@@ -1,395 +1,534 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SystemParameterService } from '../../../../services/system-parameter.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type {
-  HostingVpsProvider,
-  HostingVpsPlan,
   HostingVpsPlanConfig,
+  HostingVpsProvider,
   VpsCatalogOption,
   VpsProvider,
   VpsProviderCatalog,
   VpsProviderConfig,
 } from '../vps.types';
 
-type VpsPlanFilters = {
-  search: string;
-  status: string;
-};
+const PROVIDER_TYPE_OPTIONS: readonly { value: VpsProvider; label: string }[] = [
+  { value: 'digitalocean', label: 'DigitalOcean' },
+  { value: 'lightsail', label: 'Amazon Lightsail' },
+  { value: 'proxmox', label: 'Proxmox VE' },
+  { value: 'vmware_vcenter', label: 'VMware vCenter' },
+];
 
-type VpsPlanFormModel = {
-  name: string;
-  provider: VpsProvider;
-  providerUUID: string;
-  region: string;
-  size: string;
-  price: number;
-  setupFee: number;
-  cpu: number;
-  memoryMb: number;
-  diskGb: number;
-  transferGb: number;
-  notes: string;
-  isActive: number;
-};
-
-@Component({
-  selector: 'app-hosting-vps-plans',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
+const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/vps/plans',
+  uuidField: 'HvpUUID',
+  pageTitle: 'VPS Plans',
+  pageDescription: 'Define commercial prices and technical defaults for provider instance sizes.',
+  createTitle: 'New VPS plan',
+  editTitle: 'Edit VPS plan',
+  dialogDescription: 'Create a commercial VPS plan from provider catalog data.',
+  searchPlaceholder: 'Name, provider, region or size',
+  emptyLabel: 'No VPS plans found.',
+  deleteTitle: 'Delete VPS plan',
+  deleteMessage: 'Are you sure you want to delete this VPS plan?',
+  deleteSelectedTitle: 'Delete selected VPS plans',
+  deleteSelectedMessage: 'Are you sure you want to delete {count} selected VPS plan(s)?',
+  savedMessage: 'VPS plan saved successfully.',
+  deletedMessage: 'VPS plan deleted successfully.',
+  deleteFailedMessage: 'Failed to delete VPS plan.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  showAsyncOperationStatus: false,
+  initialPageSize: 10,
+  pageSizeOptions: [5, 10, 25, 100],
+  tabLabels: {
+    storage: 'Config',
+    notes: 'Notes',
+  },
+  listFilters: [
+    {
+      key: 'providerFilter',
+      label: 'Provider',
+      paramKey: 'providerUUID',
+      type: 'search-select',
+      placeholder: 'Search provider',
+      emptyLabel: 'No records found.',
+    },
   ],
-  templateUrl: './plans.html',
-  styleUrls: ['./plans.scss'],
-})
-export class HostingVpsPlansPage {
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly parameters = inject(SystemParameterService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly planFormDialog = viewChild<TemplateRef<unknown>>('planFormDialog');
-
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-  readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
-  );
-  readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
-  );
-
-  readonly providers = signal<HostingVpsProvider[]>([]);
-  readonly plans = signal<HostingVpsPlan[]>([]);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly appliedSearch = signal('');
-  readonly appliedStatus = signal('');
-  readonly providerFilter = signal('');
-  readonly rows = computed(() => this.filterPlansByProvider(this.plans()));
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  private readonly plansResource = resource({
-    defaultValue: [] as HostingVpsPlan[],
-    params: (): VpsPlanFilters => ({
-      search: this.appliedSearch().trim(),
-      status: this.appliedStatus(),
-    }),
-    loader: ({ params }) => this.fetchPlans(params),
-  });
-  readonly loading = this.plansResource.isLoading;
-  readonly saving = signal(false);
-  readonly editing = signal<HostingVpsPlan | null>(null);
-  readonly defaultCurrency = signal('BRL');
-  readonly providerFilterSearch = signal('');
-  readonly providerSearch = signal('');
-  readonly regionSearch = signal('');
-  readonly sizeSearch = signal('');
-  readonly catalogLoading = signal(false);
-  readonly catalog = signal<VpsProviderCatalog | null>(null);
-  readonly catalogProviderUUID = signal<string | null>(null);
-  readonly currentRegion = signal('');
-  readonly currentSize = signal('');
-  readonly selectedPlanUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedPlanUUIDs().size);
-
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'provider',
-    'region',
-    'size',
-    'price',
-    'status',
-    'actions',
-  ];
-  readonly providerOptions: { value: VpsProvider; label: string }[] = [
-    { value: 'digitalocean', label: 'DigitalOcean' },
-    { value: 'lightsail', label: 'Amazon Lightsail' },
-    { value: 'proxmox', label: 'Proxmox VE' },
-    { value: 'vmware_vcenter', label: 'VMware vCenter' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    provider: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly planFormModel = signal<VpsPlanFormModel>({
-    name: '',
-    provider: 'digitalocean',
+  initialValues: {
+    isActive: 1,
     providerUUID: '',
-    region: '',
-    size: '',
+    name: '',
     price: 0,
     setupFee: 0,
+    region: '',
+    regionManual: '',
+    size: '',
+    sizeManual: '',
     cpu: 0,
     memoryMb: 0,
     diskGb: 0,
     transferGb: 0,
     notes: '',
-    isActive: 1,
-  });
-  readonly planForm = createForm(this.planFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-    required(schema.providerUUID);
-    required(schema.price);
-    min(schema.price, 0);
-    min(schema.setupFee, 0);
-    min(schema.cpu, 0);
-    min(schema.memoryMb, 0);
-    min(schema.diskGb, 0);
-    min(schema.transferGb, 0);
-    required(schema.isActive);
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HvpName', uuidField: 'HvpUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      lookupKey: 'providerUUID',
+      uuidField: 'HostingVpsProviderHvrUUID',
+    },
+    { id: 'region', label: 'Region', field: 'HvpRegion' },
+    { id: 'size', label: 'Size', field: 'HvpSize' },
+    {
+      id: 'price',
+      label: 'Price',
+      kind: 'currency',
+      field: 'HvpPrice',
+      currencyField: 'HvpCurrency',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HvpIsActive',
+      className: 'status-col',
+    },
+  ],
+  fields: [
+    {
+      key: 'isActive',
+      source: 'HvpIsActive',
+      payloadKey: 'isActive',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'providerUUID',
+      source: 'HostingVpsProviderHvrUUID',
+      payloadKey: 'providerUUID',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HvpName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'DO Basic 1GB',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'price',
+      source: 'HvpPrice',
+      payloadKey: 'price',
+      label: 'Price',
+      type: 'currency',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'region',
+      source: 'HvpRegion',
+      payloadKey: 'region',
+      label: 'Region',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'regionManual',
+      source: 'HvpRegion',
+      payloadKey: 'regionManual',
+      label: 'Region',
+      placeholder: 'nyc3',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'size',
+      source: 'HvpSize',
+      payloadKey: 'size',
+      label: 'Size / Bundle',
+      type: 'search-select',
+      tab: 'storage',
+      span: 2,
+    },
+    {
+      key: 'sizeManual',
+      source: 'HvpSize',
+      payloadKey: 'sizeManual',
+      label: 'Size / Bundle',
+      placeholder: 's-1vcpu-1gb',
+      tab: 'storage',
+      span: 2,
+    },
+    {
+      key: 'cpu',
+      source: 'HvpConfig',
+      payloadKey: 'cpu',
+      label: 'CPU',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.cpu ?? 0),
+    },
+    {
+      key: 'memoryMb',
+      source: 'HvpConfig',
+      payloadKey: 'memoryMb',
+      label: 'Memory MB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.memoryMb ?? 0),
+    },
+    {
+      key: 'diskGb',
+      source: 'HvpConfig',
+      payloadKey: 'diskGb',
+      label: 'Disk GB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.diskGb ?? 0),
+    },
+    {
+      key: 'transferGb',
+      source: 'HvpConfig',
+      payloadKey: 'transferGb',
+      label: 'Transfer GB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.transferGb ?? 0),
+    },
+    {
+      key: 'notes',
+      source: 'HvpConfig',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 6,
+      placeholder: 'Internal plan notes',
+      fromRecord: (value) => String(parsePlanConfig(value)?.notes ?? ''),
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-hosting-vps-plans',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly providerEndpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
+  );
+  private readonly planEndpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/vps/plans' : HOSTING_VPS_PLAN_CONFIG.endpoint,
+  );
+
+  private readonly providers = signal<HostingVpsProvider[]>([]);
+  private readonly catalog = signal<VpsProviderCatalog | null>(null);
+  private readonly catalogProviderUUID = signal<string | null>(null);
+  readonly catalogLoading = signal(false);
+
+  private readonly providerFormOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current = normalizeString(this.formValues()['providerUUID']);
+    return [...this.providers()]
+      .filter((provider) => provider.HvrIsActive === 1 || provider.HvrUUID === current)
+      .sort((a, b) =>
+        a.HvrName.localeCompare(b.HvrName, undefined, { numeric: true, sensitivity: 'base' }),
+      )
+      .map((provider) => toProviderOption(provider));
   });
 
-  readonly availableRegions = computed(() => this.catalog()?.regions ?? []);
-  readonly availableSizes = computed(() => this.catalog()?.sizes ?? []);
-  readonly regionOptions = computed(() =>
-    this.withCurrentOption(this.availableRegions(), this.currentRegion()),
+  private readonly providerFilterOptions = computed<ConfigurableCrudOption[]>(() =>
+    [...this.providers()]
+      .sort((a, b) =>
+        a.HvrName.localeCompare(b.HvrName, undefined, { numeric: true, sensitivity: 'base' }),
+      )
+      .map((provider) => toProviderOption(provider)),
   );
-  readonly sizeOptions = computed(() =>
-    this.withCurrentOption(this.availableSizes(), this.currentSize()),
-  );
-  readonly filteredRegionOptions = computed(() =>
-    this.filterCatalogOptions(this.regionOptions(), this.regionSearch()),
-  );
-  readonly filteredSizeOptions = computed(() =>
-    this.sortSizeOptions(this.filterCatalogOptions(this.sizeOptions(), this.sizeSearch())),
-  );
-  readonly providerFilterOptions = computed(() =>
-    [...this.providers()].sort((a, b) =>
-      a.HvrName.localeCompare(b.HvrName, undefined, { numeric: true, sensitivity: 'base' }),
-    ),
-  );
-  readonly filteredProviderFilterOptions = computed(() => {
-    const value = this.providerFilterSearch().trim().toLowerCase();
-    const providers = this.providerFilterOptions();
-    if (!value) return providers;
-    return providers.filter(
-      (acc) =>
-        acc.HvrName.toLowerCase().includes(value) || acc.HvrProvider.toLowerCase().includes(value),
+
+  private readonly regionOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['region']) ??
+      normalizeString(this.formValues()['regionManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.regions ?? [], current));
+  });
+
+  private readonly sizeOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['size']) ??
+      normalizeString(this.formValues()['sizeManual']) ??
+      '';
+    return catalogOptionsToCrud(
+      sortSizeOptions(withCurrentOption(this.catalog()?.sizes ?? [], current)),
     );
-  });
-
-  private readonly syncPlans = effect(() => {
-    this.plans.set(this.plansResource.value());
-    this.reconcilePlanSelection();
-  });
-
-  private readonly reportPlansError = effect(() => {
-    const error = this.plansResource.error();
-    if (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS plans.'));
-    }
-  });
-  private readonly syncProviderSelection = effect(() => {
-    const uuid = this.planFormModel().providerUUID;
-    this.syncProviderFromProvider(uuid);
-    void this.fetchProviderCatalog();
-  });
-  private readonly syncCurrentRegion = effect(() => {
-    this.currentRegion.set(this.planFormModel().region ?? '');
-  });
-  private readonly syncCurrentSize = effect(() => {
-    const size = this.planFormModel().size ?? '';
-    this.currentSize.set(size);
-    this.applySelectedSizeSpecs(size);
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.stopDialogViewportObserver();
+    super({
+      ...HOSTING_VPS_PLAN_CONFIG,
+      fields: HOSTING_VPS_PLAN_CONFIG.fields.map((field) => {
+        if (field.key === 'region') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.regions?.length),
+          };
+        }
+        if (field.key === 'regionManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.regions?.length),
+          };
+        }
+        if (field.key === 'size') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.sizes?.length),
+          };
+        }
+        if (field.key === 'sizeManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.sizes?.length),
+          };
+        }
+        return field;
+      }),
     });
-    void this.fetchDefaultCurrency();
     void this.fetchProviders();
   }
 
-  refreshList() {
+  override refreshList(): void {
     void this.fetchProviders();
-    this.plansResource.reload();
+    super.refreshList();
   }
 
-  get filteredProviders() {
-    const value = this.providerSearch().trim().toLowerCase();
-    const providers = this.providers().filter((acc) => acc.HvrIsActive === 1);
-    if (!value) return providers;
-    return providers.filter(
-      (acc) =>
-        acc.HvrName.toLowerCase().includes(value) || acc.HvrProvider.toLowerCase().includes(value),
+  protected override listEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override createEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.planEndpoint();
+  }
+
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.planEndpoint()}/bulk`;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'providerFilter') return this.providerFilterOptions();
+    // Use active(+current) for the form select; column labels fall back via lookupLabel.
+    if (key === 'providerUUID') return this.providerFormOptions();
+    if (key === 'region') return this.regionOptions();
+    if (key === 'size') return this.sizeOptions();
+    return [];
+  }
+
+  protected override lookupLabel(key: string, value: unknown): string {
+    if (key === 'providerUUID') {
+      const option = this.providerFilterOptions().find(
+        (item) => String(item.value ?? '') === String(value ?? ''),
+      );
+      if (option?.label) return option.label;
+      const provider = String(
+        this.rows().find((row) => String(row['HostingVpsProviderHvrUUID'] ?? '') === String(value ?? ''))?.[
+          'HvpProvider'
+        ] ?? '',
+      );
+      return provider ? providerTypeLabel(provider) : '';
+    }
+    return super.lookupLabel(key, value);
+  }
+
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.providers().length) await this.fetchProviders();
+
+    const providerUUID = normalizeString(
+      filters.extra['providerFilter'] ?? filters.extra['providerUUID'],
     );
+    const apiFilters: ConfigurableCrudFilters = {
+      ...filters,
+      extra: Object.fromEntries(
+        Object.entries(filters.extra).filter(
+          ([key]) => key !== 'providerFilter' && key !== 'providerUUID',
+        ),
+      ),
+    };
+
+    const rows = await super.fetchItems(apiFilters);
+    const parsed: ConfigurableCrudRecord[] = rows.map((row) => ({
+      ...row,
+      HvpConfig: parsePlanConfig(row['HvpConfig']),
+    }));
+
+    if (!providerUUID) return parsed;
+    return parsed.filter((item) => {
+      const itemProviderUUID = String(item['HostingVpsProviderHvrUUID'] ?? '');
+      const itemProvider = String(item['HvpProvider'] ?? '') as VpsProvider;
+      return (
+        itemProviderUUID === providerUUID ||
+        this.resolveProviderUUIDForProvider(itemProvider) === providerUUID
+      );
+    });
   }
 
-  onProviderOpened(opened: boolean) {
-    if (!opened) this.providerSearch.set('');
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const next = super.formValuesFromRecord(row);
+    const config = parsePlanConfig(row['HvpConfig']);
+    const region = String(row['HvpRegion'] ?? '');
+    const size = String(row['HvpSize'] ?? '');
+    const providerUUID =
+      this.providerById(String(row['HostingVpsProviderHvrUUID'] ?? ''))?.HvrUUID ??
+      this.resolveProviderUUIDForProvider(String(row['HvpProvider'] ?? '') as VpsProvider);
+
+    next['providerUUID'] = providerUUID;
+    next['region'] = region;
+    next['regionManual'] = region;
+    next['size'] = size;
+    next['sizeManual'] = size;
+    next['setupFee'] = Number(row['HvpSetupFee'] ?? 0);
+    next['cpu'] = Number(config?.cpu ?? 0);
+    next['memoryMb'] = Number(config?.memoryMb ?? 0);
+    next['diskGb'] = Number(config?.diskGb ?? 0);
+    next['transferGb'] = Number(config?.transferGb ?? 0);
+    next['notes'] = String(config?.notes ?? '');
+    next['isActive'] = Number(row['HvpIsActive'] ?? 0) === 1 ? 1 : 0;
+    next['price'] = Number(row['HvpPrice'] ?? 0);
+
+    void this.fetchProviderCatalog(providerUUID);
+    return next;
   }
 
-  onProviderFilterOpened(opened: boolean) {
-    if (!opened) this.providerFilterSearch.set('');
+  override startCreate(): void {
+    this.catalog.set(null);
+    this.catalogProviderUUID.set(null);
+    super.startCreate();
   }
 
-  onRegionOpened(opened: boolean) {
-    if (!opened) this.regionSearch.set('');
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key === 'providerUUID') {
+      this.patchFormValues({
+        region: '',
+        regionManual: '',
+        size: '',
+        sizeManual: '',
+        cpu: 0,
+        memoryMb: 0,
+        diskGb: 0,
+        transferGb: 0,
+      });
+      void this.fetchProviderCatalog(normalizeString(value));
+      return;
+    }
+
+    if (key === 'region') {
+      this.patchFormValues({ regionManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'regionManual') {
+      this.patchFormValues({ region: String(value ?? '') });
+      return;
+    }
+
+    if (key === 'size') {
+      const size = String(value ?? '');
+      this.patchFormValues({ sizeManual: size });
+      this.applySelectedSizeSpecs(size);
+      return;
+    }
+    if (key === 'sizeManual') {
+      const size = String(value ?? '');
+      this.patchFormValues({ size });
+      this.applySelectedSizeSpecs(size);
+    }
   }
 
-  onSizeOpened(opened: boolean) {
-    if (!opened) this.sizeSearch.set('');
-  }
-
-  selectedCatalogLabel(controlName: 'region' | 'size', options: VpsCatalogOption[]) {
-    const value = this.normalizeString(this.planFormModel()[controlName]);
-    if (!value) return '';
-    return options.find((option) => option.id === value)?.label ?? value;
-  }
-
-  selectedSizeLabel() {
-    const value = this.normalizeString(this.planFormModel().size);
-    if (!value) return '';
-    const option = this.sizeOptions().find((item) => item.id === value);
-    if (!option) return value;
-    return [this.sizeOptionName(option), this.sizeOptionPrice(option)].filter(Boolean).join(' ');
-  }
-
-  sizeOptionName(option: VpsCatalogOption) {
-    return this.sizeOptionParts(option)[0] ?? option.label ?? option.id;
-  }
-
-  sizeOptionPrice(option: VpsCatalogOption) {
-    return this.sizeOptionParts(option).find((part) => /\/mo|\/month|\$\d/i.test(part)) ?? '';
-  }
-
-  sizeOptionMeta(option: VpsCatalogOption) {
-    const slug = this.sizeOptionSlug(option);
-    return this.sizeOptionParts(option)
-      .slice(1)
-      .filter((part) => part !== this.sizeOptionPrice(option) && part !== slug)
-      .join(' · ');
-  }
-
-  sizeOptionSlug(option: VpsCatalogOption) {
-    const parts = this.sizeOptionParts(option);
-    return parts[parts.length - 1] !== this.sizeOptionPrice(option)
-      ? (parts[parts.length - 1] ?? option.id)
-      : option.id;
-  }
-
-  selectedSizeHasCatalogSpecs() {
-    const option = this.selectedSizeOption();
-    return (
-      !!option &&
-      ['cpu', 'memoryMb', 'diskGb', 'transferGb'].some(
-        (key) => this.catalogNumber(option[key as keyof VpsCatalogOption]) !== null,
-      )
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const providerUUID = normalizeString(payload['providerUUID']);
+    const providerRecord = this.providerById(providerUUID);
+    const region =
+      normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
+    const size = normalizeString(payload['size']) ?? normalizeString(payload['sizeManual']);
+    const notes = normalizeString(payload['notes']);
+    const setupFee = Number(
+      this.formValues()['setupFee'] ?? this.editingRecord()?.['HvpSetupFee'] ?? 0,
     );
+    const currency =
+      normalizeString(this.editingRecord()?.['HvpCurrency'] as string | undefined) ??
+      this.defaultCurrency() ??
+      'BRL';
+
+    return {
+      name: String(payload['name'] ?? '').trim(),
+      providerUUID: providerRecord?.HvrUUID ?? providerUUID,
+      region,
+      size,
+      price: Number(payload['price'] ?? 0),
+      setupFee: Number.isFinite(setupFee) ? setupFee : 0,
+      config: {
+        cpu: Number(payload['cpu'] ?? 0) || null,
+        memoryMb: Number(payload['memoryMb'] ?? 0) || null,
+        diskGb: Number(payload['diskGb'] ?? 0) || null,
+        transferGb: Number(payload['transferGb'] ?? 0) || null,
+        providerRegionId: region,
+        providerSizeId: size,
+        notes,
+      } satisfies HostingVpsPlanConfig,
+      isActive: truthyNumber(payload['isActive']) === 1,
+      currency,
+      notes,
+    };
   }
 
-  providerLabel(provider: VpsProvider) {
-    return this.providerOptions.find((opt) => opt.value === provider)?.label ?? provider;
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    const providerUUID = normalizeString(payload['providerUUID']);
+    if (!providerUUID || !this.providerById(providerUUID)) {
+      this.snack.warning(this.t('Select a valid VPS provider.'));
+      return false;
+    }
+    return super.validatePayload(payload);
   }
 
-  providerNameForPlan(item: HostingVpsPlan) {
-    return (
-      this.providerById(item.HostingVpsProviderHvrUUID)?.HvrName ??
-      this.providerById(this.resolveProviderUUIDForProvider(item.HvpProvider))?.HvrName ??
-      this.providerLabel(item.HvpProvider)
-    );
-  }
-
-  statusLabel(item: HostingVpsPlan) {
-    return item.HvpIsActive === 1 ? 'Active' : 'Inactive';
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
-
-  moneyLabel(item: HostingVpsPlan) {
-    const currency = item.HvpCurrency || this.defaultCurrency();
-    return `${currency} ${Number(item.HvpPrice ?? 0).toFixed(2)}`;
-  }
-
-  private async fetchDefaultCurrency() {
-    const currency = await this.parameters.resolveDefaultCurrency('BRL');
-    this.defaultCurrency.set(currency);
-  }
-
-  async fetchProviders() {
+  private async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
         this.providerEndpoint(),
@@ -398,51 +537,16 @@ export class HostingVpsPlansPage {
       this.providers.set(
         list.map((item) => ({
           ...item,
-          HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
+          HvrConfig: parseObjectConfig<VpsProviderConfig>(item.HvrConfig),
         })),
       );
-      void this.fetchProviderCatalog();
     } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
     }
   }
 
-  private async fetchPlans(filters: VpsPlanFilters): Promise<HostingVpsPlan[]> {
-    const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (filters.search) params.set('search', filters.search);
-    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
-
-    const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
-      `${this.planEndpoint()}?${params.toString()}`,
-    );
-    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-    return list.map((item) => ({
-      ...item,
-      HvpConfig: this.parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
-    }));
-  }
-
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedStatus.set(values.status);
-    this.resetPagination();
-    this.providerFilter.set(values.provider);
-    this.plansResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ search: '', provider: '', status: '' });
-    this.appliedSearch.set('');
-    this.appliedStatus.set('');
-    this.providerFilter.set('');
-    this.providerFilterSearch.set('');
-    this.resetPagination();
-    this.plansResource.reload();
-  }
-
-  async fetchProviderCatalog() {
-    const uuid = this.resolveCatalogProviderUUID();
+  private async fetchProviderCatalog(providerUUID: string | null | undefined) {
+    const uuid = normalizeString(providerUUID);
     if (!uuid) {
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
@@ -459,365 +563,44 @@ export class HostingVpsPlansPage {
         `${this.providerEndpoint()}/${uuid}/catalog`,
       );
       this.catalog.set(result?.data?.catalog ?? null);
-      this.applySelectedSizeSpecs(this.planFormModel().size);
+      const size =
+        normalizeString(this.formValues()['size']) ??
+        normalizeString(this.formValues()['sizeManual']);
+      if (size) this.applySelectedSizeSpecs(size);
     } catch (error) {
       this.catalog.set(null);
-      this.snack.error(this.friendlyError(error, 'Failed to load provider catalog.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
     } finally {
       this.catalogLoading.set(false);
     }
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.resetForm();
-    void this.fetchProviderCatalog();
-    this.openDialog();
-  }
-
-  startEdit(item: HostingVpsPlan) {
-    const config = item.HvpConfig ?? {};
-    this.editing.set(item);
-    const providerUUID =
-      this.providerById(item.HostingVpsProviderHvrUUID)?.HvrUUID ??
-      this.resolveProviderUUIDForProvider(item.HvpProvider);
-    this.planFormModel.set({
-      name: item.HvpName,
-      provider: item.HvpProvider,
-      providerUUID,
-      region: item.HvpRegion ?? '',
-      size: item.HvpSize ?? '',
-      price: Number(item.HvpPrice ?? 0),
-      setupFee: Number(item.HvpSetupFee ?? 0),
-      cpu: Number(config.cpu ?? 0),
-      memoryMb: Number(config.memoryMb ?? 0),
-      diskGb: Number(config.diskGb ?? 0),
-      transferGb: Number(config.transferGb ?? 0),
-      notes: config.notes ?? '',
-      isActive: item.HvpIsActive === 1 ? 1 : 0,
-    });
-    this.currentRegion.set(item.HvpRegion ?? '');
-    this.currentSize.set(item.HvpSize ?? '');
-    void this.fetchProviderCatalog();
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    if (!this.planForm().valid()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    this.saving.set(true);
-    const values = this.planFormModel();
-    const providerRecord = this.providerById(values.providerUUID);
-    if (!providerRecord) {
-      this.saving.set(false);
-      this.snack.warning('Select a valid VPS provider.');
-      return;
-    }
-
-    const payload = {
-      name: values.name.trim(),
-      providerUUID: providerRecord.HvrUUID,
-      region: this.normalizeString(values.region),
-      size: this.normalizeString(values.size),
-      price: Number(values.price ?? 0),
-      setupFee: Number(values.setupFee ?? 0),
-      config: this.buildConfigPayload(),
-      isActive: values.isActive === 1,
-    };
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.planEndpoint()}/${editing.HvpUUID}`, payload);
-        this.snack.success('VPS plan updated.');
-      } else {
-        await this.api.post(this.planEndpoint(), payload);
-        this.snack.success('VPS plan created.');
-      }
-      this.plansResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save VPS plan.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  async remove(item: HostingVpsPlan) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete VPS plan',
-        message: `Are you sure you want to delete "${item.HvpName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.planEndpoint()}/${item.HvpUUID}`);
-      this.snack.success('VPS plan deleted.');
-      this.plansResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete VPS plan.'));
-    }
-  }
-
-  isSelected(item: HostingVpsPlan) {
-    return this.selectedPlanUUIDs().has(item.HvpUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  togglePlanSelection(item: HostingVpsPlan, checked: boolean) {
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(item.HvpUUID);
-      } else {
-        next.delete(item.HvpUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        if (checked) {
-          next.add(row.HvpUUID);
-        } else {
-          next.delete(row.HvpUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedPlans() {
-    const ids = Array.from(this.selectedPlanUUIDs());
-    if (!ids.length) return;
-    const labels = this.plans()
-      .filter((item) => ids.includes(item.HvpUUID))
-      .slice(0, 3)
-      .map((item) => item.HvpName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected VPS plans',
-        message: `Are you sure you want to delete ${ids.length} selected VPS plan(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: { deleted?: string[]; failed?: { HostingVpsPlanUUID: string; message: string }[] };
-      }>(`${this.planEndpoint()}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set((response?.data?.failed ?? []).map((item) => item.HostingVpsPlanUUID));
-      this.plans.update((rows) => rows.filter((row) => !deleted.has(row.HvpUUID)));
-      this.selectedPlanUUIDs.set(failed);
-      this.plansResource.reload();
-      if (failed.size) {
-        this.snack.error(`${failed.size} VPS plan(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} VPS plan(s) deleted.`);
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected VPS plans.'));
-    }
-  }
-
-  private buildConfigPayload(): HostingVpsPlanConfig {
-    const values = this.planFormModel();
-    return {
-      cpu: Number(values.cpu ?? 0) || null,
-      memoryMb: Number(values.memoryMb ?? 0) || null,
-      diskGb: Number(values.diskGb ?? 0) || null,
-      transferGb: Number(values.transferGb ?? 0) || null,
-      providerRegionId: this.normalizeString(values.region),
-      providerSizeId: this.normalizeString(values.size),
-      notes: this.normalizeString(values.notes),
-    };
-  }
-
-  private filterPlansByProvider(rows: HostingVpsPlan[]) {
-    const providerUUID = this.normalizeString(this.providerFilter());
-    if (!providerUUID) return rows;
-    return rows.filter(
-      (item) =>
-        item.HostingVpsProviderHvrUUID === providerUUID ||
-        this.resolveProviderUUIDForProvider(item.HvpProvider) === providerUUID,
-    );
-  }
-
-  private normalizeString(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    return trimmed.length ? trimmed : null;
-  }
-
-  private selectedSizeOption() {
-    const selected = this.normalizeString(this.planFormModel().size);
-    if (!selected) return null;
-    return this.sizeOptions().find((option) => option.id === selected) ?? null;
-  }
-
   private applySelectedSizeSpecs(value: string | null | undefined) {
-    const selected = this.normalizeString(value);
+    const selected = normalizeString(value);
     if (!selected) return;
-    const option = this.sizeOptions().find((item) => item.id === selected);
+    const option = (this.catalog()?.sizes ?? []).find((item) => item.id === selected);
     if (!option) return;
 
-    const specs = {
-      cpu: this.catalogNumber(option.cpu),
-      memoryMb: this.catalogNumber(option.memoryMb),
-      diskGb: this.catalogNumber(option.diskGb),
-      transferGb: this.catalogNumber(option.transferGb),
-    };
-
-    const patch: Partial<{ cpu: number; memoryMb: number; diskGb: number; transferGb: number }> =
-      {};
-    if (specs.cpu !== null) patch.cpu = specs.cpu;
-    if (specs.memoryMb !== null) patch.memoryMb = specs.memoryMb;
-    if (specs.diskGb !== null) patch.diskGb = specs.diskGb;
-    if (specs.transferGb !== null) patch.transferGb = specs.transferGb;
+    const patch: ConfigurableCrudRecord = {};
+    const cpu = catalogNumber(option.cpu);
+    const memoryMb = catalogNumber(option.memoryMb);
+    const diskGb = catalogNumber(option.diskGb);
+    const transferGb = catalogNumber(option.transferGb);
+    if (cpu !== null) patch['cpu'] = cpu;
+    if (memoryMb !== null) patch['memoryMb'] = memoryMb;
+    if (diskGb !== null) patch['diskGb'] = diskGb;
+    if (transferGb !== null) patch['transferGb'] = transferGb;
     if (!Object.keys(patch).length) return;
-
-    this.planFormModel.update((current) => ({ ...current, ...patch }));
-  }
-
-  private catalogNumber(value: unknown): number | null {
-    const parsed = Number(value ?? 0);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  }
-
-  private parseConfig<T>(value: unknown): T | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private withCurrentOption(options: VpsCatalogOption[], current: string): VpsCatalogOption[] {
-    const normalized = this.normalizeString(current);
-    if (!normalized || options.some((opt) => opt.id === normalized)) return options;
-    return [{ id: normalized, label: `Custom: ${normalized}` }, ...options];
-  }
-
-  private sizeOptionParts(option: VpsCatalogOption) {
-    return (option.label || option.id)
-      .split(' • ')
-      .map((part) => part.trim())
-      .filter(Boolean);
-  }
-
-  private sortSizeOptions(options: VpsCatalogOption[]) {
-    return [...options].sort((a, b) => {
-      const rankDiff = this.sizeOptionRank(a) - this.sizeOptionRank(b);
-      if (rankDiff !== 0) return rankDiff;
-
-      const priceDiff = this.sizeOptionMonthlyPrice(a) - this.sizeOptionMonthlyPrice(b);
-      if (priceDiff !== 0) return priceDiff;
-
-      const nameDiff = this.sizeOptionName(a).localeCompare(this.sizeOptionName(b), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-      if (nameDiff !== 0) return nameDiff;
-
-      return this.sizeOptionSlug(a).localeCompare(this.sizeOptionSlug(b), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-    });
-  }
-
-  private sizeOptionRank(option: VpsCatalogOption) {
-    const name = this.sizeOptionName(option).toLowerCase();
-    if (name.includes('basic') && !name.includes('premium')) return 10;
-    if (name.includes('basic') && name.includes('premium')) return 15;
-    if (name.includes('general purpose')) return 20;
-    if (name.includes('cpu')) return 30;
-    if (name.includes('memory')) return 40;
-    if (name.includes('storage')) return 50;
-    if (name.includes('custom')) return 90;
-    return 80;
-  }
-
-  private sizeOptionMonthlyPrice(option: VpsCatalogOption) {
-    const price = this.sizeOptionPrice(option).match(/[\d,.]+/);
-    if (!price) return Number.POSITIVE_INFINITY;
-    return Number(price[0].replace(/,/g, ''));
-  }
-
-  private filterCatalogOptions(options: VpsCatalogOption[], search: string): VpsCatalogOption[] {
-    const value = search.trim().toLowerCase();
-    if (!value) return options;
-    return options.filter(
-      (option) =>
-        option.id.toLowerCase().includes(value) || option.label.toLowerCase().includes(value),
-    );
-  }
-
-  private resolveCatalogProviderUUID(): string | null {
-    const selected = this.normalizeString(this.planFormModel().providerUUID);
-    if (selected) return selected;
-    return null;
+    this.patchFormValues(patch);
   }
 
   private providerById(uuid: string | null | undefined): HostingVpsProvider | null {
-    const normalized = this.normalizeString(uuid);
+    const normalized = normalizeString(uuid);
     if (!normalized) return null;
-    return this.providers().find((acc) => acc.HvrUUID === normalized) ?? null;
+    return this.providers().find((item) => item.HvrUUID === normalized) ?? null;
   }
 
-  private syncProviderFromProvider(uuid: string | null | undefined) {
-    const providerRecord = this.providerById(uuid);
-    if (!providerRecord) return;
-    if (this.planFormModel().provider === providerRecord.HvrProvider) return;
-    this.planFormModel.update((current) => ({ ...current, provider: providerRecord.HvrProvider }));
-  }
-
-  private resolveProviderUUIDForProvider(provider: VpsProvider): string {
+  private resolveProviderUUIDForProvider(provider: VpsProvider | string): string {
     return (
       this.providers().find(
         (acc) => acc.HvrProvider === provider && acc.HvrIsActive === 1 && acc.HvrIsDefault === 1,
@@ -827,144 +610,133 @@ export class HostingVpsPlansPage {
       ''
     );
   }
+}
 
-  private resetForm() {
-    this.planFormModel.set({
-      name: '',
-      provider: 'digitalocean',
-      providerUUID: '',
-      region: '',
-      size: '',
-      price: 0,
-      setupFee: 0,
-      cpu: 0,
-      memoryMb: 0,
-      diskGb: 0,
-      transferGb: 0,
-      notes: '',
-      isActive: 1,
-    });
-    this.currentRegion.set('');
-    this.currentSize.set('');
-    this.providerSearch.set('');
-    this.regionSearch.set('');
-    this.sizeSearch.set('');
+function toProviderOption(provider: HostingVpsProvider): ConfigurableCrudOption {
+  return {
+    value: provider.HvrUUID,
+    label: provider.HvrName,
+    description: providerTypeLabel(provider.HvrProvider),
+    searchText: `${provider.HvrName} ${provider.HvrProvider}`,
+  };
+}
+
+function providerTypeLabel(provider: VpsProvider | string): string {
+  return PROVIDER_TYPE_OPTIONS.find((opt) => opt.value === provider)?.label ?? String(provider);
+}
+
+function parsePlanConfig(value: unknown): HostingVpsPlanConfig | null {
+  return parseObjectConfig<HostingVpsPlanConfig>(value);
+}
+
+function parseObjectConfig<T>(value: unknown): T | null {
+  if (!value) return null;
+  if (typeof value === 'object') return value as T;
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
+  } catch {
+    return null;
   }
+}
 
-  private resetPagination() {
-    this.pageIndex.set(0);
-  }
+function normalizeString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
 
-  private reconcilePlanSelection() {
-    const available = new Set(this.plans().map((item) => item.HvpUUID));
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
+function truthyNumber(value: unknown): 0 | 1 {
+  if (value === true || value === 1 || value === '1' || value === 'true') return 1;
+  return 0;
+}
 
-  private sortRows(rows: HostingVpsPlan[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
+function catalogNumber(value: unknown): number | null {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
 
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.planSortValue(a, active),
-        this.planSortValue(b, active),
-      );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
+function withCurrentOption(options: VpsCatalogOption[], current: string): VpsCatalogOption[] {
+  const normalized = normalizeString(current);
+  if (!normalized || options.some((opt) => opt.id === normalized)) return options;
+  return [{ id: normalized, label: `Custom: ${normalized}` }, ...options];
+}
 
-  private planSortValue(item: HostingVpsPlan, column: string) {
-    switch (column) {
-      case 'name':
-        return item.HvpName;
-      case 'provider':
-        return this.providerNameForPlan(item);
-      case 'region':
-        return item.HvpRegion ?? '';
-      case 'size':
-        return item.HvpSize ?? '';
-      case 'price':
-        return Number(item.HvpPrice ?? 0);
-      case 'status':
-        return item.HvpIsActive;
-      default:
-        return '';
-    }
-  }
+function catalogOptionsToCrud(options: VpsCatalogOption[]): ConfigurableCrudOption[] {
+  return options.map((option) => ({
+    value: option.id,
+    label: option.label || option.id,
+    description: sizeOptionMeta(option) || undefined,
+    searchText: `${option.id} ${option.label}`,
+  }));
+}
 
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
+function sizeOptionParts(option: VpsCatalogOption) {
+  return (option.label || option.id)
+    .split(' • ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function sizeOptionName(option: VpsCatalogOption) {
+  return sizeOptionParts(option)[0] ?? option.label ?? option.id;
+}
+
+function sizeOptionPrice(option: VpsCatalogOption) {
+  return sizeOptionParts(option).find((part) => /\/mo|\/month|\$\d/i.test(part)) ?? '';
+}
+
+function sizeOptionSlug(option: VpsCatalogOption) {
+  const parts = sizeOptionParts(option);
+  return parts[parts.length - 1] !== sizeOptionPrice(option)
+    ? (parts[parts.length - 1] ?? option.id)
+    : option.id;
+}
+
+function sizeOptionMeta(option: VpsCatalogOption) {
+  const slug = sizeOptionSlug(option);
+  return sizeOptionParts(option)
+    .slice(1)
+    .filter((part) => part !== sizeOptionPrice(option) && part !== slug)
+    .join(' · ');
+}
+
+function sizeOptionRank(option: VpsCatalogOption) {
+  const name = sizeOptionName(option).toLowerCase();
+  if (name.includes('basic') && !name.includes('premium')) return 10;
+  if (name.includes('basic') && name.includes('premium')) return 15;
+  if (name.includes('general purpose')) return 20;
+  if (name.includes('cpu')) return 30;
+  if (name.includes('memory')) return 40;
+  if (name.includes('storage')) return 50;
+  if (name.includes('custom')) return 90;
+  return 80;
+}
+
+function sizeOptionMonthlyPrice(option: VpsCatalogOption) {
+  const price = sizeOptionPrice(option).match(/[\d,.]+/);
+  if (!price) return Number.POSITIVE_INFINITY;
+  return Number(price[0].replace(/,/g, ''));
+}
+
+function sortSizeOptions(options: VpsCatalogOption[]) {
+  return [...options].sort((a, b) => {
+    const rankDiff = sizeOptionRank(a) - sizeOptionRank(b);
+    if (rankDiff !== 0) return rankDiff;
+
+    const priceDiff = sizeOptionMonthlyPrice(a) - sizeOptionMonthlyPrice(b);
+    if (priceDiff !== 0) return priceDiff;
+
+    const nameDiff = sizeOptionName(a).localeCompare(sizeOptionName(b), undefined, {
       numeric: true,
       sensitivity: 'base',
     });
-  }
+    if (nameDiff !== 0) return nameDiff;
 
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
-  }
-
-  private openDialog() {
-    const planFormDialog = this.planFormDialog();
-    if (!planFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(planFormDialog, {
-      ...getVpsDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-vps-plan-dialog',
+    return sizeOptionSlug(a).localeCompare(sizeOptionSlug(b), undefined, {
+      numeric: true,
+      sensitivity: 'base',
     });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
-  }
-
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateVpsDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateVpsDialogViewport(this.dialogRef);
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
+  });
 }
