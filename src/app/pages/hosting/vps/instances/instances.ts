@@ -283,7 +283,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private readonly plans = signal<HostingVpsPlan[]>([]);
   private readonly catalog = signal<VpsProviderCatalog | null>(null);
   private readonly catalogProviderUUID = signal<string | null>(null);
+  private readonly catalogFetchKey = signal<string | null>(null);
   private readonly catalogLoading = signal(false);
+  private catalogRequestId = 0;
   private readonly retryingInstanceUUIDs = signal<Set<string>>(new Set());
   private activePlanUUID = '';
 
@@ -344,11 +346,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   );
   private readonly imageOptions = computed<ConfigurableCrudOption[]>(() => {
     const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
-    const region = normalizeString(plan?.HvpRegion) ?? '';
-    const diskGb = Number(plan?.HvpConfig?.diskGb ?? 0);
-    const images = (this.catalog()?.images ?? []).filter((option) =>
-      isImageCompatibleWithPlan(option, region, diskGb),
-    );
+    const images = this.compatibleImagesForPlan(plan);
     const current = String(this.formValues()['image'] ?? '').trim();
     const options = images.map((option) => catalogOptionToCrud(option));
     if (current && !options.some((option) => String(option.value) === current)) {
@@ -450,6 +448,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     this.activePlanUUID = '';
     this.catalog.set(null);
     this.catalogProviderUUID.set(null);
+    this.catalogFetchKey.set(null);
     super.startCreate();
   }
 
@@ -753,11 +752,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     await this.fetchProviderCatalog(plan);
 
     const selectedImage = normalizeString(this.formValues()['image']);
-    const region = normalizeString(plan.HvpRegion) ?? '';
-    const diskGb = Number(plan.HvpConfig?.diskGb ?? 0);
-    const compatibleImages = (this.catalog()?.images ?? []).filter((option) =>
-      isImageCompatibleWithPlan(option, region, diskGb),
-    );
+    const compatibleImages = this.compatibleImagesForPlan(plan);
 
     if (selectedImage) {
       const stillCompatible = compatibleImages.some((option) => option.id === selectedImage);
@@ -775,28 +770,58 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
+  private compatibleImagesForPlan(plan: HostingVpsPlan | null | undefined): VpsCatalogOption[] {
+    if (!plan) return [];
+    const region = normalizeString(plan.HvpRegion) ?? '';
+    const diskGb = Number(plan.HvpConfig?.diskGb ?? 0);
+    const sizeId = normalizeString(plan.HvpSize) ?? '';
+    const sizeOption = (this.catalog()?.sizes ?? []).find((item) => item.id === sizeId) ?? null;
+    const platform =
+      normalizeString(sizeOption?.platform) ??
+      lightsailPlatformFromPlan(plan) ??
+      null;
+    const power = Number(sizeOption?.power ?? 0);
+    return (this.catalog()?.images ?? []).filter((option) =>
+      isImageCompatibleWithPlan(option, {
+        region,
+        diskGb,
+        platform,
+        power: power > 0 ? power : null,
+      }),
+    );
+  }
+
   private async fetchProviderCatalog(plan: HostingVpsPlan) {
     const uuid = this.resolveProviderUUIDForPlan(plan);
     if (!uuid) {
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
+      this.catalogFetchKey.set(null);
       return;
     }
-    if (this.catalogProviderUUID() === uuid && this.catalog()) return;
-    if (this.catalogLoading()) return;
 
+    const region = normalizeString(plan.HvpRegion);
+    const fetchKey = `${uuid}:${region ?? ''}`;
+    if (this.catalogFetchKey() === fetchKey && this.catalog()) return;
+
+    const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
+    this.catalogFetchKey.set(fetchKey);
     try {
+      const query = region ? `?region=${encodeURIComponent(region)}` : '';
       const result = await this.api.get<{ data?: { catalog?: VpsProviderCatalog } }>(
-        `${this.providerEndpoint()}/${uuid}/catalog`,
+        `${this.providerEndpoint()}/${uuid}/catalog${query}`,
       );
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(result?.data?.catalog ?? null);
     } catch (error) {
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(null);
+      this.catalogFetchKey.set(null);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
     } finally {
-      this.catalogLoading.set(false);
+      if (requestId === this.catalogRequestId) this.catalogLoading.set(false);
     }
   }
 
@@ -1078,21 +1103,59 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
   };
 }
 
+function lightsailParentRegion(regionOrAz: string | null | undefined): string | null {
+  const value = String(regionOrAz ?? '').trim().toLowerCase();
+  if (!value) return null;
+  const match = value.match(/^([a-z0-9-]+?)([a-z])$/i);
+  if (!match) return String(regionOrAz ?? '').trim() || null;
+  const parent = match[1];
+  if (/\d$/.test(parent)) return parent;
+  return String(regionOrAz ?? '').trim() || null;
+}
+
+function lightsailPlatformFromPlan(plan: HostingVpsPlan): string | null {
+  const family = String(plan.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
+  if (family.includes('windows')) return 'WINDOWS';
+  if (family.includes('linux') || family.includes('unix')) return 'LINUX_UNIX';
+  const size = String(plan.HvpSize ?? '').toLowerCase();
+  if (size.includes('_win') || size.includes('-win')) return 'WINDOWS';
+  if (size) return 'LINUX_UNIX';
+  return null;
+}
+
 function isImageCompatibleWithPlan(
   option: VpsCatalogOption,
-  region: string,
-  diskGb: number,
+  context: {
+    region: string;
+    diskGb: number;
+    platform?: string | null;
+    power?: number | null;
+  },
 ): boolean {
-  if (
-    region &&
-    Array.isArray(option.regions) &&
-    option.regions.length > 0 &&
-    !option.regions.includes(region)
-  ) {
+  const region = context.region;
+  if (region && Array.isArray(option.regions) && option.regions.length > 0) {
+    const parent = lightsailParentRegion(region);
+    const ok =
+      option.regions.includes(region) ||
+      Boolean(parent && option.regions.includes(parent)) ||
+      option.regions.some((item) => lightsailParentRegion(item) === parent);
+    if (!ok) return false;
+  }
+
+  const platform = String(context.platform ?? '').trim().toUpperCase();
+  const imagePlatform = String(option.platform ?? '').trim().toUpperCase();
+  if (platform && imagePlatform && platform !== imagePlatform) {
     return false;
   }
+
+  const minPower = Number(option.minPower ?? 0);
+  const power = Number(context.power ?? 0);
+  if (power > 0 && minPower > 0 && minPower > power) {
+    return false;
+  }
+
   const minDiskGb = Number(option.minDiskGb ?? 0);
-  if (diskGb > 0 && minDiskGb > 0 && minDiskGb > diskGb) {
+  if (context.diskGb > 0 && minDiskGb > 0 && minDiskGb > context.diskGb) {
     return false;
   }
   return true;

@@ -146,6 +146,9 @@ export type VpsCatalogOption = {
   transferGb?: number | null;
   regions?: string[] | null;
   minDiskGb?: number | null;
+  minPower?: number | null;
+  platform?: string | null;
+  power?: number | null;
   family?: string | null;
   category?: string | null;
   priceMonthly?: number | null;
