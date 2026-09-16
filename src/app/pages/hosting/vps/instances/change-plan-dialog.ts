@@ -82,11 +82,15 @@ export class ChangePlanDialogComponent {
   planSpecLabel(plan: HostingVpsPlan | null | undefined) {
     if (!plan) return '';
     const config = plan.HvpConfig ?? {};
+    const price = formatPlanMoney(plan.HvpPrice, plan.HvpCurrency);
+    const setupFee = formatPlanMoney(plan.HvpSetupFee ?? 0, plan.HvpCurrency);
     return [
       config.cpu ? `${config.cpu} CPU` : null,
       config.memoryMb ? `${config.memoryMb} MB` : null,
       config.diskGb ? `${config.diskGb} GB` : null,
       plan.HvpSize,
+      price,
+      `Setup fee ${setupFee}`,
     ]
       .filter(Boolean)
       .join(' / ');
@@ -101,4 +105,14 @@ export class ChangePlanDialogComponent {
     if (!targetPlanUUID) return;
     this.dialogRef.close({ targetPlanUUID });
   }
+}
+
+function formatPlanMoney(
+  value: number | string | null | undefined,
+  currency: string | null | undefined,
+) {
+  const amount = Number(value ?? 0);
+  const code = (currency || 'BRL').toUpperCase();
+  if (!Number.isFinite(amount)) return `${code} -`;
+  return `${code} ${amount.toFixed(2)}`;
 }

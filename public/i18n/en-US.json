@@ -4245,5 +4245,12 @@
   "Target plan": "Target plan",
   "VPS provisioning retry could not be queued.": "VPS provisioning retry could not be queued.",
   "VPS resources": "VPS resources",
-  "Test provider": "Test provider"
+  "Test provider": "Test provider",
+  "Setup fee": "Setup fee",
+  "Platform provider": "Platform provider",
+  "Manage the platform VPS plan catalog. Provider and plan administration is master-only.": "Manage the platform VPS plan catalog. Provider and plan administration is master-only.",
+  "Create a commercial VPS plan from the platform provider catalog.": "Create a commercial VPS plan from the platform provider catalog.",
+  "Configure platform VPS providers. Provider administration is master-only.": "Configure platform VPS providers. Provider administration is master-only.",
+  "Configure platform credentials for VPS provisioning.": "Configure platform credentials for VPS provisioning.",
+  "Register an instance from the platform VPS plan catalog.": "Register an instance from the platform VPS plan catalog."
 }

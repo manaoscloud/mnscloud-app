@@ -88,6 +88,7 @@ export type HostingVpsPlan = {
   HvpCurrency: string;
   HvpPrice: number;
   HvpSetupFee?: number | null;
+  BillingPriceBpcUUID?: string | null;
   HvpConfig?: HostingVpsPlanConfig | null;
   HvpIsActive: number;
 };
