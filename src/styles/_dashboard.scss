@@ -470,18 +470,94 @@ mns-dashboard-record-list {
   display: block;
   min-width: 0;
 }
-mns-dashboard-page .dashboard-navigation {
-  display: grid;
-  gap: 0.75rem;
-  a {
+
+// Module / resource shortcuts: outline chips aligned with KPI cards and Refresh.
+mns-dashboard-page {
+  .dashboard-navigation {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
-    min-height: 44px;
-    color: var(--mat-sys-color-primary);
-    text-decoration: none;
+    gap: 0.5rem;
   }
-  a:hover {
-    text-decoration: underline;
+
+  .dashboard-nav-link,
+  .dashboard-navigation > a,
+  .panel-header > a,
+  .monitoring-panel-header > a,
+  .dashboard-panel td > a,
+  .dashboard-panel .mat-mdc-cell > a,
+  .summary-panel td > a,
+  .summary-panel .mat-mdc-cell > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: var(--dashboard-radius, 0.75rem);
+    background: var(--mat-sys-color-surface-container);
+    color: var(--mat-sys-color-on-surface);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+
+    mat-icon {
+      width: 1.1rem;
+      height: 1.1rem;
+      font-size: 1.1rem;
+      line-height: 1.1rem;
+      color: var(--mat-sys-color-primary);
+      flex: 0 0 auto;
+    }
+
+    .dashboard-nav-chevron {
+      margin-inline-start: 0.1rem;
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+
+    &:hover,
+    &:focus-visible {
+      border-color: color-mix(in srgb, var(--mat-sys-color-primary) 55%, transparent);
+      background: var(--mat-sys-color-primary-container);
+      color: var(--mat-sys-color-on-primary-container);
+      outline: none;
+
+      mat-icon,
+      .dashboard-nav-chevron {
+        color: var(--mat-sys-color-on-primary-container);
+      }
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--mat-sys-color-primary) 35%, transparent);
+    }
+  }
+
+  .dashboard-panel td > a,
+  .dashboard-panel .mat-mdc-cell > a,
+  .summary-panel td > a,
+  .summary-panel .mat-mdc-cell > a {
+    min-height: 2rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  @media (max-width: 600px) {
+    .dashboard-navigation {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashboard-nav-link,
+    .dashboard-navigation > a {
+      justify-content: space-between;
+      width: 100%;
+      white-space: normal;
+    }
   }
 }

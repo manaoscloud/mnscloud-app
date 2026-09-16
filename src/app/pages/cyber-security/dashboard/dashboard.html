@@ -32,10 +32,11 @@
       <h2>{{ 'Next actions' | transloco }}</h2>
       <nav class="dashboard-navigation" [attr.aria-label]="'Next actions' | transloco">
         @for (action of actions; track action.section) {
-          <a [routerLink]="routeFor(action.section)"
-            ><mat-icon>{{ action.icon }}</mat-icon
-            ><span>{{ action.label | transloco }}</span></a
-          >
+          <a class="dashboard-nav-link" [routerLink]="routeFor(action.section)">
+            <mat-icon>{{ action.icon }}</mat-icon>
+            <span>{{ action.label | transloco }}</span>
+            <mat-icon class="dashboard-nav-chevron">chevron_right</mat-icon>
+          </a>
         }
       </nav>
     </section>
