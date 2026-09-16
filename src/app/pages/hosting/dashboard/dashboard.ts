@@ -281,11 +281,18 @@ export class HostingDashboardPage {
     const isMaster = this.hasPlatformMasterAccess();
     const routePath = route.join('/');
 
-    if (!isMaster) return ['/', ...route];
+    // VPS providers/plans are master-only UI; tenants stay on the VPS dashboard.
+    if (!isMaster) {
+      if (routePath === 'hosting/vps/provider' || routePath === 'hosting/vps/plans') {
+        return ['/hosting/vps'];
+      }
+      return ['/', ...route];
+    }
     if (routePath === 'hosting/smtp/accounts') return ['/system/hosting/smtp/accounts'];
     if (routePath === 'hosting/storage/accounts') return ['/system/hosting/storage/accounts'];
     if (routePath === 'hosting/vps/instances') return ['/system/vps/instances'];
     if (routePath === 'hosting/vps/provider') return ['/system/vps/provider'];
+    if (routePath === 'hosting/vps/plans') return ['/system/vps/plans'];
     if (routePath === 'hosting/vps-container/instances') return ['/system/vps-container/instances'];
     if (routePath === 'hosting/vps-container/provider') return ['/system/vps-container/provider'];
     return ['/', ...route];

@@ -29,10 +29,11 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/plans',
   uuidField: 'HvpUUID',
   pageTitle: 'VPS Plans',
-  pageDescription: 'Define commercial prices and technical defaults for provider instance sizes.',
+  pageDescription:
+    'Manage the platform VPS plan catalog. Provider and plan administration is master-only.',
   createTitle: 'New VPS plan',
   editTitle: 'Edit VPS plan',
-  dialogDescription: 'Create a commercial VPS plan from provider catalog data.',
+  dialogDescription: 'Create a commercial VPS plan from the platform provider catalog.',
   searchPlaceholder: 'Name, provider, region or size',
   emptyLabel: 'No VPS plans found.',
   deleteTitle: 'Delete VPS plan',
@@ -99,6 +100,13 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       currencyField: 'HvpCurrency',
     },
     {
+      id: 'setupFee',
+      label: 'Setup fee',
+      kind: 'currency',
+      field: 'HvpSetupFee',
+      currencyField: 'HvpCurrency',
+    },
+    {
       id: 'status',
       label: 'Status',
       kind: 'status',
@@ -140,6 +148,14 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Price',
       type: 'currency',
       required: true,
+      span: 1,
+    },
+    {
+      key: 'setupFee',
+      source: 'HvpSetupFee',
+      payloadKey: 'setupFee',
+      label: 'Setup fee',
+      type: 'currency',
       span: 1,
     },
     {
@@ -294,8 +310,13 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   });
 
   constructor() {
+    const masterScope =
+      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
     super({
       ...HOSTING_VPS_PLAN_CONFIG,
+      canCreate: masterScope,
+      canEdit: masterScope,
+      canDelete: masterScope,
       fields: HOSTING_VPS_PLAN_CONFIG.fields.map((field) => {
         if (field.key === 'region') {
           return {

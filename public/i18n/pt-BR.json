@@ -4246,5 +4246,12 @@
   "Target plan": "Plano de destino",
   "VPS provisioning retry could not be queued.": "Não foi possível enfileirar a nova tentativa de provisionamento VPS.",
   "VPS resources": "Recursos VPS",
-  "Test provider": "Testar provedor"
+  "Test provider": "Testar provedor",
+  "Setup fee": "Taxa de setup",
+  "Platform provider": "Provedor da plataforma",
+  "Manage the platform VPS plan catalog. Provider and plan administration is master-only.": "Gerencie o catálogo de planos VPS da plataforma. Administração de provedores e planos é exclusiva do Master.",
+  "Create a commercial VPS plan from the platform provider catalog.": "Crie um plano VPS comercial a partir do catálogo de provedores da plataforma.",
+  "Configure platform VPS providers. Provider administration is master-only.": "Configure provedores VPS da plataforma. A administração de provedores é exclusiva do Master.",
+  "Configure platform credentials for VPS provisioning.": "Configure credenciais da plataforma para provisionamento de VPS.",
+  "Register an instance from the platform VPS plan catalog.": "Registre uma instância a partir do catálogo de planos VPS da plataforma."
 }

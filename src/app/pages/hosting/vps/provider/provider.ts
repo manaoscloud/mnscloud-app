@@ -81,10 +81,11 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/providers',
   uuidField: 'HvrUUID',
   pageTitle: 'VPS Provider',
-  pageDescription: 'Configure DigitalOcean and Amazon Lightsail providers.',
+  pageDescription:
+    'Configure platform VPS providers. Provider administration is master-only.',
   createTitle: 'New provider',
   editTitle: 'Edit provider',
-  dialogDescription: 'Configure credentials for VPS provisioning.',
+  dialogDescription: 'Configure platform credentials for VPS provisioning.',
   searchPlaceholder: 'Name, provider or region',
   emptyLabel: 'No providers found.',
   deleteTitle: 'Delete provider',
@@ -572,7 +573,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
   );
 
   constructor() {
-    super(HOSTING_VPS_PROVIDER_CONFIG);
+    const masterScope =
+      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    super({
+      ...HOSTING_VPS_PROVIDER_CONFIG,
+      canCreate: masterScope,
+      canEdit: masterScope,
+      canDelete: masterScope,
+    });
   }
 
   protected override listEndpoint(): string {

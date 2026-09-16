@@ -822,22 +822,6 @@ export const routes: Routes = [
                     title: 'Hosting • VPS Instances | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
-                  {
-                    path: 'provider',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps/provider/provider').then(
-                        (m) => m.HostingVpsProviderPage,
-                      ),
-                    title: 'Hosting • VPS Provider | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
-                    path: 'plans',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps/plans/plans').then((m) => m.HostingVpsPlansPage),
-                    title: 'Hosting • VPS Plans | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
                 ],
               },
               {

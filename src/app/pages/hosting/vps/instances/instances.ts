@@ -56,7 +56,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   pageDescription: 'Register and track VPS instances for your tenant.',
   createTitle: 'New VPS instance',
   editTitle: 'Edit VPS instance',
-  dialogDescription: 'Register an instance from a configured VPS plan.',
+  dialogDescription: 'Register an instance from the platform VPS plan catalog.',
   searchPlaceholder: 'Name, plan, provider, region, image or status',
   emptyLabel: 'No VPS instances found.',
   deleteTitle: 'Delete VPS instance',
@@ -252,9 +252,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       .filter((plan) => plan.HvpIsActive === 1 || plan.HvpUUID === selectedPlanUUID)
       .map((plan) => ({
         value: plan.HvpUUID,
-        label: plan.HvpName,
+        label: this.planOptionLabel(plan),
         description: [
-          this.providerNameById(plan.HostingVpsProviderHvrUUID),
+          this.providerNameById(plan.HostingVpsProviderHvrUUID, plan.HvpProvider),
           plan.HvpRegion,
           plan.HvpSize,
         ]
@@ -262,10 +262,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           .join(' · '),
         searchText: [
           plan.HvpName,
-          this.providerNameById(plan.HostingVpsProviderHvrUUID),
+          this.providerNameById(plan.HostingVpsProviderHvrUUID, plan.HvpProvider),
           plan.HvpProvider,
           plan.HvpRegion,
           plan.HvpSize,
+          String(plan.HvpPrice ?? ''),
+          String(plan.HvpSetupFee ?? ''),
         ]
           .filter(Boolean)
           .join(' '),
@@ -598,10 +600,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private resolveProviderUUIDForPlan(plan: HostingVpsPlan): string {
-    const directProvider = this.providers().find(
-      (acc) => acc.HvrUUID === plan.HostingVpsProviderHvrUUID && acc.HvrIsActive === 1,
-    );
-    if (directProvider) return directProvider.HvrUUID;
+    const linked = normalizeString(plan.HostingVpsProviderHvrUUID);
+    if (linked) {
+      const directProvider = this.providers().find(
+        (acc) => acc.HvrUUID === linked && acc.HvrIsActive === 1,
+      );
+      // Platform catalog plans may reference providers tenants do not own.
+      return directProvider?.HvrUUID ?? linked;
+    }
 
     return (
       this.providers().find(
@@ -627,7 +633,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         })),
       );
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
+      this.providers.set([]);
+      // Plans come from the platform catalog; providers are optional for the picker.
+      if (this.isMaster()) {
+        this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
+      }
     }
   }
 
@@ -699,9 +709,23 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
   }
 
-  private providerNameById(uuid: string | null | undefined) {
-    if (!uuid) return 'Default provider';
-    return this.providers().find((acc) => acc.HvrUUID === uuid)?.HvrName ?? 'Unknown provider';
+  private planOptionLabel(plan: HostingVpsPlan): string {
+    const price = formatMoney(plan.HvpPrice, plan.HvpCurrency);
+    const setupFee = formatMoney(plan.HvpSetupFee ?? 0, plan.HvpCurrency);
+    return `${plan.HvpName} · ${price} · ${this.t('Setup fee')} ${setupFee}`;
+  }
+
+  private providerNameById(
+    uuid: string | null | undefined,
+    providerType?: HostingVpsPlan['HvpProvider'] | null,
+  ) {
+    if (!uuid) return this.t('Default provider');
+    const named = this.providers().find((acc) => acc.HvrUUID === uuid)?.HvrName;
+    if (named) return named;
+    if (providerType) return providerTypeLabel(providerType);
+    const linkedPlan = this.plans().find((plan) => plan.HostingVpsProviderHvrUUID === uuid);
+    if (linkedPlan?.HvpProvider) return providerTypeLabel(linkedPlan.HvpProvider);
+    return this.t('Platform provider');
   }
 }
 
@@ -758,4 +782,28 @@ function normalizeString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const trimmed = String(value).trim();
   return trimmed.length ? trimmed : null;
+}
+
+function formatMoney(value: number | string | null | undefined, currency: string | null | undefined) {
+  const amount = Number(value ?? 0);
+  const code = (currency || 'BRL').toUpperCase();
+  if (!Number.isFinite(amount)) return `${code} -`;
+  return `${code} ${amount.toFixed(2)}`;
+}
+
+function providerTypeLabel(provider: HostingVpsPlan['HvpProvider'] | string): string {
+  switch (provider) {
+    case 'digitalocean':
+      return 'DigitalOcean';
+    case 'lightsail':
+      return 'Amazon Lightsail';
+    case 'proxmox':
+      return 'Proxmox VE';
+    case 'vmware_vcenter':
+      return 'VMware vCenter';
+    case 'sangfor_scp':
+      return 'Sangfor SCP';
+    default:
+      return String(provider);
+  }
 }
