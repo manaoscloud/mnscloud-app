@@ -2244,6 +2244,28 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   margin-right: 0.45rem;
 }
 
+.mat-mdc-menu-panel.activity-menu {
+  width: min(22rem, calc(100vw - 1.5rem));
+  min-width: min(18rem, calc(100vw - 1.5rem));
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  overflow-x: hidden;
+  border-radius: 0.75rem !important;
+  background: var(--mat-sys-color-surface-container-highest);
+}
+
+.mat-mdc-menu-panel.activity-menu .mat-mdc-menu-content {
+  padding: 0;
+  overflow-x: hidden;
+}
+
+@media (max-width: 480px) {
+  .mat-mdc-menu-panel.activity-menu {
+    width: calc(100vw - 1rem);
+    min-width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+  }
+}
+
 @media (max-width: 900px) {
   .cdk-overlay-pane.voip-domain-form-dialog .mat-mdc-dialog-actions,
   .cdk-overlay-pane.voip-did-form-dialog .mat-mdc-dialog-actions,

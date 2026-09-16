@@ -29,32 +29,50 @@ import { AsyncOperationsService } from './async-operations.service';
               @if (operation.errorCode) {
                 <div class="activity-error">{{ operation.errorCode }}</div>
               }
-              <div class="activity-item-actions">
-                @if (operation.canRecheck && (operation.state === 'blocked' || operation.state === 'failed')) {
-                  <button
-                    mat-button
-                    type="button"
-                    [disabled]="operations.rechecking().has(operation.operationUUID)"
-                    (click)="operations.recheck(operation, destroy)"
-                  >
-                    @if (operations.rechecking().has(operation.operationUUID)) {
-                      <mat-spinner diameter="16"></mat-spinner>
-                    } @else {
-                      {{ 'Recheck' | transloco }}
-                    }
-                  </button>
-                }
-                @if (
-                  operation.state === 'succeeded' ||
-                  operation.state === 'blocked' ||
-                  operation.state === 'failed' ||
-                  operation.state === 'cancelled'
-                ) {
-                  <button mat-icon-button type="button" (click)="operations.dismiss(operation.operationUUID)">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                }
-              </div>
+              @if (
+                (operation.canRecheck &&
+                  (operation.state === 'blocked' || operation.state === 'failed')) ||
+                operation.state === 'succeeded' ||
+                operation.state === 'blocked' ||
+                operation.state === 'failed' ||
+                operation.state === 'cancelled'
+              ) {
+                <div class="activity-item-actions">
+                  @if (
+                    operation.canRecheck &&
+                    (operation.state === 'blocked' || operation.state === 'failed')
+                  ) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="activity-recheck"
+                      [disabled]="operations.rechecking().has(operation.operationUUID)"
+                      (click)="operations.recheck(operation, destroy)"
+                    >
+                      @if (operations.rechecking().has(operation.operationUUID)) {
+                        <mat-spinner diameter="16"></mat-spinner>
+                      } @else {
+                        {{ 'Recheck' | transloco }}
+                      }
+                    </button>
+                  }
+                  @if (
+                    operation.state === 'succeeded' ||
+                    operation.state === 'blocked' ||
+                    operation.state === 'failed' ||
+                    operation.state === 'cancelled'
+                  ) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="activity-dismiss"
+                      (click)="operations.dismiss(operation.operationUUID)"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
             </li>
           }
         </ul>
@@ -63,10 +81,20 @@ import { AsyncOperationsService } from './async-operations.service';
   `,
   styles: [
     `
+      :host {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
       .activity-panel {
-        min-width: 280px;
-        max-width: 360px;
-        padding: 0.5rem 0.25rem;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 0.5rem 0;
+        overflow-x: hidden;
       }
       .activity-panel-header {
         font-size: 0.75rem;
@@ -74,44 +102,57 @@ import { AsyncOperationsService } from './async-operations.service';
         letter-spacing: 0.02em;
         text-transform: uppercase;
         color: var(--mat-sys-color-on-surface-variant);
-        padding: 0.25rem 0.75rem 0.5rem;
+        padding: 0.25rem 0.85rem 0.5rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
       }
       .activity-empty {
         margin: 0;
-        padding: 0.5rem 0.75rem 0.75rem;
+        padding: 0.5rem 0.85rem 0.75rem;
         font-size: 0.85rem;
         color: var(--mat-sys-color-on-surface-variant);
+        overflow-wrap: anywhere;
       }
       .activity-list {
         list-style: none;
         margin: 0;
         padding: 0;
-        max-height: 320px;
-        overflow: auto;
+        max-height: min(320px, 50vh);
+        overflow-x: hidden;
+        overflow-y: auto;
       }
       .activity-item {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
-        padding: 0.5rem 0.75rem;
+        gap: 0.35rem;
+        padding: 0.55rem 0.85rem;
         border-top: 1px solid var(--mat-sys-color-outline-variant);
+        min-width: 0;
       }
       .activity-item-main {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
-        gap: 0.75rem;
+        gap: 0.65rem;
         min-width: 0;
       }
       .activity-id {
+        flex: 0 0 auto;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.8rem;
+        line-height: 1.35;
       }
       .activity-state {
+        flex: 1 1 auto;
+        min-width: 0;
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
+        text-align: right;
+        line-height: 1.35;
         color: var(--mat-sys-color-primary);
+        overflow-wrap: anywhere;
+        white-space: normal;
       }
       .activity-state[data-state='succeeded'] {
         color: var(--mat-sys-color-primary);
@@ -123,13 +164,30 @@ import { AsyncOperationsService } from './async-operations.service';
       .activity-error {
         font-size: 0.75rem;
         color: var(--mat-sys-color-error);
-        word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .activity-item-actions {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
-        gap: 0.25rem;
+        gap: 0.35rem;
+        min-width: 0;
+      }
+      .activity-recheck {
+        min-height: 32px;
+        line-height: 32px;
+        padding: 0 0.7rem;
+      }
+      .activity-dismiss {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+      }
+      .activity-dismiss mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
       }
     `,
   ],
