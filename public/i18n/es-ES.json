@@ -4254,5 +4254,17 @@
   "Configure platform credentials for VPS provisioning.": "Configure credenciales de la plataforma para el aprovisionamiento de VPS.",
   "Register an instance from the platform VPS plan catalog.": "Registre una instancia desde el catálogo de planes VPS de la plataforma.",
   "Region changed. Select a size available in this region.": "Región cambiada. Seleccione un plan disponible en esta región.",
-  "Selected size is not available in this region. Choose another Droplet plan.": "El plan seleccionado no está disponible en esta región. Elija otro Droplet plan."
+  "Selected size is not available in this region. Choose another Droplet plan.": "El plan seleccionado no está disponible en esta región. Elija otro Droplet plan.",
+  "Authentication method": "Método de autenticación",
+  "SSH Key": "Clave SSH",
+  "SSH key is required for SSH key authentication.": "La clave SSH es obligatoria para la autenticación por clave SSH.",
+  "Password is required for password authentication.": "La contraseña es obligatoria para la autenticación por usuario y contraseña.",
+  "Select an image compatible with the selected plan.": "Seleccione una imagen compatible con el plan seleccionado.",
+  "Failed to upgrade VPS plan.": "Error al actualizar el plan de la VPS.",
+  "Upgrade": "Actualizar",
+  "Upgrade plan": "Actualizar plan",
+  "Upgrade VPS plan": "Actualizar plan VPS",
+  "Username and password": "Usuario y contraseña",
+  "Only plans in the same size category are listed.": "Solo se listan planes de la misma categoría de tamaño.",
+  "No compatible upgrade plans are available for this instance category.": "No hay planes de actualización compatibles para esta categoría de instancia."
 }

@@ -71,6 +71,8 @@ export type HostingVpsPlanConfig = {
   transferGb?: number | null;
   providerSizeId?: string | null;
   providerRegionId?: string | null;
+  sizeFamily?: string | null;
+  sizeCategory?: string | null;
   backupEnabled?: boolean | null;
   ipv6Enabled?: boolean | null;
   monitoringEnabled?: boolean | null;
@@ -95,6 +97,9 @@ export type HostingVpsPlan = {
 
 export type HostingVpsInstanceConfig = {
   providerImageId?: string | null;
+  authMethod?: 'ssh_key' | 'password' | string | null;
+  username?: string | null;
+  password?: string | null;
   sshKey?: string;
   notes?: string;
   provisionError?: string | null;
@@ -126,6 +131,7 @@ export type VpsCatalogOption = {
   diskGb?: number | null;
   transferGb?: number | null;
   regions?: string[] | null;
+  minDiskGb?: number | null;
   family?: string | null;
   category?: string | null;
   priceMonthly?: number | null;
