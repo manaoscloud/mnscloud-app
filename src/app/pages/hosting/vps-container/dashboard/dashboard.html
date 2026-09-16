@@ -31,7 +31,7 @@
             <p>{{ 'Current container inventory grouped by operational state.' | transloco }}</p>
           </div>
           <a [routerLink]="routeTo('instances')">
-            <mat-icon>open_in_new</mat-icon>
+            <mat-icon>chevron_right</mat-icon>
             {{ 'Instances' | transloco }}
           </a>
         </div>
@@ -89,7 +89,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <a [routerLink]="routeTo('instances')">
-                  <mat-icon>open_in_new</mat-icon>
+                  <mat-icon>chevron_right</mat-icon>
                   {{ 'View' | transloco }}
                 </a>
               </td>
@@ -129,7 +129,7 @@
             </p>
           </div>
           <a [routerLink]="routeTo('provider')">
-            <mat-icon>open_in_new</mat-icon>
+            <mat-icon>chevron_right</mat-icon>
             {{ 'Provider' | transloco }}
           </a>
         </div>
@@ -212,7 +212,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <a [routerLink]="routeTo('provider')">
-                  <mat-icon>open_in_new</mat-icon>
+                  <mat-icon>chevron_right</mat-icon>
                   {{ 'View' | transloco }}
                 </a>
               </td>
@@ -255,7 +255,7 @@
           </p>
         </div>
         <a [routerLink]="routeTo('plans')">
-          <mat-icon>open_in_new</mat-icon>
+          <mat-icon>chevron_right</mat-icon>
           {{ 'Plans' | transloco }}
         </a>
       </div>

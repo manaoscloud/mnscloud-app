@@ -31,7 +31,7 @@
             <p>{{ 'SMTP providers with linked accounts and delivery routes.' | transloco }}</p>
           </div>
           <a [routerLink]="routeTo('providers')">
-            <mat-icon>open_in_new</mat-icon>
+            <mat-icon>chevron_right</mat-icon>
             {{ 'Provider' | transloco }}
           </a>
         </div>
@@ -116,7 +116,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <a [routerLink]="routeTo('providers')">
-                  <mat-icon>open_in_new</mat-icon>
+                  <mat-icon>chevron_right</mat-icon>
                   {{ 'View' | transloco }}
                 </a>
               </td>
@@ -154,7 +154,7 @@
             <p>{{ 'SMTP accounts grouped by provider and route usage.' | transloco }}</p>
           </div>
           <a [routerLink]="routeTo('accounts')">
-            <mat-icon>open_in_new</mat-icon>
+            <mat-icon>chevron_right</mat-icon>
             {{ 'Account' | transloco }}
           </a>
         </div>
@@ -225,7 +225,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
               <td mat-cell *matCellDef="let row">
                 <a [routerLink]="routeTo('accounts')">
-                  <mat-icon>open_in_new</mat-icon>
+                  <mat-icon>chevron_right</mat-icon>
                   {{ 'View' | transloco }}
                 </a>
               </td>
@@ -264,7 +264,7 @@
           <p>{{ 'SMTP delivery routes with account linkage and status.' | transloco }}</p>
         </div>
         <a [routerLink]="routeTo('routes')">
-          <mat-icon>open_in_new</mat-icon>
+          <mat-icon>chevron_right</mat-icon>
           {{ 'Route' | transloco }}
         </a>
       </div>
@@ -315,7 +315,7 @@
             <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
             <td mat-cell *matCellDef="let row">
               <a [routerLink]="routeTo('routes')">
-                <mat-icon>open_in_new</mat-icon>
+                <mat-icon>chevron_right</mat-icon>
                 {{ 'View' | transloco }}
               </a>
             </td>
