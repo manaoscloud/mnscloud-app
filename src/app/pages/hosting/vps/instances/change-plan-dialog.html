@@ -1,0 +1,74 @@
+<div class="change-plan-dialog">
+  <div class="dialog-header change-plan-header">
+    <div>
+      <h2>{{ 'Change VPS plan' | transloco }}</h2>
+      <p>{{ instance.HviName }}</p>
+    </div>
+  </div>
+
+  <mat-dialog-content class="change-plan-content">
+    @if (currentPlan(); as current) {
+      <div class="change-plan-summary">
+        <div class="plan-summary-card">
+          <span class="summary-label">{{ 'Current plan' | transloco }}</span>
+          <strong>{{ current.HvpName }}</strong>
+          <small>{{ planSpecLabel(current) }}</small>
+        </div>
+        @if (selectedTargetPlan(); as targetPlan) {
+          <div class="plan-summary-card">
+            <span class="summary-label">{{ 'Target plan' | transloco }}</span>
+            <strong>{{ targetPlan.HvpName }}</strong>
+            <small>{{ planSpecLabel(targetPlan) }}</small>
+          </div>
+        }
+      </div>
+    }
+
+    <mat-form-field appearance="outline" class="change-plan-select">
+      <mat-label>{{ 'Target plan' | transloco }}</mat-label>
+      <mat-select [value]="targetPlanUUID()" (selectionChange)="targetPlanUUID.set($event.value)">
+        @for (option of changePlanOptions(); track option.plan.HvpUUID) {
+          <mat-option [value]="option.plan.HvpUUID" [disabled]="option.blocked">
+            <div class="plan-change-option">
+              <span>{{ option.plan.HvpName }}</span>
+              <small>
+                {{ planSpecLabel(option.plan) }}
+                @if (option.blocked) {
+                  · migration required
+                } @else if (option.diskChange > 0) {
+                  · disk increase is permanent
+                }
+              </small>
+            </div>
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (!changePlanOptions().length) {
+      <p class="change-plan-warning">
+        {{ 'No compatible plans are available for this instance.' | transloco }}
+      </p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="change-plan-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" (click)="cancel()">
+        {{ 'Cancel' | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="!targetPlanUUID()"
+        (click)="confirm()"
+      >
+        <mat-icon>swap_vert</mat-icon>
+        {{ 'Change plan' | transloco }}
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>

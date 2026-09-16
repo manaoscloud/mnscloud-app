@@ -1,44 +1,22 @@
-import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
-import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  TemplateRef,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom, takeUntil } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { getVpsDialogViewportConfig, updateVpsDialogViewport } from '../vps-dialog-viewport';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  ChangePlanDialogComponent,
+  ChangePlanDialogData,
+  ChangePlanDialogResult,
+} from './change-plan-dialog';
 import type {
   HostingVpsInstance,
   HostingVpsInstanceConfig,
@@ -57,529 +35,545 @@ type CustomerOption = {
   Status?: number | null;
 };
 
-type VpsInstanceFilters = {
-  search: string;
-  customerUUID: string;
-  status: string;
+const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
+  key: 'retry-provision',
+  label: 'Retry provisioning',
+  icon: 'replay',
+  tooltip: 'Retry provisioning',
 };
 
-type VpsInstanceFormModel = {
-  name: string;
-  customerUUID: string;
-  planUUID: string;
-  image: string;
-  sshKey: string;
-  notes: string;
-  status: string;
-  isActive: number;
+const CHANGE_PLAN_ACTION: ConfigurableCrudRowAction = {
+  key: 'change-plan',
+  label: 'Change plan',
+  icon: 'swap_vert',
+  tooltip: 'Change plan',
+};
+
+const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/vps/instances',
+  uuidField: 'HviUUID',
+  pageTitle: 'VPS Instances',
+  pageDescription: 'Register and track VPS instances for your tenant.',
+  createTitle: 'New VPS instance',
+  editTitle: 'Edit VPS instance',
+  dialogDescription: 'Register an instance from a configured VPS plan.',
+  searchPlaceholder: 'Name, plan, provider, region, image or status',
+  emptyLabel: 'No VPS instances found.',
+  deleteTitle: 'Delete VPS instance',
+  deleteMessage:
+    'Delete this VPS instance from MNSCloud and destroy the provider VPS when linked?',
+  deleteSelectedTitle: 'Delete selected VPS instances',
+  deleteSelectedMessage:
+    'Delete {count} selected VPS instance(s) from MNSCloud and destroy linked provider VPS resources?',
+  savedMessage: 'VPS instance saved successfully.',
+  deletedMessage: 'VPS instance deleted.',
+  deleteFailedMessage: 'Failed to delete VPS instance.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  showAsyncOperationStatus: true,
+  initialPageSize: 10,
+  pageSizeOptions: [5, 10, 25, 100],
+  rowActions: [RETRY_PROVISION_ACTION, CHANGE_PLAN_ACTION],
+  listFilters: [
+    {
+      key: 'customerUUID',
+      label: 'Customer',
+      paramKey: 'customerUUID',
+      type: 'search-select',
+      placeholder: 'Search customers',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  tabLabels: { notes: 'Notes' },
+  initialValues: {
+    isActive: 1,
+    planUUID: '',
+    customerUUID: '',
+    image: '',
+    name: '',
+    sshKey: '',
+    notes: '',
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HviName', uuidField: 'HviUUID' },
+    {
+      id: 'customer',
+      label: 'Customer',
+      kind: 'related',
+      field: 'CustomerName',
+      uuidField: 'CustomerCusUUID',
+    },
+    {
+      id: 'plan',
+      label: 'Plan',
+      kind: 'related',
+      lookupKey: 'planUUID',
+      uuidField: 'HostingVpsPlanHvpUUID',
+    },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      lookupKey: 'providerUUID',
+      uuidField: 'HostingVpsProviderHvrUUID',
+    },
+    { id: 'region', label: 'Region', kind: 'text', field: 'PlanRegion' },
+    { id: 'size', label: 'Size', kind: 'text', field: 'PlanSize' },
+    { id: 'image', label: 'Image', kind: 'text', field: 'InstanceImage' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HviIsActive',
+      className: 'status-col',
+    },
+    {
+      id: 'runtimeStatus',
+      label: 'RTS',
+      kind: 'text',
+      field: 'HviStatus',
+      className: 'runtime-status-col',
+    },
+  ],
+  fields: [
+    {
+      key: 'isActive',
+      source: 'HviIsActive',
+      payloadKey: 'isActive',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'planUUID',
+      source: 'HostingVpsPlanHvpUUID',
+      payloadKey: 'planUUID',
+      label: 'Plan',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'customerUUID',
+      source: 'CustomerCusUUID',
+      payloadKey: 'customerUUID',
+      label: 'Customer',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'image',
+      source: 'InstanceImage',
+      payloadKey: 'image',
+      label: 'Image',
+      type: 'search-select',
+      placeholder: 'ubuntu-22-04-x64',
+      span: 1,
+      fromRecord: (_value, row) => instanceImageFromRecord(row),
+    },
+    {
+      key: 'name',
+      source: 'HviName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'web-app-01',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'sshKey',
+      source: 'HviConfig',
+      payloadKey: 'sshKey',
+      label: 'SSH Key',
+      placeholder: 'default-key',
+      span: 2,
+      fromRecord: (value) => configString(value, 'sshKey'),
+    },
+    {
+      key: 'notes',
+      source: 'HviConfig',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 6,
+      placeholder: 'Provisioned for marketing site',
+      fromRecord: (value) => configString(value, 'notes'),
+    },
+  ],
 };
 
 @Component({
   selector: 'app-hosting-vps-instances',
   standalone: true,
-  imports: [
-    AsyncOperationStatusComponent,
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './instances.html',
-  styleUrls: ['./instances.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingVpsInstancesPage {
-  private readonly operations = inject(AsyncOperationsService);
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
+export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly instanceFormDialog = viewChild<TemplateRef<unknown>>('instanceFormDialog');
-  readonly changePlanDialog = viewChild<TemplateRef<unknown>>('changePlanDialog');
-
+  private readonly customers = signal<CustomerOption[]>([]);
+  private readonly providers = signal<HostingVpsProvider[]>([]);
+  private readonly plans = signal<HostingVpsPlan[]>([]);
+  private readonly catalog = signal<VpsProviderCatalog | null>(null);
+  private readonly catalogProviderUUID = signal<string | null>(null);
+  private readonly catalogLoading = signal(false);
+  private readonly retryingInstanceUUIDs = signal<Set<string>>(new Set());
   private activePlanUUID = '';
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private changePlanDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
 
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-  readonly providerEndpoint = computed(() =>
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly providerEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
-  readonly instanceEndpoint = computed(() =>
+  private readonly instanceEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
   );
-  readonly planEndpoint = computed(() =>
+  private readonly planEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
   );
-  readonly customerEndpoint = 'erp/customers';
 
-  readonly customers = signal<CustomerOption[]>([]);
-  readonly providers = signal<HostingVpsProvider[]>([]);
-  readonly plans = signal<HostingVpsPlan[]>([]);
-  readonly vpsInstances = signal<HostingVpsInstance[]>([]);
-  readonly appliedSearch = signal('');
-  readonly appliedCustomerUUID = signal('');
-  readonly appliedStatus = signal('');
-  private readonly instancesResource = resource({
-    defaultValue: [] as HostingVpsInstance[],
-    params: (): VpsInstanceFilters => ({
-      search: this.appliedSearch().trim(),
-      customerUUID: this.appliedCustomerUUID(),
-      status: this.appliedStatus(),
-    }),
-    loader: ({ params }) => this.fetchInstances(params),
-  });
-  private readonly syncInstances = effect(() => {
-    this.vpsInstances.set(this.instancesResource.value());
-    this.reconcileInstanceSelection();
-  });
-  private readonly reportInstancesError = effect(() => {
-    const error = this.instancesResource.error();
-    if (error) this.snack.error(this.friendlyError(error, 'Failed to load VPS instances.'));
-  });
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly rows = computed(() => {
-    const search = this.appliedSearch().trim().toLowerCase();
-    const customerUUID = this.appliedCustomerUUID();
-    const status = this.appliedStatus();
-    return this.vpsInstances().filter((item) => {
-      const plan = this.planById(item.HostingVpsPlanHvpUUID);
-      const matchesSearch =
-        !search ||
-        item.HviName.toLowerCase().includes(search) ||
-        (item.CustomerName ?? '').toLowerCase().includes(search) ||
-        (item.HviStatus ?? '').toLowerCase().includes(search) ||
-        (plan?.HvpRegion ?? '').toLowerCase().includes(search) ||
-        (plan?.HvpSize ?? '').toLowerCase().includes(search) ||
-        (this.instanceImageValue(item) ?? '').toLowerCase().includes(search) ||
-        this.providerNameById(item.HostingVpsProviderHvrUUID).toLowerCase().includes(search) ||
-        this.planNameById(item.HostingVpsPlanHvpUUID).toLowerCase().includes(search);
-      const matchesStatus =
-        status === '' ||
-        (status === '1' && item.HviIsActive === 1) ||
-        (status === '0' && item.HviIsActive !== 1);
-      const matchesCustomer = !customerUUID || item.CustomerCusUUID === customerUUID;
-      return matchesSearch && matchesCustomer && matchesStatus;
-    });
-  });
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-
-  readonly loading = this.instancesResource.isLoading;
-  readonly saving = signal(false);
-  readonly retryingInstanceUUIDs = signal<Set<string>>(new Set());
-  readonly changingPlan = signal(false);
-  readonly catalogLoading = signal(false);
-  readonly catalog = signal<VpsProviderCatalog | null>(null);
-  readonly catalogProviderUUID = signal<string | null>(null);
-  readonly editing = signal<HostingVpsInstance | null>(null);
-  readonly changePlanInstance = signal<HostingVpsInstance | null>(null);
-  readonly targetPlanUUID = signal('');
-  readonly planSearch = signal('');
-  readonly customerSearch = signal('');
-  readonly imageSearch = signal('');
-  readonly currentRegion = signal('');
-  readonly currentSize = signal('');
-  readonly currentImage = signal('');
-  readonly selectedInstanceUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedInstanceUUIDs().size);
-  readonly isProvisionedEdit = signal(false);
-
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'customer',
-    'plan',
-    'provider',
-    'region',
-    'size',
-    'image',
-    'status',
-    'runtimeStatus',
-    'actions',
-  ];
-
-  readonly filterFormModel = signal<VpsInstanceFilters>({
-    search: '',
-    customerUUID: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly instanceFormModel = signal<VpsInstanceFormModel>({
-    name: '',
-    customerUUID: '',
-    planUUID: '',
-    image: '',
-    sshKey: '',
-    notes: '',
-    status: '',
-    isActive: 1,
-  });
-  readonly instanceForm = createForm(this.instanceFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.customerUUID);
-    required(schema.planUUID);
-    required(schema.isActive);
-  });
-
-  readonly availableRegions = computed(() => this.catalog()?.regions ?? []);
-  readonly availableSizes = computed(() => this.catalog()?.sizes ?? []);
-  readonly availableImages = computed(() => this.catalog()?.images ?? []);
-  readonly regionOptions = computed(() =>
-    this.withCurrentOption(this.availableRegions(), this.currentRegion()),
+  private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.customers().map((customer) => ({
+      value: customer.CustomerUUID,
+      label: customer.Name,
+      description: customer.Document ?? undefined,
+      searchText: [customer.Name, customer.Document].filter(Boolean).join(' '),
+    })),
   );
-  readonly sizeOptions = computed(() =>
-    this.withCurrentOption(this.availableSizes(), this.currentSize()),
-  );
-  readonly imageOptions = computed(() =>
-    this.withCurrentOption(this.availableImages(), this.currentImage()),
-  );
-  readonly filteredImageOptions = computed(() =>
-    this.filterCatalogOptions(this.imageOptions(), this.imageSearch()),
-  );
-  readonly filteredCustomers = computed(() => {
-    const search = this.customerSearch().trim().toLowerCase();
-    const items = this.customers();
-    if (!search) return items;
-    return items.filter((customer) =>
-      [customer.Name, customer.Document]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(search)),
-    );
-  });
-  readonly changePlanOptions = computed(() => {
-    const instance = this.changePlanInstance();
-    if (!instance) return [];
-    const current = this.planById(instance.HostingVpsPlanHvpUUID);
-    if (!current) return [];
-    const currentDisk = this.planDiskGb(current);
+  private readonly planOptions = computed<ConfigurableCrudOption[]>(() => {
+    const selectedPlanUUID = String(this.formValues()['planUUID'] ?? '');
     return this.plans()
-      .filter(
-        (plan) =>
-          plan.HvpIsActive === 1 &&
-          plan.HvpUUID !== current.HvpUUID &&
-          plan.HostingVpsProviderHvrUUID === current.HostingVpsProviderHvrUUID &&
-          plan.HvpProvider === current.HvpProvider &&
-          (plan.HvpRegion ?? '') === (current.HvpRegion ?? '') &&
-          !!plan.HvpSize,
-      )
+      .filter((plan) => plan.HvpIsActive === 1 || plan.HvpUUID === selectedPlanUUID)
       .map((plan) => ({
-        plan,
-        diskChange: this.planDiskGb(plan) - currentDisk,
-        blocked: this.planDiskGb(plan) < currentDisk,
+        value: plan.HvpUUID,
+        label: plan.HvpName,
+        description: [
+          this.providerNameById(plan.HostingVpsProviderHvrUUID),
+          plan.HvpRegion,
+          plan.HvpSize,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        searchText: [
+          plan.HvpName,
+          this.providerNameById(plan.HostingVpsProviderHvrUUID),
+          plan.HvpProvider,
+          plan.HvpRegion,
+          plan.HvpSize,
+        ]
+          .filter(Boolean)
+          .join(' '),
       }));
+  });
+  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.providers().map((provider) => ({
+      value: provider.HvrUUID,
+      label: provider.HvrName,
+      description: provider.HvrProvider,
+      searchText: `${provider.HvrName} ${provider.HvrProvider}`,
+    })),
+  );
+  private readonly imageOptions = computed<ConfigurableCrudOption[]>(() => {
+    const images = this.catalog()?.images ?? [];
+    const current = String(this.formValues()['image'] ?? '').trim();
+    const options = images.map((option) => catalogOptionToCrud(option));
+    if (current && !options.some((option) => String(option.value) === current)) {
+      options.unshift({
+        value: current,
+        label: `Custom: ${current}`,
+        description: 'Custom',
+        searchText: current,
+      });
+    }
+    return options;
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.closeChangePlanDialog();
-      this.stopDialogViewportObserver();
-    });
-    void this.fetchProviders();
-    void this.fetchCustomers();
-    void this.fetchPlans();
-  }
+    super(HOSTING_VPS_INSTANCE_CONFIG);
 
-  private readonly syncSelectedPlan = effect(() => {
-    this.applySelectedPlan(this.instanceFormModel().planUUID);
-  });
-  private readonly syncCurrentImage = effect(() => {
-    this.currentImage.set(this.instanceFormModel().image ?? '');
-  });
-
-  refreshList() {
-    void this.fetchProviders();
-    void this.fetchCustomers();
-    void this.fetchPlans();
-    this.instancesResource.reload();
-  }
-
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedCustomerUUID.set(values.customerUUID);
-    this.appliedStatus.set(values.status);
-    this.resetPagination();
-    this.instancesResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ search: '', customerUUID: '', status: '' });
-    this.applyFilters();
-  }
-
-  get filteredPlans() {
-    const value = this.planSearch().trim().toLowerCase();
-    const activePlans = this.plans().filter((plan) => plan.HvpIsActive === 1);
-    if (!value) return activePlans;
-    return activePlans.filter(
-      (plan) =>
-        plan.HvpName.toLowerCase().includes(value) ||
-        this.providerNameById(plan.HostingVpsProviderHvrUUID).toLowerCase().includes(value) ||
-        plan.HvpProvider.toLowerCase().includes(value) ||
-        (plan.HvpRegion ?? '').toLowerCase().includes(value) ||
-        (plan.HvpSize ?? '').toLowerCase().includes(value),
+    const customerFilter = HOSTING_VPS_INSTANCE_CONFIG.listFilters?.find(
+      (filter) => filter.key === 'customerUUID',
     );
+    if (customerFilter) customerFilter.hiddenWhen = () => this.isMaster();
+
+    const customerField = HOSTING_VPS_INSTANCE_CONFIG.fields.find(
+      (field) => field.key === 'customerUUID',
+    );
+    if (customerField) {
+      customerField.hiddenWhen = () => this.isMaster();
+      customerField.requiredWhen = () => !this.isMaster();
+    }
+
+    void Promise.all([this.fetchProviders(), this.fetchCustomers(), this.fetchPlans()]);
   }
 
-  onPlanOpened(opened: boolean) {
-    if (!opened) this.planSearch.set('');
+  protected override listEndpoint(): string {
+    return this.instanceEndpoint();
   }
 
-  onCustomerOpened(opened: boolean) {
-    if (!opened) this.customerSearch.set('');
+  protected override createEndpoint(): string {
+    return this.instanceEndpoint();
   }
 
-  onImageOpened(opened: boolean) {
-    if (!opened) this.imageSearch.set('');
+  protected override updateEndpoint(): string {
+    return this.instanceEndpoint();
   }
 
-  selectedPlan() {
-    const uuid = this.normalizeString(this.instanceFormModel().planUUID);
-    if (!uuid) return null;
-    return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.instanceEndpoint();
   }
 
-  selectedPlanProviderLabel() {
-    const plan = this.selectedPlan();
-    if (!plan) return '';
-    return this.providerNameById(plan.HostingVpsProviderHvrUUID);
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.instanceEndpoint()}/bulk`;
   }
 
-  selectedPlanCatalogLabel(controlName: 'region' | 'size') {
-    const plan = this.selectedPlan();
-    if (!plan) return '';
-    const value = this.normalizeString(controlName === 'region' ? plan.HvpRegion : plan.HvpSize);
-    if (!value) return '';
-    const options = controlName === 'region' ? this.regionOptions() : this.sizeOptions();
-    return options.find((option) => option.id === value)?.label ?? value;
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    await Promise.all([
+      this.providers().length ? Promise.resolve() : this.fetchProviders(),
+      this.plans().length ? Promise.resolve() : this.fetchPlans(),
+      this.isMaster() || this.customers().length ? Promise.resolve() : this.fetchCustomers(),
+    ]);
+    const rows = await super.fetchItems(filters);
+    return rows.map((row) => this.enrichInstance(row));
   }
 
-  selectedCatalogLabel(controlName: 'image', options: VpsCatalogOption[]) {
-    const value = this.normalizeString(this.instanceFormModel()[controlName]);
-    if (!value) return '';
-    return options.find((option) => option.id === value)?.label ?? value;
+  override refreshList() {
+    void this.fetchProviders();
+    void this.fetchCustomers();
+    void this.fetchPlans();
+    super.refreshList();
   }
 
-  selectedImageLabel() {
-    const value = this.normalizeString(this.instanceFormModel().image);
-    if (!value) return '';
-    const option = this.imageOptions().find((item) => item.id === value);
-    if (!option) return value;
-    return [this.imageOptionName(option), this.imageOptionVersionArch(option)]
-      .filter(Boolean)
-      .join(' ');
+  override startCreate(): void {
+    this.activePlanUUID = '';
+    this.catalog.set(null);
+    this.catalogProviderUUID.set(null);
+    super.startCreate();
   }
 
-  imageOptionName(option: VpsCatalogOption) {
-    return option.name || option.label || option.id;
+  override startEdit(row: ConfigurableCrudRecord): void {
+    super.startEdit(row);
+    const planUUID = String(this.formValues()['planUUID'] ?? '');
+    this.activePlanUUID = planUUID;
+    void this.applySelectedPlan(planUUID, false);
   }
 
-  imageOptionVersionArch(option: VpsCatalogOption) {
-    return [option.version, option.architecture].filter(Boolean).join(' ');
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'customerUUID') return this.customerOptions();
+    if (key === 'planUUID') return this.planOptions();
+    if (key === 'providerUUID') return this.providerOptions();
+    if (key === 'image') return this.imageOptions();
+    return [];
   }
 
-  imageOptionMeta(option: VpsCatalogOption) {
-    return [option.source, option.type].filter(Boolean).join(' · ');
+  override fieldLoading(field: ConfigurableCrudField): boolean {
+    return field.key === 'image' ? this.catalogLoading() : super.fieldLoading(field);
   }
 
-  imageOptionSlug(option: VpsCatalogOption) {
-    return option.slug || option.id;
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'planUUID') return;
+    void this.applySelectedPlan(String(value ?? ''), true);
   }
 
-  statusLabel(item: HostingVpsInstance) {
-    return item.HviIsActive === 1 ? 'Active' : 'Inactive';
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const editing = this.editingRecord();
+    const sshKey = normalizeString(payload['sshKey']);
+    const providerImageId = normalizeString(payload['image']);
+    const notes = normalizeString(payload['notes']);
+    const config: HostingVpsInstanceConfig = {};
+    if (sshKey) config.sshKey = sshKey;
+    if (providerImageId) config.providerImageId = providerImageId;
+    if (notes) config.notes = notes;
+
+    return {
+      name: String(payload['name'] ?? '').trim(),
+      customerUUID: this.isMaster()
+        ? (normalizeString(payload['customerUUID']) ?? null)
+        : payload['customerUUID'],
+      planUUID: payload['planUUID'],
+      config,
+      status: editing ? normalizeString(editing['HviStatus']) : null,
+      isActive: Number(payload['isActive']) === 1,
+    };
   }
 
-  canRetryProvision(item: HostingVpsInstance) {
-    const status = (item.HviStatus ?? '').trim().toLowerCase();
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const actions: ConfigurableCrudRowAction[] = [];
+    if (this.canRetryProvision(row)) {
+      actions.push({
+        ...RETRY_PROVISION_ACTION,
+        icon: this.retryingInstanceUUIDs().has(this.recordUUID(row)) ? 'hourglass_top' : 'replay',
+      });
+    }
+    if (this.canChangePlan(row)) actions.push(CHANGE_PLAN_ACTION);
+    return actions;
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'retry-provision') {
+      await this.retryProvision(row);
+      return;
+    }
+    if (action.key === 'change-plan') {
+      await this.openChangePlanDialog(row);
+    }
+  }
+
+  private canRetryProvision(row: ConfigurableCrudRecord) {
+    const status = String(row['HviStatus'] ?? '')
+      .trim()
+      .toLowerCase();
     return (
-      item.HviIsActive === 1 &&
-      !item.HviExternalId &&
+      Number(row['HviIsActive']) === 1 &&
+      !row['HviExternalId'] &&
       ['', 'failed', 'queue_failed'].includes(status)
     );
   }
 
-  isRetrying(item: HostingVpsInstance) {
-    return this.retryingInstanceUUIDs().has(item.HviUUID);
-  }
-
-  canChangePlan(item: HostingVpsInstance) {
-    const plan = this.planById(item.HostingVpsPlanHvpUUID);
-    const resizeStatus = item.HviConfig?.resize?.status ?? '';
+  private canChangePlan(row: ConfigurableCrudRecord) {
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
+    const resizeStatus = config?.resize?.status ?? '';
     return (
-      item.HviIsActive === 1 &&
-      !!item.HviExternalId &&
+      Number(row['HviIsActive']) === 1 &&
+      !!row['HviExternalId'] &&
       plan?.HvpProvider === 'digitalocean' &&
-      !['resize_queued', 'resizing', 'powering_on'].includes(item.HviStatus ?? '') &&
+      !['resize_queued', 'resizing', 'powering_on'].includes(String(row['HviStatus'] ?? '')) &&
       !['queued', 'resizing', 'powering_on'].includes(resizeStatus)
     );
   }
 
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
+  private async retryProvision(row: ConfigurableCrudRecord) {
+    const uuid = this.recordUUID(row);
+    if (!this.canRetryProvision(row) || this.retryingInstanceUUIDs().has(uuid)) return;
 
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
+    const errorMessage = parseConfig<HostingVpsInstanceConfig>(row['HviConfig'])?.provisionError;
+    const details =
+      typeof errorMessage === 'string' && errorMessage.trim()
+        ? ` Last error: ${errorMessage.trim()}`
+        : '';
+    const confirmed = await this.confirmAction(
+      'Retry VPS provisioning',
+      `Retry provider provisioning for "${String(row['HviName'] ?? '')}"? This can create a VPS and may generate provider charges.${details}`,
+      'Retry provisioning',
+    );
+    if (!confirmed) return;
 
-  instanceConfigValue(item: HostingVpsInstance, key: keyof HostingVpsInstanceConfig) {
-    const config = item.HviConfig ?? {};
-    return config?.[key] ?? null;
-  }
-
-  instancePlanValue(item: HostingVpsInstance, key: 'HvpRegion' | 'HvpSize' | 'HvpImage') {
-    return this.planById(item.HostingVpsPlanHvpUUID)?.[key] ?? null;
-  }
-
-  instanceImageValue(item: HostingVpsInstance) {
-    const image =
-      this.instanceConfigValue(item, 'providerImageId') ?? this.instancePlanValue(item, 'HvpImage');
-    return typeof image === 'string' ? image : null;
-  }
-
-  providerNameById(uuid: string | null | undefined) {
-    if (!uuid) return 'Default provider';
-    return this.providers().find((acc) => acc.HvrUUID === uuid)?.HvrName ?? 'Unknown provider';
-  }
-
-  planNameById(uuid: string | null | undefined) {
-    if (!uuid) return 'No plan';
-    return this.planById(uuid)?.HvpName ?? 'Unknown plan';
-  }
-
-  customerLabel(customer: CustomerOption) {
-    return [customer.Name, customer.Document].filter(Boolean).join(' · ');
-  }
-
-  instanceCustomerLabel(item: HostingVpsInstance) {
-    return item.CustomerName || '-';
-  }
-
-  planById(uuid: string | null | undefined) {
-    if (!uuid) return null;
-    return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
-  }
-
-  planDiskGb(plan: HostingVpsPlan | null | undefined) {
-    const value = Number(plan?.HvpConfig?.diskGb ?? 0);
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  planSpecLabel(plan: HostingVpsPlan | null | undefined) {
-    if (!plan) return '';
-    const config = plan.HvpConfig ?? {};
-    return [
-      config.cpu ? `${config.cpu} CPU` : null,
-      config.memoryMb ? `${config.memoryMb} MB` : null,
-      config.diskGb ? `${config.diskGb} GB` : null,
-      plan.HvpSize,
-    ]
-      .filter(Boolean)
-      .join(' / ');
-  }
-
-  async fetchProviders() {
+    this.retryingInstanceUUIDs.update((current) => new Set(current).add(uuid));
+    this.mutating.set(true);
     try {
-      const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
-        this.providerEndpoint(),
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.providers.set(
-        list.map((item) => ({
-          ...item,
-          HvrConfig: this.parseConfig<VpsProviderConfig>(item.HvrConfig),
-        })),
-      );
-      this.applySelectedPlan(this.instanceFormModel().planUUID);
+      const response = await this.api.post(`${this.instanceEndpoint()}/${uuid}/retry-provision`, {});
+      const updated = (
+        response as { data?: { item?: HostingVpsInstance } } | null | undefined
+      )?.data?.item;
+      if ((updated?.HviStatus ?? '').toLowerCase() === 'queue_failed') {
+        this.snack.error(this.t('VPS provisioning retry could not be queued.'));
+      } else {
+        this.trackOperation(response);
+      }
+      this.refreshList();
     } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS providers.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to retry VPS provisioning.'));
+    } finally {
+      this.retryingInstanceUUIDs.update((current) => {
+        const next = new Set(current);
+        next.delete(uuid);
+        return next;
+      });
+      this.mutating.set(false);
     }
   }
 
-  async fetchCustomers() {
-    if (this.isMaster()) {
-      this.customers.set([]);
+  private async openChangePlanDialog(row: ConfigurableCrudRecord) {
+    if (!this.canChangePlan(row)) return;
+    if (!this.plans().length) await this.fetchPlans();
+
+    const instance = this.toInstance(row);
+    const ref = this.dialog.open<
+      ChangePlanDialogComponent,
+      ChangePlanDialogData,
+      ChangePlanDialogResult
+    >(ChangePlanDialogComponent, {
+      width: 'min(720px, calc(100vw - 24px))',
+      maxWidth: 'calc(100vw - 24px)',
+      maxHeight: 'calc(100dvh - 24px)',
+      disableClose: true,
+      autoFocus: false,
+      restoreFocus: true,
+      panelClass: 'hosting-vps-change-plan-dialog',
+      data: {
+        instance,
+        plans: this.plans(),
+      },
+    });
+
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result?.targetPlanUUID) return;
+
+    const target = this.planById(result.targetPlanUUID);
+    if (!target) {
+      this.snack.warning(this.t('Select a valid target VPS plan.'));
       return;
     }
-    try {
-      const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        `${this.customerEndpoint}?status=1&limit=500&offset=0`,
-      );
-      this.customers.set(result?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load customers.'));
-    }
-  }
 
-  async fetchPlans() {
-    try {
-      const params = new URLSearchParams({ limit: '500', offset: '0' });
-      const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
-        `${this.planEndpoint()}?${params.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      this.plans.set(
-        list.map((item) => ({
-          ...item,
-          HvpConfig: this.parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
-        })),
-      );
-      this.applySelectedPlan(this.instanceFormModel().planUUID);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS plans.'));
-    }
-  }
-
-  private async fetchInstances(filters: VpsInstanceFilters): Promise<HostingVpsInstance[]> {
-    const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (filters.search) params.set('search', filters.search);
-    if (filters.customerUUID) params.set('customerUUID', filters.customerUUID);
-    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
-
-    const result = await this.api.get<{ data?: { items?: HostingVpsInstance[] } }>(
-      `${this.instanceEndpoint()}?${params.toString()}`,
+    const confirmed = await this.confirmAction(
+      'Change VPS plan',
+      `Queue plan change for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
+      'Change plan',
     );
-    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-    return list.map((item) => ({
-      ...item,
-      HviConfig: this.parseConfig<HostingVpsInstanceConfig>(item.HviConfig),
-    }));
+    if (!confirmed) return;
+
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(
+        `${this.instanceEndpoint()}/${instance.HviUUID}/change-plan`,
+        { targetPlanUUID: result.targetPlanUUID },
+      );
+      this.trackOperation(response);
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to change VPS plan.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
-  async fetchProviderCatalog() {
-    const uuid = this.resolveCatalogProviderUUID();
+  private async applySelectedPlan(uuid: string, planChangedByUser: boolean) {
+    const normalized = normalizeString(uuid);
+    if (!normalized) {
+      this.activePlanUUID = '';
+      this.patchFormValues({ image: '' });
+      this.catalog.set(null);
+      this.catalogProviderUUID.set(null);
+      return;
+    }
+
+    const plan = this.planById(normalized);
+    if (!plan) return;
+
+    const planChanged = this.activePlanUUID !== normalized;
+    this.activePlanUUID = normalized;
+
+    if (planChangedByUser && planChanged) {
+      this.patchFormValues({ image: '' });
+    }
+
+    const selectedImage = normalizeString(this.formValues()['image']);
+    if (!selectedImage && plan.HvpImage) {
+      this.patchFormValues({ image: plan.HvpImage });
+    }
+
+    void this.fetchProviderCatalog(plan);
+  }
+
+  private async fetchProviderCatalog(plan: HostingVpsPlan) {
+    const uuid = this.resolveProviderUUIDForPlan(plan);
     if (!uuid) {
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
@@ -590,7 +584,6 @@ export class HostingVpsInstancesPage {
 
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
-
     try {
       const result = await this.api.get<{ data?: { catalog?: VpsProviderCatalog } }>(
         `${this.providerEndpoint()}/${uuid}/catalog`,
@@ -598,447 +591,10 @@ export class HostingVpsInstancesPage {
       this.catalog.set(result?.data?.catalog ?? null);
     } catch (error) {
       this.catalog.set(null);
-      this.snack.error(this.friendlyError(error, 'Failed to load provider catalog.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
     } finally {
       this.catalogLoading.set(false);
     }
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.setProvisionedEditControls(false);
-    this.resetForm();
-    void this.fetchProviderCatalog();
-    this.openDialog();
-  }
-
-  startEdit(item: HostingVpsInstance) {
-    const config = item.HviConfig ?? {};
-    const legacyPlanImage = this.planById(item.HostingVpsPlanHvpUUID)?.HvpImage ?? '';
-    const image = config.providerImageId ?? legacyPlanImage;
-    this.editing.set(item);
-    this.activePlanUUID = item.HostingVpsPlanHvpUUID ?? '';
-    this.instanceFormModel.set({
-      name: item.HviName,
-      customerUUID: item.CustomerCusUUID ?? '',
-      planUUID: item.HostingVpsPlanHvpUUID ?? '',
-      image: image ?? '',
-      sshKey: config.sshKey ?? '',
-      notes: config.notes ?? '',
-      status: item.HviStatus ?? '',
-      isActive: item.HviIsActive === 1 ? 1 : 0,
-    });
-    this.currentRegion.set('');
-    this.currentSize.set('');
-    this.currentImage.set(image ?? '');
-    this.applySelectedPlan(item.HostingVpsPlanHvpUUID ?? '');
-    this.setProvisionedEditControls(!!item.HviExternalId);
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    if (!this.instanceForm().valid()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    this.saving.set(true);
-    const values = this.instanceFormModel();
-    const plan = this.plans().find((item) => item.HvpUUID === values.planUUID);
-    if (!plan) {
-      this.saving.set(false);
-      this.snack.warning('Select a valid VPS plan.');
-      return;
-    }
-    const payload: Record<string, unknown> = {
-      name: values.name.trim(),
-      customerUUID: values.customerUUID,
-      planUUID: plan.HvpUUID,
-      config: this.buildConfigPayload(),
-      status: this.normalizeString(values.status),
-      isActive: values.isActive === 1,
-    };
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.instanceEndpoint()}/${editing.HviUUID}`, payload);
-        this.snack.success('VPS instance updated.');
-      } else {
-        const response = await this.api.post(this.instanceEndpoint(), payload);
-        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
-      }
-      this.instancesResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save VPS instance.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  async remove(item: HostingVpsInstance) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete VPS instance',
-        message: `Delete "${item.HviName}" from MNSCloud and destroy the provider VPS when linked?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.instanceEndpoint()}/${item.HviUUID}`);
-      this.snack.success('VPS instance deleted.');
-      this.instancesResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete VPS instance.'));
-    }
-  }
-
-  async retryProvision(item: HostingVpsInstance) {
-    if (!this.canRetryProvision(item) || this.isRetrying(item)) return;
-
-    const errorMessage = this.instanceConfigValue(item, 'provisionError');
-    const details =
-      typeof errorMessage === 'string' && errorMessage.trim()
-        ? ` Last error: ${errorMessage.trim()}`
-        : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Retry VPS provisioning',
-        message: `Retry provider provisioning for "${item.HviName}"? This can create a VPS and may generate provider charges.${details}`,
-        confirmLabel: 'Retry provisioning',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.retryingInstanceUUIDs.update((current) => new Set(current).add(item.HviUUID));
-    try {
-      const response = await this.api.post<{
-        data?: { item?: HostingVpsInstance };
-      }>(`${this.instanceEndpoint()}/${item.HviUUID}/retry-provision`, {});
-      const updated = response?.data?.item;
-      if (updated) {
-        this.vpsInstances.update((rows) =>
-          rows.map((row) =>
-            row.HviUUID === updated.HviUUID
-              ? {
-                  ...updated,
-                  HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
-                }
-              : row,
-          ),
-        );
-      }
-      this.instancesResource.reload();
-      if ((updated?.HviStatus ?? '').toLowerCase() === 'queue_failed') {
-        this.snack.error('VPS provisioning retry could not be queued.');
-      } else {
-        this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to retry VPS provisioning.'));
-    } finally {
-      this.retryingInstanceUUIDs.update((current) => {
-        const next = new Set(current);
-        next.delete(item.HviUUID);
-        return next;
-      });
-    }
-  }
-
-  startChangePlan(item: HostingVpsInstance) {
-    const changePlanDialog = this.changePlanDialog();
-    if (!this.canChangePlan(item) || !changePlanDialog) return;
-    this.changePlanInstance.set(item);
-    this.targetPlanUUID.set('');
-    this.changePlanDialogRef = this.dialog.open(changePlanDialog, {
-      width: 'min(720px, calc(100vw - 24px))',
-      maxWidth: 'calc(100vw - 24px)',
-      maxHeight: 'calc(100dvh - 24px)',
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-vps-change-plan-dialog',
-    });
-    bindDialogClosed(this.changePlanDialogRef, () => {
-      this.changePlanDialogRef = null;
-      this.changePlanInstance.set(null);
-      this.targetPlanUUID.set('');
-    });
-  }
-
-  closeChangePlanDialog() {
-    if (!this.changePlanDialogRef) return;
-    this.changePlanDialogRef.close();
-    this.changePlanDialogRef = null;
-  }
-
-  selectedTargetPlan() {
-    const uuid = this.normalizeString(this.targetPlanUUID());
-    if (!uuid) return null;
-    return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
-  }
-
-  async changePlan() {
-    const instance = this.changePlanInstance();
-    const targetPlanUUID = this.normalizeString(this.targetPlanUUID());
-    if (!instance || !targetPlanUUID) {
-      this.snack.warning('Select a target VPS plan.');
-      return;
-    }
-
-    const target = this.selectedTargetPlan();
-    if (!target) {
-      this.snack.warning('Select a valid target VPS plan.');
-      return;
-    }
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Change VPS plan',
-        message: `Queue plan change for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
-        confirmLabel: 'Change plan',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.changingPlan.set(true);
-    try {
-      const response = await this.api.post<{
-        data?: { item?: HostingVpsInstance };
-      }>(`${this.instanceEndpoint()}/${instance.HviUUID}/change-plan`, { targetPlanUUID });
-      const updated = response?.data?.item;
-      if (updated) {
-        this.vpsInstances.update((rows) =>
-          rows.map((row) =>
-            row.HviUUID === updated.HviUUID
-              ? {
-                  ...updated,
-                  HviConfig: this.parseConfig<HostingVpsInstanceConfig>(updated.HviConfig),
-                }
-              : row,
-          ),
-        );
-      }
-      this.instancesResource.reload();
-      this.closeChangePlanDialog();
-      this.operations.observe(response, this.destroyRef, () => this.instancesResource.reload());
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to change VPS plan.'));
-    } finally {
-      this.changingPlan.set(false);
-    }
-  }
-
-  isSelected(item: HostingVpsInstance) {
-    return this.selectedInstanceUUIDs().has(item.HviUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleInstanceSelection(item: HostingVpsInstance, checked: boolean) {
-    this.selectedInstanceUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(item.HviUUID);
-      } else {
-        next.delete(item.HviUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedInstanceUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        if (checked) {
-          next.add(row.HviUUID);
-        } else {
-          next.delete(row.HviUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedInstances() {
-    const ids = Array.from(this.selectedInstanceUUIDs());
-    if (!ids.length) return;
-    const labels = this.vpsInstances()
-      .filter((item) => ids.includes(item.HviUUID))
-      .slice(0, 3)
-      .map((item) => item.HviName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected VPS instances',
-        message: `Delete ${ids.length} selected VPS instance(s) from MNSCloud and destroy linked provider VPS resources?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingVpsInstanceUUID: string; message: string }[];
-        };
-      }>(`${this.instanceEndpoint()}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map((item) => item.HostingVpsInstanceUUID),
-      );
-      this.vpsInstances.update((rows) => rows.filter((row) => !deleted.has(row.HviUUID)));
-      this.selectedInstanceUUIDs.set(failed);
-      this.instancesResource.reload();
-      if (failed.size) {
-        this.snack.error(`${failed.size} VPS instance(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} VPS instance(s) deleted.`);
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected VPS instances.'));
-    }
-  }
-
-  private applySelectedPlan(uuid: string | null) {
-    const normalized = this.normalizeString(uuid);
-    if (!normalized) {
-      this.activePlanUUID = '';
-      this.instanceFormModel.update((current) => ({ ...current, image: '' }));
-      this.currentImage.set('');
-      this.catalog.set(null);
-      this.catalogProviderUUID.set(null);
-      return;
-    }
-    const plan = this.plans().find((item) => item.HvpUUID === normalized);
-    if (!plan) return;
-    const planChanged = this.activePlanUUID !== normalized;
-    this.activePlanUUID = normalized;
-    this.currentRegion.set(plan.HvpRegion ?? '');
-    this.currentSize.set(plan.HvpSize ?? '');
-    let selectedImage = this.normalizeString(this.instanceFormModel().image);
-    if (planChanged) {
-      selectedImage = null;
-      this.instanceFormModel.update((current) => ({ ...current, image: '' }));
-    }
-    if (selectedImage) {
-      this.currentImage.set(selectedImage);
-    } else if (plan.HvpImage) {
-      this.instanceFormModel.update((current) => ({ ...current, image: plan.HvpImage ?? '' }));
-      this.currentImage.set(plan.HvpImage);
-    } else {
-      this.currentImage.set('');
-    }
-    void this.fetchProviderCatalog();
-  }
-
-  private buildConfigPayload(): HostingVpsInstanceConfig {
-    const values = this.instanceFormModel();
-    const config: HostingVpsInstanceConfig = {};
-    const sshKey = this.normalizeString(values.sshKey);
-    const providerImageId = this.normalizeString(values.image);
-    const notes = this.normalizeString(values.notes);
-    if (sshKey) config.sshKey = sshKey;
-    if (providerImageId) config.providerImageId = providerImageId;
-    if (notes) config.notes = notes;
-    return config;
-  }
-
-  private normalizeString(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    return trimmed.length ? trimmed : null;
-  }
-
-  private parseConfig<T>(value: unknown): T | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private withCurrentOption(options: VpsCatalogOption[], current: string): VpsCatalogOption[] {
-    const normalized = this.normalizeString(current);
-    if (!normalized || options.some((opt) => opt.id === normalized)) return options;
-    return [
-      {
-        id: normalized,
-        label: `Custom: ${normalized}`,
-        source: 'Custom',
-        name: normalized,
-        slug: normalized,
-      },
-      ...options,
-    ];
-  }
-
-  private filterCatalogOptions(options: VpsCatalogOption[], search: string): VpsCatalogOption[] {
-    const value = search.trim().toLowerCase();
-    if (!value) return options;
-    return options.filter((option) =>
-      [
-        option.id,
-        option.label,
-        option.source,
-        option.name,
-        option.version,
-        option.architecture,
-        option.type,
-        option.slug,
-      ]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value)),
-    );
-  }
-
-  private resolveCatalogProviderUUID(): string | null {
-    const plan = this.selectedPlan();
-    if (!plan) return null;
-    return this.resolveProviderUUIDForPlan(plan);
   }
 
   private resolveProviderUUIDForPlan(plan: HostingVpsPlan): string {
@@ -1058,152 +614,148 @@ export class HostingVpsInstancesPage {
     );
   }
 
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
-  }
-
-  private resetForm() {
-    this.activePlanUUID = '';
-    this.setProvisionedEditControls(false);
-    this.instanceFormModel.set({
-      name: '',
-      customerUUID: '',
-      planUUID: '',
-      image: '',
-      sshKey: '',
-      notes: '',
-      status: '',
-      isActive: 1,
-    });
-    this.currentRegion.set('');
-    this.currentSize.set('');
-    this.currentImage.set('');
-    this.planSearch.set('');
-    this.customerSearch.set('');
-    this.imageSearch.set('');
-  }
-
-  private setProvisionedEditControls(isProvisioned: boolean) {
-    this.isProvisionedEdit.set(isProvisioned);
-  }
-
-  private resetPagination() {
-    this.pageIndex.set(0);
-  }
-
-  private reconcileInstanceSelection() {
-    const available = new Set(this.vpsInstances().map((item) => item.HviUUID));
-    this.selectedInstanceUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortRows(rows: HostingVpsInstance[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.instanceSortValue(a, active),
-        this.instanceSortValue(b, active),
+  private async fetchProviders() {
+    try {
+      const result = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
+        this.providerEndpoint(),
       );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private instanceSortValue(item: HostingVpsInstance, column: string) {
-    const plan = this.planById(item.HostingVpsPlanHvpUUID);
-    switch (column) {
-      case 'name':
-        return item.HviName;
-      case 'customer':
-        return this.instanceCustomerLabel(item);
-      case 'plan':
-        return this.planNameById(item.HostingVpsPlanHvpUUID);
-      case 'provider':
-        return this.providerNameById(item.HostingVpsProviderHvrUUID);
-      case 'region':
-        return plan?.HvpRegion ?? '';
-      case 'size':
-        return plan?.HvpSize ?? '';
-      case 'image':
-        return this.instanceImageValue(item) ?? '';
-      case 'status':
-        return item.HviIsActive;
-      case 'runtimeStatus':
-        return item.HviStatus ?? '';
-      default:
-        return '';
+      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+      this.providers.set(
+        list.map((item) => ({
+          ...item,
+          HvrConfig: parseConfig<VpsProviderConfig>(item.HvrConfig),
+        })),
+      );
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
     }
   }
 
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
+  private async fetchCustomers() {
+    if (this.isMaster()) {
+      this.customers.set([]);
+      return;
+    }
+    try {
+      const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
+        'erp/customers?status=1&limit=500&offset=0',
+      );
+      this.customers.set(result?.data?.items ?? []);
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load customers.'));
+    }
   }
 
-  private openDialog() {
-    const instanceFormDialog = this.instanceFormDialog();
-    if (!instanceFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(instanceFormDialog, {
-      ...getVpsDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-vps-instance-dialog',
-    });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
+  private async fetchPlans() {
+    try {
+      const result = await this.api.get<{ data?: { items?: HostingVpsPlan[] } }>(
+        `${this.planEndpoint()}?limit=500&offset=0`,
+      );
+      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
+      this.plans.set(
+        list.map((item) => ({
+          ...item,
+          HvpConfig: parseConfig<HostingVpsPlanConfig>(item.HvpConfig),
+        })),
+      );
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS plans.'));
+    }
   }
 
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
+  private enrichInstance(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    const image =
+      (typeof config?.providerImageId === 'string' ? config.providerImageId : null) ??
+      plan?.HvpImage ??
+      null;
+    return {
+      ...row,
+      HviConfig: config,
+      PlanRegion: plan?.HvpRegion ?? null,
+      PlanSize: plan?.HvpSize ?? null,
+      InstanceImage: image,
+    };
   }
 
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateVpsDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateVpsDialogViewport(this.dialogRef);
+  private toInstance(row: ConfigurableCrudRecord): HostingVpsInstance {
+    return {
+      HviUUID: String(row['HviUUID'] ?? ''),
+      HviName: String(row['HviName'] ?? ''),
+      HviConfig: parseConfig<HostingVpsInstanceConfig>(row['HviConfig']),
+      CustomerCusUUID: (row['CustomerCusUUID'] as string | null | undefined) ?? null,
+      CustomerName: (row['CustomerName'] as string | null | undefined) ?? null,
+      HviExternalId: (row['HviExternalId'] as string | null | undefined) ?? null,
+      HviStatus: (row['HviStatus'] as string | null | undefined) ?? null,
+      HviIsActive: Number(row['HviIsActive']) === 1 ? 1 : 0,
+      HostingVpsProviderHvrUUID: String(row['HostingVpsProviderHvrUUID'] ?? ''),
+      HostingVpsPlanHvpUUID: String(row['HostingVpsPlanHvpUUID'] ?? ''),
+    };
   }
 
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
+  private planById(uuid: string | null | undefined) {
+    if (!uuid) return null;
+    return this.plans().find((plan) => plan.HvpUUID === uuid) ?? null;
   }
+
+  private providerNameById(uuid: string | null | undefined) {
+    if (!uuid) return 'Default provider';
+    return this.providers().find((acc) => acc.HvrUUID === uuid)?.HvrName ?? 'Unknown provider';
+  }
+}
+
+function instanceImageFromRecord(row: ConfigurableCrudRecord): string {
+  const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
+  if (typeof config?.providerImageId === 'string' && config.providerImageId.trim()) {
+    return config.providerImageId;
+  }
+  return String(row['InstanceImage'] ?? '');
+}
+
+function configString(value: unknown, key: keyof HostingVpsInstanceConfig): string {
+  const config = parseConfig<HostingVpsInstanceConfig>(value);
+  const field = config?.[key];
+  return typeof field === 'string' ? field : '';
+}
+
+function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
+  const name = option.name || option.label || option.id;
+  const versionArch = [option.version, option.architecture].filter(Boolean).join(' ');
+  const meta = [option.source, option.type].filter(Boolean).join(' · ');
+  return {
+    value: option.id,
+    label: [name, versionArch].filter(Boolean).join(' '),
+    description: [meta, option.slug || option.id].filter(Boolean).join(' · '),
+    searchText: [
+      option.id,
+      option.label,
+      option.source,
+      option.name,
+      option.version,
+      option.architecture,
+      option.type,
+      option.slug,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  };
+}
+
+function parseConfig<T>(value: unknown): T | null {
+  if (!value) return null;
+  if (typeof value === 'object') return value as T;
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
 }
