@@ -696,8 +696,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (this.editingRecord() ? !this.canEdit() : !this.canCreate()) return;
     if (!this.commitDateDrafts()) return;
     this.copyEnabledAddressValues();
-    const payload = this.augmentPayload(this.buildPayload());
-    if (!this.validatePayload(payload)) return;
+    // Validate the flat form payload before augmentPayload reshapes nested
+    // config/credentials objects; otherwise required fields look missing.
+    const formPayload = this.buildPayload();
+    if (!this.validatePayload(formPayload)) return;
+    const payload = this.augmentPayload(formPayload);
 
     this.saving.set(true);
     try {
