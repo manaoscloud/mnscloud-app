@@ -67,6 +67,20 @@ describe('Queued operations in cookie sessions', () => {
     await service.resume(owner());
     expect(get).toHaveBeenCalled();
     expect(service.visible().length).toBe(1);
+    expect(service.badgeCount()).toBe(1);
+  });
+  it('does not hydrate succeeded operations on resume', async () => {
+    get.and.resolveTo({
+      data: {
+        items: [
+          { operationUUID, state: 'succeeded' },
+          { operationUUID: '33333333333333333333333333333333', state: 'failed', canRecheck: true },
+        ],
+      },
+    });
+    await service.resume(owner());
+    expect(service.visible().map((item) => item.state)).toEqual(['failed']);
+    expect(service.badgeCount()).toBe(1);
   });
   it('shares polling while notifying both the status panel and resource page', async () => {
     const panel = owner(),
@@ -82,6 +96,10 @@ describe('Queued operations in cookie sessions', () => {
     expect(get.calls.count()).toBe(1);
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledTimes(1);
+    expect(service.visible().length).toBe(1);
+    expect(service.badgeCount()).toBe(0);
+    jasmine.clock().tick(10_000);
+    expect(service.visible()).toEqual([]);
   });
   it('discards an in-flight response from an expired cookie session', async () => {
     let resolve!: (value: unknown) => void;
@@ -102,5 +120,14 @@ describe('Queued operations in cookie sessions', () => {
     service.watch({ operationUUID, state: 'succeeded' }, owner(), callback);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(get).not.toHaveBeenCalled();
+    expect(service.badgeCount()).toBe(0);
+  });
+  it('keeps blocked operations until dismiss and excludes them from success auto-clear', () => {
+    service.watch({ operationUUID, state: 'blocked', canRecheck: true }, owner(), () => {});
+    expect(service.badgeCount()).toBe(1);
+    jasmine.clock().tick(10_000);
+    expect(service.visible().length).toBe(1);
+    service.dismiss(operationUUID);
+    expect(service.visible()).toEqual([]);
   });
 });

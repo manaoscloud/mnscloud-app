@@ -1179,15 +1179,21 @@ not automatic rotation or remote revocation. All labels use PT/EN/ES dictionarie
 ## Asynchronous business operations
 
 Queue-backed mutations return an accepted operation, not a completed provider action. Use
-`AsyncOperationsService` and the shared `mns-async-operation-status` component; do not build local
-polling loops or announce success immediately. Keep shared status styles in `styles/_operations.scss`.
-The service follows the owned operation endpoint, stops on page/session/environment changes, bounds
-polling and resumes recent owned status when the shared component opens. Never resubmit a mutation
-because polling failed. `ApiService` retains a request key after an uncertain HTTP response.
+`AsyncOperationsService` with snackbars for immediate feedback and the shell Activity Center
+(`mns-async-operation-activity` in `main-layout` topbar) for in-flight and attention status. Do not
+mount per-page chip strips or build local polling loops; do not announce success from the mutation
+HTTP response alone. Keep shared activity styles in `styles/_operations.scss`.
 
-The server advertises `canRecheck` for supported readback. The shared action requests verification;
-it does not force a provider retry or invent completion. Backend permissions and immutable intent
-remain authoritative. Render states and safe error labels through PT/EN/ES translations. DNS reads
-use cached observations; disable editing while the observation is pending or blocked, and require a
-fresh revision before submitting another change. Preserve the existing CRUD/dialog templates and
-soft-delete semantics. No recovery/billing interface is introduced.
+The service follows the owned `/user/operations` endpoints, bounds polling, and resumes only
+non-terminal plus `blocked`/`failed` (recheckable) operations when the shell opens. Succeeded items
+are cleared from the panel after a short retention window; badge count is in-flight + attention only.
+Never resubmit a mutation because polling failed. `ApiService` retains a request key after an
+uncertain HTTP response. Tenant/session changes clear local operation state.
+
+The server advertises `canRecheck` for supported readback. The Activity Center action requests
+verification; it does not force a provider retry or invent completion. Backend permissions and
+immutable intent remain authoritative. Render states and safe error labels through PT/EN/ES
+translations. DNS reads use cached observations; disable editing while the observation is pending or
+blocked, and require a fresh revision before submitting another change. Preserve the existing
+CRUD/dialog templates and soft-delete semantics. No recovery/billing interface is introduced.
+The deprecated `showAsyncOperationStatus` Configurable CRUD flag is ignored.

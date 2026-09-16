@@ -1,5 +1,4 @@
 import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
-import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -81,7 +80,6 @@ type VpsContainerInstanceFormModel = {
   selector: 'app-hosting-vps-container-instances',
   standalone: true,
   imports: [
-    AsyncOperationStatusComponent,
     RefreshButtonComponent,
     FormField,
     MatButtonModule,

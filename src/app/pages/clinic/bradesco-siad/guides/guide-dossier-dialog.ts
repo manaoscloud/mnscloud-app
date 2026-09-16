@@ -1,5 +1,4 @@
 import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
-import { AsyncOperationStatusComponent } from '../../../../shared/operations/async-operation-status';
 import { Component, DestroyRef, Inject, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -47,7 +46,6 @@ type DossierResponse = {
   selector: 'app-clinic-bradesco-siad-guide-dossier-dialog',
   standalone: true,
   imports: [
-    AsyncOperationStatusComponent,
     CommonModule,
     MatDialogModule,
     MatButtonModule,
@@ -69,7 +67,6 @@ type DossierResponse = {
         </div>
       </div>
       <div class="dialog-content">
-        <mns-async-operation-status />
         @if (loading()) {
           <mat-progress-bar mode="indeterminate" />
         }

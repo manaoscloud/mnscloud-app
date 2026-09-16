@@ -4318,5 +4318,16 @@
   "Disk read": "Leitura de disco",
   "Disk write": "Escrita de disco",
   "Provider status": "Status do provedor",
-  "Inbound and outbound": "Entrada e saída"
+  "Inbound and outbound": "Entrada e saída",
+  "operations.activityTitle": "Atividade em segundo plano",
+  "operations.activityEmpty": "Nenhuma atividade em segundo plano no momento.",
+  "operations.state.queued": "Na fila",
+  "operations.state.running": "Em execução",
+  "operations.state.verifying": "Verificando",
+  "operations.state.waitingRetry": "Aguardando nova tentativa",
+  "operations.state.succeeded": "Concluída",
+  "operations.state.blocked": "Bloqueada",
+  "operations.state.failed": "Falhou",
+  "operations.state.cancelled": "Cancelada",
+  "Recheck": "Verificar novamente"
 }

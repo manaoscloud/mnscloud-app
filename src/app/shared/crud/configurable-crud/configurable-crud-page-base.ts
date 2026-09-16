@@ -1,4 +1,3 @@
-import { AsyncOperationStatusComponent } from '../../operations/async-operation-status';
 import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
   Directive,
@@ -63,7 +62,6 @@ import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confi
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
   SecretContentFieldComponent,
-  AsyncOperationStatusComponent,
   RouterLink,
   RefreshButtonComponent,
   MatButtonModule,
@@ -379,8 +377,8 @@ export type ConfigurableCrudConfig = {
   pageSizeOptions?: readonly number[];
   initialPageSize?: number;
   /**
-   * When false, hides the shared async-operation status strip.
-   * Prefer resource-row sync status for durable workflows (default: true).
+   * @deprecated Async operation feedback lives in the shell Activity Center.
+   * This flag is ignored and kept only for temporary call-site compatibility.
    */
   showAsyncOperationStatus?: boolean;
 };
@@ -411,10 +409,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly operations = inject(AsyncOperationsService);
   protected trackOperation(response: unknown): boolean {
     return this.operations.observe(response, this.destroyRef, () => this.refreshList());
-  }
-
-  protected showAsyncOperationStatus(): boolean {
-    return this.config.showAsyncOperationStatus !== false;
   }
 
   protected readonly api = inject(ApiService);
