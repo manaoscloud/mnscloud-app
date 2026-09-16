@@ -4252,5 +4252,7 @@
   "Create a commercial VPS plan from the platform provider catalog.": "Create a commercial VPS plan from the platform provider catalog.",
   "Configure platform VPS providers. Provider administration is master-only.": "Configure platform VPS providers. Provider administration is master-only.",
   "Configure platform credentials for VPS provisioning.": "Configure platform credentials for VPS provisioning.",
-  "Register an instance from the platform VPS plan catalog.": "Register an instance from the platform VPS plan catalog."
+  "Register an instance from the platform VPS plan catalog.": "Register an instance from the platform VPS plan catalog.",
+  "Region changed. Select a size available in this region.": "Region changed. Select a size available in this region.",
+  "Selected size is not available in this region. Choose another Droplet plan.": "Selected size is not available in this region. Choose another Droplet plan."
 }

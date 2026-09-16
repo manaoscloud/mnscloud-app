@@ -4252,5 +4252,7 @@
   "Create a commercial VPS plan from the platform provider catalog.": "Cree un plan VPS comercial desde el catálogo de proveedores de la plataforma.",
   "Configure platform VPS providers. Provider administration is master-only.": "Configure proveedores VPS de la plataforma. La administración de proveedores es solo Master.",
   "Configure platform credentials for VPS provisioning.": "Configure credenciales de la plataforma para el aprovisionamiento de VPS.",
-  "Register an instance from the platform VPS plan catalog.": "Registre una instancia desde el catálogo de planes VPS de la plataforma."
+  "Register an instance from the platform VPS plan catalog.": "Registre una instancia desde el catálogo de planes VPS de la plataforma.",
+  "Region changed. Select a size available in this region.": "Región cambiada. Seleccione un plan disponible en esta región.",
+  "Selected size is not available in this region. Choose another Droplet plan.": "El plan seleccionado no está disponible en esta región. Elija otro Droplet plan."
 }
