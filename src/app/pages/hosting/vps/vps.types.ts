@@ -67,6 +67,10 @@ export type HostingVpsPlanConfig = {
   transferGb?: number | null;
   providerSizeId?: string | null;
   providerRegionId?: string | null;
+  /** Lightsail availability zone (e.g. us-east-1a); same as providerRegionId when AZ-scoped. */
+  availabilityZone?: string | null;
+  /** Parent AWS region for Lightsail SDK/provision (e.g. us-east-1). */
+  awsRegion?: string | null;
   sizeFamily?: string | null;
   sizeCategory?: string | null;
   backupEnabled?: boolean | null;

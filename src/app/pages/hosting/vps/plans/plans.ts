@@ -175,7 +175,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       source: 'HvpRegion',
       payloadKey: 'regionManual',
       label: 'Region',
-      placeholder: 'nyc3',
+      placeholder: 'us-east-1a',
       tab: 'storage',
       span: 1,
     },
@@ -317,17 +317,23 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (!region) return sizes;
     const regionAware = sizes.some((size) => Array.isArray(size.regions) && size.regions.length > 0);
     if (!regionAware) return sizes;
-    return sizes.filter(
-      (size) =>
-        !Array.isArray(size.regions) ||
-        size.regions.length === 0 ||
-        size.regions.includes(region),
-    );
+    const parent = lightsailParentRegion(region);
+    return sizes.filter((size) => {
+      if (!Array.isArray(size.regions) || size.regions.length === 0) return true;
+      if (size.regions.includes(region)) return true;
+      // Lightsail bundles are parent-region scoped; accept AZ or parent match.
+      return Boolean(parent && size.regions.includes(parent));
+    });
   });
 
   private readonly regionOptions = computed<ConfigurableCrudOption[]>(() => {
     const current = this.selectedRegion() ?? '';
-    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.regions ?? [], current));
+    return withCurrentOption(this.catalog()?.regions ?? [], current).map((option) => ({
+      value: option.id,
+      label: option.label || option.id,
+      description: option.id && option.id !== option.label ? option.id : undefined,
+      searchText: `${option.id} ${option.label}`,
+    }));
   });
 
   private readonly sizeOptions = computed<ConfigurableCrudOption[]>(() => {
@@ -560,13 +566,13 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
 
     if (key === 'region') {
       this.patchFormValues({ regionManual: String(value ?? '') });
-      this.clearSizeSelection('Region changed. Select a size available in this region.');
+      this.clearSizeSelection('Region/zone changed. Select a size available in this placement.');
       this.refreshCatalogForSelectedRegion(String(value ?? ''));
       return;
     }
     if (key === 'regionManual') {
       this.patchFormValues({ region: String(value ?? '') });
-      this.clearSizeSelection('Region changed. Select a size available in this region.');
+      this.clearSizeSelection('Region/zone changed. Select a size available in this placement.');
       this.refreshCatalogForSelectedRegion(String(value ?? ''));
       return;
     }
@@ -604,6 +610,11 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       normalizeString(sizeOption?.family) ?? normalizeString(existingConfig?.sizeFamily);
     const sizeCategory =
       normalizeString(sizeOption?.category) ?? normalizeString(existingConfig?.sizeCategory);
+    const provider = providerRecord?.HvrProvider ?? this.catalog()?.provider ?? null;
+    const lightsailAz = provider === 'lightsail' ? lightsailAvailabilityZone(region) : null;
+    const lightsailAwsRegion = provider === 'lightsail'
+      ? lightsailParentRegion(region) || region
+      : null;
 
     return {
       name: String(payload['name'] ?? '').trim(),
@@ -618,6 +629,8 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
         diskGb: Number(payload['diskGb'] ?? 0) || null,
         transferGb: Number(payload['transferGb'] ?? 0) || null,
         providerRegionId: region,
+        availabilityZone: lightsailAz,
+        awsRegion: lightsailAwsRegion,
         providerSizeId: size,
         sizeFamily,
         sizeCategory,
@@ -733,10 +746,11 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       region &&
       Array.isArray(option.regions) &&
       option.regions.length > 0 &&
-      !option.regions.includes(region)
+      !option.regions.includes(region) &&
+      !option.regions.includes(lightsailParentRegion(region) ?? '')
     ) {
       this.clearSizeSelection(
-        'Selected size is not available in this region. Choose another plan.',
+        'Selected size is not available in this region/zone. Choose another plan.',
       );
       return;
     }
@@ -847,6 +861,24 @@ function truthyNumber(value: unknown): 0 | 1 {
 function catalogNumber(value: unknown): number | null {
   const parsed = Number(value ?? 0);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** `us-east-1a` → `us-east-1`; plain regions pass through. */
+function lightsailParentRegion(regionOrAz: string | null | undefined): string | null {
+  const value = String(regionOrAz ?? '').trim().toLowerCase();
+  if (!value) return null;
+  const match = value.match(/^([a-z0-9-]+?)([a-z])$/i);
+  if (!match) return String(regionOrAz ?? '').trim() || null;
+  const parent = match[1];
+  if (/\d$/.test(parent)) return parent;
+  return String(regionOrAz ?? '').trim() || null;
+}
+
+function lightsailAvailabilityZone(regionOrAz: string | null | undefined): string | null {
+  const value = normalizeString(regionOrAz);
+  if (!value) return null;
+  const parent = lightsailParentRegion(value);
+  return parent && parent.toLowerCase() !== value.toLowerCase() ? value : null;
 }
 
 function withCurrentOption(options: VpsCatalogOption[], current: string): VpsCatalogOption[] {
