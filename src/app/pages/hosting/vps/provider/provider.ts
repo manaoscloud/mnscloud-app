@@ -402,7 +402,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'region',
       payloadKey: 'region',
-      label: 'Region',
+      label: 'API region',
       placeholder: 'us-east-1',
       tab: 'authentication',
       span: 1,

@@ -278,6 +278,8 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly catalog = signal<VpsProviderCatalog | null>(null);
   private readonly catalogProviderUUID = signal<string | null>(null);
   readonly catalogLoading = signal(false);
+  private readonly catalogFetchKey = signal<string | null>(null);
+  private catalogRequestId = 0;
 
   private readonly providerFormOptions = computed<ConfigurableCrudOption[]>(() => {
     const current = normalizeString(this.formValues()['providerUUID']);
@@ -525,13 +527,17 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     next['isActive'] = Number(row['HvpIsActive'] ?? 0) === 1 ? 1 : 0;
     next['price'] = Number(row['HvpPrice'] ?? 0);
 
-    void this.fetchProviderCatalog(providerUUID);
+    void this.fetchProviderCatalog(providerUUID, {
+      region: normalizeString(next['region']) ?? normalizeString(next['regionManual']),
+      force: true,
+    });
     return next;
   }
 
   override startCreate(): void {
     this.catalog.set(null);
     this.catalogProviderUUID.set(null);
+    this.catalogFetchKey.set(null);
     super.startCreate();
   }
 
@@ -547,18 +553,20 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
         diskGb: 0,
         transferGb: 0,
       });
-      void this.fetchProviderCatalog(normalizeString(value));
+      void this.fetchProviderCatalog(normalizeString(value), { force: true });
       return;
     }
 
     if (key === 'region') {
       this.patchFormValues({ regionManual: String(value ?? '') });
       this.clearSizeSelection('Region changed. Select a size available in this region.');
+      this.refreshCatalogForSelectedRegion(String(value ?? ''));
       return;
     }
     if (key === 'regionManual') {
       this.patchFormValues({ region: String(value ?? '') });
       this.clearSizeSelection('Region changed. Select a size available in this region.');
+      this.refreshCatalogForSelectedRegion(String(value ?? ''));
       return;
     }
 
@@ -646,33 +654,70 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     }
   }
 
-  private async fetchProviderCatalog(providerUUID: string | null | undefined) {
+  private refreshCatalogForSelectedRegion(regionValue: string): void {
+    const providerUUID =
+      normalizeString(this.formValues()['providerUUID']) ?? this.catalogProviderUUID();
+    if (!providerUUID) return;
+    const provider =
+      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    // DigitalOcean already returns size.regions[] in one catalog payload.
+    if (provider !== 'lightsail') return;
+    void this.fetchProviderCatalog(providerUUID, {
+      region: normalizeString(regionValue),
+      force: true,
+    });
+  }
+
+  private async fetchProviderCatalog(
+    providerUUID: string | null | undefined,
+    options?: { region?: string | null; force?: boolean },
+  ) {
     const uuid = normalizeString(providerUUID);
     if (!uuid) {
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
+      this.catalogFetchKey.set(null);
       return;
     }
-    if (this.catalogProviderUUID() === uuid && this.catalog()) return;
-    if (this.catalogLoading()) return;
 
+    const region = normalizeString(options?.region) ??
+      normalizeString(this.formValues()['region']) ??
+      normalizeString(this.formValues()['regionManual']);
+    const fetchKey = `${uuid}:${region ?? ''}`;
+    if (!options?.force && this.catalogFetchKey() === fetchKey && this.catalog()) return;
+
+    const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
+    this.catalogFetchKey.set(fetchKey);
 
     try {
+      const query = region ? `?region=${encodeURIComponent(region)}` : '';
       const result = await this.api.get<{ data?: { catalog?: VpsProviderCatalog } }>(
-        `${this.providerEndpoint()}/${uuid}/catalog`,
+        `${this.providerEndpoint()}/${uuid}/catalog${query}`,
       );
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(result?.data?.catalog ?? null);
       const size =
         normalizeString(this.formValues()['size']) ??
         normalizeString(this.formValues()['sizeManual']);
-      if (size) void this.applySelectedSizeSpecs(size);
+      if (size) {
+        const available = (result?.data?.catalog?.sizes ?? []).some((item) => item.id === size);
+        if (!available) {
+          this.clearSizeSelection(
+            'Selected size is not available in this region. Choose another plan.',
+          );
+        } else {
+          void this.applySelectedSizeSpecs(size);
+        }
+      }
     } catch (error) {
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(null);
+      this.catalogFetchKey.set(null);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
     } finally {
-      this.catalogLoading.set(false);
+      if (requestId === this.catalogRequestId) this.catalogLoading.set(false);
     }
   }
 
@@ -690,7 +735,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       !option.regions.includes(region)
     ) {
       this.clearSizeSelection(
-        'Selected size is not available in this region. Choose another Droplet plan.',
+        'Selected size is not available in this region. Choose another plan.',
       );
       return;
     }
@@ -913,6 +958,8 @@ function sizeOptionDescription(option: VpsCatalogOption) {
 function sizeOptionRank(option: VpsCatalogOption) {
   const family = sizeOptionFamily(option).toLowerCase();
   const category = sizeOptionCategory(option).toLowerCase();
+  if (family.includes('linux') || family.includes('unix')) return 10 + lightsailTierRank(category);
+  if (family.includes('windows')) return 40 + lightsailTierRank(category);
   if (family.includes('basic')) {
     if (category.includes('regular')) return 10;
     if (category.includes('premium amd')) return 11;
@@ -926,6 +973,28 @@ function sizeOptionRank(option: VpsCatalogOption) {
   if (family.includes('storage')) return 50;
   if (family.includes('custom')) return 90;
   return 80;
+}
+
+function lightsailTierRank(category: string) {
+  const normalized = category.toLowerCase().replace(/\s+/g, '');
+  const order = [
+    'nano',
+    'micro',
+    'small',
+    'medium',
+    'large',
+    'xlarge',
+    '2xlarge',
+    '4xlarge',
+    '8xlarge',
+    '12xlarge',
+    '16xlarge',
+    '24xlarge',
+    '32xlarge',
+    '48xlarge',
+  ];
+  const index = order.indexOf(normalized);
+  return index >= 0 ? index : 30;
 }
 
 function sizeOptionMonthlyPrice(option: VpsCatalogOption) {
@@ -973,7 +1042,7 @@ function buildGroupedSizeOptions(
   provider: VpsProvider | string | null,
 ): ConfigurableCrudOption[] {
   const sorted = sortSizeOptions(options);
-  if (provider !== 'digitalocean') {
+  if (provider !== 'digitalocean' && provider !== 'lightsail') {
     return catalogOptionsToCrud(sorted);
   }
 

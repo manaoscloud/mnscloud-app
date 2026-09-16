@@ -4329,5 +4329,6 @@
   "operations.state.blocked": "Bloqueada",
   "operations.state.failed": "Falhou",
   "operations.state.cancelled": "Cancelada",
-  "Recheck": "Verificar novamente"
+  "Recheck": "Verificar novamente",
+  "API region": "Região da API"
 }
