@@ -822,6 +822,19 @@ export const routes: Routes = [
                     title: 'Hosting • VPS Instances | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
+                  {
+                    path: 'instances/:uuid/monitoring',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/instances/instance-monitor').then(
+                        (m) => m.VpsInstanceMonitorPage,
+                      ),
+                    title: 'Hosting • VPS Monitoring | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      context: 'hosting',
+                      breadcrumb: 'VPS instance monitoring',
+                    },
+                  },
                 ],
               },
               {
@@ -1917,6 +1930,19 @@ export const routes: Routes = [
                       ),
                     title: 'System VPS Instances | mnscloud',
                     data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'instances/:uuid/monitoring',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/instances/instance-monitor').then(
+                        (m) => m.VpsInstanceMonitorPage,
+                      ),
+                    title: 'System VPS Monitoring | mnscloud',
+                    data: {
+                      scope: 'master',
+                      context: 'system',
+                      breadcrumb: 'VPS instance monitoring',
+                    },
                   },
                   {
                     path: 'provider',

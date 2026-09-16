@@ -4316,5 +4316,6 @@
   "Uptime": "Uptime",
   "Disk read": "Disk read",
   "Disk write": "Disk write",
-  "Provider status": "Provider status"
+  "Provider status": "Provider status",
+  "Inbound and outbound": "Inbound and outbound"
 }
