@@ -1,7 +1,7 @@
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ApiService } from '../../../../services/api.service';
@@ -50,7 +50,6 @@ const EMPTY_VPS_DASHBOARD: VpsDashboardSnapshot = {
   imports: [
     DashboardRecordListComponent,
     DashboardPageComponent,
-    RouterModule,
     MatIconModule,
     TranslocoPipe,
     NgClass,
@@ -298,10 +297,6 @@ export class HostingVpsDashboardPage {
           : [],
       failedSections,
     };
-  }
-
-  routeTo(section: 'instances' | 'provider' | 'plans') {
-    return this.isMaster() ? ['/system/vps', section] : ['/hosting/vps', section];
   }
 
   formatMemory(value: number | null | undefined) {
