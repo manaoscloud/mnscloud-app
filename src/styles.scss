@@ -1752,6 +1752,34 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   text-overflow: ellipsis;
 }
 
+.mat-mdc-option.select-group-option,
+.mat-mdc-option.select-subgroup-option {
+  opacity: 1 !important;
+  pointer-events: none;
+  min-height: 32px;
+  margin-top: 4px;
+}
+
+.mat-mdc-option.select-group-option .select-option-main {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.mat-mdc-option.select-subgroup-option .select-option-main {
+  font-weight: 600;
+  padding-left: 0.75rem;
+  opacity: 0.9;
+}
+
+.mat-mdc-option.select-plan-option .select-option-main {
+  padding-left: 1.5rem;
+}
+
+.mat-mdc-option.select-plan-option .select-option-description {
+  padding-left: 1.5rem;
+}
+
 .select-option-description {
   margin-top: 0.15rem;
   color: var(--mat-sys-color-on-surface-variant);

@@ -125,6 +125,10 @@ export type VpsCatalogOption = {
   memoryMb?: number | null;
   diskGb?: number | null;
   transferGb?: number | null;
+  regions?: string[] | null;
+  family?: string | null;
+  category?: string | null;
+  priceMonthly?: number | null;
 };
 
 export type VpsProviderCatalog = {
