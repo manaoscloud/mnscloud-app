@@ -4329,5 +4329,6 @@
   "operations.state.failed": "Failed",
   "operations.state.cancelled": "Cancelled",
   "Recheck": "Recheck",
-  "API region": "API region"
+  "API region": "API region",
+  "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.": "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs."
 }

@@ -637,6 +637,24 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.snack.warning(this.t('Select an image compatible with the selected plan.'));
       return false;
     }
+
+    const selectedImageId = normalizeString(payload['image']);
+    const imageOption = (this.catalog()?.images ?? []).find((item) => item.id === selectedImageId);
+    if (plan && imageOption && !isImageCompatibleWithPlan(imageOption, {
+      region: normalizeString(plan.HvpRegion) ?? '',
+      diskGb: Number(plan.HvpConfig?.diskGb ?? 0),
+      cpu: Number(plan.HvpConfig?.cpu ?? 0),
+      memoryMb: Number(plan.HvpConfig?.memoryMb ?? 0),
+      platform: lightsailPlatformFromPlan(plan),
+    })) {
+      this.snack.warning(
+        this.t(
+          'Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.',
+        ),
+      );
+      return false;
+    }
+
     return super.validatePayload(payload);
   }
 
@@ -856,6 +874,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (!plan) return [];
     const region = normalizeString(plan.HvpRegion) ?? '';
     const diskGb = Number(plan.HvpConfig?.diskGb ?? 0);
+    const cpu = Number(plan.HvpConfig?.cpu ?? 0);
+    const memoryMb = Number(plan.HvpConfig?.memoryMb ?? 0);
     const sizeId = normalizeString(plan.HvpSize) ?? '';
     const sizeOption = (this.catalog()?.sizes ?? []).find((item) => item.id === sizeId) ?? null;
     const platform =
@@ -867,6 +887,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       isImageCompatibleWithPlan(option, {
         region,
         diskGb,
+        cpu,
+        memoryMb,
         platform,
         power: power > 0 ? power : null,
       }),
@@ -1165,7 +1187,14 @@ function configString(value: unknown, key: keyof HostingVpsInstanceConfig): stri
 function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
   const name = option.name || option.label || option.id;
   const versionArch = [option.version, option.architecture].filter(Boolean).join(' ');
-  const meta = [option.source, option.type].filter(Boolean).join(' · ');
+  const specs = [
+    option.cpu ? `${option.cpu} vCPU` : null,
+    option.memoryMb ? `${option.memoryMb} MB` : null,
+    option.minDiskGb || option.diskGb
+      ? `${option.minDiskGb || option.diskGb} GB`
+      : null,
+  ].filter(Boolean);
+  const meta = [option.source, option.type, ...specs].filter(Boolean).join(' · ');
   return {
     value: option.id,
     label: [name, versionArch].filter(Boolean).join(' '),
@@ -1179,6 +1208,7 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
       option.architecture,
       option.type,
       option.slug,
+      ...specs,
     ]
       .filter(Boolean)
       .join(' '),
@@ -1210,6 +1240,8 @@ function isImageCompatibleWithPlan(
   context: {
     region: string;
     diskGb: number;
+    cpu?: number;
+    memoryMb?: number;
     platform?: string | null;
     power?: number | null;
   },
@@ -1236,10 +1268,21 @@ function isImageCompatibleWithPlan(
     return false;
   }
 
-  const minDiskGb = Number(option.minDiskGb ?? 0);
+  const minDiskGb = Number(option.minDiskGb ?? option.diskGb ?? 0);
   if (context.diskGb > 0 && minDiskGb > 0 && minDiskGb > context.diskGb) {
     return false;
   }
+
+  const minCpu = Number(option.cpu ?? 0);
+  if ((context.cpu ?? 0) > 0 && minCpu > 0 && minCpu > (context.cpu ?? 0)) {
+    return false;
+  }
+
+  const minMemoryMb = Number(option.memoryMb ?? 0);
+  if ((context.memoryMb ?? 0) > 0 && minMemoryMb > 0 && minMemoryMb > (context.memoryMb ?? 0)) {
+    return false;
+  }
+
   return true;
 }
 
