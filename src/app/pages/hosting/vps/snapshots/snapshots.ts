@@ -41,7 +41,19 @@ const RESTORE_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Restore snapshot',
 };
 
-const HOSTING_VPS_SNAPSHOT_CONFIG: ConfigurableCrudConfig = {
+type SnapshotProviderCapabilities = {
+  create: boolean;
+  delete: boolean;
+  get: boolean;
+  list: boolean;
+  restore: boolean;
+  poll: boolean;
+  includeMemory: boolean;
+  quiesce: boolean;
+  restoreMode: 'in_place' | 'new_instance' | 'none';
+};
+
+const HOSTING_VPS_SNAPSHOT_CONFIG_BASE: Omit<ConfigurableCrudConfig, 'fields'> = {
   endpoint: 'hosting/vps/snapshots',
   uuidField: 'HvsUUID',
   pageTitle: 'VPS Snapshots',
@@ -135,47 +147,6 @@ const HOSTING_VPS_SNAPSHOT_CONFIG: ConfigurableCrudConfig = {
       className: 'status-col',
     },
   ],
-  fields: [
-    {
-      key: 'name',
-      source: 'HvsName',
-      payloadKey: 'name',
-      label: 'Name',
-      placeholder: 'WEB-APP-01-SNAP',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'instanceUUID',
-      source: 'HostingVpsInstanceHviUUID',
-      payloadKey: 'instanceUUID',
-      label: 'Instance',
-      type: 'search-select',
-      required: true,
-      span: 1,
-      disabledWhen: ({ editing }) => editing,
-    },
-    {
-      key: 'includeMemory',
-      source: 'HvsIncludeMemory',
-      payloadKey: 'includeMemory',
-      label: 'Include memory',
-      type: 'select',
-      options: YES_NO_OPTIONS,
-      span: 1,
-      disabledWhen: ({ editing }) => editing,
-    },
-    {
-      key: 'quiesce',
-      source: 'HvsQuiesce',
-      payloadKey: 'quiesce',
-      label: 'Quiesce',
-      type: 'select',
-      options: YES_NO_OPTIONS,
-      span: 1,
-      disabledWhen: ({ editing }) => editing,
-    },
-  ],
 };
 
 @Component({
@@ -188,6 +159,7 @@ const HOSTING_VPS_SNAPSHOT_CONFIG: ConfigurableCrudConfig = {
 export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly instances = signal<HostingVpsInstance[]>([]);
+  private readonly capabilitiesByProvider = signal<Record<string, SnapshotProviderCapabilities>>({});
   private readonly mutatingActionUUIDs = signal<Set<string>>(new Set());
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -205,16 +177,83 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
       .map((instance) => ({
         value: instance.HviUUID,
         label: instance.HviName,
-        description: [instance.HviStatus, instance.HviExternalId].filter(Boolean).join(' · '),
-        searchText: [instance.HviName, instance.HviStatus, instance.HviExternalId]
+        description: [
+          instance.ProviderName || instance.ProviderCode,
+          instance.HviStatus,
+          instance.HviExternalId,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        searchText: [
+          instance.HviName,
+          instance.ProviderName,
+          instance.ProviderCode,
+          instance.HviStatus,
+          instance.HviExternalId,
+        ]
           .filter(Boolean)
           .join(' '),
       })),
   );
 
   constructor() {
-    super(HOSTING_VPS_SNAPSHOT_CONFIG);
-    void this.fetchInstances();
+    super({
+      ...HOSTING_VPS_SNAPSHOT_CONFIG_BASE,
+      fields: [
+        {
+          key: 'name',
+          source: 'HvsName',
+          payloadKey: 'name',
+          label: 'Name',
+          placeholder: 'WEB-APP-01-SNAP',
+          required: true,
+          span: 1,
+        },
+        {
+          key: 'instanceUUID',
+          source: 'HostingVpsInstanceHviUUID',
+          payloadKey: 'instanceUUID',
+          label: 'Instance',
+          type: 'search-select',
+          required: true,
+          span: 1,
+          disabledWhen: ({ editing }) => editing,
+        },
+        {
+          key: 'includeMemory',
+          source: 'HvsIncludeMemory',
+          payloadKey: 'includeMemory',
+          label: 'Include memory',
+          type: 'select',
+          options: YES_NO_OPTIONS,
+          span: 1,
+          disabledWhen: ({ editing }) => editing,
+          hiddenWhen: ({ editing, values }) =>
+            editing || !this.supportsOption(values['instanceUUID'], 'includeMemory'),
+        },
+        {
+          key: 'quiesce',
+          source: 'HvsQuiesce',
+          payloadKey: 'quiesce',
+          label: 'Quiesce',
+          type: 'select',
+          options: YES_NO_OPTIONS,
+          span: 1,
+          disabledWhen: ({ editing }) => editing,
+          hiddenWhen: ({ editing, values }) =>
+            editing || !this.supportsOption(values['instanceUUID'], 'quiesce'),
+        },
+      ],
+      columns: HOSTING_VPS_SNAPSHOT_CONFIG_BASE.columns.map((column) =>
+        column.id === 'includeMemory'
+          ? {
+              ...column,
+              hiddenWhen: () => !this.anyLoadedSnapshotUsesMemory(),
+            }
+          : column,
+      ),
+    });
+    void this.fetchCatalog();
   }
 
   protected override listEndpoint(): string {
@@ -248,7 +287,9 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
-    if (!this.instances().length) await this.fetchInstances();
+    if (!this.instances().length || !Object.keys(this.capabilitiesByProvider()).length) {
+      await this.fetchCatalog();
+    }
 
     const params = new URLSearchParams();
     params.set('limit', String(this.listLimit));
@@ -269,15 +310,28 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override refreshList() {
-    void this.fetchInstances();
+    void this.fetchCatalog();
     super.refreshList();
   }
 
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'instanceUUID') return;
+    const caps = this.capabilitiesForInstance(value);
+    const reset: ConfigurableCrudRecord = {};
+    if (!caps?.includeMemory) reset['includeMemory'] = 0;
+    if (!caps?.quiesce) reset['quiesce'] = 0;
+    if (Object.keys(reset).length) this.patchFormValues(reset);
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const instanceUUID = !this.editingRecord()
+      ? payload['instanceUUID']
+      : this.editingRecord()?.['HostingVpsInstanceHviUUID'];
+    const caps = this.capabilitiesForInstance(instanceUUID);
     const next: ConfigurableCrudRecord = {
       name: payload['name'],
-      includeMemory: Number(payload['includeMemory']) === 1,
-      quiesce: Number(payload['quiesce']) === 1,
+      includeMemory: caps?.includeMemory ? Number(payload['includeMemory']) === 1 : false,
+      quiesce: caps?.quiesce ? Number(payload['quiesce']) === 1 : false,
     };
     if (!this.editingRecord()) {
       next['instanceUUID'] = payload['instanceUUID'];
@@ -314,6 +368,30 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
+  private supportsOption(
+    instanceUUID: unknown,
+    option: 'includeMemory' | 'quiesce',
+  ): boolean {
+    return Boolean(this.capabilitiesForInstance(instanceUUID)?.[option]);
+  }
+
+  private capabilitiesForInstance(
+    instanceUUID: unknown,
+  ): SnapshotProviderCapabilities | null {
+    const uuid = String(instanceUUID ?? '').trim();
+    if (!uuid) return null;
+    const instance = this.instances().find((row) => row.HviUUID === uuid);
+    const code = String(instance?.ProviderCode ?? '')
+      .trim()
+      .toLowerCase();
+    if (!code) return null;
+    return this.capabilitiesByProvider()[code] ?? null;
+  }
+
+  private anyLoadedSnapshotUsesMemory(): boolean {
+    return this.rows().some((row) => Number(row['HvsIncludeMemory'] ?? 0) === 1);
+  }
+
   private enrichSnapshot(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const providerName = String(row['ProviderName'] ?? '').trim();
     const providerCode = String(row['ProviderCode'] ?? '').trim();
@@ -324,6 +402,10 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
     return { ...row, ProviderLabel: providerLabel };
   }
 
+  private async fetchCatalog() {
+    await Promise.all([this.fetchInstances(), this.fetchCapabilities()]);
+  }
+
   private async fetchInstances() {
     try {
       const response = await this.api.get<{ data?: { items?: HostingVpsInstance[] } }>(
@@ -332,6 +414,17 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
       this.instances.set(response?.data?.items ?? []);
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to load VPS instances.');
+    }
+  }
+
+  private async fetchCapabilities() {
+    try {
+      const response = await this.api.get<{
+        data?: { providers?: Record<string, SnapshotProviderCapabilities> };
+      }>(`${this.snapshotEndpoint()}/capabilities`);
+      this.capabilitiesByProvider.set(response?.data?.providers ?? {});
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || 'Failed to load snapshot capabilities.');
     }
   }
 
