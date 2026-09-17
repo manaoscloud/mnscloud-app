@@ -870,24 +870,6 @@ export const routes: Routes = [
                     title: 'Hosting • VPS Container Instances | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
-                  {
-                    path: 'provider',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps-container/provider/provider').then(
-                        (m) => m.HostingVpsContainerProviderPage,
-                      ),
-                    title: 'Hosting • VPS Container Provider | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
-                    path: 'plans',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps-container/plans/plans').then(
-                        (m) => m.HostingVpsContainerPlansPage,
-                      ),
-                    title: 'Hosting • VPS Container Plans | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
                 ],
               },
               {

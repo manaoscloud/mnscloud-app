@@ -4331,5 +4331,15 @@
   "Recheck": "Recheck",
   "API region": "API region",
   "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.": "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.",
-  "Copy plan": "Copy plan"
+  "Copy plan": "Copy plan",
+  "SSH key is required.": "SSH key is required.",
+  "Select an image from the provider catalog.": "Select an image from the provider catalog.",
+  "VPS Container provisioning retry could not be queued.": "VPS Container provisioning retry could not be queued.",
+  "Failed to retry VPS Container provisioning.": "Failed to retry VPS Container provisioning.",
+  "Select a valid target VPS Container plan.": "Select a valid target VPS Container plan.",
+  "Failed to change VPS Container plan.": "Failed to change VPS Container plan.",
+  "Failed to load VPS Container providers.": "Failed to load VPS Container providers.",
+  "Failed to load VPS Container plans.": "Failed to load VPS Container plans.",
+  "Unknown provider": "Unknown provider",
+  "Select a valid VPS Container provider.": "Select a valid VPS Container provider."
 }
