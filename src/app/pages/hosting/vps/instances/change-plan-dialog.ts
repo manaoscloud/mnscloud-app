@@ -53,7 +53,10 @@ export class ChangePlanDialogComponent {
     const current = this.currentPlan();
     if (!current) return [];
     const currentDisk = this.planDiskGb(current);
+    const currentMemory = this.planMemoryMb(current);
     const currentGrouping = planSizeGrouping(current);
+    const provider = String(current.HvpProvider ?? '');
+    if (provider !== 'digitalocean' && provider !== 'lightsail') return [];
     if (isGpuSizeGrouping(currentGrouping)) return [];
 
     return this.data.plans
@@ -63,7 +66,17 @@ export class ChangePlanDialogComponent {
         if (plan.HvpProvider !== current.HvpProvider) return false;
         if ((plan.HvpRegion ?? '') !== (current.HvpRegion ?? '')) return false;
         if (!plan.HvpSize) return false;
-        if (plan.HvpProvider !== 'digitalocean') return false;
+
+        if (provider === 'lightsail') {
+          const currentFamily = String(current.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
+          const targetFamily = String(plan.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
+          if (currentFamily && targetFamily && currentFamily !== targetFamily) return false;
+          const targetDisk = this.planDiskGb(plan);
+          if (currentDisk > 0 && targetDisk > 0 && targetDisk < currentDisk) return false;
+          const targetMemory = this.planMemoryMb(plan);
+          if (currentMemory > 0 && targetMemory > 0 && targetMemory < currentMemory) return false;
+          return true;
+        }
 
         const grouping = planSizeGrouping(plan);
         if (isGpuSizeGrouping(grouping)) return false;
@@ -91,6 +104,10 @@ export class ChangePlanDialogComponent {
       });
   });
 
+  readonly isLightsailUpgrade = computed(
+    () => String(this.currentPlan()?.HvpProvider ?? '') === 'lightsail',
+  );
+
   readonly selectedTargetPlan = computed(() => this.planById(this.targetPlanUUID()));
 
   planById(uuid: string | null | undefined) {
@@ -100,6 +117,11 @@ export class ChangePlanDialogComponent {
 
   planDiskGb(plan: HostingVpsPlan | null | undefined) {
     const value = Number(plan?.HvpConfig?.diskGb ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  planMemoryMb(plan: HostingVpsPlan | null | undefined) {
+    const value = Number(plan?.HvpConfig?.memoryMb ?? 0);
     return Number.isFinite(value) ? value : 0;
   }
 

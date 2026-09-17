@@ -689,10 +689,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
     const resizeStatus = config?.resize?.status ?? '';
     const grouping = planSizeGrouping(plan);
+    const provider = plan?.HvpProvider;
     return (
       Number(row['HviIsActive']) === 1 &&
       !!row['HviExternalId'] &&
-      plan?.HvpProvider === 'digitalocean' &&
+      (provider === 'digitalocean' || provider === 'lightsail') &&
       !isGpuSizeGrouping(grouping) &&
       !['resize_queued', 'resizing', 'powering_on'].includes(String(row['HviStatus'] ?? '')) &&
       !['queued', 'resizing', 'powering_on'].includes(resizeStatus)
@@ -776,7 +777,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const confirmed = await this.confirmAction(
       'Upgrade VPS plan',
-      `Queue upgrade for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
+      target.HvpProvider === 'lightsail'
+        ? `Queue Lightsail upgrade for "${instance.HviName}" to "${target.HvpName}"? The instance will be recreated from a snapshot (downtime). Dynamic public IP may change; an existing Static IP is preserved.`
+        : `Queue upgrade for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
       'Upgrade',
     );
     if (!confirmed) return;
