@@ -70,6 +70,10 @@ const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'password', label: 'Username and password' },
 ];
 
+const LIGHTSAIL_AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'ssh_key', label: 'SSH key' },
+];
+
 const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/instances',
   uuidField: 'HviUUID',
@@ -118,6 +122,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     username: 'root',
     password: '',
     sshKey: '',
+    planProvider: '',
     notes: '',
   },
   columns: [
@@ -209,12 +214,17 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       source: 'HviConfig',
       payloadKey: 'authMethod',
       label: 'Authentication method',
+      labelWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') === 'lightsail'
+          ? 'Authentication method (Lightsail requires SSH key)'
+          : 'Authentication method',
       type: 'select',
       options: AUTH_METHOD_OPTIONS,
       required: true,
       span: 1,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'authMethod') || 'ssh_key',
+      disabledWhen: ({ values }) => String(values['planProvider'] ?? '') === 'lightsail',
     },
     {
       key: 'username',
@@ -225,8 +235,12 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'username') || 'root',
-      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'password',
-      requiredWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') === 'password',
+      hiddenWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') === 'lightsail' ||
+        String(values['authMethod'] ?? 'ssh_key') !== 'password',
+      requiredWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
       key: 'password',
@@ -238,21 +252,29 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'authentication',
       fromRecord: () => '',
-      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'password',
+      hiddenWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') === 'lightsail' ||
+        String(values['authMethod'] ?? 'ssh_key') !== 'password',
       requiredWhen: ({ editing, values }) =>
-        !editing && String(values['authMethod'] ?? 'ssh_key') === 'password',
+        !editing &&
+        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
       key: 'sshKey',
       source: 'HviConfig',
       payloadKey: 'sshKey',
       label: 'SSH Key',
-      placeholder: 'default-key',
+      placeholder: 'ssh-rsa AAAA... or ssh-ed25519 AAAA...',
       span: 2,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
-      hiddenWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') !== 'ssh_key',
-      requiredWhen: ({ values }) => String(values['authMethod'] ?? 'ssh_key') === 'ssh_key',
+      hiddenWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        String(values['authMethod'] ?? 'ssh_key') !== 'ssh_key',
+      requiredWhen: ({ values }) =>
+        String(values['planProvider'] ?? '') === 'lightsail' ||
+        String(values['authMethod'] ?? 'ssh_key') === 'ssh_key',
     },
     {
       key: 'notes',
@@ -450,6 +472,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     this.catalogProviderUUID.set(null);
     this.catalogFetchKey.set(null);
     super.startCreate();
+    this.patchFormValues({
+      planProvider: '',
+      authMethod: 'ssh_key',
+      password: '',
+    });
   }
 
   override startEdit(row: ConfigurableCrudRecord): void {
@@ -457,6 +484,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const planUUID = String(this.formValues()['planUUID'] ?? '');
     this.activePlanUUID = planUUID;
     void this.applySelectedPlan(planUUID, false);
+  }
+
+  override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    if (field.key === 'authMethod') {
+      return this.isSelectedPlanLightsail() ? LIGHTSAIL_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
+    }
+    return super.fieldOptions(field);
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -471,12 +505,29 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return field.key === 'image' ? this.catalogLoading() : super.fieldLoading(field);
   }
 
+  private isSelectedPlanLightsail(): boolean {
+    const fromForm = String(this.formValues()['planProvider'] ?? '')
+      .trim()
+      .toLowerCase();
+    if (fromForm) return fromForm === 'lightsail';
+    const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+    return plan?.HvpProvider === 'lightsail';
+  }
+
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key === 'planUUID') {
       void this.applySelectedPlan(String(value ?? ''), true);
       return;
     }
     if (key === 'authMethod') {
+      if (this.isSelectedPlanLightsail()) {
+        this.patchFormValues({
+          authMethod: 'ssh_key',
+          password: '',
+          username: '',
+        });
+        return;
+      }
       const method = String(value ?? 'ssh_key');
       if (method === 'password') {
         this.patchFormValues({
@@ -491,15 +542,21 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
-    const authMethod =
-      String(payload['authMethod'] ?? 'ssh_key')
-        .trim()
-        .toLowerCase() === 'password'
-        ? 'password'
-        : 'ssh_key';
+    const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
+    const lightsail = plan?.HvpProvider === 'lightsail' ||
+      String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
+    const authMethod = lightsail
+      ? 'ssh_key'
+      : String(payload['authMethod'] ?? 'ssh_key')
+          .trim()
+          .toLowerCase() === 'password'
+      ? 'password'
+      : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
-    const username = normalizeString(payload['username']) ?? 'root';
-    const password = normalizeString(payload['password']);
+    const username = lightsail
+      ? null
+      : (normalizeString(payload['username']) ?? (authMethod === 'password' ? 'root' : null));
+    const password = lightsail ? null : normalizeString(payload['password']);
     const providerImageId = normalizeString(payload['image']);
     const notes = normalizeString(payload['notes']);
     const config: HostingVpsInstanceConfig = {
@@ -552,14 +609,24 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       return super.validatePayload(payload);
     }
 
-    const authMethod =
-      String(payload['authMethod'] ?? 'ssh_key')
-        .trim()
-        .toLowerCase() === 'password'
-        ? 'password'
-        : 'ssh_key';
+    const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
+    const lightsail = plan?.HvpProvider === 'lightsail' ||
+      String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
+    const authMethod = lightsail
+      ? 'ssh_key'
+      : String(payload['authMethod'] ?? 'ssh_key')
+          .trim()
+          .toLowerCase() === 'password'
+      ? 'password'
+      : 'ssh_key';
     if (authMethod === 'ssh_key' && !normalizeString(payload['sshKey'])) {
-      this.snack.warning(this.t('SSH key is required for SSH key authentication.'));
+      this.snack.warning(
+        this.t(
+          lightsail
+            ? 'SSH key is required for Lightsail instances.'
+            : 'SSH key is required for SSH key authentication.',
+        ),
+      );
       return false;
     }
     if (authMethod === 'password' && !normalizeString(payload['password'])) {
@@ -733,7 +800,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const normalized = normalizeString(uuid);
     if (!normalized) {
       this.activePlanUUID = '';
-      this.patchFormValues({ image: '' });
+      this.patchFormValues({ image: '', planProvider: '' });
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
       return;
@@ -744,9 +811,21 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const planChanged = this.activePlanUUID !== normalized;
     this.activePlanUUID = normalized;
+    const provider = String(plan.HvpProvider ?? '').trim().toLowerCase();
 
     if (planChangedByUser && planChanged) {
       this.patchFormValues({ image: '' });
+    }
+
+    if (provider === 'lightsail') {
+      this.patchFormValues({
+        planProvider: 'lightsail',
+        authMethod: 'ssh_key',
+        password: '',
+        username: '',
+      });
+    } else {
+      this.patchFormValues({ planProvider: provider || '' });
     }
 
     await this.fetchProviderCatalog(plan);
