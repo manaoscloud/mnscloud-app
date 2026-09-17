@@ -716,12 +716,26 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
         normalizeString(this.formValues()['size']) ??
         normalizeString(this.formValues()['sizeManual']);
       if (size) {
-        const available = (result?.data?.catalog?.sizes ?? []).some((item) => item.id === size);
-        if (!available) {
+        const catalogSizes = result?.data?.catalog?.sizes ?? [];
+        const provider =
+          result?.data?.catalog?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+        // DigitalOcean/Lightsail sizes are catalog-scoped. Private-cloud plans use free-form
+        // size labels + explicit CPU/RAM/disk — never wipe those specs when flavors are empty.
+        const requiresCatalogSize = provider === 'digitalocean' || provider === 'lightsail';
+        if (requiresCatalogSize && catalogSizes.length > 0) {
+          const available = catalogSizes.some((item) => item.id === size);
+          if (!available) {
+            this.clearSizeSelection(
+              'Selected size is not available in this region. Choose another plan.',
+            );
+          } else {
+            void this.applySelectedSizeSpecs(size);
+          }
+        } else if (requiresCatalogSize && catalogSizes.length === 0) {
           this.clearSizeSelection(
             'Selected size is not available in this region. Choose another plan.',
           );
-        } else {
+        } else if (catalogSizes.some((item) => item.id === size)) {
           void this.applySelectedSizeSpecs(size);
         }
       }
@@ -742,7 +756,11 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (!option) return;
 
     const region = this.selectedRegion();
+    const provider =
+      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    const requiresCatalogSize = provider === 'digitalocean' || provider === 'lightsail';
     if (
+      requiresCatalogSize &&
       region &&
       Array.isArray(option.regions) &&
       option.regions.length > 0 &&
@@ -765,8 +783,6 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (diskGb !== null) patch['diskGb'] = diskGb;
     if (transferGb !== null) patch['transferGb'] = transferGb;
 
-    const provider =
-      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
     const usdMonthly = catalogNumber(option.priceMonthly);
     if (usdMonthly !== null && usdMonthly > 0) {
       const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
