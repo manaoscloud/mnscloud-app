@@ -1923,6 +1923,14 @@ export class MainLayout {
               route: '/hosting/vps/instances',
               masterRoute: '/system/vps/instances',
             },
+            {
+              id: 'hosting/vps/snapshots',
+              label: 'Snapshots',
+              icon: 'photo_camera',
+              route: '/hosting/vps/snapshots',
+              masterRoute: '/system/vps/snapshots',
+              entitlementCode: 'module.hosting.vps.snapshot',
+            },
           ],
         },
         {
