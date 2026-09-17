@@ -24,8 +24,15 @@
       </div>
 
       <p class="change-plan-hint">
-        {{ 'Only plans in the same size category are listed.' | transloco }}
-        {{ currentGrouping().family }} / {{ currentGrouping().category }}
+        @if (isLightsailUpgrade()) {
+          {{
+            'Lightsail upgrades recreate the instance from a snapshot (downtime). Dynamic public IP may change; an existing Static IP is kept.'
+              | transloco
+          }}
+        } @else {
+          {{ 'Only plans in the same size category are listed.' | transloco }}
+          {{ currentGrouping().family }} / {{ currentGrouping().category }}
+        }
       </p>
     }
 
