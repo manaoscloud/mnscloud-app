@@ -1,45 +1,15 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import {
-  getVpsDialogViewportConfig,
-  updateVpsDialogViewport,
-} from '../vps-container-dialog-viewport';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type {
   HostingVpsContainerProvider,
   VpsContainerProvider,
@@ -47,116 +17,69 @@ import type {
   VpsContainerProviderCredentials,
 } from '../vps-container.types';
 
-@Component({
-  selector: 'app-hosting-vps-container-provider',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './provider.html',
-  styleUrls: ['./provider.scss'],
-})
-export class HostingVpsContainerProviderPage {
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
 
-  readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
+const PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [{ value: 'incus', label: 'Incus' }];
 
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
+const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
+  key: 'test',
+  label: 'Test',
+  icon: 'science',
+  tooltip: 'Test provider',
+};
 
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-  readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
-  );
+const CONFIG_FIELD_KEYS = [
+  'apiUrl',
+  'project',
+  'target',
+  'storagePool',
+  'network',
+  'profile',
+  'remote',
+  'imageAlias',
+] as const;
 
-  readonly providers = signal<HostingVpsContainerProvider[]>([]);
-  readonly appliedSearch = signal('');
-  readonly appliedStatus = signal('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly rows = computed(() => {
-    const search = this.appliedSearch().trim().toLowerCase();
-    const status = this.appliedStatus();
-    return this.providers().filter((item) => {
-      const searchableConfig = [
-        this.providerConfigValue(item, 'apiUrl'),
-        this.providerConfigValue(item, 'project'),
-        this.providerConfigValue(item, 'target'),
-        this.providerConfigValue(item, 'network'),
-      ].map((value) => String(value ?? '').toLowerCase());
-      const matchesSearch =
-        !search ||
-        item.HcpName.toLowerCase().includes(search) ||
-        this.providerLabel(item.HcpProvider).toLowerCase().includes(search) ||
-        searchableConfig.some((value) => value.includes(search));
-      const matchesStatus =
-        status === '' ||
-        (status === '1' && item.HcpIsActive === 1) ||
-        (status === '0' && item.HcpIsActive !== 1);
-      return matchesSearch && matchesStatus;
-    });
-  });
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
+const CREDENTIAL_FIELD_KEYS = [
+  'bearerToken',
+  'clientCertificate',
+  'clientPrivateKey',
+  'serverCertificate',
+] as const;
 
-  readonly saving = signal(false);
-  readonly validatingProviderId = signal<string | null>(null);
-  readonly editing = signal<HostingVpsContainerProvider | null>(null);
-  readonly providerSelection = signal<VpsContainerProvider>('incus');
-  readonly hideBearerToken = signal(true);
-  readonly selectedProviderUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedProviderUUIDs().size);
-
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'provider',
-    'region',
-    'default',
-    'status',
-    'actions',
-  ];
-  readonly providerOptions: { value: VpsContainerProvider; label: string }[] = [
-    { value: 'incus', label: 'Incus' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly providerFormModel = signal({
+const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/vps-container/providers',
+  uuidField: 'HcpUUID',
+  pageTitle: 'VPS Container Provider',
+  pageDescription: 'Configure Incus providers for VPS Container provisioning.',
+  createTitle: 'New provider',
+  editTitle: 'Edit provider',
+  dialogDescription: 'Configure credentials for VPS Container provisioning.',
+  searchPlaceholder: 'Name, provider, project or API URL',
+  emptyLabel: 'No providers found.',
+  deleteTitle: 'Delete provider',
+  deleteMessage: 'Are you sure you want to delete this provider?',
+  deleteSelectedTitle: 'Delete selected providers',
+  deleteSelectedMessage: 'Are you sure you want to delete {count} selected provider(s)?',
+  savedMessage: 'Provider saved successfully.',
+  deletedMessage: 'Provider deleted successfully.',
+  deleteFailedMessage: 'Failed to delete provider.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  showAsyncOperationStatus: false,
+  authenticationTabAfterRecord: true,
+  rowActions: [TEST_PROVIDER_ACTION],
+  tabLabels: {
+    authentication: 'API',
+  },
+  initialValues: {
     name: '',
-    provider: 'incus' as VpsContainerProvider,
+    provider: 'incus',
     apiUrl: '',
     project: 'default',
     target: '',
@@ -165,135 +88,267 @@ export class HostingVpsContainerProviderPage {
     profile: 'default',
     remote: 'https://images.linuxcontainers.org',
     imageAlias: '',
+    verifyTls: 1,
     bearerToken: '',
     clientCertificate: '',
     clientPrivateKey: '',
     serverCertificate: '',
     isActive: 1,
     isDefault: 0,
-  });
-  readonly providerForm = createForm(this.providerFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-    required(schema.apiUrl);
-    required(schema.isActive);
-    required(schema.isDefault);
-  });
-
-  private readonly providersResource = resource({
-    params: () => ({
-      search: this.appliedSearch(),
-      status: this.appliedStatus(),
-      endpoint: this.providerEndpoint(),
-    }),
-    defaultValue: [] as HostingVpsContainerProvider[],
-    loader: async ({ params }) => {
-      const search = params.search.trim();
-      const query = new URLSearchParams({ limit: '500', offset: '0' });
-      if (search) query.set('search', search);
-      if (params.status === '0' || params.status === '1') query.set('status', params.status);
-      const result = await this.api.get<{
-        data?: { items?: HostingVpsContainerProvider[] };
-      }>(`${params.endpoint}?${query.toString()}`);
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      return list.map((item) => ({
-        ...item,
-        HcpConfig: this.parseConfig<VpsContainerProviderConfig>(item.HcpConfig),
-      })) as HostingVpsContainerProvider[];
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HcpName', uuidField: 'HcpUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HcpProvider',
+      lookupKey: 'provider',
     },
-  });
-  readonly loading = this.providersResource.isLoading;
-  private readonly syncProviders = effect(() => {
-    this.providers.set(this.providersResource.value());
-    this.reconcileProviderSelection();
-  });
-  private readonly reportLoadError = effect(() => {
-    const error = this.providersResource.error();
-    if (!error) return;
-    this.snack.error(this.friendlyError(error, 'Failed to load VPS Container providers.'));
-  });
+    { id: 'region', label: 'Region / Project', field: 'RegionDisplay' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HcpIsDefault',
+      className: 'status-col',
+    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HcpIsActive', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'isActive',
+      source: 'HcpIsActive',
+      payloadKey: 'isActive',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'isDefault',
+      source: 'HcpIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'provider',
+      source: 'HcpProvider',
+      payloadKey: 'provider',
+      label: 'Provider',
+      type: 'search-select',
+      translateOptions: false,
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HcpName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'Primary provider',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'apiUrl',
+      payloadKey: 'apiUrl',
+      label: 'Incus API URL',
+      placeholder: 'https://incus.example.com:8443',
+      tab: 'authentication',
+      span: 2,
+      required: true,
+    },
+    {
+      key: 'project',
+      payloadKey: 'project',
+      label: 'Project',
+      placeholder: 'default',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'target',
+      payloadKey: 'target',
+      label: 'Target node',
+      placeholder: 'node-01',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'storagePool',
+      payloadKey: 'storagePool',
+      label: 'Storage pool',
+      placeholder: 'default',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'network',
+      payloadKey: 'network',
+      label: 'Network',
+      placeholder: 'incusbr0',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'profile',
+      payloadKey: 'profile',
+      label: 'Profile',
+      placeholder: 'default',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'remote',
+      payloadKey: 'remote',
+      label: 'Image server',
+      placeholder: 'https://images.linuxcontainers.org',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'imageAlias',
+      payloadKey: 'imageAlias',
+      label: 'Default image alias',
+      placeholder: 'debian/12',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'verifyTls',
+      payloadKey: 'verifyTls',
+      label: 'Verify TLS',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'bearerToken',
+      payloadKey: 'bearerToken',
+      label: 'Bearer token',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current token',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'clientCertificate',
+      payloadKey: 'clientCertificate',
+      label: 'Client certificate',
+      type: 'textarea',
+      rows: 4,
+      placeholder: '-----BEGIN CERTIFICATE-----',
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'clientPrivateKey',
+      payloadKey: 'clientPrivateKey',
+      label: 'Client private key',
+      type: 'textarea',
+      rows: 4,
+      placeholder: '-----BEGIN PRIVATE KEY-----',
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'serverCertificate',
+      payloadKey: 'serverCertificate',
+      label: 'Server certificate',
+      type: 'textarea',
+      rows: 4,
+      placeholder: 'Optional trusted server certificate',
+      tab: 'authentication',
+      span: 2,
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-hosting-vps-container-provider',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingVpsContainerProviderPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly endpoint = computed(() =>
+    this.isMaster()
+      ? 'system/hosting/vps-container/providers'
+      : HOSTING_VPS_CONTAINER_PROVIDER_CONFIG.endpoint,
+  );
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.stopDialogViewportObserver();
+    const masterScope =
+      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    super({
+      ...HOSTING_VPS_CONTAINER_PROVIDER_CONFIG,
+      pageDescription:
+        'Configure platform Incus providers. Provider administration is master-only.',
+      canCreate: masterScope,
+      canEdit: masterScope,
+      canDelete: masterScope,
     });
   }
 
-  refreshList() {
-    this.providersResource.reload();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedStatus.set(values.status);
-    this.resetPagination();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ search: '', status: '' });
-    this.applyFilters();
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  providerLabel(provider: VpsContainerProvider) {
-    return this.providerOptions.find((opt) => opt.value === provider)?.label ?? provider;
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  statusLabel(item: HostingVpsContainerProvider) {
-    return item.HcpIsActive === 1 ? 'Active' : 'Inactive';
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  providerIsDefault(item: HostingVpsContainerProvider) {
-    return item.HcpIsDefault === 1;
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'provider') return PROVIDER_OPTIONS;
+    return [];
   }
 
-  providerConfigValue(item: HostingVpsContainerProvider, key: keyof VpsContainerProviderConfig) {
-    const config = item.HcpConfig ?? {};
-    return config?.[key] ?? null;
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    const items = await super.fetchItems(filters);
+    return items.map((item) => {
+      const config = parseConfig<VpsContainerProviderConfig>(item['HcpConfig']);
+      return {
+        ...item,
+        HcpConfig: config,
+        RegionDisplay: regionDisplay(config),
+      };
+    });
   }
 
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  override startEdit(row: ConfigurableCrudRecord): void {
+    void this.startEditWithCredentials(row);
   }
 
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.resetForm();
-    this.openDialog();
-  }
-
-  async startEdit(item: HostingVpsContainerProvider) {
-    let providerRecord = item;
-    try {
-      const result = await this.api.get<{ data?: { item?: HostingVpsContainerProvider | null } }>(
-        `${this.providerEndpoint()}/${item.HcpUUID}`,
-      );
-      const detail = result?.data?.item;
-      if (detail) {
-        providerRecord = {
-          ...detail,
-          HcpConfig: this.parseConfig<VpsContainerProviderConfig>(detail.HcpConfig),
-        };
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load provider credentials.'));
-    }
-
-    const config = providerRecord.HcpConfig ?? {};
-    const credentials = providerRecord.credentials ?? {};
-    this.editing.set(providerRecord);
-    this.providerFormModel.set({
-      name: providerRecord.HcpName,
-      provider: providerRecord.HcpProvider,
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const base = super.formValuesFromRecord(row);
+    const config = parseConfig<VpsContainerProviderConfig>(row['HcpConfig']) ?? {};
+    const credentials =
+      (row['credentials'] as VpsContainerProviderCredentials | null | undefined) ?? {};
+    return {
+      ...base,
+      name: String(row['HcpName'] ?? base['name'] ?? ''),
+      provider: providerOf(row['HcpProvider'] ?? base['provider']),
       apiUrl: config.apiUrl ?? '',
       project: config.project ?? 'default',
       target: config.target ?? '',
@@ -302,387 +357,134 @@ export class HostingVpsContainerProviderPage {
       profile: config.profile ?? 'default',
       remote: config.remote ?? 'https://images.linuxcontainers.org',
       imageAlias: config.imageAlias ?? '',
+      verifyTls: config.verifyTls === undefined ? 1 : truthyNumber(config.verifyTls),
       bearerToken: credentials.bearerToken ?? '',
       clientCertificate: credentials.clientCertificate ?? '',
       clientPrivateKey: credentials.clientPrivateKey ?? '',
       serverCertificate: credentials.serverCertificate ?? '',
-      isActive: providerRecord.HcpIsActive === 1 ? 1 : 0,
-      isDefault: providerRecord.HcpIsDefault === 1 ? 1 : 0,
-    });
-    this.providerSelection.set(providerRecord.HcpProvider);
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    if (!this.providerForm().valid()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    const values = this.providerFormModel();
-    const credentials = this.buildCredentialsPayload();
-    if (!this.editing() && !credentials) {
-      this.snack.warning('Credentials are required for new providers.');
-      return;
-    }
-
-    this.saving.set(true);
-    const payload: Record<string, unknown> = {
-      name: values.name.trim(),
-      provider: values.provider,
-      config: this.buildConfigPayload(),
-      isActive: values.isActive === 1,
-      isDefault: values.isDefault === 1,
+      isActive: truthyNumber(row['HcpIsActive']),
+      isDefault: truthyNumber(row['HcpIsDefault']),
     };
-    if (credentials) payload['credentials'] = credentials;
+  }
 
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const next: ConfigurableCrudRecord = {
+      name: typeof payload['name'] === 'string' ? payload['name'].trim() : payload['name'],
+      provider: providerOf(payload['provider']),
+      config: buildConfigPayload(payload),
+      isActive: truthyNumber(payload['isActive']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
+    };
+    const credentials = buildCredentialsPayload(payload);
+    if (credentials) next['credentials'] = credentials;
+    return next;
+  }
+
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+
+    const editing = !!this.editingRecord();
+    const credentials = buildCredentialsPayload(payload);
+    if (!editing && !credentials) {
+      this.snack.warning(this.t('Credentials are required for new providers.'));
+      return false;
+    }
+    return true;
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'test') return;
+    const uuid = String(row['HcpUUID'] ?? '');
+    if (!uuid) return;
+
+    this.mutating.set(true);
     try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.providerEndpoint()}/${editing.HcpUUID}`, payload);
-        this.snack.success('Provider updated.');
-      } else {
-        await this.api.post(this.providerEndpoint(), payload);
-        this.snack.success('Provider created.');
-      }
-      this.providersResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      const label =
+        this.lookupLabel('provider', row['HcpProvider']) || String(row['HcpProvider'] ?? '');
+      this.snack.success(this.t(`${label} provider tested successfully.`));
     } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save provider.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to test provider.'));
     } finally {
-      this.saving.set(false);
+      this.mutating.set(false);
     }
   }
 
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  async remove(item: HostingVpsContainerProvider) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete provider',
-        message: `Are you sure you want to delete "${item.HcpName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
+  private async startEditWithCredentials(row: ConfigurableCrudRecord): Promise<void> {
+    let providerRecord = row;
     try {
-      await this.api.delete(`${this.providerEndpoint()}/${item.HcpUUID}`);
-      this.snack.success('Provider deleted.');
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete provider.'));
-    }
-  }
-
-  isSelected(item: HostingVpsContainerProvider) {
-    return this.selectedProviderUUIDs().has(item.HcpUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleProviderSelection(item: HostingVpsContainerProvider, checked: boolean) {
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(item.HcpUUID);
-      } else {
-        next.delete(item.HcpUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        if (checked) {
-          next.add(row.HcpUUID);
-        } else {
-          next.delete(row.HcpUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedProviders() {
-    const ids = Array.from(this.selectedProviderUUIDs());
-    if (!ids.length) return;
-    const labels = this.providers()
-      .filter((item) => ids.includes(item.HcpUUID))
-      .slice(0, 3)
-      .map((item) => item.HcpName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected providers',
-        message: `Are you sure you want to delete ${ids.length} selected provider(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingVpsContainerProviderUUID: string; message: string }[];
-        };
-      }>(`${this.providerEndpoint()}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map((item) => item.HostingVpsContainerProviderUUID),
+      const result = await this.api.get<{ data?: { item?: HostingVpsContainerProvider | null } }>(
+        `${this.endpoint()}/${String(row['HcpUUID'] ?? '')}`,
       );
-      this.providers.update((rows) => rows.filter((row) => !deleted.has(row.HcpUUID)));
-      this.selectedProviderUUIDs.set(failed);
-      this.providersResource.reload();
-      if (failed.size) {
-        this.snack.error(`${failed.size} provider(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} provider(s) deleted.`);
+      const detail = result?.data?.item;
+      if (detail) {
+        const config = parseConfig<VpsContainerProviderConfig>(detail.HcpConfig);
+        providerRecord = {
+          ...detail,
+          HcpConfig: config,
+          RegionDisplay: regionDisplay(config),
+        } as ConfigurableCrudRecord;
       }
     } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected providers.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load provider credentials.'));
     }
+    super.startEdit(providerRecord);
   }
+}
 
-  async validateProvider(item: HostingVpsContainerProvider) {
-    this.validatingProviderId.set(item.HcpUUID);
-    try {
-      await this.api.post(`${this.providerEndpoint()}/${item.HcpUUID}/validate`, {});
-      this.snack.success(`${this.providerLabel(item.HcpProvider)} provider tested successfully.`);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to test provider.'));
-    } finally {
-      this.validatingProviderId.set(null);
-    }
+function providerOf(value: unknown): VpsContainerProvider {
+  if (value && typeof value === 'object' && 'provider' in (value as Record<string, unknown>)) {
+    return providerOf((value as ConfigurableCrudRecord)['provider']);
   }
+  const normalized = String(value ?? 'incus') as VpsContainerProvider;
+  return PROVIDER_OPTIONS.some((option) => option.value === normalized) ? normalized : 'incus';
+}
 
-  toggleSecret(event: MouseEvent) {
-    event.stopPropagation();
-    this.hideBearerToken.set(!this.hideBearerToken());
+function truthyNumber(value: unknown): 0 | 1 {
+  if (value === true || value === 1 || value === '1' || value === 'true') return 1;
+  return 0;
+}
+
+function normalizeString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function parseConfig<T>(value: unknown): T | null {
+  if (!value) return null;
+  if (typeof value === 'object') return value as T;
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
+  } catch {
+    return null;
   }
+}
 
-  private normalizeString(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    return trimmed.length ? trimmed : null;
+function regionDisplay(config: VpsContainerProviderConfig | null | undefined): string {
+  if (!config) return '';
+  return String(config.project ?? config.apiUrl ?? config.target ?? '');
+}
+
+function buildConfigPayload(values: ConfigurableCrudRecord): VpsContainerProviderConfig {
+  const config: VpsContainerProviderConfig = {};
+  for (const key of CONFIG_FIELD_KEYS) {
+    const normalized = normalizeString(values[key]);
+    if (normalized) (config as Record<string, unknown>)[key] = normalized;
   }
+  config.verifyTls = truthyNumber(values['verifyTls']) === 1;
+  return config;
+}
 
-  private parseConfig<T>(value: unknown): T | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
-    } catch {
-      return null;
-    }
+function buildCredentialsPayload(
+  values: ConfigurableCrudRecord,
+): VpsContainerProviderCredentials | null {
+  const credentials: VpsContainerProviderCredentials = {};
+  for (const key of CREDENTIAL_FIELD_KEYS) {
+    const normalized = normalizeString(values[key]);
+    if (normalized) credentials[key] = normalized;
   }
-
-  private resetForm() {
-    this.providerFormModel.set({
-      name: '',
-      provider: 'incus',
-      apiUrl: '',
-      project: 'default',
-      target: '',
-      storagePool: '',
-      network: '',
-      profile: 'default',
-      remote: 'https://images.linuxcontainers.org',
-      imageAlias: '',
-      bearerToken: '',
-      clientCertificate: '',
-      clientPrivateKey: '',
-      serverCertificate: '',
-      isActive: 1,
-      isDefault: 0,
-    });
-    this.providerSelection.set('incus');
-  }
-
-  private resetPagination() {
-    this.pageIndex.set(0);
-  }
-
-  private reconcileProviderSelection() {
-    const available = new Set(this.providers().map((item) => item.HcpUUID));
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortRows(rows: HostingVpsContainerProvider[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.providerSortValue(a, active),
-        this.providerSortValue(b, active),
-      );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private providerSortValue(item: HostingVpsContainerProvider, column: string) {
-    switch (column) {
-      case 'name':
-        return item.HcpName;
-      case 'provider':
-        return this.providerLabel(item.HcpProvider);
-      case 'region':
-        return String(
-          this.providerConfigValue(item, 'project') ??
-            this.providerConfigValue(item, 'apiUrl') ??
-            '',
-        );
-      case 'default':
-        return item.HcpIsDefault;
-      case 'status':
-        return item.HcpIsActive;
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
-  }
-
-  private buildConfigPayload(): VpsContainerProviderConfig {
-    const values = this.providerFormModel();
-    const config: VpsContainerProviderConfig = {};
-    const apiUrl = this.normalizeString(values.apiUrl);
-    const project = this.normalizeString(values.project);
-    const target = this.normalizeString(values.target);
-    const storagePool = this.normalizeString(values.storagePool);
-    const network = this.normalizeString(values.network);
-    const profile = this.normalizeString(values.profile);
-    const remote = this.normalizeString(values.remote);
-    const imageAlias = this.normalizeString(values.imageAlias);
-    if (apiUrl) config.apiUrl = apiUrl;
-    if (project) config.project = project;
-    if (target) config.target = target;
-    if (storagePool) config.storagePool = storagePool;
-    if (network) config.network = network;
-    if (profile) config.profile = profile;
-    if (remote) config.remote = remote;
-    if (imageAlias) config.imageAlias = imageAlias;
-    return config;
-  }
-
-  private buildCredentialsPayload(): VpsContainerProviderCredentials | null {
-    const values = this.providerFormModel();
-    const credentials: VpsContainerProviderCredentials = {};
-    const bearerToken = this.normalizeString(values.bearerToken);
-    const clientCertificate = this.normalizeString(values.clientCertificate);
-    const clientPrivateKey = this.normalizeString(values.clientPrivateKey);
-    const serverCertificate = this.normalizeString(values.serverCertificate);
-    if (bearerToken) credentials.bearerToken = bearerToken;
-    if (clientCertificate) credentials.clientCertificate = clientCertificate;
-    if (clientPrivateKey) credentials.clientPrivateKey = clientPrivateKey;
-    if (serverCertificate) credentials.serverCertificate = serverCertificate;
-    return Object.keys(credentials).length ? credentials : null;
-  }
-
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
-  }
-
-  private openDialog() {
-    const providerFormDialog = this.providerFormDialog();
-    if (!providerFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(providerFormDialog, {
-      ...getVpsDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-vps-container-provider-dialog',
-    });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
-  }
-
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateVpsDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateVpsDialogViewport(this.dialogRef);
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
+  return Object.keys(credentials).length ? credentials : null;
 }

@@ -1,395 +1,869 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom, takeUntil } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SystemParameterService } from '../../../../services/system-parameter.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import {
-  getVpsDialogViewportConfig,
-  updateVpsDialogViewport,
-} from '../vps-container-dialog-viewport';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type {
-  HostingVpsContainerProvider,
-  HostingVpsContainerPlan,
   HostingVpsContainerPlanConfig,
+  HostingVpsContainerProvider,
   VpsContainerCatalogOption,
   VpsContainerProvider,
   VpsContainerProviderCatalog,
   VpsContainerProviderConfig,
 } from '../vps-container.types';
 
-type VpsContainerPlanFilters = {
-  search: string;
-  status: string;
+const PROVIDER_TYPE_OPTIONS: readonly { value: VpsContainerProvider; label: string }[] = [
+  { value: 'incus', label: 'Incus' },
+];
+
+const COPY_PLAN_ACTION: ConfigurableCrudRowAction = {
+  key: 'copy',
+  label: 'Copy',
+  icon: 'content_copy',
+  tooltip: 'Copy plan',
 };
 
-type VpsContainerPlanFormModel = {
-  name: string;
-  provider: VpsContainerProvider;
-  providerUUID: string;
-  region: string;
-  size: string;
-  price: number;
-  setupFee: number;
-  cpu: number;
-  memoryMb: number;
-  diskGb: number;
-  transferGb: number;
-  notes: string;
-  isActive: number;
+const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/vps-container/plans',
+  uuidField: 'HcnUUID',
+  pageTitle: 'VPS Container Plans',
+  pageDescription:
+    'Define commercial prices and technical defaults for provider instance sizes.',
+  createTitle: 'New VPS Container plan',
+  editTitle: 'Edit VPS Container plan',
+  dialogDescription: 'Create a commercial VPS Container plan from provider catalog data.',
+  searchPlaceholder: 'Name, provider, region or size',
+  emptyLabel: 'No VPS Container plans found.',
+  deleteTitle: 'Delete VPS Container plan',
+  deleteMessage: 'Are you sure you want to delete this VPS Container plan?',
+  deleteSelectedTitle: 'Delete selected VPS Container plans',
+  deleteSelectedMessage:
+    'Are you sure you want to delete {count} selected VPS Container plan(s)?',
+  savedMessage: 'VPS Container plan saved successfully.',
+  deletedMessage: 'VPS Container plan deleted successfully.',
+  deleteFailedMessage: 'Failed to delete VPS Container plan.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  showAsyncOperationStatus: false,
+  initialPageSize: 10,
+  pageSizeOptions: [5, 10, 25, 100],
+  rowActions: [COPY_PLAN_ACTION],
+  tabLabels: {
+    storage: 'Config',
+    financial: 'Pricing',
+    notes: 'Notes',
+  },
+  listFilters: [
+    {
+      key: 'providerFilter',
+      label: 'Provider',
+      paramKey: 'providerUUID',
+      type: 'search-select',
+      placeholder: 'Search provider',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  initialValues: {
+    isActive: 1,
+    providerUUID: '',
+    name: '',
+    price: 0,
+    setupFee: 0,
+    region: '',
+    regionManual: '',
+    size: '',
+    sizeManual: '',
+    image: '',
+    imageManual: '',
+    cpu: 0,
+    memoryMb: 0,
+    diskGb: 0,
+    transferGb: 0,
+    profile: '',
+    profileManual: '',
+    storagePool: '',
+    storagePoolManual: '',
+    network: '',
+    networkManual: '',
+    target: '',
+    imageServer: '',
+    notes: '',
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HcnName', uuidField: 'HcnUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      lookupKey: 'providerUUID',
+      uuidField: 'HostingVpsContainerProviderHcpUUID',
+    },
+    { id: 'region', label: 'Region', field: 'HcnRegion' },
+    { id: 'size', label: 'Size', field: 'HcnSize' },
+    {
+      id: 'price',
+      label: 'Price',
+      kind: 'currency',
+      field: 'HcnPrice',
+      currencyField: 'HcnCurrency',
+    },
+    {
+      id: 'setupFee',
+      label: 'Setup fee',
+      kind: 'currency',
+      field: 'HcnSetupFee',
+      currencyField: 'HcnCurrency',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HcnIsActive',
+      className: 'status-col',
+    },
+  ],
+  fields: [
+    {
+      key: 'isActive',
+      source: 'HcnIsActive',
+      payloadKey: 'isActive',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'providerUUID',
+      source: 'HostingVpsContainerProviderHcpUUID',
+      payloadKey: 'providerUUID',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HcnName',
+      payloadKey: 'name',
+      label: 'Name',
+      placeholder: 'Incus Basic 1GB',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'price',
+      source: 'HcnPrice',
+      payloadKey: 'price',
+      label: 'Price',
+      type: 'currency',
+      required: true,
+      tab: 'financial',
+      span: 1,
+    },
+    {
+      key: 'setupFee',
+      source: 'HcnSetupFee',
+      payloadKey: 'setupFee',
+      label: 'Setup fee',
+      type: 'currency',
+      tab: 'financial',
+      span: 1,
+    },
+    {
+      key: 'region',
+      source: 'HcnRegion',
+      payloadKey: 'region',
+      label: 'Region',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'regionManual',
+      source: 'HcnRegion',
+      payloadKey: 'regionManual',
+      label: 'Region',
+      placeholder: 'default',
+      tab: 'storage',
+      span: 1,
+    },
+    {
+      key: 'size',
+      source: 'HcnSize',
+      payloadKey: 'size',
+      label: 'Size / Bundle',
+      type: 'search-select',
+      tab: 'storage',
+      span: 2,
+      lineFillAfter: 1,
+      translateOptions: false,
+    },
+    {
+      key: 'sizeManual',
+      source: 'HcnSize',
+      payloadKey: 'sizeManual',
+      label: 'Size / Bundle',
+      placeholder: 'custom-flavor',
+      tab: 'storage',
+      span: 2,
+      lineFillAfter: 1,
+    },
+    {
+      key: 'image',
+      source: 'HcnImage',
+      payloadKey: 'image',
+      label: 'Image',
+      type: 'search-select',
+      tab: 'storage',
+      span: 2,
+      lineFillAfter: 1,
+      translateOptions: false,
+    },
+    {
+      key: 'imageManual',
+      source: 'HcnImage',
+      payloadKey: 'imageManual',
+      label: 'Image',
+      placeholder: 'ubuntu/22.04',
+      tab: 'storage',
+      span: 2,
+      lineFillAfter: 1,
+    },
+    {
+      key: 'cpu',
+      source: 'HcnConfig',
+      payloadKey: 'cpu',
+      label: 'CPU',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      breakBefore: true,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.cpu ?? 0),
+    },
+    {
+      key: 'memoryMb',
+      source: 'HcnConfig',
+      payloadKey: 'memoryMb',
+      label: 'Memory MB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.memoryMb ?? 0),
+    },
+    {
+      key: 'diskGb',
+      source: 'HcnConfig',
+      payloadKey: 'diskGb',
+      label: 'Disk GB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.diskGb ?? 0),
+    },
+    {
+      key: 'transferGb',
+      source: 'HcnConfig',
+      payloadKey: 'transferGb',
+      label: 'Transfer GB',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => Number(parsePlanConfig(value)?.transferGb ?? 0),
+    },
+    {
+      key: 'profile',
+      source: 'HcnConfig',
+      payloadKey: 'profile',
+      label: 'Profile',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.profile ?? ''),
+    },
+    {
+      key: 'profileManual',
+      source: 'HcnConfig',
+      payloadKey: 'profileManual',
+      label: 'Profile',
+      placeholder: 'default',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.profile ?? ''),
+    },
+    {
+      key: 'storagePool',
+      source: 'HcnConfig',
+      payloadKey: 'storagePool',
+      label: 'Storage pool',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.storagePool ?? ''),
+    },
+    {
+      key: 'storagePoolManual',
+      source: 'HcnConfig',
+      payloadKey: 'storagePoolManual',
+      label: 'Storage pool',
+      placeholder: 'default',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.storagePool ?? ''),
+    },
+    {
+      key: 'network',
+      source: 'HcnConfig',
+      payloadKey: 'network',
+      label: 'Network',
+      type: 'search-select',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.network ?? ''),
+    },
+    {
+      key: 'networkManual',
+      source: 'HcnConfig',
+      payloadKey: 'networkManual',
+      label: 'Network',
+      placeholder: 'lxdbr0',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.network ?? ''),
+    },
+    {
+      key: 'target',
+      source: 'HcnConfig',
+      payloadKey: 'target',
+      label: 'Target',
+      placeholder: 'Incus cluster target',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.target ?? ''),
+    },
+    {
+      key: 'imageServer',
+      source: 'HcnConfig',
+      payloadKey: 'imageServer',
+      label: 'Image server',
+      placeholder: 'https://images.linuxcontainers.org',
+      tab: 'storage',
+      span: 1,
+      fromRecord: (value) => String(parsePlanConfig(value)?.imageServer ?? ''),
+    },
+    {
+      key: 'notes',
+      source: 'HcnConfig',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+      placeholder: 'Internal plan notes',
+      fromRecord: (value) => String(parsePlanConfig(value)?.notes ?? ''),
+    },
+  ],
 };
 
 @Component({
   selector: 'app-hosting-vps-container-plans',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './plans.html',
-  styleUrls: ['./plans.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingVpsContainerPlansPage {
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly parameters = inject(SystemParameterService);
+export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
 
-  readonly planFormDialog = viewChild<TemplateRef<unknown>>('planFormDialog');
-
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-  readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly providerEndpoint = computed(() =>
+    this.isMaster()
+      ? 'system/hosting/vps-container/providers'
+      : 'hosting/vps-container/providers',
   );
-  readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans',
+  private readonly planEndpoint = computed(() =>
+    this.isMaster()
+      ? 'system/hosting/vps-container/plans'
+      : HOSTING_VPS_CONTAINER_PLAN_CONFIG.endpoint,
   );
 
-  readonly providers = signal<HostingVpsContainerProvider[]>([]);
-  readonly plans = signal<HostingVpsContainerPlan[]>([]);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly appliedSearch = signal('');
-  readonly appliedStatus = signal('');
-  readonly providerFilter = signal('');
-  readonly rows = computed(() => this.filterPlansByProvider(this.plans()));
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  private readonly plansResource = resource({
-    defaultValue: [] as HostingVpsContainerPlan[],
-    params: (): VpsContainerPlanFilters => ({
-      search: this.appliedSearch().trim(),
-      status: this.appliedStatus(),
-    }),
-    loader: ({ params }) => this.fetchPlans(params),
-  });
-  readonly loading = this.plansResource.isLoading;
-  readonly saving = signal(false);
-  readonly editing = signal<HostingVpsContainerPlan | null>(null);
-  readonly defaultCurrency = signal('BRL');
-  readonly providerFilterSearch = signal('');
-  readonly providerSearch = signal('');
-  readonly regionSearch = signal('');
-  readonly sizeSearch = signal('');
+  private readonly providers = signal<HostingVpsContainerProvider[]>([]);
+  private readonly catalog = signal<VpsContainerProviderCatalog | null>(null);
+  private readonly catalogProviderUUID = signal<string | null>(null);
   readonly catalogLoading = signal(false);
-  readonly catalog = signal<VpsContainerProviderCatalog | null>(null);
-  readonly catalogProviderUUID = signal<string | null>(null);
-  readonly currentRegion = signal('');
-  readonly currentSize = signal('');
-  readonly selectedPlanUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedPlanUUIDs().size);
+  private readonly catalogFetchKey = signal<string | null>(null);
+  private catalogRequestId = 0;
 
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'provider',
-    'region',
-    'size',
-    'price',
-    'status',
-    'actions',
-  ];
-  readonly providerOptions: { value: VpsContainerProvider; label: string }[] = [
-    { value: 'incus', label: 'Incus' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    provider: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly planFormModel = signal<VpsContainerPlanFormModel>({
-    name: '',
-    provider: 'incus',
-    providerUUID: '',
-    region: '',
-    size: '',
-    price: 0,
-    setupFee: 0,
-    cpu: 0,
-    memoryMb: 0,
-    diskGb: 0,
-    transferGb: 0,
-    notes: '',
-    isActive: 1,
-  });
-  readonly planForm = createForm(this.planFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-    required(schema.providerUUID);
-    required(schema.price);
-    min(schema.price, 0);
-    min(schema.setupFee, 0);
-    min(schema.cpu, 0);
-    min(schema.memoryMb, 0);
-    min(schema.diskGb, 0);
-    min(schema.transferGb, 0);
-    required(schema.isActive);
+  private readonly providerFormOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current = normalizeString(this.formValues()['providerUUID']);
+    return [...this.providers()]
+      .filter((provider) => provider.HcpIsActive === 1 || provider.HcpUUID === current)
+      .sort((a, b) =>
+        a.HcpName.localeCompare(b.HcpName, undefined, { numeric: true, sensitivity: 'base' }),
+      )
+      .map((provider) => toProviderOption(provider));
   });
 
-  readonly availableRegions = computed(() => this.catalog()?.regions ?? []);
-  readonly availableSizes = computed(() => this.catalog()?.sizes ?? []);
-  readonly regionOptions = computed(() =>
-    this.withCurrentOption(this.availableRegions(), this.currentRegion()),
+  private readonly providerFilterOptions = computed<ConfigurableCrudOption[]>(() =>
+    [...this.providers()]
+      .sort((a, b) =>
+        a.HcpName.localeCompare(b.HcpName, undefined, { numeric: true, sensitivity: 'base' }),
+      )
+      .map((provider) => toProviderOption(provider)),
   );
-  readonly sizeOptions = computed(() =>
-    this.withCurrentOption(this.availableSizes(), this.currentSize()),
-  );
-  readonly filteredRegionOptions = computed(() =>
-    this.filterCatalogOptions(this.regionOptions(), this.regionSearch()),
-  );
-  readonly filteredSizeOptions = computed(() =>
-    this.sortSizeOptions(this.filterCatalogOptions(this.sizeOptions(), this.sizeSearch())),
-  );
-  readonly providerFilterOptions = computed(() =>
-    [...this.providers()].sort((a, b) =>
-      a.HcpName.localeCompare(b.HcpName, undefined, { numeric: true, sensitivity: 'base' }),
-    ),
-  );
-  readonly filteredProviderFilterOptions = computed(() => {
-    const value = this.providerFilterSearch().trim().toLowerCase();
-    const providers = this.providerFilterOptions();
-    if (!value) return providers;
-    return providers.filter(
-      (acc) =>
-        acc.HcpName.toLowerCase().includes(value) || acc.HcpProvider.toLowerCase().includes(value),
+
+  private readonly regionOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['region']) ??
+      normalizeString(this.formValues()['regionManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.regions ?? [], current));
+  });
+
+  private readonly sizeOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['size']) ??
+      normalizeString(this.formValues()['sizeManual']) ??
+      '';
+    const options = withCurrentOption(this.catalog()?.sizes ?? [], current);
+    return catalogOptionsToCrud(sortSizeOptions(options));
+  });
+
+  private readonly imageOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['image']) ??
+      normalizeString(this.formValues()['imageManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.images ?? [], current));
+  });
+
+  private readonly profileOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['profile']) ??
+      normalizeString(this.formValues()['profileManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.profiles ?? [], current));
+  });
+
+  private readonly storagePoolOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['storagePool']) ??
+      normalizeString(this.formValues()['storagePoolManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.storagePools ?? [], current));
+  });
+
+  private readonly networkOptions = computed<ConfigurableCrudOption[]>(() => {
+    const current =
+      normalizeString(this.formValues()['network']) ??
+      normalizeString(this.formValues()['networkManual']) ??
+      '';
+    return catalogOptionsToCrud(withCurrentOption(this.catalog()?.networks ?? [], current));
+  });
+
+  private readonly locksCatalogSpecs = computed(() => {
+    const size =
+      normalizeString(this.formValues()['size']) ??
+      normalizeString(this.formValues()['sizeManual']);
+    if (!size) return false;
+    const option = (this.catalog()?.sizes ?? []).find((item) => item.id === size);
+    return Boolean(
+      option &&
+        (catalogNumber(option.cpu) !== null ||
+          catalogNumber(option.memoryMb) !== null ||
+          catalogNumber(option.diskGb) !== null),
     );
-  });
-
-  private readonly syncPlans = effect(() => {
-    this.plans.set(this.plansResource.value());
-    this.reconcilePlanSelection();
-  });
-
-  private readonly reportPlansError = effect(() => {
-    const error = this.plansResource.error();
-    if (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS Container plans.'));
-    }
-  });
-  private readonly syncProviderSelection = effect(() => {
-    const uuid = this.planFormModel().providerUUID;
-    this.syncProviderFromProvider(uuid);
-    void this.fetchProviderCatalog();
-  });
-  private readonly syncCurrentRegion = effect(() => {
-    this.currentRegion.set(this.planFormModel().region ?? '');
-  });
-  private readonly syncCurrentSize = effect(() => {
-    const size = this.planFormModel().size ?? '';
-    this.currentSize.set(size);
-    this.applySelectedSizeSpecs(size);
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.stopDialogViewportObserver();
+    const masterScope =
+      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    super({
+      ...HOSTING_VPS_CONTAINER_PLAN_CONFIG,
+      canCreate: masterScope,
+      canEdit: masterScope,
+      canDelete: masterScope,
+      fields: HOSTING_VPS_CONTAINER_PLAN_CONFIG.fields.map((field) => {
+        if (field.key === 'region') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.regions?.length),
+            requiredWhen: () => Boolean(this.catalog()?.regions?.length),
+          };
+        }
+        if (field.key === 'regionManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.regions?.length),
+          };
+        }
+        if (field.key === 'size') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.sizes?.length),
+            requiredWhen: () => Boolean(this.catalog()?.sizes?.length),
+          };
+        }
+        if (field.key === 'sizeManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.sizes?.length),
+          };
+        }
+        if (field.key === 'image') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.images?.length),
+          };
+        }
+        if (field.key === 'imageManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.images?.length),
+          };
+        }
+        if (field.key === 'profile') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.profiles?.length),
+          };
+        }
+        if (field.key === 'profileManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.profiles?.length),
+          };
+        }
+        if (field.key === 'storagePool') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.storagePools?.length),
+          };
+        }
+        if (field.key === 'storagePoolManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.storagePools?.length),
+          };
+        }
+        if (field.key === 'network') {
+          return {
+            ...field,
+            loading: () => this.catalogLoading(),
+            hiddenWhen: () => !(this.catalog()?.networks?.length),
+          };
+        }
+        if (field.key === 'networkManual') {
+          return {
+            ...field,
+            hiddenWhen: () => Boolean(this.catalog()?.networks?.length),
+          };
+        }
+        if (['cpu', 'memoryMb', 'diskGb', 'transferGb'].includes(field.key)) {
+          return {
+            ...field,
+            disabledWhen: () => this.locksCatalogSpecs(),
+          };
+        }
+        return field;
+      }),
     });
-    void this.fetchDefaultCurrency();
     void this.fetchProviders();
   }
 
-  refreshList() {
+  override refreshList(): void {
     void this.fetchProviders();
-    this.plansResource.reload();
+    super.refreshList();
   }
 
-  get filteredProviders() {
-    const value = this.providerSearch().trim().toLowerCase();
-    const providers = this.providers().filter((acc) => acc.HcpIsActive === 1);
-    if (!value) return providers;
-    return providers.filter(
-      (acc) =>
-        acc.HcpName.toLowerCase().includes(value) || acc.HcpProvider.toLowerCase().includes(value),
+  protected override listEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override createEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    return this.planEndpoint();
+  }
+
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.planEndpoint();
+  }
+
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.planEndpoint()}/bulk`;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'providerFilter') return this.providerFilterOptions();
+    if (key === 'providerUUID') return this.providerFormOptions();
+    if (key === 'region') return this.regionOptions();
+    if (key === 'size') return this.sizeOptions();
+    if (key === 'image') return this.imageOptions();
+    if (key === 'profile') return this.profileOptions();
+    if (key === 'storagePool') return this.storagePoolOptions();
+    if (key === 'network') return this.networkOptions();
+    return [];
+  }
+
+  protected override lookupLabel(key: string, value: unknown): string {
+    if (key === 'providerUUID') {
+      const option = this.providerFilterOptions().find(
+        (item) => String(item.value ?? '') === String(value ?? ''),
+      );
+      if (option?.label) return option.label;
+      const provider = String(
+        this.rows().find(
+          (row) => String(row['HostingVpsContainerProviderHcpUUID'] ?? '') === String(value ?? ''),
+        )?.['HcnProvider'] ?? '',
+      );
+      return provider ? providerTypeLabel(provider) : '';
+    }
+    return super.lookupLabel(key, value);
+  }
+
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.providers().length) await this.fetchProviders();
+
+    const providerUUID = normalizeString(
+      filters.extra['providerFilter'] ?? filters.extra['providerUUID'],
     );
+    const apiFilters: ConfigurableCrudFilters = {
+      ...filters,
+      extra: Object.fromEntries(
+        Object.entries(filters.extra).filter(
+          ([key]) => key !== 'providerFilter' && key !== 'providerUUID',
+        ),
+      ),
+    };
+
+    const rows = await super.fetchItems(apiFilters);
+    const parsed: ConfigurableCrudRecord[] = rows.map((row) => ({
+      ...row,
+      HcnConfig: parsePlanConfig(row['HcnConfig']),
+    }));
+
+    if (!providerUUID) return parsed;
+    return parsed.filter((item) => {
+      const itemProviderUUID = String(item['HostingVpsContainerProviderHcpUUID'] ?? '');
+      const itemProvider = String(item['HcnProvider'] ?? '') as VpsContainerProvider;
+      return (
+        itemProviderUUID === providerUUID ||
+        this.resolveProviderUUIDForProvider(itemProvider) === providerUUID
+      );
+    });
   }
 
-  onProviderOpened(opened: boolean) {
-    if (!opened) this.providerSearch.set('');
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const next = super.formValuesFromRecord(row);
+    const config = parsePlanConfig(row['HcnConfig']);
+    const region = String(row['HcnRegion'] ?? '');
+    const size = String(row['HcnSize'] ?? '');
+    const image = String(row['HcnImage'] ?? '');
+    const providerUUID =
+      this.providerById(String(row['HostingVpsContainerProviderHcpUUID'] ?? ''))?.HcpUUID ??
+      this.resolveProviderUUIDForProvider(String(row['HcnProvider'] ?? '') as VpsContainerProvider);
+
+    next['providerUUID'] = providerUUID;
+    next['region'] = region;
+    next['regionManual'] = region;
+    next['size'] = size;
+    next['sizeManual'] = size;
+    next['image'] = image;
+    next['imageManual'] = image;
+    next['setupFee'] = Number(row['HcnSetupFee'] ?? 0);
+    next['cpu'] = Number(config?.cpu ?? 0);
+    next['memoryMb'] = Number(config?.memoryMb ?? 0);
+    next['diskGb'] = Number(config?.diskGb ?? 0);
+    next['transferGb'] = Number(config?.transferGb ?? 0);
+    next['profile'] = String(config?.profile ?? '');
+    next['profileManual'] = String(config?.profile ?? '');
+    next['storagePool'] = String(config?.storagePool ?? '');
+    next['storagePoolManual'] = String(config?.storagePool ?? '');
+    next['network'] = String(config?.network ?? '');
+    next['networkManual'] = String(config?.network ?? '');
+    next['target'] = String(config?.target ?? '');
+    next['imageServer'] = String(config?.imageServer ?? '');
+    next['notes'] = String(config?.notes ?? '');
+    next['isActive'] = Number(row['HcnIsActive'] ?? 0) === 1 ? 1 : 0;
+    next['price'] = Number(row['HcnPrice'] ?? 0);
+
+    void this.fetchProviderCatalog(providerUUID, { force: true });
+    return next;
   }
 
-  onProviderFilterOpened(opened: boolean) {
-    if (!opened) this.providerFilterSearch.set('');
+  override startCreate(): void {
+    this.catalog.set(null);
+    this.catalogProviderUUID.set(null);
+    this.catalogFetchKey.set(null);
+    super.startCreate();
   }
 
-  onRegionOpened(opened: boolean) {
-    if (!opened) this.regionSearch.set('');
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'copy') return;
+    this.startCopy(row);
   }
 
-  onSizeOpened(opened: boolean) {
-    if (!opened) this.sizeSearch.set('');
+  private startCopy(row: ConfigurableCrudRecord): void {
+    if (!this.canCreate()) return;
+    const values = this.formValuesFromRecord(row);
+    const sourceName = String(values['name'] ?? row['HcnName'] ?? '').trim();
+    values['name'] = sourceName ? `${sourceName} COPY` : 'COPY';
+    this.startCreateWithValues(values);
   }
 
-  selectedCatalogLabel(controlName: 'region' | 'size', options: VpsContainerCatalogOption[]) {
-    const value = this.normalizeString(this.planFormModel()[controlName]);
-    if (!value) return '';
-    return options.find((option) => option.id === value)?.label ?? value;
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key === 'providerUUID') {
+      this.patchFormValues({
+        region: '',
+        regionManual: '',
+        size: '',
+        sizeManual: '',
+        image: '',
+        imageManual: '',
+        cpu: 0,
+        memoryMb: 0,
+        diskGb: 0,
+        transferGb: 0,
+      });
+      void this.fetchProviderCatalog(normalizeString(value), { force: true });
+      return;
+    }
+
+    if (key === 'region') {
+      this.patchFormValues({ regionManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'regionManual') {
+      this.patchFormValues({ region: String(value ?? '') });
+      return;
+    }
+
+    if (key === 'size') {
+      const size = String(value ?? '');
+      this.patchFormValues({ sizeManual: size });
+      void this.applySelectedSizeSpecs(size);
+      return;
+    }
+    if (key === 'sizeManual') {
+      const size = String(value ?? '');
+      this.patchFormValues({ size });
+      void this.applySelectedSizeSpecs(size);
+      return;
+    }
+
+    if (key === 'image') {
+      this.patchFormValues({ imageManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'imageManual') {
+      this.patchFormValues({ image: String(value ?? '') });
+      return;
+    }
+
+    if (key === 'profile') {
+      this.patchFormValues({ profileManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'profileManual') {
+      this.patchFormValues({ profile: String(value ?? '') });
+      return;
+    }
+
+    if (key === 'storagePool') {
+      this.patchFormValues({ storagePoolManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'storagePoolManual') {
+      this.patchFormValues({ storagePool: String(value ?? '') });
+      return;
+    }
+
+    if (key === 'network') {
+      this.patchFormValues({ networkManual: String(value ?? '') });
+      return;
+    }
+    if (key === 'networkManual') {
+      this.patchFormValues({ network: String(value ?? '') });
+    }
   }
 
-  selectedSizeLabel() {
-    const value = this.normalizeString(this.planFormModel().size);
-    if (!value) return '';
-    const option = this.sizeOptions().find((item) => item.id === value);
-    if (!option) return value;
-    return [this.sizeOptionName(option), this.sizeOptionPrice(option)].filter(Boolean).join(' ');
-  }
-
-  sizeOptionName(option: VpsContainerCatalogOption) {
-    return this.sizeOptionParts(option)[0] ?? option.label ?? option.id;
-  }
-
-  sizeOptionPrice(option: VpsContainerCatalogOption) {
-    return this.sizeOptionParts(option).find((part) => /\/mo|\/month|\$\d/i.test(part)) ?? '';
-  }
-
-  sizeOptionMeta(option: VpsContainerCatalogOption) {
-    const slug = this.sizeOptionSlug(option);
-    return this.sizeOptionParts(option)
-      .slice(1)
-      .filter((part) => part !== this.sizeOptionPrice(option) && part !== slug)
-      .join(' · ');
-  }
-
-  sizeOptionSlug(option: VpsContainerCatalogOption) {
-    const parts = this.sizeOptionParts(option);
-    return parts[parts.length - 1] !== this.sizeOptionPrice(option)
-      ? (parts[parts.length - 1] ?? option.id)
-      : option.id;
-  }
-
-  selectedSizeHasCatalogSpecs() {
-    const option = this.selectedSizeOption();
-    return (
-      !!option &&
-      ['cpu', 'memoryMb', 'diskGb'].some(
-        (key) => this.catalogNumber(option[key as keyof VpsContainerCatalogOption]) !== null,
-      )
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const providerUUID = normalizeString(payload['providerUUID']);
+    const providerRecord = this.providerById(providerUUID);
+    const region =
+      normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
+    const size = normalizeString(payload['size']) ?? normalizeString(payload['sizeManual']);
+    const image = normalizeString(payload['image']) ?? normalizeString(payload['imageManual']);
+    const profile =
+      normalizeString(payload['profile']) ?? normalizeString(payload['profileManual']);
+    const storagePool =
+      normalizeString(payload['storagePool']) ?? normalizeString(payload['storagePoolManual']);
+    const network =
+      normalizeString(payload['network']) ?? normalizeString(payload['networkManual']);
+    const target = normalizeString(payload['target']) ?? region;
+    const imageServer = normalizeString(payload['imageServer']);
+    const notes = normalizeString(payload['notes']);
+    const setupFee = Number(
+      this.formValues()['setupFee'] ?? this.editingRecord()?.['HcnSetupFee'] ?? 0,
     );
+    const currency =
+      normalizeString(this.editingRecord()?.['HcnCurrency'] as string | undefined) ??
+      this.defaultCurrency() ??
+      'BRL';
+
+    return {
+      name: String(payload['name'] ?? '').trim(),
+      providerUUID: providerRecord?.HcpUUID ?? providerUUID,
+      region,
+      size,
+      image,
+      price: Number(payload['price'] ?? 0),
+      setupFee: Number.isFinite(setupFee) ? setupFee : 0,
+      config: {
+        cpu: Number(payload['cpu'] ?? 0) || null,
+        memoryMb: Number(payload['memoryMb'] ?? 0) || null,
+        diskGb: Number(payload['diskGb'] ?? 0) || null,
+        transferGb: Number(payload['transferGb'] ?? 0) || null,
+        profile,
+        storagePool,
+        network,
+        target,
+        imageServer,
+        notes,
+      } satisfies HostingVpsContainerPlanConfig,
+      isActive: truthyNumber(payload['isActive']) === 1,
+      currency,
+    };
   }
 
-  providerLabel(provider: VpsContainerProvider) {
-    return this.providerOptions.find((opt) => opt.value === provider)?.label ?? provider;
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    const providerUUID = normalizeString(payload['providerUUID']);
+    if (!providerUUID || !this.providerById(providerUUID)) {
+      this.snack.warning(this.t('Select a valid VPS Container provider.'));
+      return false;
+    }
+    return super.validatePayload(payload);
   }
 
-  providerNameForPlan(item: HostingVpsContainerPlan) {
-    return (
-      this.providerById(item.HostingVpsContainerProviderHcpUUID)?.HcpName ??
-      this.providerById(this.resolveProviderUUIDForProvider(item.HcnProvider))?.HcpName ??
-      this.providerLabel(item.HcnProvider)
-    );
-  }
-
-  statusLabel(item: HostingVpsContainerPlan) {
-    return item.HcnIsActive === 1 ? 'Active' : 'Inactive';
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
-
-  moneyLabel(item: HostingVpsContainerPlan) {
-    const currency = item.HcnCurrency || this.defaultCurrency();
-    return `${currency} ${Number(item.HcnPrice ?? 0).toFixed(2)}`;
-  }
-
-  private async fetchDefaultCurrency() {
-    const currency = await this.parameters.resolveDefaultCurrency('BRL');
-    this.defaultCurrency.set(currency);
-  }
-
-  async fetchProviders() {
+  private async fetchProviders() {
     try {
       const result = await this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
         this.providerEndpoint(),
@@ -398,433 +872,80 @@ export class HostingVpsContainerPlansPage {
       this.providers.set(
         list.map((item) => ({
           ...item,
-          HcpConfig: this.parseConfig<VpsContainerProviderConfig>(item.HcpConfig),
+          HcpConfig: parseObjectConfig<VpsContainerProviderConfig>(item.HcpConfig),
         })),
       );
-      void this.fetchProviderCatalog();
     } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load VPS Container providers.'));
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS Container providers.'));
     }
   }
 
-  private async fetchPlans(filters: VpsContainerPlanFilters): Promise<HostingVpsContainerPlan[]> {
-    const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (filters.search) params.set('search', filters.search);
-    if (filters.status === '0' || filters.status === '1') params.set('status', filters.status);
-
-    const result = await this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
-      `${this.planEndpoint()}?${params.toString()}`,
-    );
-    const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-    return list.map((item) => ({
-      ...item,
-      HcnConfig: this.parseConfig<HostingVpsContainerPlanConfig>(item.HcnConfig),
-    }));
-  }
-
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedStatus.set(values.status);
-    this.resetPagination();
-    this.providerFilter.set(values.provider);
-    this.plansResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ search: '', provider: '', status: '' });
-    this.appliedSearch.set('');
-    this.appliedStatus.set('');
-    this.providerFilter.set('');
-    this.providerFilterSearch.set('');
-    this.resetPagination();
-    this.plansResource.reload();
-  }
-
-  async fetchProviderCatalog() {
-    const uuid = this.resolveCatalogProviderUUID();
+  private async fetchProviderCatalog(
+    providerUUID: string | null | undefined,
+    options?: { force?: boolean },
+  ) {
+    const uuid = normalizeString(providerUUID);
     if (!uuid) {
       this.catalog.set(null);
       this.catalogProviderUUID.set(null);
+      this.catalogFetchKey.set(null);
       return;
     }
-    if (this.catalogProviderUUID() === uuid && this.catalog()) return;
-    if (this.catalogLoading()) return;
 
+    const fetchKey = uuid;
+    if (!options?.force && this.catalogFetchKey() === fetchKey && this.catalog()) return;
+
+    const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
+    this.catalog.set(null);
+    this.catalogFetchKey.set(fetchKey);
 
     try {
       const result = await this.api.get<{ data?: { catalog?: VpsContainerProviderCatalog } }>(
         `${this.providerEndpoint()}/${uuid}/catalog`,
       );
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(result?.data?.catalog ?? null);
-      this.applySelectedSizeSpecs(this.planFormModel().size);
+      const size =
+        normalizeString(this.formValues()['size']) ??
+        normalizeString(this.formValues()['sizeManual']);
+      if (size && (result?.data?.catalog?.sizes ?? []).some((item) => item.id === size)) {
+        void this.applySelectedSizeSpecs(size);
+      }
     } catch (error) {
+      if (requestId !== this.catalogRequestId) return;
       this.catalog.set(null);
-      this.snack.error(this.friendlyError(error, 'Failed to load provider catalog.'));
+      this.catalogFetchKey.set(null);
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load provider catalog.'));
     } finally {
-      this.catalogLoading.set(false);
+      if (requestId === this.catalogRequestId) this.catalogLoading.set(false);
     }
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.resetForm();
-    void this.fetchProviderCatalog();
-    this.openDialog();
-  }
-
-  startEdit(item: HostingVpsContainerPlan) {
-    const config = item.HcnConfig ?? {};
-    this.editing.set(item);
-    const providerUUID =
-      this.providerById(item.HostingVpsContainerProviderHcpUUID)?.HcpUUID ??
-      this.resolveProviderUUIDForProvider(item.HcnProvider);
-    this.planFormModel.set({
-      name: item.HcnName,
-      provider: item.HcnProvider,
-      providerUUID,
-      region: item.HcnRegion ?? '',
-      size: item.HcnSize ?? '',
-      price: Number(item.HcnPrice ?? 0),
-      setupFee: Number(item.HcnSetupFee ?? 0),
-      cpu: Number(config.cpu ?? 0),
-      memoryMb: Number(config.memoryMb ?? 0),
-      diskGb: Number(config.diskGb ?? 0),
-      transferGb: Number(config.transferGb ?? 0),
-      notes: config.notes ?? '',
-      isActive: item.HcnIsActive === 1 ? 1 : 0,
-    });
-    this.currentRegion.set(item.HcnRegion ?? '');
-    this.currentSize.set(item.HcnSize ?? '');
-    void this.fetchProviderCatalog();
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    if (!this.planForm().valid()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    this.saving.set(true);
-    const values = this.planFormModel();
-    const providerRecord = this.providerById(values.providerUUID);
-    if (!providerRecord) {
-      this.saving.set(false);
-      this.snack.warning('Select a valid VPS Container provider.');
-      return;
-    }
-
-    const payload = {
-      name: values.name.trim(),
-      providerUUID: providerRecord.HcpUUID,
-      region: this.normalizeString(values.region),
-      size: this.normalizeString(values.size),
-      price: Number(values.price ?? 0),
-      setupFee: Number(values.setupFee ?? 0),
-      config: this.buildConfigPayload(),
-      isActive: values.isActive === 1,
-    };
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.planEndpoint()}/${editing.HcnUUID}`, payload);
-        this.snack.success('VPS Container plan updated.');
-      } else {
-        await this.api.post(this.planEndpoint(), payload);
-        this.snack.success('VPS Container plan created.');
-      }
-      this.plansResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save VPS Container plan.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  async remove(item: HostingVpsContainerPlan) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete VPS Container plan',
-        message: `Are you sure you want to delete "${item.HcnName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.planEndpoint()}/${item.HcnUUID}`);
-      this.snack.success('VPS Container plan deleted.');
-      this.plansResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete VPS Container plan.'));
-    }
-  }
-
-  isSelected(item: HostingVpsContainerPlan) {
-    return this.selectedPlanUUIDs().has(item.HcnUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  togglePlanSelection(item: HostingVpsContainerPlan, checked: boolean) {
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(item.HcnUUID);
-      } else {
-        next.delete(item.HcnUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        if (checked) {
-          next.add(row.HcnUUID);
-        } else {
-          next.delete(row.HcnUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedPlans() {
-    const ids = Array.from(this.selectedPlanUUIDs());
-    if (!ids.length) return;
-    const labels = this.plans()
-      .filter((item) => ids.includes(item.HcnUUID))
-      .slice(0, 3)
-      .map((item) => item.HcnName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected VPS Container plans',
-        message: `Are you sure you want to delete ${ids.length} selected VPS Container plan(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingVpsContainerPlanUUID: string; message: string }[];
-        };
-      }>(`${this.planEndpoint()}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map((item) => item.HostingVpsContainerPlanUUID),
-      );
-      this.plans.update((rows) => rows.filter((row) => !deleted.has(row.HcnUUID)));
-      this.selectedPlanUUIDs.set(failed);
-      this.plansResource.reload();
-      if (failed.size) {
-        this.snack.error(`${failed.size} VPS Container plan(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} VPS Container plan(s) deleted.`);
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected VPS Container plans.'));
-    }
-  }
-
-  private buildConfigPayload(): HostingVpsContainerPlanConfig {
-    const values = this.planFormModel();
-    return {
-      cpu: Number(values.cpu ?? 0) || null,
-      memoryMb: Number(values.memoryMb ?? 0) || null,
-      diskGb: Number(values.diskGb ?? 0) || null,
-      target: this.normalizeString(values.region),
-      imageServer: null,
-      notes: this.normalizeString(values.notes),
-    };
-  }
-
-  private filterPlansByProvider(rows: HostingVpsContainerPlan[]) {
-    const providerUUID = this.normalizeString(this.providerFilter());
-    if (!providerUUID) return rows;
-    return rows.filter(
-      (item) =>
-        item.HostingVpsContainerProviderHcpUUID === providerUUID ||
-        this.resolveProviderUUIDForProvider(item.HcnProvider) === providerUUID,
-    );
-  }
-
-  private normalizeString(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    return trimmed.length ? trimmed : null;
-  }
-
-  private selectedSizeOption() {
-    const selected = this.normalizeString(this.planFormModel().size);
-    if (!selected) return null;
-    return this.sizeOptions().find((option) => option.id === selected) ?? null;
-  }
-
-  private applySelectedSizeSpecs(value: string | null | undefined) {
-    const selected = this.normalizeString(value);
+  private async applySelectedSizeSpecs(value: string | null | undefined) {
+    const selected = normalizeString(value);
     if (!selected) return;
-    const option = this.sizeOptions().find((item) => item.id === selected);
+    const option = (this.catalog()?.sizes ?? []).find((item) => item.id === selected);
     if (!option) return;
 
-    const specs = {
-      cpu: this.catalogNumber(option.cpu),
-      memoryMb: this.catalogNumber(option.memoryMb),
-      diskGb: this.catalogNumber(option.diskGb),
-    };
-
-    const patch: Partial<{ cpu: number; memoryMb: number; diskGb: number }> = {};
-    if (specs.cpu !== null) patch.cpu = specs.cpu;
-    if (specs.memoryMb !== null) patch.memoryMb = specs.memoryMb;
-    if (specs.diskGb !== null) patch.diskGb = specs.diskGb;
+    const patch: ConfigurableCrudRecord = {};
+    const cpu = catalogNumber(option.cpu);
+    const memoryMb = catalogNumber(option.memoryMb);
+    const diskGb = catalogNumber(option.diskGb);
+    const transferGb = catalogNumber(option.transferGb);
+    if (cpu !== null) patch['cpu'] = cpu;
+    if (memoryMb !== null) patch['memoryMb'] = memoryMb;
+    if (diskGb !== null) patch['diskGb'] = diskGb;
+    if (transferGb !== null) patch['transferGb'] = transferGb;
     if (!Object.keys(patch).length) return;
-
-    this.planFormModel.update((current) => ({ ...current, ...patch }));
-  }
-
-  private catalogNumber(value: unknown): number | null {
-    const parsed = Number(value ?? 0);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  }
-
-  private parseConfig<T>(value: unknown): T | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private withCurrentOption(
-    options: VpsContainerCatalogOption[],
-    current: string,
-  ): VpsContainerCatalogOption[] {
-    const normalized = this.normalizeString(current);
-    if (!normalized || options.some((opt) => opt.id === normalized)) return options;
-    return [{ id: normalized, label: `Custom: ${normalized}` }, ...options];
-  }
-
-  private sizeOptionParts(option: VpsContainerCatalogOption) {
-    return (option.label || option.id)
-      .split(' • ')
-      .map((part) => part.trim())
-      .filter(Boolean);
-  }
-
-  private sortSizeOptions(options: VpsContainerCatalogOption[]) {
-    return [...options].sort((a, b) => {
-      const rankDiff = this.sizeOptionRank(a) - this.sizeOptionRank(b);
-      if (rankDiff !== 0) return rankDiff;
-
-      const priceDiff = this.sizeOptionMonthlyPrice(a) - this.sizeOptionMonthlyPrice(b);
-      if (priceDiff !== 0) return priceDiff;
-
-      const nameDiff = this.sizeOptionName(a).localeCompare(this.sizeOptionName(b), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-      if (nameDiff !== 0) return nameDiff;
-
-      return this.sizeOptionSlug(a).localeCompare(this.sizeOptionSlug(b), undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-    });
-  }
-
-  private sizeOptionRank(option: VpsContainerCatalogOption) {
-    const name = this.sizeOptionName(option).toLowerCase();
-    if (name.includes('basic') && !name.includes('premium')) return 10;
-    if (name.includes('basic') && name.includes('premium')) return 15;
-    if (name.includes('general purpose')) return 20;
-    if (name.includes('cpu')) return 30;
-    if (name.includes('memory')) return 40;
-    if (name.includes('storage')) return 50;
-    if (name.includes('custom')) return 90;
-    return 80;
-  }
-
-  private sizeOptionMonthlyPrice(option: VpsContainerCatalogOption) {
-    const price = this.sizeOptionPrice(option).match(/[\d,.]+/);
-    if (!price) return Number.POSITIVE_INFINITY;
-    return Number(price[0].replace(/,/g, ''));
-  }
-
-  private filterCatalogOptions(
-    options: VpsContainerCatalogOption[],
-    search: string,
-  ): VpsContainerCatalogOption[] {
-    const value = search.trim().toLowerCase();
-    if (!value) return options;
-    return options.filter(
-      (option) =>
-        option.id.toLowerCase().includes(value) || option.label.toLowerCase().includes(value),
-    );
-  }
-
-  private resolveCatalogProviderUUID(): string | null {
-    const selected = this.normalizeString(this.planFormModel().providerUUID);
-    if (selected) return selected;
-    return null;
+    this.patchFormValues(patch);
   }
 
   private providerById(uuid: string | null | undefined): HostingVpsContainerProvider | null {
-    const normalized = this.normalizeString(uuid);
+    const normalized = normalizeString(uuid);
     if (!normalized) return null;
-    return this.providers().find((acc) => acc.HcpUUID === normalized) ?? null;
-  }
-
-  private syncProviderFromProvider(uuid: string | null | undefined) {
-    const providerRecord = this.providerById(uuid);
-    if (!providerRecord) return;
-    if (this.planFormModel().provider === providerRecord.HcpProvider) return;
-    this.planFormModel.update((current) => ({
-      ...current,
-      provider: providerRecord.HcpProvider,
-    }));
+    return this.providers().find((item) => item.HcpUUID === normalized) ?? null;
   }
 
   private resolveProviderUUIDForProvider(provider: VpsContainerProvider): string {
@@ -837,144 +958,102 @@ export class HostingVpsContainerPlansPage {
       ''
     );
   }
+}
 
-  private resetForm() {
-    this.planFormModel.set({
-      name: '',
-      provider: 'incus',
-      providerUUID: '',
-      region: '',
-      size: '',
-      price: 0,
-      setupFee: 0,
-      cpu: 0,
-      memoryMb: 0,
-      diskGb: 0,
-      transferGb: 0,
-      notes: '',
-      isActive: 1,
-    });
-    this.currentRegion.set('');
-    this.currentSize.set('');
-    this.providerSearch.set('');
-    this.regionSearch.set('');
-    this.sizeSearch.set('');
+function toProviderOption(provider: HostingVpsContainerProvider): ConfigurableCrudOption {
+  return {
+    value: provider.HcpUUID,
+    label: provider.HcpName,
+    description: providerTypeLabel(provider.HcpProvider),
+    searchText: `${provider.HcpName} ${provider.HcpProvider}`,
+  };
+}
+
+function providerTypeLabel(provider: VpsContainerProvider | string): string {
+  return PROVIDER_TYPE_OPTIONS.find((opt) => opt.value === provider)?.label ?? String(provider);
+}
+
+function parsePlanConfig(value: unknown): HostingVpsContainerPlanConfig | null {
+  return parseObjectConfig<HostingVpsContainerPlanConfig>(value);
+}
+
+function parseObjectConfig<T>(value: unknown): T | null {
+  if (!value) return null;
+  if (typeof value === 'object') return value as T;
+  if (typeof value !== 'string') return null;
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
+  } catch {
+    return null;
   }
+}
 
-  private resetPagination() {
-    this.pageIndex.set(0);
+function normalizeString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function truthyNumber(value: unknown): 0 | 1 {
+  if (value === true || value === 1 || value === '1' || value === 'true') return 1;
+  return 0;
+}
+
+function catalogNumber(value: unknown): number | null {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function withCurrentOption(
+  options: VpsContainerCatalogOption[],
+  current: string,
+): VpsContainerCatalogOption[] {
+  const normalized = normalizeString(current);
+  if (!normalized || options.some((opt) => opt.id === normalized)) return options;
+  return [{ id: normalized, label: `Custom: ${normalized}` }, ...options];
+}
+
+function catalogOptionsToCrud(options: VpsContainerCatalogOption[]): ConfigurableCrudOption[] {
+  return options.map((option) => ({
+    value: option.id,
+    label: option.label || option.id,
+    description: sizeOptionMeta(option) || undefined,
+    searchText: `${option.id} ${option.label}`,
+  }));
+}
+
+function sizeOptionParts(option: VpsContainerCatalogOption) {
+  return (option.label || option.id)
+    .split(' • ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function sizeOptionMeta(option: VpsContainerCatalogOption) {
+  const specs: string[] = [];
+  const cpu = catalogNumber(option.cpu);
+  const memoryMb = catalogNumber(option.memoryMb);
+  const diskGb = catalogNumber(option.diskGb);
+  const transferGb = catalogNumber(option.transferGb);
+  if (cpu !== null) specs.push(`${cpu} vCPU`);
+  if (memoryMb !== null) {
+    specs.push(
+      memoryMb >= 1024 && memoryMb % 1024 === 0
+        ? `${memoryMb / 1024} GB RAM`
+        : `${memoryMb} MB RAM`,
+    );
   }
+  if (diskGb !== null) specs.push(`${diskGb} GB disk`);
+  if (transferGb !== null) specs.push(`${transferGb} GB transfer`);
+  if (specs.length) return specs.join(' · ');
+  return sizeOptionParts(option).slice(1).join(' · ') || undefined;
+}
 
-  private reconcilePlanSelection() {
-    const available = new Set(this.plans().map((item) => item.HcnUUID));
-    this.selectedPlanUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortRows(rows: HostingVpsContainerPlan[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.planSortValue(a, active),
-        this.planSortValue(b, active),
-      );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private planSortValue(item: HostingVpsContainerPlan, column: string) {
-    switch (column) {
-      case 'name':
-        return item.HcnName;
-      case 'provider':
-        return this.providerNameForPlan(item);
-      case 'region':
-        return item.HcnRegion ?? '';
-      case 'size':
-        return item.HcnSize ?? '';
-      case 'price':
-        return Number(item.HcnPrice ?? 0);
-      case 'status':
-        return item.HcnIsActive;
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
-  }
-
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
-    }
-    if (error instanceof Error) return error.message;
-    return fallback;
-  }
-
-  private openDialog() {
-    const planFormDialog = this.planFormDialog();
-    if (!planFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(planFormDialog, {
-      ...getVpsDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-vps-container-plan-dialog',
-    });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
-  }
-
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateVpsDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateVpsDialogViewport(this.dialogRef);
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
+function sortSizeOptions(options: VpsContainerCatalogOption[]) {
+  return [...options].sort((a, b) => {
+    const nameA = sizeOptionParts(a)[0] ?? a.label ?? a.id;
+    const nameB = sizeOptionParts(b)[0] ?? b.label ?? b.id;
+    return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+  });
 }

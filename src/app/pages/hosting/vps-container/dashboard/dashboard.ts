@@ -1,16 +1,16 @@
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import {
+  DashboardRecordListComponent,
+  type DashboardRecord,
+} from '../../../../shared/dashboard/dashboard-record-list';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import {
   HostingVpsContainerInstance,
@@ -28,37 +28,6 @@ type KpiTile = {
   detailLabel: string;
   icon: string;
   state: 'good' | 'warn' | 'bad' | 'neutral';
-};
-
-type StatusRow = {
-  status: string;
-  total: number;
-  active: number;
-  issues: number;
-};
-
-type ProviderRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  active: boolean;
-  isDefault: boolean;
-  plans: number;
-  instances: number;
-  issues: number;
-};
-
-type PlanRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  cpu: string;
-  memory: string;
-  disk: string;
-  profile: string;
-  price: string;
-  active: boolean;
-  instances: number;
 };
 
 type VpsContainerDashboardSnapshot = {
@@ -79,12 +48,9 @@ const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
   selector: 'app-hosting-vps-container-dashboard',
   standalone: true,
   imports: [
+    DashboardRecordListComponent,
     DashboardPageComponent,
-    RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
@@ -109,42 +75,6 @@ export class HostingVpsContainerDashboardPage {
   readonly providers = computed(() => this.dashboard().providers);
   readonly plans = computed(() => this.dashboard().plans);
   readonly instances = computed(() => this.dashboard().instances);
-
-  readonly statusDataSource = createSignalCrudTable<StatusRow>(
-    computed(() => this.statusRows()),
-    (row, column) => this.statusSortValue(row, column),
-  );
-  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
-    computed(() => this.providerRows()),
-    (row, column) => this.providerSortValue(row, column),
-  );
-  readonly planDataSource = createSignalCrudTable<PlanRow>(
-    computed(() => this.planRows()),
-    (row, column) => this.planSortValue(row, column),
-  );
-
-  readonly statusColumns = ['status', 'total', 'active', 'issues', 'actions'];
-  readonly providerColumns = [
-    'provider',
-    'type',
-    'active',
-    'default',
-    'plans',
-    'instances',
-    'issues',
-    'actions',
-  ];
-  readonly planColumns = [
-    'plan',
-    'provider',
-    'cpu',
-    'memory',
-    'disk',
-    'profile',
-    'price',
-    'instances',
-    'active',
-  ];
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -235,6 +165,88 @@ export class HostingVpsContainerDashboardPage {
     },
   ]);
 
+  readonly statusRows = computed<DashboardRecord[]>(() => {
+    const map = new Map<string, HostingVpsContainerInstance[]>();
+    this.instances().forEach((item) => {
+      const status = String(item.HciStatus || 'unknown');
+      map.set(status, [...(map.get(status) ?? []), item]);
+    });
+    return [...map.entries()]
+      .map(([status, rows]) => {
+        const total = rows.length;
+        const active = rows.filter((row) => this.isActive(row.HciIsActive, row.HciStatus)).length;
+        const issues = rows.filter((row) => this.hasIssue(row)).length;
+        return {
+          name: status,
+          meta: String(total),
+          status,
+          tone: this.statusTone(status, issues),
+          details: [
+            { label: 'Total', value: String(total) },
+            { label: 'Active', value: String(active) },
+            { label: 'Issues', value: String(issues) },
+          ],
+        } satisfies DashboardRecord;
+      })
+      .sort((a, b) => Number(b.meta) - Number(a.meta) || a.name.localeCompare(b.name));
+  });
+
+  readonly providerRows = computed<DashboardRecord[]>(() =>
+    this.providers().map((provider) => {
+      const plans = this.plans().filter(
+        (plan) => plan.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
+      );
+      const instances = this.instances().filter(
+        (instance) => instance.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
+      );
+      const active = this.isActive(provider.HcpIsActive);
+      const issues = instances.filter((instance) => this.hasIssue(instance)).length;
+      return {
+        name: provider.HcpName,
+        meta: provider.HcpProvider,
+        status: active ? 'Active' : 'Inactive',
+        tone: issues > 0 ? 'danger' : active ? 'success' : 'skipped',
+        details: [
+          { label: 'Plans', value: String(plans.length) },
+          { label: 'Instances', value: String(instances.length) },
+          { label: 'Issues', value: String(issues) },
+          {
+            label: 'Default',
+            value: Number(provider.HcpIsDefault ?? 0) === 1 ? 'Yes' : 'No',
+            translate: true,
+          },
+        ],
+      } satisfies DashboardRecord;
+    }),
+  );
+
+  readonly planRows = computed<DashboardRecord[]>(() =>
+    this.plans().map((plan) => {
+      const config = this.normalizePlanConfig(plan.HcnConfig);
+      const active = this.isActive(plan.HcnIsActive);
+      return {
+        name: plan.HcnName,
+        meta: this.providerLabel(plan.HostingVpsContainerProviderHcpUUID),
+        status: active ? 'Active' : 'Inactive',
+        tone: active ? 'success' : 'skipped',
+        details: [
+          { label: 'CPU', value: config.cpu ? `${config.cpu} vCPU` : '-' },
+          { label: 'Memory', value: this.formatMemory(config.memoryMb) },
+          { label: 'Disk', value: config.diskGb ? `${config.diskGb} GB` : '-' },
+          { label: 'Profile', value: config.profile || '-' },
+          { label: 'Price', value: this.formatPrice(plan.HcnPrice, plan.HcnCurrency) },
+          {
+            label: 'Instances',
+            value: String(
+              this.instances().filter((item) => item.HostingVpsContainerPlanHcnUUID === plan.HcnUUID)
+                .length,
+            ),
+          },
+        ],
+      } satisfies DashboardRecord;
+    }),
+  );
+
   refreshList() {
     this.dashboardResource.reload();
   }
@@ -258,7 +270,7 @@ export class HostingVpsContainerDashboardPage {
     const results = [providersResult, plansResult, instancesResult];
     const failedSections = results.filter((result) => result.status === 'rejected').length;
 
-    if (failedSections > 0) {
+    if (failedSections === results.length) {
       throw new Error('Failed to load VPS Container dashboard.');
     }
 
@@ -288,36 +300,6 @@ export class HostingVpsContainerDashboardPage {
     };
   }
 
-  routeTo(section: 'instances' | 'provider' | 'plans') {
-    return this.isMaster()
-      ? ['/system/vps-container', section]
-      : ['/hosting/vps-container', section];
-  }
-
-  chipClass(value: boolean | number) {
-    return Boolean(value) ? 'chip-success is-active' : 'chip-skipped is-inactive';
-  }
-
-  issueChipClass(issues: number) {
-    return issues > 0 ? 'chip-warning' : 'chip-success is-active';
-  }
-
-  statusChipClass(status: string) {
-    const normalized = status.toLowerCase();
-    if (['failed', 'error', 'suspended', 'cancelled', 'canceled'].includes(normalized)) {
-      return 'chip-danger';
-    }
-    if (['pending', 'queued', 'provisioning', 'creating', 'running'].includes(normalized)) {
-      return 'chip-warning';
-    }
-    return 'chip-success is-active';
-  }
-
-  providerLabel(uuid: string) {
-    const provider = this.providers().find((item) => item.HcpUUID === uuid);
-    return provider?.HcpName || '-';
-  }
-
   formatMemory(value: number | null | undefined) {
     const mb = Number(value ?? 0);
     if (!Number.isFinite(mb) || mb <= 0) return '-';
@@ -341,61 +323,19 @@ export class HostingVpsContainerDashboardPage {
       : 'hosting/vps-container/instances';
   }
 
-  private statusRows(): StatusRow[] {
-    const map = new Map<string, HostingVpsContainerInstance[]>();
-    this.instances().forEach((item) => {
-      const status = String(item.HciStatus || 'unknown');
-      map.set(status, [...(map.get(status) ?? []), item]);
-    });
-    return [...map.entries()]
-      .map(([status, rows]) => ({
-        status,
-        total: rows.length,
-        active: rows.filter((row) => this.isActive(row.HciIsActive, row.HciStatus)).length,
-        issues: rows.filter((row) => this.hasIssue(row)).length,
-      }))
-      .sort((a, b) => b.total - a.total || a.status.localeCompare(b.status));
+  private statusTone(status: string, issues: number): DashboardRecord['tone'] {
+    if (issues > 0 || this.isIssueStatus(status)) return 'danger';
+    const normalized = status.toLowerCase();
+    if (['pending', 'queued', 'provisioning', 'creating', 'running'].includes(normalized)) {
+      return 'running';
+    }
+    if (['inactive', 'disabled', 'stopped', 'unknown'].includes(normalized)) return 'skipped';
+    return 'success';
   }
 
-  private providerRows(): ProviderRow[] {
-    return this.providers().map((provider) => {
-      const plans = this.plans().filter(
-        (plan) => plan.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
-      );
-      const instances = this.instances().filter(
-        (instance) => instance.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
-      );
-      return {
-        uuid: provider.HcpUUID,
-        name: provider.HcpName,
-        provider: provider.HcpProvider,
-        active: this.isActive(provider.HcpIsActive),
-        isDefault: Number(provider.HcpIsDefault ?? 0) === 1,
-        plans: plans.length,
-        instances: instances.length,
-        issues: instances.filter((instance) => this.hasIssue(instance)).length,
-      };
-    });
-  }
-
-  private planRows(): PlanRow[] {
-    return this.plans().map((plan) => {
-      const config = this.normalizePlanConfig(plan.HcnConfig);
-      return {
-        uuid: plan.HcnUUID,
-        name: plan.HcnName,
-        provider: this.providerLabel(plan.HostingVpsContainerProviderHcpUUID),
-        cpu: config.cpu ? `${config.cpu} vCPU` : '-',
-        memory: this.formatMemory(config.memoryMb),
-        disk: config.diskGb ? `${config.diskGb} GB` : '-',
-        profile: config.profile || '-',
-        price: this.formatPrice(plan.HcnPrice, plan.HcnCurrency),
-        active: this.isActive(plan.HcnIsActive),
-        instances: this.instances().filter(
-          (item) => item.HostingVpsContainerPlanHcnUUID === plan.HcnUUID,
-        ).length,
-      };
-    });
+  private providerLabel(uuid: string) {
+    const provider = this.providers().find((item) => item.HcpUUID === uuid);
+    return provider?.HcpName || '-';
   }
 
   private normalizePlanConfig(value: HostingVpsContainerPlanConfig | string | null | undefined) {
@@ -444,38 +384,6 @@ export class HostingVpsContainerDashboardPage {
     const code = currency || 'BRL';
     if (!Number.isFinite(amount)) return '-';
     return `${code} ${amount.toFixed(2)}`;
-  }
-
-  private statusSortValue(row: StatusRow, column: string) {
-    if (column === 'status') return row.status;
-    if (column === 'total') return row.total;
-    if (column === 'active') return row.active;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private providerSortValue(row: ProviderRow, column: string) {
-    if (column === 'provider') return row.name;
-    if (column === 'type') return row.provider;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    if (column === 'plans') return row.plans;
-    if (column === 'instances') return row.instances;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private planSortValue(row: PlanRow, column: string) {
-    if (column === 'plan') return row.name;
-    if (column === 'provider') return row.provider;
-    if (column === 'cpu') return Number(row.cpu.split(' ')[0] || 0);
-    if (column === 'memory') return row.memory;
-    if (column === 'disk') return Number(row.disk.split(' ')[0] || 0);
-    if (column === 'profile') return row.profile;
-    if (column === 'price') return row.price;
-    if (column === 'instances') return row.instances;
-    if (column === 'active') return row.active ? 1 : 0;
-    return '';
   }
 
   private errorMessage(error: unknown, fallback: string) {
