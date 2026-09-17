@@ -4330,5 +4330,6 @@
   "operations.state.cancelled": "Cancelada",
   "Recheck": "Volver a comprobar",
   "API region": "Región de la API",
-  "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.": "La imagen seleccionada supera los mínimos de CPU, memoria o disco del plan. Elija otra imagen o aumente las especificaciones del plan."
+  "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.": "La imagen seleccionada supera los mínimos de CPU, memoria o disco del plan. Elija otra imagen o aumente las especificaciones del plan.",
+  "Copy plan": "Copiar plan"
 }

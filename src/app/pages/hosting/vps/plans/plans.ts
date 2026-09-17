@@ -8,6 +8,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type {
   HostingVpsPlanConfig,
@@ -25,6 +26,12 @@ const PROVIDER_TYPE_OPTIONS: readonly { value: VpsProvider; label: string }[] = 
   { value: 'vmware_vcenter', label: 'VMware vCenter' },
 ];
 
+const COPY_PLAN_ACTION: ConfigurableCrudRowAction = {
+  key: 'copy',
+  label: 'Copy',
+  icon: 'content_copy',
+  tooltip: 'Copy plan',
+};
 const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/plans',
   uuidField: 'HvpUUID',
@@ -51,6 +58,7 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
   showAsyncOperationStatus: false,
   initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
+  rowActions: [COPY_PLAN_ACTION],
   tabLabels: {
     storage: 'Config',
     financial: 'Pricing',
@@ -546,6 +554,19 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     this.catalogProviderUUID.set(null);
     this.catalogFetchKey.set(null);
     super.startCreate();
+  }
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'copy') return;
+    this.startCopy(row);
+  }
+
+  private startCopy(row: ConfigurableCrudRecord): void {
+    if (!this.canCreate()) return;
+    const values = this.formValuesFromRecord(row);
+    const sourceName = String(values['name'] ?? row['HvpName'] ?? '').trim();
+    values['name'] = sourceName ? `${sourceName} COPY` : 'COPY';
+    this.startCreateWithValues(values);
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {

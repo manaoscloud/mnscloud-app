@@ -673,6 +673,25 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.openDialog();
   }
 
+  /**
+   * Open the create dialog prefilled from an existing row (copy / duplicate).
+   * Keeps editingRecord null so save issues a create.
+   */
+  protected startCreateWithValues(values: ConfigurableCrudRecord): void {
+    if (!this.canCreate()) return;
+    this.dateDrafts.clear();
+    this.revealedPasswordFields.set(new Set());
+    this.editingRecord.set(null);
+    this.formValues.set({ ...this.emptyFormValues(), ...values });
+    this.relatedForms.set({});
+    this.relatedRows.set({});
+    this.enabledCopyActions.set(this.defaultCopyActionKeys());
+    for (const action of this.addressCopyActions()) {
+      if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
+    }
+    this.openDialog();
+  }
+
   startEdit(row: T): void {
     if (!this.canEditRow(row)) return;
     this.dateDrafts.clear();
