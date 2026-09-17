@@ -265,7 +265,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       source: 'HviConfig',
       payloadKey: 'sshKey',
       label: 'SSH Key',
-      placeholder: 'ssh-rsa AAAA... or ssh-ed25519 AAAA...',
+      placeholder: 'ssh-rsa AAAA... comment (Lightsail: ssh-rsa OpenSSH only)',
       span: 2,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
