@@ -724,6 +724,9 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
+    // Clear immediately so Proxmox node switches do not keep filtering the prior
+    // node's templates (which looks like an empty image list for the new region).
+    this.catalog.set(null);
     this.catalogFetchKey.set(fetchKey);
 
     try {

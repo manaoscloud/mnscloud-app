@@ -911,6 +911,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const requestId = ++this.catalogRequestId;
     this.catalogLoading.set(true);
     this.catalogProviderUUID.set(uuid);
+    // Drop the previous node catalog immediately so region-scoped filters (Proxmox)
+    // never briefly/persistently show another node's templates as an empty list.
+    this.catalog.set(null);
     this.catalogFetchKey.set(fetchKey);
     try {
       const query = region ? `?region=${encodeURIComponent(region)}` : '';
@@ -1248,11 +1251,16 @@ function isImageCompatibleWithPlan(
 ): boolean {
   const region = context.region;
   if (region && Array.isArray(option.regions) && option.regions.length > 0) {
+    const regionLc = region.toLowerCase();
     const parent = lightsailParentRegion(region);
-    const ok =
-      option.regions.includes(region) ||
-      Boolean(parent && option.regions.includes(parent)) ||
-      option.regions.some((item) => lightsailParentRegion(item) === parent);
+    const parentLc = parent?.toLowerCase() ?? null;
+    const ok = option.regions.some((item) => {
+      const itemLc = String(item ?? '').toLowerCase();
+      if (!itemLc) return false;
+      if (itemLc === regionLc) return true;
+      if (parentLc && itemLc === parentLc) return true;
+      return lightsailParentRegion(item)?.toLowerCase() === parentLc;
+    });
     if (!ok) return false;
   }
 
