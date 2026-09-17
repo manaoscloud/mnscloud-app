@@ -4331,5 +4331,15 @@
   "Recheck": "Volver a comprobar",
   "API region": "Región de la API",
   "Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.": "La imagen seleccionada supera los mínimos de CPU, memoria o disco del plan. Elija otra imagen o aumente las especificaciones del plan.",
-  "Copy plan": "Copiar plan"
+  "Copy plan": "Copiar plan",
+  "SSH key is required.": "La clave SSH es obligatoria.",
+  "Select an image from the provider catalog.": "Seleccione una imagen del catálogo del proveedor.",
+  "VPS Container provisioning retry could not be queued.": "No se pudo encolar el reintento de aprovisionamiento de VPS Container.",
+  "Failed to retry VPS Container provisioning.": "Error al reintentar el aprovisionamiento de VPS Container.",
+  "Select a valid target VPS Container plan.": "Seleccione un plan VPS Container de destino válido.",
+  "Failed to change VPS Container plan.": "Error al cambiar el plan de VPS Container.",
+  "Failed to load VPS Container providers.": "Error al cargar los proveedores VPS Container.",
+  "Failed to load VPS Container plans.": "Error al cargar los planes VPS Container.",
+  "Unknown provider": "Proveedor desconocido",
+  "Select a valid VPS Container provider.": "Seleccione un proveedor VPS Container válido."
 }
