@@ -117,6 +117,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     storage: '',
     bridge: '',
     templateVmid: '',
+    verifyTls: 1,
     vcenterUrl: '',
     datacenter: '',
     cluster: '',
@@ -260,6 +261,17 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+    },
+    {
+      key: 'verifyTls',
+      payloadKey: 'verifyTls',
+      label: 'Verify TLS',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) =>
+        !['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(providerOf(values)),
     },
     {
       key: 'tokenId',
@@ -640,6 +652,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       storage: config.storage ?? '',
       bridge: config.bridge ?? '',
       templateVmid: config.templateVmid === undefined ? '' : String(config.templateVmid),
+      verifyTls: config.verifyTls === undefined ? 1 : truthyNumber(config.verifyTls),
       vcenterUrl: config.vcenterUrl ?? '',
       datacenter: config.datacenter ?? '',
       cluster: config.cluster ?? '',
@@ -812,6 +825,11 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
   for (const key of CONFIG_FIELD_KEYS) {
     const normalized = normalizeString(values[key]);
     if (normalized) (config as Record<string, unknown>)[key] = normalized;
+  }
+
+  const provider = providerOf(values['provider']);
+  if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {
+    config.verifyTls = truthyNumber(values['verifyTls']) === 1;
   }
 
   const catalogPaths = {
