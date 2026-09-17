@@ -835,6 +835,15 @@ export const routes: Routes = [
                       breadcrumb: 'VPS instance monitoring',
                     },
                   },
+                  {
+                    path: 'snapshots',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/snapshots/snapshots').then(
+                        (m) => m.HostingVpsSnapshotsPage,
+                      ),
+                    title: 'Hosting • VPS Snapshots | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                 ],
               },
               {
@@ -1943,6 +1952,15 @@ export const routes: Routes = [
                       context: 'system',
                       breadcrumb: 'VPS instance monitoring',
                     },
+                  },
+                  {
+                    path: 'snapshots',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/snapshots/snapshots').then(
+                        (m) => m.HostingVpsSnapshotsPage,
+                      ),
+                    title: 'System VPS Snapshots | mnscloud',
+                    data: { scope: 'master', context: 'system' },
                   },
                   {
                     path: 'provider',

@@ -175,3 +175,40 @@ export type HostingVpsInstance = {
   HostingVpsProviderHvrUUID: string;
   HostingVpsPlanHvpUUID: string;
 };
+
+export type HostingVpsSnapshotStatus =
+  | 'queued'
+  | 'creating'
+  | 'available'
+  | 'restoring'
+  | 'deleting'
+  | 'failed'
+  | 'deleted'
+  | 'queue_failed'
+  | string;
+
+export type HostingVpsSnapshot = {
+  HvsUUID: string;
+  HvsName: string;
+  HostingVpsInstanceHviUUID: string;
+  HviName?: string | null;
+  InstanceExternalId?: string | null;
+  InstanceStatus?: string | null;
+  CustomerCusUUID?: string | null;
+  CustomerName?: string | null;
+  HostingVpsProviderHvrUUID?: string | null;
+  ProviderName?: string | null;
+  ProviderCode?: string | null;
+  HvsExternalId?: string | null;
+  HvsStatus?: HostingVpsSnapshotStatus | null;
+  HvsSizeGb?: number | null;
+  HvsRegion?: string | null;
+  HvsIncludeMemory: number;
+  HvsQuiesce: number;
+  HvsConfig?: Record<string, unknown> | string | null;
+  HvsIsActive: number;
+  UserUsrUUID?: string | null;
+  HvsDateCreated?: string | null;
+  HvsDateUpdated?: string | null;
+  HvsDateCompleted?: string | null;
+};
