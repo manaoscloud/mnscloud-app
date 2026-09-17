@@ -173,6 +173,8 @@ export type HostingVpsInstance = {
   HviStatus?: string | null;
   HviIsActive: number;
   HostingVpsProviderHvrUUID: string;
+  ProviderName?: string | null;
+  ProviderCode?: string | null;
   HostingVpsPlanHvpUUID: string;
 };
 
