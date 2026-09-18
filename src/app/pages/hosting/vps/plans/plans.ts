@@ -56,7 +56,6 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
   bulkDelete: true,
   statusFilter: true,
   showAsyncOperationStatus: false,
-  initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
   rowActions: [COPY_PLAN_ACTION],
   tabLabels: {

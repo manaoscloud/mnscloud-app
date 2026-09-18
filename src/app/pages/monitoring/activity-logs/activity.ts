@@ -131,8 +131,7 @@ const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   serverSidePagination: true,
-  initialPageSize: 25,
-  pageSizeOptions: [10, 25, 50, 100],
+  pageSizeOptions: [5, 10, 25, 100],
 };
 
 @Component({

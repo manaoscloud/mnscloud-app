@@ -98,7 +98,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   bulkDelete: true,
   statusFilter: true,
   showAsyncOperationStatus: false,
-  initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
   rowActions: [MONITOR_ACTION, DETAILS_ACTION, RETRY_PROVISION_ACTION, UPGRADE_ACTION],
   listFilters: [

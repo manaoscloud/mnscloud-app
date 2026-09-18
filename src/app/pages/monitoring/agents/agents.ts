@@ -230,7 +230,6 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
     { id: 'uptime', label: 'Uptime', field: 'uptimeText' },
     { id: 'heartbeat', label: 'Heartbeat', field: 'lastHeartbeatAt', kind: 'datetime' },
   ],
-  initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
 };
 
