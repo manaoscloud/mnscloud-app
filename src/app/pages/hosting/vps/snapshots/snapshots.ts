@@ -77,7 +77,6 @@ const HOSTING_VPS_SNAPSHOT_CONFIG_BASE: Omit<ConfigurableCrudConfig, 'fields'> =
   bulkDelete: true,
   statusFilter: true,
   showAsyncOperationStatus: false,
-  initialPageSize: 10,
   pageSizeOptions: [5, 10, 25, 100],
   rowActions: [SYNC_ACTION, RESTORE_ACTION],
   listFilters: [
