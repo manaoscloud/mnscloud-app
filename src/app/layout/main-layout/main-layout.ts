@@ -1885,8 +1885,9 @@ export class MainLayout {
               id: 'hosting/storage/providers',
               label: 'Providers',
               icon: 'cloud_sync',
-              route: '/hosting/storage/providers',
               masterRoute: '/system/hosting/storage/providers',
+              scope: 'master',
+              permissions: ['platform.master.access'],
             },
             {
               id: 'hosting/storage/accounts',
