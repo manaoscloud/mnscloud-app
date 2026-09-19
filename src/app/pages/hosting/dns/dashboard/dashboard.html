@@ -1,0 +1,357 @@
+<mns-dashboard-page
+  [title]="'DNS Dashboard'"
+  [description]="'Provider, domain, and sync health for Hosting DNS.'"
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  (refresh)="refreshList()"
+>
+  <div class="dashboard-content">
+    <div class="dashboard-grid">
+      @for (item of kpis(); track item.label) {
+        <article class="dashboard-metric" [ngClass]="'state-' + item.state">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value | transloco }}</strong>
+            <small class="dashboard-metric-hint"
+              >{{ item.detailValue }} {{ item.detailLabel | transloco }}</small
+            >
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="dashboard-sections">
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Provider Readiness' | transloco }}</h2>
+            <p>{{ 'DNS providers with linked domains and credential readiness.' | transloco }}</p>
+          </div>
+          <a [routerLink]="routeTo('providers')">
+            <mat-icon>chevron_right</mat-icon>
+            {{ 'Providers' | transloco }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            [dataSource]="providerDataSource.visibleRows()"
+            matSort
+            [matSortActive]="providerDataSource.sortActive()"
+            [matSortDirection]="providerDataSource.sortDirection()"
+            (matSortChange)="providerDataSource.setSort($event)"
+          >
+            <ng-container matColumnDef="provider">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Provider' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <strong>{{ row.name }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="platform">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Platform' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ platformLabel(row.platform) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Scope' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">{{ row.scope }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Active' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
+                  {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="default">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Default' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="chipClass(row.isDefault)"
+                >
+                  {{ row.isDefault ? ('Yes' | transloco) : ('No' | transloco) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="domains">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Domains' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.domains }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="issues">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Issues' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="issueChipClass(row.issues)"
+                >
+                  {{ row.issues }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                <a [routerLink]="routeTo('providers')">
+                  <mat-icon>chevron_right</mat-icon>
+                  {{ 'View' | transloco }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="providerColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: providerColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="providerColumns.length">
+                {{
+                  loading()
+                    ? ('Loading DNS providers...' | transloco)
+                    : ('No DNS providers found.' | transloco)
+                }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="providerDataSource.sortedRows().length"
+          [pageIndex]="providerDataSource.pageIndex()"
+          [pageSize]="providerDataSource.pageSize()"
+          [pageSizeOptions]="[5, 10, 25]"
+          (page)="providerDataSource.setPage($event)"
+          showFirstLastButtons
+        />
+      </section>
+
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Domain Inventory' | transloco }}</h2>
+            <p>{{ 'DNS domains with provision and sync status.' | transloco }}</p>
+          </div>
+          <a [routerLink]="routeTo('domains')">
+            <mat-icon>chevron_right</mat-icon>
+            {{ 'Domains' | transloco }}
+          </a>
+        </div>
+
+        <div class="table-wrapper mat-elevation-z8">
+          <table
+            mat-table
+            [dataSource]="domainDataSource.visibleRows()"
+            matSort
+            [matSortActive]="domainDataSource.sortActive()"
+            [matSortDirection]="domainDataSource.sortDirection()"
+            (matSortChange)="domainDataSource.setSort($event)"
+          >
+            <ng-container matColumnDef="domain">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Domain' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <div class="record-main">{{ row.name }}</div>
+                <div class="record-uuid">{{ row.uuid }}</div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="provider">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Provider' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.provider }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="customer">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Customer' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.customer }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="sync">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Sync' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span
+                  class="status-pill status-chip state-chip"
+                  [ngClass]="syncChipClass(row.sync)"
+                >
+                  {{ syncLabel(row.sync) | transloco }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Active' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.active)">
+                  {{ row.active ? ('Active' | transloco) : ('Inactive' | transloco) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="zoneIp">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                {{ 'Zone IP' | transloco }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.zoneIp }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
+              <td mat-cell *matCellDef="let row">
+                @if (row.canOpenRecords) {
+                  <a [routerLink]="domainRecordsLink(row)">
+                    <mat-icon>chevron_right</mat-icon>
+                    {{ 'Records' | transloco }}
+                  </a>
+                } @else {
+                  <a [routerLink]="routeTo('domains')">
+                    <mat-icon>chevron_right</mat-icon>
+                    {{ 'View' | transloco }}
+                  </a>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="domainColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: domainColumns"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="domainColumns.length">
+                {{
+                  loading()
+                    ? ('Loading DNS domains...' | transloco)
+                    : ('No DNS domains found.' | transloco)
+                }}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <mat-paginator
+          class="mobile-paginator"
+          [length]="domainDataSource.sortedRows().length"
+          [pageIndex]="domainDataSource.pageIndex()"
+          [pageSize]="domainDataSource.pageSize()"
+          [pageSizeOptions]="[5, 10, 25]"
+          (page)="domainDataSource.setPage($event)"
+          showFirstLastButtons
+        />
+      </section>
+    </div>
+
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <div>
+          <h2>{{ 'Platform Coverage' | transloco }}</h2>
+          <p>{{ 'DNS platforms with provider, domain, and issue counts.' | transloco }}</p>
+        </div>
+        <a [routerLink]="routeTo('providers')">
+          <mat-icon>chevron_right</mat-icon>
+          {{ 'Providers' | transloco }}
+        </a>
+      </div>
+
+      <div class="table-wrapper mat-elevation-z8">
+        <table
+          mat-table
+          [dataSource]="platformDataSource.visibleRows()"
+          matSort
+          [matSortActive]="platformDataSource.sortActive()"
+          [matSortDirection]="platformDataSource.sortDirection()"
+          (matSortChange)="platformDataSource.setSort($event)"
+        >
+          <ng-container matColumnDef="platform">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Platform' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ platformLabel(row.platform) }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="providers">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Providers' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.providers }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="domains">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Domains' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.domains }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="provisioned">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Provisioned' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.provisioned }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="issues">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+              {{ 'Issues' | transloco }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              <span
+                class="status-pill status-chip state-chip"
+                [ngClass]="issueChipClass(row.issues)"
+              >
+                {{ row.issues }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="platformColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: platformColumns"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="platformColumns.length">
+              {{
+                loading()
+                  ? ('Loading platform coverage...' | transloco)
+                  : ('No DNS platforms found.' | transloco)
+              }}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        class="mobile-paginator"
+        [length]="platformDataSource.sortedRows().length"
+        [pageIndex]="platformDataSource.pageIndex()"
+        [pageSize]="platformDataSource.pageSize()"
+        [pageSizeOptions]="[5, 10, 25]"
+        (page)="platformDataSource.setPage($event)"
+        showFirstLastButtons
+      />
+    </section>
+  </div>
+</mns-dashboard-page>

@@ -1808,6 +1808,14 @@ export class MainLayout {
           scope: 'both',
           children: [
             {
+              id: 'hosting/dns/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/hosting/dns',
+              masterRoute: '/system/hosting/dns',
+              scope: 'both',
+            },
+            {
               id: 'hosting/dns/providers',
               label: 'Providers',
               icon: 'manage_accounts',
