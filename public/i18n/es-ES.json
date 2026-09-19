@@ -4360,5 +4360,7 @@
   "provisioned": "aprovisionados",
   "Not ready": "No listo",
   "In flight": "En curso",
-  "Records": "Registros"
+  "Records": "Registros",
+  "rollout failed to queue.": "error al encolar el despliegue.",
+  "rollout partially queued.": "despliegue parcialmente encolado."
 }

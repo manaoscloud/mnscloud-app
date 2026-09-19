@@ -4360,5 +4360,7 @@
   "provisioned": "provisioned",
   "Not ready": "Not ready",
   "In flight": "In flight",
-  "Records": "Records"
+  "Records": "Records",
+  "rollout failed to queue.": "rollout failed to queue.",
+  "rollout partially queued.": "rollout partially queued."
 }
