@@ -33,7 +33,6 @@ export type HostingWebhostPlan = {
   HostingWebhostProviderHwpUUID: string;
   ProviderName: string;
   HwlProvider: WebhostProviderType;
-  HwlPackage?: string | null;
   HwlDiskMb?: number | null;
   HwlBandwidthMb?: number | null;
   HwlDomains?: number | null;
@@ -71,7 +70,6 @@ export type HostingWebhostHost = {
   CustomerName?: string | null;
   HostingWebhostPlanHwlUUID: string;
   PlanName: string;
-  PlanPackage?: string | null;
   PlanDiskMb?: number | null;
   PlanBandwidthMb?: number | null;
   HostingWebhostProviderHwpUUID: string;

@@ -310,9 +310,9 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       .filter((plan) => plan.HwlIsActive === 1)
       .map((plan) => ({
         value: plan.HwlUUID,
-        label: plan.HwlPackage ? `${plan.HwlName} · ${plan.HwlPackage}` : plan.HwlName,
+        label: plan.HwlName,
         description: plan.ProviderName,
-        searchText: `${plan.HwlName} ${plan.ProviderName} ${plan.HwlPackage ?? ''}`,
+        searchText: `${plan.HwlName} ${plan.ProviderName}`,
       })),
   );
   private readonly domainOptions = computed<ConfigurableCrudOption[]>(() => {

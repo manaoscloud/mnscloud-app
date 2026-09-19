@@ -19,7 +19,7 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
   createTitle: 'New webhost plan',
   editTitle: 'Edit webhost plan',
   dialogDescription: 'Configure plan identity, package limits and pricing.',
-  searchPlaceholder: 'Name, provider or package',
+  searchPlaceholder: 'Name or provider',
   emptyLabel: 'No webhost plans found.',
   deleteTitle: 'Delete webhost plan',
   deleteMessage: 'Are you sure you want to delete this webhost plan?',
@@ -51,7 +51,6 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     name: '',
     providerUUID: '',
-    packageName: '',
     diskMb: 0,
     bandwidthMb: 0,
     domains: 0,
@@ -73,7 +72,6 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
       field: 'ProviderName',
       uuidField: 'HostingWebhostProviderHwpUUID',
     },
-    { id: 'package', label: 'Package', field: 'HwlPackage' },
     { id: 'resources', label: 'Resources', field: 'PlanResourcesLabel' },
     {
       id: 'price',
@@ -103,13 +101,6 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     { key: 'name', source: 'HwlName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'packageName',
-      source: 'HwlPackage',
-      payloadKey: 'packageName',
-      label: 'Package name',
-      span: 1,
-    },
     {
       key: 'diskMb',
       source: 'HwlDiskMb',
@@ -270,7 +261,6 @@ export class HostingWebhostPlansPage extends ConfigurableCrudPageBase<Configurab
     return {
       ...super.formValuesFromRecord(row),
       status: truthyNumber(row['HwlIsActive']),
-      packageName: String(row['HwlPackage'] ?? ''),
       diskMb: Number(row['HwlDiskMb'] ?? 0),
       bandwidthMb: Number(row['HwlBandwidthMb'] ?? 0),
       domains: Number(row['HwlDomains'] ?? 0),
@@ -288,7 +278,6 @@ export class HostingWebhostPlansPage extends ConfigurableCrudPageBase<Configurab
     return {
       name: payload['name'],
       providerUUID: payload['providerUUID'],
-      packageName: normalizeString(payload['packageName']),
       diskMb: numberOrNull(payload['diskMb']),
       bandwidthMb: numberOrNull(payload['bandwidthMb']),
       domains: numberOrNull(payload['domains']),
