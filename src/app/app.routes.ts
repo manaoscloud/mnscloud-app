@@ -690,34 +690,52 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'hosting' },
               },
               {
-                path: 'hosting/dns/domains/:uuid/records',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/zone-records/zone-records').then(
-                    (m) => m.HostingDnsZoneRecordsPage,
-                  ),
-              },
-              {
-                path: 'hosting/dns/domains/:uuid',
-                pathMatch: 'full',
-                redirectTo: 'hosting/dns/domains',
-              },
-              {
-                path: 'hosting/dns/domains',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/domains/domains').then(
-                    (m) => m.HostingDnsDomainsPage,
-                  ),
-                title: 'Hosting • DNS • Domains | mnscloud',
+                path: 'hosting/dns',
+                title: 'Hosting • DNS | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
-              },
-              {
-                path: 'hosting/dns/providers',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/providers/providers').then(
-                    (m) => m.HostingDnsProvidersPage,
-                  ),
-                title: 'Hosting • DNS • Providers | mnscloud',
-                data: { scope: 'tenant', context: 'hosting' },
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/dashboard/dashboard').then(
+                        (m) => m.HostingDnsDashboardPage,
+                      ),
+                    title: 'Hosting • DNS Dashboard | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'domains/:uuid/records',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/zone-records/zone-records').then(
+                        (m) => m.HostingDnsZoneRecordsPage,
+                      ),
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'domains/:uuid',
+                    pathMatch: 'full',
+                    redirectTo: 'domains',
+                  },
+                  {
+                    path: 'domains',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/domains/domains').then(
+                        (m) => m.HostingDnsDomainsPage,
+                      ),
+                    title: 'Hosting • DNS • Domains | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/providers/providers').then(
+                        (m) => m.HostingDnsProvidersPage,
+                      ),
+                    title: 'Hosting • DNS • Providers | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                ],
               },
               {
                 path: 'hosting/smtp',
@@ -1772,34 +1790,52 @@ export const routes: Routes = [
                 data: { scope: 'master', context: 'system' },
               },
               {
-                path: 'hosting/dns/domains/:uuid/records',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/zone-records/zone-records').then(
-                    (m) => m.HostingDnsZoneRecordsPage,
-                  ),
-              },
-              {
-                path: 'hosting/dns/domains/:uuid',
-                pathMatch: 'full',
-                redirectTo: 'hosting/dns/domains',
-              },
-              {
-                path: 'hosting/dns/domains',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/domains/domains').then(
-                    (m) => m.HostingDnsDomainsPage,
-                  ),
-                title: 'System Hosting • DNS • Domains | mnscloud',
+                path: 'hosting/dns',
+                title: 'System Hosting • DNS | mnscloud',
                 data: { scope: 'master', context: 'system' },
-              },
-              {
-                path: 'hosting/dns/providers',
-                loadComponent: () =>
-                  import('./pages/hosting/dns/providers/providers').then(
-                    (m) => m.HostingDnsProvidersPage,
-                  ),
-                title: 'System Hosting • DNS • Providers | mnscloud',
-                data: { scope: 'master', context: 'system' },
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/dashboard/dashboard').then(
+                        (m) => m.HostingDnsDashboardPage,
+                      ),
+                    title: 'System Hosting • DNS Dashboard | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'domains/:uuid/records',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/zone-records/zone-records').then(
+                        (m) => m.HostingDnsZoneRecordsPage,
+                      ),
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'domains/:uuid',
+                    pathMatch: 'full',
+                    redirectTo: 'domains',
+                  },
+                  {
+                    path: 'domains',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/domains/domains').then(
+                        (m) => m.HostingDnsDomainsPage,
+                      ),
+                    title: 'System Hosting • DNS • Domains | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/providers/providers').then(
+                        (m) => m.HostingDnsProvidersPage,
+                      ),
+                    title: 'System Hosting • DNS • Providers | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
               },
               {
                 path: 'hosting/smtp',
