@@ -1,4 +1,4 @@
-export type WebhostProviderType = 'cpanel_whm' | 'plesk' | 'directadmin';
+export type WebhostProviderType = 'cpanel_whm';
 
 export type WebhostProviderConfig = {
   hostname?: string | null;

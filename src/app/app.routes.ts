@@ -886,23 +886,14 @@ export const routes: Routes = [
                 title: 'Hosting • Webhost | mnscloud',
                 data: { scope: 'tenant', context: 'hosting' },
                 children: [
-                  { path: '', pathMatch: 'full', redirectTo: 'providers' },
                   {
-                    path: 'providers',
+                    path: '',
+                    pathMatch: 'full',
                     loadComponent: () =>
-                      import('./pages/hosting/webhost/providers/providers').then(
-                        (m) => m.HostingWebhostProvidersPage,
+                      import('./pages/hosting/webhost/dashboard/dashboard').then(
+                        (m) => m.HostingWebhostDashboardPage,
                       ),
-                    title: 'Hosting • Webhost • Providers | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
-                    path: 'plans',
-                    loadComponent: () =>
-                      import('./pages/hosting/webhost/plans/plans').then(
-                        (m) => m.HostingWebhostPlansPage,
-                      ),
-                    title: 'Hosting • Webhost • Plans | mnscloud',
+                    title: 'Hosting • Webhost Dashboard | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
@@ -926,41 +917,29 @@ export const routes: Routes = [
                   {
                     path: 'databases',
                     loadComponent: () =>
-                      import('./pages/hosting/webhost/tools/tools').then(
-                        (m) => m.HostingWebhostToolsPage,
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
                       ),
                     title: 'Hosting • Webhost • Databases | mnscloud',
-                    data: {
-                      scope: 'tenant',
-                      context: 'hosting',
-                      tool: 'databases',
-                    },
+                    data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
                     path: 'mailing-lists',
                     loadComponent: () =>
-                      import('./pages/hosting/webhost/tools/tools').then(
-                        (m) => m.HostingWebhostToolsPage,
+                      import('./pages/hosting/webhost/mailing-lists/mailing-lists').then(
+                        (m) => m.HostingWebhostMailingListsPage,
                       ),
                     title: 'Hosting • Webhost • Mailing Lists | mnscloud',
-                    data: {
-                      scope: 'tenant',
-                      context: 'hosting',
-                      tool: 'mailing-lists',
-                    },
+                    data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
                     path: 'zone-editor',
                     loadComponent: () =>
-                      import('./pages/hosting/webhost/tools/tools').then(
-                        (m) => m.HostingWebhostToolsPage,
+                      import('./pages/hosting/webhost/zone-editor/zone-editor').then(
+                        (m) => m.HostingWebhostZoneEditorPage,
                       ),
                     title: 'Hosting • Webhost • Zone Editor | mnscloud',
-                    data: {
-                      scope: 'tenant',
-                      context: 'hosting',
-                      tool: 'zone-records',
-                    },
+                    data: { scope: 'tenant', context: 'hosting' },
                   },
                 ],
               },
@@ -1903,6 +1882,86 @@ export const routes: Routes = [
                         (m) => m.HostingStorageAccountsPage,
                       ),
                     title: 'System Storage Accounts | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                ],
+              },
+              {
+                path: 'hosting/webhost',
+                title: 'System Webhost | mnscloud',
+                data: { scope: 'master', context: 'system' },
+                children: [
+                  {
+                    path: '',
+                    pathMatch: 'full',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/dashboard/dashboard').then(
+                        (m) => m.HostingWebhostDashboardPage,
+                      ),
+                    title: 'System Webhost Dashboard | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'providers',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/providers/providers').then(
+                        (m) => m.HostingWebhostProvidersPage,
+                      ),
+                    title: 'System Webhost Providers | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'plans',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/plans/plans').then(
+                        (m) => m.HostingWebhostPlansPage,
+                      ),
+                    title: 'System Webhost Plans | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'hosts',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/hosts/hosts').then(
+                        (m) => m.HostingWebhostHostsPage,
+                      ),
+                    title: 'System Webhost Hosts | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'emails',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/emails/emails').then(
+                        (m) => m.HostingWebhostEmailsPage,
+                      ),
+                    title: 'System Webhost Emails | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'databases',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
+                      ),
+                    title: 'System Webhost Databases | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'mailing-lists',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/mailing-lists/mailing-lists').then(
+                        (m) => m.HostingWebhostMailingListsPage,
+                      ),
+                    title: 'System Webhost Mailing Lists | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'zone-editor',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/zone-editor/zone-editor').then(
+                        (m) => m.HostingWebhostZoneEditorPage,
+                      ),
+                    title: 'System Webhost Zone Editor | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                 ],

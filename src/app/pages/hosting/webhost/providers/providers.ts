@@ -1,662 +1,313 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom, takeUntil } from 'rxjs';
+import { Component, computed } from '@angular/core';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
 import {
-  getWebhostDialogViewportConfig,
-  updateWebhostDialogViewport,
-} from '../webhost-dialog-viewport';
-import type {
-  HostingWebhostProvider,
-  WebhostProviderConfig,
-  WebhostProviderCredentials,
-  WebhostProviderType,
-} from '../webhost.types';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  WEBHOST_PROVIDER_OPTIONS,
+  YES_NO_OPTIONS,
+  asRecord,
+  normalizeString,
+  truthyNumber,
+} from '../webhost-shared';
 
-@Component({
-  selector: 'app-hosting-webhost-providers',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
+const VALIDATE_ACTION: ConfigurableCrudRowAction = {
+  key: 'validate',
+  label: 'Validate',
+  icon: 'fact_check',
+  tooltip: 'Validate',
+};
+
+const PROVIDER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'system/hosting/webhost/providers',
+  uuidField: 'HwpUUID',
+  pageTitle: 'Webhost Providers',
+  pageDescription: 'Manage cPanel/WHM panels and credentials. Master-only administration.',
+  createTitle: 'New webhost provider',
+  editTitle: 'Edit webhost provider',
+  dialogDescription: 'Configure provider identity, panel host and API credentials.',
+  searchPlaceholder: 'Name, hostname or username',
+  emptyLabel: 'No webhost providers found.',
+  deleteTitle: 'Delete webhost provider',
+  deleteMessage: 'Are you sure you want to delete this webhost provider?',
+  deleteSelectedTitle: 'Delete selected webhost providers',
+  deleteSelectedMessage: 'Delete {count} selected webhost providers?',
+  savedMessage: 'Webhost provider saved successfully.',
+  deletedMessage: 'Webhost provider deleted successfully.',
+  deleteFailedMessage: 'Failed to delete webhost provider.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  authenticationTabAfterRecord: true,
+  tabLabels: {
+    authentication: 'Credentials',
+    notes: 'Notes',
+  },
+  rowActions: [VALIDATE_ACTION],
+  listFilters: [
+    {
+      key: 'provider',
+      label: 'Provider',
+      paramKey: 'provider',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
   ],
-  templateUrl: './providers.html',
-  styleUrls: ['./providers.scss'],
-})
-export class HostingWebhostProvidersPage {
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly providerFormDialog = viewChild<TemplateRef<unknown>>('providerFormDialog');
-
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-
-  readonly providerEndpoint = 'hosting/webhost/providers';
-  readonly providers = signal<HostingWebhostProvider[]>([]);
-  readonly appliedSearch = signal('');
-  readonly appliedStatus = signal('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly rows = computed(() => {
-    const search = this.appliedSearch().trim().toLowerCase();
-    const status = this.appliedStatus();
-    return this.providers().filter((item) => {
-      const config = item.HwpConfig ?? {};
-      const credentials = item.credentials ?? {};
-      const matchesSearch =
-        !search ||
-        item.HwpName.toLowerCase().includes(search) ||
-        this.providerLabel(item.HwpProvider).toLowerCase().includes(search) ||
-        (config.hostname ?? '').toLowerCase().includes(search) ||
-        (credentials.username ?? '').toLowerCase().includes(search);
-      const matchesStatus =
-        status === '' ||
-        (status === '1' && item.HwpIsActive === 1) ||
-        (status === '0' && item.HwpIsActive !== 1);
-      return matchesSearch && matchesStatus;
-    });
-  });
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-
-  readonly saving = signal(false);
-  readonly validatingProviderId = signal<string | null>(null);
-  readonly editing = signal<HostingWebhostProvider | null>(null);
-  readonly hideApiToken = signal(true);
-  readonly selectedProviderUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedProviderUUIDs().size);
-
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'provider',
-    'host',
-    'username',
-    'default',
-    'status',
-    'actions',
-  ];
-  readonly providerOptions: { value: WebhostProviderType; label: string }[] = [
-    { value: 'cpanel_whm', label: 'cPanel/WHM' },
-    { value: 'plesk', label: 'Plesk' },
-    { value: 'directadmin', label: 'DirectAdmin' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly providerFormModel = signal({
+  initialValues: {
     name: '',
-    provider: 'cpanel_whm' as WebhostProviderType,
+    provider: 'cpanel_whm',
+    status: 1,
+    isDefault: 0,
     hostname: '',
     port: 2087,
     username: '',
     apiToken: '',
     sslVerify: 1,
     notes: '',
-    isActive: 1,
-    isDefault: 0,
-  });
-  readonly providerForm = createForm(this.providerFormModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-    required(schema.hostname);
-    required(schema.port);
-    required(schema.username);
-    required(schema.sslVerify);
-    required(schema.isActive);
-    required(schema.isDefault);
-  });
-
-  private readonly providersResource = resource({
-    params: () => ({
-      search: this.appliedSearch(),
-      status: this.appliedStatus(),
-      endpoint: this.providerEndpoint,
-    }),
-    defaultValue: [] as HostingWebhostProvider[],
-    loader: async ({ params }) => {
-      const search = params.search.trim();
-      const query = new URLSearchParams({ limit: '500', offset: '0' });
-      if (search) query.set('search', search);
-      if (params.status === '0' || params.status === '1') query.set('status', params.status);
-      const result = await this.api.get<{ data?: { items?: HostingWebhostProvider[] } }>(
-        `${params.endpoint}?${query.toString()}`,
-      );
-      const list = Array.isArray(result?.data?.items) ? result.data.items : [];
-      return list.map((item) => ({
-        ...item,
-        HwpConfig: this.parseConfig<WebhostProviderConfig>(item.HwpConfig),
-      })) as HostingWebhostProvider[];
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HwpName', uuidField: 'HwpUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HwpProvider',
+      lookupKey: 'provider',
     },
-  });
-  readonly loading = this.providersResource.isLoading;
-  private readonly syncProviders = effect(() => {
-    this.providers.set(this.providersResource.value());
-    this.reconcileProviderSelection();
-  });
-  private readonly reportLoadError = effect(() => {
-    const error = this.providersResource.error();
-    if (!error) return;
-    this.snack.error(this.friendlyError(error, 'Failed to load Webhost providers.'));
-  });
+    { id: 'host', label: 'Host', field: 'ProviderHostLabel' },
+    { id: 'username', label: 'Username', field: 'ProviderUsernameLabel' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HwpIsDefault',
+      className: 'status-col',
+    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HwpIsActive', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'HwpIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'provider',
+      source: 'HwpProvider',
+      payloadKey: 'provider',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+      translateOptions: false,
+    },
+    {
+      key: 'isDefault',
+      source: 'HwpIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default provider',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'HwpName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'hostname',
+      payloadKey: 'hostname',
+      label: 'Hostname',
+      required: true,
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'port',
+      payloadKey: 'port',
+      label: 'Port',
+      type: 'number',
+      required: true,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'sslVerify',
+      payloadKey: 'sslVerify',
+      label: 'Verify TLS',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'username',
+      payloadKey: 'username',
+      label: 'Username',
+      required: true,
+      tab: 'authentication',
+      span: 2,
+    },
+    {
+      key: 'apiToken',
+      payloadKey: 'apiToken',
+      label: 'API token',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current API token',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      requiredWhen: ({ editing }) => !editing,
+    },
+    {
+      key: 'notes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 3,
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-hosting-webhost-providers',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingWebhostProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly endpoint = computed(() => 'system/hosting/webhost/providers');
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.stopDialogViewportObserver();
-    });
+    super(PROVIDER_CONFIG);
   }
 
-  refreshList() {
-    this.providersResource.reload();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedStatus.set(values.status);
-    this.resetPagination();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ search: '', status: '' });
-    this.applyFilters();
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  providerLabel(provider: WebhostProviderType) {
-    return this.providerOptions.find((opt) => opt.value === provider)?.label ?? provider;
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  statusLabel(item: HostingWebhostProvider) {
-    return item.HwpIsActive === 1 ? 'Active' : 'Inactive';
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  providerIsDefault(item: HostingWebhostProvider) {
-    return item.HwpIsDefault === 1;
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'provider') return WEBHOST_PROVIDER_OPTIONS;
+    return [];
   }
 
-  hostLabel(item: HostingWebhostProvider) {
-    const config = item.HwpConfig ?? {};
-    const hostname = config.hostname ?? '-';
-    const port = config.port ?? 2087;
-    return hostname === '-' ? '-' : `${hostname}:${port}`;
-  }
-
-  usernameLabel(item: HostingWebhostProvider) {
-    return item.credentials?.username || '-';
-  }
-
-  apiTokenPlaceholder() {
-    return this.editing()?.credentials?.apiTokenConfigured
-      ? 'Token stored; leave blank to keep it'
-      : 'API token';
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.resetForm();
-    this.openDialog();
-  }
-
-  async startEdit(item: HostingWebhostProvider) {
-    let provider = item;
-    try {
-      const result = await this.api.get<{ data?: { item?: HostingWebhostProvider | null } }>(
-        `${this.providerEndpoint}/${item.HwpUUID}`,
-      );
-      const detail = result?.data?.item;
-      if (detail) {
-        provider = {
-          ...detail,
-          HwpConfig: this.parseConfig<WebhostProviderConfig>(detail.HwpConfig),
-        };
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load provider details.'));
-    }
-
-    const config = provider.HwpConfig ?? {};
-    const credentials = provider.credentials ?? {};
-    this.editing.set(provider);
-    this.providerFormModel.set({
-      name: provider.HwpName,
-      provider: provider.HwpProvider,
-      hostname: config.hostname ?? '',
-      port: Number(config.port ?? 2087),
-      username: credentials.username ?? '',
-      apiToken: credentials.apiToken ?? '',
-      sslVerify: config.sslVerify === false ? 0 : 1,
-      notes: config.notes ?? '',
-      isActive: provider.HwpIsActive === 1 ? 1 : 0,
-      isDefault: provider.HwpIsDefault === 1 ? 1 : 0,
-    });
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    if (!this.providerForm().valid() || !this.isValidProviderPort()) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    const values = this.providerFormModel();
-    const credentials = this.buildCredentialsPayload();
-    if (!this.editing() && !credentials?.apiToken) {
-      this.snack.warning('API token is required for new providers.');
-      return;
-    }
-
-    this.saving.set(true);
-    const payload: Record<string, unknown> = {
-      name: values.name.trim(),
-      provider: values.provider,
-      config: this.buildConfigPayload(),
-      isActive: values.isActive === 1,
-      isDefault: values.isDefault === 1,
-    };
-    if (credentials) payload['credentials'] = credentials;
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.providerEndpoint}/${editing.HwpUUID}`, payload);
-        this.snack.success('Webhost provider updated.');
-      } else {
-        await this.api.post(this.providerEndpoint, payload);
-        this.snack.success('Webhost provider created.');
-      }
-      this.providersResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save Webhost provider.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  async remove(item: HostingWebhostProvider) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete Webhost provider',
-        message: `Are you sure you want to delete "${item.HwpName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.providerEndpoint}/${item.HwpUUID}`);
-      this.snack.success('Webhost provider deleted.');
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete Webhost provider.'));
-    }
-  }
-
-  isSelected(item: HostingWebhostProvider) {
-    return this.selectedProviderUUIDs().has(item.HwpUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleProviderSelection(item: HostingWebhostProvider, checked: boolean) {
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) {
-        next.add(item.HwpUUID);
-      } else {
-        next.delete(item.HwpUUID);
-      }
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        if (checked) {
-          next.add(row.HwpUUID);
-        } else {
-          next.delete(row.HwpUUID);
-        }
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedProviders() {
-    const ids = Array.from(this.selectedProviderUUIDs());
-    if (!ids.length) return;
-    const labels = this.providers()
-      .filter((item) => ids.includes(item.HwpUUID))
-      .slice(0, 3)
-      .map((item) => item.HwpName);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected Webhost providers',
-        message: `Are you sure you want to delete ${ids.length} selected Webhost provider(s)?${suffix}`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingWebhostProviderUUID: string; message: string }[];
-        };
-      }>(`${this.providerEndpoint}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map((item) => item.HostingWebhostProviderUUID),
-      );
-      this.providers.update((rows) => rows.filter((row) => !deleted.has(row.HwpUUID)));
-      this.selectedProviderUUIDs.set(failed);
-      this.providersResource.reload();
-      if (failed.size) {
-        this.snack.error(`${failed.size} Webhost provider(s) could not be deleted.`);
-      } else {
-        this.snack.success(`${deleted.size || ids.length} Webhost provider(s) deleted.`);
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected Webhost providers.'));
-    }
-  }
-
-  async validateProvider(item: HostingWebhostProvider) {
-    this.validatingProviderId.set(item.HwpUUID);
-    try {
-      await this.api.post(`${this.providerEndpoint}/${item.HwpUUID}/validate`, {});
-      this.snack.success(`${this.providerLabel(item.HwpProvider)} provider tested successfully.`);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to test Webhost provider.'));
-    } finally {
-      this.validatingProviderId.set(null);
-    }
-  }
-
-  toggleSecret(event: MouseEvent) {
-    event.stopPropagation();
-    this.hideApiToken.set(!this.hideApiToken());
-  }
-
-  private normalizeString(value: string | null | undefined): string | null {
-    if (!value) return null;
-    const trimmed = value.trim();
-    return trimmed.length ? trimmed : null;
-  }
-
-  private parseConfig<T>(value: unknown): T | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as T) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private resetForm() {
-    this.providerFormModel.set({
-      name: '',
-      provider: 'cpanel_whm',
-      hostname: '',
-      port: 2087,
-      username: '',
-      apiToken: '',
-      sslVerify: 1,
-      notes: '',
-      isActive: 1,
-      isDefault: 0,
-    });
-  }
-
-  private isValidProviderPort() {
-    const port = Number(this.providerFormModel().port);
-    return Number.isInteger(port) && port >= 1 && port <= 65535;
-  }
-
-  private resetPagination() {
-    this.pageIndex.set(0);
-  }
-
-  private reconcileProviderSelection() {
-    const available = new Set(this.providers().map((item) => item.HwpUUID));
-    this.selectedProviderUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortRows(rows: HostingWebhostProvider[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(
-        this.providerSortValue(a, active),
-        this.providerSortValue(b, active),
-      );
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private providerSortValue(item: HostingWebhostProvider, column: string) {
-    switch (column) {
-      case 'name':
-        return item.HwpName;
-      case 'provider':
-        return this.providerLabel(item.HwpProvider);
-      case 'host':
-        return this.hostLabel(item);
-      case 'username':
-        return this.usernameLabel(item);
-      case 'default':
-        return item.HwpIsDefault;
-      case 'status':
-        return item.HwpIsActive;
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
+  protected override async fetchItems(
+    filters: ConfigurableCrudFilters,
   ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
+    const items = await super.fetchItems(filters);
+    return items.map((item) => {
+      const config = asRecord(item['HwpConfig']);
+      const credentials = asRecord(item['credentials']);
+      const hostname = String(config['hostname'] ?? '');
+      const port = Number(config['port'] ?? 2087);
+      return {
+        ...item,
+        ProviderHostLabel: hostname ? `${hostname}:${port}` : '-',
+        ProviderUsernameLabel: String(credentials['username'] ?? '-'),
+      };
     });
   }
 
-  private buildConfigPayload(): WebhostProviderConfig {
-    const values = this.providerFormModel();
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const config = asRecord(row['HwpConfig']);
+    const credentials = asRecord(row['credentials']);
     return {
-      hostname: this.normalizeString(values.hostname),
-      port: Number(values.port || 2087),
-      sslVerify: values.sslVerify === 1,
-      notes: this.normalizeString(values.notes),
+      ...super.formValuesFromRecord(row),
+      provider: String(row['HwpProvider'] ?? 'cpanel_whm') || 'cpanel_whm',
+      isDefault: truthyNumber(row['HwpIsDefault']),
+      status: truthyNumber(row['HwpIsActive']),
+      hostname: String(config['hostname'] ?? ''),
+      port: Number(config['port'] ?? 2087),
+      sslVerify: config['sslVerify'] === false ? 0 : 1,
+      notes: String(config['notes'] ?? ''),
+      username: String(credentials['username'] ?? ''),
+      apiToken: '',
     };
   }
 
-  private buildCredentialsPayload(): WebhostProviderCredentials | null {
-    const values = this.providerFormModel();
-    const credentials: WebhostProviderCredentials = {};
-    const username = this.normalizeString(values.username);
-    const apiToken = this.normalizeString(values.apiToken);
-    if (username) credentials.username = username;
-    if (apiToken) credentials.apiToken = apiToken;
-    return Object.keys(credentials).length ? credentials : null;
-  }
-
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const port = Number(payload['port'] ?? 0);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      this.snack.warning(this.t('Port must be between 1 and 65535.'));
+      return false;
     }
-    if (error instanceof Error) return error.message;
-    return fallback;
+    if (!this.editingRecord() && !String(payload['apiToken'] ?? '').trim()) {
+      this.snack.warning(this.t('API token is required for new providers.'));
+      return false;
+    }
+    return true;
   }
 
-  private openDialog() {
-    const providerFormDialog = this.providerFormDialog();
-    if (!providerFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(providerFormDialog, {
-      ...getWebhostDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-webhost-provider-dialog',
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const credentials = cleanCredentials({
+      username: normalizeString(payload['username']),
+      apiToken: normalizeString(payload['apiToken']),
     });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
+    return {
+      name: payload['name'],
+      provider: 'cpanel_whm',
+      config: {
+        hostname: normalizeString(payload['hostname']),
+        port: Number(payload['port'] || 2087),
+        sslVerify: truthyNumber(payload['sslVerify']) === 1,
+        notes: normalizeString(payload['notes']),
+      },
+      ...(credentials ? { credentials } : {}),
+      isActive: truthyNumber(payload['status']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
+    };
   }
 
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'validate') return;
+    const uuid = String(row['HwpUUID'] ?? '');
+    if (!uuid) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.snack.success(this.t('Webhost provider validated.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to validate webhost provider.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
+}
 
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateWebhostDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateWebhostDialogViewport(this.dialogRef);
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
+function cleanCredentials(
+  value: Record<string, string | null>,
+): Record<string, string> | null {
+  const cleaned = Object.fromEntries(
+    Object.entries(value).filter(([, item]) => Boolean(item)),
+  ) as Record<string, string>;
+  return Object.keys(cleaned).length ? cleaned : null;
 }
