@@ -4362,5 +4362,12 @@
   "In flight": "In flight",
   "Records": "Records",
   "rollout failed to queue.": "rollout failed to queue.",
-  "rollout partially queued.": "rollout partially queued."
+  "rollout partially queued.": "rollout partially queued.",
+  "Bucket is required for the selected provider.": "Bucket is required for the selected provider.",
+  "Container is required for Azure Blob Storage.": "Container is required for Azure Blob Storage.",
+  "Storage account validated.": "Storage account validated.",
+  "Failed to validate storage account.": "Failed to validate storage account.",
+  "Failed to load storage providers.": "Failed to load storage providers.",
+  "Storage provider validated.": "Storage provider validated.",
+  "Failed to validate storage provider.": "Failed to validate storage provider."
 }

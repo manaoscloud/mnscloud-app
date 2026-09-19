@@ -1872,6 +1872,7 @@ export class MainLayout {
           id: 'hosting/storage',
           label: 'Storage',
           icon: 'storage',
+          entitlementCode: 'module.hosting.storage.account',
           children: [
             {
               id: 'hosting/storage/dashboard',

@@ -4362,5 +4362,12 @@
   "In flight": "En curso",
   "Records": "Registros",
   "rollout failed to queue.": "error al encolar el despliegue.",
-  "rollout partially queued.": "despliegue parcialmente encolado."
+  "rollout partially queued.": "despliegue parcialmente encolado.",
+  "Bucket is required for the selected provider.": "El bucket es obligatorio para el proveedor seleccionado.",
+  "Container is required for Azure Blob Storage.": "El contenedor es obligatorio para Azure Blob Storage.",
+  "Storage account validated.": "Cuenta de storage validada.",
+  "Failed to validate storage account.": "Error al validar la cuenta de storage.",
+  "Failed to load storage providers.": "Error al cargar proveedores de storage.",
+  "Storage provider validated.": "Proveedor de storage validado.",
+  "Failed to validate storage provider.": "Error al validar el proveedor de storage."
 }

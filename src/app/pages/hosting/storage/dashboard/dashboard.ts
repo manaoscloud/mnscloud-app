@@ -1,38 +1,70 @@
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
+import {
+  DashboardRecord,
+  DashboardRecordListComponent,
+} from '../../../../shared/dashboard/dashboard-record-list';
 
-type StorageProviderType = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
-
-type StorageProvider = {
-  HspUUID: string;
-  HspName: string;
-  HspProvider: StorageProviderType;
-  HspConfig?: Record<string, unknown> | string | null;
-  HspIsActive: number;
-  HspIsDefault: number;
+type StorageDashboardKpis = {
+  providersTotal: number;
+  providersActive: number;
+  providersDefault: number;
+  accountsTotal: number;
+  accountsActive: number;
+  accountsDefault: number;
+  bucketsMapped: number;
+  bucketsUnmapped: number;
+  readinessPassed: number;
+  readinessTotal: number;
+  issues: number;
 };
 
-type StorageAccount = {
+type StorageDashboardProvider = {
+  HspUUID: string;
+  HspName: string;
+  HspProvider: string;
+  HspIsActive: number;
+  HspIsDefault: number;
+  accountCount: number;
+  bucketCount: number;
+  issues: number;
+};
+
+type StorageDashboardAccount = {
   HsaUUID: string;
   HsaName: string;
   HostingStorageProviderHspUUID: string;
-  HsaConfig?: Record<string, unknown> | string | null;
+  ProviderName: string | null;
+  ProviderType: string | null;
+  bucket: string;
+  region: string | null;
   HsaIsActive: number;
   HsaIsDefault: number;
-  HspName?: string;
-  HspProvider?: StorageProviderType;
+  issues: number;
+};
+
+type StorageDashboardType = {
+  provider: string;
+  providers: number;
+  accounts: number;
+  activeAccounts: number;
+  issues: number;
+};
+
+type StorageDashboardSnapshot = {
+  generatedAt: string | null;
+  kpis: StorageDashboardKpis;
+  providers: StorageDashboardProvider[];
+  accounts: StorageDashboardAccount[];
+  types: StorageDashboardType[];
 };
 
 type KpiTile = {
@@ -44,45 +76,26 @@ type KpiTile = {
   state: 'good' | 'warn' | 'bad' | 'neutral';
 };
 
-type ProviderRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  active: boolean;
-  isDefault: boolean;
-  accounts: number;
-  buckets: number;
-  issues: number;
-};
-
-type AccountRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  bucket: string;
-  region: string;
-  active: boolean;
-  isDefault: boolean;
-};
-
-type ProviderTypeRow = {
-  provider: string;
-  providers: number;
-  accounts: number;
-  activeAccounts: number;
-  issues: number;
-};
-
-type StorageDashboardSnapshot = {
-  providers: StorageProvider[];
-  accounts: StorageAccount[];
-  failedSections: number;
+const EMPTY_KPIS: StorageDashboardKpis = {
+  providersTotal: 0,
+  providersActive: 0,
+  providersDefault: 0,
+  accountsTotal: 0,
+  accountsActive: 0,
+  accountsDefault: 0,
+  bucketsMapped: 0,
+  bucketsUnmapped: 0,
+  readinessPassed: 0,
+  readinessTotal: 3,
+  issues: 0,
 };
 
 const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
+  generatedAt: null,
+  kpis: EMPTY_KPIS,
   providers: [],
   accounts: [],
-  failedSections: 0,
+  types: [],
 };
 
 @Component({
@@ -90,11 +103,9 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
   standalone: true,
   imports: [
     DashboardPageComponent,
+    DashboardRecordListComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
   ],
@@ -116,349 +127,129 @@ export class HostingStorageDashboardPage {
 
   readonly loading = this.dashboardResource.isLoading;
   readonly dashboard = computed(() => this.dashboardResource.value());
-  readonly providers = computed(() => this.dashboard().providers);
-  readonly accounts = computed(() => this.dashboard().accounts);
-
-  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
-    computed(() => this.providerRows()),
-    (row, column) => this.providerSortValue(row, column),
-  );
-  readonly accountDataSource = createSignalCrudTable<AccountRow>(
-    computed(() => this.accountRows()),
-    (row, column) => this.accountSortValue(row, column),
-  );
-  readonly typeDataSource = createSignalCrudTable<ProviderTypeRow>(
-    computed(() => this.typeRows()),
-    (row, column) => this.typeSortValue(row, column),
-  );
-
-  readonly providerColumns = [
-    'provider',
-    'type',
-    'active',
-    'default',
-    'accounts',
-    'buckets',
-    'issues',
-    'actions',
-  ];
-  readonly accountColumns = [
-    'account',
-    'provider',
-    'bucket',
-    'region',
-    'active',
-    'default',
-    'actions',
-  ];
-  readonly typeColumns = ['type', 'providers', 'accounts', 'activeAccounts', 'issues', 'actions'];
+  readonly kpisData = computed(() => this.dashboard().kpis ?? EMPTY_KPIS);
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
-    if (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load Storage dashboard.'));
-      return;
-    }
-
-    const failedSections = this.dashboard().failedSections;
-    if (failedSections > 0 && !this.loading()) {
-      this.snack.warning('Some Storage dashboard sections could not be loaded.');
-    }
+    if (!error) return;
+    this.snack.error(this.errorMessage(error, 'Failed to load Storage dashboard.'));
   });
 
-  readonly providerSummary = computed(() => {
-    const rows = this.providers();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HspIsActive)).length;
-    const defaults = rows.filter((row) => Number(row.HspIsDefault ?? 0) === 1).length;
-    return { total, active, defaults };
+  readonly kpis = computed<KpiTile[]>(() => {
+    const kpis = this.kpisData();
+    return [
+      {
+        label: 'Storage Providers',
+        value: `${kpis.providersActive} / ${kpis.providersTotal}`,
+        detailValue: String(kpis.providersDefault),
+        detailLabel: 'defaults',
+        icon: 'cloud_sync',
+        state: kpis.providersActive > 0 ? 'good' : 'warn',
+      },
+      {
+        label: 'Storage Accounts',
+        value: `${kpis.accountsActive} / ${kpis.accountsTotal}`,
+        detailValue: String(kpis.accountsDefault),
+        detailLabel: 'defaults',
+        icon: 'inventory_2',
+        state: kpis.accountsActive > 0 ? 'good' : 'warn',
+      },
+      {
+        label: 'Storage Buckets',
+        value: String(kpis.bucketsMapped),
+        detailValue: String(kpis.bucketsUnmapped),
+        detailLabel: 'unmapped',
+        icon: 'folder',
+        state: kpis.bucketsMapped > 0 ? 'good' : 'neutral',
+      },
+      {
+        label: 'Storage Readiness',
+        value: `${kpis.readinessPassed} / ${kpis.readinessTotal}`,
+        detailValue: String(kpis.issues),
+        detailLabel: 'issues',
+        icon: 'verified',
+        state:
+          kpis.readinessPassed === kpis.readinessTotal
+            ? 'good'
+            : kpis.readinessPassed > 0
+              ? 'warn'
+              : 'bad',
+      },
+    ];
   });
 
-  readonly accountSummary = computed(() => {
-    const rows = this.accounts();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HsaIsActive)).length;
-    const defaults = rows.filter((row) => Number(row.HsaIsDefault ?? 0) === 1).length;
-    return { total, active, defaults };
-  });
+  readonly providerRows = computed<DashboardRecord[]>(() =>
+    this.dashboard().providers.map((provider) => ({
+      name: provider.HspName,
+      meta: provider.HspProvider,
+      status: provider.HspIsActive === 1 ? 'Active' : 'Inactive',
+      tone: provider.issues > 0 ? 'danger' : provider.HspIsActive === 1 ? 'success' : 'skipped',
+      details: [
+        { label: 'Accounts', value: String(provider.accountCount) },
+        { label: 'Buckets', value: String(provider.bucketCount) },
+        { label: 'Issues', value: String(provider.issues) },
+        {
+          label: 'Default',
+          value: provider.HspIsDefault === 1 ? 'Yes' : 'No',
+          translate: true,
+        },
+      ],
+    })),
+  );
 
-  readonly bucketSummary = computed(() => {
-    const buckets = new Set(
-      this.accounts()
-        .map((row) => this.bucketLabel(row))
-        .filter((value) => value !== '-'),
-    );
-    return { total: buckets.size };
-  });
+  readonly accountRows = computed<DashboardRecord[]>(() =>
+    this.dashboard().accounts.map((account) => ({
+      name: account.HsaName,
+      meta: account.ProviderName || account.ProviderType || '-',
+      status: account.HsaIsActive === 1 ? 'Active' : 'Inactive',
+      tone: account.issues > 0 ? 'danger' : account.HsaIsActive === 1 ? 'success' : 'skipped',
+      details: [
+        { label: 'Bucket', value: account.bucket },
+        { label: 'Region', value: account.region || '-' },
+        { label: 'Issues', value: String(account.issues) },
+        {
+          label: 'Default',
+          value: account.HsaIsDefault === 1 ? 'Yes' : 'No',
+          translate: true,
+        },
+      ],
+    })),
+  );
 
-  readonly readinessSummary = computed(() => {
-    const providerReady = this.providerSummary().active > 0;
-    const accountReady = this.accountSummary().active > 0;
-    const bucketReady = this.bucketSummary().total > 0;
-    const checks = [providerReady, accountReady, bucketReady];
-    const passed = checks.filter(Boolean).length;
-    return { passed, total: checks.length };
-  });
-
-  readonly kpis = computed<KpiTile[]>(() => [
-    {
-      label: 'Storage Providers',
-      value: `${this.providerSummary().active} / ${this.providerSummary().total}`,
-      detailValue: String(this.providerSummary().defaults),
-      detailLabel: 'defaults',
-      icon: 'cloud_sync',
-      state: this.providerSummary().active > 0 ? 'good' : 'warn',
-    },
-    {
-      label: 'Storage Accounts',
-      value: `${this.accountSummary().active} / ${this.accountSummary().total}`,
-      detailValue: String(this.accountSummary().defaults),
-      detailLabel: 'defaults',
-      icon: 'inventory_2',
-      state: this.accountSummary().active > 0 ? 'good' : 'warn',
-    },
-    {
-      label: 'Storage Buckets',
-      value: String(this.bucketSummary().total),
-      detailValue: String(this.accountRows().filter((row) => row.bucket === '-').length),
-      detailLabel: 'unmapped',
-      icon: 'folder',
-      state: this.bucketSummary().total > 0 ? 'good' : 'neutral',
-    },
-    {
-      label: 'Storage Readiness',
-      value: `${this.readinessSummary().passed} / ${this.readinessSummary().total}`,
-      detailValue: String(this.providerRows().reduce((sum, row) => sum + row.issues, 0)),
-      detailLabel: 'issues',
-      icon: 'verified',
-      state:
-        this.readinessSummary().passed === this.readinessSummary().total
-          ? 'good'
-          : this.readinessSummary().passed > 0
-            ? 'warn'
-            : 'bad',
-    },
-  ]);
+  readonly typeRows = computed<DashboardRecord[]>(() =>
+    this.dashboard().types.map((row) => ({
+      name: row.provider,
+      meta: String(row.providers),
+      status: row.issues > 0 ? 'Issues' : 'Ready',
+      tone: row.issues > 0 ? 'danger' : 'success',
+      details: [
+        { label: 'Providers', value: String(row.providers) },
+        { label: 'Accounts', value: String(row.accounts) },
+        { label: 'Active accounts', value: String(row.activeAccounts) },
+        { label: 'Issues', value: String(row.issues) },
+      ],
+    })),
+  );
 
   refreshList() {
     this.dashboardResource.reload();
   }
 
   async loadDashboardSnapshot(): Promise<StorageDashboardSnapshot> {
-    const [providersResult, accountsResult] = await Promise.allSettled([
-      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
-      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
-    ]);
-
-    const results = [providersResult, accountsResult];
-    const failedSections = results.filter((result) => result.status === 'rejected').length;
-
-    if (failedSections > 0) {
-      throw new Error('Failed to load Storage dashboard.');
-    }
-
+    const endpoint = this.isMaster()
+      ? 'system/hosting/storage/dashboard?limit=50'
+      : 'hosting/storage/dashboard?limit=50';
+    const response = await this.api.get<{ data?: StorageDashboardSnapshot }>(endpoint, {
+      timeout: 30000,
+    });
+    const data = response?.data;
     return {
-      providers:
-        providersResult.status === 'fulfilled'
-          ? this.items<StorageProvider>(providersResult.value).map((row) => ({
-              ...row,
-              HspConfig: this.parseJson(row.HspConfig),
-            }))
-          : [],
-      accounts:
-        accountsResult.status === 'fulfilled'
-          ? this.items<StorageAccount>(accountsResult.value).map((row) => ({
-              ...row,
-              HsaConfig: this.parseJson(row.HsaConfig),
-            }))
-          : [],
-      failedSections,
+      generatedAt: data?.generatedAt ?? null,
+      kpis: { ...EMPTY_KPIS, ...(data?.kpis ?? {}) },
+      providers: Array.isArray(data?.providers) ? data.providers : [],
+      accounts: Array.isArray(data?.accounts) ? data.accounts : [],
+      types: Array.isArray(data?.types) ? data.types : [],
     };
-  }
-
-  routeTo(section: 'providers' | 'accounts') {
-    return this.isMaster() ? ['/system/hosting/storage', section] : ['/hosting/storage', section];
-  }
-
-  chipClass(value: boolean | number) {
-    return Boolean(value) ? 'chip-success is-active' : 'chip-skipped is-inactive';
-  }
-
-  issueChipClass(issues: number) {
-    return issues > 0 ? 'chip-warning' : 'chip-success is-active';
-  }
-
-  private providerEndpoint() {
-    return this.isMaster() ? 'system/hosting/storage/providers' : 'hosting/storage/providers';
-  }
-
-  private accountEndpoint() {
-    return this.isMaster() ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
-  }
-
-  private providerRows(): ProviderRow[] {
-    return this.providers().map((provider) => {
-      const accounts = this.accounts().filter(
-        (account) => account.HostingStorageProviderHspUUID === provider.HspUUID,
-      );
-      const buckets = new Set(
-        accounts.map((account) => this.bucketLabel(account)).filter((value) => value !== '-'),
-      );
-      return {
-        uuid: provider.HspUUID,
-        name: provider.HspName,
-        provider: this.providerLabel(provider.HspProvider),
-        active: this.isActive(provider.HspIsActive),
-        isDefault: Number(provider.HspIsDefault ?? 0) === 1,
-        accounts: accounts.length,
-        buckets: buckets.size,
-        issues: this.providerIssues(provider, accounts),
-      };
-    });
-  }
-
-  private accountRows(): AccountRow[] {
-    return this.accounts().map((account) => ({
-      uuid: account.HsaUUID,
-      name: account.HsaName,
-      provider: account.HspName || this.storageProviderName(account.HostingStorageProviderHspUUID),
-      bucket: this.bucketLabel(account),
-      region: this.regionLabel(account),
-      active: this.isActive(account.HsaIsActive),
-      isDefault: Number(account.HsaIsDefault ?? 0) === 1,
-    }));
-  }
-
-  private typeRows(): ProviderTypeRow[] {
-    const keys = new Set<StorageProviderType>();
-    this.providers().forEach((provider) => keys.add(provider.HspProvider));
-    this.accounts().forEach((account) => {
-      if (account.HspProvider) keys.add(account.HspProvider);
-    });
-
-    return [...keys].map((type) => {
-      const providers = this.providers().filter((provider) => provider.HspProvider === type);
-      const accounts = this.accounts().filter((account) => {
-        const provider = this.providers().find(
-          (item) => item.HspUUID === account.HostingStorageProviderHspUUID,
-        );
-        return account.HspProvider === type || provider?.HspProvider === type;
-      });
-      return {
-        provider: this.providerLabel(type),
-        providers: providers.length,
-        accounts: accounts.length,
-        activeAccounts: accounts.filter((account) => this.isActive(account.HsaIsActive)).length,
-        issues:
-          providers.filter((provider) => !this.isActive(provider.HspIsActive)).length +
-          accounts.filter((account) => !this.isActive(account.HsaIsActive)).length,
-      };
-    });
-  }
-
-  private providerIssues(provider: StorageProvider, accounts: StorageAccount[]) {
-    let issues = 0;
-    if (!this.isActive(provider.HspIsActive)) issues += 1;
-    if (accounts.length === 0) issues += 1;
-    issues += accounts.filter((account) => !this.isActive(account.HsaIsActive)).length;
-    issues += accounts.filter((account) => this.bucketLabel(account) === '-').length;
-    return issues;
-  }
-
-  private providerLabel(provider: StorageProviderType | string) {
-    const labels: Record<string, string> = {
-      s3: 'Amazon S3',
-      spaces: 'DigitalOcean Spaces',
-      gcs: 'Google Cloud Storage',
-      azure: 'Azure Blob Storage',
-      sangfor_scp: 'Sangfor SCP/HCI',
-    };
-    return labels[provider] ?? provider;
-  }
-
-  private storageProviderName(uuid: string) {
-    const provider = this.providers().find((item) => item.HspUUID === uuid);
-    return provider?.HspName || '-';
-  }
-
-  private bucketLabel(account: StorageAccount) {
-    const config = this.asRecord(account.HsaConfig);
-    return String(config['bucket'] || config['container'] || config['bucketName'] || '-');
-  }
-
-  private regionLabel(account: StorageAccount) {
-    const config = this.asRecord(account.HsaConfig);
-    const providerConfig = this.asRecord(
-      this.providers().find((item) => item.HspUUID === account.HostingStorageProviderHspUUID)
-        ?.HspConfig,
-    );
-    return String(
-      config['region'] || providerConfig['region'] || providerConfig['endpoint'] || '-',
-    );
-  }
-
-  private isActive(value: unknown) {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value === 1;
-    if (typeof value === 'string' && value.trim()) {
-      return ['1', 'true', 'active', 'running', 'ready'].includes(value.toLowerCase());
-    }
-    return false;
-  }
-
-  private items<T>(response: unknown): T[] {
-    const wrapped = response as { data?: { items?: T[] } | T[]; items?: T[] };
-    if (Array.isArray((wrapped?.data as { items?: T[] } | undefined)?.items)) {
-      return (wrapped.data as { items: T[] }).items;
-    }
-    return [];
-  }
-
-  private parseJson(value: Record<string, unknown> | string | null | undefined) {
-    if (!value) return null;
-    if (typeof value !== 'string') return value;
-    try {
-      return JSON.parse(value) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-
-  private asRecord(value: unknown): Record<string, unknown> {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
-    }
-    return {};
-  }
-
-  private providerSortValue(row: ProviderRow, column: string) {
-    if (column === 'provider') return row.name;
-    if (column === 'type') return row.provider;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    if (column === 'accounts') return row.accounts;
-    if (column === 'buckets') return row.buckets;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private accountSortValue(row: AccountRow, column: string) {
-    if (column === 'account') return row.name;
-    if (column === 'provider') return row.provider;
-    if (column === 'bucket') return row.bucket;
-    if (column === 'region') return row.region;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    return '';
-  }
-
-  private typeSortValue(row: ProviderTypeRow, column: string) {
-    if (column === 'type') return row.provider;
-    if (column === 'providers') return row.providers;
-    if (column === 'accounts') return row.accounts;
-    if (column === 'activeAccounts') return row.activeAccounts;
-    if (column === 'issues') return row.issues;
-    return '';
   }
 
   private errorMessage(error: unknown, fallback: string) {
