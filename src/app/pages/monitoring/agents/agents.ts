@@ -480,24 +480,54 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
     if (!confirmed) return;
     this.updatingProducts.update((current) => new Set(current).add(product.product));
     try {
-      const response = await this.api.post<{ data?: { jobs?: unknown[]; skipped?: unknown[] } }>(
-        `monitoring/agents/runtime-products/${product.product}/update`,
-        {},
-      );
+      const response = await this.api.post<{
+        data?: {
+          jobs?: unknown[];
+          skipped?: unknown[];
+          failed?: Array<{ message?: string } | unknown>;
+          rollout?: { status?: string };
+        };
+      }>(`monitoring/agents/runtime-products/${product.product}/update`, {});
       const queued = response.data?.jobs?.length ?? 0;
       const skipped = response.data?.skipped?.length ?? 0;
-      if (queued > 0)
+      const failedItems = Array.isArray(response.data?.failed) ? response.data.failed : [];
+      const failed = failedItems.length;
+      const rolloutStatus = response.data?.rollout?.status?.trim() || null;
+      const firstFailure = failedItems
+        .map((item) =>
+          item && typeof item === 'object' && 'message' in item
+            ? String((item as { message?: unknown }).message ?? '').trim()
+            : '',
+        )
+        .find((message) => Boolean(message));
+
+      if (failed > 0 && queued === 0) {
+        this.snack.error(
+          firstFailure ||
+            `${product.label} ${this.transloco.translate('rollout failed to queue.')}`,
+        );
+      } else if (failed > 0) {
+        this.snack.error(
+          firstFailure ||
+            `${product.label} ${this.transloco.translate('rollout partially queued.')}`,
+        );
+      } else if (queued > 0) {
         this.snack.success(
           `${product.label} ${this.transloco.translate('rollout queued for')} ${queued} node(s).`,
         );
-      else if (skipped > 0)
+      } else if (skipped > 0) {
         this.snack.success(
           `${product.label} ${this.transloco.translate('rollout already has pending or current node(s).')}`,
         );
-      else
+      } else if (rolloutStatus === 'failed' || rolloutStatus === 'partial') {
+        this.snack.error(
+          `${product.label} ${this.transloco.translate('rollout failed to queue.')}`,
+        );
+      } else {
         this.snack.success(
           `${product.label} ${this.transloco.translate('is already up to date.')}`,
         );
+      }
       this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || `Failed to queue ${product.label} rollout.`);

@@ -4361,5 +4361,7 @@
   "provisioned": "provisionados",
   "Not ready": "Não pronto",
   "In flight": "Em andamento",
-  "Records": "Registros"
+  "Records": "Registros",
+  "rollout failed to queue.": "falha ao enfileirar o rollout.",
+  "rollout partially queued.": "rollout parcialmente enfileirado."
 }
