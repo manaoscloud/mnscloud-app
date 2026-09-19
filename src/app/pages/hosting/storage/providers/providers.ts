@@ -1,195 +1,103 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  untracked,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
 import {
-  CrudDialogBinding,
-  openCrudTemplateDialog,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
 
-type HostingStorageProvider = {
-  HspUUID: string;
-  HspName: string;
-  HspProvider: StorageProvider;
-  HspConfig?: Record<string, unknown> | null;
-  HspIsActive: number;
-  HspIsDefault: number;
+const PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 's3', label: 'Amazon S3' },
+  { value: 'spaces', label: 'DigitalOcean Spaces' },
+  { value: 'gcs', label: 'Google Cloud Storage' },
+  { value: 'azure', label: 'Azure Blob Storage' },
+  { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
+];
+
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const SANGFOR_MODE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'scp_storage', label: 'SCP storage API' },
+  { value: 's3_compatible', label: 'S3 compatible API' },
+];
+
+const VALIDATE_ACTION: ConfigurableCrudRowAction = {
+  key: 'validate',
+  label: 'Validate',
+  icon: 'fact_check',
+  tooltip: 'Validate',
 };
 
-type ApiResponse<T> = {
-  data: T;
-};
+const MANAGED_CONFIG_KEYS = [
+  'region',
+  'endpoint',
+  'accessKeyId',
+  'projectId',
+  'clientEmail',
+  'accountName',
+  'forcePathStyle',
+  'mode',
+  'apiUrl',
+  'apiVersion',
+  'authPath',
+  'validatePath',
+  'resourcePoolId',
+  'storagePoolId',
+  'datastoreId',
+  'verifyTls',
+  'timeoutSeconds',
+] as const;
 
-type StorageProviderFormValue = {
-  name: string;
-  provider: StorageProvider;
-  isActive: number;
-  isDefault: number;
-  region: string;
-  endpoint: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-  projectId: string;
-  clientEmail: string;
-  privateKey: string;
-  accountName: string;
-  accountKey: string;
-  forcePathStyle: boolean;
-  mode: string;
-  apiUrl: string;
-  apiVersion: string;
-  authPath: string;
-  validatePath: string;
-  resourcePoolId: string;
-  storagePoolId: string;
-  datastoreId: string;
-  verifyTls: boolean;
-  timeoutSeconds: string;
-  username: string;
-  password: string;
-  apiToken: string;
-  configJson: string;
-  credentialsJson: string;
-};
-
-@Component({
-  selector: 'app-hosting-storage-providers',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './providers.html',
-  styleUrls: ['./providers.scss'],
-})
-export class HostingStorageProvidersPage {
-  private readonly api = inject(ApiService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly providerDialog = viewChild<TemplateRef<unknown>>('providerDialog');
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-
-  private dialogBinding: CrudDialogBinding | null = null;
-  readonly dataSource = new MatTableDataSource<HostingStorageProvider>([]);
-
-  readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
-  readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/storage/providers' : 'hosting/storage/providers',
-  );
-
-  readonly saving = signal(false);
-  readonly editing = signal<HostingStorageProvider | null>(null);
-  readonly selectedProvider = signal<StorageProvider>('s3');
-  readonly selectedIds = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedIds().size);
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  readonly validatingId = signal<string | null>(null);
-
-  readonly displayedColumns = ['select', 'name', 'provider', 'default', 'status', 'actions'];
-
-  readonly providerOptions: { value: StorageProvider; label: string }[] = [
-    { value: 's3', label: 'Amazon S3' },
-    { value: 'spaces', label: 'DigitalOcean Spaces' },
-    { value: 'gcs', label: 'Google Cloud Storage' },
-    { value: 'azure', label: 'Azure Blob Storage' },
-    { value: 'sangfor_scp', label: 'Sangfor Technologies SCP/HCI' },
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    provider: '',
-    status: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  private readonly providersResource = resource({
-    params: () => ({ endpoint: this.endpoint() }),
-    defaultValue: [] as HostingStorageProvider[],
-    loader: async ({ params }) => {
-      const result = await this.api.get<ApiResponse<{ items?: HostingStorageProvider[] }>>(
-        params.endpoint,
-      );
-      return result.data?.items ?? [];
+const PROVIDER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/storage/providers',
+  uuidField: 'HspUUID',
+  pageTitle: 'Storage Providers',
+  pageDescription: 'Manage object storage platforms and credentials.',
+  createTitle: 'New storage provider',
+  editTitle: 'Edit storage provider',
+  dialogDescription: 'Configure storage provider identity, connection and credentials.',
+  searchPlaceholder: 'Name or provider',
+  emptyLabel: 'No storage providers found.',
+  deleteTitle: 'Delete storage provider',
+  deleteMessage: 'Are you sure you want to delete this storage provider?',
+  deleteSelectedTitle: 'Delete selected storage providers',
+  deleteSelectedMessage: 'Delete {count} selected storage providers?',
+  savedMessage: 'Storage provider saved successfully.',
+  deletedMessage: 'Storage provider deleted successfully.',
+  deleteFailedMessage: 'Failed to delete storage provider.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  authenticationTabAfterRecord: true,
+  tabLabels: {
+    authentication: 'Credentials',
+  },
+  rowActions: [VALIDATE_ACTION],
+  listFilters: [
+    {
+      key: 'provider',
+      label: 'Provider',
+      paramKey: 'provider',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
     },
-  });
-
-  readonly loading = this.providersResource.isLoading;
-  readonly providers = this.providersResource.value;
-
-  private readonly syncTableData = effect(() => {
-    this.dataSource.data = this.providers();
-    this.pageIndex.set(0);
-    this.reconcileSelection();
-  });
-
-  private readonly reportLoadError = effect(() => {
-    const error = this.providersResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load storage providers.'));
-  });
-
-  readonly formModel = signal<StorageProviderFormValue>({
+  ],
+  initialValues: {
     name: '',
     provider: 's3',
-    isActive: 1,
+    status: 1,
     isDefault: 0,
     region: '',
     endpoint: '',
@@ -200,7 +108,7 @@ export class HostingStorageProvidersPage {
     privateKey: '',
     accountName: '',
     accountKey: '',
-    forcePathStyle: false,
+    forcePathStyle: 0,
     mode: 'scp_storage',
     apiUrl: '',
     apiVersion: '',
@@ -209,536 +117,558 @@ export class HostingStorageProvidersPage {
     resourcePoolId: '',
     storagePoolId: '',
     datastoreId: '',
-    verifyTls: true,
+    verifyTls: 1,
     timeoutSeconds: '',
     username: '',
     password: '',
     apiToken: '',
-    configJson: '',
-    credentialsJson: '',
-  });
-  readonly form = createForm(this.formModel, (schema) => {
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.provider);
-  });
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HspName', uuidField: 'HspUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HspProvider',
+      lookupKey: 'provider',
+    },
+    { id: 'default', label: 'Default', kind: 'boolean', field: 'HspIsDefault', className: 'status-col' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HspIsActive', className: 'status-col' },
+  ],
+  fields: [
+    { key: 'status', source: 'HspIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'provider',
+      source: 'HspProvider',
+      payloadKey: 'provider',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+      translateOptions: false,
+    },
+    {
+      key: 'isDefault',
+      source: 'HspIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default provider',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'HspName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'region',
+      payloadKey: 'region',
+      label: 'Region',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesS3StyleConfig(values),
+      requiredWhen: ({ values }) => usesS3StyleConfig(values),
+    },
+    {
+      key: 'endpoint',
+      payloadKey: 'endpoint',
+      label: 'Endpoint',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => !usesS3StyleConfig(values),
+    },
+    {
+      key: 'accessKeyId',
+      payloadKey: 'accessKeyId',
+      label: 'Access key ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesAccessKeyId(values),
+      requiredWhen: ({ values }) => usesAccessKeyId(values),
+    },
+    {
+      key: 'forcePathStyle',
+      payloadKey: 'forcePathStyle',
+      label: 'Force path-style URLs',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesS3StyleConfig(values),
+    },
+    {
+      key: 'projectId',
+      payloadKey: 'projectId',
+      label: 'Project ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'gcs',
+      requiredWhen: ({ values }) => storageProvider(values['provider']) === 'gcs',
+    },
+    {
+      key: 'clientEmail',
+      payloadKey: 'clientEmail',
+      label: 'Client email',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'gcs',
+      requiredWhen: ({ values }) => storageProvider(values['provider']) === 'gcs',
+    },
+    {
+      key: 'accountName',
+      payloadKey: 'accountName',
+      label: 'Account name',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'azure',
+      requiredWhen: ({ values }) => storageProvider(values['provider']) === 'azure',
+    },
+    {
+      key: 'mode',
+      payloadKey: 'mode',
+      label: 'API mode',
+      type: 'search-select',
+      options: SANGFOR_MODE_OPTIONS,
+      translateOptions: false,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+      requiredWhen: ({ values }) => storageProvider(values['provider']) === 'sangfor_scp',
+    },
+    {
+      key: 'apiUrl',
+      payloadKey: 'apiUrl',
+      label: 'API URL',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+      requiredWhen: ({ values }) => usesSangforScpConfig(values),
+    },
+    {
+      key: 'apiVersion',
+      payloadKey: 'apiVersion',
+      label: 'API version',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'authPath',
+      payloadKey: 'authPath',
+      label: 'Auth path',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'validatePath',
+      payloadKey: 'validatePath',
+      label: 'Validate path',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'resourcePoolId',
+      payloadKey: 'resourcePoolId',
+      label: 'Resource pool ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'storagePoolId',
+      payloadKey: 'storagePoolId',
+      label: 'Storage pool ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'datastoreId',
+      payloadKey: 'datastoreId',
+      label: 'Datastore ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
+    },
+    {
+      key: 'verifyTls',
+      payloadKey: 'verifyTls',
+      label: 'Verify TLS',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+    },
+    {
+      key: 'timeoutSeconds',
+      payloadKey: 'timeoutSeconds',
+      label: 'Timeout (seconds)',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+    },
+    {
+      key: 'secretAccessKey',
+      payloadKey: 'secretAccessKey',
+      label: 'Secret access key',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current secret access key',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => !usesSecretAccessKey(values),
+      requiredWhen: ({ editing, values }) => !editing && requiresSecretAccessKey(values),
+    },
+    {
+      key: 'privateKey',
+      payloadKey: 'privateKey',
+      label: 'Private key',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current private key',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'gcs',
+      requiredWhen: ({ editing, values }) =>
+        !editing && storageProvider(values['provider']) === 'gcs',
+    },
+    {
+      key: 'accountKey',
+      payloadKey: 'accountKey',
+      label: 'Account key',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current account key',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'azure',
+      requiredWhen: ({ editing, values }) =>
+        !editing && storageProvider(values['provider']) === 'azure',
+    },
+    {
+      key: 'apiToken',
+      payloadKey: 'apiToken',
+      label: 'API token',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current API token',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+    },
+    {
+      key: 'username',
+      payloadKey: 'username',
+      label: 'Username',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+    },
+    {
+      key: 'password',
+      payloadKey: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Leave blank to keep the current password',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
+    },
+  ],
+};
 
-  readonly filteredProviders = computed(() => {
-    const { search, provider, status } = this.filterFormModel();
-    const term = search.trim().toLowerCase();
-    const rows = this.providers().filter((item) => {
-      const matchesTerm =
-        !term || `${item.HspName} ${item.HspProvider}`.toLowerCase().includes(term);
-      const matchesProvider = !provider || item.HspProvider === provider;
-      const matchesStatus = status === '' || String(item.HspIsActive) === status;
-      return matchesTerm && matchesProvider && matchesStatus;
-    });
-    return this.sortRows(rows);
-  });
-
-  readonly pagedProviders = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.filteredProviders().slice(start, start + this.pageSize());
-  });
+@Component({
+  selector: 'app-hosting-storage-providers',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingStorageProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly endpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/storage/providers' : PROVIDER_CONFIG.endpoint,
+  );
 
   constructor() {
-    this.dataSource.sortingDataAccessor = (row, column) => this.sortValue(row, column);
-    this.destroyRef.onDestroy(() => this.closeDialog());
+    super(PROVIDER_CONFIG);
   }
 
-  refreshList() {
-    this.providersResource.reload();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  applyFilters() {
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({ search: '', provider: '', status: '' });
-    this.pageIndex.set(0);
-    this.reconcileSelection();
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.pageIndex.set(0);
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.formModel.set({
-      name: '',
-      provider: 's3',
-      isActive: 1,
-      isDefault: 0,
-      region: '',
-      endpoint: '',
-      accessKeyId: '',
-      secretAccessKey: '',
-      projectId: '',
-      clientEmail: '',
-      privateKey: '',
-      accountName: '',
-      accountKey: '',
-      forcePathStyle: false,
-      mode: 'scp_storage',
-      apiUrl: '',
-      apiVersion: '',
-      authPath: '',
-      validatePath: '',
-      resourcePoolId: '',
-      storagePoolId: '',
-      datastoreId: '',
-      verifyTls: true,
-      timeoutSeconds: '',
-      username: '',
-      password: '',
-      apiToken: '',
-      configJson: '',
-      credentialsJson: '',
-    });
-    this.selectedProvider.set('s3');
-    this.openDialog();
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'provider') return PROVIDER_OPTIONS;
+    return [];
   }
 
-  startEdit(item: HostingStorageProvider) {
-    this.editing.set(item);
-    const config = this.asRecord(item.HspConfig);
-    this.formModel.set({
-      name: item.HspName,
-      provider: item.HspProvider,
-      isActive: item.HspIsActive ? 1 : 0,
-      isDefault: item.HspIsDefault ? 1 : 0,
-      region: this.stringValue(config['region']),
-      endpoint: this.stringValue(config['endpoint']),
-      accessKeyId: this.stringValue(config['accessKeyId']),
-      secretAccessKey: '',
-      projectId: this.stringValue(config['projectId']),
-      clientEmail: this.stringValue(config['clientEmail']),
-      privateKey: '',
-      accountName: this.stringValue(config['accountName']),
-      accountKey: '',
-      forcePathStyle: this.boolValue(config['forcePathStyle']),
-      mode: this.stringValue(config['mode']) || 'scp_storage',
-      apiUrl: this.stringValue(config['apiUrl']),
-      apiVersion: this.stringValue(config['apiVersion']),
-      authPath: this.stringValue(config['authPath']),
-      validatePath: this.stringValue(config['validatePath']),
-      resourcePoolId: this.stringValue(config['resourcePoolId']),
-      storagePoolId: this.stringValue(config['storagePoolId']),
-      datastoreId: this.stringValue(config['datastoreId']),
-      verifyTls: config['verifyTls'] === undefined ? true : this.boolValue(config['verifyTls']),
-      timeoutSeconds: this.stringValue(config['timeoutSeconds']),
-      username: '',
-      password: '',
-      apiToken: '',
-      configJson: this.extraJson(config, [
-        'region',
-        'endpoint',
-        'accessKeyId',
-        'projectId',
-        'clientEmail',
-        'accountName',
-        'forcePathStyle',
-        'mode',
-        'apiUrl',
-        'apiVersion',
-        'authPath',
-        'validatePath',
-        'resourcePoolId',
-        'storagePoolId',
-        'datastoreId',
-        'verifyTls',
-        'timeoutSeconds',
-      ]),
-      credentialsJson: '',
-    });
-    this.selectedProvider.set(item.HspProvider);
-    this.openDialog();
-  }
-
-  private openDialog() {
-    const providerDialog = this.providerDialog();
-    if (!providerDialog || this.dialogBinding) return;
-    const binding = openCrudTemplateDialog(this.dialog, providerDialog, 'crud-dialog-panel', {
-      onEscape: () => this.closeDialog(),
-    });
-    this.dialogBinding = binding;
-    bindDialogClosed(binding.ref, () => {
-      binding.stop();
-      if (this.dialogBinding === binding) {
-        this.dialogBinding = null;
-      }
-    });
-  }
-
-  openCrudTemplateDialog() {
-    this.openDialog();
-  }
-
-  closeDialog() {
-    const binding = this.dialogBinding;
-    this.dialogBinding = null;
-    binding?.ref.close();
-    binding?.stop();
-    this.editing.set(null);
-  }
-
-  async save(keepOpen = false) {
-    if (!this.form().valid()) {
-      return;
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'provider' && key !== 'mode') return;
+    if (key === 'provider') {
+      this.patchFormValues(providerDefaults(storageProvider(value), true, this.formValues()));
     }
+  }
 
-    const raw = this.formModel();
-    let extraConfig: Record<string, unknown> = {};
-    let extraCredentials: Record<string, unknown> = {};
-    try {
-      extraConfig = raw.configJson.trim() ? JSON.parse(raw.configJson) : {};
-      extraCredentials = raw.credentialsJson.trim() ? JSON.parse(raw.credentialsJson) : {};
-    } catch {
-      this.snack.error('Additional config and credentials must be valid JSON.');
-      return;
-    }
-
-    const config = this.cleanRecord({
-      ...extraConfig,
-      ...this.providerConfigFromForm(raw.provider, raw),
-    });
-    const credentials = this.cleanRecord({
-      ...extraCredentials,
-      ...this.providerCredentialsFromForm(raw.provider, raw),
-    });
-    if (raw.provider === 'sangfor_scp' && raw.mode === 'scp_storage') {
-      const hasToken = !!this.stringValue(credentials['apiToken']);
-      const hasAccessKeyPair =
-        !!this.stringValue(config['accessKeyId']) &&
-        !!this.stringValue(credentials['secretAccessKey']);
-      const hasLogin =
-        !!this.stringValue(credentials['username']) && !!this.stringValue(credentials['password']);
-      if (!this.editing() && !hasToken && !hasAccessKeyPair && !hasLogin) {
-        this.snack.warning(
-          'Sangfor requires an API token, Access Key/Secret Key, or username/password.',
-        );
-        return;
-      }
-    }
-
-    const payload = {
-      name: raw.name.trim(),
-      provider: raw.provider,
-      config,
-      credentials,
-      isActive: raw.isActive === 1,
-      isDefault: Boolean(raw.isDefault),
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const config = asRecord(row['HspConfig']);
+    const normalized: ConfigurableCrudRecord = {
+      ...super.formValuesFromRecord(row),
+      provider: storageProvider(row['HspProvider']),
+      isDefault: truthyNumber(row['HspIsDefault']),
+      status: truthyNumber(row['HspIsActive']),
     };
-
-    this.saving.set(true);
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.endpoint()}/${editing.HspUUID}`, payload);
-        this.snack.success('Storage provider updated.');
-      } else {
-        await this.api.post(this.endpoint(), payload);
-        this.snack.success('Storage provider created.');
-      }
-      this.providersResource.reload();
-      if (keepOpen && !editing) {
-        this.editing.set(null);
-        this.formModel.set({
-          name: '',
-          provider: 's3',
-          isActive: 1,
-          isDefault: 0,
-          region: '',
-          endpoint: '',
-          accessKeyId: '',
-          secretAccessKey: '',
-          projectId: '',
-          clientEmail: '',
-          privateKey: '',
-          accountName: '',
-          accountKey: '',
-          forcePathStyle: false,
-          mode: 'scp_storage',
-          apiUrl: '',
-          apiVersion: '',
-          authPath: '',
-          validatePath: '',
-          resourcePoolId: '',
-          storagePoolId: '',
-          datastoreId: '',
-          verifyTls: true,
-          timeoutSeconds: '',
-          username: '',
-          password: '',
-          apiToken: '',
-          configJson: '',
-          credentialsJson: '',
-        });
-        this.selectedProvider.set('s3');
-      } else {
-        this.closeDialog();
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save storage provider.'));
-    } finally {
-      this.saving.set(false);
+    for (const key of MANAGED_CONFIG_KEYS) {
+      normalized[key] = config[key] ?? PROVIDER_CONFIG.initialValues[key] ?? '';
     }
-  }
-
-  async validateProvider(item: HostingStorageProvider) {
-    this.validatingId.set(item.HspUUID);
-    try {
-      await this.api.post(`${this.endpoint()}/${item.HspUUID}/validate`, {});
-      this.snack.success('Storage provider validated.');
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to validate storage provider.'));
-    } finally {
-      this.validatingId.set(null);
-    }
-  }
-
-  async deleteProvider(item: HostingStorageProvider) {
-    const ok = await this.confirm(`Delete storage provider ${item.HspName}?`);
-    if (!ok) return;
-    try {
-      await this.api.delete(`${this.endpoint()}/${item.HspUUID}`);
-      this.snack.success('Storage provider deleted.');
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete storage provider.'));
-    }
-  }
-
-  async deleteSelectedProviders() {
-    const ids = [...this.selectedIds()];
-    if (!ids.length) return;
-    const ok = await this.confirm(`Delete ${ids.length} selected storage provider(s)?`);
-    if (!ok) return;
-    try {
-      const response = await this.api.delete(`${this.endpoint()}/bulk`, { ids });
-      const failedIds = this.extractBulkFailedIds(response);
-      this.selectedIds.set(new Set(failedIds.filter((id) => ids.includes(id))));
-      if (failedIds.length > 0) {
-        const deletedCount = ids.length - failedIds.length;
-        this.snack.warning(
-          `${deletedCount} storage provider(s) deleted; ${failedIds.length} failed.`,
-        );
-      } else {
-        this.snack.success('Selected storage providers deleted.');
-      }
-      this.providersResource.reload();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete selected storage providers.'));
-    }
-  }
-
-  isSelected(row: HostingStorageProvider) {
-    return this.selectedIds().has(row.HspUUID);
-  }
-
-  toggleSelection(row: HostingStorageProvider, checked: boolean) {
-    const next = new Set(this.selectedIds());
-    checked ? next.add(row.HspUUID) : next.delete(row.HspUUID);
-    this.selectedIds.set(next);
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    const next = new Set(this.selectedIds());
-    for (const row of this.pagedProviders()) {
-      checked ? next.add(row.HspUUID) : next.delete(row.HspUUID);
-    }
-    this.selectedIds.set(next);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedProviders();
-    return rows.length > 0 && rows.every((row) => this.selectedIds().has(row.HspUUID));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedProviders();
-    return rows.some((row) => this.selectedIds().has(row.HspUUID)) && !this.isAllVisibleSelected();
-  }
-
-  providerLabel(value: string) {
-    return this.providerOptions.find((item) => item.value === value)?.label ?? value;
-  }
-
-  statusLabel(value: number) {
-    return value === 1 ? 'Active' : 'Inactive';
-  }
-
-  onProviderChange(provider: StorageProvider) {
-    this.selectedProvider.set(provider);
-    this.formModel.update((current) => ({ ...current, provider }));
-  }
-
-  private providerConfigFromForm(provider: StorageProvider, raw: StorageProviderFormValue) {
-    if (provider === 's3' || provider === 'spaces') {
-      return {
-        region: raw.region,
-        endpoint: raw.endpoint,
-        accessKeyId: raw.accessKeyId,
-        forcePathStyle: raw.forcePathStyle,
-      };
-    }
-    if (provider === 'gcs') {
-      return {
-        projectId: raw.projectId,
-        clientEmail: raw.clientEmail,
-      };
-    }
-    if (provider === 'sangfor_scp') {
-      const config: Record<string, unknown> = {
-        mode: raw.mode,
-        apiUrl: raw.apiUrl,
-        apiVersion: raw.apiVersion,
-        authPath: raw.authPath,
-        validatePath: raw.validatePath,
-        resourcePoolId: raw.resourcePoolId,
-        storagePoolId: raw.storagePoolId,
-        datastoreId: raw.datastoreId,
-        accessKeyId: raw.accessKeyId,
-        verifyTls: raw.verifyTls,
-        timeoutSeconds: raw.timeoutSeconds,
-      };
-      if (raw.mode === 's3_compatible') {
-        config['region'] = raw.region;
-        config['endpoint'] = raw.endpoint;
-        config['accessKeyId'] = raw.accessKeyId;
-        config['forcePathStyle'] = raw.forcePathStyle;
-      }
-      return config;
-    }
+    if (config['forcePathStyle'] === true) normalized['forcePathStyle'] = 1;
+    if (config['verifyTls'] === false) normalized['verifyTls'] = 0;
+    normalized['mode'] = String(config['mode'] ?? normalized['mode'] ?? 'scp_storage');
     return {
-      accountName: raw.accountName,
+      ...providerDefaults(storageProvider(normalized['provider']), false, normalized),
+      ...normalized,
+      secretAccessKey: '',
+      privateKey: '',
+      accountKey: '',
+      apiToken: '',
+      username: '',
+      password: '',
     };
   }
 
-  private providerCredentialsFromForm(provider: StorageProvider, raw: StorageProviderFormValue) {
-    if (provider === 's3' || provider === 'spaces') {
-      return { secretAccessKey: raw.secretAccessKey };
-    }
-    if (provider === 'gcs') {
-      return { privateKey: raw.privateKey };
-    }
-    if (provider === 'sangfor_scp') {
-      if (raw.mode === 's3_compatible') {
-        return {
-          secretAccessKey: raw.secretAccessKey,
-          apiToken: raw.apiToken,
-          username: raw.username,
-          password: raw.password,
-        };
-      }
-      return {
-        apiToken: raw.apiToken,
-        secretAccessKey: raw.secretAccessKey,
-        username: raw.username,
-        password: raw.password,
-      };
-    }
-    return { accountKey: raw.accountKey };
-  }
-
-  private asRecord(value: unknown): Record<string, unknown> {
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
-  }
-
-  private cleanRecord(value: Record<string, unknown>) {
-    return Object.fromEntries(
-      Object.entries(value).filter(
-        ([, item]) => item !== null && item !== undefined && item !== '',
-      ),
-    );
-  }
-
-  private stringValue(value: unknown) {
-    return typeof value === 'string' ? value : '';
-  }
-
-  private boolValue(value: unknown) {
-    return value === true || value === 1 || value === 'true';
-  }
-
-  private extraJson(value: Record<string, unknown>, managedKeys: string[]) {
-    const extra = Object.fromEntries(
-      Object.entries(value).filter(([key]) => !managedKeys.includes(key)),
-    );
-    return Object.keys(extra).length > 0 ? JSON.stringify(extra, null, 2) : '';
-  }
-
-  private sortRows(rows: HostingStorageProvider[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-
-    return [...rows].sort((a, b) => {
-      const av = this.sortValue(a, active);
-      const bv = this.sortValue(b, active);
-      const result = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
-      return direction === 'asc' ? result : -result;
+  protected override patchFormValues(values: ConfigurableCrudRecord): void {
+    const normalized = { ...values };
+    normalized['provider'] = storageProvider(normalized['provider']);
+    normalized['isDefault'] = truthyNumber(normalized['isDefault']);
+    normalized['status'] = truthyNumber(normalized['status'] ?? normalized['isActive'] ?? 1);
+    normalized['forcePathStyle'] = truthyNumber(normalized['forcePathStyle']);
+    normalized['verifyTls'] =
+      normalized['verifyTls'] === undefined || normalized['verifyTls'] === ''
+        ? 1
+        : truthyNumber(normalized['verifyTls']);
+    normalized['mode'] = String(normalized['mode'] ?? 'scp_storage') || 'scp_storage';
+    super.patchFormValues({
+      ...providerDefaults(storageProvider(normalized['provider']), false, normalized),
+      ...normalized,
     });
   }
 
-  private sortValue(row: HostingStorageProvider, column: string) {
-    if (column === 'name') return row.HspName ?? '';
-    if (column === 'provider') return this.providerLabel(row.HspProvider);
-    if (column === 'default') return String(row.HspIsDefault ?? 0);
-    if (column === 'status') return this.statusLabel(row.HspIsActive);
-    return '';
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const selected = storageProvider(payload['provider']);
+    if (selected !== 'sangfor_scp' || sangforMode(payload['mode']) !== 'scp_storage') return true;
+    if (this.editingRecord()) return true;
+
+    const hasToken = String(payload['apiToken'] ?? '').trim().length > 0;
+    const hasAccessKeyPair =
+      String(payload['accessKeyId'] ?? '').trim().length > 0 &&
+      String(payload['secretAccessKey'] ?? '').trim().length > 0;
+    const hasLogin =
+      String(payload['username'] ?? '').trim().length > 0 &&
+      String(payload['password'] ?? '').trim().length > 0;
+    if (hasToken || hasAccessKeyPair || hasLogin) return true;
+
+    this.snack.warning(
+      this.t('Sangfor requires an API token, Access Key/Secret Key, or username/password.'),
+    );
+    return false;
   }
 
-  private reconcileSelection() {
-    const valid = new Set(this.dataSource.data.map((row) => row.HspUUID));
-    const current = untracked(() => this.selectedIds());
-    const next = new Set([...current].filter((id) => valid.has(id)));
-    if (next.size === current.size && [...next].every((id) => current.has(id))) return;
-    this.selectedIds.set(next);
-  }
-
-  private extractBulkFailedIds(response: unknown) {
-    const payload = this.asRecord(response);
-    const data = this.asRecord(payload['data']);
-    const failed = Array.isArray(data['failed']) ? data['failed'] : [];
-
-    return failed
-      .map((item) => {
-        const row = this.asRecord(item);
-        return this.stringValue(row['HspUUID']);
-      })
-      .filter((id) => id.length > 0);
-  }
-
-  private async confirm(message: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: { title: 'Confirm delete', message, confirmText: 'Delete', color: 'warn' },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    return !!(await firstValueFrom(ref.afterClosed()));
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as {
-      error?: { error?: string; message?: string; code?: string };
-      message?: string;
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const selectedProvider = storageProvider(payload['provider']);
+    return {
+      name: payload['name'],
+      provider: selectedProvider,
+      config: buildProviderConfig(selectedProvider, payload),
+      credentials: buildProviderCredentials(selectedProvider, payload),
+      isActive: truthyNumber(payload['status']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
     };
-    const message = maybe?.error?.message || maybe?.error?.error;
-    const code = maybe?.error?.code;
-    if (message && code) return `${message} (${code})`;
-    return message || maybe?.message || fallback;
   }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'validate') return;
+    const uuid = String(row['HspUUID'] ?? '');
+    if (!uuid) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.snack.success(this.t('Storage provider validated.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to validate storage provider.'));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+}
+
+function storageProvider(value: unknown): StorageProvider {
+  const normalized = String(value ?? 's3') as StorageProvider;
+  return ['s3', 'gcs', 'azure', 'spaces', 'sangfor_scp'].includes(normalized) ? normalized : 's3';
+}
+
+function sangforMode(value: unknown): string {
+  return String(value ?? 'scp_storage') === 's3_compatible' ? 's3_compatible' : 'scp_storage';
+}
+
+function usesS3StyleConfig(values: ConfigurableCrudRecord): boolean {
+  const provider = storageProvider(values['provider']);
+  if (provider === 's3' || provider === 'spaces') return true;
+  return provider === 'sangfor_scp' && sangforMode(values['mode']) === 's3_compatible';
+}
+
+function usesAccessKeyId(values: ConfigurableCrudRecord): boolean {
+  const provider = storageProvider(values['provider']);
+  if (provider === 's3' || provider === 'spaces') return true;
+  if (provider === 'sangfor_scp') return true;
+  return false;
+}
+
+function usesSecretAccessKey(values: ConfigurableCrudRecord): boolean {
+  const provider = storageProvider(values['provider']);
+  if (provider === 's3' || provider === 'spaces') return true;
+  return provider === 'sangfor_scp';
+}
+
+function requiresSecretAccessKey(values: ConfigurableCrudRecord): boolean {
+  return storageProvider(values['provider']) === 's3' || storageProvider(values['provider']) === 'spaces';
+}
+
+function usesSangforScpConfig(values: ConfigurableCrudRecord): boolean {
+  return storageProvider(values['provider']) === 'sangfor_scp' && sangforMode(values['mode']) === 'scp_storage';
+}
+
+function providerDefaults(
+  value: StorageProvider,
+  force: boolean,
+  current: ConfigurableCrudRecord,
+): ConfigurableCrudRecord {
+  if (force) {
+    return {
+      mode: value === 'sangfor_scp' ? 'scp_storage' : current['mode'],
+      forcePathStyle: 0,
+      verifyTls: 1,
+      ...(force
+        ? {
+            secretAccessKey: '',
+            privateKey: '',
+            accountKey: '',
+            apiToken: '',
+            username: '',
+            password: '',
+          }
+        : {}),
+    };
+  }
+  return {};
+}
+
+function buildProviderConfig(
+  value: StorageProvider,
+  payload: ConfigurableCrudRecord,
+): Record<string, unknown> {
+  if (value === 's3' || value === 'spaces') {
+    return cleanRecord({
+      region: payload['region'],
+      endpoint: payload['endpoint'],
+      accessKeyId: payload['accessKeyId'],
+      forcePathStyle: truthyNumber(payload['forcePathStyle']) === 1,
+    });
+  }
+  if (value === 'gcs') {
+    return cleanRecord({
+      projectId: payload['projectId'],
+      clientEmail: payload['clientEmail'],
+    });
+  }
+  if (value === 'azure') {
+    return cleanRecord({
+      accountName: payload['accountName'],
+    });
+  }
+  if (value === 'sangfor_scp') {
+    const mode = sangforMode(payload['mode']);
+    const config: Record<string, unknown> = {
+      mode,
+      apiUrl: payload['apiUrl'],
+      apiVersion: payload['apiVersion'],
+      authPath: payload['authPath'],
+      validatePath: payload['validatePath'],
+      resourcePoolId: payload['resourcePoolId'],
+      storagePoolId: payload['storagePoolId'],
+      datastoreId: payload['datastoreId'],
+      accessKeyId: payload['accessKeyId'],
+      verifyTls: truthyNumber(payload['verifyTls']) === 1,
+      timeoutSeconds: payload['timeoutSeconds'],
+    };
+    if (mode === 's3_compatible') {
+      config['region'] = payload['region'];
+      config['endpoint'] = payload['endpoint'];
+      config['accessKeyId'] = payload['accessKeyId'];
+      config['forcePathStyle'] = truthyNumber(payload['forcePathStyle']) === 1;
+    }
+    return cleanRecord(config);
+  }
+  return {};
+}
+
+function buildProviderCredentials(
+  value: StorageProvider,
+  payload: ConfigurableCrudRecord,
+): Record<string, unknown> {
+  if (value === 's3' || value === 'spaces') {
+    return cleanRecord({ secretAccessKey: payload['secretAccessKey'] });
+  }
+  if (value === 'gcs') {
+    return cleanRecord({ privateKey: payload['privateKey'] });
+  }
+  if (value === 'azure') {
+    return cleanRecord({ accountKey: payload['accountKey'] });
+  }
+  if (value === 'sangfor_scp') {
+    return cleanRecord({
+      apiToken: payload['apiToken'],
+      secretAccessKey: payload['secretAccessKey'],
+      username: payload['username'],
+      password: payload['password'],
+    });
+  }
+  return {};
+}
+
+function truthyNumber(value: unknown): number {
+  return value === true || value === 1 || value === '1' ? 1 : 0;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([, item]) => item !== null && item !== undefined && item !== '',
+    ),
+  );
 }
