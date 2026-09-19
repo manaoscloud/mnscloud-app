@@ -4405,5 +4405,9 @@
   "Select a domain linked to the selected customer.": "Select a domain linked to the selected customer.",
   "Password is required when auto-provisioning a mailbox.": "Password is required when auto-provisioning a mailbox.",
   "Lifecycle": "Lifecycle",
-  "Active hosts": "Active hosts"
+  "Active hosts": "Active hosts",
+  "Failed to load webhost hosts.": "Failed to load webhost hosts.",
+  "Failed to load webhost plans.": "Failed to load webhost plans.",
+  "Failed to load webhost providers.": "Failed to load webhost providers.",
+  "Failed to load hosting domains.": "Failed to load hosting domains."
 }

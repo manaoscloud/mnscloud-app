@@ -4406,5 +4406,9 @@
   "Select a domain linked to the selected customer.": "Selecione um domínio vinculado ao cliente selecionado.",
   "Password is required when auto-provisioning a mailbox.": "A senha é obrigatória ao provisionar automaticamente uma caixa de e-mail.",
   "Lifecycle": "Ciclo de vida",
-  "Active hosts": "Hosts ativos"
+  "Active hosts": "Hosts ativos",
+  "Failed to load webhost hosts.": "Falha ao carregar hosts Webhost.",
+  "Failed to load webhost plans.": "Falha ao carregar planos Webhost.",
+  "Failed to load webhost providers.": "Falha ao carregar provedores Webhost.",
+  "Failed to load hosting domains.": "Falha ao carregar domínios de hosting."
 }
