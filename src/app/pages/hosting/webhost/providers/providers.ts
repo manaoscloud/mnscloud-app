@@ -129,7 +129,7 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Hostname',
       required: true,
       tab: 'authentication',
-      span: 2,
+      span: 1,
     },
     {
       key: 'port',
@@ -155,7 +155,7 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Username',
       required: true,
       tab: 'authentication',
-      span: 2,
+      span: 1,
     },
     {
       key: 'apiToken',
@@ -165,7 +165,7 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current API token',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
+      span: 1,
       requiredWhen: ({ editing }) => !editing,
     },
     {
