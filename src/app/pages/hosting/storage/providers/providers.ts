@@ -58,7 +58,7 @@ const MANAGED_CONFIG_KEYS = [
 ] as const;
 
 const PROVIDER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'hosting/storage/providers',
+  endpoint: 'system/hosting/storage/providers',
   uuidField: 'HspUUID',
   pageTitle: 'Storage Providers',
   pageDescription: 'Manage object storage platforms and credentials.',
@@ -389,9 +389,7 @@ export class HostingStorageProvidersPage extends ConfigurableCrudPageBase<Config
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/storage/providers' : PROVIDER_CONFIG.endpoint,
-  );
+  private readonly endpoint = computed(() => 'system/hosting/storage/providers');
 
   constructor() {
     super(PROVIDER_CONFIG);

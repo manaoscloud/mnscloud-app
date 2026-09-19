@@ -797,15 +797,6 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
-                    path: 'providers',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/providers/providers').then(
-                        (m) => m.HostingStorageProvidersPage,
-                      ),
-                    title: 'Hosting • Storage Providers | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
                     path: 'accounts',
                     loadComponent: () =>
                       import('./pages/hosting/storage/accounts/accounts').then(
