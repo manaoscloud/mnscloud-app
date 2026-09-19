@@ -57,10 +57,10 @@ export type WebhostHostProvisionStatus =
   | 'failed';
 
 export type WebhostHostConfig = {
-  contactEmail?: string | null;
-  documentRoot?: string | null;
-  autoProvision?: boolean | null;
   notes?: string | null;
+  ip?: string | null;
+  plan?: string | null;
+  providerEmail?: string | null;
 };
 
 export type HostingWebhostHost = {
@@ -68,6 +68,7 @@ export type HostingWebhostHost = {
   HwhName: string;
   CustomerCusUUID?: string | null;
   CustomerName?: string | null;
+  CustomerEmail?: string | null;
   HostingWebhostPlanHwlUUID: string;
   PlanName: string;
   PlanDiskMb?: number | null;
@@ -107,7 +108,6 @@ export type WebhostEmailProvisionStatus =
   | 'failed';
 
 export type WebhostEmailConfig = {
-  autoProvision?: boolean | null;
   notes?: string | null;
 };
 

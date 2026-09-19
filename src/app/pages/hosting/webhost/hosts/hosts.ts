@@ -17,7 +17,6 @@ import type {
 import {
   WEBHOST_HOST_STATUS_OPTIONS,
   WEBHOST_PROVISION_STATUS_OPTIONS,
-  YES_NO_OPTIONS,
   appendWebhostListParams,
   asRecord,
   lifecycleChipClass,
@@ -57,6 +56,13 @@ const UNSUSPEND_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Unsuspend',
 };
 
+const DEPROVISION_ACTION: ConfigurableCrudRowAction = {
+  key: 'deprovision',
+  label: 'Deprovision',
+  icon: 'cloud_off',
+  tooltip: 'Deprovision',
+};
+
 const HOST_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/webhost/hosts',
   uuidField: 'HwhUUID',
@@ -64,11 +70,12 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   pageDescription: 'Provision and manage Webhost accounts linked to plans and DNS domains.',
   createTitle: 'New webhost host',
   editTitle: 'Edit webhost host',
-  dialogDescription: 'Configure host identity, customer, plan and domain settings.',
+  dialogDescription: 'Configure host identity, customer, plan and domain. Provision starts automatically.',
   searchPlaceholder: 'Name, domain, username or customer',
   emptyLabel: 'No webhost hosts found.',
   deleteTitle: 'Delete webhost host',
-  deleteMessage: 'Are you sure you want to delete this webhost host?',
+  deleteMessage:
+    'Delete this webhost host from MNSCloud? Provisioned hosts must be deprovisioned first.',
   deleteSelectedTitle: 'Delete selected webhost hosts',
   deleteSelectedMessage: 'Delete {count} selected webhost hosts?',
   savedMessage: 'Webhost host saved successfully.',
@@ -80,10 +87,9 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   bulkDelete: true,
   statusFilter: true,
   tabLabels: {
-    storage: 'Hosting',
     notes: 'Notes',
   },
-  rowActions: [PROVISION_ACTION, SYNC_ACTION, SUSPEND_ACTION, UNSUSPEND_ACTION],
+  rowActions: [PROVISION_ACTION, DEPROVISION_ACTION, SYNC_ACTION, SUSPEND_ACTION, UNSUSPEND_ACTION],
   listFilters: [
     {
       key: 'customerUUID',
@@ -132,11 +138,6 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     planUUID: '',
     hostingDnsDomainUUID: '',
     username: '',
-    hostStatus: 'pending',
-    provisionStatus: 'manual',
-    contactEmail: '',
-    documentRoot: '',
-    autoProvision: 0,
     notes: '',
     status: 1,
   },
@@ -159,6 +160,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'provider', label: 'Provider', field: 'ProviderName' },
     { id: 'user', label: 'Username', field: 'HwhUsername' },
+    { id: 'ip', label: 'IP', field: 'HostIpLabel' },
     {
       id: 'lifecycle',
       label: 'Lifecycle',
@@ -222,50 +224,6 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'username',
       label: 'Username',
       required: true,
-      span: 1,
-    },
-    {
-      key: 'hostStatus',
-      source: 'HwhStatus',
-      payloadKey: 'hostStatus',
-      label: 'Lifecycle',
-      type: 'search-select',
-      options: WEBHOST_HOST_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'provisionStatus',
-      source: 'HwhProvisionStatus',
-      payloadKey: 'provisionStatus',
-      label: 'Provision status',
-      type: 'search-select',
-      options: WEBHOST_PROVISION_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'contactEmail',
-      payloadKey: 'contactEmail',
-      label: 'Contact email',
-      type: 'email',
-      tab: 'storage',
-      span: 2,
-    },
-    {
-      key: 'documentRoot',
-      payloadKey: 'documentRoot',
-      label: 'Document root',
-      tab: 'storage',
-      span: 2,
-    },
-    {
-      key: 'autoProvision',
-      payloadKey: 'autoProvision',
-      label: 'Auto provision',
-      type: 'search-select',
-      options: YES_NO_OPTIONS,
-      tab: 'storage',
       span: 1,
     },
     {
@@ -375,10 +333,16 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
       `${this.listEndpoint()}?${params.toString()}`,
     );
-    return (response?.data?.items ?? []).map((item) => ({
-      ...item,
-      HwhConfig: asRecord(item['HwhConfig']),
-    }));
+    return (response?.data?.items ?? []).map((item) => {
+      const config = asRecord(item['HwhConfig']);
+      const ip = normalizeString(config['ip'] ?? config['ipAddress'] ?? '');
+      return {
+        ...item,
+        HwhConfig: config,
+        HostIpLabel: ip || '—',
+        CustomerEmail: normalizeString(item['CustomerEmail']) || '—',
+      };
+    });
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
@@ -395,11 +359,6 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     return {
       ...super.formValuesFromRecord(row),
       status: truthyNumber(row['HwhIsActive']),
-      hostStatus: String(row['HwhStatus'] ?? 'pending'),
-      provisionStatus: String(row['HwhProvisionStatus'] ?? 'manual'),
-      contactEmail: String(config['contactEmail'] ?? ''),
-      documentRoot: String(config['documentRoot'] ?? ''),
-      autoProvision: config['autoProvision'] ? 1 : 0,
       notes: String(config['notes'] ?? ''),
     };
   }
@@ -423,12 +382,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       planUUID: payload['planUUID'],
       hostingDnsDomainUUID: payload['hostingDnsDomainUUID'],
       username: String(payload['username'] ?? '').trim(),
-      status: payload['hostStatus'],
-      provisionStatus: payload['provisionStatus'],
       config: {
-        contactEmail: normalizeString(payload['contactEmail']),
-        documentRoot: normalizeString(payload['documentRoot']),
-        autoProvision: truthyNumber(payload['autoProvision']) === 1,
         notes: normalizeString(payload['notes']),
       },
       isActive: truthyNumber(payload['status']) === 1,
@@ -436,18 +390,31 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    const provisioned = String(row['HwhProvisionStatus'] ?? '') === 'provisioned';
+    const provisionStatus = String(row['HwhProvisionStatus'] ?? '');
+    const provisioned = provisionStatus === 'provisioned';
+    const pendingOrProvisioning =
+      provisionStatus === 'pending' || provisionStatus === 'provisioning';
     const suspended = String(row['HwhStatus'] ?? '') === 'suspended';
-    return [
-      provisioned ? SYNC_ACTION : PROVISION_ACTION,
-      suspended ? UNSUSPEND_ACTION : SUSPEND_ACTION,
-    ];
+    const actions: ConfigurableCrudRowAction[] = [];
+    if (!provisioned && !pendingOrProvisioning) {
+      actions.push(PROVISION_ACTION);
+    }
+    if (provisioned || pendingOrProvisioning) {
+      actions.push(DEPROVISION_ACTION);
+    }
+    if (provisioned) {
+      actions.push(SYNC_ACTION);
+      actions.push(suspended ? UNSUSPEND_ACTION : SUSPEND_ACTION);
+    }
+    return actions;
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     const uuid = String(row['HwhUUID'] ?? '');
     if (!uuid) return;
-    if (!['provision', 'sync', 'suspend', 'unsuspend'].includes(action.key)) return;
+    if (!['provision', 'deprovision', 'sync', 'suspend', 'unsuspend'].includes(action.key)) {
+      return;
+    }
     this.mutating.set(true);
     try {
       const response = await this.api.post(`${this.endpoint()}/${uuid}/${action.key}`, {});
