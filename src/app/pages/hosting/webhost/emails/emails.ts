@@ -14,7 +14,6 @@ import type { HostingWebhostHost } from '../webhost.types';
 import {
   WEBHOST_HOST_STATUS_OPTIONS,
   WEBHOST_PROVISION_STATUS_OPTIONS,
-  YES_NO_OPTIONS,
   appendWebhostListParams,
   asRecord,
   hostOptionLabel,
@@ -70,13 +69,14 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
   pageDescription: 'Manage mailboxes created inside Webhost hosts.',
   createTitle: 'New webhost email',
   editTitle: 'Edit webhost email',
-  dialogDescription: 'Configure mailbox identity, quota and provisioning.',
+  dialogDescription: 'Configure mailbox identity and quota. Provision starts automatically on create.',
   searchPlaceholder: 'Email, host or domain',
   emptyLabel: 'No webhost emails found.',
   deleteTitle: 'Delete webhost email',
-  deleteMessage: 'Are you sure you want to delete this webhost email locally?',
+  deleteMessage:
+    'Delete this mailbox? If it is provisioned on the provider, it will be removed there first.',
   deleteSelectedTitle: 'Delete selected webhost emails',
-  deleteSelectedMessage: 'Delete {count} selected webhost emails locally?',
+  deleteSelectedMessage: 'Delete {count} selected webhost emails (provider cleanup when provisioned)?',
   savedMessage: 'Webhost email saved successfully.',
   deletedMessage: 'Webhost email deleted successfully.',
   deleteFailedMessage: 'Failed to delete webhost email.',
@@ -129,9 +129,6 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
     localPart: '',
     password: '',
     quotaMb: 0,
-    emailStatus: 'pending',
-    provisionStatus: 'manual',
-    autoProvision: 0,
     notes: '',
     status: 1,
   },
@@ -193,26 +190,6 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'emailStatus',
-      source: 'HweStatus',
-      payloadKey: 'emailStatus',
-      label: 'Lifecycle',
-      type: 'search-select',
-      options: WEBHOST_HOST_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'provisionStatus',
-      source: 'HweProvisionStatus',
-      payloadKey: 'provisionStatus',
-      label: 'Provision status',
-      type: 'search-select',
-      options: WEBHOST_PROVISION_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
       key: 'quotaMb',
       source: 'HweQuotaMb',
       payloadKey: 'quotaMb',
@@ -222,25 +199,15 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'autoProvision',
-      payloadKey: 'autoProvision',
-      label: 'Auto provision',
-      type: 'search-select',
-      options: YES_NO_OPTIONS,
-      tab: 'authentication',
-      span: 1,
-    },
-    {
       key: 'password',
       payloadKey: 'password',
       label: 'Password',
       type: 'password',
-      placeholder: 'Required when auto-provisioning a new mailbox',
+      placeholder: 'Required for new mailbox provision',
       autocomplete: 'new-password',
       tab: 'authentication',
       span: 2,
-      requiredWhen: ({ editing, values }) =>
-        !editing && truthyNumber(values['autoProvision']) === 1,
+      requiredWhen: ({ editing }) => !editing,
     },
     {
       key: 'notes',
@@ -330,10 +297,7 @@ export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<Configura
     return {
       ...super.formValuesFromRecord(row),
       status: truthyNumber(row['HweIsActive']),
-      emailStatus: String(row['HweStatus'] ?? 'pending'),
-      provisionStatus: String(row['HweProvisionStatus'] ?? 'manual'),
       quotaMb: Number(row['HweQuotaMb'] ?? 0),
-      autoProvision: config['autoProvision'] ? 1 : 0,
       notes: String(config['notes'] ?? ''),
       password: '',
     };
@@ -341,12 +305,8 @@ export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<Configura
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
-    if (
-      !this.editingRecord() &&
-      truthyNumber(payload['autoProvision']) === 1 &&
-      !String(payload['password'] ?? '').trim()
-    ) {
-      this.snack.warning(this.t('Password is required when auto-provisioning a mailbox.'));
+    if (!this.editingRecord() && !String(payload['password'] ?? '').trim()) {
+      this.snack.warning(this.t('Password is required to provision a new mailbox.'));
       return false;
     }
     return true;
@@ -359,11 +319,7 @@ export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<Configura
       localPart: String(payload['localPart'] ?? '').trim(),
       ...(password ? { password } : {}),
       quotaMb: numberOrNull(payload['quotaMb']),
-      status: payload['emailStatus'],
-      provisionStatus: payload['provisionStatus'],
-      autoProvision: truthyNumber(payload['autoProvision']) === 1,
       config: {
-        autoProvision: truthyNumber(payload['autoProvision']) === 1,
         notes: normalizeString(payload['notes']),
       },
       isActive: truthyNumber(payload['status']) === 1,
