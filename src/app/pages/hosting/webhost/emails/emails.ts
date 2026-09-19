@@ -1,815 +1,441 @@
-import { AsyncOperationsService } from '../../../../shared/operations/async-operations.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
 import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { FormField, form as createForm, min, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import type { HostingWebhostHost } from '../webhost.types';
 import {
-  getWebhostDialogViewportConfig,
-  updateWebhostDialogViewport,
-} from '../webhost-dialog-viewport';
-import type {
-  HostingWebhostEmailAccount,
-  HostingWebhostHost,
-  WebhostEmailConfig,
-  WebhostEmailProvisionStatus,
-  WebhostEmailStatus,
-  WebhostProviderType,
-} from '../webhost.types';
+  WEBHOST_HOST_STATUS_OPTIONS,
+  WEBHOST_PROVISION_STATUS_OPTIONS,
+  YES_NO_OPTIONS,
+  appendWebhostListParams,
+  asRecord,
+  hostOptionLabel,
+  lifecycleChipClass,
+  normalizeString,
+  numberOrNull,
+  promptWebhostPassword,
+  truthyNumber,
+  webhostRootEndpoint,
+} from '../webhost-shared';
 
-type WebhostEmailFilters = {
-  search: string;
-  hostUUID: string;
-  status: string;
-  provisionStatus: string;
+const PROVISION_ACTION: ConfigurableCrudRowAction = {
+  key: 'provision',
+  label: 'Provision',
+  icon: 'cloud_upload',
+  tooltip: 'Provision',
+};
+const RESET_PASSWORD_ACTION: ConfigurableCrudRowAction = {
+  key: 'reset-password',
+  label: 'Reset password',
+  icon: 'password',
+  tooltip: 'Reset password',
+};
+const SYNC_ACTION: ConfigurableCrudRowAction = {
+  key: 'sync',
+  label: 'Sync',
+  icon: 'sync',
+  tooltip: 'Sync',
+};
+const SUSPEND_ACTION: ConfigurableCrudRowAction = {
+  key: 'suspend',
+  label: 'Suspend',
+  icon: 'pause_circle',
+  tooltip: 'Suspend',
+};
+const UNSUSPEND_ACTION: ConfigurableCrudRowAction = {
+  key: 'unsuspend',
+  label: 'Unsuspend',
+  icon: 'play_circle',
+  tooltip: 'Unsuspend',
+};
+const DEPROVISION_ACTION: ConfigurableCrudRowAction = {
+  key: 'deprovision',
+  label: 'Deprovision',
+  icon: 'cloud_off',
+  tooltip: 'Deprovision',
 };
 
-type WebhostEmailFilterFormModel = WebhostEmailFilters & {
-  provider: string;
-};
-
-type WebhostEmailFormModel = {
-  hostUUID: string;
-  localPart: string;
-  password: string;
-  quotaMb: number;
-  status: WebhostEmailStatus;
-  provisionStatus: WebhostEmailProvisionStatus;
-  autoProvision: number;
-  notes: string;
-  isActive: number;
-};
-
-type WebhostEmailPasswordFormModel = {
-  password: string;
+const EMAIL_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/webhost/emails',
+  uuidField: 'HweUUID',
+  pageTitle: 'Webhost Emails',
+  pageDescription: 'Manage mailboxes created inside Webhost hosts.',
+  createTitle: 'New webhost email',
+  editTitle: 'Edit webhost email',
+  dialogDescription: 'Configure mailbox identity, quota and provisioning.',
+  searchPlaceholder: 'Email, host or domain',
+  emptyLabel: 'No webhost emails found.',
+  deleteTitle: 'Delete webhost email',
+  deleteMessage: 'Are you sure you want to delete this webhost email locally?',
+  deleteSelectedTitle: 'Delete selected webhost emails',
+  deleteSelectedMessage: 'Delete {count} selected webhost emails locally?',
+  savedMessage: 'Webhost email saved successfully.',
+  deletedMessage: 'Webhost email deleted successfully.',
+  deleteFailedMessage: 'Failed to delete webhost email.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  authenticationTabAfterRecord: true,
+  tabLabels: {
+    authentication: 'Mailbox',
+    notes: 'Notes',
+  },
+  rowActions: [
+    PROVISION_ACTION,
+    RESET_PASSWORD_ACTION,
+    SYNC_ACTION,
+    SUSPEND_ACTION,
+    UNSUSPEND_ACTION,
+    DEPROVISION_ACTION,
+  ],
+  listFilters: [
+    {
+      key: 'hostUUID',
+      label: 'Host',
+      paramKey: 'hostUUID',
+      type: 'search-select',
+      placeholder: 'Search hosts',
+      emptyLabel: 'No records found.',
+    },
+    {
+      key: 'emailStatus',
+      label: 'Lifecycle',
+      paramKey: 'status',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
+    {
+      key: 'provisionStatus',
+      label: 'Provision',
+      paramKey: 'provisionStatus',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  initialValues: {
+    hostUUID: '',
+    localPart: '',
+    password: '',
+    quotaMb: 0,
+    emailStatus: 'pending',
+    provisionStatus: 'manual',
+    autoProvision: 0,
+    notes: '',
+    status: 1,
+  },
+  columns: [
+    { id: 'email', label: 'Email', kind: 'identity', field: 'HweEmail', uuidField: 'HweUUID' },
+    {
+      id: 'host',
+      label: 'Host',
+      kind: 'related',
+      field: 'HostName',
+      uuidField: 'HostingWebhostHostHwhUUID',
+    },
+    { id: 'provider', label: 'Provider', field: 'ProviderName' },
+    { id: 'quota', label: 'Quota', field: 'EmailQuotaLabel' },
+    {
+      id: 'lifecycle',
+      label: 'Lifecycle',
+      kind: 'status',
+      field: 'HweStatus',
+      options: WEBHOST_HOST_STATUS_OPTIONS,
+      className: 'status-col',
+      chipClass: lifecycleChipClass,
+    },
+    {
+      id: 'provision',
+      label: 'Provision',
+      kind: 'status',
+      field: 'HweProvisionStatus',
+      options: WEBHOST_PROVISION_STATUS_OPTIONS,
+      className: 'status-col',
+      chipClass: lifecycleChipClass,
+    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HweIsActive', className: 'status-col' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'HweIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'hostUUID',
+      source: 'HostingWebhostHostHwhUUID',
+      payloadKey: 'hostUUID',
+      label: 'Host',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'localPart',
+      source: 'HweLocalPart',
+      payloadKey: 'localPart',
+      label: 'Local part',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'emailStatus',
+      source: 'HweStatus',
+      payloadKey: 'emailStatus',
+      label: 'Lifecycle',
+      type: 'search-select',
+      options: WEBHOST_HOST_STATUS_OPTIONS,
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'provisionStatus',
+      source: 'HweProvisionStatus',
+      payloadKey: 'provisionStatus',
+      label: 'Provision status',
+      type: 'search-select',
+      options: WEBHOST_PROVISION_STATUS_OPTIONS,
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'quotaMb',
+      source: 'HweQuotaMb',
+      payloadKey: 'quotaMb',
+      label: 'Quota (MB)',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'autoProvision',
+      payloadKey: 'autoProvision',
+      label: 'Auto provision',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'password',
+      payloadKey: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Required when auto-provisioning a new mailbox',
+      autocomplete: 'new-password',
+      tab: 'authentication',
+      span: 2,
+      requiredWhen: ({ editing, values }) =>
+        !editing && truthyNumber(values['autoProvision']) === 1,
+    },
+    {
+      key: 'notes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 3,
+    },
+  ],
 };
 
 @Component({
   selector: 'app-hosting-webhost-emails',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-  ],
-  templateUrl: './emails.html',
-  styleUrls: ['./emails.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingWebhostEmailsPage {
-  private readonly operations = inject(AsyncOperationsService);
-  private readonly api = inject(ApiService);
-  private readonly snack = inject(SnackbarService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly emailFormDialog = viewChild<TemplateRef<unknown>>('emailFormDialog');
-  readonly passwordDialog = viewChild<TemplateRef<unknown>>('passwordDialog');
-
-  private dialogRef: MatDialogRef<unknown> | null = null;
-  private passwordDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-
-  readonly emailEndpoint = 'hosting/webhost/emails';
-  readonly hostEndpoint = 'hosting/webhost/hosts';
-  readonly emails = signal<HostingWebhostEmailAccount[]>([]);
-  readonly hosts = signal<HostingWebhostHost[]>([]);
-  readonly appliedSearch = signal('');
-  readonly appliedProvider = signal('');
-  readonly appliedHostUUID = signal('');
-  readonly appliedStatus = signal('');
-  readonly appliedProvisionStatus = signal('');
-  readonly hostSearch = signal('');
-  readonly pageIndex = signal(0);
-  readonly pageSize = signal(10);
-  readonly sortActive = signal('');
-  readonly sortDirection = signal<'asc' | 'desc' | ''>('');
-  private readonly emailsResource = resource({
-    defaultValue: [] as HostingWebhostEmailAccount[],
-    params: (): WebhostEmailFilters => ({
-      search: this.appliedSearch().trim(),
-      hostUUID: this.appliedHostUUID(),
-      status: this.appliedStatus(),
-      provisionStatus: this.appliedProvisionStatus(),
-    }),
-    loader: ({ params }) => this.fetchEmails(params),
-  });
-  readonly loading = this.emailsResource.isLoading;
-  readonly saving = signal(false);
-  readonly actionEmailUUID = signal<string | null>(null);
-  readonly editing = signal<HostingWebhostEmailAccount | null>(null);
-  readonly passwordTarget = signal<HostingWebhostEmailAccount | null>(null);
-  readonly passwordAction = signal<'provision' | 'reset-password'>('provision');
-  readonly selectedEmailUUIDs = signal<Set<string>>(new Set());
-  readonly selectedCount = computed(() => this.selectedEmailUUIDs().size);
-  readonly selectedHost = computed(() => {
-    const hostUUID = this.emailFormModel().hostUUID;
-    return this.hosts().find((host) => host.HwhUUID === hostUUID) ?? null;
-  });
-
-  readonly providerOptions: { value: WebhostProviderType; label: string }[] = [
-    { value: 'cpanel_whm', label: 'cPanel/WHM' },
-    { value: 'plesk', label: 'Plesk' },
-    { value: 'directadmin', label: 'DirectAdmin' },
-  ];
-  readonly statusOptions: { value: WebhostEmailStatus; label: string }[] = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'active', label: 'Active' },
-    { value: 'suspended', label: 'Suspended' },
-    { value: 'error', label: 'Error' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
-  readonly provisionOptions: { value: WebhostEmailProvisionStatus; label: string }[] = [
-    { value: 'manual', label: 'Manual' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'provisioning', label: 'Provisioning' },
-    { value: 'provisioned', label: 'Provisioned' },
-    { value: 'failed', label: 'Failed' },
-  ];
-  readonly displayedColumns = [
-    'select',
-    'email',
-    'host',
-    'provider',
-    'quota',
-    'status',
-    'provision',
-    'lastSync',
-    'actions',
-  ];
-
-  readonly filterFormModel = signal<WebhostEmailFilterFormModel>({
-    search: '',
-    provider: '',
-    hostUUID: '',
-    status: '',
-    provisionStatus: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly emailFormModel = signal<WebhostEmailFormModel>({
-    hostUUID: '',
-    localPart: '',
-    password: '',
-    quotaMb: 0,
-    status: 'pending',
-    provisionStatus: 'manual',
-    autoProvision: 0,
-    notes: '',
-    isActive: 1,
-  });
-  readonly emailForm = createForm(this.emailFormModel, (schema) => {
-    required(schema.hostUUID);
-    required(schema.localPart);
-    minLength(schema.localPart, 1);
-    min(schema.quotaMb, 0);
-    required(schema.status);
-    required(schema.provisionStatus);
-    required(schema.isActive);
-  });
-
-  readonly passwordFormModel = signal<WebhostEmailPasswordFormModel>({
-    password: '',
-  });
-  readonly passwordForm = createForm(this.passwordFormModel, (schema) => {
-    required(schema.password);
-    minLength(schema.password, 8);
-  });
-
-  readonly rows = computed(() => {
-    const search = this.appliedSearch().trim().toLowerCase();
-    const provider = this.appliedProvider();
-    const hostUUID = this.appliedHostUUID();
-    const status = this.appliedStatus();
-    const provisionStatus = this.appliedProvisionStatus();
-    return this.emails().filter((item) => {
-      const matchesSearch =
-        !search ||
-        item.HweEmail.toLowerCase().includes(search) ||
-        item.HostName.toLowerCase().includes(search) ||
-        item.DomainName.toLowerCase().includes(search) ||
-        item.ProviderName.toLowerCase().includes(search);
-      const matchesProvider = !provider || item.HostingWebhostProviderHwpUUID === provider;
-      const matchesHost = !hostUUID || item.HostingWebhostHostHwhUUID === hostUUID;
-      const matchesStatus = !status || item.HweStatus === status;
-      const matchesProvision = !provisionStatus || item.HweProvisionStatus === provisionStatus;
-      return matchesSearch && matchesProvider && matchesHost && matchesStatus && matchesProvision;
-    });
-  });
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
-  readonly pagedRows = computed(() => {
-    const start = this.pageIndex() * this.pageSize();
-    return this.sortedRows().slice(start, start + this.pageSize());
-  });
-  readonly filteredHosts = computed(() => {
-    const search = this.hostSearch().trim().toLowerCase();
-    const items = this.hosts().filter((host) => host.HwhIsActive === 1);
-    if (!search) return items;
-    return items.filter(
-      (host) =>
-        host.HwhName.toLowerCase().includes(search) ||
-        host.DomainName.toLowerCase().includes(search) ||
-        host.HwhUsername.toLowerCase().includes(search) ||
-        host.ProviderName.toLowerCase().includes(search),
-    );
-  });
-  readonly providerFilterOptions = computed(() => {
-    const providers = new Map<
-      string,
-      { uuid: string; name: string; platform: WebhostProviderType | string }
-    >();
-    for (const host of this.hosts()) {
-      if (!host.HostingWebhostProviderHwpUUID) continue;
-      providers.set(host.HostingWebhostProviderHwpUUID, {
-        uuid: host.HostingWebhostProviderHwpUUID,
-        name: host.ProviderName || '-',
-        platform: host.HwlProvider,
-      });
-    }
-    return Array.from(providers.values()).sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-    );
-  });
-
-  private readonly syncEmails = effect(() => {
-    this.emails.set(this.emailsResource.value());
-    this.reconcileEmailSelection();
-  });
-
-  private readonly reportEmailsError = effect(() => {
-    const error = this.emailsResource.error();
-    if (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost emails.'));
-    }
-  });
+export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly route = inject(ActivatedRoute);
+  private readonly hosts = signal<HostingWebhostHost[]>([]);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
+  private readonly endpoint = computed(() => `${this.rootEndpoint()}/emails`);
+  private readonly hostOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.hosts()
+      .filter((host) => host.HwhIsActive === 1)
+      .map((host) => ({
+        value: host.HwhUUID,
+        label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
+        description: host.ProviderName,
+        searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername} ${host.ProviderName}`,
+      })),
+  );
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.closeDialog();
-      this.passwordDialogRef?.close();
-      this.stopDialogViewportObserver();
-    });
+    super(EMAIL_CONFIG);
     void this.fetchHosts();
   }
 
-  refreshList() {
-    void this.fetchHosts();
-    this.emailsResource.reload();
+  protected override listEndpoint(): string {
+    return this.endpoint();
   }
 
-  applyFilters() {
-    const values = this.filterFormModel();
-    this.appliedSearch.set(values.search);
-    this.appliedProvider.set(values.provider);
-    this.appliedHostUUID.set(values.hostUUID);
-    this.appliedStatus.set(values.status);
-    this.appliedProvisionStatus.set(values.provisionStatus);
-    this.resetPagination();
-    this.emailsResource.reload();
+  protected override createEndpoint(): string {
+    return this.endpoint();
   }
 
-  clearFilters() {
-    this.filterFormModel.set({
-      search: '',
-      provider: '',
-      hostUUID: '',
-      status: '',
-      provisionStatus: '',
-    });
-    this.applyFilters();
+  protected override updateEndpoint(): string {
+    return this.endpoint();
   }
 
-  onHostOpened(opened: boolean) {
-    if (!opened) this.hostSearch.set('');
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
   }
 
-  providerLabel(provider: WebhostProviderType | string) {
-    return this.providerOptions.find((option) => option.value === provider)?.label ?? provider;
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
   }
 
-  statusLabel(status: WebhostEmailStatus | string) {
-    return this.statusOptions.find((option) => option.value === status)?.label ?? status;
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'hostUUID') return this.hostOptions();
+    if (key === 'emailStatus') return WEBHOST_HOST_STATUS_OPTIONS;
+    if (key === 'provisionStatus') return WEBHOST_PROVISION_STATUS_OPTIONS;
+    return [];
   }
 
-  provisionLabel(status: WebhostEmailProvisionStatus | string) {
-    return this.provisionOptions.find((option) => option.value === status)?.label ?? status;
-  }
-
-  hostLabel(host: HostingWebhostHost) {
-    return `${host.HwhName} · ${host.DomainName}`;
-  }
-
-  emailHostLabel(item: HostingWebhostEmailAccount) {
-    return `${item.HostName} · ${item.DomainName}`;
-  }
-
-  quotaLabel(item: HostingWebhostEmailAccount) {
-    return item.HweQuotaMb ? `${item.HweQuotaMb} MB` : 'Default';
-  }
-
-  onPage(event: PageEvent) {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-  }
-
-  onSort(sort: Sort) {
-    this.sortActive.set(sort.active);
-    this.sortDirection.set(sort.direction);
-    this.resetPagination();
-  }
-
-  async fetchHosts() {
-    try {
-      const result = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
-        `${this.hostEndpoint}?limit=500&offset=0&isActive=1`,
-      );
-      this.hosts.set(result?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost hosts.'));
-    }
-  }
-
-  private async fetchEmails(filters: WebhostEmailFilters): Promise<HostingWebhostEmailAccount[]> {
-    const params = new URLSearchParams({ limit: '500', offset: '0' });
-    if (filters.search) params.set('search', filters.search);
-    if (filters.hostUUID) params.set('hostUUID', filters.hostUUID);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.provisionStatus) params.set('provisionStatus', filters.provisionStatus);
-
-    const result = await this.api.get<{ data?: { items?: HostingWebhostEmailAccount[] } }>(
-      `${this.emailEndpoint}?${params.toString()}`,
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.hosts().length) await this.fetchHosts();
+    const params = new URLSearchParams();
+    appendWebhostListParams(params, filters, this.listFilters());
+    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+      `${this.listEndpoint()}?${params.toString()}`,
     );
-    const items = result?.data?.items ?? [];
-    return items.map((item) => ({ ...item, HweConfig: this.parseConfig(item.HweConfig) }));
+    return (response?.data?.items ?? []).map((item) => ({
+      ...item,
+      HweConfig: asRecord(item['HweConfig']),
+      EmailQuotaLabel: item['HweQuotaMb'] ? `${item['HweQuotaMb']} MB` : 'Default',
+    }));
   }
 
-  startCreate() {
-    this.editing.set(null);
-    this.resetForm();
-    this.openDialog();
-  }
-
-  async startEdit(item: HostingWebhostEmailAccount) {
-    let email = item;
-    try {
-      const result = await this.api.get<{ data?: { item?: HostingWebhostEmailAccount | null } }>(
-        `${this.emailEndpoint}/${item.HweUUID}`,
-      );
-      if (result?.data?.item) {
-        email = { ...result.data.item, HweConfig: this.parseConfig(result.data.item.HweConfig) };
-      }
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to load Webhost email.'));
-    }
-
-    const config = email.HweConfig ?? {};
-    this.editing.set(email);
-    this.emailFormModel.set({
-      hostUUID: email.HostingWebhostHostHwhUUID,
-      localPart: email.HweLocalPart,
-      password: '',
-      quotaMb: email.HweQuotaMb ?? 0,
-      status: email.HweStatus,
-      provisionStatus: email.HweProvisionStatus,
-      autoProvision: config.autoProvision ? 1 : 0,
-      notes: config.notes ?? '',
-      isActive: email.HweIsActive === 1 ? 1 : 0,
-    });
-    this.openDialog();
-  }
-
-  cancelForm() {
-    this.closeDialog();
-    this.editing.set(null);
-    this.resetForm();
-  }
-
-  async submit(closeAfterSave = true) {
-    const values = this.emailFormModel();
-    if (
-      !this.emailForm().valid() ||
-      (!this.editing() && values.autoProvision === 1 && !values.password.trim())
-    ) {
-      this.snack.warning('Please fill all required fields.');
-      return;
-    }
-
-    this.saving.set(true);
-    const payload = {
-      hostUUID: values.hostUUID,
-      localPart: values.localPart.trim(),
-      password: values.password.trim() || undefined,
-      quotaMb: this.numberOrNull(values.quotaMb),
-      status: values.status,
-      provisionStatus: values.provisionStatus,
-      autoProvision: values.autoProvision === 1,
-      config: this.buildConfigPayload(),
-      isActive: values.isActive === 1,
-    };
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put(`${this.emailEndpoint}/${editing.HweUUID}`, payload);
-        this.snack.success('Webhost email updated.');
-      } else {
-        const response = await this.api.post(this.emailEndpoint, payload);
-        if (!this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload()))
-          this.snack.success('Webhost email created.');
-      }
-      this.emailsResource.reload();
-      if (closeAfterSave || editing) {
-        this.closeDialog();
-        this.editing.set(null);
-      }
-      this.resetForm();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to save Webhost email.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNew() {
-    void this.submit(false);
-  }
-
-  openPasswordAction(item: HostingWebhostEmailAccount, action: 'provision' | 'reset-password') {
-    const passwordDialog = this.passwordDialog();
-    if (!passwordDialog) return;
-    this.passwordTarget.set(item);
-    this.passwordAction.set(action);
-    this.passwordFormModel.set({ password: '' });
-    this.passwordDialogRef = this.dialog.open(passwordDialog, {
-      width: 'min(520px, calc(100vw - 24px))',
-      maxWidth: 'calc(100vw - 24px)',
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-webhost-password-dialog',
-    });
-  }
-
-  closePasswordDialog() {
-    this.passwordDialogRef?.close();
-    this.passwordDialogRef = null;
-    this.passwordTarget.set(null);
-    this.passwordFormModel.set({ password: '' });
-  }
-
-  async submitPasswordAction() {
-    if (!this.passwordForm().valid() || !this.passwordTarget()) {
-      return;
-    }
-    const target = this.passwordTarget();
-    if (!target) return;
-    const action = this.passwordAction();
-    this.actionEmailUUID.set(target.HweUUID);
-    try {
-      const response = await this.api.post(`${this.emailEndpoint}/${target.HweUUID}/${action}`, {
-        password: this.passwordFormModel().password,
-      });
-      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
-      this.closePasswordDialog();
-      this.emailsResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to run email action.'));
-    } finally {
-      this.actionEmailUUID.set(null);
-    }
-  }
-
-  async runAction(item: HostingWebhostEmailAccount, action: 'sync' | 'suspend' | 'unsuspend') {
-    this.actionEmailUUID.set(item.HweUUID);
-    try {
-      const response = await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/${action}`, {});
-      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
-      this.emailsResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, `Failed to ${action} Webhost email.`));
-    } finally {
-      this.actionEmailUUID.set(null);
-    }
-  }
-
-  async deprovision(item: HostingWebhostEmailAccount) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Deprovision Webhost email',
-        message: `Remove "${item.HweEmail}" from the provider? The local record will remain for history.`,
-        confirmLabel: 'Deprovision',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-    this.actionEmailUUID.set(item.HweUUID);
-    try {
-      const response = await this.api.post(`${this.emailEndpoint}/${item.HweUUID}/deprovision`, {});
-      this.operations.observe(response, this.destroyRef, () => this.emailsResource.reload());
-      this.emailsResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to deprovision Webhost email.'));
-    } finally {
-      this.actionEmailUUID.set(null);
-    }
-  }
-
-  async remove(item: HostingWebhostEmailAccount) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete Webhost email',
-        message: `Are you sure you want to delete "${item.HweEmail}" locally?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.emailEndpoint}/${item.HweUUID}`);
-      this.snack.success('Webhost email deleted.');
-      this.emailsResource.reload();
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete Webhost email.'));
-    }
-  }
-
-  isSelected(item: HostingWebhostEmailAccount) {
-    return this.selectedEmailUUIDs().has(item.HweUUID);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.pagedRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleEmailSelection(item: HostingWebhostEmailAccount, checked: boolean) {
-    this.selectedEmailUUIDs.update((current) => {
-      const next = new Set(current);
-      checked ? next.add(item.HweUUID) : next.delete(item.HweUUID);
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedEmailUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.pagedRows()) {
-        checked ? next.add(row.HweUUID) : next.delete(row.HweUUID);
-      }
-      return next;
-    });
-  }
-
-  async removeSelectedEmails() {
-    const ids = Array.from(this.selectedEmailUUIDs());
-    if (!ids.length) return;
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected Webhost emails',
-        message: `Are you sure you want to delete ${ids.length} selected Webhost email(s) locally?`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        data?: {
-          deleted?: string[];
-          failed?: { HostingWebhostEmailAccountUUID: string; message: string }[];
-        };
-      }>(`${this.emailEndpoint}/bulk`, { ids });
-      const deleted = new Set(response?.data?.deleted ?? []);
-      const failed = new Set(
-        (response?.data?.failed ?? []).map((item) => item.HostingWebhostEmailAccountUUID),
-      );
-      this.emails.update((rows) => rows.filter((row) => !deleted.has(row.HweUUID)));
-      this.selectedEmailUUIDs.set(failed);
-      this.emailsResource.reload();
-      failed.size
-        ? this.snack.error(`${failed.size} Webhost email(s) could not be deleted.`)
-        : this.snack.success(`${deleted.size || ids.length} Webhost email(s) deleted.`);
-    } catch (error) {
-      this.snack.error(this.friendlyError(error, 'Failed to delete selected Webhost emails.'));
-    }
-  }
-
-  private resetForm() {
-    this.emailFormModel.set({
-      hostUUID: '',
-      localPart: '',
-      password: '',
-      quotaMb: 0,
-      status: 'pending',
-      provisionStatus: 'manual',
-      autoProvision: 0,
-      notes: '',
-      isActive: 1,
-    });
-  }
-
-  private resetPagination() {
-    this.pageIndex.set(0);
-  }
-
-  private reconcileEmailSelection() {
-    const available = new Set(this.emails().map((item) => item.HweUUID));
-    this.selectedEmailUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
-  }
-
-  private sortRows(rows: HostingWebhostEmailAccount[]) {
-    const active = this.sortActive();
-    const direction = this.sortDirection();
-    if (!active || !direction) return rows;
-    return [...rows].sort((a, b) => {
-      const compared = this.compareValues(this.sortValue(a, active), this.sortValue(b, active));
-      return direction === 'asc' ? compared : -compared;
-    });
-  }
-
-  private sortValue(item: HostingWebhostEmailAccount, column: string) {
-    switch (column) {
-      case 'email':
-        return item.HweEmail;
-      case 'host':
-        return this.emailHostLabel(item);
-      case 'provider':
-        return `${item.ProviderName} ${item.HwlProvider}`;
-      case 'quota':
-        return item.HweQuotaMb ?? 0;
-      case 'status':
-        return this.statusLabel(item.HweStatus);
-      case 'provision':
-        return this.provisionLabel(item.HweProvisionStatus);
-      case 'lastSync':
-        return item.HweLastSyncAt ?? '';
-      default:
-        return '';
-    }
-  }
-
-  private compareValues(
-    a: string | number | null | undefined,
-    b: string | number | null | undefined,
-  ) {
-    const left = a ?? '';
-    const right = b ?? '';
-    if (typeof left === 'number' && typeof right === 'number') return left - right;
-    return String(left).localeCompare(String(right), undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    });
-  }
-
-  private numberOrNull(value: number | null | undefined): number | null {
-    const numberValue = Number(value ?? 0);
-    return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
-  }
-
-  private normalizeString(value: string | null | undefined): string | null {
-    const trimmed = value?.trim();
-    return trimmed ? trimmed : null;
-  }
-
-  private parseConfig(value: unknown): WebhostEmailConfig | null {
-    if (!value) return null;
-    if (typeof value === 'object') return value as WebhostEmailConfig;
-    if (typeof value !== 'string') return null;
-    try {
-      const parsed = JSON.parse(value);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as WebhostEmailConfig) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private buildConfigPayload(): WebhostEmailConfig {
-    const values = this.emailFormModel();
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const config = asRecord(row['HweConfig']);
     return {
-      autoProvision: values.autoProvision === 1,
-      notes: this.normalizeString(values.notes),
+      ...super.formValuesFromRecord(row),
+      status: truthyNumber(row['HweIsActive']),
+      emailStatus: String(row['HweStatus'] ?? 'pending'),
+      provisionStatus: String(row['HweProvisionStatus'] ?? 'manual'),
+      quotaMb: Number(row['HweQuotaMb'] ?? 0),
+      autoProvision: config['autoProvision'] ? 1 : 0,
+      notes: String(config['notes'] ?? ''),
+      password: '',
     };
   }
 
-  private friendlyError(error: unknown, fallback: string) {
-    if (error instanceof HttpErrorResponse) {
-      const serverMessage = error.error?.error || error.error?.message;
-      return typeof serverMessage === 'string' && serverMessage.trim().length
-        ? serverMessage
-        : error.message || fallback;
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    if (
+      !this.editingRecord() &&
+      truthyNumber(payload['autoProvision']) === 1 &&
+      !String(payload['password'] ?? '').trim()
+    ) {
+      this.snack.warning(this.t('Password is required when auto-provisioning a mailbox.'));
+      return false;
     }
-    if (error instanceof Error) return error.message;
-    return fallback;
+    return true;
   }
 
-  private openDialog() {
-    const emailFormDialog = this.emailFormDialog();
-    if (!emailFormDialog || this.dialogRef) return;
-    this.dialogRef = this.dialog.open(emailFormDialog, {
-      ...getWebhostDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'hosting-webhost-email-dialog',
-    });
-    bindDialogEscape(this.dialogRef, () => {
-      this.cancelForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.dialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.dialogRef = null;
-    });
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const password = String(payload['password'] ?? '').trim();
+    return {
+      hostUUID: payload['hostUUID'],
+      localPart: String(payload['localPart'] ?? '').trim(),
+      ...(password ? { password } : {}),
+      quotaMb: numberOrNull(payload['quotaMb']),
+      status: payload['emailStatus'],
+      provisionStatus: payload['provisionStatus'],
+      autoProvision: truthyNumber(payload['autoProvision']) === 1,
+      config: {
+        autoProvision: truthyNumber(payload['autoProvision']) === 1,
+        notes: normalizeString(payload['notes']),
+      },
+      isActive: truthyNumber(payload['status']) === 1,
+    };
   }
 
-  private closeDialog() {
-    if (!this.dialogRef) return;
-    this.stopDialogViewportObserver();
-    this.dialogRef.close();
-    this.dialogRef = null;
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const suspended = String(row['HweStatus'] ?? '') === 'suspended';
+    return [
+      PROVISION_ACTION,
+      RESET_PASSWORD_ACTION,
+      SYNC_ACTION,
+      suspended ? UNSUSPEND_ACTION : SUSPEND_ACTION,
+      DEPROVISION_ACTION,
+    ];
   }
 
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.dialogRef) return;
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      if (this.dialogRef) updateWebhostDialogViewport(this.dialogRef);
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    updateWebhostDialogViewport(this.dialogRef);
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    const uuid = String(row['HweUUID'] ?? '');
+    if (!uuid) return;
+
+    if (action.key === 'deprovision') {
+      const ok = await this.confirmAction(
+        'Deprovision webhost email',
+        `Remove "${String(row['HweEmail'] ?? '')}" from the provider? The local record will remain for history.`,
+        'Deprovision',
+      );
+      if (!ok) return;
+    }
+
+    let body: Record<string, unknown> = {};
+    if (action.key === 'provision' || action.key === 'reset-password') {
+      const password = await promptWebhostPassword(
+        this.dialog,
+        action.key === 'reset-password' ? 'Reset mailbox password' : 'Provision mailbox',
+        'Enter a password with at least 8 characters.',
+      );
+      if (!password) return;
+      body = { password };
+    }
+
+    if (
+      !['provision', 'reset-password', 'sync', 'suspend', 'unsuspend', 'deprovision'].includes(
+        action.key,
+      )
+    ) {
+      return;
+    }
+
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(`${this.endpoint()}/${uuid}/${action.key}`, body);
+      this.trackOperation(response);
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(
+        this.errorMessage(error) || this.t(`Failed to ${action.key} webhost email.`),
+      );
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
+  private async fetchHosts(): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
+        `${this.rootEndpoint()}/hosts?limit=500&offset=0&isActive=1`,
+      );
+      this.hosts.set(response?.data?.items ?? []);
+    } catch (error) {
+      this.hosts.set([]);
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load webhost hosts.'));
+    }
   }
 }

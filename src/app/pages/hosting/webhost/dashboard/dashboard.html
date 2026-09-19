@@ -1,0 +1,45 @@
+<mns-dashboard-page
+  class="webhost-dashboard"
+  [title]="'Webhost Dashboard'"
+  [description]="'Provider, host, email, and panel readiness for Webhost operations.'"
+  [loading]="dashboardResource.isLoading()"
+  [error]="dashboardResource.error()"
+  [hasData]="dashboardResource.hasData()"
+  (refresh)="refreshList()"
+>
+  <div class="dashboard-content">
+    <div class="dashboard-grid">
+      @for (item of kpis(); track item.label) {
+        <article class="dashboard-metric" [ngClass]="'state-' + item.state">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value }}</strong>
+            <small class="dashboard-metric-hint"
+              >{{ item.detailValue }} {{ item.detailLabel | transloco }}</small
+            >
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="dashboard-sections">
+      <mns-dashboard-record-list
+        [title]="'Webhost Provider Readiness'"
+        [items]="providerRows()"
+        [emptyLabel]="'No webhost providers found.'"
+      />
+      <mns-dashboard-record-list
+        [title]="'Webhost Hosts'"
+        [items]="hostRows()"
+        [emptyLabel]="'No webhost hosts found. Create a host from an active plan and DNS domain.'"
+      />
+    </div>
+
+    <mns-dashboard-record-list
+      [title]="'Provider Types'"
+      [items]="typeRows()"
+      [emptyLabel]="'No webhost provider types found.'"
+    />
+  </div>
+</mns-dashboard-page>
