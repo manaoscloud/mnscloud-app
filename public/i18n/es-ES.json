@@ -4409,5 +4409,7 @@
   "Failed to load webhost hosts.": "Error al cargar hosts Webhost.",
   "Failed to load webhost plans.": "Error al cargar planes Webhost.",
   "Failed to load webhost providers.": "Error al cargar proveedores Webhost.",
-  "Failed to load hosting domains.": "Error al cargar dominios de hosting."
+  "Failed to load hosting domains.": "Error al cargar dominios de hosting.",
+  "Select a register linked to the selected customer.": "Seleccione un registro vinculado al cliente seleccionado.",
+  "Failed to load domain registers.": "Error al cargar registros de dominio."
 }

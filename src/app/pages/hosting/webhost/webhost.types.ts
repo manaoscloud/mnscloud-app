@@ -76,8 +76,9 @@ export type HostingWebhostHost = {
   HostingWebhostProviderHwpUUID: string;
   ProviderName: string;
   HwlProvider: WebhostProviderType;
-  HostingDnsDomainHddUUID: string;
+  HostingDnsRegisterHrgUUID: string;
   DomainName: string;
+  RegisterName?: string | null;
   HwhUsername: string;
   HwhExternalId?: string | null;
   HwhProviderStatus?: string | null;
@@ -89,13 +90,12 @@ export type HostingWebhostHost = {
   HwhIsActive: number;
 };
 
-export type HostingDnsDomainOption = {
-  HddUUID: string;
-  HddName: string;
+export type HostingDnsRegisterOption = {
+  HrgUUID: string;
+  HrgName: string;
   CustomerCusUUID?: string | null;
   CustomerName?: string | null;
-  HddProvider?: string | null;
-  HddStatus?: number | null;
+  HrgStatus?: number | null;
 };
 
 export type WebhostEmailStatus = 'pending' | 'active' | 'suspended' | 'error' | 'cancelled';
@@ -116,7 +116,7 @@ export type HostingWebhostEmailAccount = {
   HostingWebhostHostHwhUUID: string;
   HostName: string;
   HostUsername: string;
-  HostingDnsDomainHddUUID: string;
+  HostingDnsRegisterHrgUUID: string;
   DomainName: string;
   HweEmail: string;
   HostingWebhostPlanHwlUUID: string;

@@ -4410,5 +4410,7 @@
   "Failed to load webhost hosts.": "Falha ao carregar hosts Webhost.",
   "Failed to load webhost plans.": "Falha ao carregar planos Webhost.",
   "Failed to load webhost providers.": "Falha ao carregar provedores Webhost.",
-  "Failed to load hosting domains.": "Falha ao carregar domínios de hosting."
+  "Failed to load hosting domains.": "Falha ao carregar domínios de hosting.",
+  "Select a register linked to the selected customer.": "Selecione um registro vinculado ao cliente selecionado.",
+  "Failed to load domain registers.": "Falha ao carregar registros de domínio."
 }

@@ -4409,5 +4409,7 @@
   "Failed to load webhost hosts.": "Failed to load webhost hosts.",
   "Failed to load webhost plans.": "Failed to load webhost plans.",
   "Failed to load webhost providers.": "Failed to load webhost providers.",
-  "Failed to load hosting domains.": "Failed to load hosting domains."
+  "Failed to load hosting domains.": "Failed to load hosting domains.",
+  "Select a register linked to the selected customer.": "Select a register linked to the selected customer.",
+  "Failed to load domain registers.": "Failed to load domain registers."
 }
