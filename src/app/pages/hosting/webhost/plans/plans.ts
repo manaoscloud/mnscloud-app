@@ -7,9 +7,17 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type { HostingWebhostProvider } from '../webhost.types';
 import { asRecord, normalizeString, numberOrNull, truthyNumber } from '../webhost-shared';
+
+const COPY_PLAN_ACTION: ConfigurableCrudRowAction = {
+  key: 'copy',
+  label: 'Copy',
+  icon: 'content_copy',
+  tooltip: 'Copy plan',
+};
 
 const PLAN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/hosting/webhost/plans',
@@ -33,6 +41,7 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
   inactiveValue: 0,
   bulkDelete: true,
   statusFilter: true,
+  rowActions: [COPY_PLAN_ACTION],
   tabLabels: {
     storage: 'Resources',
     financial: 'Pricing',
@@ -272,6 +281,19 @@ export class HostingWebhostPlansPage extends ConfigurableCrudPageBase<Configurab
       setupFee: Number(row['HwlSetupFee'] ?? 0),
       notes: String(config['notes'] ?? ''),
     };
+  }
+
+  override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord): void {
+    if (action.key !== 'copy') return;
+    this.startCopy(row);
+  }
+
+  private startCopy(row: ConfigurableCrudRecord): void {
+    if (!this.canCreate()) return;
+    const values = this.formValuesFromRecord(row);
+    const sourceName = String(values['name'] ?? row['HwlName'] ?? '').trim();
+    values['name'] = sourceName ? `${sourceName} COPY` : 'COPY';
+    this.startCreateWithValues(values);
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
