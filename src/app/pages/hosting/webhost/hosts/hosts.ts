@@ -11,7 +11,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type {
-  HostingDnsDomainOption,
+  HostingDnsRegisterOption,
   HostingWebhostPlan,
 } from '../webhost.types';
 import {
@@ -67,11 +67,11 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/webhost/hosts',
   uuidField: 'HwhUUID',
   pageTitle: 'Webhost Hosts',
-  pageDescription: 'Provision and manage Webhost accounts linked to plans and DNS domains.',
+  pageDescription: 'Provision and manage Webhost accounts linked to plans and domain registers.',
   createTitle: 'New webhost host',
   editTitle: 'Edit webhost host',
   dialogDescription: 'Configure host identity, customer, plan and domain. Provision starts automatically.',
-  searchPlaceholder: 'Name, domain, username or customer',
+  searchPlaceholder: 'Name, register, username or customer',
   emptyLabel: 'No webhost hosts found.',
   deleteTitle: 'Delete webhost host',
   deleteMessage:
@@ -108,11 +108,11 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
     {
-      key: 'hostingDnsDomainUUID',
-      label: 'Domain',
-      paramKey: 'hostingDnsDomainUUID',
+      key: 'hostingDnsRegisterUUID',
+      label: 'Register',
+      paramKey: 'hostingDnsRegisterUUID',
       type: 'search-select',
-      placeholder: 'Search domains',
+      placeholder: 'Search registers',
       emptyLabel: 'No records found.',
     },
     {
@@ -136,8 +136,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     name: '',
     customerUUID: '',
     planUUID: '',
-    hostingDnsDomainUUID: '',
-    username: '',
+    hostingDnsRegisterUUID: '',
     notes: '',
     status: 1,
   },
@@ -150,7 +149,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       field: 'CustomerName',
       uuidField: 'CustomerCusUUID',
     },
-    { id: 'domain', label: 'Domain', field: 'DomainName' },
+    { id: 'domain', label: 'Domain', field: 'DomainLabel' },
     {
       id: 'plan',
       label: 'Plan',
@@ -209,23 +208,15 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'hostingDnsDomainUUID',
-      source: 'HostingDnsDomainHddUUID',
-      payloadKey: 'hostingDnsDomainUUID',
-      label: 'Domain',
+      key: 'hostingDnsRegisterUUID',
+      source: 'HostingDnsRegisterHrgUUID',
+      payloadKey: 'hostingDnsRegisterUUID',
+      label: 'Register',
       type: 'search-select',
       required: true,
       span: 1,
     },
     { key: 'name', source: 'HwhName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'username',
-      source: 'HwhUsername',
-      payloadKey: 'username',
-      label: 'Username',
-      required: true,
-      span: 1,
-    },
     {
       key: 'notes',
       payloadKey: 'notes',
@@ -249,7 +240,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
   private readonly route = inject(ActivatedRoute);
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly plans = signal<HostingWebhostPlan[]>([]);
-  private readonly domains = signal<HostingDnsDomainOption[]>([]);
+  private readonly registers = signal<HostingDnsRegisterOption[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
@@ -273,24 +264,24 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
         searchText: `${plan.HwlName} ${plan.ProviderName}`,
       })),
   );
-  private readonly domainOptions = computed<ConfigurableCrudOption[]>(() => {
+  private readonly registerOptions = computed<ConfigurableCrudOption[]>(() => {
     const customerUUID = String(
       this.formValues()['customerUUID'] || this.listFilterValues()['customerUUID'] || '',
     );
-    return this.domains()
-      .filter((domain) => domain.HddStatus === undefined || domain.HddStatus === 1)
-      .filter((domain) => !customerUUID || domain.CustomerCusUUID === customerUUID)
-      .map((domain) => ({
-        value: domain.HddUUID,
-        label: domain.HddName,
-        description: domain.CustomerName ?? undefined,
-        searchText: `${domain.HddName} ${domain.CustomerName ?? ''}`,
+    return this.registers()
+      .filter((register) => register.HrgStatus === undefined || register.HrgStatus === 1)
+      .filter((register) => !customerUUID || register.CustomerCusUUID === customerUUID)
+      .map((register) => ({
+        value: register.HrgUUID,
+        label: register.HrgName,
+        description: register.CustomerName ?? undefined,
+        searchText: `${register.HrgName} ${register.CustomerName ?? ''}`,
       }));
   });
 
   constructor() {
     super(HOST_CONFIG);
-    void Promise.all([this.fetchCustomers(), this.fetchPlans(), this.fetchDomains()]);
+    void Promise.all([this.fetchCustomers(), this.fetchPlans(), this.fetchRegisters()]);
   }
 
   protected override listEndpoint(): string {
@@ -316,7 +307,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'planUUID') return this.planOptions();
-    if (key === 'hostingDnsDomainUUID') return this.domainOptions();
+    if (key === 'hostingDnsRegisterUUID') return this.registerOptions();
     if (key === 'hostStatus') return WEBHOST_HOST_STATUS_OPTIONS;
     if (key === 'provisionStatus') return WEBHOST_PROVISION_STATUS_OPTIONS;
     return [];
@@ -326,7 +317,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     await Promise.all([
       this.customers().length ? Promise.resolve() : this.fetchCustomers(),
       this.plans().length ? Promise.resolve() : this.fetchPlans(),
-      this.domains().length ? Promise.resolve() : this.fetchDomains(),
+      this.registers().length ? Promise.resolve() : this.fetchRegisters(),
     ]);
     const params = new URLSearchParams();
     appendWebhostListParams(params, filters, this.listFilters());
@@ -336,25 +327,29 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     return (response?.data?.items ?? []).map((item) => {
       const config = asRecord(item['HwhConfig']);
       const ip = normalizeString(config['ip'] ?? config['ipAddress'] ?? '');
+      const registerName = normalizeString(item['RegisterName']);
+      const domainName = normalizeString(item['DomainName']);
       return {
         ...item,
         HwhConfig: config,
         HostIpLabel: ip || '—',
         CustomerEmail: normalizeString(item['CustomerEmail']) || '—',
+        DomainLabel: registerName || domainName || '—',
       };
     });
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key !== 'customerUUID') return;
-    const domainUUID = String(this.formValues()['hostingDnsDomainUUID'] ?? '');
-    const domain = this.domains().find((item) => item.HddUUID === domainUUID);
-    if (domain && domain.CustomerCusUUID !== String(value ?? '')) {
-      this.patchFormValues({ hostingDnsDomainUUID: '' });
+    const registerUUID = String(this.formValues()['hostingDnsRegisterUUID'] ?? '');
+    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
+    if (register && register.CustomerCusUUID !== String(value ?? '')) {
+      this.patchFormValues({ hostingDnsRegisterUUID: '' });
     }
   }
 
   protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    this.ensureRegisterOption(row);
     const config = asRecord(row['HwhConfig']);
     return {
       ...super.formValuesFromRecord(row),
@@ -365,11 +360,11 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
-    const domainUUID = String(payload['hostingDnsDomainUUID'] ?? '');
+    const registerUUID = String(payload['hostingDnsRegisterUUID'] ?? '');
     const customerUUID = String(payload['customerUUID'] ?? '');
-    const domain = this.domains().find((item) => item.HddUUID === domainUUID);
-    if (!domain || domain.CustomerCusUUID !== customerUUID) {
-      this.snack.warning(this.t('Select a domain linked to the selected customer.'));
+    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
+    if (!register || register.CustomerCusUUID !== customerUUID) {
+      this.snack.warning(this.t('Select a register linked to the selected customer.'));
       return false;
     }
     return true;
@@ -380,8 +375,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       name: payload['name'],
       customerUUID: payload['customerUUID'],
       planUUID: payload['planUUID'],
-      hostingDnsDomainUUID: payload['hostingDnsDomainUUID'],
-      username: String(payload['username'] ?? '').trim(),
+      hostingDnsRegisterUUID: payload['hostingDnsRegisterUUID'],
       config: {
         notes: normalizeString(payload['notes']),
       },
@@ -456,15 +450,34 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
-  private async fetchDomains(): Promise<void> {
+  private async fetchRegisters(): Promise<void> {
     try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsDomainOption[] } }>(
-        'hosting/dns/domains?limit=500&offset=0&status=1',
+      const response = await this.api.get<{ data?: { items?: HostingDnsRegisterOption[] } }>(
+        'hosting/dns/registers?availableFor=host&status=1&limit=500&offset=0',
       );
-      this.domains.set(response?.data?.items ?? []);
+      this.registers.set(response?.data?.items ?? []);
     } catch (error) {
-      this.domains.set([]);
-      this.snack.error(this.errorMessage(error) || this.t('Failed to load hosting domains.'));
+      this.registers.set([]);
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load domain registers.'));
     }
+  }
+
+  private ensureRegisterOption(row: ConfigurableCrudRecord) {
+    const registerUUID = String(row['HostingDnsRegisterHrgUUID'] ?? '');
+    if (!registerUUID) return;
+    if (this.registers().some((item) => item.HrgUUID === registerUUID)) return;
+    const name =
+      normalizeString(row['RegisterName']) || normalizeString(row['DomainName']);
+    if (!name) return;
+    this.registers.update((current) => [
+      ...current,
+      {
+        HrgUUID: registerUUID,
+        HrgName: name,
+        CustomerCusUUID: row['CustomerCusUUID'] as string | null | undefined,
+        CustomerName: row['CustomerName'] as string | null | undefined,
+        HrgStatus: 1,
+      },
+    ]);
   }
 }

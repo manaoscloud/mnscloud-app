@@ -27,6 +27,14 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+type HostingDnsRegisterOption = {
+  HrgUUID: string;
+  HrgName: string;
+  CustomerCusUUID?: string | null;
+  CustomerName?: string | null;
+  HrgStatus?: number | null;
+};
+
 const IN_FLIGHT_OPERATION_STATES = new Set([
   'queued',
   'running',
@@ -58,11 +66,11 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/dns/domains',
   uuidField: 'HddUUID',
   pageTitle: 'Domains',
-  pageDescription: 'Register domains and registrar metadata.',
+  pageDescription: 'Manage DNS zones, provider linkage, and provisioning sync.',
   createTitle: 'New domain',
   editTitle: 'Edit domain',
-  dialogDescription: 'Store domain ownership, provider metadata and DNS defaults.',
-  searchPlaceholder: 'Search by domain',
+  dialogDescription: 'Link a registered domain to a DNS provider and zone defaults.',
+  searchPlaceholder: 'Search by domain or register',
   emptyLabel: 'No domains found.',
   deleteTitle: 'Delete domain',
   deleteMessage:
@@ -99,7 +107,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   ],
   tabLabels: { storage: 'DNS settings', notes: 'Notes' },
   initialValues: {
-    name: '',
+    registerUUID: '',
     customerUUID: '',
     providerUUID: '',
     status: 1,
@@ -108,7 +116,13 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'name', label: 'Domain', kind: 'identity', field: 'HddName', uuidField: 'HddUUID' },
+    {
+      id: 'name',
+      label: 'Domain',
+      kind: 'identity',
+      field: 'DomainIdentityLabel',
+      uuidField: 'HddUUID',
+    },
     {
       id: 'customer',
       label: 'Customer',
@@ -161,11 +175,11 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'name',
-      source: 'HddName',
-      payloadKey: 'name',
-      label: 'Domain',
-      placeholder: 'example.com',
+      key: 'registerUUID',
+      source: 'HostingDnsRegisterHrgUUID',
+      payloadKey: 'registerUUID',
+      label: 'Register',
+      type: 'search-select',
       required: true,
       span: 1,
     },
@@ -213,6 +227,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   private readonly router = inject(Router);
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<DomainProviderOption[]>([]);
+  private readonly registers = signal<HostingDnsRegisterOption[]>([]);
   private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
@@ -236,9 +251,23 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       searchText: `${provider.HdpName} ${provider.HdpProvider}`,
     })),
   );
+  private readonly registerOptions = computed<ConfigurableCrudOption[]>(() => {
+    const customerUUID = String(
+      this.formValues()['customerUUID'] || this.listFilterValues()['customerUUID'] || '',
+    );
+    return this.registers()
+      .filter((register) => register.HrgStatus === undefined || register.HrgStatus === 1)
+      .filter((register) => !customerUUID || register.CustomerCusUUID === customerUUID)
+      .map((register) => ({
+        value: register.HrgUUID,
+        label: register.HrgName,
+        description: register.CustomerName ?? undefined,
+        searchText: `${register.HrgName} ${register.CustomerName ?? ''}`,
+      }));
+  });
   constructor() {
     super(HOSTING_DNS_DOMAIN_CONFIG);
-    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders()]);
+    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders(), this.fetchRegisters()]);
   }
 
   private domainsPath(): string {
@@ -249,6 +278,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     await Promise.all([
       this.customers().length ? Promise.resolve() : this.fetchCustomers(),
       this.providers().length ? Promise.resolve() : this.fetchDomainProviders(),
+      this.registers().length ? Promise.resolve() : this.fetchRegisters(),
     ]);
     const rows = await super.fetchItems(filters);
     const environment = readStoredEnvironmentUUID();
@@ -256,6 +286,10 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       const enriched = {
         ...row,
         DomainSyncStatus: domainSyncStatus(row),
+        DomainIdentityLabel:
+          String(row['RegisterName'] ?? '').trim() ||
+          String(row['HddName'] ?? '').trim() ||
+          '—',
       };
       const operationUUID = String(row['MessagingOperationMopUUID'] ?? '');
       const mopState = String(row['MopState'] ?? '');
@@ -282,12 +316,39 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'providerUUID') return this.providerOptions();
+    if (key === 'registerUUID') return this.registerOptions();
     return [];
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'customerUUID') return;
+    const registerUUID = String(this.formValues()['registerUUID'] ?? '');
+    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
+    if (register && register.CustomerCusUUID !== String(value ?? '')) {
+      this.patchFormValues({ registerUUID: '' });
+    }
+  }
+
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    this.ensureRegisterOption(row);
+    return super.formValuesFromRecord(row);
+  }
+
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const registerUUID = String(payload['registerUUID'] ?? '');
+    const customerUUID = String(payload['customerUUID'] ?? '');
+    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
+    if (!register || register.CustomerCusUUID !== customerUUID) {
+      this.snack.warning('Select a register linked to the selected customer.');
+      return false;
+    }
+    return true;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
-      name: payload['name'],
+      registerUUID: payload['registerUUID'],
       customerUUID: payload['customerUUID'],
       providerUUID: payload['providerUUID'],
       zoneIP: payload['zoneIP'],
@@ -344,6 +405,36 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to load customers.');
     }
+  }
+
+  private async fetchRegisters() {
+    try {
+      const response = await this.api.get<{ data?: { items?: HostingDnsRegisterOption[] } }>(
+        'hosting/dns/registers?availableFor=domain&status=1&limit=500&offset=0',
+      );
+      this.registers.set(response?.data?.items ?? []);
+    } catch (error) {
+      this.registers.set([]);
+      this.snack.error(this.errorMessage(error) || 'Failed to load domain registers.');
+    }
+  }
+
+  private ensureRegisterOption(row: ConfigurableCrudRecord) {
+    const registerUUID = String(row['HostingDnsRegisterHrgUUID'] ?? '');
+    if (!registerUUID) return;
+    if (this.registers().some((item) => item.HrgUUID === registerUUID)) return;
+    const name = String(row['RegisterName'] ?? row['HddName'] ?? '').trim();
+    if (!name) return;
+    this.registers.update((current) => [
+      ...current,
+      {
+        HrgUUID: registerUUID,
+        HrgName: name,
+        CustomerCusUUID: row['CustomerCusUUID'] as string | null | undefined,
+        CustomerName: row['CustomerName'] as string | null | undefined,
+        HrgStatus: 1,
+      },
+    ]);
   }
 
   private async provisionDomain(domain: ConfigurableCrudRecord) {

@@ -1831,6 +1831,14 @@ export class MainLayout {
               masterRoute: '/system/hosting/dns/domains',
               scope: 'both',
             },
+            {
+              id: 'hosting/dns/registers',
+              label: 'Registers',
+              icon: 'app_registration',
+              route: '/hosting/dns/registers',
+              masterRoute: '/system/hosting/dns/registers',
+              scope: 'both',
+            },
           ],
         },
         {
