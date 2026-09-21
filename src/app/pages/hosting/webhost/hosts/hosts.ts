@@ -15,8 +15,7 @@ import type {
   HostingWebhostPlan,
 } from '../webhost.types';
 import {
-  WEBHOST_HOST_STATUS_OPTIONS,
-  WEBHOST_PROVISION_STATUS_OPTIONS,
+  YES_NO_OPTIONS,
   appendWebhostListParams,
   asRecord,
   lifecycleChipClass,
@@ -56,18 +55,17 @@ const UNSUSPEND_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Unsuspend',
 };
 
-const DEPROVISION_ACTION: ConfigurableCrudRowAction = {
-  key: 'deprovision',
-  label: 'Deprovision',
-  icon: 'cloud_off',
-  tooltip: 'Deprovision',
-};
+/** Filter: provisioned yes/no only (create already queues provision). */
+const PROVISIONED_FILTER_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'provisioned', label: 'Yes' },
+  { value: 'not_provisioned', label: 'No' },
+];
 
 const HOST_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/webhost/hosts',
   uuidField: 'HwhUUID',
   pageTitle: 'Webhost Hosts',
-  pageDescription: 'Provision and manage Webhost accounts linked to plans and domain registers.',
+  pageDescription: 'Manage Webhost accounts linked to plans and domain registers. Create starts provisioning automatically.',
   createTitle: 'New webhost host',
   editTitle: 'Edit webhost host',
   dialogDescription: 'Configure host identity, customer, plan and domain. Provision starts automatically.',
@@ -75,9 +73,10 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   emptyLabel: 'No webhost hosts found.',
   deleteTitle: 'Delete webhost host',
   deleteMessage:
-    'Delete this webhost host from MNSCloud? Provisioned hosts must be deprovisioned first.',
+    'Delete this webhost host? If it is provisioned on the provider, it will be removed automatically.',
   deleteSelectedTitle: 'Delete selected webhost hosts',
-  deleteSelectedMessage: 'Delete {count} selected webhost hosts?',
+  deleteSelectedMessage:
+    'Delete {count} selected webhost hosts? Provisioned accounts will be removed from the provider automatically.',
   savedMessage: 'Webhost host saved successfully.',
   deletedMessage: 'Webhost host deleted successfully.',
   deleteFailedMessage: 'Failed to delete webhost host.',
@@ -89,7 +88,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   tabLabels: {
     notes: 'Notes',
   },
-  rowActions: [PROVISION_ACTION, DEPROVISION_ACTION, SYNC_ACTION, SUSPEND_ACTION, UNSUSPEND_ACTION],
+  rowActions: [PROVISION_ACTION, SYNC_ACTION, SUSPEND_ACTION, UNSUSPEND_ACTION],
   listFilters: [
     {
       key: 'customerUUID',
@@ -116,16 +115,8 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
     {
-      key: 'hostStatus',
-      label: 'Lifecycle',
-      paramKey: 'status',
-      type: 'search-select',
-      placeholder: 'Search',
-      emptyLabel: 'No records found.',
-    },
-    {
       key: 'provisionStatus',
-      label: 'Provision',
+      label: 'Provisioned',
       paramKey: 'provisionStatus',
       type: 'search-select',
       placeholder: 'Search',
@@ -158,23 +149,14 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingWebhostPlanHwlUUID',
     },
     { id: 'provider', label: 'Provider', field: 'ProviderName' },
-    { id: 'user', label: 'Username', field: 'HwhUsername' },
+    { id: 'user', label: 'Username', field: 'HwhUsername', copyable: true },
     { id: 'ip', label: 'IP', field: 'HostIpLabel' },
     {
-      id: 'lifecycle',
-      label: 'Lifecycle',
-      kind: 'status',
-      field: 'HwhStatus',
-      options: WEBHOST_HOST_STATUS_OPTIONS,
-      className: 'status-col',
-      chipClass: lifecycleChipClass,
-    },
-    {
       id: 'provision',
-      label: 'Provision',
+      label: 'Provisioned',
       kind: 'status',
-      field: 'HwhProvisionStatus',
-      options: WEBHOST_PROVISION_STATUS_OPTIONS,
+      field: 'ProvisionedLabel',
+      options: YES_NO_OPTIONS,
       className: 'status-col',
       chipClass: lifecycleChipClass,
     },
@@ -308,8 +290,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'planUUID') return this.planOptions();
     if (key === 'hostingDnsRegisterUUID') return this.registerOptions();
-    if (key === 'hostStatus') return WEBHOST_HOST_STATUS_OPTIONS;
-    if (key === 'provisionStatus') return WEBHOST_PROVISION_STATUS_OPTIONS;
+    if (key === 'provisionStatus') return PROVISIONED_FILTER_OPTIONS;
     return [];
   }
 
@@ -320,23 +301,39 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       this.registers().length ? Promise.resolve() : this.fetchRegisters(),
     ]);
     const params = new URLSearchParams();
-    appendWebhostListParams(params, filters, this.listFilters());
+    const nextFilters: ConfigurableCrudFilters = {
+      ...filters,
+      extra: { ...filters.extra },
+    };
+    const provisionFilter = String(nextFilters.extra['provisionStatus'] ?? '');
+    if (provisionFilter === 'not_provisioned') {
+      delete nextFilters.extra['provisionStatus'];
+    }
+    appendWebhostListParams(params, nextFilters, this.listFilters());
     const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
       `${this.listEndpoint()}?${params.toString()}`,
     );
-    return (response?.data?.items ?? []).map((item) => {
+    let items = (response?.data?.items ?? []).map((item) => {
       const config = asRecord(item['HwhConfig']);
       const ip = normalizeString(config['ip'] ?? config['ipAddress'] ?? '');
       const registerName = normalizeString(item['RegisterName']);
       const domainName = normalizeString(item['DomainName']);
+      const provisionStatus = String(item['HwhProvisionStatus'] ?? '');
+      const provisioned = provisionStatus === 'provisioned' ? 1 : 0;
       return {
         ...item,
         HwhConfig: config,
         HostIpLabel: ip || '—',
         CustomerEmail: normalizeString(item['CustomerEmail']) || '—',
         DomainLabel: registerName || domainName || '—',
+        ProvisionedLabel: provisioned,
+        HwhProvisionStatusDisplay: provisionStatus,
       };
     });
+    if (provisionFilter === 'not_provisioned') {
+      items = items.filter((item) => Number(item['ProvisionedLabel']) !== 1);
+    }
+    return items;
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
@@ -393,9 +390,6 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     if (!provisioned && !pendingOrProvisioning) {
       actions.push(PROVISION_ACTION);
     }
-    if (provisioned || pendingOrProvisioning) {
-      actions.push(DEPROVISION_ACTION);
-    }
     if (provisioned) {
       actions.push(SYNC_ACTION);
       actions.push(suspended ? UNSUSPEND_ACTION : SUSPEND_ACTION);
@@ -406,7 +400,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     const uuid = String(row['HwhUUID'] ?? '');
     if (!uuid) return;
-    if (!['provision', 'deprovision', 'sync', 'suspend', 'unsuspend'].includes(action.key)) {
+    if (!['provision', 'sync', 'suspend', 'unsuspend'].includes(action.key)) {
       return;
     }
     this.mutating.set(true);
