@@ -15,6 +15,7 @@ import type {
   HostingWebhostPlan,
 } from '../webhost.types';
 import {
+  WEBHOST_HOST_STATUS_OPTIONS,
   YES_NO_OPTIONS,
   appendWebhostListParams,
   asRecord,
@@ -132,6 +133,15 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     status: 1,
   },
   columns: [
+    {
+      id: 'situation',
+      label: 'Situation',
+      kind: 'status',
+      field: 'HwhStatus',
+      options: WEBHOST_HOST_STATUS_OPTIONS,
+      className: 'status-col',
+      chipClass: lifecycleChipClass,
+    },
     { id: 'name', label: 'Name', kind: 'identity', field: 'HwhName', uuidField: 'HwhUUID' },
     {
       id: 'customer',

@@ -9,7 +9,11 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { webhostRootEndpoint } from '../webhost-shared';
+import {
+  webhostRootEndpoint,
+  WEBHOST_TOOL_STATUS_OPTIONS,
+  lifecycleChipClass,
+} from '../webhost-shared';
 
 type Kind = 'databases' | 'database-users' | 'database-grants';
 const retry: ConfigurableCrudRowAction = {
@@ -81,6 +85,15 @@ function configuration(kind: Kind): ConfigurableCrudConfig {
       },
     ],
     columns: [
+      {
+        id: 'situation',
+        label: 'Situation',
+        kind: 'status',
+        field: 'status',
+        options: WEBHOST_TOOL_STATUS_OPTIONS,
+        className: 'status-col',
+        chipClass: lifecycleChipClass,
+      },
       {
         id: 'name',
         label: grant ? 'Database' : user ? 'Username' : 'Database',

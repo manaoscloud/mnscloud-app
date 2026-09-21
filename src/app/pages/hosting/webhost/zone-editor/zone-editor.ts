@@ -12,6 +12,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type { HostingWebhostHost } from '../webhost.types';
 import {
+  WEBHOST_ZONE_STATUS_OPTIONS,
   WEBHOST_ZONE_TYPE_OPTIONS,
   hostOptionLabel,
   lifecycleChipClass,
@@ -68,6 +69,15 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
     priority: null, weight: null, port: null, notes: '',
   },
   columns: [
+    {
+      id: 'situation',
+      label: 'Situation',
+      kind: 'status',
+      field: 'HwzStatus',
+      options: WEBHOST_ZONE_STATUS_OPTIONS,
+      className: 'status-col',
+      chipClass: lifecycleChipClass,
+    },
     { id: 'result', label: 'Status', kind: 'status', field: 'HwzProvisionStatus', options: RESULT_OPTIONS, chipClass: lifecycleChipClass },
     { id: 'name', label: 'Name', kind: 'identity', field: 'HwzName', uuidField: 'HwzUUID' },
     { id: 'type', label: 'Type', field: 'HwzType' },
