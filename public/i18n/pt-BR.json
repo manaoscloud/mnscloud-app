@@ -139,6 +139,8 @@
   "Attendance": "Atendimento",
   "attention": "atenção",
   "actionable": "acionável",
+  "Failed to load user details.": "Falha ao carregar detalhes do usuário.",
+  "No active legal hold found for this user.": "Nenhuma retenção legal ativa encontrada para este usuário.",
   "update actions": "ações de update",
   "Attention points": "Pontos de atenção",
   "Auditable policy decisions from trusted nodes.": "Decisões de política auditáveis de nós confiáveis.",

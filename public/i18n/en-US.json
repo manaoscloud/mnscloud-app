@@ -139,6 +139,8 @@
   "Attendance": "Attendance",
   "attention": "attention",
   "actionable": "actionable",
+  "Failed to load user details.": "Failed to load user details.",
+  "No active legal hold found for this user.": "No active legal hold found for this user.",
   "update actions": "update actions",
   "Attention points": "Attention points",
   "Auditable policy decisions from trusted nodes.": "Auditable policy decisions from trusted nodes.",

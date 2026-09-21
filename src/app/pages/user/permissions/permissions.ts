@@ -7,7 +7,9 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
   ConfigurableCrudPageBase,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { AuthService } from '../../../services/auth.service';
 import { TenantAccess, TenantService } from '../../../services/tenant.service';
 
@@ -50,7 +52,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   bulkDelete: false,
   tabLabels: {
-    authentication: 'Access rule',
+    record: 'Record',
     notes: 'Notes',
   },
   initialValues: {
@@ -79,7 +81,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 4,
-      tab: 'authentication',
+      tab: 'record',
       placeholder: 'Search user',
     },
     {
@@ -90,7 +92,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 4,
-      tab: 'authentication',
+      tab: 'record',
       placeholder: 'Search permission',
     },
     {
@@ -102,7 +104,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       options: EFFECT_OPTIONS,
       required: true,
       span: 2,
-      tab: 'authentication',
+      tab: 'record',
     },
     {
       key: 'environmentUUID',
@@ -111,7 +113,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'Tenant',
       type: 'search-select',
       span: 2,
-      tab: 'authentication',
+      tab: 'record',
       placeholder: 'Search tenant',
       hiddenWhen: ({ values }) => String(values['permissionCode'] ?? '').startsWith('platform.'),
     },
@@ -122,7 +124,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'Expiration',
       type: 'date',
       span: 1,
-      tab: 'authentication',
+      tab: 'record',
     },
     {
       key: 'reason',
@@ -134,6 +136,14 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       span: 4,
       tab: 'notes',
+    },
+  ],
+  rowActions: [
+    {
+      key: 'view-details',
+      label: 'View details',
+      icon: 'visibility',
+      tooltip: 'View details',
     },
   ],
 };
@@ -163,6 +173,33 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
     void this.loadCatalog();
     void this.loadTenants();
     void this.loadUsers();
+  }
+
+  override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return this.config.rowActions ?? [];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'view-details') return;
+    openDataViewerDialog(this.dialog, {
+      title: String(row['permissionCode'] || 'Special permission'),
+      description: 'Permission grants are immutable. Revoke and create a new grant to change them.',
+      status: {
+        label: 'Status',
+        value: Number(row['status'] ?? 0) === 1 ? 'Active' : 'Inactive',
+        tone: Number(row['status'] ?? 0) === 1 ? 'success' : 'neutral',
+      },
+      details: [
+        { label: 'User', value: row['userName'], wide: true },
+        { label: 'User UUID', value: row['userUUID'], monospace: true, wide: true },
+        { label: 'Permission', value: row['permissionCode'], monospace: true, wide: true },
+        { label: 'Scope', value: row['scope'], translate: true },
+        { label: 'Effect', value: row['effect'], translate: true },
+        { label: 'Tenant', value: row['environmentName'] || '-' },
+        { label: 'Expires', value: row['expiresAt'], kind: 'datetime' },
+        { label: 'Reason', value: row['reason'] || '-', wide: true },
+      ],
+    });
   }
 
   protected override listEndpoint(): string {
