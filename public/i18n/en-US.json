@@ -4466,5 +4466,7 @@
   "Select all": "Select all",
   "Database Grants": "Database grants",
   "Database Users": "Database users",
-  "Delete selected database resources?": "Delete selected database resources?"
+  "Delete selected database resources?": "Delete selected database resources?",
+  "New webhost database": "New webhost database",
+  "Edit webhost database": "Edit webhost database"
 }

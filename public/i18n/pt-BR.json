@@ -4467,5 +4467,7 @@
   "Select all": "Selecionar todos",
   "Database Grants": "Vínculos e privilégios",
   "Database Users": "Usuários de banco",
-  "Delete selected database resources?": "Excluir os recursos de banco selecionados?"
+  "Delete selected database resources?": "Excluir os recursos de banco selecionados?",
+  "New webhost database": "Novo banco de dados",
+  "Edit webhost database": "Editar banco de dados"
 }
