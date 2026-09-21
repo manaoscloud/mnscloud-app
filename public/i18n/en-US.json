@@ -4432,5 +4432,10 @@
   "Domain register deleted successfully.": "Domain register deleted successfully.",
   "Failed to delete domain register.": "Failed to delete domain register.",
   "Name, register, username or customer": "Name, register, username or customer",
-  "Provision and manage Webhost accounts linked to plans and domain registers.": "Provision and manage Webhost accounts linked to plans and domain registers."
+  "Provision and manage Webhost accounts linked to plans and domain registers.": "Provision and manage Webhost accounts linked to plans and domain registers.",
+  "MNSCloud Pay": "MNSCloud Pay",
+  "MNSCloud Pay — Platform rails": "MNSCloud Pay — Platform rails",
+  "Activate MNSCloud Pay to bill your customers. Bank partner: Inter Empresas.": "Activate MNSCloud Pay to bill your customers. Bank partner: Inter Empresas.",
+  "Search MNSCloud Pay accounts": "Search MNSCloud Pay accounts",
+  "Inter Empresas (MNSCloud Pay)": "Inter Empresas (MNSCloud Pay)"
 }
