@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +21,7 @@ import { AppI18nService } from '../../../../services/app-i18n.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { UserGovernanceDetailComponent } from './components/user-governance-detail/user-governance-detail';
 import { UserGovernanceTableComponent } from './components/user-governance-table/user-governance-table';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { PageShellComponent } from '../../../../shared/pages/page-shell';
 import {
   AccountAction,
   ApiListResponse,
@@ -49,10 +48,8 @@ type GovernanceActionFormModel = {
   selector: 'app-system-governance-users',
   standalone: true,
   imports: [
-    RefreshButtonComponent,
     FormField,
     MatButtonModule,
-    MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -61,6 +58,7 @@ type GovernanceActionFormModel = {
     TranslocoPipe,
     UserGovernanceDetailComponent,
     UserGovernanceTableComponent,
+    PageShellComponent,
   ],
   templateUrl: './users.html',
   styleUrls: ['./users.scss'],

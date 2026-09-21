@@ -1,218 +1,155 @@
-<section class="erp-page user-profile-page" animate.enter="app-fade-in">
-  <mat-card class="erp-card profile-card">
-    <header class="erp-header">
+<mns-settings-page
+  title="My Profile"
+  description="Manage your personal information and account."
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [valid]="profileForm().valid()"
+  [error]="apiError()"
+  (refresh)="refreshProfile()"
+  (save)="onSave()"
+  (cancel)="onReset()"
+>
+  @if (apiError() && !profile()) {
+    <section class="profile-state is-error">
+      <mat-icon>error_outline</mat-icon>
       <div>
-        <h1>{{ 'My Profile' | transloco }}</h1>
-        <p>{{ 'Manage your personal information and account.' | transloco }}</p>
+        <strong>{{ 'Unable to load profile' | transloco }}</strong>
+        <span>{{ apiError()! | transloco }}</span>
       </div>
+    </section>
+  }
 
-      <div class="header-actions">
-        <app-refresh-button
-          [loading]="loading() || saving() || savingAvatar()"
-          (refresh)="refreshProfile()"
-        />
-      </div>
-    </header>
+  <mat-tab-group class="form-tabs profile-tabs">
+    <mat-tab [label]="'Record' | transloco">
+      <div class="tab-content form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'First Name' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.firstName" autocomplete="given-name" />
+        </mat-form-field>
 
-    @if (loading()) {
-      <div class="profile-loading" aria-live="polite" aria-busy="true">
-        <mat-progress-spinner diameter="40" mode="indeterminate" />
-        <span>{{ 'Loading your profile...' | transloco }}</span>
-      </div>
-    } @else {
-      @if (apiError()) {
-        <section class="profile-state is-error">
-          <mat-icon>error_outline</mat-icon>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Last Name' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.lastName" autocomplete="family-name" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Email' | transloco }}</mat-label>
+          <input matInput [value]="formModel().email" readonly autocomplete="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Phone' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.phone" autocomplete="tel" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Date of Birth' | transloco }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            [formField]="profileForm.dateBirth"
+            appDateMask
+          />
+          <mat-datepicker-toggle matSuffix [for]="picker" />
+          <mat-datepicker #picker touchUi />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'New Password' | transloco }}</mat-label>
+          <input
+            matInput
+            type="password"
+            [formField]="profileForm.newPassword"
+            autocomplete="new-password"
+          />
+          <mat-hint>{{ 'Leave blank to keep current password.' | transloco }}</mat-hint>
+        </mat-form-field>
+
+        <section class="profile-summary span-4">
           <div>
-            <strong>{{ 'Unable to load profile' | transloco }}</strong>
-            <span>{{ apiError()! | transloco }}</span>
+            <span>{{ 'Status' | transloco }}</span>
+            <strong>{{ (profile()?.status === 1 ? 'Active' : 'Inactive') | transloco }}</strong>
+          </div>
+          <div>
+            <span>{{ 'Created at' | transloco }}</span>
+            <strong>{{ profile()?.dateCreated || '-' }}</strong>
           </div>
         </section>
-      }
+      </div>
+    </mat-tab>
 
-      <form
-        id="profileForm"
-        class="profile-form"
-        (submit)="onSave(); $event.preventDefault()"
-        autocomplete="off"
-        novalidate
-      >
-        <mat-tab-group class="form-tabs profile-tabs">
-          <mat-tab [label]="'Record' | transloco">
-            <div class="tab-content form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'First Name' | transloco }}</mat-label>
-                <input matInput [formField]="profileForm.firstName" autocomplete="given-name" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Last Name' | transloco }}</mat-label>
-                <input matInput [formField]="profileForm.lastName" autocomplete="family-name" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Email' | transloco }}</mat-label>
-                <input matInput [value]="formModel().email" readonly autocomplete="email" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Phone' | transloco }}</mat-label>
-                <input matInput [formField]="profileForm.phone" autocomplete="tel" />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'Date of Birth' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [matDatepicker]="picker"
-                  [formField]="profileForm.dateBirth"
-                  appDateMask
-                />
-                <mat-datepicker-toggle matSuffix [for]="picker" />
-                <mat-datepicker #picker touchUi />
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'New Password' | transloco }}</mat-label>
-                <input
-                  matInput
-                  type="password"
-                  [formField]="profileForm.newPassword"
-                  autocomplete="new-password"
-                />
-                <mat-hint>{{ 'Leave blank to keep current password.' | transloco }}</mat-hint>
-              </mat-form-field>
-
-              <section class="profile-summary span-4">
-                <div>
-                  <span>{{ 'Status' | transloco }}</span>
-                  <strong>{{
-                    (profile()?.status === 1 ? 'Active' : 'Inactive') | transloco
-                  }}</strong>
-                </div>
-                <div>
-                  <span>{{ 'Created at' | transloco }}</span>
-                  <strong>{{ profile()?.dateCreated || '-' }}</strong>
-                </div>
-              </section>
-            </div>
-          </mat-tab>
-
-          <mat-tab label="Avatar">
-            <div class="tab-content avatar-tab">
-              <section class="avatar-editor">
-                <div class="avatar-preview" [class.has-image]="effectiveAvatarDisplayUrl()">
-                  @if (effectiveAvatarDisplayUrl()) {
-                    <img [src]="effectiveAvatarDisplayUrl()!" alt="Profile avatar" />
-                  } @else {
-                    <span>{{ avatarLetter }}</span>
-                  }
-                </div>
-
-                <div class="avatar-content">
-                  <h2>{{ 'Profile picture' | transloco }}</h2>
-                  <p>{{ 'Supported formats: JPG, PNG, WEBP (max 5MB).' | transloco }}</p>
-
-                  <div class="avatar-actions">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      type="button"
-                      (click)="openAvatarFilePicker()"
-                      [disabled]="savingAvatar() || loading()"
-                    >
-                      <mat-icon>upload</mat-icon>
-                      {{ 'Upload' | transloco }}
-                    </button>
-
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      (click)="onCancelAvatarChange()"
-                      [disabled]="
-                        savingAvatar() || loading() || (!avatarPreviewUrl() && !currentAvatarUrl())
-                      "
-                    >
-                      <mat-icon>restart_alt</mat-icon>
-                      {{ 'Reset' | transloco }}
-                    </button>
-
-                    <button
-                      mat-flat-button
-                      color="primary"
-                      type="button"
-                      (click)="onSaveAvatar()"
-                      [disabled]="savingAvatarDisabled()"
-                    >
-                      @if (savingAvatar()) {
-                        <mat-progress-spinner diameter="20" mode="indeterminate" />
-                      } @else {
-                        <mat-icon>save</mat-icon>
-                      }
-                      @if (!savingAvatar()) {
-                        {{ 'Save Picture' | transloco }}
-                      } @else {
-                        {{ 'Saving...' | transloco }}
-                      }
-                    </button>
-                  </div>
-
-                  @if (avatarPreviewUrl()) {
-                    <span class="avatar-pending">{{
-                      'Picture selected. Save it to apply changes.' | transloco
-                    }}</span>
-                  }
-                </div>
-
-                <input
-                  #avatarInput
-                  type="file"
-                  class="avatar-file-input"
-                  accept="image/*"
-                  (change)="onAvatarFileSelected($event)"
-                />
-              </section>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
-      </form>
-
-      <mat-divider />
-
-      <footer class="profile-actions">
-        <div class="secondary-actions">
-          <button
-            mat-stroked-button
-            type="button"
-            (click)="onReset()"
-            [disabled]="saving() || savingAvatar() || loading()"
-          >
-            <mat-icon>restart_alt</mat-icon>
-            {{ 'Reset' | transloco }}
-          </button>
-        </div>
-
-        <div class="primary-actions">
-          <button
-            mat-flat-button
-            color="primary"
-            type="submit"
-            form="profileForm"
-            [disabled]="saving() || savingAvatar() || loading() || !profileForm().valid()"
-          >
-            @if (saving()) {
-              <mat-progress-spinner diameter="20" mode="indeterminate" />
+    <mat-tab [label]="'Avatar' | transloco">
+      <div class="tab-content avatar-tab">
+        <section class="avatar-editor">
+          <div class="avatar-preview" [class.has-image]="effectiveAvatarDisplayUrl()">
+            @if (effectiveAvatarDisplayUrl()) {
+              <img [src]="effectiveAvatarDisplayUrl()!" alt="Profile avatar" />
             } @else {
-              <mat-icon>save</mat-icon>
+              <span>{{ avatarLetter }}</span>
             }
-            @if (!saving()) {
-              {{ 'Save' | transloco }}
-            } @else {
-              {{ 'Saving...' | transloco }}
+          </div>
+
+          <div class="avatar-content">
+            <h2>{{ 'Profile picture' | transloco }}</h2>
+            <p>{{ 'Supported formats: JPG, PNG, WEBP (max 5MB).' | transloco }}</p>
+
+            <div class="avatar-actions">
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                (click)="openAvatarFilePicker()"
+                [disabled]="savingAvatar() || loading()"
+              >
+                <mat-icon>upload</mat-icon>
+                {{ 'Upload' | transloco }}
+              </button>
+
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="onCancelAvatarChange()"
+                [disabled]="
+                  savingAvatar() || loading() || (!avatarPreviewUrl() && !currentAvatarUrl())
+                "
+              >
+                <mat-icon>restart_alt</mat-icon>
+                {{ 'Reset' | transloco }}
+              </button>
+
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                (click)="onSaveAvatar()"
+                [disabled]="savingAvatarDisabled()"
+              >
+                @if (savingAvatar()) {
+                  <mat-progress-spinner diameter="20" mode="indeterminate" />
+                } @else {
+                  <mat-icon>save</mat-icon>
+                }
+                {{ (savingAvatar() ? 'Saving...' : 'Save Picture') | transloco }}
+              </button>
+            </div>
+
+            @if (avatarPreviewUrl()) {
+              <span class="avatar-pending">{{
+                'Picture selected. Save it to apply changes.' | transloco
+              }}</span>
             }
-          </button>
-        </div>
-      </footer>
-    }
-  </mat-card>
-</section>
+          </div>
+
+          <input
+            #avatarInput
+            type="file"
+            class="avatar-file-input"
+            accept="image/*"
+            (change)="onAvatarFileSelected($event)"
+          />
+        </section>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mns-settings-page>
