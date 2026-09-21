@@ -45,7 +45,7 @@ import { RefreshButtonComponent } from '../../../../../shared/refresh-button/ref
 import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
 import { MnsSelectFieldComponent, MnsTextFieldComponent } from '../../../../../shared/forms';
 
-type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
+type PaymentGatewayProvider = 'inter_business';
 
 type PaymentGatewayAccount = {
   EfgUUID: string;
@@ -72,54 +72,6 @@ type ProviderFieldDefinition = {
 type ProviderFieldView = ProviderFieldDefinition & { controlName: string };
 
 const PROVIDER_FIELD_DEFINITIONS: Record<PaymentGatewayProvider, ProviderFieldDefinition[]> = {
-  pagarme: [
-    {
-      key: 'apiBaseUrl',
-      label: 'API Base URL',
-      section: 'config',
-      placeholder: 'https://api.pagar.me',
-    },
-    { key: 'apiKey', label: 'API Key', section: 'credentials', required: true, kind: 'password' },
-    { key: 'encryptionKey', label: 'Encryption Key', section: 'credentials', kind: 'password' },
-  ],
-  asaas: [
-    {
-      key: 'apiBaseUrl',
-      label: 'API Base URL',
-      section: 'config',
-      placeholder: 'https://api.asaas.com',
-    },
-    { key: 'apiKey', label: 'API Key', section: 'credentials', required: true, kind: 'password' },
-  ],
-  stripe: [
-    {
-      key: 'apiBaseUrl',
-      label: 'API Base URL',
-      section: 'config',
-      placeholder: 'https://api.stripe.com',
-    },
-    {
-      key: 'secretKey',
-      label: 'Secret Key',
-      section: 'credentials',
-      required: true,
-      kind: 'password',
-    },
-    { key: 'webhookSecret', label: 'Webhook Secret', section: 'credentials', kind: 'password' },
-  ],
-  efi: [
-    { key: 'apiBaseUrl', label: 'API Base URL', section: 'config' },
-    { key: 'clientId', label: 'Client ID', section: 'credentials', required: true },
-    {
-      key: 'clientSecret',
-      label: 'Client Secret',
-      section: 'credentials',
-      required: true,
-      kind: 'password',
-    },
-    { key: 'certificate', label: 'Certificate (PEM)', section: 'credentials', kind: 'textarea' },
-    { key: 'privateKey', label: 'Private Key (PEM)', section: 'credentials', kind: 'textarea' },
-  ],
   inter_business: [
     {
       key: 'sandbox',
@@ -240,28 +192,46 @@ export class FinancialPaymentGatewayPage {
   readonly context = signal<string>(this.route.snapshot.data?.['context'] ?? 'financial');
   readonly isMaster = computed(() => this.scope() === 'master');
   readonly pageTitle = computed(() =>
-    this.context() === 'system' ? 'System Payment Gateways' : 'Payment Gateways',
+    this.isMaster() ? 'MNSCloud Pay — Platform rails' : 'MNSCloud Pay',
   );
   readonly pageSubtitle = computed(() =>
     this.isMaster()
-      ? 'Define master payment gateways for global usage.'
-      : 'Configure tenant payment gateways for financial workflows.',
+      ? 'Configure the platform payment rail (wallet top-ups). Bank partner: Inter Empresas.'
+      : 'Activate MNSCloud Pay to bill your customers. Bank partner: Inter Empresas.',
   );
+  readonly usesPlatformProviderAccounts = computed(() => this.isMaster());
   readonly baseEndpoint = computed(() =>
-    this.isMaster() ? 'system/payment-gateways' : 'erp/financial/payment/gateways',
+    this.usesPlatformProviderAccounts()
+      ? 'system/payment/provider-accounts'
+      : 'erp/financial/payment/gateways',
   );
 
   private readonly paymentGatewaysResource = resource({
-    params: () => ({ endpoint: this.baseEndpoint() }),
+    params: () => ({
+      endpoint: this.baseEndpoint(),
+      platform: this.usesPlatformProviderAccounts(),
+    }),
     defaultValue: [] as PaymentGatewayAccount[],
     loader: async ({ params }) => {
       const result = await this.api.get<unknown>(params.endpoint);
       const list = Array.isArray((result as any)?.data?.items) ? (result as any).data.items : [];
 
-      return list.map((item: any) => ({
-        ...item,
-        EfgConfig: this.parseConfig(item.EfgConfig),
-      })) as PaymentGatewayAccount[];
+      return list.map((item: any) => {
+        if (params.platform) {
+          return {
+            EfgUUID: String(item.PpaUUID ?? ''),
+            EfgName: String(item.PpaName ?? ''),
+            EfgProvider: (item.PpaProvider ?? 'inter_business') as PaymentGatewayProvider,
+            EfgConfig: this.parseConfig(item.PpaConfig),
+            EfgIsActive: Number(item.PpaStatus ?? 0),
+            EfgIsDefault: Number(item.PpaIsDefault ?? 0),
+          } as PaymentGatewayAccount;
+        }
+        return {
+          ...item,
+          EfgConfig: this.parseConfig(item.EfgConfig),
+        } as PaymentGatewayAccount;
+      });
     },
   });
 
@@ -277,7 +247,7 @@ export class FinancialPaymentGatewayPage {
 
   readonly gatewayFormModel = signal({
     name: '',
-    provider: 'pagarme' as PaymentGatewayProvider,
+    provider: 'inter_business' as PaymentGatewayProvider,
     configJson: '',
     credentialsJson: '',
     isActive: true,
@@ -296,11 +266,7 @@ export class FinancialPaymentGatewayPage {
   );
 
   readonly providerOptions: { value: PaymentGatewayProvider; label: string }[] = [
-    { value: 'pagarme', label: 'Pagar.me' },
-    { value: 'asaas', label: 'Asaas' },
-    { value: 'stripe', label: 'Stripe' },
-    { value: 'efi', label: 'Efi' },
-    { value: 'inter_business', label: 'Inter Empresas' },
+    { value: 'inter_business', label: 'Inter Empresas (MNSCloud Pay)' },
   ];
   readonly yesNoOptions = [
     { value: true, label: 'Yes' },
@@ -664,7 +630,7 @@ export class FinancialPaymentGatewayPage {
     this.advancedJsonMode.set(false);
     this.gatewayFormModel.set({
       name: '',
-      provider: 'pagarme',
+      provider: 'inter_business',
       configJson: '',
       credentialsJson: '',
       isActive: true,
@@ -737,22 +703,41 @@ export class FinancialPaymentGatewayPage {
 
     const payload: Record<string, unknown> = {
       name: values.name,
-      provider: values.provider,
-      isActive: values.isActive,
+      provider: 'inter_business',
       isDefault: values.isDefault,
     };
 
-    if (config) payload['config'] = config;
+    if (this.usesPlatformProviderAccounts()) {
+      payload['status'] = values.isActive ? 1 : 0;
+    } else {
+      payload['isActive'] = values.isActive;
+    }
+
+    // Stamp product method + bank partner for multi-bank history.
+    const stampedConfig = {
+      ...(config ?? {}),
+      productMethod: 'mnscloud_pay',
+      bankPartner: 'inter_business',
+    };
+    payload['config'] = stampedConfig;
     if (credentials) payload['credentials'] = credentials;
 
     try {
       if (this.editingGateway()) {
         const uuid = this.editingGateway()!.EfgUUID;
         await this.api.put(`${this.baseEndpoint()}/${uuid}`, payload);
-        this.showGatewaySuccess('Payment gateway updated.');
+        this.showGatewaySuccess(
+          this.usesPlatformProviderAccounts()
+            ? 'Platform payment rail updated.'
+            : 'MNSCloud Pay account updated.',
+        );
       } else {
         await this.api.post(this.baseEndpoint(), payload);
-        this.showGatewaySuccess('Payment gateway created.');
+        this.showGatewaySuccess(
+          this.usesPlatformProviderAccounts()
+            ? 'Platform payment rail created.'
+            : 'MNSCloud Pay account created.',
+        );
       }
 
       if (!this.editingGateway() && keepOpenForNew) {
@@ -775,6 +760,10 @@ export class FinancialPaymentGatewayPage {
   }
 
   async deleteGateway(item: PaymentGatewayAccount) {
+    if (this.usesPlatformProviderAccounts()) {
+      this.showGatewayWarning('Platform payment rails cannot be deleted from this screen.');
+      return;
+    }
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
         title: 'Delete payment gateway',
@@ -797,6 +786,10 @@ export class FinancialPaymentGatewayPage {
   }
 
   async removeManyGateways() {
+    if (this.usesPlatformProviderAccounts()) {
+      this.showGatewayWarning('Platform payment rails cannot be bulk-deleted from this screen.');
+      return;
+    }
     const ids = [...this.selectedGatewayUUIDs()];
     if (ids.length === 0) return;
 
@@ -857,6 +850,12 @@ export class FinancialPaymentGatewayPage {
   }
 
   async validateGateway(item: PaymentGatewayAccount) {
+    if (this.usesPlatformProviderAccounts()) {
+      this.showGatewayWarning(
+        'Use a tenant MNSCloud Pay account to validate bank-partner connectivity for now.',
+      );
+      return;
+    }
     this.validatingGatewayUUID.set(item.EfgUUID);
 
     try {
