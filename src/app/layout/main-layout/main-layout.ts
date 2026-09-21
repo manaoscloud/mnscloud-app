@@ -2074,8 +2074,17 @@ export class MainLayout {
               id: 'hosting/webhost/mailing-lists',
               label: 'Mailing Lists',
               icon: 'forward_to_inbox',
-              route: '/hosting/webhost/mailing-lists',
-              masterRoute: '/system/hosting/webhost/mailing-lists',
+              entitlementCode: 'module.hosting.webhost.plan',
+              children: [
+                {
+                  id: 'hosting/webhost/mailing-lists/registry',
+                  label: 'Registry',
+                  icon: 'list_alt',
+                  route: '/hosting/webhost/mailing-lists',
+                  masterRoute: '/system/hosting/webhost/mailing-lists',
+                  entitlementCode: 'module.hosting.webhost.plan',
+                },
+              ],
             },
             {
               id: 'hosting/webhost/zone-editor',
