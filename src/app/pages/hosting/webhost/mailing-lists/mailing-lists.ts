@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
 import {
@@ -349,7 +350,7 @@ export class HostingWebhostMailingListsPage
           clear();
           binding.ref.close();
         });
-        binding.ref.afterClosed().subscribe(() => {
+        void firstValueFrom(binding.ref.afterClosed()).then(() => {
           clearTimeout(timer);
           clear();
           unregister();
