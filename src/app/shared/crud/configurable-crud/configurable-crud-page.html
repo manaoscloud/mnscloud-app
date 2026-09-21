@@ -506,6 +506,7 @@
                       [appCurrencyMaskCurrency]="currencyForField(field)"
                       [autocomplete]="field.autocomplete ?? 'off'"
                       [attr.data-field-key]="field.key"
+                      [disabled]="isFieldDisabled(field)"
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                       (keydown.enter)="field.postalLookup ? searchPostalCode(field, $event) : null"
