@@ -1106,7 +1106,7 @@ export class MainLayout {
                 },
                 {
                   id: 'erp/financial/payment-gateway',
-                  label: 'Gateways',
+                  label: 'MNSCloud Pay',
                   icon: 'credit_card',
                   route: '/erp/financial/payment-gateway',
                   masterRoute: '/system/payment-gateway',

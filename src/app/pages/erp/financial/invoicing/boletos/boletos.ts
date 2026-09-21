@@ -52,7 +52,7 @@ type ErpFinInvBoleto = {
   Notes?: string | null;
 };
 
-type PaymentGatewayProvider = 'pagarme' | 'asaas' | 'stripe' | 'efi' | 'inter_business';
+type PaymentGatewayProvider = 'inter_business';
 type PaymentGatewayAccount = {
   EfgUUID: string;
   EfgName: string;
@@ -173,15 +173,7 @@ export class InvoicingBoletosPage {
   private providerLabel(provider: PaymentGatewayProvider) {
     switch (provider) {
       case 'inter_business':
-        return 'Inter Empresas';
-      case 'pagarme':
-        return 'Pagar.me';
-      case 'asaas':
-        return 'Asaas';
-      case 'stripe':
-        return 'Stripe';
-      case 'efi':
-        return 'Efi';
+        return 'Inter Empresas (MNSCloud Pay)';
       default:
         return provider;
     }
