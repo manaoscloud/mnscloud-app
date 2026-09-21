@@ -990,13 +990,6 @@ export class MainLayout {
           requiresEnvironment: true,
         },
         {
-          id: 'billing/mnscloud-pay',
-          label: 'MNSCloud Pay',
-          icon: 'credit_card',
-          route: '/erp/financial/payment-gateway',
-          masterRoute: '/system/payment-gateway',
-        },
-        {
           id: 'billing/ledger-wallets',
           label: 'Ledger',
           icon: 'receipt_long',
@@ -1004,6 +997,14 @@ export class MainLayout {
           masterRoute: '/system/billing/wallets',
         },
       ],
+    },
+
+    {
+      id: 'system/mnscloud-pay',
+      label: 'MNSCloud Pay',
+      icon: 'credit_card',
+      masterRoute: '/system/mnscloud-pay',
+      scope: 'master',
     },
 
     {
@@ -1083,10 +1084,9 @@ export class MainLayout {
           children: [
             {
               id: 'erp/financial/payment-gateway',
-              label: 'MNSCloud Pay',
+              label: 'Payment Providers',
               icon: 'credit_card',
               route: '/erp/financial/payment-gateway',
-              masterRoute: '/system/payment-gateway',
             },
             {
               id: 'erp/financial/accounts',

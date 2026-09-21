@@ -457,7 +457,7 @@ export const routes: Routes = [
                   import('./pages/erp/financial/payment/gateway/payment-gateway').then(
                     (m) => m.FinancialPaymentGatewayPage,
                   ),
-                title: 'ERP • Financial • MNSCloud Pay | mnscloud',
+                title: 'ERP • Financial • Payment Providers | mnscloud',
                 data: { scope: 'tenant', context: 'financial' },
               },
 
@@ -1985,12 +1985,12 @@ export const routes: Routes = [
                 ],
               },
               {
-                path: 'payment-gateway',
+                path: 'mnscloud-pay',
                 loadComponent: () =>
-                  import('./pages/erp/financial/payment/gateway/payment-gateway').then(
-                    (m) => m.FinancialPaymentGatewayPage,
+                  import('./pages/system/mnscloud-pay/mnscloud-pay-accounts').then(
+                    (m) => m.SystemMnscloudPayAccountsPage,
                   ),
-                title: 'MNSCloud Pay — Platform rails | mnscloud',
+                title: 'System • MNSCloud Pay | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
