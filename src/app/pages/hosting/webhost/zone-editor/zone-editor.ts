@@ -140,7 +140,8 @@ export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<Confi
       hostUUID: payload['hostUUID'],
       name: String(payload['name'] ?? '').trim(),
       type: payload['recordType'],
-      value: String(payload['value'] ?? ''),
+      // The shared CRUD payload trims strings; DNS TXT data must retain the form bytes.
+      value: String(this.formValues()['value'] ?? ''),
       ttl: numberOrNull(payload['ttl']) ?? 14400,
       priority: ['MX', 'SRV'].includes(String(payload['recordType'])) ? numberOrNull(payload['priority']) : null,
       weight: payload['recordType'] === 'SRV' ? numberOrNull(payload['weight']) : null,
