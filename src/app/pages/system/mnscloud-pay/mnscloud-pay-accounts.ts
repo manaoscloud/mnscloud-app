@@ -32,17 +32,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom } from 'rxjs';
 
-import { ApiService } from '../../../../../services/api.service';
-import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ApiService } from '../../../services/api.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 import {
   CrudDialogBinding,
   openCrudTemplateDialog,
-} from '../../../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+} from '../../../shared/dialog/crud-dialog.util';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../../../shared/dialog/dialog-events.util';
-import { MnsSelectFieldComponent, MnsTextFieldComponent } from '../../../../../shared/forms';
+import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
+import { MnsSelectFieldComponent, MnsTextFieldComponent } from '../../../shared/forms';
 
 type PaymentGatewayProvider = 'inter_business';
 
@@ -152,7 +152,7 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
   }, []);
 
 @Component({
-  selector: 'app-financial-payment-gateway',
+  selector: 'app-system-mnscloud-pay-accounts',
   standalone: true,
   imports: [
     RefreshButtonComponent,
@@ -177,21 +177,21 @@ const ALL_PROVIDER_FIELDS: ProviderFieldView[] = Object.values(PROVIDER_FIELD_DE
     TranslocoPipe,
     NgClass,
   ],
-  templateUrl: './payment-gateway.html',
-  styleUrls: ['./payment-gateway.scss'],
+  templateUrl: './mnscloud-pay-accounts.html',
+  styleUrls: ['./mnscloud-pay-accounts.scss'],
   host: { class: 'app-fade-in-host' },
 })
-export class FinancialPaymentGatewayPage {
+export class SystemMnscloudPayAccountsPage {
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'Payment Providers');
+  readonly pageTitle = computed(() => 'MNSCloud Pay');
   readonly pageSubtitle = computed(
     () =>
-      'Register payment providers for this tenant. Available provider: MNSCloud Pay (Inter Empresas).',
+      'Platform product rails for wallet top-ups and billing tenants. Bank partner: Inter Empresas.',
   );
-  readonly baseEndpoint = computed(() => 'erp/financial/payment/gateways');
+  readonly baseEndpoint = computed(() => 'system/payment/provider-accounts');
 
   private readonly paymentGatewaysResource = resource({
     params: () => ({
@@ -202,10 +202,16 @@ export class FinancialPaymentGatewayPage {
       const result = await this.api.get<unknown>(params.endpoint);
       const list = Array.isArray((result as any)?.data?.items) ? (result as any).data.items : [];
 
-      return list.map((item: any) => ({
-        ...item,
-        EfgConfig: this.parseConfig(item.EfgConfig),
-      }) as PaymentGatewayAccount);
+      return list.map((item: any) => {
+        return {
+          EfgUUID: String(item.PpaUUID ?? ''),
+          EfgName: String(item.PpaName ?? ''),
+          EfgProvider: (item.PpaProvider ?? 'inter_business') as PaymentGatewayProvider,
+          EfgConfig: this.parseConfig(item.PpaConfig),
+          EfgIsActive: Number(item.PpaStatus ?? 0),
+          EfgIsDefault: Number(item.PpaIsDefault ?? 0),
+        } as PaymentGatewayAccount;
+      });
     },
   });
 
@@ -240,7 +246,7 @@ export class FinancialPaymentGatewayPage {
   );
 
   readonly providerOptions: { value: PaymentGatewayProvider; label: string }[] = [
-    { value: 'inter_business', label: 'MNSCloud Pay' },
+    { value: 'inter_business', label: 'Inter Empresas (MNSCloud Pay)' },
   ];
   readonly yesNoOptions = [
     { value: true, label: 'Yes' },
@@ -646,7 +652,7 @@ export class FinancialPaymentGatewayPage {
         return;
       }
       if (!this.editingGateway() && !credentials) {
-        this.showGatewayWarning('Credentials are required for new payment providers.');
+        this.showGatewayWarning('Credentials are required for new payment gateways.');
         this.savingGateway.set(false);
         return;
       }
@@ -667,7 +673,7 @@ export class FinancialPaymentGatewayPage {
         config = {};
       }
       if (!this.editingGateway() && Object.keys(credentials).length === 0) {
-        this.showGatewayWarning('Credentials are required for new payment providers.');
+        this.showGatewayWarning('Credentials are required for new payment gateways.');
         this.savingGateway.set(false);
         return;
       }
@@ -677,12 +683,12 @@ export class FinancialPaymentGatewayPage {
 
     const payload: Record<string, unknown> = {
       name: values.name,
-      provider: 'mnscloud_pay',
-      bankPartner: 'inter_business',
-      isDefault: values.isDefault,
-      isActive: values.isActive,
+      provider: 'inter_business',
+      isDefault: values.isDefault ? 1 : 0,
+      status: values.isActive ? 1 : 0,
     };
 
+    // Stamp product method + bank partner for multi-bank history.
     const stampedConfig = {
       ...(config ?? {}),
       productMethod: 'mnscloud_pay',
@@ -695,10 +701,10 @@ export class FinancialPaymentGatewayPage {
       if (this.editingGateway()) {
         const uuid = this.editingGateway()!.EfgUUID;
         await this.api.put(`${this.baseEndpoint()}/${uuid}`, payload);
-        this.showGatewaySuccess('Payment provider updated.');
+        this.showGatewaySuccess('MNSCloud Pay platform rail updated.');
       } else {
         await this.api.post(this.baseEndpoint(), payload);
-        this.showGatewaySuccess('Payment provider created.');
+        this.showGatewaySuccess('MNSCloud Pay platform rail created.');
       }
 
       if (!this.editingGateway() && keepOpenForNew) {
@@ -709,7 +715,7 @@ export class FinancialPaymentGatewayPage {
       }
       this.paymentGatewaysResource.reload();
     } catch (error) {
-      this.showGatewayError(this.friendlyError(error, 'Failed to save payment provider.'));
+      this.showGatewayError(this.friendlyError(error, 'Failed to save payment gateway.'));
     } finally {
       this.savingGateway.set(false);
     }
@@ -720,82 +726,12 @@ export class FinancialPaymentGatewayPage {
     void this.submitGateway(true);
   }
 
-  async deleteGateway(item: PaymentGatewayAccount) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete payment provider',
-        message: `Are you sure you want to delete "${item.EfgName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`${this.baseEndpoint()}/${item.EfgUUID}`);
-      this.showGatewaySuccess('Payment provider deleted.');
-      this.paymentGatewaysResource.reload();
-    } catch (error) {
-      this.showGatewayError(this.friendlyError(error, 'Failed to delete payment provider.'));
-    }
+  async deleteGateway(_item: PaymentGatewayAccount) {
+    this.showGatewayWarning('Platform rails cannot be deleted from this screen.');
   }
 
   async removeManyGateways() {
-    const ids = [...this.selectedGatewayUUIDs()];
-    if (ids.length === 0) return;
-
-    const selectedRows = this.dataSource.data.filter((row) => ids.includes(row.EfgUUID));
-    const sample = selectedRows
-      .slice(0, 3)
-      .map((row) => row.EfgName)
-      .join(', ');
-    const suffix = sample ? ` (${sample}${selectedRows.length > 3 ? ', ...' : ''})` : '';
-
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete selected payment providers',
-        message: `Delete ${ids.length} selected payment provider${ids.length === 1 ? '' : 's'}${suffix}?`,
-        confirmLabel: 'Delete selected',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      const response = await this.api.delete<{
-        deleted?: string[];
-        failed?: { EfgUUID?: string; message?: string }[];
-      }>(`${this.baseEndpoint()}/bulk`, { ids });
-      const deleted = new Set(response?.deleted ?? []);
-      const failed = response?.failed ?? [];
-
-      if (deleted.size > 0) {
-        this.selectedGatewayUUIDs.set(
-          new Set([...this.selectedGatewayUUIDs()].filter((uuid) => !deleted.has(uuid))),
-        );
-      }
-
-      this.paymentGatewaysResource.reload();
-
-      if (failed.length > 0) {
-        const failedIds = new Set(
-          failed.map((item) => item.EfgUUID).filter((uuid): uuid is string => Boolean(uuid)),
-        );
-        this.selectedGatewayUUIDs.set(failedIds);
-        this.showGatewayError(`${failed.length} selected payment provider(s) could not be deleted.`);
-        return;
-      }
-
-      this.showGatewaySuccess('Selected payment providers deleted.');
-    } catch (error) {
-      this.showGatewayError(
-        this.friendlyError(error, 'Failed to delete selected payment providers.'),
-      );
-    }
+    this.showGatewayWarning('Platform rails cannot be bulk-deleted from this screen.');
   }
 
   isValidatingGateway(item: PaymentGatewayAccount) {
@@ -804,15 +740,14 @@ export class FinancialPaymentGatewayPage {
 
   async validateGateway(item: PaymentGatewayAccount) {
     this.validatingGatewayUUID.set(item.EfgUUID);
-
     try {
       const response = await this.api.post<{ message?: string }>(
         `${this.baseEndpoint()}/${item.EfgUUID}/validate`,
         {},
       );
-      this.showGatewaySuccess(response?.message ?? 'Payment provider validated.');
+      this.showGatewaySuccess(response?.message ?? 'MNSCloud Pay platform rail validated.');
     } catch (error) {
-      this.showGatewayError(this.friendlyError(error, 'Failed to validate payment provider.'));
+      this.showGatewayError(this.friendlyError(error, 'Failed to validate platform rail.'));
     } finally {
       this.validatingGatewayUUID.set(null);
     }
