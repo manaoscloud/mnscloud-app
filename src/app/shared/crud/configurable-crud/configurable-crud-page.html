@@ -409,6 +409,16 @@
                     </mat-select>
                   </mat-form-field>
                 }
+                @case ('checkbox-group') {
+                  <mns-checkbox-group-field
+                    [class]="fieldClass(field)"
+                    [label]="translatedFieldLabel(field)"
+                    [options]="fieldOptions(field)"
+                    [disabled]="isFieldDisabled(field)"
+                    [value]="fieldValueArray(field.key)"
+                    (valueChange)="setFieldValue(field.key, $event)"
+                  />
+                }
                 @case ('multi-select') {
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label
@@ -656,6 +666,16 @@
                               </mat-select>
                             </mat-form-field>
                           }
+                          @case ('checkbox-group') {
+                            <mns-checkbox-group-field
+                              [class]="fieldClass(field)"
+                              [label]="translatedFieldLabel(field)"
+                              [options]="fieldOptions(field)"
+                              [disabled]="isFieldDisabled(field)"
+                              [value]="fieldValueArray(field.key)"
+                              (valueChange)="setFieldValue(field.key, $event)"
+                            />
+                          }
                           @case ('multi-select') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
@@ -767,6 +787,16 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -866,6 +896,16 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -967,6 +1007,16 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1093,6 +1143,16 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1221,6 +1281,16 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1304,6 +1374,16 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1386,6 +1466,16 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1528,6 +1618,16 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1629,6 +1729,16 @@
                       </mat-select>
                     </mat-form-field>
                   }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
+                  }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1695,6 +1805,16 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  }
+                  @case ('checkbox-group') {
+                    <mns-checkbox-group-field
+                      [class]="fieldClass(field)"
+                      [label]="translatedFieldLabel(field)"
+                      [options]="fieldOptions(field)"
+                      [disabled]="isFieldDisabled(field)"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('multi-select') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">

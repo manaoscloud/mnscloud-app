@@ -147,23 +147,6 @@ export type WebhostToolProvisionStatus =
 export type WebhostZoneRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'SRV' | 'CAA';
 export type WebhostZoneRecordStatus = 'pending' | 'active' | 'error' | 'deleted';
 
-export type HostingWebhostDatabase = {
-  HwdUUID: string;
-  HostingWebhostHostHwhUUID: string;
-  HostName: string;
-  HostUsername: string;
-  DomainName: string;
-  ProviderName: string;
-  HwlProvider: WebhostProviderType;
-  HwdName: string;
-  HwdUsername?: string | null;
-  HwdPrivileges?: string | null;
-  HwdStatus: WebhostToolStatus;
-  HwdProvisionStatus: WebhostToolProvisionStatus;
-  HwdLastSyncAt?: string | null;
-  HwdIsActive: number;
-};
-
 export type HostingWebhostMailingList = {
   HwmUUID: string;
   HostingWebhostHostHwhUUID: string;
