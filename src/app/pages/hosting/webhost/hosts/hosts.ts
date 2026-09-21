@@ -150,7 +150,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'provider', label: 'Provider', field: 'ProviderName' },
     { id: 'user', label: 'Username', field: 'HwhUsername', copyable: true },
-    { id: 'ip', label: 'IP', field: 'HostIpLabel' },
+    { id: 'tempUrl', label: 'Temp URL', field: 'HostTempUrlLabel', copyable: true },
     {
       id: 'provision',
       label: 'Provisioned',
@@ -316,6 +316,10 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     let items = (response?.data?.items ?? []).map((item) => {
       const config = asRecord(item['HwhConfig']);
       const ip = normalizeString(config['ip'] ?? config['ipAddress'] ?? '');
+      const username = normalizeString(item['HwhUsername']);
+      const temporaryUrl =
+        normalizeString(config['temporaryUrl']) ||
+        (ip && username ? `http://${ip}/~${username}/` : null);
       const registerName = normalizeString(item['RegisterName']);
       const domainName = normalizeString(item['DomainName']);
       const provisionStatus = String(item['HwhProvisionStatus'] ?? '');
@@ -324,6 +328,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
         ...item,
         HwhConfig: config,
         HostIpLabel: ip || '—',
+        HostTempUrlLabel: temporaryUrl || '—',
         CustomerEmail: normalizeString(item['CustomerEmail']) || '—',
         DomainLabel: registerName || domainName || '—',
         ProvisionedLabel: provisioned,
