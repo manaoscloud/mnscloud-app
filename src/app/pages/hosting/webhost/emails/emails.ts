@@ -109,7 +109,7 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'emailStatus',
-      label: 'Lifecycle',
+      label: 'Situation',
       paramKey: 'status',
       type: 'search-select',
       placeholder: 'Search',
@@ -145,7 +145,7 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
     { id: 'quota', label: 'Quota', field: 'EmailQuotaLabel' },
     {
       id: 'lifecycle',
-      label: 'Lifecycle',
+      label: 'Situation',
       kind: 'status',
       field: 'HweStatus',
       options: WEBHOST_HOST_STATUS_OPTIONS,

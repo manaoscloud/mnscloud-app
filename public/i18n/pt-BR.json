@@ -4406,6 +4406,7 @@
   "Port must be between 1 and 65535.": "A porta deve estar entre 1 e 65535.",
   "Select a domain linked to the selected customer.": "Selecione um domínio vinculado ao cliente selecionado.",
   "Password is required when auto-provisioning a mailbox.": "A senha é obrigatória ao provisionar automaticamente uma caixa de e-mail.",
+  "Situation": "Situação",
   "Lifecycle": "Ciclo de vida",
   "Active hosts": "Hosts ativos",
   "Failed to load webhost hosts.": "Falha ao carregar hosts Webhost.",
