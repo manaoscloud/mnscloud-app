@@ -1,69 +1,57 @@
-<section class="erp-page" animate.enter="app-fade-in">
-  <mat-card class="erp-card">
-    <header class="erp-header">
-      <div>
-        <h1>{{ 'User Governance' | transloco }}</h1>
-        <p>
-          {{
-            'Close, suspend, anonymize, and legally retain accounts without breaking platform history.'
-              | transloco
-          }}
-        </p>
-      </div>
-      <div class="header-actions">
-        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
-      </div>
-    </header>
+<mns-page-shell
+  title="User Governance"
+  description="Close, suspend, anonymize, and legally retain accounts without breaking platform history."
+  [loading]="loading()"
+  (refresh)="refreshList()"
+>
+  @if (error()) {
+    <div class="error-banner">{{ error() }}</div>
+  }
 
-    @if (error()) {
-      <div class="error-banner">{{ error() }}</div>
-    }
+  <div class="filter-grid">
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Search' | transloco }}</mat-label>
+      <input matInput [formField]="filterForm.search" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Status' | transloco }}</mat-label>
+      <mat-select [formField]="filterForm.status">
+        <mat-option value="">{{ 'All' | transloco }}</mat-option>
+        <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
+        <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
+      </mat-select>
+    </mat-form-field>
 
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input matInput [formField]="filterForm.search" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>{{ 'Status' | transloco }}</mat-label>
-        <mat-select [formField]="filterForm.status">
-          <mat-option value="">{{ 'All' | transloco }}</mat-option>
-          <mat-option [value]="1">{{ 'Active' | transloco }}</mat-option>
-          <mat-option [value]="0">{{ 'Inactive' | transloco }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <div class="filter-actions">
-        <button mat-stroked-button type="button" (click)="applyFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button type="button" (click)="clearFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
-      </div>
+    <div class="filter-actions">
+      <button mat-stroked-button type="button" (click)="applyFilters()">
+        <mat-icon>filter_alt</mat-icon>
+        {{ 'Apply' | transloco }}
+      </button>
+      <button mat-stroked-button type="button" (click)="clearFilters()">
+        <mat-icon>backspace</mat-icon>
+        {{ 'Clear' | transloco }}
+      </button>
     </div>
+  </div>
 
-    <div class="content-grid">
-      <section class="list-segment">
-        <app-user-governance-table
-          [users]="users()"
-          [loading]="loading()"
-          [selectedUserUUID]="selectedUser()?.UserUUID ?? null"
-          (inspect)="selectUser($event)"
-          (governanceAction)="handleGovernanceAction($event)"
-        />
-      </section>
-
-      <app-user-governance-detail
-        [user]="selectedUser()"
-        [actions]="actions()"
-        [legalHolds]="legalHolds()"
-        (releaseHold)="releaseHold($event)"
+  <div class="content-grid">
+    <section class="list-segment">
+      <app-user-governance-table
+        [users]="users()"
+        [loading]="loading()"
+        [selectedUserUUID]="selectedUser()?.UserUUID ?? null"
+        (inspect)="selectUser($event)"
+        (governanceAction)="handleGovernanceAction($event)"
       />
-    </div>
-  </mat-card>
+    </section>
+
+    <app-user-governance-detail
+      [user]="selectedUser()"
+      [actions]="actions()"
+      [legalHolds]="legalHolds()"
+      (releaseHold)="releaseHold($event)"
+    />
+  </div>
 
   <ng-template #actionDialog>
     <h2 mat-dialog-title>{{ actionTitleKey() | transloco }}</h2>
@@ -102,4 +90,4 @@
       </button>
     </mat-dialog-actions>
   </ng-template>
-</section>
+</mns-page-shell>

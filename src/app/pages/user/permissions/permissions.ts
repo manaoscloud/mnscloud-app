@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
+/** Special permission grants CRUD — uses shared ConfigurableCrudPageBase (app.md ERP generic CRUD). */
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,

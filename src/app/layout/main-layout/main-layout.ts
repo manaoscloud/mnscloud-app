@@ -1020,7 +1020,7 @@ export class MainLayout {
             {
               id: 'user/special-permissions',
               label: 'Special permissions',
-              icon: 'shield_person',
+              icon: 'verified_user',
               route: '/user/permissions',
             },
           ],
