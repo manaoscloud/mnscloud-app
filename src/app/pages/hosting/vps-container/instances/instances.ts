@@ -124,7 +124,7 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     { id: 'image', label: 'Image', kind: 'text', field: 'InstanceImage' },
     {
       id: 'runtimeStatus',
-      label: 'RTS',
+      label: 'Situation',
       kind: 'text',
       field: 'HciStatus',
       className: 'runtime-status-col',

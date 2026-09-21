@@ -149,7 +149,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       id: 'runtimeStatus',
-      label: 'Provisioning',
+      label: 'Situation',
       kind: 'text',
       field: 'HviStatus',
       className: 'runtime-status-col',

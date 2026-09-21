@@ -123,7 +123,7 @@ const HOSTING_VPS_SNAPSHOT_CONFIG_BASE: Omit<ConfigurableCrudConfig, 'fields'> =
     },
     {
       id: 'status',
-      label: 'Status',
+      label: 'Situation',
       kind: 'status',
       field: 'HvsStatus',
       options: SNAPSHOT_STATUS_OPTIONS,

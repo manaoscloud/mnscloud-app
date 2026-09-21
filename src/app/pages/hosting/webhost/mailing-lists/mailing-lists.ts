@@ -14,6 +14,8 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import type { HostingWebhostHost } from '../webhost.types';
 import {
+  WEBHOST_TOOL_STATUS_OPTIONS,
+  lifecycleChipClass,
   asRecord,
   hostOptionLabel,
   normalizeString,
@@ -98,6 +100,15 @@ const MAILING_CONFIG: ConfigurableCrudConfig = {
     status: 1,
   },
   columns: [
+    {
+      id: 'situation',
+      label: 'Situation',
+      kind: 'status',
+      field: 'HwmStatus',
+      options: WEBHOST_TOOL_STATUS_OPTIONS,
+      className: 'status-col',
+      chipClass: lifecycleChipClass,
+    },
     { id: 'name', label: 'List', kind: 'identity', field: 'HwmName', uuidField: 'HwmUUID' },
     { id: 'email', label: 'Email', field: 'HwmEmail' },
     {
