@@ -933,6 +933,32 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'database-users',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
+                      ),
+                    title: 'Hosting • Webhost • Database users | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      databaseResource: 'database-users',
+                      context: 'hosting',
+                    },
+                  },
+                  {
+                    path: 'database-grants',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
+                      ),
+                    title: 'Hosting • Webhost • Database grants | mnscloud',
+                    data: {
+                      scope: 'tenant',
+                      databaseResource: 'database-grants',
+                      context: 'hosting',
+                    },
+                  },
+                  {
                     path: 'mailing-lists',
                     loadComponent: () =>
                       import('./pages/hosting/webhost/mailing-lists/mailing-lists').then(
@@ -1963,6 +1989,32 @@ export const routes: Routes = [
                       ),
                     title: 'System Webhost Databases | mnscloud',
                     data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'database-users',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
+                      ),
+                    title: 'System Webhost Database users | mnscloud',
+                    data: {
+                      scope: 'master',
+                      databaseResource: 'database-users',
+                      context: 'system',
+                    },
+                  },
+                  {
+                    path: 'database-grants',
+                    loadComponent: () =>
+                      import('./pages/hosting/webhost/databases/databases').then(
+                        (m) => m.HostingWebhostDatabasesPage,
+                      ),
+                    title: 'System Webhost Database grants | mnscloud',
+                    data: {
+                      scope: 'master',
+                      databaseResource: 'database-grants',
+                      context: 'system',
+                    },
                   },
                   {
                     path: 'mailing-lists',

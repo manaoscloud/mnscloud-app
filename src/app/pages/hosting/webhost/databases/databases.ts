@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -10,193 +9,346 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import type { HostingWebhostHost } from '../webhost.types';
-import {
-  WEBHOST_PROVISION_STATUS_OPTIONS,
-  WEBHOST_TOOL_STATUS_OPTIONS,
-  appendWebhostListParams,
-  asRecord,
-  hostOptionLabel,
-  lifecycleChipClass,
-  normalizeString,
-  truthyNumber,
-  webhostRootEndpoint,
-} from '../webhost-shared';
+import { webhostRootEndpoint } from '../webhost-shared';
 
-const PROVISION_ACTION: ConfigurableCrudRowAction = {
-  key: 'provision', label: 'Provision', icon: 'cloud_upload', tooltip: 'Provision',
+type Kind = 'databases' | 'database-users' | 'database-grants';
+const retry: ConfigurableCrudRowAction = {
+  key: 'provision',
+  label: 'Retry provisioning',
+  icon: 'cloud_upload',
 };
-const SYNC_ACTION: ConfigurableCrudRowAction = {
-  key: 'sync', label: 'Sync', icon: 'sync', tooltip: 'Sync',
+const sync: ConfigurableCrudRowAction = { key: 'sync', label: 'Sync', icon: 'sync' };
+const reset: ConfigurableCrudRowAction = {
+  key: 'reset-password',
+  label: 'Reset password',
+  icon: 'password',
 };
-const DEPROVISION_ACTION: ConfigurableCrudRowAction = {
-  key: 'deprovision', label: 'Deprovision', icon: 'cloud_off', tooltip: 'Deprovision',
-};
-
-const DATABASE_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'hosting/webhost/databases',
-  uuidField: 'HwdUUID',
-  pageTitle: 'Webhost Databases',
-  pageDescription: 'Manage MySQL databases provisioned on Webhost hosts.',
-  createTitle: 'New webhost database',
-  editTitle: 'Edit webhost database',
-  dialogDescription: 'Configure database name, user and privileges.',
-  searchPlaceholder: 'Name, host or username',
-  emptyLabel: 'No webhost databases found.',
-  deleteTitle: 'Delete webhost database',
-  deleteMessage: 'Are you sure you want to delete this webhost database locally?',
-  deleteSelectedTitle: 'Delete selected webhost databases',
-  deleteSelectedMessage: 'Delete {count} selected webhost databases locally?',
-  savedMessage: 'Webhost database saved successfully.',
-  deletedMessage: 'Webhost database deleted successfully.',
-  deleteFailedMessage: 'Failed to delete webhost database.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
-  bulkDelete: true,
-  statusFilter: true,
-  tabLabels: { storage: 'Database', notes: 'Notes' },
-  rowActions: [PROVISION_ACTION, SYNC_ACTION, DEPROVISION_ACTION],
-  listFilters: [
-    { key: 'hostUUID', label: 'Host', paramKey: 'hostUUID', type: 'search-select', placeholder: 'Search hosts', emptyLabel: 'No records found.' },
-    { key: 'toolStatus', label: 'Lifecycle', paramKey: 'status', type: 'search-select', placeholder: 'Search', emptyLabel: 'No records found.' },
-    { key: 'provisionStatus', label: 'Provision', paramKey: 'provisionStatus', type: 'search-select', placeholder: 'Search', emptyLabel: 'No records found.' },
-  ],
-  initialValues: {
-    hostUUID: '', name: '', username: '', privileges: 'ALL PRIVILEGES',
-    toolStatus: 'pending', provisionStatus: 'manual', notes: '', status: 1,
-  },
-  columns: [
-    { id: 'name', label: 'Database', kind: 'identity', field: 'HwdName', uuidField: 'HwdUUID' },
-    { id: 'host', label: 'Host', kind: 'related', field: 'HostName', uuidField: 'HostingWebhostHostHwhUUID' },
-    { id: 'username', label: 'DB user', field: 'HwdUsername' },
-    { id: 'provider', label: 'Provider', field: 'ProviderName' },
-    { id: 'lifecycle', label: 'Lifecycle', kind: 'status', field: 'HwdStatus', options: WEBHOST_TOOL_STATUS_OPTIONS, className: 'status-col', chipClass: lifecycleChipClass },
-    { id: 'provision', label: 'Provision', kind: 'status', field: 'HwdProvisionStatus', options: WEBHOST_PROVISION_STATUS_OPTIONS, className: 'status-col', chipClass: lifecycleChipClass },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HwdIsActive', className: 'status-col' },
-  ],
-  fields: [
-    { key: 'status', source: 'HwdIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'hostUUID', source: 'HostingWebhostHostHwhUUID', payloadKey: 'hostUUID', label: 'Host', type: 'search-select', required: true, span: 1 },
-    { key: 'name', source: 'HwdName', payloadKey: 'name', label: 'Database name', required: true, span: 1 },
-    { key: 'username', source: 'HwdUsername', payloadKey: 'username', label: 'DB username', span: 1 },
-    { key: 'privileges', source: 'HwdPrivileges', payloadKey: 'privileges', label: 'Privileges', span: 1 },
-    { key: 'toolStatus', source: 'HwdStatus', payloadKey: 'toolStatus', label: 'Lifecycle', type: 'search-select', options: WEBHOST_TOOL_STATUS_OPTIONS, required: true, span: 1 },
-    { key: 'provisionStatus', source: 'HwdProvisionStatus', payloadKey: 'provisionStatus', label: 'Provision status', type: 'search-select', options: WEBHOST_PROVISION_STATUS_OPTIONS, required: true, span: 1 },
-    { key: 'notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 3 },
-  ],
-};
-
+function configuration(kind: Kind): ConfigurableCrudConfig {
+  const grant = kind === 'database-grants',
+    user = kind === 'database-users';
+  const title = grant ? 'Database grants' : user ? 'Database users' : 'Webhost Databases';
+  return {
+    endpoint: `hosting/webhost/${kind}`,
+    uuidField: 'uuid',
+    pageTitle: title,
+    pageDescription: 'Manage database resources and access on your hosting account.',
+    createTitle: grant
+      ? 'Link user to database'
+      : user
+        ? 'New database user'
+        : 'New webhost database',
+    editTitle: grant
+      ? 'Edit database privileges'
+      : user
+        ? 'Edit database user'
+        : 'Edit webhost database',
+    dialogDescription: 'Changes are applied automatically to the hosting provider.',
+    searchPlaceholder: 'Name or host',
+    emptyLabel: 'No records found.',
+    deleteTitle: grant ? 'Unlink database user' : 'Delete database resource',
+    deleteMessage: grant
+      ? 'Revoke this user’s access to this database?'
+      : 'Permanently remove this resource from the hosting provider? Unlink users first.',
+    deleteSelectedTitle: 'Delete database resource',
+    deleteSelectedMessage: 'Delete selected database resources?',
+    savedMessage: 'Database resource saved.',
+    deletedMessage: 'Database resource deleted.',
+    deleteFailedMessage: 'Database operation failed.',
+    statusMode: 'number',
+    activeValue: 1,
+    inactiveValue: 0,
+    statusFilter: true,
+    bulkDelete: false,
+    rowActions: [retry, sync, ...(user ? [reset] : [])],
+    initialValues: {
+      hostUUID: '',
+      name: '',
+      databaseUUID: '',
+      userUUID: '',
+      privileges: [],
+      password: '',
+      notes: '',
+      status: 1,
+    },
+    listFilters: [
+      {
+        key: 'hostUUID',
+        label: 'Host',
+        paramKey: 'hostUUID',
+        type: 'search-select',
+        placeholder: 'Search hosts',
+        emptyLabel: 'No records found.',
+      },
+    ],
+    columns: [
+      {
+        id: 'name',
+        label: grant ? 'Database' : user ? 'Username' : 'Database',
+        field: 'name',
+        kind: 'identity',
+        uuidField: 'uuid',
+      },
+      {
+        id: 'host',
+        label: 'Host',
+        field: 'HostName',
+        kind: 'related',
+        uuidField: 'HostingWebhostHostHwhUUID',
+      },
+      ...(grant ? [{ id: 'username', label: 'DB user', field: 'Username' }] : []),
+      { id: 'provider', label: 'Provider', field: 'ProviderName' },
+      { id: 'status', label: 'Status', kind: 'status', field: 'isActive', className: 'status-col' },
+    ],
+    fields: [
+      {
+        key: 'status',
+        source: 'isActive',
+        label: 'Status',
+        type: 'status',
+        span: 1,
+        hiddenWhen: (c) => !!c.values['passwordAction'],
+      },
+      {
+        key: 'hostUUID',
+        source: 'HostingWebhostHostHwhUUID',
+        label: 'Host',
+        type: 'search-select',
+        required: true,
+        span: 1,
+        disabledWhen: (c) => c.editing,
+      },
+      ...(grant
+        ? [
+            {
+              key: 'databaseUUID',
+              source: 'databaseUUID',
+              label: 'Database',
+              type: 'search-select' as const,
+              required: true,
+              span: 1 as const,
+              disabledWhen: (c: any) => c.editing,
+            },
+            {
+              key: 'userUUID',
+              source: 'userUUID',
+              label: 'DB user',
+              type: 'search-select' as const,
+              required: true,
+              span: 1 as const,
+              disabledWhen: (c: any) => c.editing,
+            },
+            {
+              key: 'privileges',
+              source: 'privileges',
+              label: 'Privileges',
+              type: 'checkbox-group' as const,
+              required: true,
+              span: 4 as const,
+            },
+          ]
+        : [
+            {
+              key: 'name',
+              source: 'name',
+              label: user ? 'Username' : 'Database name',
+              required: true,
+              span: 1 as const,
+              disabledWhen: (c: any) => c.editing,
+            },
+          ]),
+      ...(user
+        ? [
+            {
+              key: 'password',
+              label: 'Password',
+              type: 'password' as const,
+              span: 1 as const,
+              autocomplete: 'new-password',
+              hiddenWhen: (c: any) => c.editing && !c.values['passwordAction'],
+              requiredWhen: (c: any) => !c.editing || !!c.values['passwordAction'],
+            },
+          ]
+        : []),
+      {
+        key: 'notes',
+        label: 'Notes',
+        type: 'textarea',
+        tab: 'notes',
+        span: 4,
+        rows: 3,
+        hiddenWhen: (c) => !!c.values['passwordAction'],
+      },
+    ],
+  };
+}
 @Component({
   selector: 'app-hosting-webhost-databases',
-  standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  override readonly dialogTitle = computed(() => {
+    const action = this.formValues()['passwordAction'];
+    return action === 'reset-password'
+      ? 'Reset password'
+      : action === 'provision'
+        ? 'Retry provisioning'
+        : this.editingRecord()
+          ? this.config.editTitle
+          : this.config.createTitle;
+  });
   private readonly route = inject(ActivatedRoute);
-  private readonly hosts = signal<HostingWebhostHost[]>([]);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
-  private readonly endpoint = computed(() => `${this.rootEndpoint()}/databases`);
-  private readonly hostOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.hosts().filter((h) => h.HwhIsActive === 1).map((host) => ({
-      value: host.HwhUUID,
-      label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
-      description: host.ProviderName,
-      searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername}`,
-    })),
-  );
-
+  private readonly kind: Kind = this.route.snapshot.data['databaseResource'] ?? 'databases';
+  private readonly root = webhostRootEndpoint(this.route.snapshot.data['scope'] === 'master');
+  private readonly hosts = signal<ConfigurableCrudRecord[]>([]);
+  private readonly databases = signal<ConfigurableCrudRecord[]>([]);
+  private readonly users = signal<ConfigurableCrudRecord[]>([]);
+  private readonly privileges = signal<ConfigurableCrudOption[]>([]);
+  private lookupGeneration = 0;
   constructor() {
-    super(DATABASE_CONFIG);
-    void this.fetchHosts();
+    super(configuration(inject(ActivatedRoute).snapshot.data['databaseResource'] ?? 'databases'));
+    void this.loadHosts();
   }
-
-  protected override listEndpoint(): string { return this.endpoint(); }
-  protected override createEndpoint(): string { return this.endpoint(); }
-  protected override updateEndpoint(): string { return this.endpoint(); }
-  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string { return this.endpoint(); }
-  protected override bulkDeleteEndpoint(): string { return `${this.endpoint()}/bulk`; }
-
+  protected override listEndpoint() {
+    return `${this.root}/${this.kind}`;
+  }
+  protected override createEndpoint() {
+    return this.listEndpoint();
+  }
+  protected override updateEndpoint() {
+    return this.listEndpoint();
+  }
+  protected override deleteEndpointFor() {
+    return this.listEndpoint();
+  }
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'hostUUID') return this.hostOptions();
-    if (key === 'toolStatus') return WEBHOST_TOOL_STATUS_OPTIONS;
-    if (key === 'provisionStatus') return WEBHOST_PROVISION_STATUS_OPTIONS;
-    return [];
-  }
-
-  protected override async fetchItems(filters: ConfigurableCrudFilters) {
-    if (!this.hosts().length) await this.fetchHosts();
-    const params = new URLSearchParams();
-    appendWebhostListParams(params, filters, this.listFilters());
-    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-      `${this.listEndpoint()}?${params.toString()}`,
-    );
-    return (response?.data?.items ?? []).map((item) => ({
-      ...item,
-      HwdConfig: asRecord(item['HwdConfig']),
+    if (key === 'privileges') return this.privileges();
+    const rows =
+      key === 'hostUUID' ? this.hosts() : key === 'databaseUUID' ? this.databases() : this.users();
+    return rows.map((r) => ({
+      value: String(r['uuid'] ?? r['HwhUUID']),
+      label: String(r['name'] ?? r['HwhName']),
     }));
   }
-
-  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    const p = new URLSearchParams({ limit: '1000', offset: '0' });
+    if (filters.search) p.set('search', String(filters.search));
+    if (filters.status !== '' && filters.status != null) p.set('isActive', String(filters.status));
+    const host = filters.extra?.['hostUUID'];
+    if (host) p.set('hostUUID', String(host));
+    const response = await this.api.get<any>(`${this.listEndpoint()}?${p}`);
+    return response.data.items;
+  }
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord) {
+    void this.loadHostResources(String(row['HostingWebhostHostHwhUUID']));
     return {
       ...super.formValuesFromRecord(row),
-      status: truthyNumber(row['HwdIsActive']),
-      toolStatus: String(row['HwdStatus'] ?? 'pending'),
-      provisionStatus: String(row['HwdProvisionStatus'] ?? 'manual'),
-      notes: String(asRecord(row['HwdConfig'])['notes'] ?? ''),
+      notes: (row['config'] as any)?.notes ?? '',
+      password: '',
+      passwordAction: '',
     };
   }
-
-  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+  protected override augmentPayload(p: ConfigurableCrudRecord) {
     return {
-      hostUUID: payload['hostUUID'],
-      name: String(payload['name'] ?? '').trim(),
-      username: normalizeString(payload['username']),
-      privileges: normalizeString(payload['privileges']),
-      status: payload['toolStatus'],
-      provisionStatus: payload['provisionStatus'],
-      config: { notes: normalizeString(payload['notes']) },
-      isActive: truthyNumber(payload['status']) === 1,
+      hostUUID: p['hostUUID'],
+      ...(this.kind === 'database-grants'
+        ? { databaseUUID: p['databaseUUID'], userUUID: p['userUUID'], privileges: p['privileges'] }
+        : { name: p['name'] }),
+      ...(!this.editingRecord() && this.kind === 'database-users'
+        ? { password: p['password'] }
+        : {}),
+      isActive: Number(p['status']) === 1,
+      config: { notes: p['notes'] || null },
     };
   }
-
-  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    const uuid = String(row['HwdUUID'] ?? '');
-    if (!uuid) return;
-    if (action.key === 'deprovision') {
-      const ok = await this.confirmAction(
-        'Deprovision webhost database',
-        `Remove "${String(row['HwdName'] ?? '')}" from the provider? The local record will remain for history.`,
-        'Deprovision',
-      );
-      if (!ok) return;
+  protected override onFieldValueChanged(key: string, value: unknown) {
+    if (key === 'hostUUID') {
+      this.setFieldValue('databaseUUID', '');
+      this.setFieldValue('userUUID', '');
+      this.setFieldValue('privileges', []);
+      void this.loadHostResources(String(value));
     }
-    if (!['provision', 'sync', 'deprovision'].includes(action.key)) return;
+  }
+  override rowActions(row: ConfigurableCrudRecord) {
+    if (['pending', 'provisioning'].includes(String(row['provisionStatus']))) return [];
+    return [
+      sync,
+      ...(row['provisionStatus'] === 'failed' ? [retry] : []),
+      ...(this.kind === 'database-users' && row['provisionStatus'] === 'provisioned'
+        ? [reset]
+        : []),
+    ];
+  }
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (this.kind === 'database-users' && ['reset-password', 'provision'].includes(action.key)) {
+      this.startEdit(row);
+      this.setFieldValue('passwordAction', action.key);
+      return;
+    }
     this.mutating.set(true);
     try {
-      const response = await this.api.post(`${this.endpoint()}/${uuid}/${action.key}`, {});
-      this.trackOperation(response);
+      this.trackOperation(
+        await this.api.post(`${this.listEndpoint()}/${row['uuid']}/${action.key}`, {}),
+      );
       this.refreshList();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t(`Failed to ${action.key} webhost database.`));
+    } catch (e) {
+      this.snack.error(this.errorMessage(e));
     } finally {
       this.mutating.set(false);
     }
   }
-
-  private async fetchHosts() {
+  override async saveItem(saveAndNew = false) {
+    const action = this.formValues()['passwordAction'];
+    if (!action) return super.saveItem(saveAndNew);
+    const p = this.formValues()['password'];
+    if (typeof p !== 'string' || p.length < 12) {
+      this.snack.error(this.t('Password must have at least 12 characters.'));
+      return;
+    }
+    this.saving.set(true);
     try {
-      const params = new URLSearchParams({ limit: '500', offset: '0', isActive: '1' });
-      const response = await this.api.get<{ data?: { items?: HostingWebhostHost[] } }>(
-        `${this.rootEndpoint()}/hosts?${params.toString()}`,
+      this.trackOperation(
+        await this.api.post(`${this.listEndpoint()}/${this.editingRecord()?.['uuid']}/${action}`, {
+          password: p,
+        }),
       );
-      this.hosts.set(response?.data?.items ?? []);
-    } catch {
-      this.hosts.set([]);
+      this.closeDialog();
+      this.refreshList();
+    } catch (e) {
+      this.snack.error(this.errorMessage(e));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+  private async loadHosts() {
+    try {
+      const r = await this.api.get<any>(`${this.root}/hosts?limit=1000&offset=0&isActive=1`);
+      this.hosts.set(r.data.items.filter((h: any) => h.HwhProvisionStatus === 'provisioned'));
+    } catch (e) {
+      this.snack.error(this.errorMessage(e));
+    }
+  }
+  private async loadHostResources(host: string) {
+    const generation = ++this.lookupGeneration;
+    this.databases.set([]);
+    this.users.set([]);
+    this.privileges.set([]);
+    if (!host || this.kind !== 'database-grants') return;
+    try {
+      const [d, u, c] = await Promise.all([
+        this.api.get<any>(`${this.root}/databases?hostUUID=${host}&limit=1000`),
+        this.api.get<any>(`${this.root}/database-users?hostUUID=${host}&limit=1000`),
+        this.api.get<any>(`${this.root}/database-grants/capabilities?hostUUID=${host}`),
+      ]);
+      if (generation !== this.lookupGeneration) return;
+      this.databases.set(d.data.items.filter((r: any) => r.provisionStatus === 'provisioned'));
+      this.users.set(u.data.items.filter((r: any) => r.provisionStatus === 'provisioned'));
+      this.privileges.set(c.data.privileges.map((p: string) => ({ value: p, label: p })));
+      if (this.fieldValueArray('privileges').includes('ALL PRIVILEGES'))
+        this.setFieldValue('privileges', c.data.privileges);
+    } catch (e) {
+      this.snack.error(this.errorMessage(e));
     }
   }
 }

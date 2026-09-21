@@ -1,3 +1,4 @@
+import { CheckboxGroupFieldComponent } from '../../forms/checkbox-group-field';
 import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
   Directive,
@@ -61,6 +62,7 @@ import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
+  CheckboxGroupFieldComponent,
   SecretContentFieldComponent,
   RouterLink,
   RefreshButtonComponent,
@@ -126,6 +128,7 @@ export type ConfigurableCrudFieldType =
   | 'phone'
   | 'date'
   | 'select'
+  | 'checkbox-group'
   | 'multi-select'
   | 'search-select'
   | 'permission-tree'
