@@ -4468,5 +4468,22 @@
   "Database Users": "Database users",
   "Delete selected database resources?": "Delete selected database resources?",
   "New webhost database": "New webhost database",
-  "Edit webhost database": "Edit webhost database"
+  "Edit webhost database": "Edit webhost database",
+  "Add and remove managed DNS records. Existing provider records are preserved.": "Add and remove managed DNS records. Existing provider records are preserved.",
+  "Remove this DNS record from the provider?": "Remove this DNS record from the provider?",
+  "Retry failed DNS operation": "Retry failed DNS operation",
+  "Failed to retry DNS operation.": "Failed to retry DNS operation.",
+  "Unmanaged": "Unmanaged",
+  "Retry": "Retry",
+  "TTL": "TTL",
+  "Record name": "Record name",
+  "New zone record": "New zone record",
+  "Edit zone record": "Edit zone record",
+  "Configure DNS name, type, value and TTL.": "Configure DNS name, type, value and TTL.",
+  "Name, value, type or host": "Name, value, type or host",
+  "No zone records found.": "No zone records found.",
+  "Delete zone record": "Delete zone record",
+  "Zone record saved successfully.": "Zone record saved successfully.",
+  "Zone record deleted successfully.": "Zone record deleted successfully.",
+  "Failed to delete zone record.": "Failed to delete zone record."
 }

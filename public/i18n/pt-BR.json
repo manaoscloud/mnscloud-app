@@ -4469,5 +4469,22 @@
   "Database Users": "Usuários de banco",
   "Delete selected database resources?": "Excluir os recursos de banco selecionados?",
   "New webhost database": "Novo banco de dados",
-  "Edit webhost database": "Editar banco de dados"
+  "Edit webhost database": "Editar banco de dados",
+  "Add and remove managed DNS records. Existing provider records are preserved.": "Adicione e remova registros DNS gerenciados. Os registros existentes no provedor são preservados.",
+  "Remove this DNS record from the provider?": "Remover este registro DNS do provedor?",
+  "Retry failed DNS operation": "Tentar novamente a operação DNS que falhou",
+  "Failed to retry DNS operation.": "Não foi possível repetir a operação DNS.",
+  "Unmanaged": "Não gerenciado",
+  "Retry": "Tentar novamente",
+  "TTL": "TTL",
+  "Record name": "Nome do registro",
+  "New zone record": "Novo registro DNS",
+  "Edit zone record": "Editar registro DNS",
+  "Configure DNS name, type, value and TTL.": "Configure o nome, tipo, valor e TTL do registro DNS.",
+  "Name, value, type or host": "Nome, valor, tipo ou hospedagem",
+  "No zone records found.": "Nenhum registro DNS encontrado.",
+  "Delete zone record": "Remover registro DNS",
+  "Zone record saved successfully.": "Registro DNS salvo.",
+  "Zone record deleted successfully.": "Registro DNS removido.",
+  "Failed to delete zone record.": "Falha ao remover registro DNS."
 }
