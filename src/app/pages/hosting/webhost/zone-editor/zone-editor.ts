@@ -43,8 +43,6 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
   emptyLabel: 'No zone records found.',
   deleteTitle: 'Delete zone record',
   deleteMessage: 'Remove this DNS record from the provider?',
-  deleteSelectedTitle: 'Delete selected zone records',
-  deleteSelectedMessage: 'Delete {count} selected zone records locally?',
   savedMessage: 'Zone record saved successfully.',
   deletedMessage: 'Zone record deleted successfully.',
   deleteFailedMessage: 'Failed to delete zone record.',
@@ -119,7 +117,6 @@ export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<Confi
   protected override createEndpoint(): string { return this.endpoint(); }
   protected override updateEndpoint(): string { return this.endpoint(); }
   protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string { return this.endpoint(); }
-  protected override bulkDeleteEndpoint(): string { return `${this.endpoint()}/bulk`; }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'hostUUID') return this.hostOptions();
@@ -141,7 +138,7 @@ export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<Confi
       hostUUID: payload['hostUUID'],
       name: String(payload['name'] ?? '').trim(),
       type: payload['recordType'],
-      value: String(payload['value'] ?? '').trim(),
+      value: String(payload['value'] ?? ''),
       ttl: numberOrNull(payload['ttl']) ?? 14400,
       priority: ['MX', 'SRV'].includes(String(payload['recordType'])) ? numberOrNull(payload['priority']) : null,
       weight: payload['recordType'] === 'SRV' ? numberOrNull(payload['weight']) : null,
