@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, resource } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -201,14 +201,57 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
   private readonly route = inject(ActivatedRoute);
   private readonly kind: Kind = this.route.snapshot.data['databaseResource'] ?? 'databases';
   private readonly root = webhostRootEndpoint(this.route.snapshot.data['scope'] === 'master');
-  private readonly hosts = signal<ConfigurableCrudRecord[]>([]);
-  private readonly databases = signal<ConfigurableCrudRecord[]>([]);
-  private readonly users = signal<ConfigurableCrudRecord[]>([]);
-  private readonly privileges = signal<ConfigurableCrudOption[]>([]);
-  private lookupGeneration = 0;
+  private readonly hostResource = resource({
+    defaultValue: [] as ConfigurableCrudRecord[],
+    loader: async () => {
+      const response = await this.api.get<any>(`${this.root}/hosts?limit=1000&offset=0&isActive=1`);
+      return response.data.items.filter(
+        (h: ConfigurableCrudRecord) => h['HwhProvisionStatus'] === 'provisioned',
+      ) as ConfigurableCrudRecord[];
+    },
+  });
+  private readonly hostAccessResource = resource({
+    params: () =>
+      this.kind === 'database-grants' && this.formValues()['hostUUID']
+        ? String(this.formValues()['hostUUID'])
+        : undefined,
+    defaultValue: {
+      databases: [] as ConfigurableCrudRecord[],
+      users: [] as ConfigurableCrudRecord[],
+      privileges: [] as string[],
+    },
+    loader: async ({ params: host }) => {
+      const [databases, users, capabilities] = await Promise.all([
+        this.api.get<any>(`${this.root}/databases?hostUUID=${host}&limit=1000`),
+        this.api.get<any>(`${this.root}/database-users?hostUUID=${host}&limit=1000`),
+        this.api.get<any>(`${this.root}/database-grants/capabilities?hostUUID=${host}`),
+      ]);
+      const ready = (row: ConfigurableCrudRecord) => row['provisionStatus'] === 'provisioned';
+      return {
+        databases: databases.data.items.filter(ready) as ConfigurableCrudRecord[],
+        users: users.data.items.filter(ready) as ConfigurableCrudRecord[],
+        privileges: capabilities.data.privileges as string[],
+      };
+    },
+  });
+  private readonly hosts = computed(() => this.hostResource.value());
+  private readonly databases = computed(() => this.hostAccessResource.value().databases);
+  private readonly users = computed(() => this.hostAccessResource.value().users);
+  private readonly privileges = computed(() =>
+    this.hostAccessResource.value().privileges.map((p) => ({ value: p, label: p })),
+  );
   constructor() {
     super(configuration(inject(ActivatedRoute).snapshot.data['databaseResource'] ?? 'databases'));
-    void this.loadHosts();
+    effect(() => {
+      const error = this.hostResource.error() ?? this.hostAccessResource.error();
+      if (error) this.snack.error(this.errorMessage(error));
+    });
+    effect(() => {
+      const privileges = this.hostAccessResource.value().privileges;
+      if (privileges.length && this.fieldValueArray('privileges').includes('ALL PRIVILEGES')) {
+        this.setFieldValue('privileges', privileges);
+      }
+    });
   }
   protected override listEndpoint() {
     return `${this.root}/${this.kind}`;
@@ -241,7 +284,6 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
     return response.data.items;
   }
   protected override formValuesFromRecord(row: ConfigurableCrudRecord) {
-    void this.loadHostResources(String(row['HostingWebhostHostHwhUUID']));
     return {
       ...super.formValuesFromRecord(row),
       notes: (row['config'] as any)?.notes ?? '',
@@ -267,7 +309,6 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
       this.setFieldValue('databaseUUID', '');
       this.setFieldValue('userUUID', '');
       this.setFieldValue('privileges', []);
-      void this.loadHostResources(String(value));
     }
   }
   override rowActions(row: ConfigurableCrudRecord) {
@@ -319,36 +360,6 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
       this.snack.error(this.errorMessage(e));
     } finally {
       this.saving.set(false);
-    }
-  }
-  private async loadHosts() {
-    try {
-      const r = await this.api.get<any>(`${this.root}/hosts?limit=1000&offset=0&isActive=1`);
-      this.hosts.set(r.data.items.filter((h: any) => h.HwhProvisionStatus === 'provisioned'));
-    } catch (e) {
-      this.snack.error(this.errorMessage(e));
-    }
-  }
-  private async loadHostResources(host: string) {
-    const generation = ++this.lookupGeneration;
-    this.databases.set([]);
-    this.users.set([]);
-    this.privileges.set([]);
-    if (!host || this.kind !== 'database-grants') return;
-    try {
-      const [d, u, c] = await Promise.all([
-        this.api.get<any>(`${this.root}/databases?hostUUID=${host}&limit=1000`),
-        this.api.get<any>(`${this.root}/database-users?hostUUID=${host}&limit=1000`),
-        this.api.get<any>(`${this.root}/database-grants/capabilities?hostUUID=${host}`),
-      ]);
-      if (generation !== this.lookupGeneration) return;
-      this.databases.set(d.data.items.filter((r: any) => r.provisionStatus === 'provisioned'));
-      this.users.set(u.data.items.filter((r: any) => r.provisionStatus === 'provisioned'));
-      this.privileges.set(c.data.privileges.map((p: string) => ({ value: p, label: p })));
-      if (this.fieldValueArray('privileges').includes('ALL PRIVILEGES'))
-        this.setFieldValue('privileges', c.data.privileges);
-    } catch (e) {
-      this.snack.error(this.errorMessage(e));
     }
   }
 }
