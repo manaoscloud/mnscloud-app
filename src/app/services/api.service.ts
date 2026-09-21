@@ -78,7 +78,12 @@ export class ApiService {
 
   private environmentOptional(endpoint: string): boolean {
     const normalized = endpoint.replace(/^\//, '');
-    return normalized === 'cyber-security' || normalized.startsWith('cyber-security/');
+    return (
+      normalized === 'cyber-security' ||
+      normalized.startsWith('cyber-security/') ||
+      // System hosting writes still need the selected tenant (create host/plan/etc.).
+      normalized.startsWith('system/hosting/')
+    );
   }
 
   private systemCyberSecurityContext(endpoint: string): boolean {
