@@ -50,6 +50,8 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
   activeValue: 'provisioned',
   inactiveValue: 'failed',
   bulkDelete: false,
+  deleteSelectedTitle: '',
+  deleteSelectedMessage: '',
   canEdit: false,
   serverSidePagination: true,
   statusOptions: RESULT_OPTIONS,
