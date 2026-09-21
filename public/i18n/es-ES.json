@@ -4437,5 +4437,10 @@
   "MNSCloud Pay — Platform rails": "MNSCloud Pay — Rieles de la plataforma",
   "Activate MNSCloud Pay to bill your customers. Bank partner: Inter Empresas.": "Active MNSCloud Pay para cobrar a sus clientes. Banco socio: Inter Empresas.",
   "Search MNSCloud Pay accounts": "Buscar cuentas MNSCloud Pay",
-  "Inter Empresas (MNSCloud Pay)": "Inter Empresas (MNSCloud Pay)"
+  "Inter Empresas (MNSCloud Pay)": "Inter Empresas (MNSCloud Pay)",
+  "Payment Providers": "Proveedores de pago",
+  "Register payment providers for this tenant. Available provider: MNSCloud Pay (Inter Empresas).": "Registre proveedores de pago de este tenant. Proveedor disponible: MNSCloud Pay (Inter Empresas).",
+  "Platform product rails for wallet top-ups and billing tenants. Bank partner: Inter Empresas.": "Rieles del producto para recargas de billetera y cobro a tenants. Banco socio: Inter Empresas.",
+  "Search payment providers": "Buscar proveedores de pago",
+  "Search platform rails": "Buscar rieles de la plataforma"
 }
