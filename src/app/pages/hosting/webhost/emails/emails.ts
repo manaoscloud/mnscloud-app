@@ -165,6 +165,14 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
   ],
   fields: [
     {
+      key: 'status',
+      source: 'HweIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
       key: 'localPart',
       source: 'HweLocalPart',
       payloadKey: 'localPart',
@@ -190,14 +198,6 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
       autocomplete: 'new-password',
       span: 1,
       requiredWhen: ({ editing }) => !editing,
-    },
-    {
-      key: 'status',
-      source: 'HweIsActive',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
     },
     {
       key: 'quotaMb',
