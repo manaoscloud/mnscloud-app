@@ -4433,5 +4433,10 @@
   "Domain register deleted successfully.": "Registro de domínio excluído com sucesso.",
   "Failed to delete domain register.": "Falha ao excluir registro de domínio.",
   "Name, register, username or customer": "Nome, registro, usuário ou cliente",
-  "Provision and manage Webhost accounts linked to plans and domain registers.": "Provisione e gerencie contas Webhost vinculadas a planos e registros de domínio."
+  "Provision and manage Webhost accounts linked to plans and domain registers.": "Provisione e gerencie contas Webhost vinculadas a planos e registros de domínio.",
+  "MNSCloud Pay": "MNSCloud Pay",
+  "MNSCloud Pay — Platform rails": "MNSCloud Pay — Trilhos da plataforma",
+  "Activate MNSCloud Pay to bill your customers. Bank partner: Inter Empresas.": "Ative o MNSCloud Pay para cobrar seus clientes. Banco parceiro: Inter Empresas.",
+  "Search MNSCloud Pay accounts": "Buscar contas MNSCloud Pay",
+  "Inter Empresas (MNSCloud Pay)": "Inter Empresas (MNSCloud Pay)"
 }
