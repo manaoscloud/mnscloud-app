@@ -4517,5 +4517,23 @@
   "Mailing list deleted successfully.": "Mailing list deleted successfully.",
   "Failed to delete mailing list.": "Failed to delete mailing list.",
   "Private mailing lists cannot be advertised.": "Private mailing lists cannot be advertised.",
-  "Mailing list already exists at the provider.": "Mailing list already exists at the provider."
+  "Mailing list already exists at the provider.": "Mailing list already exists at the provider.",
+  "secretsDashboard": {
+    "title": "Secrets dashboard",
+    "description": "Secret inventory, validity and storage operations.",
+    "active": "Active secrets",
+    "inactive": "Inactive secrets",
+    "unavailable": "Unavailable or not authorized",
+    "authorizedTotal": "Total in the authorized scope",
+    "sample": "First {{count}} secrets ordered by name (up to 100).",
+    "expiryWindow": "Expiring soon: within the next 7 days.",
+    "operationHint": "Latest operation per secret; completed does not attest vault availability.",
+    "attention": "Attention in the sample",
+    "noAttention": "No pending storage, expiry or failure signals in this sample.",
+    "management": "Secret management",
+    "attentionHint": "Up to 6 priorities from the sample: failures, expired, expiring and pending storage. Open management to review the full inventory.",
+    "metadataOnly": "This overview reads metadata only. Secret content is never requested or displayed.",
+    "unavailableState": "Not reported",
+    "total": "Total secrets"
+  }
 }

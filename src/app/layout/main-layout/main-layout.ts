@@ -2276,6 +2276,16 @@ export class MainLayout {
           requiresEnvironment: true,
           children: [
             {
+              id: 'cyber-security/secrets/dashboard',
+              label: 'Dashboard',
+              icon: 'dashboard',
+              route: '/cyber-security/secrets/dashboard',
+              masterRoute: '/system/cyber-security/secrets/dashboard',
+              entitlementCode: 'module.cyber-security.secrets',
+              permissions: ['tenant.cyber-security.secrets.read'],
+              requiresEnvironment: true,
+            },
+            {
               id: 'cyber-security/secret-accounts',
               label: 'Accounts',
               icon: 'manage_accounts',

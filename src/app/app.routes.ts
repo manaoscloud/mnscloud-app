@@ -318,6 +318,15 @@ export const routes: Routes = [
                 title: 'Cyber Security • Network Policies | mnscloud',
               },
               {
+                path: 'cyber-security/secrets/dashboard',
+                loadComponent: () =>
+                  import('./pages/cyber-security/secrets/dashboard/dashboard').then(
+                    (m) => m.SecretsDashboardPage,
+                  ),
+                title: 'Cyber Security • Secrets Dashboard | mnscloud',
+                data: { scope: 'tenant' },
+              },
+              {
                 path: 'cyber-security/secrets',
                 loadComponent: () =>
                   import('./pages/cyber-security/secrets/secrets').then(
@@ -1484,6 +1493,15 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityNetworkPoliciesPage,
                   ),
                 title: 'System Cyber Security • Network Policies | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'cyber-security/secrets/dashboard',
+                loadComponent: () =>
+                  import('./pages/cyber-security/secrets/dashboard/dashboard').then(
+                    (m) => m.SecretsDashboardPage,
+                  ),
+                title: 'Cyber Security • Secrets Dashboard | mnscloud',
                 data: { scope: 'master' },
               },
               {

@@ -153,3 +153,20 @@ templates/detail-page or templates/settings-page; shared styles belong in
 src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
 Run node scripts/validate-content-pages.mjs and the build; verify both responsive
 layouts and settings dirty/cancel/save behavior before release.
+
+## Secrets dashboard
+
+Secrets Manager exposes a read-only overview at `/cyber-security/secrets/dashboard`
+and `/system/cyber-security/secrets/dashboard`. It uses the shared dashboard template,
+scoped resource retention and the existing authorized metadata collection endpoints.
+Totals come from the API `total`, with separate bounded active/inactive requests;
+account and optional status totals remain unavailable when denied or failed. Required
+secret inventory failures retain only the same-scope last successful snapshot.
+
+Validity and latest-operation distributions cover only the first 100 secrets ordered
+by name, matching `ProcCyberSecuritySecretList`; they are explicitly labeled as a sample.
+Attention shows at most six sample records, ordered by failure, expiry and pending
+storage priority. These are neither global alert totals nor vault health attestations.
+The page does not request values, reveal content, probe servers or enqueue operations.
+No new commercial resource or backend contract is introduced; existing Secrets and
+Secret Accounts authorization/entitlement boundaries remain authoritative.
