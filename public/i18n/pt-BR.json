@@ -4536,5 +4536,6 @@
     "metadataOnly": "Esta visão consulta apenas metadados. O conteúdo dos segredos nunca é solicitado ou exibido.",
     "unavailableState": "Não informado",
     "total": "Total de segredos"
-  }
+  },
+  "Secrets": "Segredos"
 }

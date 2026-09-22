@@ -4535,5 +4535,6 @@
     "metadataOnly": "This overview reads metadata only. Secret content is never requested or displayed.",
     "unavailableState": "Not reported",
     "total": "Total secrets"
-  }
+  },
+  "Secrets": "Secrets"
 }
