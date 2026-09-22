@@ -9,11 +9,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import {
-  webhostRootEndpoint,
-  WEBHOST_TOOL_STATUS_OPTIONS,
-  lifecycleChipClass,
-} from '../webhost-shared';
+import { WEBHOST_TOOL_STATUS_OPTIONS, lifecycleChipClass } from '../webhost-shared';
 
 type Kind = 'databases' | 'database-users' | 'database-grants';
 const retry: ConfigurableCrudRowAction = {
@@ -213,7 +209,7 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
   });
   private readonly route = inject(ActivatedRoute);
   private readonly kind: Kind = this.route.snapshot.data['databaseResource'] ?? 'databases';
-  private readonly root = webhostRootEndpoint(this.route.snapshot.data['scope'] === 'master');
+  private readonly root = 'hosting/webhost';
   private readonly hostResource = resource({
     defaultValue: [] as ConfigurableCrudRecord[],
     loader: async () => {
