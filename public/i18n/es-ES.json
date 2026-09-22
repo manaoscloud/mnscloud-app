@@ -4517,5 +4517,24 @@
   "Mailing list deleted successfully.": "Lista de correo eliminada correctamente.",
   "Failed to delete mailing list.": "No se pudo eliminar la lista de correo.",
   "Private mailing lists cannot be advertised.": "Las listas privadas no pueden publicarse.",
-  "Mailing list already exists at the provider.": "La lista de correo ya existe en el proveedor."
+  "Mailing list already exists at the provider.": "La lista de correo ya existe en el proveedor.",
+  "secretsDashboard": {
+    "title": "Panel de secretos",
+    "description": "Inventario de secretos, vigencia y operaciones de almacenamiento.",
+    "active": "Secretos activos",
+    "inactive": "Secretos inactivos",
+    "unavailable": "No disponible o sin autorización",
+    "authorizedTotal": "Total en el ámbito autorizado",
+    "sample": "Primeros {{count}} secretos por nombre (hasta 100).",
+    "expiryWindow": "Próximos a vencer: en los próximos 7 días.",
+    "operationHint": "Última operación por secreto; completada no acredita la disponibilidad de la bóveda.",
+    "attention": "Atención en la muestra",
+    "noAttention": "Sin señales de almacenamiento pendiente, vencimiento o fallos en esta muestra.",
+    "management": "Gestión de secretos",
+    "attentionHint": "Hasta 6 prioridades de la muestra: fallos, vencidos, próximos a vencer y almacenamiento pendiente. Abra la gestión para consultar todo el inventario.",
+    "metadataOnly": "Esta vista consulta solo metadatos. Nunca se solicita ni se muestra el contenido de los secretos.",
+    "unavailableState": "No informado",
+    "total": "Total de secretos"
+  },
+  "Secrets": "Secretos"
 }

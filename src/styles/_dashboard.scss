@@ -556,7 +556,9 @@ mns-dashboard-page {
     .dashboard-nav-link,
     .dashboard-navigation > a {
       justify-content: space-between;
+      box-sizing: border-box;
       width: 100%;
+      min-height: 2.75rem;
       white-space: normal;
     }
   }
