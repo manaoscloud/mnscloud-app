@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -22,7 +21,6 @@ import {
   numberOrNull,
   promptWebhostPassword,
   truthyNumber,
-  webhostRootEndpoint,
 } from '../webhost-shared';
 
 const PROVISION_ACTION: ConfigurableCrudRowAction = {
@@ -69,14 +67,16 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
   pageDescription: 'Manage mailboxes created inside Webhost hosts.',
   createTitle: 'New webhost email',
   editTitle: 'Edit webhost email',
-  dialogDescription: 'Configure mailbox identity and quota. Provision starts automatically on create.',
+  dialogDescription:
+    'Configure mailbox identity and quota. Provision starts automatically on create.',
   searchPlaceholder: 'Email, host or domain',
   emptyLabel: 'No webhost emails found.',
   deleteTitle: 'Delete webhost email',
   deleteMessage:
     'Delete this mailbox? If it is provisioned on the provider, it will be removed there first.',
   deleteSelectedTitle: 'Delete selected webhost emails',
-  deleteSelectedMessage: 'Delete {count} selected webhost emails (provider cleanup when provisioned)?',
+  deleteSelectedMessage:
+    'Delete {count} selected webhost emails (provider cleanup when provisioned)?',
   savedMessage: 'Webhost email saved successfully.',
   deletedMessage: 'Webhost email deleted successfully.',
   deleteFailedMessage: 'Failed to delete webhost email.',
@@ -161,7 +161,13 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
       className: 'status-col',
       chipClass: lifecycleChipClass,
     },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HweIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HweIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -228,11 +234,8 @@ const EMAIL_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly route = inject(ActivatedRoute);
   private readonly hosts = signal<HostingWebhostHost[]>([]);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
+  private readonly rootEndpoint = computed(() => 'hosting/webhost');
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/emails`);
   private readonly hostOptions = computed<ConfigurableCrudOption[]>(() =>
     this.hosts()

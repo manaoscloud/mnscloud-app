@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -10,10 +9,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import type {
-  HostingDnsRegisterOption,
-  HostingWebhostPlan,
-} from '../webhost.types';
+import type { HostingDnsRegisterOption } from '../webhost.types';
 import {
   WEBHOST_HOST_STATUS_OPTIONS,
   YES_NO_OPTIONS,
@@ -22,8 +18,9 @@ import {
   lifecycleChipClass,
   normalizeString,
   truthyNumber,
-  webhostRootEndpoint,
 } from '../webhost-shared';
+
+type PlanCatalogOption = { HwlUUID: string; HwlName: string; HwlIsActive: number };
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -66,10 +63,12 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/webhost/hosts',
   uuidField: 'HwhUUID',
   pageTitle: 'Webhost Hosts',
-  pageDescription: 'Manage Webhost accounts linked to plans and domain registers. Create starts provisioning automatically.',
+  pageDescription:
+    'Manage Webhost accounts linked to plans and domain registers. Create starts provisioning automatically.',
   createTitle: 'New webhost host',
   editTitle: 'Edit webhost host',
-  dialogDescription: 'Configure host identity, customer, plan and domain. Provision starts automatically.',
+  dialogDescription:
+    'Configure host identity, customer, plan and domain. Provision starts automatically.',
   searchPlaceholder: 'Name, register, username or customer',
   emptyLabel: 'No webhost hosts found.',
   deleteTitle: 'Delete webhost host',
@@ -170,7 +169,13 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       className: 'status-col',
       chipClass: lifecycleChipClass,
     },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HwhIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HwhIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -229,13 +234,10 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly route = inject(ActivatedRoute);
   private readonly customers = signal<CustomerOption[]>([]);
-  private readonly plans = signal<HostingWebhostPlan[]>([]);
+  private readonly plans = signal<PlanCatalogOption[]>([]);
   private readonly registers = signal<HostingDnsRegisterOption[]>([]);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
+  private readonly rootEndpoint = computed(() => 'hosting/webhost');
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/hosts`);
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -252,8 +254,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       .map((plan) => ({
         value: plan.HwlUUID,
         label: plan.HwlName,
-        description: plan.ProviderName,
-        searchText: `${plan.HwlName} ${plan.ProviderName}`,
+        searchText: plan.HwlName,
       })),
   );
   private readonly registerOptions = computed<ConfigurableCrudOption[]>(() => {
@@ -424,9 +425,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       this.trackOperation(response);
       this.refreshList();
     } catch (error) {
-      this.snack.error(
-        this.errorMessage(error) || this.t(`Failed to ${action.key} webhost host.`),
-      );
+      this.snack.error(this.errorMessage(error) || this.t(`Failed to ${action.key} webhost host.`));
     } finally {
       this.mutating.set(false);
     }
@@ -434,10 +433,8 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
 
   private async fetchPlans(): Promise<void> {
     try {
-      const pickerRoot = this.isMaster()
-        ? 'system/hosting/webhost'
-        : 'hosting/webhost';
-      const response = await this.api.get<{ data?: { items?: HostingWebhostPlan[] } }>(
+      const pickerRoot = 'hosting/webhost';
+      const response = await this.api.get<{ data?: { items?: PlanCatalogOption[] } }>(
         `${pickerRoot}/plans?limit=500&offset=0&status=1`,
       );
       this.plans.set(response?.data?.items ?? []);
@@ -475,8 +472,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     const registerUUID = String(row['HostingDnsRegisterHrgUUID'] ?? '');
     if (!registerUUID) return;
     if (this.registers().some((item) => item.HrgUUID === registerUUID)) return;
-    const name =
-      normalizeString(row['RegisterName']) || normalizeString(row['DomainName']);
+    const name = normalizeString(row['RegisterName']) || normalizeString(row['DomainName']);
     if (!name) return;
     this.registers.update((current) => [
       ...current,

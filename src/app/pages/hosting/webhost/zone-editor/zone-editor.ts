@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -18,11 +17,13 @@ import {
   lifecycleChipClass,
   normalizeString,
   numberOrNull,
-  webhostRootEndpoint,
 } from '../webhost-shared';
 
 const RETRY_ACTION: ConfigurableCrudRowAction = {
-  key: 'provision', label: 'Retry', icon: 'refresh', tooltip: 'Retry failed DNS operation',
+  key: 'provision',
+  label: 'Retry',
+  icon: 'refresh',
+  tooltip: 'Retry failed DNS operation',
 };
 const RESULT_OPTIONS = [
   { value: 'pending', label: 'Queued' },
@@ -56,17 +57,40 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   serverSidePagination: true,
   statusOptions: RESULT_OPTIONS,
-  canDeleteRow: (row) => Number(row['HwzManaged']) === 1 && !['pending', 'provisioning'].includes(String(row['HwzProvisionStatus'])),
+  canDeleteRow: (row) =>
+    Number(row['HwzManaged']) === 1 &&
+    !['pending', 'provisioning'].includes(String(row['HwzProvisionStatus'])),
   statusFilter: true,
   tabLabels: { storage: 'Record', notes: 'Notes' },
   rowActions: [RETRY_ACTION],
   listFilters: [
-    { key: 'hostUUID', label: 'Host', paramKey: 'hostUUID', type: 'search-select', placeholder: 'Search hosts', emptyLabel: 'No records found.' },
-    { key: 'recordType', label: 'Type', paramKey: 'type', type: 'search-select', placeholder: 'Search', emptyLabel: 'No records found.' },
+    {
+      key: 'hostUUID',
+      label: 'Host',
+      paramKey: 'hostUUID',
+      type: 'search-select',
+      placeholder: 'Search hosts',
+      emptyLabel: 'No records found.',
+    },
+    {
+      key: 'recordType',
+      label: 'Type',
+      paramKey: 'type',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
   ],
   initialValues: {
-    hostUUID: '', name: '', recordType: 'A', value: '', ttl: 14400,
-    priority: null, weight: null, port: null, notes: '',
+    hostUUID: '',
+    name: '',
+    recordType: 'A',
+    value: '',
+    ttl: 14400,
+    priority: null,
+    weight: null,
+    port: null,
+    notes: '',
   },
   columns: [
     {
@@ -78,22 +102,101 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
       className: 'status-col',
       chipClass: lifecycleChipClass,
     },
-    { id: 'result', label: 'Status', kind: 'status', field: 'HwzProvisionStatus', options: RESULT_OPTIONS, chipClass: lifecycleChipClass },
+    {
+      id: 'result',
+      label: 'Status',
+      kind: 'status',
+      field: 'HwzProvisionStatus',
+      options: RESULT_OPTIONS,
+      chipClass: lifecycleChipClass,
+    },
     { id: 'name', label: 'Name', kind: 'identity', field: 'HwzName', uuidField: 'HwzUUID' },
     { id: 'type', label: 'Type', field: 'HwzType' },
     { id: 'value', label: 'Value', field: 'HwzValue' },
-    { id: 'host', label: 'Host', kind: 'related', field: 'HostName', uuidField: 'HostingWebhostHostHwhUUID' },
+    {
+      id: 'host',
+      label: 'Host',
+      kind: 'related',
+      field: 'HostName',
+      uuidField: 'HostingWebhostHostHwhUUID',
+    },
   ],
   fields: [
-    { key: 'hostUUID', source: 'HostingWebhostHostHwhUUID', payloadKey: 'hostUUID', label: 'Host', type: 'search-select', required: true, span: 1 },
-    { key: 'name', source: 'HwzName', payloadKey: 'name', label: 'Record name', required: true, span: 1 },
-    { key: 'recordType', source: 'HwzType', payloadKey: 'recordType', label: 'Type', type: 'search-select', options: WEBHOST_ZONE_TYPE_OPTIONS, required: true, span: 1 },
-    { key: 'value', source: 'HwzValue', payloadKey: 'value', label: 'Value', required: true, span: 1 },
+    {
+      key: 'hostUUID',
+      source: 'HostingWebhostHostHwhUUID',
+      payloadKey: 'hostUUID',
+      label: 'Host',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'HwzName',
+      payloadKey: 'name',
+      label: 'Record name',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'recordType',
+      source: 'HwzType',
+      payloadKey: 'recordType',
+      label: 'Type',
+      type: 'search-select',
+      options: WEBHOST_ZONE_TYPE_OPTIONS,
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'value',
+      source: 'HwzValue',
+      payloadKey: 'value',
+      label: 'Value',
+      required: true,
+      span: 1,
+    },
     { key: 'ttl', source: 'HwzTtl', payloadKey: 'ttl', label: 'TTL', type: 'number', span: 1 },
-    { key: 'priority', source: 'HwzPriority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, requiredWhen: ({ values }) => ['MX', 'SRV'].includes(String(values['recordType'])), hiddenWhen: ({ values }) => !['MX', 'SRV'].includes(String(values['recordType'])) },
-    { key: 'weight', source: 'HwzWeight', payloadKey: 'weight', label: 'Weight', type: 'number', span: 1, requiredWhen: ({ values }) => values['recordType'] === 'SRV', hiddenWhen: ({ values }) => values['recordType'] !== 'SRV' },
-    { key: 'port', source: 'HwzPort', payloadKey: 'port', label: 'Port', type: 'number', span: 1, requiredWhen: ({ values }) => values['recordType'] === 'SRV', hiddenWhen: ({ values }) => values['recordType'] !== 'SRV' },
-    { key: 'notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 3 },
+    {
+      key: 'priority',
+      source: 'HwzPriority',
+      payloadKey: 'priority',
+      label: 'Priority',
+      type: 'number',
+      span: 1,
+      requiredWhen: ({ values }) => ['MX', 'SRV'].includes(String(values['recordType'])),
+      hiddenWhen: ({ values }) => !['MX', 'SRV'].includes(String(values['recordType'])),
+    },
+    {
+      key: 'weight',
+      source: 'HwzWeight',
+      payloadKey: 'weight',
+      label: 'Weight',
+      type: 'number',
+      span: 1,
+      requiredWhen: ({ values }) => values['recordType'] === 'SRV',
+      hiddenWhen: ({ values }) => values['recordType'] !== 'SRV',
+    },
+    {
+      key: 'port',
+      source: 'HwzPort',
+      payloadKey: 'port',
+      label: 'Port',
+      type: 'number',
+      span: 1,
+      requiredWhen: ({ values }) => values['recordType'] === 'SRV',
+      hiddenWhen: ({ values }) => values['recordType'] !== 'SRV',
+    },
+    {
+      key: 'notes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 3,
+    },
   ],
 };
 
@@ -105,30 +208,36 @@ const ZONE_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly route = inject(ActivatedRoute);
   private readonly hosts = signal<HostingWebhostHost[]>([]);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
+  private readonly rootEndpoint = computed(() => 'hosting/webhost');
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/zone-records`);
   private readonly hostOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.hosts().filter((h) => h.HwhIsActive === 1 && h.HwhProvisionStatus === 'provisioned').map((host) => ({
-      value: host.HwhUUID,
-      label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
-      description: host.ProviderName,
-      searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername}`,
-    })),
+    this.hosts()
+      .filter((h) => h.HwhIsActive === 1 && h.HwhProvisionStatus === 'provisioned')
+      .map((host) => ({
+        value: host.HwhUUID,
+        label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
+        description: host.ProviderName,
+        searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername}`,
+      })),
   );
 
   constructor() {
     super(ZONE_CONFIG);
-
   }
 
-  protected override listEndpoint(): string { return this.endpoint(); }
-  protected override createEndpoint(): string { return this.endpoint(); }
-  protected override updateEndpoint(): string { return this.endpoint(); }
-  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string { return this.endpoint(); }
+  protected override listEndpoint(): string {
+    return this.endpoint();
+  }
+  protected override createEndpoint(): string {
+    return this.endpoint();
+  }
+  protected override updateEndpoint(): string {
+    return this.endpoint();
+  }
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
+  }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'hostUUID') return this.hostOptions();
@@ -142,7 +251,9 @@ export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<Confi
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return Number(row['HwzManaged']) === 1 && row['HwzProvisionStatus'] === 'failed' ? [RETRY_ACTION] : [];
+    return Number(row['HwzManaged']) === 1 && row['HwzProvisionStatus'] === 'failed'
+      ? [RETRY_ACTION]
+      : [];
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -153,7 +264,9 @@ export class HostingWebhostZoneEditorPage extends ConfigurableCrudPageBase<Confi
       // The shared CRUD payload trims strings; DNS TXT data must retain the form bytes.
       value: String(this.formValues()['value'] ?? ''),
       ttl: numberOrNull(payload['ttl']) ?? 14400,
-      priority: ['MX', 'SRV'].includes(String(payload['recordType'])) ? numberOrNull(payload['priority']) : null,
+      priority: ['MX', 'SRV'].includes(String(payload['recordType']))
+        ? numberOrNull(payload['priority'])
+        : null,
       weight: payload['recordType'] === 'SRV' ? numberOrNull(payload['weight']) : null,
       port: payload['recordType'] === 'SRV' ? numberOrNull(payload['port']) : null,
       config: { notes: normalizeString(payload['notes']) },

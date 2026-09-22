@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 
@@ -21,7 +20,6 @@ import {
   normalizeString,
   truthyNumber,
   WEBHOST_ACCESS_TYPE_OPTIONS,
-  webhostRootEndpoint,
   YES_NO_OPTIONS,
 } from '../webhost-shared';
 
@@ -201,23 +199,22 @@ const MAILING_CONFIG: ConfigurableCrudConfig = {
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HostingWebhostMailingListsPage
-  extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly route = inject(ActivatedRoute);
+export class HostingWebhostMailingListsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly hosts = signal<HostingWebhostHost[]>([]);
-  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly rootEndpoint = computed(() => webhostRootEndpoint(this.isMaster()));
+  private readonly rootEndpoint = computed(() => 'hosting/webhost');
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/mailing-lists`);
   private readonly hostOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.hosts().filter((h) =>
-      h.HwhIsActive === 1 && h.HwhStatus === 'active' && h.HwhProvisionStatus === 'provisioned'
-    ).map((host) => ({
-      value: host.HwhUUID,
-      label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
-      description: host.ProviderName,
-      searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername}`,
-    }))
+    this.hosts()
+      .filter(
+        (h) =>
+          h.HwhIsActive === 1 && h.HwhStatus === 'active' && h.HwhProvisionStatus === 'provisioned',
+      )
+      .map((host) => ({
+        value: host.HwhUUID,
+        label: hostOptionLabel(host as unknown as ConfigurableCrudRecord),
+        description: host.ProviderName,
+        searchText: `${host.HwhName} ${host.DomainName} ${host.HwhUsername}`,
+      })),
   );
 
   constructor() {
@@ -257,11 +254,9 @@ export class HostingWebhostMailingListsPage
     if (filters.status !== '') params.set('isActive', String(filters.status));
     const host = filters.extra['hostUUID'];
     if (host) params.set('hostUUID', String(host));
-    const response = await this.api.get<
-      { data?: { items?: ConfigurableCrudRecord[]; total?: number } }
-    >(
-      `${this.listEndpoint()}?${params.toString()}`,
-    );
+    const response = await this.api.get<{
+      data?: { items?: ConfigurableCrudRecord[]; total?: number };
+    }>(`${this.listEndpoint()}?${params.toString()}`);
     this.serverTotal.set(Number(response?.data?.total ?? 0));
     return (response?.data?.items ?? []).map((row) => ({
       ...row,
@@ -308,11 +303,14 @@ export class HostingWebhostMailingListsPage
     if (action.key === 'error') {
       openDataViewerDialog(this.dialog, {
         title: 'Mailing list failure',
-        details: [{ label: 'List', value: row['HwmEmail'] }, {
-          label: 'Error',
-          value: row['HwmProvisionError'],
-          translate: true,
-        }],
+        details: [
+          { label: 'List', value: row['HwmEmail'] },
+          {
+            label: 'Error',
+            value: row['HwmProvisionError'],
+            translate: true,
+          },
+        ],
       });
       return;
     }
@@ -338,10 +336,13 @@ export class HostingWebhostMailingListsPage
           throw new Error(this.t('Mailman access is unavailable.'));
         }
         if (tab) tab.location.replace(target.href);
-        const details = [{ label: 'One-time password', value: data.password }, {
-          label: 'Mailman URL',
-          value: target.href,
-        }];
+        const details = [
+          { label: 'One-time password', value: data.password },
+          {
+            label: 'Mailman URL',
+            value: target.href,
+          },
+        ];
         const binding = openDataViewerDialog(this.dialog, {
           title: 'Mailman access',
           description:
