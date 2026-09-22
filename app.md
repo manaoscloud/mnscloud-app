@@ -1197,3 +1197,14 @@ translations. DNS reads use cached observations; disable editing while the obser
 blocked, and require a fresh revision before submitting another change. Preserve the existing
 CRUD/dialog templates and soft-delete semantics. No recovery/billing interface is introduced.
 The deprecated `showAsyncOperationStatus` Configurable CRUD flag is ignored.
+
+## Hosting / Webhost scope
+
+- Providers and Plans are Master-only administrative pages.
+- Dashboard exists in both Master and tenant contexts.
+- Hosts, Emails, Databases (including users and grants), Mailing Lists and Zone Editor
+  are tenant-only pages. Master users must switch to a selected tenant to use them.
+- Operational pages always call `hosting/webhost/...`; do not recreate System route aliases.
+- Host plan selection uses the read-only tenant catalog at `hosting/webhost/plans`.
+  Catalog administration remains in System; do not send provider settings to tenants.
+- Situation remains an automatic list column, never an editable CRUD field.
