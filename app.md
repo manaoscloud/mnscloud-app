@@ -1220,3 +1220,24 @@ single-operation `form` configuration. Both reuse the shared renderer and dialog
 Parent identity is captured in endpoints, and API/DB still enforce ownership/permissions.
 Use collection actions for nested configurations such as plan/rate/volume-tier management.
 One-shot financial operations expose only their allowed action, never arbitrary create/delete.
+
+## Shared navigation and paginated relationship fields
+
+Material paginator labels and ranges use the shared Transloco-backed MatPaginatorIntl;
+all languages react without reload. Breadcrumb segment labels and route title segments use
+runtime translations, preserving authorized entity names and UUID URLs. CI checks every menu
+label, paginator keys and tuple-driven credential labels against all three dictionaries.
+
+Configurable fields may declare `remoteLookup` with endpoint, uuidField, labelField and optional
+selectedLabelField/searchParam. The shared searchable select owns server search and explicit
+previous/next pages (50 options per page), loading/error state, and clearing search on close.
+The current selection remains identifiable outside the current page. Do not preload unlimited
+foreign-key datasets or silently filter just the first backend window. API remains authoritative.
+
+Lists with paginated endpoints must set `serverSidePagination`. Only the canonical items/total/
+limit/offset envelope is accepted. Parent-specific nested collections retain the same renderer.
+Per-record lifecycle guards use canEditRow/canDeleteRow; server enforcement remains mandatory.
+
+A CRUD with `defaultCurrencyScope` resolves its default from that explicit master/tenant
+Parameter endpoint before enabling creation. Missing/invalid configuration is an error; it must
+not silently become BRL. Currency is never inferred from the browser's language.

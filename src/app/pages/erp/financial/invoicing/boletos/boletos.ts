@@ -1,11 +1,8 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../../../services/api.service';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudOption,
-  ConfigurableCrudConfig,
   ConfigurableCrudRowAction,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
@@ -18,6 +15,9 @@ const statuses = [
 ];
 // Financial records use individual deletion only; bank-backed records remain protected by DB/API.
 const config = defineCrud({
+  serverSidePagination: true,
+  canEditRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
+  canDeleteRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
   endpoint: 'erp/financial/invoicing/boletos',
   uuidField: 'ErpFinInvBoletoUUID',
   pageTitle: 'Boletos',
@@ -54,6 +54,12 @@ const config = defineCrud({
     { key: 'title', source: 'Title', label: 'Title', required: true, span: 1 },
     {
       key: 'customerUUID',
+      remoteLookup: {
+        endpoint: 'erp/customers?status=1',
+        searchParam: 'q',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+      },
       source: 'CustomerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -74,6 +80,11 @@ const config = defineCrud({
     },
     {
       key: 'gatewayAccountUUID',
+      remoteLookup: {
+        endpoint: 'erp/financial/payment/gateways?status=1',
+        uuidField: 'EfgUUID',
+        labelField: 'EfgName',
+      },
       source: 'GatewayAccountUUID',
       label: 'Payment provider',
       type: 'search-select',
@@ -119,35 +130,6 @@ export class InvoicingBoletosPage extends ConfigurableCrudPageBase<ConfigurableC
     super(config);
   }
 
-  private readonly lookupApi = inject(ApiService);
-  private readonly customers = resource({
-    defaultValue: [] as ConfigurableCrudRecord[],
-    loader: async () =>
-      (await this.lookupApi.get<any>('erp/customers?status=1&limit=5000'))?.data?.items ?? [],
-  });
-  private readonly gateways = resource({
-    defaultValue: [] as ConfigurableCrudRecord[],
-    loader: async () =>
-      (await this.lookupApi.get<any>('erp/financial/payment/gateways?limit=5000'))?.data?.items ??
-      [],
-  });
-  override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'customerUUID')
-      return this.customers
-        .value()
-        .map((r: ConfigurableCrudRecord) => ({
-          value: String(r['CustomerUUID']),
-          label: String(r['Name']),
-        }));
-    if (key === 'gatewayAccountUUID')
-      return this.gateways
-        .value()
-        .map((r: ConfigurableCrudRecord) => ({
-          value: String(r['EfgUUID']),
-          label: String(r['EfgName']),
-        }));
-    return super.lookupOptions(key);
-  }
   override async handleRowAction(
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,

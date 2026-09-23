@@ -187,7 +187,7 @@ export interface BillingPaymentIntent {
   BpiCurrency: string;
   BpiStatus: string;
   BpiProvider?: string | null;
-  PaymentProviderAccountPpaUUID?: string | null;
+  PayProviderAccountPpaUUID?: string | null;
   BpiGatewaySource?: string | null;
   BpiProviderReference?: string | null;
   BpiCheckoutUrl?: string | null;
@@ -336,9 +336,8 @@ export class BillingService {
   readonly entitlementRevision = signal(0);
 
   async getTenantDashboard() {
-    const response = await this.api.get<ApiListResponse<BillingTenantDashboard>>(
-      'billing/dashboard',
-    );
+    const response =
+      await this.api.get<ApiListResponse<BillingTenantDashboard>>('billing/dashboard');
     return response.data?.item ?? null;
   }
 

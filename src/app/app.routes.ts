@@ -429,9 +429,9 @@ export const routes: Routes = [
               {
                 path: 'erp/human-resources/time-clock-accounts',
                 loadComponent: () =>
-                  import('./pages/erp/human-resources/time-clock-accounts/time-clock-accounts').then(
-                    (m) => m.ErpHumanResourcesTimeClockAccountsPage,
-                  ),
+                  import(
+                    './pages/erp/human-resources/time-clock-accounts/time-clock-accounts'
+                  ).then((m) => m.ErpHumanResourcesTimeClockAccountsPage),
                 title: 'ERP • Human Resources • Time Clock Accounts | mnscloud',
               },
 
@@ -1771,7 +1771,10 @@ export const routes: Routes = [
               },
               {
                 path: 'pabx/server-assignments',
-                loadComponent: () => import('./pages/voip/pabx/server-assignment/server-assignment').then((m) => m.VoipPabxServerAssignmentPage),
+                loadComponent: () =>
+                  import('./pages/voip/pabx/server-assignment/server-assignment').then(
+                    (m) => m.VoipPabxServerAssignmentPage,
+                  ),
                 title: 'PABX server assignments | mnscloud',
                 data: { scope: 'master' },
               },
@@ -1992,10 +1995,8 @@ export const routes: Routes = [
               {
                 path: 'pay',
                 loadComponent: () =>
-                  import('./pages/system/pay/pay-accounts').then(
-                    (m) => m.SystemPayAccountsPage,
-                  ),
-                title: 'System • Payments | mnscloud',
+                  import('./pages/system/pay/pay-accounts').then((m) => m.SystemPayAccountsPage),
+                title: 'System • Pay | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
@@ -2004,16 +2005,16 @@ export const routes: Routes = [
                   import('./pages/system/pay/fee-plans/fee-plans').then(
                     (m) => m.SystemPayFeePlansPage,
                   ),
-                title: 'System • Payments Fee Plans | mnscloud',
+                title: 'System • Pay • Fee Plans | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'pay/fee-plan-assignments',
                 loadComponent: () =>
-                  import(
-                    './pages/system/pay/fee-plan-assignments/fee-plan-assignments'
-                  ).then((m) => m.SystemPayFeePlanAssignmentsPage),
-                title: 'System • Payments Fee Plan Assignments | mnscloud',
+                  import('./pages/system/pay/fee-plan-assignments/fee-plan-assignments').then(
+                    (m) => m.SystemPayFeePlanAssignmentsPage,
+                  ),
+                title: 'System • Pay • Fee Plan Assignments | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
@@ -2022,7 +2023,7 @@ export const routes: Routes = [
                   import('./pages/system/pay/fee-accruals/fee-accruals').then(
                     (m) => m.SystemPayFeeAccrualsPage,
                   ),
-                title: 'System • Payments Fee Accruals | mnscloud',
+                title: 'System • Pay • Postpaid Accruals | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {

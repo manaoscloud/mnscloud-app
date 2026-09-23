@@ -1,3 +1,4 @@
+import { payErrorMessage } from '../../shared/payment/pay-error';
 import { inject } from '@angular/core';
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
@@ -129,7 +130,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // Outros erros (422, 400, 500 etc.)
-      const commercialMessage = entitlementErrorMessage(error);
+      const commercialMessage = payErrorMessage(error) ?? entitlementErrorMessage(error);
       const rawMessage =
         (error.error && (error.error.error || error.error.message)) ||
         error.message ||

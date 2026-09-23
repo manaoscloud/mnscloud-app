@@ -1,3 +1,4 @@
+import { payErrorMessage } from '../../payment/pay-error';
 import { CheckboxGroupFieldComponent } from '../../forms/checkbox-group-field';
 import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
@@ -156,6 +157,13 @@ export type ConfigurableCrudPostalCodeLookup = {
 };
 
 export type ConfigurableCrudField = {
+  remoteLookup?: {
+    endpoint: string;
+    uuidField: string;
+    labelField: string;
+    selectedLabelField?: string;
+    searchParam?: string;
+  };
   key: string;
   label: string;
   labelWhen?: (context: ConfigurableCrudFieldContext) => string;
@@ -343,6 +351,7 @@ export type ConfigurableCrudConfig = {
   collectionDialog?: boolean;
   formOnly?: boolean;
   defaultCurrencyFields?: readonly string[];
+  defaultCurrencyScope?: 'master' | 'tenant';
   payload?: (values: ConfigurableCrudRecord, editing: boolean) => ConfigurableCrudRecord;
   endpoint: string;
   /** Optional lifecycle endpoint when a resource reads from a projection but creates elsewhere. */
@@ -482,6 +491,34 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly formValues = signal<ConfigurableCrudRecord>({});
   readonly enabledCopyActions = signal(new Set<string>());
   readonly defaultCurrency = signal('BRL');
+  readonly currencyReady = signal(false);
+  private readonly selectedRemoteOptions = new Map<string, ConfigurableCrudOption>();
+  readonly remoteQueries = signal<Record<string, { search: string; offset: number }>>({});
+  readonly remoteLookups = resource({
+    params: () => ({
+      queries: this.remoteQueries(),
+      fields: this.config.fields.filter((f) => f.remoteLookup),
+    }),
+    defaultValue: {} as Record<string, { items: ConfigurableCrudRecord[]; error: boolean }>,
+    loader: async ({ params }) =>
+      Object.fromEntries(
+        await Promise.all(
+          params.fields.map(async (field) => {
+            const query = params.queries[field.key] ?? { search: '', offset: 0 };
+            const endpoint = field.remoteLookup!.endpoint;
+            const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=50&offset=${query.offset}&${field.remoteLookup!.searchParam ?? 'search'}=${encodeURIComponent(query.search)}`;
+            try {
+              const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
+                url,
+              );
+              return [field.key, { items: response.data.items, error: false }];
+            } catch {
+              return [field.key, { items: [], error: true }];
+            }
+          }),
+        ),
+      ),
+  });
   /**
    * Material owns the live text while a date is incomplete. Keeping that draft outside
    * the form signal prevents Angular from writing an incomplete string back through
@@ -593,7 +630,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
-  readonly canCreate = computed(() => this.config.canCreate !== false);
+  readonly canCreate = computed(
+    () =>
+      this.config.canCreate !== false &&
+      (!this.config.defaultCurrencyScope || this.currencyReady()),
+  );
   readonly canEdit = computed(() => this.config.canEdit !== false);
   readonly canDelete = computed(() => this.config.canDelete !== false);
   readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
@@ -605,9 +646,26 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
     this.pageSize.set(config.initialPageSize ?? 5);
-    void this.parameters
-      .resolveDefaultCurrency('BRL')
-      .then((currency) => this.defaultCurrency.set(currency));
+    if (config.defaultCurrencyScope) {
+      this.defaultCurrency.set('');
+      const scope = config.defaultCurrencyScope === 'master' ? 'system' : 'settings';
+      void this.api
+        .get<any>(`${scope}/parameters/resolve/DEFAULT_CURRENCY`)
+        .then((response) => {
+          const currency = String(response?.data?.items?.[0]?.SprValue ?? '')
+            .trim()
+            .toUpperCase();
+          if (!/^[A-Z]{3}$/.test(currency)) throw new Error('Default currency is not configured.');
+          this.defaultCurrency.set(currency);
+          this.currencyReady.set(true);
+        })
+        .catch(() => this.snack.warning(this.t('Default currency is not configured.')));
+    } else {
+      void this.parameters.resolveDefaultCurrency('BRL').then((currency) => {
+        this.defaultCurrency.set(currency);
+        this.currencyReady.set(true);
+      });
+    }
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
       params: () => this.listResourceParams(),
@@ -979,8 +1037,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       await this.handleRowAction(action, row);
       return;
     }
-    const { ConfigurableCrudCollectionDialog } =
-      await import('./configurable-crud-collection-dialog');
+    const { ConfigurableCrudCollectionDialog } = await import(
+      './configurable-crud-collection-dialog'
+    );
     const formOnly = Boolean(action.form);
     const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
       data: { ...factory(row), collectionDialog: true, formOnly },
@@ -1178,6 +1237,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   setFieldValue(key: string, value: unknown): void {
+    const remoteField = this.config.fields.find((field) => field.key === key && field.remoteLookup);
+    if (remoteField) {
+      const option = this.fieldOptions(remoteField).find((item) => item.value === value);
+      if (option) this.selectedRemoteOptions.set(key, option);
+      else this.selectedRemoteOptions.delete(key);
+    }
     try {
       this.formValues.update(
         (current) => this.config.fieldChange?.(key, value, current) ?? { ...current, [key]: value },
@@ -1298,6 +1363,30 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    if (field.remoteLookup) {
+      const lookup = field.remoteLookup;
+      const result = this.remoteLookups.value()[field.key];
+      const options: ConfigurableCrudOption[] = (result?.items ?? []).map(
+        (r: ConfigurableCrudRecord) => ({
+          value: String(r[lookup.uuidField]),
+          label: String(r[lookup.labelField] ?? r[lookup.uuidField]),
+        }),
+      );
+      const selected = this.fieldValue(field.key);
+      if (selected && !options.some((o) => o.value === selected))
+        options.unshift({
+          value: String(selected),
+          label: String(
+            (this.selectedRemoteOptions.get(field.key)?.value === selected
+              ? this.selectedRemoteOptions.get(field.key)?.label
+              : undefined) ??
+              this.editingRecord()?.[lookup.selectedLabelField ?? lookup.labelField] ??
+              selected,
+          ),
+        });
+      return options;
+    }
+
     return field.options ?? this.lookupOptions(field.key);
   }
 
@@ -1320,8 +1409,29 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return filter.loading?.() ?? false;
   }
 
+  remoteSearchChanged(field: ConfigurableCrudField, search: string): void {
+    if (!field.remoteLookup) return;
+    this.remoteQueries.update((q) => ({ ...q, [field.key]: { search, offset: 0 } }));
+  }
+  remotePageChanged(field: ConfigurableCrudField, direction: number): void {
+    const old = this.remoteQueries()[field.key] ?? { search: '', offset: 0 };
+    this.remoteQueries.update((q) => ({
+      ...q,
+      [field.key]: { ...old, offset: Math.max(0, old.offset + direction * 50) },
+    }));
+  }
+  remoteHasNext(field: ConfigurableCrudField): boolean {
+    return (this.remoteLookups.value()[field.key]?.items.length ?? 0) === 50;
+  }
+  remoteHasPrevious(field: ConfigurableCrudField): boolean {
+    return (this.remoteQueries()[field.key]?.offset ?? 0) > 0;
+  }
+  remoteError(field: ConfigurableCrudField): boolean {
+    return this.remoteLookups.value()[field.key]?.error ?? false;
+  }
+
   fieldLoading(field: ConfigurableCrudField): boolean {
-    return field.loading?.() ?? false;
+    return field.remoteLookup ? this.remoteLookups.isLoading() : (field.loading?.() ?? false);
   }
 
   canQuickCreate(field: ConfigurableCrudField): boolean {
@@ -2122,6 +2232,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected errorMessage(error: unknown): string {
+    const payMessage = payErrorMessage(error);
+    if (payMessage) return payMessage;
     if (error && typeof error === 'object') {
       const maybe = error as { error?: { error?: string; message?: string }; message?: string };
       return maybe.error?.error ?? maybe.error?.message ?? maybe.message ?? 'Operation failed.';
@@ -2136,7 +2248,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
 function extractCrudItems(response: unknown): ConfigurableCrudRecord[] {
   const data = (response as { data?: unknown })?.data;
-  if (Array.isArray(data)) return data as ConfigurableCrudRecord[];
   if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {
     return (data as { items: ConfigurableCrudRecord[] }).items;
   }

@@ -1,12 +1,8 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../../services/api.service';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudOption,
-  ConfigurableCrudConfig,
-  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 
@@ -17,8 +13,9 @@ const statuses = [
 
 // Assignments are revoked individually through their audited lifecycle.
 const config = defineCrud({
+  serverSidePagination: true,
   endpoint: 'system/pay/fee-plan-assignments',
-  uuidField: 'BpaUUID',
+  uuidField: 'PfaUUID',
   pageTitle: 'Pay — Fee Plan Assignments',
   bulkDelete: false,
   statusOptions: statuses,
@@ -30,23 +27,25 @@ const config = defineCrud({
       label: 'Fee plan',
       field: 'FeePlanName',
       kind: 'related',
-      uuidField: 'BillingFeePlanBfpUUID',
+      uuidField: 'PayFeePlanPfpUUID',
     },
     {
       id: 'mode',
       label: 'Billing mode',
-      field: 'BpaBillingMode',
+      field: 'PfaBillingMode',
       options: [
         { value: 'PREPAID', label: 'Prepaid' },
         { value: 'POSTPAID', label: 'Postpaid' },
       ],
     },
-    { id: 'status', label: 'Status', field: 'BpaStatus', kind: 'status' },
+    { id: 'from', label: 'Effective from', field: 'PfaEffectiveFrom', kind: 'datetime' },
+    { id: 'to', label: 'Effective to', field: 'PfaEffectiveTo', kind: 'datetime' },
+    { id: 'status', label: 'Status', field: 'PfaStatus', kind: 'status' },
   ],
   fields: [
     {
       key: 'status',
-      source: 'BpaStatus',
+      source: 'PfaStatus',
       label: 'Status',
       type: 'status',
       span: 1,
@@ -54,6 +53,11 @@ const config = defineCrud({
     },
     {
       key: 'tenantUUID',
+      remoteLookup: {
+        endpoint: 'system/billing/tenants',
+        uuidField: 'EnvironmentUUID',
+        labelField: 'EnvironmentName',
+      },
       source: 'UserUsrUUID',
       label: 'Tenant',
       type: 'search-select',
@@ -63,7 +67,13 @@ const config = defineCrud({
     },
     {
       key: 'planUUID',
-      source: 'BillingFeePlanBfpUUID',
+      remoteLookup: {
+        endpoint: 'system/pay/fee-plans',
+        uuidField: 'PfpUUID',
+        labelField: 'PfpName',
+        selectedLabelField: 'FeePlanName',
+      },
+      source: 'PayFeePlanPfpUUID',
       label: 'Fee plan',
       type: 'search-select',
       required: true,
@@ -72,7 +82,7 @@ const config = defineCrud({
     },
     {
       key: 'billingMode',
-      source: 'BpaBillingMode',
+      source: 'PfaBillingMode',
       label: 'Billing mode',
       type: 'select',
       span: 1,
@@ -81,7 +91,29 @@ const config = defineCrud({
         { value: 'POSTPAID', label: 'Postpaid' },
       ],
     },
-    { key: 'notes', source: 'BpaNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
+    {
+      key: 'effectiveFrom',
+      source: 'PfaEffectiveFrom',
+      label: 'Effective from (UTC)',
+      type: 'datetime',
+      fromRecord: (v: unknown) =>
+        String(v ?? '')
+          .replace(' ', 'T')
+          .slice(0, 16),
+      span: 1,
+    },
+    {
+      key: 'effectiveTo',
+      source: 'PfaEffectiveTo',
+      label: 'Effective to (UTC)',
+      type: 'datetime',
+      fromRecord: (v: unknown) =>
+        String(v ?? '')
+          .replace(' ', 'T')
+          .slice(0, 16),
+      span: 1,
+    },
+    { key: 'notes', source: 'PfaNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
   ],
 });
 
@@ -95,38 +127,5 @@ const config = defineCrud({
 export class SystemPayFeePlanAssignmentsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
-  }
-
-  private readonly lookupApi = inject(ApiService);
-  private readonly tenants = resource({
-    defaultValue: [] as ConfigurableCrudRecord[],
-    loader: async () => {
-      const items: ConfigurableCrudRecord[] = [];
-      for (let offset = 0; ; offset += 50) {
-        const page =
-          (await this.lookupApi.get<any>(`system/billing/tenants?limit=50&offset=${offset}`))?.data
-            ?.items ?? [];
-        items.push(...page);
-        if (page.length < 50) return items;
-      }
-    },
-  });
-  private readonly plans = resource({
-    defaultValue: [] as ConfigurableCrudRecord[],
-    loader: async () =>
-      (await this.lookupApi.get<any>('system/pay/fee-plans?limit=5000'))?.data?.items ?? [],
-  });
-  override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'tenantUUID')
-      return this.tenants.value().map((r: ConfigurableCrudRecord) => ({
-        value: String(r['EnvironmentUUID']),
-        label: String(r['EnvironmentName'] ?? r['TenantEmail'] ?? r['EnvironmentUUID']),
-      }));
-    if (key === 'planUUID')
-      return this.plans.value().map((r: ConfigurableCrudRecord) => ({
-        value: String(r['BfpUUID']),
-        label: String(r['BfpName']),
-      }));
-    return super.lookupOptions(key);
   }
 }

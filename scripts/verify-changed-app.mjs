@@ -50,7 +50,14 @@ if (appFiles.length) {
   run('node', ['scripts/check-angular-baseline.mjs', '--strict', ...appFiles]);
 }
 
-run('node', ['--test', 'scripts/crud-discovery.test.mjs', 'scripts/payment-account-crud.test.mjs']);
+run('node', [
+  '--test',
+  'scripts/crud-discovery.test.mjs',
+  'scripts/payment-account-crud.test.mjs',
+  'scripts/pay-i18n-coverage.test.mjs',
+  'scripts/pay-error.test.mjs',
+]);
+run('node', ['scripts/pay-i18n-coverage.mjs']);
 if (
   changedFiles.some(
     (path) => path.startsWith('src/app/shared/payment/') || path.endsWith('/define-crud.ts'),

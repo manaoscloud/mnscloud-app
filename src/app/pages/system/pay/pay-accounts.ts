@@ -1,11 +1,8 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../services/api.service';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudOption,
-  ConfigurableCrudConfig,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';

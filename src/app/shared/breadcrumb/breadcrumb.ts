@@ -1,3 +1,4 @@
+import { TranslocoService } from '@jsverse/transloco';
 import { Component, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
@@ -28,12 +29,15 @@ export class BreadcrumbComponent {
     { initialValue: null },
   );
 
+  private readonly translationEvent = toSignal(inject(TranslocoService).events$);
+
   readonly crumbs = signal<Crumb[]>([]);
 
   constructor() {
     effect(() => {
       const event = this.navigationEvent();
       this.i18n.language();
+      this.translationEvent();
       if (event === null || event instanceof NavigationEnd) {
         this.buildBreadcrumbs();
       }
@@ -66,7 +70,8 @@ export class BreadcrumbComponent {
   }
 
   private formatLabel(segment: string): string {
-    return segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    if (/^[a-f0-9-]{32,36}$/i.test(segment)) return segment;
+    return this.i18n.t(segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
   }
 
   private currentBreadcrumbKey(): string | null {
