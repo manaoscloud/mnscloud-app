@@ -180,6 +180,9 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       );
       const url = response?.data?.url;
       if (!url) throw new Error('Recording URL was not returned.');
+      // Local extension (app.md "document the reason"): this opens a real custom audio-player
+      // widget shared with PABX media files, not a CRUD form, so it intentionally bypasses
+      // openCrudTemplateDialog/openDataViewerDialog and keeps its own compact viewport sizing.
       this.dialog.open(VoipPabxCdrRecordingDialogComponent, {
         width: 'min(640px, calc(100vw - 32px))',
         maxWidth: '640px',
