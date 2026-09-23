@@ -180,13 +180,13 @@ const config: ConfigurableCrudConfig = {
 };
 
 @Component({
-  selector: 'app-voip-pabx-routing',
+  selector: 'app-voip-pabx-group',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipPabxRoutingPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipPabxGroupPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
   readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   readonly extensionOptions = signal<ConfigurableCrudOption[]>([]);
