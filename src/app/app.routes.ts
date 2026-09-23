@@ -1993,6 +1993,33 @@ export const routes: Routes = [
                 data: { scope: 'master', context: 'system' },
               },
               {
+                path: 'mnscloud-pay/fee-plans',
+                loadComponent: () =>
+                  import('./pages/system/mnscloud-pay/fee-plans/fee-plans').then(
+                    (m) => m.SystemMnscloudPayFeePlansPage,
+                  ),
+                title: 'System • MNSCloud Pay Fee Plans | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'mnscloud-pay/fee-plan-assignments',
+                loadComponent: () =>
+                  import(
+                    './pages/system/mnscloud-pay/fee-plan-assignments/fee-plan-assignments'
+                  ).then((m) => m.SystemMnscloudPayFeePlanAssignmentsPage),
+                title: 'System • MNSCloud Pay Fee Plan Assignments | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
+                path: 'mnscloud-pay/fee-accruals',
+                loadComponent: () =>
+                  import('./pages/system/mnscloud-pay/fee-accruals/fee-accruals').then(
+                    (m) => m.SystemMnscloudPayFeeAccrualsPage,
+                  ),
+                title: 'System • MNSCloud Pay Fee Accruals | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
+              {
                 path: 'parameters',
                 loadComponent: () =>
                   import('./pages/settings/parameters/parameters').then(

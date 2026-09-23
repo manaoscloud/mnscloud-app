@@ -1003,8 +1003,33 @@ export class MainLayout {
       id: 'system/mnscloud-pay',
       label: 'MNSCloud Pay',
       icon: 'credit_card',
-      masterRoute: '/system/mnscloud-pay',
       scope: 'master',
+      children: [
+        {
+          id: 'system/mnscloud-pay/accounts',
+          label: 'Provider Accounts',
+          icon: 'account_balance',
+          masterRoute: '/system/mnscloud-pay',
+        },
+        {
+          id: 'system/mnscloud-pay/fee-plans',
+          label: 'Fee Plans',
+          icon: 'sell',
+          masterRoute: '/system/mnscloud-pay/fee-plans',
+        },
+        {
+          id: 'system/mnscloud-pay/fee-plan-assignments',
+          label: 'Fee Plan Assignments',
+          icon: 'assignment_ind',
+          masterRoute: '/system/mnscloud-pay/fee-plan-assignments',
+        },
+        {
+          id: 'system/mnscloud-pay/fee-accruals',
+          label: 'Postpaid Accruals',
+          icon: 'pending_actions',
+          masterRoute: '/system/mnscloud-pay/fee-accruals',
+        },
+      ],
     },
 
     {

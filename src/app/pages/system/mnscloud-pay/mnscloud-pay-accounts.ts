@@ -269,7 +269,6 @@ export class SystemMnscloudPayAccountsPage {
 
   dataSource = new MatTableDataSource<PaymentGatewayAccount>([]);
   displayedColumns: string[] = [
-    'select',
     'name',
     'provider',
     'config',
