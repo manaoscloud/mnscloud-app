@@ -186,7 +186,7 @@ export class SystemMnscloudPayAccountsPage {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'MNSCloud Pay');
+  readonly pageTitle = computed(() => 'Payments');
   readonly pageSubtitle = computed(
     () =>
       'Platform product rails for wallet top-ups and billing tenants. Bank partner: Inter Empresas.',

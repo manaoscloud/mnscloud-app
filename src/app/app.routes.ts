@@ -1989,7 +1989,7 @@ export const routes: Routes = [
                   import('./pages/system/mnscloud-pay/mnscloud-pay-accounts').then(
                     (m) => m.SystemMnscloudPayAccountsPage,
                   ),
-                title: 'System • MNSCloud Pay | mnscloud',
+                title: 'System • Payments | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
@@ -1998,7 +1998,7 @@ export const routes: Routes = [
                   import('./pages/system/mnscloud-pay/fee-plans/fee-plans').then(
                     (m) => m.SystemMnscloudPayFeePlansPage,
                   ),
-                title: 'System • MNSCloud Pay Fee Plans | mnscloud',
+                title: 'System • Payments Fee Plans | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
@@ -2007,7 +2007,7 @@ export const routes: Routes = [
                   import(
                     './pages/system/mnscloud-pay/fee-plan-assignments/fee-plan-assignments'
                   ).then((m) => m.SystemMnscloudPayFeePlanAssignmentsPage),
-                title: 'System • MNSCloud Pay Fee Plan Assignments | mnscloud',
+                title: 'System • Payments Fee Plan Assignments | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
@@ -2016,7 +2016,7 @@ export const routes: Routes = [
                   import('./pages/system/mnscloud-pay/fee-accruals/fee-accruals').then(
                     (m) => m.SystemMnscloudPayFeeAccrualsPage,
                   ),
-                title: 'System • MNSCloud Pay Fee Accruals | mnscloud',
+                title: 'System • Payments Fee Accruals | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {

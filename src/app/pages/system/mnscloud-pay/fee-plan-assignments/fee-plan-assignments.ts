@@ -85,7 +85,7 @@ export class SystemMnscloudPayFeePlanAssignmentsPage {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'MNSCloud Pay — Fee Plan Assignments');
+  readonly pageTitle = computed(() => 'Payments — Fee Plan Assignments');
   readonly pageSubtitle = computed(
     () => 'Assign a fee plan and billing mode (prepaid/postpaid) to a specific tenant.',
   );

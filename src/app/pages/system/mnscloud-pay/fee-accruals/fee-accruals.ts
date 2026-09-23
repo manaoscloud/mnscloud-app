@@ -71,7 +71,7 @@ export class SystemMnscloudPayFeeAccrualsPage {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'MNSCloud Pay — Postpaid Accruals');
+  readonly pageTitle = computed(() => 'Payments — Postpaid Accruals');
   readonly pageSubtitle = computed(
     () => 'Open MNSCloud Pay fees for postpaid tenants, awaiting manual settlement by finance.',
   );
