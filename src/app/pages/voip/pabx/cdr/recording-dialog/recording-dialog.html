@@ -1,7 +1,7 @@
 <div class="recording-dialog">
   <header class="dialog-header">
     <div>
-      <h2 mat-dialog-title>{{ data.title || 'Recording' }}</h2>
+      <h2 mat-dialog-title>{{ data.title || ('Recording' | transloco) }}</h2>
       <p>
         {{
           data.subtitle ||
@@ -13,7 +13,12 @@
         }}
       </p>
     </div>
-    <button mat-icon-button type="button" aria-label="Close" (click)="close()">
+    <button
+      mat-icon-button
+      type="button"
+      [attr.aria-label]="'Close' | transloco"
+      (click)="close()"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </header>
@@ -34,7 +39,9 @@
 
   <mat-dialog-actions class="form-actions">
     <div class="secondary-actions">
-      <button mat-stroked-button type="button" (click)="close()">Close</button>
+      <button mat-stroked-button type="button" (click)="close()">
+        {{ 'Close' | transloco }}
+      </button>
     </div>
     <div class="primary-actions">
       <a
@@ -46,7 +53,7 @@
         rel="noopener noreferrer"
       >
         <mat-icon>download</mat-icon>
-        Download
+        {{ 'Download' | transloco }}
       </a>
     </div>
   </mat-dialog-actions>
