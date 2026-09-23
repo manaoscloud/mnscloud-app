@@ -15,6 +15,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/recording-dialog';
+import { UploadCancelledError } from '../../../../shared/upload/file-upload-progress';
 import { VoipPabxMediaFilesService } from './media-files.service';
 
 const statuses: ConfigurableCrudOption[] = [
@@ -203,11 +204,15 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
       name: text(payload['name']) ?? '',
       storageMode,
       storageAccountUUID:
-        storageMode === 'storage' ? text(payload['storageAccountUUID']) ?? '' : '',
+        storageMode === 'storage' ? (text(payload['storageAccountUUID']) ?? '') : '',
       deliveryMode: text(payload['deliveryMode']) ?? 'default',
       description: text(payload['description']),
       enabled: Number(payload['enabled']) === 1,
     };
+  }
+
+  protected override keepDialogOpenAfterSave(): boolean {
+    return this.pendingUploadFile !== null;
   }
 
   protected override async afterSave(
@@ -222,15 +227,23 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
       text(context.record?.['uuid']) ??
       text((extractRecord(context.response) ?? {})['VmfUUID']);
     if (!uuid) {
-      this.notifications.warning('Media file metadata was saved, but upload target was not returned.');
+      this.notifications.warning(
+        'Media file metadata was saved, but upload target was not returned.',
+      );
+      this.closeDialog();
       return;
     }
 
     try {
-      await this.mediaApi.upload(uuid, file);
+      await this.runManagedFileUpload(this.mediaApi.uploadWithProgress(uuid, file), file.size);
       this.notifications.success('Media file audio uploaded successfully.');
       this.itemsResource.reload();
+      this.closeDialog();
     } catch (error) {
+      if (error instanceof UploadCancelledError) {
+        this.notifications.warning('Media file audio upload was cancelled.');
+        return;
+      }
       this.notifications.error(
         `Media file metadata was saved, but the audio upload failed: ${this.errorMessage(error)}`,
       );
@@ -244,6 +257,9 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
       const response = await this.mediaApi.playbackUrl(uuid);
       const url = response?.data?.url;
       if (!url) throw new Error('Media file playback URL was not returned.');
+      // Local extension (app.md "document the reason"): this opens a real custom audio-player
+      // widget shared with CDR recordings, not a CRUD form, so it intentionally bypasses
+      // openCrudTemplateDialog/openDataViewerDialog and keeps its own compact viewport sizing.
       this.playbackDialog.open(VoipPabxCdrRecordingDialogComponent, {
         width: 'min(640px, calc(100vw - 32px))',
         maxWidth: '640px',

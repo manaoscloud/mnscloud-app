@@ -57,12 +57,6 @@ export class VoipPabxMediaFilesService {
     return this.api.put<any>(`${this.endpoint}/${uuid}`, payload);
   }
 
-  upload(uuid: string, file: File) {
-    const data = new FormData();
-    data.append('file', file, file.name);
-    return this.api.post<any>(`${this.endpoint}/${uuid}/upload`, data);
-  }
-
   uploadWithProgress(uuid: string, file: File) {
     const data = new FormData();
     data.append('file', file, file.name);

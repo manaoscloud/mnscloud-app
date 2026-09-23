@@ -1003,6 +1003,34 @@ mat-chip.status-pill.is-inactive,
   grid-column: span 4;
 }
 
+.crud-dialog .file-upload-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.75rem 1rem;
+  margin: 0 0 0.75rem;
+  border-radius: 8px;
+  background: var(--mns-surface-variant, rgba(0, 0, 0, 0.04));
+}
+
+.crud-dialog .file-upload-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.crud-dialog .file-upload-progress-percent {
+  font-variant-numeric: tabular-nums;
+}
+
+.crud-dialog .file-upload-progress-detail {
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+
 .crud-dialog .form-actions {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
