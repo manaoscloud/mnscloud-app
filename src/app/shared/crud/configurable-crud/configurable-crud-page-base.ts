@@ -1504,7 +1504,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return String(row[this.config.uuidField] ?? '');
   }
 
+  private columnOptionLabel(row: T, column: ConfigurableCrudColumn): string | undefined {
+    const value = row[column.field ?? column.id];
+    const option = column.options?.find((item) => String(item.value ?? '') === String(value ?? ''));
+    return option ? this.t(option.label) : undefined;
+  }
+
   columnMain(row: T, column: ConfigurableCrudColumn): string {
+    const label = this.columnOptionLabel(row, column);
+    if (label !== undefined) return label;
     if (column.lookupKey && column.uuidField) {
       return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
     }
@@ -1519,6 +1527,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   columnText(row: T, column: ConfigurableCrudColumn): string {
+    const label = this.columnOptionLabel(row, column);
+    if (label !== undefined) return label;
     const field = column.field ?? column.id;
     if (column.lookupKey) {
       return this.lookupLabel(column.lookupKey, row[field]) || this.displayValue(row[field]);
@@ -1824,6 +1834,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private sortValue(row: T, column?: ConfigurableCrudColumn): string {
     if (!column) return '';
+    const label = this.columnOptionLabel(row, column);
+    if (label !== undefined) return label.toLowerCase();
     if (column.kind === 'related') return this.columnMain(row, column).toLowerCase();
     const field = column.field ?? column.id;
     if (column.kind === 'boolean') return this.isTruthyValue(row[field]) ? '1' : '0';
