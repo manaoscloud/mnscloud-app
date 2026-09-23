@@ -2097,11 +2097,35 @@
       </mat-tab-group>
     </div>
 
+    @if (fileUploadViewModel(); as uploadState) {
+      @if (uploadState.busy || fileUploadProgress()) {
+        <div class="file-upload-progress" aria-live="polite" [attr.aria-busy]="uploadState.busy">
+          <div class="file-upload-progress-header">
+            <span class="file-upload-progress-title">{{ uploadState.title | transloco }}</span>
+            @if (uploadState.percentLabel) {
+              <span class="file-upload-progress-percent">{{ uploadState.percentLabel }}</span>
+            }
+          </div>
+          <mat-progress-bar
+            [mode]="uploadState.progressMode"
+            [value]="uploadState.progressValue"
+          ></mat-progress-bar>
+          <span class="file-upload-progress-detail">{{ uploadState.detail }}</span>
+        </div>
+      }
+    }
+
     <div class="form-actions">
       <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeDialog()">
-          {{ 'Cancel' | transloco }}
-        </button>
+        @if (fileUploadActive()) {
+          <button mat-stroked-button type="button" (click)="cancelFileUpload()">
+            {{ 'Cancel upload' | transloco }}
+          </button>
+        } @else {
+          <button mat-stroked-button type="button" (click)="closeDialog()">
+            {{ 'Cancel' | transloco }}
+          </button>
+        }
       </div>
       <div class="primary-actions">
         <div class="save-split-action" [class.is-single-action]="!!editingRecord()">
@@ -2110,7 +2134,7 @@
             color="primary"
             type="button"
             class="save-main-button"
-            [disabled]="saving()"
+            [disabled]="saving() || fileUploadActive()"
             (click)="saveItem(false)"
           >
             <mat-icon>save</mat-icon>
@@ -2122,7 +2146,7 @@
               color="primary"
               type="button"
               class="save-more-button"
-              [disabled]="saving()"
+              [disabled]="saving() || fileUploadActive()"
               [matMenuTriggerFor]="saveMenu"
             >
               <mat-icon>expand_more</mat-icon>
