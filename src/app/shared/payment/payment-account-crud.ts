@@ -114,6 +114,7 @@ export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig 
     });
   }
   return defineCrud({
+    serverSidePagination: true,
     endpoint: platform ? 'system/pay/provider-accounts' : 'erp/financial/payment/gateways',
     uuidField: prefix + 'UUID',
     pageTitle: platform ? 'Pay — Provider Accounts' : 'Payment Providers',
@@ -137,9 +138,9 @@ export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig 
       { id: 'name', label: 'Name', field: prefix + 'Name', kind: 'identity' },
       {
         id: 'provider',
-        label: 'Bank partner',
+        label: platform ? 'Bank partner' : 'Payment provider',
         field: prefix + 'Provider',
-        options: [{ value: 'inter_business', label: 'Inter Empresas' }],
+        options: [{ value: 'inter_business', label: platform ? 'Inter Empresas' : 'Pay' }],
       },
       { id: 'default', label: 'Default', field: prefix + 'IsDefault', kind: 'boolean' },
       {

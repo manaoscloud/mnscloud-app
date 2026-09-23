@@ -62,13 +62,18 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           </mat-select-trigger>
 
           <mat-option class="select-search-option" disabled>
-            <mat-form-field appearance="outline" class="select-search-field">
+            <mat-form-field
+              appearance="outline"
+              class="select-search-field"
+              role="group"
+              aria-disabled="false"
+            >
               <mat-icon matPrefix>search</mat-icon>
               <input
                 matInput
                 [placeholder]="placeholder() | transloco"
                 [value]="search()"
-                (input)="search.set($any($event.target).value)"
+                (input)="setSearch($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
@@ -76,6 +81,33 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-form-field>
           </mat-option>
 
+          @if (loadError()) {
+            <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
+          }
+          @if (remoteSearch()) {
+            <div class="select-search-option" role="group">
+              <button
+                mat-icon-button
+                type="button"
+                [disabled]="!hasPrevious() || loading()"
+                [attr.aria-label]="'Previous page' | transloco"
+                [matTooltip]="'Previous page' | transloco"
+                (click)="$event.stopPropagation(); pageChange.emit(-1)"
+              >
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [disabled]="!hasNext() || loading()"
+                [attr.aria-label]="'Next page' | transloco"
+                [matTooltip]="'Next page' | transloco"
+                (click)="$event.stopPropagation(); pageChange.emit(1)"
+              >
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          }
           @if (loading()) {
             <mat-option disabled class="select-state-option">
               {{ loadingLabel() | transloco }}
@@ -135,13 +167,18 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           </mat-select-trigger>
 
           <mat-option class="select-search-option" disabled>
-            <mat-form-field appearance="outline" class="select-search-field">
+            <mat-form-field
+              appearance="outline"
+              class="select-search-field"
+              role="group"
+              aria-disabled="false"
+            >
               <mat-icon matPrefix>search</mat-icon>
               <input
                 matInput
                 [placeholder]="placeholder() | transloco"
                 [value]="search()"
-                (input)="search.set($any($event.target).value)"
+                (input)="setSearch($any($event.target).value)"
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
@@ -149,6 +186,33 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-form-field>
           </mat-option>
 
+          @if (loadError()) {
+            <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
+          }
+          @if (remoteSearch()) {
+            <div class="select-search-option" role="group">
+              <button
+                mat-icon-button
+                type="button"
+                [disabled]="!hasPrevious() || loading()"
+                [attr.aria-label]="'Previous page' | transloco"
+                [matTooltip]="'Previous page' | transloco"
+                (click)="$event.stopPropagation(); pageChange.emit(-1)"
+              >
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [disabled]="!hasNext() || loading()"
+                [attr.aria-label]="'Next page' | transloco"
+                [matTooltip]="'Next page' | transloco"
+                (click)="$event.stopPropagation(); pageChange.emit(1)"
+              >
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          }
           @if (loading()) {
             <mat-option disabled class="select-state-option">
               {{ loadingLabel() | transloco }}
@@ -250,7 +314,18 @@ export class MnsSearchSelectFieldComponent {
   readonly createLabel = input('Create new');
   readonly createRecord = output<void>();
 
+  readonly remoteSearch = input(false);
+  readonly hasPrevious = input(false);
+  readonly hasNext = input(false);
+  readonly loadError = input(false);
+  readonly searchChange = output<string>();
+  readonly pageChange = output<number>();
   readonly search = signal('');
+  setSearch(value: string): void {
+    this.search.set(value);
+    this.searchChange.emit(value);
+  }
+
   readonly selectedOption = computed(() => {
     const field = this.field();
     const currentValue = field ? field().value() : this.value();
@@ -274,7 +349,7 @@ export class MnsSearchSelectFieldComponent {
   readonly filteredOptions = computed(() => {
     const term = this.normalize(this.search());
     const options = this.options();
-    if (!term) return options;
+    if (!term || this.remoteSearch()) return options;
 
     const matches = new Set<number>();
     options.forEach((option, index) => {
@@ -300,7 +375,7 @@ export class MnsSearchSelectFieldComponent {
 
   handleOpenedChange(opened: boolean): void {
     this.openedChange.emit(opened);
-    if (!opened) this.search.set('');
+    if (!opened) this.setSearch('');
   }
 
   readonly compareOptionValues = (left: unknown, right: unknown): boolean =>

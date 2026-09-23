@@ -1,3 +1,5 @@
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { PaginatorIntlService } from './services/paginator-intl.service';
 import {
   ApplicationConfig,
   importProvidersFrom,
@@ -33,6 +35,7 @@ registerLocaleData(localePt);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: MatPaginatorIntl, useClass: PaginatorIntlService },
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideAppInitializer(() => {

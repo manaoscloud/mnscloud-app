@@ -1,19 +1,16 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../../services/api.service';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudOption,
-  ConfigurableCrudConfig,
-  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 
 // Financial accruals are immutable here; the only mutation is authorized settlement.
 const config = defineCrud({
+  serverSidePagination: true,
   endpoint: 'system/pay/fee-accruals',
-  uuidField: 'BfaUUID',
+  uuidField: 'PacUUID',
   pageTitle: 'Pay — Postpaid Accruals',
   canCreate: false,
   canEdit: false,
@@ -32,24 +29,34 @@ const config = defineCrud({
     {
       id: 'amount',
       label: 'Amount',
-      field: 'BfaAmount',
+      field: 'PacAmount',
       kind: 'currency',
-      currencyField: 'BfaCurrency',
+      currencyField: 'PacCurrency',
     },
-    { id: 'transaction', label: 'Transaction type', field: 'BfaTransactionType' },
-    { id: 'status', label: 'Status', field: 'BfaStatus', kind: 'status' },
-    { id: 'created', label: 'Created', field: 'BfaDateCreated', kind: 'datetime' },
+    {
+      id: 'transaction',
+      label: 'Transaction type',
+      field: 'PacTransactionType',
+      options: [
+        { value: 'boleto', label: 'Boleto' },
+        { value: 'pix', label: 'Pix' },
+      ],
+    },
+    { id: 'status', label: 'Status', field: 'PacStatus', kind: 'status' },
+    { id: 'reference', label: 'Settlement reference', field: 'PacSettlementReference' },
+    { id: 'settled', label: 'Settled at', field: 'PacDateSettled', kind: 'datetime' },
+    { id: 'created', label: 'Created', field: 'PacDateCreated', kind: 'datetime' },
   ],
   rowActions: [
     {
       key: 'settle',
       label: 'Settle',
       icon: 'done_all',
-      visible: (r) => r['BfaStatus'] === 'open',
+      visible: (r) => r['PacStatus'] === 'open',
       form: (r) =>
         defineCrud({
-          endpoint: `system/pay/fee-accruals/${r['BfaUUID']}/settle`,
-          uuidField: 'BfaUUID',
+          endpoint: `system/pay/fee-accruals/${r['PacUUID']}/settle`,
+          uuidField: 'PacUUID',
           pageTitle: 'Settle fee accrual',
           createTitle: 'Settle fee accrual',
           dialogDescription: 'Record the external settlement reference.',
