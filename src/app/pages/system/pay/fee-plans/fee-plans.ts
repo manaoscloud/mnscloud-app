@@ -12,6 +12,11 @@ const bankPartners = [
   { value: 'inter_business', label: 'Inter Empresas' },
 ];
 
+const transactionTypes = [
+  { value: 'boleto', label: 'Boleto' },
+  { value: 'pix', label: 'Pix' },
+];
+
 const statuses = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
@@ -122,10 +127,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         label: 'Transaction type',
         field: 'PfrTransactionType',
         kind: 'identity',
-        options: [
-          { value: 'boleto', label: 'Boleto' },
-          { value: 'pix', label: 'Pix' },
-        ],
+        options: transactionTypes,
       },
       { id: 'provider', label: 'Bank partner', field: 'PfrProvider', options: bankPartners },
       {
@@ -145,10 +147,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         type: 'select',
         span: 1,
         required: true,
-        options: [
-          { value: 'boleto', label: 'Boleto' },
-          { value: 'pix', label: 'Pix' },
-        ],
+        options: transactionTypes,
         disabledWhen: ({ editing }) => editing,
       },
       {

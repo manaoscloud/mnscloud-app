@@ -12,6 +12,11 @@ const statuses = [
 ];
 
 // Assignments are revoked individually through their audited lifecycle.
+const billingModes = [
+  { value: 'PREPAID', label: 'Prepaid' },
+  { value: 'POSTPAID', label: 'Postpaid' },
+];
+
 const config = defineCrud({
   serverSidePagination: true,
   endpoint: 'system/pay/fee-plan-assignments',
@@ -33,10 +38,7 @@ const config = defineCrud({
       id: 'mode',
       label: 'Billing mode',
       field: 'PfaBillingMode',
-      options: [
-        { value: 'PREPAID', label: 'Prepaid' },
-        { value: 'POSTPAID', label: 'Postpaid' },
-      ],
+      options: billingModes,
     },
     { id: 'from', label: 'Effective from', field: 'PfaEffectiveFrom', kind: 'datetime' },
     { id: 'to', label: 'Effective to', field: 'PfaEffectiveTo', kind: 'datetime' },
@@ -86,10 +88,7 @@ const config = defineCrud({
       label: 'Billing mode',
       type: 'select',
       span: 1,
-      options: [
-        { value: 'PREPAID', label: 'Prepaid' },
-        { value: 'POSTPAID', label: 'Postpaid' },
-      ],
+      options: billingModes,
     },
     {
       key: 'effectiveFrom',
