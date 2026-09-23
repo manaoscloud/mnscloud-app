@@ -4573,5 +4573,18 @@
     "unavailableState": "No informado",
     "total": "Total de secretos"
   },
-  "Secrets": "Secretos"
+  "Secrets": "Secretos",
+  "PABX server assignments": "Asignaciones de servidores PABX",
+  "Assign platform PABX servers to tenants.": "Asigne servidores PABX de la plataforma a los tenants.",
+  "New PABX server assignment": "Nueva asignación de servidor PABX",
+  "Edit PABX server assignment": "Editar asignación de servidor PABX",
+  "Select the tenant and server. Disable an assignment to revoke access.": "Seleccione el tenant y el servidor. Desactive la asignación para revocar el acceso.",
+  "No PABX server assignments found.": "No se encontraron asignaciones de servidores PABX.",
+  "Delete PABX server assignment": "Eliminar asignación de servidor PABX",
+  "Delete this PABX server assignment?": "¿Eliminar esta asignación de servidor PABX?",
+  "Delete PABX server assignments": "Eliminar asignaciones de servidores PABX",
+  "Delete {count} PABX server assignments?": "¿Eliminar {count} asignaciones de servidores PABX?",
+  "PABX server assignment saved successfully.": "Asignación de servidor PABX guardada correctamente.",
+  "PABX server assignment deleted successfully.": "Asignación de servidor PABX eliminada correctamente.",
+  "Failed to delete PABX server assignment.": "No se pudo eliminar la asignación de servidor PABX."
 }

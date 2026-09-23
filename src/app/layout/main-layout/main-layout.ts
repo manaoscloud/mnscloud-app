@@ -1577,8 +1577,16 @@ export class MainLayout {
               id: 'voip/pabx/server',
               label: 'Servers',
               icon: 'dns',
-              route: '/voip/pabx/server',
+              route: '/system/pabx/server',
               masterRoute: '/system/pabx/server',
+              permissions: ['platform.master.access'],
+            },
+            {
+              id: 'voip/pabx/server-assignments',
+              label: 'PABX server assignments',
+              icon: 'assignment_ind',
+              route: '/system/pabx/server-assignments',
+              masterRoute: '/system/pabx/server-assignments',
               permissions: ['platform.master.access'],
             },
             {
