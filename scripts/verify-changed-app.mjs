@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { directoryCrud } from './crud-discovery.mjs';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
@@ -29,12 +30,7 @@ function run(command, args) {
 
 function hasCrudTemplate(path) {
   if (!existsSync(path) || !statSync(path).isDirectory()) return false;
-  return readdirSync(path).some((entry) => {
-    const file = join(path, entry);
-    if (!statSync(file).isFile() || !['.html', '.ts'].includes(extname(file))) return false;
-    const source = readFileSync(file, 'utf8');
-    return source.includes('ConfigurableCrudPageBase');
-  });
+  return directoryCrud(path).length > 0;
 }
 
 function findCrudRoot(file) {
@@ -54,10 +50,30 @@ if (appFiles.length) {
   run('node', ['scripts/check-angular-baseline.mjs', '--strict', ...appFiles]);
 }
 
+run('node', ['--test', 'scripts/crud-discovery.test.mjs', 'scripts/payment-account-crud.test.mjs']);
+if (
+  changedFiles.some(
+    (path) => path.startsWith('src/app/shared/payment/') || path.endsWith('/define-crud.ts'),
+  )
+) {
+  run('node', [
+    'scripts/validate-crud-i18n.mjs',
+    '--shared',
+    'src/app/shared/payment/payment-account-crud.ts',
+    'src/app/shared/crud/configurable-crud/define-crud.ts',
+  ]);
+}
 run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
 
-const crudRoots = [...new Set(appFiles.map(findCrudRoot).filter(Boolean))].sort();
+const crudRoots = [
+  ...new Set(
+    changedFiles
+      .filter((path) => path.startsWith('src/app/'))
+      .map(findCrudRoot)
+      .filter(Boolean),
+  ),
+].sort();
 for (const crudRoot of crudRoots) {
   run('node', ['scripts/validate-crud-template.mjs', crudRoot]);
   run('node', ['scripts/validate-crud-layout.mjs', crudRoot]);

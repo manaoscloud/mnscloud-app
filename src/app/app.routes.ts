@@ -1990,37 +1990,37 @@ export const routes: Routes = [
                 ],
               },
               {
-                path: 'mnscloud-pay',
+                path: 'pay',
                 loadComponent: () =>
-                  import('./pages/system/mnscloud-pay/mnscloud-pay-accounts').then(
-                    (m) => m.SystemMnscloudPayAccountsPage,
+                  import('./pages/system/pay/pay-accounts').then(
+                    (m) => m.SystemPayAccountsPage,
                   ),
                 title: 'System • Payments | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
-                path: 'mnscloud-pay/fee-plans',
+                path: 'pay/fee-plans',
                 loadComponent: () =>
-                  import('./pages/system/mnscloud-pay/fee-plans/fee-plans').then(
-                    (m) => m.SystemMnscloudPayFeePlansPage,
+                  import('./pages/system/pay/fee-plans/fee-plans').then(
+                    (m) => m.SystemPayFeePlansPage,
                   ),
                 title: 'System • Payments Fee Plans | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
-                path: 'mnscloud-pay/fee-plan-assignments',
+                path: 'pay/fee-plan-assignments',
                 loadComponent: () =>
                   import(
-                    './pages/system/mnscloud-pay/fee-plan-assignments/fee-plan-assignments'
-                  ).then((m) => m.SystemMnscloudPayFeePlanAssignmentsPage),
+                    './pages/system/pay/fee-plan-assignments/fee-plan-assignments'
+                  ).then((m) => m.SystemPayFeePlanAssignmentsPage),
                 title: 'System • Payments Fee Plan Assignments | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {
-                path: 'mnscloud-pay/fee-accruals',
+                path: 'pay/fee-accruals',
                 loadComponent: () =>
-                  import('./pages/system/mnscloud-pay/fee-accruals/fee-accruals').then(
-                    (m) => m.SystemMnscloudPayFeeAccrualsPage,
+                  import('./pages/system/pay/fee-accruals/fee-accruals').then(
+                    (m) => m.SystemPayFeeAccrualsPage,
                   ),
                 title: 'System • Payments Fee Accruals | mnscloud',
                 data: { scope: 'master', context: 'system' },

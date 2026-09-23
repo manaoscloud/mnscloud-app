@@ -46,3 +46,11 @@ templates/detail-page or templates/settings-page; shared styles belong in
 src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
 Run node scripts/validate-content-pages.mjs and the build; verify both responsive
 layouts and settings dirty/cancel/save behavior before release.
+
+## Canonical CRUD creation
+
+For every CRUD/list resource, use `scripts/create-crud.mjs` and extend
+`ConfigurableCrudPageBase`; reuse its shared HTML/SCSS. Do not copy older pages or
+create local CRUD shells. The template is configuration-only. Enhance shared capabilities
+when needed. Explicit CRUD validation must fail on legacy or unrecognized targets.
+Run template, layout and i18n checks, the build and desktop/mobile PT/EN/ES validation.
