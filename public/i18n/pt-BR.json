@@ -4574,5 +4574,14 @@
     "unavailableState": "Não informado",
     "total": "Total de segredos"
   },
-  "Secrets": "Segredos"
+  "Secrets": "Segredos",
+  "Database menu bases": "Bases",
+  "Database menu users": "Usuários",
+  "Database menu permissions": "Permissões",
+  "Ready delivery routes": "Rotas prontas para envio",
+  "Sort by": "Ordenar por",
+  "Ascending": "Crescente",
+  "Descending": "Decrescente",
+  "default": "padrão",
+  "Issues": "Problemas"
 }

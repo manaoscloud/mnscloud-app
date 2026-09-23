@@ -12,13 +12,11 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-type SmtpProvider = 'smtp' | 'sendgrid' | 'ses' | 'mailersend';
+type SmtpProvider = 'smtp' | 'ses';
 
 const PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'smtp', label: 'SMTP' },
-  { value: 'sendgrid', label: 'Twilio SendGrid' },
   { value: 'ses', label: 'Amazon SES' },
-  { value: 'mailersend', label: 'MailerSend' },
 ];
 
 const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -85,19 +83,43 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
     secure: 0,
     username: '',
     password: '',
-    apiKey: '',
     region: '',
     accessKeyId: '',
     secretAccessKey: '',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HspName', uuidField: 'HspUUID' },
-    { id: 'provider', label: 'Provider', kind: 'related', field: 'HspProvider', lookupKey: 'provider' },
-    { id: 'default', label: 'Default', kind: 'boolean', field: 'HspIsDefault', className: 'status-col' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HspIsActive', className: 'status-col' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HspProvider',
+      lookupKey: 'provider',
+    },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HspIsDefault',
+      className: 'status-col',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HspIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
-    { key: 'status', source: 'HspIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'HspIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     {
       key: 'provider',
       source: 'HspProvider',
@@ -171,21 +193,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       span: 2,
       hiddenWhen: ({ values }) => provider(values['provider']) !== 'smtp',
       requiredWhen: ({ editing, values }) => !editing && provider(values['provider']) === 'smtp',
-    },
-    {
-      key: 'apiKey',
-      payloadKey: 'apiKey',
-      label: 'API key',
-      labelWhen: ({ values }) =>
-        provider(values['provider']) === 'mailersend' ? 'API token' : 'API key',
-      type: 'password',
-      placeholder: 'Leave blank to keep the current token',
-      autocomplete: 'new-password',
-      tab: 'authentication',
-      span: 2,
-      hiddenWhen: ({ values }) => !['sendgrid', 'mailersend'].includes(provider(values['provider'])),
-      requiredWhen: ({ editing, values }) =>
-        !editing && ['sendgrid', 'mailersend'].includes(provider(values['provider'])),
     },
     {
       key: 'region',
@@ -286,13 +293,16 @@ export class HostingSmtpProvidersPage extends ConfigurableCrudPageBase<Configura
     if (config && typeof config === 'object') {
       const itemConfig = config as Record<string, unknown>;
       normalized['host'] = normalized['host'] ?? itemConfig['host'] ?? '';
-      normalized['port'] = normalized['port'] ?? itemConfig['port'] ?? defaultPort(provider(normalized['provider']));
+      normalized['port'] = normalized['port'] ?? itemConfig['port'] ?? 587;
       normalized['secure'] = truthyNumber(normalized['secure'] ?? itemConfig['secure']);
       normalized['username'] = normalized['username'] ?? itemConfig['username'] ?? '';
       normalized['region'] = normalized['region'] ?? itemConfig['region'] ?? '';
       normalized['accessKeyId'] = normalized['accessKeyId'] ?? itemConfig['accessKeyId'] ?? '';
     }
-    super.patchFormValues({ ...providerDefaults(provider(normalized['provider']), false, normalized), ...normalized });
+    super.patchFormValues({
+      ...providerDefaults(provider(normalized['provider']), false, normalized),
+      ...normalized,
+    });
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -329,11 +339,7 @@ export class HostingSmtpProvidersPage extends ConfigurableCrudPageBase<Configura
 
 function provider(value: unknown): SmtpProvider {
   const normalized = String(value ?? 'smtp') as SmtpProvider;
-  return ['smtp', 'sendgrid', 'ses', 'mailersend'].includes(normalized) ? normalized : 'smtp';
-}
-
-function defaultPort(value: SmtpProvider): number {
-  return value === 'mailersend' ? 443 : 587;
+  return ['smtp', 'ses'].includes(normalized) ? normalized : 'smtp';
 }
 
 function truthyNumber(value: unknown): number {
@@ -345,30 +351,12 @@ function providerDefaults(
   force: boolean,
   current: ConfigurableCrudRecord,
 ): ConfigurableCrudRecord {
-  if (value === 'sendgrid') {
-    return {
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      secure: 0,
-      username: 'apikey',
-      ...(force ? { password: '', apiKey: '' } : {}),
-    };
-  }
   if (value === 'ses') {
     const region = String(current['region'] ?? '').trim();
     return {
       host: region ? `email-smtp.${region}.amazonaws.com` : '',
       port: 587,
       secure: 0,
-    };
-  }
-  if (value === 'mailersend') {
-    return {
-      host: 'api.mailersend.com',
-      port: 443,
-      secure: 1,
-      username: '',
-      ...(force ? { apiKey: '' } : {}),
     };
   }
   return {
@@ -381,9 +369,6 @@ function buildProviderConfig(
   value: SmtpProvider,
   payload: ConfigurableCrudRecord,
 ): Record<string, unknown> {
-  if (value === 'sendgrid') {
-    return { service: 'sendgrid', host: 'smtp.sendgrid.net', port: 587, secure: false };
-  }
   if (value === 'ses') {
     const region = String(payload['region'] ?? '').trim();
     return {
@@ -393,9 +378,6 @@ function buildProviderConfig(
       port: 587,
       secure: false,
     };
-  }
-  if (value === 'mailersend') {
-    return { service: 'mailersend', host: 'api.mailersend.com', port: 443, secure: true };
   }
   return {
     host: String(payload['host'] ?? '').trim(),
@@ -409,10 +391,6 @@ function buildProviderCredentials(
   value: SmtpProvider,
   payload: ConfigurableCrudRecord,
 ): Record<string, unknown> {
-  if (value === 'sendgrid' || value === 'mailersend') {
-    const apiKey = String(payload['apiKey'] ?? '').trim();
-    return apiKey ? { apiKey } : {};
-  }
   if (value === 'ses') {
     const secretAccessKey = String(payload['secretAccessKey'] ?? '').trim();
     return secretAccessKey ? { secretAccessKey } : {};

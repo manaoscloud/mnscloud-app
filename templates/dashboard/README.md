@@ -27,3 +27,9 @@ master/tenant isolation. Development rollout precedes production approval.
 Use DashboardRecordListComponent for record inventories and status/detail panels. Supply typed
 details (text/datetime), explicit enum translation and semantic status tones. Keep API requests
 and domain mapping in the page/service; reuse component markup and shared styles.
+
+Record panels may opt into the shared sort selector and paginator using `sortOptions`,
+`sortActive`, `sortDirection`, `sortChange`, `total`, `pageIndex`, `pageSize` and `page`.
+The page keeps signal-based sorting/pagination and supplies the visible records. Sort
+labels are translated; raw record identities are not. Contextual management links can
+be projected below the inventory without adding mutation actions to the dashboard.
