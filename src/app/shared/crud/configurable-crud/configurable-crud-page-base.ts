@@ -210,6 +210,9 @@ export type ConfigurableCrudField = {
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   disabledWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+  /** Short inline help text rendered under the field. Static or derived from current values. */
+  hint?: string;
+  hintWhen?: (context: ConfigurableCrudFieldContext) => string;
 };
 
 export type ConfigurableCrudFieldContext = {
@@ -1209,6 +1212,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   translatedFieldLabel(field: ConfigurableCrudField): string {
     const label = this.fieldLabel(field);
     return field.translateLabel === false ? label : this.t(label);
+  }
+
+  fieldHint(field: ConfigurableCrudField): string {
+    const hint =
+      field.hintWhen?.({
+        editing: Boolean(this.editingRecord()),
+        values: this.formValues(),
+      }) ?? field.hint;
+    return hint ? this.t(hint) : '';
   }
 
   translatedOptionLabel(field: ConfigurableCrudField, option: ConfigurableCrudOption): string {

@@ -553,6 +553,9 @@
                   </mat-form-field>
                 }
               }
+              @if (fieldHint(field)) {
+                <p class="field-hint" [ngClass]="fieldClass(field)">{{ fieldHint(field) }}</p>
+              }
             }
           </div>
         </mat-tab>
@@ -854,6 +857,9 @@
                       }
                     </mat-form-field>
                   }
+                }
+                @if (fieldHint(field)) {
+                  <p class="field-hint" [ngClass]="fieldClass(field)">{{ fieldHint(field) }}</p>
                 }
               }
             </div>
@@ -1685,6 +1691,9 @@
                       }
                     </mat-form-field>
                   }
+                }
+                @if (fieldHint(field)) {
+                  <p class="field-hint" [ngClass]="fieldClass(field)">{{ fieldHint(field) }}</p>
                 }
               }
             </div>
