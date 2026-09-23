@@ -61,12 +61,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             }
           </mat-select-trigger>
 
-          <mat-option
-            class="select-search-option"
-            disabled
-            role="presentation"
-            [attr.aria-disabled]="null"
-          >
+          <mat-option class="select-search-option" disabled>
             <mat-form-field appearance="outline" class="select-search-field">
               <mat-icon matPrefix>search</mat-icon>
               <input
@@ -77,6 +72,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
+                aria-disabled="false"
               />
             </mat-form-field>
           </mat-option>
@@ -166,12 +162,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             }
           </mat-select-trigger>
 
-          <mat-option
-            class="select-search-option"
-            disabled
-            role="presentation"
-            [attr.aria-disabled]="null"
-          >
+          <mat-option class="select-search-option" disabled>
             <mat-form-field appearance="outline" class="select-search-field">
               <mat-icon matPrefix>search</mat-icon>
               <input
@@ -182,6 +173,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
+                aria-disabled="false"
               />
             </mat-form-field>
           </mat-option>
