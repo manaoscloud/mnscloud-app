@@ -25,7 +25,13 @@ const config = defineCrud({
   initialValues: { status: 1, billingMode: 'PREPAID', tenantUUID: '', planUUID: '', notes: '' },
   columns: [
     { id: 'tenant', label: 'Tenant', field: 'TenantEmail', kind: 'identity' },
-    { id: 'plan', label: 'Fee plan', field: 'FeePlanName', uuidField: 'BillingFeePlanBfpUUID' },
+    {
+      id: 'plan',
+      label: 'Fee plan',
+      field: 'FeePlanName',
+      kind: 'related',
+      uuidField: 'BillingFeePlanBfpUUID',
+    },
     {
       id: 'mode',
       label: 'Billing mode',
@@ -94,8 +100,16 @@ export class SystemPayFeePlanAssignmentsPage extends ConfigurableCrudPageBase<Co
   private readonly lookupApi = inject(ApiService);
   private readonly tenants = resource({
     defaultValue: [] as ConfigurableCrudRecord[],
-    loader: async () =>
-      (await this.lookupApi.get<any>('system/billing/tenants?limit=5000'))?.data?.items ?? [],
+    loader: async () => {
+      const items: ConfigurableCrudRecord[] = [];
+      for (let offset = 0; ; offset += 50) {
+        const page =
+          (await this.lookupApi.get<any>(`system/billing/tenants?limit=50&offset=${offset}`))?.data
+            ?.items ?? [];
+        items.push(...page);
+        if (page.length < 50) return items;
+      }
+    },
   });
   private readonly plans = resource({
     defaultValue: [] as ConfigurableCrudRecord[],
@@ -104,19 +118,15 @@ export class SystemPayFeePlanAssignmentsPage extends ConfigurableCrudPageBase<Co
   });
   override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'tenantUUID')
-      return this.tenants
-        .value()
-        .map((r: ConfigurableCrudRecord) => ({
-          value: String(r['EnvironmentUUID']),
-          label: String(r['EnvironmentName'] ?? r['TenantEmail'] ?? r['EnvironmentUUID']),
-        }));
+      return this.tenants.value().map((r: ConfigurableCrudRecord) => ({
+        value: String(r['EnvironmentUUID']),
+        label: String(r['EnvironmentName'] ?? r['TenantEmail'] ?? r['EnvironmentUUID']),
+      }));
     if (key === 'planUUID')
-      return this.plans
-        .value()
-        .map((r: ConfigurableCrudRecord) => ({
-          value: String(r['BfpUUID']),
-          label: String(r['BfpName']),
-        }));
+      return this.plans.value().map((r: ConfigurableCrudRecord) => ({
+        value: String(r['BfpUUID']),
+        label: String(r['BfpName']),
+      }));
     return super.lookupOptions(key);
   }
 }
