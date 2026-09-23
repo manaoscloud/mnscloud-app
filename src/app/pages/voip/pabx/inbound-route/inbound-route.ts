@@ -151,13 +151,13 @@ function config(): ConfigurableCrudConfig {
 }
 
 @Component({
-  selector: 'app-voip-pabx-trunk-route',
+  selector: 'app-voip-pabx-inbound-route',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class VoipPabxTrunkRoutePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
   readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   readonly didOptions = signal<ConfigurableCrudOption[]>([]);
