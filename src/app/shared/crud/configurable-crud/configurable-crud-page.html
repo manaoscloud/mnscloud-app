@@ -1,4 +1,4 @@
-<section class="erp-page">
+<section class="erp-page" [hidden]="config.formOnly">
   <mat-card class="erp-card">
     <div class="erp-header">
       <div>
@@ -6,6 +6,11 @@
         <p>{{ config.pageDescription | transloco }}</p>
       </div>
       <div class="header-actions">
+        @if (config.collectionDialog) {
+          <button mat-stroked-button type="button" (click)="closeCollectionDialog()">
+            {{ 'Close' | transloco }}
+          </button>
+        }
         @if (backLink(); as destination) {
           <a mat-stroked-button color="primary" [routerLink]="destination">
             <mat-icon>arrow_back</mat-icon>
@@ -279,7 +284,7 @@
                     type="button"
                     [matTooltip]="action.tooltip ?? action.label | transloco"
                     [attr.aria-label]="action.label | transloco"
-                    (click)="handleRowAction(action, row)"
+                    (click)="runRowAction(action, row)"
                   >
                     <mat-icon>{{ action.icon }}</mat-icon>
                   </button>
@@ -1932,6 +1937,20 @@
           </mat-tab>
         }
 
+        @for (action of collectionActions(); track action.key) {
+          <mat-tab [label]="action.label | transloco">
+            <div class="tab-content">
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="runRowAction(action, editingRecord()!)"
+              >
+                <mat-icon>{{ action.icon }}</mat-icon
+                >{{ action.label | transloco }}
+              </button>
+            </div>
+          </mat-tab>
+        }
         @if (showRelatedCollections()) {
           @for (collection of relatedCollections(); track collection.key) {
             <mat-tab [label]="collection.label | transloco">
@@ -2149,7 +2168,7 @@
             <mat-icon>save</mat-icon>
             {{ 'Save' | transloco }}
           </button>
-          @if (!editingRecord()) {
+          @if (!editingRecord() && !config.formOnly) {
             <button
               mat-flat-button
               color="primary"

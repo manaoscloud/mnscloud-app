@@ -1,5 +1,5 @@
 import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../../../services/api.service';
+import { ApiService } from '../../../services/api.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -7,19 +7,19 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudConfig,
   ConfigurableCrudRowAction,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
-import { paymentAccountConfig } from '../../../../../shared/payment/payment-account-crud';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { paymentAccountConfig } from '../../../shared/payment/payment-account-crud';
 
-const config = paymentAccountConfig(false);
+const config = paymentAccountConfig(true);
 @Component({
-  selector: 'app-payment-gateway',
+  selector: 'app-pay-accounts',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class SystemPayAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
   }

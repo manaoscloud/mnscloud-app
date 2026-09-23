@@ -1,9 +1,15 @@
 #!/usr/bin/env node
+import { assertCrudTargets } from './crud-discovery.mjs';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 
 const root = process.cwd();
-const args = process.argv.slice(2);
+const shared = process.argv.includes('--shared');
+const args = process.argv.slice(2).filter((arg) => arg !== '--shared');
+if (shared) {
+  if (!args.length || args.some((arg) => !arg.startsWith('src/app/shared/')))
+    throw new Error('Shared i18n checks require explicit shared-layer files.');
+} else assertCrudTargets(args);
 
 if (!args.length) {
   console.error('Usage: node scripts/validate-crud-i18n.mjs <page-or-file> [...]');
@@ -65,6 +71,10 @@ function collectTsKeys(content) {
   for (const match of content.matchAll(/\bthis\.t\(\s*['"]([^'"]+)['"]/g)) {
     keys.add(match[1]);
   }
+  for (const match of content.matchAll(
+    /\b(?:label|pageTitle|pageDescription|createTitle|editTitle|dialogDescription|searchPlaceholder|emptyLabel|deleteTitle|deleteMessage|deleteSelectedTitle|deleteSelectedMessage|savedMessage|deletedMessage|deleteFailedMessage|hint|placeholder|tooltip)\s*:\s*['"]([^'"]+)['"]/g,
+  ))
+    keys.add(match[1]);
   return keys;
 }
 

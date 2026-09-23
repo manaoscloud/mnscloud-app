@@ -157,7 +157,7 @@
   `*ngIf`, `*ngFor`, `*ngSwitch`, `@Input(`, `@Output(`, `@ViewChild`, `@ViewChildren`,
   `ChangeDetectionStrategy.Eager`, constructor dependency injection, `ngx-translate`,
   `TranslateService`, `TranslateModule`, and `RouterTestingModule`.
-- New module/page scaffolding must start from the Angular 22 CRUD template in `templates/crud`.
+- New CRUD/list scaffolding must use `scripts/create-crud.mjs` and the configuration-only template in `templates/crud`. Every module, including System/Pay, must extend `ConfigurableCrudPageBase` and reference its shared HTML/SCSS.
   Do not copy older pages as a baseline. The template validator intentionally fails decorator
   queries, manual lifecycle teardown, old animation packages/triggers, constructor DI, the legacy
   `| t` pipe alias, and old `Data`/`Details` CRUD tab labels so new modules do not inherit Angular
@@ -381,8 +381,7 @@
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
 - ERP generic CRUDs:
-  - Simple ERP resources such as customers, companies, suppliers, resellers, carriers, and
-    complexes must use the standard shared CRUD component contract in
+  - CRUD/list resources in every module (including System and ERP) must use the standard shared CRUD component contract in
     `src/app/shared/crud/configurable-crud/`.
   - Create/edit must open through the generic `crud-form-dialog` panel class and the shared
     `.crud-dialog` template surface. Do not add resource-specific overlay panel classes or
@@ -1208,3 +1207,16 @@ The deprecated `showAsyncOperationStatus` Configurable CRUD flag is ignored.
 - Host plan selection uses the read-only tenant catalog at `hosting/webhost/plans`.
   Catalog administration remains in System; do not send provider settings to tenants.
 - Situation remains an automatic list column, never an editable CRUD field.
+
+## CRUD creation and validation coverage
+
+The canonical scaffold is configuration-only (`scripts/create-crud.mjs`). No standalone
+CRUD page HTML/SCSS template is maintained. New/changed legacy CRUDs must fail CI even
+when they do not inherit the generic base; explicit validation with zero recognized
+components is an error. Dashboard/detail/settings pages keep their own shared contracts.
+
+Declarative row actions may open a child `collection` configuration, recursively, or a
+single-operation `form` configuration. Both reuse the shared renderer and dialog sizing.
+Parent identity is captured in endpoints, and API/DB still enforce ownership/permissions.
+Use collection actions for nested configurations such as plan/rate/volume-tier management.
+One-shot financial operations expose only their allowed action, never arbitrary create/delete.

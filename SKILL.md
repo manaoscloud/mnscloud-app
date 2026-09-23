@@ -170,3 +170,11 @@ storage priority. These are neither global alert totals nor vault health attesta
 The page does not request values, reveal content, probe servers or enqueue operations.
 No new commercial resource or backend contract is introduced; existing Secrets and
 Secret Accounts authorization/entitlement boundaries remain authoritative.
+
+## Canonical CRUD creation
+
+For every CRUD/list resource, use `scripts/create-crud.mjs` and extend
+`ConfigurableCrudPageBase`; reuse its shared HTML/SCSS. Do not copy older pages or
+create local CRUD shells. The template is configuration-only. Enhance shared capabilities
+when needed. Explicit CRUD validation must fail on legacy or unrecognized targets.
+Run template, layout and i18n checks, the build and desktop/mobile PT/EN/ES validation.

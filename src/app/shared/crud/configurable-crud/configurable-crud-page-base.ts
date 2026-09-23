@@ -290,6 +290,9 @@ export type ConfigurableCrudRowAction = {
   label: string;
   icon: string;
   tooltip?: string;
+  visible?: (row: ConfigurableCrudRecord) => boolean;
+  collection?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
+  form?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
 };
 
 export type ConfigurableCrudRelatedCollectionColumn = {
@@ -337,6 +340,10 @@ export type ConfigurableCrudFilterActionMenu = {
 export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
+  collectionDialog?: boolean;
+  formOnly?: boolean;
+  defaultCurrencyFields?: readonly string[];
+  payload?: (values: ConfigurableCrudRecord, editing: boolean) => ConfigurableCrudRecord;
   endpoint: string;
   /** Optional lifecycle endpoint when a resource reads from a projection but creates elsewhere. */
   createEndpoint?: string;
@@ -374,6 +381,11 @@ export type ConfigurableCrudConfig = {
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
   relatedCollections?: readonly ConfigurableCrudRelatedCollection[];
+  fieldChange?: (
+    key: string,
+    value: unknown,
+    current: ConfigurableCrudRecord,
+  ) => ConfigurableCrudRecord;
   filterActions?: readonly ConfigurableCrudFilterAction[];
   filterActionMenu?: ConfigurableCrudFilterActionMenu;
   canCreate?: boolean;
@@ -736,10 +748,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     // config/credentials objects; otherwise required fields look missing.
     const formPayload = this.buildPayload();
     if (!this.validatePayload(formPayload)) return;
-    const payload = this.augmentPayload(formPayload);
 
     this.saving.set(true);
     try {
+      const payload = this.augmentPayload(formPayload);
       const current = this.editingRecord();
       let response: unknown;
       if (current) {
@@ -925,8 +937,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
+  collectionActions(): readonly ConfigurableCrudRowAction[] {
+    const row = this.editingRecord();
+    return row ? this.rowActions(row).filter((action) => Boolean(action.collection)) : [];
+  }
+
   rowActions(_row: T): readonly ConfigurableCrudRowAction[] {
-    return this.config.rowActions ?? [];
+    return (this.config.rowActions ?? []).filter((action) => action.visible?.(_row) !== false);
   }
 
   filterActions(): readonly ConfigurableCrudFilterAction[] {
@@ -954,6 +971,33 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   canDeleteRow(row: T): boolean {
     return this.canDelete() && (this.config.canDeleteRow?.(row) ?? true);
   }
+
+  async runRowAction(action: ConfigurableCrudRowAction, row: T): Promise<void> {
+    if (action.visible?.(row) === false) return;
+    const factory = action.collection ?? action.form;
+    if (!factory) {
+      await this.handleRowAction(action, row);
+      return;
+    }
+    const { ConfigurableCrudCollectionDialog } =
+      await import('./configurable-crud-collection-dialog');
+    const formOnly = Boolean(action.form);
+    const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
+      data: { ...factory(row), collectionDialog: true, formOnly },
+      width: formOnly ? '0' : '96vw',
+      maxWidth: formOnly ? '0' : '1400px',
+      height: formOnly ? '0' : '90dvh',
+      maxHeight: '96dvh',
+      autoFocus: false,
+      restoreFocus: true,
+      panelClass: formOnly ? 'quick-create-host-dialog' : 'crud-collection-dialog',
+      disableClose: formOnly,
+    });
+    await firstValueFrom(ref.afterClosed());
+    this.refreshList();
+  }
+
+  closeCollectionDialog(): void {}
 
   handleRowAction(_action: ConfigurableCrudRowAction, _row: T): void | Promise<void> {}
 
@@ -1134,7 +1178,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   setFieldValue(key: string, value: unknown): void {
-    this.formValues.update((current) => ({ ...current, [key]: value }));
+    try {
+      this.formValues.update(
+        (current) => this.config.fieldChange?.(key, value, current) ?? { ...current, [key]: value },
+      );
+    } catch (error) {
+      this.snack.error(
+        this.t(error instanceof Error ? error.message : 'Enter a valid JSON object.'),
+      );
+      return;
+    }
     this.onFieldValueChanged(key, value);
     this.syncCopyActionsForSource(key);
     this.clearCopyActionsForTarget(key);
@@ -1512,7 +1565,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return payload;
+    return this.config.payload?.(payload, Boolean(this.editingRecord())) ?? payload;
   }
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
@@ -1707,6 +1760,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
   ): Promise<T[]> {
+    if (this.config.formOnly) return [];
     const params = new URLSearchParams();
     const limit = this.serverSidePagination()
       ? (filters as ConfigurableCrudListParams).limit
@@ -1877,7 +1931,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   private emptyFormValues(): ConfigurableCrudRecord {
-    return { ...this.config.initialValues };
+    const values = { ...this.config.initialValues };
+    for (const key of this.config.defaultCurrencyFields ?? []) values[key] = this.defaultCurrency();
+    return values;
   }
 
   protected formValuesFromRecord(row: T): ConfigurableCrudRecord {

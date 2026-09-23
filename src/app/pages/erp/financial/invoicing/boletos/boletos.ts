@@ -1,629 +1,172 @@
-import {
-  Component,
-  effect,
-  resource,
-  TemplateRef,
-  inject,
-  viewChild,
-  afterNextRender,
-  DestroyRef,
-} from '@angular/core';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
+import { Component, inject, resource } from '@angular/core';
 import { ApiService } from '../../../../../services/api.service';
-import { SnackbarService } from '../../../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { DateMaskDirective } from '../../../../../shared/date-mask/date-mask.directive';
-import { MnsDateAdapterModule } from '../../../../../shared/date-mask/mns-date-adapter.module';
-import { CurrencyMaskDirective } from '../../../../../shared/currency-mask/currency-mask.directive';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import {
-  bindDialogClosed,
-  bindDialogEscape,
-} from '../../../../../shared/dialog/dialog-events.util';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudOption,
+  ConfigurableCrudConfig,
+  ConfigurableCrudRowAction,
+} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
 
-type BoletoStatus = 'open' | 'paid' | 'overdue' | 'canceled';
-
-type ErpFinInvBoleto = {
-  ErpFinInvBoletoUUID: string;
-  CustomerUUID?: string | null;
-  Title: string;
-  Amount: number;
-  Status: BoletoStatus;
-  DueDate: string;
-  Notes?: string | null;
-};
-
-type PaymentGatewayProvider = 'inter_business';
-type PaymentGatewayAccount = {
-  EfgUUID: string;
-  EfgName: string;
-  EfgProvider: PaymentGatewayProvider;
-};
-type CustomerOption = {
-  CustomerUUID: string;
-  Name: string;
-  Document?: string | null;
-};
-
-@Component({
-  selector: 'app-invoicing-boletos',
-  standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatChipsModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatSlideToggleModule,
-    DateMaskDirective,
-    MnsDateAdapterModule,
-    CurrencyMaskDirective,
-  ],
-  templateUrl: './boletos.html',
-  styleUrls: ['./boletos.scss'],
-})
-export class InvoicingBoletosPage {
-  private api = inject(ApiService);
-  private snack = inject(SnackbarService);
-  private dialog = inject(MatDialog);
-
-  boletos: ErpFinInvBoleto[] = [];
-  dataSource = new MatTableDataSource<ErpFinInvBoleto>([]);
-  displayedColumns: string[] = ['title', 'dueDate', 'amount', 'status', 'actions'];
-  private readonly boletosResource = resource({
-    defaultValue: [] as ErpFinInvBoleto[],
-    loader: async () => {
-      const res = await this.api.get<any>('erp/financial/invoicing/boletos');
-      return res?.data?.items ?? [];
-    },
-  });
-  get loading() {
-    return this.boletosResource.isLoading();
-  }
-  saving = false;
-  error = '';
-  search = '';
-  searchInput = '';
-  editingBoleto: ErpFinInvBoleto | null = null;
-  amountPrefix = '';
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly boletoFormDialog = viewChild<TemplateRef<unknown>>('boletoFormDialog');
-  private boletoFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-  private readonly syncBoletos = effect(() => {
-    this.boletos = this.boletosResource.value();
-    this.dataSource.data = [...this.boletos];
-    this.applyFilter();
-  });
-  private readonly reportBoletosError = effect(() => {
-    const error = this.boletosResource.error();
-    if (error) {
-      this.showError(this.extractErrorMessage(error, 'Failed to load boletos.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  statusOptions: { value: BoletoStatus; label: string }[] = [
-    { value: 'open', label: 'Open' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'canceled', label: 'Canceled' },
-  ];
-
-  form = {
+const statuses = [
+  { value: 'open', label: 'Open' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'canceled', label: 'Canceled' },
+];
+// Financial records use individual deletion only; bank-backed records remain protected by DB/API.
+const config = defineCrud({
+  endpoint: 'erp/financial/invoicing/boletos',
+  uuidField: 'ErpFinInvBoletoUUID',
+  pageTitle: 'Boletos',
+  bulkDelete: false,
+  statusMode: 'string',
+  activeValue: 'open',
+  inactiveValue: 'canceled',
+  statusOptions: statuses,
+  initialValues: {
     title: '',
-    dueDate: null as Date | null,
     amount: 0,
-    status: 'open' as BoletoStatus,
+    status: 'open',
+    dueDate: null,
     notes: '',
     issueAtGateway: true,
-    gatewayAccountUUID: '',
     customerUUID: '',
-  };
-  gatewayOptions: PaymentGatewayAccount[] = [];
-  customerOptions: CustomerOption[] = [];
+    gatewayAccountUUID: '',
+  },
+  columns: [
+    { id: 'title', label: 'Title', field: 'Title', kind: 'identity' },
+    { id: 'date', label: 'Due date', field: 'DueDate', kind: 'date' },
+    { id: 'amount', label: 'Amount', field: 'Amount', kind: 'currency' },
+    { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'Status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+      options: statuses,
+    },
+    { key: 'title', source: 'Title', label: 'Title', required: true, span: 1 },
+    {
+      key: 'customerUUID',
+      source: 'CustomerUUID',
+      label: 'Customer',
+      type: 'search-select',
+      span: 1,
+    },
+    { key: 'amount', source: 'Amount', label: 'Amount', type: 'currency', required: true, span: 1 },
+    { key: 'dueDate', source: 'DueDate', label: 'Due date', type: 'date', required: true, span: 1 },
+    {
+      key: 'issueAtGateway',
+      label: 'Issue at bank',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: true, label: 'Yes' },
+        { value: false, label: 'No' },
+      ],
+      hiddenWhen: ({ editing }) => editing,
+    },
+    {
+      key: 'gatewayAccountUUID',
+      source: 'GatewayAccountUUID',
+      label: 'Payment provider',
+      type: 'search-select',
+      span: 1,
+      hiddenWhen: ({ editing, values }) => editing || !values['issueAtGateway'],
+    },
+    { key: 'notes', source: 'Notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
+  ],
+  rowActions: [
+    {
+      key: 'sync',
+      label: 'Synchronize payment',
+      icon: 'sync',
+      visible: (r) => Boolean(r['GatewayChargeId']),
+    },
+  ],
+  payload: (v, editing) =>
+    editing
+      ? {
+          title: v['title'],
+          customerUUID: v['customerUUID'],
+          amount: v['amount'],
+          status: v['status'],
+          dueDate: v['dueDate'],
+          notes: v['notes'],
+        }
+      : {
+          ...v,
+          gatewayAccountUUID: v['issueAtGateway'] ? v['gatewayAccountUUID'] : null,
+          gatewayPayload: null,
+        },
+});
 
-  private readonly initializePage = (() => {
-    this.amountPrefix = this.getCurrencyAffixes().prefix;
-    this.startCreate();
-    void this.fetchGatewayOptions();
-    void this.fetchCustomerOptions();
+@Component({
+  selector: 'app-boletos',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class InvoicingBoletosPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  constructor() {
+    super(config);
+  }
 
+  private readonly lookupApi = inject(ApiService);
+  private readonly customers = resource({
+    defaultValue: [] as ConfigurableCrudRecord[],
+    loader: async () =>
+      (await this.lookupApi.get<any>('erp/customers?status=1&limit=5000'))?.data?.items ?? [],
+  });
+  private readonly gateways = resource({
+    defaultValue: [] as ConfigurableCrudRecord[],
+    loader: async () =>
+      (await this.lookupApi.get<any>('erp/financial/payment/gateways?limit=5000'))?.data?.items ??
+      [],
+  });
+  override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'customerUUID')
+      return this.customers
+        .value()
+        .map((r: ConfigurableCrudRecord) => ({
+          value: String(r['CustomerUUID']),
+          label: String(r['Name']),
+        }));
+    if (key === 'gatewayAccountUUID')
+      return this.gateways
+        .value()
+        .map((r: ConfigurableCrudRecord) => ({
+          value: String(r['EfgUUID']),
+          label: String(r['EfgName']),
+        }));
+    return super.lookupOptions(key);
+  }
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key !== 'sync') return;
+    try {
+      await this.api.post(`${this.config.endpoint}/${this.recordUUID(row)}/sync`, {});
+      this.snack.success(this.t('Payment synchronized.'));
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
+  }
+  override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    if (!Number.isFinite(Number(payload['amount'])) || Number(payload['amount']) <= 0) {
+      this.snack.warning(this.t('Amount must be greater than zero.'));
+      return false;
+    }
     return true;
-  })();
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.stopDialogViewportObserver();
-    this.closeBoletoDialog();
-  });
-
-  private providerLabel(provider: PaymentGatewayProvider) {
-    switch (provider) {
-      case 'inter_business':
-        return 'Inter Empresas (MNSCloud Pay)';
-      default:
-        return provider;
-    }
-  }
-
-  gatewayOptionLabel(item: PaymentGatewayAccount) {
-    return `${item.EfgName} (${this.providerLabel(item.EfgProvider)})`;
-  }
-
-  async fetchGatewayOptions() {
-    try {
-      const rows = await this.api.get<PaymentGatewayAccount[]>('erp/financial/payment/gateways');
-      this.gatewayOptions = Array.isArray(rows) ? rows : [];
-    } catch {
-      this.gatewayOptions = [];
-    }
-  }
-
-  async fetchCustomerOptions() {
-    try {
-      const res = await this.api.get<any>('erp/customers?status=1&limit=200');
-      const items = Array.isArray(res?.data?.items) ? res.data.items : [];
-      this.customerOptions = items
-        .map((row: any) => ({
-          CustomerUUID: row?.CustomerUUID ?? row?.customerUUID ?? '',
-          Name: row?.Name ?? row?.name ?? '',
-          Document: row?.Document ?? row?.document ?? null,
-        }))
-        .filter((item: CustomerOption) => item.CustomerUUID && item.Name);
-    } catch {
-      this.customerOptions = [];
-    }
-  }
-
-  customerOptionLabel(item: CustomerOption) {
-    const document =
-      typeof item.Document === 'string' && item.Document.trim() ? ` • ${item.Document}` : '';
-    return `${item.Name}${document}`;
-  }
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'title':
-          return data.Title ?? '';
-        case 'dueDate':
-          return data.DueDate ?? '';
-        case 'amount':
-          return data.Amount ?? 0;
-        case 'status':
-          return data.Status ?? '';
-        default:
-          return '';
-      }
-    };
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      return [data.Title, data.Status, data.Notes]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-  });
-
-  onSearchChange(value: string) {
-    this.searchInput = value;
-  }
-
-  applySearchFilters() {
-    this.search = this.searchInput.trim();
-    this.applyFilter();
-  }
-
-  clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.applyFilter();
-  }
-
-  refreshList() {
-    this.boletosResource.reload();
-  }
-
-  applyFilter() {
-    const q = this.search.trim().toLowerCase();
-    this.dataSource.filter = q;
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
-  }
-
-  startCreate() {
-    this.editingBoleto = null;
-    this.form.title = '';
-    this.form.dueDate = null;
-    this.form.amount = 0;
-    this.form.status = 'open';
-    this.form.notes = '';
-    this.form.issueAtGateway = true;
-    this.form.gatewayAccountUUID = '';
-    this.form.customerUUID = '';
-  }
-
-  openCreateDialog() {
-    this.startCreate();
-    this.openBoletoDialog();
-  }
-
-  startEdit(boleto: ErpFinInvBoleto) {
-    this.editingBoleto = boleto;
-    this.form.title = boleto.Title ?? '';
-    this.form.dueDate = this.parseDateInput(boleto.DueDate);
-    this.form.amount = boleto.Amount ?? 0;
-    this.form.status = boleto.Status ?? 'open';
-    this.form.notes = boleto.Notes ?? '';
-    this.form.issueAtGateway = true;
-    this.form.customerUUID = boleto.CustomerUUID ?? '';
-  }
-
-  openEditDialog(boleto: ErpFinInvBoleto) {
-    this.startEdit(boleto);
-    this.openBoletoDialog();
-  }
-
-  async saveBoleto(keepOpenForNew = false) {
-    if (!this.form.title.trim()) {
-      this.showWarning('Title is required.');
-      return;
-    }
-
-    if (!this.form.dueDate) {
-      this.showWarning('Due date is required.');
-      return;
-    }
-
-    if (!Number.isFinite(Number(this.form.amount)) || Number(this.form.amount) <= 0) {
-      this.showWarning('Amount must be greater than zero.');
-      return;
-    }
-
-    this.saving = true;
-    this.error = '';
-
-    try {
-      const issueAtGateway = !this.editingBoleto ? Boolean(this.form.issueAtGateway) : true;
-      const payload = {
-        title: this.form.title.trim(),
-        dueDate: this.formatDateInput(this.form.dueDate),
-        amount: Number(this.form.amount),
-        status: this.form.status,
-        notes: this.form.notes?.trim() || null,
-        customerUUID: this.form.customerUUID || null,
-        gatewayAccountUUID: issueAtGateway ? this.form.gatewayAccountUUID || null : null,
-        issueAtGateway,
-        gatewayPayload: null,
-      };
-
-      if (this.editingBoleto) {
-        await this.api.put(
-          `erp/financial/invoicing/boletos/${this.editingBoleto.ErpFinInvBoletoUUID}`,
-          payload,
-        );
-        this.snack.success('Boleto updated successfully.');
-      } else {
-        const response = await this.api.post<any>('erp/financial/invoicing/boletos', payload);
-        this.snack.success(this.buildCreateSuccessMessage(response, issueAtGateway));
-      }
-
-      if (!this.editingBoleto && keepOpenForNew) {
-        this.startCreate();
-      } else {
-        this.closeBoletoDialog();
-        this.startCreate();
-      }
-      this.boletosResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to save boleto.');
-    } finally {
-      this.saving = false;
-    }
-  }
-
-  private buildCreateSuccessMessage(response: any, issueAtGateway: boolean) {
-    const message = typeof response?.message === 'string' ? response.message.trim() : '';
-    if (!issueAtGateway) {
-      return message || 'Boleto created successfully.';
-    }
-
-    const sourceRaw = response?.data?.gatewaySource;
-    const source = typeof sourceRaw === 'string' ? sourceRaw.trim() : '';
-    const sourceLabel = this.gatewaySourceLabel(source);
-    if (sourceLabel) {
-      return `${message || 'Boleto created successfully.'} Gateway source: ${sourceLabel}.`;
-    }
-
-    return message || 'Boleto created successfully.';
-  }
-
-  private gatewaySourceLabel(source: string) {
-    switch (source) {
-      case 'preferred':
-        return 'selected gateway';
-      case 'tenant_default':
-        return 'tenant default gateway';
-      case 'master_default':
-        return 'master default gateway';
-      default:
-        return '';
-    }
-  }
-
-  saveAndNewBoleto() {
-    if (this.editingBoleto) return;
-    void this.saveBoleto(true);
-  }
-
-  cancelBoletoForm() {
-    this.closeBoletoDialog();
-    this.startCreate();
-  }
-
-  async deleteBoleto(boletoUUID: string) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete boleto',
-        message: 'Are you sure you want to delete this boleto?',
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-    this.error = '';
-    try {
-      await this.api.delete(`erp/financial/invoicing/boletos/${boletoUUID}`);
-      this.snack.success('Boleto deleted successfully.');
-      this.boletosResource.reload();
-    } catch (err: any) {
-      this.showError(err?.message ?? 'Failed to delete boleto.');
-    }
-  }
-
-  formatAmount(value: number) {
-    return Number(value || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
-  statusClass(status?: string) {
-    return status ? `is-${status}` : '';
-  }
-
-  private parseDateInput(value?: string | null) {
-    if (!value) return null;
-    const trimmed = value.trim();
-    const [datePart] = trimmed.split('T');
-    if (!datePart) return null;
-    const [year, month, day] = datePart.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
-  }
-
-  private formatDateInput(value: Date | null) {
-    if (!value) return null;
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  private getCurrencyAffixes() {
-    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
-    const currency = this.getCurrencyFromLocale(locale);
-    const formatter = new Intl.NumberFormat(locale, { style: 'currency', currency });
-    const parts = formatter.formatToParts(1.1);
-    const currencyPart = parts.find((part) => part.type === 'currency')?.value ?? '$';
-    const integerIndex = parts.findIndex((part) => part.type === 'integer');
-    const currencyIndex = parts.findIndex((part) => part.type === 'currency');
-
-    let prefix = '';
-
-    if (currencyIndex > -1 && integerIndex > -1 && currencyIndex < integerIndex) {
-      const literal = parts[currencyIndex + 1];
-      prefix = currencyPart + (literal?.type === 'literal' ? literal.value : ' ');
-    } else {
-      prefix = `${currencyPart} `;
-    }
-
-    return { prefix };
-  }
-
-  private getCurrencyFromLocale(locale: string) {
-    let region = '';
-    try {
-      region = new Intl.Locale(locale).region ?? '';
-    } catch {
-      region = '';
-    }
-    const map: Record<string, string> = {
-      BR: 'BRL',
-      US: 'USD',
-      PT: 'EUR',
-      ES: 'EUR',
-      FR: 'EUR',
-      DE: 'EUR',
-      IT: 'EUR',
-      NL: 'EUR',
-      BE: 'EUR',
-      IE: 'EUR',
-      AT: 'EUR',
-      FI: 'EUR',
-      GR: 'EUR',
-      LU: 'EUR',
-      LT: 'EUR',
-      LV: 'EUR',
-      EE: 'EUR',
-      SK: 'EUR',
-      SI: 'EUR',
-      CY: 'EUR',
-      MT: 'EUR',
-      GB: 'GBP',
-      MX: 'MXN',
-      AR: 'ARS',
-      CL: 'CLP',
-      CO: 'COP',
-      PE: 'PEN',
-      UY: 'UYU',
-      PY: 'PYG',
-      CA: 'CAD',
-      AU: 'AUD',
-      NZ: 'NZD',
-      JP: 'JPY',
-    };
-    return map[region] ?? 'USD';
-  }
-
-  private openBoletoDialog() {
-    const boletoFormDialog = this.boletoFormDialog();
-    if (!boletoFormDialog || this.boletoFormDialogRef) return;
-    this.error = '';
-    this.boletoFormDialogRef = this.dialog.open(boletoFormDialog, {
-      ...this.getBoletoDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'erp-boleto-form-dialog',
-    });
-    bindDialogEscape(this.boletoFormDialogRef, () => {
-      this.cancelBoletoForm();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.boletoFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.boletoFormDialogRef = null;
-    });
-  }
-
-  private closeBoletoDialog() {
-    if (!this.boletoFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.boletoFormDialogRef.close();
-    this.boletoFormDialogRef = null;
-  }
-
-  private getBoletoDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: '100vw',
-        maxWidth: '100vw',
-        maxHeight: '100dvh',
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.boletoFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateBoletoDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateBoletoDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateBoletoDialogViewport() {
-    if (!this.boletoFormDialogRef) return;
-    const config = this.getBoletoDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const maxHeight = typeof config.maxHeight === 'string' ? config.maxHeight : '';
-    this.boletoFormDialogRef.updateSize(width, maxHeight);
-    if (config.position) {
-      this.boletoFormDialogRef.updatePosition(config.position);
-    } else {
-      this.boletoFormDialogRef.updatePosition();
-    }
-  }
-  private showError(message: string) {
-    this.error = '';
-    this.snack.error(message);
-  }
-
-  private extractErrorMessage(error: unknown, fallback: string) {
-    if (error instanceof Error && error.message) {
-      return error.message;
-    }
-    return fallback;
-  }
-
-  private showWarning(message: string) {
-    this.error = '';
-    this.snack.warning(message);
   }
 }

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+import { assertCrudTargets } from './crud-discovery.mjs';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 
 const root = process.cwd();
 const args = process.argv.slice(2);
+assertCrudTargets(args);
 
 if (!args.length) {
   console.error('Usage: node scripts/validate-crud-template.mjs <page-or-file> [...]');

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+import { assertCrudTargets } from './crud-discovery.mjs';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
 const args = process.argv.slice(2);
+assertCrudTargets(args);
 
 if (!args.length) {
   console.error(
