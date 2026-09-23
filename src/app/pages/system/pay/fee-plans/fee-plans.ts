@@ -10,6 +10,11 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 
+const bankPartners = [
+  { value: '', label: 'All' },
+  { value: 'inter_business', label: 'Inter Empresas' },
+];
+
 const statuses = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
@@ -124,7 +129,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
           { value: 'pix', label: 'Pix' },
         ],
       },
-      { id: 'provider', label: 'Bank partner', field: 'BfrProvider' },
+      { id: 'provider', label: 'Bank partner', field: 'BfrProvider', options: bankPartners },
       {
         id: 'fixed',
         label: 'Fixed amount',
@@ -154,10 +159,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         label: 'Bank partner',
         type: 'select',
         span: 1,
-        options: [
-          { value: '', label: 'All' },
-          { value: 'inter_business', label: 'Inter Empresas' },
-        ],
+        options: bankPartners,
         disabledWhen: ({ editing }) => editing,
       },
       { key: 'currency', source: 'BfrCurrency', label: 'Currency', span: 1, required: true },
