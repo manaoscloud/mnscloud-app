@@ -72,7 +72,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
-                aria-disabled="false"
+                [attr.aria-disabled]="false"
               />
             </mat-form-field>
           </mat-option>
@@ -173,7 +173,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
                 (click)="$event.stopPropagation()"
                 (keydown)="$event.stopPropagation()"
                 autocomplete="off"
-                aria-disabled="false"
+                [attr.aria-disabled]="false"
               />
             </mat-form-field>
           </mat-option>
