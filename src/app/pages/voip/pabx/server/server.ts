@@ -79,7 +79,7 @@ const CODEC_OPTIONS = [
 
 const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
 
-// This page does not extend ConfigurableCrudPageBase: PABX server management needs
+// This page does not extend the shared configurable CRUD base: PABX server management needs
 // engine-specific tabs (API/Control/Codecs) plus resource-specific actions (install-command
 // generation, remote-control validation, per-row control diagnostics) that fall outside the
 // generic directory-resource contract in app.md.
