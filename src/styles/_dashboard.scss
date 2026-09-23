@@ -569,6 +569,10 @@ mns-dashboard-record-list {
   display: block;
   min-width: 0;
 
+  .dashboard-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .panel-header {
     min-width: 0;
 
