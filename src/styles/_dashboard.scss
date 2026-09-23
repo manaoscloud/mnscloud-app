@@ -563,3 +563,28 @@ mns-dashboard-page {
     }
   }
 }
+
+// Record panels can shrink inside the responsive dashboard grid, including sort controls.
+mns-dashboard-record-list {
+  display: block;
+  min-width: 0;
+
+  .dashboard-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel-header {
+    min-width: 0;
+
+    mat-form-field {
+      width: 20rem;
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .inventory-title > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

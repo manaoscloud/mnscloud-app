@@ -4587,5 +4587,14 @@
   "Delete {count} PABX server assignments?": "Excluir {count} atribuições de servidores PABX?",
   "PABX server assignment saved successfully.": "Atribuição de servidor PABX salva com sucesso.",
   "PABX server assignment deleted successfully.": "Atribuição de servidor PABX excluída com sucesso.",
-  "Failed to delete PABX server assignment.": "Falha ao excluir atribuição de servidor PABX."
+  "Failed to delete PABX server assignment.": "Falha ao excluir atribuição de servidor PABX.",
+  "Sort by": "Ordenar por",
+  "Database menu permissions": "Permissões",
+  "default": "padrão",
+  "Database menu users": "Usuários",
+  "Issues": "Problemas",
+  "Ascending": "Crescente",
+  "Descending": "Decrescente",
+  "Database menu bases": "Bases",
+  "Ready delivery routes": "Rotas prontas para envio"
 }

@@ -2081,7 +2081,7 @@ export class MainLayout {
               children: [
                 {
                   id: 'hosting/webhost/databases',
-                  label: 'Databases',
+                  label: 'Database menu bases',
                   icon: 'storage',
                   route: '/hosting/webhost/databases',
                   scope: 'tenant',
@@ -2089,7 +2089,7 @@ export class MainLayout {
                 },
                 {
                   id: 'hosting/webhost/database-users',
-                  label: 'Database users',
+                  label: 'Database menu users',
                   icon: 'person',
                   route: '/hosting/webhost/database-users',
                   scope: 'tenant',
@@ -2097,7 +2097,7 @@ export class MainLayout {
                 },
                 {
                   id: 'hosting/webhost/database-grants',
-                  label: 'Database grants',
+                  label: 'Database menu permissions',
                   icon: 'key',
                   route: '/hosting/webhost/database-grants',
                   scope: 'tenant',
