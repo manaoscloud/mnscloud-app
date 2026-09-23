@@ -28,6 +28,7 @@ import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 type FeeAccrual = {
   BfaUUID: string;
@@ -207,7 +208,7 @@ export class SystemMnscloudPayFeeAccrualsPage {
     const template = this.settleDialog();
     if (!template || this.settleDialogRef) return;
     this.settleDialogRef = this.dialog.open(template, { panelClass: 'crud-dialog-panel' });
-    this.settleDialogRef.afterClosed().subscribe(() => {
+    bindDialogClosed(this.settleDialogRef, () => {
       this.settleDialogRef = null;
       this.settlingItem.set(null);
     });
