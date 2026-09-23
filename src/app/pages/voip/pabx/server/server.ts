@@ -79,6 +79,10 @@ const CODEC_OPTIONS = [
 
 const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
 
+// This page does not extend the shared configurable CRUD base: PABX server management needs
+// engine-specific tabs (API/Control/Codecs) plus resource-specific actions (install-command
+// generation, remote-control validation, per-row control diagnostics) that fall outside the
+// generic directory-resource contract in app.md.
 @Component({
   selector: 'app-voip-pabx-server',
   standalone: true,
@@ -698,6 +702,9 @@ export class VoipPabxServerPage {
 
   private sortValue(row: VoipPabxServerItem, column: string): string | number {
     if (column === 'advertisedIP') return row.VpsAdvertisedIP || '';
+    if (column === 'publicIPs') return this.publicIPv4(row) || this.publicIPv6(row) || '';
+    if (column === 'privateIPs') return this.privateIPv4(row) || this.privateIPv6(row) || '';
+    if (column === 'control') return this.controlTarget(row);
     const value = (row as Record<string, unknown>)[column];
     if (typeof value === 'number') return value;
     return String(value ?? '');

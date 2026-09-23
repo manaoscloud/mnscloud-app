@@ -3,7 +3,9 @@
     <header class="erp-header">
       <div>
         <h1>{{ 'PABX Servers' | transloco }}</h1>
-        <p>{{ 'Register PABX platform servers used by tenant domains and routing.' | transloco }}</p>
+        <p>
+          {{ 'Register PABX platform servers used by tenant domains and routing.' | transloco }}
+        </p>
       </div>
 
       <div class="header-actions">
@@ -107,7 +109,9 @@
         </ng-container>
 
         <ng-container matColumnDef="publicIPs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'SIP public IPs' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'SIP public IPs' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ publicIPv4(row) || '-' }}</span>
@@ -119,7 +123,9 @@
         </ng-container>
 
         <ng-container matColumnDef="advertisedIP">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'SIP advertised IP' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'SIP advertised IP' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ advertisedIP(row) || '-' }}</span>
@@ -129,7 +135,9 @@
         </ng-container>
 
         <ng-container matColumnDef="privateIPs">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Private listen IPs' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+            {{ 'Private listen IPs' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row">
             <div class="ip-stack">
               <span>{{ privateIPv4(row) || '-' }}</span>
@@ -141,7 +149,9 @@
         </ng-container>
 
         <ng-container matColumnDef="engine">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="engine-col">{{ 'Engine' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="engine-col">
+            {{ 'Engine' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="engine-col">
             {{ engineLabel(row.VpsEngine) }}
           </td>
@@ -166,7 +176,9 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">{{ 'Status' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">
+            {{ 'Status' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="status-col">
             <mat-chip
               class="status-pill status-chip state-chip"
@@ -181,7 +193,9 @@
         </ng-container>
 
         <ng-container matColumnDef="lastSeen">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">{{ 'Last Seen' | transloco }}</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="last-seen-col">
+            {{ 'Last Seen' | transloco }}
+          </th>
           <td mat-cell *matCellDef="let row" class="last-seen-col">
             {{ row.VpsLastSeenAt ? (row.VpsLastSeenAt | mnsDateTime) : '-' }}
           </td>
@@ -269,7 +283,7 @@
     </div>
 
     <mat-dialog-content class="dialog-content">
-      <form id="voipPabxServerForm" (ngSubmit)="save()">
+      <form>
         <mat-tab-group class="form-tabs" animationDuration="150ms">
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
@@ -306,7 +320,9 @@
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'Public IPv4 (SIP/NAT)' | transloco }}</mat-label>
                 <input matInput [formField]="form.publicIPv4" autocomplete="off" />
-                <mat-hint>{{ 'Used first for SIP advertise and NAT rewriting when present.' | transloco }}</mat-hint>
+                <mat-hint>{{
+                  'Used first for SIP advertise and NAT rewriting when present.' | transloco
+                }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
@@ -331,46 +347,52 @@
             </div>
           </mat-tab>
 
-          <mat-tab label="API">
+          <mat-tab [label]="'API' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>Node UUID</mat-label>
                 <input matInput [formField]="form.nodeUUID" autocomplete="off" />
-                <mat-hint>Used by Agent provisioning to bind this PABX server.</mat-hint>
+                <mat-hint>{{
+                  'Used by Agent provisioning to bind this PABX server.' | transloco
+                }}</mat-hint>
               </mat-form-field>
             </div>
           </mat-tab>
 
-          <mat-tab label="Control">
+          <mat-tab [label]="'Control' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Remote command executor</mat-label>
+                <mat-label>{{ 'Remote command executor' | transloco }}</mat-label>
                 <mat-select [formField]="form.remoteCommandExecutor">
-                  <mat-option value="">Tenant default</mat-option>
-                  <mat-option value="agent">Agent</mat-option>
-                  <mat-option value="esl_ami">ESL/AMI</mat-option>
+                  <mat-option value="">{{ 'Tenant default' | transloco }}</mat-option>
+                  <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
+                  <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
                 </mat-select>
-                <mat-hint>Empty uses tenant, then master. Master fallback is Agent.</mat-hint>
+                <mat-hint>{{
+                  'Empty uses tenant, then master. Master fallback is Agent.' | transloco
+                }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Control Host</mat-label>
+                <mat-label>{{ 'Control Host' | transloco }}</mat-label>
                 <input matInput [formField]="form.controlHost" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Control Port</mat-label>
+                <mat-label>{{ 'Control Port' | transloco }}</mat-label>
                 <input matInput type="number" [formField]="form.controlPort" autocomplete="off" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Control Username</mat-label>
+                <mat-label>{{ 'Control Username' | transloco }}</mat-label>
                 <input matInput [formField]="form.controlUsername" autocomplete="off" />
-                <mat-hint>Asterisk AMI usa usuario. FreeSWITCH ESL pode ficar vazio.</mat-hint>
+                <mat-hint>{{
+                  'Asterisk AMI uses a username. FreeSWITCH ESL can be left empty.' | transloco
+                }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Control Secret</mat-label>
+                <mat-label>{{ 'Control Secret' | transloco }}</mat-label>
                 <input
                   matInput
                   type="password"
@@ -379,25 +401,28 @@
                 />
                 <mat-hint>
                   {{
-                    editing()?.VpsControlSecretSet
-                      ? 'Senha ja salva. Preencha somente para trocar.'
-                      : 'Nenhuma senha salva ainda.'
+                    (editing()?.VpsControlSecretSet
+                      ? 'Password already saved. Fill in only to change it.'
+                      : 'No password saved yet.'
+                    ) | transloco
                   }}
                 </mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Allowed IPs</mat-label>
+                <mat-label>{{ 'Allowed IPs' | transloco }}</mat-label>
                 <input matInput [formField]="form.controlAllowedIps" autocomplete="off" />
-                <mat-hint>Lista separada por virgula. Ex.: 168.0.230.247/32</mat-hint>
+                <mat-hint>{{
+                  'Comma-separated list. E.g.: 168.0.230.247/32' | transloco
+                }}</mat-hint>
               </mat-form-field>
             </div>
           </mat-tab>
 
-          <mat-tab label="Codecs">
+          <mat-tab [label]="'Codecs' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'Codecs permitidos' | transloco }}</mat-label>
+                <mat-label>{{ 'Allowed codecs' | transloco }}</mat-label>
                 <mat-select [formField]="form.allowedCodecs" multiple>
                   @for (codec of codecOptions; track codec) {
                     <mat-option [value]="codec">{{ codec }}</mat-option>
@@ -407,11 +432,11 @@
             </div>
           </mat-tab>
 
-          <mat-tab label="Notes">
+          <mat-tab [label]="'Notes' | transloco">
             <div class="tab-content form-grid">
               <mat-form-field appearance="outline" class="span-4">
-                <mat-label>Notes</mat-label>
-                <textarea matInput rows="6" [formField]="form.notes"></textarea>
+                <mat-label>{{ 'Notes' | transloco }}</mat-label>
+                <textarea matInput rows="4" [formField]="form.notes"></textarea>
               </mat-form-field>
             </div>
           </mat-tab>
@@ -425,12 +450,12 @@
           class="dialog-action-button save-main-button"
           mat-flat-button
           color="primary"
-          type="submit"
-          form="voipPabxServerForm"
+          type="button"
           [disabled]="!form().valid() || saving()"
+          (click)="save()"
         >
           <mat-icon>save</mat-icon>
-          Save
+          {{ 'Save' | transloco }}
         </button>
         @if (!editing()) {
           <button
@@ -455,7 +480,7 @@
           [disabled]="!form().valid() || saving()"
         >
           <mat-icon>add</mat-icon>
-          <span>Save/New</span>
+          <span>{{ 'Save/New' | transloco }}</span>
         </button>
       </mat-menu>
 
@@ -466,7 +491,7 @@
           type="button"
           (click)="closeDialog()"
         >
-          Cancel
+          {{ 'Cancel' | transloco }}
         </button>
       </div>
     </mat-dialog-actions>

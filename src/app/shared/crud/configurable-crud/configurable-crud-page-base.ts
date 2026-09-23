@@ -16,7 +16,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -29,6 +29,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
@@ -60,6 +61,13 @@ import { MnsPermissionTreeFieldComponent } from '../../forms/mns-permission-tree
 import { SecretContentFieldComponent } from '../../secret-content/secret-content-field';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
+import {
+  buildFileUploadViewModel,
+  createInitialFileUploadProgress,
+  FileUploadExecution,
+  FileUploadProgress,
+  runFileUploadExecution,
+} from '../../upload/file-upload-progress';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
   CheckboxGroupFieldComponent,
@@ -77,6 +85,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatInputModule,
   MatMenuModule,
   MatPaginatorModule,
+  MatProgressBarModule,
   MatProgressSpinnerModule,
   MatSelectModule,
   MatSortModule,
@@ -442,6 +451,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly serverTotal = signal(0);
   readonly saving = signal(false);
   readonly mutating = signal(false);
+  /** Generic file-upload-progress state (app.md "File Upload Progress Baseline"). */
+  readonly fileUploadActive = signal(false);
+  readonly fileUploadProgress = signal<FileUploadProgress<unknown> | null>(null);
+  readonly fileUploadViewModel = computed(() =>
+    buildFileUploadViewModel(this.fileUploadProgress(), this.fileUploadActive()),
+  );
+  private fileUploadExecution: FileUploadExecution | null = null;
   readonly relatedRows = signal<Record<string, ConfigurableCrudRecord[]>>({});
   readonly relatedForms = signal<Record<string, ConfigurableCrudRecord>>({});
   readonly relatedLoading = signal(new Set<string>());
@@ -739,7 +755,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         this.editingRecord.set(null);
         this.formValues.set(this.emptyFormValues());
         this.dateDrafts.clear();
-      } else {
+      } else if (!this.keepDialogOpenAfterSave()) {
         this.closeDialog();
       }
       await this.afterSave({
@@ -941,6 +957,50 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   handleFilterAction(_action: ConfigurableCrudFilterAction): void | Promise<void> {}
 
   protected afterSave(_context: ConfigurableCrudSaveContext<T>): void | Promise<void> {}
+
+  /**
+   * Override and return true when `afterSave` still needs the dialog open, e.g. to run a
+   * managed file upload and show its progress (app.md "File Upload Progress Baseline"). The
+   * subclass is then responsible for calling `closeDialog()` itself once the upload settles.
+   */
+  protected keepDialogOpenAfterSave(): boolean {
+    return false;
+  }
+
+  /**
+   * Runs a `postFormWithProgress`-style upload while updating `fileUploadActive`/
+   * `fileUploadProgress` for the shared dialog progress UI. Resolves with the last known
+   * progress; rejects with `UploadCancelledError` on `cancelFileUpload()`.
+   */
+  protected async runManagedFileUpload<U = unknown>(
+    source: Observable<FileUploadProgress<U>>,
+    fileSize: number | null,
+  ): Promise<FileUploadProgress<U>> {
+    this.fileUploadActive.set(true);
+    let last: FileUploadProgress<U> = createInitialFileUploadProgress<U>(fileSize);
+    const execution = runFileUploadExecution<U>({
+      fileSize,
+      source,
+      setProgress: (progress) => {
+        last = progress;
+        this.fileUploadProgress.set(progress as FileUploadProgress<unknown>);
+      },
+      currentProgress: () => last,
+      errorMessage: (error) => this.errorMessage(error),
+    });
+    this.fileUploadExecution = execution;
+    try {
+      await execution.done;
+    } finally {
+      this.fileUploadExecution = null;
+      this.fileUploadActive.set(false);
+    }
+    return last;
+  }
+
+  cancelFileUpload(): void {
+    this.fileUploadExecution?.cancel();
+  }
 
   async deleteSelectedItems(): Promise<void> {
     if (!this.bulkDeleteEnabled()) return;

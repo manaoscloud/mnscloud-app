@@ -1343,8 +1343,8 @@ export const routes: Routes = [
               {
                 path: 'voip/pabx/inbound-routes',
                 loadComponent: () =>
-                  import('./pages/voip/pabx/trunk-route/trunk-route').then(
-                    (m) => m.VoipPabxTrunkRoutePage,
+                  import('./pages/voip/pabx/inbound-route/inbound-route').then(
+                    (m) => m.VoipPabxInboundRoutePage,
                   ),
                 title: 'VoIP • PABX • Inbound Routes | mnscloud',
                 data: { resource: 'inbound-routes' },
@@ -1352,7 +1352,7 @@ export const routes: Routes = [
               {
                 path: 'voip/pabx/group',
                 loadComponent: () =>
-                  import('./pages/voip/pabx/routing/routing').then((m) => m.VoipPabxRoutingPage),
+                  import('./pages/voip/pabx/group/group').then((m) => m.VoipPabxGroupPage),
                 title: 'VoIP • PABX • Group | mnscloud',
                 data: { resource: 'group' },
               },
