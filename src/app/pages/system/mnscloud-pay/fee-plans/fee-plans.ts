@@ -102,7 +102,7 @@ export class SystemMnscloudPayFeePlansPage {
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
 
-  readonly pageTitle = computed(() => 'MNSCloud Pay — Fee Plans');
+  readonly pageTitle = computed(() => 'Payments — Fee Plans');
   readonly pageSubtitle = computed(
     () => 'Standard and custom fee plans charged on settled boleto/Pix transactions.',
   );
