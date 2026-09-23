@@ -27,7 +27,7 @@ function tiers(rate: ConfigurableCrudRecord): ConfigurableCrudConfig {
     bulkDelete: false,
     initialValues: { fixedAmount: 0, percentRate: 0, periodType: 'MONTHLY' },
     columns: [
-      { id: 'count', label: 'Minimum volume count', field: 'BftMinVolumeCount' },
+      { id: 'count', label: 'Minimum volume count', field: 'BftMinVolumeCount', kind: 'identity' },
       {
         id: 'volume',
         label: 'Minimum volume amount',
@@ -118,6 +118,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         id: 'transaction',
         label: 'Transaction type',
         field: 'BfrTransactionType',
+        kind: 'identity',
         options: [
           { value: 'boleto', label: 'Boleto' },
           { value: 'pix', label: 'Pix' },
