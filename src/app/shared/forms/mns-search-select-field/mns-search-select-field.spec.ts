@@ -22,12 +22,9 @@ describe('Remote relationship dropdown accessibility', () => {
     fixture.componentRef.setInput('hasNext', true);
     fixture.componentRef.setInput('options', [{ value: 'saved', label: 'Saved tenant' }]);
     fixture.componentRef.setInput('value', 'saved');
-    const searches: string[] = [],
-      pages: number[] = [],
-      selections: unknown[] = [];
-    fixture.componentInstance.searchChange.subscribe((value) => searches.push(value));
-    fixture.componentInstance.pageChange.subscribe((value) => pages.push(value));
-    fixture.componentInstance.valueChange.subscribe((value) => selections.push(value));
+    const searches = spyOn(fixture.componentInstance.searchChange, 'emit').and.callThrough();
+    const pages = spyOn(fixture.componentInstance.pageChange, 'emit').and.callThrough();
+    const selections = spyOn(fixture.componentInstance.valueChange, 'emit').and.callThrough();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.nativeElement.querySelector('mat-select').click();
@@ -43,13 +40,13 @@ describe('Remote relationship dropdown accessibility', () => {
     search.value = 'remote tenant';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
-    expect(searches).toContain('remote tenant');
+    expect(searches).toHaveBeenCalledWith('remote tenant');
     const next = panel.querySelector<HTMLButtonElement>('button[aria-label="Next page"]')!;
     expect(next.disabled).toBeFalse();
     expect(next.closest('[aria-disabled="true"]')).toBeNull();
     next.click();
-    expect(pages).toEqual([1]);
-    expect(selections).toEqual([]);
+    expect(pages).toHaveBeenCalledOnceWith(1);
+    expect(selections).not.toHaveBeenCalled();
     fixture.destroy();
   });
 });
