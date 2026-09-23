@@ -1,0 +1,206 @@
+<section class="erp-page">
+  <mat-card class="erp-card">
+    <header class="erp-header">
+      <div>
+        <h1>{{ pageTitle() }}</h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+      <div class="header-actions">
+        <app-refresh-button [loading]="loadingAssignments()" (refresh)="refreshList()" />
+        <button mat-stroked-button color="primary" type="button" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          New
+        </button>
+      </div>
+    </header>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>Search assignments</mat-label>
+        <input
+          matInput
+          [value]="searchInput"
+          (input)="onSearchChange($any($event.target).value)"
+          placeholder="Tenant, plan, billing mode..."
+        />
+      </mat-form-field>
+      <div class="filter-actions">
+        <button mat-stroked-button type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loadingAssignments()">
+      @if (loadingAssignments()) {
+        <div class="table-loading" aria-live="polite" aria-busy="true">
+          <mat-progress-spinner diameter="36" mode="indeterminate" />
+        </div>
+      }
+
+      <table mat-table [dataSource]="dataSource" matSort>
+        <ng-container matColumnDef="tenant">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tenant</th>
+          <td mat-cell *matCellDef="let row">{{ row.TenantEmail || row.UserUsrUUID }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="plan">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fee plan</th>
+          <td mat-cell *matCellDef="let row">{{ row.FeePlanName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="billingMode">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Billing mode</th>
+          <td mat-cell *matCellDef="let row">{{ billingModeLabel(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="status-col">Status</th>
+          <td mat-cell *matCellDef="let row" class="status-col">
+            <span
+              class="status-pill status-chip state-chip"
+              [ngClass]="assignmentStatusChipClass(row)"
+              [class.is-active]="row.BpaStatus === 1"
+              [class.is-inactive]="row.BpaStatus !== 1"
+            >
+              {{ assignmentStatusLabel(row) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col-header actions-col-cell">
+            Actions
+          </th>
+          <td mat-cell *matCellDef="let row" class="actions-col-cell">
+            <div class="actions-col">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openEditDialog(row)"
+                matTooltip="Edit assignment"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="deleteAssignment(row)"
+                matTooltip="Remove assignment"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            {{
+              loadingAssignments()
+                ? 'Loading assignments...'
+                : 'No fee plan assignments found for "' + (search || 'all') + '"'
+            }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      class="mobile-paginator"
+      [pageSizeOptions]="[5, 10, 25, 100]"
+      showFirstLastButtons
+      aria-label="Select page of fee plan assignments"
+    />
+  </mat-card>
+</section>
+
+<ng-template #assignmentFormDialog>
+  <div class="crud-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>{{ editingAssignment() ? 'Edit assignment' : 'Assign fee plan to tenant' }}</h2>
+        <p>Only a master/finance user can grant postpaid billing to a tenant.</p>
+      </div>
+      @if (editingAssignment()) {
+        <span class="pill">Editing</span>
+      }
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <form class="form-grid">
+        @if (!editingAssignment()) {
+          <mns-search-select-field
+            class="span-2"
+            label="Tenant"
+            [field]="assignmentForm.tenantUUID"
+            placeholder="Search tenant by email"
+            emptyLabel="No tenants found."
+            [loading]="loadingTenants()"
+            [options]="tenantOptions()"
+            (openedChange)="tenantOpened($event)"
+          />
+        } @else {
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>Tenant</mat-label>
+            <input matInput [value]="editingAssignment()!.TenantEmail" disabled />
+          </mat-form-field>
+        }
+        @if (!editingAssignment()) {
+          <mns-select-field
+            [field]="assignmentForm.planUUID"
+            label="Fee plan"
+            [options]="planOptions()"
+          />
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>Fee plan</mat-label>
+            <input matInput [value]="editingAssignment()!.FeePlanName" disabled />
+          </mat-form-field>
+        }
+        <mns-select-field
+          [field]="assignmentForm.billingMode"
+          label="Billing mode"
+          [options]="billingModeOptions"
+        />
+        <mat-form-field appearance="outline" class="span-4">
+          <mat-label>Notes</mat-label>
+          <input
+            matInput
+            [value]="assignmentFormModel().notes"
+            (input)="
+              assignmentFormModel.set({ ...assignmentFormModel(), notes: $any($event.target).value })
+            "
+          />
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="cancelAssignmentForm()">Cancel</button>
+      </div>
+      <div class="primary-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="submitAssignment()"
+          [disabled]="savingAssignment()"
+        >
+          <mat-icon>save</mat-icon>
+          Save
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>
+</ng-template>
