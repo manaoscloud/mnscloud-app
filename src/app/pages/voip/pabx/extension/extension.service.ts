@@ -18,7 +18,6 @@ export type VoipPabxExtensionItem = {
   VpeRecordCalls: number;
   VpeOutboundCid?: string | null;
   VpeCodecs?: string | null;
-  VpeParamsJson?: unknown;
   VpeEnabled: number;
   UserUsrUUID?: string | null;
   VpeDateCreated?: string | null;
@@ -64,7 +63,6 @@ export class VoipPabxExtensionService {
     recordCalls?: boolean;
     outboundCid?: string | null;
     codecs?: string | null;
-    params?: Record<string, unknown> | null;
     enabled?: boolean;
   }) {
     return this.api.post<any>(this.basePath, payload);
@@ -83,7 +81,6 @@ export class VoipPabxExtensionService {
     recordCalls?: boolean;
     outboundCid?: string | null;
     codecs?: string | null;
-    params?: Record<string, unknown> | null;
     enabled?: boolean;
   }) {
     return this.api.post<any>(`${this.basePath}/bulk`, payload);
@@ -104,8 +101,7 @@ export class VoipPabxExtensionService {
       recordCalls?: boolean;
       outboundCid?: string | null;
       codecs?: string | null;
-      params?: Record<string, unknown> | null;
-      enabled?: boolean;
+        enabled?: boolean;
     },
   ) {
     return this.api.put<any>(`${this.basePath}/${uuid}`, payload);
