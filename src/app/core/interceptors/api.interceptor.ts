@@ -1,3 +1,4 @@
+import { isRuntimeTokenReplaceConfirmationRequired } from '../../shared/install-command-dialog/runtime-install-token';
 import { payErrorMessage } from '../../shared/payment/pay-error';
 import { inject } from '@angular/core';
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
@@ -126,6 +127,11 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
         }
         auth.expireSession();
         snack.error('Your session has expired. Please sign in again.');
+        return throwError(() => error);
+      }
+
+      // Interactive confirmation (not a failure): the caller asks the operator and retries.
+      if (isRuntimeTokenReplaceConfirmationRequired(error)) {
         return throwError(() => error);
       }
 

@@ -56,6 +56,29 @@ describe('apiInterceptor', () => {
     expect(snack.error).toHaveBeenCalledWith('Your session has expired. Please sign in again.');
   });
 
+  it('does not toast the runtime install token replacement confirmation', async () => {
+    const promise = httpClient
+      .post('/api/v1/system/voip/pabx/servers/x/install-command', {})
+      .toPromise();
+    const req = http.expectOne('/api/v1/system/voip/pabx/servers/x/install-command');
+    req.flush(
+      { error: 'Confirm', code: 'RUNTIME_TOKEN_REPLACE_CONFIRMATION_REQUIRED', data: {} },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.error).not.toHaveBeenCalled();
+  });
+
+  it('still toasts other conflicts', async () => {
+    const promise = httpClient.post('/api/v1/example', {}).toPromise();
+    const req = http.expectOne('/api/v1/example');
+    req.flush({ error: 'Duplicate record.' }, { status: 409, statusText: 'Conflict' });
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.error).toHaveBeenCalled();
+  });
+
   it('adds CSRF header to mutating same-origin requests when the csrf cookie exists', async () => {
     document.cookie = 'mnscloud_csrf=csrf-token; path=/';
 

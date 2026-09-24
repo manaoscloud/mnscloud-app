@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject, signal } from '@angular/core';
 
 import {
@@ -288,7 +292,10 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
     showSuccess: boolean,
   ): Promise<void> {
     try {
-      const response = await this.serverApi.generateInstallCommand(row.VbsUUID);
+      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
+        this.serverApi.generateInstallCommand(row.VbsUUID, body),
+      );
+      if (!response) return;
       const command = String(response?.data?.command ?? response?.data?.item?.command ?? '');
       if (!command) {
         this.snack.warning('Install command was not returned.');
@@ -326,8 +333,10 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
     return {
       title: 'SBC install command',
       description: 'Run this command on the OpenSIPS SBC server.',
-      warning:
-        'This runtime token is shown only once. Generating a new command replaces the previous token for this SBC server.',
+      warning: runtimeInstallTokenWarning(
+        data,
+        'This runtime token is shown only once. Copy it only to the intended server.',
+      ),
       command,
       details: [
         { label: 'Server', value: row.VbsName },

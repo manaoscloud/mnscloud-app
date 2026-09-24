@@ -3,31 +3,64 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export type SlowConfirmDialogData = {
   title: string;
   message: string;
   confirmLabel?: string;
+  /** When true, title/message/labels are translation keys rendered through Transloco. */
+  translate?: boolean;
 };
 
 @Component({
   selector: 'app-slow-confirm-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
   template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <div mat-dialog-content>
-      <p class="message">{{ data.message }}</p>
-      @if (!ready()) {
-        <p class="hint">Please wait a moment…</p>
-      }
-    </div>
-    <div mat-dialog-actions align="end">
-      <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
-      <button mat-flat-button color="warn" type="button" [disabled]="!ready()" (click)="confirm()">
-        {{ data.confirmLabel || 'Confirm' }}
-      </button>
-    </div>
+    @if (data.translate) {
+      <h2 mat-dialog-title>{{ data.title | transloco }}</h2>
+      <div mat-dialog-content>
+        <p class="message">{{ data.message | transloco }}</p>
+        @if (!ready()) {
+          <p class="hint">{{ 'Please wait a moment…' | transloco }}</p>
+        }
+      </div>
+      <div mat-dialog-actions align="end">
+        <button mat-stroked-button mat-dialog-close type="button">
+          {{ 'Cancel' | transloco }}
+        </button>
+        <button
+          mat-flat-button
+          color="warn"
+          type="button"
+          [disabled]="!ready()"
+          (click)="confirm()"
+        >
+          {{ data.confirmLabel || 'Confirm' | transloco }}
+        </button>
+      </div>
+    } @else {
+      <h2 mat-dialog-title>{{ data.title }}</h2>
+      <div mat-dialog-content>
+        <p class="message">{{ data.message }}</p>
+        @if (!ready()) {
+          <p class="hint">Please wait a moment…</p>
+        }
+      </div>
+      <div mat-dialog-actions align="end">
+        <button mat-stroked-button mat-dialog-close type="button">Cancel</button>
+        <button
+          mat-flat-button
+          color="warn"
+          type="button"
+          [disabled]="!ready()"
+          (click)="confirm()"
+        >
+          {{ data.confirmLabel || 'Confirm' }}
+        </button>
+      </div>
+    }
   `,
 })
 export class SlowConfirmDialogComponent {

@@ -1,3 +1,4 @@
+import type { RuntimeInstallCommandBody } from '../../../../shared/install-command-dialog/runtime-install-token';
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from '../../../../services/api.service';
@@ -47,8 +48,8 @@ export class VoipSoftswitchServerService {
     return this.api.get<any>(`${this.basePath(isMaster)}${suffix ? `?${suffix}` : ''}`);
   }
 
-  generateInstallCommand(uuid: string) {
-    return this.api.post<any>(`system/voip/softswitch/servers/${uuid}/install-command`, {});
+  generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
+    return this.api.post<any>(`system/voip/softswitch/servers/${uuid}/install-command`, body);
   }
 
   getRuntimeInventory(uuid: string) {

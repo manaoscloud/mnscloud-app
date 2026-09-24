@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -418,10 +422,13 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
 
   private async openGeneratedInstallCommand(uuid: string, showSuccess: boolean): Promise<void> {
     try {
-      const response = await this.api.post<{ data?: Record<string, unknown> }>(
-        `${config.endpoint}/${uuid}/install-command`,
-        {},
+      const response = await requestRuntimeInstallCommand(this.installDialog, (body) =>
+        this.api.post<{ data?: Record<string, unknown> }>(
+          `${config.endpoint}/${uuid}/install-command`,
+          body,
+        ),
       );
+      if (!response) return;
       const data = response?.data ?? {};
       if (showSuccess) this.snack.success(this.t('PABX install command generated.'));
       const engine = String(data['engine'] || '').toLowerCase();
@@ -452,8 +459,10 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
           data: {
             title: 'PABX server install command',
             description: 'Run this command on the target PABX server.',
-            warning:
-              'This runtime token is shown only once. Generating a new command replaces the previous token.',
+            warning: runtimeInstallTokenWarning(
+              data,
+              'This runtime token is shown only once. Copy it only to the intended server.',
+            ),
             details: [
               { label: 'API base', value: apiBase, monospace: true },
               { label: 'Node UUID', value: data['nodeUUID'], monospace: true },

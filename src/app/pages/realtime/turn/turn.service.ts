@@ -1,3 +1,4 @@
+import type { RuntimeInstallCommandBody } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
@@ -47,8 +48,8 @@ export class RealtimeTurnService {
     return this.api.delete<any>(`${this.resourcePath(resource, scope)}/bulk`, { ids });
   }
 
-  generateInstallCommand(uuid: string) {
-    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, {});
+  generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
+    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, body);
   }
 
   provisionDomain(uuid: string, scope: TurnScope = 'master') {

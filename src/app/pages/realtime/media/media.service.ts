@@ -1,3 +1,4 @@
+import type { RuntimeInstallCommandBody } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
@@ -26,14 +27,21 @@ export class RealtimeMediaService {
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
     const suffix = query.toString();
-    return this.api.get<any>(`${this.basePath}/${this.resourcePath(resource)}${suffix ? `?${suffix}` : ''}`);
+    return this.api.get<any>(
+      `${this.basePath}/${this.resourcePath(resource)}${suffix ? `?${suffix}` : ''}`,
+    );
   }
 
   create(resource: MediaResource, payload: MediaRecord, _scope: MediaScope = 'master') {
     return this.api.post<any>(`${this.basePath}/${this.resourcePath(resource)}`, payload);
   }
 
-  update(resource: MediaResource, uuid: string, payload: MediaRecord, _scope: MediaScope = 'master') {
+  update(
+    resource: MediaResource,
+    uuid: string,
+    payload: MediaRecord,
+    _scope: MediaScope = 'master',
+  ) {
     return this.api.put<any>(`${this.basePath}/${this.resourcePath(resource)}/${uuid}`, payload);
   }
 
@@ -45,11 +53,13 @@ export class RealtimeMediaService {
     return this.api.delete<any>(`${this.basePath}/${this.resourcePath(resource)}/bulk`, { ids });
   }
 
-  generateInstallCommand(uuid: string) {
-    return this.api.post<any>(`${this.basePath}/servers/${uuid}/install-command`, {});
+  generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
+    return this.api.post<any>(`${this.basePath}/servers/${uuid}/install-command`, body);
   }
 
-  listRealtimeDomains(params: { purpose?: string; status?: number; limit?: number; search?: string } = {}) {
+  listRealtimeDomains(
+    params: { purpose?: string; status?: number; limit?: number; search?: string } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.purpose) query.set('purpose', params.purpose);
     if (params.status !== undefined && params.status !== null)

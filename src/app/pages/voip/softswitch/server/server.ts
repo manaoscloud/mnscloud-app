@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject, signal } from '@angular/core';
 
 import {
@@ -297,7 +301,10 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
     showSuccess: boolean,
   ): Promise<void> {
     try {
-      const response = await this.serverApi.generateInstallCommand(row.VsrUUID);
+      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
+        this.serverApi.generateInstallCommand(row.VsrUUID, body),
+      );
+      if (!response) return;
       const command = String(response?.data?.command ?? response?.data?.item?.command ?? '');
       if (!command) {
         this.snack.warning('Install command was not returned.');
@@ -335,8 +342,10 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
     return {
       title: 'Softswitch install command',
       description: 'Run this command on the Kamailio Softswitch server.',
-      warning:
-        'This runtime token is shown only once. Generating a new command replaces the previous token for this Softswitch server.',
+      warning: runtimeInstallTokenWarning(
+        data,
+        'This runtime token is shown only once. Copy it only to the intended server.',
+      ),
       command,
       details: [
         { label: 'Server', value: row.VsrName },
@@ -372,7 +381,10 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
             details: [
               { label: 'Engine version', value: inventory?.engineVersion, wide: true },
               { label: 'Service status', value: inventory?.serviceStatus },
-              { label: 'Capability status', value: this.capabilityStatusLabel(inventory?.capabilityStatus) },
+              {
+                label: 'Capability status',
+                value: this.capabilityStatusLabel(inventory?.capabilityStatus),
+              },
             ],
           },
           {

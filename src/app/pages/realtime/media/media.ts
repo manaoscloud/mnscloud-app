@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
@@ -77,7 +81,12 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'advertisedIP', label: 'IP anunciado', field: 'RmsAdvertisedIP', copyable: true },
     { id: 'controlIP', label: 'Control IP', field: 'RmsControlIP', copyable: true },
-    { id: 'effectiveControlIP', label: 'Control efetivo', field: 'RmsEffectiveControlIP', copyable: true },
+    {
+      id: 'effectiveControlIP',
+      label: 'Control efetivo',
+      field: 'RmsEffectiveControlIP',
+      copyable: true,
+    },
     { id: 'controlPort', label: 'Control Port', field: 'RmsControlPort' },
     { id: 'status', label: 'Status', kind: 'status', field: 'RmsStatus', className: 'status-col' },
     { id: 'lastSeen', label: 'Last Seen', field: 'RmsLastSeenAt', kind: 'datetime' },
@@ -101,19 +110,111 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
       options: ENGINE_OPTIONS,
       span: 1,
     },
-    { key: 'mediaDomainUUID', source: 'RealtimeMediaDomainRmdUUID', payloadKey: 'mediaDomainUUID', label: 'Media Domain', type: 'search-select', span: 1 },
+    {
+      key: 'mediaDomainUUID',
+      source: 'RealtimeMediaDomainRmdUUID',
+      payloadKey: 'mediaDomainUUID',
+      label: 'Media Domain',
+      type: 'search-select',
+      span: 1,
+    },
     { key: 'name', source: 'RmsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    { key: 'nodeUUID', source: 'RmsNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', tab: 'network', span: 1 },
-    { key: 'hostname', source: 'RmsHostname', payloadKey: 'hostname', label: 'Hostname', tab: 'network', span: 1 },
-    { key: 'publicIP', source: 'RmsPublicIP', payloadKey: 'publicIP', label: 'Public IP', tab: 'network', span: 1 },
-    { key: 'privateIP', source: 'RmsPrivateIP', payloadKey: 'privateIP', label: 'Private IP', tab: 'network', span: 1 },
-    { key: 'controlIP', source: 'RmsControlIP', payloadKey: 'controlIP', label: 'Control IP', tab: 'network', span: 1 },
-    { key: 'controlPort', source: 'RmsControlPort', payloadKey: 'controlPort', label: 'Control Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'minMediaPort', source: 'RmsMinMediaPort', payloadKey: 'minMediaPort', label: 'Min Media Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'maxMediaPort', source: 'RmsMaxMediaPort', payloadKey: 'maxMediaPort', label: 'Max Media Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'version', source: 'RmsVersion', payloadKey: 'version', label: 'Version', tab: 'network', span: 1 },
-    { key: 'configJson', source: 'RmsConfig', payloadKey: 'config', label: 'Config JSON', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 8 },
-    { key: 'notes', source: 'RmsNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'nodeUUID',
+      source: 'RmsNodeUUID',
+      payloadKey: 'nodeUUID',
+      label: 'Node UUID',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'hostname',
+      source: 'RmsHostname',
+      payloadKey: 'hostname',
+      label: 'Hostname',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'publicIP',
+      source: 'RmsPublicIP',
+      payloadKey: 'publicIP',
+      label: 'Public IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'privateIP',
+      source: 'RmsPrivateIP',
+      payloadKey: 'privateIP',
+      label: 'Private IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'controlIP',
+      source: 'RmsControlIP',
+      payloadKey: 'controlIP',
+      label: 'Control IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'controlPort',
+      source: 'RmsControlPort',
+      payloadKey: 'controlPort',
+      label: 'Control Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'minMediaPort',
+      source: 'RmsMinMediaPort',
+      payloadKey: 'minMediaPort',
+      label: 'Min Media Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'maxMediaPort',
+      source: 'RmsMaxMediaPort',
+      payloadKey: 'maxMediaPort',
+      label: 'Max Media Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'version',
+      source: 'RmsVersion',
+      payloadKey: 'version',
+      label: 'Version',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'configJson',
+      source: 'RmsConfig',
+      payloadKey: 'config',
+      label: 'Config JSON',
+      type: 'textarea',
+      format: 'json',
+      tab: 'notes',
+      span: 4,
+      rows: 8,
+    },
+    {
+      key: 'notes',
+      source: 'RmsNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -144,15 +245,45 @@ const MEDIA_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'domain', label: 'Realtime Domain', kind: 'identity', field: 'RtdName', uuidField: 'RealtimeDomainRtdUUID' },
+    {
+      id: 'domain',
+      label: 'Realtime Domain',
+      kind: 'identity',
+      field: 'RtdName',
+      uuidField: 'RealtimeDomainRtdUUID',
+    },
     { id: 'purpose', label: 'Purpose', field: 'RtdPurpose' },
     { id: 'status', label: 'Status', kind: 'status', field: 'RmdStatus', className: 'status-col' },
     { id: 'updatedAt', label: 'Updated', field: 'RmdDateUpdated', kind: 'datetime' },
   ],
   fields: [
-    { key: 'status', source: 'RmdStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'search-select', required: true, span: 1 },
-    { key: 'notes', source: 'RmdNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 8 },
+    {
+      key: 'status',
+      source: 'RmdStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'realtimeDomainUUID',
+      source: 'RealtimeDomainRtdUUID',
+      payloadKey: 'realtimeDomainUUID',
+      label: 'Realtime Domain',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'RmdNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 8,
+    },
   ],
 };
 
@@ -204,11 +335,26 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
       this.mediaApi.list('domains', { status: 1, limit: 5000 }),
       this.mediaApi.listRealtimeDomains({ purpose: 'media', status: 1, limit: 5000 }),
     ]);
-    this.mediaDomainOptions = this.toOptions(mediaDomains?.data?.items ?? [], 'RmdUUID', 'RtdName', 'RealtimeDomainRtdUUID');
-    this.realtimeDomainOptions = this.toOptions(realtimeDomains?.data?.items ?? [], 'RtdUUID', 'RtdName', 'RtdPurpose');
+    this.mediaDomainOptions = this.toOptions(
+      mediaDomains?.data?.items ?? [],
+      'RmdUUID',
+      'RtdName',
+      'RealtimeDomainRtdUUID',
+    );
+    this.realtimeDomainOptions = this.toOptions(
+      realtimeDomains?.data?.items ?? [],
+      'RtdUUID',
+      'RtdName',
+      'RtdPurpose',
+    );
   }
 
-  private toOptions(rows: ConfigurableCrudRecord[], valueKey: string, labelKey: string, descriptionKey: string): ConfigurableCrudOption[] {
+  private toOptions(
+    rows: ConfigurableCrudRecord[],
+    valueKey: string,
+    labelKey: string,
+    descriptionKey: string,
+  ): ConfigurableCrudOption[] {
     return rows
       .map((row) => ({
         value: String(row[valueKey] ?? ''),
@@ -221,13 +367,19 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
 
   private async openInstallCommand(row: ConfigurableCrudRecord) {
     try {
-      const response = await this.mediaApi.generateInstallCommand(String(row['RmsUUID'] ?? ''));
+      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
+        this.mediaApi.generateInstallCommand(String(row['RmsUUID'] ?? ''), body),
+      );
+      if (!response) return;
       const token = response?.data ?? {};
       const command = this.installCommand(token, row);
       const data: InstallCommandDialogData = {
         title: 'Media install command',
         description: 'Run this command on the target media edge host.',
-        warning: 'The runtime token is sensitive. Copy it only to the intended server.',
+        warning: runtimeInstallTokenWarning(
+          token,
+          'This runtime token is shown only once. Copy it only to the intended server.',
+        ),
         command,
         details: [
           { label: 'API base', value: window.location.origin, monospace: true },

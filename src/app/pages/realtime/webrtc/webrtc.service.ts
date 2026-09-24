@@ -1,3 +1,4 @@
+import type { RuntimeInstallCommandBody } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 
@@ -21,7 +22,12 @@ export class RealtimeWebRtcService {
 
   list(
     resource: WebRtcResource,
-    params: { limit?: number; offset?: number; search?: string; status?: string | number | null } = {},
+    params: {
+      limit?: number;
+      offset?: number;
+      search?: string;
+      status?: string | number | null;
+    } = {},
     scope: WebRtcScope = 'tenant',
   ) {
     const query = new URLSearchParams();
@@ -36,7 +42,12 @@ export class RealtimeWebRtcService {
   }
 
   listRealtimeDomains(
-    params: { limit?: number; search?: string; purpose?: string; status?: number | string | null } = {},
+    params: {
+      limit?: number;
+      search?: string;
+      purpose?: string;
+      status?: number | string | null;
+    } = {},
     scope: WebRtcScope = 'tenant',
   ) {
     const query = new URLSearchParams();
@@ -51,7 +62,9 @@ export class RealtimeWebRtcService {
     return this.api.get<any>(`${basePath}${suffix ? `?${suffix}` : ''}`);
   }
 
-  listMediaServers(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
+  listMediaServers(
+    params: { limit?: number; offset?: number; search?: string; status?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
@@ -63,22 +76,28 @@ export class RealtimeWebRtcService {
     return this.api.get<any>(`system/realtime/media/servers${suffix ? `?${suffix}` : ''}`);
   }
 
-  listPabxAccounts(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
+  listPabxAccounts(
+    params: { limit?: number; offset?: number; search?: string; status?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
-    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
+    if (params.status !== undefined && params.status !== null)
+      query.set('status', String(params.status));
     const suffix = query.toString();
     return this.api.get<any>(`voip/pabx/accounts${suffix ? `?${suffix}` : ''}`);
   }
 
-  listSoftswitchAccounts(params: { limit?: number; offset?: number; search?: string; status?: number } = {}) {
+  listSoftswitchAccounts(
+    params: { limit?: number; offset?: number; search?: string; status?: number } = {},
+  ) {
     const query = new URLSearchParams();
     if (params.limit) query.set('limit', String(params.limit));
     if (params.offset) query.set('offset', String(params.offset));
     if (params.search) query.set('search', params.search);
-    if (params.status !== undefined && params.status !== null) query.set('status', String(params.status));
+    if (params.status !== undefined && params.status !== null)
+      query.set('status', String(params.status));
     const suffix = query.toString();
     return this.api.get<any>(`voip/softswitch/accounts${suffix ? `?${suffix}` : ''}`);
   }
@@ -109,7 +128,7 @@ export class RealtimeWebRtcService {
     return this.api.post<any>(`${basePath}/domains/${uuid}/provision`, {});
   }
 
-  generateInstallCommand(uuid: string) {
-    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, {});
+  generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
+    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, body);
   }
 }
