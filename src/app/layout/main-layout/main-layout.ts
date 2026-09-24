@@ -1582,14 +1582,6 @@ export class MainLayout {
               permissions: ['platform.master.access'],
             },
             {
-              id: 'voip/pabx/server-assignments',
-              label: 'PABX server assignments',
-              icon: 'assignment_ind',
-              route: '/system/pabx/server-assignments',
-              masterRoute: '/system/pabx/server-assignments',
-              permissions: ['platform.master.access'],
-            },
-            {
               id: 'voip/pabx/domains',
               label: 'Domains',
               icon: 'language',
