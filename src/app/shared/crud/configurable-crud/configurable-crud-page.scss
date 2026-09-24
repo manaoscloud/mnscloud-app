@@ -9,24 +9,39 @@
   padding-top: 0.65rem;
 }
 
-.form-grid > * {
+:is(.form-grid, .crud-field-contents) > * {
   min-width: 0;
   width: 100%;
 }
 
-.form-grid > .span-1 {
+// Fields without a hint keep their own grid placement through a transparent wrapper.
+.crud-field-contents {
+  display: contents;
+}
+
+// Hinted fields: the control and its hint share one grid cell so the hint sits under the field.
+.form-grid > .crud-field-cell {
+  display: flex;
+  flex-direction: column;
+
+  > .field-hint {
+    padding: 0 0.25rem;
+  }
+}
+
+:is(.form-grid, .crud-field-contents) > .span-1 {
   grid-column: span 1;
 }
 
-.form-grid > .span-2 {
+:is(.form-grid, .crud-field-contents) > .span-2 {
   grid-column: span 2;
 }
 
-.form-grid > .span-3 {
+:is(.form-grid, .crud-field-contents) > .span-3 {
   grid-column: span 3;
 }
 
-.form-grid > .span-4 {
+:is(.form-grid, .crud-field-contents) > .span-4 {
   grid-column: 1 / -1;
 }
 
@@ -55,23 +70,23 @@
   grid-column: span 3;
 }
 
-.form-grid > .break-before {
+:is(.form-grid, .crud-field-contents) > .break-before {
   grid-column-start: 1;
 }
 
-.form-grid > .break-before.span-1 {
+:is(.form-grid, .crud-field-contents) > .break-before.span-1 {
   grid-column: 1 / span 1;
 }
 
-.form-grid > .break-before.span-2 {
+:is(.form-grid, .crud-field-contents) > .break-before.span-2 {
   grid-column: 1 / span 2;
 }
 
-.form-grid > .break-before.span-3 {
+:is(.form-grid, .crud-field-contents) > .break-before.span-3 {
   grid-column: 1 / span 3;
 }
 
-.form-grid > .break-before.span-4 {
+:is(.form-grid, .crud-field-contents) > .break-before.span-4 {
   grid-column: 1 / -1;
 }
 
@@ -312,7 +327,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .form-grid > .span-4,
+  :is(.form-grid, .crud-field-contents) > .span-4,
   .address-section-grid > .span-4 {
     grid-column: 1 / -1;
   }
@@ -324,10 +339,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .form-grid > .span-3,
-  .form-grid > .span-4,
-  .form-grid > .break-before.span-3,
-  .form-grid > .break-before.span-4,
+  :is(.form-grid, .crud-field-contents) > .span-3,
+  :is(.form-grid, .crud-field-contents) > .span-4,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-3,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-4,
   .address-section-grid > .span-3,
   .address-section-grid > .span-4,
   .address-section-grid > .break-before.span-3,
@@ -342,14 +357,14 @@
     grid-template-columns: 1fr;
   }
 
-  .form-grid > .span-1,
-  .form-grid > .span-2,
-  .form-grid > .span-3,
-  .form-grid > .span-4,
-  .form-grid > .break-before.span-1,
-  .form-grid > .break-before.span-2,
-  .form-grid > .break-before.span-3,
-  .form-grid > .break-before.span-4,
+  :is(.form-grid, .crud-field-contents) > .span-1,
+  :is(.form-grid, .crud-field-contents) > .span-2,
+  :is(.form-grid, .crud-field-contents) > .span-3,
+  :is(.form-grid, .crud-field-contents) > .span-4,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-1,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-2,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-3,
+  :is(.form-grid, .crud-field-contents) > .break-before.span-4,
   .address-section-grid > .span-1,
   .address-section-grid > .span-2,
   .address-section-grid > .span-3,
