@@ -238,9 +238,6 @@
               [loading]="referenceLoading()"
               [options]="supplierOptions()"
               (openedChange)="supplierOpened($event)"
-              [canCreate]="true"
-              [createLabel]="supplierQuickCreate.label ?? ''"
-              (createRecord)="createSupplier()"
             />
 
             <mns-select-field

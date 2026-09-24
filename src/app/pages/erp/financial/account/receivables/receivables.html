@@ -240,9 +240,6 @@
               [loading]="referenceLoading()"
               [options]="customerOptions()"
               (openedChange)="customerOpened($event)"
-              [canCreate]="true"
-              [createLabel]="customerQuickCreate.label ?? ''"
-              (createRecord)="createCustomer()"
             />
 
             <mns-select-field

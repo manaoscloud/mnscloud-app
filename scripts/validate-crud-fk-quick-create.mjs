@@ -3,6 +3,7 @@
 // must offer creating the referenced record through its canonical CRUD form, or declare why not.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { directoryCrud } from './crud-discovery.mjs';
 
 const root = process.cwd();
 const registryPath = 'src/app/shared/crud/configurable-crud/quick-create.ts';
@@ -152,6 +153,14 @@ function registryViolations(entries) {
   return violations;
 }
 
+function isLegacyCrudTemplate(file) {
+  return directoryCrud(dirname(file)).some(
+    (component) =>
+      component.kind === 'legacy' &&
+      readFileSync(component.path, 'utf8').includes(file.split('/').pop()),
+  );
+}
+
 function collectFiles(target, files) {
   if (!existsSync(target)) throw new Error(`Target does not exist: ${target}`);
   if (statSync(target).isFile()) {
@@ -175,11 +184,18 @@ function main(argv) {
   const registryKeys = new Set(entries.map((entry) => entry.key));
   const problems = registryViolations(entries);
 
+  const backlog = [];
   const files = new Set();
   for (const target of all ? ['src/app/pages'] : targets)
     collectFiles(resolve(root, target), files);
   for (const file of [...files].sort()) {
     const content = readFileSync(file, 'utf8');
+    if (file.endsWith('.html') && isLegacyCrudTemplate(file)) {
+      // Legacy CRUDs are blocked by the ConfigurableCrudPageBase migration gate as soon as they
+      // are touched; they gain quick-create through the configurable base once migrated.
+      if (templateViolations(content).length) backlog.push(relative(root, file));
+      continue;
+    }
     const found = file.endsWith('.html')
       ? templateViolations(content)
       : fieldViolations(content, registryKeys);
@@ -190,6 +206,10 @@ function main(argv) {
     }
   }
 
+  if (backlog.length) {
+    console.log('FK quick-create backlog (legacy CRUD, migrate to ConfigurableCrudPageBase):');
+    for (const file of backlog) console.log(`  - ${file}`);
+  }
   if (problems.length) {
     console.error(`FK quick-create contract failed (${problems.length}):`);
     for (const problem of problems) console.error(`  - ${problem}`);

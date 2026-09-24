@@ -297,6 +297,7 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemPromotionsPage extends ConfigurableCrudPageBase<
   BillingPromotion & ConfigurableCrudRecord

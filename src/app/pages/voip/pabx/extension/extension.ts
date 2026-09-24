@@ -334,7 +334,7 @@ const config: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRecord> {
   private readonly pabxOptionsState = signal<readonly PabxLookup[]>([]);
