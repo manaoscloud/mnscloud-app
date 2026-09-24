@@ -50,6 +50,8 @@ import {
 } from '../../../../../shared/forms';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { openQuickCreate } from '../../../../../shared/crud/configurable-crud/configurable-crud-quick-create-host';
+import { quickCreateRegistryEntry } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 type ReceivableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
@@ -191,7 +193,14 @@ export class FinancialReceivablesPage {
   readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
   readonly referenceLoading = computed(() => this.snapshotResource.isLoading());
   readonly rows = computed(() => this.snapshotResource.value().items);
-  readonly customerOptions = computed(() => this.snapshotResource.value().customers);
+  readonly customerQuickCreate = quickCreateRegistryEntry('CustomerCusUUID')!;
+  /** Customers created from the FK select, kept until the snapshot reloads with them. */
+  private readonly createdCustomers = signal<CustomerOption[]>([]);
+  readonly customerOptions = computed(() => {
+    const loaded = this.snapshotResource.value().customers;
+    const known = new Set(loaded.map((option) => option.value));
+    return [...this.createdCustomers().filter((option) => !known.has(option.value)), ...loaded];
+  });
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     const start = this.pageIndex() * this.pageSize();
@@ -401,6 +410,17 @@ export class FinancialReceivablesPage {
       }
       return next;
     });
+  }
+
+  async createCustomer() {
+    const option = (await openQuickCreate(this.dialog, this.customerQuickCreate))?.option;
+    if (!option) return;
+    const created = { ...option, value: String(option.value) };
+    this.createdCustomers.update((items) => [
+      created,
+      ...items.filter((item) => item.value !== created.value),
+    ]);
+    this.formModel.update((current) => ({ ...current, customerUUID: created.value }));
   }
 
   customerOpened(opened: boolean) {

@@ -10,6 +10,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { WEBHOST_TOOL_STATUS_OPTIONS, lifecycleChipClass } from '../webhost-shared';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 type Kind = 'databases' | 'database-users' | 'database-grants';
 const retry: ConfigurableCrudRowAction = {
@@ -133,6 +134,7 @@ function configuration(kind: Kind): ConfigurableCrudConfig {
               source: 'databaseUUID',
               label: 'Database',
               type: 'search-select' as const,
+              quickCreate: quickCreateFor('HostingWebhostDatabaseHwdUUID'),
               required: true,
               span: 1 as const,
               disabledWhen: (c: any) => c.editing,
@@ -142,6 +144,7 @@ function configuration(kind: Kind): ConfigurableCrudConfig {
               source: 'userUUID',
               label: 'DB user',
               type: 'search-select' as const,
+              quickCreate: quickCreateFor('HostingWebhostDatabaseUserHduUUID'),
               required: true,
               span: 1 as const,
               disabledWhen: (c: any) => c.editing,

@@ -1,14 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatDialogRef } from '@angular/material/dialog';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
-  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
-  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -93,6 +90,15 @@ function domainConfig(scope: 'tenant' | 'master'): ConfigurableCrudConfig {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipDomainPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      voipDomainOptionFromResponse(response, payload) ?? super.quickCreateOption(response, payload)
+    );
+  }
+
   constructor() {
     const route = inject(ActivatedRoute);
     super(domainConfig(route.snapshot.data['scope'] === 'master' ? 'master' : 'tenant'));
@@ -105,56 +111,6 @@ export class VoipDomainPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       purpose: String(payload['purpose'] ?? '').trim(),
       status: Number(payload['status']) === 1,
     };
-  }
-}
-
-@Component({
-  selector: 'app-voip-domain-quick-create-host',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: [
-    '../../../shared/crud/configurable-crud/configurable-crud-page.scss',
-    '../../erp/customer/customer-quick-create-host.scss',
-  ],
-})
-export class VoipDomainQuickCreateHostComponent extends VoipDomainPage {
-  private readonly quickDialogRef = inject(
-    MatDialogRef<VoipDomainQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
-  );
-  private savingFromQuickCreate = false;
-
-  constructor() {
-    super();
-    queueMicrotask(() => this.startCreate());
-  }
-
-  override async saveItem(saveAndNew = false): Promise<void> {
-    this.savingFromQuickCreate = true;
-    try {
-      await super.saveItem(saveAndNew);
-    } finally {
-      this.savingFromQuickCreate = false;
-    }
-  }
-
-  override closeDialog(): void {
-    super.closeDialog();
-    if (!this.savingFromQuickCreate) {
-      this.quickDialogRef.close({ option: null });
-    }
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
-  ): Promise<void> {
-    await super.afterSave(context);
-    if (context.mode !== 'create') return;
-    this.quickDialogRef.close({
-      option: voipDomainOptionFromResponse(context.response, context.payload),
-      response: context.response,
-      payload: context.payload,
-    });
   }
 }
 

@@ -8,6 +8,7 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const MEDIA_MODE_OPTIONS = [
   { value: 'normal', label: 'Normal' },
@@ -201,6 +202,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'inputPeerUUID',
       label: 'Inbound peer',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSbcPeerVspUUID'),
       required: true,
       tab: 'match',
       span: 1,
@@ -231,6 +233,7 @@ const PIPE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'outputPeerUUID',
       label: 'Destination peer',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSbcPeerVspUUID'),
       required: true,
       tab: 'authentication',
       span: 1,

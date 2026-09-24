@@ -455,12 +455,9 @@
   when the panel closes.
   Searchable-select labels and placeholders must be passed through Transloco by the consuming
   template/config. Do not pass untranslated placeholder literals into shared select adapters.
-- FK quick-create actions should be enabled for every eligible dynamic FK/searchable select whose
-  referenced resource has a canonical create form in the current scope. The quick-create action must
-  reuse that canonical create form of the referenced component/resource. Do not implement a second
-  lightweight dialog or duplicate field list for the referenced entity. If the referenced resource
-  cannot expose its existing create form through a host/component, leave quick-create disabled until
-  that canonical form is reusable.
+- FK quick-create is mandatory for every searchable FK form field. See
+  `FK Quick-Create Baseline (Current)`; it is part of the Definition Of Done and enforced by
+  `npm run check:crud:fk`.
 - Any free-text code field backed by a canonical DB/API registry, such as Billing Product Code, must
   use `mat-autocomplete` with API-provided suggestions and still preserve manual typing when the
   workflow intentionally creates a new registry entry.
@@ -486,6 +483,47 @@
   - Validate both closed and opened select states in PT/EN/ES during CRUD creation/refactor.
   - The DOM translation service is a safety net only; it is not the source of truth for CRUD
     component labels.
+
+## FK Quick-Create Baseline (Current)
+
+Users must be able to create a missing related record from the FK select itself, without leaving
+or cancelling the form they are filling.
+
+- Every searchable FK form field (`type: 'search-select'`, persisted value is a related record UUID)
+  must offer quick-create: the `+` suffix button and the `Create <resource>` option in the empty
+  state of `mns-search-select-field`.
+- Quick-create always opens the referenced resource's canonical configurable CRUD page in
+  quick-create mode. Never build a lightweight dialog, a duplicated field list, or a
+  resource-specific host subclass.
+- Registry: `src/app/shared/crud/configurable-crud/quick-create.ts` (`QUICK_CREATE_REGISTRY`) maps
+  the canonical FK column (`ReferencedTableName` + `ReferencedTableField`, e.g. `CustomerCusUUID`)
+  to the page class (lazy `loadComponent`), the translated `Create <resource>` label, an optional
+  `permission` (master-only `system/*` resources use `platform.master.access`), and optional
+  `routeData` for pages that pick a variant from route data (catalog kind, database resource).
+- Binding a field:
+  - `source` equal to a registry key: nothing to add, the field gets quick-create automatically.
+  - non-canonical `source`/key (legacy `pabxUUID`, `accountUUID`, ...): add
+    `quickCreate: quickCreateFor('<RegistryKey>')`.
+  - genuinely not creatable in place (tenants/users provisioned by onboarding or invitation,
+    polymorphic targets, read-only pages, non-configurable forms): `quickCreate: false` plus
+    `quickCreateExemptReason: '<why>'`. An exemption without a reason fails validation.
+- New configurable CRUD resource: register its page in `QUICK_CREATE_REGISTRY` in the same task so
+  every form that references it gets quick-create. A new referenced resource without a registry
+  entry is incomplete work, not a reason to disable quick-create.
+- Hand-written Signal Forms dialogs bind the adapter directly: `[canCreate]`, `[createLabel]` and
+  `(createRecord)` calling `openQuickCreate(dialog, quickCreateRegistryEntry('<RegistryKey>'))`,
+  then add the returned option to the options list and set the form value. Use
+  `data-quick-create-exempt="<reason>"` on the tag only for the same exemption cases above.
+- Quick-create mode (`CONFIGURABLE_CRUD_QUICK_CREATE`, provided by the invisible
+  `ConfigurableCrudQuickCreateHostComponent`) is owned by `ConfigurableCrudPageBase`: the page does
+  not load its list, opens the create dialog directly, hides `Save/New`, and returns the created
+  option on save or `null` on cancel. The requesting field merges that option into its options and
+  selects it (appends it for `multiple`), preserving everything already typed in the parent form.
+- The created option is taken from the create response; when the response has no record, the base
+  finds it by the label through the list endpoint. Override `quickCreateOption()` in the page only
+  to enrich `description`/`searchText`.
+- Filters (`listFilters`) never offer quick-create.
+- UI gating is UX only: the API still authorizes the create request.
 
 ## System Parameter Defaults
 
@@ -756,6 +794,9 @@
   - dialog must follow viewport rules from `Dialog Viewport Rules (Current)` section
   - dialog footer must follow `Dialog Action Footer Baseline (Current)` for desktop/mobile action placement
   - dialog content must use compact density baseline from `styles.scss` (no local size inflation)
+  - every searchable FK form field offers quick-create per `FK Quick-Create Baseline (Current)`
+    (registry entry, `quickCreateFor(...)`, or `quickCreate: false` with a documented reason); a
+    new resource referenced by other forms is registered in `QUICK_CREATE_REGISTRY`
 - Styling and responsiveness:
   - use `span.status-pill.status-chip.state-chip` with Activity Log palette classes (`chip-success`, `chip-running`, `chip-queued`, `chip-failed`, `chip-skipped`) plus `is-active`/`is-inactive`
   - do not use `::ng-deep` for table column alignment; use local classes on `th/td` (for example: `.status-col`, `.actions-col-cell`)
@@ -765,6 +806,7 @@
 - Validation:
   - must pass `npm run check:crud -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run check:crud:i18n -- <component-folder-or-html>` for every CRUD page touched
+  - must pass `npm run check:crud:fk -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run build`
   - delivery must explicitly list each changed file and confirm checklist compliance, including
     translation coverage for all new/changed visible strings in `en-US`, `pt-BR`, and `es-ES`
@@ -796,6 +838,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, and
   `.filter-actions`. If one of those needs a reusable adjustment, change `src/styles.scss`, not a
   page component.
+- `npm run check:crud:fk -- <path>` (or `-- --all`) enforces `FK Quick-Create Baseline (Current)`
+  and validates that every registry entry loads a configurable CRUD page. `verify:changed` (CI)
+  runs it with `--all`, so any FK field anywhere without quick-create blocks the merge.
 - CI runs `npm run check:crud:layout -- --changed <base> HEAD` before build so newly touched CRUD
   pages cannot drift from the global layout baseline.
 
@@ -808,6 +853,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - missing `Apply/Clear`, `Refresh/New`, or loading overlay
   - `Apply/Clear` order or placement differs from baseline
   - `confirm()` browser dialog used instead of `SlowConfirmDialogComponent`
+  - a searchable FK form field without quick-create and without a documented exemption
 
 ## Request Template (recommended)
 
@@ -857,7 +903,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - routing or selection criteria fields belong in a `Match` tab when they decide which rule,
     destination, tenant, policy, or pipe applies; domain matching must be optional and must not be
     the only supported routing criterion for telecom/SBC resources
-  - searchable selects only for FK-like dynamic data
+  - every select is a searchable select (see `Searchable Select Baseline (Current)`); FK selects
+    also offer quick-create (see `FK Quick-Create Baseline (Current)`)
   - shared inputs such as phone fields should use existing shared components when available
   - maps, copy flows, and auxiliary sections are optional resource features, not global CRUD requirements
 - Visual validation must confirm that the dialog opens as a dialog overlay with visible content, not as an inline form or collapsed top band.

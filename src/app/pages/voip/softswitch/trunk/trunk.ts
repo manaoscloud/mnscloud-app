@@ -12,6 +12,7 @@ import {
 import { ApiService } from '../../../../services/api.service';
 import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const authenticationModes: ConfigurableCrudOption[] = [
   { value: 'ip_acl', label: 'IP ACL' },
@@ -142,6 +143,7 @@ const TRUNK_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'accountUUID',
       label: 'Softswitch',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'),
       required: true,
       span: 1,
       tab: 'record',

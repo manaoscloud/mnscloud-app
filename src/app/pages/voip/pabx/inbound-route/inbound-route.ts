@@ -9,7 +9,7 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 type RouteTargetType = 'extension' | 'group' | 'queue' | 'ivr';
 
@@ -86,7 +86,7 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate: { label: 'Create PABX', component: VoipPabxAccountQuickCreateHostComponent },
+        quickCreate: quickCreateFor('VoipPabxAccountVpaUUID'),
       },
       {
         key: 'didUUID',
@@ -94,6 +94,7 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'didUUID',
         label: 'DID',
         type: 'search-select',
+        quickCreate: quickCreateFor('VoipDidVddUUID'),
         required: true,
         span: 1,
       },
@@ -125,6 +126,8 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'routeTargetUUID',
         label: 'Destination',
         type: 'search-select',
+        quickCreate: false,
+        quickCreateExemptReason: 'Route target is polymorphic (extension, queue, IVR, group) and depends on the selected target type.',
         required: true,
         tab: 'routing',
         span: 1,

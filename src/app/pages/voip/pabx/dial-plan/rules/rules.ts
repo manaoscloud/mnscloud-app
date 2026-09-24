@@ -16,6 +16,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openCrudComponentDialog } from '../../../../../shared/dialog/crud-dialog.util';
+import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -146,6 +147,7 @@ function config(): ConfigurableCrudConfig {
         source: 'dialPlanUUID',
         label: 'Dial Plan',
         type: 'search-select',
+        quickCreate: quickCreateFor('VoipPabxDialPlanVdpUUID'),
         required: true,
         span: 1,
       },
@@ -227,6 +229,7 @@ function config(): ConfigurableCrudConfig {
         source: 'trunkUUID',
         label: 'Trunk',
         type: 'search-select',
+        quickCreate: quickCreateFor('VoipPabxTrunkVptUUID'),
         span: 1,
         tab: 'network',
         requiredWhen: ({ values }) =>
@@ -246,6 +249,7 @@ function config(): ConfigurableCrudConfig {
         source: 'fallbackTrunkUUIDs',
         label: 'Contingency trunks',
         type: 'search-select',
+        quickCreate: quickCreateFor('VoipPabxTrunkVptUUID'),
         multiple: true,
         span: 4,
         tab: 'network',

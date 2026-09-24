@@ -19,6 +19,7 @@ import {
   cleanPayload,
   numberOrNull,
 } from '../../shared/billing-crud';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const PROMOTION_PAYLOAD_KEYS = [
   'code',
@@ -179,6 +180,7 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'ruleProductUUID',
       label: 'Rule product',
       type: 'search-select',
+      quickCreate: quickCreateFor('BillingProductBprUUID'),
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',
       span: 2,
@@ -188,6 +190,7 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'rulePriceUUID',
       label: 'Rule price',
       type: 'search-select',
+      quickCreate: quickCreateFor('BillingPriceBpcUUID'),
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',
       span: 2,

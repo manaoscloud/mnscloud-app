@@ -8,6 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const strategies: ConfigurableCrudOption[] = [
   { value: 'priority', label: 'Priority' },
@@ -80,6 +81,7 @@ const CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'accountUUID',
       label: 'Softswitch',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'),
       required: true,
       span: 1,
       tab: 'record',

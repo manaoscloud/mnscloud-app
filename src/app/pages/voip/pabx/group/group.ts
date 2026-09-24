@@ -10,7 +10,6 @@ import {
   ConfigurableCrudRelatedCollection,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -93,7 +92,6 @@ const config: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
-      quickCreate: { label: 'Create PABX', component: VoipPabxAccountQuickCreateHostComponent },
     },
     { key: 'name', source: 'VpgName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     {

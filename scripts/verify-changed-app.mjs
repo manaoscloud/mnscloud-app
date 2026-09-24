@@ -53,6 +53,7 @@ if (appFiles.length) {
 run('node', [
   '--test',
   'scripts/crud-discovery.test.mjs',
+  'scripts/validate-crud-fk-quick-create.test.mjs',
   'scripts/payment-account-crud.test.mjs',
   'scripts/pay-i18n-coverage.test.mjs',
   'scripts/pay-error.test.mjs',
@@ -86,6 +87,9 @@ for (const crudRoot of crudRoots) {
   run('node', ['scripts/validate-crud-layout.mjs', crudRoot]);
   run('node', ['scripts/validate-crud-i18n.mjs', crudRoot]);
 }
+// FK quick-create is enforced app-wide: every searchable FK form field offers in-place creation
+// or documents its exemption, and every registry entry loads a configurable CRUD page.
+run('node', ['scripts/validate-crud-fk-quick-create.mjs', '--all']);
 
 console.log(
   `Changed-app validation passed for ${appFiles.length} Angular file(s) and ${crudRoots.length} CRUD root(s).`,

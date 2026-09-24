@@ -123,6 +123,8 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'environmentUUID',
       label: 'Tenant',
       type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason: 'Tenants are provisioned through onboarding; there is no in-place create form.',
       required: true,
       span: 4,
       rows: 2,

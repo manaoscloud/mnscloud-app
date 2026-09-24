@@ -17,8 +17,6 @@ import {
   runRuntimeDiagnostic,
   RuntimeDiagnosticResult,
 } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
-import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
-import { VoipPabxDialPlanPlanQuickCreateHostComponent } from '../dial-plan/plan/plan';
 
 type PabxLookup = ConfigurableCrudOption & {
   requiresDomain: boolean;
@@ -74,10 +72,6 @@ const fields: readonly ConfigurableCrudField[] = [
     required: true,
     placeholder: 'Search PABX',
     autocomplete: 'off',
-    quickCreate: {
-      label: 'Create PABX',
-      component: VoipPabxAccountQuickCreateHostComponent,
-    },
   },
   {
     key: 'createMode',
@@ -177,10 +171,6 @@ const fields: readonly ConfigurableCrudField[] = [
     span: 1,
     placeholder: 'Search dial plan',
     autocomplete: 'off',
-    quickCreate: {
-      label: 'Create dial plan',
-      component: VoipPabxDialPlanPlanQuickCreateHostComponent,
-    },
   },
   {
     key: 'vmEnabled',

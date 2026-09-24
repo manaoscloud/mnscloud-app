@@ -16,6 +16,7 @@ import {
   cleanPayload,
   numberOrNull,
 } from '../../shared/billing-crud';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const PACKAGE_PAYLOAD_KEYS = [
   'code',
@@ -122,6 +123,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'itemProductUUID',
       label: 'Initial item product',
       type: 'search-select',
+      quickCreate: quickCreateFor('BillingProductBprUUID'),
       requiredWhen: ({ editing }) => !editing,
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',

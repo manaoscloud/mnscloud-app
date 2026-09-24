@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatDialogRef } from '@angular/material/dialog';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -8,10 +7,8 @@ import {
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
-  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
-  ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
@@ -167,6 +164,16 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      storageAccountOptionFromResponse(response, payload) ??
+      super.quickCreateOption(response, payload)
+    );
+  }
+
   private readonly route = inject(ActivatedRoute);
   private readonly providers = signal<HostingStorageProvider[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -320,56 +327,6 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
       this.providers.set([]);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load storage providers.'));
     }
-  }
-}
-
-@Component({
-  selector: 'app-hosting-storage-accounts-quick-create-host',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: [
-    '../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
-    '../../../erp/customer/customer-quick-create-host.scss',
-  ],
-})
-export class HostingStorageAccountsQuickCreateHostComponent extends HostingStorageAccountsPage {
-  private readonly quickDialogRef = inject(
-    MatDialogRef<HostingStorageAccountsQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
-  );
-  private savingFromQuickCreate = false;
-
-  constructor() {
-    super();
-    queueMicrotask(() => this.startCreate());
-  }
-
-  override async saveItem(saveAndNew = false): Promise<void> {
-    this.savingFromQuickCreate = true;
-    try {
-      await super.saveItem(saveAndNew);
-    } finally {
-      this.savingFromQuickCreate = false;
-    }
-  }
-
-  override closeDialog(): void {
-    super.closeDialog();
-    if (!this.savingFromQuickCreate) {
-      this.quickDialogRef.close({ option: null });
-    }
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
-  ): Promise<void> {
-    await super.afterSave(context);
-    if (context.mode !== 'create') return;
-    this.quickDialogRef.close({
-      option: storageAccountOptionFromResponse(context.response, context.payload),
-      response: context.response,
-      payload: context.payload,
-    });
   }
 }
 

@@ -50,6 +50,8 @@ import {
 } from '../../../../../shared/forms';
 import { RefreshButtonComponent } from '../../../../../shared/refresh-button/refresh-button';
 import { SlowConfirmDialogComponent } from '../../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { openQuickCreate } from '../../../../../shared/crud/configurable-crud/configurable-crud-quick-create-host';
+import { quickCreateRegistryEntry } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 type PayableStatus = 'open' | 'paid' | 'overdue' | 'canceled';
 
@@ -190,7 +192,14 @@ export class FinancialPayablesPage {
   readonly loading = computed(() => this.snapshotResource.isLoading() || this.mutating());
   readonly referenceLoading = computed(() => this.snapshotResource.isLoading());
   readonly rows = computed(() => this.snapshotResource.value().items);
-  readonly supplierOptions = computed(() => this.snapshotResource.value().suppliers);
+  readonly supplierQuickCreate = quickCreateRegistryEntry('ErpSupplierSupUUID')!;
+  /** Suppliers created from the FK select, kept until the snapshot reloads with them. */
+  private readonly createdSuppliers = signal<SupplierOption[]>([]);
+  readonly supplierOptions = computed(() => {
+    const loaded = this.snapshotResource.value().suppliers;
+    const known = new Set(loaded.map((option) => option.value));
+    return [...this.createdSuppliers().filter((option) => !known.has(option.value)), ...loaded];
+  });
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     const start = this.pageIndex() * this.pageSize();
@@ -398,6 +407,17 @@ export class FinancialPayablesPage {
       }
       return next;
     });
+  }
+
+  async createSupplier() {
+    const option = (await openQuickCreate(this.dialog, this.supplierQuickCreate))?.option;
+    if (!option) return;
+    const created = { ...option, value: String(option.value) };
+    this.createdSuppliers.update((items) => [
+      created,
+      ...items.filter((item) => item.value !== created.value),
+    ]);
+    this.formModel.update((current) => ({ ...current, supplierUUID: created.value }));
   }
 
   supplierOpened(opened: boolean) {

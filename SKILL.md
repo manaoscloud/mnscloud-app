@@ -37,6 +37,12 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - Searchable `mat-select` controls must use the global `select-search-option` and
   `select-search-field` layout from `src/styles.scss`; do not add page-local spacing overrides for
   those classes. The search field and its Material wrappers must keep the editable text cursor.
+- Every searchable FK form field must let the user create the missing related record in place
+  (FK quick-create) through the referenced resource's canonical CRUD page, following `app.md`
+  `FK Quick-Create Baseline (Current)`: register new resources in `QUICK_CREATE_REGISTRY`
+  (`src/app/shared/crud/configurable-crud/quick-create.ts`), bind non-canonical sources with
+  `quickCreateFor(...)`, and exempt only with `quickCreate: false` + `quickCreateExemptReason`.
+  Never build a lightweight duplicate create dialog or a per-resource host subclass.
 - Monetary CRUD inputs must follow the `app.md` system parameter defaults contract: resolve
   `DEFAULT_CURRENCY` with `SystemParameterService.resolveDefaultCurrency()`, initialize create forms
   from that value, let existing record currency win in edit mode, and normalize editable currency
@@ -55,7 +61,8 @@ Run before committing:
 npm run build
 ```
 
-Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior.
+Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior, and
+`npm run check:crud:fk -- <page-folder>` for every CRUD page with FK fields.
 
 For bare-metal production runtime install/update, use the module-local latest-release helper:
 

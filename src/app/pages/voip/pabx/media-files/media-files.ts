@@ -17,6 +17,7 @@ import {
 import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/recording-dialog';
 import { UploadCancelledError } from '../../../../shared/upload/file-upload-progress';
 import { VoipPabxMediaFilesService } from './media-files.service';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -92,6 +93,7 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
         source: 'pabxUUID',
         label: 'PABX',
         type: 'search-select',
+        quickCreate: quickCreateFor('VoipPabxAccountVpaUUID'),
         required: true,
         span: 1,
       },
@@ -127,6 +129,7 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
         source: 'storageAccountUUID',
         label: 'Storage account',
         type: 'search-select',
+        quickCreate: quickCreateFor('HostingStorageAccountHsaUUID'),
         tab: 'storage',
         span: 1,
         hiddenWhen: ({ values }) => values['storageMode'] !== 'storage',

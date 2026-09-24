@@ -10,7 +10,6 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { VoipPabxBlacklistListQuickCreateHostComponent } from '../list/list';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -87,10 +86,6 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate: {
-          component: VoipPabxBlacklistListQuickCreateHostComponent,
-          label: 'Create blacklist',
-        },
       },
       { key: 'VbnNumber', source: 'VbnNumber', label: 'Number', required: true, span: 1 },
       {
