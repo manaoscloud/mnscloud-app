@@ -4665,5 +4665,18 @@
   "An active fee plan and rate are required.": "É necessário um plano de tarifas ativo com uma tarifa aplicável.",
   "Payment resource not found.": "Registro de pagamento não encontrado.",
   "Permission denied.": "Permissão negada.",
-  "Pay request could not be completed.": "Não foi possível concluir a solicitação do Pay."
+  "Pay request could not be completed.": "Não foi possível concluir a solicitação do Pay.",
+  "FreeSWITCH": "FreeSWITCH",
+  "Asterisk": "Asterisk",
+  "Validate remote control": "Validar controle remoto",
+  "New PABX server": "Novo servidor PABX",
+  "Edit PABX server": "Editar servidor PABX",
+  "Name, hostname, IP": "Nome, hostname, IP",
+  "Delete PABX server": "Excluir servidor PABX",
+  "Delete this server? This action will disable the server record.": "Excluir este servidor? Esta ação desativará o registro do servidor.",
+  "Delete selected PABX servers": "Excluir servidores PABX selecionados",
+  "Delete {count} selected PABX servers?": "Excluir {count} servidores PABX selecionados?",
+  "PABX server saved successfully.": "Servidor PABX salvo com sucesso.",
+  "PABX server deleted successfully.": "Servidor PABX excluído com sucesso.",
+  "Failed to delete PABX server.": "Falha ao excluir servidor PABX."
 }

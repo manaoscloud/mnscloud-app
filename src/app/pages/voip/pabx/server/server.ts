@@ -190,7 +190,7 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'name',
       label: 'Name',
       required: true,
-      span: 2,
+      span: 1,
     },
     {
       key: 'nodeUUID',
@@ -198,7 +198,7 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'nodeUUID',
       label: 'Node UUID',
       translateLabel: false,
-      span: 2,
+      span: 1,
       hint: 'Used by Agent provisioning to bind this PABX server.',
     },
     {
@@ -207,7 +207,15 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'hostname',
       label: 'Hostname',
       tab: 'network',
-      span: 2,
+      span: 1,
+    },
+    {
+      key: 'baseUrl',
+      source: 'VpsBaseUrl',
+      payloadKey: 'baseUrl',
+      label: 'Base URL',
+      tab: 'network',
+      span: 1,
     },
     {
       key: 'publicIPv4',
@@ -216,21 +224,22 @@ const config: ConfigurableCrudConfig = {
       label: 'Public IPv4 (SIP/NAT)',
       tab: 'network',
       span: 1,
+      breakBefore: true,
       hint: 'Used first for SIP advertise and NAT rewriting when present.',
-    },
-    {
-      key: 'publicIPv6',
-      source: 'VpsPublicIPv6',
-      payloadKey: 'publicIPv6',
-      label: 'Public IPv6 (SIP/NAT)',
-      tab: 'network',
-      span: 1,
     },
     {
       key: 'privateIPv4',
       source: 'VpsPrivateIPv4',
       payloadKey: 'privateIPv4',
       label: 'Private IPv4 (listen)',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'publicIPv6',
+      source: 'VpsPublicIPv6',
+      payloadKey: 'publicIPv6',
+      label: 'Public IPv6 (SIP/NAT)',
       tab: 'network',
       span: 1,
     },
@@ -243,14 +252,6 @@ const config: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'baseUrl',
-      source: 'VpsBaseUrl',
-      payloadKey: 'baseUrl',
-      label: 'Base URL',
-      tab: 'network',
-      span: 2,
-    },
-    {
       key: 'remoteCommandExecutor',
       source: 'VpsRemoteCommandExecutor',
       payloadKey: 'remoteCommandExecutor',
@@ -258,7 +259,7 @@ const config: ConfigurableCrudConfig = {
       type: 'select',
       options: remoteCommandExecutorOptions,
       tab: 'authentication',
-      span: 2,
+      span: 1,
       hint: 'Empty uses tenant, then master. Master fallback is Agent.',
     },
     {
@@ -268,6 +269,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Control Host',
       tab: 'authentication',
       span: 1,
+      breakBefore: true,
     },
     {
       key: 'controlPort',
@@ -284,7 +286,7 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'controlUsername',
       label: 'Control Username',
       tab: 'authentication',
-      span: 2,
+      span: 1,
       hint: 'Asterisk AMI uses a username. FreeSWITCH ESL can be left empty.',
     },
     {
@@ -293,7 +295,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Control Secret',
       type: 'password',
       tab: 'authentication',
-      span: 2,
+      span: 1,
       autocomplete: 'new-password',
       hintWhen: ({ editing, values }) =>
         editing && values['VpsControlSecretSet']
@@ -306,7 +308,7 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'controlAllowedIps',
       label: 'Allowed IPs',
       tab: 'authentication',
-      span: 2,
+      span: 4,
       hint: 'Comma-separated list. E.g.: 168.0.230.247/32',
     },
     {
@@ -335,7 +337,7 @@ const config: ConfigurableCrudConfig = {
 };
 
 // This page does not extend the shared configurable CRUD base: PABX server management needs
-// engine-specific tabs (API/Control/Codecs) plus resource-specific actions (install-command
+// engine-specific tabs (Control/Codecs) plus resource-specific actions (install-command
 // generation, remote-control validation, per-row control diagnostics) that fall outside the
 // generic directory-resource contract in app.md.
 @Component({

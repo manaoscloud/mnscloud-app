@@ -1037,9 +1037,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       await this.handleRowAction(action, row);
       return;
     }
-    const { ConfigurableCrudCollectionDialog } = await import(
-      './configurable-crud-collection-dialog'
-    );
+    const { ConfigurableCrudCollectionDialog } =
+      await import('./configurable-crud-collection-dialog');
     const formOnly = Boolean(action.form);
     const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
       data: { ...factory(row), collectionDialog: true, formOnly },
@@ -1316,6 +1315,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         values: this.formValues(),
       });
     return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
+  }
+
+  /**
+   * Grid cell for a field in hint-capable tabs. A hinted field becomes one grid cell that stacks
+   * the control and its hint; other fields pass through (`display: contents`) unchanged.
+   */
+  fieldCellClass(field: ConfigurableCrudField): string {
+    return this.fieldHint(field)
+      ? `crud-field-cell ${this.fieldClass(field)}`
+      : 'crud-field-contents';
   }
 
   fieldLabel(field: ConfigurableCrudField): string {
