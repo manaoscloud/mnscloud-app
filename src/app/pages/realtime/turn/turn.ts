@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
@@ -92,26 +96,172 @@ const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    { key: 'status', source: 'RtsStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Primary Realm Domain', type: 'search-select', span: 1 },
+    {
+      key: 'status',
+      source: 'RtsStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'realtimeDomainUUID',
+      source: 'RealtimeDomainRtdUUID',
+      payloadKey: 'realtimeDomainUUID',
+      label: 'Primary Realm Domain',
+      type: 'search-select',
+      span: 1,
+    },
     { key: 'name', source: 'RtsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
-    { key: 'nodeUUID', source: 'RtsNodeUUID', payloadKey: 'nodeUUID', label: 'Node UUID', tab: 'network', span: 1 },
-    { key: 'hostname', source: 'RtsHostname', payloadKey: 'hostname', label: 'Hostname', tab: 'network', span: 1 },
-    { key: 'publicIP', source: 'RtsPublicIP', payloadKey: 'publicIP', label: 'Public IP', tab: 'network', span: 1 },
-    { key: 'privateIP', source: 'RtsPrivateIP', payloadKey: 'privateIP', label: 'Private IP', tab: 'network', span: 1 },
-    { key: 'listeningIP', source: 'RtsListeningIP', payloadKey: 'listeningIP', label: 'Listening IP', tab: 'network', span: 1 },
-    { key: 'externalIP', source: 'RtsExternalIP', payloadKey: 'externalIP', label: 'External IP', tab: 'network', span: 1 },
-    { key: 'listeningPort', source: 'RtsListeningPort', payloadKey: 'listeningPort', label: 'Listening Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'tlsListeningPort', source: 'RtsTlsListeningPort', payloadKey: 'tlsListeningPort', label: 'TLS Listening Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'minRelayPort', source: 'RtsMinRelayPort', payloadKey: 'minRelayPort', label: 'Min Relay Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'maxRelayPort', source: 'RtsMaxRelayPort', payloadKey: 'maxRelayPort', label: 'Max Relay Port', type: 'number', tab: 'network', span: 1 },
-    { key: 'totalQuota', source: 'RtsTotalQuota', payloadKey: 'totalQuota', label: 'Total Quota', type: 'number', tab: 'network', span: 1 },
-    { key: 'bpsCapacity', source: 'RtsBpsCapacity', payloadKey: 'bpsCapacity', label: 'BPS Capacity', type: 'number', tab: 'network', span: 1 },
-    { key: 'certificateProvider', source: 'RtsCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: CERTIFICATE_PROVIDER_OPTIONS, tab: 'authentication', span: 1 },
-    { key: 'tlsCertPath', source: 'RtsTlsCertPath', payloadKey: 'tlsCertPath', label: 'TLS Cert Path', tab: 'authentication', span: 1 },
-    { key: 'tlsKeyPath', source: 'RtsTlsKeyPath', payloadKey: 'tlsKeyPath', label: 'TLS Key Path', tab: 'authentication', span: 1 },
-    { key: 'configJson', source: 'RtsConfig', payloadKey: 'config', label: 'Config JSON', type: 'textarea', format: 'json', tab: 'notes', span: 4, rows: 8 },
-    { key: 'notes', source: 'RtsNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'nodeUUID',
+      source: 'RtsNodeUUID',
+      payloadKey: 'nodeUUID',
+      label: 'Node UUID',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'hostname',
+      source: 'RtsHostname',
+      payloadKey: 'hostname',
+      label: 'Hostname',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'publicIP',
+      source: 'RtsPublicIP',
+      payloadKey: 'publicIP',
+      label: 'Public IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'privateIP',
+      source: 'RtsPrivateIP',
+      payloadKey: 'privateIP',
+      label: 'Private IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'listeningIP',
+      source: 'RtsListeningIP',
+      payloadKey: 'listeningIP',
+      label: 'Listening IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'externalIP',
+      source: 'RtsExternalIP',
+      payloadKey: 'externalIP',
+      label: 'External IP',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'listeningPort',
+      source: 'RtsListeningPort',
+      payloadKey: 'listeningPort',
+      label: 'Listening Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'tlsListeningPort',
+      source: 'RtsTlsListeningPort',
+      payloadKey: 'tlsListeningPort',
+      label: 'TLS Listening Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'minRelayPort',
+      source: 'RtsMinRelayPort',
+      payloadKey: 'minRelayPort',
+      label: 'Min Relay Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'maxRelayPort',
+      source: 'RtsMaxRelayPort',
+      payloadKey: 'maxRelayPort',
+      label: 'Max Relay Port',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'totalQuota',
+      source: 'RtsTotalQuota',
+      payloadKey: 'totalQuota',
+      label: 'Total Quota',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'bpsCapacity',
+      source: 'RtsBpsCapacity',
+      payloadKey: 'bpsCapacity',
+      label: 'BPS Capacity',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+    },
+    {
+      key: 'certificateProvider',
+      source: 'RtsCertificateProvider',
+      payloadKey: 'certificateProvider',
+      label: 'Certificate Provider',
+      type: 'select',
+      options: CERTIFICATE_PROVIDER_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'tlsCertPath',
+      source: 'RtsTlsCertPath',
+      payloadKey: 'tlsCertPath',
+      label: 'TLS Cert Path',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'tlsKeyPath',
+      source: 'RtsTlsKeyPath',
+      payloadKey: 'tlsKeyPath',
+      label: 'TLS Key Path',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'configJson',
+      source: 'RtsConfig',
+      payloadKey: 'config',
+      label: 'Config JSON',
+      type: 'textarea',
+      format: 'json',
+      tab: 'notes',
+      span: 4,
+      rows: 8,
+    },
+    {
+      key: 'notes',
+      source: 'RtsNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -147,7 +297,13 @@ const TURN_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'domain', label: 'Realtime Domain', kind: 'identity', field: 'RtdName', uuidField: 'RealtimeDomainRtdUUID' },
+    {
+      id: 'domain',
+      label: 'Realtime Domain',
+      kind: 'identity',
+      field: 'RtdName',
+      uuidField: 'RealtimeDomainRtdUUID',
+    },
     { id: 'server', label: 'Server', field: 'RtsName' },
     { id: 'certificateProvider', label: 'Certificate', field: 'RtnCertificateProvider' },
     { id: 'provisionStatus', label: 'Provision', field: 'RtnProvisionStatus' },
@@ -163,14 +319,76 @@ const TURN_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    { key: 'status', source: 'RtnStatus', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'serverUUID', source: 'RealtimeTurnServerRtsUUID', payloadKey: 'serverUUID', label: 'Server', type: 'search-select', required: true, span: 1 },
-    { key: 'realtimeDomainUUID', source: 'RealtimeDomainRtdUUID', payloadKey: 'realtimeDomainUUID', label: 'Realtime Domain', type: 'search-select', required: true, span: 1 },
-    { key: 'certificateProvider', source: 'RtnCertificateProvider', payloadKey: 'certificateProvider', label: 'Certificate Provider', type: 'select', options: CERTIFICATE_PROVIDER_OPTIONS, span: 1 },
-    { key: 'autoProvision', source: 'RtnAutoProvision', payloadKey: 'autoProvision', label: 'Auto Provision', type: 'select', options: STATUS_OPTIONS, span: 1 },
-    { key: 'tlsCertPath', source: 'RtnTlsCertPath', payloadKey: 'tlsCertPath', label: 'TLS Cert Path', tab: 'authentication', span: 1 },
-    { key: 'tlsKeyPath', source: 'RtnTlsKeyPath', payloadKey: 'tlsKeyPath', label: 'TLS Key Path', tab: 'authentication', span: 1 },
-    { key: 'notes', source: 'RtnNotes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'status',
+      source: 'RtnStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    {
+      key: 'serverUUID',
+      source: 'RealtimeTurnServerRtsUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'realtimeDomainUUID',
+      source: 'RealtimeDomainRtdUUID',
+      payloadKey: 'realtimeDomainUUID',
+      label: 'Realtime Domain',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'certificateProvider',
+      source: 'RtnCertificateProvider',
+      payloadKey: 'certificateProvider',
+      label: 'Certificate Provider',
+      type: 'select',
+      options: CERTIFICATE_PROVIDER_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'autoProvision',
+      source: 'RtnAutoProvision',
+      payloadKey: 'autoProvision',
+      label: 'Auto Provision',
+      type: 'select',
+      options: STATUS_OPTIONS,
+      span: 1,
+    },
+    {
+      key: 'tlsCertPath',
+      source: 'RtnTlsCertPath',
+      payloadKey: 'tlsCertPath',
+      label: 'TLS Cert Path',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'tlsKeyPath',
+      source: 'RtnTlsKeyPath',
+      payloadKey: 'tlsKeyPath',
+      label: 'TLS Key Path',
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'RtnNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
 };
 
@@ -215,11 +433,26 @@ abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<Configurabl
       this.turnApi.list('servers', { status: 1, limit: 5000 }, 'master'),
       this.turnApi.listRealtimeDomains({ purpose: 'turn', status: 1, limit: 5000 }, 'master'),
     ]);
-    this.serverOptions = this.toOptions(servers?.data?.items ?? [], 'RtsUUID', 'RtsName', 'RtsHostname');
-    this.realtimeDomainOptions = this.toOptions(domains?.data?.items ?? [], 'RtdUUID', 'RtdName', 'RtdPurpose');
+    this.serverOptions = this.toOptions(
+      servers?.data?.items ?? [],
+      'RtsUUID',
+      'RtsName',
+      'RtsHostname',
+    );
+    this.realtimeDomainOptions = this.toOptions(
+      domains?.data?.items ?? [],
+      'RtdUUID',
+      'RtdName',
+      'RtdPurpose',
+    );
   }
 
-  private toOptions(rows: ConfigurableCrudRecord[], valueKey: string, labelKey: string, descriptionKey: string): ConfigurableCrudOption[] {
+  private toOptions(
+    rows: ConfigurableCrudRecord[],
+    valueKey: string,
+    labelKey: string,
+    descriptionKey: string,
+  ): ConfigurableCrudOption[] {
     return rows
       .map((row) => ({
         value: String(row[valueKey] ?? ''),
@@ -249,17 +482,27 @@ abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<Configurabl
 
   private async openInstallCommand(row: ConfigurableCrudRecord) {
     try {
-      const response = await this.turnApi.generateInstallCommand(String(row['RtsUUID'] ?? ''));
+      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
+        this.turnApi.generateInstallCommand(String(row['RtsUUID'] ?? ''), body),
+      );
+      if (!response) return;
       const token = response?.data ?? {};
       const data: InstallCommandDialogData = {
         title: 'TURN/STUN install command',
         description: 'Run this command on the target TURN/STUN edge host.',
-        warning: 'The runtime token is sensitive. Copy it only to the intended server.',
+        warning: runtimeInstallTokenWarning(
+          token,
+          'This runtime token is shown only once. Copy it only to the intended server.',
+        ),
         command: this.installCommand(token, row),
         details: [
           { label: 'API base', value: window.location.origin, monospace: true },
           { label: 'Node UUID', value: token['nodeUUID'], monospace: true },
-          { label: 'Realm', value: token['realm'] || row['RtdName'] || row['DomainName'], monospace: true },
+          {
+            label: 'Realm',
+            value: token['realm'] || row['RtdName'] || row['DomainName'],
+            monospace: true,
+          },
           { label: 'Runtime', value: 'mnscloud-turn', monospace: true },
         ],
       };

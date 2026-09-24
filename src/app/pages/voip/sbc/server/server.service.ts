@@ -1,3 +1,4 @@
+import type { RuntimeInstallCommandBody } from '../../../../shared/install-command-dialog/runtime-install-token';
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from '../../../../services/api.service';
@@ -28,7 +29,7 @@ export type VoipSbcServerItem = {
 export class VoipSbcServerService {
   private readonly api = inject(ApiService);
 
-  generateInstallCommand(uuid: string) {
-    return this.api.post<any>(`system/voip/sbc/servers/${uuid}/install-command`, {});
+  generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
+    return this.api.post<any>(`system/voip/sbc/servers/${uuid}/install-command`, body);
   }
 }

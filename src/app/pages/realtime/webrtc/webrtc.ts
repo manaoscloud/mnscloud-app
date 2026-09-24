@@ -1,3 +1,7 @@
+import {
+  requestRuntimeInstallCommand,
+  runtimeInstallTokenWarning,
+} from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
@@ -691,12 +695,18 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
 
   private async openInstallCommand(row: ConfigurableCrudRecord) {
     try {
-      const response = await this.webRtcApi.generateInstallCommand(String(row['RwsUUID'] ?? ''));
+      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
+        this.webRtcApi.generateInstallCommand(String(row['RwsUUID'] ?? ''), body),
+      );
+      if (!response) return;
       const token = response?.data ?? {};
       const data: InstallCommandDialogData = {
         title: 'WebRTC install command',
         description: 'Run this command on the target WebRTC edge host.',
-        warning: 'The runtime token is sensitive. Copy it only to the intended server.',
+        warning: runtimeInstallTokenWarning(
+          token,
+          'This runtime token is shown only once. Copy it only to the intended server.',
+        ),
         command: this.installCommand(token),
         details: [
           { label: 'API base', value: window.location.origin, monospace: true },
