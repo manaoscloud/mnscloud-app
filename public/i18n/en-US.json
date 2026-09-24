@@ -4677,5 +4677,18 @@
   "An active fee plan and rate are required.": "An active fee plan and rate are required.",
   "Payment resource not found.": "Payment resource not found.",
   "Permission denied.": "Permission denied.",
-  "Pay request could not be completed.": "Pay request could not be completed."
+  "Pay request could not be completed.": "Pay request could not be completed.",
+  "FreeSWITCH": "FreeSWITCH",
+  "Asterisk": "Asterisk",
+  "Validate remote control": "Validate remote control",
+  "New PABX server": "New PABX server",
+  "Edit PABX server": "Edit PABX server",
+  "Name, hostname, IP": "Name, hostname, IP",
+  "Delete PABX server": "Delete PABX server",
+  "Delete this server? This action will disable the server record.": "Delete this server? This action will disable the server record.",
+  "Delete selected PABX servers": "Delete selected PABX servers",
+  "Delete {count} selected PABX servers?": "Delete {count} selected PABX servers?",
+  "PABX server saved successfully.": "PABX server saved successfully.",
+  "PABX server deleted successfully.": "PABX server deleted successfully.",
+  "Failed to delete PABX server.": "Failed to delete PABX server."
 }
