@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, resource } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 import { ConfigurableCrudConfig, ConfigurableCrudListFilter, ConfigurableCrudOption, ConfigurableCrudPageBase, ConfigurableCrudRecord, CONFIGURABLE_CRUD_IMPORTS } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
@@ -19,11 +19,23 @@ function config(): ConfigurableCrudConfig { return {
 }; }
 @Component({ selector: 'app-support-tickets', standalone: true, imports: CONFIGURABLE_CRUD_IMPORTS, templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html', styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'] })
 export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly rawApi = inject(ApiService); readonly customers = signal<ConfigurableCrudOption[]>([]); readonly channels = signal<ConfigurableCrudOption[]>([]); readonly lookupsLoading = signal(false);
-  constructor() { super(config()); void this.loadLookups(); }
+  private readonly rawApi = inject(ApiService);
+  private readonly lookups = resource({
+    defaultValue: { customers: [] as ConfigurableCrudOption[], channels: [] as ConfigurableCrudOption[] },
+    loader: async () => {
+      const [customers, channels] = await Promise.all([this.rawApi.get<any>('erp/customers?limit=500&offset=0'), this.rawApi.get<any>('support/ticket-channels?limit=500&offset=0')]);
+      return {
+        customers: (customers?.data?.items ?? []).map((row: any) => ({ value: row.CustomerUUID, label: row.Name ?? row.LegalName ?? row.CustomerUUID })),
+        channels: (channels?.data?.items ?? []).map((row: any) => ({ value: row.SupportTicketChannelUUID, label: row.Name ?? row.Code ?? row.SupportTicketChannelUUID })),
+      };
+    },
+  });
+  readonly customers = computed(() => this.lookups.value().customers);
+  readonly channels = computed(() => this.lookups.value().channels);
+  readonly lookupsLoading = computed(() => this.lookups.isLoading());
+  constructor() { super(config()); }
   override fieldLoading(field: { key: string }) { return ['customerUUID', 'channelUUID'].includes(field.key) && this.lookupsLoading(); }
   protected override lookupOptions(key: string) { return key === 'customerUUID' ? this.customers() : key === 'channelUUID' ? this.channels() : []; }
   override listFilterOptions(filter: ConfigurableCrudListFilter) { return filter.key === 'customerUUID' ? this.customers() : filter.key === 'channelUUID' ? this.channels() : super.listFilterOptions(filter); }
   protected override augmentPayload(payload: ConfigurableCrudRecord) { return { ...payload, slaBreached: Number(payload['slaBreached']) }; }
-  private async loadLookups() { this.lookupsLoading.set(true); try { const [customers, channels] = await Promise.all([this.rawApi.get<any>('erp/customers?limit=500&offset=0'), this.rawApi.get<any>('support/ticket-channels?limit=500&offset=0')]); this.customers.set((customers?.data?.items ?? []).map((row: any) => ({ value: row.CustomerUUID, label: row.Name ?? row.LegalName ?? row.CustomerUUID }))); this.channels.set((channels?.data?.items ?? []).map((row: any) => ({ value: row.SupportTicketChannelUUID, label: row.Name ?? row.Code ?? row.SupportTicketChannelUUID }))); } finally { this.lookupsLoading.set(false); } }
 }
