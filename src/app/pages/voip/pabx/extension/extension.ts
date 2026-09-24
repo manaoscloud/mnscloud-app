@@ -42,6 +42,11 @@ const yesNoOptions: readonly ConfigurableCrudOption[] = [
   { value: 0, label: 'No' },
 ];
 
+const contextOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'default', label: 'Default (internal)' },
+  { value: 'public', label: 'Public (inbound)' },
+];
+
 const codecOptions: readonly ConfigurableCrudOption[] = [
   { value: 'OPUS', label: 'OPUS' },
   { value: 'PCMU', label: 'PCMU' },
@@ -146,10 +151,10 @@ const fields: readonly ConfigurableCrudField[] = [
     label: 'Context',
     payloadKey: 'context',
     source: 'VpeContext',
-    type: 'text',
+    type: 'select',
     tab: 'routing',
     span: 1,
-    autocomplete: 'off',
+    options: contextOptions,
   },
   {
     key: 'outboundCid',
@@ -214,18 +219,6 @@ const fields: readonly ConfigurableCrudField[] = [
     options: codecOptions,
     fromRecord: (value) => splitCodecs(value),
   },
-  {
-    key: 'params',
-    label: 'Engine configuration',
-    payloadKey: 'params',
-    source: 'VpeParamsJson',
-    format: 'json',
-    type: 'textarea',
-    tab: 'notes',
-    span: 4,
-    rows: 4,
-    placeholder: '{}',
-  },
 ];
 
 const config: ConfigurableCrudConfig = {
@@ -236,8 +229,7 @@ const config: ConfigurableCrudConfig = {
   pageDescription: 'Manage extensions linked to tenant PABX accounts.',
   createTitle: 'New PABX extension',
   editTitle: 'Edit PABX extension',
-  dialogDescription:
-    'Maintain extension identity, routing, voicemail, codecs, and engine settings.',
+  dialogDescription: 'Maintain extension identity, routing, voicemail, and codecs.',
   searchPlaceholder: 'Extension, caller ID, PABX, domain...',
   emptyLabel: 'No PABX extensions found.',
   deleteTitle: 'Delete PABX extension',
@@ -274,14 +266,13 @@ const config: ConfigurableCrudConfig = {
     password: '',
     callerIdName: '',
     callerIdNumber: '',
-    context: 'public',
+    context: 'default',
     outboundCid: '',
     dialPlanUUID: '',
     vmEnabled: 0,
     vmPassword: '',
     recordCalls: 0,
     codecs: [],
-    params: '{}',
   },
   statusMode: 'number',
   activeValue: 1,
@@ -325,7 +316,6 @@ const config: ConfigurableCrudConfig = {
     routing: 'Routing',
     monitoring: 'Voicemail',
     codecs: 'Codecs',
-    notes: 'Advanced',
   },
 };
 
@@ -371,12 +361,6 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       return;
     }
 
-    const params = parseParams(values['params']);
-    if (params === undefined) {
-      this.snack.warning(this.t('Engine configuration must be valid JSON.'));
-      return;
-    }
-
     this.saving.set(true);
     try {
       const response = await this.api.post('voip/pabx/extensions/bulk', {
@@ -392,7 +376,6 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
         vmPassword: nullableString(values['vmPassword']),
         recordCalls: toBoolean(values['recordCalls']),
         codecs: splitCodecs(values['codecs']).join(','),
-        params,
         enabled: toBoolean(values['enabled']),
       });
       this.snack.success(this.t('PABX extensions created successfully.'));
@@ -687,19 +670,6 @@ function parseRange(value: unknown): { start: number; end: number; total: number
   const end = Number(match[2]);
   if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || end < start) return null;
   return { start, end, total: end - start + 1 };
-}
-
-function parseParams(value: unknown): Record<string, unknown> | null | undefined {
-  if (value === null || value === undefined || value === '') return null;
-  if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
-  try {
-    const parsed = JSON.parse(String(value));
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? (parsed as Record<string, unknown>)
-      : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 function readRows(response: unknown): ConfigurableCrudRecord[] {
