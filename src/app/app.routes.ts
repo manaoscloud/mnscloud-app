@@ -1770,15 +1770,6 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
-                path: 'pabx/server-assignments',
-                loadComponent: () =>
-                  import('./pages/voip/pabx/server-assignment/server-assignment').then(
-                    (m) => m.VoipPabxServerAssignmentPage,
-                  ),
-                title: 'PABX server assignments | mnscloud',
-                data: { scope: 'master' },
-              },
-              {
                 path: 'pabx/server',
                 loadComponent: () =>
                   import('./pages/voip/pabx/server/server').then((m) => m.VoipPabxServerPage),
