@@ -1,15 +1,13 @@
-import { Component, computed, inject, resource } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component, computed, resource } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudPageBase,
   ConfigurableCrudOption,
-  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
-  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'company', label: 'Company' },
@@ -195,6 +193,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'complexUUID',
       label: 'Complex',
       type: 'search-select',
+      quickCreate: quickCreateFor('ErpComplexEcxUUID'),
       placeholder: 'Search complexes',
       tab: 'address',
       addressSection: 'main',
@@ -206,6 +205,8 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'dueDayUUID',
       label: 'Due day',
       type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason: 'Due days are a fixed billing calendar catalog without a create form.',
       placeholder: 'Search due days',
       tab: 'financial',
       span: 1,
@@ -541,6 +542,15 @@ type DueDayRecord = {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      customerOptionFromResponse(response, payload) ?? super.quickCreateOption(response, payload)
+    );
+  }
+
   private readonly complexesResource = resource({
     defaultValue: [] as ComplexRecord[],
     loader: async () => {
@@ -609,56 +619,6 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       addressMainCity: complex.City ?? '',
       addressMainState: complex.State ?? '',
       addressMainCountry: complex.Country ?? '',
-    });
-  }
-}
-
-@Component({
-  selector: 'app-erp-customer-quick-create-host',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: [
-    '../../../shared/crud/configurable-crud/configurable-crud-page.scss',
-    './customer-quick-create-host.scss',
-  ],
-})
-export class ErpCustomerQuickCreateHostComponent extends ErpCustomerPage {
-  private readonly quickDialogRef = inject(
-    MatDialogRef<ErpCustomerQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
-  );
-  private savingFromQuickCreate = false;
-
-  constructor() {
-    super();
-    queueMicrotask(() => this.startCreate());
-  }
-
-  override async saveItem(saveAndNew = false): Promise<void> {
-    this.savingFromQuickCreate = true;
-    try {
-      await super.saveItem(saveAndNew);
-    } finally {
-      this.savingFromQuickCreate = false;
-    }
-  }
-
-  override closeDialog(): void {
-    super.closeDialog();
-    if (!this.savingFromQuickCreate) {
-      this.quickDialogRef.close({ option: null });
-    }
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
-  ): Promise<void> {
-    await super.afterSave(context);
-    if (context.mode !== 'create') return;
-    this.quickDialogRef.close({
-      option: customerOptionFromResponse(context.response, context.payload),
-      response: context.response,
-      payload: context.payload,
     });
   }
 }

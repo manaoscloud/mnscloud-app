@@ -1,13 +1,10 @@
-import { Component, inject } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
-  ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
-  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -83,6 +80,15 @@ function config(): ConfigurableCrudConfig {
   styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipPabxDialPlanPlanPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      dialPlanOptionFromResponse(response, payload) ?? super.quickCreateOption(response, payload)
+    );
+  }
+
   constructor() {
     super(config());
   }
@@ -92,59 +98,6 @@ export class VoipPabxDialPlanPlanPage extends ConfigurableCrudPageBase<Configura
       ...payload,
       enabled: Number(payload['enabled']) === 1,
     };
-  }
-}
-
-@Component({
-  selector: 'app-voip-pabx-dial-plan-plan-quick-create-host',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: [
-    '../../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
-    '../../../../erp/customer/customer-quick-create-host.scss',
-  ],
-})
-export class VoipPabxDialPlanPlanQuickCreateHostComponent extends VoipPabxDialPlanPlanPage {
-  private readonly quickDialogRef = inject(
-    MatDialogRef<
-      VoipPabxDialPlanPlanQuickCreateHostComponent,
-      ConfigurableCrudQuickCreateResult
-    >,
-  );
-  private savingFromQuickCreate = false;
-
-  constructor() {
-    super();
-    queueMicrotask(() => this.startCreate());
-  }
-
-  override async saveItem(saveAndNew = false): Promise<void> {
-    this.savingFromQuickCreate = true;
-    try {
-      await super.saveItem(saveAndNew);
-    } finally {
-      this.savingFromQuickCreate = false;
-    }
-  }
-
-  override closeDialog(): void {
-    super.closeDialog();
-    if (!this.savingFromQuickCreate) {
-      this.quickDialogRef.close({ option: null });
-    }
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
-  ): Promise<void> {
-    await super.afterSave(context);
-    if (context.mode !== 'create') return;
-    this.quickDialogRef.close({
-      option: dialPlanOptionFromResponse(context.response, context.payload),
-      response: context.response,
-      payload: context.payload,
-    });
   }
 }
 

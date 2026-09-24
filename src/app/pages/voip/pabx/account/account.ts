@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
 
 import { ApiService } from '../../../../services/api.service';
 import {
@@ -9,13 +8,9 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
-  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
-import { HostingStorageAccountsQuickCreateHostComponent } from '../../../hosting/storage/accounts/accounts';
-import { VoipPabxBlacklistListQuickCreateHostComponent } from '../blacklist/list/list';
-import { VoipPabxDialPlanPlanQuickCreateHostComponent } from '../dial-plan/plan/plan';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -157,10 +152,6 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate: {
-          label: 'Create customer',
-          component: ErpCustomerQuickCreateHostComponent,
-        },
       },
       {
         key: 'name',
@@ -188,10 +179,6 @@ function config(): ConfigurableCrudConfig {
         required: true,
         tab: 'routing',
         span: 1,
-        quickCreate: {
-          label: 'Create dial plan',
-          component: VoipPabxDialPlanPlanQuickCreateHostComponent,
-        },
       },
       {
         key: 'blacklistUUID',
@@ -201,10 +188,6 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         tab: 'routing',
         span: 1,
-        quickCreate: {
-          label: 'Create blacklist',
-          component: VoipPabxBlacklistListQuickCreateHostComponent,
-        },
       },
       {
         key: 'recordingStorageMode',
@@ -226,10 +209,6 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         hiddenWhen: ({ values }) => values['recordingStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['recordingStorageMode'] === 'storage',
-        quickCreate: {
-          label: 'Create storage account',
-          component: HostingStorageAccountsQuickCreateHostComponent,
-        },
       },
       {
         key: 'mediaStorageMode',
@@ -251,10 +230,7 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         hiddenWhen: ({ values }) => values['mediaStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['mediaStorageMode'] === 'storage',
-        quickCreate: {
-          label: 'Create storage account',
-          component: HostingStorageAccountsQuickCreateHostComponent,
-        },
+        quickCreate: quickCreateFor('HostingStorageAccountHsaUUID'),
       },
       {
         key: 'mediaDeliveryMode',
@@ -279,6 +255,15 @@ function config(): ConfigurableCrudConfig {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      pabxAccountOptionFromResponse(response, payload) ?? super.quickCreateOption(response, payload)
+    );
+  }
+
   private readonly rawApi = inject(ApiService);
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
@@ -435,56 +420,6 @@ function mergeOption(
 ): ConfigurableCrudOption[] {
   if (items.some((item) => item.value === option.value)) return [...items];
   return [...items, option].sort((left, right) => left.label.localeCompare(right.label));
-}
-
-@Component({
-  selector: 'app-voip-pabx-account-quick-create-host',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: [
-    '../../../../shared/crud/configurable-crud/configurable-crud-page.scss',
-    '../../../erp/customer/customer-quick-create-host.scss',
-  ],
-})
-export class VoipPabxAccountQuickCreateHostComponent extends VoipPabxAccountPage {
-  private readonly quickDialogRef = inject(
-    MatDialogRef<VoipPabxAccountQuickCreateHostComponent, ConfigurableCrudQuickCreateResult>,
-  );
-  private savingFromQuickCreate = false;
-
-  constructor() {
-    super();
-    queueMicrotask(() => this.startCreate());
-  }
-
-  override async saveItem(saveAndNew = false): Promise<void> {
-    this.savingFromQuickCreate = true;
-    try {
-      await super.saveItem(saveAndNew);
-    } finally {
-      this.savingFromQuickCreate = false;
-    }
-  }
-
-  override closeDialog(): void {
-    super.closeDialog();
-    if (!this.savingFromQuickCreate) {
-      this.quickDialogRef.close({ option: null });
-    }
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
-  ): Promise<void> {
-    await super.afterSave(context);
-    if (context.mode !== 'create') return;
-    this.quickDialogRef.close({
-      option: pabxAccountOptionFromResponse(context.response, context.payload),
-      response: context.response,
-      payload: context.payload,
-    });
-  }
 }
 
 function pabxAccountOptionFromResponse(

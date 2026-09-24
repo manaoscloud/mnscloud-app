@@ -6,6 +6,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses = [
   { value: 'open', label: 'Open' },
@@ -63,6 +64,7 @@ const config = defineCrud({
       source: 'CustomerUUID',
       label: 'Customer',
       type: 'search-select',
+      quickCreate: quickCreateFor('CustomerCusUUID'),
       span: 1,
     },
     { key: 'amount', source: 'Amount', label: 'Amount', type: 'currency', required: true, span: 1 },
@@ -88,6 +90,7 @@ const config = defineCrud({
       source: 'GatewayAccountUUID',
       label: 'Payment provider',
       type: 'search-select',
+      quickCreate: quickCreateFor('ErpFinPayGatewayAccountEfgUUID'),
       span: 1,
       hiddenWhen: ({ editing, values }) => editing || !values['issueAtGateway'],
     },

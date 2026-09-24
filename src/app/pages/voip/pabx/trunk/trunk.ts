@@ -13,7 +13,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
-import { VoipPabxAccountQuickCreateHostComponent } from '../account/account';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -164,10 +164,7 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate: {
-          label: 'Create PABX',
-          component: VoipPabxAccountQuickCreateHostComponent,
-        },
+        quickCreate: quickCreateFor('VoipPabxAccountVpaUUID'),
       },
       {
         key: 'direction',
@@ -406,7 +403,8 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
       description:
         'Reads the outbound registration and connectivity status of all active trunks assigned to the selected PABX.',
       startEndpoint: `voip/pabx/accounts/${pabxUUID}/trunks/runtime-status`,
-      statusEndpoint: (jobUUID) => `voip/pabx/accounts/${pabxUUID}/trunks/runtime-status/${jobUUID}`,
+      statusEndpoint: (jobUUID) =>
+        `voip/pabx/accounts/${pabxUUID}/trunks/runtime-status/${jobUUID}`,
       sections: trunkStatusSections,
     });
   }

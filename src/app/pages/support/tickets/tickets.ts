@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, resource } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
 import { ConfigurableCrudConfig, ConfigurableCrudListFilter, ConfigurableCrudOption, ConfigurableCrudPageBase, ConfigurableCrudRecord, CONFIGURABLE_CRUD_IMPORTS } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 const statuses: ConfigurableCrudOption[] = ['open', 'in_progress', 'pending', 'resolved', 'closed', 'canceled'].map((value) => ({ value, label: value }));
 const priorities: ConfigurableCrudOption[] = ['low', 'normal', 'high', 'urgent'].map((value) => ({ value, label: value }));
 const severities: ConfigurableCrudOption[] = ['minor', 'major', 'critical'].map((value) => ({ value, label: value }));
@@ -13,16 +14,28 @@ function config(): ConfigurableCrudConfig { return {
   listFilters: [{ key: 'customerUUID', label: 'Customer', type: 'search-select', span: 1 }, { key: 'channelUUID', label: 'Channel', type: 'search-select', span: 1 }, { key: 'priority', label: 'Priority', type: 'select', options: priorities, span: 1 }],
   tabLabels: { authentication: 'Contact', financial: 'SLA', notes: 'Notes' },
   fields: [
-    { key: 'customerUUID', source: 'CustomerUUID', label: 'Customer', type: 'search-select', required: true, span: 1 }, { key: 'channelUUID', source: 'ChannelUUID', label: 'Channel', type: 'search-select', required: true, span: 1 }, { key: 'status', source: 'Status', label: 'Status', type: 'select', options: statuses, required: true, span: 1 }, { key: 'priority', source: 'Priority', label: 'Priority', type: 'select', options: priorities, required: true, span: 1 }, { key: 'subject', source: 'Subject', label: 'Subject', required: true, span: 2, breakBefore: true }, { key: 'type', source: 'Type', label: 'Type', type: 'select', options: types, span: 1 }, { key: 'severity', source: 'Severity', label: 'Severity', type: 'select', options: severities, span: 1 }, { key: 'tags', source: 'Tags', label: 'Tags', span: 4, breakBefore: true }, { key: 'description', source: 'Description', label: 'Description', type: 'textarea', tab: 'notes', required: true, span: 4, rows: 4 }, { key: 'internalNotes', source: 'InternalNotes', label: 'Internal notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 }, { key: 'contactName', source: 'ContactName', label: 'Contact name', tab: 'authentication', span: 1 }, { key: 'contactEmail', source: 'ContactEmail', label: 'Contact email', type: 'email', tab: 'authentication', span: 1 }, { key: 'contactPhone', source: 'ContactPhone', label: 'Contact phone', type: 'phone', tab: 'authentication', span: 1 }, { key: 'slaPlan', source: 'SlaPlan', label: 'SLA plan', tab: 'financial', span: 1 }, { key: 'slaResponseDeadline', source: 'SlaResponseDeadline', label: 'Response deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaResolutionDeadline', source: 'SlaResolutionDeadline', label: 'Resolution deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaBreached', source: 'SlaBreached', label: 'SLA breached', type: 'select', options: yesNo, tab: 'financial', span: 1 },
+    { key: 'customerUUID', source: 'CustomerUUID', label: 'Customer', type: 'search-select', quickCreate: quickCreateFor('CustomerCusUUID'), required: true, span: 1 }, { key: 'channelUUID', source: 'ChannelUUID', label: 'Channel', type: 'search-select', quickCreate: quickCreateFor('SupportTicketChannelStcUUID'), required: true, span: 1 }, { key: 'status', source: 'Status', label: 'Status', type: 'select', options: statuses, required: true, span: 1 }, { key: 'priority', source: 'Priority', label: 'Priority', type: 'select', options: priorities, required: true, span: 1 }, { key: 'subject', source: 'Subject', label: 'Subject', required: true, span: 2, breakBefore: true }, { key: 'type', source: 'Type', label: 'Type', type: 'select', options: types, span: 1 }, { key: 'severity', source: 'Severity', label: 'Severity', type: 'select', options: severities, span: 1 }, { key: 'tags', source: 'Tags', label: 'Tags', span: 4, breakBefore: true }, { key: 'description', source: 'Description', label: 'Description', type: 'textarea', tab: 'notes', required: true, span: 4, rows: 4 }, { key: 'internalNotes', source: 'InternalNotes', label: 'Internal notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 }, { key: 'contactName', source: 'ContactName', label: 'Contact name', tab: 'authentication', span: 1 }, { key: 'contactEmail', source: 'ContactEmail', label: 'Contact email', type: 'email', tab: 'authentication', span: 1 }, { key: 'contactPhone', source: 'ContactPhone', label: 'Contact phone', type: 'phone', tab: 'authentication', span: 1 }, { key: 'slaPlan', source: 'SlaPlan', label: 'SLA plan', tab: 'financial', span: 1 }, { key: 'slaResponseDeadline', source: 'SlaResponseDeadline', label: 'Response deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaResolutionDeadline', source: 'SlaResolutionDeadline', label: 'Resolution deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaBreached', source: 'SlaBreached', label: 'SLA breached', type: 'select', options: yesNo, tab: 'financial', span: 1 },
   ],
 }; }
 @Component({ selector: 'app-support-tickets', standalone: true, imports: CONFIGURABLE_CRUD_IMPORTS, templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html', styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'] })
 export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly rawApi = inject(ApiService); readonly customers = signal<ConfigurableCrudOption[]>([]); readonly channels = signal<ConfigurableCrudOption[]>([]); readonly lookupsLoading = signal(false);
-  constructor() { super(config()); void this.loadLookups(); }
+  private readonly rawApi = inject(ApiService);
+  private readonly lookups = resource({
+    defaultValue: { customers: [] as ConfigurableCrudOption[], channels: [] as ConfigurableCrudOption[] },
+    loader: async () => {
+      const [customers, channels] = await Promise.all([this.rawApi.get<any>('erp/customers?limit=500&offset=0'), this.rawApi.get<any>('support/ticket-channels?limit=500&offset=0')]);
+      return {
+        customers: (customers?.data?.items ?? []).map((row: any) => ({ value: row.CustomerUUID, label: row.Name ?? row.LegalName ?? row.CustomerUUID })),
+        channels: (channels?.data?.items ?? []).map((row: any) => ({ value: row.SupportTicketChannelUUID, label: row.Name ?? row.Code ?? row.SupportTicketChannelUUID })),
+      };
+    },
+  });
+  readonly customers = computed(() => this.lookups.value().customers);
+  readonly channels = computed(() => this.lookups.value().channels);
+  readonly lookupsLoading = computed(() => this.lookups.isLoading());
+  constructor() { super(config()); }
   override fieldLoading(field: { key: string }) { return ['customerUUID', 'channelUUID'].includes(field.key) && this.lookupsLoading(); }
   protected override lookupOptions(key: string) { return key === 'customerUUID' ? this.customers() : key === 'channelUUID' ? this.channels() : []; }
   override listFilterOptions(filter: ConfigurableCrudListFilter) { return filter.key === 'customerUUID' ? this.customers() : filter.key === 'channelUUID' ? this.channels() : super.listFilterOptions(filter); }
   protected override augmentPayload(payload: ConfigurableCrudRecord) { return { ...payload, slaBreached: Number(payload['slaBreached']) }; }
-  private async loadLookups() { this.lookupsLoading.set(true); try { const [customers, channels] = await Promise.all([this.rawApi.get<any>('erp/customers?limit=500&offset=0'), this.rawApi.get<any>('support/ticket-channels?limit=500&offset=0')]); this.customers.set((customers?.data?.items ?? []).map((row: any) => ({ value: row.CustomerUUID, label: row.Name ?? row.LegalName ?? row.CustomerUUID }))); this.channels.set((channels?.data?.items ?? []).map((row: any) => ({ value: row.SupportTicketChannelUUID, label: row.Name ?? row.Code ?? row.SupportTicketChannelUUID }))); } finally { this.lookupsLoading.set(false); } }
 }

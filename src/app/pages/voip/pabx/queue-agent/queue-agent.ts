@@ -117,6 +117,8 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'employeeUUID',
         label: 'Employee',
         type: 'search-select',
+        quickCreate: false,
+        quickCreateExemptReason: 'HR employees use a dedicated form that is not a configurable CRUD page yet.',
         required: true,
         span: 1,
       },

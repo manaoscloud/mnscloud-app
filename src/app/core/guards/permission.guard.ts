@@ -11,9 +11,14 @@ export const permissionGuard: CanActivateFn = (route) => {
     return router.parseUrl('/dashboard');
   }
 
-  const normalizedRequired = permission.toLowerCase();
-  const permissions = auth.user()?.permissions ?? [];
-  const allowed = permissions.some((currentPermission) => {
+  const allowed = hasEffectivePermission(auth.user()?.permissions ?? [], permission);
+  return allowed ? true : router.parseUrl('/dashboard');
+};
+
+/** Effective permission match shared by route guards and in-page actions (wildcards, master). */
+export function hasEffectivePermission(permissions: readonly unknown[], required: string): boolean {
+  const normalizedRequired = required.toLowerCase();
+  return permissions.some((currentPermission) => {
     const normalizedPermission = String(currentPermission ?? '').toLowerCase();
     if (normalizedPermission === normalizedRequired) return true;
     if (
@@ -30,6 +35,4 @@ export const permissionGuard: CanActivateFn = (route) => {
       .replace(/\*/g, '.*')}$`;
     return new RegExp(pattern).test(normalizedRequired);
   });
-
-  return allowed ? true : router.parseUrl('/dashboard');
-};
+}

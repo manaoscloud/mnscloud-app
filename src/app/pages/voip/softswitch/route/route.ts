@@ -8,6 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const routeDirections: ConfigurableCrudOption[] = [
   { value: 'inbound', label: 'Inbound' },
@@ -68,6 +69,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'accountUUID',
       label: 'Softswitch',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'),
       required: true,
       span: 1,
       tab: 'record',
@@ -108,6 +110,7 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'trunkGroupUUID',
       label: 'Trunk group',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchTrunkGroupVtgUUID'),
       span: 1,
       tab: 'record',
     },

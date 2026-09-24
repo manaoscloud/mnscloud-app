@@ -10,10 +10,18 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { VoipDomainQuickCreateHostComponent } from '../domain/domain';
-import { VoipPabxAccountQuickCreateHostComponent } from '../pabx/account/account';
+import {
+  QuickCreateRegistryKey,
+  quickCreateFor,
+} from '../../../shared/crud/configurable-crud/quick-create';
 
 type Service = 'pabx' | 'softswitch' | 'sbc';
+
+const serviceAccountRegistryKey = {
+  pabx: 'VoipPabxAccountVpaUUID',
+  softswitch: 'VoipSoftswitchAccountVssUUID',
+  sbc: 'VoipSbcAccountVsaUUID',
+} as const satisfies Record<Service, QuickCreateRegistryKey>;
 
 const statusOptions: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -94,13 +102,7 @@ function config(service: Service): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate:
-          service === 'pabx'
-            ? {
-                label: 'Create PABX',
-                component: VoipPabxAccountQuickCreateHostComponent,
-              }
-            : undefined,
+        quickCreate: quickCreateFor(serviceAccountRegistryKey[service]),
       },
       {
         key: 'domainUUID',
@@ -110,13 +112,6 @@ function config(service: Service): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate:
-          service === 'pabx'
-            ? {
-                label: 'Create VoIP domain',
-                component: VoipDomainQuickCreateHostComponent,
-              }
-            : undefined,
       },
       {
         key: 'isDefault',

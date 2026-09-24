@@ -32,3 +32,9 @@ for (const [key, value] of Object.entries({
 mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, selector + '.ts'), source);
 console.log('Created generic CRUD configuration: ' + directory);
+console.log(
+  'If other forms reference this resource, register ' +
+    className +
+    ' in QUICK_CREATE_REGISTRY (src/app/shared/crud/configurable-crud/quick-create.ts) ' +
+    'so their FK selects can create it in place (app.md FK Quick-Create Baseline).',
+);

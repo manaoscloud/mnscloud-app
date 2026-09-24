@@ -7,6 +7,7 @@ import {
   ElementRef,
   TemplateRef,
   Type,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -23,7 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogState } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,6 +54,9 @@ import { DateMaskDirective } from '../../date-mask/date-mask.directive';
 import { formatDateInput, toDateOnly } from '../../date-mask/date-input-format';
 import { MnsDateAdapterModule } from '../../date-mask/mns-date-adapter.module';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
+import { CONFIGURABLE_CRUD_QUICK_CREATE, quickCreateRegistryEntry } from './quick-create';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AuthService } from '../../../services/auth.service';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
 import {
   MnsSearchSelectFieldComponent,
@@ -121,10 +125,19 @@ export type ConfigurableCrudQuickCreateContext = {
   values: ConfigurableCrudRecord;
 };
 
+/**
+ * Opens the referenced resource's canonical configurable CRUD page (`component` or lazy
+ * `loadComponent`) in quick-create mode. Never point this at a lightweight duplicate form.
+ */
 export type ConfigurableCrudQuickCreateConfig = {
   enabled?: boolean | ((context: ConfigurableCrudQuickCreateContext) => boolean);
   label?: string;
-  component: Type<unknown>;
+  component?: Type<unknown>;
+  loadComponent?: () => Promise<Type<unknown>>;
+  /** Effective permission required to create the referenced record (e.g. master-only resources). */
+  permission?: string;
+  /** Route data the referenced page reads (e.g. `scope`, a catalog kind) when opened in place. */
+  routeData?: Record<string, unknown>;
 };
 
 export type ConfigurableCrudFieldType =
@@ -209,7 +222,12 @@ export type ConfigurableCrudField = {
   /** Key holding the ISO 4217 code for this monetary value. */
   currencyKey?: string;
   options?: readonly ConfigurableCrudOption[];
-  quickCreate?: ConfigurableCrudQuickCreateConfig;
+  /**
+   * FK quick-create. Omitted: resolved from `QUICK_CREATE_REGISTRY` by `source`. `false` opts
+   * out and requires `quickCreateExemptReason` (enforced by `npm run check:crud:fk`).
+   */
+  quickCreate?: ConfigurableCrudQuickCreateConfig | false;
+  quickCreateExemptReason?: string;
   /** Set to false for protocol/vendor option labels that must remain literal. */
   translateOptions?: boolean;
   /** Enables multiple selection for a searchable relation field. */
@@ -400,6 +418,8 @@ export type ConfigurableCrudConfig = {
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  /** Field key whose value labels a record created through FK quick-create. Defaults to `name`. */
+  quickCreateLabelField?: string;
   /** Optional per-record deletion rule for resources with protected lifecycle states. */
   canEditRow?: (row: ConfigurableCrudRecord) => boolean;
   canDeleteRow?: (row: ConfigurableCrudRecord) => boolean;
@@ -448,6 +468,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected readonly api = inject(ApiService);
+  private readonly quickCreateAuth = inject(AuthService);
   protected readonly snack = inject(SnackbarService);
   protected readonly dateTime = inject(DateTimeFormatService);
   protected readonly parameters = inject(SystemParameterService);
@@ -458,6 +479,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   private readonly appI18n = inject(AppI18nService);
   protected readonly listLimit = 500;
   protected readonly config: ConfigurableCrudConfig;
+  private readonly quickCreateSession = inject(CONFIGURABLE_CRUD_QUICK_CREATE, { optional: true });
+  /** True when this page runs as the create form of an FK select in another CRUD. */
+  readonly quickCreateMode = this.quickCreateSession !== null;
+  private quickCreateSaving = false;
+  private quickCreateResult: ConfigurableCrudQuickCreateResult | null = null;
+  /** Options created through quick-create, merged into the field options until the next reload. */
+  private readonly quickCreatedOptions = signal<Record<string, ConfigurableCrudOption[]>>({});
 
   readonly formDialog = viewChild<TemplateRef<unknown>>('crudFormDialog');
   protected dialogBinding: CrudDialogBinding | null = null;
@@ -668,10 +696,17 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
-      params: () => this.listResourceParams(),
+      params: () => (this.quickCreateMode ? undefined : this.listResourceParams()),
       defaultValue: [] as T[],
       loader: ({ params }) => this.fetchItems(params),
     });
+
+    if (this.quickCreateMode) {
+      afterNextRender(() => {
+        if (this.canCreate()) this.startCreate();
+        else this.quickCreateSession?.complete({ option: null });
+      });
+    }
 
     effect(() => {
       const available = new Set(this.rows().map((row) => this.recordUUID(row)));
@@ -808,6 +843,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!this.validatePayload(formPayload)) return;
 
     this.saving.set(true);
+    this.quickCreateSaving = this.quickCreateMode;
     try {
       const payload = this.augmentPayload(formPayload);
       const current = this.editingRecord();
@@ -838,10 +874,69 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         response,
         record: current,
       });
+      if (this.quickCreateMode && !current) {
+        this.quickCreateResult = {
+          option: await this.quickCreateOption(response, payload),
+          response,
+          payload,
+        };
+        if (!this.keepDialogOpenAfterSave())
+          this.quickCreateSession?.complete(this.quickCreateResult);
+      }
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     } finally {
       this.saving.set(false);
+      this.quickCreateSaving = false;
+      // A failure after the form dialog closed must still release the invisible host.
+      if (this.quickCreateMode && this.dialogBinding?.ref.getState() !== MatDialogState.OPEN) {
+        this.quickCreateSession?.complete(this.quickCreateResult ?? { option: null });
+      }
+    }
+  }
+
+  /**
+   * Maps the record created in quick-create mode to the requesting FK option. Uses the create
+   * response when it carries the record; otherwise finds the new record through the list endpoint.
+   * Override only to enrich `description`/`searchText`; value must stay the resource UUID.
+   */
+  protected async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    const labelField =
+      this.config.fields.find(
+        (field) => field.key === (this.config.quickCreateLabelField ?? 'name'),
+      ) ??
+      this.config.fields.find((field) => field.required && (!field.type || field.type === 'text'));
+    const labelSource = labelField?.source ?? labelField?.key ?? '';
+    const payloadLabel = labelField
+      ? optionText(payload[labelField.payloadKey ?? labelField.key])
+      : null;
+    const toOption = (record: ConfigurableCrudRecord): ConfigurableCrudOption | null => {
+      const uuid = optionText(record[this.config.uuidField]) ?? optionText(record['uuid']);
+      if (!uuid) return null;
+      const label = optionText(record[labelSource]) ?? payloadLabel ?? uuid;
+      return { value: uuid, label, searchText: `${label} ${uuid}` };
+    };
+
+    const created = quickCreateResponseRecord(response);
+    const direct = created ? toOption(created) : null;
+    if (direct) return direct;
+    if (!payloadLabel) return null;
+
+    try {
+      const params = new URLSearchParams({ search: payloadLabel, limit: '25', offset: '0' });
+      const list = await this.api.get<unknown>(`${this.config.endpoint}?${params}`);
+      const candidates = extractCrudItems(list)
+        .map(toOption)
+        .filter((option): option is ConfigurableCrudOption => option !== null);
+      const exact = candidates.filter(
+        (option) => option.label.toLowerCase() === payloadLabel.toLowerCase(),
+      );
+      return exact.length === 1 ? exact[0] : null;
+    } catch {
+      return null;
     }
   }
 
@@ -1146,6 +1241,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.dialogBinding?.ref.close();
+    if (this.quickCreateMode && !this.quickCreateSaving) {
+      this.quickCreateSession?.complete(this.quickCreateResult ?? { option: null });
+    }
   }
 
   fieldValue(key: string): string | number | boolean | null {
@@ -1393,10 +1491,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
               selected,
           ),
         });
-      return options;
+      return this.withQuickCreatedOptions(field, options);
     }
 
-    return field.options ?? this.lookupOptions(field.key);
+    return this.withQuickCreatedOptions(field, field.options ?? this.lookupOptions(field.key));
   }
 
   listFilterOptions(filter: ConfigurableCrudListFilter): readonly ConfigurableCrudOption[] {
@@ -1443,9 +1541,28 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return field.remoteLookup ? this.remoteLookups.isLoading() : (field.loading?.() ?? false);
   }
 
+  /** Explicit field config wins; otherwise the canonical registry entry for the FK `source`. */
+  protected resolveQuickCreate(
+    field: ConfigurableCrudField,
+  ): ConfigurableCrudQuickCreateConfig | null {
+    if (field.quickCreate === false) return null;
+    if (field.quickCreate) return field.quickCreate;
+    if (field.type !== 'search-select') return null;
+    return quickCreateRegistryEntry(field.source);
+  }
+
   canQuickCreate(field: ConfigurableCrudField): boolean {
-    const quickCreate = field.quickCreate;
-    if (!quickCreate) return false;
+    const quickCreate = this.resolveQuickCreate(field);
+    if (!quickCreate || this.isFieldDisabled(field)) return false;
+    if (
+      quickCreate.permission &&
+      !hasEffectivePermission(
+        this.quickCreateAuth.user()?.permissions ?? [],
+        quickCreate.permission,
+      )
+    ) {
+      return false;
+    }
     const context: ConfigurableCrudQuickCreateContext = {
       editing: Boolean(this.editingRecord()),
       values: this.formValues(),
@@ -1456,37 +1573,55 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   quickCreateLabel(field: ConfigurableCrudField): string {
-    return field.quickCreate?.label ?? 'Create new';
+    return this.resolveQuickCreate(field)?.label ?? 'Create new';
   }
 
   async quickCreateField(field: ConfigurableCrudField): Promise<void> {
-    const quickCreate = field.quickCreate;
+    const quickCreate = this.resolveQuickCreate(field);
     if (!quickCreate || !this.canQuickCreate(field)) return;
+    const { openQuickCreate } = await import('./configurable-crud-quick-create-host');
+    const result = await openQuickCreate(this.dialog, quickCreate);
+    const option = result?.option;
+    if (!result || !option) return;
 
-    const ref = this.dialog.open<unknown, unknown, ConfigurableCrudQuickCreateResult>(
-      quickCreate.component,
-      {
-        width: '0',
-        height: '0',
-        maxWidth: '0',
-        maxHeight: '0',
-        autoFocus: false,
-        restoreFocus: true,
-        panelClass: ['quick-create-host-dialog'],
-      },
-    );
-    const result = await firstValueFrom(ref.afterClosed());
-    if (!result?.option) return;
+    this.quickCreatedOptions.update((current) => ({
+      ...current,
+      [field.key]: [
+        option,
+        ...(current[field.key] ?? []).filter((item) => String(item.value) !== String(option.value)),
+      ],
+    }));
+    if (field.remoteLookup) this.selectedRemoteOptions.set(field.key, option);
+    await this.afterQuickCreate(field, option, result);
+    if (field.multiple) {
+      const selected = this.formValues()[field.key];
+      const values = Array.isArray(selected) ? selected : [];
+      this.setFieldValue(field.key, [
+        ...values.filter((value) => value !== option.value),
+        option.value,
+      ]);
+    } else {
+      this.setFieldValue(field.key, option.value);
+    }
+  }
 
-    this.afterQuickCreate(field, result.option, result);
-    this.setFieldValue(field.key, result.option.value);
+  /** Keeps options created through quick-create visible until the page reloads its lookups. */
+  private withQuickCreatedOptions(
+    field: ConfigurableCrudField,
+    options: readonly ConfigurableCrudOption[],
+  ): readonly ConfigurableCrudOption[] {
+    const created = this.quickCreatedOptions()[field.key];
+    if (!created?.length) return options;
+    const known = new Set(options.map((option) => String(option.value)));
+    const missing = created.filter((option) => !known.has(String(option.value)));
+    return missing.length ? [...missing, ...options] : options;
   }
 
   protected afterQuickCreate(
     _field: ConfigurableCrudField,
     _option: ConfigurableCrudOption,
     _result: ConfigurableCrudQuickCreateResult,
-  ): void {}
+  ): void | Promise<void> {}
 
   addressCopyActions(): readonly ConfigurableCrudCopyAction[] {
     return this.config.addressCopyActions ?? [];
@@ -2261,4 +2396,25 @@ function extractCrudItems(response: unknown): ConfigurableCrudRecord[] {
     return (data as { items: ConfigurableCrudRecord[] }).items;
   }
   return [];
+}
+
+function optionText(value: unknown): string | null {
+  if (value === null || value === undefined || typeof value === 'object') return null;
+  const normalized = String(value).trim();
+  return normalized || null;
+}
+
+/** Create responses carry the record under different envelopes; return the first object found. */
+function quickCreateResponseRecord(response: unknown): ConfigurableCrudRecord | null {
+  const value = response as { data?: unknown; item?: unknown; record?: unknown } | null | undefined;
+  const data = value?.data as
+    { item?: unknown; record?: unknown; data?: unknown; items?: unknown } | undefined;
+  const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+  const candidates = [data?.item, data?.record, data?.data, items[0], value?.data, value?.item];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      return candidate as ConfigurableCrudRecord;
+    }
+  }
+  return null;
 }

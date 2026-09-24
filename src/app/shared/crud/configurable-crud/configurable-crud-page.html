@@ -1,4 +1,4 @@
-<section class="erp-page" [hidden]="config.formOnly">
+<section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
   <mat-card class="erp-card">
     <div class="erp-header">
       <div>
@@ -2252,7 +2252,7 @@
             <mat-icon>save</mat-icon>
             {{ 'Save' | transloco }}
           </button>
-          @if (!editingRecord() && !config.formOnly) {
+          @if (!editingRecord() && !config.formOnly && !quickCreateMode) {
             <button
               mat-flat-button
               color="primary"

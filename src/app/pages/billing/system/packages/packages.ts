@@ -16,6 +16,7 @@ import {
   cleanPayload,
   numberOrNull,
 } from '../../shared/billing-crud';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const PACKAGE_PAYLOAD_KEYS = [
   'code',
@@ -122,6 +123,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'itemProductUUID',
       label: 'Initial item product',
       type: 'search-select',
+      quickCreate: quickCreateFor('BillingProductBprUUID'),
       requiredWhen: ({ editing }) => !editing,
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',
@@ -183,6 +185,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
   BillingPackage & ConfigurableCrudRecord

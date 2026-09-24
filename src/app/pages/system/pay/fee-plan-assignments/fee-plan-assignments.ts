@@ -63,6 +63,8 @@ const config = defineCrud({
       source: 'UserUsrUUID',
       label: 'Tenant',
       type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason: 'Tenants are provisioned through onboarding; there is no in-place create form.',
       required: true,
       span: 1,
       disabledWhen: ({ editing }) => editing,

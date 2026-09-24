@@ -20,6 +20,7 @@ import {
 } from '../../../shared/install-command-dialog/install-command-dialog';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { RealtimeWebRtcService, WebRtcResource, WebRtcScope } from './webrtc.service';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const STATUS_OPTIONS = [
   { value: 1, label: 'Active' },
@@ -258,6 +259,10 @@ function webRtcDomainConfig(endpoint: string, titlePrefix = 'WebRTC'): Configura
       {
         key: 'realtimeDomainUUID',
         source: 'RealtimeDomainRtdUUID',
+        // Tenant WebRTC domains bind the tenant's own realtime domains.
+        quickCreate: quickCreateFor(
+          endpoint.startsWith('system/') ? 'RealtimeDomainRtdUUID' : 'RealtimeDomainTenantRtdUUID',
+        ),
         payloadKey: 'realtimeDomainUUID',
         label: 'Realtime Domain',
         type: 'search-select',

@@ -10,7 +10,6 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
-import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -107,10 +106,6 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         required: true,
         span: 1,
-        quickCreate: {
-          label: 'Create customer',
-          component: ErpCustomerQuickCreateHostComponent,
-        },
       },
       {
         key: 'name',

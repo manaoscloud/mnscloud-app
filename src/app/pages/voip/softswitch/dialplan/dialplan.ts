@@ -8,6 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const scopes: ConfigurableCrudOption[] = [
   { value: 'account', label: 'Account' },
@@ -60,7 +61,7 @@ const CONFIG: ConfigurableCrudConfig = {
     status: 1,
   },
   fields: [
-    { key: 'accountUUID', source: 'accountUUID', payloadKey: 'accountUUID', label: 'Softswitch', type: 'search-select', required: true, span: 1 },
+    { key: 'accountUUID', source: 'accountUUID', payloadKey: 'accountUUID', label: 'Softswitch', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'), required: true, span: 1 },
     { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
     { key: 'scope', source: 'scope', payloadKey: 'scope', label: 'Scope', type: 'select', options: scopes, required: true, span: 1, tab: 'routing' },

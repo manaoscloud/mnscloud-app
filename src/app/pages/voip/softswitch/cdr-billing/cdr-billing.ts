@@ -80,6 +80,8 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'accountUUID',
       label: 'Softswitch',
       type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason: 'CDR billing records are read-only; the page disables create.',
       required: true,
       span: 1,
     },

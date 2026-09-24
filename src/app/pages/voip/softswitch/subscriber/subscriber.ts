@@ -12,7 +12,6 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
-import { ErpCustomerQuickCreateHostComponent } from '../../../erp/customer/customer';
 import {
   runRuntimeDiagnostic,
   RuntimeDiagnosticResult,
@@ -155,10 +154,6 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
       tab: 'record',
-      quickCreate: {
-        label: 'Create customer',
-        component: ErpCustomerQuickCreateHostComponent,
-      },
     },
     {
       key: 'registerEnabled',

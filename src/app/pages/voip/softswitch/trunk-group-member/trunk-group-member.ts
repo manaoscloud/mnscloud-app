@@ -8,6 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const CONFIG: ConfigurableCrudConfig = {
   endpoint: 'voip/softswitch/trunk-group-members',
@@ -65,6 +66,7 @@ const CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'trunkGroupUUID',
       label: 'Trunk group',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchTrunkGroupVtgUUID'),
       required: true,
       span: 1,
       tab: 'record',
@@ -75,6 +77,7 @@ const CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'trunkUUID',
       label: 'Trunk',
       type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchTrunkVtkUUID'),
       required: true,
       span: 1,
       tab: 'record',
