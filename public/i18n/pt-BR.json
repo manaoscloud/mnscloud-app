@@ -5048,5 +5048,18 @@
   "Settlement webhook": "Webhook de liquidação",
   "Register settlement webhook": "Registrar webhook de liquidação",
   "Provide Client ID, Client Secret, certificate and private key together.": "Informe Client ID, Client Secret, certificado e chave privada juntos.",
-  "Settlement webhook registered with the bank.": "Webhook de liquidação registrado no banco."
+  "Settlement webhook registered with the bank.": "Webhook de liquidação registrado no banco.",
+  "The checking account number is required.": "O número da conta corrente é obrigatório.",
+  "Environment must be production or sandbox.": "O ambiente deve ser produção ou sandbox.",
+  "Receive methods are invalid.": "As formas de recebimento são inválidas.",
+  "Days to cancel after due date must be between 0 and 60.": "Os dias para baixa após o vencimento devem estar entre 0 e 60.",
+  "Client ID, Client Secret, certificate and private key are required.": "Client ID, Client Secret, certificado e chave privada são obrigatórios.",
+  "The private key does not belong to the certificate.": "A chave privada não pertence ao certificado.",
+  "The certificate has expired.": "O certificado está vencido.",
+  "The certificate or private key file is invalid.": "O arquivo do certificado ou da chave privada é inválido.",
+  "This bank is not supported.": "Este banco não é suportado.",
+  "The platform address for the webhook is invalid.": "O endereço da plataforma para o webhook é inválido.",
+  "This bank does not support settlement webhooks.": "Este banco não suporta webhook de liquidação.",
+  "The bank rejected the connection. Check credentials, certificate and environment.": "O banco recusou a conexão. Confira as credenciais, o certificado e o ambiente.",
+  "The bank could not be reached. Check the certificate and try again.": "Não foi possível acessar o banco. Confira o certificado e tente novamente."
 }
