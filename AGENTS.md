@@ -20,7 +20,7 @@ This repository contains only the standalone MNSCloud Angular app.
 
 ```js
 window.MNSCLOUD_APP_CONFIG = {
-  apiBaseUrl: "https://api.example.com/api/v1",
+  apiBaseUrl: 'https://api.example.com/api/v1',
 };
 ```
 
@@ -29,6 +29,10 @@ window.MNSCLOUD_APP_CONFIG = {
 - API calls go through `src/app/services/api.service.ts`.
 - Runtime API URL resolution lives in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD page, dialog, table, upload, and filter behavior must follow `app.md`.
+- Pick the page template from `app.md` → `Page Template Catalog (Current)`. Every CRUD/list page
+  extends `ConfigurableCrudPageBase`; matching CSS hook classes alone is not compliance.
+  `npm run check:crud:inventory` enforces this app-wide against `scripts/crud-legacy-allowlist.json`,
+  which may only shrink.
 - Use Angular Material and existing shared helpers before introducing new UI patterns.
 
 ## Shared visual identity
