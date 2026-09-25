@@ -5095,5 +5095,20 @@
   "The platform storage is not configured. Configure the default storage and try again.": "O storage da plataforma não está configurado. Configure o storage padrão e tente novamente.",
   "This bank does not support the selected purpose.": "Este banco não suporta a finalidade selecionada.",
   "This payment gateway is not supported.": "Este gateway de pagamento não é suportado.",
-  "Create stock type": "Criar tipo de estoque"
+  "Create stock type": "Criar tipo de estoque",
+  "Fixed IPv4 (/32)": "IPv4 fixo (/32)",
+  "IP/Mask": "IP/Máscara",
+  "Leave blank to keep the current secret": "Deixe em branco para manter o segredo atual",
+  "Manage fixed IPv4 CIDR assignments for your ISP environment.": "Gerencie as atribuições CIDR de IPv4 fixo do seu ambiente ISP.",
+  "Manage fixed IPv6 CIDR assignments for your ISP environment.": "Gerencie as atribuições CIDR de IPv6 fixo do seu ambiente ISP.",
+  "Manage IPv4 pools and available networks.": "Gerencie pools IPv4 e redes disponíveis.",
+  "Manage IPv6 pools and available networks.": "Gerencie pools IPv6 e redes disponíveis.",
+  "Manage available IPv4 networks for this pool.": "Gerencie as redes IPv4 disponíveis deste pool.",
+  "Manage available IPv6 networks for this pool.": "Gerencie as redes IPv6 disponíveis deste pool.",
+  "Platform RADIUS servers available to tenants.": "Servidores RADIUS da plataforma disponíveis aos tenants.",
+  "RADIUS servers used to authenticate your PPPoE clients.": "Servidores RADIUS usados para autenticar seus clientes PPPoE.",
+  "Create POP": "Criar POP",
+  "Create vendor": "Criar fabricante",
+  "Create vendor model": "Criar modelo de fabricante",
+  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Somente IPv4 fixos /32 podem ser atribuídos; crie-os em IPv4 fixo."
 }

@@ -218,6 +218,19 @@ export const QUICK_CREATE_REGISTRY = {
       ),
     permission: MASTER_PERMISSION,
   },
+  IspPopIppUUID: {
+    label: 'Create POP',
+    loadComponent: () => import('../../../pages/isp/pop/pop').then((m) => m.IspPopPage),
+  },
+  IspVendorIveUUID: {
+    label: 'Create vendor',
+    loadComponent: () => import('../../../pages/isp/vendor/vendor').then((m) => m.IspVendorPage),
+  },
+  IspVendorModelIvmUUID: {
+    label: 'Create vendor model',
+    loadComponent: () =>
+      import('../../../pages/isp/vendor-model/vendor-model').then((m) => m.IspVendorModelPage),
+  },
   PayFeePlanPfpUUID: {
     label: 'Create fee plan',
     loadComponent: () =>
