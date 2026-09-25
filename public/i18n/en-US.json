@@ -5094,5 +5094,20 @@
   "The platform storage is not configured. Configure the default storage and try again.": "The platform storage is not configured. Configure the default storage and try again.",
   "This bank does not support the selected purpose.": "This bank does not support the selected purpose.",
   "This payment gateway is not supported.": "This payment gateway is not supported.",
-  "Create stock type": "Create stock type"
+  "Create stock type": "Create stock type",
+  "Fixed IPv4 (/32)": "Fixed IPv4 (/32)",
+  "IP/Mask": "IP/Mask",
+  "Leave blank to keep the current secret": "Leave blank to keep the current secret",
+  "Manage fixed IPv4 CIDR assignments for your ISP environment.": "Manage fixed IPv4 CIDR assignments for your ISP environment.",
+  "Manage fixed IPv6 CIDR assignments for your ISP environment.": "Manage fixed IPv6 CIDR assignments for your ISP environment.",
+  "Manage IPv4 pools and available networks.": "Manage IPv4 pools and available networks.",
+  "Manage IPv6 pools and available networks.": "Manage IPv6 pools and available networks.",
+  "Manage available IPv4 networks for this pool.": "Manage available IPv4 networks for this pool.",
+  "Manage available IPv6 networks for this pool.": "Manage available IPv6 networks for this pool.",
+  "Platform RADIUS servers available to tenants.": "Platform RADIUS servers available to tenants.",
+  "RADIUS servers used to authenticate your PPPoE clients.": "RADIUS servers used to authenticate your PPPoE clients.",
+  "Create POP": "Create POP",
+  "Create vendor": "Create vendor",
+  "Create vendor model": "Create vendor model",
+  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4."
 }

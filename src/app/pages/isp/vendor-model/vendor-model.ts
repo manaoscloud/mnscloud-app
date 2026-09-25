@@ -1,407 +1,82 @@
+import { Component } from '@angular/core';
 import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  afterNextRender,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
+const modelTypes = ['OLT', 'ONU', 'NAS', 'CPE', 'OPTICAL_CABLE', 'UTP_CABLE', 'SPLITTER'].map(
+  (value) => ({ value, label: value }),
+);
 
-import { MatCardModule } from '@angular/material/card';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
-import { ApiService } from '../../../services/api.service';
-import { IspVendorModel } from '../../../models/isp-vendor-model.model';
-import { IspVendor } from '../../../models/isp-vendor.model';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
-
-type VendorOption = Pick<IspVendor, 'VendorUUID' | 'VendorName'>;
+const config = defineCrud({
+  endpoint: 'isp/vendor-models',
+  uuidField: 'VendorModelUUID',
+  pageTitle: 'Vendor Models',
+  pageDescription: 'Map vendor equipment models to your ISP inventory.',
+  bulkDelete: true,
+  initialValues: { status: 1, vendorUUID: '', name: '', type: 'OLT', notes: '' },
+  columns: [
+    {
+      id: 'name',
+      label: 'Model',
+      field: 'VendorModelName',
+      uuidField: 'VendorModelUUID',
+      kind: 'identity',
+    },
+    { id: 'type', label: 'Type', field: 'VendorModelType', translateValue: false },
+    { id: 'vendor', label: 'Vendor', field: 'VendorName' },
+    { id: 'status', label: 'Status', field: 'VendorModelStatus', kind: 'status' },
+  ],
+  fields: [
+    { key: 'status', source: 'VendorModelStatus', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'vendorUUID',
+      source: 'VendorUUID',
+      label: 'Vendor',
+      type: 'search-select',
+      required: true,
+      remoteLookup: { endpoint: 'isp/vendors', uuidField: 'VendorUUID', labelField: 'VendorName' },
+      quickCreate: quickCreateFor('IspVendorIveUUID'),
+      span: 1,
+    },
+    { key: 'name', source: 'VendorModelName', label: 'Model', required: true, span: 1 },
+    {
+      key: 'type',
+      source: 'VendorModelType',
+      label: 'Type',
+      type: 'select',
+      required: true,
+      options: modelTypes,
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'VendorModelNotes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
+  ],
+});
 
 @Component({
   selector: 'app-isp-vendor-model',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatTooltipModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './vendor-model.html',
-  styleUrls: ['./vendor-model.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class IspVendorModelPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly editing = signal<IspVendorModel | null>(null);
-  readonly vendorOptions = signal<VendorOption[]>([]);
-  readonly modelTypes = [
-    'OLT',
-    'ONU',
-    'NAS',
-    'CPE',
-    'OPTICAL_CABLE',
-    'UTP_CABLE',
-    'SPLITTER',
-  ] as const;
-  private readonly modelsResource = resource({
-    defaultValue: [] as IspVendorModel[],
-    loader: () => this.fetchModels(),
-  });
-  readonly loading = this.modelsResource.isLoading;
-  vendorSearch = '';
-
-  readonly dataSource = new MatTableDataSource<IspVendorModel>([]);
-  readonly displayedColumns = ['name', 'type', 'vendor', 'status', 'actions'];
-  search = '';
-  searchInput = '';
-
-  readonly modelFormModel = signal({
-    vendorUUID: '',
-    name: '',
-    type: 'OLT',
-    notes: '',
-    status: 1,
-  });
-  readonly modelForm = createForm(this.modelFormModel, (schema) => {
-    required(schema.vendorUUID);
-    required(schema.name);
-    minLength(schema.name, 2);
-    required(schema.type);
-    required(schema.status);
-  });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly vendorModelFormDialog = viewChild<TemplateRef<unknown>>('vendorModelFormDialog');
-  private vendorModelFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-  private readonly syncModels = effect(() => {
-    this.dataSource.data = this.modelsResource.value();
-    this.applySearchFilters();
-  });
-  private readonly reportModelsError = effect(() => {
-    const error = this.modelsResource.error();
-    if (error) {
-      this.error.set(this.extractErrorMessage(error, 'Failed to load vendor models.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      return [data.VendorModelName, data.VendorModelType, this.vendorNameFor(data)]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-
-    this.fetchVendors();
-  });
-
+export class IspVendorModelPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
-      this.closeVendorModelDialog();
-    });
+    super(config);
   }
 
-  get filteredVendorOptions() {
-    const value = this.vendorSearch.trim().toLowerCase();
-    if (!value) return this.vendorOptions();
-    return this.vendorOptions().filter((vendor) =>
-      (vendor.VendorName ?? '').toLowerCase().includes(value),
-    );
-  }
-
-  onVendorOpened(opened: boolean) {
-    if (opened) {
-      this.vendorSearch = '';
-    }
-  }
-
-  onSearchChange(value: string) {
-    this.searchInput = value;
-  }
-
-  applySearchFilters(value?: string) {
-    if (value !== undefined) this.searchInput = value;
-    this.search = this.searchInput.trim();
-    this.dataSource.filter = this.search.toLowerCase();
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  refreshList() {
-    this.modelsResource.reload();
-  }
-
-  async fetchVendors() {
-    try {
-      const response = await this.api.get<any>('isp/vendors');
-      const items = response?.data?.items ?? [];
-      this.vendorOptions.set(
-        items.map((vendor: IspVendor) => ({
-          VendorUUID: vendor.VendorUUID,
-          VendorName: vendor.VendorName,
-        })),
-      );
-      if (!this.modelFormModel().vendorUUID && items.length) {
-        this.modelFormModel.update((value) => ({ ...value, vendorUUID: items[0].VendorUUID }));
-      }
-    } catch (err) {
-      console.error('Failed to load vendors.', err);
-    }
-  }
-
-  private async fetchModels() {
-    this.error.set(null);
-    const response = await this.api.get<any>('isp/vendor-models');
-    return response?.data?.items ?? [];
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.modelFormModel.set({
-      vendorUUID: this.vendorOptions()[0]?.VendorUUID ?? '',
-      name: '',
-      type: 'OLT',
-      notes: '',
-      status: 1,
-    });
-  }
-
-  startEdit(item: IspVendorModel) {
-    this.editing.set(item);
-    this.modelFormModel.set({
-      vendorUUID: item.VendorUUID,
-      name: item.VendorModelName,
-      type: item.VendorModelType,
-      notes: item.VendorModelNotes ?? '',
-      status: item.VendorModelStatus ?? 1,
-    });
-    this.openVendorModelDialog();
-  }
-
-  async saveModel() {
-    if (!this.modelForm().valid()) return;
-
-    const value = this.modelFormModel();
-    const payload = {
-      vendorUUID: value.vendorUUID,
-      name: value.name.trim(),
-      type: value.type,
-      notes: value.notes?.trim() || null,
-      status: value.status,
-    };
-
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put<any>(`isp/vendor-models/${editing.VendorModelUUID}`, payload);
-      } else {
-        await this.api.post<any>('isp/vendor-models', payload);
-      }
-
-      this.modelsResource.reload();
-      this.closeVendorModelDialog();
-      this.startCreate();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to save vendor model.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async deleteModel(item: IspVendorModel) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete vendor model',
-        message: `Are you sure you want to delete "${item.VendorModelName}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`isp/vendor-models/${item.VendorModelUUID}`);
-      this.modelsResource.reload();
-    } catch (err) {
-      console.error('Failed to delete vendor model.', err);
-      alert('Failed to delete vendor model.');
-    }
-  }
-
-  vendorNameFor(item: IspVendorModel) {
-    if (item.VendorName) return item.VendorName;
-    return (
-      this.vendorOptions().find((vendor) => vendor.VendorUUID === item.VendorUUID)?.VendorName ??
-      'Unknown'
-    );
-  }
-
-  statusLabel(item: IspVendorModel) {
-    return item.VendorModelStatus === 1 ? 'Active' : 'Inactive';
-  }
-
-  openCreateDialog() {
-    this.startCreate();
-    this.openVendorModelDialog();
-  }
-
-  cancelVendorModelForm() {
-    this.closeVendorModelDialog();
-    this.startCreate();
-  }
-
-  private openVendorModelDialog() {
-    const vendorModelFormDialog = this.vendorModelFormDialog();
-    if (!vendorModelFormDialog || this.vendorModelFormDialogRef) return;
-    this.error.set(null);
-    this.vendorModelFormDialogRef = this.dialog.open(vendorModelFormDialog, {
-      ...this.getVendorModelDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'isp-vendor-model-form-dialog',
-    });
-    bindDialogEscape(this.vendorModelFormDialogRef, () => {
-      this.closeVendorModelDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.vendorModelFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.vendorModelFormDialogRef = null;
-    });
-  }
-
-  private closeVendorModelDialog() {
-    if (!this.vendorModelFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.vendorModelFormDialogRef.close();
-    this.vendorModelFormDialogRef = null;
-  }
-
-  private getVendorModelDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: '100vw',
-        maxWidth: '100vw',
-        maxHeight: '100dvh',
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
-    return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
-    };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.vendorModelFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updateVendorModelDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updateVendorModelDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updateVendorModelDialogViewport() {
-    if (!this.vendorModelFormDialogRef) return;
-    const config = this.getVendorModelDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const maxHeight = typeof config.maxHeight === 'string' ? config.maxHeight : '';
-    this.vendorModelFormDialogRef.updateSize(width, maxHeight);
-    if (config.position) {
-      this.vendorModelFormDialogRef.updatePosition(config.position);
-    } else {
-      this.vendorModelFormDialogRef.updatePosition();
-    }
-  }
-
-  private extractErrorMessage(err: any, fallback: string) {
-    return err?.error?.error || err?.error?.message || err?.message || fallback;
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return { ...payload, status: Number(payload['status']) };
   }
 }

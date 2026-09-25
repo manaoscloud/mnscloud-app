@@ -1,399 +1,94 @@
-import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  afterNextRender,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
+import { Component, inject, resource } from '@angular/core';
 import { ApiService } from '../../../../services/api.service';
-import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed, bindDialogEscape } from '../../../../shared/dialog/dialog-events.util';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 
-type PppoeClientItem = {
-  PpcUUID: string;
-  PpcUsername: string;
-  PpcPlanName?: string | null;
-  PpcFramedIp?: string | null;
-  If4UUID?: string | null;
-  If4Cidr?: string | null;
-  PpcStatus: number;
-  PpcDateCreated?: string | null;
-};
-
-type FixedIpv4Option = {
-  If4UUID: string;
-  If4Name: string;
-  If4Cidr: string;
-  If4Status: number;
-};
+const config = defineCrud({
+  endpoint: 'isp/radius-servers/pppoe-clients',
+  uuidField: 'PpcUUID',
+  pageTitle: 'PPPoE Client',
+  pageDescription: 'Manage PPPoE users authenticated by RADIUS.',
+  bulkDelete: true,
+  initialValues: { status: 1, username: '', password: '', planName: '', fixedIpv4UUID: '' },
+  columns: [
+    {
+      id: 'username',
+      label: 'Username',
+      field: 'PpcUsername',
+      uuidField: 'PpcUUID',
+      kind: 'identity',
+    },
+    { id: 'plan', label: 'Plan', field: 'PpcPlanName' },
+    { id: 'ip', label: 'Fixed IPv4 (/32)', field: 'If4Cidr', translateValue: false },
+    { id: 'status', label: 'Status', field: 'PpcStatus', kind: 'status' },
+  ],
+  fields: [
+    { key: 'status', source: 'PpcStatus', label: 'Status', type: 'status', span: 1 },
+    { key: 'username', source: 'PpcUsername', label: 'Username', required: true, span: 1 },
+    { key: 'password', label: 'Password', type: 'password', required: true, span: 1 },
+    { key: 'planName', source: 'PpcPlanName', label: 'Plan', span: 1 },
+    {
+      key: 'fixedIpv4UUID',
+      source: 'If4UUID',
+      label: 'Fixed IPv4 (/32)',
+      type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.',
+      span: 1,
+    },
+  ],
+});
 
 @Component({
   selector: 'app-pppoe-client',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    FormField,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatTooltipModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './pppoe-client.html',
-  styleUrls: ['./pppoe-client.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class PppoeClientPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
+export class PppoeClientPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly lookupApi = inject(ApiService);
 
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly editing = signal<PppoeClientItem | null>(null);
-  readonly hidePassword = signal(true);
-  readonly fixedIpv4Options = signal<FixedIpv4Option[]>([]);
-  private readonly clientsResource = resource({
-    defaultValue: [] as PppoeClientItem[],
-    loader: () => this.fetchClients(),
-  });
-  readonly loading = this.clientsResource.isLoading;
-
-  readonly dataSource = new MatTableDataSource<PppoeClientItem>([]);
-  readonly displayedColumns = ['username', 'plan', 'ip', 'status', 'actions'];
-  search = '';
-  searchInput = '';
-
-  readonly pppoeFormModel = signal({
-    username: '',
-    password: '',
-    planName: '',
-    fixedIpv4UUID: '',
-    status: 1,
-  });
-  readonly pppoeForm = createForm(this.pppoeFormModel, (schema) => {
-    required(schema.username);
-    minLength(schema.username, 2);
-    required(schema.password);
-    minLength(schema.password, 4);
-    required(schema.status);
-  });
-
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly pppoeClientFormDialog = viewChild<TemplateRef<unknown>>('pppoeClientFormDialog');
-  private pppoeClientFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogViewportObserver: ResizeObserver | null = null;
-  private readonly syncClients = effect(() => {
-    this.dataSource.data = this.clientsResource.value();
-    this.applySearchFilters();
-  });
-  private readonly reportClientsError = effect(() => {
-    const error = this.clientsResource.error();
-    if (error) {
-      this.error.set(this.extractErrorMessage(error, 'Failed to load PPPoE clients.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.filterPredicate = (data, filter) => {
-      const value = filter.trim().toLowerCase();
-      if (!value) return true;
-      return [data.PpcUsername, data.PpcPlanName, data.PpcFramedIp, data.If4Cidr]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(value));
-    };
-
-    void this.fetchFixedIpv4Options();
+  // PPPoE clients may only receive single-host (/32) fixed IPv4 assignments.
+  private readonly fixedIpv4 = resource({
+    defaultValue: [] as ConfigurableCrudOption[],
+    loader: async (): Promise<ConfigurableCrudOption[]> => {
+      const response = await this.lookupApi.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'isp/fixed-ipv4-addresses?status=1&limit=1000&offset=0',
+      );
+      return (response?.data?.items ?? [])
+        .filter((item) => String(item['If4Cidr'] ?? '').endsWith('/32'))
+        .map((item): ConfigurableCrudOption => ({
+          value: String(item['If4UUID']),
+          label: `${item['If4Name']} (${item['If4Cidr']})`,
+        }));
+    },
   });
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
-      this.stopDialogViewportObserver();
-      this.closePppoeClientDialog();
-    });
+    super(config);
   }
 
-  onSearchChange(value: string) {
-    this.searchInput = value;
+  override fieldLoading(field: { key: string }): boolean {
+    return field.key === 'fixedIpv4UUID' ? this.fixedIpv4.isLoading() : false;
   }
 
-  applySearchFilters(value?: string) {
-    if (value !== undefined) this.searchInput = value;
-    this.search = this.searchInput.trim();
-    this.dataSource.filter = this.search.toLowerCase();
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    return key === 'fixedIpv4UUID' ? this.fixedIpv4.value() : [];
   }
 
-  clearSearchFilters() {
-    this.searchInput = '';
-    this.search = '';
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  refreshList() {
-    this.clientsResource.reload();
-    void this.fetchFixedIpv4Options();
-  }
-
-  private async fetchClients() {
-    this.error.set(null);
-    const response = await this.api.get<any>('isp/radius-servers/pppoe-clients');
-    return response?.data?.items ?? [];
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.pppoeFormModel.set({
-      username: '',
-      password: '',
-      planName: '',
-      fixedIpv4UUID: '',
-      status: 1,
-    });
-  }
-
-  startEdit(client: PppoeClientItem) {
-    this.editing.set(client);
-    this.pppoeFormModel.set({
-      username: client.PpcUsername,
-      password: '',
-      planName: client.PpcPlanName ?? '',
-      fixedIpv4UUID: client.If4UUID ?? '',
-      status: client.PpcStatus ?? 1,
-    });
-    this.openPppoeClientDialog();
-  }
-
-  async saveClient(createAnother = false) {
-    if (!this.pppoeForm().valid()) return;
-
-    const value = this.pppoeFormModel();
-    const payload = {
-      username: value.username.trim(),
-      password: value.password.trim(),
-      planName: value.planName?.trim() || null,
-      fixedIpv4UUID: value.fixedIpv4UUID?.trim() || null,
-      status: value.status,
-    };
-
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put<any>(`isp/radius-servers/pppoe-clients/${editing.PpcUUID}`, payload);
-      } else {
-        await this.api.post<any>('isp/radius-servers/pppoe-clients', payload);
-      }
-
-      this.clientsResource.reload();
-      if (createAnother) {
-        this.startCreate();
-        return;
-      }
-      this.closePppoeClientDialog();
-      this.startCreate();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to save PPPoE client.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveClientAndNew() {
-    void this.saveClient(true);
-  }
-
-  async deleteClient(client: PppoeClientItem) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete PPPoE client',
-        message: `Are you sure you want to delete "${client.PpcUsername}"?`,
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`isp/radius-servers/pppoe-clients/${client.PpcUUID}`);
-      this.clientsResource.reload();
-    } catch (err) {
-      console.error('Failed to delete PPPoE client.', err);
-      alert('Failed to delete PPPoE client.');
-    }
-  }
-
-  statusLabel(client: PppoeClientItem) {
-    return client.PpcStatus === 1 ? 'Active' : 'Inactive';
-  }
-
-  togglePassword(event: MouseEvent) {
-    event.stopPropagation();
-    this.hidePassword.set(!this.hidePassword());
-  }
-
-  openCreateDialog() {
-    this.startCreate();
-    this.openPppoeClientDialog();
-  }
-
-  cancelPppoeClientForm() {
-    this.closePppoeClientDialog();
-    this.startCreate();
-  }
-
-  private openPppoeClientDialog() {
-    const pppoeClientFormDialog = this.pppoeClientFormDialog();
-    if (!pppoeClientFormDialog || this.pppoeClientFormDialogRef) return;
-    this.error.set(null);
-    this.pppoeClientFormDialogRef = this.dialog.open(pppoeClientFormDialog, {
-      ...this.getPppoeClientDialogViewportConfig(),
-      disableClose: true,
-      autoFocus: false,
-      restoreFocus: true,
-      panelClass: 'isp-pppoe-client-form-dialog',
-    });
-    bindDialogEscape(this.pppoeClientFormDialogRef, () => {
-      this.closePppoeClientDialog();
-    });
-    this.startDialogViewportObserver();
-    bindDialogClosed(this.pppoeClientFormDialogRef, () => {
-      this.stopDialogViewportObserver();
-      this.pppoeClientFormDialogRef = null;
-    });
-  }
-
-  private closePppoeClientDialog() {
-    if (!this.pppoeClientFormDialogRef) return;
-    this.stopDialogViewportObserver();
-    this.pppoeClientFormDialogRef.close();
-    this.pppoeClientFormDialogRef = null;
-  }
-
-  private getPppoeClientDialogViewportConfig() {
-    if (window.innerWidth <= 900) {
-      return {
-        width: '100vw',
-        maxWidth: '100vw',
-        maxHeight: '100dvh',
-      };
-    }
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) {
-      return {
-        width: 'min(1280px, calc(100vw - 1.5rem))',
-        maxWidth: '99vw',
-        maxHeight: '95vh',
-      };
-    }
-
-    const rect = pageContent.getBoundingClientRect();
-    const spacing = 8;
-    const widthPx = Math.max(320, Math.floor(rect.width - spacing * 2));
-    const maxHeightPx = Math.max(420, Math.floor(rect.height - spacing * 2));
-    const leftPx = Math.max(0, Math.floor(rect.left + spacing));
-    const topPx = Math.max(0, Math.floor(rect.top + spacing));
-
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
-      width: `${widthPx}px`,
-      maxWidth: `${widthPx}px`,
-      maxHeight: `${maxHeightPx}px`,
-      position: {
-        left: `${leftPx}px`,
-        top: `${topPx}px`,
-      },
+      ...payload,
+      fixedIpv4UUID: payload['fixedIpv4UUID'] || null,
+      planName: payload['planName'] || null,
+      status: Number(payload['status']),
     };
-  }
-
-  private startDialogViewportObserver() {
-    this.stopDialogViewportObserver();
-    if (!this.pppoeClientFormDialogRef) return;
-
-    const pageContent = document.querySelector('.page-content') as HTMLElement | null;
-    if (!pageContent) return;
-
-    this.dialogViewportObserver = new ResizeObserver(() => {
-      this.updatePppoeClientDialogViewport();
-    });
-    this.dialogViewportObserver.observe(pageContent);
-    this.updatePppoeClientDialogViewport();
-  }
-
-  private stopDialogViewportObserver() {
-    if (!this.dialogViewportObserver) return;
-    this.dialogViewportObserver.disconnect();
-    this.dialogViewportObserver = null;
-  }
-
-  private updatePppoeClientDialogViewport() {
-    if (!this.pppoeClientFormDialogRef) return;
-    const config = this.getPppoeClientDialogViewportConfig();
-    const width = typeof config.width === 'string' ? config.width : '';
-    const maxHeight = typeof config.maxHeight === 'string' ? config.maxHeight : '';
-    this.pppoeClientFormDialogRef.updateSize(width, maxHeight);
-    if (config.position) {
-      this.pppoeClientFormDialogRef.updatePosition(config.position);
-    } else {
-      this.pppoeClientFormDialogRef.updatePosition();
-    }
-  }
-
-  private extractErrorMessage(err: any, fallback: string) {
-    return err?.error?.error || err?.error?.message || err?.message || fallback;
-  }
-
-  private async fetchFixedIpv4Options() {
-    try {
-      const response = await this.api.get<any>(
-        'isp/fixed-ipv4-addresses?status=1&limit=1000&offset=0',
-      );
-      const items = Array.isArray(response?.data?.items) ? response.data.items : [];
-      const options = items.filter((item: any) => String(item?.If4Cidr ?? '').endsWith('/32'));
-      this.fixedIpv4Options.set(options);
-    } catch {
-      this.fixedIpv4Options.set([]);
-    }
   }
 }
