@@ -20,6 +20,12 @@ const messages: Record<string, string> = {
   PAY_CERTIFICATE_EXPIRED: 'The certificate has expired.',
   PAY_INVALID_CERTIFICATE: 'The certificate or private key file is invalid.',
   PAY_UNSUPPORTED_BANK: 'This bank is not supported.',
+  PAY_CERTIFICATE_REUPLOAD:
+    'Upload the certificate and private key again to store them in the platform storage.',
+  PAY_STORAGE_UNAVAILABLE:
+    'The platform storage is not configured. Configure the default storage and try again.',
+  PAY_INVALID_PURPOSE: 'This bank does not support the selected purpose.',
+  PAY_UNSUPPORTED_GATEWAY: 'This payment gateway is not supported.',
   PAY_INVALID_WEBHOOK_URL: 'The platform address for the webhook is invalid.',
   PAY_WEBHOOK_UNSUPPORTED: 'This bank does not support settlement webhooks.',
   PAY_BANK_REJECTED:
