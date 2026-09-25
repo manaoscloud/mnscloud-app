@@ -429,9 +429,9 @@ export const routes: Routes = [
               {
                 path: 'erp/human-resources/time-clock-accounts',
                 loadComponent: () =>
-                  import(
-                    './pages/erp/human-resources/time-clock-accounts/time-clock-accounts'
-                  ).then((m) => m.ErpHumanResourcesTimeClockAccountsPage),
+                  import('./pages/erp/human-resources/time-clock-accounts/time-clock-accounts').then(
+                    (m) => m.ErpHumanResourcesTimeClockAccountsPage,
+                  ),
                 title: 'ERP • Human Resources • Time Clock Accounts | mnscloud',
               },
 
@@ -1983,11 +1983,14 @@ export const routes: Routes = [
                   },
                 ],
               },
+              { path: 'pay', pathMatch: 'full', redirectTo: 'pay/bank-partners' },
               {
-                path: 'pay',
+                path: 'pay/bank-partners',
                 loadComponent: () =>
-                  import('./pages/system/pay/pay-accounts').then((m) => m.SystemPayAccountsPage),
-                title: 'System • Pay | mnscloud',
+                  import('./pages/system/pay/bank-partners/bank-partners').then(
+                    (m) => m.SystemPayBankPartnersPage,
+                  ),
+                title: 'System • Pay • Bank Partners | mnscloud',
                 data: { scope: 'master', context: 'system' },
               },
               {

@@ -295,6 +295,10 @@
 .crud-file-field {
   display: grid;
   gap: 0.35rem;
+  // Padding and border stay inside the grid cell; long file names ellipsize instead of
+  // widening the form on narrow screens.
+  box-sizing: border-box;
+  min-width: 0;
   min-height: 56px;
   padding: 0.65rem 0.75rem;
   border: 1px solid color-mix(in srgb, currentColor 44%, transparent);

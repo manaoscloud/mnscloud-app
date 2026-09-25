@@ -2,8 +2,8 @@ import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
   ConfigurableCrudRecord,
-} from '../crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../crud/configurable-crud/define-crud';
+} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
 
 function object(value: unknown): ConfigurableCrudRecord {
   if (value === null || value === undefined || value === '') return {};
@@ -22,13 +22,16 @@ const configKeys = [
 ];
 const secretKeys = ['clientId', 'clientSecret', 'certPem', 'keyPem'];
 
-/** Presentation mapping only. API seals secrets and enforces scope and supported bank partners. */
-export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig {
-  const prefix = platform ? 'Ppa' : 'Efg';
+/**
+ * Tenant payment gateways (ERP). Independent from MNSCloud Pay bank partners, which live under
+ * System > Pay > Bank partners. API seals secrets and enforces tenant scope.
+ */
+export function paymentGatewayConfig(): ConfigurableCrudConfig {
+  const prefix = 'Efg';
   const fields: ConfigurableCrudField[] = [
     {
       key: 'status',
-      source: platform ? 'PpaStatus' : 'EfgIsActive',
+      source: 'EfgIsActive',
       label: 'Status',
       type: 'status',
       span: 1,
@@ -115,12 +118,11 @@ export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig 
   }
   return defineCrud({
     serverSidePagination: true,
-    endpoint: platform ? 'system/pay/provider-accounts' : 'erp/financial/payment/gateways',
+    endpoint: 'erp/financial/payment/gateways',
     uuidField: prefix + 'UUID',
-    pageTitle: platform ? 'Pay — Provider Accounts' : 'Payment Providers',
-    // Platform rails have no delete contract; tenant gateways retain supported bulk deletion.
-    canDelete: !platform,
-    bulkDelete: !platform,
+    pageTitle: 'Payment Providers',
+    canDelete: true,
+    bulkDelete: true,
     statusOptions: [
       { value: 1, label: 'Active' },
       { value: 0, label: 'Inactive' },
@@ -138,15 +140,15 @@ export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig 
       { id: 'name', label: 'Name', field: prefix + 'Name', kind: 'identity' },
       {
         id: 'provider',
-        label: platform ? 'Bank partner' : 'Payment provider',
+        label: 'Payment provider',
         field: prefix + 'Provider',
-        options: [{ value: 'inter_business', label: platform ? 'Inter Empresas' : 'Pay' }],
+        options: [{ value: 'inter_business', label: 'Pay' }],
       },
       { id: 'default', label: 'Default', field: prefix + 'IsDefault', kind: 'boolean' },
       {
         id: 'status',
         label: 'Status',
-        field: platform ? 'PpaStatus' : 'EfgIsActive',
+        field: 'EfgIsActive',
         kind: 'status',
       },
     ],
@@ -197,10 +199,10 @@ export function paymentAccountConfig(platform: boolean): ConfigurableCrudConfig 
       }
       return {
         name: v['name'],
-        provider: platform ? 'inter_business' : 'pay',
+        provider: 'pay',
         bankPartner: 'inter_business',
         isDefault: Number(v['isDefault']) === 1,
-        ...(platform ? { status: v['status'] } : { isActive: Number(v['status']) === 1 }),
+        isActive: Number(v['status']) === 1,
         config: { ...config, productMethod: 'pay', bankPartner: 'inter_business' },
         ...(Object.keys(credentials).length ? { credentials } : {}),
       };

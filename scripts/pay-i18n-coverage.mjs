@@ -28,7 +28,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const source =
     menu +
     readFileSync('src/app/services/paginator-intl.service.ts', 'utf8') +
-    readFileSync('src/app/shared/payment/payment-account-crud.ts', 'utf8');
+    readFileSync('src/app/pages/system/pay/bank-partners/bank-partners-crud.ts', 'utf8') +
+    readFileSync('src/app/pages/erp/financial/payment/gateway/payment-gateway-crud.ts', 'utf8');
   const keys = visibleKeys(source);
   for (const key of [
     'System',

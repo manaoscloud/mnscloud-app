@@ -1050,10 +1050,10 @@ export class MainLayout {
       scope: 'master',
       children: [
         {
-          id: 'system/pay/accounts',
-          label: 'Provider Accounts',
+          id: 'system/pay/bank-partners',
+          label: 'Bank Partners',
           icon: 'account_balance',
-          masterRoute: '/system/pay',
+          masterRoute: '/system/pay/bank-partners',
         },
         {
           id: 'system/pay/fee-plans',

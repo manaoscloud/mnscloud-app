@@ -9,9 +9,9 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
-import { paymentAccountConfig } from '../../../../../shared/payment/payment-account-crud';
+import { paymentGatewayConfig } from './payment-gateway-crud';
 
-const config = paymentAccountConfig(false);
+const config = paymentGatewayConfig();
 @Component({
   selector: 'app-payment-gateway',
   standalone: true,
