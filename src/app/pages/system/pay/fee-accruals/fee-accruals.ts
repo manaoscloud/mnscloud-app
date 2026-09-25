@@ -26,6 +26,8 @@ const config = defineCrud({
   fields: [],
   columns: [
     { id: 'tenant', label: 'Tenant', field: 'TenantEmail', kind: 'identity' },
+    { id: 'charge', label: 'Fee charge', field: 'PfcID', kind: 'text' },
+    { id: 'boleto', label: 'Boleto', field: 'EibID', kind: 'text' },
     {
       id: 'amount',
       label: 'Amount',
@@ -36,11 +38,18 @@ const config = defineCrud({
     {
       id: 'transaction',
       label: 'Transaction type',
-      field: 'PacTransactionType',
+      field: 'PfcTransactionType',
       options: [
         { value: 'boleto', label: 'Boleto' },
         { value: 'pix', label: 'Pix' },
       ],
+    },
+    {
+      id: 'provider',
+      label: 'Gateway',
+      field: 'PfcProvider',
+      options: [{ value: 'inter_business', label: 'Inter Empresas' }],
+      translateValue: false,
     },
     { id: 'status', label: 'Status', field: 'PacStatus', kind: 'status' },
     { id: 'reference', label: 'Settlement reference', field: 'PacSettlementReference' },

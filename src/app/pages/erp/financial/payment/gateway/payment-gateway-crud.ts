@@ -1,211 +1,260 @@
 import {
-  ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudOption,
   ConfigurableCrudRecord,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
 
-function object(value: unknown): ConfigurableCrudRecord {
-  if (value === null || value === undefined || value === '') return {};
-  const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-    throw new Error('Enter a valid JSON object.');
-  return parsed as ConfigurableCrudRecord;
-}
-const configKeys = [
-  'sandbox',
-  'scope',
-  'apiBaseUrl',
-  'tokenUrl',
-  'createChargePath',
-  'getChargePathTemplate',
-];
-const secretKeys = ['clientId', 'clientSecret', 'certPem', 'keyPem'];
-
 /**
- * Tenant payment gateways (ERP). Independent from MNSCloud Pay bank partners, which live under
- * System > Pay > Bank partners. API seals secrets and enforces tenant scope.
+ * Tenant payment gateways (ERP): the tenant's own accounts used to charge its customers.
+ * Independent from MNSCloud Pay bank partners (System > Pay). The gateway list comes from the
+ * tenant catalog API; each gateway shows only the fields its integration needs.
  */
-export function paymentGatewayConfig(): ConfigurableCrudConfig {
-  const prefix = 'Efg';
-  const fields: ConfigurableCrudField[] = [
-    {
-      key: 'status',
-      source: 'EfgIsActive',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    { key: 'name', source: prefix + 'Name', label: 'Name', required: true, span: 1 },
-    {
-      key: 'isDefault',
-      source: prefix + 'IsDefault',
-      label: 'Default',
-      type: 'select',
-      span: 1,
-      options: [
-        { value: 1, label: 'Yes' },
-        { value: 0, label: 'No' },
-      ],
-    },
-    {
-      key: 'advanced',
-      label: 'Configuration mode',
-      type: 'select',
-      span: 1,
-      options: [
-        { value: false, label: 'Form' },
-        { value: true, label: 'Advanced JSON' },
-      ],
-    },
-    {
-      key: 'configJson',
-      source: prefix + 'Config',
-      label: 'Configuration JSON',
-      type: 'textarea',
-      format: 'json',
-      span: 4,
-      rows: 8,
-      tab: 'network',
-      hiddenWhen: ({ values }) => !values['advanced'],
-    },
-    {
-      key: 'credentialsJson',
-      label: 'Credentials JSON',
-      type: 'secret-content',
-      format: 'json',
-      span: 4,
-      tab: 'authentication',
-      hiddenWhen: ({ values }) => !values['advanced'],
-      requiredWhen: ({ editing }) => !editing,
-      hint: 'Leave credentials empty to keep the stored secret.',
-    },
-  ];
-  const definitions: [string, string, ConfigurableCrudField['type']][] = [
-    ['sandbox', 'Sandbox', 'select'],
-    ['scope', 'OAuth Scope', 'text'],
-    ['apiBaseUrl', 'API Base URL', 'text'],
-    ['tokenUrl', 'Token URL', 'text'],
-    ['createChargePath', 'Create Charge Path', 'text'],
-    ['getChargePathTemplate', 'Get Charge Path Template', 'text'],
-    ['clientId', 'Client ID', 'password'],
-    ['clientSecret', 'Client Secret', 'password'],
-    ['certPem', 'Certificate PEM', 'secret-content'],
-    ['keyPem', 'Private Key PEM', 'secret-content'],
-  ];
-  for (const [key, label, type] of definitions) {
-    const secret = secretKeys.includes(key);
-    fields.push({
-      key,
-      label,
-      type,
-      span: type === 'secret-content' ? 4 : 1,
-      tab: secret ? 'authentication' : 'network',
-      hiddenWhen: ({ values }) => Boolean(values['advanced']),
-      requiredWhen: ({ editing }) => !editing && (secret || key === 'scope'),
-      ...(secret
-        ? { fromRecord: () => '' }
-        : { source: prefix + 'Config', fromRecord: (value: unknown) => object(value)[key] ?? '' }),
-      ...(key === 'sandbox'
-        ? {
-            options: [
-              { value: false, label: 'No' },
-              { value: true, label: 'Yes' },
-            ],
-          }
-        : {}),
-    });
-  }
-  return defineCrud({
-    serverSidePagination: true,
-    endpoint: 'erp/financial/payment/gateways',
-    uuidField: prefix + 'UUID',
-    pageTitle: 'Payment Providers',
-    canDelete: true,
-    bulkDelete: true,
-    statusOptions: [
-      { value: 1, label: 'Active' },
-      { value: 0, label: 'Inactive' },
-    ],
-    initialValues: {
-      name: '',
-      status: 1,
-      isDefault: 0,
-      advanced: false,
-      sandbox: false,
-      scope: 'boleto-cobranca.read boleto-cobranca.write',
-    },
-    fields,
-    columns: [
-      { id: 'name', label: 'Name', field: prefix + 'Name', kind: 'identity' },
-      {
-        id: 'provider',
-        label: 'Payment provider',
-        field: prefix + 'Provider',
-        options: [{ value: 'inter_business', label: 'Pay' }],
-      },
-      { id: 'default', label: 'Default', field: prefix + 'IsDefault', kind: 'boolean' },
-      {
-        id: 'status',
-        label: 'Status',
-        field: 'EfgIsActive',
-        kind: 'status',
-      },
-    ],
-    rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
-    fieldChange: (key, value, current) => {
-      if (key !== 'advanced' || value === current['advanced']) return { ...current, [key]: value };
-      const next = { ...current, advanced: value };
-      const config = object(current['configJson']);
-      if (value) {
-        for (const field of configKeys) {
-          if (current[field] !== '' && current[field] !== undefined && current[field] !== null)
-            config[field] = current[field];
-          else delete config[field];
-        }
-        const credentials = Object.fromEntries(
-          secretKeys.filter((field) => current[field]).map((field) => [field, current[field]]),
-        );
-        return {
-          ...next,
-          configJson: JSON.stringify(config, null, 2),
-          credentialsJson: Object.keys(credentials).length
-            ? JSON.stringify(credentials, null, 2)
-            : '',
-        };
-      }
-      const credentials = object(current['credentialsJson']);
-      return {
-        ...next,
-        ...Object.fromEntries(configKeys.map((field) => [field, config[field] ?? ''])),
-        ...Object.fromEntries(secretKeys.map((field) => [field, credentials[field] ?? ''])),
-      };
-    },
-    payload: (v) => {
-      const config = object(v['configJson']);
-      const credentials = v['advanced'] ? object(v['credentialsJson']) : {};
-      if (!v['advanced']) {
-        for (const key of configKeys) {
-          if (v[key] !== null && v[key] !== undefined && v[key] !== '') config[key] = v[key];
-          else delete config[key];
-        }
-        for (const key of secretKeys) if (v[key]) credentials[key] = v[key];
-      }
-      if (
-        Object.keys(credentials).length &&
-        secretKeys.some((key) => !String(credentials[key] ?? '').trim())
-      ) {
-        throw new Error('Provide all credential fields to replace the stored secret.');
-      }
-      return {
-        name: v['name'],
-        provider: 'pay',
-        bankPartner: 'inter_business',
-        isDefault: Number(v['isDefault']) === 1,
-        isActive: Number(v['status']) === 1,
-        config: { ...config, productMethod: 'pay', bankPartner: 'inter_business' },
-        ...(Object.keys(credentials).length ? { credentials } : {}),
-      };
-    },
-  });
+export const INTER_OWN_ACCOUNT = 'inter_business';
+
+const statusOptions: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Active' },
+  { value: 0, label: 'Inactive' },
+];
+const yesNoOptions: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+const environmentOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'production', label: 'Production' },
+  { value: 'sandbox', label: 'Sandbox' },
+];
+const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'BOLETO,PIX', label: 'Boleto and Pix' },
+  { value: 'BOLETO', label: 'Boleto only' },
+  { value: 'PIX', label: 'Pix only' },
+];
+/** Fallback until the catalog loads; the API remains the source of truth. */
+export const defaultGatewayOptions: readonly ConfigurableCrudOption[] = [
+  { value: INTER_OWN_ACCOUNT, label: 'Inter Empresas (conta própria)' },
+];
+
+export const GATEWAY_PEM_FIELDS = ['certPem', 'keyPem'] as const;
+const CREDENTIAL_FIELDS = ['clientId', 'clientSecret', ...GATEWAY_PEM_FIELDS] as const;
+
+const isInter = ({ values }: { values: ConfigurableCrudRecord }) =>
+  String(values['provider'] ?? '') === INTER_OWN_ACCOUNT;
+const hideUnlessInter = (context: { values: ConfigurableCrudRecord }) => !isInter(context);
+const requiredOnCreate = ({
+  editing,
+  values,
+}: {
+  editing: boolean;
+  values: ConfigurableCrudRecord;
+}) => !editing && isInter({ values });
+const keepSecretHint = ({ editing }: { editing: boolean }) =>
+  editing ? 'Leave empty to keep the stored credentials. Replacing requires all fields.' : '';
+
+const fields: ConfigurableCrudField[] = [
+  {
+    key: 'status',
+    source: 'EfgIsActive',
+    label: 'Status',
+    type: 'status',
+    span: 1,
+    options: statusOptions,
+  },
+  {
+    key: 'provider',
+    source: 'EfgProvider',
+    label: 'Gateway',
+    type: 'select',
+    span: 1,
+    required: true,
+    disabledWhen: ({ editing }) => editing,
+    translateOptions: false,
+  },
+  { key: 'name', source: 'EfgName', label: 'Name', required: true, span: 1 },
+  {
+    key: 'environment',
+    source: 'EfgEnvironment',
+    label: 'Environment',
+    type: 'select',
+    span: 1,
+    required: true,
+    options: environmentOptions,
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'isDefault',
+    source: 'EfgIsDefault',
+    label: 'Default for boletos',
+    type: 'select',
+    span: 1,
+    options: yesNoOptions,
+  },
+  {
+    key: 'accountNumber',
+    source: 'EfgAccountNumber',
+    label: 'Checking account',
+    tab: 'financial',
+    span: 1,
+    required: true,
+    autocomplete: 'off',
+    hint: 'Inter checking account number (x-conta-corrente).',
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'receiveMethods',
+    source: 'EfgReceiveMethods',
+    label: 'Receive methods',
+    type: 'select',
+    tab: 'financial',
+    span: 1,
+    required: true,
+    options: receiveMethodOptions,
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'autoCancelDays',
+    source: 'EfgAutoCancelDays',
+    label: 'Days to cancel after due date',
+    type: 'number',
+    tab: 'financial',
+    span: 1,
+    required: true,
+    hint: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'clientId',
+    label: 'Client ID',
+    tab: 'authentication',
+    span: 2,
+    autocomplete: 'off',
+    translateLabel: false,
+    fromRecord: () => '',
+    requiredWhen: requiredOnCreate,
+    hintWhen: keepSecretHint,
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'clientSecret',
+    label: 'Client Secret',
+    type: 'password',
+    tab: 'authentication',
+    span: 2,
+    autocomplete: 'new-password',
+    translateLabel: false,
+    fromRecord: () => '',
+    requiredWhen: requiredOnCreate,
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'certPem',
+    label: 'Certificate (.crt)',
+    type: 'file',
+    accept: '.crt,.pem',
+    tab: 'authentication',
+    span: 2,
+    fromRecord: () => '',
+    requiredWhen: requiredOnCreate,
+    hiddenWhen: hideUnlessInter,
+  },
+  {
+    key: 'keyPem',
+    label: 'Private key (.key)',
+    type: 'file',
+    accept: '.key,.pem',
+    tab: 'authentication',
+    span: 2,
+    fromRecord: () => '',
+    requiredWhen: requiredOnCreate,
+    hiddenWhen: hideUnlessInter,
+  },
+];
+
+function text(value: unknown): string {
+  return String(value ?? '').trim();
 }
+
+export const paymentGatewayConfig = defineCrud({
+  serverSidePagination: true,
+  endpoint: 'erp/financial/payment/gateways',
+  uuidField: 'EfgUUID',
+  pageTitle: 'Payment Gateways',
+  pageDescription: 'Your own gateway accounts used to issue boletos and Pix to your customers.',
+  createTitle: 'New payment gateway',
+  editTitle: 'Edit payment gateway',
+  dialogDescription: 'Select the gateway; only the fields its integration requires are shown.',
+  searchPlaceholder: 'ID, name, gateway or account',
+  emptyLabel: 'No payment gateways found.',
+  savedMessage: 'Payment gateway saved.',
+  canDelete: true,
+  bulkDelete: true,
+  statusOptions,
+  tabLabels: {
+    record: 'Identification',
+    financial: 'Account and charges',
+    authentication: 'Credentials',
+  },
+  initialValues: {
+    status: 1,
+    provider: INTER_OWN_ACCOUNT,
+    name: '',
+    environment: 'production',
+    isDefault: 0,
+    accountNumber: '',
+    receiveMethods: 'BOLETO,PIX',
+    autoCancelDays: 30,
+    clientId: '',
+    clientSecret: '',
+    certPem: '',
+    keyPem: '',
+  },
+  fields,
+  columns: [
+    { id: 'id', label: 'ID', field: 'EfgID', kind: 'text' },
+    { id: 'name', label: 'Name', field: 'EfgName', kind: 'identity' },
+    {
+      id: 'provider',
+      label: 'Gateway',
+      field: 'EfgProvider',
+      options: defaultGatewayOptions,
+      translateValue: false,
+    },
+    {
+      id: 'environment',
+      label: 'Environment',
+      field: 'EfgEnvironment',
+      options: environmentOptions,
+    },
+    { id: 'account', label: 'Checking account', field: 'EfgAccountNumber', kind: 'text' },
+    {
+      id: 'certificate',
+      label: 'Certificate expires',
+      field: 'EfgCertificateExpiresAt',
+      kind: 'date',
+    },
+    { id: 'default', label: 'Default for boletos', field: 'EfgIsDefault', kind: 'boolean' },
+    { id: 'status', label: 'Status', field: 'EfgIsActive', kind: 'status' },
+  ],
+  rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
+  payload: (values, editing) => {
+    const credentials: Record<string, string> = {};
+    for (const key of CREDENTIAL_FIELDS) {
+      const value = text(values[key]);
+      if (value) credentials[key] = value;
+    }
+    const replacing = Object.keys(credentials).length > 0;
+    if (replacing && CREDENTIAL_FIELDS.some((key) => !credentials[key])) {
+      throw new Error('Provide Client ID, Client Secret, certificate and private key together.');
+    }
+    return {
+      name: text(values['name']),
+      ...(editing ? {} : { provider: text(values['provider']) }),
+      environment: text(values['environment']),
+      accountNumber: text(values['accountNumber']).replace(/\D/g, ''),
+      receiveMethods: text(values['receiveMethods']),
+      autoCancelDays: Number(values['autoCancelDays']),
+      isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
+      isActive: Number(values['status']) === 1 ? 1 : 0,
+      ...(replacing ? { credentials } : {}),
+    };
+  },
+});

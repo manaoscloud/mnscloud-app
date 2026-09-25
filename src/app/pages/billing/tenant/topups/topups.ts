@@ -48,7 +48,13 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
     { id: 'id', label: 'Reference', kind: 'identity', field: 'BpiID', uuidField: 'BpiUUID' },
     { id: 'amount', label: 'Amount', field: 'BpiAmount' },
     { id: 'currency', label: 'Currency', field: 'BpiCurrency' },
-    { id: 'provider', label: 'Provider', field: 'BpiProvider' },
+    {
+      id: 'provider',
+      label: 'Bank',
+      field: 'PbcProvider',
+      options: [{ value: 'inter_business', label: 'Inter Empresas' }],
+      translateValue: false,
+    },
     { id: 'created', label: 'Created at', kind: 'datetime', field: 'BpiDateCreated' },
     { id: 'expires', label: 'Expires at', kind: 'datetime', field: 'BpiExpiresAt' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpiStatus' },
@@ -80,6 +86,7 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
   BillingPaymentIntent & ConfigurableCrudRecord

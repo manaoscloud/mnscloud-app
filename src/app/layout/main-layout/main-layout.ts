@@ -1109,7 +1109,7 @@ export class MainLayout {
           children: [
             {
               id: 'erp/financial/payment-gateway',
-              label: 'Payment Providers',
+              label: 'Payment Gateways',
               icon: 'credit_card',
               route: '/erp/financial/payment-gateway',
             },
