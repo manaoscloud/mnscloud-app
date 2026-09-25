@@ -57,7 +57,7 @@ const keepSecretHint = ({ editing }: { editing: boolean }) =>
 const fields: ConfigurableCrudField[] = [
   {
     key: 'status',
-    source: 'PpaStatus',
+    source: 'PbcStatus',
     label: 'Status',
     type: 'status',
     span: 1,
@@ -65,7 +65,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'provider',
-    source: 'PpaProvider',
+    source: 'PbcProvider',
     label: 'Bank',
     type: 'select',
     span: 1,
@@ -73,10 +73,10 @@ const fields: ConfigurableCrudField[] = [
     disabledWhen: ({ editing }) => editing,
     translateOptions: false,
   },
-  { key: 'name', source: 'PpaName', label: 'Name', required: true, span: 1 },
+  { key: 'name', source: 'PbcName', label: 'Name', required: true, span: 1 },
   {
     key: 'environment',
-    source: 'PpaEnvironment',
+    source: 'PbcEnvironment',
     label: 'Environment',
     type: 'select',
     span: 1,
@@ -86,7 +86,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'isDefault',
-    source: 'PpaIsDefault',
+    source: 'PbcIsDefault',
     label: 'Default for top-ups',
     type: 'select',
     span: 1,
@@ -94,7 +94,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'accountNumber',
-    source: 'PpaAccountNumber',
+    source: 'PbcAccountNumber',
     label: 'Checking account',
     tab: 'financial',
     span: 1,
@@ -105,7 +105,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'receiveMethods',
-    source: 'PpaReceiveMethods',
+    source: 'PbcReceiveMethods',
     label: 'Receive methods',
     type: 'select',
     tab: 'financial',
@@ -116,7 +116,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'autoCancelDays',
-    source: 'PpaAutoCancelDays',
+    source: 'PbcAutoCancelDays',
     label: 'Days to cancel after due date',
     type: 'number',
     tab: 'financial',
@@ -190,8 +190,8 @@ function text(value: unknown): string {
 
 export const bankPartnersConfig = defineCrud({
   serverSidePagination: true,
-  endpoint: 'system/pay/provider-accounts',
-  uuidField: 'PpaUUID',
+  endpoint: 'system/pay/bank-connections',
+  uuidField: 'PbcUUID',
   pageTitle: 'Pay — Bank Partners',
   pageDescription: 'Bank connections that issue and settle MNSCloud Pay charges.',
   createTitle: 'New bank connection',
@@ -226,35 +226,35 @@ export const bankPartnersConfig = defineCrud({
   },
   fields,
   columns: [
-    { id: 'name', label: 'Name', field: 'PpaName', kind: 'identity' },
+    { id: 'name', label: 'Name', field: 'PbcName', kind: 'identity' },
     {
       id: 'provider',
       label: 'Bank',
-      field: 'PpaProvider',
+      field: 'PbcProvider',
       options: defaultBankOptions,
       translateValue: false,
     },
     {
       id: 'environment',
       label: 'Environment',
-      field: 'PpaEnvironment',
+      field: 'PbcEnvironment',
       options: environmentOptions,
     },
-    { id: 'account', label: 'Checking account', field: 'PpaAccountNumber', kind: 'text' },
+    { id: 'account', label: 'Checking account', field: 'PbcAccountNumber', kind: 'text' },
     {
       id: 'certificate',
       label: 'Certificate expires',
-      field: 'PpaCertificateExpiresAt',
+      field: 'PbcCertificateExpiresAt',
       kind: 'date',
     },
     {
       id: 'webhook',
       label: 'Settlement webhook',
-      field: 'PpaWebhookStatus',
+      field: 'PbcWebhookStatus',
       options: webhookStatusOptions,
     },
-    { id: 'default', label: 'Default for top-ups', field: 'PpaIsDefault', kind: 'boolean' },
-    { id: 'status', label: 'Status', field: 'PpaStatus', kind: 'status' },
+    { id: 'default', label: 'Default for top-ups', field: 'PbcIsDefault', kind: 'boolean' },
+    { id: 'status', label: 'Status', field: 'PbcStatus', kind: 'status' },
   ],
   rowActions: [
     { key: 'validate', label: 'Validate connection', icon: 'verified' },
