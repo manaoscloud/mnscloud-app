@@ -20,7 +20,7 @@ This repository contains only the standalone MNSCloud Angular app.
 
 ```js
 window.MNSCLOUD_APP_CONFIG = {
-  apiBaseUrl: "https://api.example.com/api/v1",
+  apiBaseUrl: 'https://api.example.com/api/v1',
 };
 ```
 

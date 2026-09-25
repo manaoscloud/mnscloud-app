@@ -104,8 +104,12 @@ if (changedFiles.includes(allowlistFile)) {
   let basePending = [];
   try {
     basePending =
-      JSON.parse(execFileSync('git', ['show', `${base}:${allowlistFile}`], { encoding: 'utf8' }))
-        .pending ?? [];
+      JSON.parse(
+        execFileSync('git', ['show', `${base}:${allowlistFile}`], {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+        }),
+      ).pending ?? [];
   } catch {
     basePending = null;
   }
