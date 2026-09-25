@@ -5093,5 +5093,6 @@
   "Upload the certificate and private key again to store them in the platform storage.": "Upload the certificate and private key again to store them in the platform storage.",
   "The platform storage is not configured. Configure the default storage and try again.": "The platform storage is not configured. Configure the default storage and try again.",
   "This bank does not support the selected purpose.": "This bank does not support the selected purpose.",
-  "This payment gateway is not supported.": "This payment gateway is not supported."
+  "This payment gateway is not supported.": "This payment gateway is not supported.",
+  "Create stock type": "Create stock type"
 }

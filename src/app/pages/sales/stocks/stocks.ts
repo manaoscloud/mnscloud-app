@@ -1,305 +1,47 @@
+import { Component } from '@angular/core';
 import {
-  Component,
-  effect,
-  TemplateRef,
-  inject,
-  resource,
-  signal,
-  viewChild,
-  afterNextRender,
-  DestroyRef,
-} from '@angular/core';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
-import { FormField, form as createForm, required } from '@angular/forms/signals';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
-import { ApiService } from '../../../services/api.service';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
-import { MnsTextFieldComponent } from '../../../shared/forms';
-
-type SaleStockItem = {
-  SskUUID: string;
-  SskID: string;
-  SskName: string;
-  SaleStockTypeSstUUID: string | null;
-  SaleStockTypeName: string | null;
-  SskDateCreated: string | null;
-  SskDateUpdated: string | null;
-};
-
-type SaleStockTypeItem = {
-  SstUUID: string;
-  SstName: string;
-};
-
-type StockFilters = {
-  search: string;
-};
-
-type StockFormModel = {
-  name: string;
-  saleStockTypeUUID: string;
-};
+// Sale catalog records have no status lifecycle; the status filter is disabled.
+const config = defineCrud({
+  endpoint: 'sale/stocks',
+  uuidField: 'SskUUID',
+  pageTitle: 'Stocks',
+  pageDescription: 'Manage POS stock definitions for your environment.',
+  bulkDelete: true,
+  statusFilter: false,
+  initialValues: { name: '', saleStockTypeUUID: '' },
+  columns: [
+    { id: 'name', label: 'Name', field: 'SskName', uuidField: 'SskUUID', kind: 'identity' },
+    { id: 'type', label: 'Stock type', field: 'SaleStockTypeName' },
+  ],
+  fields: [
+    { key: 'name', source: 'SskName', label: 'Name', required: true, span: 1 },
+    {
+      key: 'saleStockTypeUUID',
+      source: 'SaleStockTypeSstUUID',
+      label: 'Stock type',
+      type: 'search-select',
+      required: true,
+      remoteLookup: { endpoint: 'sale/stock-types', uuidField: 'SstUUID', labelField: 'SstName' },
+      span: 1,
+    },
+  ],
+});
 
 @Component({
   selector: 'app-sales-stocks',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MnsTextFieldComponent,
-    FormField,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './stocks.html',
-  styleUrls: ['./stocks.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class SalesStocksPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly stocks = signal<SaleStockItem[]>([]);
-  readonly stockTypes = signal<SaleStockTypeItem[]>([]);
-  readonly editing = signal<SaleStockItem | null>(null);
-  readonly stockTypeSearch = signal('');
-
-  readonly filterFormModel = signal<StockFilters>({
-    search: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly stockFormModel = signal<StockFormModel>({
-    name: '',
-    saleStockTypeUUID: '',
-  });
-  readonly stockForm = createForm(this.stockFormModel, (schema) => {
-    required(schema.name);
-    required(schema.saleStockTypeUUID);
-  });
-
-  readonly displayedColumns = ['name', 'type', 'actions'];
-  readonly dataSource = new MatTableDataSource<SaleStockItem>([]);
-  private readonly stocksResource = resource({
-    defaultValue: [] as SaleStockItem[],
-    params: (): StockFilters => ({
-      search: this.filterFormModel().search.trim(),
-    }),
-    loader: ({ params }) => this.fetchStocks(params),
-  });
-  private readonly syncStocks = effect(() => {
-    const items = this.stocksResource.value();
-    this.stocks.set(items);
-    this.dataSource.data = [...items];
-    this.error.set(null);
-  });
-  private readonly reportStocksError = effect(() => {
-    const error = this.stocksResource.error();
-    if (error) this.error.set(this.extractErrorMessage(error, 'Failed to load stocks.'));
-  });
-  readonly loading = this.stocksResource.isLoading;
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly stockFormDialog = viewChild<TemplateRef<unknown>>('stockFormDialog');
-  private stockFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-
-  private readonly initializePage = (() => {
-    this.fetchStockTypes();
-
-    return true;
-  })();
-
-  private readonly afterViewReady = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.SskName ?? '';
-        case 'type':
-          return data.SaleStockTypeName ?? '';
-        default:
-          return '';
-      }
-    };
-  });
-
-  async fetchStockTypes() {
-    try {
-      const response = await this.api.get<any>('sale/stock-types?limit=200');
-      this.stockTypes.set(response?.data?.items ?? []);
-    } catch (err) {
-      console.error('Failed to load stock types.', err);
-    }
-  }
-
-  private async fetchStocks(filters: StockFilters): Promise<SaleStockItem[]> {
-    const params = new URLSearchParams();
-    if (filters.search) params.set('search', filters.search);
-
-    const query = params.toString();
-    const response = await this.api.get<any>(`sale/stocks${query ? `?${query}` : ''}`);
-    return Array.isArray(response?.data?.items) ? response.data.items : [];
-  }
-
-  applyFilters() {
-    this.stocksResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ search: '' });
-    this.stocksResource.reload();
-  }
-
-  refreshList() {
-    this.stocksResource.reload();
-  }
-
-  startEdit(stock: SaleStockItem) {
-    this.editing.set(stock);
-    this.stockFormModel.set({
-      name: stock.SskName,
-      saleStockTypeUUID: stock.SaleStockTypeSstUUID ?? '',
-    });
-  }
-
-  openCreateDialog() {
-    this.cancelEdit();
-    this.openStockDialog();
-  }
-
-  openEditDialog(stock: SaleStockItem) {
-    this.startEdit(stock);
-    this.openStockDialog();
-  }
-
-  cancelEdit() {
-    this.editing.set(null);
-    this.stockFormModel.set({ name: '', saleStockTypeUUID: '' });
-    this.closeStockDialog();
-  }
-
-  get filteredStockTypes() {
-    const value = this.stockTypeSearch().trim().toLowerCase();
-    if (!value) return this.stockTypes();
-    return this.stockTypes().filter((item) => (item.SstName ?? '').toLowerCase().includes(value));
-  }
-
-  onStockTypeOpened(opened: boolean) {
-    if (opened) {
-      this.stockTypeSearch.set('');
-    }
-  }
-
-  async saveStock() {
-    if (!this.stockForm().valid()) return;
-
-    const values = this.stockFormModel();
-    const payload = {
-      name: values.name.trim(),
-      saleStockTypeUUID: values.saleStockTypeUUID,
-    };
-    if (!payload.name || !payload.saleStockTypeUUID) return;
-
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put<any>(`sale/stocks/${editing.SskUUID}`, payload);
-      } else {
-        await this.api.post<any>('sale/stocks', payload);
-      }
-
-      this.stocksResource.reload();
-      this.cancelEdit();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to save stock.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async deleteStock(stock: SaleStockItem) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete stock',
-        message: 'Are you sure you want to delete this stock?',
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`sale/stocks/${stock.SskUUID}`);
-      this.stocksResource.reload();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to delete stock.'));
-    }
-  }
-
-  private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {
-    this.closeStockDialog();
-  });
-
-  private openStockDialog() {
-    const stockFormDialog = this.stockFormDialog();
-    if (!stockFormDialog || this.stockFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      stockFormDialog,
-      'sale-stocks-form-dialog',
-    );
-    this.stockFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.stockFormDialogRef, () => {
-      this.cancelEdit();
-    });
-  }
-
-  private closeStockDialog() {
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.stockFormDialogRef?.close();
-    this.stockFormDialogRef = null;
-  }
-
-  private extractErrorMessage(err: any, fallback: string) {
-    return err?.error?.error || err?.error?.message || err?.message || fallback;
+export class SalesStocksPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  constructor() {
+    super(config);
   }
 }

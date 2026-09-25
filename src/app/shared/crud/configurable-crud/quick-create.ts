@@ -266,6 +266,11 @@ export const QUICK_CREATE_REGISTRY = {
       import('../../../pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcServersPage),
     permission: MASTER_PERMISSION,
   },
+  SaleStockTypeSstUUID: {
+    label: 'Create stock type',
+    loadComponent: () =>
+      import('../../../pages/sales/stock-type/stock-type').then((m) => m.SaleStockTypePage),
+  },
   SupportTicketChannelStcUUID: {
     label: 'Create channel',
     loadComponent: () =>

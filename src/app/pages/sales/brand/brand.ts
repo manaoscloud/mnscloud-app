@@ -1,233 +1,35 @@
+import { Component } from '@angular/core';
 import {
-  Component,
-  DestroyRef,
-  afterNextRender,
-  effect,
-  resource,
-  TemplateRef,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
-import { form as createForm, required } from '@angular/forms/signals';
-
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
-import { firstValueFrom, takeUntil } from 'rxjs';
-
-import { ApiService } from '../../../services/api.service';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
-import { MnsTextFieldComponent } from '../../../shared/forms';
-
-type BrandItem = {
-  SbrUUID: string;
-  SbrID: string;
-  SbrName: string;
-  SbrDateCreated: string | null;
-  SbrDateUpdated: string | null;
-};
-
-type BrandFilters = {
-  name: string;
-};
+// Sale catalog records have no status lifecycle; the status filter is disabled.
+const config = defineCrud({
+  endpoint: 'sale/brands',
+  uuidField: 'SbrUUID',
+  pageTitle: 'Brand',
+  pageDescription: 'Register brand definitions used in sales.',
+  bulkDelete: true,
+  statusFilter: false,
+  initialValues: { name: '' },
+  columns: [
+    { id: 'name', label: 'Name', field: 'SbrName', uuidField: 'SbrUUID', kind: 'identity' },
+  ],
+  fields: [{ key: 'name', source: 'SbrName', label: 'Name', required: true, span: 1 }],
+});
 
 @Component({
   selector: 'app-sale-brand',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MnsTextFieldComponent,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatTooltipModule,
-    MatDialogModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    TranslocoPipe,
-  ],
-  templateUrl: './brand.html',
-  styleUrls: ['./brand.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class SaleBrandPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly destroyRef = inject(DestroyRef);
-
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly brands = signal<BrandItem[]>([]);
-  readonly editing = signal<BrandItem | null>(null);
-  readonly filterFormModel = signal({ name: '' });
-  readonly filterForm = createForm(this.filterFormModel);
-  private readonly brandsResource = resource({
-    defaultValue: [] as BrandItem[],
-    params: (): BrandFilters => ({
-      name: this.filterFormModel().name.trim(),
-    }),
-    loader: ({ params }) => this.fetchBrands(params),
-  });
-  readonly loading = this.brandsResource.isLoading;
-
-  readonly brandFormModel = signal({ name: '' });
-  readonly brandForm = createForm(this.brandFormModel, (path) => {
-    required(path.name);
-  });
-
-  readonly displayedColumns = ['name', 'actions'];
-  readonly dataSource = new MatTableDataSource<BrandItem>([]);
-  readonly paginator = viewChild(MatPaginator);
-  readonly brandFormDialog = viewChild<TemplateRef<unknown>>('brandFormDialog');
-  private brandFormDialogRef: MatDialogRef<unknown> | null = null;
-  private dialogBinding: CrudDialogBinding | null = null;
-  private readonly syncBrands = effect(() => {
-    const items = this.brandsResource.value();
-    this.brands.set(items);
-    this.dataSource.data = [...items];
-  });
-  private readonly reportBrandsError = effect(() => {
-    const error = this.brandsResource.error();
-    if (error) {
-      this.error.set(this.extractErrorMessage(error, 'Failed to load brands.'));
-      this.dataSource.data = [];
-    }
-  });
-
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-  });
-
+export class SaleBrandPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    this.destroyRef.onDestroy(() => this.closeBrandDialog());
-  }
-
-  private async fetchBrands(filters: BrandFilters) {
-    this.error.set(null);
-
-    const params = new URLSearchParams();
-    if (filters.name) params.set('name', filters.name);
-
-    const response = await this.api.get<any>(`sale/brands?${params.toString()}`);
-    return response?.data?.items ?? [];
-  }
-
-  applyFilters() {
-    this.brandsResource.reload();
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({ name: '' });
-    this.brandsResource.reload();
-  }
-
-  refreshList() {
-    this.brandsResource.reload();
-  }
-
-  startEdit(brand: BrandItem) {
-    this.editing.set(brand);
-    this.brandFormModel.set({ name: brand.SbrName });
-  }
-
-  openCreateDialog() {
-    this.cancelEdit();
-    this.openBrandDialog();
-  }
-
-  openEditDialog(brand: BrandItem) {
-    this.startEdit(brand);
-    this.openBrandDialog();
-  }
-
-  cancelEdit() {
-    this.editing.set(null);
-    this.brandFormModel.set({ name: '' });
-    this.closeBrandDialog();
-  }
-
-  async saveBrand() {
-    if (!this.brandForm().valid()) return;
-
-    const payload = { name: this.brandFormModel().name.trim() };
-    if (!payload.name) return;
-
-    this.saving.set(true);
-    this.error.set(null);
-
-    try {
-      const editing = this.editing();
-      if (editing) {
-        await this.api.put<any>(`sale/brands/${editing.SbrUUID}`, payload);
-      } else {
-        await this.api.post<any>('sale/brands', payload);
-      }
-
-      this.cancelEdit();
-      this.brandsResource.reload();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to save brand.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  private openBrandDialog() {
-    const brandFormDialog = this.brandFormDialog();
-    if (!brandFormDialog || this.brandFormDialogRef) return;
-    this.dialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      brandFormDialog,
-      'sale-brand-form-dialog',
-    );
-    this.brandFormDialogRef = this.dialogBinding.ref;
-    bindDialogEscape(this.brandFormDialogRef, () => {
-      this.cancelEdit();
-    });
-  }
-
-  private closeBrandDialog() {
-    this.dialogBinding?.stop();
-    this.dialogBinding = null;
-    this.brandFormDialogRef?.close();
-    this.brandFormDialogRef = null;
-  }
-
-  async deleteBrand(brand: BrandItem) {
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: 'Delete brand',
-        message: 'Are you sure you want to delete this brand?',
-        confirmLabel: 'Delete',
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    try {
-      await this.api.delete(`sale/brands/${brand.SbrUUID}`);
-      this.brandsResource.reload();
-    } catch (err: any) {
-      this.error.set(this.extractErrorMessage(err, 'Failed to delete brand.'));
-    }
-  }
-
-  private extractErrorMessage(err: any, fallback: string) {
-    return err?.error?.error || err?.error?.message || err?.message || fallback;
+    super(config);
   }
 }

@@ -30,13 +30,8 @@
     "src/app/pages/isp/vendor/vendor.ts",
     "src/app/pages/isp/vendor-model/vendor-model.ts",
     "src/app/pages/monitoring/telemetry/overview.ts",
-    "src/app/pages/sales/brand/brand.ts",
-    "src/app/pages/sales/category/category.ts",
     "src/app/pages/sales/product/product.ts",
     "src/app/pages/sales/quotation/quotation.ts",
-    "src/app/pages/sales/stock-type/stock-type.ts",
-    "src/app/pages/sales/stocks/stocks.ts",
-    "src/app/pages/sales/unit/unit.ts",
     "src/app/pages/settings/themes/themes.ts"
   ]
 }
