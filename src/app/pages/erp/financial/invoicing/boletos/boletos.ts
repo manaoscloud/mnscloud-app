@@ -88,7 +88,7 @@ const config = defineCrud({
         labelField: 'EfgName',
       },
       source: 'GatewayAccountUUID',
-      label: 'Payment provider',
+      label: 'Payment gateway',
       type: 'search-select',
       quickCreate: quickCreateFor('ErpFinPayGatewayAccountEfgUUID'),
       span: 1,

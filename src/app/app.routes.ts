@@ -466,7 +466,7 @@ export const routes: Routes = [
                   import('./pages/erp/financial/payment/gateway/payment-gateway').then(
                     (m) => m.FinancialPaymentGatewayPage,
                   ),
-                title: 'ERP • Financial • Payment Providers | mnscloud',
+                title: 'ERP • Financial • Payment Gateways | mnscloud',
                 data: { scope: 'tenant', context: 'financial' },
               },
 

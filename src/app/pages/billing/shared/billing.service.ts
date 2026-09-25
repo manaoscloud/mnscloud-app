@@ -186,9 +186,8 @@ export interface BillingPaymentIntent {
   BpiAmount: number;
   BpiCurrency: string;
   BpiStatus: string;
-  BpiProvider?: string | null;
   PayBankConnectionPbcUUID?: string | null;
-  BpiGatewaySource?: string | null;
+  PbcProvider?: string | null;
   BpiProviderReference?: string | null;
   BpiCheckoutUrl?: string | null;
   BpiReference?: string | null;

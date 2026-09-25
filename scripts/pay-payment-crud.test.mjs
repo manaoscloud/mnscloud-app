@@ -81,46 +81,39 @@ test('Pay bank partner edit keeps stored credentials unless all are replaced', (
   assert.throws(() => config.payload({ ...values, clientId: 'partial' }, true), /together/);
 });
 
-test('Tenant gateway preserves stored secrets and unknown configuration', () => {
-  const config = paymentGatewayConfig();
+test('Tenant gateway (own Inter account) is typed, independent from Pay and has no JSON', () => {
+  const config = paymentGatewayConfig;
+  assert.equal(config.endpoint, 'erp/financial/payment/gateways');
   const values = {
     ...config.initialValues,
-    name: 'Account',
-    configJson: '{"custom":"keep"}',
-    clientId: '',
-    clientSecret: '',
-    certPem: '',
-    keyPem: '',
-  };
-  const payload = config.payload(values, true);
-  assert.equal(payload.credentials, undefined);
-  assert.equal(payload.config.custom, 'keep');
-  assert.equal(payload.provider, 'pay');
-  assert.throws(
-    () => config.payload({ ...values, clientId: 'partial' }, true),
-    /all credential fields/,
-  );
-});
-
-test('Tenant gateway switches editing modes without losing input', () => {
-  const config = paymentGatewayConfig();
-  const values = {
-    ...config.initialValues,
-    configJson: '{"custom":"keep"}',
-    scope: 'new.scope',
+    name: ' Inter proprio ',
+    environment: 'sandbox',
+    accountNumber: '12.345-6',
     clientId: 'id',
     clientSecret: 'secret',
-    certPem: 'cert',
-    keyPem: 'key',
+    certPem: '-----BEGIN CERTIFICATE-----',
+    keyPem: '-----BEGIN PRIVATE KEY-----',
   };
-  const advanced = config.fieldChange('advanced', true, values);
-  assert.equal(JSON.parse(advanced.configJson).scope, 'new.scope');
-  const form = config.fieldChange('advanced', false, {
-    ...advanced,
-    configJson: '{"custom":"keep","scope":"edited"}',
-  });
-  assert.equal(form.scope, 'edited');
-  assert.equal(form.clientSecret, 'secret');
-  assert.equal(config.payload(form, true).config.custom, 'keep');
-  assert.throws(() => config.fieldChange('advanced', false, { ...advanced, configJson: 'broken' }));
+  const created = config.payload(values, false);
+  assert.deepEqual(Object.keys(created).sort(), [
+    'accountNumber',
+    'autoCancelDays',
+    'credentials',
+    'environment',
+    'isActive',
+    'isDefault',
+    'name',
+    'provider',
+    'receiveMethods',
+  ]);
+  assert.equal(created.provider, 'inter_business');
+  assert.equal(created.accountNumber, '123456');
+  assert.equal(created.environment, 'sandbox');
+  const fieldKeys = config.fields.map((field) => field.key);
+  for (const removed of ['advanced', 'configJson', 'credentialsJson', 'scope', 'apiBaseUrl', 'webhookCaPem'])
+    assert.ok(!fieldKeys.includes(removed), removed);
+  const edited = config.payload({ ...values, clientId: '', clientSecret: '', certPem: '', keyPem: '' }, true);
+  assert.equal(edited.credentials, undefined);
+  assert.equal(edited.provider, undefined);
+  assert.throws(() => config.payload({ ...values, keyPem: '' }, true), /together/);
 });
