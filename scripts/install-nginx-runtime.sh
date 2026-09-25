@@ -198,11 +198,13 @@ fetch_artifact() {
   fi
   [[ -n "$APP_ARTIFACT_URL" ]] || die "APP_ARTIFACT_URL or APP_ARTIFACT_PATH is required"
   [[ "$APP_ARTIFACT_URL" =~ ^https:// ]] || die "APP_ARTIFACT_URL must use HTTPS"
+  # A rollout can start seconds after the GitHub release is published, while the asset
+  # download still returns 404; retry long enough (~100s) for it to become available.
   curl -fsSL \
     --connect-timeout "${APP_ARTIFACT_CONNECT_TIMEOUT_SECONDS:-15}" \
     --max-time "${APP_ARTIFACT_MAX_TIME_SECONDS:-300}" \
-    --retry "${APP_ARTIFACT_RETRY_COUNT:-3}" \
-    --retry-delay "${APP_ARTIFACT_RETRY_DELAY_SECONDS:-2}" \
+    --retry "${APP_ARTIFACT_RETRY_COUNT:-10}" \
+    --retry-delay "${APP_ARTIFACT_RETRY_DELAY_SECONDS:-10}" \
     --retry-all-errors \
     -o "$target" \
     "$APP_ARTIFACT_URL"
