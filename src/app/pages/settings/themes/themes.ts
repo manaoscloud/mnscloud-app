@@ -42,7 +42,7 @@ import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { bindDialogClosed, bindDialogEscape } from '../../../shared/dialog/dialog-events.util';
 
@@ -176,6 +176,7 @@ export class SettingsThemesPage {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly transloco = inject(TranslocoService);
 
   readonly paginator = viewChild(MatPaginator);
   readonly sort = viewChild(MatSort);
@@ -386,9 +387,9 @@ export class SettingsThemesPage {
     if (this.saving()) return;
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete theme domain',
-        message: `Delete domain "${item.Domain}" and queue provider cleanup?`,
-        confirmLabel: 'Delete',
+        title: this.transloco.translate('Delete Theme Domain'),
+        message: `${this.transloco.translate('Are you sure you want to delete theme domain')} "${item.Domain}"?`,
+        confirmLabel: this.transloco.translate('Delete domain'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -408,7 +409,7 @@ export class SettingsThemesPage {
       });
       this.refreshList();
       if (this.editing()?.ThemeUUID === item.ThemeUUID) this.cancelForm();
-      this.snack.success('Domain deleted successfully.');
+      this.snack.success(this.transloco.translate('Theme domain deleted successfully.'));
     } catch (error: unknown) {
       this.snack.error(this.friendlyError(error, 'Failed to delete domain.'));
     } finally {
@@ -426,9 +427,9 @@ export class SettingsThemesPage {
     const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
     const ref = this.dialog.open(SlowConfirmDialogComponent, {
       data: {
-        title: 'Delete selected theme domains',
-        message: `Delete ${ids.length} selected theme domain(s) and queue provider cleanup?${suffix}`,
-        confirmLabel: 'Delete selected',
+        title: this.transloco.translate('Delete Theme Domains'),
+        message: `${this.transloco.translate('Are you sure you want to delete the selected theme domains?')}${suffix}`,
+        confirmLabel: this.transloco.translate('Delete selected'),
       },
       panelClass: 'slow-confirm-dialog',
       disableClose: true,
@@ -447,6 +448,8 @@ export class SettingsThemesPage {
       this.domains.update((rows) => rows.filter((row) => !deleted.has(row.ThemeUUID)));
       this.dataSource.data = this.domains();
       this.selectedThemeUUIDs.set(failed);
+      this.refreshList();
+      this.snack.success(this.transloco.translate('Theme domains bulk delete completed.'));
       this.refreshList();
       failed.size
         ? this.snack.error(`${failed.size} theme domain(s) could not be deleted.`)
@@ -525,7 +528,21 @@ export class SettingsThemesPage {
   }
 
   statusLabel(status: string) {
-    return status.trim().toUpperCase();
+    const key = status.trim().toLowerCase();
+    switch (key) {
+      case 'done':
+      case 'active':
+        return this.transloco.translate('Done');
+      case 'queued':
+        return this.transloco.translate('Queued');
+      case 'running':
+      case 'provisioning':
+        return this.transloco.translate('Running');
+      case 'failed':
+        return this.transloco.translate('Failed');
+      default:
+        return this.transloco.translate('Idle');
+    }
   }
 
   private setActionBusy(themeUUID: string, key: 'web' | 'cert', value: boolean) {

@@ -1,443 +1,84 @@
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
-import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
-import { NgClass } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-
-import { ApiService } from '../../../../services/api.service';
-import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { ApiService } from '../../../../services/api.service';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
+import { DashboardRecordListComponent, type DashboardRecord } from '../../../../shared/dashboard/dashboard-record-list';
+import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
+import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 
-type SmtpProvider = {
-  HspUUID: string;
-  HspName: string;
-  HspProvider: string;
-  HspIsActive: number;
-  HspIsDefault: number;
+type ProviderRow = { uuid: string; name: string; provider: string; active: number; isDefault: number; accounts: number; routes: number; issues: number };
+type AccountRow = { uuid: string; name: string; provider: string; fromName: string | null; fromEmail: string | null; active: number; isDefault: number; routes: number };
+type RouteRow = { uuid: string; event: string; account: string; provider: string; fromName: string | null; fromEmail: string | null; active: number };
+type Snapshot = {
+  kpis: { providersTotal: number; providersActive: number; providersDefault: number;
+    accountsTotal: number; accountsActive: number; accountsDefault: number;
+    routesTotal: number; routesActive: number; routesLinked: number; issues: number; readyRoutes: number };
+  providers: ProviderRow[]; accounts: AccountRow[]; routes: RouteRow[];
 };
-
-type SmtpAccount = {
-  HsaUUID: string;
-  HsaName: string;
-  HostingSmtpProviderHspUUID: string;
-  HsaDefaultFromName?: string | null;
-  HsaDefaultFromEmail?: string | null;
-  HsaIsActive: number;
-  HsaIsDefault: number;
-  HspName?: string;
-  HspProvider?: string;
+const EMPTY: Snapshot = {
+  kpis: { providersTotal: 0, providersActive: 0, providersDefault: 0, accountsTotal: 0, accountsActive: 0,
+    accountsDefault: 0, routesTotal: 0, routesActive: 0, routesLinked: 0, issues: 0, readyRoutes: 0 },
+  providers: [], accounts: [], routes: [],
 };
-
-type SmtpRoute = {
-  HsrUUID: string;
-  HsrEventType: string;
-  HsrFromName?: string | null;
-  HsrFromEmail?: string | null;
-  HsrIsActive: number;
-  HostingSmtpAccountHsaUUID: string;
-  HsaName?: string;
-  HspName?: string;
-  HspProvider?: string;
-};
-
-type KpiTile = {
-  label: string;
-  value: string;
-  detailValue: string;
-  detailLabel: string;
-  icon: string;
-  state: 'good' | 'warn' | 'bad' | 'neutral';
-};
-
-type ProviderRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  active: boolean;
-  isDefault: boolean;
-  accounts: number;
-  routes: number;
-  issues: number;
-};
-
-type AccountRow = {
-  uuid: string;
-  name: string;
-  provider: string;
-  from: string;
-  active: boolean;
-  isDefault: boolean;
-  routes: number;
-};
-
-type RouteRow = {
-  uuid: string;
-  event: string;
-  account: string;
-  provider: string;
-  from: string;
-  active: boolean;
-};
-
-type SmtpDashboardSnapshot = {
-  providers: SmtpProvider[];
-  accounts: SmtpAccount[];
-  routes: SmtpRoute[];
-  failedSections: number;
-};
-
-const EMPTY_SMTP_DASHBOARD: SmtpDashboardSnapshot = {
-  providers: [],
-  accounts: [],
-  routes: [],
-  failedSections: 0,
-};
-
 @Component({
   selector: 'app-hosting-smtp-dashboard',
-  standalone: true,
-  imports: [
-    DashboardPageComponent,
-    RouterModule,
-    MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
-    TranslocoPipe,
-    NgClass,
-  ],
+  imports: [DashboardPageComponent, DashboardRecordListComponent, RouterModule, MatIconModule, TranslocoPipe],
   templateUrl: './dashboard.html',
 })
 export class HostingSmtpDashboardPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
-  private readonly snack = inject(SnackbarService);
-
-  readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-
-  readonly dashboardResource = dashboardResource({
-    params: () => ({ scope: this.scope() }),
-    defaultValue: EMPTY_SMTP_DASHBOARD,
-    loader: () => this.loadDashboardSnapshot(),
-  });
-
-  readonly loading = this.dashboardResource.isLoading;
-  readonly dashboard = computed(() => this.dashboardResource.value());
-  readonly providers = computed(() => this.dashboard().providers);
-  readonly accounts = computed(() => this.dashboard().accounts);
-  readonly routes = computed(() => this.dashboard().routes);
-
-  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
-    computed(() => this.providerRows()),
-    (row, column) => this.providerSortValue(row, column),
-  );
-  readonly accountDataSource = createSignalCrudTable<AccountRow>(
-    computed(() => this.accountRows()),
-    (row, column) => this.accountSortValue(row, column),
-  );
-  readonly routeDataSource = createSignalCrudTable<RouteRow>(
-    computed(() => this.routeRows()),
-    (row, column) => this.routeSortValue(row, column),
-  );
-
-  readonly providerColumns = [
-    'provider',
-    'type',
-    'active',
-    'default',
-    'accounts',
-    'routes',
-    'issues',
-    'actions',
-  ];
-  readonly accountColumns = [
-    'account',
-    'provider',
-    'from',
-    'active',
-    'default',
-    'routes',
-    'actions',
-  ];
-  readonly routeColumns = ['event', 'account', 'provider', 'from', 'active', 'actions'];
-
-  private readonly reportDashboardState = effect(() => {
-    const error = this.dashboardResource.error();
-    if (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load SMTP dashboard.'));
-      return;
-    }
-
-    const failedSections = this.dashboard().failedSections;
-    if (failedSections > 0 && !this.loading()) {
-      this.snack.warning('Some SMTP dashboard sections could not be loaded.');
-    }
-  });
-
-  readonly providerSummary = computed(() => {
-    const rows = this.providers();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HspIsActive)).length;
-    const defaults = rows.filter((row) => Number(row.HspIsDefault ?? 0) === 1).length;
-    return { total, active, defaults };
-  });
-
-  readonly accountSummary = computed(() => {
-    const rows = this.accounts();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HsaIsActive)).length;
-    const defaults = rows.filter((row) => Number(row.HsaIsDefault ?? 0) === 1).length;
-    return { total, active, defaults };
-  });
-
-  readonly routeSummary = computed(() => {
-    const rows = this.routes();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HsrIsActive)).length;
-    const linked = rows.filter((row) =>
-      Boolean(this.accountLabel(row.HostingSmtpAccountHsaUUID)),
-    ).length;
-    return { total, active, linked };
-  });
-
-  readonly readinessSummary = computed(() => {
-    const providerReady = this.providerSummary().active > 0;
-    const accountReady = this.accountSummary().active > 0;
-    const routeReady = this.routeSummary().active > 0;
-    const checks = [providerReady, accountReady, routeReady];
-    const passed = checks.filter(Boolean).length;
-    return { passed, total: checks.length };
-  });
-
-  readonly kpis = computed<KpiTile[]>(() => [
-    {
-      label: 'SMTP Providers',
-      value: `${this.providerSummary().active} / ${this.providerSummary().total}`,
-      detailValue: String(this.providerSummary().defaults),
-      detailLabel: 'defaults',
-      icon: 'cloud_sync',
-      state: this.providerSummary().active > 0 ? 'good' : 'warn',
+  readonly isMaster = this.route.snapshot.data?.['scope'] === 'master';
+  readonly dashboard = dashboardResource({
+    defaultValue: EMPTY,
+    loader: async () => {
+      const response = await this.api.get<{ data: Snapshot }>(
+        `${this.isMaster ? 'system/' : ''}hosting/smtp/dashboard`, { timeout: 30000 },
+      );
+      return response.data;
     },
-    {
-      label: 'SMTP Accounts',
-      value: `${this.accountSummary().active} / ${this.accountSummary().total}`,
-      detailValue: String(this.accountSummary().defaults),
-      detailLabel: 'defaults',
-      icon: 'alternate_email',
-      state: this.accountSummary().active > 0 ? 'good' : 'warn',
-    },
-    {
-      label: 'SMTP Routes',
-      value: `${this.routeSummary().active} / ${this.routeSummary().total}`,
-      detailValue: String(this.routeSummary().linked),
-      detailLabel: 'linked',
-      icon: 'route',
-      state: this.routeSummary().active > 0 ? 'good' : 'neutral',
-    },
-    {
-      label: 'Delivery Readiness',
-      value: `${this.readinessSummary().passed} / ${this.readinessSummary().total}`,
-      detailValue: String(this.providerRows().reduce((sum, row) => sum + row.issues, 0)),
-      detailLabel: 'issues',
-      icon: 'mark_email_read',
-      state:
-        this.readinessSummary().passed === this.readinessSummary().total
-          ? 'good'
-          : this.readinessSummary().passed > 0
-            ? 'warn'
-            : 'bad',
-    },
-  ]);
-
-  refreshList() {
-    this.dashboardResource.reload();
+  });
+  readonly providerTable = createSignalCrudTable(computed(() => this.dashboard.value().providers), (r, c) => r[c as keyof ProviderRow]);
+  readonly accountTable = createSignalCrudTable(computed(() => this.dashboard.value().accounts), (r, c) => c === 'from' ? this.from(r) : r[c as keyof AccountRow]);
+  readonly routeTable = createSignalCrudTable(computed(() => this.dashboard.value().routes), (r, c) => c === 'from' ? this.from(r) : r[c as keyof RouteRow]);
+  readonly providerSort = [{key:'name',label:'Provider'},{key:'provider',label:'Type'},{key:'active',label:'Active'},{key:'isDefault',label:'Default'},{key:'accounts',label:'Accounts'},{key:'routes',label:'Routes'},{key:'issues',label:'Issues'}];
+  readonly accountSort = [{key:'name',label:'Account'},{key:'provider',label:'Provider'},{key:'from',label:'From'},{key:'active',label:'Active'},{key:'isDefault',label:'Default'},{key:'routes',label:'Routes'}];
+  readonly routeSort = [{key:'event',label:'Event'},{key:'account',label:'Account'},{key:'provider',label:'Provider'},{key:'from',label:'From'},{key:'active',label:'Active'}];
+  constructor() {
+    this.providerTable.setSort({active:'name',direction:'asc'});
+    this.accountTable.setSort({active:'name',direction:'asc'});
+    this.routeTable.setSort({active:'event',direction:'asc'});
   }
-
-  async loadDashboardSnapshot(): Promise<SmtpDashboardSnapshot> {
-    const [providersResult, accountsResult, routesResult] = await Promise.allSettled([
-      this.api.get<unknown>(`${this.providerEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
-      this.api.get<unknown>(`${this.accountEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
-      this.api.get<unknown>(`${this.routeEndpoint()}?limit=500&offset=0`, { timeout: 30000 }),
-    ]);
-
-    const results = [providersResult, accountsResult, routesResult];
-    const failedSections = results.filter((result) => result.status === 'rejected').length;
-
-    if (failedSections > 0) {
-      throw new Error('Failed to load SMTP dashboard.');
-    }
-
-    return {
-      providers:
-        providersResult.status === 'fulfilled'
-          ? this.items<SmtpProvider>(providersResult.value)
-          : [],
-      accounts:
-        accountsResult.status === 'fulfilled' ? this.items<SmtpAccount>(accountsResult.value) : [],
-      routes: routesResult.status === 'fulfilled' ? this.items<SmtpRoute>(routesResult.value) : [],
-      failedSections,
-    };
+  readonly kpis = computed(() => {
+    const k = this.dashboard.value().kpis;
+    return [
+      {label:'SMTP Providers',value:`${k.providersActive} / ${k.providersTotal}`,hint:`${k.providersDefault}`,detail:'default',icon:'hub'},
+      {label:'SMTP Accounts',value:`${k.accountsActive} / ${k.accountsTotal}`,hint:`${k.accountsDefault}`,detail:'default',icon:'mail'},
+      {label:'SMTP Routes',value:`${k.routesActive} / ${k.routesTotal}`,hint:`${k.routesLinked}`,detail:'linked',icon:'route'},
+      {label:'Ready delivery routes',value:`${k.readyRoutes}`,hint:`${k.issues}`,detail:'issues',icon:'mark_email_read'},
+    ];
+  });
+  private status(active: number): Pick<DashboardRecord, 'status' | 'tone'> {
+    return {status: active === 1 ? 'Active' : 'Inactive', tone: active === 1 ? 'success' : 'skipped'};
   }
-
+  private from(row: AccountRow | RouteRow) {
+    return row.fromName && row.fromEmail ? `${row.fromName} <${row.fromEmail}>` : row.fromEmail || row.fromName || '-';
+  }
+  readonly providerRecords = computed<DashboardRecord[]>(() => this.providerTable.visibleRows().map(r => ({
+    name:r.name,meta:r.provider === 'ses' ? 'Amazon SES' : r.provider.toUpperCase(),...this.status(r.active),
+    details:[{label:'Default',value:r.isDefault === 1 ? 'Yes' : 'No',translate:true},{label:'Accounts',value:String(r.accounts)},
+      {label:'Routes',value:String(r.routes)},{label:'Issues',value:String(r.issues)}],
+  })));
+  readonly accountRecords = computed<DashboardRecord[]>(() => this.accountTable.visibleRows().map(r => ({
+    name:r.name,meta:r.provider,...this.status(r.active),
+    details:[{label:'From',value:this.from(r)},{label:'Default',value:r.isDefault === 1 ? 'Yes' : 'No',translate:true},{label:'Routes',value:String(r.routes)}],
+  })));
+  readonly routeRecords = computed<DashboardRecord[]>(() => this.routeTable.visibleRows().map(r => ({
+    name:r.event,meta:r.account,...this.status(r.active),details:[{label:'Provider',value:r.provider},{label:'From',value:this.from(r)}],
+  })));
   routeTo(section: 'providers' | 'accounts' | 'routes') {
-    return this.isMaster() ? ['/system/hosting/smtp', section] : ['/hosting/smtp', section];
-  }
-
-  chipClass(value: boolean | number) {
-    return Boolean(value) ? 'chip-success is-active' : 'chip-skipped is-inactive';
-  }
-
-  issueChipClass(issues: number) {
-    return issues > 0 ? 'chip-warning' : 'chip-success is-active';
-  }
-
-  private providerEndpoint() {
-    return this.isMaster() ? 'system/hosting/smtp/providers' : 'hosting/smtp/providers';
-  }
-
-  private accountEndpoint() {
-    return this.isMaster() ? 'system/hosting/smtp/accounts' : 'hosting/smtp/accounts';
-  }
-
-  private routeEndpoint() {
-    return this.isMaster() ? 'system/hosting/smtp/routes' : 'hosting/smtp/routes';
-  }
-
-  private providerRows(): ProviderRow[] {
-    return this.providers().map((provider) => {
-      const accounts = this.accounts().filter(
-        (account) => account.HostingSmtpProviderHspUUID === provider.HspUUID,
-      );
-      const routes = this.routes().filter((route) =>
-        accounts.some((account) => account.HsaUUID === route.HostingSmtpAccountHsaUUID),
-      );
-      return {
-        uuid: provider.HspUUID,
-        name: provider.HspName,
-        provider: provider.HspProvider,
-        active: this.isActive(provider.HspIsActive),
-        isDefault: Number(provider.HspIsDefault ?? 0) === 1,
-        accounts: accounts.length,
-        routes: routes.length,
-        issues: this.providerIssues(provider, accounts, routes),
-      };
-    });
-  }
-
-  private accountRows(): AccountRow[] {
-    return this.accounts().map((account) => ({
-      uuid: account.HsaUUID,
-      name: account.HsaName,
-      provider: account.HspName || this.providerLabel(account.HostingSmtpProviderHspUUID),
-      from: this.fromLabel(account.HsaDefaultFromName, account.HsaDefaultFromEmail),
-      active: this.isActive(account.HsaIsActive),
-      isDefault: Number(account.HsaIsDefault ?? 0) === 1,
-      routes: this.routes().filter((route) => route.HostingSmtpAccountHsaUUID === account.HsaUUID)
-        .length,
-    }));
-  }
-
-  private routeRows(): RouteRow[] {
-    return this.routes().map((route) => ({
-      uuid: route.HsrUUID,
-      event: route.HsrEventType || 'general',
-      account: route.HsaName || this.accountLabel(route.HostingSmtpAccountHsaUUID),
-      provider: route.HspName || this.routeProviderLabel(route),
-      from: this.fromLabel(route.HsrFromName, route.HsrFromEmail),
-      active: this.isActive(route.HsrIsActive),
-    }));
-  }
-
-  private providerIssues(provider: SmtpProvider, accounts: SmtpAccount[], routes: SmtpRoute[]) {
-    let issues = 0;
-    if (!this.isActive(provider.HspIsActive)) issues += 1;
-    if (accounts.length === 0) issues += 1;
-    if (routes.length === 0) issues += 1;
-    issues += accounts.filter((account) => !this.isActive(account.HsaIsActive)).length;
-    issues += routes.filter((route) => !this.isActive(route.HsrIsActive)).length;
-    return issues;
-  }
-
-  private providerLabel(uuid: string) {
-    const provider = this.providers().find((item) => item.HspUUID === uuid);
-    return provider?.HspName || '-';
-  }
-
-  private accountLabel(uuid: string) {
-    const account = this.accounts().find((item) => item.HsaUUID === uuid);
-    return account?.HsaName || '';
-  }
-
-  private routeProviderLabel(route: SmtpRoute) {
-    const account = this.accounts().find(
-      (item) => item.HsaUUID === route.HostingSmtpAccountHsaUUID,
-    );
-    if (!account) return '-';
-    return account.HspName || this.providerLabel(account.HostingSmtpProviderHspUUID);
-  }
-
-  private fromLabel(name?: string | null, email?: string | null) {
-    const cleanName = String(name ?? '').trim();
-    const cleanEmail = String(email ?? '').trim();
-    if (cleanName && cleanEmail) return `${cleanName} <${cleanEmail}>`;
-    return cleanEmail || cleanName || '-';
-  }
-
-  private isActive(value: unknown) {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value === 1;
-    if (typeof value === 'string' && value.trim()) {
-      return ['1', 'true', 'active', 'running', 'ready'].includes(value.toLowerCase());
-    }
-    return false;
-  }
-
-  private items<T>(response: unknown): T[] {
-    const wrapped = response as { data?: { items?: T[] } };
-    if (Array.isArray((wrapped?.data as { items?: T[] } | undefined)?.items)) {
-      return (wrapped.data as { items: T[] }).items;
-    }
-    return [];
-  }
-
-  private providerSortValue(row: ProviderRow, column: string) {
-    if (column === 'provider') return row.name;
-    if (column === 'type') return row.provider;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    if (column === 'accounts') return row.accounts;
-    if (column === 'routes') return row.routes;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private accountSortValue(row: AccountRow, column: string) {
-    if (column === 'account') return row.name;
-    if (column === 'provider') return row.provider;
-    if (column === 'from') return row.from;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    if (column === 'routes') return row.routes;
-    return '';
-  }
-
-  private routeSortValue(row: RouteRow, column: string) {
-    if (column === 'event') return row.event;
-    if (column === 'account') return row.account;
-    if (column === 'provider') return row.provider;
-    if (column === 'from') return row.from;
-    if (column === 'active') return row.active ? 1 : 0;
-    return '';
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as { error?: { error?: string; message?: string }; message?: string };
-    return maybe?.error?.message || maybe?.error?.error || maybe?.message || fallback;
+    return [this.isMaster ? '/system/hosting/smtp' : '/hosting/smtp',section];
   }
 }
