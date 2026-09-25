@@ -5109,5 +5109,19 @@
   "Create POP": "Crear POP",
   "Create vendor": "Crear fabricante",
   "Create vendor model": "Crear modelo de fabricante",
-  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Solo se pueden asignar IPv4 fijas /32; créelas en IPv4 fija."
+  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Solo se pueden asignar IPv4 fijas /32; créelas en IPv4 fija.",
+  "Department": "Departamento",
+  "Position": "Cargo",
+  "Hire date": "Fecha de contratación",
+  "Termination date": "Fecha de baja",
+  "Manage employee records, company links, departments and positions.": "Gestione los registros de empleados, vínculos con empresas, departamentos y cargos.",
+  "Manage human resources departments.": "Gestione los departamentos de recursos humanos.",
+  "Manage human resources job positions.": "Gestione los cargos de recursos humanos.",
+  "Temporary password generated successfully.": "Contraseña temporal generada correctamente.",
+  "Generate a new temporary password? The previous password stops working immediately.": "¿Generar una nueva contraseña temporal? La contraseña anterior deja de funcionar inmediatamente.",
+  "Failed to reset password.": "No se pudo restablecer la contraseña.",
+  "Create company": "Crear empresa",
+  "Create department": "Crear departamento",
+  "Create position": "Crear cargo",
+  "Create employee": "Crear empleado"
 }

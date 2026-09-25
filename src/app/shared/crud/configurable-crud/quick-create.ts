@@ -93,6 +93,11 @@ export const QUICK_CREATE_REGISTRY = {
       ),
     permission: MASTER_PERMISSION,
   },
+  ErpCompanyComUUID: {
+    label: 'Create company',
+    loadComponent: () =>
+      import('../../../pages/erp/companies/companies').then((m) => m.ErpCompaniesPage),
+  },
   ErpComplexEcxUUID: {
     label: 'Create complex',
     loadComponent: () => import('../../../pages/erp/complex/complex').then((m) => m.ErpComplexPage),
@@ -102,6 +107,27 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/erp/financial/payment/gateway/payment-gateway').then(
         (m) => m.FinancialPaymentGatewayPage,
+      ),
+  },
+  ErpHrDepartmentEhdUUID: {
+    label: 'Create department',
+    loadComponent: () =>
+      import('../../../pages/erp/human-resources/departments/departments').then(
+        (m) => m.ErpHumanResourcesDepartmentsPage,
+      ),
+  },
+  ErpHrEmployeeEmpUUID: {
+    label: 'Create employee',
+    loadComponent: () =>
+      import('../../../pages/erp/human-resources/employees/employees').then(
+        (m) => m.ErpHumanResourcesEmployeesPage,
+      ),
+  },
+  ErpHrPositionEhpUUID: {
+    label: 'Create position',
+    loadComponent: () =>
+      import('../../../pages/erp/human-resources/positions/positions').then(
+        (m) => m.ErpHumanResourcesPositionsPage,
       ),
   },
   ErpSupplierSupUUID: {
