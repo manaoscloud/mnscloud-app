@@ -163,6 +163,27 @@
   `| t` pipe alias, and old `Data`/`Details` CRUD tab labels so new modules do not inherit Angular
   21-era patterns.
 
+## Page Template Catalog (Current)
+
+"Template" in this document always means one of the shared page bases below. Copying the global
+CSS hook classes (`.erp-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
+`openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
+the page must use the shared base named here.
+
+| Scenario | Template (scaffold) | Shared base | Validator |
+|---|---|---|---|
+| Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module, not only ERP) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss` | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
+| Read-only summary with indicators and record inventories; Refresh is the only action | `templates/dashboard` | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard` |
+| Singleton configuration with dirty/cancel/save | `templates/settings-page` | `SettingsPageComponent` (on `PageShellComponent`) | `scripts/validate-content-pages.mjs` |
+| Read-only page for one resource | `templates/detail-page` | `DetailPageComponent` (on `PageShellComponent`) | `scripts/validate-content-pages.mjs` |
+
+- A page that needs behavior the shared base lacks gets a generic extension point in the base
+  (row actions, `collection`/`form` factories, related collections, hooks); never page-local
+  CRUD HTML/SCSS, `MatTableDataSource`, or a parallel module base class.
+- `check:crud:inventory` scans the whole app. Pages still pending migration are listed in
+  `scripts/crud-legacy-allowlist.json`; that list may only shrink, CI rejects new entries, and a
+  migrated page must be removed from it in the same change.
+
 ## Commercial Menu Projection
 
 - The app may hide tenant-facing commercial modules based on API-provided billing grants, but this is
@@ -380,7 +401,7 @@
   - Do not use an empty `.mobile-paginator` placeholder.
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
-- ERP generic CRUDs:
+- Generic CRUDs (all modules):
   - CRUD/list resources in every module (including System and ERP) must use the standard shared CRUD component contract in
     `src/app/shared/crud/configurable-crud/`.
   - Create/edit must open through the generic `crud-form-dialog` panel class and the shared
@@ -843,6 +864,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   runs it with `--all`, so any FK field anywhere without quick-create blocks the merge.
 - CI runs `npm run check:crud:layout -- --changed <base> HEAD` before build so newly touched CRUD
   pages cannot drift from the global layout baseline.
+- `npm run check:crud:inventory` runs app-wide in `verify:changed` (CI). Any CRUD/list page that
+  does not extend `ConfigurableCrudPageBase` and is not listed in
+  `scripts/crud-legacy-allowlist.json` blocks the merge; passing the per-page validators alone
+  never proves a page uses the generic template.
 
 ## Non-negotiables (Blockers)
 
