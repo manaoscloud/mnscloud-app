@@ -15,10 +15,6 @@ const statusOptions: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
 ];
-const yesNoOptions: readonly ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
 const environmentOptions: readonly ConfigurableCrudOption[] = [
   { value: 'production', label: 'Production' },
   { value: 'sandbox', label: 'Sandbox' },
@@ -27,6 +23,11 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
   { value: 'BOLETO,PIX', label: 'Boleto and Pix' },
   { value: 'BOLETO', label: 'Boleto only' },
   { value: 'PIX', label: 'Pix only' },
+];
+/** Purposes of a platform bank connection; only one connection per purpose is active. */
+export const purposeOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'TENANT_BILLING', label: 'Tenant billing' },
+  { value: 'PAY_SPLIT', label: 'MNSCloud Pay (split)' },
 ];
 const webhookStatusOptions: readonly ConfigurableCrudOption[] = [
   { value: 'NOT_REGISTERED', label: 'Not registered' },
@@ -62,6 +63,7 @@ const fields: ConfigurableCrudField[] = [
     type: 'status',
     span: 1,
     options: statusOptions,
+    hint: 'Activating this connection deactivates the other active connection of the same purpose.',
   },
   {
     key: 'provider',
@@ -85,12 +87,13 @@ const fields: ConfigurableCrudField[] = [
     hiddenWhen: hideUnlessInter,
   },
   {
-    key: 'isDefault',
-    source: 'PbcIsDefault',
-    label: 'Default for top-ups',
+    key: 'purpose',
+    source: 'PbcPurpose',
+    label: 'Purpose',
     type: 'select',
     span: 1,
-    options: yesNoOptions,
+    required: true,
+    hint: 'Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.',
   },
   {
     key: 'accountNumber',
@@ -214,7 +217,7 @@ export const bankPartnersConfig = defineCrud({
     provider: INTER,
     name: '',
     environment: 'production',
-    isDefault: 0,
+    purpose: 'TENANT_BILLING',
     accountNumber: '',
     receiveMethods: 'BOLETO,PIX',
     autoCancelDays: 30,
@@ -227,6 +230,7 @@ export const bankPartnersConfig = defineCrud({
   fields,
   columns: [
     { id: 'name', label: 'Name', field: 'PbcName', kind: 'identity' },
+    { id: 'purpose', label: 'Purpose', field: 'PbcPurpose', options: purposeOptions },
     {
       id: 'provider',
       label: 'Bank',
@@ -253,7 +257,12 @@ export const bankPartnersConfig = defineCrud({
       field: 'PbcWebhookStatus',
       options: webhookStatusOptions,
     },
-    { id: 'default', label: 'Default for top-ups', field: 'PbcIsDefault', kind: 'boolean' },
+    {
+      id: 'files',
+      label: 'Certificate stored',
+      field: 'PbcCredentialFilesStored',
+      kind: 'boolean',
+    },
     { id: 'status', label: 'Status', field: 'PbcStatus', kind: 'status' },
   ],
   rowActions: [
@@ -278,9 +287,9 @@ export const bankPartnersConfig = defineCrud({
       ...(editing ? {} : { provider: text(values['provider']) }),
       environment: text(values['environment']),
       accountNumber: text(values['accountNumber']).replace(/\D/g, ''),
+      purpose: text(values['purpose']),
       receiveMethods: text(values['receiveMethods']),
       autoCancelDays: Number(values['autoCancelDays']),
-      isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
       status: Number(values['status']) === 1 ? 1 : 0,
       ...(replacing ? { credentials } : {}),
     };

@@ -44,13 +44,15 @@ test('Pay bank partner (Inter) payload is typed and never carries free-form conf
     'autoCancelDays',
     'credentials',
     'environment',
-    'isDefault',
     'name',
     'provider',
+    'purpose',
     'receiveMethods',
     'status',
   ]);
   assert.equal(created.provider, 'inter_business');
+  assert.equal(created.purpose, 'TENANT_BILLING');
+  assert.ok(!config.fields.some((field) => field.key === 'isDefault'));
   assert.equal(created.accountNumber, '1234567');
   assert.equal(created.autoCancelDays, 15);
   assert.equal(created.name, 'Inter principal');

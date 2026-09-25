@@ -5084,5 +5084,14 @@
   "New payment method": "New payment method",
   "No payment methods found.": "No payment methods found.",
   "Payment method saved.": "Payment method saved.",
-  "Ways your customers can pay, used by receivables and invoices.": "Ways your customers can pay, used by receivables and invoices."
+  "Ways your customers can pay, used by receivables and invoices.": "Ways your customers can pay, used by receivables and invoices.",
+  "Tenant billing": "Tenant billing",
+  "MNSCloud Pay (split)": "MNSCloud Pay (split)",
+  "Activating this connection deactivates the other active connection of the same purpose.": "Activating this connection deactivates the other active connection of the same purpose.",
+  "Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.": "Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.",
+  "Certificate stored": "Certificate stored",
+  "Upload the certificate and private key again to store them in the platform storage.": "Upload the certificate and private key again to store them in the platform storage.",
+  "The platform storage is not configured. Configure the default storage and try again.": "The platform storage is not configured. Configure the default storage and try again.",
+  "This bank does not support the selected purpose.": "This bank does not support the selected purpose.",
+  "This payment gateway is not supported.": "This payment gateway is not supported."
 }

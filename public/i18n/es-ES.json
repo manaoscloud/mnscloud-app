@@ -5084,5 +5084,14 @@
   "New payment method": "Nueva forma de pago",
   "No payment methods found.": "No se encontraron formas de pago.",
   "Payment method saved.": "Forma de pago guardada.",
-  "Ways your customers can pay, used by receivables and invoices.": "Formas en que sus clientes pueden pagar, usadas en cuentas por cobrar y facturas."
+  "Ways your customers can pay, used by receivables and invoices.": "Formas en que sus clientes pueden pagar, usadas en cuentas por cobrar y facturas.",
+  "Tenant billing": "Facturación del tenant",
+  "MNSCloud Pay (split)": "MNSCloud Pay (split)",
+  "Activating this connection deactivates the other active connection of the same purpose.": "Activar esta conexión desactiva la otra conexión activa de la misma finalidad.",
+  "Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.": "Facturación del tenant: recargas de billetera y facturas del tenant. MNSCloud Pay (split): cobros que los tenants emiten a sus clientes.",
+  "Certificate stored": "Certificado almacenado",
+  "Upload the certificate and private key again to store them in the platform storage.": "Envíe nuevamente el certificado y la clave privada para almacenarlos en el storage de la plataforma.",
+  "The platform storage is not configured. Configure the default storage and try again.": "El storage de la plataforma no está configurado. Configure el storage predeterminado e intente nuevamente.",
+  "This bank does not support the selected purpose.": "Este banco no admite la finalidad seleccionada.",
+  "This payment gateway is not supported.": "Esta pasarela de pago no es compatible."
 }

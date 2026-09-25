@@ -6,7 +6,14 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { bankPartnersConfig, defaultBankOptions, PEM_FIELDS } from './bank-partners-crud';
+import {
+  bankPartnersConfig,
+  defaultBankOptions,
+  PEM_FIELDS,
+  purposeOptions,
+} from './bank-partners-crud';
+
+type BankPartnerCatalogItem = { code: string; name: string; purposes?: string[] };
 
 @Component({
   selector: 'app-pay-bank-partners',
@@ -17,6 +24,8 @@ import { bankPartnersConfig, defaultBankOptions, PEM_FIELDS } from './bank-partn
 })
 export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly bankOptions = signal<readonly ConfigurableCrudOption[]>(defaultBankOptions);
+  /** Purposes each bank supports, from the API catalog (fallback: every purpose). */
+  private readonly bankPurposes = signal<Record<string, string[]>>({});
   private readonly pemFileNames = new Map<string, string>();
 
   constructor() {
@@ -26,12 +35,15 @@ export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<Configur
 
   private async loadCatalog(): Promise<void> {
     try {
-      const response = await this.api.get<{ data?: { items?: { code: string; name: string }[] } }>(
+      const response = await this.api.get<{ data?: { items?: BankPartnerCatalogItem[] } }>(
         'system/pay/bank-partners',
       );
       const items = response?.data?.items ?? [];
       if (items.length) {
         this.bankOptions.set(items.map((item) => ({ value: item.code, label: item.name })));
+        this.bankPurposes.set(
+          Object.fromEntries(items.map((item) => [item.code, item.purposes ?? []])),
+        );
       }
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
@@ -39,7 +51,14 @@ export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<Configur
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    return key === 'provider' ? this.bankOptions() : [];
+    if (key === 'provider') return this.bankOptions();
+    if (key === 'purpose') {
+      const supported = this.bankPurposes()[String(this.formValues()['provider'] ?? '')];
+      return supported?.length
+        ? purposeOptions.filter((option) => supported.includes(String(option.value)))
+        : purposeOptions;
+    }
+    return [];
   }
 
   override startCreate(): void {
