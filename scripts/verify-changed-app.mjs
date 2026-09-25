@@ -54,7 +54,7 @@ run('node', [
   '--test',
   'scripts/crud-discovery.test.mjs',
   'scripts/validate-crud-fk-quick-create.test.mjs',
-  'scripts/payment-account-crud.test.mjs',
+  'scripts/pay-payment-crud.test.mjs',
   'scripts/pay-i18n-coverage.test.mjs',
   'scripts/pay-error.test.mjs',
 ]);
@@ -67,9 +67,17 @@ if (
   run('node', [
     'scripts/validate-crud-i18n.mjs',
     '--shared',
-    'src/app/shared/payment/payment-account-crud.ts',
     'src/app/shared/crud/configurable-crud/define-crud.ts',
   ]);
+}
+// Pay bank partners and tenant gateways own their CRUD configs (independent domains).
+for (const page of [
+  'src/app/pages/system/pay/bank-partners',
+  'src/app/pages/erp/financial/payment/gateway',
+]) {
+  if (changedFiles.some((path) => path.startsWith(page + '/'))) {
+    run('node', ['scripts/validate-crud-i18n.mjs', page]);
+  }
 }
 run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
