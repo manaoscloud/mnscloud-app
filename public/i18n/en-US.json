@@ -5109,5 +5109,19 @@
   "Create POP": "Create POP",
   "Create vendor": "Create vendor",
   "Create vendor model": "Create vendor model",
-  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4."
+  "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.": "Only /32 fixed IPv4 entries are assignable; create them in Fixed IPv4.",
+  "Department": "Department",
+  "Position": "Position",
+  "Hire date": "Hire date",
+  "Termination date": "Termination date",
+  "Manage employee records, company links, departments and positions.": "Manage employee records, company links, departments and positions.",
+  "Manage human resources departments.": "Manage human resources departments.",
+  "Manage human resources job positions.": "Manage human resources job positions.",
+  "Temporary password generated successfully.": "Temporary password generated successfully.",
+  "Generate a new temporary password? The previous password stops working immediately.": "Generate a new temporary password? The previous password stops working immediately.",
+  "Failed to reset password.": "Failed to reset password.",
+  "Create company": "Create company",
+  "Create department": "Create department",
+  "Create position": "Create position",
+  "Create employee": "Create employee"
 }

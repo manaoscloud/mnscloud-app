@@ -1,26 +1,52 @@
 import { Component } from '@angular/core';
-
 import {
-  HUMAN_RESOURCES_CRUD_IMPORTS,
-  SimpleResourcePageBase,
-} from '../shared/simple-resource-page-base';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
+
+const config = defineCrud({
+  endpoint: 'erp/human-resources/departments',
+  uuidField: 'DepartmentUUID',
+  pageTitle: 'Departments',
+  pageDescription: 'Manage human resources departments.',
+  bulkDelete: true,
+  initialValues: { status: 1, name: '', description: '', notes: '' },
+  columns: [
+    { id: 'name', label: 'Name', field: 'Name', uuidField: 'DepartmentUUID', kind: 'identity' },
+    { id: 'description', label: 'Description', field: 'Description' },
+    { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
+  ],
+  fields: [
+    { key: 'status', source: 'Status', label: 'Status', type: 'status', span: 1 },
+    { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
+    { key: 'description', source: 'Description', label: 'Description', span: 2 },
+    {
+      key: 'notes',
+      source: 'Notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
+  ],
+});
 
 @Component({
   selector: 'app-erp-hr-departments',
   standalone: true,
-  imports: HUMAN_RESOURCES_CRUD_IMPORTS,
-  templateUrl: '../shared/simple-resource-page.html',
-  styleUrls: ['../shared/human-resources-crud.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpHumanResourcesDepartmentsPage extends SimpleResourcePageBase {
-  protected override readonly config = {
-    endpoint: 'erp/human-resources/departments',
-    uuidField: 'DepartmentUUID',
-    pageTitle: 'Departments',
-    pageDescription: 'Manage human resources departments.',
-    dialogCreateTitle: 'New Department',
-    dialogEditTitle: 'Edit Department',
-    dialogDescription: 'Define the department name, status and notes.',
-    deleteLabel: 'Department',
-  };
+export class ErpHumanResourcesDepartmentsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  constructor() {
+    super(config);
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    return { ...payload, status: Number(payload['status']) };
+  }
 }
