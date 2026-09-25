@@ -5094,5 +5094,6 @@
   "Upload the certificate and private key again to store them in the platform storage.": "Envie novamente o certificado e a chave privada para armazená-los no storage da plataforma.",
   "The platform storage is not configured. Configure the default storage and try again.": "O storage da plataforma não está configurado. Configure o storage padrão e tente novamente.",
   "This bank does not support the selected purpose.": "Este banco não suporta a finalidade selecionada.",
-  "This payment gateway is not supported.": "Este gateway de pagamento não é suportado."
+  "This payment gateway is not supported.": "Este gateway de pagamento não é suportado.",
+  "Create stock type": "Criar tipo de estoque"
 }
