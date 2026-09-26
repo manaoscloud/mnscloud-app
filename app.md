@@ -189,9 +189,9 @@ the page must use the shared base named here.
   `createUpload` (create sends a file field as multipart with the shared upload progress, e.g.
   product images), column `kind: 'image'` (thumbnail), `addressSections`/`addressCopyActions`,
   `relatedCollections`, `afterSave`/`keepDialogOpenAfterSave` + `runManagedFileUpload`.
-- `check:crud:inventory` scans the whole app. Pages still pending migration are listed in
-  `scripts/crud-legacy-allowlist.json`; that list may only shrink, CI rejects new entries, and a
-  migrated page must be removed from it in the same change.
+- `check:crud:inventory` scans the whole app in CI (`verify:changed`) and fails on any CRUD/list
+  page that does not extend `ConfigurableCrudPageBase`. There is no allowlist; the only opt-out is
+  the documented `crud-template-exempt` marker for non-CRUD table pages.
 
 ## Commercial Menu Projection
 
@@ -874,9 +874,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - CI runs `npm run check:crud:layout -- --changed <base> HEAD` before build so newly touched CRUD
   pages cannot drift from the global layout baseline.
 - `npm run check:crud:inventory` runs app-wide in `verify:changed` (CI). Any CRUD/list page that
-  does not extend `ConfigurableCrudPageBase` and is not listed in
-  `scripts/crud-legacy-allowlist.json` blocks the merge; passing the per-page validators alone
-  never proves a page uses the generic template.
+  does not extend `ConfigurableCrudPageBase` blocks the merge; passing the per-page validators
+  alone never proves a page uses the generic template.
 
 ## Non-negotiables (Blockers)
 

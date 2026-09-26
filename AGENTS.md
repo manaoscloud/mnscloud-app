@@ -31,8 +31,7 @@ window.MNSCLOUD_APP_CONFIG = {
 - CRUD page, dialog, table, upload, and filter behavior must follow `app.md`.
 - Pick the page template from `app.md` → `Page Template Catalog (Current)`. Every CRUD/list page
   extends `ConfigurableCrudPageBase`; matching CSS hook classes alone is not compliance.
-  `npm run check:crud:inventory` enforces this app-wide against `scripts/crud-legacy-allowlist.json`,
-  which may only shrink.
+  `npm run check:crud:inventory` enforces this app-wide (no allowlist).
 - Use Angular Material and existing shared helpers before introducing new UI patterns.
 
 ## Shared visual identity

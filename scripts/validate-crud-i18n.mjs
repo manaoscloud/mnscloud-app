@@ -78,11 +78,22 @@ function collectTsKeys(content) {
   return keys;
 }
 
+// Transloco resolves flat keys first and then dotted paths into nested objects.
+function hasTranslation(dictionary, key) {
+  if (Object.hasOwn(dictionary, key)) return true;
+  let node = dictionary;
+  for (const part of key.split('.')) {
+    if (!node || typeof node !== 'object' || !Object.hasOwn(node, part)) return false;
+    node = node[part];
+  }
+  return typeof node === 'string';
+}
+
 function validateKeys(file, keys) {
   const errors = [];
   for (const key of keys) {
     for (const [language, dictionary] of Object.entries(dictionaries)) {
-      if (!Object.hasOwn(dictionary, key)) {
+      if (!hasTranslation(dictionary, key)) {
         errors.push(`${relative(root, file)} missing ${language} translation: ${key}`);
       }
     }

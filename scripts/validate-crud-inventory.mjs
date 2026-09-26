@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-// App-wide CRUD inventory gate: every CRUD/list page must extend ConfigurableCrudPageBase.
-// Legacy pages are tolerated only while listed in crud-legacy-allowlist.json, and that list
-// may only shrink: a listed page that is no longer legacy (migrated or removed) fails until
-// its entry is deleted, so the allowlist always matches the real migration backlog.
+// App-wide CRUD inventory gate: every CRUD/list page must extend ConfigurableCrudPageBase and use
+// its shared HTML/SCSS. There is no allowlist: a table-based page that is not a record CRUD opts
+// out only through a documented `// crud-template-exempt: <reason>` marker (see crud-discovery).
 import { directoryCrud } from './crud-discovery.mjs';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 export function crudInventory(root) {
@@ -20,33 +19,22 @@ export function crudInventory(root) {
     .map(({ path, kind }) => ({ path: relative(root, path).split('\\').join('/'), kind }));
 }
 
-export function checkCrudInventory(components, pending) {
-  const legacy = new Set(components.filter((c) => c.kind === 'legacy').map((c) => c.path));
-  const allowed = new Set(pending);
-  return {
-    unlisted: [...legacy].filter((path) => !allowed.has(path)).sort(),
-    stale: [...allowed].filter((path) => !legacy.has(path)).sort(),
-    remaining: legacy.size,
-  };
+export function legacyCrudPages(components) {
+  return components
+    .filter((component) => component.kind === 'legacy')
+    .map((component) => component.path)
+    .sort();
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const root = process.cwd();
-  const allowlistPath = resolve(root, 'scripts/crud-legacy-allowlist.json');
-  const pending = existsSync(allowlistPath)
-    ? (JSON.parse(readFileSync(allowlistPath, 'utf8')).pending ?? [])
-    : [];
-  const { unlisted, stale, remaining } = checkCrudInventory(crudInventory(root), pending);
-  if (unlisted.length)
+  const components = crudInventory(process.cwd());
+  const legacy = legacyCrudPages(components);
+  if (legacy.length) {
     console.error(
       'Legacy CRUD/list pages must extend ConfigurableCrudPageBase and use its shared HTML/SCSS:\n' +
-        unlisted.map((path) => `  ${path}`).join('\n'),
+        legacy.map((path) => `  ${path}`).join('\n'),
     );
-  if (stale.length)
-    console.error(
-      'Remove migrated pages from scripts/crud-legacy-allowlist.json:\n' +
-        stale.map((path) => `  ${path}`).join('\n'),
-    );
-  if (unlisted.length || stale.length) process.exit(1);
-  console.log(`CRUD inventory passed; ${remaining} legacy page(s) pending migration.`);
+    process.exit(1);
+  }
+  console.log(`CRUD inventory passed; ${components.length} generic CRUD page(s), no legacy pages.`);
 }

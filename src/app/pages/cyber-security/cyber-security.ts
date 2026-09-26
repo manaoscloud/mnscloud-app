@@ -1,938 +1,438 @@
-import { NgClass, JsonPipe } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
-  Component,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  TemplateRef,
-  viewChild,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FormField, form as createForm, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
+import { openDataViewerDialog } from '../../shared/data-viewer-dialog/data-viewer-dialog';
 
-import { ApiService } from '../../services/api.service';
-import { AppI18nService } from '../../services/app-i18n.service';
-import { SnackbarService } from '../../services/snackbar.service';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../shared/refresh-button/refresh-button';
-import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
+type CyberSection = 'servers' | 'decisions' | 'alerts' | 'lists' | 'security-events';
 
-type CyberRecord = {
-  [key: string]: any;
-  uuid?: string;
-  id?: string;
-  name?: string;
-  slug?: string;
-  description?: string;
-  defaultPorts?: unknown;
-  logPaths?: unknown;
-  crowdsecCollections?: unknown;
-  enabled?: number;
-  serviceSlug?: string | null;
-  serviceSlugs?: string;
-  mode?: string;
-  level?: string;
-  profileName?: string | null;
-  defaultDecisionDuration?: string;
-  trustedNetworks?: unknown;
-  rules?: unknown;
-  listType?: string;
-  value?: string;
-  scope?: string;
-  reason?: string;
-  agentUUID?: string;
-  serverUUID?: string | null;
-  profileUUID?: string;
-  servers?: number;
-  protectedServers?: number;
-  attentionServers?: number;
-  activeDecisions?: number;
-  openAlerts?: number;
-  trustedNodes?: number;
-  networkPolicies?: number;
-  securityEvents24h?: number;
-  agentName?: string;
-  agentHostname?: string;
-  agentConnectionStatus?: string;
-  jobUUID?: string;
-  command?: string;
-  status?: string;
-  dateCreated?: string;
-  progressStep?: string;
-  progressPercent?: number;
-  progressMessage?: string;
-  progress?: CyberProgressEvent[];
-  attemptCount?: number;
-  errorCode?: string;
-  errorMessage?: string;
-  nodeUUID?: string;
-  nodeType?: string;
-  hostname?: string;
-  allowedNetworks?: unknown;
-  endpointGroups?: unknown;
-  authMode?: string;
-  secretVersion?: number;
-  lastSeenAt?: string;
-  lastSeenIP?: string;
-  notes?: string;
-  endpointGroup?: string;
-  action?: string;
-  priority?: number;
-  networks?: unknown;
-  methods?: unknown;
-  rateLimitPerMinute?: number | null;
-  burst?: number | null;
-  trustedNodeUUID?: string | null;
-  trustedNodeName?: string | null;
-  eventType?: string;
-  decision?: string;
-  decisionUUID?: string | null;
-  enforcementStatus?: string | null;
-  enforcementAction?: string | null;
-  enforcementExpiresAt?: string | null;
-  sourceIP?: string;
-  origin?: string;
-  startedAt?: string;
-  expiresAt?: string;
-  serverName?: string | null;
-  serverHostname?: string | null;
-  serverPrivateIP?: string | null;
-  serverPublicIP?: string | null;
-  method?: string;
-  path?: string;
-  scenario?: string | null;
-  message?: string | null;
-  details?: unknown;
-  detectedAt?: string;
-  policyName?: string | null;
+const options = (values: string[]): ConfigurableCrudOption[] =>
+  values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
+
+const alertStatuses = options(['open', 'acknowledged', 'resolved', 'ignored']);
+const decisionStatuses = options(['active', 'expired', 'removed']);
+const levels = options(['info', 'warning', 'error', 'critical']);
+const decisionActions = options(['ban', 'allow', 'captcha', 'none']);
+const origins = options(['crowdsec', 'manual', 'import', 'system']);
+const listTypes = [
+  { value: 'allowlist', label: 'Allowlist' },
+  { value: 'blocklist', label: 'Blocklist' },
+];
+const listScopes = [
+  { value: 'ip', label: 'IP' },
+  { value: 'range', label: 'Range' },
+  { value: 'country', label: 'Country' },
+  { value: 'asn', label: 'ASN' },
+];
+
+const tone = (value: unknown) => {
+  switch (String(value ?? '')) {
+    case 'active':
+    case 'protected':
+    case 'healthy':
+    case 'online':
+    case 'completed':
+    case 'done':
+    case 'resolved':
+      return 'chip-success';
+    case 'queued':
+    case 'pending':
+    case 'acknowledged':
+      return 'chip-queued';
+    case 'running':
+    case 'installing':
+      return 'chip-running';
+    case 'warning':
+    case 'open':
+      return 'chip-warning';
+    case 'failed':
+    case 'error':
+    case 'critical':
+    case 'offline':
+    case 'ban':
+      return 'chip-failed';
+    default:
+      return 'chip-skipped';
+  }
 };
 
-type CyberProgressEvent = {
-  at?: string;
-  step?: string;
-  percent?: number;
-  message?: string;
-  status?: string;
-  output?: string;
-  error?: string;
-};
+const readOnly = { canCreate: false, canEdit: false, canDelete: false, bulkDelete: false } as const;
 
-type CyberFilters = {
-  search: string;
-  serverUUID: string;
-  status: string;
-  level: string;
-  serviceSlug: string;
-  sourceIP: string;
-  action: string;
-  origin: string;
-};
+const jobRequest = (
+  command: string,
+  successMessage: string,
+  extra: (row: ConfigurableCrudRecord) => Record<string, unknown> = () => ({}),
+) => ({
+  method: 'post' as const,
+  endpoint: () => 'cyber-security/servers/jobs',
+  body: (row: ConfigurableCrudRecord) => ({
+    agentUUID: row['agentUUID'],
+    command,
+    payload: {},
+    ...extra(row),
+  }),
+  successMessage,
+});
 
-type CyberSnapshot = {
-  servers: CyberRecord[];
-  services: CyberRecord[];
-  profiles: CyberRecord[];
-  decisions: CyberRecord[];
-  alerts: CyberRecord[];
-  listEntries: CyberRecord[];
-  trustedNodes: CyberRecord[];
-  securityEvents: CyberRecord[];
-};
+// Assigning a profile is a one-shot form posted to the server profile endpoint.
+function assignProfile(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: 'cyber-security/servers/profile',
+    uuidField: 'agentUUID',
+    pageTitle: 'Assign security profile',
+    createTitle: 'Assign security profile',
+    savedMessage: 'Security profile assigned.',
+    ...readOnly,
+    canCreate: true,
+    initialValues: { profileUUID: row['profileUUID'] ?? '' },
+    columns: [{ id: 'profile', label: 'Profile', field: 'profileUUID' }],
+    fields: [
+      {
+        key: 'profileUUID',
+        label: 'Profile',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'cyber-security/profiles',
+          uuidField: 'uuid',
+          labelField: 'name',
+        },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Security profiles carry rules and services; create them on the Profiles page.',
+        span: 4,
+      },
+    ],
+    payload: (values) => ({
+      agentUUID: row['agentUUID'],
+      profileUUID: values['profileUUID'] || null,
+    }),
+  });
+}
 
-type CyberResourceParams = {
-  section: CyberSection;
-  filters: CyberFilters;
-};
-
-const EMPTY_CYBER_SNAPSHOT: CyberSnapshot = {
-  servers: [],
-  services: [],
-  profiles: [],
-  decisions: [],
-  alerts: [],
-  listEntries: [],
-  trustedNodes: [],
-  securityEvents: [],
+const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
+  servers: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/servers',
+    uuidField: 'uuid',
+    pageTitle: 'Servers',
+    pageDescription: 'Agents, protection state, CrowdSec and bouncer health.',
+    serverSidePagination: true,
+    statusFilter: false,
+    columns: [
+      { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
+      { id: 'profile', label: 'Profile', field: 'profileName' },
+      {
+        id: 'protection',
+        label: 'Protection',
+        field: 'protectionStatus',
+        kind: 'status',
+        chipClass: tone,
+      },
+      { id: 'job', label: 'Last job', field: 'lastJobStatus', kind: 'status', chipClass: tone },
+      {
+        id: 'crowdsec',
+        label: 'CrowdSec',
+        field: 'crowdsecStatus',
+        kind: 'status',
+        chipClass: tone,
+      },
+      { id: 'bouncer', label: 'Bouncer', field: 'bouncerStatus', kind: 'status', chipClass: tone },
+      { id: 'lastSync', label: 'Last sync', field: 'lastSyncAt', kind: 'datetime' },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [
+      { key: 'jobs', label: 'Job details', icon: 'manage_search', tooltip: 'Job details' },
+      {
+        key: 'status',
+        label: 'Refresh security status',
+        icon: 'fact_check',
+        tooltip: 'Refresh security status',
+        visible: (row) => Boolean(row['agentUUID']),
+        request: jobRequest('cyber.security.status', 'Security status refresh started.'),
+      },
+      {
+        key: 'install',
+        label: 'Install protection',
+        icon: 'admin_panel_settings',
+        tooltip: 'Install protection',
+        visible: (row) => Boolean(row['agentUUID']),
+        request: {
+          ...jobRequest('cyber.security.install', 'Protection install job started.', () => ({
+            payload: { collections: ['crowdsecurity/linux', 'crowdsecurity/sshd'] },
+          })),
+          confirm: {
+            title: 'Install protection',
+            message: 'Queue the CrowdSec protection install on this server?',
+            confirmLabel: 'Install',
+          },
+        },
+      },
+      {
+        key: 'apply',
+        label: 'Apply security profile',
+        icon: 'policy',
+        tooltip: 'Apply security profile',
+        visible: (row) => Boolean(row['agentUUID'] && row['profileUUID']),
+        request: jobRequest(
+          'cyber.security.profile.apply',
+          'Security profile apply job started.',
+          (row) => ({
+            profileUUID: row['profileUUID'],
+          }),
+        ),
+      },
+      { key: 'assign', label: 'Assign security profile', icon: 'shield', form: assignProfile },
+    ],
+  }),
+  decisions: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/decisions',
+    uuidField: 'uuid',
+    pageTitle: 'Decisions',
+    pageDescription: 'Active security decisions currently enforced by CrowdSec.',
+    serverSidePagination: true,
+    statusMode: 'string',
+    activeValue: 'active',
+    inactiveValue: 'expired',
+    statusOptions: decisionStatuses,
+    listFilters: [
+      { key: 'action', label: 'Action', type: 'select', span: 1, options: decisionActions },
+      { key: 'origin', label: 'Origin', type: 'select', span: 1, options: origins },
+    ],
+    columns: [
+      {
+        id: 'value',
+        label: 'Value',
+        field: 'value',
+        uuidField: 'uuid',
+        kind: 'identity',
+        translateValue: false,
+      },
+      { id: 'server', label: 'Server', field: 'serverName' },
+      {
+        id: 'action',
+        label: 'Action',
+        field: 'action',
+        kind: 'status',
+        options: decisionActions,
+        chipClass: tone,
+      },
+      { id: 'origin', label: 'Origin', field: 'origin', options: origins },
+      { id: 'service', label: 'Service', field: 'serviceSlug', translateValue: false },
+      { id: 'expires', label: 'Expires', field: 'expiresAt', kind: 'datetime' },
+      { id: 'status', label: 'Status', field: 'status', kind: 'status', chipClass: tone },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [{ key: 'details', label: 'Details', icon: 'visibility', tooltip: 'Details' }],
+  }),
+  alerts: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/alerts',
+    uuidField: 'uuid',
+    pageTitle: 'Alerts',
+    pageDescription: 'Open security findings that need operator review.',
+    serverSidePagination: true,
+    statusMode: 'string',
+    activeValue: 'open',
+    inactiveValue: 'resolved',
+    statusOptions: alertStatuses,
+    listFilters: [{ key: 'level', label: 'Level', type: 'select', span: 1, options: levels }],
+    columns: [
+      { id: 'message', label: 'Message', field: 'message', uuidField: 'uuid', kind: 'identity' },
+      { id: 'server', label: 'Server', field: 'serverName' },
+      {
+        id: 'level',
+        label: 'Level',
+        field: 'level',
+        kind: 'status',
+        options: levels,
+        chipClass: tone,
+      },
+      { id: 'service', label: 'Service', field: 'serviceSlug', translateValue: false },
+      { id: 'detectedAt', label: 'Detected at', field: 'detectedAt', kind: 'datetime' },
+      { id: 'status', label: 'Status', field: 'status', kind: 'status', chipClass: tone },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [
+      { key: 'details', label: 'Details', icon: 'visibility', tooltip: 'Details' },
+      ...(
+        [
+          ['acknowledged', 'Acknowledge', 'done'],
+          ['resolved', 'Resolve', 'task_alt'],
+          ['ignored', 'Ignore', 'visibility_off'],
+        ] as const
+      ).map(([status, label, icon]) => ({
+        key: status,
+        label,
+        icon,
+        tooltip: label,
+        visible: (row: ConfigurableCrudRecord) => row['status'] !== status,
+        request: {
+          method: 'put' as const,
+          endpoint: (row: ConfigurableCrudRecord) => `cyber-security/alerts/${row['uuid']}/status`,
+          body: () => ({ status }),
+          successMessage: 'Alert updated.',
+        },
+      })),
+    ],
+  }),
+  lists: defineCrud({
+    endpoint: 'cyber-security/lists',
+    uuidField: 'uuid',
+    pageTitle: 'Allowlist / Blocklist',
+    pageDescription: 'Explicit allow and block entries for trusted operations.',
+    serverSidePagination: true,
+    // No bulk list-entry endpoint exists; individual delete keeps the audited single-entry path.
+    bulkDelete: false,
+    listFilters: [
+      { key: 'listType', label: 'List type', type: 'select', span: 1, options: listTypes },
+    ],
+    initialValues: { enabled: 1, listType: 'allowlist', value: '', scope: 'ip', reason: '' },
+    columns: [
+      {
+        id: 'value',
+        label: 'Value',
+        field: 'value',
+        uuidField: 'uuid',
+        kind: 'identity',
+        translateValue: false,
+      },
+      { id: 'type', label: 'List type', field: 'listType', options: listTypes },
+      { id: 'scope', label: 'Scope', field: 'scope', options: listScopes },
+      { id: 'reason', label: 'Reason', field: 'reason' },
+      { id: 'status', label: 'Status', field: 'enabled', kind: 'status' },
+    ],
+    fields: [
+      { key: 'enabled', source: 'enabled', label: 'Status', type: 'status', span: 1 },
+      {
+        key: 'listType',
+        source: 'listType',
+        label: 'List type',
+        type: 'select',
+        options: listTypes,
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'scope',
+        source: 'scope',
+        label: 'Scope',
+        type: 'select',
+        options: listScopes,
+        required: true,
+        span: 1,
+      },
+      { key: 'value', source: 'value', label: 'Value', required: true, span: 1 },
+      { key: 'reason', source: 'reason', label: 'Reason', span: 4 },
+    ],
+  }),
+  'security-events': defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/security-events',
+    uuidField: 'uuid',
+    pageTitle: 'Security Events',
+    pageDescription: 'Audited decisions for trusted access, deny, rate limit and monitor events.',
+    serverSidePagination: true,
+    statusFilter: false,
+    columns: [
+      {
+        id: 'detectedAt',
+        label: 'Detected at',
+        field: 'detectedAt',
+        uuidField: 'uuid',
+        kind: 'identity',
+      },
+      { id: 'decision', label: 'Decision', field: 'decision', kind: 'status', chipClass: tone },
+      {
+        id: 'endpointGroup',
+        label: 'Endpoint group',
+        field: 'endpointGroup',
+        translateValue: false,
+      },
+      { id: 'source', label: 'Source', field: 'sourceIP', translateValue: false },
+      { id: 'node', label: 'Trusted node', field: 'trustedNodeName' },
+      { id: 'reason', label: 'Reason', field: 'reason' },
+    ],
+    fields: [],
+    initialValues: {},
+  }),
 };
 
 @Component({
   selector: 'app-cyber-security',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    MatTooltipModule,
-    RouterLink,
-    TranslocoPipe,
-    JsonPipe,
-    NgClass,
-  ],
-  templateUrl: './cyber-security.html',
-  styleUrls: ['./cyber-security.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class CyberSecurityPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly snack = inject(SnackbarService);
-  private readonly i18n = inject(AppI18nService);
-  private readonly routeParams = toSignal(this.route.paramMap, { initialValue: null });
-
-  readonly listDialog = viewChild<TemplateRef<unknown>>('listDialog');
-  readonly jobDialog = viewChild<TemplateRef<unknown>>('jobDialog');
-  readonly alertDialog = viewChild<TemplateRef<unknown>>('alertDialog');
-  readonly decisionDialog = viewChild<TemplateRef<unknown>>('decisionDialog');
-
-  private readonly appliedFilters = signal<CyberFilters>({
-    search: '',
-    serverUUID: '',
-    status: '',
-    level: '',
-    serviceSlug: '',
-    sourceIP: '',
-    action: '',
-    origin: '',
-  });
-  readonly activeSection = signal<CyberSection>('servers');
-  private readonly cyberResource = resource({
-    params: (): CyberResourceParams => ({
-      section: this.activeSection(),
-      filters: this.appliedFilters(),
-    }),
-    defaultValue: EMPTY_CYBER_SNAPSHOT,
-    loader: ({ params }) => this.fetchCyberSnapshot(params.filters, params.section),
-  });
-
-  readonly loading = this.cyberResource.isLoading;
-  readonly servers = signal<CyberRecord[]>([]);
-  readonly services = signal<CyberRecord[]>([]);
-  readonly profiles = signal<CyberRecord[]>([]);
-  readonly decisions = signal<CyberRecord[]>([]);
-  readonly alerts = signal<CyberRecord[]>([]);
-  readonly listEntries = signal<CyberRecord[]>([]);
-  readonly trustedNodes = signal<CyberRecord[]>([]);
-  readonly securityEvents = signal<CyberRecord[]>([]);
-  readonly editingListEntry = signal<CyberRecord | null>(null);
-  readonly serverProfileSearch = signal('');
-  readonly selectedServer = signal<CyberRecord | null>(null);
-  readonly selectedJobs = signal<CyberRecord[]>([]);
-  readonly selectedAlert = signal<CyberRecord | null>(null);
-  readonly selectedDecision = signal<CyberRecord | null>(null);
-  readonly alertServerSearch = signal('');
-  readonly alertServiceSearch = signal('');
-  readonly decisionDataSource = new MatTableDataSource<CyberRecord>([]);
-  readonly alertDataSource = new MatTableDataSource<CyberRecord>([]);
-
-  readonly decisionPaginator = viewChild<MatPaginator>('decisionPaginator');
-  readonly decisionSort = viewChild<MatSort>('decisionSort');
-  readonly alertPaginator = viewChild<MatPaginator>('alertPaginator');
-  readonly alertSort = viewChild<MatSort>('alertSort');
-  private readonly bindTableQueries = effect(() => {
-    this.decisionDataSource.paginator = this.decisionPaginator() ?? null;
-    this.decisionDataSource.sort = this.decisionSort() ?? null;
-    this.alertDataSource.paginator = this.alertPaginator() ?? null;
-    this.alertDataSource.sort = this.alertSort() ?? null;
-  });
-
-  private readonly syncCyberData = effect(() => {
-    const snapshot = this.cyberResource.value();
-    this.servers.set(snapshot.servers);
-    this.services.set(snapshot.services);
-    this.profiles.set(snapshot.profiles);
-    this.decisions.set(snapshot.decisions);
-    this.decisionDataSource.data = snapshot.decisions;
-    this.alerts.set(snapshot.alerts);
-    this.alertDataSource.data = snapshot.alerts;
-    this.listEntries.set(snapshot.listEntries);
-    this.trustedNodes.set(snapshot.trustedNodes);
-    this.securityEvents.set(snapshot.securityEvents);
-  });
-
-  private readonly reportCyberError = effect(() => {
-    const error = this.cyberResource.error();
-    if (!error) return;
-    this.snack.error(this.errorMessage(error, 'Failed to load Cyber Security.'));
-  });
-
-  readonly sections: Array<{
-    key: CyberSection;
-    label: string;
-    icon: string;
-    description: string;
-  }> = [
-    {
-      key: 'servers',
-      label: 'Servers',
-      icon: 'dns',
-      description: 'Agents, protection state, CrowdSec and bouncer health.',
-    },
-    {
-      key: 'profiles',
-      label: 'Security Profiles',
-      icon: 'shield',
-      description: 'Reusable protection policies for Linux services.',
-    },
-    {
-      key: 'decisions',
-      label: 'Decisions',
-      icon: 'gavel',
-      description: 'Active security decisions currently enforced by CrowdSec.',
-    },
-    {
-      key: 'alerts',
-      label: 'Alerts',
-      icon: 'notification_important',
-      description: 'Open security findings that need operator review.',
-    },
-    {
-      key: 'lists',
-      label: 'Allowlist / Blocklist',
-      icon: 'rule',
-      description: 'Explicit allow and block entries for trusted operations.',
-    },
-    {
-      key: 'trusted-nodes',
-      label: 'Trusted Nodes',
-      icon: 'hub',
-      description: 'Authenticated infrastructure nodes and agent-backed integrations.',
-    },
-    {
-      key: 'network-policies',
-      label: 'Network Policies',
-      icon: 'policy',
-      description: 'Endpoint groups, node scopes, rate limits and enforcement mode.',
-    },
-    {
-      key: 'security-events',
-      label: 'Security Events',
-      icon: 'manage_search',
-      description: 'Audited decisions for trusted access, deny, rate limit and monitor events.',
-    },
-  ];
-
-  readonly currentSection = computed(
-    () => this.sections.find((section) => section.key === this.activeSection()) ?? this.sections[0],
-  );
-  readonly filteredProfiles = computed(() => {
-    const search = this.serverProfileSearch().trim().toLowerCase();
-    if (!search) return this.profiles();
-    return this.profiles().filter((profile) =>
-      `${profile.name ?? ''} ${profile.description ?? ''} ${profile.serviceSlugs ?? ''}`
-        .toLowerCase()
-        .includes(search),
-    );
-  });
-  readonly filteredAlertServers = computed(() => {
-    const search = this.alertServerSearch().trim().toLowerCase();
-    if (!search) return this.servers();
-    return this.servers().filter((server) =>
-      `${this.serverLabel(server)} ${this.serverDetail(server)}`.toLowerCase().includes(search),
-    );
-  });
-  readonly filteredAlertServices = computed(() => {
-    const search = this.alertServiceSearch().trim().toLowerCase();
-    if (!search) return this.services();
-    return this.services().filter((service) =>
-      `${service.name ?? ''} ${service.slug ?? ''} ${service.description ?? ''}`
-        .toLowerCase()
-        .includes(search),
-    );
-  });
-
-  readonly serverColumns = [
-    'agent',
-    'profile',
-    'protection',
-    'job',
-    'crowdsec',
-    'bouncer',
-    'lastSync',
-    'actions',
-  ];
-  readonly decisionColumns = [
-    'server',
-    'value',
-    'status',
-    'action',
-    'origin',
-    'service',
-    'scenario',
-    'started',
-    'expires',
-    'actions',
-  ];
-  readonly alertColumns = [
-    'server',
-    'level',
-    'status',
-    'enforcement',
-    'service',
-    'message',
-    'detectedAt',
-    'actions',
-  ];
-  readonly listColumns = ['type', 'value', 'scope', 'status', 'reason', 'actions'];
-  readonly securityEventColumns = [
-    'detectedAt',
-    'decision',
-    'endpointGroup',
-    'source',
-    'node',
-    'reason',
-  ];
-
-  readonly filterFormModel = signal({
-    search: '',
-    serverUUID: '',
-    status: '',
-    level: '',
-    serviceSlug: '',
-    sourceIP: '',
-    action: '',
-    origin: '',
-  });
-  readonly filterForm = createForm(this.filterFormModel);
-
-  readonly listFormModel = signal({
-    listType: 'allowlist',
-    value: '',
-    scope: 'ip',
-    reason: '',
-    enabled: 1,
-  });
-  readonly listForm = createForm(this.listFormModel, (path) => {
-    required(path.listType);
-    required(path.value);
-    required(path.scope);
-  });
-
+export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    this.decisionDataSource.sortingDataAccessor = (row, column) => {
-      switch (column) {
-        case 'server':
-          return this.serverLabel(row);
-        case 'service':
-          return this.serviceLabel(row.serviceSlug);
-        case 'expires':
-          return row.expiresAt ?? '';
-        case 'started':
-          return row.startedAt ?? row.dateCreated ?? '';
-        default:
-          return row[column] ?? '';
-      }
-    };
-    this.alertDataSource.sortingDataAccessor = (row, column) => {
-      switch (column) {
-        case 'server':
-          return this.serverLabel(row);
-        case 'service':
-          return this.serviceLabel(row.serviceSlug);
-        case 'source':
-          return row.sourceIP ?? '';
-        case 'enforcement':
-          return row.enforcementAction ?? row.enforcementStatus ?? '';
-        case 'detectedAt':
-          return row.detectedAt ?? row.dateCreated ?? '';
-        default:
-          return row[column] ?? '';
-      }
-    };
-    effect(() => {
-      const params = this.routeParams();
-      this.activeSection.set(this.normalizeSection(params?.get('section') ?? null));
+    const section = inject(ActivatedRoute).snapshot.paramMap.get('section') as CyberSection | null;
+    super(CONFIGS[section ?? 'servers'] ?? CONFIGS.servers);
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key === 'jobs') await this.showJobs(row);
+    if (action.key === 'details') this.showDetails(row);
+  }
+
+  private async showJobs(row: ConfigurableCrudRecord): Promise<void> {
+    if (!row['agentUUID']) return;
+    try {
+      const params = new URLSearchParams({ agentUUID: String(row['agentUUID']), limit: '20' });
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        `cyber-security/jobs?${params.toString()}`,
+      );
+      openDataViewerDialog(this.dialog, {
+        title: 'Job details',
+        description: String(row['agentName'] ?? row['agentUUID']),
+        sections: [
+          {
+            title: 'Recent jobs',
+            table: {
+              columns: [
+                { key: 'command', label: 'Command', monospace: true, translate: false },
+                { key: 'status', label: 'Status' },
+                { key: 'progressPercent', label: 'Progress' },
+                { key: 'progressMessage', label: 'Message', translate: false },
+                { key: 'dateCreated', label: 'Created at', kind: 'datetime' },
+              ],
+              rows: response?.data?.items ?? [],
+              emptyLabel: 'No jobs found.',
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'Failed to load job details.'));
+    }
+  }
+
+  private showDetails(row: ConfigurableCrudRecord): void {
+    openDataViewerDialog(this.dialog, {
+      title: 'Details',
+      sections: [{ title: 'Record', code: { value: row, format: 'json', copy: true } }],
     });
   }
 
-  routeFor(section: CyberSection) {
-    const base = this.router.url.startsWith('/system/cyber-security')
-      ? '/system/cyber-security'
-      : '/cyber-security';
-    return `${base}/${section}`;
-  }
-
-  refreshList() {
-    this.cyberResource.reload();
-  }
-
-  private emptyCyberSnapshot(): CyberSnapshot {
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
-      servers: [],
-      services: [],
-      profiles: [],
-      decisions: [],
-      alerts: [],
-      listEntries: [],
-      trustedNodes: [],
-      securityEvents: [],
+      ...payload,
+      enabled: Number(payload['enabled'] ?? 1),
+      reason: payload['reason'] || null,
     };
-  }
-
-  private async fetchCyberSnapshot(
-    filters: CyberFilters,
-    section: CyberSection,
-  ): Promise<CyberSnapshot> {
-    const snapshot = this.emptyCyberSnapshot();
-    const query = this.queryString(filters);
-    const decisionQuery = this.decisionQueryString(filters);
-    const alertQuery = this.alertQueryString(filters);
-
-    switch (section) {
-      case 'servers': {
-        const [servers, profiles] = await Promise.all([
-          this.api.get<any>(`cyber-security/servers${query}`),
-          this.api.get<any>(`cyber-security/profiles${query}`),
-        ]);
-        snapshot.servers = servers?.data?.items ?? [];
-        snapshot.profiles = profiles?.data?.items ?? [];
-        return snapshot;
-      }
-      case 'decisions': {
-        const [decisions, servers, services] = await Promise.all([
-          this.api.get<any>(`cyber-security/decisions${decisionQuery}`),
-          this.api.get<any>(`cyber-security/servers${query}`),
-          this.api.get<any>(`cyber-security/services${query}`),
-        ]);
-        snapshot.decisions = decisions?.data?.items ?? [];
-        snapshot.servers = servers?.data?.items ?? [];
-        snapshot.services = services?.data?.items ?? [];
-        return snapshot;
-      }
-      case 'alerts': {
-        const [alerts, servers, services] = await Promise.all([
-          this.api.get<any>(`cyber-security/alerts${alertQuery}`),
-          this.api.get<any>(`cyber-security/servers${query}`),
-          this.api.get<any>(`cyber-security/services${query}`),
-        ]);
-        snapshot.alerts = alerts?.data?.items ?? [];
-        snapshot.servers = servers?.data?.items ?? [];
-        snapshot.services = services?.data?.items ?? [];
-        return snapshot;
-      }
-      case 'lists': {
-        const lists = await this.api.get<any>(`cyber-security/lists${query}`);
-        snapshot.listEntries = lists?.data?.items ?? [];
-        return snapshot;
-      }
-      case 'security-events': {
-        const [securityEvents, trustedNodes] = await Promise.all([
-          this.api.get<any>(`cyber-security/security-events${query}`),
-          this.api.get<any>(`cyber-security/trusted-nodes${query}`),
-        ]);
-        snapshot.securityEvents = securityEvents?.data?.items ?? [];
-        snapshot.trustedNodes = trustedNodes?.data?.items ?? [];
-        return snapshot;
-      }
-      case 'profiles':
-      case 'trusted-nodes':
-      case 'network-policies':
-      default:
-        return snapshot;
-    }
-  }
-
-  applyFilters() {
-    this.resetDecisionPaginator();
-    this.resetAlertPaginator();
-    this.appliedFilters.set(this.currentFilters());
-  }
-
-  clearFilters() {
-    this.filterFormModel.set({
-      search: '',
-      serverUUID: '',
-      status: '',
-      level: '',
-      serviceSlug: '',
-      sourceIP: '',
-      action: '',
-      origin: '',
-    });
-    this.alertServerSearch.set('');
-    this.alertServiceSearch.set('');
-    this.resetDecisionPaginator();
-    this.resetAlertPaginator();
-    this.applyFilters();
-  }
-
-  clearServerProfileSearch(open: boolean) {
-    if (!open) this.serverProfileSearch.set('');
-  }
-
-  clearAlertServerSearch(open: boolean) {
-    if (!open) this.alertServerSearch.set('');
-  }
-
-  clearAlertServiceSearch(open: boolean) {
-    if (!open) this.alertServiceSearch.set('');
-  }
-
-  resetAlertPaginator() {
-    this.alertDataSource.paginator?.firstPage();
-  }
-
-  resetDecisionPaginator() {
-    this.decisionDataSource.paginator?.firstPage();
-  }
-
-  openListEntry(row?: CyberRecord, listType = 'allowlist') {
-    this.editingListEntry.set(row ?? null);
-    this.listFormModel.set({
-      listType: row?.listType ?? listType,
-      value: row?.value ?? '',
-      scope: row?.scope ?? 'ip',
-      reason: row?.reason ?? '',
-      enabled: row?.enabled ?? 1,
-    });
-    this.openDialog(this.listDialog());
-  }
-
-  async saveListEntry() {
-    if (!this.listForm().valid()) return;
-    const row = this.editingListEntry();
-    await this.save(
-      row ? `cyber-security/lists/${row.uuid}` : 'cyber-security/lists',
-      this.listFormModel(),
-      !!row,
-    );
-  }
-
-  async deleteListEntry(row: CyberRecord) {
-    await this.remove(`cyber-security/lists/${row.uuid}`);
-  }
-
-  async requestStatusRefresh(row: CyberRecord) {
-    if (!row.agentUUID) return;
-    await this.api.post('cyber-security/servers/jobs', {
-      agentUUID: row.agentUUID,
-      command: 'cyber.security.status',
-      payload: {},
-    });
-    this.snack.success('Security status refresh started.');
-    this.refreshList();
-  }
-
-  async queueInstall(row: CyberRecord) {
-    if (!row.agentUUID) return;
-    await this.api.post('cyber-security/servers/jobs', {
-      agentUUID: row.agentUUID,
-      command: 'cyber.security.install',
-      payload: {
-        collections: ['crowdsecurity/linux', 'crowdsecurity/sshd'],
-      },
-    });
-    this.snack.success('Protection install job started.');
-    this.refreshList();
-  }
-
-  async queueProfileApply(row: CyberRecord) {
-    if (!row.agentUUID || !row.profileUUID) return;
-    await this.api.post('cyber-security/servers/jobs', {
-      agentUUID: row.agentUUID,
-      profileUUID: row.profileUUID,
-      command: 'cyber.security.profile.apply',
-      payload: {},
-    });
-    this.snack.success('Security profile apply job started.');
-    this.refreshList();
-  }
-
-  async assignServerProfile(row: CyberRecord, profileUUID: string | null) {
-    if (!row.agentUUID) return;
-    const previousProfileUUID = row.profileUUID ?? null;
-    row.profileUUID = profileUUID ?? undefined;
-    row.profileName = profileUUID
-      ? this.profiles().find((profile) => profile.uuid === profileUUID)?.name
-      : null;
-    try {
-      await this.api.post('cyber-security/servers/profile', {
-        agentUUID: row.agentUUID,
-        profileUUID,
-      });
-      this.snack.success(profileUUID ? 'Security profile assigned.' : 'Security profile removed.');
-      this.refreshList();
-    } catch (error) {
-      row.profileUUID = previousProfileUUID ?? undefined;
-      row.profileName = previousProfileUUID
-        ? this.profiles().find((profile) => profile.uuid === previousProfileUUID)?.name
-        : null;
-      this.snack.error(this.errorMessage(error, 'Failed to assign security profile.'));
-    }
-  }
-
-  async openJobDetails(row: CyberRecord) {
-    if (!row.agentUUID) return;
-    this.selectedServer.set(row);
-    this.selectedJobs.set([]);
-    this.openDialog(this.jobDialog(), '1100px');
-    try {
-      const params = new URLSearchParams({
-        agentUUID: row.agentUUID,
-        limit: '20',
-      });
-      const response = await this.api.get<any>(`cyber-security/jobs?${params.toString()}`);
-      this.selectedJobs.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load job details.'));
-    }
-  }
-
-  progressEvents(job: CyberRecord) {
-    return Array.isArray(job.progress) ? job.progress : [];
-  }
-
-  jobProgress(job: CyberRecord) {
-    const value = Number(job.progressPercent ?? 0);
-    return Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
-  }
-
-  openAlertDetails(row: CyberRecord) {
-    this.selectedAlert.set(row);
-    this.openDialog(this.alertDialog(), '980px');
-  }
-
-  openDecisionDetails(row: CyberRecord) {
-    this.selectedDecision.set(row);
-    this.openDialog(this.decisionDialog(), '980px');
-  }
-
-  async updateAlertStatus(row: CyberRecord, status: string) {
-    if (!row.uuid) return;
-    const previous = row.status;
-    row.status = status;
-    try {
-      await this.api.put(`cyber-security/alerts/${row.uuid}/status`, { status });
-      this.snack.success('Alert updated.');
-      this.refreshList();
-    } catch (error) {
-      row.status = previous;
-      this.snack.error(this.errorMessage(error, 'Failed to update alert.'));
-    }
-  }
-
-  chipClass(value: string | null | undefined) {
-    return `chip-${value || 'none'}`;
-  }
-
-  formatJson(value: unknown) {
-    if (!value) return '-';
-    if (Array.isArray(value)) return value.join(', ') || '-';
-    return JSON.stringify(value);
-  }
-
-  formatList(value: unknown) {
-    if (!value) return '-';
-    if (Array.isArray(value)) return value.map((item) => String(item)).join(', ') || '-';
-    return String(value);
-  }
-
-  formatPorts(value: unknown) {
-    if (!Array.isArray(value)) return this.formatList(value);
-    const ports = value.map((item) => {
-      if (!item || typeof item !== 'object') return String(item);
-      const entry = item as Record<string, unknown>;
-      const protocol = String(entry['protocol'] ?? '').toUpperCase();
-      const port = entry['port'] ?? entry['range'] ?? '';
-      return [protocol, port].filter(Boolean).join(' ');
-    });
-    return ports.join(', ') || '-';
-  }
-
-  trustedNodeLabel(uuid: string | null | undefined) {
-    if (!uuid) return 'Any trusted node';
-    return this.trustedNodes().find((node) => node.uuid === uuid)?.name ?? uuid;
-  }
-
-  serverOptionValue(row: CyberRecord) {
-    return row.uuid || row.serverUUID || '';
-  }
-
-  serverLabel(row: CyberRecord | string | null | undefined): string {
-    if (!row) return '-';
-    if (typeof row === 'string') {
-      const server = this.servers().find((item) => item.uuid === row || item.serverUUID === row);
-      return server ? this.serverLabel(server) : row;
-    }
-    return (
-      row.serverName ||
-      row.agentName ||
-      row.serverHostname ||
-      row.agentHostname ||
-      row.hostname ||
-      row.agentUUID ||
-      row.serverUUID ||
-      '-'
-    );
-  }
-
-  serverDetail(row: CyberRecord) {
-    return (
-      row.serverPrivateIP || row.serverPublicIP || row.agentHostname || row.serverHostname || ''
-    );
-  }
-
-  serviceLabel(slug: string | null | undefined) {
-    if (!slug) return '-';
-    return this.services().find((service) => service.slug === slug)?.name ?? slug;
-  }
-
-  listTypeLabel(value: string | null | undefined) {
-    const normalized = String(value ?? '').toLowerCase();
-    if (normalized === 'allowlist') return this.t('Allowlist');
-    if (normalized === 'blocklist') return this.t('Blocklist');
-    return value || '-';
-  }
-
-  listScopeLabel(value: string | null | undefined) {
-    const normalized = String(value ?? '').toLowerCase();
-    if (normalized === 'ip') return 'IP';
-    if (normalized === 'range') return this.t('Range');
-    if (normalized === 'country') return this.t('Country');
-    if (normalized === 'asn') return this.t('ASN');
-    return value || '-';
-  }
-
-  enabledLabel(value: number | boolean | null | undefined) {
-    return Number(value ?? 0) === 1 ? this.t('Active') : this.t('Inactive');
-  }
-
-  private async save(endpoint: string, payload: Record<string, any>, update: boolean) {
-    try {
-      if (update) await this.api.put(endpoint, payload);
-      else await this.api.post(endpoint, payload);
-      this.dialog.closeAll();
-      this.snack.success('Saved successfully.');
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to save.'));
-    }
-  }
-
-  private async remove(endpoint: string) {
-    try {
-      await this.api.delete(endpoint);
-      this.snack.success('Deleted successfully.');
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to delete.'));
-    }
-  }
-
-  private openDialog(template?: TemplateRef<unknown>, width = '920px') {
-    if (!template) return;
-    this.dialog.open(template, {
-      width,
-      maxWidth: '96vw',
-      maxHeight: '88vh',
-    });
-  }
-
-  private queryString(filters: CyberFilters) {
-    const search = filters.search.trim();
-    const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    params.set('limit', '1000');
-    return `?${params.toString()}`;
-  }
-
-  private alertQueryString(filters: CyberFilters) {
-    const params = new URLSearchParams();
-    if (filters.search.trim()) params.set('search', filters.search.trim());
-    if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.level) params.set('level', filters.level);
-    if (filters.serviceSlug) params.set('serviceSlug', filters.serviceSlug);
-    if (filters.sourceIP.trim()) params.set('sourceIP', filters.sourceIP.trim());
-    params.set('limit', '1000');
-    return `?${params.toString()}`;
-  }
-
-  private decisionQueryString(filters: CyberFilters) {
-    const params = new URLSearchParams();
-    if (filters.search.trim()) params.set('search', filters.search.trim());
-    if (filters.serverUUID) params.set('serverUUID', filters.serverUUID);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.action) params.set('action', filters.action);
-    if (filters.origin) params.set('origin', filters.origin);
-    if (filters.serviceSlug) params.set('serviceSlug', filters.serviceSlug);
-    if (filters.sourceIP.trim()) params.set('sourceIP', filters.sourceIP.trim());
-    params.set('limit', '1000');
-    return `?${params.toString()}`;
-  }
-
-  private pretty(value: unknown) {
-    return JSON.stringify(value ?? null, null, 2);
-  }
-
-  private t(value: string) {
-    return value ? this.i18n.t(value) : value;
-  }
-
-  private parseJsonFields(payload: Record<string, any>, fields: string[]) {
-    const next = { ...payload };
-    for (const field of fields) {
-      try {
-        next[field] = JSON.parse(String(next[field] || 'null'));
-      } catch {
-        throw new Error(`${field} must be valid JSON.`);
-      }
-    }
-    return next;
-  }
-
-  private currentFilters(): CyberFilters {
-    return this.filterFormModel();
-  }
-
-  private errorMessage(error: any, fallback: string) {
-    return error?.error?.error || error?.message || fallback;
-  }
-
-  private normalizeSection(value: string | null): CyberSection {
-    const section = value || 'servers';
-    return this.sections.some((item) => item.key === section)
-      ? (section as CyberSection)
-      : 'servers';
   }
 }
-
-type CyberSection =
-  | 'servers'
-  | 'profiles'
-  | 'decisions'
-  | 'alerts'
-  | 'lists'
-  | 'trusted-nodes'
-  | 'network-policies'
-  | 'security-events';
