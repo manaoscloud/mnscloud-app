@@ -5159,5 +5159,18 @@
   "Last seen": "Last seen",
   "mTLS": "mTLS",
   "Invalid JSON in {field}.": "Invalid JSON in {field}.",
-  "Create trusted node": "Create trusted node"
+  "Create trusted node": "Create trusted node",
+  "Asset": "Asset",
+  "Commerce": "Commerce",
+  "Consumable": "Consumable",
+  "Manufacturing": "Manufacturing",
+  "Raw material": "Raw material",
+  "Set cover": "Set cover",
+  "Upload image": "Upload image",
+  "Upload product images and choose the cover.": "Upload product images and choose the cover.",
+  "Cover image updated.": "Cover image updated.",
+  "Select a file to upload.": "Select a file to upload.",
+  "Create brand": "Create brand",
+  "Create category": "Create category",
+  "Create unit": "Create unit"
 }

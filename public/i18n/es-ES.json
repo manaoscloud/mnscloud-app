@@ -5159,5 +5159,18 @@
   "Last seen": "Visto por última vez",
   "mTLS": "mTLS",
   "Invalid JSON in {field}.": "JSON inválido en {field}.",
-  "Create trusted node": "Crear nodo de confianza"
+  "Create trusted node": "Crear nodo de confianza",
+  "Asset": "Activo",
+  "Commerce": "Comercio",
+  "Consumable": "Consumible",
+  "Manufacturing": "Manufactura",
+  "Raw material": "Materia prima",
+  "Set cover": "Definir portada",
+  "Upload image": "Subir imagen",
+  "Upload product images and choose the cover.": "Suba imágenes del producto y elija la portada.",
+  "Cover image updated.": "Imagen de portada actualizada.",
+  "Select a file to upload.": "Seleccione un archivo para subir.",
+  "Create brand": "Crear marca",
+  "Create category": "Crear categoría",
+  "Create unit": "Crear unidad"
 }
