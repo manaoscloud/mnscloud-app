@@ -305,10 +305,28 @@ export const QUICK_CREATE_REGISTRY = {
       import('../../../pages/realtime/webrtc/webrtc').then((m) => m.RealtimeWebRtcServersPage),
     permission: MASTER_PERMISSION,
   },
+  SaleBrandSbrUUID: {
+    label: 'Create brand',
+    loadComponent: () => import('../../../pages/sales/brand/brand').then((m) => m.SaleBrandPage),
+  },
+  SaleCategoryScaUUID: {
+    label: 'Create category',
+    loadComponent: () =>
+      import('../../../pages/sales/category/category').then((m) => m.SaleCategoryPage),
+  },
+  SaleProductSprUUID: {
+    label: 'Create product',
+    loadComponent: () =>
+      import('../../../pages/sales/product/product').then((m) => m.SaleProductPage),
+  },
   SaleStockTypeSstUUID: {
     label: 'Create stock type',
     loadComponent: () =>
       import('../../../pages/sales/stock-type/stock-type').then((m) => m.SaleStockTypePage),
+  },
+  SaleUnitSunUUID: {
+    label: 'Create unit',
+    loadComponent: () => import('../../../pages/sales/unit/unit').then((m) => m.SaleUnitPage),
   },
   SupportTicketChannelStcUUID: {
     label: 'Create channel',

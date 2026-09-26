@@ -281,7 +281,8 @@ export type ConfigurableCrudColumn = {
     | 'date'
     | 'datetime'
     | 'currency'
-    | 'number';
+    | 'number'
+    | 'image';
   lookupKey?: string;
   className?: string;
   options?: readonly ConfigurableCrudOption[];
@@ -319,6 +320,15 @@ export type ConfigurableCrudRowAction = {
   visible?: (row: ConfigurableCrudRecord) => boolean;
   collection?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   form?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
+  /** Declarative one-click API call (for example "set as cover"); reloads the list on success. */
+  request?: ConfigurableCrudRowActionRequest;
+};
+
+export type ConfigurableCrudRowActionRequest = {
+  method: 'post' | 'put';
+  endpoint: (row: ConfigurableCrudRecord) => string;
+  successMessage: string;
+  confirm?: { title: string; message: string; confirmLabel?: string };
 };
 
 export type ConfigurableCrudRelatedCollectionColumn = {
@@ -428,6 +438,11 @@ export type ConfigurableCrudConfig = {
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
   /** Places Authentication directly after Record without changing the default tab sequence. */
   authenticationTabAfterRecord?: boolean;
+  /**
+   * Create sends the selected file field as multipart/form-data with upload progress instead of
+   * JSON (for upload-only collections such as product images). Updates stay JSON.
+   */
+  createUpload?: { fileField: string; formField: string };
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
   pageSizeOptions?: readonly number[];
@@ -853,6 +868,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
           `${this.updateEndpoint()}/${this.recordUUID(current)}`,
           payload,
         );
+      } else if (this.config.createUpload) {
+        response = await this.uploadCreate(formPayload, this.config.createUpload);
       } else {
         response = await this.api.post(this.createEndpoint(), payload);
       }
@@ -1127,6 +1144,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async runRowAction(action: ConfigurableCrudRowAction, row: T): Promise<void> {
     if (action.visible?.(row) === false) return;
+    if (action.request) {
+      await this.runRowActionRequest(action.request, row);
+      return;
+    }
     const factory = action.collection ?? action.form;
     if (!factory) {
       await this.handleRowAction(action, row);
@@ -1196,6 +1217,47 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       this.fileUploadActive.set(false);
     }
     return last;
+  }
+
+  private async runRowActionRequest(
+    request: ConfigurableCrudRowActionRequest,
+    row: T,
+  ): Promise<void> {
+    if (request.confirm) {
+      const confirmed = await this.confirmAction(
+        request.confirm.title,
+        request.confirm.message,
+        request.confirm.confirmLabel,
+      );
+      if (!confirmed) return;
+    }
+    this.mutating.set(true);
+    try {
+      const endpoint = request.endpoint(row);
+      if (request.method === 'put') await this.api.put(endpoint, {});
+      else await this.api.post(endpoint, {});
+      this.snack.success(this.t(request.successMessage));
+      this.itemsResource.reload();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  private async uploadCreate(
+    formPayload: ConfigurableCrudRecord,
+    upload: NonNullable<ConfigurableCrudConfig['createUpload']>,
+  ): Promise<unknown> {
+    const file = formPayload[upload.fileField];
+    if (!(file instanceof File)) throw new Error(this.t('Select a file to upload.'));
+    const body = new FormData();
+    body.append(upload.formField, file);
+    const progress = await this.runManagedFileUpload(
+      this.api.postFormWithProgress(this.createEndpoint(), body),
+      file.size,
+    );
+    return progress.response;
   }
 
   cancelFileUpload(): void {
@@ -1730,6 +1792,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const customClass = column.chipClass?.(value, row);
     if (customClass) return customClass;
     return this.isActiveStatus(value) ? 'chip-success' : 'chip-skipped';
+  }
+
+  imageUrl(row: T, column: ConfigurableCrudColumn): string | null {
+    const value = row[column.field ?? column.id];
+    return typeof value === 'string' && value.trim() ? value : null;
   }
 
   hasCustomStatusChipClass(column: ConfigurableCrudColumn): boolean {

@@ -389,3 +389,17 @@
     justify-content: flex-start;
   }
 }
+
+.crud-image-thumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  object-fit: cover;
+  background: var(--mat-sys-color-surface-container);
+}
+
+.crud-image-empty {
+  color: var(--mat-sys-color-on-surface-variant);
+}
