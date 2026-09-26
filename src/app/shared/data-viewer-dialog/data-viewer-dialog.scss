@@ -173,31 +173,26 @@
 .data-viewer-status.tone-success {
   --activity-chip-bg: rgba(34, 197, 94, 0.2);
   --activity-chip-border: #22c55e;
-  --activity-chip-color: #bbf7d0;
 }
 
 .data-viewer-status.tone-warning {
   --activity-chip-bg: rgba(245, 158, 11, 0.2);
   --activity-chip-border: #f59e0b;
-  --activity-chip-color: #fde68a;
 }
 
 .data-viewer-status.tone-danger {
   --activity-chip-bg: rgba(239, 68, 68, 0.2);
   --activity-chip-border: #ef4444;
-  --activity-chip-color: #fecaca;
 }
 
 .data-viewer-status.tone-info {
   --activity-chip-bg: rgba(59, 130, 246, 0.2);
   --activity-chip-border: #3b82f6;
-  --activity-chip-color: #bfdbfe;
 }
 
 .data-viewer-status.tone-neutral {
   --activity-chip-bg: rgba(148, 163, 184, 0.14);
   --activity-chip-border: #94a3b8;
-  --activity-chip-color: #e2e8f0;
 }
 
 @media (max-width: 1200px) {

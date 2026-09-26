@@ -16,7 +16,6 @@
     "src/app/pages/infragis/management/management.ts",
     "src/app/pages/monitoring/telemetry/overview.ts",
     "src/app/pages/sales/product/product.ts",
-    "src/app/pages/sales/quotation/quotation.ts",
-    "src/app/pages/settings/themes/themes.ts"
+    "src/app/pages/sales/quotation/quotation.ts"
   ]
 }
