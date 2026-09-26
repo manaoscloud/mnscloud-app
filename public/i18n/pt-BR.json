@@ -5173,5 +5173,21 @@
   "Select a file to upload.": "Selecione um arquivo para enviar.",
   "Create brand": "Criar marca",
   "Create category": "Criar categoria",
-  "Create unit": "Criar unidade"
+  "Create unit": "Criar unidade",
+  "Asset Type Code": "Código do tipo de ativo",
+  "Asset categories used to classify InfraGIS asset types.": "Categorias usadas para classificar os tipos de ativo do InfraGIS.",
+  "Asset types with their category, color and icon.": "Tipos de ativo com categoria, cor e ícone.",
+  "Category Code": "Código da categoria",
+  "Color": "Cor",
+  "Georeferenced InfraGIS assets.": "Ativos georreferenciados do InfraGIS.",
+  "Icon": "Ícone",
+  "InfraGIS projects grouping layers and assets.": "Projetos do InfraGIS que agrupam camadas e ativos.",
+  "Layer": "Camada",
+  "Map layers of each InfraGIS project.": "Camadas de mapa de cada projeto InfraGIS.",
+  "Operational statuses available for InfraGIS assets.": "Status operacionais disponíveis para os ativos do InfraGIS.",
+  "Status Code": "Código do status",
+  "Create project": "Criar projeto",
+  "Create layer": "Criar camada",
+  "Create asset type": "Criar tipo de ativo",
+  "Create asset status": "Criar status de ativo"
 }

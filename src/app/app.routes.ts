@@ -651,12 +651,62 @@ export const routes: Routes = [
               // InfraGIS
               {
                 path: 'infragis/management',
+                redirectTo: 'infragis/management/projects',
+                pathMatch: 'full',
+              },
+              {
+                path: 'infragis/management/projects',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
                   ),
-                title: 'InfraGIS • Management | mnscloud',
-                data: { scope: 'tenant', context: 'infragis' },
+                title: 'InfraGIS • Projects | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'projects' },
+              },
+              {
+                path: 'infragis/management/layers',
+                loadComponent: () =>
+                  import('./pages/infragis/management/management').then(
+                    (m) => m.InfraGisManagementPage,
+                  ),
+                title: 'InfraGIS • Layers | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'layers' },
+              },
+              {
+                path: 'infragis/management/categories',
+                loadComponent: () =>
+                  import('./pages/infragis/management/management').then(
+                    (m) => m.InfraGisManagementPage,
+                  ),
+                title: 'InfraGIS • Categories | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'categories' },
+              },
+              {
+                path: 'infragis/management/asset-types',
+                loadComponent: () =>
+                  import('./pages/infragis/management/management').then(
+                    (m) => m.InfraGisManagementPage,
+                  ),
+                title: 'InfraGIS • Asset Types | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'asset-types' },
+              },
+              {
+                path: 'infragis/management/statuses',
+                loadComponent: () =>
+                  import('./pages/infragis/management/management').then(
+                    (m) => m.InfraGisManagementPage,
+                  ),
+                title: 'InfraGIS • Statuses | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'statuses' },
+              },
+              {
+                path: 'infragis/management/assets',
+                loadComponent: () =>
+                  import('./pages/infragis/management/management').then(
+                    (m) => m.InfraGisManagementPage,
+                  ),
+                title: 'InfraGIS • Assets | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'assets' },
               },
               {
                 path: 'infragis',

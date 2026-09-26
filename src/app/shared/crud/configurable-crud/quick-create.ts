@@ -251,6 +251,36 @@ export const QUICK_CREATE_REGISTRY = {
       ),
     permission: MASTER_PERMISSION,
   },
+  InfraGisAssetCategoryIacUUID: {
+    label: 'Create category',
+    loadComponent: () =>
+      import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
+    routeData: { resource: 'categories' },
+  },
+  InfraGisAssetStatusIgsUUID: {
+    label: 'Create asset status',
+    loadComponent: () =>
+      import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
+    routeData: { resource: 'statuses' },
+  },
+  InfraGisAssetTypeIgtUUID: {
+    label: 'Create asset type',
+    loadComponent: () =>
+      import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
+    routeData: { resource: 'asset-types' },
+  },
+  InfraGisLayerIglUUID: {
+    label: 'Create layer',
+    loadComponent: () =>
+      import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
+    routeData: { resource: 'layers' },
+  },
+  InfraGisProjectIprUUID: {
+    label: 'Create project',
+    loadComponent: () =>
+      import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
+    routeData: { resource: 'projects' },
+  },
   IspPopIppUUID: {
     label: 'Create POP',
     loadComponent: () => import('../../../pages/isp/pop/pop').then((m) => m.IspPopPage),
