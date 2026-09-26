@@ -231,6 +231,17 @@
                 >
                   {{ statusLabelForColumn(row, column) | transloco }}
                 </span>
+              } @else if (column.kind === 'image') {
+                @if (imageUrl(row, column); as src) {
+                  <img
+                    class="crud-image-thumb"
+                    [src]="src"
+                    [alt]="column.label | transloco"
+                    loading="lazy"
+                  />
+                } @else {
+                  <span class="crud-image-empty" aria-hidden="true">—</span>
+                }
               } @else if (column.kind === 'boolean') {
                 <span
                   class="status-pill status-chip state-chip boolean-chip"

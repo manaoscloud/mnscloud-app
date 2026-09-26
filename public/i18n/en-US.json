@@ -5150,5 +5150,18 @@
   "Certificate event queued for {domain}.": "Certificate event queued for {domain}.",
   "Failed to queue action.": "Failed to queue action.",
   "Same as billing address option": "Same as billing address option",
-  "Same as billing address": "Same as billing address"
+  "Same as billing address": "Same as billing address",
+  "Asset": "Asset",
+  "Commerce": "Commerce",
+  "Consumable": "Consumable",
+  "Manufacturing": "Manufacturing",
+  "Raw material": "Raw material",
+  "Set cover": "Set cover",
+  "Upload image": "Upload image",
+  "Upload product images and choose the cover.": "Upload product images and choose the cover.",
+  "Cover image updated.": "Cover image updated.",
+  "Select a file to upload.": "Select a file to upload.",
+  "Create brand": "Create brand",
+  "Create category": "Create category",
+  "Create unit": "Create unit"
 }

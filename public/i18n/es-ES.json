@@ -5150,5 +5150,18 @@
   "Certificate event queued for {domain}.": "Evento de certificado encolado para {domain}.",
   "Failed to queue action.": "No se pudo encolar la acción.",
   "Same as billing address option": "Igual a la dirección de facturación",
-  "Same as billing address": "Igual a la dirección de facturación"
+  "Same as billing address": "Igual a la dirección de facturación",
+  "Asset": "Activo",
+  "Commerce": "Comercio",
+  "Consumable": "Consumible",
+  "Manufacturing": "Manufactura",
+  "Raw material": "Materia prima",
+  "Set cover": "Definir portada",
+  "Upload image": "Subir imagen",
+  "Upload product images and choose the cover.": "Suba imágenes del producto y elija la portada.",
+  "Cover image updated.": "Imagen de portada actualizada.",
+  "Select a file to upload.": "Seleccione un archivo para subir.",
+  "Create brand": "Crear marca",
+  "Create category": "Crear categoría",
+  "Create unit": "Crear unidad"
 }
