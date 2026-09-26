@@ -1,571 +1,174 @@
+import { Component } from '@angular/core';
 import {
-  Component,
-  DestroyRef,
-  TemplateRef,
-  afterNextRender,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { NgClass } from '@angular/common';
-import { FormField, form as createForm, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
-import { AppI18nService } from '../../../services/app-i18n.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { CrudDialogBinding, openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-import { bindDialogClosed } from '../../../shared/dialog/dialog-events.util';
-import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
-import {
-  CyberSecurityTrustedNode,
-  CyberSecurityTrustedNodePayload,
-  CyberSecurityTrustedNodesService,
-} from './cyber-security-trusted-nodes.service';
+const nodeTypes = [
+  'freeswitch',
+  'asterisk',
+  'kamailio',
+  'opensips',
+  'nginx',
+  'worker',
+  'agent',
+  'api',
+  'other',
+].map((value) => ({ value, label: value }));
+const statuses = [
+  { value: 'active', label: 'Active' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'revoked', label: 'Revoked' },
+];
+const authModes = [
+  { value: 'hmac', label: 'HMAC' },
+  { value: 'api_key', label: 'API key' },
+  { value: 'mtls', label: 'mTLS' },
+  { value: 'none', label: 'None' },
+];
+const modes = [
+  { value: 'monitor', label: 'Monitor' },
+  { value: 'enforce', label: 'Enforce' },
+];
 
-@Component({
-  selector: 'app-cyber-security-trusted-nodes',
-  standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    RefreshButtonComponent,
-    FormField,
-    MatButtonModule,
-    MatCardModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSortModule,
-    MatTableModule,
-    MatTabsModule,
-    TranslocoPipe,
-    MatTooltipModule,
-    NgClass,
-  ],
-  templateUrl: './trusted-nodes.html',
-  styleUrls: ['./trusted-nodes.scss'],
-})
-export class CyberSecurityTrustedNodesPage {
-  private readonly trustedNodesApi = inject(CyberSecurityTrustedNodesService);
-  private readonly dialog = inject(MatDialog);
-  private readonly i18n = inject(AppI18nService);
-  private readonly snack = inject(SnackbarService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly listLimit = 1000;
-
-  readonly saving = signal(false);
-  private readonly mutating = signal(false);
-  readonly editing = signal<CyberSecurityTrustedNode | null>(null);
-  readonly searchInput = signal('');
-  readonly search = signal('');
-  readonly selectedTrustedNodeUUIDs = signal<Set<string>>(new Set());
-  private readonly trustedNodesResource = resource({
-    params: () => this.search(),
-    defaultValue: [] as CyberSecurityTrustedNode[],
-    loader: ({ params }) => this.loadTrustedNodes(params),
-  });
-
-  readonly loading = computed(() => this.trustedNodesResource.isLoading() || this.mutating());
-
-  readonly dataSource = new MatTableDataSource<CyberSecurityTrustedNode>([]);
-  readonly displayedColumns = [
-    'select',
-    'name',
-    'nodeType',
-    'networks',
-    'groups',
-    'status',
-    'lastSeen',
-    'actions',
-  ];
-
-  readonly formModel = signal({
+const config = defineCrud({
+  endpoint: 'cyber-security/trusted-nodes',
+  uuidField: 'uuid',
+  pageTitle: 'Trusted Nodes',
+  pageDescription: 'Authenticated infrastructure nodes and agent-backed integrations.',
+  bulkDelete: true,
+  serverSidePagination: true,
+  statusMode: 'string',
+  activeValue: 'active',
+  inactiveValue: 'suspended',
+  statusOptions: statuses,
+  tabLabels: { network: 'Access' },
+  initialValues: {
+    status: 'active',
     name: '',
     nodeUUID: '',
     nodeType: 'freeswitch',
     hostname: '',
-    allowedNetworks: '[]',
-    endpointGroups: '[]',
     authMode: 'hmac',
     secret: '',
-    status: 'active',
     mode: 'monitor',
     notes: '',
-  });
-  readonly form = createForm(this.formModel, (path) => {
-    required(path.name);
-    minLength(path.name, 2);
-    required(path.nodeUUID);
-    required(path.nodeType);
-    required(path.allowedNetworks);
-    required(path.endpointGroups);
-    required(path.authMode);
-    required(path.status);
-    required(path.mode);
-  });
+    allowedNetworks: '[]',
+    endpointGroups: '[]',
+  },
+  columns: [
+    { id: 'name', label: 'Name', field: 'name', uuidField: 'uuid', kind: 'identity' },
+    { id: 'nodeType', label: 'Node type', field: 'nodeType', translateValue: false },
+    { id: 'networks', label: 'Allowed networks', field: 'allowedNetworks', translateValue: false },
+    { id: 'groups', label: 'Endpoint groups', field: 'endpointGroups', translateValue: false },
+    { id: 'lastSeen', label: 'Last seen', field: 'lastSeenAt', kind: 'datetime' },
+    { id: 'status', label: 'Status', field: 'status', kind: 'status' },
+  ],
+  fields: [
+    {
+      key: 'status',
+      source: 'status',
+      label: 'Status',
+      type: 'status',
+      options: statuses,
+      span: 1,
+    },
+    { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
+    { key: 'nodeUUID', source: 'nodeUUID', label: 'Node UUID', required: true, span: 1 },
+    {
+      key: 'nodeType',
+      source: 'nodeType',
+      label: 'Node type',
+      type: 'select',
+      options: nodeTypes,
+      translateOptions: false,
+      required: true,
+      span: 1,
+    },
+    { key: 'hostname', source: 'hostname', label: 'Hostname', span: 1 },
+    {
+      key: 'mode',
+      source: 'mode',
+      label: 'Mode',
+      type: 'select',
+      options: modes,
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'authMode',
+      source: 'authMode',
+      label: 'Auth mode',
+      type: 'select',
+      options: authModes,
+      required: true,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'secret',
+      label: 'New secret',
+      type: 'password',
+      tab: 'authentication',
+      placeholder: 'Leave blank to keep the current secret',
+      span: 2,
+    },
+    {
+      key: 'allowedNetworks',
+      source: 'allowedNetworks',
+      label: 'Allowed networks',
+      type: 'textarea',
+      format: 'json',
+      rows: 4,
+      required: true,
+      tab: 'network',
+      span: 4,
+    },
+    {
+      key: 'endpointGroups',
+      source: 'endpointGroups',
+      label: 'Endpoint groups',
+      type: 'textarea',
+      format: 'json',
+      rows: 4,
+      required: true,
+      tab: 'network',
+      span: 4,
+    },
+    {
+      key: 'notes',
+      source: 'notes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      rows: 4,
+      span: 4,
+    },
+  ],
+});
 
-  readonly paginator = viewChild(MatPaginator);
-  readonly sort = viewChild(MatSort);
-  readonly trustedNodeFormDialog = viewChild<TemplateRef<unknown>>('trustedNodeFormDialog');
-
-  private trustedNodeDialogBinding: CrudDialogBinding | null = null;
-  private lastLoadError = '';
-
-  private readonly syncTrustedNodes = effect(() => {
-    this.dataSource.data = this.trustedNodesResource.value();
-    queueMicrotask(() => this.reconcileSelection());
-  });
-
-  private readonly reportLoadError = effect(() => {
-    const error = this.trustedNodesResource.error();
-    if (!error) {
-      this.lastLoadError = '';
-      return;
-    }
-
-    const message = this.extractErrorMessage(error, 'Failed to load trusted nodes.');
-    if (message !== this.lastLoadError) {
-      this.lastLoadError = message;
-      this.snack.error(message);
-    }
-  });
-
-  private readonly setupTable = afterNextRender(() => {
-    this.dataSource.paginator = this.paginator() ?? null;
-    this.dataSource.sort = this.sort() ?? null;
-    this.dataSource.sortingDataAccessor = (data, sortHeaderId) => {
-      switch (sortHeaderId) {
-        case 'name':
-          return data.name ?? '';
-        case 'nodeType':
-          return data.nodeType ?? '';
-        case 'networks':
-          return this.formatList(data.allowedNetworks);
-        case 'groups':
-          return this.formatList(data.endpointGroups);
-        case 'status':
-          return data.status ?? '';
-        case 'lastSeen':
-          return data.lastSeenAt ?? '';
-        default:
-          return '';
-      }
-    };
-  });
-
+@Component({
+  selector: 'app-cyber-security-trusted-nodes',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class CyberSecurityTrustedNodesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    this.destroyRef.onDestroy(() => this.closeTrustedNodeDialog());
+    super(config);
   }
 
-  applySearchFilters() {
-    const nextSearch = this.searchInput().trim();
-    if (nextSearch === this.search()) {
-      this.trustedNodesResource.reload();
-    } else {
-      this.search.set(nextSearch);
-    }
-  }
-
-  clearSearchFilters() {
-    this.searchInput.set('');
-    if (this.search()) {
-      this.search.set('');
-    } else {
-      this.trustedNodesResource.reload();
-    }
-  }
-
-  refreshList() {
-    this.trustedNodesResource.reload();
-  }
-
-  startCreate() {
-    this.editing.set(null);
-    this.formModel.set({
-      name: '',
-      nodeUUID: '',
-      nodeType: 'freeswitch',
-      hostname: '',
-      allowedNetworks: '[]',
-      endpointGroups: '[]',
-      authMode: 'hmac',
-      secret: '',
-      status: 'active',
-      mode: 'monitor',
-      notes: '',
-    });
-    this.openTrustedNodeDialog();
-  }
-
-  startEdit(trustedNode: CyberSecurityTrustedNode) {
-    this.editing.set(trustedNode);
-    this.fillForm(trustedNode);
-    this.openTrustedNodeDialog();
-  }
-
-  async saveItem(saveAndNew = false) {
-    if (!this.form().valid()) return;
-
-    let payload: CyberSecurityTrustedNodePayload;
-    try {
-      payload = this.buildPayload();
-    } catch (error: any) {
-      this.snack.error(this.extractErrorMessage(error, 'Invalid form data.'));
-      return;
-    }
-
-    const createMode = !this.editing();
-    this.saving.set(true);
-
-    try {
-      const editing = this.editing();
-      if (editing?.uuid) {
-        await this.trustedNodesApi.update(editing.uuid, payload);
-        this.snack.success('Trusted node updated successfully.');
-      } else {
-        await this.trustedNodesApi.create(payload);
-        this.snack.success('Trusted node created successfully.');
-      }
-
-      this.trustedNodesResource.reload();
-
-      if (saveAndNew && createMode) {
-        this.formModel.set({
-          name: '',
-          nodeUUID: '',
-          nodeType: 'freeswitch',
-          hostname: '',
-          allowedNetworks: '[]',
-          endpointGroups: '[]',
-          authMode: 'hmac',
-          secret: '',
-          status: 'active',
-          mode: 'monitor',
-          notes: '',
-        });
-        this.editing.set(null);
-        return;
-      }
-
-      this.cancelForm();
-    } catch (error: any) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to save trusted node.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  saveAndNewItem() {
-    if (this.editing()) return;
-    void this.saveItem(true);
-  }
-
-  cancelForm() {
-    this.closeTrustedNodeDialog();
-    this.formModel.set({
-      name: '',
-      nodeUUID: '',
-      nodeType: 'freeswitch',
-      hostname: '',
-      allowedNetworks: '[]',
-      endpointGroups: '[]',
-      authMode: 'hmac',
-      secret: '',
-      status: 'active',
-      mode: 'monitor',
-      notes: '',
-    });
-    this.editing.set(null);
-  }
-
-  async deleteItem(trustedNode: CyberSecurityTrustedNode) {
-    if (!trustedNode.uuid) return;
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Revoke trusted node'),
-        message: `${this.t('Are you sure you want to revoke')} "${trustedNode.name}"?`,
-        confirmLabel: this.t('Revoke'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.mutating.set(true);
-    try {
-      await this.trustedNodesApi.remove(trustedNode.uuid);
-      this.snack.success('Trusted node revoked successfully.');
-      this.trustedNodesResource.reload();
-    } catch (error: any) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to revoke trusted node.'));
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  get selectedCount() {
-    return this.selectedTrustedNodeUUIDs().size;
-  }
-
-  visibleRows() {
-    const filtered = this.dataSource.filter ? this.dataSource.filteredData : this.dataSource.data;
-    const paginator = this.dataSource.paginator;
-    if (!paginator) return filtered;
-    const start = paginator.pageIndex * paginator.pageSize;
-    return filtered.slice(start, start + paginator.pageSize);
-  }
-
-  isSelected(trustedNode: CyberSecurityTrustedNode) {
-    return !!trustedNode.uuid && this.selectedTrustedNodeUUIDs().has(trustedNode.uuid);
-  }
-
-  isAllVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.length > 0 && rows.every((row) => this.isSelected(row));
-  }
-
-  isSomeVisibleSelected() {
-    const rows = this.visibleRows();
-    return rows.some((row) => this.isSelected(row)) && !this.isAllVisibleSelected();
-  }
-
-  toggleTrustedNodeSelection(trustedNode: CyberSecurityTrustedNode, checked: boolean) {
-    if (!trustedNode.uuid) return;
-    this.selectedTrustedNodeUUIDs.update((current) => {
-      const next = new Set(current);
-      if (checked) next.add(trustedNode.uuid as string);
-      else next.delete(trustedNode.uuid as string);
-      return next;
-    });
-  }
-
-  toggleVisibleSelection(checked: boolean) {
-    this.selectedTrustedNodeUUIDs.update((current) => {
-      const next = new Set(current);
-      for (const row of this.visibleRows()) {
-        if (!row.uuid) continue;
-        if (checked) next.add(row.uuid);
-        else next.delete(row.uuid);
-      }
-      return next;
-    });
-  }
-
-  async deleteSelectedItems() {
-    const ids = Array.from(this.selectedTrustedNodeUUIDs());
-    if (!ids.length) return;
-
-    const labels = this.dataSource.data
-      .filter((item) => ids.includes(item.uuid))
-      .slice(0, 3)
-      .map((item) => item.name);
-    const suffix = labels.length ? ` (${labels.join(', ')}${ids.length > 3 ? ', ...' : ''})` : '';
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      data: {
-        title: this.t('Revoke selected trusted nodes'),
-        message: `${this.t('Are you sure you want to revoke selected trusted node(s)?')} ${ids.length}${suffix}`,
-        confirmLabel: this.t('Revoke selected'),
-      },
-      panelClass: 'slow-confirm-dialog',
-      disableClose: true,
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-
-    this.mutating.set(true);
-    try {
-      const response = await this.trustedNodesApi.removeMany(ids);
-      const deleted = new Set<string>(response?.data?.deleted ?? []);
-      const failed = new Set<string>(
-        (response?.data?.failed ?? [])
-          .map((item: any) => this.extractBulkFailureUUID(item))
-          .filter((uuid: string | null): uuid is string => !!uuid),
-      );
-      this.dataSource.data = this.dataSource.data.filter((row) => !deleted.has(row.uuid));
-      this.selectedTrustedNodeUUIDs.set(failed);
-      if (failed.size) {
-        this.snack.error(
-          `${failed.size} ${this.t('selected trusted node(s) could not be revoked.')}`,
-        );
-      } else {
-        this.snack.success(
-          `${deleted.size || ids.length} ${this.t('selected trusted node(s) revoked.')}`,
-        );
-      }
-      this.trustedNodesResource.reload();
-    } catch (error: any) {
-      this.snack.error(this.extractErrorMessage(error, 'Failed to revoke selected trusted nodes.'));
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  formatList(value: unknown) {
-    if (Array.isArray(value)) return value.join(', ') || '-';
-    if (typeof value === 'string' && value.trim()) return value;
-    return '-';
-  }
-
-  chipClass(status: string | null | undefined) {
-    const normalized = String(status ?? '').toLowerCase();
-    if (normalized === 'active') return 'chip-success';
-    if (normalized === 'suspended') return 'chip-warning';
-    if (normalized === 'revoked') return 'chip-danger';
-    return 'chip-skipped';
-  }
-
-  statusLabel(status: string | null | undefined) {
-    const normalized = String(status ?? '').toLowerCase();
-    if (normalized === 'active') return this.t('Active');
-    if (normalized === 'suspended') return this.t('Suspended');
-    if (normalized === 'revoked') return this.t('Revoked');
-    return '-';
-  }
-
-  modeLabel(mode: string | null | undefined) {
-    const normalized = String(mode ?? '').toLowerCase();
-    if (normalized === 'monitor') return this.t('Monitor only');
-    if (normalized === 'enforce') return this.t('Enforce');
-    return mode || '-';
-  }
-
-  nodeTypeLabel(nodeType: string | null | undefined) {
-    const normalized = String(nodeType ?? '').toLowerCase();
-    if (normalized === 'worker') return this.t('Worker');
-    if (normalized === 'agent') return this.t('Agent');
-    if (normalized === 'other') return this.t('Other');
-    return nodeType || '-';
-  }
-
-  private fillForm(trustedNode: CyberSecurityTrustedNode) {
-    this.formModel.set({
-      name: trustedNode.name ?? '',
-      nodeUUID: trustedNode.nodeUUID ?? '',
-      nodeType: trustedNode.nodeType ?? 'freeswitch',
-      hostname: trustedNode.hostname ?? '',
-      allowedNetworks: this.pretty(trustedNode.allowedNetworks ?? []),
-      endpointGroups: this.pretty(trustedNode.endpointGroups ?? []),
-      authMode: trustedNode.authMode ?? 'hmac',
-      secret: '',
-      status: trustedNode.status ?? 'active',
-      mode: trustedNode.mode ?? 'monitor',
-      notes: trustedNode.notes ?? '',
-    });
-  }
-
-  private buildPayload(): CyberSecurityTrustedNodePayload {
-    const value = this.formModel();
-    const payload: CyberSecurityTrustedNodePayload = {
-      name: value.name.trim(),
-      nodeUUID: value.nodeUUID.trim(),
-      nodeType: value.nodeType,
-      hostname: value.hostname.trim() || null,
-      allowedNetworks: this.parseJson(value.allowedNetworks, 'Allowed networks'),
-      endpointGroups: this.parseJson(value.endpointGroups, 'Endpoint groups'),
-      authMode: value.authMode,
-      status: value.status,
-      mode: value.mode,
-      notes: value.notes.trim() || null,
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const { secret, ...rest } = payload;
+    const value = typeof secret === 'string' ? secret.trim() : '';
+    return {
+      ...rest,
+      ...(value ? { secret: value } : {}),
+      hostname: rest['hostname'] || null,
+      notes: rest['notes'] || null,
     };
-    const secret = value.secret.trim();
-    if (secret) payload.secret = secret;
-    return payload;
-  }
-
-  private parseJson(value: string, label: string) {
-    try {
-      return JSON.parse(value || 'null');
-    } catch {
-      throw new Error(`${this.t(label)} ${this.t('must be valid JSON.')}`);
-    }
-  }
-
-  private t(value: string) {
-    return this.i18n.t(value);
-  }
-
-  private pretty(value: unknown) {
-    return JSON.stringify(value ?? null, null, 2);
-  }
-
-  private async loadTrustedNodes(search: string) {
-    const trustedNodes = await this.trustedNodesApi.list(search, this.listLimit);
-    const paginator = this.paginator();
-    if (paginator) queueMicrotask(() => paginator.firstPage());
-    return trustedNodes.items;
-  }
-
-  private openTrustedNodeDialog() {
-    const trustedNodeFormDialog = this.trustedNodeFormDialog();
-    if (!trustedNodeFormDialog || this.trustedNodeDialogBinding) return;
-    this.trustedNodeDialogBinding = openCrudTemplateDialog(
-      this.dialog,
-      trustedNodeFormDialog,
-      'crud-form-dialog',
-      { onEscape: () => this.cancelForm() },
-    );
-    bindDialogClosed(this.trustedNodeDialogBinding.ref, () => {
-      this.trustedNodeDialogBinding?.stop();
-      this.trustedNodeDialogBinding = null;
-    });
-  }
-
-  private closeTrustedNodeDialog() {
-    if (!this.trustedNodeDialogBinding) return;
-    this.trustedNodeDialogBinding.ref.close();
-    this.trustedNodeDialogBinding.stop();
-    this.trustedNodeDialogBinding = null;
-  }
-
-  private extractErrorMessage(error: any, fallback: string) {
-    return error?.error?.error || error?.error?.message || error?.message || fallback;
-  }
-
-  private extractBulkFailureUUID(item: any): string | null {
-    if (!item || typeof item !== 'object') return null;
-    if (typeof item.CyberSecurityTrustedNodeUUID === 'string') {
-      return item.CyberSecurityTrustedNodeUUID;
-    }
-    if (typeof item.uuid === 'string') return item.uuid;
-    const uuidKey = Object.keys(item).find((key) => key.endsWith('UUID'));
-    return uuidKey && typeof item[uuidKey] === 'string' ? item[uuidKey] : null;
-  }
-
-  private reconcileSelection() {
-    const available = new Set(this.dataSource.data.map((item) => item.uuid));
-    this.selectedTrustedNodeUUIDs.update((current) => {
-      const next = new Set<string>();
-      current.forEach((uuid) => {
-        if (available.has(uuid)) next.add(uuid);
-      });
-      return next;
-    });
   }
 }
