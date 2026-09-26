@@ -5149,5 +5149,7 @@
   "Please use #RRGGBB format for the primary color.": "Use o formato #RRGGBB para a cor primária.",
   "Web event queued for {domain}.": "Evento web enfileirado para {domain}.",
   "Certificate event queued for {domain}.": "Evento de certificado enfileirado para {domain}.",
-  "Failed to queue action.": "Falha ao enfileirar a ação."
+  "Failed to queue action.": "Falha ao enfileirar a ação.",
+  "Same as billing address option": "Igual ao endereço de cobrança",
+  "Same as billing address": "Igual ao endereço de cobrança"
 }
