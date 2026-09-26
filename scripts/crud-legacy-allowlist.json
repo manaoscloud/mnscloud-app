@@ -2,8 +2,6 @@
   "$comment": "Legacy CRUD/list pages pending migration to ConfigurableCrudPageBase. This list may only shrink; remove an entry in the same change that migrates the page.",
   "pending": [
     "src/app/pages/cyber-security/cyber-security.ts",
-    "src/app/pages/infragis/management/management.ts",
-    "src/app/pages/sales/product/product.ts",
-    "src/app/pages/sales/quotation/quotation.ts"
+    "src/app/pages/infragis/management/management.ts"
   ]
 }
