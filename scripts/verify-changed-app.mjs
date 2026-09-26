@@ -96,32 +96,8 @@ for (const crudRoot of crudRoots) {
   run('node', ['scripts/validate-crud-layout.mjs', crudRoot]);
   run('node', ['scripts/validate-crud-i18n.mjs', crudRoot]);
 }
-// Every CRUD/list page extends ConfigurableCrudPageBase; legacy pages are tolerated only while
-// listed in the allowlist, which may shrink but never gain entries relative to the base commit.
+// Every CRUD/list page extends ConfigurableCrudPageBase (app-wide, no allowlist).
 run('node', ['scripts/validate-crud-inventory.mjs']);
-const allowlistFile = 'scripts/crud-legacy-allowlist.json';
-if (changedFiles.includes(allowlistFile)) {
-  let basePending = [];
-  try {
-    basePending =
-      JSON.parse(
-        execFileSync('git', ['show', `${base}:${allowlistFile}`], {
-          encoding: 'utf8',
-          stdio: ['ignore', 'pipe', 'ignore'],
-        }),
-      ).pending ?? [];
-  } catch {
-    basePending = null;
-  }
-  if (basePending) {
-    const headPending = JSON.parse(readFileSync(allowlistFile, 'utf8')).pending ?? [];
-    const added = headPending.filter((path) => !basePending.includes(path));
-    if (added.length) {
-      console.error(`${allowlistFile} may only shrink; new legacy entries:\n${added.join('\n')}`);
-      process.exit(1);
-    }
-  }
-}
 // FK quick-create is enforced app-wide: every searchable FK form field offers in-place creation
 // or documents its exemption, and every registry entry loads a configurable CRUD page.
 run('node', ['scripts/validate-crud-fk-quick-create.mjs', '--all']);
