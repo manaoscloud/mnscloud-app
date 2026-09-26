@@ -2294,6 +2294,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected validatePayload(payload: ConfigurableCrudRecord): boolean {
     for (const field of this.config.fields) {
+      if (field.format === 'json' && this.isFieldVisible(field)) {
+        const raw = this.formValues()[field.key];
+        if (typeof raw === 'string' && raw.trim()) {
+          try {
+            JSON.parse(raw);
+          } catch {
+            this.snack.warning(this.t('Invalid JSON in {field}.', { field: this.t(field.label) }));
+            return false;
+          }
+        }
+      }
+    }
+    for (const field of this.config.fields) {
       const value = payload[field.payloadKey ?? field.key];
       if (this.isFieldVisible(field) && field.type === 'date' && value !== null && value !== '') {
         if (this.normalizeDateForPayload(value) === undefined) {

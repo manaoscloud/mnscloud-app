@@ -5150,5 +5150,14 @@
   "Certificate event queued for {domain}.": "Certificate event queued for {domain}.",
   "Failed to queue action.": "Failed to queue action.",
   "Same as billing address option": "Same as billing address option",
-  "Same as billing address": "Same as billing address"
+  "Same as billing address": "Same as billing address",
+  "Allowed networks": "Allowed networks",
+  "Authenticated infrastructure nodes and agent-backed integrations.": "Authenticated infrastructure nodes and agent-backed integrations.",
+  "Endpoint group": "Endpoint group",
+  "Endpoint groups": "Endpoint groups",
+  "HMAC": "HMAC",
+  "Last seen": "Last seen",
+  "mTLS": "mTLS",
+  "Invalid JSON in {field}.": "Invalid JSON in {field}.",
+  "Create trusted node": "Create trusted node"
 }
