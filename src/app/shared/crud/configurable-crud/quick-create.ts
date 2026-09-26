@@ -93,6 +93,13 @@ export const QUICK_CREATE_REGISTRY = {
       ),
     permission: MASTER_PERMISSION,
   },
+  CyberSecurityTrustedNodeCtnUUID: {
+    label: 'Create trusted node',
+    loadComponent: () =>
+      import('../../../pages/cyber-security/trusted-nodes/trusted-nodes').then(
+        (m) => m.CyberSecurityTrustedNodesPage,
+      ),
+  },
   ErpCompanyComUUID: {
     label: 'Create company',
     loadComponent: () =>

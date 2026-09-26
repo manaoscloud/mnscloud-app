@@ -5151,5 +5151,14 @@
   "Certificate event queued for {domain}.": "Evento de certificado enfileirado para {domain}.",
   "Failed to queue action.": "Falha ao enfileirar a ação.",
   "Same as billing address option": "Igual ao endereço de cobrança",
-  "Same as billing address": "Igual ao endereço de cobrança"
+  "Same as billing address": "Igual ao endereço de cobrança",
+  "Allowed networks": "Redes permitidas",
+  "Authenticated infrastructure nodes and agent-backed integrations.": "Nós de infraestrutura autenticados e integrações com agentes.",
+  "Endpoint group": "Grupo de endpoint",
+  "Endpoint groups": "Grupos de endpoint",
+  "HMAC": "HMAC",
+  "Last seen": "Visto por último",
+  "mTLS": "mTLS",
+  "Invalid JSON in {field}.": "JSON inválido em {field}.",
+  "Create trusted node": "Criar nó confiável"
 }
