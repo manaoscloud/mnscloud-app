@@ -74,6 +74,39 @@ test('Pay bank partner (Inter) payload is typed and never carries free-form conf
     assert.ok(!fieldKeys.includes(removed), removed);
 });
 
+test('Asaas bank partner sends only its API key and no Inter settings', () => {
+  const config = bankPartnersConfig;
+  const values = {
+    ...config.initialValues,
+    provider: 'asaas',
+    purpose: 'PAY_SPLIT',
+    environment: 'sandbox',
+    name: 'Asaas split',
+    apiKey: ' $aact_sandbox_key ',
+    accountNumber: '999',
+    clientId: 'ignored',
+  };
+  const created = config.payload(values, false);
+  assert.deepEqual(Object.keys(created).sort(), [
+    'credentials',
+    'environment',
+    'name',
+    'provider',
+    'purpose',
+    'status',
+  ]);
+  assert.deepEqual(created.credentials, { apiKey: '$aact_sandbox_key' });
+  const fieldByKey = Object.fromEntries(config.fields.map((field) => [field.key, field]));
+  const context = { editing: false, values };
+  for (const key of ['accountNumber', 'receiveMethods', 'autoCancelDays', 'clientId', 'certPem'])
+    assert.equal(fieldByKey[key].hiddenWhen(context), true, key);
+  assert.equal(fieldByKey['apiKey'].hiddenWhen(context), false);
+  assert.equal(fieldByKey['apiKey'].requiredWhen(context), true);
+  const interContext = { editing: false, values: { ...values, provider: 'inter_business' } };
+  assert.equal(fieldByKey['apiKey'].hiddenWhen(interContext), true);
+  assert.equal(fieldByKey['certPem'].hiddenWhen(interContext), false);
+});
+
 test('Pay bank partner edit keeps stored credentials unless all are replaced', () => {
   const config = bankPartnersConfig;
   const values = { ...config.initialValues, name: 'X', accountNumber: '1' };

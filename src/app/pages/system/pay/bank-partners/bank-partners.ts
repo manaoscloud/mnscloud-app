@@ -7,13 +7,13 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import {
+  bankDefinitions,
   bankPartnersConfig,
+  type BankPartnerDefinition,
   defaultBankOptions,
   PEM_FIELDS,
   purposeOptions,
 } from './bank-partners-crud';
-
-type BankPartnerCatalogItem = { code: string; name: string; purposes?: string[] };
 
 @Component({
   selector: 'app-pay-bank-partners',
@@ -35,7 +35,7 @@ export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<Configur
 
   private async loadCatalog(): Promise<void> {
     try {
-      const response = await this.api.get<{ data?: { items?: BankPartnerCatalogItem[] } }>(
+      const response = await this.api.get<{ data?: { items?: BankPartnerDefinition[] } }>(
         'system/pay/bank-partners',
       );
       const items = response?.data?.items ?? [];
@@ -44,6 +44,8 @@ export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<Configur
         this.bankPurposes.set(
           Object.fromEntries(items.map((item) => [item.code, item.purposes ?? []])),
         );
+        // The API catalog decides which settings and credentials each bank's form shows.
+        for (const item of items) bankDefinitions.set(item.code, item);
       }
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
