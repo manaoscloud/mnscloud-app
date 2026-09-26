@@ -1,9 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
 
+// A non-CRUD surface that still renders a table (for example the Metrics fleet explorer) may opt
+// out with `// crud-template-exempt: <reason>` in its component. The reason is mandatory; a bare
+// marker keeps the page classified as legacy.
+export const CRUD_EXEMPT_MARKER = /\/\/\s*crud-template-exempt:[ \t]*(\S[^\n]{9,})/;
+
 export function classifyCrud(ts, html = '') {
   if (!ts.includes('@Component')) return null;
   if (/extends\s+ConfigurableCrudPageBase\b/.test(ts)) return 'generic';
+  if (CRUD_EXEMPT_MARKER.test(ts)) return null;
   if (
     /MatTableDataSource/.test(ts) ||
     (/mat-table/.test(html + ts) && /erp-page|startEdit|openEdit|FormDialog/.test(html + ts))

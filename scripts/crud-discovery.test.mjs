@@ -45,3 +45,15 @@ test('explicit validation rejects empty, legacy and copied templates', () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('documented crud-template-exempt marker opts a non-CRUD table page out', () => {
+  const html = '<section class="erp-page"><table mat-table>';
+  assert.equal(
+    classifyCrud(
+      '// crud-template-exempt: metrics fleet explorer keeps its display modes\n@Component({}) class A {}',
+      html,
+    ),
+    null,
+  );
+  assert.equal(classifyCrud('// crud-template-exempt:\n@Component({}) class A {}', html), 'legacy');
+});

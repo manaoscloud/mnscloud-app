@@ -354,28 +354,6 @@ export const routes: Routes = [
                 title: 'Cyber Security | mnscloud',
               },
 
-              // CRM
-              {
-                path: 'erp/crm/leads',
-                loadComponent: () =>
-                  import('./pages/erp/crm/leads/leads').then((m) => m.CrmLeadsPage),
-                title: 'ERP • CRM • Leads | mnscloud',
-              },
-              {
-                path: 'erp/crm/opportunities',
-                loadComponent: () =>
-                  import('./pages/erp/crm/opportunities/opportunities').then(
-                    (m) => m.CrmOpportunitiesPage,
-                  ),
-                title: 'ERP • CRM • Opportunities | mnscloud',
-              },
-              {
-                path: 'erp/crm/pipeline',
-                loadComponent: () =>
-                  import('./pages/erp/crm/pipeline/pipeline').then((m) => m.CrmPipelinePage),
-                title: 'ERP • CRM • Pipeline | mnscloud',
-              },
-
               // ERP Entities
               {
                 path: 'erp/customer',

@@ -180,6 +180,9 @@ the page must use the shared base named here.
 - A page that needs behavior the shared base lacks gets a generic extension point in the base
   (row actions, `collection`/`form` factories, related collections, hooks); never page-local
   CRUD HTML/SCSS, `MatTableDataSource`, or a parallel module base class.
+- A page that renders a table but is not a record CRUD (for example the Metrics fleet explorer)
+  opts out with a `// crud-template-exempt: <reason>` comment in its component. The reason is
+  mandatory (a bare marker stays legacy) and must point to the contract that defines the page.
 - `check:crud:inventory` scans the whole app. Pages still pending migration are listed in
   `scripts/crud-legacy-allowlist.json`; that list may only shrink, CI rejects new entries, and a
   migrated page must be removed from it in the same change.

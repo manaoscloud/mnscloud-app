@@ -2456,25 +2456,6 @@ export class MainLayout {
       requiresEnvironment: true,
     },
 
-    // ✅ CRM (tenant) — abaixo do ERP, requer ambiente selecionado
-    {
-      id: 'crm',
-      label: 'CRM',
-      icon: 'contact_page',
-      entitlementCode: 'module.erp.*',
-      requiresEnvironment: true,
-      children: [
-        { id: 'crm/leads', label: 'Leads', icon: 'person_add', route: '/erp/crm/leads' },
-        {
-          id: 'crm/opportunities',
-          label: 'Opportunities',
-          icon: 'track_changes',
-          route: '/erp/crm/opportunities',
-        },
-        { id: 'crm/pipeline', label: 'Pipeline', icon: 'view_kanban', route: '/erp/crm/pipeline' },
-      ],
-    },
-
     // Settings (raiz) — última posição
     {
       id: 'settings',
