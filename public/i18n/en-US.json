@@ -5172,5 +5172,21 @@
   "Select a file to upload.": "Select a file to upload.",
   "Create brand": "Create brand",
   "Create category": "Create category",
-  "Create unit": "Create unit"
+  "Create unit": "Create unit",
+  "Asset Type Code": "Asset Type Code",
+  "Asset categories used to classify InfraGIS asset types.": "Asset categories used to classify InfraGIS asset types.",
+  "Asset types with their category, color and icon.": "Asset types with their category, color and icon.",
+  "Category Code": "Category Code",
+  "Color": "Color",
+  "Georeferenced InfraGIS assets.": "Georeferenced InfraGIS assets.",
+  "Icon": "Icon",
+  "InfraGIS projects grouping layers and assets.": "InfraGIS projects grouping layers and assets.",
+  "Layer": "Layer",
+  "Map layers of each InfraGIS project.": "Map layers of each InfraGIS project.",
+  "Operational statuses available for InfraGIS assets.": "Operational statuses available for InfraGIS assets.",
+  "Status Code": "Status Code",
+  "Create project": "Create project",
+  "Create layer": "Create layer",
+  "Create asset type": "Create asset type",
+  "Create asset status": "Create asset status"
 }

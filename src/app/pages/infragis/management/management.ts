@@ -1,616 +1,341 @@
-import { NgStyle } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
-  Component,
-  TemplateRef,
-  computed,
-  inject,
-  resource,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { firstValueFrom } from 'rxjs';
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  QuickCreateRegistryKey,
+  quickCreateFor,
+} from '../../../shared/crud/configurable-crud/quick-create';
 
-import { TranslocoPipe } from '@jsverse/transloco';
-import { ApiService } from '../../../services/api.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
-
-type InfraGisResourceKey =
+export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
-type InfraGisRecord = Record<string, any>;
-type InfraGisField = {
-  key: string;
-  label: string;
-  type?: 'text' | 'number' | 'textarea' | 'select' | 'color';
-  span?: 'span-2' | 'span-4';
-  rows?: number;
-  options?: () => Array<{ value: string | number | null; label: string }>;
-};
-type InfraGisFieldGroup = {
-  label: string;
-  fields: InfraGisField[];
-};
 
-type InfraGisResource = {
-  key: InfraGisResourceKey;
-  label: string;
-  endpoint: string;
-  uuidField: string;
-  columns: Array<{ key: string; label: string }>;
-  fieldGroups: InfraGisFieldGroup[];
-};
+const geometries = ['POINT', 'LINE', 'POLYGON', 'MIXED'].map((value) => ({ value, label: value }));
 
-type InfraGisDashboardFilters = {
-  search: string;
-  status: number | null;
-};
+const statusField = (source: string): ConfigurableCrudField => ({
+  key: 'status',
+  source,
+  label: 'Status',
+  type: 'status',
+  span: 1,
+});
+const sortOrderField = (source: string): ConfigurableCrudField => ({
+  key: 'sortOrder',
+  source,
+  label: 'Sort Order',
+  type: 'number',
+  span: 1,
+});
+const lookup = (
+  key: string,
+  source: string,
+  label: string,
+  endpoint: string,
+  uuidField: string,
+  labelField: string,
+  selectedLabelField: string,
+  tab: ConfigurableCrudField['tab'],
+  required = false,
+): ConfigurableCrudField => ({
+  key,
+  source,
+  label,
+  type: 'search-select',
+  required,
+  remoteLookup: { endpoint, uuidField, labelField, selectedLabelField },
+  quickCreate: quickCreateFor(source as QuickCreateRegistryKey),
+  tab,
+  span: 2,
+});
 
-type InfraGisDashboardSnapshot = {
-  rows: Record<InfraGisResourceKey, InfraGisRecord[]>;
-};
+const common = {
+  bulkDelete: true,
+  initialValues: { status: 1, sortOrder: 1000, geometryType: 'POINT', color: '#22C55E' },
+} as const;
 
-const EMPTY_INFRAGIS_ROWS: Record<InfraGisResourceKey, InfraGisRecord[]> = {
-  projects: [],
-  layers: [],
-  categories: [],
-  'asset-types': [],
-  statuses: [],
-  assets: [],
-};
-
-const EMPTY_INFRAGIS_DASHBOARD: InfraGisDashboardSnapshot = {
-  rows: { ...EMPTY_INFRAGIS_ROWS },
+// One routed page per InfraGIS catalog (route data `resource`), replacing the former tabbed
+// management screen. All catalogs share the generic CRUD surface.
+const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
+  projects: defineCrud({
+    ...common,
+    endpoint: 'infragis/projects',
+    uuidField: 'IprUUID',
+    pageTitle: 'Projects',
+    pageDescription: 'InfraGIS projects grouping layers and assets.',
+    tabLabels: { notes: 'Description' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IprName', uuidField: 'IprUUID', kind: 'identity' },
+      { id: 'vertical', label: 'Vertical', field: 'VerticalProfileName' },
+      { id: 'layers', label: 'Layers', field: 'LayerCount', kind: 'number' },
+      { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
+      { id: 'status', label: 'Status', field: 'IprStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IprStatus'),
+      { key: 'name', source: 'IprName', label: 'Name', required: true, span: 2 },
+      sortOrderField('IprSortOrder'),
+      {
+        key: 'description',
+        source: 'IprDescription',
+        label: 'Description',
+        type: 'textarea',
+        rows: 5,
+        tab: 'notes',
+        span: 4,
+      },
+    ],
+  }),
+  layers: defineCrud({
+    ...common,
+    endpoint: 'infragis/layers',
+    uuidField: 'IglUUID',
+    pageTitle: 'Layers',
+    pageDescription: 'Map layers of each InfraGIS project.',
+    tabLabels: { match: 'Assignment', transform: 'Style' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IglName', uuidField: 'IglUUID', kind: 'identity' },
+      { id: 'project', label: 'Project', field: 'ProjectName' },
+      { id: 'geometry', label: 'Geometry', field: 'IglGeometryType', translateValue: false },
+      { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
+      { id: 'status', label: 'Status', field: 'IglStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IglStatus'),
+      { key: 'code', source: 'IglCode', label: 'Code', span: 1 },
+      { key: 'name', source: 'IglName', label: 'Name', required: true, span: 1 },
+      sortOrderField('IglSortOrder'),
+      lookup(
+        'projectUUID',
+        'InfraGisProjectIprUUID',
+        'Project',
+        'infragis/projects',
+        'IprUUID',
+        'IprName',
+        'ProjectName',
+        'match',
+        true,
+      ),
+      {
+        key: 'geometryType',
+        source: 'IglGeometryType',
+        label: 'Geometry',
+        type: 'select',
+        options: geometries,
+        translateOptions: false,
+        tab: 'match',
+        span: 1,
+      },
+      {
+        key: 'styleJson',
+        source: 'IglStyleJson',
+        label: 'Style JSON',
+        type: 'textarea',
+        format: 'json',
+        rows: 6,
+        tab: 'transform',
+        span: 4,
+      },
+    ],
+  }),
+  categories: defineCrud({
+    ...common,
+    endpoint: 'infragis/categories',
+    uuidField: 'IacUUID',
+    pageTitle: 'Categories',
+    pageDescription: 'Asset categories used to classify InfraGIS asset types.',
+    tabLabels: { transform: 'Visual' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IacName', uuidField: 'IacUUID', kind: 'identity' },
+      { id: 'code', label: 'Code', field: 'IacCode', translateValue: false },
+      { id: 'color', label: 'Color', field: 'IacColor', translateValue: false },
+      { id: 'status', label: 'Status', field: 'IacStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IacStatus'),
+      { key: 'code', source: 'IacCode', label: 'Category Code', span: 1 },
+      { key: 'name', source: 'IacName', label: 'Name', required: true, span: 1 },
+      sortOrderField('IacSortOrder'),
+      { key: 'color', source: 'IacColor', label: 'Color', tab: 'transform', span: 1 },
+      { key: 'icon', source: 'IacIcon', label: 'Icon', tab: 'transform', span: 2 },
+    ],
+  }),
+  'asset-types': defineCrud({
+    ...common,
+    endpoint: 'infragis/asset-types',
+    uuidField: 'IgtUUID',
+    pageTitle: 'Asset Types',
+    pageDescription: 'Asset types with their category, color and icon.',
+    tabLabels: { match: 'Classification' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IgtName', uuidField: 'IgtUUID', kind: 'identity' },
+      { id: 'code', label: 'Code', field: 'IgtCode', translateValue: false },
+      { id: 'category', label: 'Category', field: 'CategoryName' },
+      { id: 'color', label: 'Color', field: 'IgtDefaultColor', translateValue: false },
+      { id: 'status', label: 'Status', field: 'IgtStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IgtStatus'),
+      { key: 'code', source: 'IgtCode', label: 'Asset Type Code', span: 1 },
+      { key: 'name', source: 'IgtName', label: 'Name', required: true, span: 1 },
+      sortOrderField('IgtSortOrder'),
+      lookup(
+        'categoryUUID',
+        'InfraGisAssetCategoryIacUUID',
+        'Category',
+        'infragis/categories',
+        'IacUUID',
+        'IacName',
+        'CategoryName',
+        'match',
+      ),
+      { key: 'color', source: 'IgtDefaultColor', label: 'Color', tab: 'match', span: 1 },
+      { key: 'icon', source: 'IgtDefaultIcon', label: 'Icon', tab: 'match', span: 1 },
+    ],
+  }),
+  statuses: defineCrud({
+    ...common,
+    endpoint: 'infragis/statuses',
+    uuidField: 'IgsUUID',
+    pageTitle: 'Statuses',
+    pageDescription: 'Operational statuses available for InfraGIS assets.',
+    tabLabels: { transform: 'Visual' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IgsName', uuidField: 'IgsUUID', kind: 'identity' },
+      { id: 'code', label: 'Code', field: 'IgsCode', translateValue: false },
+      { id: 'color', label: 'Color', field: 'IgsColor', translateValue: false },
+      { id: 'status', label: 'Status', field: 'IgsStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IgsStatus'),
+      { key: 'code', source: 'IgsCode', label: 'Status Code', span: 1 },
+      { key: 'name', source: 'IgsName', label: 'Name', required: true, span: 1 },
+      sortOrderField('IgsSortOrder'),
+      { key: 'color', source: 'IgsColor', label: 'Color', tab: 'transform', span: 1 },
+    ],
+  }),
+  assets: defineCrud({
+    ...common,
+    endpoint: 'infragis/assets',
+    uuidField: 'IgaUUID',
+    pageTitle: 'Assets',
+    pageDescription: 'Georeferenced InfraGIS assets.',
+    tabLabels: { match: 'Assignment', monitoring: 'Geometry', transform: 'Advanced' },
+    columns: [
+      { id: 'name', label: 'Name', field: 'IgaName', uuidField: 'IgaUUID', kind: 'identity' },
+      { id: 'project', label: 'Project', field: 'ProjectName' },
+      { id: 'layer', label: 'Layer', field: 'LayerName' },
+      { id: 'type', label: 'Type', field: 'AssetTypeName' },
+      { id: 'assetStatus', label: 'Asset Status', field: 'AssetStatusName' },
+      { id: 'status', label: 'Status', field: 'IgaStatus', kind: 'status' },
+    ],
+    fields: [
+      statusField('IgaStatus'),
+      { key: 'name', source: 'IgaName', label: 'Name', required: true, span: 2 },
+      { key: 'externalID', source: 'IgaExternalID', label: 'External ID', span: 1 },
+      lookup(
+        'projectUUID',
+        'InfraGisProjectIprUUID',
+        'Project',
+        'infragis/projects',
+        'IprUUID',
+        'IprName',
+        'ProjectName',
+        'match',
+        true,
+      ),
+      lookup(
+        'layerUUID',
+        'InfraGisLayerIglUUID',
+        'Layer',
+        'infragis/layers',
+        'IglUUID',
+        'IglName',
+        'LayerName',
+        'match',
+        true,
+      ),
+      lookup(
+        'assetTypeUUID',
+        'InfraGisAssetTypeIgtUUID',
+        'Asset Type',
+        'infragis/asset-types',
+        'IgtUUID',
+        'IgtName',
+        'AssetTypeName',
+        'match',
+      ),
+      lookup(
+        'assetStatusUUID',
+        'InfraGisAssetStatusIgsUUID',
+        'Asset Status',
+        'infragis/statuses',
+        'IgsUUID',
+        'IgsName',
+        'AssetStatusName',
+        'match',
+      ),
+      {
+        key: 'latitude',
+        source: 'IgmLatitude',
+        label: 'Latitude',
+        type: 'number',
+        tab: 'monitoring',
+        span: 1,
+      },
+      {
+        key: 'longitude',
+        source: 'IgmLongitude',
+        label: 'Longitude',
+        type: 'number',
+        tab: 'monitoring',
+        span: 1,
+      },
+      {
+        key: 'geoJson',
+        source: 'IgmGeoJson',
+        label: 'GeoJSON',
+        type: 'textarea',
+        format: 'json',
+        rows: 5,
+        tab: 'monitoring',
+        span: 4,
+      },
+      {
+        key: 'propertiesJson',
+        source: 'IgaPropertiesJson',
+        label: 'Properties JSON',
+        type: 'textarea',
+        format: 'json',
+        rows: 6,
+        tab: 'transform',
+        span: 4,
+      },
+    ],
+  }),
 };
 
 @Component({
   selector: 'app-infragis-management',
   standalone: true,
-  imports: [
-    RefreshButtonComponent,
-    MatButtonModule,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatTableModule,
-    MatTabsModule,
-    MatTooltipModule,
-    TranslocoPipe,
-    NgStyle,
-  ],
-  templateUrl: './management.html',
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class InfraGisManagementPage {
-  private readonly api = inject(ApiService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snack = inject(SnackbarService);
-
-  readonly recordDialog = viewChild<TemplateRef<unknown>>('recordDialog');
-
-  readonly saving = signal(false);
-  readonly mutating = signal(false);
-  readonly search = signal('');
-  readonly statusFilter = signal<number | null>(null);
-  private readonly appliedFilters = signal<InfraGisDashboardFilters>({ search: '', status: null });
-  readonly editingResource = signal<InfraGisResource | null>(null);
-  readonly editingRecord = signal<InfraGisRecord | null>(null);
-  readonly formModel = signal<InfraGisRecord>({});
-
-  private dialogRef?: MatDialogRef<unknown>;
-
-  readonly resources: InfraGisResource[] = [
-    {
-      key: 'projects',
-      label: 'Projects',
-      endpoint: 'infragis/projects',
-      uuidField: 'IprUUID',
-      columns: [
-        { key: 'IprName', label: 'Name' },
-        { key: 'VerticalProfileName', label: 'Vertical' },
-        { key: 'LayerCount', label: 'Layers' },
-        { key: 'AssetCount', label: 'Assets' },
-        { key: 'IprStatus', label: 'Status' },
-      ],
-      fieldGroups: [
-        {
-          label: 'Record',
-          fields: [
-            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-            { key: 'name', label: 'Name', span: 'span-2' },
-            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-          ],
-        },
-        {
-          label: 'Description',
-          fields: [
-            { key: 'description', label: 'Description', type: 'textarea', span: 'span-4', rows: 5 },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'layers',
-      label: 'Layers',
-      endpoint: 'infragis/layers',
-      uuidField: 'IglUUID',
-      columns: [
-        { key: 'IglName', label: 'Name' },
-        { key: 'ProjectName', label: 'Project' },
-        { key: 'IglGeometryType', label: 'Geometry' },
-        { key: 'AssetCount', label: 'Assets' },
-        { key: 'IglStatus', label: 'Status' },
-      ],
-      fieldGroups: [
-        {
-          label: 'Record',
-          fields: [
-            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-            { key: 'code', label: 'Code' },
-            { key: 'name', label: 'Name' },
-            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-          ],
-        },
-        {
-          label: 'Assignment',
-          fields: [
-            {
-              key: 'projectUUID',
-              label: 'Project',
-              type: 'select',
-              options: () => this.projectOptions(),
-              span: 'span-2',
-            },
-            {
-              key: 'geometryType',
-              label: 'Geometry',
-              type: 'select',
-              options: () => this.geometryOptions(),
-            },
-          ],
-        },
-        {
-          label: 'Style',
-          fields: [
-            { key: 'styleJson', label: 'Style JSON', type: 'textarea', span: 'span-4', rows: 6 },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'categories',
-      label: 'Categories',
-      endpoint: 'infragis/categories',
-      uuidField: 'IacUUID',
-      columns: [
-        { key: 'IacCode', label: 'Code' },
-        { key: 'IacName', label: 'Name' },
-        { key: 'IacColor', label: 'Color' },
-        { key: 'IacStatus', label: 'Status' },
-      ],
-      fieldGroups: this.taxonomyFieldGroups('Category'),
-    },
-    {
-      key: 'asset-types',
-      label: 'Asset Types',
-      endpoint: 'infragis/asset-types',
-      uuidField: 'IgtUUID',
-      columns: [
-        { key: 'IgtCode', label: 'Code' },
-        { key: 'IgtName', label: 'Name' },
-        { key: 'CategoryName', label: 'Category' },
-        { key: 'IgtDefaultColor', label: 'Color' },
-        { key: 'IgtStatus', label: 'Status' },
-      ],
-      fieldGroups: [
-        {
-          label: 'Record',
-          fields: [
-            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-            { key: 'code', label: 'Asset Type Code' },
-            { key: 'name', label: 'Name' },
-            { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-          ],
-        },
-        {
-          label: 'Classification',
-          fields: [
-            {
-              key: 'categoryUUID',
-              label: 'Category',
-              type: 'select',
-              options: () => this.categoryOptions(),
-              span: 'span-2',
-            },
-            { key: 'color', label: 'Color', type: 'color' },
-            { key: 'icon', label: 'Icon' },
-          ],
-        },
-      ],
-    },
-    {
-      key: 'statuses',
-      label: 'Statuses',
-      endpoint: 'infragis/statuses',
-      uuidField: 'IgsUUID',
-      columns: [
-        { key: 'IgsCode', label: 'Code' },
-        { key: 'IgsName', label: 'Name' },
-        { key: 'IgsColor', label: 'Color' },
-        { key: 'IgsStatus', label: 'Status' },
-      ],
-      fieldGroups: this.statusFieldGroups(),
-    },
-    {
-      key: 'assets',
-      label: 'Assets',
-      endpoint: 'infragis/assets',
-      uuidField: 'IgaUUID',
-      columns: [
-        { key: 'IgaName', label: 'Name' },
-        { key: 'ProjectName', label: 'Project' },
-        { key: 'LayerName', label: 'Layer' },
-        { key: 'AssetTypeName', label: 'Type' },
-        { key: 'AssetStatusName', label: 'Asset Status' },
-        { key: 'IgaStatus', label: 'Status' },
-      ],
-      fieldGroups: [
-        {
-          label: 'Record',
-          fields: [
-            { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-            { key: 'name', label: 'Name', span: 'span-2' },
-            { key: 'externalID', label: 'External ID' },
-          ],
-        },
-        {
-          label: 'Assignment',
-          fields: [
-            {
-              key: 'projectUUID',
-              label: 'Project',
-              type: 'select',
-              options: () => this.projectOptions(),
-              span: 'span-2',
-            },
-            {
-              key: 'layerUUID',
-              label: 'Layer',
-              type: 'select',
-              options: () => this.layerOptions(),
-              span: 'span-2',
-            },
-            {
-              key: 'assetTypeUUID',
-              label: 'Asset Type',
-              type: 'select',
-              options: () => this.assetTypeOptions(),
-              span: 'span-2',
-            },
-            {
-              key: 'assetStatusUUID',
-              label: 'Asset Status',
-              type: 'select',
-              options: () => this.assetStatusOptions(),
-              span: 'span-2',
-            },
-          ],
-        },
-        {
-          label: 'Geometry',
-          fields: [
-            { key: 'latitude', label: 'Latitude', type: 'number' },
-            { key: 'longitude', label: 'Longitude', type: 'number' },
-            { key: 'geoJson', label: 'GeoJSON', type: 'textarea', span: 'span-4', rows: 5 },
-          ],
-        },
-        {
-          label: 'Advanced',
-          fields: [
-            {
-              key: 'propertiesJson',
-              label: 'Properties JSON',
-              type: 'textarea',
-              span: 'span-4',
-              rows: 6,
-            },
-          ],
-        },
-      ],
-    },
-  ];
-
-  private readonly dashboardResource = resource({
-    params: () => this.appliedFilters(),
-    defaultValue: EMPTY_INFRAGIS_DASHBOARD,
-    loader: ({ params }) => this.loadDashboardSnapshot(params),
-  });
-
-  readonly loading = computed(() => this.dashboardResource.isLoading() || this.mutating());
-  readonly dashboard = computed(() => this.dashboardResource.value());
-  readonly rows = computed(() => this.dashboard().rows);
-
-  refresh() {
-    this.dashboardResource.reload();
+export class InfraGisManagementPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  constructor() {
+    const resource = inject(ActivatedRoute).snapshot.data['resource'] as InfraGisResourceKey;
+    super(CONFIGS[resource] ?? CONFIGS.projects);
   }
 
-  applyFilters() {
-    this.updateAppliedFilters({
-      search: this.search().trim(),
-      status: this.statusFilter(),
-    });
-  }
-
-  clearFilters() {
-    this.search.set('');
-    this.statusFilter.set(null);
-    this.updateAppliedFilters({ search: '', status: null });
-  }
-
-  openCreate(resource: InfraGisResource) {
-    this.openDialog(resource, null);
-  }
-
-  openEdit(resource: InfraGisResource, row: InfraGisRecord) {
-    this.openDialog(resource, row);
-  }
-
-  async save() {
-    const resource = this.editingResource();
-    if (!resource) return;
-    const record = this.editingRecord();
-    const uuid = record?.[resource.uuidField];
-    this.saving.set(true);
-    try {
-      const endpoint = uuid ? `${resource.endpoint}/${uuid}` : resource.endpoint;
-      const request = uuid
-        ? this.api.put<any>(endpoint, this.formModel())
-        : this.api.post<any>(endpoint, this.formModel());
-      await request;
-      this.snack.success('InfraGIS record saved.');
-      this.dialogRef?.close();
-      this.dashboardResource.reload();
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Unable to save InfraGIS record.');
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async remove(resource: InfraGisResource, row: InfraGisRecord) {
-    const uuid = row?.[resource.uuidField];
-    if (!uuid) return;
-    const ref = this.dialog.open(SlowConfirmDialogComponent, {
-      panelClass: 'slow-confirm-dialog',
-      data: {
-        title: 'Delete record',
-        message: `Delete ${this.displayValue(row, resource.columns[0].key)}?`,
-        confirmLabel: 'Delete',
-      },
-    });
-    const confirmed = await firstValueFrom(ref.afterClosed());
-    if (!confirmed) return;
-    this.mutating.set(true);
-    try {
-      await this.api.delete<any>(`${resource.endpoint}/${uuid}`);
-      this.snack.success('InfraGIS record deleted.');
-      this.dashboardResource.reload();
-    } catch (error) {
-      this.snack.error(
-        error instanceof Error ? error.message : 'Unable to delete InfraGIS record.',
-      );
-    } finally {
-      this.mutating.set(false);
-    }
-  }
-
-  displayedColumns(resource: InfraGisResource) {
-    return [...resource.columns.map((column) => column.key), 'actions'];
-  }
-
-  displayValue(row: InfraGisRecord, key: string) {
-    const value = row?.[key];
-    if (key.endsWith('Status')) return Number(value) === 1 ? 'Active' : 'Inactive';
-    return value ?? '-';
-  }
-
-  updateField(key: string, value: unknown) {
-    this.formModel.set({ ...this.formModel(), [key]: value });
-  }
-
-  private openDialog(resource: InfraGisResource, row: InfraGisRecord | null) {
-    const recordDialog = this.recordDialog();
-    if (!recordDialog) return;
-    this.editingResource.set(resource);
-    this.editingRecord.set(row);
-    this.formModel.set(this.toFormModel(resource, row));
-    this.dialogRef = this.dialog.open(recordDialog, {
-      width: 'min(920px, 96vw)',
-      maxHeight: '92vh',
-      disableClose: true,
-      panelClass: 'crud-dialog-panel',
-    });
-  }
-
-  private toFormModel(resource: InfraGisResource, row: InfraGisRecord | null): InfraGisRecord {
-    if (!row) {
-      return { status: 1, sortOrder: 1000, geometryType: 'POINT', color: '#22C55E' };
-    }
-    const mappings: Record<string, string> = {
-      name: `${this.prefix(resource)}Name`,
-      code: `${this.prefix(resource)}Code`,
-      color: resource.key === 'asset-types' ? 'IgtDefaultColor' : `${this.prefix(resource)}Color`,
-      icon: resource.key === 'asset-types' ? 'IgtDefaultIcon' : `${this.prefix(resource)}Icon`,
-      status: `${this.prefix(resource)}Status`,
-      sortOrder: `${this.prefix(resource)}SortOrder`,
-      description: 'IprDescription',
-      projectUUID: 'InfraGisProjectIprUUID',
-      layerUUID: 'InfraGisLayerIglUUID',
-      categoryUUID: 'InfraGisAssetCategoryIacUUID',
-      assetTypeUUID: 'InfraGisAssetTypeIgtUUID',
-      assetStatusUUID: 'InfraGisAssetStatusIgsUUID',
-      geometryType: 'IgmGeometryType',
-      latitude: 'IgmLatitude',
-      longitude: 'IgmLongitude',
-      propertiesJson: 'IgaPropertiesJson',
-      geoJson: 'IgmGeoJson',
-      externalID: 'IgaExternalID',
-      styleJson: 'IglStyleJson',
-    };
-    const model: InfraGisRecord = {};
-    for (const field of this.resourceFields(resource))
-      model[field.key] = row[mappings[field.key]] ?? null;
-    return model;
-  }
-
-  resourceFields(resource: InfraGisResource): InfraGisField[] {
-    return resource.fieldGroups.flatMap((group) => group.fields);
-  }
-
-  private prefix(resource: InfraGisResource) {
-    return {
-      projects: 'Ipr',
-      layers: 'Igl',
-      categories: 'Iac',
-      'asset-types': 'Igt',
-      statuses: 'Igs',
-      assets: 'Iga',
-    }[resource.key];
-  }
-
-  private updateAppliedFilters(next: InfraGisDashboardFilters) {
-    const current = this.appliedFilters();
-    if (current.search === next.search && current.status === next.status) {
-      this.dashboardResource.reload();
-      return;
-    }
-    this.appliedFilters.set(next);
-  }
-
-  private async loadDashboardSnapshot(
-    filters: InfraGisDashboardFilters,
-  ): Promise<InfraGisDashboardSnapshot> {
-    try {
-      const responses = await Promise.all(
-        this.resources.map((resource) => this.api.get<any>(this.listUrl(resource, filters))),
-      );
-      const nextRows = { ...EMPTY_INFRAGIS_ROWS };
-      this.resources.forEach((resource, index) => {
-        nextRows[resource.key] = responses[index]?.data?.items ?? [];
-      });
-      return {
-        rows: nextRows,
-      };
-    } catch (error) {
-      this.snack.error(error instanceof Error ? error.message : 'Unable to load InfraGIS.');
-      throw error;
-    }
-  }
-
-  private listUrl(resource: InfraGisResource, filters: InfraGisDashboardFilters) {
-    const params = new URLSearchParams();
-    if (filters.search) params.set('search', filters.search);
-    if (filters.status !== null) params.set('status', String(filters.status));
-    params.set('limit', '5000');
-    return `${resource.endpoint}?${params.toString()}`;
-  }
-
-  private statusOptions() {
-    return [
-      { value: 1, label: 'Active' },
-      { value: 0, label: 'Inactive' },
-    ];
-  }
-
-  private geometryOptions() {
-    return ['POINT', 'LINE', 'POLYGON', 'MIXED'].map((value) => ({ value, label: value }));
-  }
-
-  private projectOptions() {
-    return this.rows().projects.map((row) => ({ value: row['IprUUID'], label: row['IprName'] }));
-  }
-
-  private layerOptions() {
-    return this.rows().layers.map((row) => ({
-      value: row['IglUUID'],
-      label: `${row['ProjectName']} / ${row['IglName']}`,
-    }));
-  }
-
-  private categoryOptions() {
-    return [
-      { value: null, label: '-' },
-      ...this.rows().categories.map((row) => ({ value: row['IacUUID'], label: row['IacName'] })),
-    ];
-  }
-
-  private assetTypeOptions() {
-    return [
-      { value: null, label: '-' },
-      ...this.rows()['asset-types'].map((row) => ({
-        value: row['IgtUUID'],
-        label: row['IgtName'],
-      })),
-    ];
-  }
-
-  private assetStatusOptions() {
-    return [
-      { value: null, label: '-' },
-      ...this.rows().statuses.map((row) => ({ value: row['IgsUUID'], label: row['IgsName'] })),
-    ];
-  }
-
-  private taxonomyFieldGroups(label: string): InfraGisResource['fieldGroups'] {
-    return [
-      {
-        label: 'Record',
-        fields: [
-          { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-          { key: 'code', label: `${label} Code` },
-          { key: 'name', label: 'Name' },
-          { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-        ],
-      },
-      {
-        label: 'Visual',
-        fields: [
-          { key: 'color', label: 'Color', type: 'color' },
-          { key: 'icon', label: 'Icon', span: 'span-2' },
-        ],
-      },
-    ];
-  }
-
-  private statusFieldGroups(): InfraGisResource['fieldGroups'] {
-    return [
-      {
-        label: 'Record',
-        fields: [
-          { key: 'status', label: 'Status', type: 'select', options: () => this.statusOptions() },
-          { key: 'code', label: 'Status Code' },
-          { key: 'name', label: 'Name' },
-          { key: 'sortOrder', label: 'Sort Order', type: 'number' },
-        ],
-      },
-      {
-        label: 'Visual',
-        fields: [{ key: 'color', label: 'Color', type: 'color' }],
-      },
-    ];
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const next: ConfigurableCrudRecord = { ...payload, status: Number(payload['status'] ?? 1) };
+    for (const [key, value] of Object.entries(next)) if (value === '') next[key] = null;
+    return next;
   }
 }
