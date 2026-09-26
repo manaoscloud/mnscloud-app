@@ -327,6 +327,8 @@ export type ConfigurableCrudRowAction = {
 export type ConfigurableCrudRowActionRequest = {
   method: 'post' | 'put';
   endpoint: (row: ConfigurableCrudRecord) => string;
+  /** Request body; defaults to `{}`. */
+  body?: (row: ConfigurableCrudRecord) => Record<string, unknown>;
   successMessage: string;
   confirm?: { title: string; message: string; confirmLabel?: string };
 };
@@ -1234,8 +1236,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.mutating.set(true);
     try {
       const endpoint = request.endpoint(row);
-      if (request.method === 'put') await this.api.put(endpoint, {});
-      else await this.api.post(endpoint, {});
+      const body = request.body?.(row) ?? {};
+      if (request.method === 'put') await this.api.put(endpoint, body);
+      else await this.api.post(endpoint, body);
       this.snack.success(this.t(request.successMessage));
       this.itemsResource.reload();
     } catch (error) {
@@ -1784,7 +1787,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const option = options.find(
       (candidate) => String(candidate.value ?? '') === String(value ?? ''),
     );
-    return option?.label ?? this.statusLabel(value);
+    if (option) return option.label;
+    // Free-form job/health states (custom chip palette) show their own value.
+    if (column.chipClass)
+      return value === null || value === undefined || value === '' ? '-' : String(value);
+    return this.statusLabel(value);
   }
 
   statusChipClass(row: T, column: ConfigurableCrudColumn): string {
