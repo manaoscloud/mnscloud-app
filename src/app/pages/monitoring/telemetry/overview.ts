@@ -28,6 +28,8 @@ type Agent = {
 };
 type DisplayMode = 'cards' | 'list' | 'compact';
 // Read-only paginated dashboard: no create/delete or local filters over an incomplete fleet.
+// crud-template-exempt: Metrics fleet explorer (app.md Read-only metrics dashboards) is a read-only
+// analysis surface with Cards/List/Compact modes, not a record CRUD.
 @Component({
   selector: 'mns-telemetry-overview',
   standalone: true,
