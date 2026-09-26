@@ -5148,5 +5148,7 @@
   "Please use #RRGGBB format for the primary color.": "Please use #RRGGBB format for the primary color.",
   "Web event queued for {domain}.": "Web event queued for {domain}.",
   "Certificate event queued for {domain}.": "Certificate event queued for {domain}.",
-  "Failed to queue action.": "Failed to queue action."
+  "Failed to queue action.": "Failed to queue action.",
+  "Same as billing address option": "Same as billing address option",
+  "Same as billing address": "Same as billing address"
 }
