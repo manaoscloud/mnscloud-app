@@ -28,6 +28,19 @@ const TLS_JOB_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+const RUNTIME_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'unknown', label: 'Not reported' },
+  { value: 'unsealed', label: 'Unsealed' },
+  { value: 'sealed', label: 'Sealed' },
+  { value: 'uninitialized', label: 'Not initialized' },
+  { value: 'unreachable', label: 'Unreachable' },
+];
+
+const SEAL_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'awskms', label: 'AWS KMS (automatic)' },
+  { value: 'shamir', label: 'Shamir (manual)' },
+];
+
 const SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/cyber-security/secret-servers',
   uuidField: 'CsrUUID',
@@ -87,10 +100,37 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       className: 'status-col',
     },
     {
+      id: 'runtimeState',
+      label: 'Vault state',
+      kind: 'status',
+      field: 'CsrRuntimeState',
+      options: RUNTIME_STATE_OPTIONS,
+      chipClass: (value) =>
+        value === 'unsealed'
+          ? 'chip-success'
+          : ['sealed', 'unreachable', 'uninitialized'].includes(String(value))
+            ? 'chip-failed'
+            : 'chip-skipped',
+    },
+    {
+      id: 'runtimeSealType',
+      label: 'Seal',
+      kind: 'status',
+      field: 'CsrRuntimeSealType',
+      options: SEAL_TYPE_OPTIONS,
+      chipClass: (value) => (value === 'awskms' ? 'chip-success' : 'chip-skipped'),
+    },
+    {
+      id: 'runtimeObservedAt',
+      label: 'Last observed',
+      kind: 'datetime',
+      field: 'CsrRuntimeObservedAt',
+    },
+    {
       id: 'tlsFingerprint',
       label: 'TLS valid until',
       kind: 'datetime',
-      field: 'CsrTlsNotAfter',
+      field: 'CsrRuntimeTlsNotAfter',
     },
     {
       id: 'tlsJobStatus',

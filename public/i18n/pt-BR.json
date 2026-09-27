@@ -5227,5 +5227,13 @@
   "Secret saved successfully.": "Segredo salvo com sucesso.",
   "Secret server deleted successfully.": "Servidor de segredos excluído com sucesso.",
   "Secret server saved successfully.": "Servidor de segredos salvo com sucesso.",
-  "https://vault.example.com:8200": "https://vault.example.com:8200"
+  "https://vault.example.com:8200": "https://vault.example.com:8200",
+  "Vault state": "Estado do cofre",
+  "Unsealed": "Aberto",
+  "Sealed": "Selado",
+  "Not initialized": "Não inicializado",
+  "Seal": "Seal",
+  "AWS KMS (automatic)": "AWS KMS (automático)",
+  "Shamir (manual)": "Shamir (manual)",
+  "Last observed": "Última observação"
 }
