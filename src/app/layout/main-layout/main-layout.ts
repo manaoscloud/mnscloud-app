@@ -2233,6 +2233,15 @@ export class MainLayout {
           permissions: ['tenant.monitoring.activity.read'],
           requiresEnvironment: true,
         },
+        {
+          id: 'monitoring/notification-rules',
+          label: 'Notification rules',
+          icon: 'notifications_active',
+          masterRoute: '/system/monitoring/notification-rules',
+          scope: 'master',
+          permissions: ['tenant.monitoring.activity.read'],
+          requiresEnvironment: false,
+        },
       ],
     },
     {

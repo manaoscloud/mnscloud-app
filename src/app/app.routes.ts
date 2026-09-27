@@ -1446,6 +1446,15 @@ export const routes: Routes = [
                 title: 'System Monitoring • Activity Logs | mnscloud',
               },
               {
+                path: 'monitoring/notification-rules',
+                loadComponent: () =>
+                  import('./pages/monitoring/notification-rules/notification-rules').then(
+                    (m) => m.MonitoringNotificationRulesPage,
+                  ),
+                title: 'System Monitoring • Notification rules | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'monitoring/overview',
                 loadComponent: () =>
                   import('./pages/monitoring/telemetry/overview').then(
