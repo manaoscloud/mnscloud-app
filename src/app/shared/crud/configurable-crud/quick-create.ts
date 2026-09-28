@@ -206,15 +206,29 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.HostingVpsInstancesPage,
       ),
   },
+  HostingVpsFirewallHvfUUID: {
+    label: 'Create firewall profile',
+    loadComponent: () =>
+      import('../../../pages/hosting/vps/firewalls/firewalls').then(
+        (m) => m.HostingVpsFirewallsPage,
+      ),
+  },
+  HostingVpsNetworkHvnUUID: {
+    label: 'Create private network',
+    loadComponent: () =>
+      import('../../../pages/hosting/vps/networks/networks').then((m) => m.HostingVpsNetworksPage),
+  },
   HostingVpsPlanHvpUUID: {
     label: 'Create VPS plan',
     loadComponent: () =>
       import('../../../pages/hosting/vps/plans/plans').then((m) => m.HostingVpsPlansPage),
+    permission: MASTER_PERMISSION,
   },
   HostingVpsProviderHvrUUID: {
     label: 'Create VPS provider',
     loadComponent: () =>
       import('../../../pages/hosting/vps/provider/provider').then((m) => m.HostingVpsProviderPage),
+    permission: MASTER_PERMISSION,
   },
   HostingWebhostDatabaseHwdUUID: {
     label: 'Create database',

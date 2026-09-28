@@ -20,8 +20,10 @@ import {
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { openVpsInstanceMonitor } from './instance-monitor';
 import type {
+  HostingVpsFirewall,
   HostingVpsInstance,
   HostingVpsInstanceConfig,
+  HostingVpsNetwork,
   HostingVpsPlan,
   HostingVpsPlanConfig,
   HostingVpsProvider,
@@ -209,6 +211,29 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     {
+      key: 'networkUUID',
+      source: 'HostingVpsNetworkHvnUUID',
+      payloadKey: 'networkUUID',
+      label: 'Private network',
+      type: 'search-select',
+      span: 2,
+      tab: 'network',
+      hint: 'Only available networks of the plan provider and region are listed.',
+      hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
+    },
+    {
+      key: 'firewallUUIDs',
+      source: 'HostingVpsFirewallHvfUUID',
+      payloadKey: 'firewallUUIDs',
+      label: 'Firewall profiles',
+      type: 'search-select',
+      multiple: true,
+      span: 2,
+      tab: 'network',
+      hint: 'Applied by the provider right after provisioning.',
+      hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
+    },
+    {
       key: 'authMethod',
       source: 'HviConfig',
       payloadKey: 'authMethod',
@@ -302,6 +327,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<HostingVpsProvider[]>([]);
   private readonly plans = signal<HostingVpsPlan[]>([]);
+  private readonly networks = signal<HostingVpsNetwork[]>([]);
+  private readonly firewalls = signal<HostingVpsFirewall[]>([]);
   private readonly catalog = signal<VpsProviderCatalog | null>(null);
   private readonly catalogProviderUUID = signal<string | null>(null);
   private readonly catalogFetchKey = signal<string | null>(null);
@@ -330,6 +357,35 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       searchText: [customer.Name, customer.Document].filter(Boolean).join(' '),
     })),
   );
+  /** Networks the selected plan can join: same provider, same region or provider-wide (*). */
+  private readonly networkOptions = computed<ConfigurableCrudOption[]>(() => {
+    const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+    if (!plan) return [];
+    return this.networks()
+      .filter(
+        (network) =>
+          network.HostingVpsProviderHvrUUID === plan.HostingVpsProviderHvrUUID &&
+          (network.HvnRegion === '*' ||
+            network.HvnRegion.toLowerCase() === String(plan.HvpRegion ?? '').toLowerCase()),
+      )
+      .map((network) => ({
+        value: network.HvnUUID,
+        label: network.HvnName,
+        description: network.HvnCidr,
+        searchText: `${network.HvnName} ${network.HvnCidr}`,
+      }));
+  });
+
+  private readonly firewallOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.firewalls()
+      .filter((firewall) => Number(firewall.HvfIsActive) === 1)
+      .map((firewall) => ({
+        value: firewall.HvfUUID,
+        label: firewall.HvfName,
+        searchText: firewall.HvfName,
+      })),
+  );
+
   private readonly planOptions = computed<ConfigurableCrudOption[]>(() => {
     const selectedPlanUUID = String(this.formValues()['planUUID'] ?? '');
     return this.plans()
@@ -453,6 +509,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.providers().length ? Promise.resolve() : this.fetchProviders(),
       this.plans().length ? Promise.resolve() : this.fetchPlans(),
       this.customers().length ? Promise.resolve() : this.fetchCustomers(),
+      this.networks().length ? Promise.resolve() : this.fetchNetworkCatalog(),
     ]);
     const rows = await super.fetchItems(filters);
     return rows.map((row) => this.enrichInstance(row));
@@ -462,6 +519,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     void this.fetchProviders();
     void this.fetchCustomers();
     void this.fetchPlans();
+    void this.fetchNetworkCatalog();
     super.refreshList();
   }
 
@@ -497,6 +555,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (key === 'planUUID') return this.planOptions();
     if (key === 'providerUUID') return this.providerOptions();
     if (key === 'image') return this.imageOptions();
+    if (key === 'networkUUID') return this.networkOptions();
+    if (key === 'firewallUUIDs') return this.firewallOptions();
     return [];
   }
 
@@ -600,6 +660,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       config,
       status: editing ? normalizeString(editing['HviStatus']) : null,
       isActive: Number(payload['isActive']) === 1,
+      ...(editing
+        ? {}
+        : {
+            networkUUID: normalizeString(payload['networkUUID']),
+            firewallUUIDs: Array.isArray(payload['firewallUUIDs']) ? payload['firewallUUIDs'] : [],
+          }),
     };
   }
 
@@ -982,6 +1048,26 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     } catch (error) {
       this.customers.set([]);
       this.snack.error(this.errorMessage(error) || this.t('Failed to load customers.'));
+    }
+  }
+
+  private async fetchNetworkCatalog() {
+    const base = this.isMaster() ? 'system/hosting/vps' : 'hosting/vps';
+    try {
+      const [networks, firewalls] = await Promise.all([
+        this.api.get<{ data?: { items?: HostingVpsNetwork[] } }>(
+          `${base}/networks?status=available&limit=1000&offset=0`,
+        ),
+        this.api.get<{ data?: { items?: HostingVpsFirewall[] } }>(
+          `${base}/firewalls?limit=1000&offset=0`,
+        ),
+      ]);
+      this.networks.set(networks?.data?.items ?? []);
+      this.firewalls.set(firewalls?.data?.items ?? []);
+    } catch {
+      // Tenants without the network/firewall entitlement simply get no options.
+      this.networks.set([]);
+      this.firewalls.set([]);
     }
   }
 
