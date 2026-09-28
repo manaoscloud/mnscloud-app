@@ -81,8 +81,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/providers',
   uuidField: 'HvrUUID',
   pageTitle: 'VPS Provider',
-  pageDescription:
-    'Configure platform VPS providers. Provider administration is master-only.',
+  pageDescription: 'Configure platform VPS providers. Provider administration is master-only.',
   createTitle: 'New provider',
   editTitle: 'Edit provider',
   dialogDescription: 'Configure platform credentials for VPS provisioning.',
@@ -118,6 +117,12 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     bridge: '',
     templateVmid: '',
     verifyTls: 1,
+    sdnEnabled: 0,
+    sdnZone: '',
+    sdnCidrPool: '',
+    sdnTagStart: '',
+    sdnTagEnd: '',
+    sdnSnat: 0,
     vcenterUrl: '',
     datacenter: '',
     cluster: '',
@@ -167,7 +172,13 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       field: 'HvrIsDefault',
       className: 'status-col',
     },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HvrIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HvrIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -272,6 +283,62 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       hiddenWhen: ({ values }) =>
         !['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(providerOf(values)),
+    },
+    {
+      key: 'sdnEnabled',
+      payloadKey: 'sdnEnabled',
+      label: 'Private network SDN binding',
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+    },
+    {
+      key: 'sdnZone',
+      payloadKey: 'sdnZone',
+      label: 'Approved SDN zone ID',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
+      requiredWhen: ({ values }) => sdnEnabled(values),
+    },
+    {
+      key: 'sdnCidrPool',
+      payloadKey: 'sdnCidrPool',
+      label: 'Authorized private CIDRs (comma separated)',
+      tab: 'authentication',
+      span: 2,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
+      requiredWhen: ({ values }) => sdnEnabled(values),
+    },
+    {
+      key: 'sdnTagStart',
+      payloadKey: 'sdnTagStart',
+      label: 'Reserved VLAN/VNI range start',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
+    },
+    {
+      key: 'sdnTagEnd',
+      payloadKey: 'sdnTagEnd',
+      label: 'Reserved VLAN/VNI range end',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
+    },
+    {
+      key: 'sdnSnat',
+      payloadKey: 'sdnSnat',
+      label: 'Enable subnet SNAT',
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
     },
     {
       key: 'tokenId',
@@ -585,8 +652,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
   );
 
   constructor() {
-    const masterScope =
-      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    const masterScope = (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
     super({
       ...HOSTING_VPS_PROVIDER_CONFIG,
       canCreate: masterScope,
@@ -644,6 +710,12 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       ...base,
       name: String(row['HvrName'] ?? base['name'] ?? ''),
       provider: providerOf(row['HvrProvider'] ?? base['provider']),
+      sdnEnabled: config.sdn ? 1 : 0,
+      sdnZone: config.sdn?.zone ?? '',
+      sdnCidrPool: config.sdn?.cidrPool?.join(', ') ?? '',
+      sdnTagStart: config.sdn?.tagRange?.[0] ?? '',
+      sdnTagEnd: config.sdn?.tagRange?.[1] ?? '',
+      sdnSnat: config.sdn?.snat ? 1 : 0,
       region: config.region ?? '',
       projectId: config.projectId ?? '',
       accessKeyId: config.accessKeyId ?? '',
@@ -706,6 +778,23 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
     const editing = !!this.editingRecord();
     const selected = providerOf(payload['provider']);
     const credentials = buildCredentialsPayload(payload);
+
+    if (sdnEnabled(payload)) {
+      const start = String(payload['sdnTagStart'] ?? '').trim();
+      const end = String(payload['sdnTagEnd'] ?? '').trim();
+      if (
+        (start || end) &&
+        (!start ||
+          !end ||
+          ![Number(start), Number(end)].every(
+            (tag) => Number.isInteger(tag) && tag >= 1 && tag <= 16777215,
+          ) ||
+          Number(start) > Number(end))
+      ) {
+        this.snack.warning(this.t('Enter both ends of an ordered reserved VLAN/VNI range.'));
+        return false;
+      }
+    }
 
     if (!editing && !credentials) {
       if (selected === 'sangfor_scp') {
@@ -828,6 +917,22 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
   }
 
   const provider = providerOf(values['provider']);
+  if (provider === 'proxmox') {
+    config.sdn = sdnEnabled(values)
+      ? {
+          zone: String(values['sdnZone'] ?? '').trim(),
+          cidrPool: String(values['sdnCidrPool'] ?? '')
+            .split(/[,\n]+/)
+            .map((cidr) => cidr.trim())
+            .filter(Boolean),
+          tagRange:
+            String(values['sdnTagStart'] ?? '').trim() || String(values['sdnTagEnd'] ?? '').trim()
+              ? [Number(values['sdnTagStart']), Number(values['sdnTagEnd'])]
+              : null,
+          snat: truthyNumber(values['sdnSnat']) === 1,
+        }
+      : null;
+  }
   if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {
     config.verifyTls = truthyNumber(values['verifyTls']) === 1;
   }
@@ -848,4 +953,8 @@ function buildCredentialsPayload(values: ConfigurableCrudRecord): VpsProviderCre
     if (normalized) credentials[key] = normalized;
   }
   return Object.keys(credentials).length ? credentials : null;
+}
+
+function sdnEnabled(values: ConfigurableCrudRecord): boolean {
+  return providerOf(values) === 'proxmox' && truthyNumber(values['sdnEnabled']) === 1;
 }

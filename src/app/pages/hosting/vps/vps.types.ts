@@ -2,6 +2,12 @@ export type VpsProvider =
   'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter' | 'sangfor_scp';
 
 export type VpsProviderConfig = {
+  sdn?: {
+    zone: string;
+    cidrPool: string[];
+    tagRange?: [number, number] | null;
+    snat?: boolean;
+  } | null;
   region?: string;
   projectId?: string;
   accessKeyId?: string;
