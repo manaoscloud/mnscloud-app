@@ -470,6 +470,7 @@
 
                   @if (item().voipPabxAutoDomainDnsMode === 'managed_dns') {
                     <mns-search-select-field
+                      data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
                       fieldClass="span-2"
                       [label]="'Authorized DNS policy' | transloco"
                       [options]="dnsPolicyOptions()"
