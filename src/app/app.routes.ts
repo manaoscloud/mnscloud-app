@@ -899,6 +899,24 @@ export const routes: Routes = [
                     title: 'Hosting • VPS Snapshots | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
+                  {
+                    path: 'networks',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/networks/networks').then(
+                        (m) => m.HostingVpsNetworksPage,
+                      ),
+                    title: 'Hosting • VPS Networks | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'firewalls',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/firewalls/firewalls').then(
+                        (m) => m.HostingVpsFirewallsPage,
+                      ),
+                    title: 'Hosting • VPS Firewalls | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                 ],
               },
               {
@@ -2110,6 +2128,24 @@ export const routes: Routes = [
                         (m) => m.HostingVpsSnapshotsPage,
                       ),
                     title: 'System VPS Snapshots | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'networks',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/networks/networks').then(
+                        (m) => m.HostingVpsNetworksPage,
+                      ),
+                    title: 'System VPS Networks | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'firewalls',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/firewalls/firewalls').then(
+                        (m) => m.HostingVpsFirewallsPage,
+                      ),
+                    title: 'System VPS Firewalls | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                   {

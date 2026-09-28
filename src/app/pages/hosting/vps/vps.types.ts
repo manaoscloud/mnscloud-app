@@ -214,3 +214,55 @@ export type HostingVpsSnapshot = {
   HvsDateUpdated?: string | null;
   HvsDateCompleted?: string | null;
 };
+
+export type HostingVpsNetworkStatus =
+  'queued' | 'creating' | 'available' | 'deleting' | 'failed' | 'deleted';
+
+export type HostingVpsNetwork = {
+  HvnUUID: string;
+  HvnName: string;
+  HostingVpsProviderHvrUUID: string;
+  ProviderName?: string | null;
+  ProviderCode?: VpsProvider | null;
+  /** Provider region; `*` = provider-wide network (Proxmox SDN). */
+  HvnRegion: string;
+  HvnCidr: string;
+  HvnGateway?: string | null;
+  HvnStatus: HostingVpsNetworkStatus;
+  HvnIsDefault: number;
+  HvnIsActive: number;
+  UserUsrUUID?: string | null;
+};
+
+export type HostingVpsNetworkCapabilities = {
+  create: boolean;
+  delete: boolean;
+  attach: boolean;
+  attachOnCreate: boolean;
+  detach: boolean;
+  maxNetworksPerInstance: number;
+  regionScoped: boolean;
+  gateway: boolean;
+  minPrefix: number;
+  maxPrefix: number;
+};
+
+export type HostingVpsFirewall = {
+  HvfUUID: string;
+  HvfName: string;
+  HvfOutboundPolicy: 'accept' | 'drop';
+  HvfRevision: number;
+  HvfStatus: string;
+  HvfIsActive: number;
+  UserUsrUUID?: string | null;
+};
+
+export type HostingVpsFirewallCapabilities = {
+  apply: boolean;
+  detach: boolean;
+  outbound: boolean;
+  deny: boolean;
+  icmpv6: boolean;
+  maxRules: number;
+  scope: 'profile' | 'instance' | 'none';
+};

@@ -2011,6 +2011,22 @@ export class MainLayout {
               masterRoute: '/system/vps/snapshots',
               entitlementCode: 'module.hosting.vps.snapshot',
             },
+            {
+              id: 'hosting/vps/networks',
+              label: 'Private networks',
+              icon: 'lan',
+              route: '/hosting/vps/networks',
+              masterRoute: '/system/vps/networks',
+              entitlementCode: 'module.hosting.vps.network',
+            },
+            {
+              id: 'hosting/vps/firewalls',
+              label: 'Firewalls',
+              icon: 'security',
+              route: '/hosting/vps/firewalls',
+              masterRoute: '/system/vps/firewalls',
+              entitlementCode: 'module.hosting.vps.firewall',
+            },
           ],
         },
         {
