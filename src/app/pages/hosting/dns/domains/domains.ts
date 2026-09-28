@@ -35,12 +35,7 @@ type HostingDnsRegisterOption = {
   HrgStatus?: number | null;
 };
 
-const IN_FLIGHT_OPERATION_STATES = new Set([
-  'queued',
-  'running',
-  'waiting_retry',
-  'verifying',
-]);
+const IN_FLIGHT_OPERATION_STATES = new Set(['queued', 'running', 'waiting_retry', 'verifying']);
 
 const DOMAIN_SYNC_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'not_configured', label: 'Not configured' },
@@ -105,7 +100,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
-  tabLabels: { storage: 'DNS settings', notes: 'Notes' },
+  tabLabels: { storage: 'DNS settings', network: 'PABX DNS', notes: 'Notes' },
   initialValues: {
     registerUUID: '',
     customerUUID: '',
@@ -149,6 +144,55 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'HddStatus', className: 'status-col' },
   ],
   fields: [
+    {
+      key: 'pabxPolicyEnabled',
+      label: 'Allow automatic PABX DNS publication',
+      type: 'select',
+      options: [
+        { value: false, label: 'Disabled' },
+        { value: true, label: 'Enabled' },
+      ],
+      tab: 'network',
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: 'pabxPolicyBase',
+      label: 'Authorized Realm SIP base',
+      tab: 'network',
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: 'pabxPolicyTtl',
+      label: 'DNS TTL (seconds)',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: 'pabxPolicyCapacity',
+      label: 'Publication capacity',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: 'pabxPolicyPlatform',
+      label: 'Platform sharing (master only)',
+      type: 'select',
+      options: [
+        { value: false, label: 'Tenant only' },
+        { value: true, label: 'Platform' },
+      ],
+      tab: 'network',
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+      hint: 'Requires master permission and a platform DNS provider. Provision the zone before enabling publication.',
+    },
+
     {
       key: 'status',
       source: 'HddStatus',
@@ -287,17 +331,11 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
         ...row,
         DomainSyncStatus: domainSyncStatus(row),
         DomainIdentityLabel:
-          String(row['RegisterName'] ?? '').trim() ||
-          String(row['HddName'] ?? '').trim() ||
-          '—',
+          String(row['RegisterName'] ?? '').trim() || String(row['HddName'] ?? '').trim() || '—',
       };
       const operationUUID = String(row['MessagingOperationMopUUID'] ?? '');
       const mopState = String(row['MopState'] ?? '');
-      if (
-        operationUUID &&
-        IN_FLIGHT_OPERATION_STATES.has(mopState) &&
-        environment
-      ) {
+      if (operationUUID && IN_FLIGHT_OPERATION_STATES.has(mopState) && environment) {
         this.operations.watch(
           {
             operationUUID,
@@ -355,9 +393,47 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       defaultTtl: payload['defaultTtl'],
       status: payload['status'],
       notes: payload['notes'],
+      ...(this.editingRecord() &&
+      JSON.stringify({
+        pabxPolicyEnabled: this.formValues()['pabxPolicyEnabled'] === true,
+        pabxPolicyBase: this.formValues()['pabxPolicyBase'],
+        pabxPolicyTtl: Number(this.formValues()['pabxPolicyTtl']),
+        pabxPolicyCapacity: Number(this.formValues()['pabxPolicyCapacity']),
+        pabxPolicyPlatform: this.formValues()['pabxPolicyPlatform'] === true,
+      }) !== this.loadedPolicySignature
+        ? {
+            pabxDnsPolicy: {
+              base: this.formValues()['pabxPolicyBase'],
+              ttl: Number(this.formValues()['pabxPolicyTtl']),
+              capacity: Number(this.formValues()['pabxPolicyCapacity']),
+              platform: this.formValues()['pabxPolicyPlatform'] === true,
+              status: this.formValues()['pabxPolicyEnabled'] === true,
+            },
+          }
+        : {}),
     };
   }
 
+  private loadedPolicySignature = '';
+  override async startEdit(row: ConfigurableCrudRecord) {
+    try {
+      const result = await this.api.get<any>(
+        `hosting/dns/domains/${this.recordUUID(row)}/pabx-policy`,
+      );
+      const p = result?.data?.items?.[0];
+      const values = {
+        pabxPolicyEnabled: p?.status ?? false,
+        pabxPolicyBase: p?.base ?? `pabx.${row['HddName']}`,
+        pabxPolicyTtl: p?.ttl ?? 300,
+        pabxPolicyCapacity: p?.capacity ?? 1000,
+        pabxPolicyPlatform: p?.platform ?? false,
+      };
+      this.loadedPolicySignature = JSON.stringify(values);
+      super.startEdit({ ...row, ...values });
+    } catch (e) {
+      this.snack.error(this.errorMessage(e));
+    }
+  }
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const status = String(row['DomainSyncStatus'] ?? row['HddProvisionStatus'] ?? '');
     return [
@@ -461,11 +537,15 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
 }
 
 function domainSyncStatus(row: ConfigurableCrudRecord): string {
-  const mopState = String(row['MopState'] ?? '').trim().toLowerCase();
+  const mopState = String(row['MopState'] ?? '')
+    .trim()
+    .toLowerCase();
   if (IN_FLIGHT_OPERATION_STATES.has(mopState) || mopState === 'failed' || mopState === 'blocked') {
     return mopState;
   }
-  const provision = String(row['HddProvisionStatus'] ?? 'not_configured').trim().toLowerCase();
+  const provision = String(row['HddProvisionStatus'] ?? 'not_configured')
+    .trim()
+    .toLowerCase();
   return provision || 'not_configured';
 }
 

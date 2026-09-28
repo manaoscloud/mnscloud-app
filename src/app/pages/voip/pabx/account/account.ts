@@ -1,8 +1,10 @@
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { Component, inject, signal } from '@angular/core';
 
 import { ApiService } from '../../../../services/api.service';
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudRowAction,
   ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -11,6 +13,16 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+
+const publicationStates: ConfigurableCrudOption[] = [
+  { value: 'not_requested', label: 'Not requested' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'queued', label: 'Queued' },
+  { value: 'published', label: 'Published' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'blocked', label: 'Needs review' },
+  { value: 'deleted', label: 'Deleted' },
+];
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -101,6 +113,13 @@ function config(): ConfigurableCrudConfig {
       mediaDeliveryMode: 'default',
     },
     columns: [
+      {
+        id: 'dns',
+        label: 'DNS publication',
+        kind: 'status',
+        field: 'DnsPublicationState',
+        options: publicationStates,
+      },
       { id: 'name', label: 'Name', kind: 'identity', field: 'VpaName', uuidField: 'VpaUUID' },
       {
         id: 'customer',
@@ -126,6 +145,16 @@ function config(): ConfigurableCrudConfig {
       { id: 'status', label: 'Status', kind: 'status', field: 'VpaIsActive' },
     ],
     fields: [
+      {
+        key: 'realmDnsPreview',
+        label: 'Realm SIP DNS publication',
+        hiddenWhen: ({ editing }) => editing,
+        tab: 'record',
+        span: 4,
+        disabledWhen: () => true,
+        hint: 'Select a server to preview A and optional AAAA publication.',
+      },
+
       {
         key: 'isActive',
         source: 'VpaIsActive',
@@ -264,6 +293,113 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     );
   }
 
+  protected override afterSave(): void {
+    this.realmRequestKey = crypto.randomUUID();
+  }
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const state = String(row['DnsPublicationState'] ?? 'not_requested');
+    return state === 'not_requested'
+      ? []
+      : [
+          { key: 'dns-status', label: 'DNS publication', icon: 'dns' },
+          ...(this.canEdit() && state === 'failed'
+            ? [{ key: 'dns-retry', label: 'Retry DNS publication', icon: 'refresh' }]
+            : []),
+          ...(this.canEdit() && state === 'blocked'
+            ? [{ key: 'dns-recheck', label: 'Recheck DNS result', icon: 'fact_check' }]
+            : []),
+        ];
+  }
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    const endpoint = `voip/pabx/accounts/${this.recordUUID(row)}/dns-publication`;
+    const result = await this.rawApi.get<any>(endpoint),
+      p = result?.data?.item;
+    if (!p) {
+      this.snack.error(this.t('Unavailable'));
+      return;
+    }
+    if ((action.key === 'dns-retry' || action.key === 'dns-recheck') && Number(p.canRetry) === 1) {
+      await this.rawApi.post(endpoint + '/retry', {});
+      this.refreshList();
+      return;
+    }
+    if (action.key === 'dns-recheck') {
+      if (p.operationUUID && Number(p.canRecheck) === 1) {
+        this.trackOperation(
+          await this.rawApi.post(`user/operations/${p.operationUUID}/recheck`, {}),
+        );
+        this.refreshList();
+      }
+      return;
+    }
+    openDataViewerDialog(this.dialog, {
+      title: 'DNS publication',
+      description: 'Publication confirms provider readback, not SIP readiness or DNS cache expiry.',
+      details: [
+        { label: 'Domain', value: p.name },
+        {
+          label: 'Status',
+          value: this.t(
+            publicationStates.find(
+              (option) =>
+                option.value ===
+                (['failed', 'blocked'].includes(p.operationState) ? p.operationState : p.state),
+            )?.label ?? p.state,
+          ),
+        },
+        { label: 'Operation', value: p.operationUUID },
+        { label: 'Error', value: p.operationError ?? p.errorCode },
+        { label: 'Updated at', value: p.updatedAt, kind: 'datetime' },
+      ],
+      sections: [
+        {
+          title: 'DNS records',
+          table: {
+            columns: [
+              { key: 'type', label: 'Type' },
+              { key: 'name', label: 'Name' },
+              { key: 'value', label: 'Value' },
+              { key: 'ttl', label: 'TTL' },
+            ],
+            rows: (p.records ?? []).map((r: any) => ({ ...r, value: r.data.join(', ') })),
+          },
+        },
+      ],
+    });
+  }
+  private realmRequestKey = crypto.randomUUID();
+  private realmPreviewSequence = 0;
+  override startCreate(): void {
+    this.realmRequestKey = crypto.randomUUID();
+    super.startCreate();
+  }
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'serverUUID' || this.editingRecord()) return;
+    if (!value) {
+      ++this.realmPreviewSequence;
+      this.patchFormValues({ realmDnsPreview: '' });
+      return;
+    }
+    const sequence = ++this.realmPreviewSequence;
+    void this.rawApi
+      .get<any>(`voip/pabx/realm-preview?serverUUID=${encodeURIComponent(String(value))}`)
+      .then((result) => {
+        if (sequence !== this.realmPreviewSequence) return;
+        const p = result?.data?.item;
+        const text = !p
+          ? this.t('Unavailable')
+          : p.validationError
+            ? this.t(p.validationError)
+            : p.mode === 'managed_dns' && Number(p.enabled) === 1
+              ? `${p.base} · A ${p.ipv4}${p.ipv6 ? ` · AAAA ${p.ipv6}` : ''} · ${this.t(p.source === 'platform' ? 'Platform' : 'Tenant only')}`
+              : this.t('SIP identity without DNS publication');
+        this.patchFormValues({ realmDnsPreview: text });
+      })
+      .catch(() => {
+        if (sequence === this.realmPreviewSequence)
+          this.patchFormValues({ realmDnsPreview: this.t('Unavailable') });
+      });
+  }
   private readonly rawApi = inject(ApiService);
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
@@ -325,6 +461,8 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
+      ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
+      realmDnsPreview: undefined,
       isActive: Number(payload['isActive']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,
       storageAccountUUID:
