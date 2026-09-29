@@ -5486,5 +5486,7 @@
   "Automatically publish the SIP realm DNS records when a PABX account is created.": "Publique automaticamente os registros DNS do Realm SIP ao criar uma conta PABX.",
   "PABX realm names are generated under this DNS base. Use a base within this domain.": "Os nomes do Realm PABX são gerados sob esta base DNS. Use uma base dentro deste domínio.",
   "Time in seconds that DNS resolvers may cache the published records.": "Tempo em segundos que os resolvedores DNS podem manter os registros publicados em cache.",
-  "Maximum number of PABX DNS publications allowed by this policy.": "Quantidade máxima de publicações DNS do PABX permitida por esta política."
+  "Maximum number of PABX DNS publications allowed by this policy.": "Quantidade máxima de publicações DNS do PABX permitida por esta política.",
+  "Automatic publication": "Publicação automática",
+  "Realm SIP base": "Base do Realm SIP"
 }

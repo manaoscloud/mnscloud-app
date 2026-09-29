@@ -149,7 +149,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'pabxPolicyEnabled',
       help: 'Automatically publish the SIP realm DNS records when a PABX account is created.',
-      label: 'Allow automatic PABX DNS publication',
+      label: 'Automatic publication',
       type: 'select',
       options: [
         { value: false, label: 'Disabled' },
@@ -162,7 +162,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'pabxPolicyBase',
       help: 'PABX realm names are generated under this DNS base. Use a base within this domain.',
-      label: 'Authorized Realm SIP base',
+      label: 'Realm SIP base',
       tab: 'network',
       span: 2,
       hiddenWhen: ({ editing }) => !editing,
@@ -187,7 +187,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyPlatform',
-      label: 'Platform sharing (master only)',
+      label: 'Availability',
       type: 'select',
       options: [
         { value: false, label: 'Tenant only' },
