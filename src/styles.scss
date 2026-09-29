@@ -105,6 +105,7 @@ $dark-theme: mat.define-theme(
   @include mat.snack-bar-theme($theme);
   @include mat.table-theme($theme);
   @include mat.toolbar-theme($theme);
+  @include mat.tooltip-theme($theme);
 }
 
 /* =========================================================

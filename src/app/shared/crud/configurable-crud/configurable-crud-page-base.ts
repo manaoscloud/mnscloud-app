@@ -1494,7 +1494,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    */
   fieldCellClass(field: ConfigurableCrudField, inlineHint = true): string {
     if (this.config.contextualHelp) {
-      return `crud-contextual-field-cell ${this.fieldClass(field)} ${field.help ? 'has-field-help' : ''}`;
+      return `crud-contextual-field-cell ${this.fieldClass(field)}`;
     }
     return inlineHint && this.fieldHint(field)
       ? `crud-field-cell ${this.fieldClass(field)}`
