@@ -277,6 +277,7 @@
 
 .crud-file-field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.35rem;
   // Padding and border stay inside the grid cell; long file names ellipsize instead of
   // widening the form on narrow screens.
@@ -295,13 +296,20 @@
   opacity: 0.78;
 }
 
+// Reserve an internal action column across the existing upload rows. The 40px help
+// target must not increase the native file-input row or cover its filename.
 .crud-file-field-control {
-  display: flex;
-  align-items: center;
-  min-width: 0;
+  display: contents;
   mns-field-help {
-    flex: 0 0 auto;
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
   }
+}
+.crud-file-field-label,
+.crud-file-field-input,
+.crud-file-field-status {
+  grid-column: 1;
 }
 
 .crud-file-field-input {
