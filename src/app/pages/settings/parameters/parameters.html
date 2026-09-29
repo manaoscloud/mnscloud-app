@@ -421,40 +421,6 @@
                 }
                 @if (isMaster() || item().voipPabxRealmSource === 'own') {
                   <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
-                    <input
-                      matInput
-                      [placeholder]="voipPabxAutoDomainBasePlaceholder()"
-                      [value]="item().voipPabxAutoDomainBase"
-                      (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
-                    />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'PABX SIP realm label' | transloco }}</mat-label>
-                    <mat-select
-                      [value]="item().voipPabxAutoDomainLabelMode"
-                      (selectionChange)="updateItem({ voipPabxAutoDomainLabelMode: $event.value })"
-                    >
-                      <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'PABX SIP realm UUID length' | transloco }}</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      min="8"
-                      max="32"
-                      [value]="item().voipPabxAutoDomainUuidLength"
-                      (input)="
-                        updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })
-                      "
-                    />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="span-2">
                     <mat-label>{{ 'PABX SIP realm DNS mode' | transloco }}</mat-label>
                     <mat-select
                       [value]="item().voipPabxAutoDomainDnsMode"
@@ -472,18 +438,68 @@
                     <mns-search-select-field
                       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
                       fieldClass="span-2"
-                      [label]="'Authorized DNS policy' | transloco"
+                      [label]="'Domain for Realm SIP publication' | transloco"
                       [options]="dnsPolicyOptions()"
                       [value]="item().voipPabxDnsPolicyUUID"
+                      [help]="'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.' | transloco"
                       (valueChange)="selectDnsPolicy($event)"
                     />
+
+                    <mat-form-field appearance="outline" class="span-2">
+                      <mat-label>{{ 'Effective SIP Realm base' | transloco }}</mat-label>
+                      <input matInput [value]="effectiveBase()" readonly />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="span-2">
+                      <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
+                      <input matInput [value]="realmPreview()" readonly />
+                    </mat-form-field>
+
+                    @if (selectedPolicyInvalid()) {
+                      <p class="span-4 settings-page-feedback" role="alert">
+                        {{ selectedPolicyError() | transloco }}
+                      </p>
+                    }
+                  } @else {
+                    <mat-form-field appearance="outline" class="span-2">
+                      <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [placeholder]="voipPabxAutoDomainBasePlaceholder()"
+                        [value]="item().voipPabxAutoDomainBase"
+                        (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
+                      />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="span-2">
+                      <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
+                      <input matInput [value]="realmPreview()" readonly />
+                    </mat-form-field>
                   }
-                  <div class="parameter-hint span-4">
-                    {{
-                      'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.'
-                        | transloco
-                    }}
-                  </div>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'PABX SIP realm label' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipPabxAutoDomainLabelMode"
+                      (selectionChange)="updateItem({ voipPabxAutoDomainLabelMode: $event.value })"
+                    >
+                      <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'PABX SIP realm UUID length' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="8"
+                      max="32"
+                      [value]="item().voipPabxAutoDomainUuidLength"
+                      (input)="
+                        updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })
+                      "
+                    />
+                  </mat-form-field>
 
                   <div class="toggle-grid span-4">
                     <mat-slide-toggle
@@ -506,7 +522,28 @@
                     </mat-slide-toggle>
                   </div>
                 } @else {
-                  <p class="span-4">
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Inherited publication mode' | transloco }}</mat-label>
+                    <input matInput [value]="inheritedModeLabel() | transloco" readonly />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Inherited SIP Realm base' | transloco }}</mat-label>
+                    <input matInput [value]="effectiveBase()" readonly />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
+                    <input matInput [value]="realmPreview()" readonly />
+                  </mat-form-field>
+
+                  @if (inheritedPolicyInvalid()) {
+                    <p class="span-4 settings-page-feedback" role="alert">
+                      {{ inheritedPolicyError() | transloco }}
+                    </p>
+                  }
+
+                  <p class="span-4 empty-tab">
                     {{
                       'New PABX accounts inherit the complete platform Realm SIP configuration.'
                         | transloco

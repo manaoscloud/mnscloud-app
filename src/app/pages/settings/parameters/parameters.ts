@@ -57,6 +57,21 @@ type SystemParametersItem = {
   voipPabxAutoDomainDnsMode: 'identity_only' | 'managed_dns';
   voipPabxRealmSource: 'own' | 'inherit';
   voipPabxDnsPolicyUUID: string;
+  voipPabxDnsPolicyBase?: string | null;
+  voipPabxDnsPolicyZoneName?: string | null;
+  voipPabxDnsPolicyEligible?: boolean | null;
+  voipPabxDnsPolicyError?: string | null;
+  voipPabxEffectiveSource?: 'tenant' | 'platform';
+  voipPabxEffectiveDnsMode?: 'identity_only' | 'managed_dns';
+  voipPabxEffectiveBase?: string;
+  voipPabxEffectiveZoneName?: string | null;
+  voipPabxEffectivePolicyUUID?: string | null;
+  voipPabxEffectivePolicyEligible?: boolean;
+  voipPabxEffectivePolicyError?: string | null;
+  voipPabxInheritedDnsMode?: 'identity_only' | 'managed_dns';
+  voipPabxInheritedBase?: string;
+  voipPabxInheritedZoneName?: string | null;
+  voipPabxInheritedPolicyUUID?: string | null;
   voipPabxAutoDomainIsActive: boolean;
   billingSignupTrialEnabled: boolean;
   billingSignupTrialAmount: number;
@@ -84,7 +99,14 @@ type StorageAccountItem = {
 type ParametersSnapshot = {
   item: SystemParametersItem;
   storageAccounts: StorageAccountItem[];
-  dnsPolicies: Array<{ policyUUID: string; base: string; status: boolean }>;
+  dnsPolicies: Array<{
+    policyUUID: string;
+    domainUUID?: string;
+    base: string;
+    zoneName?: string;
+    status: boolean;
+    eligible?: boolean;
+  }>;
 };
 
 type BradescoSiadItem = {
@@ -155,6 +177,21 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxAutoDomainDnsMode: 'identity_only',
   voipPabxRealmSource: 'inherit',
   voipPabxDnsPolicyUUID: '',
+  voipPabxDnsPolicyBase: null,
+  voipPabxDnsPolicyZoneName: null,
+  voipPabxDnsPolicyEligible: null,
+  voipPabxDnsPolicyError: null,
+  voipPabxEffectiveSource: 'platform',
+  voipPabxEffectiveDnsMode: 'identity_only',
+  voipPabxEffectiveBase: 'pabx.publichost.cloud',
+  voipPabxEffectiveZoneName: null,
+  voipPabxEffectivePolicyUUID: null,
+  voipPabxEffectivePolicyEligible: true,
+  voipPabxEffectivePolicyError: null,
+  voipPabxInheritedDnsMode: 'identity_only',
+  voipPabxInheritedBase: 'pabx.publichost.cloud',
+  voipPabxInheritedZoneName: null,
+  voipPabxInheritedPolicyUUID: null,
   voipPabxAutoDomainIsActive: true,
   billingSignupTrialEnabled: false,
   billingSignupTrialAmount: 0,
@@ -194,12 +231,43 @@ const DEFAULT_ITEM: SystemParametersItem = {
 })
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);
-  readonly dnsPolicies = signal<Array<{ policyUUID: string; base: string; status: boolean }>>([]);
-  readonly dnsPolicyOptions = computed(() =>
-    this.dnsPolicies()
-      .filter((p) => p.status)
-      .map((p) => ({ value: p.policyUUID, label: p.base })),
-  );
+  readonly dnsPolicies = signal<
+    Array<{
+      policyUUID: string;
+      domainUUID?: string;
+      base: string;
+      zoneName?: string;
+      status: boolean;
+      eligible?: boolean;
+    }>
+  >([]);
+  readonly dnsPolicyOptions = computed(() => {
+    const list = this.dnsPolicies();
+    const currentUUID = this.item().voipPabxDnsPolicyUUID;
+    const options = list
+      .filter((p) => p.status && p.eligible !== false)
+      .map((p) => ({
+        value: p.policyUUID,
+        label: `${p.zoneName || p.base} — Base SIP: ${p.base}`,
+        searchText: `${p.zoneName ?? ''} ${p.base}`,
+      }));
+
+    if (currentUUID && !options.some((o) => o.value === currentUUID)) {
+      const currentPolicy = list.find((p) => p.policyUUID === currentUUID);
+      const zoneName = currentPolicy?.zoneName || this.item().voipPabxDnsPolicyZoneName || '';
+      const base = currentPolicy?.base || this.item().voipPabxDnsPolicyBase || '';
+      const label = zoneName || base
+        ? `${zoneName || base} — Base SIP: ${base} (Invalid / Indisponível)`
+        : `${currentUUID} (Invalid / Indisponível)`;
+      options.unshift({
+        value: currentUUID,
+        label,
+        searchText: currentUUID,
+      });
+    }
+
+    return options;
+  });
   readonly realmSources = [
     { value: 'inherit', label: 'Inherit platform configuration' },
     { value: 'own', label: 'Use own configuration' },
@@ -213,9 +281,79 @@ export class SettingsParametersPage {
     const policy = this.dnsPolicies().find((p) => p.policyUUID === uuid);
     this.updateItem({
       voipPabxDnsPolicyUUID: uuid,
-      ...(policy ? { voipPabxAutoDomainBase: policy.base } : {}),
+      ...(policy
+        ? {
+          voipPabxAutoDomainBase: policy.base,
+          voipPabxDnsPolicyBase: policy.base,
+          voipPabxDnsPolicyZoneName: policy.zoneName,
+          voipPabxDnsPolicyEligible: policy.eligible !== false,
+          voipPabxDnsPolicyError: null,
+        }
+        : {}),
     });
   }
+
+  readonly effectiveBase = computed(() => {
+    const it = this.item();
+    if (!this.isMaster() && it.voipPabxRealmSource === 'inherit') {
+      return it.voipPabxInheritedBase || it.voipPabxEffectiveBase || 'pabx.publichost.cloud';
+    }
+    if (it.voipPabxAutoDomainDnsMode === 'managed_dns') {
+      const policy = this.dnsPolicies().find((p) => p.policyUUID === it.voipPabxDnsPolicyUUID);
+      return policy?.base || it.voipPabxDnsPolicyBase || it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
+    }
+    return it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
+  });
+
+  readonly realmPreview = computed(() => {
+    const base = this.effectiveBase();
+    return `[uuid-short].${base}`;
+  });
+
+  readonly inheritedModeLabel = computed(() => {
+    const mode = this.item().voipPabxInheritedDnsMode || this.item().voipPabxEffectiveDnsMode;
+    return mode === 'managed_dns' ? 'Managed DNS publication' : 'SIP identity without DNS publication';
+  });
+
+  readonly selectedPolicyInvalid = computed(() => {
+    const it = this.item();
+    if (it.voipPabxAutoDomainDnsMode !== 'managed_dns') return false;
+    if (it.voipPabxRealmSource === 'inherit' && !this.isMaster()) return false;
+    if (!it.voipPabxDnsPolicyUUID) return false;
+    if (it.voipPabxDnsPolicyEligible === false) return true;
+    const policy = this.dnsPolicies().find((p) => p.policyUUID === it.voipPabxDnsPolicyUUID);
+    if (!policy) return true;
+    if (policy.eligible === false || !policy.status) return true;
+    return false;
+  });
+
+  readonly selectedPolicyError = computed(() => {
+    const it = this.item();
+    if (it.voipPabxDnsPolicyError) return it.voipPabxDnsPolicyError;
+    const policy = this.dnsPolicies().find((p) => p.policyUUID === it.voipPabxDnsPolicyUUID);
+    if (!policy) {
+      return 'The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.';
+    }
+    if (!policy.status) {
+      return 'The selected DNS domain policy is disabled.';
+    }
+    if (policy.eligible === false) {
+      return 'The selected DNS domain is not fully provisioned or its provider is inactive.';
+    }
+    return 'The selected DNS policy is invalid.';
+  });
+
+  readonly inheritedPolicyInvalid = computed(() => {
+    const it = this.item();
+    if (this.isMaster() || it.voipPabxRealmSource !== 'inherit') return false;
+    const mode = it.voipPabxInheritedDnsMode || it.voipPabxEffectiveDnsMode;
+    if (mode !== 'managed_dns') return false;
+    return it.voipPabxEffectivePolicyEligible === false;
+  });
+
+  readonly inheritedPolicyError = computed(() => {
+    return this.item().voipPabxEffectivePolicyError || 'The inherited platform DNS policy is currently unavailable.';
+  });
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
 
@@ -576,6 +714,23 @@ export class SettingsParametersPage {
       voipPabxRealmSource:
         raw?.voipPabxRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
       voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
+      voipPabxDnsPolicyBase: raw?.voipPabxDnsPolicyBase ?? null,
+      voipPabxDnsPolicyZoneName: raw?.voipPabxDnsPolicyZoneName ?? null,
+      voipPabxDnsPolicyEligible: raw?.voipPabxDnsPolicyEligible != null
+        ? Boolean(raw.voipPabxDnsPolicyEligible)
+        : null,
+      voipPabxDnsPolicyError: raw?.voipPabxDnsPolicyError ?? null,
+      voipPabxEffectiveSource: raw?.voipPabxEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
+      voipPabxEffectiveDnsMode: raw?.voipPabxEffectiveDnsMode ?? 'identity_only',
+      voipPabxEffectiveBase: raw?.voipPabxEffectiveBase ?? 'pabx.publichost.cloud',
+      voipPabxEffectiveZoneName: raw?.voipPabxEffectiveZoneName ?? null,
+      voipPabxEffectivePolicyUUID: raw?.voipPabxEffectivePolicyUUID ?? null,
+      voipPabxEffectivePolicyEligible: raw?.voipPabxEffectivePolicyEligible !== false,
+      voipPabxEffectivePolicyError: raw?.voipPabxEffectivePolicyError ?? null,
+      voipPabxInheritedDnsMode: raw?.voipPabxInheritedDnsMode ?? 'identity_only',
+      voipPabxInheritedBase: raw?.voipPabxInheritedBase ?? 'pabx.publichost.cloud',
+      voipPabxInheritedZoneName: raw?.voipPabxInheritedZoneName ?? null,
+      voipPabxInheritedPolicyUUID: raw?.voipPabxInheritedPolicyUUID ?? null,
       voipPabxAutoDomainEnabled: raw?.voipPabxAutoDomainEnabled !== false,
       voipPabxAutoDomainBase:
         String(raw?.voipPabxAutoDomainBase ?? DEFAULT_ITEM.voipPabxAutoDomainBase).trim() ||
@@ -641,6 +796,8 @@ export class SettingsParametersPage {
       voipPabxAutoDomainDnsMode: this.normalizePabxAutoDomainDnsMode(
         value.voipPabxAutoDomainDnsMode,
       ),
+      voipPabxRealmSource: value.voipPabxRealmSource,
+      voipPabxDnsPolicyUUID: value.voipPabxDnsPolicyUUID,
       billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
       billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
       billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
@@ -683,6 +840,8 @@ export class SettingsParametersPage {
       voipPabxAutoDomainUuidLength: value.voipPabxAutoDomainUuidLength,
       voipPabxAutoDomainSetDefault: value.voipPabxAutoDomainSetDefault,
       voipPabxAutoDomainDnsMode: value.voipPabxAutoDomainDnsMode,
+      voipPabxRealmSource: value.voipPabxRealmSource,
+      voipPabxDnsPolicyUUID: value.voipPabxDnsPolicyUUID,
       voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
       billingSignupTrialEnabled: value.billingSignupTrialEnabled,
       billingSignupTrialAmount: value.billingSignupTrialAmount,
