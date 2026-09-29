@@ -5460,8 +5460,6 @@
   "Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.": "El DNS administrado publica A y, cuando está disponible, AAAA en una zona autorizada. Los realms SIP existentes se conservan.",
   "New PABX accounts inherit the complete platform Realm SIP configuration.": "Las nuevas cuentas PABX heredan la configuración completa de Realm SIP de la plataforma.",
   "DNS publication": "Publicación DNS",
-  "Realm SIP DNS publication": "Publicación DNS del Realm SIP",
-  "Select a server to preview A and optional AAAA publication.": "Seleccione un servidor para ver la publicación de A y, cuando está disponible, AAAA.",
   "Retry DNS publication": "Reintentar publicación DNS",
   "Recheck DNS result": "Verificar resultado DNS",
   "Publication confirms provider readback, not SIP readiness or DNS cache expiry.": "La publicación confirma la lectura en el proveedor. La disponibilidad SIP y la expiración de las cachés DNS requieren verificaciones separadas.",

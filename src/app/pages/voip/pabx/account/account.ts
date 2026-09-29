@@ -146,18 +146,6 @@ function config(): ConfigurableCrudConfig {
     ],
     fields: [
       {
-        key: 'realmDnsPreview',
-        type: 'textarea',
-        rows: 4,
-        label: 'Realm SIP DNS publication',
-        hiddenWhen: ({ editing }) => editing,
-        tab: 'record',
-        span: 4,
-        disabledWhen: () => true,
-        hint: 'Select a server to preview A and optional AAAA publication.',
-      },
-
-      {
         key: 'isActive',
         source: 'VpaIsActive',
         payloadKey: 'isActive',
@@ -370,39 +358,9 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     });
   }
   private realmRequestKey = crypto.randomUUID();
-  private realmPreviewSequence = 0;
   override startCreate(): void {
     this.realmRequestKey = crypto.randomUUID();
     super.startCreate();
-  }
-  protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'serverUUID' || this.editingRecord()) return;
-    if (!value) {
-      ++this.realmPreviewSequence;
-      this.patchFormValues({ realmDnsPreview: '' });
-      return;
-    }
-    const sequence = ++this.realmPreviewSequence;
-    void this.rawApi
-      .get<any>(`voip/pabx/realm-preview?serverUUID=${encodeURIComponent(String(value))}`)
-      .then((result) => {
-        if (sequence !== this.realmPreviewSequence) return;
-        const p = result?.data?.item;
-        const text = !p
-          ? this.t('Unavailable')
-          : p.validationError
-            ? this.t(p.validationError)
-            : p.mode === 'managed_dns' && Number(p.enabled) === 1
-              ? `${p.base}
-${this.t(p.source === 'platform' ? 'Platform' : 'Tenant only')}
-A ${p.ipv4}${p.ipv6 ? `\nAAAA ${p.ipv6}` : ''}`
-              : this.t('SIP identity without DNS publication');
-        this.patchFormValues({ realmDnsPreview: text });
-      })
-      .catch(() => {
-        if (sequence === this.realmPreviewSequence)
-          this.patchFormValues({ realmDnsPreview: this.t('Unavailable') });
-      });
   }
   private readonly rawApi = inject(ApiService);
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
@@ -466,7 +424,6 @@ A ${p.ipv4}${p.ipv6 ? `\nAAAA ${p.ipv6}` : ''}`
     return {
       ...payload,
       ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
-      realmDnsPreview: undefined,
       isActive: Number(payload['isActive']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,
       storageAccountUUID:
