@@ -23,6 +23,7 @@ import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -53,7 +54,9 @@ type SystemParametersItem = {
   voipPabxAutoDomainLabelMode: 'uuid_short';
   voipPabxAutoDomainUuidLength: number;
   voipPabxAutoDomainSetDefault: boolean;
-  voipPabxAutoDomainDnsMode: 'identity_only';
+  voipPabxAutoDomainDnsMode: 'identity_only' | 'managed_dns';
+  voipPabxRealmSource: 'own' | 'inherit';
+  voipPabxDnsPolicyUUID: string;
   voipPabxAutoDomainIsActive: boolean;
   billingSignupTrialEnabled: boolean;
   billingSignupTrialAmount: number;
@@ -81,6 +84,7 @@ type StorageAccountItem = {
 type ParametersSnapshot = {
   item: SystemParametersItem;
   storageAccounts: StorageAccountItem[];
+  dnsPolicies: Array<{ policyUUID: string; base: string; status: boolean }>;
 };
 
 type BradescoSiadItem = {
@@ -104,12 +108,19 @@ type BradescoSiadCredentials = {
 };
 
 const DEFAULT_SIAD_ITEM: BradescoSiadItem = {
-  environment: 'dsv', origin: '', suborigin: '', referenciado: '', isActive: false,
-  credentialsConfigured: false, credentialsUpdatedAt: null, credential: null,
+  environment: 'dsv',
+  origin: '',
+  suborigin: '',
+  referenciado: '',
+  isActive: false,
+  credentialsConfigured: false,
+  credentialsUpdatedAt: null,
+  credential: null,
 };
 
 const DEFAULT_SIAD_CREDENTIALS: BradescoSiadCredentials = {
-  clientId: '', clientSecret: '',
+  clientId: '',
+  clientSecret: '',
 };
 
 const DEFAULT_ITEM: SystemParametersItem = {
@@ -142,6 +153,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxAutoDomainUuidLength: 12,
   voipPabxAutoDomainSetDefault: true,
   voipPabxAutoDomainDnsMode: 'identity_only',
+  voipPabxRealmSource: 'inherit',
+  voipPabxDnsPolicyUUID: '',
   voipPabxAutoDomainIsActive: true,
   billingSignupTrialEnabled: false,
   billingSignupTrialAmount: 0,
@@ -164,6 +177,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
   standalone: true,
   imports: [
     SettingsPageComponent,
+    MnsSearchSelectFieldComponent,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -180,6 +194,28 @@ const DEFAULT_ITEM: SystemParametersItem = {
 })
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);
+  readonly dnsPolicies = signal<Array<{ policyUUID: string; base: string; status: boolean }>>([]);
+  readonly dnsPolicyOptions = computed(() =>
+    this.dnsPolicies()
+      .filter((p) => p.status)
+      .map((p) => ({ value: p.policyUUID, label: p.base })),
+  );
+  readonly realmSources = [
+    { value: 'inherit', label: 'Inherit platform configuration' },
+    { value: 'own', label: 'Use own configuration' },
+  ];
+  readonly realmDnsModes = [
+    { value: 'identity_only', label: 'SIP identity without DNS publication' },
+    { value: 'managed_dns', label: 'Managed DNS publication' },
+  ];
+  selectDnsPolicy(value: unknown) {
+    const uuid = String(value ?? '');
+    const policy = this.dnsPolicies().find((p) => p.policyUUID === uuid);
+    this.updateItem({
+      voipPabxDnsPolicyUUID: uuid,
+      ...(policy ? { voipPabxAutoDomainBase: policy.base } : {}),
+    });
+  }
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
 
@@ -222,17 +258,21 @@ export class SettingsParametersPage {
     defaultValue: {
       item: { ...DEFAULT_ITEM },
       storageAccounts: [],
+      dnsPolicies: [],
     } as ParametersSnapshot,
     loader: ({ params }) => this.loadParametersSnapshot(params.endpoint, params.isMaster),
   });
 
   private readonly siadResource = resource({
-    params: () => this.isMaster() ? undefined : true,
+    params: () => (this.isMaster() ? undefined : true),
     defaultValue: { ...DEFAULT_SIAD_ITEM },
     loader: () => this.loadSiad(),
   });
 
-  readonly loading = computed(() => this.parametersResource.isLoading() || (!this.isMaster() && this.siadResource.isLoading()));
+  readonly loading = computed(
+    () =>
+      this.parametersResource.isLoading() || (!this.isMaster() && this.siadResource.isLoading()),
+  );
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);
   readonly success = signal<string | null>(null);
@@ -253,16 +293,22 @@ export class SettingsParametersPage {
   readonly showSiadClientSecret = signal(false);
   readonly showSiadPrivateKey = signal(false);
   readonly hasChanges = computed(
-    () => this.buildSignature(this.item()) !== this.baselineSignature()
-      || (!this.isMaster() && this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature())
-      || (!this.isMaster() && Object.values(this.siadCredentials()).some((value) => value.trim() !== '')),
+    () =>
+      this.buildSignature(this.item()) !== this.baselineSignature() ||
+      (!this.isMaster() &&
+        this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature()) ||
+      (!this.isMaster() &&
+        Object.values(this.siadCredentials()).some((value) => value.trim() !== '')),
   );
 
   constructor() {
     effect(() => {
-      const snapshot = this.parametersResource.hasValue() ? this.parametersResource.value() : undefined;
+      const snapshot = this.parametersResource.hasValue()
+        ? this.parametersResource.value()
+        : undefined;
       if (!snapshot) return;
       this.storageAccounts.set(snapshot.storageAccounts);
+      this.dnsPolicies.set(snapshot.dnsPolicies);
       this.item.set(snapshot.item);
       this.baselineItem.set({ ...snapshot.item });
       this.baselineSignature.set(this.buildSignature(snapshot.item));
@@ -361,15 +407,22 @@ export class SettingsParametersPage {
         }
       }
       if (!this.isMaster()) {
-        const siadChanged = this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature();
+        const siadChanged =
+          this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature();
         let savedSiad = this.siadItem();
         if (siadChanged) {
-          const result = await this.api.put<any>('settings/integrations/bradesco/siad', this.siadItem());
+          const result = await this.api.put<any>(
+            'settings/integrations/bradesco/siad',
+            this.siadItem(),
+          );
           savedSiad = this.readSiad(result);
         }
         const certificate = this.siadCertificateFile();
         const privateKey = this.siadPrivateKeyFile();
-        const hasCredentialInput = Object.values(this.siadCredentials()).some((value) => value.trim() !== '') || certificate || privateKey;
+        const hasCredentialInput =
+          Object.values(this.siadCredentials()).some((value) => value.trim() !== '') ||
+          certificate ||
+          privateKey;
         if (hasCredentialInput) {
           if (!certificate || !privateKey) {
             throw new Error('Select both the SIAD certificate and private key.');
@@ -380,7 +433,10 @@ export class SettingsParametersPage {
           formData.set('certificate', certificate, certificate.name);
           formData.set('privateKey', privateKey, privateKey.name);
           const progress = await lastValueFrom(
-            this.api.postFormWithProgress<any>('settings/integrations/bradesco/siad/credentials', formData),
+            this.api.postFormWithProgress<any>(
+              'settings/integrations/bradesco/siad/credentials',
+              formData,
+            ),
           );
           savedSiad = this.readSiad(progress.response);
         }
@@ -517,6 +573,9 @@ export class SettingsParametersPage {
         raw?.voipPabxRemoteCommandExecutor,
       ),
       voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
+      voipPabxRealmSource:
+        raw?.voipPabxRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
+      voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
       voipPabxAutoDomainEnabled: raw?.voipPabxAutoDomainEnabled !== false,
       voipPabxAutoDomainBase:
         String(raw?.voipPabxAutoDomainBase ?? DEFAULT_ITEM.voipPabxAutoDomainBase).trim() ||
@@ -571,8 +630,10 @@ export class SettingsParametersPage {
       voipPabxMediaDeliveryMode: value.voipPabxMediaDeliveryMode,
       voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
       voipPabxAutoDomainBase:
-        value.voipPabxAutoDomainBase.trim().toLowerCase().replace(/^\.+|\.+$/g, '') ||
-        DEFAULT_ITEM.voipPabxAutoDomainBase,
+        value.voipPabxAutoDomainBase
+          .trim()
+          .toLowerCase()
+          .replace(/^\.+|\.+$/g, '') || DEFAULT_ITEM.voipPabxAutoDomainBase,
       voipPabxAutoDomainLabelMode: this.normalizePabxAutoDomainLabelMode(
         value.voipPabxAutoDomainLabelMode,
       ),
@@ -641,7 +702,13 @@ export class SettingsParametersPage {
   }
 
   private buildSiadSignature(value: BradescoSiadItem): string {
-    return JSON.stringify({ environment: value.environment, origin: value.origin, suborigin: value.suborigin, referenciado: value.referenciado, isActive: value.isActive });
+    return JSON.stringify({
+      environment: value.environment,
+      origin: value.origin,
+      suborigin: value.suborigin,
+      referenciado: value.referenciado,
+      isActive: value.isActive,
+    });
   }
 
   private async loadSiad(): Promise<BradescoSiadItem> {
@@ -653,17 +720,22 @@ export class SettingsParametersPage {
     const environment = String(raw?.environment ?? 'dsv').toLowerCase();
     return {
       environment: environment === 'hml' || environment === 'prd' ? environment : 'dsv',
-      origin: String(raw?.origin ?? ''), suborigin: String(raw?.suborigin ?? ''),
-      referenciado: String(raw?.referenciado ?? ''), isActive: raw?.isActive === true,
+      origin: String(raw?.origin ?? ''),
+      suborigin: String(raw?.suborigin ?? ''),
+      referenciado: String(raw?.referenciado ?? ''),
+      isActive: raw?.isActive === true,
       credentialsConfigured: raw?.credentialsConfigured === true,
       credentialsUpdatedAt: raw?.credentialsUpdatedAt ? String(raw.credentialsUpdatedAt) : null,
-      credential: raw?.credential && typeof raw.credential === 'object'
-        ? {
-          certificateFilename: String(raw.credential.certificateFilename ?? ''),
-          certificateFingerprintSha256: String(raw.credential.certificateFingerprintSha256 ?? ''),
-          certificateNotAfter: String(raw.credential.certificateNotAfter ?? ''),
-        }
-        : null,
+      credential:
+        raw?.credential && typeof raw.credential === 'object'
+          ? {
+              certificateFilename: String(raw.credential.certificateFilename ?? ''),
+              certificateFingerprintSha256: String(
+                raw.credential.certificateFingerprintSha256 ?? '',
+              ),
+              certificateNotAfter: String(raw.credential.certificateNotAfter ?? ''),
+            }
+          : null,
     };
   }
 
@@ -671,14 +743,16 @@ export class SettingsParametersPage {
     endpoint: string,
     isMaster: boolean,
   ): Promise<ParametersSnapshot> {
-    const [parametersResult, storageAccounts] = await Promise.all([
+    const [parametersResult, storageAccounts, policies] = await Promise.all([
       this.api.get<any>(endpoint),
       this.fetchStorageAccounts(isMaster),
+      this.api.get<any>(`${endpoint}/pabx-dns-policies`),
     ]);
 
     return {
       item: this.readItem(parametersResult),
       storageAccounts,
+      dnsPolicies: policies?.data?.items ?? [],
     };
   }
 
@@ -718,8 +792,8 @@ export class SettingsParametersPage {
     return 'uuid_short';
   }
 
-  private normalizePabxAutoDomainDnsMode(_value: unknown): 'identity_only' {
-    return 'identity_only';
+  private normalizePabxAutoDomainDnsMode(value: unknown): 'identity_only' | 'managed_dns' {
+    return value === 'managed_dns' ? 'managed_dns' : 'identity_only';
   }
 
   private normalizeCaptchaProvider(value: unknown): 'turnstile' | 'hcaptcha' | '' {
