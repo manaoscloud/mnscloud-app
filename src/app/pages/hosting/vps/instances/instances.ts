@@ -218,7 +218,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       span: 2,
       tab: 'network',
-      hint: 'Only available networks of the plan provider and region are listed.',
+      help: 'Only available networks of the plan provider and region are listed.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
@@ -230,7 +230,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       multiple: true,
       span: 2,
       tab: 'network',
-      hint: 'Applied by the provider right after provisioning.',
+      help: 'Applied by the provider right after provisioning.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {

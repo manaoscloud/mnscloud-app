@@ -338,7 +338,7 @@
 </section>
 
 <ng-template #crudFormDialog>
-  <div class="crud-dialog" [class.crud-contextual-help]="config.contextualHelp">
+  <div class="crud-dialog">
     <div class="dialog-header">
       <div>
         <h2>{{ dialogTitle() | transloco }}</h2>
@@ -350,14 +350,8 @@
       <mat-tab-group class="form-tabs crud-tabs">
         <mat-tab [label]="tabLabel('record', 'Record') | transloco">
           <div class="tab-content form-grid">
-            @if (config.tabNotices?.record; as notice) {
-              <p class="crud-form-notice">
-                <mat-icon aria-hidden="true">info_outline</mat-icon
-                ><span>{{ notice | transloco }}</span>
-              </p>
-            }
             @for (field of recordFields(); track field.key) {
-              <div [class]="fieldCellClass(field)">
+              <div class="crud-field-contents">
                 @switch (field.type) {
                   @case ('date') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -377,11 +371,11 @@
                       />
                       <mat-datepicker-toggle matSuffix [for]="recordDatePicker" />
                       <mat-datepicker #recordDatePicker touchUi />
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
@@ -402,18 +396,18 @@
                           }}</mat-option>
                         }
                       </mat-select>
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
                   }
                   @case ('search-select') {
                     <mns-search-select-field
-                      [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                      [help]="fieldHelp(field)"
                       [fieldClass]="fieldClass(field)"
                       [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -451,11 +445,11 @@
                           }}</mat-option>
                         }
                       </mat-select>
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
@@ -488,11 +482,11 @@
                           }}</mat-option>
                         }
                       </mat-select>
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
@@ -514,11 +508,11 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
@@ -538,11 +532,11 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       ></textarea>
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
@@ -553,14 +547,19 @@
                         >{{ translatedFieldLabel(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</label
                       >
-                      <input
-                        class="crud-file-field-input"
-                        type="file"
-                        [accept]="field.accept ?? ''"
-                        [attr.data-field-key]="field.key"
-                        (change)="onFileInput(field.key, $event)"
-                      />
-                      <div class="crud-file-field-hint">
+                      <div class="crud-file-field-control">
+                        <input
+                          class="crud-file-field-input"
+                          type="file"
+                          [accept]="field.accept ?? ''"
+                          [attr.data-field-key]="field.key"
+                          (change)="onFileInput(field.key, $event)"
+                        />
+                        @if (fieldHelp(field); as help) {
+                          <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
+                        }
+                      </div>
+                      <div class="crud-file-field-status">
                         {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
                       </div>
                     </div>
@@ -625,19 +624,15 @@
                           }}</mat-icon>
                         </button>
                       }
-                      @if (config.contextualHelp && field.help) {
+                      @if (fieldHelp(field); as help) {
                         <mns-field-help
                           matIconSuffix
                           [label]="translatedFieldLabel(field)"
-                          [text]="field.help | transloco"
+                          [text]="help"
                         />
                       }
                     </mat-form-field>
                   }
-                }
-
-                @if (fieldHint(field)) {
-                  <p class="field-hint">{{ fieldHint(field) }}</p>
                 }
               </div>
             }
@@ -713,10 +708,18 @@
                               />
                               <mat-datepicker-toggle matSuffix [for]="addressDatePicker" />
                               <mat-datepicker #addressDatePicker touchUi />
+                              @if (fieldHelp(field); as help) {
+                                <mns-field-help
+                                  matIconSuffix
+                                  [label]="translatedFieldLabel(field)"
+                                  [text]="help"
+                                />
+                              }
                             </mat-form-field>
                           }
                           @case ('search-select') {
                             <mns-search-select-field
+                              [help]="fieldHelp(field)"
                               [fieldClass]="fieldClass(field)"
                               [label]="
                                 translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
@@ -758,6 +761,13 @@
                                   }}</mat-option>
                                 }
                               </mat-select>
+                              @if (fieldHelp(field); as help) {
+                                <mns-field-help
+                                  matIconSuffix
+                                  [label]="translatedFieldLabel(field)"
+                                  [text]="help"
+                                />
+                              }
                             </mat-form-field>
                           }
                           @case ('checkbox-group') {
@@ -788,6 +798,13 @@
                                   }}</mat-option>
                                 }
                               </mat-select>
+                              @if (fieldHelp(field); as help) {
+                                <mns-field-help
+                                  matIconSuffix
+                                  [label]="translatedFieldLabel(field)"
+                                  [text]="help"
+                                />
+                              }
                             </mat-form-field>
                           }
                           @default {
@@ -830,6 +847,13 @@
                                   }
                                 </button>
                               }
+                              @if (fieldHelp(field); as help) {
+                                <mns-field-help
+                                  matIconSuffix
+                                  [label]="translatedFieldLabel(field)"
+                                  [text]="help"
+                                />
+                              }
                             </mat-form-field>
                           }
                         }
@@ -845,18 +869,12 @@
         @if (networkFields().length) {
           <mat-tab [label]="tabLabel('network', 'Network') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.network; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of networkFields(); track field.key) {
-                <div [class]="fieldCellClass(field)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -895,11 +913,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -931,11 +949,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -975,19 +993,15 @@
                             }}</mat-icon>
                           </button>
                         }
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
                     }
-                  }
-
-                  @if (fieldHint(field)) {
-                    <p class="field-hint">{{ fieldHint(field) }}</p>
                   }
                 </div>
               }
@@ -998,18 +1012,12 @@
         @if (routingFields().length) {
           <mat-tab [label]="tabLabel('routing', 'Routing') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.routing; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of routingFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1045,11 +1053,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1081,11 +1089,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1125,11 +1133,11 @@
                             }}</mat-icon>
                           </button>
                         }
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1144,18 +1152,12 @@
         @if (storageFields().length) {
           <mat-tab [label]="tabLabel('storage', 'Storage') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.storage; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of storageFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1192,11 +1194,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1229,11 +1231,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1274,11 +1276,11 @@
                             }}</mat-icon>
                           </button>
                         }
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1296,14 +1298,8 @@
         @if (financialFields().length) {
           <mat-tab [label]="tabLabel('financial', 'Financial') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.financial; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of financialFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('date') {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1323,18 +1319,18 @@
                         />
                         <mat-datepicker-toggle matSuffix [for]="financialDatePicker" />
                         <mat-datepicker #financialDatePicker touchUi />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
                     }
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1373,11 +1369,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1409,11 +1405,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1435,11 +1431,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1459,11 +1455,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         ></textarea>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1491,11 +1487,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1513,18 +1509,12 @@
         @if (monitoringFields().length) {
           <mat-tab [label]="tabLabel('monitoring', 'Monitoring') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.monitoring; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of monitoringFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1563,11 +1553,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1599,11 +1589,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1625,11 +1615,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1644,18 +1634,12 @@
         @if (matchFields().length) {
           <mat-tab [label]="tabLabel('match', 'Match') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.match; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of matchFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1694,11 +1678,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1730,11 +1714,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1756,11 +1740,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1775,18 +1759,12 @@
         @if (transformFields().length) {
           <mat-tab [label]="tabLabel('transform', 'Transform') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.transform; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of transformFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1825,11 +1803,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1861,11 +1839,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1887,11 +1865,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1909,11 +1887,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         ></textarea>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1935,11 +1913,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -1958,14 +1936,8 @@
         <ng-template #authenticationTab>
           <mat-tab [label]="tabLabel('authentication', 'Authentication') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.authentication; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of authenticationFields(); track field.key) {
-                <div [class]="fieldCellClass(field)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('secret-content') {
                       <mns-secret-content-field
@@ -1982,14 +1954,19 @@
                           >{{ translatedFieldLabel(field)
                           }}{{ isFieldRequired(field) ? '*' : '' }}</label
                         >
-                        <input
-                          class="crud-file-field-input"
-                          type="file"
-                          [accept]="field.accept ?? ''"
-                          [attr.data-field-key]="field.key"
-                          (change)="onFileInput(field.key, $event)"
-                        />
-                        <div class="crud-file-field-hint">
+                        <div class="crud-file-field-control">
+                          <input
+                            class="crud-file-field-input"
+                            type="file"
+                            [accept]="field.accept ?? ''"
+                            [attr.data-field-key]="field.key"
+                            (change)="onFileInput(field.key, $event)"
+                          />
+                          @if (fieldHelp(field); as help) {
+                            <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
+                          }
+                        </div>
+                        <div class="crud-file-field-status">
                           {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
                         </div>
                       </div>
@@ -1997,7 +1974,7 @@
 
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -2048,11 +2025,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2084,11 +2061,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2128,19 +2105,15 @@
                             }}</mat-icon>
                           </button>
                         }
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
                     }
-                  }
-
-                  @if (fieldHint(field)) {
-                    <p class="field-hint">{{ fieldHint(field) }}</p>
                   }
                 </div>
               }
@@ -2151,18 +2124,12 @@
         @if (limitsFields().length) {
           <mat-tab [label]="tabLabel('limits', 'Limits') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.limits; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of limitsFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -2201,11 +2168,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2237,11 +2204,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2263,11 +2230,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2282,14 +2249,8 @@
         @if (codecFields().length) {
           <mat-tab [label]="tabLabel('codecs', 'Codecs') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.codecs; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of codecFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('select') {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -2307,11 +2268,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2343,11 +2304,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2369,11 +2330,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2388,18 +2349,12 @@
         @if (diagnosticsFields().length) {
           <mat-tab [label]="tabLabel('diagnostics', 'Diagnostics') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.diagnostics; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of diagnosticsFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
-                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
+                        [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -2438,11 +2393,11 @@
                             }}</mat-option>
                           }
                         </mat-select>
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2462,11 +2417,11 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
-                        @if (config.contextualHelp && field.help) {
+                        @if (fieldHelp(field); as help) {
                           <mns-field-help
                             matIconSuffix
                             [label]="translatedFieldLabel(field)"
-                            [text]="field.help | transloco"
+                            [text]="help"
                           />
                         }
                       </mat-form-field>
@@ -2501,6 +2456,7 @@
                     @switch (field.type) {
                       @case ('search-select') {
                         <mns-search-select-field
+                          [help]="fieldHelp(field, collection)"
                           [fieldClass]="fieldClass(field)"
                           [label]="
                             translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
@@ -2530,6 +2486,13 @@
                               }}</mat-option>
                             }
                           </mat-select>
+                          @if (fieldHelp(field, collection); as help) {
+                            <mns-field-help
+                              matIconSuffix
+                              [label]="translatedFieldLabel(field)"
+                              [text]="help"
+                            />
+                          }
                         </mat-form-field>
                       }
                       @case ('status') {
@@ -2550,6 +2513,13 @@
                               }}</mat-option>
                             }
                           </mat-select>
+                          @if (fieldHelp(field, collection); as help) {
+                            <mns-field-help
+                              matIconSuffix
+                              [label]="translatedFieldLabel(field)"
+                              [text]="help"
+                            />
+                          }
                         </mat-form-field>
                       }
                       @default {
@@ -2571,6 +2541,13 @@
                               )
                             "
                           />
+                          @if (fieldHelp(field, collection); as help) {
+                            <mns-field-help
+                              matIconSuffix
+                              [label]="translatedFieldLabel(field)"
+                              [text]="help"
+                            />
+                          }
                         </mat-form-field>
                       }
                     }
@@ -2648,14 +2625,8 @@
         @if (notesFields().length) {
           <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
             <div class="tab-content form-grid">
-              @if (config.tabNotices?.notes; as notice) {
-                <p class="crud-form-notice">
-                  <mat-icon aria-hidden="true">info_outline</mat-icon
-                  ><span>{{ notice | transloco }}</span>
-                </p>
-              }
               @for (field of notesFields(); track field.key) {
-                <div [class]="fieldCellClass(field, false)">
+                <div class="crud-field-contents">
                   <mat-form-field appearance="outline" [class]="fieldClass(field)">
                     <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                     <textarea
@@ -2665,11 +2636,11 @@
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                     ></textarea>
-                    @if (config.contextualHelp && field.help) {
+                    @if (fieldHelp(field); as help) {
                       <mns-field-help
                         matIconSuffix
                         [label]="translatedFieldLabel(field)"
-                        [text]="field.help | transloco"
+                        [text]="help"
                       />
                     }
                   </mat-form-field>

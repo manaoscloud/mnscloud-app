@@ -47,7 +47,7 @@ const requiredOnCreate = ({
   editing: boolean;
   values: ConfigurableCrudRecord;
 }) => !editing && isInter({ values });
-const keepSecretHint = ({ editing }: { editing: boolean }) =>
+const keepSecretHelp = ({ editing }: { editing: boolean }) =>
   editing ? 'Leave empty to keep the stored credentials. Replacing requires all fields.' : '';
 
 const fields: ConfigurableCrudField[] = [
@@ -96,7 +96,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     autocomplete: 'off',
-    hint: 'Inter checking account number (x-conta-corrente).',
+    help: 'Inter checking account number (x-conta-corrente).',
     hiddenWhen: hideUnlessInter,
   },
   {
@@ -118,7 +118,7 @@ const fields: ConfigurableCrudField[] = [
     tab: 'financial',
     span: 1,
     required: true,
-    hint: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
+    help: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
     hiddenWhen: hideUnlessInter,
   },
   {
@@ -130,7 +130,7 @@ const fields: ConfigurableCrudField[] = [
     translateLabel: false,
     fromRecord: () => '',
     requiredWhen: requiredOnCreate,
-    hintWhen: keepSecretHint,
+    helpWhen: keepSecretHelp,
     hiddenWhen: hideUnlessInter,
   },
   {

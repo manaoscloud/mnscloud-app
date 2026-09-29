@@ -179,7 +179,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           options: OUTBOUND_OPTIONS,
           required: true,
           span: 2,
-          hint: 'Lightsail cannot restrict outbound traffic.',
+          help: 'Lightsail cannot restrict outbound traffic.',
         },
         {
           key: 'description',
@@ -246,7 +246,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               label: 'Addresses (CIDR)',
               placeholder: '203.0.113.0/24, 2001:db8::/32',
               span: 2,
-              hint: 'Separate with commas. Empty with no networks = any address.',
+              help: 'Separate with commas. Empty with no networks = any address.',
             },
             {
               key: 'remoteNetworks',

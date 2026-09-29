@@ -5482,7 +5482,7 @@
   "Close help": "Close help",
   "Provision the DNS zone before enabling automatic PABX publication.": "Provision the DNS zone before enabling automatic PABX publication.",
   "Platform sharing requires master permission and a platform DNS provider.": "Platform sharing requires master permission and a platform DNS provider.",
-  "Automatically publish the SIP realm DNS records when a PABX account is created.": "Automatically publish the SIP realm DNS records when a PABX account is created.",
+  "Automatically publish the SIP realm DNS records when a PABX account is created. Provision the DNS zone before enabling publication.": "Automatically publish the SIP realm DNS records when a PABX account is created. Provision the DNS zone before enabling publication.",
   "PABX realm names are generated under this DNS base. Use a base within this domain.": "PABX realm names are generated under this DNS base. Use a base within this domain.",
   "Time in seconds that DNS resolvers may cache the published records.": "Time in seconds that DNS resolvers may cache the published records.",
   "Maximum number of PABX DNS publications allowed by this policy.": "Maximum number of PABX DNS publications allowed by this policy.",

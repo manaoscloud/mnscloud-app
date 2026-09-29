@@ -203,7 +203,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Node UUID',
       translateLabel: false,
       span: 1,
-      hint: 'Used by Agent provisioning to bind this PABX server.',
+      help: 'Used by Agent provisioning to bind this PABX server.',
     },
     {
       key: 'hostname',
@@ -229,7 +229,7 @@ const config: ConfigurableCrudConfig = {
       tab: 'network',
       span: 1,
       breakBefore: true,
-      hint: 'Used first for SIP advertise and NAT rewriting when present.',
+      help: 'Used first for SIP advertise and NAT rewriting when present.',
     },
     {
       key: 'privateIPv4',
@@ -264,7 +264,7 @@ const config: ConfigurableCrudConfig = {
       options: remoteCommandExecutorOptions,
       tab: 'authentication',
       span: 1,
-      hint: 'Empty uses tenant, then master. Master fallback is Agent.',
+      help: 'Empty uses tenant, then master. Master fallback is Agent.',
     },
     {
       key: 'controlHost',
@@ -291,7 +291,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Control Username',
       tab: 'authentication',
       span: 1,
-      hint: 'Asterisk AMI uses a username. FreeSWITCH ESL can be left empty.',
+      help: 'Asterisk AMI uses a username. FreeSWITCH ESL can be left empty.',
     },
     {
       key: 'controlSecret',
@@ -301,7 +301,7 @@ const config: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       autocomplete: 'new-password',
-      hintWhen: ({ editing, values }) =>
+      helpWhen: ({ editing, values }) =>
         editing && values['VpsControlSecretSet']
           ? 'Password already saved. Fill in only to change it.'
           : 'No password saved yet.',
@@ -313,7 +313,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Allowed IPs',
       tab: 'authentication',
       span: 4,
-      hint: 'Comma-separated list. E.g.: 168.0.230.247/32',
+      help: 'Comma-separated list. E.g.: 168.0.230.247/32',
     },
     {
       key: 'allowedCodecs',
