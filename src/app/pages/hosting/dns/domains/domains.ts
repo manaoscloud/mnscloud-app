@@ -59,6 +59,8 @@ const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
 
 const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/dns/domains',
+  contextualHelp: true,
+  tabNotices: { network: 'Provision the DNS zone before enabling automatic PABX publication.' },
   uuidField: 'HddUUID',
   pageTitle: 'Domains',
   pageDescription: 'Manage DNS zones, provider linkage, and provisioning sync.',
@@ -146,7 +148,8 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   fields: [
     {
       key: 'pabxPolicyEnabled',
-      label: 'Allow automatic PABX DNS publication',
+      help: 'Automatically publish the SIP realm DNS records when a PABX account is created.',
+      label: 'Automatic publication',
       type: 'select',
       options: [
         { value: false, label: 'Disabled' },
@@ -158,13 +161,15 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyBase',
-      label: 'Authorized Realm SIP base',
+      help: 'PABX realm names are generated under this DNS base. Use a base within this domain.',
+      label: 'Realm SIP base',
       tab: 'network',
       span: 2,
       hiddenWhen: ({ editing }) => !editing,
     },
     {
       key: 'pabxPolicyTtl',
+      help: 'Time in seconds that DNS resolvers may cache the published records.',
       label: 'DNS TTL (seconds)',
       type: 'number',
       tab: 'network',
@@ -173,6 +178,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyCapacity',
+      help: 'Maximum number of PABX DNS publications allowed by this policy.',
       label: 'Publication capacity',
       type: 'number',
       tab: 'network',
@@ -181,7 +187,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyPlatform',
-      label: 'Platform sharing (master only)',
+      label: 'Availability',
       type: 'select',
       options: [
         { value: false, label: 'Tenant only' },
@@ -190,7 +196,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       tab: 'network',
       span: 2,
       hiddenWhen: ({ editing }) => !editing,
-      hint: 'Requires master permission and a platform DNS provider. Provision the zone before enabling publication.',
+      help: 'Platform sharing requires master permission and a platform DNS provider.',
     },
 
     {

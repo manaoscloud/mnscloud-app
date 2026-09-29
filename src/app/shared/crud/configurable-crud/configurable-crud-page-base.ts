@@ -1,3 +1,4 @@
+import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
 import { CheckboxGroupFieldComponent } from '../../forms/checkbox-group-field';
 import { AsyncOperationsService } from '../../operations/async-operations.service';
@@ -75,6 +76,7 @@ import {
 } from '../../upload/file-upload-progress';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
+  FieldHelpComponent,
   CheckboxGroupFieldComponent,
   SecretContentFieldComponent,
   RouterLink,
@@ -238,6 +240,8 @@ export type ConfigurableCrudField = {
   disabledWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   /** Short inline help text rendered under the field. Static or derived from current values. */
   hint?: string;
+  /** Optional supplementary guidance; translated and rendered by the shared help control. */
+  help?: string;
   hintWhen?: (context: ConfigurableCrudFieldContext) => string;
 };
 
@@ -437,6 +441,10 @@ export type ConfigurableCrudConfig = {
   canDeleteRow?: (row: ConfigurableCrudRecord) => boolean;
   bulkDelete?: boolean;
   statusFilter?: boolean;
+  /** Pilot opt-in: compact, uniformly aligned controls with optional contextual help. */
+  contextualHelp?: boolean;
+  /** Essential instructions remain visible, independent of optional help. */
+  tabNotices?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
   /** Places Authentication directly after Record without changing the default tab sequence. */
   authenticationTabAfterRecord?: boolean;
@@ -1484,8 +1492,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    * Grid cell for a field in hint-capable tabs. A hinted field becomes one grid cell that stacks
    * the control and its hint; other fields pass through (`display: contents`) unchanged.
    */
-  fieldCellClass(field: ConfigurableCrudField): string {
-    return this.fieldHint(field)
+  fieldCellClass(field: ConfigurableCrudField, inlineHint = true): string {
+    if (this.config.contextualHelp) {
+      return `crud-contextual-field-cell ${this.fieldClass(field)} ${field.help ? 'has-field-help' : ''}`;
+    }
+    return inlineHint && this.fieldHint(field)
       ? `crud-field-cell ${this.fieldClass(field)}`
       : 'crud-field-contents';
   }

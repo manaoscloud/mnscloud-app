@@ -5477,5 +5477,15 @@
   "Failed to delete domain.": "No se pudo eliminar el dominio.",
   "Delete {count} selected domains?": "¿Eliminar los {count} dominios seleccionados?",
   "Domain saved successfully.": "Dominio guardado correctamente.",
-  "PABX DNS": "PABX DNS"
+  "PABX DNS": "PABX DNS",
+  "Help for": "Ayuda sobre",
+  "Close help": "Cerrar ayuda",
+  "Provision the DNS zone before enabling automatic PABX publication.": "Provisione la zona DNS antes de habilitar la publicación automática del PABX.",
+  "Platform sharing requires master permission and a platform DNS provider.": "Compartir en la plataforma requiere permiso master y un proveedor DNS de la plataforma.",
+  "Automatically publish the SIP realm DNS records when a PABX account is created.": "Publique automáticamente los registros DNS del Realm SIP al crear una cuenta PABX.",
+  "PABX realm names are generated under this DNS base. Use a base within this domain.": "Los nombres del Realm PABX se generan bajo esta base DNS. Use una base dentro de este dominio.",
+  "Time in seconds that DNS resolvers may cache the published records.": "Tiempo en segundos que los resolvedores DNS pueden mantener los registros publicados en caché.",
+  "Maximum number of PABX DNS publications allowed by this policy.": "Número máximo de publicaciones DNS del PABX permitidas por esta política.",
+  "Automatic publication": "Publicación automática",
+  "Realm SIP base": "Base del Realm SIP"
 }

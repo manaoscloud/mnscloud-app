@@ -1,0 +1,87 @@
+// Shared optional field assistance. Opt-in keeps existing forms unchanged.
+.crud-dialog.crud-contextual-help .form-grid {
+  align-items: start;
+}
+.crud-contextual-help .form-grid > .crud-contextual-field-cell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+}
+.crud-contextual-help .form-grid > .crud-contextual-field-cell.has-field-help {
+  grid-template-columns: minmax(0, 1fr) var(--form-control-height);
+  column-gap: 4px;
+}
+.crud-contextual-help .crud-contextual-field-cell > :not(mns-field-help):not(.field-hint) {
+  grid-column: 1 !important;
+  min-width: 0;
+  width: 100%;
+}
+.crud-contextual-help .crud-contextual-field-cell > .field-hint {
+  grid-column: 1 / -1;
+}
+mns-field-help {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+}
+.field-help-trigger.mat-mdc-icon-button {
+  width: var(--form-control-height);
+  height: var(--form-control-height);
+  padding: 8px;
+  color: var(--mat-sys-color-on-surface-variant, currentColor);
+}
+.field-help-trigger.mat-mdc-icon-button .mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+.field-help-panel {
+  box-sizing: border-box;
+  width: min(360px, calc(100vw - 48px));
+  max-height: min(360px, calc(100dvh - 24px));
+  overflow: auto;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--mat-sys-color-outline-variant, #7b888b);
+  border-radius: 8px;
+  background: var(--mat-sys-color-surface-container, #252b2a);
+  color: var(--mat-sys-color-on-surface, #e0e3e2);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 20%);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.field-help-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.field-help-heading strong {
+  min-width: 0;
+}
+.field-help-heading button {
+  flex: 0 0 auto;
+}
+.field-help-panel p {
+  margin: 4px 0 0;
+  white-space: pre-line;
+}
+.crud-form-notice {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 8px;
+  color: var(--mat-sys-color-on-surface-variant, currentColor);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.crud-form-notice .mat-icon {
+  flex: 0 0 20px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
