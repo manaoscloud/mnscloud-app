@@ -147,6 +147,8 @@ function config(): ConfigurableCrudConfig {
     fields: [
       {
         key: 'realmDnsPreview',
+        type: 'textarea',
+        rows: 4,
         label: 'Realm SIP DNS publication',
         hiddenWhen: ({ editing }) => editing,
         tab: 'record',
@@ -391,7 +393,9 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
           : p.validationError
             ? this.t(p.validationError)
             : p.mode === 'managed_dns' && Number(p.enabled) === 1
-              ? `${p.base} · A ${p.ipv4}${p.ipv6 ? ` · AAAA ${p.ipv6}` : ''} · ${this.t(p.source === 'platform' ? 'Platform' : 'Tenant only')}`
+              ? `${p.base}
+${this.t(p.source === 'platform' ? 'Platform' : 'Tenant only')}
+A ${p.ipv4}${p.ipv6 ? `\nAAAA ${p.ipv6}` : ''}`
               : this.t('SIP identity without DNS publication');
         this.patchFormValues({ realmDnsPreview: text });
       })
