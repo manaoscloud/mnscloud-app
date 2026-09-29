@@ -59,6 +59,8 @@ const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
 
 const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/dns/domains',
+  contextualHelp: true,
+  tabNotices: { network: 'Provision the DNS zone before enabling automatic PABX publication.' },
   uuidField: 'HddUUID',
   pageTitle: 'Domains',
   pageDescription: 'Manage DNS zones, provider linkage, and provisioning sync.',
@@ -146,6 +148,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   fields: [
     {
       key: 'pabxPolicyEnabled',
+      help: 'Automatically publish the SIP realm DNS records when a PABX account is created.',
       label: 'Allow automatic PABX DNS publication',
       type: 'select',
       options: [
@@ -158,6 +161,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyBase',
+      help: 'PABX realm names are generated under this DNS base. Use a base within this domain.',
       label: 'Authorized Realm SIP base',
       tab: 'network',
       span: 2,
@@ -165,6 +169,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyTtl',
+      help: 'Time in seconds that DNS resolvers may cache the published records.',
       label: 'DNS TTL (seconds)',
       type: 'number',
       tab: 'network',
@@ -173,6 +178,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'pabxPolicyCapacity',
+      help: 'Maximum number of PABX DNS publications allowed by this policy.',
       label: 'Publication capacity',
       type: 'number',
       tab: 'network',
@@ -190,7 +196,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       tab: 'network',
       span: 2,
       hiddenWhen: ({ editing }) => !editing,
-      hint: 'Requires master permission and a platform DNS provider. Provision the zone before enabling publication.',
+      help: 'Platform sharing requires master permission and a platform DNS provider.',
     },
 
     {

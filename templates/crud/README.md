@@ -29,3 +29,26 @@ npm run build
 Validation must recognize at least one CRUD and reject copied/legacy implementations.
 The changed-app CI checks new and modified resource pages, including SCSS-only changes.
 Schema delivery uses the enrolled Agent reconciliation path described by the workspace.
+
+## Contextual field help (opt-in pilot)
+
+Global styles live in `src/styles/_field-help.scss`; `FieldHelpComponent` owns the
+accessible interaction. Do not add page-local sizing, positioning, color, or tooltip CSS.
+Only Hosting / DNS / Domains currently opts in; leave other resources unchanged until
+this pilot is approved. New templates do not enable it automatically.
+
+- `contextualHelp: true` on the CRUD configuration opts into uniformly aligned field cells.
+- `help: 'Translation key'` is optional supplementary text. The generic normal field tabs
+  render an adjacent help button without changing `--form-control-height` (40px baseline).
+- `tabNotices: { network: 'Essential instruction' }` keeps prerequisites visible.
+- Existing `hint`/`hintWhen` and validation messages are never automatically hidden or converted.
+- Text is escaped Angular interpolation; do not accept arbitrary HTML. Translate help,
+  notices, titles and accessible labels in PT/EN/ES.
+- Hover/focus provides a short tooltip; click, Enter/Space or touch opens persistent help.
+  Escape/backdrop/close dismiss it, return focus, and must not dismiss the parent CRUD dialog.
+- The icon must remain separate from select arrows, password toggles and quick-create actions.
+  Mobile must fit the viewport; help must remain available on disabled fields.
+- The generic address and inline related-collection editors retain their existing presentation;
+  use the shared help component when those editors are explicitly migrated.
+- Verify dark/light themes, desktop/mobile, keyboard focus, Escape, visible prerequisites,
+  equal control heights and unchanged save payloads before extending adoption.
