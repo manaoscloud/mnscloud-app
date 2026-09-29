@@ -245,46 +245,43 @@ export class SettingsParametersPage {
   private readonly translation = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
   readonly dnsOffset = signal(0);
-  readonly dnsTotal = signal(0);
-  readonly dnsLoading = signal(false);
-  readonly dnsLoadError = signal(false);
-  private dnsSearch = '';
-  private dnsRequest = 0;
+  private readonly dnsSearch = signal('');
   private dnsTimer?: ReturnType<typeof setTimeout>;
+  readonly dnsTotal = computed(() => this.dnsResource.value()?.total ?? 0);
+  readonly dnsLoading = computed(() => this.dnsResource.isLoading());
+  readonly dnsLoadError = computed(() => !!this.dnsResource.error());
+  private readonly dnsResource = resource({
+    params: () => ({
+      endpoint: this.baseEndpoint(),
+      search: this.dnsSearch(),
+      offset: this.dnsOffset(),
+    }),
+    defaultValue: { items: [] as ParametersSnapshot['dnsPolicies'], total: 0 },
+    loader: async ({ params }) => {
+      const query = new URLSearchParams({
+        search: params.search,
+        limit: '50',
+        offset: String(params.offset),
+      });
+      const result = await this.api.get<any>(`${params.endpoint}/pabx-dns-policies?${query}`);
+      return { items: result?.data?.items ?? [], total: Number(result?.data?.total ?? 0) };
+    },
+  });
 
   searchDnsPolicies(term: string) {
-    this.dnsSearch = term;
-    this.dnsOffset.set(0);
-    ++this.dnsRequest;
     clearTimeout(this.dnsTimer);
-    this.dnsTimer = setTimeout(() => void this.loadDnsPolicies(), 250);
+    this.dnsTimer = setTimeout(() => {
+      this.dnsOffset.set(0);
+      this.dnsSearch.set(term);
+    }, 250);
   }
 
   pageDnsPolicies(direction: number) {
     this.dnsOffset.update((offset) => Math.max(0, offset + direction * 50));
-    void this.loadDnsPolicies();
   }
 
-  async loadDnsPolicies() {
-    clearTimeout(this.dnsTimer);
-    const request = ++this.dnsRequest;
-    this.dnsLoading.set(true);
-    this.dnsLoadError.set(false);
-    try {
-      const query = new URLSearchParams({
-        search: this.dnsSearch,
-        limit: '50',
-        offset: String(this.dnsOffset()),
-      });
-      const result = await this.api.get<any>(`${this.baseEndpoint()}/pabx-dns-policies?${query}`);
-      if (request !== this.dnsRequest || this.destroyRef.destroyed) return;
-      this.dnsPolicies.set(result?.data?.items ?? []);
-      this.dnsTotal.set(result?.data?.total ?? 0);
-    } catch {
-      if (request === this.dnsRequest && !this.destroyRef.destroyed) this.dnsLoadError.set(true);
-    } finally {
-      if (request === this.dnsRequest && !this.destroyRef.destroyed) this.dnsLoading.set(false);
-    }
+  refreshDnsPolicies() {
+    this.dnsResource.reload();
   }
 
   readonly dnsPolicyOptions = computed(() => {
@@ -506,8 +503,10 @@ export class SettingsParametersPage {
   );
 
   constructor() {
+    effect(() => {
+      if (this.dnsResource.hasValue()) this.dnsPolicies.set(this.dnsResource.value().items);
+    });
     this.destroyRef.onDestroy(() => {
-      ++this.dnsRequest;
       clearTimeout(this.dnsTimer);
     });
     effect(() => {
@@ -984,7 +983,6 @@ export class SettingsParametersPage {
       this.api.get<any>(`${endpoint}/pabx-dns-policies`),
     ]);
 
-    this.dnsTotal.set(policies?.data?.total ?? 0);
     this.dnsOffset.set(0);
     return {
       item: this.readItem(parametersResult),

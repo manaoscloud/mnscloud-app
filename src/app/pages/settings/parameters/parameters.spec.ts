@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
@@ -8,6 +8,7 @@ import { AppI18nService } from '../../../services/app-i18n.service';
 
 describe('Realm SIP domain selection', () => {
   let page: SettingsParametersPage;
+  let fixture: ComponentFixture<SettingsParametersPage>;
   let get: jasmine.Spy;
   beforeEach(async () => {
     get = jasmine.createSpy().and.resolveTo({ data: { items: [], total: 0 } });
@@ -28,9 +29,10 @@ describe('Realm SIP domain selection', () => {
     })
       .overrideComponent(SettingsParametersPage, { set: { template: '' } })
       .compileComponents();
-    page = TestBed.createComponent(SettingsParametersPage).componentInstance;
+    fixture = TestBed.createComponent(SettingsParametersPage);
+    page = fixture.componentInstance;
     TestBed.tick();
-    await Promise.resolve();
+    await fixture.whenStable();
     TestBed.tick();
   });
   it('keeps an eligible saved selection outside the current page', () => {
@@ -56,7 +58,10 @@ describe('Realm SIP domain selection', () => {
       },
     });
     page.dnsOffset.set(50);
-    await page.loadDnsPolicies();
+    page.refreshDnsPolicies();
+    TestBed.tick();
+    await fixture.whenStable();
+    TestBed.tick();
     expect(get.calls.mostRecent().args[0]).toContain('offset=50');
     expect(page.dnsTotal()).toBe(70);
     expect(page.dnsPolicies()[0].policyUUID).toBe('p51');
@@ -64,13 +69,17 @@ describe('Realm SIP domain selection', () => {
   it('does not apply a stale response after a newer request', async () => {
     let resolveOld!: (value: unknown) => void;
     get.and.returnValue(new Promise((resolve) => (resolveOld = resolve)));
-    const old = page.loadDnsPolicies();
+    page.dnsOffset.set(50);
+    TestBed.tick();
     get.and.resolveTo({
       data: { items: [{ policyUUID: 'new', base: 'sip.example.com', status: true }], total: 1 },
     });
-    await page.loadDnsPolicies();
+    page.dnsOffset.set(0);
+    TestBed.tick();
+    await fixture.whenStable();
     resolveOld({ data: { items: [], total: 0 } });
-    await old;
+    await Promise.resolve();
+    TestBed.tick();
     expect(page.dnsPolicies()[0].policyUUID).toBe('new');
   });
   it('omits a stale policy when saving identity-only configuration', () => {

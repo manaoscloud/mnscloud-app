@@ -447,7 +447,7 @@
                       [hasNext]="dnsOffset() + 50 < dnsTotal()"
                       (searchChange)="searchDnsPolicies($event)"
                       (pageChange)="pageDnsPolicies($event)"
-                      (openedChange)="$event && loadDnsPolicies()"
+                      (openedChange)="$event && refreshDnsPolicies()"
                       [value]="item().voipPabxDnsPolicyUUID"
                       [help]="'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.' | transloco"
                       (valueChange)="selectDnsPolicy($event)"
