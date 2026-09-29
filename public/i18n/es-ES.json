@@ -5498,5 +5498,15 @@
   "Time in seconds that DNS resolvers may cache the published records.": "Tiempo en segundos que los resolvedores DNS pueden mantener los registros publicados en caché.",
   "Maximum number of PABX DNS publications allowed by this policy.": "Número máximo de publicaciones DNS del PABX permitidas por esta política.",
   "Automatic publication": "Publicación automática",
-  "Realm SIP base": "Base del Realm SIP"
+  "Realm SIP base": "Base del Realm SIP",
+  "SIP realm base": "Base del Realm SIP",
+  "Selected DNS domain policy was not found": "No se encontró la política DNS seleccionada",
+  "Selected DNS domain policy is disabled": "La política DNS seleccionada está deshabilitada",
+  "Selected DNS domain policy is not shared with platform": "La política DNS seleccionada no está disponible para la plataforma",
+  "Selected DNS domain policy is not owned by this tenant": "La política DNS seleccionada no pertenece a este tenant",
+  "Selected DNS domain has been deleted or deactivated": "El dominio DNS seleccionado fue eliminado o desactivado",
+  "Selected DNS domain is not fully provisioned": "El dominio DNS seleccionado aún no está completamente aprovisionado",
+  "Selected DNS domain has a background job in progress": "El dominio DNS seleccionado tiene una operación en curso",
+  "Selected DNS provider is inactive or incompatible": "El proveedor DNS seleccionado está inactivo o es incompatible",
+  "Selected DNS policy base is not contained in domain zone": "La base SIP seleccionada no pertenece a la zona DNS"
 }
