@@ -1,21 +1,3 @@
-// Shared optional field assistance. Opt-in keeps existing forms unchanged.
-.crud-dialog.crud-contextual-help .form-grid {
-  align-items: start;
-}
-.crud-contextual-help .form-grid > .crud-contextual-field-cell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  min-width: 0;
-}
-.crud-contextual-help .crud-contextual-field-cell > :not(.field-hint) {
-  grid-column: 1 !important;
-  min-width: 0;
-  width: 100%;
-}
-.crud-contextual-help .crud-contextual-field-cell > .field-hint {
-  grid-column: 1 / -1;
-}
 mns-field-help {
   display: inline-flex;
   align-items: center;
@@ -64,23 +46,6 @@ mns-field-help {
   margin: 4px 0 0;
   white-space: pre-line;
 }
-.crud-form-notice {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 4px 0 8px;
-  color: var(--mat-sys-color-on-surface-variant, currentColor);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-.crud-form-notice .mat-icon {
-  flex: 0 0 20px;
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
-
 // Hover and click surfaces share opaque theme colors, spacing and typography.
 // Never rely on opacity on the overlay: underlying form text must not bleed through.
 .field-help-tooltip .mat-mdc-tooltip-surface {

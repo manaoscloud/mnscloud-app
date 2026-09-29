@@ -14,19 +14,9 @@
   width: 100%;
 }
 
-// Fields without a hint keep their own grid placement through a transparent wrapper.
+// Transparent wrappers retain each control's existing grid span.
 .crud-field-contents {
   display: contents;
-}
-
-// Hinted fields: the control and its hint share one grid cell so the hint sits under the field.
-.form-grid > .crud-field-cell {
-  display: flex;
-  flex-direction: column;
-
-  > .field-hint {
-    padding: 0 0.25rem;
-  }
 }
 
 :is(.form-grid, .crud-field-contents) > .span-1 {
@@ -43,13 +33,6 @@
 
 :is(.form-grid, .crud-field-contents) > .span-4 {
   grid-column: 1 / -1;
-}
-
-.field-hint {
-  margin: -0.35rem 0 0;
-  font-size: 0.75rem;
-  line-height: 1.3;
-  opacity: 0.7;
 }
 
 .form-grid > .line-fill {
@@ -294,6 +277,7 @@
 
 .crud-file-field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.35rem;
   // Padding and border stay inside the grid cell; long file names ellipsize instead of
   // widening the form on narrow screens.
@@ -312,12 +296,29 @@
   opacity: 0.78;
 }
 
+// Reserve an internal action column across the existing upload rows. The 40px help
+// target must not increase the native file-input row or cover its filename.
+.crud-file-field-control {
+  display: contents;
+  mns-field-help {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+}
+.crud-file-field-label,
+.crud-file-field-input,
+.crud-file-field-status {
+  grid-column: 1;
+}
+
 .crud-file-field-input {
+  min-width: 0;
   width: 100%;
   color: inherit;
 }
 
-.crud-file-field-hint {
+.crud-file-field-status {
   font-size: 0.75rem;
   opacity: 0.72;
   overflow: hidden;

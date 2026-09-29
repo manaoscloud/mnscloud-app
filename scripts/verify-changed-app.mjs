@@ -60,6 +60,7 @@ run('node', [
   'scripts/pay-error.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
+run('node', ['scripts/validate-field-help.mjs']);
 if (
   changedFiles.some(
     (path) => path.startsWith('src/app/shared/payment/') || path.endsWith('/define-crud.ts'),

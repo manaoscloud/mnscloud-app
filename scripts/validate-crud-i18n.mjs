@@ -72,7 +72,7 @@ function collectTsKeys(content) {
     keys.add(match[1]);
   }
   for (const match of content.matchAll(
-    /\b(?:label|pageTitle|pageDescription|createTitle|editTitle|dialogDescription|searchPlaceholder|emptyLabel|deleteTitle|deleteMessage|deleteSelectedTitle|deleteSelectedMessage|savedMessage|deletedMessage|deleteFailedMessage|hint|placeholder|tooltip)\s*:\s*['"]([^'"]+)['"]/g,
+    /\b(?:label|pageTitle|pageDescription|createTitle|editTitle|dialogDescription|searchPlaceholder|emptyLabel|deleteTitle|deleteMessage|deleteSelectedTitle|deleteSelectedMessage|savedMessage|deletedMessage|deleteFailedMessage|help|placeholder|tooltip)\s*:\s*['"]([^'"]+)['"]/g,
   ))
     keys.add(match[1]);
   return keys;

@@ -186,7 +186,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           required: true,
           span: 1,
           disabledWhen: ({ editing }) => editing,
-          hintWhen: ({ values }) => this.providerHint(values['providerUUID']),
+          helpWhen: ({ values }) => this.providerHelp(values['providerUUID']),
         },
         {
           key: 'region',
@@ -212,7 +212,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           required: true,
           span: 1,
           disabledWhen: ({ editing }) => editing,
-          hintWhen: ({ values }) => this.prefixHint(values['providerUUID']),
+          helpWhen: ({ values }) => this.prefixHelp(values['providerUUID']),
         },
         {
           key: 'gateway',
@@ -230,7 +230,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           payloadKey: 'externalId',
           label: 'Existing provider network ID',
           span: 1,
-          hint: 'Registers an existing provider network without creating it.',
+          help: 'Registers an existing provider network without creating it.',
           hiddenWhen: ({ editing }) => editing || !this.isMaster(),
         },
         {
@@ -400,7 +400,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
     return provider ? (this.capabilities()[provider.HvrProvider] ?? null) : null;
   }
 
-  private providerHint(providerUUID: unknown): string {
+  private providerHelp(providerUUID: unknown): string {
     const caps = this.capabilitiesFor(providerUUID);
     if (!providerUUID || !caps) return '';
     if (!caps.create) return 'This provider does not support private networks.';
@@ -409,7 +409,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
       : 'Instances join this network only when they are created.';
   }
 
-  private prefixHint(providerUUID: unknown): string {
+  private prefixHelp(providerUUID: unknown): string {
     const caps = this.capabilitiesFor(providerUUID);
     return caps?.create
       ? `${this.t('Private RFC1918 range')} /${caps.minPrefix}-/${caps.maxPrefix}`

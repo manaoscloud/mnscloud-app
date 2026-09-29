@@ -108,7 +108,7 @@ const hiddenUnless = (setting: string) => ({ values }: FieldContext) => !declare
 const requiredSetting = (setting: string) => ({ values }: FieldContext) => declares(values, setting);
 const requiredOnCreate = (key: string) => ({ editing, values }: FieldContext) =>
   !editing && Boolean(credentialOf(values, key)?.required);
-const keepSecretHint = ({ editing }: { editing: boolean }) =>
+const keepSecretHelp = ({ editing }: { editing: boolean }) =>
   editing ? 'Leave empty to keep the stored credentials. Replacing requires all fields.' : '';
 
 const fields: ConfigurableCrudField[] = [
@@ -119,7 +119,7 @@ const fields: ConfigurableCrudField[] = [
     type: 'status',
     span: 1,
     options: statusOptions,
-    hint: 'Activating this connection deactivates the other active connection of the same purpose.',
+    help: 'Activating this connection deactivates the other active connection of the same purpose.',
   },
   {
     key: 'provider',
@@ -149,7 +149,7 @@ const fields: ConfigurableCrudField[] = [
     type: 'select',
     span: 1,
     required: true,
-    hint: 'Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.',
+    help: 'Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.',
   },
   {
     key: 'accountNumber',
@@ -159,7 +159,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     requiredWhen: requiredSetting('accountNumber'),
     autocomplete: 'off',
-    hint: 'Inter checking account number (x-conta-corrente).',
+    help: 'Inter checking account number (x-conta-corrente).',
     hiddenWhen: hiddenUnless('accountNumber'),
   },
   {
@@ -181,7 +181,7 @@ const fields: ConfigurableCrudField[] = [
     tab: 'financial',
     span: 1,
     requiredWhen: requiredSetting('autoCancelDays'),
-    hint: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
+    help: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
     hiddenWhen: hiddenUnless('autoCancelDays'),
   },
   {
@@ -194,7 +194,7 @@ const fields: ConfigurableCrudField[] = [
     translateLabel: false,
     fromRecord: () => '',
     requiredWhen: requiredOnCreate('apiKey'),
-    hintWhen: keepSecretHint,
+    helpWhen: keepSecretHelp,
     hiddenWhen: hiddenUnless('apiKey'),
   },
   {
@@ -206,7 +206,7 @@ const fields: ConfigurableCrudField[] = [
     translateLabel: false,
     fromRecord: () => '',
     requiredWhen: requiredOnCreate('clientId'),
-    hintWhen: keepSecretHint,
+    helpWhen: keepSecretHelp,
     hiddenWhen: hiddenUnless('clientId'),
   },
   {
@@ -251,7 +251,7 @@ const fields: ConfigurableCrudField[] = [
     tab: 'authentication',
     span: 2,
     fromRecord: () => '',
-    hint: 'Optional. Inter: Minhas integrações > Certificado Webhook.',
+    help: 'Optional. Inter: Minhas integrações > Certificado Webhook.',
     hiddenWhen: hiddenUnless('webhookCaPem'),
   },
 ];

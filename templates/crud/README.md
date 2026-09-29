@@ -30,26 +30,34 @@ Validation must recognize at least one CRUD and reject copied/legacy implementat
 The changed-app CI checks new and modified resource pages, including SCSS-only changes.
 Schema delivery uses the enrolled Agent reconciliation path described by the workspace.
 
-## Contextual field help (opt-in pilot)
+## Contextual field help (global)
 
 Global styles live in `src/styles/_field-help.scss`; `FieldHelpComponent` owns the
 accessible interaction. Do not add page-local sizing, positioning, color, or tooltip CSS.
-Only Hosting / DNS / Domains currently opts in; leave other resources unchanged until
-this pilot is approved. New templates do not enable it automatically.
+All generic CRUD forms use this contract by default, including collection dialogs,
+address fields and inline related-collection editors. No per-page opt-in is required.
 
-- `contextualHelp: true` on the CRUD configuration opts into uniformly aligned field cells.
-- `help: 'Translation key'` is optional supplementary text. The generic normal field tabs
-  render an inline `matIconSuffix` help button inside the outline without changing `--form-control-height` (40px baseline).
-- `tabNotices: { network: 'Essential instruction' }` keeps prerequisites visible.
-- Existing `hint`/`hintWhen` and validation messages are never automatically hidden or converted.
+- `help: 'Translation key'` provides supplementary guidance inside the field outline.
+- `helpWhen: ({ editing, values }) => 'Translation key'` supplies conditional guidance.
+  An empty result hides the help button; it does not fall back to the static text.
+  Related-collection guidance uses its own draft values, never the parent form values.
+- Use `matIconSuffix` on Material fields and the shared `help` input on searchable
+  relation fields. Native file controls place help inside their existing outline;
+  the selected filename remains visible as operational state.
+- Keep the full control width and `--form-control-height` (40px baseline), independently
+  of select arrows, password toggles and quick-create actions. Never place help in an
+  external grid column or over the field value. Multiline/upload controls retain their
+  existing heights.
+- Do not reintroduce detached field-hint paragraphs or tab-level help notices. Put field
+  prerequisites into the relevant help text. Validation errors, loading/provisioning
+  states and resource-level safety confirmations remain visible in their own components.
 - Text is escaped Angular interpolation; do not accept arbitrary HTML. Translate help,
-  notices, titles and accessible labels in PT/EN/ES.
-- Hover/focus provides a short tooltip; click, Enter/Space or touch opens persistent help.
-  Escape/backdrop/close dismiss it, return focus, and must not dismiss the parent CRUD dialog.
-- The icon must reserve suffix space inside the full-width control, independently of select arrows, password toggles and quick-create actions. Do not allocate an external grid column or absolutely position an icon over the field value.
-  Mobile must fit the viewport; help must remain available on disabled fields.
-- The generic address and inline related-collection editors retain their existing presentation;
-  use the shared help component when those editors are explicitly migrated.
-- Verify dark/light themes, desktop/mobile, keyboard focus, Escape, visible prerequisites,
-  equal control heights and unchanged save payloads before extending adoption.
-- Hover and click help must both have an opaque surface, readable theme text (at least 4.5:1 contrast), border, padding and shadow. Include the Material tooltip theme in the global theme mixin. Test computed background opacity and contrast over underlying form content; checking that a tooltip exists is insufficient.
+  titles and accessible labels in PT/EN/ES. The i18n validator checks static `help` keys.
+- Hover/focus shows a short tooltip; click, Enter/Space or touch opens persistent help.
+  Escape/backdrop/close dismisses it and returns focus without closing the CRUD dialog.
+  Help must remain available on disabled fields and fit mobile viewports.
+- Both surfaces must be opaque, with text contrast at least 4.5:1, border, padding and
+  shadow. Include the Material tooltip theme in the global theme mixin. Test computed
+  opacity and contrast, not only tooltip existence.
+- Verify dark/light, desktop/mobile, keyboard, all languages, conditional guidance,
+  unchanged values/payloads and normal create/edit behavior when adding new consumers.

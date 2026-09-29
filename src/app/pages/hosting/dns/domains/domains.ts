@@ -59,8 +59,6 @@ const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
 
 const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/dns/domains',
-  contextualHelp: true,
-  tabNotices: { network: 'Provision the DNS zone before enabling automatic PABX publication.' },
   uuidField: 'HddUUID',
   pageTitle: 'Domains',
   pageDescription: 'Manage DNS zones, provider linkage, and provisioning sync.',
@@ -148,7 +146,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   fields: [
     {
       key: 'pabxPolicyEnabled',
-      help: 'Automatically publish the SIP realm DNS records when a PABX account is created.',
+      help: 'Automatically publish the SIP realm DNS records when a PABX account is created. Provision the DNS zone before enabling publication.',
       label: 'Automatic publication',
       type: 'select',
       options: [
