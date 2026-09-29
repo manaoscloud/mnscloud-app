@@ -5455,6 +5455,7 @@
   "Realm preview": "Vista previa del Realm",
   "Inherited publication mode": "Modo de publicación heredado",
   "Inherited SIP Realm base": "Base heredada del Realm SIP",
+  "Inherited SIP Realm domain": "Dominio heredado del Realm SIP",
   "The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.": "La política de dominio DNS seleccionada no está disponible o ha sido eliminada. Seleccione un dominio activo.",
   "The selected DNS domain policy is disabled.": "La política de dominio DNS seleccionada está deshabilitada.",
   "The selected DNS domain is not fully provisioned or its provider is inactive.": "El dominio DNS seleccionado no está completamente aprovisionado o su proveedor está inactivo.",

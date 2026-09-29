@@ -5455,6 +5455,7 @@
   "Realm preview": "Realm preview",
   "Inherited publication mode": "Inherited publication mode",
   "Inherited SIP Realm base": "Inherited SIP Realm base",
+  "Inherited SIP Realm domain": "Inherited SIP Realm domain",
   "The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.": "The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.",
   "The selected DNS domain policy is disabled.": "The selected DNS domain policy is disabled.",
   "The selected DNS domain is not fully provisioned or its provider is inactive.": "The selected DNS domain is not fully provisioned or its provider is inactive.",
