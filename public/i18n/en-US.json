@@ -5498,5 +5498,15 @@
   "Time in seconds that DNS resolvers may cache the published records.": "Time in seconds that DNS resolvers may cache the published records.",
   "Maximum number of PABX DNS publications allowed by this policy.": "Maximum number of PABX DNS publications allowed by this policy.",
   "Automatic publication": "Automatic publication",
-  "Realm SIP base": "Realm SIP base"
+  "Realm SIP base": "Realm SIP base",
+  "SIP realm base": "SIP realm base",
+  "Selected DNS domain policy was not found": "Selected DNS domain policy was not found",
+  "Selected DNS domain policy is disabled": "Selected DNS domain policy is disabled",
+  "Selected DNS domain policy is not shared with platform": "Selected DNS domain policy is not shared with platform",
+  "Selected DNS domain policy is not owned by this tenant": "Selected DNS domain policy is not owned by this tenant",
+  "Selected DNS domain has been deleted or deactivated": "Selected DNS domain has been deleted or deactivated",
+  "Selected DNS domain is not fully provisioned": "Selected DNS domain is not fully provisioned",
+  "Selected DNS domain has a background job in progress": "Selected DNS domain has a background job in progress",
+  "Selected DNS provider is inactive or incompatible": "Selected DNS provider is inactive or incompatible",
+  "Selected DNS policy base is not contained in domain zone": "Selected DNS policy base is not contained in domain zone"
 }

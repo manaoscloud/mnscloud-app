@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ViewEncapsulation,
   computed,
   effect,
@@ -21,7 +22,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 
@@ -241,14 +242,57 @@ export class SettingsParametersPage {
       eligible?: boolean;
     }>
   >([]);
+  private readonly translation = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly dnsOffset = signal(0);
+  private readonly dnsSearch = signal('');
+  private dnsTimer?: ReturnType<typeof setTimeout>;
+  readonly dnsTotal = computed(() => this.dnsResource.value()?.total ?? 0);
+  readonly dnsLoading = computed(() => this.dnsResource.isLoading());
+  readonly dnsLoadError = computed(() => !!this.dnsResource.error());
+  private readonly dnsResource = resource({
+    params: () => ({
+      endpoint: this.baseEndpoint(),
+      search: this.dnsSearch(),
+      offset: this.dnsOffset(),
+    }),
+    defaultValue: { items: [] as ParametersSnapshot['dnsPolicies'], total: 0 },
+    loader: async ({ params }) => {
+      const query = new URLSearchParams({
+        search: params.search,
+        limit: '50',
+        offset: String(params.offset),
+      });
+      const result = await this.api.get<any>(`${params.endpoint}/pabx-dns-policies?${query}`);
+      return { items: result?.data?.items ?? [], total: Number(result?.data?.total ?? 0) };
+    },
+  });
+
+  searchDnsPolicies(term: string) {
+    clearTimeout(this.dnsTimer);
+    this.dnsTimer = setTimeout(() => {
+      this.dnsOffset.set(0);
+      this.dnsSearch.set(term);
+    }, 250);
+  }
+
+  pageDnsPolicies(direction: number) {
+    this.dnsOffset.update((offset) => Math.max(0, offset + direction * 50));
+  }
+
+  refreshDnsPolicies() {
+    this.dnsResource.reload();
+  }
+
   readonly dnsPolicyOptions = computed(() => {
+    this.i18n.language();
     const list = this.dnsPolicies();
     const currentUUID = this.item().voipPabxDnsPolicyUUID;
     const options = list
       .filter((p) => p.status && p.eligible !== false)
       .map((p) => ({
         value: p.policyUUID,
-        label: `${p.zoneName || p.base} — Base SIP: ${p.base}`,
+        label: `${p.zoneName || p.base} — ${this.translation.translate('SIP realm base')}: ${p.base}`,
         searchText: `${p.zoneName ?? ''} ${p.base}`,
       }));
 
@@ -256,9 +300,12 @@ export class SettingsParametersPage {
       const currentPolicy = list.find((p) => p.policyUUID === currentUUID);
       const zoneName = currentPolicy?.zoneName || this.item().voipPabxDnsPolicyZoneName || '';
       const base = currentPolicy?.base || this.item().voipPabxDnsPolicyBase || '';
-      const label = zoneName || base
-        ? `${zoneName || base} — Base SIP: ${base} (Invalid / Indisponível)`
-        : `${currentUUID} (Invalid / Indisponível)`;
+      const unavailable = this.item().voipPabxDnsPolicyEligible !== true;
+      const suffix = unavailable ? ` (${this.translation.translate('Unavailable')})` : '';
+      const label =
+        zoneName || base
+          ? `${zoneName || base} — ${this.translation.translate('SIP realm base')}: ${base}${suffix}`
+          : `${currentUUID}${suffix}`;
       options.unshift({
         value: currentUUID,
         label,
@@ -283,12 +330,12 @@ export class SettingsParametersPage {
       voipPabxDnsPolicyUUID: uuid,
       ...(policy
         ? {
-          voipPabxAutoDomainBase: policy.base,
-          voipPabxDnsPolicyBase: policy.base,
-          voipPabxDnsPolicyZoneName: policy.zoneName,
-          voipPabxDnsPolicyEligible: policy.eligible !== false,
-          voipPabxDnsPolicyError: null,
-        }
+            voipPabxAutoDomainBase: policy.base,
+            voipPabxDnsPolicyBase: policy.base,
+            voipPabxDnsPolicyZoneName: policy.zoneName,
+            voipPabxDnsPolicyEligible: policy.eligible !== false,
+            voipPabxDnsPolicyError: null,
+          }
         : {}),
     });
   }
@@ -300,7 +347,12 @@ export class SettingsParametersPage {
     }
     if (it.voipPabxAutoDomainDnsMode === 'managed_dns') {
       const policy = this.dnsPolicies().find((p) => p.policyUUID === it.voipPabxDnsPolicyUUID);
-      return policy?.base || it.voipPabxDnsPolicyBase || it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
+      return (
+        policy?.base ||
+        it.voipPabxDnsPolicyBase ||
+        it.voipPabxAutoDomainBase ||
+        'pabx.publichost.cloud'
+      );
     }
     return it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
   });
@@ -318,7 +370,9 @@ export class SettingsParametersPage {
 
   readonly inheritedModeLabel = computed(() => {
     const mode = this.item().voipPabxInheritedDnsMode || this.item().voipPabxEffectiveDnsMode;
-    return mode === 'managed_dns' ? 'Managed DNS publication' : 'SIP identity without DNS publication';
+    return mode === 'managed_dns'
+      ? 'Managed DNS publication'
+      : 'SIP identity without DNS publication';
   });
 
   readonly selectedPolicyInvalid = computed(() => {
@@ -328,7 +382,7 @@ export class SettingsParametersPage {
     if (!it.voipPabxDnsPolicyUUID) return false;
     if (it.voipPabxDnsPolicyEligible === false) return true;
     const policy = this.dnsPolicies().find((p) => p.policyUUID === it.voipPabxDnsPolicyUUID);
-    if (!policy) return true;
+    if (!policy) return it.voipPabxDnsPolicyEligible !== true;
     if (policy.eligible === false || !policy.status) return true;
     return false;
   });
@@ -358,7 +412,10 @@ export class SettingsParametersPage {
   });
 
   readonly inheritedPolicyError = computed(() => {
-    return this.item().voipPabxEffectivePolicyError || 'The inherited platform DNS policy is currently unavailable.';
+    return (
+      this.item().voipPabxEffectivePolicyError ||
+      'The inherited platform DNS policy is currently unavailable.'
+    );
   });
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
@@ -446,6 +503,12 @@ export class SettingsParametersPage {
   );
 
   constructor() {
+    effect(() => {
+      if (this.dnsResource.hasValue()) this.dnsPolicies.set(this.dnsResource.value().items);
+    });
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.dnsTimer);
+    });
     effect(() => {
       const snapshot = this.parametersResource.hasValue()
         ? this.parametersResource.value()
@@ -722,11 +785,11 @@ export class SettingsParametersPage {
       voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
       voipPabxDnsPolicyBase: raw?.voipPabxDnsPolicyBase ?? null,
       voipPabxDnsPolicyZoneName: raw?.voipPabxDnsPolicyZoneName ?? null,
-      voipPabxDnsPolicyEligible: raw?.voipPabxDnsPolicyEligible != null
-        ? Boolean(raw.voipPabxDnsPolicyEligible)
-        : null,
+      voipPabxDnsPolicyEligible:
+        raw?.voipPabxDnsPolicyEligible != null ? Boolean(raw.voipPabxDnsPolicyEligible) : null,
       voipPabxDnsPolicyError: raw?.voipPabxDnsPolicyError ?? null,
-      voipPabxEffectiveSource: raw?.voipPabxEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
+      voipPabxEffectiveSource:
+        raw?.voipPabxEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
       voipPabxEffectiveDnsMode: raw?.voipPabxEffectiveDnsMode ?? 'identity_only',
       voipPabxEffectiveBase: raw?.voipPabxEffectiveBase ?? 'pabx.publichost.cloud',
       voipPabxEffectiveZoneName: raw?.voipPabxEffectiveZoneName ?? null,
@@ -803,7 +866,10 @@ export class SettingsParametersPage {
         value.voipPabxAutoDomainDnsMode,
       ),
       voipPabxRealmSource: value.voipPabxRealmSource,
-      voipPabxDnsPolicyUUID: value.voipPabxDnsPolicyUUID,
+      voipPabxDnsPolicyUUID:
+        value.voipPabxAutoDomainDnsMode === 'managed_dns' && value.voipPabxRealmSource === 'own'
+          ? value.voipPabxDnsPolicyUUID
+          : '',
       billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
       billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
       billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
@@ -847,7 +913,10 @@ export class SettingsParametersPage {
       voipPabxAutoDomainSetDefault: value.voipPabxAutoDomainSetDefault,
       voipPabxAutoDomainDnsMode: value.voipPabxAutoDomainDnsMode,
       voipPabxRealmSource: value.voipPabxRealmSource,
-      voipPabxDnsPolicyUUID: value.voipPabxDnsPolicyUUID,
+      voipPabxDnsPolicyUUID:
+        value.voipPabxAutoDomainDnsMode === 'managed_dns' && value.voipPabxRealmSource === 'own'
+          ? value.voipPabxDnsPolicyUUID
+          : '',
       voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
       billingSignupTrialEnabled: value.billingSignupTrialEnabled,
       billingSignupTrialAmount: value.billingSignupTrialAmount,
@@ -914,6 +983,7 @@ export class SettingsParametersPage {
       this.api.get<any>(`${endpoint}/pabx-dns-policies`),
     ]);
 
+    this.dnsOffset.set(0);
     return {
       item: this.readItem(parametersResult),
       storageAccounts,
