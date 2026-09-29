@@ -437,7 +437,7 @@
                   @if (item().voipPabxAutoDomainDnsMode === 'managed_dns') {
                     <mns-search-select-field
                       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
-                      fieldClass="span-2"
+                      fieldClass="span-4"
                       [label]="'Domain for Realm SIP publication' | transloco"
                       [options]="dnsPolicyOptions()"
                       [value]="item().voipPabxDnsPolicyUUID"
@@ -445,23 +445,13 @@
                       (valueChange)="selectDnsPolicy($event)"
                     />
 
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Effective SIP Realm base' | transloco }}</mat-label>
-                      <input matInput [value]="effectiveBase()" readonly />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
-                      <input matInput [value]="realmPreview()" readonly />
-                    </mat-form-field>
-
                     @if (selectedPolicyInvalid()) {
                       <p class="span-4 settings-page-feedback" role="alert">
                         {{ selectedPolicyError() | transloco }}
                       </p>
                     }
                   } @else {
-                    <mat-form-field appearance="outline" class="span-2">
+                    <mat-form-field appearance="outline" class="span-4">
                       <mat-label>{{ 'PABX SIP realm base' | transloco }}</mat-label>
                       <input
                         matInput
@@ -469,11 +459,6 @@
                         [value]="item().voipPabxAutoDomainBase"
                         (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
                       />
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
-                      <input matInput [value]="realmPreview()" readonly />
                     </mat-form-field>
                   }
 
@@ -528,13 +513,8 @@
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'Inherited SIP Realm base' | transloco }}</mat-label>
-                    <input matInput [value]="effectiveBase()" readonly />
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="span-2">
-                    <mat-label>{{ 'Realm preview' | transloco }}</mat-label>
-                    <input matInput [value]="realmPreview()" readonly />
+                    <mat-label>{{ 'Inherited SIP Realm domain' | transloco }}</mat-label>
+                    <input matInput [value]="inheritedDomainLabel()" readonly />
                   </mat-form-field>
 
                   @if (inheritedPolicyInvalid()) {

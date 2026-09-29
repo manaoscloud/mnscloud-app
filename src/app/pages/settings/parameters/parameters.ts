@@ -305,9 +305,15 @@ export class SettingsParametersPage {
     return it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
   });
 
-  readonly realmPreview = computed(() => {
+  readonly inheritedDomainLabel = computed(() => {
+    const it = this.item();
+    const mode = it.voipPabxInheritedDnsMode || it.voipPabxEffectiveDnsMode;
     const base = this.effectiveBase();
-    return `[uuid-short].${base}`;
+    const zone = it.voipPabxInheritedZoneName || it.voipPabxEffectiveZoneName;
+    if (mode === 'managed_dns' && (zone || base)) {
+      return zone ? `${zone} — Base SIP: ${base}` : base;
+    }
+    return base;
   });
 
   readonly inheritedModeLabel = computed(() => {
