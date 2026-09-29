@@ -377,6 +377,13 @@
                       />
                       <mat-datepicker-toggle matSuffix [for]="recordDatePicker" />
                       <mat-datepicker #recordDatePicker touchUi />
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                   @case ('select') {
@@ -395,10 +402,18 @@
                           }}</mat-option>
                         }
                       </mat-select>
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                   @case ('search-select') {
                     <mns-search-select-field
+                      [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                       [fieldClass]="fieldClass(field)"
                       [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                       [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -436,6 +451,13 @@
                           }}</mat-option>
                         }
                       </mat-select>
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                   @case ('checkbox-group') {
@@ -466,6 +488,13 @@
                           }}</mat-option>
                         }
                       </mat-select>
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                   @case ('secret-content') {
@@ -484,7 +513,15 @@
                         type="datetime-local"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
-                    /></mat-form-field>
+                      />
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
+                    </mat-form-field>
                   }
                   @case ('textarea') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -501,6 +538,13 @@
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       ></textarea>
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                   @case ('file') {
@@ -581,15 +625,17 @@
                           }}</mat-icon>
                         </button>
                       }
+                      @if (config.contextualHelp && field.help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="field.help | transloco"
+                        />
+                      }
                     </mat-form-field>
                   }
                 }
-                @if (config.contextualHelp && field.help) {
-                  <mns-field-help
-                    [label]="translatedFieldLabel(field)"
-                    [text]="field.help | transloco"
-                  />
-                }
+
                 @if (fieldHint(field)) {
                   <p class="field-hint">{{ fieldHint(field) }}</p>
                 }
@@ -810,6 +856,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -848,6 +895,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -877,6 +931,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -914,15 +975,17 @@
                             }}</mat-icon>
                           </button>
                         }
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                   }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
-                  }
+
                   @if (fieldHint(field)) {
                     <p class="field-hint">{{ fieldHint(field) }}</p>
                   }
@@ -946,6 +1009,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -981,6 +1045,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1010,6 +1081,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1047,14 +1125,15 @@
                             }}</mat-icon>
                           </button>
                         }
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1076,6 +1155,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1112,6 +1192,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1142,6 +1229,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1180,17 +1274,18 @@
                             }}</mat-icon>
                           </button>
                         }
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                   }
                   @if (field.lineFillAfter) {
                     <div class="line-fill span-{{ field.lineFillAfter }}" aria-hidden="true"></div>
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1228,10 +1323,18 @@
                         />
                         <mat-datepicker-toggle matSuffix [for]="financialDatePicker" />
                         <mat-datepicker #financialDatePicker touchUi />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1270,6 +1373,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1299,6 +1409,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('secret-content') {
@@ -1317,7 +1434,15 @@
                           type="datetime-local"
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
-                      /></mat-form-field>
+                        />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
+                      </mat-form-field>
                     }
                     @case ('textarea') {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1334,6 +1459,13 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         ></textarea>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1359,17 +1491,18 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                   }
                   @if (field.lineFillAfter) {
                     <div class="line-fill span-{{ field.lineFillAfter }}" aria-hidden="true"></div>
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1391,6 +1524,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1429,6 +1563,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1458,6 +1599,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1477,14 +1625,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1506,6 +1655,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1544,6 +1694,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1573,6 +1730,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1592,14 +1756,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1621,6 +1786,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1659,6 +1825,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1688,6 +1861,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('secret-content') {
@@ -1706,7 +1886,15 @@
                           type="datetime-local"
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
-                      /></mat-form-field>
+                        />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
+                      </mat-form-field>
                     }
                     @case ('textarea') {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1721,6 +1909,13 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         ></textarea>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1740,14 +1935,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -1801,6 +1997,7 @@
 
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1851,6 +2048,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -1880,6 +2084,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1917,15 +2128,17 @@
                             }}</mat-icon>
                           </button>
                         }
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                   }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
-                  }
+
                   @if (fieldHint(field)) {
                     <p class="field-hint">{{ fieldHint(field) }}</p>
                   }
@@ -1949,6 +2162,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -1987,6 +2201,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -2016,6 +2237,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -2035,14 +2263,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -2078,6 +2307,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @case ('checkbox-group') {
@@ -2107,6 +2343,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -2126,14 +2369,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -2155,6 +2399,7 @@
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [help]="config.contextualHelp && field.help ? (field.help | transloco) : ''"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search' | transloco"
@@ -2193,6 +2438,13 @@
                             }}</mat-option>
                           }
                         </mat-select>
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -2210,14 +2462,15 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (config.contextualHelp && field.help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="field.help | transloco"
+                          />
+                        }
                       </mat-form-field>
                     }
-                  }
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
                   }
                 </div>
               }
@@ -2412,13 +2665,14 @@
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                     ></textarea>
+                    @if (config.contextualHelp && field.help) {
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="translatedFieldLabel(field)"
+                        [text]="field.help | transloco"
+                      />
+                    }
                   </mat-form-field>
-                  @if (config.contextualHelp && field.help) {
-                    <mns-field-help
-                      [label]="translatedFieldLabel(field)"
-                      [text]="field.help | transloco"
-                    />
-                  }
                 </div>
               }
             </div>

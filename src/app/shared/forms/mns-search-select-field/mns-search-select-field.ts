@@ -1,3 +1,4 @@
+import { FieldHelpComponent } from '../field-help';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { FormField, type Field } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +30,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
     '[class]': 'fieldClass()',
   },
   imports: [
+    FieldHelpComponent,
     FormField,
     MatButtonModule,
     MatFormFieldModule,
@@ -264,6 +266,9 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           <mat-icon>add</mat-icon>
         </button>
       }
+      @if (help()) {
+        <mns-field-help matIconSuffix [label]="label()" [text]="help()" />
+      }
     </mat-form-field>
   `,
   styles: [
@@ -301,6 +306,8 @@ export class MnsSearchSelectFieldComponent {
   readonly selectionChange = output<MnsSearchSelectValue>();
   readonly openedChange = output<boolean>();
   readonly label = input.required<string>();
+  /** Already-translated optional contextual guidance, rendered inside the field outline. */
+  readonly help = input('');
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
   readonly fieldClass = input('');
   readonly placeholder = input('Search');

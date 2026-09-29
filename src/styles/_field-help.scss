@@ -8,11 +8,7 @@
   align-items: start;
   min-width: 0;
 }
-.crud-contextual-help .form-grid > .crud-contextual-field-cell.has-field-help {
-  grid-template-columns: minmax(0, 1fr) var(--form-control-height);
-  column-gap: 4px;
-}
-.crud-contextual-help .crud-contextual-field-cell > :not(mns-field-help):not(.field-hint) {
+.crud-contextual-help .crud-contextual-field-cell > :not(.field-hint) {
   grid-column: 1 !important;
   min-width: 0;
   width: 100%;
@@ -21,10 +17,9 @@
   grid-column: 1 / -1;
 }
 mns-field-help {
-  display: block;
-  grid-column: 2;
-  grid-row: 1;
-  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
 }
 .field-help-trigger.mat-mdc-icon-button {
   width: var(--form-control-height);
@@ -84,4 +79,22 @@ mns-field-help {
   font-size: 20px;
   width: 20px;
   height: 20px;
+}
+
+// Hover and click surfaces share opaque theme colors, spacing and typography.
+// Never rely on opacity on the overlay: underlying form text must not bleed through.
+.field-help-tooltip .mat-mdc-tooltip-surface {
+  box-sizing: border-box;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border: 1px solid var(--mat-sys-color-outline-variant, #7b888b);
+  border-radius: 8px;
+  background: var(--mat-sys-color-surface-container, #252b2a);
+  color: var(--mat-sys-color-on-surface, #e0e3e2);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 20%);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: start;
+  overflow-wrap: break-word;
+  white-space: normal;
 }

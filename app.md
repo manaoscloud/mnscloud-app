@@ -1331,16 +1331,17 @@ this pilot is approved. New templates do not enable it automatically.
 
 - `contextualHelp: true` on the CRUD configuration opts into uniformly aligned field cells.
 - `help: 'Translation key'` is optional supplementary text. The generic normal field tabs
-  render an adjacent help button without changing `--form-control-height` (40px baseline).
+  render an inline `matIconSuffix` help button inside the outline without changing `--form-control-height` (40px baseline).
 - `tabNotices: { network: 'Essential instruction' }` keeps prerequisites visible.
 - Existing `hint`/`hintWhen` and validation messages are never automatically hidden or converted.
 - Text is escaped Angular interpolation; do not accept arbitrary HTML. Translate help,
   notices, titles and accessible labels in PT/EN/ES.
 - Hover/focus provides a short tooltip; click, Enter/Space or touch opens persistent help.
   Escape/backdrop/close dismiss it, return focus, and must not dismiss the parent CRUD dialog.
-- The icon must remain separate from select arrows, password toggles and quick-create actions.
+- The icon must reserve suffix space inside the full-width control, independently of select arrows, password toggles and quick-create actions. Do not allocate an external grid column or absolutely position an icon over the field value.
   Mobile must fit the viewport; help must remain available on disabled fields.
 - The generic address and inline related-collection editors retain their existing presentation;
   use the shared help component when those editors are explicitly migrated.
 - Verify dark/light themes, desktop/mobile, keyboard focus, Escape, visible prerequisites,
   equal control heights and unchanged save payloads before extending adoption.
+- Hover and click help must both have an opaque surface, readable theme text (at least 4.5:1 contrast), border, padding and shadow. Include the Material tooltip theme in the global theme mixin. Test computed background opacity and contrast over underlying form content; checking that a tooltip exists is insufficient.

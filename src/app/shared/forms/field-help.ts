@@ -32,9 +32,11 @@ let nextHelpId = 0;
       [attr.aria-expanded]="opened()"
       [attr.aria-controls]="opened() ? panelId : null"
       [matTooltip]="text()"
+      matTooltipClass="field-help-tooltip"
       [matTooltipDisabled]="opened()"
       matTooltipTouchGestures="off"
-      (click)="opened.set(true)"
+      (click)="open($event)"
+      (pointerdown)="$event.stopPropagation()"
     >
       <mat-icon aria-hidden="true">info_outline</mat-icon>
     </button>
@@ -87,6 +89,11 @@ export class FieldHelpComponent {
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 },
     { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -8 },
   ];
+  open(event: MouseEvent): void {
+    // Suffix actions must not toggle a containing select or redirect focus to its input.
+    event.stopPropagation();
+    this.opened.set(true);
+  }
   onKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape') return;
     event.preventDefault();
