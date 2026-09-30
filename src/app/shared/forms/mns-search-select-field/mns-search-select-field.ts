@@ -86,8 +86,8 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           @if (loadError()) {
             <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
           }
-          @if (remoteSearch()) {
-            <div class="select-search-option" role="group">
+          @if (remoteSearch() && (hasPrevious() || hasNext())) {
+            <div class="select-page-navigation" role="group">
               <button
                 mat-icon-button
                 type="button"
@@ -191,8 +191,8 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           @if (loadError()) {
             <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
           }
-          @if (remoteSearch()) {
-            <div class="select-search-option" role="group">
+          @if (remoteSearch() && (hasPrevious() || hasNext())) {
+            <div class="select-page-navigation" role="group">
               <button
                 mat-icon-button
                 type="button"
