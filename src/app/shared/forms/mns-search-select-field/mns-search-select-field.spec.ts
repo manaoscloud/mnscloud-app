@@ -47,6 +47,26 @@ describe('Remote relationship dropdown accessibility', () => {
     next.click();
     expect(pages).toHaveBeenCalledOnceWith(1);
     expect(selections).not.toHaveBeenCalled();
+    expect(next.closest('.select-page-navigation')).not.toBeNull();
+    expect(next.closest('.select-search-option')).toBeNull();
+
+    fixture.componentRef.setInput('hasNext', false);
+    fixture.detectChanges();
+    expect(panel.querySelector('.select-page-navigation')).toBeNull();
+    expect(panel.querySelectorAll('button[aria-label$="page"]').length).toBe(0);
+    expect(panel.textContent).toContain('Saved tenant');
+
+    fixture.componentRef.setInput('hasPrevious', true);
+    fixture.detectChanges();
+    const previous = panel.querySelector<HTMLButtonElement>('button[aria-label="Previous page"]')!;
+    expect(previous.disabled).toBeFalse();
+    previous.click();
+    expect(pages).toHaveBeenCalledWith(-1);
+    expect(selections).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('loading', true);
+    fixture.detectChanges();
+    expect(previous.disabled).toBeTrue();
     fixture.destroy();
   });
   it('opens suffix help without opening the dropdown or changing its value', async () => {

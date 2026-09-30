@@ -1486,6 +1486,18 @@ app-isp-geomap-assets .geomap-expand-toggle svg {
   padding: 0;
 }
 
+// Pagination is a compact control row, separate from the searchable option.
+.cdk-overlay-pane .mat-mdc-select-panel .select-page-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+
+  > button {
+    flex: 0 0 auto;
+  }
+}
+
 .select-search-option.mdc-list-item--disabled {
   opacity: 1;
   pointer-events: auto;
