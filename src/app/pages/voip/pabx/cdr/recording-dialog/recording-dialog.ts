@@ -8,6 +8,7 @@ import { DateTimeFormatService } from '../../../../../services/date-time-format.
 
 export type VoipPabxCdrRecordingDialogData = {
   url: string;
+  downloadUrl?: string | null;
   filename: string;
   title?: string | null;
   subtitle?: string | null;

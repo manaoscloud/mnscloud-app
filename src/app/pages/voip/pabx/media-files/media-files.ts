@@ -271,6 +271,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
         panelClass: 'voip-pabx-recording-dialog-panel',
         data: {
           url,
+          downloadUrl: response?.data?.downloadUrl || url,
           filename:
             response?.data?.filename ||
             text(row['originalFilename']) ||
