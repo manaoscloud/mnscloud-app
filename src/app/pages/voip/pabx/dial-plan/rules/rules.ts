@@ -67,6 +67,7 @@ type DialPatternTemplate = {
   direction: string;
   category: string;
   regex: string;
+  replacement?: string | null;
   exampleMatches?: string[];
   exampleNonMatches?: string[];
   description?: string;
@@ -322,6 +323,19 @@ function config(): ConfigurableCrudConfig {
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Direction' | transloco }}</mat-label>
+              <mat-select
+                [value]="selectedDirection"
+                (selectionChange)="setSelectedDirection($event.value)"
+              >
+                <mat-option value="">{{ 'All directions' | transloco }}</mat-option>
+                @for (dir of directions; track dir.value) {
+                  <mat-option [value]="dir.value">{{ dir.label | transloco }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Search examples' | transloco }}</mat-label>
               <input matInput [value]="search" (input)="setSearch($any($event.target).value)" />
             </mat-form-field>
@@ -355,6 +369,12 @@ function config(): ConfigurableCrudConfig {
                 <td mat-cell *matCellDef="let template">
                   <div class="record-stack">
                     <span class="record-main regex-text">{{ template.regex }}</span>
+                    @if (template.replacement) {
+                      <span class="record-uuid">
+                        {{ 'Replacement' | transloco }}:
+                        <span class="regex-text">{{ template.replacement }}</span>
+                      </span>
+                    }
                     <span class="record-uuid">{{ template.description || '-' }}</span>
                   </div>
                 </td>
@@ -385,17 +405,27 @@ function config(): ConfigurableCrudConfig {
                 </th>
                 <td mat-cell *matCellDef="let template" class="status-col">
                   @if (testNumber.trim()) {
-                    <span
-                      class="status-pill status-chip state-chip"
-                      [class.status-active]="matches(template.regex)"
-                      [class.status-inactive]="!matches(template.regex)"
-                    >
-                      {{
-                        matches(template.regex)
-                          ? ('Matches' | transloco)
-                          : ('Does not match' | transloco)
-                      }}
-                    </span>
+                    <div class="record-stack">
+                      <span
+                        class="status-pill status-chip state-chip"
+                        [class.status-active]="matches(template.regex)"
+                        [class.status-inactive]="!matches(template.regex)"
+                      >
+                        {{
+                          matches(template.regex)
+                            ? ('Matches' | transloco)
+                            : ('Does not match' | transloco)
+                        }}
+                      </span>
+                      @if (matches(template.regex) && template.replacement) {
+                        <span class="record-uuid">
+                          {{ 'Result' | transloco }}:
+                          <span class="regex-text">{{
+                            transform(template.regex, template.replacement)
+                          }}</span>
+                        </span>
+                      }
+                    </div>
                   } @else {
                     <span
                       class="status-pill status-chip state-chip"
@@ -606,6 +636,7 @@ export class VoipDialPatternExamplesDialogComponent {
   readonly exampleColumns = ['name', 'regex', 'direction', 'category', 'test', 'actions'];
   readonly pageSizeOptions = [5, 10, 25];
   selectedProfile = '';
+  selectedDirection = '';
   search = '';
   testNumber = '';
   pageIndex = 0;
@@ -616,13 +647,22 @@ export class VoipDialPatternExamplesDialogComponent {
     const test = this.testNumber.trim();
     return this.data.templates.filter((template) => {
       const profileMatches = !this.selectedProfile || template.profileUUID === this.selectedProfile;
+      const directionMatches =
+        !this.selectedDirection || template.direction === this.selectedDirection;
       const textMatches =
         !term ||
-        [template.name, template.code, template.profileName, template.category, template.regex]
+        [
+          template.name,
+          template.code,
+          template.profileName,
+          template.category,
+          template.regex,
+          template.replacement,
+        ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(term));
       const testMatches = !test || this.matches(template.regex);
-      return profileMatches && textMatches && testMatches;
+      return profileMatches && directionMatches && textMatches && testMatches;
     });
   }
 
@@ -633,6 +673,11 @@ export class VoipDialPatternExamplesDialogComponent {
 
   setSelectedProfile(value: string): void {
     this.selectedProfile = value;
+    this.resetPage();
+  }
+
+  setSelectedDirection(value: string): void {
+    this.selectedDirection = value;
     this.resetPage();
   }
 
@@ -671,6 +716,14 @@ export class VoipDialPatternExamplesDialogComponent {
       return new RegExp(regex).test(this.testNumber.trim());
     } catch {
       return false;
+    }
+  }
+
+  transform(regex: string, replacement: string): string {
+    try {
+      return this.testNumber.trim().replace(new RegExp(regex), replacement);
+    } catch {
+      return '-';
     }
   }
 
@@ -759,6 +812,9 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
         pattern: template.regex,
         name: template.name,
       };
+      if (template.replacement) {
+        nextValues['replacement'] = template.replacement;
+      }
       if (template.direction && template.direction !== 'any') {
         nextValues['direction'] = template.direction;
       }
@@ -766,6 +822,8 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
         nextValues['resultType'] = 'emergency';
       } else if (template.category === 'service') {
         nextValues['resultType'] = 'feature_code';
+      } else if (template.direction === 'inbound') {
+        nextValues['resultType'] = 'extension';
       }
       this.patchFormValues(nextValues);
       this.snack.success(this.t('Regex applied to a new dial plan rule.'));
