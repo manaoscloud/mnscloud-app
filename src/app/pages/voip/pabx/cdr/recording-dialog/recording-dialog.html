@@ -47,10 +47,8 @@
       <a
         mat-flat-button
         color="primary"
-        [href]="data.url"
+        [href]="data.downloadUrl || data.url"
         [download]="data.filename"
-        target="_blank"
-        rel="noopener noreferrer"
       >
         <mat-icon>download</mat-icon>
         {{ 'Download' | transloco }}
