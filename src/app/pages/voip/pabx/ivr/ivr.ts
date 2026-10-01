@@ -22,6 +22,7 @@ const routeTypes: ConfigurableCrudOption[] = [
   { value: 'ivr', label: 'IVR' },
   { value: 'queue', label: 'Queue' },
   { value: 'group', label: 'Group' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 function config(): ConfigurableCrudConfig {
@@ -202,6 +203,7 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   readonly ivrOptions = signal<ConfigurableCrudOption[]>([]);
   readonly queueOptions = signal<ConfigurableCrudOption[]>([]);
   readonly groupOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly customOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -244,7 +246,9 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
           ? this.queueOptions()
           : routeType === 'group'
             ? this.groupOptions()
-            : this.extensionOptions();
+            : routeType === 'custom'
+              ? this.customOptions()
+              : this.extensionOptions();
     return options.find((option) => String(option.value) === value)?.label ?? value;
   }
 
@@ -260,7 +264,7 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [pabxs, mediaFiles, extensions, ivrs, queues, groups] = await Promise.all([
+      const [pabxs, mediaFiles, extensions, ivrs, queues, groups, customs] = await Promise.all([
         this.fetchPaged('voip/pabx/accounts', (row) =>
           option(row.VpaUUID, row.VpaName, [row.CustomerName, row.DomainName]),
         ),
@@ -279,6 +283,9 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         this.fetchPaged('voip/pabx/groups?status=1', (row) =>
           option(row.VpgUUID, row.VpgName, [row.PabxName]),
         ),
+        this.fetchPaged('voip/pabx/customs?status=1', (row) =>
+          option(row.uuid ?? row.VpcUUID, row.name ?? row.VpcName, [row.pabxName ?? row.PabxName]),
+        ),
       ]);
       this.pabxOptions.set(pabxs);
       this.mediaFileOptions.set(mediaFiles);
@@ -286,6 +293,7 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       this.ivrOptions.set(ivrs);
       this.queueOptions.set(queues);
       this.groupOptions.set(groups);
+      this.customOptions.set(customs);
     } finally {
       this.lookupsLoading.set(false);
     }
@@ -296,6 +304,7 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     if (routeType === 'ivr') return this.ivrOptions();
     if (routeType === 'queue') return this.queueOptions();
     if (routeType === 'group') return this.groupOptions();
+    if (routeType === 'custom') return this.customOptions();
     return this.extensionOptions();
   }
 

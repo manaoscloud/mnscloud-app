@@ -11,7 +11,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
-type RouteTargetType = 'extension' | 'group' | 'queue' | 'ivr';
+type RouteTargetType = 'extension' | 'group' | 'queue' | 'ivr' | 'custom';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -23,6 +23,7 @@ const routeTypes: ConfigurableCrudOption[] = [
   { value: 'group', label: 'Group' },
   { value: 'queue', label: 'Queue' },
   { value: 'ivr', label: 'IVR' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 function config(): ConfigurableCrudConfig {
@@ -127,7 +128,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Destination',
         type: 'search-select',
         quickCreate: false,
-        quickCreateExemptReason: 'Route target is polymorphic (extension, queue, IVR, group) and depends on the selected target type.',
+        quickCreateExemptReason: 'Route target is polymorphic (extension, queue, IVR, group, custom) and depends on the selected target type.',
         required: true,
         tab: 'routing',
         span: 1,
@@ -307,6 +308,7 @@ function targetEndpoint(routeType: RouteTargetType): string {
   if (routeType === 'group') return 'groups';
   if (routeType === 'queue') return 'queues';
   if (routeType === 'ivr') return 'ivrs';
+  if (routeType === 'custom') return 'customs';
   return 'extensions';
 }
 
@@ -314,6 +316,7 @@ function targetOption(routeType: RouteTargetType, row: any): ConfigurableCrudOpt
   if (routeType === 'group') return option(row.VpgUUID ?? row.uuid, row.VpgName ?? row.name, [row.PabxName]);
   if (routeType === 'queue') return option(row.VpqUUID ?? row.uuid, row.VpqName ?? row.name, [row.PabxName]);
   if (routeType === 'ivr') return option(row.VpiUUID ?? row.uuid, row.VpiName ?? row.name, [row.PabxName]);
+  if (routeType === 'custom') return option(row.VpcUUID ?? row.uuid, row.VpcName ?? row.name, [row.pabxName ?? row.PabxName]);
   return option(row.VpeUUID ?? row.uuid, row.VpeUsername ?? row.username, [row.PabxName, row.DomainName]);
 }
 

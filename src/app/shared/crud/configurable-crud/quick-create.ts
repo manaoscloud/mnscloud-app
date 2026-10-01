@@ -413,6 +413,11 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/voip/pabx/account/account').then((m) => m.VoipPabxAccountPage),
   },
+  VoipPabxCustomVpcUUID: {
+    label: 'Create custom',
+    loadComponent: () =>
+      import('../../../pages/voip/pabx/custom/custom').then((m) => m.VoipPabxCustomPage),
+  },
   VoipPabxDialPlanVdpUUID: {
     label: 'Create dial plan',
     loadComponent: () =>

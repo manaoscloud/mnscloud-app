@@ -1431,6 +1431,12 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • IVR | mnscloud',
               },
               {
+                path: 'voip/pabx/custom',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/custom/custom').then((m) => m.VoipPabxCustomPage),
+                title: 'VoIP • PABX • Custom | mnscloud',
+              },
+              {
                 path: 'voip/pabx/cdr',
                 loadComponent: () =>
                   import('./pages/voip/pabx/cdr/cdr').then((m) => m.VoipPabxCdrPage),
