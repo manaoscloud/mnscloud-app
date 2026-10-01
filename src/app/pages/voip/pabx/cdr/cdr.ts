@@ -191,6 +191,7 @@ export class VoipPabxCdrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         panelClass: 'voip-pabx-recording-dialog-panel',
         data: {
           url,
+          downloadUrl: response?.data?.downloadUrl || url,
           filename: response?.data?.filename || 'recording.wav',
           engine: row['engine'],
           pabxName: row['pabxName'],
