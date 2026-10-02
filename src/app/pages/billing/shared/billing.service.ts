@@ -190,6 +190,9 @@ export interface BillingPaymentIntent {
   PbcProvider?: string | null;
   BpiProviderReference?: string | null;
   BpiCheckoutUrl?: string | null;
+  BpiPaymentMethod?: 'PIX_BOLETO' | 'CREDIT_CARD' | null;
+  BpiSurchargeAmount?: number | null;
+  BpiChargeAmount?: number | null;
   BpiReference?: string | null;
   BpiExpiresAt?: string | null;
   BpiDateCreated?: string | null;
