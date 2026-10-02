@@ -219,6 +219,20 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     }
   }
 
+  override startCreate(): void {
+    this.didOptions.set([]);
+    this.routeTargetOptions.set([]);
+    super.startCreate();
+    void this.loadDependentLookups();
+  }
+
+  protected override startCreateWithValues(values: ConfigurableCrudRecord): void {
+    this.didOptions.set([]);
+    this.routeTargetOptions.set([]);
+    super.startCreateWithValues(values);
+    void this.loadDependentLookups();
+  }
+
   override startEdit(row: ConfigurableCrudRecord): void {
     super.startEdit(row);
     void this.loadDependentLookups(String(row['didUUID'] ?? ''));
