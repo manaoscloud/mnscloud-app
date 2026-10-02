@@ -5710,5 +5710,9 @@
   "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.": "El banco exige un correo de notificación. Inicie sesión con un usuario que tenga correo.",
   "Simulated payments are only available for sandbox connections.": "Los pagos simulados solo están disponibles en conexiones sandbox.",
   "This bank does not support simulated sandbox payments.": "Este banco no admite pagos simulados en sandbox.",
-  "Provide the bank charge reference and BOLETO or PIX.": "Indique la referencia del cobro en el banco y BOLETO o PIX."
+  "Provide the bank charge reference and BOLETO or PIX.": "Indique la referencia del cobro en el banco y BOLETO o PIX.",
+  "Billing data": "Datos de facturación",
+  "Used as the payer of your individual wallet top-ups.": "Se usan como pagador de sus recargas como persona física.",
+  "To change the CPF, edit your user profile.": "Para cambiar el CPF, edite su perfil de usuario.",
+  "This company is missing CNPJ or address data. Complete the company registration.": "A esta empresa le falta el CNPJ o la dirección. Complete el registro de la empresa."
 }

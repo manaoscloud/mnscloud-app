@@ -267,6 +267,7 @@ export const routes: Routes = [
                   import('./pages/billing/tenant/topups/topups').then(
                     (m) => m.BillingTenantTopupsPage,
                   ),
+                data: { breadcrumb: 'Top-ups' },
                 title: 'Billing • Top-ups | mnscloud',
               },
               {

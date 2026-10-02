@@ -83,6 +83,76 @@
       </div>
     </mat-tab>
 
+    <mat-tab [label]="'Billing data' | transloco">
+      <div class="tab-content form-grid">
+        <p class="span-4 billing-hint">
+          {{ 'Used as the payer of your individual wallet top-ups.' | transloco }}
+        </p>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CPF</mat-label>
+          <input matInput [formField]="profileForm.document" inputmode="numeric" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'ZIP code' | transloco }}</mat-label>
+          <input
+            matInput
+            [formField]="profileForm.addressZip"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            (keydown.enter)="searchZip()"
+          />
+          <button
+            mat-icon-button
+            matIconSuffix
+            type="button"
+            [attr.aria-label]="'Search' | transloco"
+            [disabled]="searchingZip()"
+            (click)="searchZip()"
+          >
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Address' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.addressStreet" autocomplete="address-line1" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Number' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.addressNumber" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Complement' | transloco }}</mat-label>
+          <input
+            matInput
+            [formField]="profileForm.addressComplement"
+            autocomplete="address-line2"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'Neighborhood' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.addressDistrict" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'City' | transloco }}</mat-label>
+          <input matInput [formField]="profileForm.addressCity" autocomplete="address-level2" />
+        </mat-form-field>
+
+        <mns-search-select-field
+          class="span-1"
+          [label]="'State' | transloco"
+          [field]="profileForm.addressState"
+          [options]="stateOptions"
+        />
+      </div>
+    </mat-tab>
+
     <mat-tab [label]="'Avatar' | transloco">
       <div class="tab-content avatar-tab">
         <section class="avatar-editor">
