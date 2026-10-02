@@ -5714,5 +5714,22 @@
   "Billing data": "Datos de facturación",
   "Used as the payer of your individual wallet top-ups.": "Se usan como pagador de sus recargas como persona física.",
   "To change the CPF, edit your user profile.": "Para cambiar el CPF, edite su perfil de usuario.",
-  "This company is missing CNPJ or address data. Complete the company registration.": "A esta empresa le falta el CNPJ o la dirección. Complete el registro de la empresa."
+  "This company is missing CNPJ or address data. Complete the company registration.": "A esta empresa le falta el CNPJ o la dirección. Complete el registro de la empresa.",
+  "Tenant billing (Pix/Boleto)": "Facturación del tenant (Pix/Boleto)",
+  "Tenant billing (credit card)": "Facturación del tenant (tarjeta de crédito)",
+  "Tenant billing (Pix/Boleto) and (credit card): wallet top-ups and tenant invoices; one active connection of each. MNSCloud Pay (split): charges issued by tenants to their customers.": "Facturación del tenant (Pix/Boleto) y (tarjeta de crédito): recargas de billetera y facturas del tenant; una conexión activa de cada una. MNSCloud Pay (split): cobros emitidos por los tenants a sus clientes.",
+  "Card fee (%)": "Tasa de la tarjeta (%)",
+  "Card fixed fee": "Tasa fija de la tarjeta",
+  "Percentage the bank charges per card payment. Added to the tenant top-up so the wallet receives the full amount.": "Porcentaje que el banco cobra por pago con tarjeta. Se suma a la recarga del tenant para que la billetera reciba el monto completo.",
+  "Fixed amount the bank charges per card payment, also added to the tenant top-up.": "Monto fijo que el banco cobra por pago con tarjeta, también sumado a la recarga del tenant.",
+  "Card fees apply only to card connections: percent from 0 to 50 and fixed fee from 0 to 100.": "Las tasas de tarjeta solo se aplican a conexiones de tarjeta: porcentaje de 0 a 50 y tasa fija de 0 a 100.",
+  "Pix or boleto": "Pix o boleto",
+  "Credit card": "Tarjeta de crédito",
+  "Total charged": "Total cobrado",
+  "Download boleto": "Descargar boleto",
+  "Pix credits the wallet right away; boleto only after bank clearing (1 to 2 business days).": "Por Pix el crédito entra al instante; por boleto, solo tras la compensación (1 a 2 días hábiles).",
+  "Card fee: {{fee}} — Total to pay: {{total}}": "Tasa de la tarjeta: {{fee}} — Total a pagar: {{total}}",
+  "The card fee is added to the amount. No installments.": "La tasa de la tarjeta se suma al monto. Sin cuotas.",
+  "Complete the card payment on the bank page. If it did not open, use Open payment.": "Complete el pago con tarjeta en la página del banco. Si no se abrió, use Abrir pago.",
+  "Boleto not available.": "Boleto no disponible."
 }
