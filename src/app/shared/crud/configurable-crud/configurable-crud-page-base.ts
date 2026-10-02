@@ -205,6 +205,7 @@ export type ConfigurableCrudField = {
     | 'limits'
     | 'diagnostics'
     | 'codecs'
+    | 'retention'
     | 'notes';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
@@ -664,6 +665,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly diagnosticsFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'diagnostics'),
+  );
+  readonly retentionFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'retention'),
   );
   readonly notesFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
