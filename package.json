@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200 --poll 2000",
-    "build": "ng build",
+    "build": "node --max-old-space-size=6144 node_modules/@angular/cli/bin/ng.js build",
     "verify:changed": "node scripts/verify-changed-app.mjs",
     "check:angular-baseline": "node scripts/check-angular-baseline.mjs",
     "check:angular-baseline:strict": "node scripts/check-angular-baseline.mjs --strict",
