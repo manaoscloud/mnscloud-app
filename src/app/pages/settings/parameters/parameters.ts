@@ -18,13 +18,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
-import { lastValueFrom } from 'rxjs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTableModule } from '@angular/material/table';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -88,6 +92,20 @@ type SystemParametersItem = {
   authRememberMeEnabled: boolean;
   authSessionHours: number;
   authRememberMeHours: number;
+  voipPabxCdrRetentionDays: number;
+  voipPabxRecordingRetentionDays: number;
+};
+
+type RetentionAnalysisRow = {
+  pabxUUID: string;
+  pabxName: string;
+  customerName: string;
+  effectiveCdrRetentionDays: number;
+  cdrRetentionSource: string;
+  effectiveRecordingRetentionDays: number;
+  recordingRetentionSource: string;
+  expiredCdrCount: number;
+  expiredRecordingCount: number;
 };
 
 type StorageAccountItem = {
@@ -208,6 +226,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
   authRememberMeEnabled: true,
   authSessionHours: 12,
   authRememberMeHours: 720,
+  voipPabxCdrRetentionDays: 0,
+  voipPabxRecordingRetentionDays: 0,
 };
 
 @Component({
@@ -224,6 +244,9 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatTabsModule,
     TranslocoPipe,
     MatSelectModule,
+    MatDialogModule,
+    MatTableModule,
+    MatProgressBarModule,
   ],
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
@@ -232,6 +255,26 @@ const DEFAULT_ITEM: SystemParametersItem = {
 })
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);
+  private readonly dialog = inject(MatDialog);
+  readonly analyzingRetention = signal(false);
+  readonly purgingRetention = signal(false);
+  readonly retentionAnalysis = signal<{
+    summary: { totalPabxs: number; expiredCdrs: number; expiredRecordings: number };
+    items: RetentionAnalysisRow[];
+  } | null>(null);
+  readonly retentionPurgeResult = signal<{
+    purgedCdrs: number;
+    purgedRecordings: number;
+    errorsCount: number;
+  } | null>(null);
+  readonly retentionColumns = [
+    'customer',
+    'pabx',
+    'cdrRetention',
+    'recRetention',
+    'expiredCdrs',
+    'expiredRecs',
+  ];
   readonly dnsPolicies = signal<
     Array<{
       policyUUID: string;
@@ -662,6 +705,87 @@ export class SettingsParametersPage {
     }
   }
 
+  async analyzeRetention(): Promise<void> {
+    if (this.analyzingRetention() || this.purgingRetention()) return;
+    this.analyzingRetention.set(true);
+    this.feedback.set(null);
+    try {
+      const res = await this.api.post<any>('system/voip/pabx/retention/analyze', {});
+      const data = res?.data ?? {};
+      const items: any[] = Array.isArray(data?.items) ? data.items : [];
+      this.retentionAnalysis.set({
+        summary: {
+          totalPabxs: Number(data?.summary?.totalPabxCount ?? items.length),
+          expiredCdrs: Number(data?.summary?.totalExpiredCdrs ?? 0),
+          expiredRecordings: Number(data?.summary?.totalExpiredRecordings ?? 0),
+        },
+        items: items.map((row) => ({
+          pabxUUID: String(row?.pabxUUID ?? ''),
+          pabxName: String(row?.pabxName ?? ''),
+          customerName: String(row?.customerName ?? ''),
+          effectiveCdrRetentionDays: Number(row?.effectiveCdrRetentionDays ?? 0),
+          cdrRetentionSource: String(row?.cdrRetentionSource ?? 'disabled'),
+          effectiveRecordingRetentionDays: Number(row?.effectiveRecordingRetentionDays ?? 0),
+          recordingRetentionSource: String(row?.recordingRetentionSource ?? 'disabled'),
+          expiredCdrCount: Number(row?.expiredCdrCount ?? 0),
+          expiredRecordingCount: Number(row?.expiredRecordingCount ?? 0),
+        })),
+      });
+    } catch (err) {
+      this.feedback.set(this.friendlyError(err, 'Failed to analyze retention policies.'));
+    } finally {
+      this.analyzingRetention.set(false);
+    }
+  }
+
+  async purgeRetention(): Promise<void> {
+    if (this.purgingRetention() || this.analyzingRetention()) return;
+
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      width: '440px',
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+      data: {
+        title: 'Purge expired VoIP data',
+        message:
+          'Permanently delete expired CDRs and call recordings across all active retention policies? This action is irreversible.',
+        confirmLabel: 'Purge expired data',
+        translate: true,
+      },
+    });
+
+    const confirmed = Boolean(await firstValueFrom(ref.afterClosed()));
+    if (!confirmed) return;
+
+    this.purgingRetention.set(true);
+    this.feedback.set(null);
+    this.retentionPurgeResult.set(null);
+
+    try {
+      const res = await this.api.post<any>('system/voip/pabx/retention/purge', {});
+      const data = res?.data ?? {};
+      this.retentionPurgeResult.set({
+        purgedCdrs: Number(data?.purgedCdrsCount ?? 0),
+        purgedRecordings: Number(data?.purgedRecordingsCount ?? 0),
+        errorsCount: Number(data?.failedRecordingsCount ?? 0),
+      });
+    } catch (err) {
+      this.feedback.set(this.friendlyError(err, 'Failed to execute retention purge.'));
+    } finally {
+      this.purgingRetention.set(false);
+    }
+    await this.analyzeRetention();
+  }
+
+  retentionSourceLabel(source: string): string {
+    const labels: Record<string, string> = {
+      pabx: 'PABX',
+      tenant: 'Tenant',
+      global: 'Global',
+    };
+    return labels[source] ?? 'Keep forever';
+  }
+
   private readItem(result: any): SystemParametersItem {
     const direct = result?.data?.item;
     if (direct && typeof direct === 'object') {
@@ -747,6 +871,12 @@ export class SettingsParametersPage {
         item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
         item.voipPabxAutoDomainDnsMode = this.normalizePabxAutoDomainDnsMode(value);
         item.voipPabxAutoDomainIsActive = isActive;
+      } else if (key === 'VOIP_PABX_CDR_RETENTION_DAYS') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxCdrRetentionDays = this.normalizeInteger(value, 0);
+      } else if (key === 'VOIP_PABX_RECORDING_RETENTION_DAYS') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipPabxRecordingRetentionDays = this.normalizeInteger(value, 0);
       }
     }
 
@@ -780,6 +910,8 @@ export class SettingsParametersPage {
         raw?.voipPabxRemoteCommandExecutor,
       ),
       voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
+      voipPabxCdrRetentionDays: this.normalizeInteger(raw?.voipPabxCdrRetentionDays, 0),
+      voipPabxRecordingRetentionDays: this.normalizeInteger(raw?.voipPabxRecordingRetentionDays, 0),
       voipPabxRealmSource:
         raw?.voipPabxRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
       voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
@@ -879,6 +1011,11 @@ export class SettingsParametersPage {
       signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
       authSessionHours: this.clampInteger(value.authSessionHours, 1, 168),
       authRememberMeHours: this.clampInteger(value.authRememberMeHours, 1, 2160),
+      voipPabxCdrRetentionDays: Math.max(0, this.normalizeInteger(value.voipPabxCdrRetentionDays, 0)),
+      voipPabxRecordingRetentionDays: Math.max(
+        0,
+        this.normalizeInteger(value.voipPabxRecordingRetentionDays, 0),
+      ),
     };
   }
 
@@ -918,6 +1055,8 @@ export class SettingsParametersPage {
           ? value.voipPabxDnsPolicyUUID
           : '',
       voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
+      voipPabxCdrRetentionDays: value.voipPabxCdrRetentionDays,
+      voipPabxRecordingRetentionDays: value.voipPabxRecordingRetentionDays,
       billingSignupTrialEnabled: value.billingSignupTrialEnabled,
       billingSignupTrialAmount: value.billingSignupTrialAmount,
       billingSignupTrialCurrency: value.billingSignupTrialCurrency,

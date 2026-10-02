@@ -97,6 +97,7 @@ function config(): ConfigurableCrudConfig {
       record: 'Registration',
       routing: 'Routing',
       storage: 'Storage',
+      retention: 'Retention',
     },
     initialValues: {
       isActive: 1,
@@ -111,6 +112,8 @@ function config(): ConfigurableCrudConfig {
       mediaStorageMode: 'default',
       mediaStorageAccountUUID: '',
       mediaDeliveryMode: 'default',
+      cdrRetentionDays: null,
+      recordingRetentionDays: null,
     },
     columns: [
       {
@@ -261,6 +264,26 @@ function config(): ConfigurableCrudConfig {
         tab: 'storage',
         span: 1,
         breakBefore: true,
+      },
+      {
+        key: 'cdrRetentionDays',
+        source: 'VpaCdrRetentionDays',
+        payloadKey: 'cdrRetentionDays',
+        label: 'CDR history retention (days)',
+        type: 'number',
+        tab: 'retention',
+        span: 1,
+        placeholder: 'Inherit (empty) or 0 = keep forever',
+      },
+      {
+        key: 'recordingRetentionDays',
+        source: 'VpaRecordingRetentionDays',
+        payloadKey: 'recordingRetentionDays',
+        label: 'Recording retention (days)',
+        type: 'number',
+        tab: 'retention',
+        span: 1,
+        placeholder: 'Inherit (empty) or 0 = keep forever',
       },
     ],
   };
