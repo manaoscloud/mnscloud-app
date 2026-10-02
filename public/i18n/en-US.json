@@ -5710,5 +5710,9 @@
   "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.": "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.",
   "Simulated payments are only available for sandbox connections.": "Simulated payments are only available for sandbox connections.",
   "This bank does not support simulated sandbox payments.": "This bank does not support simulated sandbox payments.",
-  "Provide the bank charge reference and BOLETO or PIX.": "Provide the bank charge reference and BOLETO or PIX."
+  "Provide the bank charge reference and BOLETO or PIX.": "Provide the bank charge reference and BOLETO or PIX.",
+  "Billing data": "Billing data",
+  "Used as the payer of your individual wallet top-ups.": "Used as the payer of your individual wallet top-ups.",
+  "To change the CPF, edit your user profile.": "To change the CPF, edit your user profile.",
+  "This company is missing CNPJ or address data. Complete the company registration.": "This company is missing CNPJ or address data. Complete the company registration."
 }

@@ -8,7 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormField, form, minLength, required } from '@angular/forms/signals';
+import { FormField, form, maxLength, minLength, pattern, required } from '@angular/forms/signals';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,6 +28,7 @@ import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive
 import { MnsDateAdapterModule } from '../../../shared/date-mask/mns-date-adapter.module';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { UserProfile } from '../../../models/user-profile.model';
 
 type ProfileFormModel = {
@@ -37,7 +38,57 @@ type ProfileFormModel = {
   phone: string;
   dateBirth: Date | null;
   newPassword: string;
+  document: string;
+  addressZip: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressComplement: string;
+  addressDistrict: string;
+  addressCity: string;
+  addressState: string;
 };
+
+const BILLING_KEYS = [
+  'document',
+  'addressZip',
+  'addressStreet',
+  'addressNumber',
+  'addressComplement',
+  'addressDistrict',
+  'addressCity',
+  'addressState',
+] as const;
+
+/** Brazilian states (UF codes are not translated). */
+const STATE_OPTIONS = [
+  'AC',
+  'AL',
+  'AM',
+  'AP',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MG',
+  'MS',
+  'MT',
+  'PA',
+  'PB',
+  'PE',
+  'PI',
+  'PR',
+  'RJ',
+  'RN',
+  'RO',
+  'RR',
+  'RS',
+  'SC',
+  'SE',
+  'SP',
+  'TO',
+].map((value) => ({ value, label: value }));
 
 @Component({
   selector: 'app-user-profile',
@@ -57,6 +108,7 @@ type ProfileFormModel = {
     MnsDateAdapterModule,
     SettingsPageComponent,
     FieldHelpComponent,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],
@@ -95,6 +147,8 @@ export class UserProfileComponent {
   });
 
   readonly profile = signal<UserProfile | null>(null);
+  readonly stateOptions = STATE_OPTIONS;
+  readonly searchingZip = signal(false);
 
   readonly formModel = signal<ProfileFormModel>({
     firstName: '',
@@ -103,6 +157,14 @@ export class UserProfileComponent {
     phone: '',
     dateBirth: null,
     newPassword: '',
+    document: '',
+    addressZip: '',
+    addressStreet: '',
+    addressNumber: '',
+    addressComplement: '',
+    addressDistrict: '',
+    addressCity: '',
+    addressState: '',
   });
 
   private readonly baselineModel = signal<ProfileFormModel | null>(null);
@@ -112,6 +174,14 @@ export class UserProfileComponent {
     minLength(schema.firstName, 2);
     required(schema.lastName);
     minLength(schema.lastName, 2);
+    // Inter Cobrança payer limits (CPF/CEP digits, UF).
+    pattern(schema.document, /^(\d{3}\.?\d{3}\.?\d{3}-?\d{2})?$/);
+    pattern(schema.addressZip, /^(\d{5}-?\d{3})?$/);
+    maxLength(schema.addressStreet, 100);
+    maxLength(schema.addressNumber, 10);
+    maxLength(schema.addressComplement, 30);
+    maxLength(schema.addressDistrict, 60);
+    maxLength(schema.addressCity, 60);
   });
 
   readonly hasChanges = computed(() => {
@@ -124,6 +194,7 @@ export class UserProfileComponent {
       current.lastName !== baseline.lastName ||
       current.phone !== baseline.phone ||
       this.dateKey(current.dateBirth) !== this.dateKey(baseline.dateBirth) ||
+      BILLING_KEYS.some((key) => current[key] !== baseline[key]) ||
       (current.newPassword ?? '').trim().length > 0
     );
   });
@@ -254,6 +325,14 @@ export class UserProfileComponent {
       lastName: (value.lastName ?? '').trim(),
       phone: (value.phone ?? '').trim() || null,
       dateBirth: dateBirthStr,
+      billing: Object.fromEntries(
+        BILLING_KEYS.map((key) => {
+          const text = (value[key] ?? '').trim();
+          const normalized =
+            key === 'document' || key === 'addressZip' ? text.replace(/\D/g, '') : text;
+          return [key, normalized || null];
+        }),
+      ),
     };
 
     if (newPassword.length > 0) {
@@ -271,7 +350,7 @@ export class UserProfileComponent {
       this.refreshProfile();
     } catch (err) {
       console.error('save profile error:', err);
-      this.snack.error('Failed to save your profile.');
+      this.snack.error(this.errorMessage(err, 'Failed to save your profile.'));
     }
 
     this.saving.set(false);
@@ -305,6 +384,14 @@ export class UserProfileComponent {
       status: raw.Status,
       dateCreated: raw.DateCreated,
       avatarUrl: raw.AvatarUrl ?? raw.Avatar ?? null,
+      document: raw.Document ?? '',
+      addressZip: raw.AddressZip ?? '',
+      addressStreet: raw.AddressStreet ?? '',
+      addressNumber: raw.AddressNumber ?? '',
+      addressComplement: raw.AddressComplement ?? '',
+      addressDistrict: raw.AddressDistrict ?? '',
+      addressCity: raw.AddressCity ?? '',
+      addressState: raw.AddressState ?? '',
     };
   }
 
@@ -319,6 +406,14 @@ export class UserProfileComponent {
       phone: profile.phone ?? '',
       dateBirth: date,
       newPassword: '',
+      document: profile.document,
+      addressZip: profile.addressZip,
+      addressStreet: profile.addressStreet,
+      addressNumber: profile.addressNumber,
+      addressComplement: profile.addressComplement,
+      addressDistrict: profile.addressDistrict,
+      addressCity: profile.addressCity,
+      addressState: profile.addressState,
     };
 
     this.formModel.set(next);
@@ -328,6 +423,34 @@ export class UserProfileComponent {
     this.avatarFile = null;
     this.clearAvatarInput();
     this.avatarVersion.set(Date.now());
+  }
+
+  /** Fills street, district, city and state from the CEP (platform postal-code lookup). */
+  async searchZip() {
+    const zip = (this.formModel().addressZip ?? '').replace(/\D/g, '');
+    if (zip.length !== 8) {
+      this.snack.warning('Invalid postal code. Provide 8 digits.');
+      return;
+    }
+    this.searchingZip.set(true);
+    try {
+      const response = await this.api.get<{ data?: { item?: Record<string, string | null> } }>(
+        `postal-codes/${zip}`,
+      );
+      const item = response?.data?.item ?? {};
+      this.formModel.update((current) => ({
+        ...current,
+        addressZip: zip,
+        addressStreet: item['street'] || current.addressStreet,
+        addressDistrict: item['district'] || current.addressDistrict,
+        addressCity: item['city'] || current.addressCity,
+        addressState: item['state'] || current.addressState,
+      }));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error, 'Failed to search postal code.'));
+    } finally {
+      this.searchingZip.set(false);
+    }
   }
 
   private dateKey(value: Date | null): string {
