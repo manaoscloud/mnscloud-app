@@ -27,6 +27,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { DateMaskDirective } from '../../../shared/date-mask/date-mask.directive';
 import { MnsDateAdapterModule } from '../../../shared/date-mask/mns-date-adapter.module';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
+import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { UserProfile } from '../../../models/user-profile.model';
 
 type ProfileFormModel = {
@@ -55,6 +56,7 @@ type ProfileFormModel = {
     DateMaskDirective,
     MnsDateAdapterModule,
     SettingsPageComponent,
+    FieldHelpComponent,
   ],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.scss'],

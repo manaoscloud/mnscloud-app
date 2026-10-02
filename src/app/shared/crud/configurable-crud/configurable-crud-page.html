@@ -337,6 +337,81 @@
   </mat-card>
 </section>
 
+<ng-template #simpleFieldTab let-tabFields>
+  <div class="tab-content form-grid">
+    @for (field of tabFields; track field.key) {
+      <div class="crud-field-contents">
+        @switch (field.type) {
+          @case ('search-select') {
+            <mns-search-select-field
+              [help]="fieldHelp(field)"
+              [fieldClass]="fieldClass(field)"
+              [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+              [placeholder]="field.placeholder ?? 'Search' | transloco"
+              [options]="fieldOptions(field)"
+              [remoteSearch]="!!field.remoteLookup"
+              [hasNext]="remoteHasNext(field)"
+              [hasPrevious]="remoteHasPrevious(field)"
+              [loadError]="remoteError(field)"
+              (searchChange)="remoteSearchChanged(field, $event)"
+              (pageChange)="remotePageChanged(field, $event)"
+              [loading]="fieldLoading(field)"
+              [disabled]="isFieldDisabled(field)"
+              [multiple]="field.multiple ?? false"
+              [value]="field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)"
+              [canCreate]="canQuickCreate(field)"
+              [createLabel]="quickCreateLabel(field)"
+              (valueChange)="setFieldValue(field.key, $event)"
+              (createRecord)="quickCreateField(field)"
+            />
+          }
+          @case ('select') {
+            <mat-form-field appearance="outline" [class]="fieldClass(field)">
+              <mat-label
+                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
+                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+              >
+              <mat-select
+                [value]="fieldValue(field.key)"
+                (selectionChange)="setFieldValue(field.key, $event.value)"
+              >
+                @for (option of fieldOptions(field); track option.value) {
+                  <mat-option [value]="option.value">{{
+                    translatedOptionLabel(field, option)
+                  }}</mat-option>
+                }
+              </mat-select>
+              @if (fieldHelp(field); as help) {
+                <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
+              }
+            </mat-form-field>
+          }
+          @default {
+            <mat-form-field appearance="outline" [class]="fieldClass(field)">
+              <mat-label
+                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
+                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+              >
+              <input
+                matInput
+                [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                [type]="htmlInputType(field)"
+                [autocomplete]="field.autocomplete ?? 'off'"
+                [attr.data-field-key]="field.key"
+                [value]="fieldValueString(field.key)"
+                (input)="setFieldValue(field.key, $any($event.target).value)"
+              />
+              @if (fieldHelp(field); as help) {
+                <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
+              }
+            </mat-form-field>
+          }
+        }
+      </div>
+    }
+  </div>
+</ng-template>
+
 <ng-template #crudFormDialog>
   <div class="crud-dialog">
     <div class="dialog-header">
@@ -2348,175 +2423,19 @@
 
         @if (diagnosticsFields().length) {
           <mat-tab [label]="tabLabel('diagnostics', 'Diagnostics') | transloco">
-            <div class="tab-content form-grid">
-              @for (field of diagnosticsFields(); track field.key) {
-                <div class="crud-field-contents">
-                  @switch (field.type) {
-                    @case ('search-select') {
-                      <mns-search-select-field
-                        [help]="fieldHelp(field)"
-                        [fieldClass]="fieldClass(field)"
-                        [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
-                        [placeholder]="field.placeholder ?? 'Search' | transloco"
-                        [options]="fieldOptions(field)"
-                        [remoteSearch]="!!field.remoteLookup"
-                        [hasNext]="remoteHasNext(field)"
-                        [hasPrevious]="remoteHasPrevious(field)"
-                        [loadError]="remoteError(field)"
-                        (searchChange)="remoteSearchChanged(field, $event)"
-                        (pageChange)="remotePageChanged(field, $event)"
-                        [loading]="fieldLoading(field)"
-                        [disabled]="isFieldDisabled(field)"
-                        [multiple]="field.multiple ?? false"
-                        [value]="
-                          field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)
-                        "
-                        [canCreate]="canQuickCreate(field)"
-                        [createLabel]="quickCreateLabel(field)"
-                        (valueChange)="setFieldValue(field.key, $event)"
-                        (createRecord)="quickCreateField(field)"
-                      />
-                    }
-                    @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
-                    }
-                    @default {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <input
-                          matInput
-                          [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                          [type]="htmlInputType(field)"
-                          [autocomplete]="field.autocomplete ?? 'off'"
-                          [attr.data-field-key]="field.key"
-                          [value]="fieldValueString(field.key)"
-                          (input)="setFieldValue(field.key, $any($event.target).value)"
-                        />
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
-                    }
-                  }
-                </div>
-              }
-            </div>
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: diagnosticsFields() }"
+            />
           </mat-tab>
         }
 
         @if (retentionFields().length) {
           <mat-tab [label]="tabLabel('retention', 'Retention') | transloco">
-            <div class="tab-content form-grid">
-              @for (field of retentionFields(); track field.key) {
-                <div class="crud-field-contents">
-                  @switch (field.type) {
-                    @case ('search-select') {
-                      <mns-search-select-field
-                        [help]="fieldHelp(field)"
-                        [fieldClass]="fieldClass(field)"
-                        [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
-                        [placeholder]="field.placeholder ?? 'Search' | transloco"
-                        [options]="fieldOptions(field)"
-                        [remoteSearch]="!!field.remoteLookup"
-                        [hasNext]="remoteHasNext(field)"
-                        [hasPrevious]="remoteHasPrevious(field)"
-                        [loadError]="remoteError(field)"
-                        (searchChange)="remoteSearchChanged(field, $event)"
-                        (pageChange)="remotePageChanged(field, $event)"
-                        [loading]="fieldLoading(field)"
-                        [disabled]="isFieldDisabled(field)"
-                        [multiple]="field.multiple ?? false"
-                        [value]="
-                          field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)
-                        "
-                        [canCreate]="canQuickCreate(field)"
-                        [createLabel]="quickCreateLabel(field)"
-                        (valueChange)="setFieldValue(field.key, $event)"
-                        (createRecord)="quickCreateField(field)"
-                      />
-                    }
-                    @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
-                    }
-                    @default {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <input
-                          matInput
-                          [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                          [type]="htmlInputType(field)"
-                          [autocomplete]="field.autocomplete ?? 'off'"
-                          [attr.data-field-key]="field.key"
-                          [value]="fieldValueString(field.key)"
-                          (input)="setFieldValue(field.key, $any($event.target).value)"
-                        />
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
-                    }
-                  }
-                </div>
-              }
-            </div>
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: retentionFields() }"
+            />
           </mat-tab>
         }
 

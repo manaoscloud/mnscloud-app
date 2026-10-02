@@ -14,8 +14,15 @@ let conditionalHelp = 0;
 for (const file of walk('src')) {
   if (!/\.(ts|html|scss)$/.test(file)) continue;
   const text = readFileSync(file, 'utf8');
-  if (/\bfield-hint\b|\bcrud-form-notice\b|\bcontextualHelp\b|\btabNotices\b/.test(text)) {
+  if (
+    /\bfield-hint\b|\bparameter-hint\b|\bcrud-form-notice\b|\bcontextualHelp\b|\btabNotices\b/.test(
+      text,
+    )
+  ) {
     errors.push(`${file}: retired detached field-help presentation`);
+  }
+  if (file.endsWith('.html') && /<mat-hint\b/.test(text)) {
+    errors.push(`${file}: use mns-field-help (matIconSuffix) instead of mat-hint`);
   }
   if (file.endsWith('.ts') && text.includes('ConfigurableCrud')) {
     if (/\b(?:hint|hintWhen)\??\s*:/.test(text)) {
@@ -31,4 +38,6 @@ if (errors.length) {
   console.error(errors.join('\n'));
   process.exit(1);
 }
-console.log(`Global field help contract passed: ${staticHelp} static and ${conditionalHelp} conditional definitions; no retired field-hint renderers.`);
+console.log(
+  `Global field help contract passed: ${staticHelp} static and ${conditionalHelp} conditional definitions; no retired field-hint renderers or mat-hint.`,
+);

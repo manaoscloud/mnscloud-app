@@ -28,6 +28,7 @@ import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.servic
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 type SystemParametersItem = {
@@ -247,6 +248,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatDialogModule,
     MatTableModule,
     MatProgressBarModule,
+    FieldHelpComponent,
   ],
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
@@ -1011,7 +1013,10 @@ export class SettingsParametersPage {
       signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
       authSessionHours: this.clampInteger(value.authSessionHours, 1, 168),
       authRememberMeHours: this.clampInteger(value.authRememberMeHours, 1, 2160),
-      voipPabxCdrRetentionDays: Math.max(0, this.normalizeInteger(value.voipPabxCdrRetentionDays, 0)),
+      voipPabxCdrRetentionDays: Math.max(
+        0,
+        this.normalizeInteger(value.voipPabxCdrRetentionDays, 0),
+      ),
       voipPabxRecordingRetentionDays: Math.max(
         0,
         this.normalizeInteger(value.voipPabxRecordingRetentionDays, 0),
