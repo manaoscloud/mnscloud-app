@@ -183,6 +183,9 @@ the page must use the shared base named here.
 - A page that renders a table but is not a record CRUD (for example the Metrics fleet explorer)
   opts out with a `// crud-template-exempt: <reason>` comment in its component. The reason is
   mandatory (a bare marker stays legacy) and must point to the contract that defines the page.
+- Columns may declare `value(row, translate)` for a computed display/sort value and
+  `detail(row, translate)` for the secondary line of `identity`/`related` cells (shown instead of the
+  UUID), for example a PABX with its engine and domain, or a route type with its target name.
 - Shared base capabilities for non-trivial resources (prefer these over page code):
   `rowActions[].collection` (full child CRUD), `rowActions[].form` (one-shot form),
   `rowActions[].request` (declarative PUT/POST with optional confirmation, e.g. "set cover"),
@@ -685,6 +688,9 @@ or cancelling the form they are filling.
   - `.dialog-content` uses `position: relative`, flex column layout, `flex: 1 1 auto`, `min-height: 0`, `max-height: min(82vh, 980px)`, `overflow: hidden`, and zero Material margin/padding
   - `.form-tabs` is a flex column with `height: 100%`, `flex: 1 1 auto`, `min-height: 0`, `overflow: hidden`, and zero bottom margin (the dialog owns section spacing)
   - tab headers stay sticky inside the dialog content, and the tab body wrapper owns vertical scroll with `overflow: auto`
+  - dialogs without tabs (pickers, step editors, ordered lists) put their body in
+    `.dialog-content > .dialog-scroll`, the global scrolling body; never leave content directly in
+    `.dialog-content`, whose `overflow: hidden` would cut it off
   - `.tab-content` starts compactly with `padding: 0.65rem 0 0.25rem`
   - `.form-grid` uses compact density: `gap: 0.5rem 0.75rem` and `margin-bottom: 0.35rem`; every field/control inside the grid must be `min-width: 0` and fill its grid track
   - `.form-actions` uses `margin: auto 0 0`, `padding: 0.85rem 0.75rem 0.75rem`, translucent surface background, `backdrop-filter: blur(8px)`, top border, and top shadow
@@ -774,6 +780,18 @@ or cancelling the form they are filling.
   instead of local inline-form overlays or page-specific command markup.
 - Visible labels, warnings, context fields, and copy/close actions must be present in every runtime
   Transloco dictionary.
+
+## Template Picker Dialog Baseline (Current)
+
+- Any modal that lets the user start a record from a predefined template must use
+  `openTemplatePickerDialog` from `src/app/shared/template-picker-dialog`. It renders searchable
+  cards (name, category, description, metadata and an ordered step preview) inside the standard
+  CRUD dialog surface and returns the selected template id.
+- Name, description, category, metadata labels and step labels are Transloco keys (English source
+  text) and must exist in every dictionary. Step details are shown as given, so they may contain
+  `{{placeholders}}`.
+- Pages must not define page-local template dialogs, card SCSS or fixed colors; the shared component
+  owns scrolling, theme tokens, the `Close` footer and mobile layout.
 
 ## Read-Only Data Viewer Dialog Baseline (Current)
 
