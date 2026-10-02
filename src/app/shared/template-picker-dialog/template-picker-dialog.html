@@ -1,0 +1,78 @@
+<div class="crud-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>{{ data.title | transloco }}</h2>
+      @if (data.description) {
+        <p>{{ data.description | transloco }}</p>
+      }
+    </div>
+  </header>
+
+  <div class="dialog-content">
+    <div class="dialog-scroll">
+      <mat-form-field appearance="outline" class="template-picker-search">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input matInput [value]="search()" (input)="search.set($any($event.target).value)" />
+        <mat-icon matIconSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <div class="template-picker-list" role="list">
+        @for (item of items(); track item.id) {
+          <article class="template-picker-card" role="listitem">
+            <div class="template-picker-card-header">
+              <div class="template-picker-titles">
+                <h3>{{ item.name | transloco }}</h3>
+                @if (item.category) {
+                  <span class="template-picker-category">{{ item.category | transloco }}</span>
+                }
+              </div>
+              <button mat-flat-button color="primary" type="button" (click)="choose(item)">
+                <mat-icon>auto_awesome</mat-icon>
+                {{ data.useLabel ?? 'Use template' | transloco }}
+              </button>
+            </div>
+
+            <p class="template-picker-description">{{ item.description | transloco }}</p>
+
+            @if (item.meta?.length) {
+              <div class="template-picker-meta">
+                @for (meta of item.meta; track meta.label) {
+                  <span>
+                    <mat-icon>{{ meta.icon }}</mat-icon>
+                    {{ meta.label | transloco
+                    }}{{ meta.value ? ': ' + (meta.value | transloco) : '' }}
+                  </span>
+                }
+              </div>
+            }
+
+            @if (item.steps?.length) {
+              <ol class="template-picker-steps">
+                @for (step of item.steps; track $index) {
+                  <li>
+                    <span class="template-picker-step-order">{{ $index + 1 }}</span>
+                    <span class="template-picker-step-label">{{ step.label | transloco }}</span>
+                    @if (step.detail) {
+                      <span class="template-picker-step-detail">{{ step.detail }}</span>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          </article>
+        } @empty {
+          <p class="template-picker-empty">
+            {{ data.emptyLabel ?? 'No templates found.' | transloco }}
+          </p>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" (click)="close()">{{ 'Close' | transloco }}</button>
+    </div>
+    <div class="primary-actions"></div>
+  </div>
+</div>

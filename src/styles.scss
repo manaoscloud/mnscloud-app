@@ -970,6 +970,26 @@ mat-chip.status-pill.is-inactive,
   padding: 0.65rem 0 0.25rem;
 }
 
+/* Column `detail` line: readable text instead of the monospace UUID style. */
+.record-stack .record-uuid.record-detail {
+  font-family: inherit;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Scrolling body for dialogs without tabs (pickers, editors): `.dialog-content > .dialog-scroll`. */
+.crud-dialog .dialog-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.65rem 0.25rem 0.75rem 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

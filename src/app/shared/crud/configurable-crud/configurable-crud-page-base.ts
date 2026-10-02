@@ -299,6 +299,10 @@ export type ConfigurableCrudColumn = {
   /** Renders a copy action beside the displayed value when the record has a value. */
   copyable?: boolean;
   hiddenWhen?: () => boolean;
+  /** Computed display value (also used for sorting); `translate` resolves Transloco keys. */
+  value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
+  /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
+  detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
 };
 
 export type ConfigurableCrudListFilter = {
@@ -1844,6 +1848,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   columnMain(row: T, column: ConfigurableCrudColumn): string {
+    const computed = this.columnComputedValue(row, column);
+    if (computed !== undefined) return computed;
     const label = this.columnOptionLabel(row, column);
     if (label !== undefined) return label;
     if (column.lookupKey && column.uuidField) {
@@ -1855,11 +1861,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   columnUUID(row: T, column: ConfigurableCrudColumn): string {
+    const detail = column.detail?.(row, (key) => this.transloco.translate(key))?.trim();
+    if (detail) return detail;
     if (column.uuidField) return this.displayValue(row[column.uuidField]);
     return column.kind === 'identity' ? this.recordUUID(row) : '';
   }
 
   columnText(row: T, column: ConfigurableCrudColumn): string {
+    const computed = this.columnComputedValue(row, column);
+    if (computed !== undefined) return computed;
     const label = this.columnOptionLabel(row, column);
     if (label !== undefined) return label;
     const field = column.field ?? column.id;
@@ -1878,6 +1888,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return value === '-' ? value : this.transloco.translate(value);
     }
     return this.displayValue(row[field]);
+  }
+
+  private columnComputedValue(row: T, column: ConfigurableCrudColumn): string | undefined {
+    if (!column.value) return undefined;
+    return column.value(row, (key) => this.transloco.translate(key))?.trim() || '-';
   }
 
   canCopyColumn(row: T, column: ConfigurableCrudColumn): boolean {

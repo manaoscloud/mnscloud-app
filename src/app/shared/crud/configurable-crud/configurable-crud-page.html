@@ -201,7 +201,7 @@
                   <div class="record-stack">
                     <span class="record-main">{{ columnMain(row, column) }}</span>
                     @if (columnUUID(row, column)) {
-                      <span class="record-uuid">{{ columnUUID(row, column) }}</span>
+                      <span class="record-uuid" [class.record-detail]="!!column.detail">{{ columnUUID(row, column) }}</span>
                     }
                   </div>
                   @if (canCopyColumn(row, column)) {
