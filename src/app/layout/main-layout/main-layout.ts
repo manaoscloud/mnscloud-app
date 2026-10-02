@@ -1642,7 +1642,13 @@ export class MainLayout {
               route: '/voip/pabx/inbound-routes',
             },
             { id: 'voip/pabx/ivr', label: 'IVR', icon: 'account_tree', route: '/voip/pabx/ivr' },
-            { id: 'voip/pabx/custom', label: 'Custom', icon: 'alt_route', route: '/voip/pabx/custom' },
+            {
+              id: 'voip/pabx/custom',
+              label: 'Custom',
+              icon: 'alt_route',
+              route: '/voip/pabx/custom',
+              entitlementCode: 'module.voip.pabx.custom',
+            },
             {
               id: 'voip/pabx/group',
               label: 'Groups',

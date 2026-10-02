@@ -12,6 +12,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
+  ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
@@ -31,14 +32,12 @@ const fallbackRouteTypes: ConfigurableCrudOption[] = [
 ];
 
 export const STEP_ACTION_TYPES: ConfigurableCrudOption[] = [
-  { value: 'playback', label: 'Playback' },
-  { value: 'api_request', label: 'API Request' },
-  { value: 'collect_dtmf', label: 'Collect DTMF' },
-  { value: 'set_variable', label: 'Set Variable' },
-  { value: 'notification', label: 'Notification' },
-  { value: 'callback', label: 'Callback' },
-  { value: 'route', label: 'Route' },
-  { value: 'hangup', label: 'Hangup' },
+  { value: 'playback', label: 'Play audio' },
+  { value: 'collect_dtmf', label: 'Collect digits' },
+  { value: 'api_request', label: 'Integration request' },
+  { value: 'notification', label: 'Notification webhook' },
+  { value: 'route', label: 'Transfer' },
+  { value: 'hangup', label: 'Hang up' },
 ];
 
 export const STEP_FAILURE_MODES: ConfigurableCrudOption[] = [
@@ -46,18 +45,35 @@ export const STEP_FAILURE_MODES: ConfigurableCrudOption[] = [
   { value: 'fallback', label: 'Fallback' },
 ];
 
-export const HTTP_METHODS: ConfigurableCrudOption[] = [
+export const API_HTTP_METHODS: ConfigurableCrudOption[] = [
+  { value: 'POST', label: 'POST' },
   { value: 'GET', label: 'GET' },
+  { value: 'PUT', label: 'PUT' },
+  { value: 'PATCH', label: 'PATCH' },
+];
+
+export const NOTIFICATION_HTTP_METHODS: ConfigurableCrudOption[] = [
   { value: 'POST', label: 'POST' },
   { value: 'PUT', label: 'PUT' },
-  { value: 'DELETE', label: 'DELETE' },
+];
+
+export const STEP_ROUTE_TYPES: ConfigurableCrudOption[] = [
+  { value: 'extension', label: 'Extension' },
+  { value: 'group', label: 'Group' },
+  { value: 'queue', label: 'Queue' },
+  { value: 'ivr', label: 'IVR' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 export const HANGUP_CAUSES: ConfigurableCrudOption[] = [
-  { value: 'NORMAL_CLEARING', label: 'Normal clearing' },
-  { value: 'USER_BUSY', label: 'User busy' },
-  { value: 'CALL_REJECTED', label: 'Call rejected' },
+  { value: 'normal', label: 'Normal clearing' },
+  { value: 'busy', label: 'User busy' },
+  { value: 'rejected', label: 'Call rejected' },
+  { value: 'unavailable', label: 'Unavailable' },
 ];
+
+/** Placeholders resolved by the API when it executes integration steps. */
+export const STEP_PLACEHOLDERS = '{{caller}} {{did}} {{input}} {{callId}} {{customUUID}} {{pabxUUID}}';
 
 export type VoipCustomStep = {
   uuid?: string;
@@ -276,7 +292,7 @@ function config(): ConfigurableCrudConfig {
                   </span>
                   <span class="meta-tag">
                     <mat-icon>alt_route</mat-icon>
-                    {{ 'Fallback' | transloco }}: {{ template.fallbackRouteType }}
+                    {{ 'Fallback' | transloco }}: {{ template.fallbackRouteType | transloco }}
                   </span>
                   <span class="meta-tag">
                     <mat-icon>format_list_numbered</mat-icon>
@@ -285,10 +301,10 @@ function config(): ConfigurableCrudConfig {
                 </div>
 
                 <div class="template-steps-preview">
-                  @for (step of template.steps; track step.order) {
+                  @for (step of template.steps; track $index) {
                     <div class="step-pill">
-                      <span class="step-order">#{{ step.order }}</span>
-                      <span class="step-action">{{ step.actionType }}</span>
+                      <span class="step-order">#{{ $index + 1 }}</span>
+                      <span class="step-action">{{ actionLabel(step.actionType) | transloco }}</span>
                     </div>
                   }
                 </div>
@@ -449,6 +465,10 @@ export class VoipCustomTemplatesDialogComponent {
     );
   }
 
+  actionLabel(type: string): string {
+    return STEP_ACTION_TYPES.find((item) => item.value === type)?.label ?? type;
+  }
+
   applyTemplate(template: VoipCustomTemplate): void {
     this.dialogRef.close(template);
   }
@@ -456,6 +476,15 @@ export class VoipCustomTemplatesDialogComponent {
   close(): void {
     this.dialogRef.close();
   }
+}
+
+export type VoipCustomStepsDialogData = {
+  custom: ConfigurableCrudRecord;
+  steps: VoipCustomStep[];
+};
+
+function compactUUID(value: unknown): string {
+  return String(value ?? '').replaceAll('-', '').toUpperCase();
 }
 
 @Component({
@@ -466,7 +495,7 @@ export class VoipCustomTemplatesDialogComponent {
     <div class="crud-dialog custom-steps-dialog">
       <div class="dialog-header">
         <div>
-          <h2>{{ 'Pipeline Steps' | transloco }} • {{ data.customName }}</h2>
+          <h2>{{ 'Pipeline Steps' | transloco }} • {{ customName }}</h2>
           <p>{{ 'Configure sequential action steps' | transloco }}</p>
         </div>
       </div>
@@ -488,7 +517,7 @@ export class VoipCustomTemplatesDialogComponent {
                     <span class="step-num">#{{ step.order }}</span>
                     <div class="step-badge" [attr.data-action]="step.actionType">
                       <mat-icon>{{ actionIcon(step.actionType) }}</mat-icon>
-                      <span>{{ actionLabel(step.actionType) }}</span>
+                      <span>{{ actionLabel(step.actionType) | transloco }}</span>
                     </div>
                     <div class="step-summary">
                       {{ stepSummary(step) }}
@@ -594,58 +623,164 @@ export class VoipCustomTemplatesDialogComponent {
 
                 @switch (stepDraft.actionType) {
                   @case ('playback') {
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Prompt audio' | transloco }}</mat-label>
-                      <mat-select
-                        [value]="stepDraft.config['mediaFileUUID'] || ''"
-                        (selectionChange)="stepDraft.config['mediaFileUUID'] = $event.value || null"
-                      >
-                        <mat-option value="">-- {{ 'None' | transloco }} --</mat-option>
-                        @for (file of mediaFiles(); track file.value) {
-                          <mat-option [value]="file.value">{{ file.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Description' | transloco }}</mat-label>
+                    <mns-search-select-field
+                      data-quick-create-exempt="Media files are uploaded in VoIP > PABX > Media files."
+                      fieldClass="span-4"
+                      [label]="('Audio file' | transloco) + '*'"
+                      [options]="mediaFiles()"
+                      [loading]="lookupsLoading()"
+                      [value]="stepDraft.config['mediaFileUUID'] || ''"
+                      (valueChange)="setConfig('mediaFileUUID', $event || '')"
+                    />
+                  }
+                  @case ('collect_dtmf') {
+                    <mns-search-select-field
+                      data-quick-create-exempt="Media files are uploaded in VoIP > PABX > Media files."
+                      fieldClass="span-4"
+                      [label]="'Prompt audio' | transloco"
+                      [options]="mediaFiles()"
+                      [loading]="lookupsLoading()"
+                      [value]="stepDraft.config['promptMediaFileUUID'] || ''"
+                      (valueChange)="setConfig('promptMediaFileUUID', $event || null)"
+                    />
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'Min digits' | transloco }}</mat-label>
                       <input
                         matInput
-                        [value]="stepDraft.config['description'] || ''"
-                        (input)="stepDraft.config['description'] = $any($event.target).value"
+                        type="number"
+                        min="1"
+                        max="20"
+                        [value]="stepDraft.config['minDigits'] ?? 1"
+                        (input)="updateConfigNumber('minDigits', $any($event.target).value)"
                       />
                     </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'Max digits' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        min="1"
+                        max="20"
+                        [value]="stepDraft.config['maxDigits'] ?? 10"
+                        (input)="updateConfigNumber('maxDigits', $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'Digit timeout (s)' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        min="1"
+                        max="30"
+                        [value]="stepDraft.config['timeoutSeconds'] ?? 5"
+                        (input)="updateConfigNumber('timeoutSeconds', $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'Attempts' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        min="1"
+                        max="5"
+                        [value]="stepDraft.config['maxTries'] ?? 3"
+                        (input)="updateConfigNumber('maxTries', $any($event.target).value)"
+                      />
+                    </mat-form-field>
+                    <p class="span-4 step-hint">
+                      {{ 'The digits are available to later integration steps as' | transloco }}
+                      {{ inputPlaceholder }}
+                    </p>
                   }
                   @case ('api_request') {
                     <mat-form-field appearance="outline" class="span-3">
-                      <mat-label>{{ 'URL' | transloco }}</mat-label>
+                      <mat-label>{{ 'HTTPS URL' | transloco }}*</mat-label>
                       <input
                         matInput
                         [value]="stepDraft.config['url'] || ''"
-                        (input)="stepDraft.config['url'] = $any($event.target).value"
-                        placeholder="https://api.example.com/v1/crm/call"
+                        (input)="setConfig('url', $any($event.target).value)"
+                        placeholder="https://crm.example.com/api/calls/route"
                       />
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="span-1">
                       <mat-label>{{ 'Method' | transloco }}</mat-label>
                       <mat-select
                         [value]="stepDraft.config['method'] || 'POST'"
-                        (selectionChange)="stepDraft.config['method'] = $event.value"
+                        (selectionChange)="setConfig('method', $event.value)"
                       >
-                        @for (m of httpMethods; track m.value) {
+                        @for (m of apiMethods; track m.value) {
                           <mat-option [value]="m.value">{{ m.label }}</mat-option>
                         }
                       </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-3">
+                      <mat-label>{{ 'Headers (JSON)' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [value]="headersString()"
+                        (input)="updateHeaders($any($event.target).value)"
+                        placeholder='{"Content-Type": "application/json"}'
+                      />
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="span-1">
                       <mat-label>{{ 'Timeout (ms)' | transloco }}</mat-label>
                       <input
                         matInput
                         type="number"
-                        [value]="stepDraft.config['timeoutMs'] || 5000"
+                        min="500"
+                        max="8000"
+                        [value]="stepDraft.config['timeoutMs'] ?? 3000"
                         (input)="updateConfigNumber('timeoutMs', $any($event.target).value)"
                       />
                     </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'Request body' | transloco }}</mat-label>
+                      <textarea
+                        matInput
+                        rows="3"
+                        [value]="stepDraft.config['body'] || ''"
+                        (input)="setConfig('body', $any($event.target).value)"
+                        [placeholder]="requestBodyPlaceholder"
+                      ></textarea>
+                    </mat-form-field>
+                    <mat-checkbox
+                      class="span-4"
+                      [checked]="stepDraft.config['routeFromResponse'] === true"
+                      (change)="setConfig('routeFromResponse', $event.checked)"
+                    >
+                      {{ 'Route using the integration reply' | transloco }}
+                    </mat-checkbox>
+                    <p class="span-4 step-hint">
+                      {{ 'Runs in the MNSCloud API (public HTTPS only). Non-2xx or timeout is a failure. Placeholders:' | transloco }}
+                      {{ placeholders }}
+                      @if (stepDraft.config['routeFromResponse'] === true) {
+                        <br />
+                        {{ 'Expected reply' | transloco }}: {{ routeReplyExample }}
+                      }
+                    </p>
+                  }
+                  @case ('notification') {
                     <mat-form-field appearance="outline" class="span-3">
+                      <mat-label>{{ 'HTTPS URL' | transloco }}*</mat-label>
+                      <input
+                        matInput
+                        [value]="stepDraft.config['url'] || ''"
+                        (input)="setConfig('url', $any($event.target).value)"
+                        placeholder="https://hooks.example.com/pabx/incoming-call"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'Method' | transloco }}</mat-label>
+                      <mat-select
+                        [value]="stepDraft.config['method'] || 'POST'"
+                        (selectionChange)="setConfig('method', $event.value)"
+                      >
+                        @for (m of notificationMethods; track m.value) {
+                          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-4">
                       <mat-label>{{ 'Headers (JSON)' | transloco }}</mat-label>
                       <input
                         matInput
@@ -658,160 +793,45 @@ export class VoipCustomTemplatesDialogComponent {
                       <mat-label>{{ 'Request body' | transloco }}</mat-label>
                       <textarea
                         matInput
-                        rows="3"
+                        rows="2"
                         [value]="stepDraft.config['body'] || ''"
-                        (input)="stepDraft.config['body'] = $any($event.target).value"
+                        (input)="setConfig('body', $any($event.target).value)"
                         [placeholder]="requestBodyPlaceholder"
                       ></textarea>
                     </mat-form-field>
-                  }
-                  @case ('collect_dtmf') {
-                    <mat-form-field appearance="outline" class="span-1">
-                      <mat-label>{{ 'Min digits' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        type="number"
-                        [value]="stepDraft.config['minDigits'] || 1"
-                        (input)="updateConfigNumber('minDigits', $any($event.target).value)"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-1">
-                      <mat-label>{{ 'Max digits' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        type="number"
-                        [value]="stepDraft.config['maxDigits'] || 10"
-                        (input)="updateConfigNumber('maxDigits', $any($event.target).value)"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-1">
-                      <mat-label>{{ 'Timeout seconds' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        type="number"
-                        [value]="stepDraft.config['timeoutSeconds'] || 10"
-                        (input)="updateConfigNumber('timeoutSeconds', $any($event.target).value)"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-1">
-                      <mat-label>{{ 'Variable name' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['variableName'] || 'collected_digits'"
-                        (input)="stepDraft.config['variableName'] = $any($event.target).value"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-4">
-                      <mat-label>{{ 'Prompt audio' | transloco }}</mat-label>
-                      <mat-select
-                        [value]="stepDraft.config['promptMediaUUID'] || ''"
-                        (selectionChange)="stepDraft.config['promptMediaUUID'] = $event.value || null"
-                      >
-                        <mat-option value="">-- {{ 'None' | transloco }} --</mat-option>
-                        @for (file of mediaFiles(); track file.value) {
-                          <mat-option [value]="file.value">{{ file.label }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  }
-                  @case ('set_variable') {
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Variable name' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['key'] || ''"
-                        (input)="stepDraft.config['key'] = $any($event.target).value"
-                        placeholder="crm_customer_id"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Variable value' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['value'] || ''"
-                        (input)="stepDraft.config['value'] = $any($event.target).value"
-                        [placeholder]="variableValuePlaceholder"
-                      />
-                    </mat-form-field>
-                  }
-                  @case ('notification') {
-                    <mat-form-field appearance="outline" class="span-3">
-                      <mat-label>{{ 'URL' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['url'] || ''"
-                        (input)="stepDraft.config['url'] = $any($event.target).value"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-1">
-                      <mat-label>{{ 'Method' | transloco }}</mat-label>
-                      <mat-select
-                        [value]="stepDraft.config['method'] || 'POST'"
-                        (selectionChange)="stepDraft.config['method'] = $event.value"
-                      >
-                        <mat-option value="POST">POST</mat-option>
-                        <mat-option value="PUT">PUT</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-4">
-                      <mat-label>{{ 'Request body' | transloco }}</mat-label>
-                      <textarea
-                        matInput
-                        rows="2"
-                        [value]="stepDraft.config['body'] || ''"
-                        (input)="stepDraft.config['body'] = $any($event.target).value"
-                      ></textarea>
-                    </mat-form-field>
-                  }
-                  @case ('callback') {
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Callback' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['callbackNumber'] || defaultCallbackNumber"
-                        (input)="stepDraft.config['callbackNumber'] = $any($event.target).value"
-                      />
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Description' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [value]="stepDraft.config['description'] || ''"
-                        (input)="stepDraft.config['description'] = $any($event.target).value"
-                      />
-                    </mat-form-field>
+                    <p class="span-4 step-hint">
+                      {{ 'Sent by the MNSCloud API without waiting for the reply. Placeholders:' | transloco }}
+                      {{ placeholders }}
+                    </p>
                   }
                   @case ('route') {
                     <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Fallback route' | transloco }}</mat-label>
+                      <mat-label>{{ 'Destination type' | transloco }}</mat-label>
                       <mat-select
                         [value]="stepDraft.config['routeType'] || 'extension'"
                         (selectionChange)="onRouteChange($event.value)"
                       >
-                        <mat-option value="extension">{{ 'Extension' | transloco }}</mat-option>
-                        <mat-option value="group">{{ 'Group' | transloco }}</mat-option>
-                        <mat-option value="queue">{{ 'Queue' | transloco }}</mat-option>
-                        <mat-option value="ivr">{{ 'IVR' | transloco }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="span-2">
-                      <mat-label>{{ 'Destination' | transloco }}</mat-label>
-                      <mat-select
-                        [value]="stepDraft.config['routeTargetUUID'] || ''"
-                        (selectionChange)="stepDraft.config['routeTargetUUID'] = $event.value"
-                      >
-                        @for (dest of routeDestinations(); track dest.value) {
-                          <mat-option [value]="dest.value">{{ dest.label }}</mat-option>
+                        @for (type of routeTypes; track type.value) {
+                          <mat-option [value]="type.value">{{ type.label | transloco }}</mat-option>
                         }
                       </mat-select>
                     </mat-form-field>
+                    <mns-search-select-field
+                      data-quick-create-exempt="Route target is polymorphic and depends on the selected destination type."
+                      fieldClass="span-2"
+                      [label]="('Destination' | transloco) + '*'"
+                      [options]="routeDestinations()"
+                      [loading]="lookupsLoading()"
+                      [value]="stepDraft.config['targetUUID'] || ''"
+                      (valueChange)="setConfig('targetUUID', $event || '')"
+                    />
                   }
                   @case ('hangup') {
                     <mat-form-field appearance="outline" class="span-4">
                       <mat-label>{{ 'Hangup cause' | transloco }}</mat-label>
                       <mat-select
-                        [value]="stepDraft.config['cause'] || 'NORMAL_CLEARING'"
-                        (selectionChange)="stepDraft.config['cause'] = $event.value"
+                        [value]="stepDraft.config['cause'] || 'normal'"
+                        (selectionChange)="setConfig('cause', $event.value)"
                       >
                         @for (cause of hangupCauses; track cause.value) {
                           <mat-option [value]="cause.value">{{ cause.label | transloco }}</mat-option>
@@ -819,6 +839,9 @@ export class VoipCustomTemplatesDialogComponent {
                       </mat-select>
                     </mat-form-field>
                   }
+                }
+                @if (stepError()) {
+                  <p class="span-4 step-error" role="alert">{{ stepError()! | transloco }}</p>
                 }
               </div>
 
@@ -997,6 +1020,19 @@ export class VoipCustomTemplatesDialogComponent {
         margin-top: 0.5rem;
       }
 
+      .step-hint {
+        margin: 0;
+        font-size: 0.82rem;
+        color: color-mix(in srgb, currentColor 65%, transparent);
+        word-break: break-word;
+      }
+
+      .step-error {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--mat-sys-error, #d32f2f);
+      }
+
       .empty-state {
         display: flex;
         flex-direction: column;
@@ -1021,52 +1057,54 @@ export class VoipCustomTemplatesDialogComponent {
   ],
 })
 export class VoipCustomStepsDialogComponent {
-  readonly data = inject<{
-    customUUID: string;
-    customName: string;
-    pabxUUID: string;
-    steps: VoipCustomStep[];
-  }>(MAT_DIALOG_DATA);
+  readonly data = inject<VoipCustomStepsDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<VoipCustomStepsDialogComponent>);
   private readonly api = inject(ApiService);
   private readonly snack = inject(SnackbarService);
 
   readonly actionTypes = STEP_ACTION_TYPES;
   readonly failureModes = STEP_FAILURE_MODES;
-  readonly httpMethods = HTTP_METHODS;
+  readonly apiMethods = API_HTTP_METHODS;
+  readonly notificationMethods = NOTIFICATION_HTTP_METHODS;
+  readonly routeTypes = STEP_ROUTE_TYPES;
   readonly hangupCauses = HANGUP_CAUSES;
+  readonly placeholders = STEP_PLACEHOLDERS;
+  readonly inputPlaceholder = '{{input}}';
+  readonly requestBodyPlaceholder = '{"caller":"{{caller}}","did":"{{did}}"}';
+  readonly routeReplyExample = '{"route":{"type":"queue","uuid":"<queue UUID>"}}';
 
   readonly steps = signal<VoipCustomStep[]>([]);
   readonly editingStep = signal<VoipCustomStep | null>(null);
   readonly editingIndex = signal<number>(-1);
   readonly isNewStep = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
+  readonly stepError = signal<string | null>(null);
+  readonly lookupsLoading = signal<boolean>(false);
 
   readonly mediaFiles = signal<ConfigurableCrudOption[]>([]);
   readonly routeDestinations = signal<ConfigurableCrudOption[]>([]);
 
-  stepDraft: VoipCustomStep = {
-    order: 1,
-    actionType: 'playback',
-    config: {},
-    onFailure: 'continue',
-    enabled: true,
-  };
-
-  readonly requestBodyPlaceholder = '{"caller": "${CALLER_NUMBER}", "did": "${DESTINATION_NUMBER}"}';
-  readonly variableValuePlaceholder = '${API_RESPONSE.customerId}';
-  readonly defaultCallbackNumber = '${CALLER_NUMBER}';
+  stepDraft: VoipCustomStep = this.newStep();
 
   constructor() {
     const raw = Array.isArray(this.data.steps) ? this.data.steps : [];
     this.steps.set(
-      raw.map((s, idx) => ({
-        ...s,
+      raw.map((step, idx) => ({
+        ...step,
         order: idx + 1,
-        config: typeof s.config === 'object' && s.config !== null ? { ...s.config } : {},
+        onFailure: step.onFailure === 'continue' ? 'continue' : 'fallback',
+        config: typeof step.config === 'object' && step.config !== null ? { ...step.config } : {},
       })),
     );
     void this.loadMediaFiles();
+  }
+
+  private get pabxUUID(): string {
+    return String(this.data.custom['pabxUUID'] ?? '');
+  }
+
+  get customName(): string {
+    return String(this.data.custom['name'] ?? '');
   }
 
   isStepEnabled(step: VoipCustomStep): boolean {
@@ -1081,64 +1119,55 @@ export class VoipCustomStepsDialogComponent {
         return 'http';
       case 'collect_dtmf':
         return 'dialpad';
-      case 'set_variable':
-        return 'data_object';
       case 'notification':
         return 'notifications';
-      case 'callback':
-        return 'phone_callback';
       case 'route':
         return 'alt_route';
       case 'hangup':
         return 'call_end';
       default:
-        return 'settings';
+        return 'help';
     }
   }
 
   actionLabel(type: string): string {
-    return this.actionTypes.find((a) => a.value === type)?.label ?? type;
+    return this.actionTypes.find((a) => a.value === type)?.label ?? 'Unsupported step';
   }
 
   stepSummary(step: VoipCustomStep): string {
     const c: Record<string, any> = step.config || {};
     switch (step.actionType) {
       case 'playback':
-        return c['description'] ? `"${c['description']}"` : 'Playback audio';
+        return this.optionLabel(this.mediaFiles(), c['mediaFileUUID']);
       case 'api_request':
-        return `${c['method'] || 'POST'} ${c['url'] || ''}`;
-      case 'collect_dtmf': {
-        const varName = c['variableName'] || 'collected_digits';
-        return `${c['minDigits'] || 1}-${c['maxDigits'] || 10} digits -> \${${varName}}`;
-      }
-      case 'set_variable':
-        return `${c['key'] || 'key'} = ${c['value'] || 'value'}`;
       case 'notification':
-        return `Webhook ${c['method'] || 'POST'} ${c['url'] || ''}`;
-      case 'callback': {
-        const cbNum = c['callbackNumber'] || '${CALLER_NUMBER}';
-        return `Callback to ${cbNum}`;
-      }
+        return `${c['method'] || 'POST'} ${c['url'] || ''}`;
+      case 'collect_dtmf':
+        return `${c['minDigits'] ?? 1}-${c['maxDigits'] ?? 10}`;
       case 'route':
-        return `Route to ${c['routeType'] || 'extension'}`;
+        return String(c['routeType'] ?? '');
       case 'hangup':
-        return `Cause: ${c['cause'] || 'NORMAL_CLEARING'}`;
+        return String(c['cause'] ?? 'normal');
       default:
         return '';
     }
   }
 
+  setConfig(key: string, value: unknown): void {
+    this.stepDraft.config[key] = value;
+    this.stepError.set(null);
+  }
+
   updateConfigNumber(key: string, value: unknown): void {
-    this.stepDraft.config[key] = Number(value) || 0;
+    const parsed = Number(value);
+    this.setConfig(key, Number.isFinite(parsed) ? Math.trunc(parsed) : null);
   }
 
   moveStep(index: number, direction: -1 | 1): void {
     const destIndex = index + direction;
     const list = [...this.steps()];
     if (destIndex < 0 || destIndex >= list.length) return;
-    const temp = list[index];
-    list[index] = list[destIndex];
-    list[destIndex] = temp;
+    [list[index], list[destIndex]] = [list[destIndex], list[index]];
     list.forEach((item, idx) => (item.order = idx + 1));
     this.steps.set(list);
   }
@@ -1150,25 +1179,19 @@ export class VoipCustomStepsDialogComponent {
   }
 
   startAddStep(): void {
-    this.stepDraft = {
-      order: this.steps().length + 1,
-      actionType: 'playback',
-      config: {},
-      onFailure: 'continue',
-      enabled: true,
-    };
+    this.stepDraft = this.newStep();
+    this.stepDraft.order = this.steps().length + 1;
     this.isNewStep.set(true);
     this.editingIndex.set(-1);
+    this.stepError.set(null);
     this.editingStep.set(this.stepDraft);
   }
 
   editStep(step: VoipCustomStep, index: number): void {
-    this.stepDraft = {
-      ...step,
-      config: { ...(step.config || {}) },
-    };
+    this.stepDraft = { ...step, config: { ...(step.config || {}) } };
     this.isNewStep.set(false);
     this.editingIndex.set(index);
+    this.stepError.set(null);
     this.editingStep.set(this.stepDraft);
     if (this.stepDraft.actionType === 'route') {
       void this.loadDestinationsForRoute(this.stepDraft.config['routeType'] || 'extension');
@@ -1177,64 +1200,97 @@ export class VoipCustomStepsDialogComponent {
 
   onActionTypeChange(type: string): void {
     this.stepDraft.actionType = type;
-    if (type === 'api_request') {
+    this.stepError.set(null);
+    if (type === 'api_request' || type === 'notification') {
       this.stepDraft.config = {
         method: 'POST',
-        timeoutMs: 5000,
         headers: { 'Content-Type': 'application/json' },
+        ...(type === 'api_request' ? { timeoutMs: 3000, routeFromResponse: false } : {}),
       };
     } else if (type === 'collect_dtmf') {
-      this.stepDraft.config = {
-        minDigits: 1,
-        maxDigits: 10,
-        timeoutSeconds: 10,
-        variableName: 'collected_digits',
-      };
+      this.stepDraft.config = { minDigits: 1, maxDigits: 10, timeoutSeconds: 5, maxTries: 3 };
     } else if (type === 'route') {
-      this.stepDraft.config = { routeType: 'extension' };
+      this.stepDraft.config = { routeType: 'extension', targetUUID: '' };
       void this.loadDestinationsForRoute('extension');
     } else if (type === 'hangup') {
-      this.stepDraft.config = { cause: 'NORMAL_CLEARING' };
+      this.stepDraft.config = { cause: 'normal' };
     } else {
-      this.stepDraft.config = {};
+      this.stepDraft.config = { mediaFileUUID: '' };
     }
   }
 
   onRouteChange(routeType: string): void {
-    this.stepDraft.config['routeType'] = routeType;
-    this.stepDraft.config['routeTargetUUID'] = '';
+    this.setConfig('routeType', routeType);
+    this.setConfig('targetUUID', '');
     void this.loadDestinationsForRoute(routeType);
   }
 
   headersString(): string {
-    const h = this.stepDraft.config['headers'];
-    if (!h) return '';
-    if (typeof h === 'string') return h;
+    const headers = this.stepDraft.config['headers'];
+    if (!headers) return '';
+    if (typeof headers === 'string') return headers;
     try {
-      return JSON.stringify(h);
+      return JSON.stringify(headers);
     } catch {
       return '';
     }
   }
 
   updateHeaders(raw: string): void {
+    const text = raw.trim();
+    if (!text) {
+      this.setConfig('headers', {});
+      return;
+    }
     try {
-      this.stepDraft.config['headers'] = JSON.parse(raw);
+      const parsed = JSON.parse(text);
+      this.setConfig('headers', parsed && typeof parsed === 'object' ? parsed : raw);
     } catch {
-      this.stepDraft.config['headers'] = raw;
+      this.setConfig('headers', raw);
+    }
+  }
+
+  /** Client-side checks mirroring the API contract, so errors show before saving. */
+  private draftError(): string | null {
+    const c = this.stepDraft.config;
+    switch (this.stepDraft.actionType) {
+      case 'playback':
+        return c['mediaFileUUID'] ? null : 'Select an audio file.';
+      case 'collect_dtmf': {
+        const min = Number(c['minDigits'] ?? 1);
+        const max = Number(c['maxDigits'] ?? 10);
+        return min >= 1 && max >= min && max <= 20 ? null : 'Digits must be between 1 and 20.';
+      }
+      case 'api_request':
+      case 'notification': {
+        if (!/^https:\/\/[^/\s]+/i.test(String(c['url'] ?? ''))) return 'Use a public HTTPS URL.';
+        if (typeof c['headers'] === 'string') return 'Headers must be a JSON object.';
+        if (/\$\{/.test(`${c['url'] ?? ''}${c['body'] ?? ''}`)) {
+          return 'Use the listed placeholders; dollar-brace expressions are not allowed.';
+        }
+        return null;
+      }
+      case 'route':
+        return c['targetUUID'] ? null : 'Select a destination.';
+      case 'hangup':
+        return null;
+      default:
+        return 'Unsupported step type.';
     }
   }
 
   applyStepDraft(): void {
+    const error = this.draftError();
+    if (error) {
+      this.stepError.set(error);
+      return;
+    }
     const list = [...this.steps()];
     if (this.isNewStep()) {
-      this.stepDraft.order = list.length + 1;
       list.push({ ...this.stepDraft });
     } else {
       const idx = this.editingIndex();
-      if (idx >= 0 && idx < list.length) {
-        list[idx] = { ...this.stepDraft };
-      }
+      if (idx >= 0 && idx < list.length) list[idx] = { ...this.stepDraft };
     }
     list.forEach((item, idx) => (item.order = idx + 1));
     this.steps.set(list);
@@ -1245,18 +1301,33 @@ export class VoipCustomStepsDialogComponent {
     this.editingStep.set(null);
     this.editingIndex.set(-1);
     this.isNewStep.set(false);
+    this.stepError.set(null);
   }
 
   async saveAllSteps(): Promise<void> {
+    const custom = this.data.custom;
     this.saving.set(true);
     try {
-      await this.api.put(`voip/pabx/customs/${this.data.customUUID}`, {
-        steps: this.steps(),
+      await this.api.put(`voip/pabx/customs/${custom['uuid']}`, {
+        pabxUUID: custom['pabxUUID'],
+        name: custom['name'],
+        description: custom['description'] ?? null,
+        timeoutSeconds: custom['timeoutSeconds'],
+        fallbackRouteType: custom['fallbackRouteType'],
+        fallbackRouteTargetUUID: custom['fallbackRouteTargetUUID'] ?? null,
+        enabled: custom['enabled'],
+        steps: this.steps().map((step) => ({
+          actionType: step.actionType,
+          onFailure: step.onFailure,
+          enabled: this.isStepEnabled(step),
+          config: step.config,
+        })),
       });
       this.snack.success('Steps saved successfully.');
       this.dialogRef.close(this.steps());
-    } catch {
-      this.snack.error('Failed to delete custom.');
+    } catch (error) {
+      const message = (error as any)?.error?.error ?? (error as any)?.message;
+      this.snack.error(typeof message === 'string' && message ? message : 'Failed to save steps.');
     } finally {
       this.saving.set(false);
     }
@@ -1266,44 +1337,80 @@ export class VoipCustomStepsDialogComponent {
     this.dialogRef.close();
   }
 
+  private newStep(): VoipCustomStep {
+    return {
+      order: 1,
+      actionType: 'playback',
+      config: { mediaFileUUID: '' },
+      onFailure: 'continue',
+      enabled: true,
+    };
+  }
+
+  private optionLabel(options: ConfigurableCrudOption[], value: unknown): string {
+    return options.find((option) => compactUUID(option.value) === compactUUID(value))?.label ?? '';
+  }
+
+  private samePabx(row: any): boolean {
+    const owner = row?.VoipPabxAccountVpaUUID ?? row?.pabxUUID ?? row?.PabxUUID;
+    return !owner || compactUUID(owner) === compactUUID(this.pabxUUID);
+  }
+
+  private async fetchPaged(endpoint: string): Promise<any[]> {
+    const rows: any[] = [];
+    for (let offset = 0; offset < 5000; offset += 500) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const res = await this.api.get<any>(`${endpoint}${separator}limit=500&offset=${offset}`);
+      const page = Array.isArray(res?.data?.items) ? res.data.items : [];
+      rows.push(...page);
+      if (page.length < 500) break;
+    }
+    return rows;
+  }
+
   private async loadMediaFiles(): Promise<void> {
+    this.lookupsLoading.set(true);
     try {
-      const res = await this.api.get<any>('voip/pabx/media-files?status=1&limit=500');
-      const items = Array.isArray(res?.data?.items) ? res.data.items : [];
+      const rows = await this.fetchPaged('voip/pabx/media-files?status=1');
       this.mediaFiles.set(
-        items.map((row: any) => ({
-          value: row.uuid ?? row.VmfUUID,
-          label: row.name ?? row.VmfName,
-        })),
+        rows
+          .filter((row) => this.samePabx(row))
+          .map((row) => ({
+            value: row.uuid ?? row.VmfUUID,
+            label: row.name ?? row.VmfName,
+          }))
+          .filter((option) => option.value),
       );
     } catch {
       this.mediaFiles.set([]);
+    } finally {
+      this.lookupsLoading.set(false);
     }
   }
 
   private async loadDestinationsForRoute(routeType: string): Promise<void> {
-    const pabxUUID = this.data.pabxUUID;
-    const endpoint =
-      routeType === 'group'
-        ? 'groups'
-        : routeType === 'queue'
-          ? 'queues'
-          : routeType === 'ivr'
-            ? 'ivrs'
-            : 'extensions';
+    const sources: Record<string, { endpoint: string; value: string; text: string }> = {
+      extension: { endpoint: 'voip/pabx/extensions?status=1', value: 'VpeUUID', text: 'VpeUsername' },
+      group: { endpoint: 'voip/pabx/groups?status=1', value: 'VpgUUID', text: 'VpgName' },
+      queue: { endpoint: 'voip/pabx/queues?status=1', value: 'VpqUUID', text: 'VpqName' },
+      ivr: { endpoint: 'voip/pabx/ivrs?status=1', value: 'VpiUUID', text: 'VpiName' },
+      custom: { endpoint: 'voip/pabx/customs?status=1', value: 'uuid', text: 'name' },
+    };
+    const source = sources[routeType] ?? sources['extension'];
+    this.lookupsLoading.set(true);
     try {
-      const res = await this.api.get<any>(
-        `voip/pabx/${endpoint}?status=1&limit=500&pabxUUID=${encodeURIComponent(pabxUUID)}`,
-      );
-      const items = Array.isArray(res?.data?.items) ? res.data.items : [];
+      const rows = await this.fetchPaged(source.endpoint);
+      const self = compactUUID(this.data.custom['uuid']);
       this.routeDestinations.set(
-        items.map((row: any) => ({
-          value: row.uuid ?? row.VpeUUID ?? row.VpgUUID ?? row.VpqUUID ?? row.VpiUUID,
-          label: row.name ?? row.username ?? row.VpeUsername ?? row.VpgName ?? row.VpqName ?? row.VpiName,
-        })),
+        rows
+          .filter((row) => this.samePabx(row))
+          .map((row) => ({ value: row[source.value], label: String(row[source.text] ?? '') }))
+          .filter((option) => option.value && compactUUID(option.value) !== self),
       );
     } catch {
       this.routeDestinations.set([]);
+    } finally {
+      this.lookupsLoading.set(false);
     }
   }
 }
@@ -1362,11 +1469,17 @@ export class VoipPabxCustomPage extends ConfigurableCrudPageBase<ConfigurableCru
           ? null
           : payload['fallbackRouteTargetUUID'] || null,
     };
-    if (this.templateDraftSteps && this.templateDraftSteps.length > 0) {
-      result['steps'] = this.templateDraftSteps;
-      this.templateDraftSteps = null;
-    }
     return result;
+  }
+
+  /** After creating from a template, open the step editor so the tenant picks its own resources. */
+  protected override async afterSave(context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>): Promise<void> {
+    const steps = this.templateDraftSteps;
+    this.templateDraftSteps = null;
+    if (context.mode !== 'create' || !steps?.length) return;
+    const created = (context.response as any)?.data;
+    if (!created?.uuid) return;
+    await this.openStepsDialog(created, steps);
   }
 
   override startEdit(row: ConfigurableCrudRecord): void {
@@ -1406,8 +1519,8 @@ export class VoipPabxCustomPage extends ConfigurableCrudPageBase<ConfigurableCru
         timeoutSeconds: selected.timeoutSeconds,
         fallbackRouteType: selected.fallbackRouteType,
       });
-      this.templateDraftSteps = selected.steps;
-    } catch (err) {
+      this.templateDraftSteps = selected.steps.map((step, index) => ({ ...step, order: index + 1 }));
+    } catch {
       this.snack.error('Failed to load custom pipeline templates.');
     }
   }
@@ -1420,26 +1533,24 @@ export class VoipPabxCustomPage extends ConfigurableCrudPageBase<ConfigurableCru
     try {
       const res = await this.rawApi.get<any>(`voip/pabx/customs/${row['uuid']}`);
       const full = res?.data ?? row;
-      const binding = openCrudComponentDialog(
-        this.dialog,
-        VoipCustomStepsDialogComponent,
-        'crud-form-dialog',
-        {
-          data: {
-            customUUID: row['uuid'],
-            customName: row['name'],
-            pabxUUID: row['pabxUUID'],
-            steps: full.steps || [],
-          },
-        },
-      );
-      const savedSteps = await firstValueFrom(binding.ref.afterClosed());
-      if (savedSteps) {
-        this.itemsResource.reload();
-      }
-    } catch (err) {
+      await this.openStepsDialog(full, Array.isArray(full.steps) ? full.steps : []);
+    } catch {
       this.snack.error('Failed to load custom steps.');
     }
+  }
+
+  private async openStepsDialog(
+    custom: ConfigurableCrudRecord,
+    steps: VoipCustomStep[],
+  ): Promise<void> {
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      VoipCustomStepsDialogComponent,
+      'crud-form-dialog',
+      { data: { custom, steps } satisfies VoipCustomStepsDialogData },
+    );
+    const savedSteps = await firstValueFrom(binding.ref.afterClosed());
+    if (savedSteps) this.itemsResource.reload();
   }
 
   private async loadPabxOptions(): Promise<void> {
