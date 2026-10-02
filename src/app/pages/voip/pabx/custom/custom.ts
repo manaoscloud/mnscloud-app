@@ -211,6 +211,13 @@ export function routeTargetOption(type: string, row: any, t: Translate): Configu
   }
 }
 
+/** Fallback target name for the list; hangup has no target. */
+function fallbackTargetDetail(row: ConfigurableCrudRecord, translate: Translate): string {
+  if (row['fallbackRouteType'] === 'hangup') return '';
+  const name = String(row['fallbackRouteTargetName'] ?? '').trim();
+  return name ? name : translate('Destination not found');
+}
+
 /** Loads every page of a list endpoint (canonical items envelope). */
 async function fetchAllItems(api: ApiService, endpoint: string): Promise<any[]> {
   const rows: any[] = [];
@@ -298,10 +305,7 @@ function config(): ConfigurableCrudConfig {
         kind: 'related',
         field: 'fallbackRouteType',
         value: (row, t) => t(optionLabel(fallbackRouteTypes, row['fallbackRouteType'] ?? 'hangup')),
-        detail: (row, t) =>
-          row['fallbackRouteType'] === 'hangup'
-            ? ''
-            : String(row['fallbackRouteTargetName'] ?? '') || t('Destination not found'),
+        detail: fallbackTargetDetail,
       },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
