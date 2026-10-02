@@ -1,0 +1,432 @@
+<div class="master-operations-card">
+  <div class="master-operations-header">
+    <div>
+      <h3>{{ 'Master Retention Operations' | transloco }}</h3>
+      <p>
+        {{
+          'Analyze expired CDRs and multi-cloud recordings across all tenants, or execute safe batch purging.'
+            | transloco
+        }}
+      </p>
+    </div>
+    <div class="master-operations-actions">
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="analyze()">
+        <mat-icon>analytics</mat-icon>
+        {{ (analyzing() ? 'Analyzing...' : 'Analyze (dry-run)') | transloco }}
+      </button>
+      @if (purging()) {
+        <button mat-stroked-button type="button" [disabled]="stopRequested()" (click)="stopPurge()">
+          <mat-icon>stop_circle</mat-icon>
+          {{ 'Stop purge' | transloco }}
+        </button>
+      } @else {
+        <button mat-flat-button color="warn" type="button" [disabled]="busy()" (click)="purge()">
+          <mat-icon>delete_sweep</mat-icon>
+          {{ 'Purge expired' | transloco }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <mat-slide-toggle
+    class="retention-orphan-toggle"
+    [checked]="includeOrphans()"
+    [disabled]="busy()"
+    (change)="includeOrphans.set($event.checked)"
+  >
+    {{ 'Include orphan records (deleted PABX) in the purge' | transloco }}
+  </mat-slide-toggle>
+
+  @if (busy()) {
+    <mat-progress-bar mode="indeterminate" class="retention-progress-bar" />
+  }
+
+  @if (feedback(); as message) {
+    <p class="retention-feedback" role="alert">{{ message }}</p>
+  }
+
+  @if (purgeTotals(); as totals) {
+    <div class="retention-result-banner" role="status">
+      <mat-icon class="success-icon">{{ totals.running ? 'sync' : 'check_circle' }}</mat-icon>
+      <div>
+        <strong>{{
+          (totals.running
+            ? 'Purge in progress...'
+            : totals.stopped
+              ? 'Purge stopped.'
+              : 'Retention purge executed successfully.'
+          ) | transloco
+        }}</strong>
+        <p>
+          {{ 'Purged CDRs:' | transloco }} {{ totals.purgedCdrs | number }} |
+          {{ 'Purged Recordings:' | transloco }} {{ totals.purgedRecordings | number }}
+          @if (totals.purgedOrphanCdrs || totals.purgedOrphanRecordings) {
+            | {{ 'Orphan CDRs purged:' | transloco }} {{ totals.purgedOrphanCdrs | number }} |
+            {{ 'Orphan recordings purged:' | transloco }}
+            {{ totals.purgedOrphanRecordings | number }}
+          }
+          @if (totals.errorsCount > 0) {
+            | {{ 'Errors:' | transloco }} {{ totals.errorsCount }}
+          }
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (summary(); as s) {
+    <div class="retention-metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">{{ 'PABX Accounts' | transloco }}</span>
+        <span class="metric-value">{{ s.totalPabxs | number }}</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Expired CDRs' | transloco }}</span>
+        <span class="metric-value warn-value">{{ s.expiredCdrs | number }}</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Expired Recordings' | transloco }}</span>
+        <span class="metric-value warn-value">{{ s.expiredRecordings | number }}</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Orphan CDRs' | transloco }}</span>
+        <span class="metric-value">{{ s.orphanCdrs | number }}</span>
+        <span class="metric-hint"
+          >{{ s.expiredOrphanCdrs | number }} {{ 'past the grace period' | transloco }}</span
+        >
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Orphan recordings' | transloco }}</span>
+        <span class="metric-value">{{ s.orphanRecordings | number }}</span>
+        <span class="metric-hint"
+          >{{ s.expiredOrphanRecordings | number }} {{ 'past the grace period' | transloco }}
+          @if (s.localOnlyOrphanRecordings) {
+            · {{ s.localOnlyOrphanRecordings | number }} {{ 'only on the PABX server' | transloco }}
+          }
+        </span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Reclaimable by orphan purge' | transloco }}</span>
+        <span class="metric-value">{{ formatBytes(s.estimatedExpiredOrphanBytes) }}</span>
+        <span class="metric-hint">
+          @if (s.orphanRetentionDays > 0) {
+            {{ 'Orphan grace' | transloco }}: {{ s.orphanRetentionDays }} {{ 'days' | transloco }}
+          } @else {
+            {{ 'Orphan purge disabled (grace 0)' | transloco }}
+          }
+        </span>
+      </div>
+    </div>
+
+    <mat-button-toggle-group
+      class="retention-filter"
+      [value]="filter()"
+      (change)="filter.set($event.value)"
+      [attr.aria-label]="'Filter' | transloco"
+    >
+      <mat-button-toggle value="all">{{ 'All' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="active">{{ 'Active PABX' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="orphan">{{ 'Orphans' | transloco }}</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    @if (visibleRows().length) {
+      <div class="retention-table-container">
+        <table mat-table [dataSource]="visibleRows()" class="retention-table">
+          <ng-container matColumnDef="customer">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Customer' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.kind === 'orphan') {
+                <mat-chip class="status-pill orphan-pill" disableRipple>{{
+                  'Orphan' | transloco
+                }}</mat-chip>
+              }
+              <span>{{ row.customerName || ('No customer' | transloco) }}</span>
+              @if (row.kind === 'orphan' && (row.tenantName || row.serverName)) {
+                <span class="retention-secondary"
+                  >{{ row.tenantName || ('Unknown tenant' | transloco) }}
+                  @if (row.serverName) {
+                    · {{ row.serverName }}
+                  }
+                </span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="pabx">
+            <th mat-header-cell *matHeaderCellDef>{{ 'PABX' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              <span>{{ row.pabxName || (orphanTypeLabel(row.orphanType) | transloco) }}</span>
+              @if (row.kind === 'orphan') {
+                <span class="retention-secondary">
+                  {{ orphanTypeLabel(row.orphanType) | transloco }}
+                  @if (row.pabxDeletedAt) {
+                    · {{ row.pabxDeletedAt | date: 'dd/MM/yyyy' }}
+                  }
+                </span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="cdrRetention">
+            <th mat-header-cell *matHeaderCellDef>{{ 'CDR Retention' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.cdrDays > 0) {
+                {{ row.cdrDays }} {{ 'days' | transloco }} ({{
+                  retentionSourceLabel(row.cdrSource) | transloco
+                }})
+              } @else {
+                {{ 'Keep forever' | transloco }}
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="recRetention">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Recording Retention' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.recordingDays > 0) {
+                {{ row.recordingDays }} {{ 'days' | transloco }} ({{
+                  retentionSourceLabel(row.recordingSource) | transloco
+                }})
+              } @else {
+                {{ 'Keep forever' | transloco }}
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="expiredCdrs">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Expired CDRs' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.expiredCdrs | number }}
+              @if (row.totalCdrs !== null) {
+                <span class="retention-secondary"
+                  >{{ 'of' | transloco }} {{ row.totalCdrs | number }}</span
+                >
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="expiredRecs">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Expired Recordings' | transloco }}</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.expiredRecordings | number }}
+              @if (row.totalRecordings !== null) {
+                <span class="retention-secondary"
+                  >{{ 'of' | transloco }} {{ row.totalRecordings | number }}</span
+                >
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columns"
+            [class.orphan-row]="row.kind === 'orphan'"
+          ></tr>
+        </table>
+      </div>
+    } @else {
+      <p class="empty-tab">
+        {{ 'No expired records detected across current retention policies.' | transloco }}
+      </p>
+    }
+  }
+</div>
+
+<div class="master-operations-card">
+  <div class="master-operations-header">
+    <div>
+      <h3>{{ 'Recording storage scan' | transloco }}</h3>
+      <p>
+        {{
+          'Lists recording objects in each tenant storage and counts files that no recording record references. Read-only: nothing is deleted.'
+            | transloco
+        }}
+      </p>
+    </div>
+    <div class="master-operations-actions">
+      <button mat-stroked-button type="button" [disabled]="busy()" (click)="scanStorage()">
+        <mat-icon>travel_explore</mat-icon>
+        {{ (scanning() ? 'Scanning...' : 'Scan storage') | transloco }}
+      </button>
+    </div>
+  </div>
+
+  @if (scan(); as result) {
+    <div class="retention-metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Objects scanned' | transloco }}</span>
+        <span class="metric-value">{{ result.summary.scannedObjects | number }}</span>
+        <span class="metric-hint">{{ formatBytes(result.summary.scannedBytes) }}</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">{{ 'Unreferenced objects' | transloco }}</span>
+        <span class="metric-value warn-value">{{
+          result.summary.unreferencedObjects | number
+        }}</span>
+        <span class="metric-hint">{{ formatBytes(result.summary.unreferencedBytes) }}</span>
+      </div>
+    </div>
+    @if (result.summary.truncated) {
+      <p class="empty-tab">
+        {{ 'The scan reached its time or object limit; run it again to continue.' | transloco }}
+      </p>
+    }
+    @if (result.targets.length) {
+      <div class="retention-table-container">
+        <table mat-table [dataSource]="result.targets" class="retention-table">
+          <ng-container matColumnDef="tenant">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Tenant' | transloco }}</th>
+            <td mat-cell *matCellDef="let target">
+              {{ target.tenantName || target.tenantUUID }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="storage">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Storage account' | transloco }}</th>
+            <td mat-cell *matCellDef="let target">
+              {{ target.storageAccountName || ('Tenant default storage' | transloco) }}
+              @if (target.error) {
+                <span class="retention-secondary retention-error">{{ target.error }}</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="scanned">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Objects scanned' | transloco }}</th>
+            <td mat-cell *matCellDef="let target">
+              {{ target.scannedObjects | number }}
+              <span class="retention-secondary">{{ formatBytes(target.scannedBytes) }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="unreferenced">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Unreferenced objects' | transloco }}</th>
+            <td mat-cell *matCellDef="let target">
+              {{ target.unreferencedObjects | number }}
+              <span class="retention-secondary">{{ formatBytes(target.unreferencedBytes) }}</span>
+              @for (sample of target.samples.slice(0, 3); track sample.key) {
+                <span class="retention-secondary retention-key">{{ sample.key }}</span>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="scanColumns"></tr>
+          <tr mat-row *matRowDef="let target; columns: scanColumns"></tr>
+        </table>
+      </div>
+    } @else {
+      <p class="empty-tab">{{ 'No recording storage is in use.' | transloco }}</p>
+    }
+  }
+</div>
+
+<div class="master-operations-card">
+  <div class="master-operations-header">
+    <div>
+      <h3>{{ 'Database maintenance' | transloco }}</h3>
+      <p>
+        {{
+          'Purging frees space inside the call history tables; the database file only shrinks after a table rebuild run by the database Agent.'
+            | transloco
+        }}
+      </p>
+    </div>
+    <div class="master-operations-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="busy() || maintenanceActive() || !maintenanceAgents().length"
+        (click)="queueMaintenance('inspect')"
+      >
+        <mat-icon>storage</mat-icon>
+        {{ 'Inspect tables' | transloco }}
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="busy() || maintenanceActive() || !maintenanceAgents().length"
+        (click)="queueMaintenance('optimize')"
+      >
+        <mat-icon>compress</mat-icon>
+        {{ 'Compact tables' | transloco }}
+      </button>
+    </div>
+  </div>
+
+  @if (maintenanceLoaded() && !maintenanceAgents().length) {
+    <p class="empty-tab">
+      {{
+        'No database Agent declares table maintenance yet. Update the database host Agent to enable it.'
+          | transloco
+      }}
+    </p>
+  }
+
+  @if (latestJob(); as job) {
+    <div class="retention-result-banner" [class.retention-banner-error]="job.status === 'failed'">
+      <mat-icon class="success-icon">{{
+        job.status === 'success' ? 'check_circle' : job.status === 'failed' ? 'error' : 'sync'
+      }}</mat-icon>
+      <div>
+        <strong
+          >{{ (job.action === 'optimize' ? 'Compact tables' : 'Inspect tables') | transloco }} ·
+          {{ job.status | transloco }}
+          @if (job.agentName) {
+            · {{ job.agentName }}
+          }
+        </strong>
+        <p>
+          @if (job.status === 'failed') {
+            {{ job.errorMessage }}
+          } @else if (job.progressMessage) {
+            {{ job.progressMessage }}
+            @if (job.progressPercent !== null) {
+              ({{ job.progressPercent }}%)
+            }
+          }
+          @if (job.result?.totalReclaimedBytes) {
+            {{ 'Disk space returned:' | transloco }}
+            {{ formatBytes(job.result?.totalReclaimedBytes) }}
+          }
+          @if (job.result?.freeBytesAfter !== undefined && job.result?.freeBytesAfter !== null) {
+            · {{ 'Free disk:' | transloco }} {{ formatBytes(job.result?.freeBytesAfter) }}
+          }
+        </p>
+      </div>
+    </div>
+    @if (job.result?.tables?.length) {
+      <div class="retention-table-container">
+        <table mat-table [dataSource]="job.result?.tables ?? []" class="retention-table">
+          <ng-container matColumnDef="table">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Table' | transloco }}</th>
+            <td mat-cell *matCellDef="let table">{{ table.table }}</td>
+          </ng-container>
+          <ng-container matColumnDef="size">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Size on disk' | transloco }}</th>
+            <td mat-cell *matCellDef="let table">
+              {{ formatBytes(table.fileBytes ?? (table.dataBytes ?? 0) + (table.indexBytes ?? 0)) }}
+              @if (table.fileBytesAfter !== undefined && table.fileBytesAfter !== null) {
+                → {{ formatBytes(table.fileBytesAfter) }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="reclaimable">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Reclaimable' | transloco }}</th>
+            <td mat-cell *matCellDef="let table">{{ formatBytes(table.reclaimableBytes) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="outcome">
+            <th mat-header-cell *matHeaderCellDef>{{ 'Status' | transloco }}</th>
+            <td mat-cell *matCellDef="let table">
+              {{ table.status ?? '' | transloco }}
+              @if (table.reclaimedBytes) {
+                <span class="retention-secondary">{{ formatBytes(table.reclaimedBytes) }}</span>
+              }
+              @if (table.message && table.status !== 'optimized') {
+                <span class="retention-secondary">{{ table.message }}</span>
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
+          <tr mat-row *matRowDef="let table; columns: tableColumns"></tr>
+        </table>
+      </div>
+    }
+  }
+</div>

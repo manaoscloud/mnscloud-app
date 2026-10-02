@@ -1,0 +1,188 @@
+mns-voip-pabx-retention-operations {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.master-operations-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-color-outline-variant, #e0e0e0);
+  background: var(--mat-sys-color-surface-container-low, #fcfcfc);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .master-operations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    > div:first-child {
+      flex: 1 1 20rem;
+      min-width: 0;
+    }
+
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+
+    .master-operations-actions {
+      display: flex;
+      flex: 0 1 auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      align-items: center;
+      min-width: 0;
+      max-width: 100%;
+
+      button {
+        max-width: 100%;
+      }
+    }
+  }
+
+  .retention-progress-bar {
+    border-radius: 4px;
+  }
+
+  .retention-result-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: var(--mat-sys-color-primary-container, #e8f5e9);
+    color: var(--mat-sys-color-on-primary-container, #1b5e20);
+
+    .success-icon {
+      color: #2e7d32;
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  .retention-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+
+    .metric-card {
+      padding: 1rem;
+      border-radius: 6px;
+      background: var(--mat-sys-color-surface, #ffffff);
+      border: 1px solid var(--mat-sys-color-outline-variant, #eeeeee);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .metric-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--mat-sys-color-on-surface-variant);
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+
+        &.warn-value {
+          color: var(--mat-sys-color-error, #ba1a1a);
+        }
+      }
+    }
+  }
+
+  .retention-table-container {
+    overflow-x: auto;
+
+    .retention-table {
+      width: 100%;
+      background: transparent;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .master-operations-card .master-operations-header .master-operations-actions {
+    flex: 1 1 100%;
+
+    button {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.master-operations-card {
+  .retention-orphan-toggle {
+    align-self: flex-start;
+  }
+
+  .retention-feedback {
+    margin: 0;
+    color: var(--mat-sys-color-error);
+    font-size: 0.875rem;
+  }
+
+  .retention-banner-error {
+    background: var(--mat-sys-color-error-container, #ffdad6);
+    color: var(--mat-sys-color-on-error-container, #410002);
+
+    .success-icon {
+      color: var(--mat-sys-color-error, #ba1a1a);
+    }
+  }
+
+  .metric-card .metric-hint {
+    font-size: 0.75rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+
+  .retention-filter {
+    align-self: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .retention-secondary {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+
+  .retention-error {
+    color: var(--mat-sys-color-error);
+  }
+
+  .retention-key {
+    font-family: monospace;
+    overflow-wrap: anywhere;
+  }
+
+  .orphan-pill {
+    margin-inline-end: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .orphan-row {
+    background: var(--mat-sys-color-surface-container, rgb(0 0 0 / 3%));
+  }
+}
