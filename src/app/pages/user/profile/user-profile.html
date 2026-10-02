@@ -63,7 +63,11 @@
             [formField]="profileForm.newPassword"
             autocomplete="new-password"
           />
-          <mat-hint>{{ 'Leave blank to keep current password.' | transloco }}</mat-hint>
+          <mns-field-help
+            matIconSuffix
+            [label]="'New Password' | transloco"
+            [text]="'Leave blank to keep current password.' | transloco"
+          />
         </mat-form-field>
 
         <section class="profile-summary span-4">

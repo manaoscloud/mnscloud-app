@@ -1340,6 +1340,10 @@ address fields and inline related-collection editors. No per-page opt-in is requ
   of select arrows, password toggles and quick-create actions. Never place help in an
   external grid column or over the field value. Multiline/upload controls retain their
   existing heights.
+- Hand-written settings/Parameters pages and other non-CRUD forms use the same component:
+  import `FieldHelpComponent` and place `<mns-field-help matIconSuffix [label] [text]>` inside
+  the `mat-form-field`. `<mat-hint>` below a field and explanatory `placeholder` text are not
+  help surfaces; `npm run check:field-help` (run by CI) rejects `<mat-hint>`.
 - Do not reintroduce detached field-hint paragraphs or tab-level help notices. Put field
   prerequisites into the relevant help text. Validation errors, loading/provisioning
   states and resource-level safety confirmations remain visible in their own components.

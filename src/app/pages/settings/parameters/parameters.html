@@ -552,12 +552,16 @@
                     [value]="item().voipPabxCdrRetentionDays"
                     (input)="updateItem({ voipPabxCdrRetentionDays: $any($event.target).value })"
                   />
-                  <mat-hint>{{
-                    (isMaster()
-                      ? 'Global default. 0 keeps call history forever.'
-                      : 'Tenant default. 0 inherits the global policy.'
-                    ) | transloco
-                  }}</mat-hint>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'CDR history retention (days)' | transloco"
+                    [text]="
+                      (isMaster()
+                        ? 'Global default for PABXs and tenants without their own value. 0 keeps call history forever. Order: PABX, then Tenant, then Global. A CDR is kept while its recording is still stored.'
+                        : 'Tenant default for PABXs without their own value. 0 inherits the global policy. Order: PABX, then Tenant, then Global. A CDR is kept while its recording is still stored.'
+                      ) | transloco
+                    "
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="span-2">
@@ -571,20 +575,17 @@
                       updateItem({ voipPabxRecordingRetentionDays: $any($event.target).value })
                     "
                   />
-                  <mat-hint>{{
-                    (isMaster()
-                      ? 'Global default. 0 keeps recordings forever.'
-                      : 'Tenant default. 0 inherits the global policy.'
-                    ) | transloco
-                  }}</mat-hint>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Call recordings retention (days)' | transloco"
+                    [text]="
+                      (isMaster()
+                        ? 'Global default for PABXs and tenants without their own value. 0 keeps recordings forever. Order: PABX, then Tenant, then Global.'
+                        : 'Tenant default for PABXs without their own value. 0 inherits the global policy. Order: PABX, then Tenant, then Global.'
+                      ) | transloco
+                    "
+                  />
                 </mat-form-field>
-
-                <p class="span-4 parameter-hint">
-                  {{
-                    'Retention order: PABX, then Tenant, then Global. An empty PABX value inherits; 0 on a PABX or on Global keeps records forever. A CDR is kept while its recording is still stored.'
-                      | transloco
-                  }}
-                </p>
 
                 @if (isMaster()) {
                   <div class="span-4 master-operations-card">
@@ -609,7 +610,7 @@
                           {{
                             (analyzingRetention()
                               ? 'Analyzing...'
-                              : 'Analyze Expired Records (Dry-Run)'
+                              : 'Analyze (dry-run)'
                             ) | transloco
                           }}
                         </button>
@@ -622,7 +623,7 @@
                         >
                           <mat-icon>delete_sweep</mat-icon>
                           {{
-                            (purgingRetention() ? 'Purging...' : 'Purge Expired Records')
+                            (purgingRetention() ? 'Purging...' : 'Purge expired')
                               | transloco
                           }}
                         </button>
@@ -728,7 +729,12 @@
                           </table>
                         </div>
                       } @else {
-                        <p class="parameter-hint">{{ 'No expired records detected across current retention policies.' | transloco }}</p>
+                        <p class="empty-tab">
+                          {{
+                            'No expired records detected across current retention policies.'
+                              | transloco
+                          }}
+                        </p>
                       }
                     }
                   </div>
