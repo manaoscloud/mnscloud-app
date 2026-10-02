@@ -26,9 +26,11 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
 ];
 /** Purposes of a platform bank connection; only one connection per purpose is active. */
 export const purposeOptions: readonly ConfigurableCrudOption[] = [
-  { value: 'TENANT_BILLING', label: 'Tenant billing' },
+  { value: 'TENANT_BILLING', label: 'Tenant billing (Pix/Boleto)' },
+  { value: 'TENANT_BILLING_CARD', label: 'Tenant billing (credit card)' },
   { value: 'PAY_SPLIT', label: 'MNSCloud Pay (split)' },
 ];
+export const CARD_PURPOSE = 'TENANT_BILLING_CARD';
 const webhookStatusOptions: readonly ConfigurableCrudOption[] = [
   { value: 'NOT_REGISTERED', label: 'Not registered' },
   { value: 'REGISTERED', label: 'Registered' },
@@ -75,7 +77,7 @@ export const bankDefinitions = new Map<string, BankPartnerDefinition>([
     {
       code: ASAAS,
       name: 'Asaas',
-      purposes: ['PAY_SPLIT'],
+      purposes: ['TENANT_BILLING', 'TENANT_BILLING_CARD', 'PAY_SPLIT'],
       credentials: [{ key: 'apiKey', kind: 'secret', required: true }],
     },
   ],
@@ -104,10 +106,24 @@ const declares = (values: ConfigurableCrudRecord, setting: string) => {
   if (setting === 'autoCancelDays') return Boolean(bank.autoCancelDays);
   return Boolean(credentialOf(values, setting));
 };
-const hiddenUnless = (setting: string) => ({ values }: FieldContext) => !declares(values, setting);
-const requiredSetting = (setting: string) => ({ values }: FieldContext) => declares(values, setting);
-const requiredOnCreate = (key: string) => ({ editing, values }: FieldContext) =>
-  !editing && Boolean(credentialOf(values, key)?.required);
+const hiddenUnless =
+  (setting: string) =>
+  ({ values }: FieldContext) =>
+    !declares(values, setting);
+const requiredSetting =
+  (setting: string) =>
+  ({ values }: FieldContext) =>
+    declares(values, setting);
+const requiredOnCreate =
+  (key: string) =>
+  ({ editing, values }: FieldContext) =>
+    !editing && Boolean(credentialOf(values, key)?.required);
+const isCardPurpose = ({ values }: FieldContext) => values['purpose'] === CARD_PURPOSE;
+/** Blank card fee fields mean no fee of that kind. */
+const feeValue = (value: unknown) => {
+  const raw = text(value).replace(',', '.');
+  return raw === '' ? null : Number(raw);
+};
 const keepSecretHelp = ({ editing }: { editing: boolean }) =>
   editing ? 'Leave empty to keep the stored credentials. Replacing requires all fields.' : '';
 
@@ -149,7 +165,27 @@ const fields: ConfigurableCrudField[] = [
     type: 'select',
     span: 1,
     required: true,
-    help: 'Tenant billing: wallet top-ups and tenant invoices. MNSCloud Pay (split): charges issued by tenants to their customers.',
+    help: 'Tenant billing (Pix/Boleto) and (credit card): wallet top-ups and tenant invoices; one active connection of each. MNSCloud Pay (split): charges issued by tenants to their customers.',
+  },
+  {
+    key: 'cardFeePercent',
+    source: 'PbcCardFeePercent',
+    label: 'Card fee (%)',
+    type: 'number',
+    tab: 'financial',
+    span: 1,
+    help: 'Percentage the bank charges per card payment. Added to the tenant top-up so the wallet receives the full amount.',
+    hiddenWhen: (context: FieldContext) => !isCardPurpose(context),
+  },
+  {
+    key: 'cardFeeFixed',
+    source: 'PbcCardFeeFixed',
+    label: 'Card fixed fee',
+    type: 'number',
+    tab: 'financial',
+    span: 1,
+    help: 'Fixed amount the bank charges per card payment, also added to the tenant top-up.',
+    hiddenWhen: (context: FieldContext) => !isCardPurpose(context),
   },
   {
     key: 'accountNumber',
@@ -287,6 +323,8 @@ export const bankPartnersConfig = defineCrud({
     name: '',
     environment: 'production',
     purpose: 'TENANT_BILLING',
+    cardFeePercent: '',
+    cardFeeFixed: '',
     accountNumber: '',
     receiveMethods: 'BOLETO,PIX',
     autoCancelDays: 30,
@@ -364,6 +402,12 @@ export const bankPartnersConfig = defineCrud({
         : {}),
       ...(declares(values, 'autoCancelDays')
         ? { autoCancelDays: Number(values['autoCancelDays']) }
+        : {}),
+      ...(text(values['purpose']) === CARD_PURPOSE
+        ? {
+            cardFeePercent: feeValue(values['cardFeePercent']),
+            cardFeeFixed: feeValue(values['cardFeeFixed']),
+          }
         : {}),
       status: Number(values['status']) === 1 ? 1 : 0,
       ...(replacing ? { credentials } : {}),

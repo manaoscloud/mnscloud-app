@@ -36,6 +36,8 @@ const messages: Record<string, string> = {
   PAY_SANDBOX_ONLY: 'Simulated payments are only available for sandbox connections.',
   PAY_SANDBOX_UNSUPPORTED: 'This bank does not support simulated sandbox payments.',
   PAY_SANDBOX_INVALID_REQUEST: 'Provide the bank charge reference and BOLETO or PIX.',
+  PAY_INVALID_CARD_FEE:
+    'Card fees apply only to card connections: percent from 0 to 50 and fixed fee from 0 to 100.',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 
