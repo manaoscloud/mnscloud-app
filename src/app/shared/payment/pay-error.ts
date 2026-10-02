@@ -31,6 +31,11 @@ const messages: Record<string, string> = {
   PAY_BANK_REJECTED:
     'The bank rejected the connection. Check credentials, certificate and environment.',
   PAY_BANK_UNREACHABLE: 'The bank could not be reached. Check the certificate and try again.',
+  PAY_WEBHOOK_EMAIL_REQUIRED:
+    'The bank requires a notification e-mail. Sign in with a user that has an e-mail address.',
+  PAY_SANDBOX_ONLY: 'Simulated payments are only available for sandbox connections.',
+  PAY_SANDBOX_UNSUPPORTED: 'This bank does not support simulated sandbox payments.',
+  PAY_SANDBOX_INVALID_REQUEST: 'Provide the bank charge reference and BOLETO or PIX.',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 

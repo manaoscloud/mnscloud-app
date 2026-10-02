@@ -5698,5 +5698,17 @@
   "recordings": "recordings",
   "running": "running",
   "skipped": "skipped",
-  "success": "success"
+  "success": "success",
+  "ZIP code": "ZIP code",
+  "Neighborhood": "Neighborhood",
+  "Copy Pix code": "Copy Pix code",
+  "Copy boleto line": "Copy boleto line",
+  "Check payment": "Check payment",
+  "Payment confirmed. Credit added to the wallet.": "Payment confirmed. Credit added to the wallet.",
+  "Payment not confirmed yet.": "Payment not confirmed yet.",
+  "The bank is still issuing the charge.": "The bank is still issuing the charge.",
+  "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.": "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.",
+  "Simulated payments are only available for sandbox connections.": "Simulated payments are only available for sandbox connections.",
+  "This bank does not support simulated sandbox payments.": "This bank does not support simulated sandbox payments.",
+  "Provide the bank charge reference and BOLETO or PIX.": "Provide the bank charge reference and BOLETO or PIX."
 }

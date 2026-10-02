@@ -5698,5 +5698,17 @@
   "recordings": "grabaciones",
   "running": "en ejecución",
   "skipped": "omitida",
-  "success": "éxito"
+  "success": "éxito",
+  "ZIP code": "Código postal",
+  "Neighborhood": "Barrio",
+  "Copy Pix code": "Copiar código Pix",
+  "Copy boleto line": "Copiar línea digitable del boleto",
+  "Check payment": "Verificar pago",
+  "Payment confirmed. Credit added to the wallet.": "Pago confirmado. Crédito agregado a la billetera.",
+  "Payment not confirmed yet.": "Pago aún no confirmado.",
+  "The bank is still issuing the charge.": "El banco aún está emitiendo el cobro.",
+  "The bank requires a notification e-mail. Sign in with a user that has an e-mail address.": "El banco exige un correo de notificación. Inicie sesión con un usuario que tenga correo.",
+  "Simulated payments are only available for sandbox connections.": "Los pagos simulados solo están disponibles en conexiones sandbox.",
+  "This bank does not support simulated sandbox payments.": "Este banco no admite pagos simulados en sandbox.",
+  "Provide the bank charge reference and BOLETO or PIX.": "Indique la referencia del cobro en el banco y BOLETO o PIX."
 }
