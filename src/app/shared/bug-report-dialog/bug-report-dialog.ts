@@ -1,6 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,7 +21,6 @@ export interface BugReportDialogData {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -36,7 +34,6 @@ export interface BugReportDialogData {
   styleUrls: ['./bug-report-dialog.scss'],
 })
 export class BugReportDialogComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly dialogRef = inject(MatDialogRef<BugReportDialogComponent>);
   private readonly bugReportService = inject(BugReportService);
   readonly data = inject<BugReportDialogData>(MAT_DIALOG_DATA, { optional: true }) || {};
@@ -45,8 +42,19 @@ export class BugReportDialogComponent {
   readonly isCapturing = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
 
+  readonly type = signal<'bug' | 'performance' | 'ui' | 'suggestion' | 'other'>('bug');
+  readonly severity = signal<'low' | 'medium' | 'high' | 'critical'>('medium');
+  readonly title = signal<string>('');
+  readonly description = signal<string>('');
+
+  readonly isFormValid = computed(() => {
+    return this.title().trim().length > 0 && this.description().trim().length > 0;
+  });
+
   readonly pageUrl = signal<string>(this.data.url || window.location.href);
-  readonly screenSize = signal<string>(`${window.innerWidth} x ${window.innerHeight} (${window.devicePixelRatio}x)`);
+  readonly screenSize = signal<string>(
+    `${window.innerWidth} x ${window.innerHeight} (${window.devicePixelRatio}x)`,
+  );
   readonly browserAgent = signal<string>(navigator.userAgent);
 
   readonly typeOptions = [
@@ -63,13 +71,6 @@ export class BugReportDialogComponent {
     { value: 'high', label: 'High' },
     { value: 'critical', label: 'Critical (Blocks work)' },
   ];
-
-  readonly form = this.fb.group({
-    type: ['bug', Validators.required],
-    severity: ['medium', Validators.required],
-    title: ['', [Validators.required, Validators.maxLength(200)]],
-    description: ['', [Validators.required, Validators.maxLength(4000)]],
-  });
 
   removeScreenshot() {
     this.screenshotData.set(null);
@@ -88,17 +89,16 @@ export class BugReportDialogComponent {
   }
 
   async submit() {
-    if (this.form.invalid || this.isSubmitting()) return;
+    if (!this.isFormValid() || this.isSubmitting()) return;
 
     this.isSubmitting.set(true);
-    const formVal = this.form.getRawValue();
 
     try {
       await this.bugReportService.submitReport({
-        title: formVal.title!,
-        description: formVal.description!,
-        type: formVal.type as any,
-        severity: formVal.severity as any,
+        title: this.title().trim(),
+        description: this.description().trim(),
+        type: this.type(),
+        severity: this.severity(),
         url: this.pageUrl(),
         screenshot: this.screenshotData() || undefined,
         systemInfo: {

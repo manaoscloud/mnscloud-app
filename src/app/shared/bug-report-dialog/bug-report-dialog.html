@@ -13,11 +13,11 @@
   </header>
 
   <mat-dialog-content class="dialog-content">
-    <form [formGroup]="form" class="bug-report-form">
+    <div class="bug-report-form">
       <div class="form-row-2">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'Problem Type' | transloco }}</mat-label>
-          <mat-select formControlName="type">
+          <mat-select [value]="type()" (selectionChange)="type.set($event.value)">
             @for (item of typeOptions; track item.value) {
               <mat-option [value]="item.value">
                 {{ item.label | transloco }}
@@ -28,7 +28,7 @@
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'Severity' | transloco }}</mat-label>
-          <mat-select formControlName="severity">
+          <mat-select [value]="severity()" (selectionChange)="severity.set($event.value)">
             @for (item of severityOptions; track item.value) {
               <mat-option [value]="item.value">
                 {{ item.label | transloco }}
@@ -42,25 +42,25 @@
         <mat-label>{{ 'Summary' | transloco }}</mat-label>
         <input
           matInput
-          formControlName="title"
+          [value]="title()"
+          (input)="title.set($any($event.target).value)"
           maxlength="200"
           [placeholder]="'e.g. Error saving client form' | transloco"
           required
         />
-        <mat-hint align="end">{{ form.get('title')?.value?.length || 0 }}/200</mat-hint>
       </mat-form-field>
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
         <mat-label>{{ 'Problem Details' | transloco }}</mat-label>
         <textarea
           matInput
-          formControlName="description"
+          [value]="description()"
+          (input)="description.set($any($event.target).value)"
           rows="4"
           maxlength="4000"
           [placeholder]="'Describe what you were doing, what went wrong, and what you expected to happen...' | transloco"
           required
         ></textarea>
-        <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/4000</mat-hint>
       </mat-form-field>
 
       <!-- Screenshot Preview Card -->
@@ -137,7 +137,7 @@
           </div>
         </div>
       </details>
-    </form>
+    </div>
   </mat-dialog-content>
 
   <mat-dialog-actions class="form-actions">
@@ -151,7 +151,7 @@
         mat-flat-button
         color="primary"
         type="button"
-        [disabled]="form.invalid || isSubmitting()"
+        [disabled]="!isFormValid() || isSubmitting()"
         (click)="submit()"
       >
         <span class="btn-content">
