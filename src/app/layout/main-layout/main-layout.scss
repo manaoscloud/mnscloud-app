@@ -668,12 +668,16 @@ html.dark {
   .lang-button span,
   .context-button span,
   .tenant-name,
+  .offline-pill span {
+    display: none;
+  }
+
+  // The toolbar's shared icon rule uses !important; override it for compact triggers.
   .tenant-arrow,
   .tenant-default-icon,
   .lang-button mat-icon:last-child,
-  .context-button mat-icon:last-child,
-  .offline-pill span {
-    display: none;
+  .context-button mat-icon:last-child {
+    display: none !important;
   }
 
   .lang-button,
@@ -698,5 +702,35 @@ html.dark {
     font-size: 0.74rem;
     padding-top: 0.75rem;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    gap: 0;
+    padding-left: calc(0.25rem + env(safe-area-inset-left));
+    padding-right: calc(0.25rem + env(safe-area-inset-right));
+  }
+
+  .topbar-end {
+    gap: 0;
+  }
+
+  .tenant-switch {
+    margin-right: 0;
+  }
+
+  // Keep all actions reachable when the offline indicator is also present.
+  .topbar:has(.offline-pill) {
+    height: auto;
+    min-height: var(--layout-bar-height);
+    flex-wrap: wrap;
+  }
+
+  .topbar-end:has(.offline-pill) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1;
+    min-width: 0;
   }
 }
