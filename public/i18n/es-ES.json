@@ -5815,5 +5815,6 @@
   "ready": "Listo",
   "unchanged": "Sin cambios",
   "blocked": "Bloqueado",
-  "applied": "Aplicado"
+  "applied": "Aplicado",
+  "Runtime Reconcile": "Reconcile de runtime"
 }

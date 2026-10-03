@@ -100,8 +100,11 @@ const config = defineCrud({
     {
       id: 'planDigest',
       label: 'Plan digest',
-      value: (row) => String(result(row)['planDigest'] ?? row['planDigest'] ?? '-'),
-      copyable: true,
+      // Short form keeps the actions column visible; "Apply this plan" uses the full digest.
+      value: (row) => {
+        const digest = String(result(row)['planDigest'] ?? row['planDigest'] ?? '');
+        return digest ? `${digest.slice(0, 12)}…` : '-';
+      },
       translateValue: false,
     },
   ],
