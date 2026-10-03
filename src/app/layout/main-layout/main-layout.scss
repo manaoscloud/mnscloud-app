@@ -675,8 +675,7 @@ html.dark {
   // The toolbar's shared icon rule uses !important; override it for compact triggers.
   .tenant-arrow,
   .tenant-default-icon,
-  .lang-button mat-icon:last-child,
-  .context-button mat-icon:last-child {
+  .topbar-trigger-arrow {
     display: none !important;
   }
 

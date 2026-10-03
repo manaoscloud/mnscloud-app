@@ -318,7 +318,7 @@
         >
           <mat-icon>translate</mat-icon>
           <span>{{ currentLanguageLabel() | transloco }}</span>
-          <mat-icon>expand_more</mat-icon>
+          <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
         </button>
         <mat-menu
           #languageMenu="matMenu"
@@ -354,7 +354,7 @@
               effectiveContextMode() === 'master' ? 'admin_panel_settings' : 'business'
             }}</mat-icon>
             <span>{{ contextModeLabel() }}</span>
-            <mat-icon>expand_more</mat-icon>
+            <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
           </button>
         }
 
@@ -407,7 +407,7 @@
               @if (currentEnvironment()?.IsDefault == 1) {
                 <mat-icon class="tenant-default-icon">star</mat-icon>
               }
-              <mat-icon class="tenant-arrow">expand_more</mat-icon>
+              <mat-icon class="tenant-arrow" iconPositionEnd>expand_more</mat-icon>
             </button>
           </div>
         }
