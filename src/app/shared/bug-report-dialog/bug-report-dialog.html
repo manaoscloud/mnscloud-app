@@ -1,0 +1,169 @@
+<div class="bug-report-dialog crud-dialog">
+  <header class="dialog-header">
+    <div class="dialog-header-title-wrap">
+      <mat-icon class="dialog-header-icon" color="primary">bug_report</mat-icon>
+      <div>
+        <h2>{{ 'Report Problem or Suggestion' | transloco }}</h2>
+        <p>{{ 'Send error details and screen print directly to our engineering team.' | transloco }}</p>
+      </div>
+    </div>
+    <button mat-icon-button type="button" mat-dialog-close [attr.aria-label]="'Close' | transloco">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="form" class="bug-report-form">
+      <div class="form-row-2">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'Problem Type' | transloco }}</mat-label>
+          <mat-select formControlName="type">
+            @for (item of typeOptions; track item.value) {
+              <mat-option [value]="item.value">
+                {{ item.label | transloco }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'Severity' | transloco }}</mat-label>
+          <mat-select formControlName="severity">
+            @for (item of severityOptions; track item.value) {
+              <mat-option [value]="item.value">
+                {{ item.label | transloco }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+        <mat-label>{{ 'Summary' | transloco }}</mat-label>
+        <input
+          matInput
+          formControlName="title"
+          maxlength="200"
+          [placeholder]="'e.g. Error saving client form' | transloco"
+          required
+        />
+        <mat-hint align="end">{{ form.get('title')?.value?.length || 0 }}/200</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+        <mat-label>{{ 'Problem Details' | transloco }}</mat-label>
+        <textarea
+          matInput
+          formControlName="description"
+          rows="4"
+          maxlength="4000"
+          [placeholder]="'Describe what you were doing, what went wrong, and what you expected to happen...' | transloco"
+          required
+        ></textarea>
+        <mat-hint align="end">{{ form.get('description')?.value?.length || 0 }}/4000</mat-hint>
+      </mat-form-field>
+
+      <!-- Screenshot Preview Card -->
+      <div class="screenshot-box">
+        <div class="screenshot-header">
+          <div class="screenshot-title">
+            <mat-icon class="preview-icon">photo_camera</mat-icon>
+            <span>{{ 'Screen capture' | transloco }}</span>
+          </div>
+          <div class="screenshot-actions">
+            @if (screenshotData()) {
+              <button
+                mat-button
+                type="button"
+                color="warn"
+                class="btn-xs"
+                (click)="removeScreenshot()"
+              >
+                <mat-icon>delete_outline</mat-icon>
+                {{ 'Remove print' | transloco }}
+              </button>
+            } @else {
+              <button
+                mat-button
+                type="button"
+                color="primary"
+                class="btn-xs"
+                [disabled]="isCapturing()"
+                (click)="recaptureScreenshot()"
+              >
+                <mat-icon>refresh</mat-icon>
+                {{ 'Capture screen' | transloco }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (isCapturing()) {
+          <div class="screenshot-loading">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>{{ 'Capturing screen…' | transloco }}</span>
+          </div>
+        } @else if (screenshotData()) {
+          <div class="screenshot-preview-container">
+            <img [src]="screenshotData()" alt="Screenshot preview" class="screenshot-img" />
+          </div>
+        } @else {
+          <div class="screenshot-empty">
+            <mat-icon>image_not_supported</mat-icon>
+            <span>{{ 'No screenshot attached. You can submit without image or recapture.' | transloco }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Collapsible Technical Diagnostics -->
+      <details class="tech-details-accordion">
+        <summary class="tech-details-summary">
+          <mat-icon class="summary-icon">tune</mat-icon>
+          <span>{{ 'Diagnostic Information' | transloco }}</span>
+          <span class="tech-badge">{{ 'Automatic' | transloco }}</span>
+        </summary>
+        <div class="tech-details-content">
+          <div class="tech-row">
+            <span class="tech-key">{{ 'Page URL' | transloco }}:</span>
+            <span class="tech-val monospace">{{ pageUrl() }}</span>
+          </div>
+          <div class="tech-row">
+            <span class="tech-key">{{ 'Screen Size' | transloco }}:</span>
+            <span class="tech-val">{{ screenSize() }}</span>
+          </div>
+          <div class="tech-row">
+            <span class="tech-key">{{ 'Browser' | transloco }}:</span>
+            <span class="tech-val">{{ browserAgent() }}</span>
+          </div>
+        </div>
+      </details>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" mat-dialog-close [disabled]="isSubmitting()">
+        {{ 'Cancel' | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="form.invalid || isSubmitting()"
+        (click)="submit()"
+      >
+        <span class="btn-content">
+          @if (isSubmitting()) {
+            <mat-spinner diameter="18" class="btn-spinner"></mat-spinner>
+            <span>{{ 'Sending…' | transloco }}</span>
+          } @else {
+            <mat-icon>send</mat-icon>
+            <span>{{ 'Send Report' | transloco }}</span>
+          }
+        </span>
+      </button>
+    </div>
+  </mat-dialog-actions>
+</div>

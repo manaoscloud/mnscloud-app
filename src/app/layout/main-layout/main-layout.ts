@@ -45,6 +45,7 @@ import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/
 import { RuntimeVersionService } from '../../services/runtime-version.service';
 import { SystemParameterService } from '../../services/system-parameter.service';
 import { BillingService } from '../../pages/billing/shared/billing.service';
+import { BugReportService } from '../../services/bug-report.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
@@ -132,6 +133,7 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
+  private readonly bugReportService = inject(BugReportService);
 
   // =======================================================
   // Signals — Core UI State
@@ -762,6 +764,10 @@ export class MainLayout {
   // =======================================================
   changeTheme(mode: ThemeMode) {
     this.themeService.setTheme(mode);
+  }
+
+  openBugReport() {
+    void this.bugReportService.openReportDialog();
   }
 
   changeLanguage(language: LanguageOptionCode) {
