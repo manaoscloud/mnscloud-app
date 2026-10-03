@@ -1,3 +1,4 @@
+import { cyberSecurityRouteData } from './pages/cyber-security/cyber-security-navigation';
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
@@ -285,6 +286,7 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityDashboardPage,
                   ),
                 title: 'Cyber Security | mnscloud',
+                data: cyberSecurityRouteData('', 'tenant'),
               },
               {
                 path: 'cyber-security/services',
@@ -292,7 +294,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/services/services').then(
                     (m) => m.CyberSecurityServicesPage,
                   ),
-                title: 'Cyber Security • Services | mnscloud',
+                title: 'Cyber Security • Protected Services | mnscloud',
+                data: cyberSecurityRouteData('services', 'tenant'),
               },
               {
                 path: 'cyber-security/profiles',
@@ -300,7 +303,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/profiles/profiles').then(
                     (m) => m.CyberSecurityProfilesPage,
                   ),
-                title: 'Cyber Security • Profiles | mnscloud',
+                title: 'Cyber Security • Security Profiles | mnscloud',
+                data: cyberSecurityRouteData('profiles', 'tenant'),
               },
               {
                 path: 'cyber-security/trusted-nodes',
@@ -309,6 +313,7 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityTrustedNodesPage,
                   ),
                 title: 'Cyber Security • Trusted Nodes | mnscloud',
+                data: cyberSecurityRouteData('trusted-nodes', 'tenant'),
               },
               {
                 path: 'cyber-security/network-policies',
@@ -316,7 +321,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/network-policies/network-policies').then(
                     (m) => m.CyberSecurityNetworkPoliciesPage,
                   ),
-                title: 'Cyber Security • Network Policies | mnscloud',
+                title: 'Cyber Security • API Access Policies | mnscloud',
+                data: cyberSecurityRouteData('network-policies', 'tenant'),
               },
               {
                 path: 'cyber-security/secrets/dashboard',
@@ -324,8 +330,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/secrets/dashboard/dashboard').then(
                     (m) => m.SecretsDashboardPage,
                   ),
-                title: 'Cyber Security • Secrets Dashboard | mnscloud',
-                data: { scope: 'tenant' },
+                title: 'Cyber Security • Secrets Overview | mnscloud',
+                data: cyberSecurityRouteData('secrets/dashboard', 'tenant'),
               },
               {
                 path: 'cyber-security/secrets',
@@ -333,7 +339,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/secrets/secrets').then(
                     (m) => m.CyberSecuritySecretsPage,
                   ),
-                title: 'Cyber Security • Secrets Manager | mnscloud',
+                title: 'Cyber Security • Secrets | mnscloud',
+                data: cyberSecurityRouteData('secrets', 'tenant'),
               },
               {
                 path: 'cyber-security/secret-accounts',
@@ -342,18 +349,26 @@ export const routes: Routes = [
                     (m) => m.CyberSecuritySecretAccountsPage,
                   ),
                 title: 'Cyber Security • Secret Accounts | mnscloud',
+                data: cyberSecurityRouteData('secret-accounts', 'tenant'),
               },
               {
                 path: 'cyber-security/dashboard',
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
               },
-              {
-                path: 'cyber-security/:section',
+              ...[
+                { section: 'servers', title: 'Servers' },
+                { section: 'alerts', title: 'Alerts' },
+                { section: 'decisions', title: 'Protection Decisions' },
+                { section: 'lists', title: 'Allowlist / Blocklist' },
+                { section: 'security-events', title: 'Security Events' },
+              ].map(({ section, title }) => ({
+                path: `cyber-security/${section}`,
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
-                title: 'Cyber Security | mnscloud',
-              },
+                title: `Cyber Security • ${title} | mnscloud`,
+                data: cyberSecurityRouteData(section, 'tenant'),
+              })),
 
               // ERP Entities
               {
@@ -1519,7 +1534,7 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityDashboardPage,
                   ),
                 title: 'System Cyber Security | mnscloud',
-                data: { scope: 'master' },
+                data: cyberSecurityRouteData('', 'master'),
               },
               {
                 path: 'cyber-security/services',
@@ -1527,8 +1542,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/services/services').then(
                     (m) => m.CyberSecurityServicesPage,
                   ),
-                title: 'System Cyber Security • Services | mnscloud',
-                data: { scope: 'master' },
+                title: 'System Cyber Security • Protected Services | mnscloud',
+                data: cyberSecurityRouteData('services', 'master'),
               },
               {
                 path: 'cyber-security/profiles',
@@ -1536,8 +1551,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/profiles/profiles').then(
                     (m) => m.CyberSecurityProfilesPage,
                   ),
-                title: 'System Cyber Security • Profiles | mnscloud',
-                data: { scope: 'master' },
+                title: 'System Cyber Security • Security Profiles | mnscloud',
+                data: cyberSecurityRouteData('profiles', 'master'),
               },
               {
                 path: 'cyber-security/trusted-nodes',
@@ -1546,7 +1561,7 @@ export const routes: Routes = [
                     (m) => m.CyberSecurityTrustedNodesPage,
                   ),
                 title: 'System Cyber Security • Trusted Nodes | mnscloud',
-                data: { scope: 'master' },
+                data: cyberSecurityRouteData('trusted-nodes', 'master'),
               },
               {
                 path: 'cyber-security/network-policies',
@@ -1554,8 +1569,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/network-policies/network-policies').then(
                     (m) => m.CyberSecurityNetworkPoliciesPage,
                   ),
-                title: 'System Cyber Security • Network Policies | mnscloud',
-                data: { scope: 'master' },
+                title: 'System Cyber Security • API Access Policies | mnscloud',
+                data: cyberSecurityRouteData('network-policies', 'master'),
               },
               {
                 path: 'cyber-security/secrets/dashboard',
@@ -1563,8 +1578,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/secrets/dashboard/dashboard').then(
                     (m) => m.SecretsDashboardPage,
                   ),
-                title: 'Cyber Security • Secrets Dashboard | mnscloud',
-                data: { scope: 'master' },
+                title: 'Cyber Security • Secrets Overview | mnscloud',
+                data: cyberSecurityRouteData('secrets/dashboard', 'master'),
               },
               {
                 path: 'cyber-security/secrets',
@@ -1572,8 +1587,8 @@ export const routes: Routes = [
                   import('./pages/cyber-security/secrets/secrets').then(
                     (m) => m.CyberSecuritySecretsPage,
                   ),
-                title: 'System Cyber Security • Secrets Manager | mnscloud',
-                data: { scope: 'master' },
+                title: 'System Cyber Security • Secrets | mnscloud',
+                data: cyberSecurityRouteData('secrets', 'master'),
               },
               {
                 path: 'cyber-security/secret-accounts',
@@ -1582,7 +1597,7 @@ export const routes: Routes = [
                     (m) => m.CyberSecuritySecretAccountsPage,
                   ),
                 title: 'System Cyber Security • Secret Accounts | mnscloud',
-                data: { scope: 'master' },
+                data: cyberSecurityRouteData('secret-accounts', 'master'),
               },
               {
                 path: 'cyber-security/secret-servers',
@@ -1591,20 +1606,26 @@ export const routes: Routes = [
                     (m) => m.CyberSecuritySecretServersPage,
                   ),
                 title: 'System Cyber Security • Secret Servers | mnscloud',
-                data: { scope: 'master' },
+                data: cyberSecurityRouteData('secret-servers', 'master'),
               },
               {
                 path: 'cyber-security/dashboard',
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
               },
-              {
-                path: 'cyber-security/:section',
+              ...[
+                { section: 'servers', title: 'Servers' },
+                { section: 'alerts', title: 'Alerts' },
+                { section: 'decisions', title: 'Protection Decisions' },
+                { section: 'lists', title: 'Allowlist / Blocklist' },
+                { section: 'security-events', title: 'Security Events' },
+              ].map(({ section, title }) => ({
+                path: `cyber-security/${section}`,
                 loadComponent: () =>
                   import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
-                title: 'System Cyber Security | mnscloud',
-                data: { scope: 'master' },
-              },
+                title: `Cyber Security • ${title} | mnscloud`,
+                data: cyberSecurityRouteData(section, 'master'),
+              })),
               {
                 path: 'billing',
                 loadComponent: () =>

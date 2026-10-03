@@ -54,6 +54,17 @@
     (`public/i18n/en-US.json`, `public/i18n/pt-BR.json`, and `public/i18n/es-ES.json`). Do not rely
     on untranslated label fallbacks in the menu.
 
+## Cyber Security navigation
+
+Cyber Security groups the existing resources by operator task: Overview; Protection
+(Servers, Security Profiles, Protected Services, Allowlist / Blocklist); Threats and Events
+(Alerts, Protection Decisions, Security Events); Access Control (Trusted Nodes, API Access
+Policies); and Secrets (Overview, Secrets, Secret Accounts, master-only Secret Servers).
+Groups are navigation-only and inherit existing commercial visibility. Preserve the canonical
+`/cyber-security/*` and `/system/cyber-security/*` URLs, API contracts and resource permissions.
+Route metadata supplies translated breadcrumbs; groups without destinations render as text.
+Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact and mobile menus.
+
 ## Angular Runtime Baseline
 
 - The app targets Angular 22+ and must use the modern Angular template/runtime model for all new

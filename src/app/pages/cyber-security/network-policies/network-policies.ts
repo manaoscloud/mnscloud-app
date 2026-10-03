@@ -37,7 +37,7 @@ const nodeTypes = [
 const config = defineCrud({
   endpoint: 'cyber-security/network-policies',
   uuidField: 'uuid',
-  pageTitle: 'Network Policies',
+  pageTitle: 'API Access Policies',
   pageDescription: 'Endpoint groups, node scopes, rate limits and enforcement mode.',
   dialogDescription: 'Define endpoint policy scope, target node and request limits.',
   bulkDelete: true,

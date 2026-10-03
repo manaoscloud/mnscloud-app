@@ -5731,5 +5731,9 @@
   "Card fee: {{fee}} — Total to pay: {{total}}": "Card fee: {{fee}} — Total to pay: {{total}}",
   "The card fee is added to the amount. No installments.": "The card fee is added to the amount. No installments.",
   "Complete the card payment on the bank page. If it did not open, use Open payment.": "Complete the card payment on the bank page. If it did not open, use Open payment.",
-  "Boleto not available.": "Boleto not available."
+  "Boleto not available.": "Boleto not available.",
+  "Threats and Events": "Threats and Events",
+  "Access Control": "Access Control",
+  "Protection Decisions": "Protection Decisions",
+  "API Access Policies": "API Access Policies"
 }
