@@ -304,7 +304,12 @@
             pending_actions
           </mat-icon>
         </button>
-        <mat-menu #activityMenu="matMenu" class="topbar-menu activity-menu" xPosition="before">
+        <mat-menu
+          #activityMenu="matMenu"
+          class="topbar-menu activity-menu"
+          xPosition="before"
+          [aria-label]="'operations.activityTitle' | transloco"
+        >
           <mns-async-operation-activity />
         </mat-menu>
 
