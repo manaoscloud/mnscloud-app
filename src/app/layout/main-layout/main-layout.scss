@@ -465,8 +465,8 @@ mat-sidenav.sidenav.compact {
 .lang-button {
   text-transform: none;
   border-radius: 999px;
-  min-height: 32px;
-  height: 32px;
+  min-height: 44px;
+  height: 44px;
   line-height: 32px;
   padding: 0 0.55rem;
   gap: 0.2rem;
@@ -475,8 +475,8 @@ mat-sidenav.sidenav.compact {
 .context-button {
   text-transform: none;
   border-radius: 999px;
-  min-height: 32px;
-  height: 32px;
+  min-height: 44px;
+  height: 44px;
   line-height: 32px;
   padding: 0 0.55rem;
   gap: 0.2rem;
@@ -500,8 +500,8 @@ mat-sidenav.sidenav.compact {
 }
 
 .topbar button[mat-icon-button] {
-  width: 40px !important;
-  height: 40px !important;
+  width: 44px !important;
+  height: 44px !important;
 
   display: flex !important;
   align-items: center;
@@ -518,8 +518,8 @@ mat-sidenav.sidenav.compact {
   text-transform: none;
   border-radius: 999px;
   padding: 0 0.75rem;
-  min-height: 32px;
-  height: 32px;
+  min-height: 44px;
+  height: 44px;
   line-height: 32px;
   display: flex;
   align-items: center;
@@ -542,80 +542,8 @@ mat-sidenav.sidenav.compact {
   font-size: 0.85rem;
 }
 
-.tenant-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 40px;
-  padding-top: 0;
-  padding-bottom: 0;
-  line-height: 20px;
-}
-
-.tenant-menu-item .mat-mdc-menu-item-text {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 40px;
-  line-height: 20px;
-}
-
-.tenant-menu-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  line-height: 20px;
-}
-
 .tenant-default-icon {
-  color: #facc15;
-}
-
-.tenant-star-slot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex: 0 0 24px;
-  color: var(--mat-sys-color-on-surface-variant);
-  cursor: pointer;
-  margin-right: 6px;
-  align-self: center;
-}
-
-.tenant-star-slot mat-icon {
-  font-size: 18px !important;
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 18px;
-}
-
-.tenant-star-slot:hover {
-  background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
   color: var(--mat-sys-color-primary);
-}
-
-.tenant-star-slot.is-default {
-  color: #facc15;
-  cursor: default;
-  pointer-events: none;
-}
-
-.tenant-check-icon {
-  font-size: 18px !important;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  align-self: center;
 }
 
 /* avatar */
@@ -652,10 +580,10 @@ mat-sidenav.sidenav.compact {
   opacity: 0;
 }
 
-/* remove expansão vertical automática do touch target */
+/* Keep toolbar controls usable by touch without overlapping targets. */
 .topbar .topbar-end button.mat-mdc-icon-button .mat-mdc-button-touch-target {
-  width: 32px !important;
-  height: 32px !important;
+  width: 44px !important;
+  height: 44px !important;
 }
 
 /* ================= CONTENT ================= */
@@ -737,20 +665,27 @@ html.dark {
     gap: 0.15rem;
   }
 
-  .lang-button span,
-  .context-button span,
+  .topbar-trigger-label,
   .tenant-name,
-  .tenant-arrow,
   .offline-pill span {
     display: none;
+  }
+
+  // The toolbar's shared icon rule uses !important; override it for compact triggers.
+  .topbar .tenant-arrow,
+  .topbar .tenant-default-icon,
+  .topbar .topbar-trigger-arrow {
+    display: none !important;
   }
 
   .lang-button,
   .context-button,
   .tenant-button {
-    min-width: 36px;
-    height: 32px;
-    padding: 0 0.35rem;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    gap: 0;
   }
 
   .page-content {
@@ -767,5 +702,35 @@ html.dark {
     font-size: 0.74rem;
     padding-top: 0.75rem;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    gap: 0;
+    padding-left: calc(0.25rem + env(safe-area-inset-left));
+    padding-right: calc(0.25rem + env(safe-area-inset-right));
+  }
+
+  .topbar-end {
+    gap: 0;
+  }
+
+  .tenant-switch {
+    margin-right: 0;
+  }
+
+  // Keep all actions reachable when the offline indicator is also present.
+  .topbar:has(.offline-pill) {
+    height: auto;
+    min-height: var(--layout-bar-height);
+    flex-wrap: wrap;
+  }
+
+  .topbar-end:has(.offline-pill) {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1;
+    min-width: 0;
   }
 }

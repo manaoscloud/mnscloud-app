@@ -906,7 +906,7 @@
   "Join mnscloud in seconds": "Únase a mnscloud en segundos",
   "Keep OLT inventory tied to its Point of Presence.": "Mantener el inventario OLT vinculado a su Punto de Presencia.",
   "Laboratório": "Laboratorio",
-  "lang.auto": "Automático (Sistema)",
+  "lang.auto": "Automático",
   "lang.english": "Inglés (EE. UU.)",
   "lang.portuguese": "Portugués (Brasil)",
   "lang.spanish": "Español (España)",
@@ -5739,5 +5739,15 @@
   "Threats and Events": "Amenazas y Eventos",
   "Access Control": "Control de Acceso",
   "Protection Decisions": "Decisiones de protección",
-  "API Access Policies": "Políticas de acceso a la API"
+  "API Access Policies": "Políticas de acceso a la API",
+  "topbar.language": "Idioma",
+  "topbar.context": "Contexto",
+  "topbar.system": "Sistema",
+  "topbar.tenant": "Tenant",
+  "topbar.theme": "Tema",
+  "topbar.profile": "Perfil",
+  "topbar.themeLight": "Claro",
+  "topbar.themeDark": "Oscuro",
+  "topbar.themeSystem": "Sistema",
+  "topbar.dismissActivity": "Descartar actividad"
 }

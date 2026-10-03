@@ -36,7 +36,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Services
-import { ThemeService } from '../../services/theme.service';
+import { ThemeMode, ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
@@ -137,6 +137,11 @@ export class MainLayout {
   // Signals — Core UI State
   // =======================================================
   readonly theme = this.themeService.theme;
+  readonly themeOptions: { value: ThemeMode; label: string; icon: string }[] = [
+    { value: 'light', label: 'topbar.themeLight', icon: 'light_mode' },
+    { value: 'dark', label: 'topbar.themeDark', icon: 'dark_mode' },
+    { value: 'system', label: 'topbar.themeSystem', icon: 'settings_suggest' },
+  ];
   readonly user = this.auth.user;
   readonly online = this.network.online;
 
@@ -584,7 +589,9 @@ export class MainLayout {
   }
 
   contextModeLabel() {
-    return this.effectiveContextMode() === 'master' ? 'System' : 'Tenant';
+    return this.i18n.t(
+      this.effectiveContextMode() === 'master' ? 'topbar.system' : 'topbar.tenant',
+    );
   }
 
   private hasPermission(required: string): boolean {
@@ -753,8 +760,8 @@ export class MainLayout {
   // =======================================================
   // Tema
   // =======================================================
-  changeTheme() {
-    this.themeService.toggleTheme();
+  changeTheme(mode: ThemeMode) {
+    this.themeService.setTheme(mode);
   }
 
   changeLanguage(language: LanguageOptionCode) {
