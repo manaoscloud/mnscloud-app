@@ -1744,7 +1744,7 @@
   "Setup amount": "Valor de instalação",
   "Setup redirects and custom error pages.": "Configure redirecionamentos e páginas de erro personalizadas.",
   "Setup waive": "Isenção de instalação",
-  "Severity": "Severidade",
+  "Severity": "Severidade / Gravidade",
   "SFU": "SFU",
   "Shared secret": "Segredo compartilhado",
   "Short label": "Rótulo curto",
@@ -5758,7 +5758,6 @@
   "Report Problem or Suggestion": "Reportar Problema ou Sugestão",
   "Send error details and screen print directly to our engineering team.": "Envie detalhes do erro e print da tela direto para nossa equipe de engenharia.",
   "Problem Type": "Tipo do Problema",
-  "Severity": "Severidade / Gravidade",
   "Summary": "Resumo",
   "e.g. Error saving client form": "Ex: Erro ao salvar cadastro de cliente",
   "Problem Details": "Detalhes do Problema",
@@ -5782,5 +5781,15 @@
   "Low": "Baixa",
   "Medium": "Média",
   "High": "Alta",
-  "Critical (Blocks work)": "Crítica (Impede o trabalho)"
+  "Critical (Blocks work)": "Crítica (Impede o trabalho)",
+  "Create package": "Criar pacote",
+  "Edit subscription": "Editar assinatura",
+  "Migrate subscribers": "Migrar assinantes",
+  "Move every live subscription to another active package.": "Move todas as assinaturas vigentes para outro pacote ativo.",
+  "Move every live subscription to another active package. The target price applies from the next cycle.": "Move todas as assinaturas vigentes para outro pacote ativo. O preço do destino vale a partir do próximo ciclo.",
+  "Package": "Pacote",
+  "Package subscriptions migrated.": "Assinaturas do pacote migradas.",
+  "Subscription canceled successfully.": "Assinatura cancelada com sucesso.",
+  "Subscription saved successfully.": "Assinatura salva com sucesso.",
+  "Target package": "Pacote de destino"
 }

@@ -15,6 +15,7 @@ import {
   cleanPayload,
   numberOrNull,
 } from '../../shared/billing-crud';
+import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 const PACKAGE_PAYLOAD_KEYS = [
@@ -72,7 +73,48 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       lookupKey: 'productUUID',
     },
     { id: 'items', label: 'Items', field: 'ItemCount' },
+    { id: 'subscribers', label: 'Subscribers', kind: 'number', field: 'SubscriptionCount' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpaStatus', className: 'status-col' },
+  ],
+  rowActions: [
+    {
+      key: 'migrateSubscribers',
+      label: 'Migrate subscribers',
+      icon: 'move_down',
+      tooltip: 'Move every live subscription to another active package.',
+      visible: (row) => Number(row['SubscriptionCount'] ?? 0) > 0,
+      form: (row) =>
+        defineCrud({
+          endpoint: `system/billing/packages/${row['BpaUUID']}/migrate-subscriptions`,
+          uuidField: 'BpaUUID',
+          pageTitle: 'Migrate subscribers',
+          createTitle: 'Migrate subscribers',
+          dialogDescription:
+            'Move every live subscription to another active package. The target price applies from the next cycle.',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: { targetPackageUUID: '' },
+          fields: [
+            {
+              key: 'targetPackageUUID',
+              payloadKey: 'targetPackageUUID',
+              label: 'Target package',
+              type: 'search-select',
+              required: true,
+              remoteLookup: {
+                endpoint: 'system/billing/packages?status=1',
+                uuidField: 'BpaUUID',
+                labelField: 'BpaName',
+              },
+              quickCreate: quickCreateFor('BillingPackageBpaUUID'),
+              span: 2,
+            },
+          ],
+          savedMessage: 'Package subscriptions migrated.',
+        }),
+    },
   ],
   relatedCollections: [
     {

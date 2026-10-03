@@ -5757,7 +5757,6 @@
   "Report Problem or Suggestion": "Report Problem or Suggestion",
   "Send error details and screen print directly to our engineering team.": "Send error details and screen print directly to our engineering team.",
   "Problem Type": "Problem Type",
-  "Severity": "Severity",
   "Summary": "Summary",
   "e.g. Error saving client form": "e.g. Error saving client form",
   "Problem Details": "Problem Details",
@@ -5781,5 +5780,15 @@
   "Low": "Low",
   "Medium": "Medium",
   "High": "High",
-  "Critical (Blocks work)": "Critical (Blocks work)"
+  "Critical (Blocks work)": "Critical (Blocks work)",
+  "Create package": "Create package",
+  "Edit subscription": "Edit subscription",
+  "Migrate subscribers": "Migrate subscribers",
+  "Move every live subscription to another active package.": "Move every live subscription to another active package.",
+  "Move every live subscription to another active package. The target price applies from the next cycle.": "Move every live subscription to another active package. The target price applies from the next cycle.",
+  "Package": "Package",
+  "Package subscriptions migrated.": "Package subscriptions migrated.",
+  "Subscription canceled successfully.": "Subscription canceled successfully.",
+  "Subscription saved successfully.": "Subscription saved successfully.",
+  "Target package": "Target package"
 }
