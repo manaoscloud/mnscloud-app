@@ -2278,6 +2278,14 @@ export class MainLayout {
           permissions: ['tenant.monitoring.activity.read'],
           requiresEnvironment: false,
         },
+        {
+          id: 'monitoring/runtime-reconcile',
+          label: 'Runtime reconcile',
+          icon: 'tune',
+          masterRoute: '/system/monitoring/runtime-reconcile',
+          scope: 'master',
+          requiresEnvironment: false,
+        },
       ],
     },
     {

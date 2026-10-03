@@ -1519,6 +1519,15 @@ export const routes: Routes = [
                 title: 'System Monitoring • Agents | mnscloud',
               },
               {
+                path: 'monitoring/runtime-reconcile',
+                loadComponent: () =>
+                  import('./pages/system/runtime/reconcile/reconcile').then(
+                    (m) => m.SystemRuntimeReconcilePage,
+                  ),
+                title: 'System Monitoring • Runtime reconcile | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'governance/users',
                 loadComponent: () =>
                   import('./pages/system/governance/users/users').then(
