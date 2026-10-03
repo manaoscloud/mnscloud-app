@@ -58,14 +58,14 @@ export class BillingSystemDashboardPage {
       const [products, prices, packages, promotions, subscriptions] = await Promise.all([
         this.billing.listProducts('', null),
         this.billing.listPrices('', '', null),
-        this.billing.listPackages('', null),
+        this.billing.countPackages(),
         this.billing.listPromotions('', null),
         this.billing.listSystemSubscriptions('', ''),
       ]);
       return {
         products: products.length,
         prices: prices.length,
-        packages: packages.length,
+        packages,
         promotions: promotions.length,
         subscriptions: subscriptions.length,
       };

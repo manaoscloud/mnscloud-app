@@ -443,67 +443,12 @@ export class BillingService {
     await this.api.delete(`system/billing/prices/${uuid}`);
   }
 
-  async listPackages(search = '', status: number | null = null) {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    if (status !== null) params.set('status', String(status));
-    const response = await this.api.get<ApiListResponse<BillingPackage>>(
-      `system/billing/packages${this.query(params)}`,
+  /** Package count from the canonical list envelope total. */
+  async countPackages() {
+    const response = await this.api.get<{ data?: { total?: number } }>(
+      'system/billing/packages?limit=1&offset=0',
     );
-    return response.data?.items ?? [];
-  }
-
-  async createPackage(payload: Record<string, unknown>) {
-    const response = await this.api.post<ApiListResponse<BillingPackage>>(
-      'system/billing/packages',
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async updatePackage(uuid: string, payload: Record<string, unknown>) {
-    const response = await this.api.put<ApiListResponse<BillingPackage>>(
-      `system/billing/packages/${uuid}`,
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async deletePackage(uuid: string) {
-    await this.api.delete(`system/billing/packages/${uuid}`);
-  }
-
-  async listPackageItems(packageUUID = '', search = '', status: number | null = null) {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    if (status !== null) params.set('status', String(status));
-    const base = packageUUID
-      ? `system/billing/packages/${packageUUID}/items`
-      : 'system/billing/package-items';
-    const response = await this.api.get<ApiListResponse<BillingPackageItem>>(
-      `${base}${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
-  }
-
-  async createPackageItem(packageUUID: string, payload: Record<string, unknown>) {
-    const response = await this.api.post<ApiListResponse<BillingPackageItem>>(
-      `system/billing/packages/${packageUUID}/items`,
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async updatePackageItem(uuid: string, payload: Record<string, unknown>) {
-    const response = await this.api.put<ApiListResponse<BillingPackageItem>>(
-      `system/billing/package-items/${uuid}`,
-      payload,
-    );
-    return response.data?.item ?? null;
-  }
-
-  async deletePackageItem(uuid: string) {
-    await this.api.delete(`system/billing/package-items/${uuid}`);
+    return Number(response.data?.total ?? 0);
   }
 
   async listPromotions(search = '', status: number | null = null) {
