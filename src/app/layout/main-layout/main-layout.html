@@ -458,6 +458,17 @@
           </div>
         </mat-menu>
 
+        <!-- Bug Report / Feedback -->
+        <button
+          mat-icon-button
+          type="button"
+          (click)="openBugReport()"
+          [attr.aria-label]="'topbar.reportBug' | transloco"
+          [matTooltip]="'topbar.reportBug' | transloco"
+        >
+          <mat-icon>bug_report</mat-icon>
+        </button>
+
         <!-- Theme -->
         <button
           mat-icon-button
@@ -535,6 +546,11 @@
         <button mat-menu-item routerLink="/settings">
           <mat-icon>settings</mat-icon>
           <span>{{ 'menu.settings' | transloco }}</span>
+        </button>
+
+        <button mat-menu-item (click)="openBugReport()">
+          <mat-icon>bug_report</mat-icon>
+          <span>{{ 'topbar.reportBug' | transloco }}</span>
         </button>
 
         <button
