@@ -322,7 +322,7 @@
           [matTooltip]="'topbar.language' | transloco"
         >
           <mat-icon>translate</mat-icon>
-          <span>{{ currentLanguageLabel() | transloco }}</span>
+          <span class="topbar-trigger-label">{{ currentLanguageLabel() | transloco }}</span>
           <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
         </button>
         <mat-menu
@@ -358,7 +358,7 @@
             <mat-icon>{{
               effectiveContextMode() === 'master' ? 'admin_panel_settings' : 'business'
             }}</mat-icon>
-            <span>{{ contextModeLabel() }}</span>
+            <span class="topbar-trigger-label">{{ contextModeLabel() }}</span>
             <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
           </button>
         }
