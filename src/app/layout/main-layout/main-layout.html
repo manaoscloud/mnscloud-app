@@ -304,50 +304,94 @@
             pending_actions
           </mat-icon>
         </button>
-        <mat-menu #activityMenu="matMenu" class="rounded-menu activity-menu" xPosition="before">
+        <mat-menu
+          #activityMenu="matMenu"
+          class="topbar-menu activity-menu"
+          xPosition="before"
+          [aria-label]="'operations.activityTitle' | transloco"
+        >
           <mns-async-operation-activity />
         </mat-menu>
 
         <!-- Language -->
-        <button mat-button class="lang-button" [matMenuTriggerFor]="languageMenu">
+        <button
+          mat-button
+          class="lang-button"
+          [matMenuTriggerFor]="languageMenu"
+          [attr.aria-label]="'topbar.language' | transloco"
+          [matTooltip]="'topbar.language' | transloco"
+        >
           <mat-icon>translate</mat-icon>
           <span>{{ currentLanguageLabel() | transloco }}</span>
-          <mat-icon>expand_more</mat-icon>
+          <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
         </button>
-        <mat-menu #languageMenu="matMenu" class="rounded-menu">
+        <mat-menu
+          #languageMenu="matMenu"
+          class="topbar-menu"
+          xPosition="before"
+          [aria-label]="'topbar.language' | transloco"
+        >
+          <div class="topbar-menu-title">{{ 'topbar.language' | transloco }}</div>
           @for (language of languageOptions; track language.code) {
-            <button mat-menu-item (click)="changeLanguage(language.code)">
-              <span>{{ language.labelKey | transloco }}</span>
+            <button
+              mat-menu-item
+              role="menuitemradio"
+              [attr.aria-checked]="language.code === currentLanguageOption()"
+              (click)="changeLanguage(language.code)"
+            >
+              <span class="topbar-menu-label">{{ language.labelKey | transloco }}</span>
               @if (language.code === currentLanguageOption()) {
-                <mat-icon>check</mat-icon>
+                <mat-icon class="topbar-menu-check">check</mat-icon>
               }
             </button>
           }
         </mat-menu>
 
         @if (isMasterUser()) {
-          <button mat-button class="context-button" [matMenuTriggerFor]="contextMenu">
+          <button
+            mat-button
+            class="context-button"
+            [matMenuTriggerFor]="contextMenu"
+            [attr.aria-label]="'topbar.context' | transloco"
+            [matTooltip]="'topbar.context' | transloco"
+          >
             <mat-icon>{{
               effectiveContextMode() === 'master' ? 'admin_panel_settings' : 'business'
             }}</mat-icon>
             <span>{{ contextModeLabel() }}</span>
-            <mat-icon>expand_more</mat-icon>
+            <mat-icon class="topbar-trigger-arrow" iconPositionEnd>expand_more</mat-icon>
           </button>
         }
 
-        <mat-menu #contextMenu="matMenu" class="rounded-menu">
-          <button mat-menu-item (click)="setContextMode('master')">
+        <mat-menu
+          #contextMenu="matMenu"
+          class="topbar-menu"
+          xPosition="before"
+          [aria-label]="'topbar.context' | transloco"
+        >
+          <div class="topbar-menu-title">{{ 'topbar.context' | transloco }}</div>
+          <button
+            mat-menu-item
+            role="menuitemradio"
+            [attr.aria-checked]="effectiveContextMode() === 'master'"
+            (click)="setContextMode('master')"
+          >
             <mat-icon>admin_panel_settings</mat-icon>
-            <span>System</span>
+            <span class="topbar-menu-label">{{ 'topbar.system' | transloco }}</span>
             @if (effectiveContextMode() === 'master') {
-              <mat-icon>check</mat-icon>
+              <mat-icon class="topbar-menu-check">check</mat-icon>
             }
           </button>
-          <button mat-menu-item (click)="setContextMode('tenant')">
+          <button
+            mat-menu-item
+            role="menuitemradio"
+            [attr.aria-checked]="effectiveContextMode() === 'tenant'"
+            (click)="setContextMode('tenant')"
+          >
             <mat-icon>business</mat-icon>
-            <span>Tenant</span>
+            <span class="topbar-menu-label">{{ 'topbar.tenant' | transloco }}</span>
             @if (effectiveContextMode() === 'tenant') {
-              <mat-icon>check</mat-icon>
+              <mat-icon class="topbar-menu-check">check</mat-icon>
             }
           </button>
         </mat-menu>
@@ -360,43 +404,67 @@
               class="tenant-button"
               [matMenuTriggerFor]="tenantMenu"
               [disabled]="loadingEnvironments()"
+              [attr.aria-label]="('topbar.tenant' | transloco) + ': ' + currentEnvironmentName()"
+              [matTooltip]="currentEnvironmentName()"
             >
               <mat-icon class="tenant-icon">business</mat-icon>
               <span class="tenant-name">{{ currentEnvironmentName() }}</span>
               @if (currentEnvironment()?.IsDefault == 1) {
                 <mat-icon class="tenant-default-icon">star</mat-icon>
               }
-              <mat-icon class="tenant-arrow">expand_more</mat-icon>
+              <mat-icon class="tenant-arrow" iconPositionEnd>expand_more</mat-icon>
             </button>
           </div>
         }
 
-        <mat-menu #tenantMenu="matMenu" class="rounded-menu">
-          @for (env of environments(); track env.EnvironmentUUID) {
-            <button mat-menu-item class="tenant-menu-item" (click)="switchEnvironment(env)">
-              <span
-                class="tenant-star-slot"
-                [class.is-default]="env.IsDefault == 1"
-                (click)="setDefaultEnvironment(env, $event)"
-                [title]="'layout.setDefault' | transloco"
-              >
-                <mat-icon>{{ env.IsDefault == 1 ? 'star' : 'star_border' }}</mat-icon>
-              </span>
-              <span class="tenant-menu-name">{{ env.EnvironmentName }}</span>
-              @if (env.EnvironmentUUID === activeEnvironmentId()) {
-                <mat-icon class="tenant-check-icon">check</mat-icon>
-              }
-            </button>
-          }
-          @if (!environments().length) {
-            <button mat-menu-item>
-              <span>{{ 'layout.noEnvironments' | transloco }}</span>
-            </button>
-          }
+        <mat-menu
+          #tenantMenu="matMenu"
+          class="topbar-menu"
+          xPosition="before"
+          [aria-label]="'topbar.tenant' | transloco"
+        >
+          <div class="topbar-menu-title">{{ 'topbar.tenant' | transloco }}</div>
+          <div class="topbar-menu-list">
+            @for (env of environments(); track env.EnvironmentUUID) {
+              <div class="topbar-menu-tenant-row">
+                <button
+                  mat-menu-item
+                  class="topbar-menu-default"
+                  role="menuitemcheckbox"
+                  [attr.aria-checked]="env.IsDefault == 1"
+                  [attr.aria-label]="('layout.setDefault' | transloco) + ': ' + env.EnvironmentName"
+                  [matTooltip]="'layout.setDefault' | transloco"
+                  (click)="setDefaultEnvironment(env, $event)"
+                >
+                  <mat-icon>{{ env.IsDefault == 1 ? 'star' : 'star_border' }}</mat-icon>
+                </button>
+                <button
+                  mat-menu-item
+                  class="topbar-menu-tenant-select"
+                  role="menuitemradio"
+                  [attr.aria-checked]="env.EnvironmentUUID === activeEnvironmentId()"
+                  (click)="switchEnvironment(env)"
+                >
+                  <span class="topbar-menu-label">{{ env.EnvironmentName }}</span>
+                  @if (env.EnvironmentUUID === activeEnvironmentId()) {
+                    <mat-icon class="topbar-menu-check">check</mat-icon>
+                  }
+                </button>
+              </div>
+            }
+            @if (!environments().length) {
+              <p class="topbar-menu-empty">{{ 'layout.noEnvironments' | transloco }}</p>
+            }
+          </div>
         </mat-menu>
 
         <!-- Theme -->
-        <button mat-icon-button (click)="changeTheme()">
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="themeMenu"
+          [attr.aria-label]="'topbar.theme' | transloco"
+          [matTooltip]="'topbar.theme' | transloco"
+        >
           <mat-icon>
             {{
               theme() === 'light'
@@ -408,8 +476,36 @@
           </mat-icon>
         </button>
 
+        <mat-menu
+          #themeMenu="matMenu"
+          class="topbar-menu"
+          xPosition="before"
+          [aria-label]="'topbar.theme' | transloco"
+        >
+          <div class="topbar-menu-title">{{ 'topbar.theme' | transloco }}</div>
+          @for (option of themeOptions; track option.value) {
+            <button
+              mat-menu-item
+              role="menuitemradio"
+              [attr.aria-checked]="theme() === option.value"
+              (click)="changeTheme(option.value)"
+            >
+              <mat-icon>{{ option.icon }}</mat-icon>
+              <span class="topbar-menu-label">{{ option.label | transloco }}</span>
+              @if (theme() === option.value) {
+                <mat-icon class="topbar-menu-check">check</mat-icon>
+              }
+            </button>
+          }
+        </mat-menu>
+
         <!-- Avatar -->
-        <button mat-icon-button [matMenuTriggerFor]="menu">
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="menu"
+          [attr.aria-label]="'topbar.profile' | transloco"
+          [matTooltip]="'topbar.profile' | transloco"
+        >
           <div
             class="avatar"
             [class.avatar-has-image]="avatarUrl()"
@@ -424,7 +520,13 @@
         </button>
       </div>
 
-      <mat-menu #menu="matMenu" class="rounded-menu">
+      <mat-menu
+        #menu="matMenu"
+        class="topbar-menu"
+        xPosition="before"
+        [aria-label]="'topbar.profile' | transloco"
+      >
+        <div class="topbar-menu-title">{{ 'topbar.profile' | transloco }}</div>
         <button mat-menu-item routerLink="/user/profile">
           <mat-icon>person</mat-icon>
           <span>{{ 'menu.myProfile' | transloco }}</span>
@@ -435,7 +537,12 @@
           <span>{{ 'menu.settings' | transloco }}</span>
         </button>
 
-        <button mat-menu-item (click)="logout()">
+        <button
+          mat-menu-item
+          class="topbar-menu-danger"
+          [disabled]="isLoggingOut()"
+          (click)="logout()"
+        >
           <mat-icon color="warn">logout</mat-icon>
           <span>{{ 'menu.logout' | transloco }}</span>
         </button>

@@ -11,7 +11,7 @@ import { AsyncOperationsService } from './async-operations.service';
   imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoPipe],
   template: `
     <div class="activity-panel" (click)="$event.stopPropagation()">
-      <div class="activity-panel-header">
+      <div class="topbar-menu-title">
         <span>{{ 'operations.activityTitle' | transloco }}</span>
       </div>
       @if (!operations.visible().length) {
@@ -66,6 +66,7 @@ import { AsyncOperationsService } from './async-operations.service';
                       mat-icon-button
                       type="button"
                       class="activity-dismiss"
+                      [attr.aria-label]="'topbar.dismissActivity' | transloco"
                       (click)="operations.dismiss(operation.operationUUID)"
                     >
                       <mat-icon>close</mat-icon>
@@ -93,18 +94,7 @@ import { AsyncOperationsService } from './async-operations.service';
         max-width: 100%;
         min-width: 0;
         box-sizing: border-box;
-        padding: 0.5rem 0;
         overflow-x: hidden;
-      }
-      .activity-panel-header {
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        color: var(--mat-sys-color-on-surface-variant);
-        padding: 0.25rem 0.85rem 0.5rem;
-        line-height: 1.35;
-        overflow-wrap: anywhere;
       }
       .activity-empty {
         margin: 0;
@@ -175,13 +165,13 @@ import { AsyncOperationsService } from './async-operations.service';
         min-width: 0;
       }
       .activity-recheck {
-        min-height: 32px;
-        line-height: 32px;
+        min-height: 44px;
+        line-height: 44px;
         padding: 0 0.7rem;
       }
       .activity-dismiss {
-        width: 32px;
-        height: 32px;
+        width: 44px;
+        height: 44px;
         padding: 0;
       }
       .activity-dismiss mat-icon {

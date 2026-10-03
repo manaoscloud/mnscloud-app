@@ -65,6 +65,23 @@ Groups are navigation-only and inherit existing commercial visibility. Preserve 
 Route metadata supplies translated breadcrumbs; groups without destinations render as text.
 Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact and mobile menus.
 
+## Topbar menus
+
+- Activity, language, System/Tenant context, tenant, theme and profile menus share the global
+  `src/styles/_topbar-menu.scss` shell (`topbar-menu`, `topbar-menu-title`, selection/check slots).
+  Material overlays live outside the layout view; keep their shared styling global.
+- Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
+  divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
+- All labels and accessible names use first-class PT/EN/ES translations. Selection menus expose
+  checked state; keep Material keyboard navigation, Escape and focus restoration.
+- Tenant default and tenant activation are independent sibling buttons, never nested interactive
+  controls. Setting the default keeps the panel open and does not switch the active environment.
+- Theme offers explicit light/dark/system choices through ThemeService; retain persistence,
+  cross-tab changes and device preference tracking. Keep existing language, tenant, permission,
+  operation polling and logout/session-cleanup flows in their services.
+- Validate desktop/mobile, light/dark, PT/EN/ES, long lists/names, default-versus-active selection,
+  keyboard/touch, operation actions and session expiry before delivering topbar changes.
+
 ## Angular Runtime Baseline
 
 - The app targets Angular 22+ and must use the modern Angular template/runtime model for all new
