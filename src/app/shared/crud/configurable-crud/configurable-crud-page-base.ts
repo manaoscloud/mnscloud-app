@@ -1079,10 +1079,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         payload,
       );
       const rows = extractCrudItems(response);
-      this.relatedRows.update((current) => ({
-        ...current,
-        [collection.key]: rows.length ? rows : this.relatedCollectionRows(collection),
-      }));
+      // Child endpoints may answer with the refreshed list or only the created record.
+      if (rows.length) {
+        this.relatedRows.update((current) => ({ ...current, [collection.key]: rows }));
+      } else {
+        await this.loadRelatedCollection(collection, parentUUID);
+      }
       this.relatedForms.update((current) => ({
         ...current,
         [collection.key]: { ...collection.initialValues },

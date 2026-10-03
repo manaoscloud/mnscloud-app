@@ -6,7 +6,6 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-  ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { BillingPackage, BillingService } from '../../shared/billing.service';
 import {
@@ -46,6 +45,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   deletedMessage: 'Billing package deleted successfully.',
   deleteFailedMessage: 'Failed to delete billing package.',
   bulkDelete: false,
+  serverSidePagination: true,
   ...BILLING_STATUS_OPTIONS,
   initialValues: {
     code: 'package.',
@@ -73,6 +73,81 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'items', label: 'Items', field: 'ItemCount' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpaStatus', className: 'status-col' },
+  ],
+  relatedCollections: [
+    {
+      key: 'packageItems',
+      label: 'Items',
+      emptyLabel: 'No package items yet.',
+      addLabel: 'Add',
+      savedMessage: 'Billing package item saved successfully.',
+      deletedMessage: 'Billing package item deleted successfully.',
+      endpoint: (packageUUID) => `system/billing/packages/${packageUUID}/items?limit=200`,
+      deleteEndpoint: (_packageUUID, row) => `system/billing/package-items/${row['BkiUUID']}`,
+      uuidField: 'BkiUUID',
+      initialValues: {
+        itemProductUUID: '',
+        itemEntitlementCode: '',
+        itemIncludedQuantity: 1,
+        itemRequired: 1,
+      },
+      fields: [
+        {
+          key: 'itemProductUUID',
+          payloadKey: 'productUUID',
+          label: 'Product',
+          type: 'search-select',
+          quickCreate: quickCreateFor('BillingProductBprUUID'),
+          required: true,
+          span: 2,
+        },
+        {
+          key: 'itemEntitlementCode',
+          payloadKey: 'entitlementCode',
+          label: 'Entitlement',
+          span: 2,
+        },
+        {
+          key: 'itemIncludedQuantity',
+          payloadKey: 'includedQuantity',
+          label: 'Included quantity',
+          type: 'number',
+          span: 1,
+        },
+        {
+          key: 'itemRequired',
+          payloadKey: 'required',
+          label: 'Required',
+          type: 'select',
+          options: YES_NO_OPTIONS,
+          span: 1,
+        },
+      ],
+      columns: [
+        {
+          id: 'product',
+          label: 'Product',
+          kind: 'related',
+          field: 'BillingProductBprUUID',
+          lookupKey: 'itemProductUUID',
+        },
+        { id: 'entitlement', label: 'Entitlement', field: 'BkiEntitlementCode' },
+        {
+          id: 'quantity',
+          label: 'Included quantity',
+          kind: 'number',
+          field: 'BkiIncludedQuantity',
+        },
+        { id: 'status', label: 'Status', kind: 'status', field: 'BkiStatus' },
+      ],
+      payload: (values) => ({
+        productUUID: values['itemProductUUID'],
+        entitlementCode: values['itemEntitlementCode'] || null,
+        includedQuantity: numberOrNull(values['itemIncludedQuantity']) ?? 1,
+        required: Number(values['itemRequired'] ?? 1),
+        status: 1,
+      }),
+    },
   ],
   fields: [
     { key: 'status', source: 'BpaStatus', payloadKey: 'status', label: 'Status', type: 'status' },
@@ -192,7 +267,6 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
 > {
   private readonly billing = inject(BillingService);
   private readonly lookups = new BillingLookupState(this.billing);
-  private pendingInitialItem: ConfigurableCrudRecord | null = null;
 
   constructor() {
     super(PACKAGE_CONFIG);
@@ -209,36 +283,19 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
     return super.lookupLabel(key, value);
   }
 
+  /** The optional initial item is created by the API in the same transaction as the package. */
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    this.pendingInitialItem = {
-      itemProductUUID: payload['itemProductUUID'],
-      itemEntitlementCode: payload['itemEntitlementCode'],
-      itemIncludedQuantity: payload['itemIncludedQuantity'],
-      itemRequired: payload['itemRequired'],
-      itemConfig: payload['itemConfig'],
-    };
     const next = cleanPayload(payload, PACKAGE_PAYLOAD_KEYS);
     next['sortOrder'] = numberOrNull(next['sortOrder']) ?? 1000;
+    if (!this.editingRecord() && payload['itemProductUUID']) {
+      next['initialItem'] = {
+        productUUID: payload['itemProductUUID'],
+        entitlementCode: payload['itemEntitlementCode'] || null,
+        includedQuantity: numberOrNull(payload['itemIncludedQuantity']) ?? 1,
+        required: Number(payload['itemRequired'] ?? 1),
+        config: payload['itemConfig'] || null,
+      };
+    }
     return next;
-  }
-
-  protected override async afterSave(
-    context: ConfigurableCrudSaveContext<BillingPackage & ConfigurableCrudRecord>,
-  ): Promise<void> {
-    if (context.mode !== 'create') return;
-    const response = context.response as { data?: { item?: BillingPackage } };
-    const packageUUID = response?.data?.item?.BpaUUID;
-    const values = this.pendingInitialItem ?? {};
-    this.pendingInitialItem = null;
-    if (!packageUUID || !values['itemProductUUID']) return;
-    await this.billing.createPackageItem(packageUUID, {
-      productUUID: values['itemProductUUID'],
-      entitlementCode: values['itemEntitlementCode'] || null,
-      includedQuantity: numberOrNull(values['itemIncludedQuantity']) ?? 1,
-      required: Number(values['itemRequired'] ?? 1),
-      config: values['itemConfig'] || null,
-      status: 1,
-    });
-    this.refreshList();
   }
 }
