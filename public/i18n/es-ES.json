@@ -93,7 +93,7 @@
   "Allowed methods JSON": "Métodos permitidos JSON",
   "Allowed networks JSON": "Redes permitidas JSON",
   "Allowlist": "Allowlist",
-  "Allowlist / Blocklist": "Allowlist / Blocklist",
+  "Allowlist / Blocklist": "Listas de permiso y bloqueo",
   "Already subscribed": "Ya suscrito",
   "Amount": "Valor",
   "Anonymize": "Anonimizar",
@@ -1258,7 +1258,7 @@
   "outdated": "desactualizado",
   "Outdated": "Desactualizado",
   "Outgoing": "Salida",
-  "Overview": "Descripción general",
+  "Overview": "Vista general",
   "Overview of your opportunities by stage.": "Resumen de sus oportunidades por etapa.",
   "Owner": "Dueño",
   "PABX": "PABX",
@@ -4076,7 +4076,7 @@
   "All resources": "Todos los recursos",
   "Read": "Lectura",
   "Create and update": "Creación y actualización",
-  "Secret Servers": "Servidores de Secretos",
+  "Secret Servers": "Servidores de secretos",
   "Secrets Manager": "Gestor de Secretos",
   "Manage Master OpenVault servers used by Secrets Manager.": "Administra servidores OpenVault del Master usados por el Gestor de Secretos.",
   "Manage tenant secrets backed by MNSCloud OpenVault.": "Administra secretos del tenant respaldados por MNSCloud OpenVault.",
@@ -5731,5 +5731,9 @@
   "Card fee: {{fee}} — Total to pay: {{total}}": "Tasa de la tarjeta: {{fee}} — Total a pagar: {{total}}",
   "The card fee is added to the amount. No installments.": "La tasa de la tarjeta se suma al monto. Sin cuotas.",
   "Complete the card payment on the bank page. If it did not open, use Open payment.": "Complete el pago con tarjeta en la página del banco. Si no se abrió, use Abrir pago.",
-  "Boleto not available.": "Boleto no disponible."
+  "Boleto not available.": "Boleto no disponible.",
+  "Threats and Events": "Amenazas y Eventos",
+  "Access Control": "Control de Acceso",
+  "Protection Decisions": "Decisiones de protección",
+  "API Access Policies": "Políticas de acceso a la API"
 }

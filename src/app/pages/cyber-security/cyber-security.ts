@@ -196,7 +196,7 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     ...readOnly,
     endpoint: 'cyber-security/decisions',
     uuidField: 'uuid',
-    pageTitle: 'Decisions',
+    pageTitle: 'Protection Decisions',
     pageDescription: 'Active security decisions currently enforced by CrowdSec.',
     serverSidePagination: true,
     statusMode: 'string',
@@ -377,7 +377,7 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
 })
 export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    const section = inject(ActivatedRoute).snapshot.paramMap.get('section') as CyberSection | null;
+    const section = inject(ActivatedRoute).snapshot.data['section'] as CyberSection | undefined;
     super(CONFIGS[section ?? 'servers'] ?? CONFIGS.servers);
   }
 

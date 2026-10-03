@@ -41,7 +41,7 @@ const OPERATION_STATES: readonly ConfigurableCrudOption[] = [
 const SECRET_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'cyber-security/secrets',
   uuidField: 'CstUUID',
-  pageTitle: 'Secrets Manager',
+  pageTitle: 'Secrets',
   pageDescription: 'Manage tenant secrets backed by MNSCloud OpenVault.',
   createTitle: 'New secret',
   editTitle: 'Edit secret',

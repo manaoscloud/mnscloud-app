@@ -10,11 +10,15 @@
     </li>
 
     <!-- DYNAMIC STEPS -->
-    @for (c of crumbs(); track c.url; let last = $last) {
+    @for (c of crumbs(); track $index; let last = $last) {
       <li class="breadcrumb-item">
         <!-- Intermediate items -->
         @if (!last) {
-          <a [routerLink]="c.url">{{ c.label }}</a>
+          @if (c.url) {
+            <a [routerLink]="c.url">{{ c.label }}</a>
+          } @else {
+            <span>{{ c.label }}</span>
+          }
           <mat-icon class="arrow">chevron_right</mat-icon>
         } @else {
           <span class="current">{{ c.label }}</span>

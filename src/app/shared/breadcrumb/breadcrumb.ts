@@ -10,7 +10,7 @@ import { AppI18nService } from '../../services/app-i18n.service';
 
 interface Crumb {
   label: string;
-  url: string;
+  url?: string;
 }
 
 @Component({
@@ -47,6 +47,14 @@ export class BreadcrumbComponent {
   private buildBreadcrumbs() {
     const url = this.router.url.split(/[?#]/)[0];
     const parts = url.split('/').filter(Boolean);
+
+    let snapshot = this.router.routerState.snapshot.root;
+    while (snapshot.firstChild) snapshot = snapshot.firstChild;
+    const trail = snapshot.data['breadcrumbTrail'] as Crumb[] | undefined;
+    if (trail) {
+      this.crumbs.set(trail.map((item) => ({ ...item, label: this.i18n.t(item.label) })));
+      return;
+    }
 
     const items: Crumb[] = [];
     let path = '';
