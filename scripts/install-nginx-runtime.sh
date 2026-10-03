@@ -29,6 +29,17 @@ log() { printf '[mnscloud-app] %s\n' "$*"; }
 die() { printf '[mnscloud-app] ERROR: %s\n' "$*" >&2; exit 1; }
 require_root() { [[ "${EUID}" -eq 0 ]] || die "this command must run as root"; }
 
+# Keep the enrolled Agent name (MonitoringAgent.MagName); fall back to the FQDN only when the
+# local Agent has no name yet. Passing the FQDN unconditionally renames Agents enrolled with a
+# short name (for example mns-api-dev1 -> mns-api-dev1.<internal-domain>).
+mnscloud_agent_install_label() {
+  local name=""
+  name="$(awk '/^[[:space:]]*name[[:space:]]*=/ { sub(/^[^=]*=[[:space:]]*/, ""); sub(/[[:space:]]+$/, ""); print; exit }' \
+    /etc/mnscloud/agent/agent.conf 2>/dev/null || true)"
+  [[ -n "$name" ]] || name="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'mnscloud-agent')"
+  printf '%s\n' "$name"
+}
+
 refresh_agent_capabilities() {
   if [[ "${APP_REFRESH_AGENT_CAPABILITIES}" == "0" ]]; then
     log "skipping mnscloud-agent capability refresh"
@@ -36,7 +47,7 @@ refresh_agent_capabilities() {
   fi
 
   local install_label
-  install_label="$(hostname -f 2>/dev/null || hostname 2>/dev/null || printf 'mnscloud-agent')"
+  install_label="$(mnscloud_agent_install_label)"
 
   if [[ -x "${AGENT_REPO_INSTALLER}" ]]; then
     log "refreshing mnscloud-agent capabilities after App runtime install"
