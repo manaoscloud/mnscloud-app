@@ -1744,7 +1744,7 @@
   "Setup amount": "Importe de instalación",
   "Setup redirects and custom error pages.": "Configurar redireccionamientos y páginas de error personalizadas.",
   "Setup waive": "Exención de instalación",
-  "Severity": "Severidad",
+  "Severity": "Severidad / Gravedad",
   "SFU": "SFU",
   "Shared secret": "Secreto compartido",
   "Short label": "etiqueta corta",
@@ -5757,7 +5757,6 @@
   "Report Problem or Suggestion": "Reportar problema o sugerencia",
   "Send error details and screen print directly to our engineering team.": "Envíe los detalles del error y la captura de pantalla directamente a nuestro equipo técnico.",
   "Problem Type": "Tipo de problema",
-  "Severity": "Severidad / Gravedad",
   "Summary": "Resumen",
   "e.g. Error saving client form": "p. ej. Error al guardar cliente",
   "Problem Details": "Detalles del problema",
@@ -5781,5 +5780,15 @@
   "Low": "Baja",
   "Medium": "Media",
   "High": "Alta",
-  "Critical (Blocks work)": "Crítica (Impide el trabajo)"
+  "Critical (Blocks work)": "Crítica (Impide el trabajo)",
+  "Create package": "Crear paquete",
+  "Edit subscription": "Editar suscripción",
+  "Migrate subscribers": "Migrar suscriptores",
+  "Move every live subscription to another active package.": "Mueve todas las suscripciones vigentes a otro paquete activo.",
+  "Move every live subscription to another active package. The target price applies from the next cycle.": "Mueve todas las suscripciones vigentes a otro paquete activo. El precio de destino aplica desde el próximo ciclo.",
+  "Package": "Paquete",
+  "Package subscriptions migrated.": "Suscripciones del paquete migradas.",
+  "Subscription canceled successfully.": "Suscripción cancelada correctamente.",
+  "Subscription saved successfully.": "Suscripción guardada correctamente.",
+  "Target package": "Paquete de destino"
 }

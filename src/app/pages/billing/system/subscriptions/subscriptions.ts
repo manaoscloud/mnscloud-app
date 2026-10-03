@@ -43,6 +43,7 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'BsuUUID',
     },
     { id: 'tenant', label: 'Tenant', field: 'EnvironmentName' },
+    { id: 'package', label: 'Package', field: 'BpaName' },
     { id: 'plan', label: 'Plan', field: 'BpcName' },
     {
       id: 'price',
@@ -69,6 +70,7 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemSubscriptionsPage extends ConfigurableCrudPageBase<
   BillingSubscription & ConfigurableCrudRecord

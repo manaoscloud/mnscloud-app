@@ -35,6 +35,14 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  BillingPackageBpaUUID: {
+    label: 'Create package',
+    loadComponent: () =>
+      import('../../../pages/billing/system/packages/packages').then(
+        (m) => m.BillingSystemPackagesPage,
+      ),
+    permission: MASTER_PERMISSION,
+  },
   BillingPriceBpcUUID: {
     label: 'Create price',
     loadComponent: () =>
