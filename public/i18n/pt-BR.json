@@ -5736,5 +5736,15 @@
   "Threats and Events": "Ameaças e Eventos",
   "Access Control": "Controle de Acesso",
   "Protection Decisions": "Decisões de proteção",
-  "API Access Policies": "Políticas de acesso à API"
+  "API Access Policies": "Políticas de acesso à API",
+  "topbar.language": "Idioma",
+  "topbar.context": "Contexto",
+  "topbar.system": "Sistema",
+  "topbar.tenant": "Tenant",
+  "topbar.theme": "Tema",
+  "topbar.profile": "Perfil",
+  "topbar.themeLight": "Claro",
+  "topbar.themeDark": "Escuro",
+  "topbar.themeSystem": "Sistema",
+  "topbar.dismissActivity": "Dispensar atividade"
 }
