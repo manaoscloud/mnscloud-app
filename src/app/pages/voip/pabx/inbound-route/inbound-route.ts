@@ -219,23 +219,35 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     }
   }
 
+  private lookupSequence = 0;
+
+  override closeDialog(): void {
+    this.cancelPendingLookups();
+    super.closeDialog();
+  }
+
   override startCreate(): void {
-    this.didOptions.set([]);
-    this.routeTargetOptions.set([]);
+    this.cancelPendingLookups();
     super.startCreate();
     void this.loadDependentLookups();
   }
 
   protected override startCreateWithValues(values: ConfigurableCrudRecord): void {
-    this.didOptions.set([]);
-    this.routeTargetOptions.set([]);
+    this.cancelPendingLookups();
     super.startCreateWithValues(values);
     void this.loadDependentLookups();
   }
 
   override startEdit(row: ConfigurableCrudRecord): void {
+    this.cancelPendingLookups();
     super.startEdit(row);
     void this.loadDependentLookups(String(row['didUUID'] ?? ''));
+  }
+
+  private cancelPendingLookups(): void {
+    this.lookupSequence += 1;
+    this.didOptions.set([]);
+    this.routeTargetOptions.set([]);
   }
 
   private async loadPabxOptions(): Promise<void> {
@@ -252,20 +264,27 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
   }
 
   private async loadDependentLookups(includeDidUUID = ''): Promise<void> {
-    await Promise.all([this.loadDids(includeDidUUID), this.loadRouteTargets()]);
+    const sequence = ++this.lookupSequence;
+    await Promise.all([
+      this.loadDids(includeDidUUID, sequence),
+      this.loadRouteTargets(sequence),
+    ]);
   }
 
-  private async loadDids(includeDidUUID = ''): Promise<void> {
+  private async loadDids(includeDidUUID = '', sequence = this.lookupSequence): Promise<void> {
     const pabxUUID = String(this.formValues()['pabxUUID'] ?? '');
-    if (!pabxUUID) {
-      this.didOptions.set([]);
+    if (!pabxUUID || sequence !== this.lookupSequence) {
+      if (sequence === this.lookupSequence) this.didOptions.set([]);
       return;
     }
+    // In create mode (editingRecord is null), never include an already assigned DID
+    const safeIncludeDidUUID = this.editingRecord() ? includeDidUUID : '';
     const params = new URLSearchParams({ pabxUUID, limit: '5000' });
-    if (includeDidUUID) params.set('includeDidUUID', includeDidUUID);
+    if (safeIncludeDidUUID) params.set('includeDidUUID', safeIncludeDidUUID);
     const response = await this.rawApi.get<any>(
       `voip/pabx/inbound-routes/available-dids?${params.toString()}`,
     );
+    if (sequence !== this.lookupSequence) return;
     this.didOptions.set(
       extractItems(response).map((row) =>
         option(row.VddUUID, row.VddNumber, [row.CustomerName]),
@@ -273,17 +292,18 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     );
   }
 
-  private async loadRouteTargets(): Promise<void> {
+  private async loadRouteTargets(sequence = this.lookupSequence): Promise<void> {
     const pabxUUID = String(this.formValues()['pabxUUID'] ?? '');
     const routeType = String(this.formValues()['routeType'] ?? 'extension') as RouteTargetType;
-    if (!pabxUUID) {
-      this.routeTargetOptions.set([]);
+    if (!pabxUUID || sequence !== this.lookupSequence) {
+      if (sequence === this.lookupSequence) this.routeTargetOptions.set([]);
       return;
     }
     const endpoint = targetEndpoint(routeType);
     const response = await this.rawApi.get<any>(
       `voip/pabx/${endpoint}?limit=5000&pabxUUID=${encodeURIComponent(pabxUUID)}`,
     );
+    if (sequence !== this.lookupSequence) return;
     this.routeTargetOptions.set(
       extractItems(response).map((row) => targetOption(routeType, row)).filter(Boolean) as ConfigurableCrudOption[],
     );
