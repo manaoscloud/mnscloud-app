@@ -1,3 +1,33 @@
+@use '@angular/material' as mat;
+
+// Text and icon triggers must use the same Material interaction layer. The app's
+// button theme does not supply icon-button tokens; scope these overrides to the
+// toolbar so unrelated buttons retain their own component themes.
+.topbar {
+  @include mat.button-overrides(
+    (
+      text-state-layer-color: var(--mat-sys-color-primary),
+      text-hover-state-layer-opacity: 0.08,
+      text-focus-state-layer-opacity: 0.12,
+      text-pressed-state-layer-opacity: 0.12,
+      text-ripple-color: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent),
+      text-container-shape: 999px,
+    )
+  );
+  @include mat.icon-button-overrides(
+    (
+      state-layer-color: var(--mat-sys-color-primary),
+      hover-state-layer-opacity: 0.08,
+      focus-state-layer-opacity: 0.12,
+      pressed-state-layer-opacity: 0.12,
+      ripple-color: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent),
+      container-shape: 999px,
+      state-layer-size: 44px,
+      touch-target-size: 44px,
+    )
+  );
+}
+
 // One overlay shell for every topbar menu, based on the Activity Center.
 .mat-mdc-menu-panel.topbar-menu {
   width: min(22rem, calc(100vw - 1.5rem));

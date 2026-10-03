@@ -72,6 +72,10 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   Material overlays live outside the layout view; keep their shared styling global.
 - Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
   divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
+- Text and icon triggers share the toolbar-scoped Material state-layer tokens: primary color,
+  8% hover, 12% keyboard focus/press, rounded shape and 44px icon targets. Mobile rules hide only
+  the trigger label, never Material ripple/focus spans. Verify hover, keyboard focus, press and
+  disabled states on every trigger in both themes; do not validate only the opened panels.
 - All labels and accessible names use first-class PT/EN/ES translations. Selection menus expose
   checked state; keep Material keyboard navigation, Escape and focus restoration.
 - Tenant default and tenant activation are independent sibling buttons, never nested interactive
