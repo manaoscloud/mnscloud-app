@@ -682,9 +682,11 @@ html.dark {
   .lang-button,
   .context-button,
   .tenant-button {
+    width: 44px;
     min-width: 44px;
     height: 44px;
-    padding: 0 0.35rem;
+    padding: 0;
+    gap: 0;
   }
 
   .page-content {
