@@ -2894,7 +2894,6 @@
   "Maintain wallet entry.": "Maintain wallet entry.",
   "Initial item product": "Initial item product",
   "Initial item entitlement": "Initial item entitlement",
-  "Initial item config JSON": "Initial item config JSON",
   "Rule product": "Rule product",
   "Rule price": "Rule price",
   "Coupon expires at": "Coupon expires at",
@@ -5816,5 +5815,18 @@
   "unchanged": "Unchanged",
   "blocked": "Blocked",
   "applied": "Applied",
-  "Runtime Reconcile": "Runtime Reconcile"
+  "Runtime Reconcile": "Runtime Reconcile",
+  "Item entitlement": "Item entitlement",
+  "Only active packages can receive new subscriptions or be chosen as a migration target. Deactivating a package does not cancel its current subscriptions.": "Only active packages can receive new subscriptions or be chosen as a migration target. Deactivating a package does not cancel its current subscriptions.",
+  "Permanent unique identifier of the package, for example package.erp.starter. The API, audit logs and integrations use it; avoid changing it after the package is in use.": "Permanent unique identifier of the package, for example package.erp.starter. The API, audit logs and integrations use it; avoid changing it after the package is in use.",
+  "Commercial name of the package shown to operators and tenants.": "Commercial name of the package shown to operators and tenants.",
+  "Main product the tenant subscribes to and pays for. The subscription price comes from this product active price.": "Main product the tenant subscribes to and pays for. The subscription price comes from this product active price.",
+  "Yes shows the package in the tenant catalog. No keeps it internal, for packages assigned by the platform team.": "Yes shows the package in the tenant catalog. No keeps it internal, for packages assigned by the platform team.",
+  "Position of the package in lists and in the catalog. Lower numbers appear first.": "Position of the package in lists and in the catalog. Lower numbers appear first.",
+  "First product included in the package, created together with it. Add more items later in the package Items list.": "First product included in the package, created together with it. Add more items later in the package Items list.",
+  "What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.": "What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.",
+  "Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.": "Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.",
+  "Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.": "Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.",
+  "Commercial description of the package for operators and catalogs.": "Commercial description of the package for operators and catalogs.",
+  "Product included in the package.": "Product included in the package."
 }
