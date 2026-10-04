@@ -59,7 +59,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     itemEntitlementCode: '',
     itemIncludedQuantity: 1,
     itemRequired: 1,
-    itemConfig: '',
     status: 1,
   },
   columns: [
@@ -141,12 +140,14 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           type: 'search-select',
           quickCreate: quickCreateFor('BillingProductBprUUID'),
           required: true,
+          help: 'Product included in the package.',
           span: 2,
         },
         {
           key: 'itemEntitlementCode',
           payloadKey: 'entitlementCode',
-          label: 'Entitlement',
+          label: 'Item entitlement',
+          help: 'What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.',
           span: 2,
         },
         {
@@ -154,6 +155,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           payloadKey: 'includedQuantity',
           label: 'Included quantity',
           type: 'number',
+          help: 'Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.',
           span: 1,
         },
         {
@@ -162,6 +164,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           label: 'Required',
           type: 'select',
           options: YES_NO_OPTIONS,
+          help: 'Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.',
           span: 1,
         },
       ],
@@ -173,7 +176,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           field: 'BillingProductBprUUID',
           lookupKey: 'itemProductUUID',
         },
-        { id: 'entitlement', label: 'Entitlement', field: 'BkiEntitlementCode' },
+        { id: 'entitlement', label: 'Item entitlement', field: 'BkiEntitlementCode' },
         {
           id: 'quantity',
           label: 'Included quantity',
@@ -192,13 +195,32 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    { key: 'status', source: 'BpaStatus', payloadKey: 'status', label: 'Status', type: 'status' },
+    // Record row 1: Status, Code, Name, Product
+    {
+      key: 'status',
+      source: 'BpaStatus',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      help: 'Only active packages can receive new subscriptions or be chosen as a migration target. Deactivating a package does not cancel its current subscriptions.',
+      span: 1,
+    },
     {
       key: 'code',
       source: 'BpaCode',
       payloadKey: 'code',
       label: 'Code',
       required: true,
+      help: 'Permanent unique identifier of the package, for example package.erp.starter. The API, audit logs and integrations use it; avoid changing it after the package is in use.',
+      span: 1,
+    },
+    {
+      key: 'name',
+      source: 'BpaName',
+      payloadKey: 'name',
+      label: 'Name',
+      required: true,
+      help: 'Commercial name of the package shown to operators and tenants.',
       span: 1,
     },
     {
@@ -208,16 +230,10 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Product',
       type: 'search-select',
       required: true,
-      span: 2,
+      help: 'Main product the tenant subscribes to and pays for. The subscription price comes from this product active price.',
+      span: 1,
     },
-    {
-      key: 'name',
-      source: 'BpaName',
-      payloadKey: 'name',
-      label: 'Name',
-      required: true,
-      span: 2,
-    },
+    // Record row 2: Public, Sort order
     {
       key: 'isPublic',
       source: 'BpaIsPublic',
@@ -225,6 +241,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Public',
       type: 'select',
       options: YES_NO_OPTIONS,
+      help: 'Yes shows the package in the tenant catalog. No keeps it internal, for packages assigned by the platform team.',
       span: 1,
     },
     {
@@ -233,8 +250,10 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'sortOrder',
       label: 'Sort order',
       type: 'number',
+      help: 'Position of the package in lists and in the catalog. Lower numbers appear first.',
       span: 1,
     },
+    // Financial (create only): the first package item, created in the same transaction.
     {
       key: 'itemProductUUID',
       payloadKey: 'itemProductUUID',
@@ -243,16 +262,18 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       quickCreate: quickCreateFor('BillingProductBprUUID'),
       requiredWhen: ({ editing }) => !editing,
       hiddenWhen: ({ editing }) => editing,
+      help: 'First product included in the package, created together with it. Add more items later in the package Items list.',
       tab: 'financial',
-      span: 2,
+      span: 1,
     },
     {
       key: 'itemEntitlementCode',
       payloadKey: 'itemEntitlementCode',
       label: 'Initial item entitlement',
       hiddenWhen: ({ editing }) => editing,
+      help: 'What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.',
       tab: 'financial',
-      span: 2,
+      span: 1,
     },
     {
       key: 'itemIncludedQuantity',
@@ -260,6 +281,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Included quantity',
       type: 'number',
       hiddenWhen: ({ editing }) => editing,
+      help: 'Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.',
       tab: 'financial',
       span: 1,
     },
@@ -270,26 +292,18 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: YES_NO_OPTIONS,
       hiddenWhen: ({ editing }) => editing,
+      help: 'Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.',
       tab: 'financial',
       span: 1,
     },
+    // Notes: full-row textarea, four rows (app.md Notes rule).
     {
       key: 'description',
       source: 'BpaDescription',
       payloadKey: 'description',
       label: 'Description',
       type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 3,
-    },
-    {
-      key: 'itemConfig',
-      payloadKey: 'itemConfig',
-      label: 'Initial item config JSON',
-      type: 'textarea',
-      format: 'json',
-      hiddenWhen: ({ editing }) => editing,
+      help: 'Commercial description of the package for operators and catalogs.',
       tab: 'notes',
       span: 4,
       rows: 4,
@@ -335,7 +349,6 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
         entitlementCode: payload['itemEntitlementCode'] || null,
         includedQuantity: numberOrNull(payload['itemIncludedQuantity']) ?? 1,
         required: Number(payload['itemRequired'] ?? 1),
-        config: payload['itemConfig'] || null,
       };
     }
     return next;
