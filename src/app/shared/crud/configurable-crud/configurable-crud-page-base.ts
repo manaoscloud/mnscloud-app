@@ -330,6 +330,8 @@ export type ConfigurableCrudRowAction = {
   form?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   /** Declarative one-click API call (for example "set as cover"); reloads the list on success. */
   request?: ConfigurableCrudRowActionRequest;
+  /** Client-side action (for example downloading a private file); also works inside collection dialogs. */
+  run?: (row: ConfigurableCrudRecord) => void | Promise<void>;
 };
 
 export type ConfigurableCrudRowActionRequest = {
@@ -1161,6 +1163,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async runRowAction(action: ConfigurableCrudRowAction, row: T): Promise<void> {
     if (action.visible?.(row) === false) return;
+    if (action.run) {
+      await action.run(row);
+      return;
+    }
     if (action.request) {
       await this.runRowActionRequest(action.request, row);
       return;

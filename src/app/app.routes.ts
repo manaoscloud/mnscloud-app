@@ -88,14 +88,72 @@ export const routes: Routes = [
               import('./pages/user/profile/user-profile').then((m) => m.UserProfileComponent),
             title: 'My Profile | mnscloud',
           },
+          // Platform support desk: platform.support.* agents (masters included), no tenant needed.
           {
-            path: 'user/bug-reports',
+            path: 'support-desk/tickets',
+            canActivate: [permissionGuard],
             loadComponent: () =>
-              import('./pages/support/bug-reports/bug-reports').then(
-                (m) => m.SupportBugReportsPage,
+              import('./pages/support/tickets/tickets').then((m) => m.SupportTicketsPage),
+            title: 'Platform support • Tickets | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.tickets.manage',
+              breadcrumb: 'Platform tickets',
+            },
+          },
+          {
+            path: 'support-desk/teams',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/teams/teams').then((m) => m.SupportTeamsPage),
+            title: 'Platform support • Teams | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Support teams',
+            },
+          },
+          {
+            path: 'support-desk/ticket-types',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/ticket-types/ticket-types').then(
+                (m) => m.SupportTicketTypesPage,
               ),
-            title: 'My problem reports | mnscloud',
-            data: { breadcrumb: 'My problem reports' },
+            title: 'Platform support • Ticket types | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Ticket types',
+            },
+          },
+          {
+            path: 'support-desk/ticket-priorities',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/ticket-priorities/ticket-priorities').then(
+                (m) => m.SupportTicketPrioritiesPage,
+              ),
+            title: 'Platform support • Ticket priorities | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Ticket priorities',
+            },
+          },
+          {
+            path: 'support-desk/ticket-origins',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/ticket-channels/ticket-channels').then(
+                (m) => m.SupportTicketChannelsPage,
+              ),
+            title: 'Platform support • Ticket origins | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Ticket origins',
+            },
           },
           {
             path: 'user/permissions',
@@ -578,7 +636,34 @@ export const routes: Routes = [
                   import('./pages/support/ticket-channels/ticket-channels').then(
                     (m) => m.SupportTicketChannelsPage,
                   ),
-                title: 'Support • Chat Channels | mnscloud',
+                title: 'Support • Ticket origins | mnscloud',
+                data: { breadcrumb: 'Ticket origins' },
+              },
+              {
+                path: 'support/ticket-types',
+                loadComponent: () =>
+                  import('./pages/support/ticket-types/ticket-types').then(
+                    (m) => m.SupportTicketTypesPage,
+                  ),
+                title: 'Support • Ticket types | mnscloud',
+                data: { breadcrumb: 'Ticket types' },
+              },
+              {
+                path: 'support/ticket-priorities',
+                loadComponent: () =>
+                  import('./pages/support/ticket-priorities/ticket-priorities').then(
+                    (m) => m.SupportTicketPrioritiesPage,
+                  ),
+                title: 'Support • Ticket priorities | mnscloud',
+                data: { breadcrumb: 'Ticket priorities' },
+              },
+              {
+                // Help center: every tenant user, no Support module needed.
+                path: 'help/tickets',
+                loadComponent: () =>
+                  import('./pages/help/tickets/tickets').then((m) => m.HelpTicketsPage),
+                title: 'My tickets | mnscloud',
+                data: { breadcrumb: 'My tickets' },
               },
               {
                 path: 'support/teams',
@@ -1493,15 +1578,6 @@ export const routes: Routes = [
                     (m) => m.MonitoringActivityLogsPage,
                   ),
                 title: 'System Monitoring • Activity Logs | mnscloud',
-              },
-              {
-                path: 'support/bug-reports',
-                loadComponent: () =>
-                  import('./pages/support/bug-reports/bug-reports').then(
-                    (m) => m.SupportBugReportsPage,
-                  ),
-                title: 'System • Problem reports | mnscloud',
-                data: { scope: 'master', breadcrumb: 'Problem reports' },
               },
               {
                 path: 'monitoring/notification-rules',

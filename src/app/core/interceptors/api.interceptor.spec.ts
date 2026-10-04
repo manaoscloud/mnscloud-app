@@ -114,8 +114,8 @@ describe('apiInterceptor', () => {
   });
 
   it('does not offer Report problem when sending the report itself fails', async () => {
-    const promise = httpClient.post('/api/v1/system/bug-reports', {}).toPromise();
-    const req = http.expectOne('/api/v1/system/bug-reports');
+    const promise = httpClient.post('/api/v1/help/tickets', {}).toPromise();
+    const req = http.expectOne('/api/v1/help/tickets');
     req.flush({ error: 'Boom.' }, { status: 502, statusText: 'Bad Gateway' });
 
     await expectAsync(promise).toBeRejected();

@@ -387,8 +387,27 @@ export const QUICK_CREATE_REGISTRY = {
     label: 'Create unit',
     loadComponent: () => import('../../../pages/sales/unit/unit').then((m) => m.SaleUnitPage),
   },
+  SupportTicketPriorityStpUUID: {
+    label: 'Create priority',
+    loadComponent: () =>
+      import('../../../pages/support/ticket-priorities/ticket-priorities').then(
+        (m) => m.SupportTicketPrioritiesPage,
+      ),
+  },
+  SupportTeamStmUUID: {
+    label: 'Create support team',
+    loadComponent: () =>
+      import('../../../pages/support/teams/teams').then((m) => m.SupportTeamsPage),
+  },
+  SupportTicketTypeSttUUID: {
+    label: 'Create ticket type',
+    loadComponent: () =>
+      import('../../../pages/support/ticket-types/ticket-types').then(
+        (m) => m.SupportTicketTypesPage,
+      ),
+  },
   SupportTicketChannelStcUUID: {
-    label: 'Create channel',
+    label: 'Create origin',
     loadComponent: () =>
       import('../../../pages/support/ticket-channels/ticket-channels').then(
         (m) => m.SupportTicketChannelsPage,

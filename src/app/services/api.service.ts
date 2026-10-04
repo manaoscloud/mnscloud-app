@@ -82,9 +82,7 @@ export class ApiService {
       normalized === 'cyber-security' ||
       normalized.startsWith('cyber-security/') ||
       // System hosting writes still need the selected tenant (create host/plan/etc.).
-      normalized.startsWith('system/hosting/') ||
-      // Problem reports record the active environment when one is selected (membership checked by the DB).
-      normalized === 'system/bug-reports'
+      normalized.startsWith('system/hosting/')
     );
   }
 

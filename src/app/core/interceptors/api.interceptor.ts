@@ -92,7 +92,7 @@ function parseSnackParams(message: string): { key: string; params?: Record<strin
   return { key, params };
 }
 
-const BUG_REPORT_ENDPOINT = /\/system\/bug-reports(?:[/?]|$)/;
+const BUG_REPORT_ENDPOINT = /\/help\/tickets(?:[/?]|$)/;
 
 function requestPath(url: string): string {
   try {
@@ -146,8 +146,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       const prefill = reports.draft().description
         ? {}
         : {
-            type: 'bug' as const,
-            severity: 'high' as const,
+            typeCode: 'bug',
+            priorityCode: 'high',
             description: failure
               ? `${failure.method} ${failure.url} → ${failure.status}${
                   failure.requestId ? ` (correlation ${failure.requestId})` : ''

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,12 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import {
-  BugReportCreated,
-  BugReportService,
-  BugReportSeverity,
-  BugReportType,
-} from '../../services/bug-report.service';
+import { ApiService } from '../../services/api.service';
+import { BugReportCreated, BugReportService } from '../../services/bug-report.service';
 import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
@@ -23,20 +19,17 @@ export interface BugReportDialogData {
   url?: string;
 }
 
-export const BUG_REPORT_TYPE_OPTIONS: readonly MnsSearchSelectFieldOption[] = [
-  { value: 'bug', label: 'System Error / Bug' },
-  { value: 'performance', label: 'Slowness / Performance' },
-  { value: 'ui', label: 'Visual / Layout Issue' },
-  { value: 'suggestion', label: 'Suggestion / Improvement' },
-  { value: 'other', label: 'Other' },
-];
+type CatalogRow = { Name?: string; Code?: string; IsDefault?: number } & Record<string, unknown>;
+type CatalogOption = MnsSearchSelectFieldOption & { code: string; isDefault: boolean };
 
-export const BUG_REPORT_SEVERITY_OPTIONS: readonly MnsSearchSelectFieldOption[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'critical', label: 'Critical (Blocks work)' },
-];
+function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): CatalogOption[] {
+  return (rows ?? []).map((row) => ({
+    value: String(row[uuidField] ?? ''),
+    label: String(row.Name ?? ''),
+    code: String(row.Code ?? ''),
+    isDefault: Number(row.IsDefault ?? 0) === 1,
+  }));
+}
 
 @Component({
   selector: 'app-bug-report-dialog',
@@ -60,12 +53,29 @@ export class BugReportDialogComponent {
   private readonly bugReports = inject(BugReportService);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly api = inject(ApiService);
   readonly data = inject<BugReportDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
 
-  readonly typeOptions = BUG_REPORT_TYPE_OPTIONS;
-  readonly severityOptions = BUG_REPORT_SEVERITY_OPTIONS;
-  readonly titleMax = 200;
-  readonly descriptionMax = 4000;
+  readonly titleMax = 160;
+  readonly descriptionMax = 10000;
+
+  /** Ticket types and priorities come from the platform support desk catalogs. */
+  readonly catalogs = resource({
+    loader: async () => {
+      const [types, priorities] = await Promise.all([
+        this.api.get<{ data?: { items?: CatalogRow[] } }>('help/ticket-types'),
+        this.api.get<{ data?: { items?: CatalogRow[] } }>('help/ticket-priorities'),
+      ]);
+      return {
+        types: catalogOptions(types?.data?.items, 'SupportTicketTypeUUID'),
+        priorities: catalogOptions(priorities?.data?.items, 'SupportTicketPriorityUUID'),
+      };
+    },
+  });
+  readonly typeOptions = computed(() => this.catalogs.value()?.types ?? []);
+  readonly priorityOptions = computed(() => this.catalogs.value()?.priorities ?? []);
+  /** Tickets belong to an environment: without one selected, the catalogs cannot load. */
+  readonly unavailable = computed(() => this.catalogs.status() === 'error');
 
   readonly draft = this.bugReports.draft;
   readonly screenshot = signal<string | null>(null);
@@ -78,6 +88,7 @@ export class BugReportDialogComponent {
   readonly isFormValid = computed(() => {
     const draft = this.draft();
     return (
+      !this.unavailable() &&
       draft.title.trim().length > 0 &&
       draft.title.trim().length <= this.titleMax &&
       draft.description.trim().length > 0 &&
@@ -88,10 +99,29 @@ export class BugReportDialogComponent {
   constructor() {
     // The dialog lives in the CDK overlay, which the capture ignores: the print shows the page.
     void this.capture();
+    // Preselect: prefill codes (failed call), then the draft, then the desk defaults.
+    effect(() => {
+      const types = this.typeOptions();
+      const priorities = this.priorityOptions();
+      if (!types.length && !priorities.length) return;
+      const codes = this.bugReports.prefillCodes();
+      const draft = this.draft();
+      const pick = (options: CatalogOption[], current: string, code?: string) =>
+        options.find((option) => code && option.code === code)?.value ??
+        options.find((option) => option.value === current)?.value ??
+        options.find((option) => option.isDefault)?.value ??
+        options[0]?.value ??
+        '';
+      const typeUUID = String(pick(types, draft.typeUUID, codes.typeCode));
+      const priorityUUID = String(pick(priorities, draft.priorityUUID, codes.priorityCode));
+      if (typeUUID !== draft.typeUUID || priorityUUID !== draft.priorityUUID) {
+        this.draft.update((value) => ({ ...value, typeUUID, priorityUUID }));
+      }
+    });
   }
 
   successTitle(protocol: string): string {
-    return this.transloco.translate('Problem report #{{protocol}} sent.', { protocol });
+    return this.transloco.translate('Ticket #{{protocol}} opened.', { protocol });
   }
 
   diagnosticsSummary(): string {
@@ -125,14 +155,13 @@ export class BugReportDialogComponent {
   }
 
   setType(value: unknown) {
-    this.draft.update((draft) => ({ ...draft, type: (value || 'bug') as BugReportType }));
+    this.bugReports.prefillCodes.update((codes) => ({ ...codes, typeCode: undefined }));
+    this.draft.update((draft) => ({ ...draft, typeUUID: String(value ?? '') }));
   }
 
-  setSeverity(value: unknown) {
-    this.draft.update((draft) => ({
-      ...draft,
-      severity: (value || 'medium') as BugReportSeverity,
-    }));
+  setPriority(value: unknown) {
+    this.bugReports.prefillCodes.update((codes) => ({ ...codes, priorityCode: undefined }));
+    this.draft.update((draft) => ({ ...draft, priorityUUID: String(value ?? '') }));
   }
 
   setIncludeDiagnostics(value: boolean) {
@@ -161,8 +190,8 @@ export class BugReportDialogComponent {
       const created = await this.bugReports.submitReport({
         title: draft.title.trim(),
         description: draft.description.trim(),
-        type: draft.type,
-        severity: draft.severity,
+        typeUUID: draft.typeUUID || null,
+        priorityUUID: draft.priorityUUID || null,
         url: this.environment.url,
         route: this.environment.route,
         appVersion: this.environment.appVersion,
@@ -186,9 +215,10 @@ export class BugReportDialogComponent {
     }
   }
 
-  openMyReports() {
+  openMyTickets() {
+    const ticket = this.created()?.SupportTicketUUID;
     this.dialogRef.close(true);
-    void this.router.navigateByUrl('/user/bug-reports');
+    void this.router.navigate(['/help/tickets'], ticket ? { queryParams: { ticket } } : {});
   }
 
   close() {
