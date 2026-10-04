@@ -49,7 +49,9 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
     label,
     type: 'search-select',
     remoteLookup: { endpoint: `${base}/${endpoint}?status=1`, uuidField, labelField: 'Name' },
-    quickCreate: quickCreateFor(registry),
+    quickCreate: quickCreateFor(registry, {
+      routeData: { scope: platform ? 'master' : 'tenant' },
+    }),
     required,
     span: 1,
   });

@@ -10,7 +10,8 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 /**
  * One Support model, two desks: the tenant desk (/support, a tenant answers its ERP customers)
  * and the platform desk (/system/support, the MNSCloud team answers tenants). Pages read the
- * desk from the route (`data.scope === 'master'`), so quick-create keeps the caller's desk.
+ * desk from the route (`data.scope === 'master'`). Quick-create fields pass this scope explicitly
+ * because the shared dialog host is outside the routed page's injector.
  */
 export type SupportDesk = 'tenant' | 'platform';
 
