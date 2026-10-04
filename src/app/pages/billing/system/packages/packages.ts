@@ -21,7 +21,7 @@ import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-
 const PACKAGE_PAYLOAD_KEYS = [
   'code',
   'name',
-  'description',
+  'notes',
   'productUUID',
   'isPublic',
   'sortOrder',
@@ -51,7 +51,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     code: 'package.',
     name: '',
-    description: '',
+    notes: '',
     productUUID: '',
     isPublic: 0,
     sortOrder: 1000,
@@ -80,7 +80,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       key: 'migrateSubscribers',
       label: 'Migrate subscribers',
       icon: 'move_down',
-      tooltip: 'Move every live subscription to another active package.',
+      tooltip: 'Move selected subscriptions to another active package.',
       visible: (row) => Number(row['SubscriptionCount'] ?? 0) > 0,
       form: (row) =>
         defineCrud({
@@ -89,13 +89,31 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           pageTitle: 'Migrate subscribers',
           createTitle: 'Migrate subscribers',
           dialogDescription:
-            'Move every live subscription to another active package. The target price applies from the next cycle.',
+            'Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.',
           canEdit: false,
           canDelete: false,
           bulkDelete: false,
           columns: [],
-          initialValues: { targetPackageUUID: '' },
+          initialValues: { subscriptionUUIDs: [], targetPackageUUID: '' },
           fields: [
+            {
+              key: 'subscriptionUUIDs',
+              payloadKey: 'subscriptionUUIDs',
+              label: 'Subscribers',
+              type: 'search-select',
+              multiple: true,
+              required: true,
+              remoteLookup: {
+                endpoint: `system/billing/packages/${row['BpaUUID']}/subscriptions`,
+                uuidField: 'BsuUUID',
+                labelField: 'TenantLabel',
+              },
+              quickCreate: false,
+              quickCreateExemptReason:
+                'Only existing live subscriptions of this package can be migrated.',
+              help: 'Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.',
+              span: 2,
+            },
             {
               key: 'targetPackageUUID',
               payloadKey: 'targetPackageUUID',
@@ -108,6 +126,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
                 labelField: 'BpaName',
               },
               quickCreate: quickCreateFor('BillingPackageBpaUUID'),
+              help: 'Active package that receives the selected subscriptions. Its price applies from the next billing cycle, using the active price with the same currency and billing mode.',
               span: 2,
             },
           ],
@@ -141,14 +160,14 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           quickCreate: quickCreateFor('BillingProductBprUUID'),
           required: true,
           help: 'Product included in the package.',
-          span: 2,
+          span: 1,
         },
         {
           key: 'itemEntitlementCode',
           payloadKey: 'entitlementCode',
           label: 'Item entitlement',
+          span: 1,
           help: 'What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.',
-          span: 2,
         },
         {
           key: 'itemIncludedQuantity',
@@ -169,13 +188,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         },
       ],
       columns: [
-        {
-          id: 'product',
-          label: 'Product',
-          kind: 'related',
-          field: 'BillingProductBprUUID',
-          lookupKey: 'itemProductUUID',
-        },
+        { id: 'product', label: 'Product', field: 'BprName' },
         { id: 'entitlement', label: 'Item entitlement', field: 'BkiEntitlementCode' },
         {
           id: 'quantity',
@@ -296,14 +309,14 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       tab: 'financial',
       span: 1,
     },
-    // Notes: full-row textarea, four rows (app.md Notes rule).
+    // Notes: `notes` as a full-row, four-row textarea (app.md Notes rule).
     {
-      key: 'description',
-      source: 'BpaDescription',
-      payloadKey: 'description',
-      label: 'Description',
+      key: 'notes',
+      source: 'BpaNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
       type: 'textarea',
-      help: 'Commercial description of the package for operators and catalogs.',
+      help: 'Internal annotations about the package, visible only to the platform team.',
       tab: 'notes',
       span: 4,
       rows: 4,

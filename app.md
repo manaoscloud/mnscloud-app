@@ -758,6 +758,9 @@ or cancelling the form they are filling.
   - arrow button radius: left square, right rounded (`0 999px 999px 0`).
   - add only a thin internal divider between `Save` and the arrow.
   - do not apply generic primary button classes that force full border radius to the main `Save` button inside the split wrapper.
+  - when the `Save/New` arrow is not rendered (edit mode, `formOnly` row-action forms such as
+    one-shot migrations, and quick-create), the wrapper must carry `.is-single-action` so the single
+    `Save` button is fully rounded; never leave a squared right edge without the arrow.
 - Save menu:
   - use Angular Material `mat-menu` for the `Save/New` action.
   - label must be `Save/New`.
@@ -1383,6 +1386,11 @@ address fields and inline related-collection editors. No per-page opt-in is requ
 - `helpWhen: ({ editing, values }) => 'Translation key'` supplies conditional guidance.
   An empty result hides the help button; it does not fall back to the static text.
   Related-collection guidance uses its own draft values, never the parent form values.
+- Related-collection editors (`relatedCollections`) render the draft fields in the shared 4-column
+  grid with the declared spans, and the `Add` action on its own full-width row, right-aligned like
+  `filter-actions`, with the 40px control height. Do not give the action a grid span or a taller
+  cell than the inputs. Related columns should display a name returned by the child list (for
+  example `BprName`) instead of relying on a parent lookup that can miss and show the UUID.
 - Use `matIconSuffix` on Material fields and the shared `help` input on searchable
   relation fields. Native file controls place help inside their existing outline;
   the selected filename remains visible as operational state.
