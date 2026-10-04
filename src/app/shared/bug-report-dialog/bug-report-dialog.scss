@@ -1,6 +1,17 @@
 // Layout, header, scrolling and footer come from the global `.crud-dialog` baseline.
 // Only the report-specific blocks (screenshot, diagnostics, confirmation) live here.
 
+.bug-report-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+}
+
 .bug-report-panel {
   display: flex;
   flex-direction: column;

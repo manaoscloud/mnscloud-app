@@ -13,35 +13,41 @@
       @if (created(); as report) {
         <section class="bug-report-success" role="status">
           <mat-icon class="bug-report-success-icon">task_alt</mat-icon>
-          <h3>{{ successTitle(report.BgrID) }}</h3>
+          <h3>{{ successTitle(report.SupportTicketID) }}</h3>
           <p>
             {{
-              'Our team was notified. Follow the status and the team answer in My problem reports.'
+              'Our team was notified. Follow the answer in My tickets; you also get an email.'
                 | transloco
             }}
           </p>
         </section>
       } @else {
+        @if (unavailable()) {
+          <p class="bug-report-warning" role="alert">
+            <mat-icon>info</mat-icon>
+            {{ 'Select an environment to open a ticket to the support team.' | transloco }}
+          </p>
+        }
         <div class="form-grid">
           <mns-search-select-field
             fieldClass="span-2"
-            [label]="'Problem Type' | transloco"
+            [label]="'Type' | transloco"
             [placeholder]="'Search' | transloco"
             [emptyLabel]="'No records found.' | transloco"
-            [options]="typeOptions"
-            [translateOptions]="true"
-            [value]="draft().type"
+            [options]="typeOptions()"
+            [loading]="catalogs.isLoading()"
+            [value]="draft().typeUUID"
             (valueChange)="setType($event)"
           />
           <mns-search-select-field
             fieldClass="span-2"
-            [label]="'Severity' | transloco"
+            [label]="'Priority' | transloco"
             [placeholder]="'Search' | transloco"
             [emptyLabel]="'No records found.' | transloco"
-            [options]="severityOptions"
-            [translateOptions]="true"
-            [value]="draft().severity"
-            (valueChange)="setSeverity($event)"
+            [options]="priorityOptions()"
+            [loading]="catalogs.isLoading()"
+            [value]="draft().priorityUUID"
+            (valueChange)="setPriority($event)"
           />
 
           <mat-form-field appearance="outline" class="span-4">
@@ -49,20 +55,20 @@
             <input
               matInput
               required
-              maxlength="200"
+              maxlength="160"
               [value]="draft().title"
               (input)="update('title', $any($event.target).value)"
               [placeholder]="'e.g. Error saving client form' | transloco"
             />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-4">
+          <mat-form-field appearance="outline" class="span-4" floatLabel="always">
             <mat-label>{{ 'Problem Details' | transloco }}</mat-label>
             <textarea
               matInput
               required
               rows="5"
-              maxlength="4000"
+              maxlength="10000"
               [value]="draft().description"
               (input)="update('description', $any($event.target).value)"
               [placeholder]="
@@ -160,9 +166,9 @@
     </div>
     <div class="primary-actions">
       @if (created()) {
-        <button mat-flat-button color="primary" type="button" (click)="openMyReports()">
-          <mat-icon>list_alt</mat-icon>
-          {{ 'My problem reports' | transloco }}
+        <button mat-flat-button color="primary" type="button" (click)="openMyTickets()">
+          <mat-icon>confirmation_number</mat-icon>
+          {{ 'My tickets' | transloco }}
         </button>
       } @else {
         <button

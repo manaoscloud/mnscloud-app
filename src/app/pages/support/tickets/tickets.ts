@@ -1,41 +1,353 @@
-import { Component, computed, inject, resource } from '@angular/core';
-import { ApiService } from '../../../services/api.service';
-import { ConfigurableCrudConfig, ConfigurableCrudListFilter, ConfigurableCrudOption, ConfigurableCrudPageBase, ConfigurableCrudRecord, CONFIGURABLE_CRUD_IMPORTS } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { Component, afterNextRender, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudField,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-const statuses: ConfigurableCrudOption[] = ['open', 'in_progress', 'pending', 'resolved', 'closed', 'canceled'].map((value) => ({ value, label: value }));
-const priorities: ConfigurableCrudOption[] = ['low', 'normal', 'high', 'urgent'].map((value) => ({ value, label: value }));
-const severities: ConfigurableCrudOption[] = ['minor', 'major', 'critical'].map((value) => ({ value, label: value }));
-const types: ConfigurableCrudOption[] = ['incident', 'request', 'question', 'problem'].map((value) => ({ value, label: value }));
-const yesNo: ConfigurableCrudOption[] = [{ value: 1, label: 'Yes' }, { value: 0, label: 'No' }];
-function config(): ConfigurableCrudConfig { return {
-  endpoint: 'support/tickets', uuidField: 'SupportTicketUUID', pageTitle: 'Support tickets', pageDescription: 'Manage tenant support requests and their service lifecycle.', createTitle: 'New support ticket', editTitle: 'Edit support ticket', dialogDescription: 'Maintain the ticket request, contact, and SLA data.', searchPlaceholder: 'Search', emptyLabel: 'No support tickets found.', deleteTitle: 'Delete support ticket', deleteMessage: 'Delete this support ticket?', deleteSelectedTitle: 'Delete selected support tickets', deleteSelectedMessage: 'Delete {count} selected support tickets?', savedMessage: 'Support ticket saved successfully.', deletedMessage: 'Support ticket deleted successfully.', deleteFailedMessage: 'Failed to delete support ticket.', statusMode: 'string', activeValue: 'open', inactiveValue: 'closed', activeStatusValues: ['open', 'in_progress', 'pending', 'resolved'], statusOptions: statuses, bulkDelete: false,
-  initialValues: { customerUUID: '', channelUUID: '', subject: '', description: '', status: 'open', priority: 'normal', severity: '', type: 'request', tags: '', internalNotes: '', contactName: '', contactEmail: '', contactPhone: '', slaPlan: '', slaResponseDeadline: '', slaResolutionDeadline: '', slaBreached: 0 },
-  columns: [{ id: 'ticket', label: 'Ticket', kind: 'identity', field: 'SupportTicketID', uuidField: 'SupportTicketUUID' }, { id: 'subject', label: 'Subject', field: 'Subject' }, { id: 'customer', label: 'Customer', field: 'CustomerName' }, { id: 'channel', label: 'Channel', field: 'ChannelName' }, { id: 'priority', label: 'Priority', field: 'Priority' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }, { id: 'openedAt', label: 'Opened at', kind: 'datetime', field: 'OpenedAt' }],
-  listFilters: [{ key: 'customerUUID', label: 'Customer', type: 'search-select', span: 1 }, { key: 'channelUUID', label: 'Channel', type: 'search-select', span: 1 }, { key: 'priority', label: 'Priority', type: 'select', options: priorities, span: 1 }],
-  tabLabels: { authentication: 'Contact', financial: 'SLA', notes: 'Notes' },
-  fields: [
-    { key: 'customerUUID', source: 'CustomerUUID', label: 'Customer', type: 'search-select', quickCreate: quickCreateFor('CustomerCusUUID'), required: true, span: 1 }, { key: 'channelUUID', source: 'ChannelUUID', label: 'Channel', type: 'search-select', quickCreate: quickCreateFor('SupportTicketChannelStcUUID'), required: true, span: 1 }, { key: 'status', source: 'Status', label: 'Status', type: 'select', options: statuses, required: true, span: 1 }, { key: 'priority', source: 'Priority', label: 'Priority', type: 'select', options: priorities, required: true, span: 1 }, { key: 'subject', source: 'Subject', label: 'Subject', required: true, span: 2, breakBefore: true }, { key: 'type', source: 'Type', label: 'Type', type: 'select', options: types, span: 1 }, { key: 'severity', source: 'Severity', label: 'Severity', type: 'select', options: severities, span: 1 }, { key: 'tags', source: 'Tags', label: 'Tags', span: 4, breakBefore: true }, { key: 'description', source: 'Description', label: 'Description', type: 'textarea', tab: 'notes', required: true, span: 4, rows: 4 }, { key: 'internalNotes', source: 'InternalNotes', label: 'Internal notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 }, { key: 'contactName', source: 'ContactName', label: 'Contact name', tab: 'authentication', span: 1 }, { key: 'contactEmail', source: 'ContactEmail', label: 'Contact email', type: 'email', tab: 'authentication', span: 1 }, { key: 'contactPhone', source: 'ContactPhone', label: 'Contact phone', type: 'phone', tab: 'authentication', span: 1 }, { key: 'slaPlan', source: 'SlaPlan', label: 'SLA plan', tab: 'financial', span: 1 }, { key: 'slaResponseDeadline', source: 'SlaResponseDeadline', label: 'Response deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaResolutionDeadline', source: 'SlaResolutionDeadline', label: 'Resolution deadline', type: 'date', tab: 'financial', span: 1 }, { key: 'slaBreached', source: 'SlaBreached', label: 'SLA breached', type: 'select', options: yesNo, tab: 'financial', span: 1 },
-  ],
-}; }
-@Component({ selector: 'app-support-tickets', standalone: true, imports: CONFIGURABLE_CRUD_IMPORTS, templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html', styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'] })
-export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly rawApi = inject(ApiService);
-  private readonly lookups = resource({
-    defaultValue: { customers: [] as ConfigurableCrudOption[], channels: [] as ConfigurableCrudOption[] },
-    loader: async () => {
-      const [customers, channels] = await Promise.all([this.rawApi.get<any>('erp/customers?limit=500&offset=0'), this.rawApi.get<any>('support/ticket-channels?limit=500&offset=0')]);
-      return {
-        customers: (customers?.data?.items ?? []).map((row: any) => ({ value: row.CustomerUUID, label: row.Name ?? row.LegalName ?? row.CustomerUUID })),
-        channels: (channels?.data?.items ?? []).map((row: any) => ({ value: row.SupportTicketChannelUUID, label: row.Name ?? row.Code ?? row.SupportTicketChannelUUID })),
-      };
-    },
+import { ApiService } from '../../../services/api.service';
+import { AuthService } from '../../../services/auth.service';
+import {
+  ACTIVE_TICKET_STATUSES,
+  SupportDesk,
+  TICKET_STATUS_OPTIONS,
+  agentTimelineCollection,
+  attachmentsCollection,
+  supportBase,
+  supportDesk,
+  ticketStatusChip,
+} from '../shared/support-desk';
+
+function priorityChip(row: ConfigurableCrudRecord): string {
+  const rank = Number(row['PriorityRank'] ?? 100);
+  return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
+}
+
+function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfig {
+  const base = supportBase(desk);
+  const platform = desk === 'platform';
+  const catalogField = (
+    key: string,
+    source: string,
+    label: string,
+    endpoint: string,
+    uuidField: string,
+    registry:
+      'SupportTicketChannelStcUUID' | 'SupportTicketTypeSttUUID' | 'SupportTicketPriorityStpUUID',
+    required: boolean,
+  ): ConfigurableCrudField => ({
+    key,
+    source,
+    payloadKey: key,
+    label,
+    type: 'search-select',
+    remoteLookup: { endpoint: `${base}/${endpoint}?status=1`, uuidField, labelField: 'Name' },
+    quickCreate: quickCreateFor(registry),
+    required,
+    span: 1,
   });
-  readonly customers = computed(() => this.lookups.value().customers);
-  readonly channels = computed(() => this.lookups.value().channels);
-  readonly lookupsLoading = computed(() => this.lookups.isLoading());
-  constructor() { super(config()); }
-  override fieldLoading(field: { key: string }) { return ['customerUUID', 'channelUUID'].includes(field.key) && this.lookupsLoading(); }
-  protected override lookupOptions(key: string) { return key === 'customerUUID' ? this.customers() : key === 'channelUUID' ? this.channels() : []; }
-  override listFilterOptions(filter: ConfigurableCrudListFilter) { return filter.key === 'customerUUID' ? this.customers() : filter.key === 'channelUUID' ? this.channels() : super.listFilterOptions(filter); }
-  protected override augmentPayload(payload: ConfigurableCrudRecord) { return { ...payload, slaBreached: Number(payload['slaBreached']) }; }
+  return defineCrud({
+    endpoint: `${base}/tickets`,
+    uuidField: 'SupportTicketUUID',
+    pageTitle: platform ? 'Platform tickets' : 'Support tickets',
+    pageDescription: platform
+      ? 'Tickets tenants opened to the platform team, including "Report problem" from the App.'
+      : 'Tickets of your customers and their service lifecycle.',
+    createTitle: 'New support ticket',
+    editTitle: 'Ticket triage',
+    dialogDescription: platform
+      ? 'Classify, prioritize and move the ticket; reply to the requester in the conversation.'
+      : 'Customer, classification, SLA and contact of the ticket.',
+    searchPlaceholder: 'Protocol, subject, customer or email',
+    emptyLabel: 'No support tickets found.',
+    deleteTitle: 'Delete support ticket',
+    deleteMessage: 'Delete this support ticket?',
+    savedMessage: 'Support ticket saved successfully.',
+    deletedMessage: 'Support ticket deleted successfully.',
+    deleteFailedMessage: 'Failed to delete support ticket.',
+    statusMode: 'string',
+    activeValue: 'open',
+    inactiveValue: 'closed',
+    statusOptions: TICKET_STATUS_OPTIONS,
+    activeStatusValues: ACTIVE_TICKET_STATUSES,
+    bulkDelete: false,
+    canCreate: !platform,
+    serverSidePagination: true,
+    initialPageSize: 10,
+    tabLabels: { notes: 'Notes', authentication: 'Contact' },
+    listFilters: [
+      {
+        key: 'assignedToMe',
+        label: 'Assigned to me',
+        type: 'search-select',
+        span: 1,
+        options: [
+          { value: '', label: 'All' },
+          { value: 1, label: 'Yes' },
+        ],
+        translateOptions: true,
+      },
+    ],
+    rowActions: [
+      {
+        key: 'conversation',
+        label: 'Conversation',
+        icon: 'forum',
+        collection: (row) => agentTimelineCollection(desk, row),
+      },
+      {
+        key: 'attachments',
+        label: 'Attachments',
+        icon: 'attach_file',
+        collection: (row) => attachmentsCollection(api, base, row, true),
+      },
+      { key: 'assign-me', label: 'Assign to me', icon: 'assignment_ind' },
+    ],
+    initialValues: {
+      customerUUID: '',
+      channelUUID: '',
+      typeUUID: '',
+      priorityUUID: '',
+      status: 'open',
+      subject: '',
+      description: '',
+      tags: '',
+      internalNotes: '',
+      contactName: '',
+      contactEmail: '',
+      contactPhone: '',
+    },
+    columns: [
+      { id: 'protocol', field: 'SupportTicketID', label: 'Protocol', kind: 'identity' },
+      {
+        id: 'subject',
+        field: 'Subject',
+        label: 'Subject',
+        detail: (row) => String(row['TypeName'] ?? ''),
+      },
+      {
+        id: 'requester',
+        field: 'CustomerName',
+        label: platform ? 'Tenant' : 'Customer',
+        detail: (row) => String(row['CreatedByName'] ?? row['ContactName'] ?? ''),
+      },
+      {
+        id: 'priority',
+        field: 'PriorityName',
+        label: 'Priority',
+        kind: 'status',
+        chipClass: (_value, row) => priorityChip(row),
+      },
+      {
+        id: 'sla',
+        field: 'SlaBreached',
+        label: 'SLA',
+        kind: 'status',
+        options: [
+          { value: 0, label: 'On time' },
+          { value: 1, label: 'Breached' },
+        ],
+        translateValue: true,
+        chipClass: (value) => (Number(value) === 1 ? 'chip-failed' : 'chip-success'),
+      },
+      { id: 'assigned', field: 'AssignedToName', label: 'Assigned to' },
+      { id: 'activity', field: 'LastActivityAt', label: 'Last activity', kind: 'datetime' },
+      {
+        id: 'status',
+        field: 'Status',
+        label: 'Status',
+        kind: 'status',
+        options: TICKET_STATUS_OPTIONS,
+        chipClass: ticketStatusChip,
+        className: 'status-col',
+      },
+    ],
+    fields: [
+      ...(platform
+        ? []
+        : [
+            {
+              key: 'customerUUID',
+              source: 'CustomerUUID',
+              payloadKey: 'customerUUID',
+              label: 'Customer',
+              type: 'search-select' as const,
+              remoteLookup: {
+                endpoint: 'erp/customers',
+                uuidField: 'CustomerUUID',
+                labelField: 'Name',
+              },
+              quickCreate: quickCreateFor('CustomerCusUUID'),
+              required: true,
+              span: 1 as const,
+            },
+          ]),
+      catalogField(
+        'channelUUID',
+        'ChannelUUID',
+        'Origin',
+        'ticket-channels',
+        'SupportTicketChannelUUID',
+        'SupportTicketChannelStcUUID',
+        true,
+      ),
+      catalogField(
+        'typeUUID',
+        'TypeUUID',
+        'Type',
+        'ticket-types',
+        'SupportTicketTypeUUID',
+        'SupportTicketTypeSttUUID',
+        false,
+      ),
+      catalogField(
+        'priorityUUID',
+        'PriorityUUID',
+        'Priority',
+        'ticket-priorities',
+        'SupportTicketPriorityUUID',
+        'SupportTicketPriorityStpUUID',
+        false,
+      ),
+      {
+        key: 'status',
+        source: 'Status',
+        payloadKey: 'status',
+        label: 'Status',
+        type: 'search-select',
+        options: TICKET_STATUS_OPTIONS,
+        translateOptions: true,
+        required: true,
+        span: 1,
+      },
+      {
+        key: 'subject',
+        source: 'Subject',
+        payloadKey: 'subject',
+        label: 'Subject',
+        required: true,
+        span: 4,
+        breakBefore: true,
+      },
+      {
+        key: 'description',
+        source: 'Description',
+        payloadKey: 'description',
+        label: 'Description',
+        type: 'textarea',
+        rows: 5,
+        required: true,
+        span: 4,
+      },
+      { key: 'tags', source: 'Tags', payloadKey: 'tags', label: 'Tags', tab: 'notes', span: 4 },
+      {
+        key: 'internalNotes',
+        source: 'InternalNotes',
+        payloadKey: 'internalNotes',
+        label: 'Internal notes',
+        type: 'textarea',
+        rows: 4,
+        tab: 'notes',
+        help: 'Never shown to the requester.',
+        span: 4,
+      },
+      {
+        key: 'contactName',
+        source: 'ContactName',
+        payloadKey: 'contactName',
+        label: 'Contact name',
+        tab: 'authentication',
+        span: 1,
+      },
+      {
+        key: 'contactEmail',
+        source: 'ContactEmail',
+        payloadKey: 'contactEmail',
+        label: 'Contact email',
+        type: 'email',
+        tab: 'authentication',
+        span: 1,
+      },
+      {
+        key: 'contactPhone',
+        source: 'ContactPhone',
+        payloadKey: 'contactPhone',
+        label: 'Contact phone',
+        type: 'phone',
+        tab: 'authentication',
+        span: 1,
+      },
+    ],
+  });
+}
+
+@Component({
+  selector: 'app-support-tickets',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly desk: SupportDesk;
+  private readonly auth = inject(AuthService);
+
+  constructor() {
+    const route = inject(ActivatedRoute);
+    const desk = supportDesk(route);
+    const api = inject(ApiService);
+    super(config(desk, () => api));
+    this.desk = desk;
+    // Email links open one ticket directly: ?ticket=<uuid>.
+    const requested = route.snapshot.queryParamMap.get('ticket');
+    if (requested) afterNextRender(() => void this.openTicket(requested));
+  }
+
+  private async openTicket(uuid: string) {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `${supportBase(this.desk)}/tickets/${encodeURIComponent(uuid)}`,
+      );
+      if (response?.data) this.startEdit(response.data);
+    } catch {
+      // The API interceptor shows the error.
+    }
+  }
+
+  override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+    if (action.key !== 'assign-me') return;
+    const me = this.auth.user()?.uuid;
+    if (!me) return;
+    try {
+      await this.api.put(`${supportBase(this.desk)}/tickets/${this.recordUUID(row)}`, {
+        customerUUID: row['CustomerUUID'] || null,
+        channelUUID: row['ChannelUUID'],
+        typeUUID: row['TypeUUID'],
+        priorityUUID: row['PriorityUUID'],
+        status: row['Status'] === 'open' ? 'in_progress' : row['Status'],
+        subject: row['Subject'],
+        description: row['Description'],
+        tags: row['Tags'],
+        internalNotes: row['InternalNotes'],
+        contactName: row['ContactName'],
+        contactEmail: row['ContactEmail'],
+        contactPhone: row['ContactPhone'],
+        assignedToUserUUID: me,
+      });
+      this.snack.success('Ticket assigned to you.');
+      this.refreshList();
+    } catch {
+      // The API interceptor shows the error.
+    }
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord) {
+    // Triage keeps the current assignment; "Assign to me" changes it explicitly.
+    const editing = this.editingRecord();
+    return { ...payload, assignedToUserUUID: editing?.['AssignedToUserUUID'] ?? null };
+  }
 }

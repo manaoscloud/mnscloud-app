@@ -86,26 +86,34 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 - Validate desktop/mobile, light/dark, PT/EN/ES, long lists/names, default-versus-active selection,
   keyboard/touch, operation actions and session expiry before delivering topbar changes.
 
-## Problem Reports ("Report problem")
+## Support Desks, Help Center And "Report problem"
 
-- Entry points: the top bar bug icon, the profile menu (`Report problem` and
-  `My problem reports`), the `Report problem` filter action of the problem report pages, and the
-  `Report problem` action of error toasts for API 5xx responses (prefilled with the failed call).
-- `BugReportService.openReportDialog()` opens `BugReportDialogComponent` at once through
-  `openCrudComponentDialog(..., 'crud-form-dialog')`; the screenshot is captured behind it with
-  `html2canvas-pro` (the theme uses `color-mix()`, which the old `html2canvas` cannot parse).
-  The CDK overlay is excluded, so the print shows the page, not the dialog.
+- One Support model, two desks. Tenant desk pages live under `/support/*` (module.support.*,
+  a tenant answers its ERP customers). The platform desk reuses the same pages under
+  `/support-desk/*` with `data.scope = 'master'` (platform.support.* permissions, so support
+  agents do not need platform master); they call `/system/support/*`. Pages read the desk with
+  `supportDesk(route)` from `pages/support/shared/support-desk.ts`; quick-create inherits it.
+- Ticket types, priorities (SLA) and origins are catalogs (`/support/ticket-types`,
+  `/support/ticket-priorities`, `/support/ticket-channels`) registered in `QUICK_CREATE_REGISTRY`.
+  Never hardcode ticket type/priority lists in the UI.
+- Help center: `/help/tickets` ("My tickets", profile menu) lets every tenant user open and follow
+  tickets to the platform team without the Support module: conversation, attachments, close.
+- "Report problem" (top bar, profile menu, My tickets action, and the action of API 5xx toasts)
+  opens a help center ticket with origin `app_report`. `BugReportService.openReportDialog()` opens
+  `BugReportDialogComponent` at once through `openCrudComponentDialog(..., 'crud-form-dialog')`;
+  type and priority come from `help/ticket-types` and `help/ticket-priorities` (defaults
+  preselected; failed-call reports prefill codes `bug`/`high`). The screenshot is captured behind
+  the dialog with `html2canvas-pro` (the theme uses `color-mix()`).
 - Screenshots hide `input[type=password]` and any element marked `data-report-mask`. Mark every
   element that shows secrets, tokens, card numbers or other sensitive values with
   `data-report-mask` when it can stay visible on screen.
-- `ClientDiagnosticsService` keeps a bounded, redacted in-memory trail: console errors, uncaught
-  errors/rejections, failed API calls (method, path, status, `X-Correlation-ID`) recorded by
-  `apiInterceptor`, and the last routes. The dialog shows exactly what is sent and the user can
-  turn diagnostics off. Unsent form values stay in `BugReportService.draft` until a report is sent.
-- Pages: `/user/bug-reports` (own reports, team answer) and `/system/support/bug-reports`
-  (master triage: status, severity, answer, internal notes, resend team email, soft delete). Both
-  are one `ConfigurableCrudPageBase` page whose list sends a fixed `listQuery` scope; details use
-  `openDataViewerDialog`, the screenshot opens through the authorized API stream.
+- `ClientDiagnosticsService` keeps a bounded, redacted in-memory trail (console errors, uncaught
+  errors/rejections, failed API calls with `X-Correlation-ID`, last routes). The dialog shows
+  exactly what is sent and the user can turn diagnostics off; the API stores them as an internal
+  attachment visible only to the support team.
+- Ticket conversation and attachments use CRUD collection dialogs (`agentTimelineCollection`,
+  `helpConversationCollection`, `attachmentsCollection`); private files open through
+  `openPrivateFile` (authorized API stream, never a storage URL).
 
 ## Angular Runtime Baseline
 

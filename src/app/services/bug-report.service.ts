@@ -8,24 +8,28 @@ import { ApiService } from './api.service';
 import { ClientDiagnosticsService, redactDiagnosticText } from './client-diagnostics.service';
 import { SnackbarService } from './snackbar.service';
 
-export type BugReportType = 'bug' | 'performance' | 'ui' | 'suggestion' | 'other';
-export type BugReportSeverity = 'low' | 'medium' | 'high' | 'critical';
-
 export type BugReportDraft = {
   title: string;
   description: string;
-  type: BugReportType;
-  severity: BugReportSeverity;
+  /** Platform ticket type and priority (catalogs of the platform support desk). */
+  typeUUID: string;
+  priorityUUID: string;
   includeDiagnostics: boolean;
 };
 
-export type BugReportPrefill = Partial<Omit<BugReportDraft, 'includeDiagnostics'>>;
+/** Prefill by catalog code (for example from a failed API call: type bug, priority high). */
+export type BugReportPrefill = {
+  title?: string;
+  description?: string;
+  typeCode?: string;
+  priorityCode?: string;
+};
 
 export type BugReportPayload = {
   title: string;
   description: string;
-  type: BugReportType;
-  severity: BugReportSeverity;
+  typeUUID: string | null;
+  priorityUUID: string | null;
   url: string;
   route: string;
   appVersion: string;
@@ -33,7 +37,7 @@ export type BugReportPayload = {
   systemInfo: Record<string, unknown>;
 };
 
-export type BugReportCreated = { BgrUUID: string; BgrID: string };
+export type BugReportCreated = { SupportTicketUUID: string; SupportTicketID: string };
 
 /** Elements whose content never appears in a problem report screenshot. */
 export const BUG_REPORT_MASK_SELECTOR = 'input[type="password"], [data-report-mask]';
@@ -41,8 +45,8 @@ export const BUG_REPORT_MASK_SELECTOR = 'input[type="password"], [data-report-ma
 const EMPTY_DRAFT: BugReportDraft = {
   title: '',
   description: '',
-  type: 'bug',
-  severity: 'medium',
+  typeUUID: '',
+  priorityUUID: '',
   includeDiagnostics: true,
 };
 
@@ -56,6 +60,8 @@ export class BugReportService {
 
   /** Unsent form values survive closing the dialog or a failed submit. */
   readonly draft = signal<BugReportDraft>({ ...EMPTY_DRAFT });
+  /** Catalog codes to preselect once the dialog loads the platform types and priorities. */
+  readonly prefillCodes = signal<{ typeCode?: string; priorityCode?: string }>({});
   private opening = false;
 
   async captureScreen(): Promise<string | null> {
@@ -89,7 +95,11 @@ export class BugReportService {
     if (this.opening) return;
     this.opening = true;
     try {
-      if (prefill) this.draft.update((draft) => ({ ...draft, ...prefill }));
+      if (prefill) {
+        const { typeCode, priorityCode, ...text } = prefill;
+        this.draft.update((draft) => ({ ...draft, ...text }));
+        this.prefillCodes.set({ typeCode, priorityCode });
+      }
       const { BugReportDialogComponent } =
         await import('../shared/bug-report-dialog/bug-report-dialog');
       const binding = openCrudComponentDialog(
@@ -123,18 +133,27 @@ export class BugReportService {
     };
   }
 
-  /** Errors are already toasted by the API interceptor; success shows the protocol. */
+  /**
+   * "Report problem" opens a ticket to the platform support team (help center, origin app_report).
+   * Errors are already toasted by the API interceptor; success shows the protocol.
+   */
   async submitReport(payload: BugReportPayload): Promise<BugReportCreated> {
-    const response = await this.api.post<{ data?: BugReportCreated }>(
-      'system/bug-reports',
-      payload,
-    );
+    const { title, ...rest } = payload;
+    const response = await this.api.post<{ data?: BugReportCreated }>('help/tickets', {
+      ...rest,
+      subject: title,
+      origin: 'app_report',
+    });
     const created = response?.data;
     this.draft.set({ ...EMPTY_DRAFT });
-    this.snack.success('Problem report #{{protocol}} sent.', 5000, {
-      protocol: created?.BgrID ?? '',
+    this.prefillCodes.set({});
+    this.snack.success('Ticket #{{protocol}} opened.', 5000, {
+      protocol: created?.SupportTicketID ?? '',
     });
-    return { BgrUUID: created?.BgrUUID ?? '', BgrID: created?.BgrID ?? '' };
+    return {
+      SupportTicketUUID: created?.SupportTicketUUID ?? '',
+      SupportTicketID: created?.SupportTicketID ?? '',
+    };
   }
 }
 
