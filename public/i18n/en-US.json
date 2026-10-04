@@ -5783,8 +5783,6 @@
   "Create package": "Create package",
   "Edit subscription": "Edit subscription",
   "Migrate subscribers": "Migrate subscribers",
-  "Move every live subscription to another active package.": "Move every live subscription to another active package.",
-  "Move every live subscription to another active package. The target price applies from the next cycle.": "Move every live subscription to another active package. The target price applies from the next cycle.",
   "Package": "Package",
   "Package subscriptions migrated.": "Package subscriptions migrated.",
   "Subscription canceled successfully.": "Subscription canceled successfully.",
@@ -5827,6 +5825,11 @@
   "What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.": "What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.",
   "Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.": "Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.",
   "Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.": "Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.",
-  "Commercial description of the package for operators and catalogs.": "Commercial description of the package for operators and catalogs.",
-  "Product included in the package.": "Product included in the package."
+  "Product included in the package.": "Product included in the package.",
+  "Internal annotations about the package, visible only to the platform team.": "Internal annotations about the package, visible only to the platform team.",
+  "Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.": "Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.",
+  "Active package that receives the selected subscriptions. Its price applies from the next billing cycle, using the active price with the same currency and billing mode.": "Active package that receives the selected subscriptions. Its price applies from the next billing cycle, using the active price with the same currency and billing mode.",
+  "Move selected subscriptions to another active package.": "Move selected subscriptions to another active package.",
+  "Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.": "Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.",
+  "Only existing live subscriptions of this package can be migrated.": "Only existing live subscriptions of this package can be migrated."
 }

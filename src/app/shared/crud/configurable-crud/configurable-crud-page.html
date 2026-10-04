@@ -201,7 +201,9 @@
                   <div class="record-stack">
                     <span class="record-main">{{ columnMain(row, column) }}</span>
                     @if (columnUUID(row, column)) {
-                      <span class="record-uuid" [class.record-detail]="!!column.detail">{{ columnUUID(row, column) }}</span>
+                      <span class="record-uuid" [class.record-detail]="!!column.detail">{{
+                        columnUUID(row, column)
+                      }}</span>
                     }
                   </div>
                   @if (canCopyColumn(row, column)) {
@@ -2559,7 +2561,7 @@
                     }
                   }
 
-                  <div class="related-collection-actions span-1">
+                  <div class="related-collection-actions">
                     <button
                       mat-stroked-button
                       color="primary"
@@ -2689,7 +2691,10 @@
         }
       </div>
       <div class="primary-actions">
-        <div class="save-split-action" [class.is-single-action]="!!editingRecord()">
+        <div
+          class="save-split-action"
+          [class.is-single-action]="!!editingRecord() || !!config.formOnly || quickCreateMode"
+        >
           <button
             mat-flat-button
             color="primary"

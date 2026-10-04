@@ -70,7 +70,7 @@ export interface BillingPackage {
   BpaID: string;
   BpaCode: string;
   BpaName: string;
-  BpaDescription?: string | null;
+  BpaNotes?: string | null;
   BillingProductBprUUID: string;
   BprCode?: string | null;
   BprName?: string | null;
