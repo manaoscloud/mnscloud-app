@@ -89,6 +89,15 @@ export const routes: Routes = [
             title: 'My Profile | mnscloud',
           },
           {
+            path: 'user/bug-reports',
+            loadComponent: () =>
+              import('./pages/support/bug-reports/bug-reports').then(
+                (m) => m.SupportBugReportsPage,
+              ),
+            title: 'My problem reports | mnscloud',
+            data: { breadcrumb: 'My problem reports' },
+          },
+          {
             path: 'user/permissions',
             loadComponent: () =>
               import('./pages/user/permissions/permissions').then((m) => m.UserPermissionsPage),
@@ -1484,6 +1493,15 @@ export const routes: Routes = [
                     (m) => m.MonitoringActivityLogsPage,
                   ),
                 title: 'System Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                path: 'support/bug-reports',
+                loadComponent: () =>
+                  import('./pages/support/bug-reports/bug-reports').then(
+                    (m) => m.SupportBugReportsPage,
+                  ),
+                title: 'System • Problem reports | mnscloud',
+                data: { scope: 'master', breadcrumb: 'Problem reports' },
               },
               {
                 path: 'monitoring/notification-rules',
