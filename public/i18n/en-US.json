@@ -5949,5 +5949,14 @@
   "Help": "Help",
   "Leave empty to use the default.": "Leave empty to use the default.",
   "Your ticket was opened. Follow the conversation in My tickets.": "Your ticket was opened. Follow the conversation in My tickets.",
-  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket."
+  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.",
+  "Add team member": "Add team member",
+  "Edit team member": "Edit team member",
+  "No team members found.": "No team members found.",
+  "Team member saved.": "Team member saved.",
+  "Team member removed.": "Team member removed.",
+  "Create support team": "Create support team",
+  "Supervisor": "Supervisor",
+  "Manager": "Manager",
+  "Team": "Team"
 }

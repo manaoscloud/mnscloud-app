@@ -102,6 +102,18 @@ export const routes: Routes = [
             },
           },
           {
+            path: 'support-desk/teams',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/teams/teams').then((m) => m.SupportTeamsPage),
+            title: 'Platform support • Teams | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Support teams',
+            },
+          },
+          {
             path: 'support-desk/ticket-types',
             canActivate: [permissionGuard],
             loadComponent: () =>

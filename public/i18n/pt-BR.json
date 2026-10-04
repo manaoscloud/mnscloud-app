@@ -5950,5 +5950,14 @@
   "Help": "Ajuda",
   "Leave empty to use the default.": "Deixe vazio para usar o padrão.",
   "Your ticket was opened. Follow the conversation in My tickets.": "Seu chamado foi aberto. Acompanhe a conversa em Meus chamados.",
-  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Alguns anexos não puderam ser salvos. Abra Meus chamados para anexá-los novamente; não crie outro chamado."
+  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Alguns anexos não puderam ser salvos. Abra Meus chamados para anexá-los novamente; não crie outro chamado.",
+  "Add team member": "Adicionar membro à equipe",
+  "Edit team member": "Editar membro da equipe",
+  "No team members found.": "Nenhum membro encontrado.",
+  "Team member saved.": "Membro da equipe salvo.",
+  "Team member removed.": "Membro da equipe removido.",
+  "Create support team": "Criar equipe de suporte",
+  "Supervisor": "Supervisor",
+  "Manager": "Gerente",
+  "Team": "Equipe"
 }

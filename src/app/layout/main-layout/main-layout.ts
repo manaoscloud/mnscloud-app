@@ -2255,6 +2255,14 @@ export class MainLayout {
           permissions: ['platform.support.tickets.manage'],
         },
         {
+          id: 'support-desk/teams',
+          label: 'Support teams',
+          icon: 'groups',
+          route: '/support-desk/teams',
+          scope: 'public',
+          permissions: ['platform.support.settings.manage'],
+        },
+        {
           id: 'support-desk/ticket-types',
           label: 'Ticket types',
           icon: 'category',

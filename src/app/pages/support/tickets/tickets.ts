@@ -37,7 +37,10 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
     endpoint: string,
     uuidField: string,
     registry:
-      'SupportTicketChannelStcUUID' | 'SupportTicketTypeSttUUID' | 'SupportTicketPriorityStpUUID',
+      | 'SupportTicketChannelStcUUID'
+      | 'SupportTicketTypeSttUUID'
+      | 'SupportTicketPriorityStpUUID'
+      | 'SupportTeamStmUUID',
     required: boolean,
   ): ConfigurableCrudField => ({
     key,
@@ -154,6 +157,7 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
         translateValue: true,
         chipClass: (value) => (Number(value) === 1 ? 'chip-failed' : 'chip-success'),
       },
+      { id: 'team', field: 'TeamName', label: 'Team' },
       { id: 'assigned', field: 'AssignedToName', label: 'Assigned to' },
       { id: 'activity', field: 'LastActivityAt', label: 'Last activity', kind: 'datetime' },
       {
@@ -167,6 +171,27 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
       },
     ],
     fields: [
+      {
+        key: 'assignedToUserUUID',
+        source: 'AssignedToUserUUID',
+        payloadKey: 'assignedToUserUUID',
+        label: 'Assigned to',
+        type: 'search-select',
+        span: 1,
+        remoteLookup: { endpoint: `${base}/agents`, uuidField: 'UserUUID', labelField: 'Name' },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Assignment selects an existing authorized agent. Account creation and permission grants belong to identity administration.',
+      },
+      catalogField(
+        'teamUUID',
+        'TeamUUID',
+        'Team',
+        'teams',
+        'SupportTeamUUID',
+        'SupportTeamStmUUID',
+        false,
+      ),
       ...(platform
         ? []
         : [
@@ -328,6 +353,7 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         channelUUID: row['ChannelUUID'],
         typeUUID: row['TypeUUID'],
         priorityUUID: row['PriorityUUID'],
+        teamUUID: row['TeamUUID'] || null,
         status: row['Status'] === 'open' ? 'in_progress' : row['Status'],
         subject: row['Subject'],
         description: row['Description'],
@@ -346,8 +372,10 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
-    // Triage keeps the current assignment; "Assign to me" changes it explicitly.
-    const editing = this.editingRecord();
-    return { ...payload, assignedToUserUUID: editing?.['AssignedToUserUUID'] ?? null };
+    return {
+      ...payload,
+      assignedToUserUUID: payload['assignedToUserUUID'] || null,
+      teamUUID: payload['teamUUID'] || null,
+    };
   }
 }

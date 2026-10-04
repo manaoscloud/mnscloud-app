@@ -5949,5 +5949,14 @@
   "Help": "Ayuda",
   "Leave empty to use the default.": "Déjelo vacío para usar el predeterminado.",
   "Your ticket was opened. Follow the conversation in My tickets.": "Tu ticket fue abierto. Sigue la conversación en Mis tickets.",
-  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "No se pudieron guardar algunos archivos adjuntos. Abre Mis tickets para adjuntarlos de nuevo; no crees otro ticket."
+  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "No se pudieron guardar algunos archivos adjuntos. Abre Mis tickets para adjuntarlos de nuevo; no crees otro ticket.",
+  "Add team member": "Añadir miembro al equipo",
+  "Edit team member": "Editar miembro del equipo",
+  "No team members found.": "No se encontraron miembros.",
+  "Team member saved.": "Miembro del equipo guardado.",
+  "Team member removed.": "Miembro del equipo eliminado.",
+  "Create support team": "Crear equipo de soporte",
+  "Supervisor": "Supervisor",
+  "Manager": "Gerente",
+  "Team": "Equipo"
 }

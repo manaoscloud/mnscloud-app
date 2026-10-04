@@ -394,6 +394,11 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.SupportTicketPrioritiesPage,
       ),
   },
+  SupportTeamStmUUID: {
+    label: 'Create support team',
+    loadComponent: () =>
+      import('../../../pages/support/teams/teams').then((m) => m.SupportTeamsPage),
+  },
   SupportTicketTypeSttUUID: {
     label: 'Create ticket type',
     loadComponent: () =>

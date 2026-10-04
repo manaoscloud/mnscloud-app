@@ -96,6 +96,11 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 - Ticket types, priorities (SLA) and origins are catalogs (`/support/ticket-types`,
   `/support/ticket-priorities`, `/support/ticket-channels`) registered in `QUICK_CREATE_REGISTRY`.
   Never hardcode ticket type/priority lists in the UI.
+- Teams also use the shared desk scope (`/support/teams`, `/system/support/teams`). Their canonical
+  form is registered as `SupportTeamStmUUID`; tickets offer searchable team quick-create and an
+  eligible-agent selector. Team members are a shared collection dialog; creating accounts or
+  granting platform permissions is intentionally outside this picker. The API validates same-desk
+  teams and requires an assigned agent to belong to the selected team.
 - Help center: `/help/tickets` ("My tickets", profile menu) lets every tenant user open and follow
   tickets to the platform team without the Support module: conversation, attachments, close.
 - "Report problem" (top bar, profile menu, My tickets action, and the action of API 5xx toasts)
@@ -111,6 +116,8 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   errors/rejections, failed API calls with `X-Correlation-ID`, last routes). The dialog shows
   exactly what is sent and the user can turn diagnostics off; the API stores them as an internal
   attachment visible only to the support team.
+- A created report can return `AttachmentWarnings`. Show the warning beside its protocol and link
+  to My tickets so users can retry attachments without opening a duplicate ticket.
 - Ticket conversation and attachments use CRUD collection dialogs (`agentTimelineCollection`,
   `helpConversationCollection`, `attachmentsCollection`); private files open through
   `openPrivateFile` (authorized API stream, never a storage URL).
