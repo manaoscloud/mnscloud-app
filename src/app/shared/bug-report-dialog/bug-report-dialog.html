@@ -15,11 +15,16 @@
           <mat-icon class="bug-report-success-icon">task_alt</mat-icon>
           <h3>{{ successTitle(report.SupportTicketID) }}</h3>
           <p>
-            {{
-              'Our team was notified. Follow the answer in My tickets; you also get an email.'
-                | transloco
-            }}
+            {{ 'Your ticket was opened. Follow the conversation in My tickets.' | transloco }}
           </p>
+          @if (report.AttachmentWarnings?.length) {
+            <p class="bug-report-warning" role="alert">
+              {{
+                'Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.'
+                  | transloco
+              }}
+            </p>
+          }
         </section>
       } @else {
         @if (unavailable()) {

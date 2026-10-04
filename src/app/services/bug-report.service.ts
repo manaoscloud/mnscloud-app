@@ -37,7 +37,11 @@ export type BugReportPayload = {
   systemInfo: Record<string, unknown>;
 };
 
-export type BugReportCreated = { SupportTicketUUID: string; SupportTicketID: string };
+export type BugReportCreated = {
+  SupportTicketUUID: string;
+  SupportTicketID: string;
+  AttachmentWarnings?: string[];
+};
 
 /** Elements whose content never appears in a problem report screenshot. */
 export const BUG_REPORT_MASK_SELECTOR = 'input[type="password"], [data-report-mask]';
@@ -153,6 +157,7 @@ export class BugReportService {
     return {
       SupportTicketUUID: created?.SupportTicketUUID ?? '',
       SupportTicketID: created?.SupportTicketID ?? '',
+      AttachmentWarnings: created?.AttachmentWarnings ?? [],
     };
   }
 }

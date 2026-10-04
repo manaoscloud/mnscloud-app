@@ -5894,7 +5894,6 @@
   "On time": "On time",
   "Open file": "Open file",
   "Opened by": "Opened by",
-  "Our team was notified. Follow the answer in My tickets; you also get an email.": "Our team was notified. Follow the answer in My tickets; you also get an email.",
   "Platform support": "Platform support",
   "Platform tickets": "Platform tickets",
   "Priority changed": "Priority changed",
@@ -5948,5 +5947,7 @@
   "Hex color, for example #2563eb.": "Hex color, for example #2563eb.",
   "Support Desk": "Platform support",
   "Help": "Help",
-  "Leave empty to use the default.": "Leave empty to use the default."
+  "Leave empty to use the default.": "Leave empty to use the default.",
+  "Your ticket was opened. Follow the conversation in My tickets.": "Your ticket was opened. Follow the conversation in My tickets.",
+  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket."
 }

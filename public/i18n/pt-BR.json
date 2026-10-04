@@ -5895,7 +5895,6 @@
   "On time": "No prazo",
   "Open file": "Abrir arquivo",
   "Opened by": "Aberto por",
-  "Our team was notified. Follow the answer in My tickets; you also get an email.": "Nossa equipe foi notificada. Acompanhe a resposta em Meus chamados; você também recebe por e-mail.",
   "Platform support": "Suporte da plataforma",
   "Platform tickets": "Chamados da plataforma",
   "Priority changed": "Prioridade alterada",
@@ -5949,5 +5948,7 @@
   "Hex color, for example #2563eb.": "Cor hexadecimal, por exemplo #2563eb.",
   "Support Desk": "Suporte da plataforma",
   "Help": "Ajuda",
-  "Leave empty to use the default.": "Deixe vazio para usar o padrão."
+  "Leave empty to use the default.": "Deixe vazio para usar o padrão.",
+  "Your ticket was opened. Follow the conversation in My tickets.": "Seu chamado foi aberto. Acompanhe a conversa em Meus chamados.",
+  "Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.": "Alguns anexos não puderam ser salvos. Abra Meus chamados para anexá-los novamente; não crie outro chamado."
 }
