@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { AppI18nService } from './app-i18n.service';
 
 type SnackType = 'success' | 'error' | 'warning' | 'info';
@@ -22,13 +23,22 @@ export class SnackbarService {
     return translated;
   }
 
-  private open(type: SnackType, message: string, duration = 3000, params?: Record<string, unknown>) {
-    this.snack.open(this.i18n.t(message, this.translateParams(params)), this.i18n.t('snackbar.close'), {
-      duration,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom',
-      panelClass: ['snackbar', `snackbar-${type}`],
-    });
+  private open(
+    type: SnackType,
+    message: string,
+    duration = 3000,
+    params?: Record<string, unknown>,
+  ) {
+    this.snack.open(
+      this.i18n.t(message, this.translateParams(params)),
+      this.i18n.t('snackbar.close'),
+      {
+        duration,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+        panelClass: ['snackbar', `snackbar-${type}`],
+      },
+    );
   }
 
   success(message: string, duration = 3000, params?: Record<string, unknown>) {
@@ -37,6 +47,28 @@ export class SnackbarService {
 
   error(message: string, duration = 3000, params?: Record<string, unknown>) {
     this.open('error', message, duration, params);
+  }
+
+  /** Error toast with one action button (for example "Report problem"). */
+  errorWithAction(
+    message: string,
+    actionLabel: string,
+    onAction: () => void,
+    duration = 8000,
+    params?: Record<string, unknown>,
+  ) {
+    const ref = this.snack.open(
+      this.i18n.t(message, this.translateParams(params)),
+      this.i18n.t(actionLabel),
+      {
+        duration,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+        panelClass: ['snackbar', 'snackbar-error'],
+      },
+    );
+    // onAction completes without a value when the toast is dismissed: ignore that case.
+    void firstValueFrom(ref.onAction()).then(onAction, () => undefined);
   }
 
   warning(message: string, duration = 3000, params?: Record<string, unknown>) {

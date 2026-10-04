@@ -1,11 +1,12 @@
 import { isRuntimeTokenReplaceConfirmationRequired } from '../../shared/install-command-dialog/runtime-install-token';
 import { payErrorMessage } from '../../shared/payment/pay-error';
-import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { Injector, inject } from '@angular/core';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
+import { ClientDiagnosticsService } from '../../services/client-diagnostics.service';
 
 function isExternalRequest(url: string) {
   if (!/^https?:\/\//i.test(url)) return false;
@@ -91,6 +92,43 @@ function parseSnackParams(message: string): { key: string; params?: Record<strin
   return { key, params };
 }
 
+const BUG_REPORT_ENDPOINT = /\/system\/bug-reports(?:[/?]|$)/;
+
+function requestPath(url: string): string {
+  try {
+    const parsed = new URL(
+      url,
+      typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+    );
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return url;
+  }
+}
+
+function recordFailure(
+  diagnostics: ClientDiagnosticsService,
+  req: HttpRequest<unknown>,
+  error: HttpErrorResponse,
+  message: string | null,
+) {
+  const body = error.error && typeof error.error === 'object' ? error.error : null;
+  diagnostics.recordFailedRequest({
+    method: req.method,
+    url: requestPath(req.urlWithParams),
+    status: error.status,
+    requestId:
+      error.headers?.get('X-Correlation-ID') ??
+      (typeof body?.correlationId === 'string' ? body.correlationId : null),
+    message,
+  });
+}
+
+/** Server and network failures offer "Report problem" with the failed call already described. */
+function offersProblemReport(req: HttpRequest<unknown>, error: HttpErrorResponse) {
+  return (error.status === 0 || error.status >= 500) && !BUG_REPORT_ENDPOINT.test(req.url);
+}
+
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   if (isExternalRequest(req.url)) {
     return next(req);
@@ -98,6 +136,27 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
   const auth = inject(AuthService);
   const snack = inject(SnackbarService);
+  const diagnostics = inject(ClientDiagnosticsService);
+  const injector = inject(Injector);
+  const reportProblem = () => {
+    const failure = diagnostics.lastFailedRequest();
+    // Lazy: the report dialog stack is loaded only when the user asks for it.
+    void import('../../services/bug-report.service').then(({ BugReportService }) => {
+      const reports = injector.get(BugReportService);
+      const prefill = reports.draft().description
+        ? {}
+        : {
+            type: 'bug' as const,
+            severity: 'high' as const,
+            description: failure
+              ? `${failure.method} ${failure.url} → ${failure.status}${
+                  failure.requestId ? ` (correlation ${failure.requestId})` : ''
+                }\n\n`
+              : '',
+          };
+      void reports.openReportDialog(prefill);
+    });
+  };
 
   const csrfToken = isMutatingRequest(req.method) ? cookieValue('mnscloud_csrf') : null;
   const bootstrapToken = auth.sessionBootstrapToken();
@@ -116,6 +175,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // Offline / erro de rede
       if (error.status === 0) {
+        recordFailure(diagnostics, req, error, 'Network error');
         snack.error('You appear to be offline. Some actions may not be saved.');
         return throwError(() => error);
       }
@@ -155,8 +215,19 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
         apiMessage = 'Too many requests. Please wait a moment and try again.';
       }
 
+      recordFailure(diagnostics, req, error, apiMessage);
       const parsedMessage = parseSnackParams(apiMessage);
-      snack.error(parsedMessage.key, 3000, parsedMessage.params);
+      if (offersProblemReport(req, error)) {
+        snack.errorWithAction(
+          parsedMessage.key,
+          'Report problem',
+          reportProblem,
+          8000,
+          parsedMessage.params,
+        );
+      } else {
+        snack.error(parsedMessage.key, 3000, parsedMessage.params);
+      }
 
       return throwError(() => error);
     }),
