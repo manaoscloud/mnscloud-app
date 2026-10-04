@@ -6,6 +6,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { apiInterceptor } from './api.interceptor';
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
+import { ClientDiagnosticsService } from '../../services/client-diagnostics.service';
 
 describe('apiInterceptor', () => {
   let httpClient: HttpClient;
@@ -16,7 +17,7 @@ describe('apiInterceptor', () => {
   beforeEach(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['isLoggedIn', 'expireSession']);
     auth.sessionBootstrapToken = jasmine.createSpy('sessionBootstrapToken').and.returnValue(null);
-    snack = jasmine.createSpyObj<SnackbarService>('SnackbarService', ['error']);
+    snack = jasmine.createSpyObj<SnackbarService>('SnackbarService', ['error', 'errorWithAction']);
     auth.isLoggedIn.and.returnValue(true);
 
     TestBed.configureTestingModule({
@@ -76,6 +77,49 @@ describe('apiInterceptor', () => {
     req.flush({ error: 'Duplicate record.' }, { status: 409, statusText: 'Conflict' });
 
     await expectAsync(promise).toBeRejected();
+    expect(snack.error).toHaveBeenCalled();
+  });
+
+  it('records failed calls with their correlation id for problem reports', async () => {
+    const promise = httpClient.get('/api/v1/erp/customers?token=abc&page=2').toPromise();
+    const req = http.expectOne('/api/v1/erp/customers?token=abc&page=2');
+    req.flush(
+      { error: 'Invalid filter.' },
+      { status: 400, statusText: 'Bad Request', headers: { 'X-Correlation-ID': 'corr-12345678' } },
+    );
+
+    await expectAsync(promise).toBeRejected();
+    const failure = TestBed.inject(ClientDiagnosticsService).lastFailedRequest();
+    expect(failure?.status).toBe(400);
+    expect(failure?.requestId).toBe('corr-12345678');
+    expect(failure?.url).toBe('/api/v1/erp/customers?token=[redacted]&page=2');
+    expect(snack.error).toHaveBeenCalled();
+    expect(snack.errorWithAction).not.toHaveBeenCalled();
+  });
+
+  it('offers Report problem on server errors', async () => {
+    const promise = httpClient.post('/api/v1/example', {}).toPromise();
+    const req = http.expectOne('/api/v1/example');
+    req.flush({ error: 'Boom.' }, { status: 500, statusText: 'Server Error' });
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.errorWithAction).toHaveBeenCalledWith(
+      'Boom.',
+      'Report problem',
+      jasmine.any(Function),
+      8000,
+      undefined,
+    );
+    expect(snack.error).not.toHaveBeenCalled();
+  });
+
+  it('does not offer Report problem when sending the report itself fails', async () => {
+    const promise = httpClient.post('/api/v1/system/bug-reports', {}).toPromise();
+    const req = http.expectOne('/api/v1/system/bug-reports');
+    req.flush({ error: 'Boom.' }, { status: 502, statusText: 'Bad Gateway' });
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.errorWithAction).not.toHaveBeenCalled();
     expect(snack.error).toHaveBeenCalled();
   });
 

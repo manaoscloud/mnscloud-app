@@ -2279,6 +2279,14 @@ export class MainLayout {
           requiresEnvironment: false,
         },
         {
+          id: 'monitoring/problem-reports',
+          label: 'Problem reports',
+          icon: 'bug_report',
+          masterRoute: '/system/support/bug-reports',
+          scope: 'master',
+          requiresEnvironment: false,
+        },
+        {
           id: 'monitoring/runtime-reconcile',
           label: 'Runtime reconcile',
           icon: 'tune',

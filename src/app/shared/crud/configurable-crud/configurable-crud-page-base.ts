@@ -453,6 +453,8 @@ export type ConfigurableCrudConfig = {
    * JSON (for upload-only collections such as product images). Updates stay JSON.
    */
   createUpload?: { fileField: string; formField: string };
+  /** Fixed list query parameters sent with every list request (for example `scope=all`). */
+  listQuery?: Readonly<Record<string, string>>;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
   pageSizeOptions?: readonly number[];
@@ -2136,6 +2138,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (value === null || value === undefined || value === '') continue;
       params.set(filter.paramKey ?? filter.key, String(value));
     }
+    for (const [key, value] of Object.entries(this.config.listQuery ?? {})) params.set(key, value);
 
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;
