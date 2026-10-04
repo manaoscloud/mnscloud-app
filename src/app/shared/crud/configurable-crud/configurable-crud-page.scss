@@ -234,14 +234,16 @@
 }
 
 .related-collection-actions {
+  /* Dedicated full-width row, right-aligned like filter-actions, whatever the field spans. */
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  min-height: 56px;
+  justify-content: flex-end;
 }
 
 .related-collection-actions button {
   min-width: 128px;
+  height: var(--form-control-height, 40px);
 }
 
 .related-collection-table {

@@ -5783,8 +5783,6 @@
   "Create package": "Crear paquete",
   "Edit subscription": "Editar suscripción",
   "Migrate subscribers": "Migrar suscriptores",
-  "Move every live subscription to another active package.": "Mueve todas las suscripciones vigentes a otro paquete activo.",
-  "Move every live subscription to another active package. The target price applies from the next cycle.": "Mueve todas las suscripciones vigentes a otro paquete activo. El precio de destino aplica desde el próximo ciclo.",
   "Package": "Paquete",
   "Package subscriptions migrated.": "Suscripciones del paquete migradas.",
   "Subscription canceled successfully.": "Suscripción cancelada correctamente.",
@@ -5827,6 +5825,11 @@
   "What this item releases to subscribers. Leave empty to use the product own entitlement, or enter an exact code (module.voip.pabx.account) or a wildcard (module.isp.*) to release a specific scope.": "Lo que este ítem habilita para los suscriptores. Déjelo vacío para usar la habilitación del propio producto, o ingrese un código exacto (module.voip.pabx.account) o un comodín (module.isp.*) para habilitar un alcance específico.",
   "Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.": "Cantidad incluida por este ítem: -1 es ilimitado, 0 sigue el límite del producto o del precio y un número positivo define el límite del paquete.",
   "Marks the item as a mandatory part of the offer. Informational only: the entitlement is granted either way.": "Marca el ítem como parte obligatoria de la oferta. Solo informativo: la habilitación se concede de cualquier forma.",
-  "Commercial description of the package for operators and catalogs.": "Descripción comercial del paquete para operadores y catálogos.",
-  "Product included in the package.": "Producto incluido en el paquete."
+  "Product included in the package.": "Producto incluido en el paquete.",
+  "Internal annotations about the package, visible only to the platform team.": "Anotaciones internas sobre el paquete, visibles solo para el equipo de la plataforma.",
+  "Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.": "Suscriptores que aceptaron el cambio. Solo se mueven las suscripciones seleccionadas; las demás permanecen en este paquete.",
+  "Active package that receives the selected subscriptions. Its price applies from the next billing cycle, using the active price with the same currency and billing mode.": "Paquete activo que recibe las suscripciones seleccionadas. Su precio aplica desde el próximo ciclo, usando el precio activo con la misma moneda y el mismo modo de cobro.",
+  "Move selected subscriptions to another active package.": "Mueve las suscripciones seleccionadas a otro paquete activo.",
+  "Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.": "Elija los suscriptores que aceptaron el cambio y el paquete que los recibe. El precio del destino aplica desde el próximo ciclo.",
+  "Only existing live subscriptions of this package can be migrated.": "Solo se pueden migrar suscripciones vigentes de este paquete."
 }
