@@ -20,6 +20,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTabsModule } from '@angular/material/tabs';
 
 import { ApiService } from '../../../services/api.service';
+import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { isSignedStorageUrl } from '../../../shared/storage/signed-url';
@@ -114,6 +115,7 @@ const STATE_OPTIONS = [
   styleUrls: ['./user-profile.scss'],
 })
 export class UserProfileComponent {
+  readonly dateTime = inject(DateTimeFormatService);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly snack = inject(SnackbarService);
