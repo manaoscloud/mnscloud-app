@@ -22,6 +22,17 @@ import {
   ticketStatusChip,
 } from '../shared/support-desk';
 
+const SUPPORT_QUEUE_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'unassigned', label: 'Unassigned' },
+  { value: 'mine', label: 'Assigned to me' },
+  { value: 'team', label: 'My teams' },
+  { value: 'waiting', label: 'Waiting for requester' },
+  { value: 'due', label: 'Due within one hour' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'resolved', label: 'Resolved or closed' },
+];
+
 function priorityChip(row: ConfigurableCrudRecord): string {
   const rank = Number(row['PriorityRank'] ?? 100);
   return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
@@ -50,7 +61,7 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
     type: 'search-select',
     remoteLookup: { endpoint: `${base}/${endpoint}?status=1`, uuidField, labelField: 'Name' },
     quickCreate: quickCreateFor(registry, {
-      routeData: { scope: platform ? 'master' : 'tenant' },
+      routeData: { scope: platform ? 'master' : 'tenant', supportDesk: desk },
     }),
     required,
     span: 1,
@@ -86,14 +97,11 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
     tabLabels: { notes: 'Notes', authentication: 'Contact' },
     listFilters: [
       {
-        key: 'assignedToMe',
-        label: 'Assigned to me',
+        key: 'queue',
+        label: 'Queue',
         type: 'search-select',
         span: 1,
-        options: [
-          { value: '', label: 'All' },
-          { value: 1, label: 'Yes' },
-        ],
+        options: SUPPORT_QUEUE_OPTIONS,
         translateOptions: true,
       },
     ],
@@ -365,6 +373,7 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         contactEmail: row['ContactEmail'],
         contactPhone: row['ContactPhone'],
         assignedToUserUUID: me,
+        expectedRevision: row['Revision'],
       });
       this.snack.success('Ticket assigned to you.');
       this.refreshList();
@@ -376,6 +385,7 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
     return {
       ...payload,
+      ...(this.editingRecord() ? { expectedRevision: this.editingRecord()?.['Revision'] } : {}),
       assignedToUserUUID: payload['assignedToUserUUID'] || null,
       teamUUID: payload['teamUUID'] || null,
     };

@@ -482,7 +482,7 @@
         <button
           mat-icon-button
           type="button"
-          (click)="openBugReport()"
+          (click)="openSupportReport()"
           [attr.aria-label]="'topbar.reportBug' | transloco"
           [matTooltip]="'topbar.reportBug' | transloco"
         >
@@ -568,12 +568,12 @@
           <span>{{ 'menu.settings' | transloco }}</span>
         </button>
 
-        <button mat-menu-item (click)="openBugReport()">
+        <button mat-menu-item (click)="openSupportReport()">
           <mat-icon>bug_report</mat-icon>
           <span>{{ 'topbar.reportBug' | transloco }}</span>
         </button>
 
-        <button mat-menu-item routerLink="/help/tickets">
+        <button mat-menu-item routerLink="/support/requests">
           <mat-icon>confirmation_number</mat-icon>
           <span>{{ 'My tickets' | transloco }}</span>
         </button>

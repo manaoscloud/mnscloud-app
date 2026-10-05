@@ -1,3 +1,5 @@
+import { SupportRequestDraft } from './support-request-draft';
+import { readStoredEnvironmentUUID } from '../core/environment/environment-context';
 import { Injectable, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -8,7 +10,7 @@ import { ApiService } from './api.service';
 import { ClientDiagnosticsService, redactDiagnosticText } from './client-diagnostics.service';
 import { SnackbarService } from './snackbar.service';
 
-export type BugReportDraft = {
+export type SupportReportDraft = {
   title: string;
   description: string;
   /** Platform ticket type and priority (catalogs of the platform support desk). */
@@ -18,14 +20,14 @@ export type BugReportDraft = {
 };
 
 /** Prefill by catalog code (for example from a failed API call: type bug, priority high). */
-export type BugReportPrefill = {
+export type SupportReportPrefill = {
   title?: string;
   description?: string;
   typeCode?: string;
   priorityCode?: string;
 };
 
-export type BugReportPayload = {
+export type SupportReportPayload = {
   title: string;
   description: string;
   typeUUID: string | null;
@@ -37,16 +39,16 @@ export type BugReportPayload = {
   systemInfo: Record<string, unknown>;
 };
 
-export type BugReportCreated = {
+export type SupportReportCreated = {
   SupportTicketUUID: string;
   SupportTicketID: string;
   AttachmentWarnings?: string[];
 };
 
 /** Elements whose content never appears in a problem report screenshot. */
-export const BUG_REPORT_MASK_SELECTOR = 'input[type="password"], [data-report-mask]';
+export const SUPPORT_REPORT_MASK_SELECTOR = 'input[type="password"], [data-report-mask]';
 
-const EMPTY_DRAFT: BugReportDraft = {
+const EMPTY_DRAFT: SupportReportDraft = {
   title: '',
   description: '',
   typeUUID: '',
@@ -55,7 +57,7 @@ const EMPTY_DRAFT: BugReportDraft = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class BugReportService {
+export class SupportReportService {
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -63,10 +65,20 @@ export class BugReportService {
   private readonly diagnostics = inject(ClientDiagnosticsService);
 
   /** Unsent form values survive closing the dialog or a failed submit. */
-  readonly draft = signal<BugReportDraft>({ ...EMPTY_DRAFT });
+  readonly draft = signal<SupportReportDraft>({ ...EMPTY_DRAFT });
   /** Catalog codes to preselect once the dialog loads the platform types and priorities. */
   readonly prefillCodes = signal<{ typeCode?: string; priorityCode?: string }>({});
+  private draftEnvironment = readStoredEnvironmentUUID();
+
+  clearDraft() {
+    this.draft.set({ ...EMPTY_DRAFT });
+    this.prefillCodes.set({});
+    this.submission.clear();
+    this.draftEnvironment = readStoredEnvironmentUUID();
+  }
+
   private opening = false;
+  private readonly submission = new SupportRequestDraft();
 
   async captureScreen(): Promise<string | null> {
     if (typeof window === 'undefined' || !document?.body) return null;
@@ -89,14 +101,15 @@ export class BugReportService {
       });
       return canvas.toDataURL('image/jpeg', 0.82);
     } catch (error) {
-      console.warn('[BugReportService] Screen capture failed:', error);
+      console.warn('[SupportReportService] Screen capture failed:', error);
       return null;
     }
   }
 
   /** Opens the report dialog at once; the screenshot is captured behind it. */
-  async openReportDialog(prefill?: BugReportPrefill): Promise<void> {
+  async openReportDialog(prefill?: SupportReportPrefill): Promise<void> {
     if (this.opening) return;
+    if (this.draftEnvironment !== readStoredEnvironmentUUID()) this.clearDraft();
     this.opening = true;
     try {
       if (prefill) {
@@ -104,11 +117,11 @@ export class BugReportService {
         this.draft.update((draft) => ({ ...draft, ...text }));
         this.prefillCodes.set({ typeCode, priorityCode });
       }
-      const { BugReportDialogComponent } =
-        await import('../shared/bug-report-dialog/bug-report-dialog');
+      const { SupportReportDialogComponent } =
+        await import('../shared/support-report-dialog/support-report-dialog');
       const binding = openCrudComponentDialog(
         this.dialog,
-        BugReportDialogComponent,
+        SupportReportDialogComponent,
         'crud-form-dialog',
         { data: { url: window.location.href } },
       );
@@ -141,13 +154,35 @@ export class BugReportService {
    * "Report problem" opens a ticket to the platform support team (help center, origin app_report).
    * Errors are already toasted by the API interceptor; success shows the protocol.
    */
-  async submitReport(payload: BugReportPayload): Promise<BugReportCreated> {
+  async submitReport(
+    payload: SupportReportPayload,
+    environmentUUID: string | null,
+  ): Promise<SupportReportCreated> {
+    if (!environmentUUID || environmentUUID !== readStoredEnvironmentUUID()) {
+      this.clearDraft();
+      this.snack.error('Environment changed. Reopen the form before continuing.');
+      throw new Error('Support report environment changed');
+    }
     const { title, ...rest } = payload;
-    const response = await this.api.post<{ data?: BugReportCreated }>('help/tickets', {
-      ...rest,
-      subject: title,
-      origin: 'app_report',
-    });
+    const body = this.submission.prepare(
+      readStoredEnvironmentUUID() ?? '',
+      {
+        ...rest,
+        subject: title,
+        origin: 'app_report',
+      },
+      {
+        title,
+        description: payload.description,
+        typeUUID: payload.typeUUID,
+        priorityUUID: payload.priorityUUID,
+        screenshot: payload.screenshot,
+        route: payload.route,
+        includeDiagnostics: this.draft().includeDiagnostics,
+      },
+    );
+    const response = await this.api.post<{ data?: SupportReportCreated }>('help/tickets', body);
+    this.submission.clear();
     const created = response?.data;
     this.draft.set({ ...EMPTY_DRAFT });
     this.prefillCodes.set({});
@@ -164,7 +199,7 @@ export class BugReportService {
 
 /** Masks passwords and anything marked `data-report-mask` inside the cloned document. */
 export function maskSensitiveContent(clone: Document): void {
-  clone.querySelectorAll<HTMLElement>(BUG_REPORT_MASK_SELECTOR).forEach((element) => {
+  clone.querySelectorAll<HTMLElement>(SUPPORT_REPORT_MASK_SELECTOR).forEach((element) => {
     if (element instanceof HTMLInputElement) {
       element.value = element.value ? '••••••' : '';
       element.setAttribute('value', element.value);

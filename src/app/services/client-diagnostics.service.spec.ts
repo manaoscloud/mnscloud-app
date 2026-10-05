@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { ClientDiagnosticsService, redactDiagnosticText } from './client-diagnostics.service';
-import { maskSensitiveContent } from './bug-report.service';
+import { maskSensitiveContent } from './support-report.service';
 
 describe('ClientDiagnosticsService', () => {
   let service: ClientDiagnosticsService;

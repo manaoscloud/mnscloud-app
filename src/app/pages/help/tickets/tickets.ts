@@ -1,9 +1,11 @@
+import { SupportRequestDraft } from '../../../services/support-request-draft';
+import { readStoredEnvironmentUUID } from '../../../core/environment/environment-context';
 import { Component, afterNextRender, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
-import { BugReportService } from '../../../services/bug-report.service';
+import { SupportReportService } from '../../../services/support-report.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -169,7 +171,17 @@ function config(api: () => ApiService, readAll: () => boolean): ConfigurableCrud
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly reports = inject(BugReportService);
+  private readonly submission = new SupportRequestDraft();
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord) {
+    return this.submission.prepare(readStoredEnvironmentUUID() ?? '', payload);
+  }
+
+  protected override async afterSave() {
+    this.submission.clear();
+  }
+
+  private readonly reports = inject(SupportReportService);
 
   constructor() {
     const api = inject(ApiService);

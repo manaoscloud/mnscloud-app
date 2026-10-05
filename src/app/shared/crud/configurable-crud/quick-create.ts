@@ -388,6 +388,7 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () => import('../../../pages/sales/unit/unit').then((m) => m.SaleUnitPage),
   },
   SupportTicketPriorityStpUUID: {
+    routeData: { supportDesk: 'tenant' },
     label: 'Create priority',
     loadComponent: () =>
       import('../../../pages/support/ticket-priorities/ticket-priorities').then(
@@ -395,11 +396,13 @@ export const QUICK_CREATE_REGISTRY = {
       ),
   },
   SupportTeamStmUUID: {
+    routeData: { supportDesk: 'tenant' },
     label: 'Create support team',
     loadComponent: () =>
       import('../../../pages/support/teams/teams').then((m) => m.SupportTeamsPage),
   },
   SupportTicketTypeSttUUID: {
+    routeData: { supportDesk: 'tenant' },
     label: 'Create ticket type',
     loadComponent: () =>
       import('../../../pages/support/ticket-types/ticket-types').then(
@@ -407,6 +410,7 @@ export const QUICK_CREATE_REGISTRY = {
       ),
   },
   SupportTicketChannelStcUUID: {
+    routeData: { supportDesk: 'tenant' },
     label: 'Create origin',
     loadComponent: () =>
       import('../../../pages/support/ticket-channels/ticket-channels').then(

@@ -1,7 +1,7 @@
 // Layout, header, scrolling and footer come from the global `.crud-dialog` baseline.
 // Only the report-specific blocks (screenshot, diagnostics, confirmation) live here.
 
-.bug-report-warning {
+.support-report-warning {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -12,7 +12,7 @@
   color: var(--mat-sys-on-tertiary-container);
 }
 
-.bug-report-panel {
+.support-report-panel {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -22,7 +22,7 @@
   background: var(--mat-sys-surface-container);
 }
 
-.bug-report-panel-header {
+.support-report-panel-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -32,16 +32,16 @@
   cursor: default;
 }
 
-summary.bug-report-panel-header {
+summary.support-report-panel-header {
   cursor: pointer;
   list-style: none;
 }
 
-summary.bug-report-panel-header::-webkit-details-marker {
+summary.support-report-panel-header::-webkit-details-marker {
   display: none;
 }
 
-.bug-report-panel-title {
+.support-report-panel-title {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -53,13 +53,13 @@ summary.bug-report-panel-header::-webkit-details-marker {
   }
 }
 
-.bug-report-panel-actions {
+.support-report-panel-actions {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
 
-.bug-report-badge {
+.support-report-badge {
   padding: 0.1rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -68,7 +68,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
   color: var(--mat-sys-on-secondary-container);
 }
 
-.bug-report-screenshot {
+.support-report-screenshot {
   display: block;
   width: 100%;
   max-height: 280px;
@@ -78,7 +78,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
   background: var(--mat-sys-surface-container-lowest);
 }
 
-.bug-report-placeholder {
+.support-report-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,13 +91,13 @@ summary.bug-report-panel-header::-webkit-details-marker {
   text-align: center;
 }
 
-.bug-report-note {
+.support-report-note {
   margin: 0;
   font-size: 0.8rem;
   color: var(--mat-sys-on-surface-variant);
 }
 
-.bug-report-facts {
+.support-report-facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.35rem 0.9rem;
@@ -120,7 +120,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
   }
 }
 
-.bug-report-log {
+.support-report-log {
   max-height: 160px;
   margin: 0;
   padding: 0.6rem 0.75rem;
@@ -133,7 +133,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
   color: var(--mat-sys-on-surface);
 }
 
-.bug-report-success {
+.support-report-success {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -153,7 +153,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
   }
 }
 
-.bug-report-success-icon {
+.support-report-success-icon {
   width: 48px;
   height: 48px;
   font-size: 48px;
@@ -161,7 +161,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
 }
 
 @media (max-width: 600px) {
-  .bug-report-facts {
+  .support-report-facts {
     grid-template-columns: minmax(0, 1fr);
 
     dd {
@@ -169,7 +169,7 @@ summary.bug-report-panel-header::-webkit-details-marker {
     }
   }
 
-  .bug-report-panel-actions {
+  .support-report-panel-actions {
     width: 100%;
 
     button {

@@ -128,11 +128,24 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 - Validate desktop/mobile, light/dark, PT/EN/ES, long lists/names, default-versus-active selection,
   keyboard/touch, operation actions and session expiry before delivering topbar changes.
 
-## Support Desks, Help Center And "Report problem"
+## Unified Support, My tickets and "Report problem"
+
+- A single Support navigation group contains My tickets, Customers and Platform. Only Customers
+  inherits the commercial Support entitlement; requester and platform routes use their respective
+  API permissions. Platform is a submenu, never a second top-level module.
+- Tenant routes explicitly declare `data.supportDesk = 'tenant'`; platform routes declare
+  `data.supportDesk = 'platform'`. FK quick-create forwards this same explicit context.
+- Creation retries keep an idempotency key and frozen payload per draft/environment. Changing the
+  environment closes overlays and clears report drafts. Ticket edits submit the loaded Revision
+  as expectedRevision; a stale-edit failure preserves the user's draft and requires reopening
+  with the current ticket before retrying.
+- Ticket queues are server filters (unassigned, mine, my teams, waiting, due, overdue, resolved).
+  Notification settings reuse the canonical notification rule form with ticket-only scope.
+
 
 - One Support model, two desks. Tenant desk pages live under `/support/*` (module.support.*,
   a tenant answers its ERP customers). The platform desk reuses the same pages under
-  `/support-desk/*` with `data.scope = 'master'` (platform.support.* permissions, so support
+  `/support/platform/*` with `data.supportDesk = 'platform'` (platform.support.* permissions, so support
   agents do not need platform master); they call `/system/support/*`. Pages read the desk with
   `supportDesk(route)` from `pages/support/shared/support-desk.ts`; quick-create inherits it.
 - Ticket types, priorities (SLA) and origins are catalogs (`/support/ticket-types`,
@@ -143,11 +156,11 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   eligible-agent selector. Team members are a shared collection dialog; creating accounts or
   granting platform permissions is intentionally outside this picker. The API validates same-desk
   teams and requires an assigned agent to belong to the selected team.
-- Help center: `/help/tickets` ("My tickets", profile menu) lets every tenant user open and follow
+- Help center: `/support/requests` ("My tickets", Support and profile menus) lets every tenant user open and follow
   tickets to the platform team without the Support module: conversation, attachments, close.
 - "Report problem" (top bar, profile menu, My tickets action, and the action of API 5xx toasts)
-  opens a help center ticket with origin `app_report`. `BugReportService.openReportDialog()` opens
-  `BugReportDialogComponent` at once through `openCrudComponentDialog(..., 'crud-form-dialog')`;
+  opens a help center ticket with origin `app_report`. `SupportReportService.openReportDialog()` opens
+  `SupportReportDialogComponent` at once through `openCrudComponentDialog(..., 'crud-form-dialog')`;
   type and priority come from `help/ticket-types` and `help/ticket-priorities` (defaults
   preselected; failed-call reports prefill codes `bug`/`high`). The screenshot is captured behind
   the dialog with `html2canvas-pro` (the theme uses `color-mix()`).
