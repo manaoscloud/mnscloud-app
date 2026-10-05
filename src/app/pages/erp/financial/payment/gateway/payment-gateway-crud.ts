@@ -11,6 +11,7 @@ import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-
  * tenant catalog API; each gateway shows only the fields its integration needs.
  */
 export const INTER_OWN_ACCOUNT = 'inter_business';
+export const ASAAS_OWN_ACCOUNT = 'asaas';
 
 const statusOptions: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -32,6 +33,7 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
 /** Fallback until the catalog loads; the API remains the source of truth. */
 export const defaultGatewayOptions: readonly ConfigurableCrudOption[] = [
   { value: INTER_OWN_ACCOUNT, label: 'Inter Empresas (conta própria)' },
+  { value: ASAAS_OWN_ACCOUNT, label: 'Asaas (conta própria)' },
 ];
 
 export const GATEWAY_PEM_FIELDS = ['certPem', 'keyPem'] as const;
@@ -39,7 +41,13 @@ const CREDENTIAL_FIELDS = ['clientId', 'clientSecret', ...GATEWAY_PEM_FIELDS] as
 
 const isInter = ({ values }: { values: ConfigurableCrudRecord }) =>
   String(values['provider'] ?? '') === INTER_OWN_ACCOUNT;
+const isAsaas = ({ values }: { values: ConfigurableCrudRecord }) =>
+  String(values['provider'] ?? '') === ASAAS_OWN_ACCOUNT;
 const hideUnlessInter = (context: { values: ConfigurableCrudRecord }) => !isInter(context);
+const hideUnlessAsaas = (context: { values: ConfigurableCrudRecord }) => !isAsaas(context);
+const hideUnlessInterOrAsaas = (context: { values: ConfigurableCrudRecord }) =>
+  !isInter(context) && !isAsaas(context);
+
 const requiredOnCreate = ({
   editing,
   values,
@@ -47,6 +55,15 @@ const requiredOnCreate = ({
   editing: boolean;
   values: ConfigurableCrudRecord;
 }) => !editing && isInter({ values });
+
+const requiredAsaasOnCreate = ({
+  editing,
+  values,
+}: {
+  editing: boolean;
+  values: ConfigurableCrudRecord;
+}) => !editing && isAsaas({ values });
+
 const keepSecretHelp = ({ editing }: { editing: boolean }) =>
   editing ? 'Leave empty to keep the stored credentials. Replacing requires all fields.' : '';
 
@@ -78,7 +95,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: environmentOptions,
-    hiddenWhen: hideUnlessInter,
+    hiddenWhen: hideUnlessInterOrAsaas,
   },
   {
     key: 'isDefault',
@@ -108,7 +125,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: receiveMethodOptions,
-    hiddenWhen: hideUnlessInter,
+    hiddenWhen: hideUnlessInterOrAsaas,
   },
   {
     key: 'autoCancelDays',
@@ -119,7 +136,20 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     help: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
-    hiddenWhen: hideUnlessInter,
+    hiddenWhen: hideUnlessInterOrAsaas,
+  },
+  {
+    key: 'apiKey',
+    label: 'API Key',
+    type: 'password',
+    tab: 'authentication',
+    span: 2,
+    autocomplete: 'new-password',
+    translateLabel: false,
+    fromRecord: () => '',
+    requiredWhen: requiredAsaasOnCreate,
+    helpWhen: keepSecretHelp,
+    hiddenWhen: hideUnlessAsaas,
   },
   {
     key: 'clientId',
@@ -236,6 +266,26 @@ export const paymentGatewayConfig = defineCrud({
   ],
   rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
   payload: (values, editing) => {
+    const provider = text(values['provider']);
+    if (provider === ASAAS_OWN_ACCOUNT) {
+      const apiKey = text(values['apiKey']);
+      const credentials: Record<string, string> = {};
+      if (apiKey) credentials['apiKey'] = apiKey;
+      if (!editing && !apiKey) {
+        throw new Error('Provide the Asaas API Key.');
+      }
+      return {
+        name: text(values['name']),
+        ...(editing ? {} : { provider: ASAAS_OWN_ACCOUNT }),
+        environment: text(values['environment']),
+        receiveMethods: text(values['receiveMethods']) || 'BOLETO,PIX',
+        autoCancelDays: Number(values['autoCancelDays']) || 30,
+        isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
+        isActive: Number(values['status']) === 1 ? 1 : 0,
+        ...(Object.keys(credentials).length > 0 ? { credentials } : {}),
+      };
+    }
+
     const credentials: Record<string, string> = {};
     for (const key of CREDENTIAL_FIELDS) {
       const value = text(values[key]);
