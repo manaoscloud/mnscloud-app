@@ -5999,5 +5999,6 @@
   "Per second": "Per second",
   "Per usage unit": "Per usage unit",
   "GB per hour": "GB per hour",
-  "GB per month": "GB per month"
+  "GB per month": "GB per month",
+  "Show this package on the public website. Tenant purchase eligibility is controlled separately.": "Show this package on the public website. Tenant purchase eligibility is controlled separately."
 }

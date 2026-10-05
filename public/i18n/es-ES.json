@@ -5999,5 +5999,6 @@
   "Per second": "Por segundo",
   "Per usage unit": "Por unidad de uso",
   "GB per hour": "GB por hora",
-  "GB per month": "GB por mes"
+  "GB per month": "GB por mes",
+  "Show this package on the public website. Tenant purchase eligibility is controlled separately.": "Muestra este paquete en el sitio público. La elegibilidad de contratación del tenant se controla por separado."
 }
