@@ -6001,5 +6001,5 @@
   "Per usage unit": "Por unidade de uso",
   "GB per hour": "GB por hora",
   "GB per month": "GB por mês",
-  "Show this package on the public website. Tenant purchase eligibility is controlled separately.": "Exibe este pacote no site público. A elegibilidade para contratação pelo tenant é controlada separadamente."
+  "Publish this package in the tenant catalog and on the public website. Unpublished packages cannot be purchased by tenants.": "Publica este pacote no catálogo do tenant e no site público. Pacotes não publicados não podem ser contratados pelos tenants."
 }

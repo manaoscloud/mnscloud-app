@@ -244,7 +244,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Public',
       type: 'select',
       options: YES_NO_OPTIONS,
-      help: 'Show this package on the public website. Tenant purchase eligibility is controlled separately.',
+      help: 'Publish this package in the tenant catalog and on the public website. Unpublished packages cannot be purchased by tenants.',
       span: 1,
     },
     {
