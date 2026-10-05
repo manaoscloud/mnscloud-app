@@ -1,3 +1,4 @@
+import { readStoredEnvironmentUUID } from '../../core/environment/environment-context';
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,13 +10,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../services/api.service';
-import { BugReportCreated, BugReportService } from '../../services/bug-report.service';
+import { SupportReportCreated, SupportReportService } from '../../services/support-report.service';
 import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
 } from '../forms/mns-search-select-field/mns-search-select-field';
 
-export interface BugReportDialogData {
+export interface SupportReportDialogData {
   url?: string;
 }
 
@@ -32,7 +33,7 @@ function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): Cata
 }
 
 @Component({
-  selector: 'app-bug-report-dialog',
+  selector: 'app-support-report-dialog',
   standalone: true,
   imports: [
     MatDialogModule,
@@ -45,17 +46,18 @@ function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): Cata
     MnsSearchSelectFieldComponent,
     TranslocoPipe,
   ],
-  templateUrl: './bug-report-dialog.html',
-  styleUrls: ['./bug-report-dialog.scss'],
+  templateUrl: './support-report-dialog.html',
+  styleUrls: ['./support-report-dialog.scss'],
 })
-export class BugReportDialogComponent {
-  private readonly dialogRef = inject(MatDialogRef<BugReportDialogComponent>);
-  private readonly bugReports = inject(BugReportService);
+export class SupportReportDialogComponent {
+  private readonly dialogRef = inject(MatDialogRef<SupportReportDialogComponent>);
+  private readonly reports = inject(SupportReportService);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly api = inject(ApiService);
-  readonly data = inject<BugReportDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
+  readonly data = inject<SupportReportDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
 
+  private readonly environmentUUID = readStoredEnvironmentUUID();
   readonly titleMax = 160;
   readonly descriptionMax = 10000;
 
@@ -77,13 +79,13 @@ export class BugReportDialogComponent {
   /** Tickets belong to an environment: without one selected, the catalogs cannot load. */
   readonly unavailable = computed(() => this.catalogs.status() === 'error');
 
-  readonly draft = this.bugReports.draft;
+  readonly draft = this.reports.draft;
   readonly screenshot = signal<string | null>(null);
   readonly capturing = signal(true);
   readonly submitting = signal(false);
-  readonly created = signal<BugReportCreated | null>(null);
-  readonly environment = this.bugReports.environment();
-  readonly diagnostics = this.bugReports.diagnosticsSnapshot();
+  readonly created = signal<SupportReportCreated | null>(null);
+  readonly environment = this.reports.environment();
+  readonly diagnostics = this.reports.diagnosticsSnapshot();
 
   readonly isFormValid = computed(() => {
     const draft = this.draft();
@@ -104,7 +106,7 @@ export class BugReportDialogComponent {
       const types = this.typeOptions();
       const priorities = this.priorityOptions();
       if (!types.length && !priorities.length) return;
-      const codes = this.bugReports.prefillCodes();
+      const codes = this.reports.prefillCodes();
       const draft = this.draft();
       const pick = (options: CatalogOption[], current: string, code?: string) =>
         options.find((option) => code && option.code === code)?.value ??
@@ -155,12 +157,12 @@ export class BugReportDialogComponent {
   }
 
   setType(value: unknown) {
-    this.bugReports.prefillCodes.update((codes) => ({ ...codes, typeCode: undefined }));
+    this.reports.prefillCodes.update((codes) => ({ ...codes, typeCode: undefined }));
     this.draft.update((draft) => ({ ...draft, typeUUID: String(value ?? '') }));
   }
 
   setPriority(value: unknown) {
-    this.bugReports.prefillCodes.update((codes) => ({ ...codes, priorityCode: undefined }));
+    this.reports.prefillCodes.update((codes) => ({ ...codes, priorityCode: undefined }));
     this.draft.update((draft) => ({ ...draft, priorityUUID: String(value ?? '') }));
   }
 
@@ -175,7 +177,7 @@ export class BugReportDialogComponent {
   async capture() {
     this.capturing.set(true);
     try {
-      this.screenshot.set(await this.bugReports.captureScreen());
+      this.screenshot.set(await this.reports.captureScreen());
     } finally {
       this.capturing.set(false);
     }
@@ -187,26 +189,29 @@ export class BugReportDialogComponent {
     const draft = this.draft();
     const include = draft.includeDiagnostics;
     try {
-      const created = await this.bugReports.submitReport({
-        title: draft.title.trim(),
-        description: draft.description.trim(),
-        typeUUID: draft.typeUUID || null,
-        priorityUUID: draft.priorityUUID || null,
-        url: this.environment.url,
-        route: this.environment.route,
-        appVersion: this.environment.appVersion,
-        screenshot: this.screenshot() ?? undefined,
-        systemInfo: {
-          userAgent: this.environment.userAgent,
-          viewport: this.environment.viewport,
-          language: this.environment.language,
-          timezone: this.environment.timezone,
-          platform: this.environment.platform,
-          consoleLogs: include ? this.diagnostics.consoleLogs : [],
-          failedRequests: include ? this.diagnostics.failedRequests : [],
-          navigation: include ? this.diagnostics.navigation : [],
+      const created = await this.reports.submitReport(
+        {
+          title: draft.title.trim(),
+          description: draft.description.trim(),
+          typeUUID: draft.typeUUID || null,
+          priorityUUID: draft.priorityUUID || null,
+          url: this.environment.url,
+          route: this.environment.route,
+          appVersion: this.environment.appVersion,
+          screenshot: this.screenshot() ?? undefined,
+          systemInfo: {
+            userAgent: this.environment.userAgent,
+            viewport: this.environment.viewport,
+            language: this.environment.language,
+            timezone: this.environment.timezone,
+            platform: this.environment.platform,
+            consoleLogs: include ? this.diagnostics.consoleLogs : [],
+            failedRequests: include ? this.diagnostics.failedRequests : [],
+            navigation: include ? this.diagnostics.navigation : [],
+          },
         },
-      });
+        this.environmentUUID,
+      );
       this.created.set(created);
     } catch {
       // The API interceptor already shows the error; the draft stays for a retry.
@@ -218,7 +223,7 @@ export class BugReportDialogComponent {
   openMyTickets() {
     const ticket = this.created()?.SupportTicketUUID;
     this.dialogRef.close(true);
-    void this.router.navigate(['/help/tickets'], ticket ? { queryParams: { ticket } } : {});
+    void this.router.navigate(['/support/requests'], ticket ? { queryParams: { ticket } } : {});
   }
 
   close() {

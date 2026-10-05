@@ -10,13 +10,15 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 /**
  * One Support model, two desks: the tenant desk (/support, a tenant answers its ERP customers)
  * and the platform desk (/system/support, the MNSCloud team answers tenants). Pages read the
- * desk from the route (`data.scope === 'master'`). Quick-create fields pass this scope explicitly
+ * desk from the route (`data.supportDesk`). Quick-create fields pass this scope explicitly
  * because the shared dialog host is outside the routed page's injector.
  */
 export type SupportDesk = 'tenant' | 'platform';
 
 export function supportDesk(route: ActivatedRoute): SupportDesk {
-  return route.snapshot.data['scope'] === 'master' ? 'platform' : 'tenant';
+  const desk = route.snapshot.data['supportDesk'];
+  if (desk !== 'platform' && desk !== 'tenant') throw new Error('Support context is required');
+  return desk;
 }
 
 export function supportBase(desk: SupportDesk): string {
@@ -114,9 +116,12 @@ export function agentTimelineCollection(
       { key: 'message', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
       {
         key: 'isInternal',
-        label: 'Internal note',
+        label: 'Message visibility',
         type: 'search-select',
-        options: YES_NO_OPTIONS,
+        options: [
+          { value: 0, label: 'Public reply' },
+          { value: 1, label: 'Internal note' },
+        ],
         translateOptions: true,
         help: 'Internal notes are never shown to the requester.',
         span: 2,

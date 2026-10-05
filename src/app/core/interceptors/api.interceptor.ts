@@ -92,7 +92,7 @@ function parseSnackParams(message: string): { key: string; params?: Record<strin
   return { key, params };
 }
 
-const BUG_REPORT_ENDPOINT = /\/help\/tickets(?:[/?]|$)/;
+const SUPPORT_REPORT_ENDPOINT = /\/help\/tickets(?:[/?]|$)/;
 
 function requestPath(url: string): string {
   try {
@@ -126,7 +126,7 @@ function recordFailure(
 
 /** Server and network failures offer "Report problem" with the failed call already described. */
 function offersProblemReport(req: HttpRequest<unknown>, error: HttpErrorResponse) {
-  return (error.status === 0 || error.status >= 500) && !BUG_REPORT_ENDPOINT.test(req.url);
+  return (error.status === 0 || error.status >= 500) && !SUPPORT_REPORT_ENDPOINT.test(req.url);
 }
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
@@ -141,8 +141,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const reportProblem = () => {
     const failure = diagnostics.lastFailedRequest();
     // Lazy: the report dialog stack is loaded only when the user asks for it.
-    void import('../../services/bug-report.service').then(({ BugReportService }) => {
-      const reports = injector.get(BugReportService);
+    void import('../../services/support-report.service').then(({ SupportReportService }) => {
+      const reports = injector.get(SupportReportService);
       const prefill = reports.draft().description
         ? {}
         : {

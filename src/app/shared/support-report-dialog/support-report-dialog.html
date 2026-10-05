@@ -11,14 +11,14 @@
   <mat-dialog-content class="dialog-content">
     <div class="dialog-scroll">
       @if (created(); as report) {
-        <section class="bug-report-success" role="status">
-          <mat-icon class="bug-report-success-icon">task_alt</mat-icon>
+        <section class="support-report-success" role="status">
+          <mat-icon class="support-report-success-icon">task_alt</mat-icon>
           <h3>{{ successTitle(report.SupportTicketID) }}</h3>
           <p>
             {{ 'Your ticket was opened. Follow the conversation in My tickets.' | transloco }}
           </p>
           @if (report.AttachmentWarnings?.length) {
-            <p class="bug-report-warning" role="alert">
+            <p class="support-report-warning" role="alert">
               {{
                 'Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.'
                   | transloco
@@ -28,7 +28,7 @@
         </section>
       } @else {
         @if (unavailable()) {
-          <p class="bug-report-warning" role="alert">
+          <p class="support-report-warning" role="alert">
             <mat-icon>info</mat-icon>
             {{ 'Select an environment to open a ticket to the support team.' | transloco }}
           </p>
@@ -84,13 +84,13 @@
           </mat-form-field>
         </div>
 
-        <section class="bug-report-panel" [attr.aria-busy]="capturing()">
-          <div class="bug-report-panel-header">
-            <span class="bug-report-panel-title">
+        <section class="support-report-panel" [attr.aria-busy]="capturing()">
+          <div class="support-report-panel-header">
+            <span class="support-report-panel-title">
               <mat-icon>photo_camera</mat-icon>
               {{ 'Screen capture' | transloco }}
             </span>
-            <span class="bug-report-panel-actions">
+            <span class="support-report-panel-actions">
               <button
                 mat-button
                 type="button"
@@ -110,17 +110,21 @@
           </div>
 
           @if (capturing()) {
-            <div class="bug-report-placeholder">
+            <div class="support-report-placeholder">
               <mat-spinner diameter="24"></mat-spinner>
               <span>{{ 'Capturing screen…' | transloco }}</span>
             </div>
           } @else if (screenshot(); as image) {
-            <img class="bug-report-screenshot" [src]="image" [alt]="'Screen capture' | transloco" />
-            <p class="bug-report-note">
+            <img
+              class="support-report-screenshot"
+              [src]="image"
+              [alt]="'Screen capture' | transloco"
+            />
+            <p class="support-report-note">
               {{ 'Passwords and fields marked as sensitive are hidden in the print.' | transloco }}
             </p>
           } @else {
-            <div class="bug-report-placeholder">
+            <div class="support-report-placeholder">
               <mat-icon>image_not_supported</mat-icon>
               <span>{{
                 'No screenshot attached. You can submit without image or recapture.' | transloco
@@ -129,15 +133,15 @@
           }
         </section>
 
-        <details class="bug-report-panel">
-          <summary class="bug-report-panel-header">
-            <span class="bug-report-panel-title">
+        <details class="support-report-panel">
+          <summary class="support-report-panel-header">
+            <span class="support-report-panel-title">
               <mat-icon>tune</mat-icon>
               {{ 'Diagnostic Information' | transloco }}
             </span>
-            <span class="bug-report-badge">{{ 'Automatic' | transloco }}</span>
+            <span class="support-report-badge">{{ 'Automatic' | transloco }}</span>
           </summary>
-          <dl class="bug-report-facts">
+          <dl class="support-report-facts">
             <dt>{{ 'Page URL' | transloco }}</dt>
             <dd class="monospace">{{ environment.url }}</dd>
             <dt>{{ 'App version' | transloco }}</dt>
@@ -150,7 +154,7 @@
             <dd>{{ diagnosticsSummary() }}</dd>
           </dl>
           @if (diagnostics.failedRequests.length || diagnostics.consoleLogs.length) {
-            <pre class="bug-report-log">{{ diagnosticsPreview() }}</pre>
+            <pre class="support-report-log">{{ diagnosticsPreview() }}</pre>
           }
           <mat-slide-toggle
             [checked]="draft().includeDiagnostics"

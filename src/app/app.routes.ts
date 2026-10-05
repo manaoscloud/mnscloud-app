@@ -90,31 +90,33 @@ export const routes: Routes = [
           },
           // Platform support desk: platform.support.* agents (masters included), no tenant needed.
           {
-            path: 'support-desk/tickets',
+            path: 'support/platform/tickets',
             canActivate: [permissionGuard],
             loadComponent: () =>
               import('./pages/support/tickets/tickets').then((m) => m.SupportTicketsPage),
             title: 'Platform support • Tickets | mnscloud',
             data: {
               scope: 'master',
+              supportDesk: 'platform',
               permission: 'platform.support.tickets.manage',
               breadcrumb: 'Platform tickets',
             },
           },
           {
-            path: 'support-desk/teams',
+            path: 'support/platform/teams',
             canActivate: [permissionGuard],
             loadComponent: () =>
               import('./pages/support/teams/teams').then((m) => m.SupportTeamsPage),
             title: 'Platform support • Teams | mnscloud',
             data: {
               scope: 'master',
+              supportDesk: 'platform',
               permission: 'platform.support.settings.manage',
               breadcrumb: 'Support teams',
             },
           },
           {
-            path: 'support-desk/ticket-types',
+            path: 'support/platform/ticket-types',
             canActivate: [permissionGuard],
             loadComponent: () =>
               import('./pages/support/ticket-types/ticket-types').then(
@@ -123,12 +125,13 @@ export const routes: Routes = [
             title: 'Platform support • Ticket types | mnscloud',
             data: {
               scope: 'master',
+              supportDesk: 'platform',
               permission: 'platform.support.settings.manage',
               breadcrumb: 'Ticket types',
             },
           },
           {
-            path: 'support-desk/ticket-priorities',
+            path: 'support/platform/ticket-priorities',
             canActivate: [permissionGuard],
             loadComponent: () =>
               import('./pages/support/ticket-priorities/ticket-priorities').then(
@@ -137,12 +140,13 @@ export const routes: Routes = [
             title: 'Platform support • Ticket priorities | mnscloud',
             data: {
               scope: 'master',
+              supportDesk: 'platform',
               permission: 'platform.support.settings.manage',
               breadcrumb: 'Ticket priorities',
             },
           },
           {
-            path: 'support-desk/ticket-origins',
+            path: 'support/platform/ticket-channels',
             canActivate: [permissionGuard],
             loadComponent: () =>
               import('./pages/support/ticket-channels/ticket-channels').then(
@@ -151,8 +155,24 @@ export const routes: Routes = [
             title: 'Platform support • Ticket origins | mnscloud',
             data: {
               scope: 'master',
+              supportDesk: 'platform',
               permission: 'platform.support.settings.manage',
               breadcrumb: 'Ticket origins',
+            },
+          },
+          {
+            path: 'support/platform/notification-rules',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/monitoring/notification-rules/notification-rules').then(
+                (m) => m.MonitoringNotificationRulesPage,
+              ),
+            title: 'Support • Platform • Notifications | mnscloud',
+            data: {
+              scope: 'master',
+              supportDesk: 'platform',
+              permission: 'platform.support.notifications.manage',
+              breadcrumb: 'Notifications',
             },
           },
           {
@@ -629,6 +649,7 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/support/tickets/tickets').then((m) => m.SupportTicketsPage),
                 title: 'Support • Tickets | mnscloud',
+                data: { supportDesk: 'tenant' },
               },
               {
                 path: 'support/ticket-channels',
@@ -637,7 +658,7 @@ export const routes: Routes = [
                     (m) => m.SupportTicketChannelsPage,
                   ),
                 title: 'Support • Ticket origins | mnscloud',
-                data: { breadcrumb: 'Ticket origins' },
+                data: { supportDesk: 'tenant', breadcrumb: 'Ticket origins' },
               },
               {
                 path: 'support/ticket-types',
@@ -646,7 +667,7 @@ export const routes: Routes = [
                     (m) => m.SupportTicketTypesPage,
                   ),
                 title: 'Support • Ticket types | mnscloud',
-                data: { breadcrumb: 'Ticket types' },
+                data: { supportDesk: 'tenant', breadcrumb: 'Ticket types' },
               },
               {
                 path: 'support/ticket-priorities',
@@ -655,11 +676,11 @@ export const routes: Routes = [
                     (m) => m.SupportTicketPrioritiesPage,
                   ),
                 title: 'Support • Ticket priorities | mnscloud',
-                data: { breadcrumb: 'Ticket priorities' },
+                data: { supportDesk: 'tenant', breadcrumb: 'Ticket priorities' },
               },
               {
                 // Help center: every tenant user, no Support module needed.
-                path: 'help/tickets',
+                path: 'support/requests',
                 loadComponent: () =>
                   import('./pages/help/tickets/tickets').then((m) => m.HelpTicketsPage),
                 title: 'My tickets | mnscloud',
@@ -670,20 +691,13 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/support/teams/teams').then((m) => m.SupportTeamsPage),
                 title: 'Support • Teams | mnscloud',
+                data: { supportDesk: 'tenant' },
               },
               {
                 path: 'support/channels',
                 loadComponent: () =>
                   import('./pages/support/channels/channels').then((m) => m.SupportChannelsPage),
                 title: 'Support • Channels | mnscloud',
-              },
-              {
-                path: 'support/attendance',
-                loadComponent: () =>
-                  import('./pages/support/attendance/attendance').then(
-                    (m) => m.SupportAttendancePage,
-                  ),
-                title: 'Support • Attendance | mnscloud',
               },
 
               // ISP

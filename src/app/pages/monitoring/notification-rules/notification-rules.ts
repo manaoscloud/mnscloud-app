@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Component, inject } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -43,6 +44,8 @@ const RULE_CONFIG: ConfigurableCrudConfig = {
   deletedMessage: 'Notification rule deleted successfully.',
   deleteFailedMessage: 'Failed to delete notification rule.',
   bulkDelete: false,
+  serverSidePagination: true,
+  initialPageSize: 10,
   rowActions: [{ key: 'send-test', label: 'Send test email', icon: 'forward_to_inbox' }],
   statusMode: 'number',
   activeValue: 1,
@@ -114,6 +117,7 @@ const RULE_CONFIG: ConfigurableCrudConfig = {
       label: 'Minimum level',
       type: 'search-select',
       options: SEVERITY_OPTIONS,
+      translateOptions: true,
       required: true,
       span: 1,
     },
@@ -150,7 +154,38 @@ const RULE_CONFIG: ConfigurableCrudConfig = {
 })
 export class MonitoringNotificationRulesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(RULE_CONFIG);
+    const support = inject(ActivatedRoute).snapshot.data['supportDesk'] === 'platform';
+    super(
+      support
+        ? {
+            ...RULE_CONFIG,
+            pageTitle: 'Support notifications',
+            pageDescription: 'Notify the platform team when a ticket has no assigned recipient.',
+            dialogDescription:
+              'Recipients receive ticket alerts when no responsible agent or eligible team member is available.',
+            listQuery: { scope: 'tickets' },
+            searchPlaceholder: 'Name',
+            columns: RULE_CONFIG.columns.filter(
+              (column) => !['eventPattern', 'severity'].includes(column.id),
+            ),
+            initialValues: {
+              ...RULE_CONFIG.initialValues,
+              eventPattern: 'support.ticket.team',
+              severity: 'info',
+              throttleSeconds: 0,
+            },
+            fields: RULE_CONFIG.fields.filter(
+              (field) => !['eventPattern', 'severity', 'throttleSeconds'].includes(field.key),
+            ),
+            payload: (values) => ({
+              ...values,
+              eventPattern: 'support.ticket.team',
+              severity: 'info',
+              throttleSeconds: 0,
+            }),
+          }
+        : RULE_CONFIG,
+    );
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {

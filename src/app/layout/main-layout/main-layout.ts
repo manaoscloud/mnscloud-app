@@ -1,3 +1,4 @@
+import { MatDialog } from '@angular/material/dialog';
 // ==========================================================
 // Layout: main-layout.ts
 // ----------------------------------------------------------
@@ -45,7 +46,7 @@ import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/
 import { RuntimeVersionService } from '../../services/runtime-version.service';
 import { SystemParameterService } from '../../services/system-parameter.service';
 import { BillingService } from '../../pages/billing/shared/billing.service';
-import { BugReportService } from '../../services/bug-report.service';
+import { SupportReportService } from '../../services/support-report.service';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -67,7 +68,11 @@ interface ShellNavItem extends NavItem {
 }
 
 function normalizeSearchText(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 }
 
 type ContextMode = 'master' | 'tenant';
@@ -127,7 +132,8 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
-  private readonly bugReportService = inject(BugReportService);
+  private readonly reportService = inject(SupportReportService);
+  private readonly dialogs = inject(MatDialog);
 
   // =======================================================
   // Signals — Core UI State
@@ -763,8 +769,8 @@ export class MainLayout {
     this.themeService.setTheme(mode);
   }
 
-  openBugReport() {
-    void this.bugReportService.openReportDialog();
+  openSupportReport() {
+    void this.reportService.openReportDialog();
   }
 
   changeLanguage(language: LanguageOptionCode) {
@@ -840,6 +846,8 @@ export class MainLayout {
     const environmentUUID = normalizeEnvironmentUUID(env?.EnvironmentUUID);
     if (!environmentUUID || environmentUUID === this.activeEnvironmentId()) return;
 
+    this.dialogs.closeAll();
+    this.reportService.clearDraft();
     this.activeEnvironmentId.set(environmentUUID);
     writeStoredEnvironmentUUID(environmentUUID);
     if (this.isMasterUser()) {
