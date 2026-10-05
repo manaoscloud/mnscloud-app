@@ -43,6 +43,10 @@ Result:
 
 Describe service restarts, migrations, firewall changes, new packages, or deployment notes.
 
+## Navigation Labels
+
+- [ ] No menu change, or `npm run check:nav` passed and labels follow `app.md` → Navigation Label Contract (no ancestor words, length budget, PT/EN/ES).
+
 ## Screenshots Or Logs
 
 Add screenshots for UI changes and relevant logs for installer/runtime changes.

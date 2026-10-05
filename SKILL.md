@@ -17,6 +17,10 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - API calls must go through `src/app/services/api.service.ts`.
 - Runtime URL resolution must stay in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD pages must follow `app.md`.
+- Sidebar labels follow `app.md` → `Navigation Label Contract`: entries live in
+  `src/app/layout/navigation/nav-registry.ts` with `nav.<id>` keys in PT/EN/ES, never repeat an
+  ancestor's words, respect the per-level length budget, use sentence case and the glossary in
+  `nav-glossary.json`. Run `npm run check:nav` after any menu change.
 - Summary dashboards must use `templates/dashboard`, `DashboardPageComponent` and
   `dashboardResource`; their only action is Refresh. Management forms and analysis selectors
   belong on their own routes. The Metrics fleet explorer retains its established analysis controls.
