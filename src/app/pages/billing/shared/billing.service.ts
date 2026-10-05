@@ -75,6 +75,10 @@ export interface BillingPackage {
   BpaCode: string;
   BpaName: string;
   BpaNotes?: string | null;
+  BpaPublicSlug?: string | null;
+  BpaPublicName?: string | null;
+  BpaPublicSummary?: string | null;
+  BpaPublicDescription?: string | null;
   BpaIsPublic: number;
   BpaSortOrder: number;
   BpaStatus: number;

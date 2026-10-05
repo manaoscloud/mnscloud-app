@@ -18,7 +18,18 @@ import {
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
-const PACKAGE_PAYLOAD_KEYS = ['code', 'name', 'notes', 'isPublic', 'sortOrder', 'status'] as const;
+const PACKAGE_PAYLOAD_KEYS = [
+  'code',
+  'name',
+  'notes',
+  'publicSlug',
+  'publicName',
+  'publicSummary',
+  'publicDescription',
+  'isPublic',
+  'sortOrder',
+  'status',
+] as const;
 
 const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/packages',
@@ -44,6 +55,10 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     code: 'package.',
     name: '',
     notes: '',
+    publicSlug: '',
+    publicName: '',
+    publicSummary: '',
+    publicDescription: '',
     isPublic: 0,
     sortOrder: 1000,
     itemProductUUID: '',
@@ -234,9 +249,9 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       help: 'Commercial name of the package shown to operators and tenants.',
-      span: 1,
+      span: 2,
     },
-    // Record row 2: Public, Sort order
+    // Record row 2: Public, Sort order, Public slug
     {
       key: 'isPublic',
       source: 'BpaIsPublic',
@@ -244,7 +259,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Public',
       type: 'select',
       options: YES_NO_OPTIONS,
-      help: 'Publish this package in the tenant catalog and on the public website. Unpublished packages cannot be purchased by tenants.',
+      help: 'Publish this package on the public internet website/catalogs. Unchecked packages are still available to authenticated tenants in the platform catalog.',
       span: 1,
     },
     {
@@ -255,6 +270,31 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       type: 'number',
       help: 'Position of the package in lists and in the catalog. Lower numbers appear first.',
       span: 1,
+    },
+    {
+      key: 'publicSlug',
+      source: 'BpaPublicSlug',
+      payloadKey: 'publicSlug',
+      label: 'Public slug',
+      help: 'Unique slug for public website/internet catalog, for example bundle-starter.',
+      span: 2,
+    },
+    // Record row 3: Public name, Public summary
+    {
+      key: 'publicName',
+      source: 'BpaPublicName',
+      payloadKey: 'publicName',
+      label: 'Public name',
+      help: 'Optional customer-facing public name for website offers.',
+      span: 2,
+    },
+    {
+      key: 'publicSummary',
+      source: 'BpaPublicSummary',
+      payloadKey: 'publicSummary',
+      label: 'Public summary',
+      help: 'Short summary shown on public website cards.',
+      span: 2,
     },
     // Financial (create only): the first package item, created in the same transaction.
     {
@@ -299,7 +339,18 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       tab: 'financial',
       span: 1,
     },
-    // Notes: `notes` as a full-row, four-row textarea (app.md Notes rule).
+    // Notes & Public Description:
+    {
+      key: 'publicDescription',
+      source: 'BpaPublicDescription',
+      payloadKey: 'publicDescription',
+      label: 'Public description',
+      type: 'textarea',
+      help: 'Detailed description for public website catalog.',
+      tab: 'notes',
+      span: 4,
+      rows: 3,
+    },
     {
       key: 'notes',
       source: 'BpaNotes',
@@ -309,7 +360,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       help: 'Internal annotations about the package, visible only to the platform team.',
       tab: 'notes',
       span: 4,
-      rows: 4,
+      rows: 3,
     },
   ],
 };
