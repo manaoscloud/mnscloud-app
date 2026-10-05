@@ -1,0 +1,62 @@
+{
+  "$comment": "Navigation Label Contract data (app.md). Read by scripts/validate-nav-labels.mjs.",
+  "locales": ["pt-BR", "en-US", "es-ES"],
+  "maxDepth": 4,
+  "maxLengthByLevel": [24, 22, 18, 16],
+  "stopWords": {
+    "pt-BR": ["a", "à", "o", "e", "de", "da", "do", "das", "dos", "em", "com", "para", "por"],
+    "en-US": ["a", "an", "the", "and", "of", "for", "to", "by", "in", "on"],
+    "es-ES": ["a", "el", "la", "los", "las", "y", "de", "del", "en", "con", "para", "por"]
+  },
+  "properNouns": ["Bradesco", "Pay"],
+  "canonicalLeaves": {
+    "dashboard": { "pt-BR": "Painel", "en-US": "Dashboard", "es-ES": "Panel" }
+  },
+  "forbiddenLabels": {
+    "pt-BR": ["Visão geral", "Cadastro", "Registro"],
+    "en-US": ["Overview", "Registry", "Registration"],
+    "es-ES": ["Vista general", "Registro"]
+  },
+  "forbiddenTerms": {
+    "pt-BR": ["Cyber Security", "Reconcile", " menu "],
+    "en-US": ["Cyber Security", " menu "],
+    "es-ES": ["Reconcile", " menu "]
+  },
+  "productTerms": [
+    "VoIP",
+    "PABX",
+    "SBC",
+    "DID",
+    "Softswitch",
+    "WebRTC",
+    "Media/RTP",
+    "TURN/STUN",
+    "InfraGIS",
+    "ISP",
+    "ERP",
+    "POP",
+    "NAS",
+    "OLT",
+    "RADIUS",
+    "PPPoE",
+    "DNS",
+    "SMTP",
+    "VPS",
+    "CDR",
+    "API",
+    "SIP",
+    "SIAD",
+    "Pay",
+    "Custom",
+    "Webhosts",
+    "Hosts",
+    "Containers",
+    "Snapshots",
+    "Firewalls",
+    "Gateways",
+    "Peers",
+    "Pipes",
+    "Boletos",
+    "Tenants"
+  ]
+}

@@ -106,6 +106,9 @@
                                     <button
                                       class="menu-item great-item"
                                       (click)="navigateTo(great)"
+                                      [matTooltip]="great.path"
+                                      matTooltipPosition="right"
+                                      [matTooltipShowDelay]="600"
                                       [class.active-grand]="isActiveItem(great)"
                                     >
                                       @if (great.icon) {
@@ -121,6 +124,9 @@
                             <button
                               class="menu-item grand-item"
                               (click)="navigateTo(grand)"
+                              [matTooltip]="grand.path"
+                              matTooltipPosition="right"
+                              [matTooltipShowDelay]="600"
                               [class.active-grand]="isActiveItem(grand)"
                             >
                               @if (grand.icon) {
@@ -137,6 +143,9 @@
                   <button
                     class="menu-item child-item"
                     (click)="navigateTo(child)"
+                    [matTooltip]="child.path"
+                    matTooltipPosition="right"
+                    [matTooltipShowDelay]="600"
                     [class.active-child]="isActiveItem(child)"
                   >
                     @if (child.icon) {
@@ -166,6 +175,10 @@
               class="compact-flyout-item"
               [class.is-active]="isActiveSection(child)"
               [class.has-children]="child.children?.length"
+              [matTooltip]="child.path"
+              matTooltipPosition="right"
+              [matTooltipShowDelay]="600"
+              [matTooltipDisabled]="!!child.children?.length"
               (mouseenter)="onCompactChildEnter(child, $event)"
               (click)="
                 child.children?.length
@@ -202,6 +215,10 @@
               class="compact-flyout-item"
               [class.is-active]="isActiveSection(grand)"
               [class.has-children]="grand.children?.length"
+              [matTooltip]="grand.path"
+              matTooltipPosition="right"
+              [matTooltipShowDelay]="600"
+              [matTooltipDisabled]="!!grand.children?.length"
               (mouseenter)="onCompactGrandEnter(grand, $event)"
               (click)="
                 grand.children?.length
@@ -238,6 +255,9 @@
               class="compact-flyout-item"
               [class.is-active]="isActiveItem(great)"
               (click)="onCompactFlyoutNavigate(great)"
+              [matTooltip]="great.path"
+              matTooltipPosition="right"
+              [matTooltipShowDelay]="600"
             >
               <span class="compact-flyout-main">
                 <mat-icon class="compact-flyout-icon">{{

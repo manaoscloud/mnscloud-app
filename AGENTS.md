@@ -8,6 +8,7 @@ This repository contains only the standalone MNSCloud Angular app.
 - Start: `npm run start`
 - Build: `npm run build`
 - CRUD validation: `npm run check:crud`
+- Menu label validation: `npm run check:nav`
 - FK quick-create validation: `npm run check:crud:fk -- <page-folder>` (or `-- --all`)
 - Install/update bare-metal Nginx runtime: `sudo ./scripts/update-latest-nginx-runtime.sh`
 
@@ -33,6 +34,14 @@ window.MNSCLOUD_APP_CONFIG = {
   extends `ConfigurableCrudPageBase`; matching CSS hook classes alone is not compliance.
   `npm run check:crud:inventory` enforces this app-wide (no allowlist).
 - Use Angular Material and existing shared helpers before introducing new UI patterns.
+
+## Sidebar navigation labels
+
+The menu tree lives in `src/app/layout/navigation/nav-registry.ts` (data only) and every label
+follows `app.md` → `Navigation Label Contract`: `nav.<id>` keys in en-US/pt-BR/es-ES, no word
+repeated from any ancestor (`Suporte › Chamados › Origens`), per-level length budget, sentence
+case, glossary terms and at least two children per group. `npm run check:nav` enforces it in CI;
+there is no allowlist. Validate PT/EN/ES at desktop (expanded and compact) and mobile widths.
 
 ## Shared visual identity
 

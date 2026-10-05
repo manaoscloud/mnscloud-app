@@ -41,25 +41,67 @@
 ## Layout
 
 - Main shell and menu are in:
-  - `src/app/layout/main-layout/main-layout.ts`
-  - `src/app/layout/main-layout/main-layout.html`
-- Menu labels must distinguish conceptual modules from resources:
-  - Product/module groups may use canonical product names, acronyms, or concepts such as `VoIP`,
-    `PABX`, `DID`, `SBC`, `SMTP`, `Realtime`, `WebRTC`, and `TURN/STUN`.
-  - Entries that open CRUD/list collection resources must use plural labels such as `Servers`,
-    `Domains`, `Providers`, `Routes`, `Policies`, `Extensions`, `Queues`, and `Inbound Routes`.
-  - Parent groups that only organize collection resources may be plural when they represent the
-    same collection family, for example `Blacklists` or `Dial Plans`.
-  - Every visible menu label must exist in all runtime Transloco dictionaries
-    (`public/i18n/en-US.json`, `public/i18n/pt-BR.json`, and `public/i18n/es-ES.json`). Do not rely
-    on untranslated label fallbacks in the menu.
+  - `src/app/layout/main-layout/main-layout.ts` and `main-layout.html` (behavior and rendering)
+  - `src/app/layout/navigation/nav-registry.ts` (menu tree, data only)
+  - `src/app/layout/navigation/nav-glossary.json` (label contract data)
+- Every sidebar label follows the Navigation Label Contract below.
+
+## Navigation Label Contract
+
+Sidebar labels are short and contextual: the tree already tells the user where they are, so a
+label names only what is new at its level. Full context belongs to the tooltip, breadcrumb and
+page title. `npm run check:nav` enforces this app-wide in CI (`verify:changed`); there is no
+allowlist — fix the label or the tree.
+
+1. **Keys.** Every entry's `label` is the Transloco key `nav.<id>` (`id` with `/` → `.`), defined
+   in `en-US`, `pt-BR` and `es-ES`. Never reuse shared CRUD keys (`Registry`, `Accounts`) in the
+   menu and never invent disambiguation keys such as `DID menu operators`; the namespace already
+   disambiguates. Removing an entry removes its `nav.*` keys (orphans fail the check).
+2. **No ancestor context.** A label never repeats a word of any ancestor in any locale (accents
+   and plurals ignored): `Suporte › Chamados › Origens`, not `Origens de chamado`;
+   `Segredos › Contas`, not `Contas de segredos`; `Suporte da plataforma › Equipes`, not
+   `Equipes de suporte`.
+3. **Child named like its group.** Use, in order: (a) the entity noun (`PABX › Contas`,
+   `SBC › Contas`, `Softswitch › Contas`); (b) flatten groups with two or fewer children
+   (`PABX › Filas`, `PABX › Agentes`); (c) the canonical `Lista` / `List` / `Lista` for the
+   main collection (`Troncos › Lista`, `Chamados › Lista`, `Segredos › Lista`).
+4. **Groups name the subject, children name the collections**: `Discagem › Planos, Regras`,
+   `Bloqueio › Listas, Números`, `RADIUS › Servidores, Clientes PPPoE`, `Tarifas › Planos,
+   Atribuições, Acúmulos`.
+5. **Length budget** (longest of PT/EN/ES, in characters): level 1 ≤ 24, level 2 ≤ 22,
+   level 3 ≤ 18, level 4 ≤ 16; aim for ≤ 16 everywhere. No label may be truncated in any locale
+   at 260px desktop, the compact flyout or 360px mobile.
+6. **Shortening order**: drop context already given by an ancestor → drop prepositions and
+   qualifiers → use the glossary's short term → use an established acronym (DNS, CDR, URA).
+   Never invent abbreviations (`Config.`, `Prior.`).
+7. **Sentence case** in every locale; acronyms, product names and proper nouns keep their form.
+8. **Nouns, not verbs.** Collections are plural (`Servidores`, `Rotas`); groups are a subject
+   noun; no actions (`Vínculos`, not `Vincular clientes`). The dashboard entry is always `Painel` /
+   `Dashboard` / `Panel` and comes first.
+9. **Glossary.** One term per concept, translated in each locale: `Painel` (never
+   `Visão geral`), `Lista` (never `Cadastro`/`Registro` as a leaf), `Fornecedores` = ERP
+   suppliers vs `Fabricantes` = ISP equipment vendors, `Assinatura` = the platform billing
+   module (its subscriptions are `Adesões`), `Cibersegurança` (never `Cyber Security` in PT).
+   English words stay only for product names and established terms listed in
+   `nav-glossary.json` `productTerms` (for example `Custom`, the PABX custom call flow product).
+10. **Scope lives in the group.** Platform versus tenant is stated once by the group
+    (`Suporte da plataforma`); its leaves reuse the tenant names (`Chamados`, `Equipes`, `Tipos`,
+    `Prioridades`, `Origens`).
+11. **Shape.** At most 4 levels (what the shell renders); a group needs at least 2 children.
+12. **Menu label ≠ page title.** Leaf entries show the full localized path as tooltip
+    (`Suporte › Chamados › Origens`), and the menu search matches that full path, so short labels
+    stay findable by their parent words. Page titles and breadcrumbs may stay complete
+    (`Prioridades de chamado`).
+
+New menu entries: add the entry to `nav-registry.ts`, add `nav.<id>` to the three dictionaries,
+run `npm run check:nav`, then validate PT/EN/ES at desktop (expanded and compact) and mobile width.
 
 ## Cyber Security navigation
 
-Cyber Security groups the existing resources by operator task: Overview; Protection
-(Servers, Security Profiles, Protected Services, Allowlist / Blocklist); Threats and Events
-(Alerts, Protection Decisions, Security Events); Access Control (Trusted Nodes, API Access
-Policies); and Secrets (Overview, Secrets, Secret Accounts, master-only Secret Servers).
+Cybersecurity groups the existing resources by operator task: Dashboard; Protection
+(Servers, Profiles, Services, Allow/block); Threats (Alerts, Decisions, Events); Access
+(Trusted nodes, API policies); and Secrets (Dashboard, List, Accounts, master-only Servers).
+Menu labels follow the Navigation Label Contract; page titles keep the full names.
 Groups are navigation-only and inherit existing commercial visibility. Preserve the canonical
 `/cyber-security/*` and `/system/cyber-security/*` URLs, API contracts and resource permissions.
 Route metadata supplies translated breadcrumbs; groups without destinations render as text.

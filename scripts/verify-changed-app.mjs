@@ -58,6 +58,7 @@ run('node', [
   'scripts/pay-payment-crud.test.mjs',
   'scripts/pay-i18n-coverage.test.mjs',
   'scripts/pay-error.test.mjs',
+  'scripts/validate-nav-labels.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -81,6 +82,8 @@ for (const page of [
     run('node', ['scripts/validate-crud-i18n.mjs', page]);
   }
 }
+// Sidebar labels follow the Navigation Label Contract app-wide (app.md).
+run('node', ['scripts/validate-nav-labels.mjs']);
 run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
 
