@@ -6000,5 +6000,5 @@
   "Per usage unit": "Per usage unit",
   "GB per hour": "GB per hour",
   "GB per month": "GB per month",
-  "Show this package on the public website. Tenant purchase eligibility is controlled separately.": "Show this package on the public website. Tenant purchase eligibility is controlled separately."
+  "Publish this package in the tenant catalog and on the public website. Unpublished packages cannot be purchased by tenants.": "Publish this package in the tenant catalog and on the public website. Unpublished packages cannot be purchased by tenants."
 }
