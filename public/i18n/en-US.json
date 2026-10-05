@@ -5958,5 +5958,22 @@
   "Create support team": "Create support team",
   "Supervisor": "Supervisor",
   "Manager": "Manager",
-  "Team": "Team"
+  "Team": "Team",
+  "GB": "GB",
+  "TB": "TB",
+  "Offer": "Offer",
+  "Offer type": "Offer type",
+  "Quantity included by this item: -1 is unlimited; a positive number sets the package limit.": "Quantity included by this item: -1 is unlimited; a positive number sets the package limit.",
+  "Individual sale only": "Individual sale only",
+  "Package inclusion only": "Package inclusion only",
+  "Individual sale and package inclusion": "Individual sale and package inclusion",
+  "Sales mode": "Sales mode",
+  "Package composition": "Package composition",
+  "Contracted composition": "Contracted composition",
+  "Promotion": "Promotion",
+  "Included in a package": "Included in a package",
+  "Additional offer": "Additional offer",
+  "Subscribe to this offer?": "Subscribe to this offer?",
+  "Products and quantities accepted when this contract was created.": "Products and quantities accepted when this contract was created.",
+  "Products and quantities included in this offer.": "Products and quantities included in this offer."
 }

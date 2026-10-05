@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
-  ConfigurableCrudColumn,
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -19,6 +18,7 @@ import {
 
 const PRICE_PAYLOAD_KEYS = [
   'productUUID',
+  'packageUUID',
   'name',
   'currency',
   'billingMode',
@@ -88,12 +88,15 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
   deletedMessage: 'Billing price deleted successfully.',
   deleteFailedMessage: 'Failed to delete billing price.',
   bulkDelete: false,
+  serverSidePagination: true,
   tabLabels: {
     financial: 'Pricing',
   },
   ...BILLING_STATUS_OPTIONS,
   initialValues: {
+    offerType: 'PRODUCT',
     productUUID: '',
+    packageUUID: '',
     name: '',
     currency: 'BRL',
     billingMode: 'MONTHLY',
@@ -107,12 +110,12 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'BpcName', uuidField: 'BpcUUID' },
+    { id: 'offer', label: 'Offer', field: 'OfferName' },
     {
-      id: 'product',
-      label: 'Product',
-      kind: 'related',
-      uuidField: 'BillingProductBprUUID',
-      lookupKey: 'productUUID',
+      id: 'offerType',
+      label: 'Offer type',
+      field: 'OfferType',
+      value: (row, t) => t(row['OfferType'] === 'PACKAGE' ? 'Package' : 'Product'),
     },
     { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode' },
     { id: 'currency', label: 'Currency', field: 'BpcCurrency' },
@@ -130,12 +133,49 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'offerType',
+      source: 'OfferType',
+      label: 'Offer type',
+      type: 'select',
+      options: [
+        { value: 'PRODUCT', label: 'Product' },
+        { value: 'PACKAGE', label: 'Package' },
+      ],
+      required: true,
+      disabledWhen: ({ editing }) => editing,
+      span: 1,
+    },
+    {
       key: 'productUUID',
       source: 'BillingProductBprUUID',
       payloadKey: 'productUUID',
       label: 'Product',
       type: 'search-select',
-      required: true,
+      hiddenWhen: ({ values }) => values['offerType'] !== 'PRODUCT',
+      requiredWhen: ({ values }) => values['offerType'] === 'PRODUCT',
+      disabledWhen: ({ editing }) => editing,
+      remoteLookup: {
+        endpoint: 'system/billing/products',
+        uuidField: 'BprUUID',
+        labelField: 'BprName',
+      },
+      tab: 'record',
+      span: 1,
+    },
+    {
+      key: 'packageUUID',
+      source: 'BillingPackageBpaUUID',
+      payloadKey: 'packageUUID',
+      label: 'Package',
+      type: 'search-select',
+      hiddenWhen: ({ values }) => values['offerType'] !== 'PACKAGE',
+      requiredWhen: ({ values }) => values['offerType'] === 'PACKAGE',
+      disabledWhen: ({ editing }) => editing,
+      remoteLookup: {
+        endpoint: 'system/billing/packages',
+        uuidField: 'BpaUUID',
+        labelField: 'BpaName',
+      },
       tab: 'record',
       span: 1,
     },
@@ -241,6 +281,7 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
   BillingPrice & ConfigurableCrudRecord
@@ -265,6 +306,14 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PRICE_PAYLOAD_KEYS);
+    if (this.editingRecord()) {
+      delete next['productUUID'];
+      delete next['packageUUID'];
+    } else if (this.formValues()['offerType'] === 'PACKAGE') {
+      next['productUUID'] = null;
+    } else {
+      next['packageUUID'] = null;
+    }
     next['currency'] = String(next['currency'] ?? 'BRL').toUpperCase();
     for (const key of ['unitPrice', 'setupAmount', 'includedQuantity', 'minimumCommitment']) {
       next[key] = numberOrNull(next[key]) ?? 0;

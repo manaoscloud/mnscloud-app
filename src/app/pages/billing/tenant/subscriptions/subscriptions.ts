@@ -1,3 +1,4 @@
+import { billingComposition } from '../../shared/billing-composition';
 import { Component, inject } from '@angular/core';
 
 import {
@@ -31,11 +32,21 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
-  rowActions: [{ key: 'cancel', label: 'Cancel subscription', icon: 'block' }],
+  serverSidePagination: true,
+  rowActions: [
+    {
+      key: 'composition',
+      label: 'Contracted composition',
+      icon: 'list',
+      collection: (row) =>
+        billingComposition(`billing/subscriptions/${row['BsuUUID']}/items`, true),
+    },
+    { key: 'cancel', label: 'Cancel subscription', icon: 'block' },
+  ],
   ...BILLING_STRING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
-    { id: 'product', label: 'Product', kind: 'identity', field: 'BprName', uuidField: 'BsuUUID' },
+    { id: 'product', label: 'Offer', kind: 'identity', field: 'OfferName', uuidField: 'BsuUUID' },
     { id: 'plan', label: 'Plan', field: 'BpcName' },
     {
       id: 'price',
@@ -62,6 +73,7 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
   BillingSubscription & ConfigurableCrudRecord
@@ -76,7 +88,7 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     action: ConfigurableCrudRowAction,
     row: BillingSubscription & ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key !== 'cancel') return;
+    if (action.key !== 'cancel') return super.handleRowAction(action, row);
     const confirmed = await this.confirmAction(
       'Cancel subscription',
       'Cancel this subscription?',

@@ -5959,5 +5959,22 @@
   "Create support team": "Criar equipe de suporte",
   "Supervisor": "Supervisor",
   "Manager": "Gerente",
-  "Team": "Equipe"
+  "Team": "Equipe",
+  "GB": "GB",
+  "TB": "TB",
+  "Offer": "Oferta",
+  "Offer type": "Tipo de oferta",
+  "Quantity included by this item: -1 is unlimited; a positive number sets the package limit.": "Quantidade incluída neste item: -1 é ilimitada; um número positivo define o limite do pacote.",
+  "Individual sale only": "Somente venda individual",
+  "Package inclusion only": "Somente inclusão em pacote",
+  "Individual sale and package inclusion": "Venda individual e inclusão em pacote",
+  "Sales mode": "Modalidade de venda",
+  "Package composition": "Composição do pacote",
+  "Contracted composition": "Composição contratada",
+  "Promotion": "Promoção",
+  "Included in a package": "Incluído em um pacote",
+  "Additional offer": "Oferta adicional",
+  "Subscribe to this offer?": "Contratar esta oferta?",
+  "Products and quantities accepted when this contract was created.": "Produtos e quantidades aceitos na criação deste contrato.",
+  "Products and quantities included in this offer.": "Produtos e quantidades incluídos nesta oferta."
 }

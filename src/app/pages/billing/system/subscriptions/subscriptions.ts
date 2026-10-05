@@ -1,3 +1,4 @@
+import { billingComposition } from '../../shared/billing-composition';
 import { Component } from '@angular/core';
 
 import {
@@ -31,7 +32,17 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
-  rowActions: [{ key: 'cancel', label: 'Cancel subscription', icon: 'block' }],
+  serverSidePagination: true,
+  rowActions: [
+    {
+      key: 'composition',
+      label: 'Contracted composition',
+      icon: 'list',
+      collection: (row) =>
+        billingComposition(`system/billing/subscriptions/${row['BsuUUID']}/items`, true),
+    },
+    { key: 'cancel', label: 'Cancel subscription', icon: 'block' },
+  ],
   ...BILLING_STRING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
@@ -39,7 +50,7 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
       id: 'product',
       label: 'Product',
       kind: 'identity',
-      field: 'BprName',
+      field: 'OfferName',
       uuidField: 'BsuUUID',
     },
     { id: 'tenant', label: 'Tenant', field: 'EnvironmentName' },
@@ -83,7 +94,7 @@ export class BillingSystemSubscriptionsPage extends ConfigurableCrudPageBase<
     action: ConfigurableCrudRowAction,
     row: BillingSubscription & ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key !== 'cancel') return;
+    if (action.key !== 'cancel') return super.handleRowAction(action, row);
     const confirmed = await this.confirmAction(
       'Cancel subscription',
       'Cancel this subscription?',

@@ -1,3 +1,4 @@
+import { billingComposition } from '../../shared/billing-composition';
 import { Component, inject } from '@angular/core';
 
 import {
@@ -31,7 +32,23 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
-  rowActions: [{ key: 'subscribe', label: 'Subscribe', icon: 'add_shopping_cart' }],
+  serverSidePagination: true,
+  rowActions: [
+    {
+      key: 'composition',
+      label: 'Package composition',
+      icon: 'list',
+      visible: (row) => row['OfferType'] === 'PACKAGE',
+      collection: (row) => billingComposition(`billing/catalog/${row['BpcUUID']}/items`, false),
+    },
+    {
+      key: 'subscribe',
+      label: 'Subscribe',
+      icon: 'add_shopping_cart',
+      visible: (row) =>
+        row['OfferBillingScope'] === 'MODULE' && row['SubscriptionStatus'] === 'AVAILABLE',
+    },
+  ],
   ...BILLING_STRING_STATUS_OPTIONS,
   activeStatusValues: ['AVAILABLE', 'ACTIVE', 'PENDING_CANCEL'] as const,
   statusOptions: [
@@ -40,7 +57,20 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
   ],
   initialValues: {},
   columns: [
-    { id: 'product', label: 'Product', kind: 'identity', field: 'BprName', uuidField: 'BprUUID' },
+    { id: 'offer', label: 'Offer', kind: 'identity', field: 'OfferName', uuidField: 'OfferUUID' },
+    {
+      id: 'offerType',
+      label: 'Offer type',
+      field: 'OfferType',
+      value: (row, t) => t(row['OfferType'] === 'PACKAGE' ? 'Package' : 'Product'),
+    },
+    {
+      id: 'coverage',
+      label: 'Coverage',
+      field: 'CoverageStatus',
+      value: (row, t) =>
+        t(row['CoverageStatus'] === 'INCLUDED' ? 'Included in a package' : 'Additional offer'),
+    },
     { id: 'plan', label: 'Plan', field: 'BpcName' },
     {
       id: 'price',
@@ -67,40 +97,45 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
   BillingCatalogItem & ConfigurableCrudRecord
 > {
+  private readonly checkoutKeys = new Map<string, string>();
   private readonly billing = inject(BillingService);
 
   constructor() {
     super(CATALOG_CONFIG);
   }
 
-  override rowActions(
-    row: BillingCatalogItem & ConfigurableCrudRecord,
-  ): readonly ConfigurableCrudRowAction[] {
-    return row.BprBillingScope === 'MODULE' && row.SubscriptionStatus === 'AVAILABLE'
-      ? (CATALOG_CONFIG.rowActions ?? [])
-      : [];
-  }
-
   override async handleRowAction(
     action: ConfigurableCrudRowAction,
     row: BillingCatalogItem & ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key !== 'subscribe') return;
+    if (action.key !== 'subscribe') return super.handleRowAction(action, row);
+    if (this.mutating()) return;
 
     const confirmed = await this.confirmAction(
       'Subscribe',
-      'Subscribe to this product?',
+      'Subscribe to this offer?',
       'Subscribe',
     );
     if (!confirmed) return;
 
     this.mutating.set(true);
     try {
-      await this.billing.createSubscription({ priceUUID: this.recordUUID(row) });
+      const priceUUID = this.recordUUID(row);
+      const requestKey = `${localStorage.getItem('mc_current_env')}:${priceUUID}`;
+      const idempotencyKey = this.checkoutKeys.get(requestKey) ?? crypto.randomUUID();
+      this.checkoutKeys.set(requestKey, idempotencyKey);
+      await this.billing.createSubscription({
+        priceUUID,
+        offerType: row.OfferType,
+        offerUUID: row.OfferUUID,
+        idempotencyKey,
+      });
+      this.checkoutKeys.delete(requestKey);
       this.snack.success('Subscription created.');
       this.refreshList();
     } catch {

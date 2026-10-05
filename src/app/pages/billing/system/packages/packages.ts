@@ -18,15 +18,7 @@ import {
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
-const PACKAGE_PAYLOAD_KEYS = [
-  'code',
-  'name',
-  'notes',
-  'productUUID',
-  'isPublic',
-  'sortOrder',
-  'status',
-] as const;
+const PACKAGE_PAYLOAD_KEYS = ['code', 'name', 'notes', 'isPublic', 'sortOrder', 'status'] as const;
 
 const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/packages',
@@ -52,7 +44,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     code: 'package.',
     name: '',
     notes: '',
-    productUUID: '',
     isPublic: 0,
     sortOrder: 1000,
     itemProductUUID: '',
@@ -64,13 +55,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'BpaName', uuidField: 'BpaUUID' },
     { id: 'code', label: 'Code', field: 'BpaCode' },
-    {
-      id: 'product',
-      label: 'Product',
-      kind: 'related',
-      uuidField: 'BillingProductBprUUID',
-      lookupKey: 'productUUID',
-    },
     { id: 'items', label: 'Items', field: 'ItemCount' },
     { id: 'subscribers', label: 'Subscribers', kind: 'number', field: 'SubscriptionCount' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpaStatus', className: 'status-col' },
@@ -174,7 +158,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           payloadKey: 'includedQuantity',
           label: 'Included quantity',
           type: 'number',
-          help: 'Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.',
+          help: 'Quantity included by this item: -1 is unlimited; a positive number sets the package limit.',
           span: 1,
         },
         {
@@ -208,7 +192,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    // Record row 1: Status, Code, Name, Product
+    // Record row 1: Status, Code, Name
     {
       key: 'status',
       source: 'BpaStatus',
@@ -234,16 +218,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       help: 'Commercial name of the package shown to operators and tenants.',
-      span: 1,
-    },
-    {
-      key: 'productUUID',
-      source: 'BillingProductBprUUID',
-      payloadKey: 'productUUID',
-      label: 'Product',
-      type: 'search-select',
-      required: true,
-      help: 'Main product the tenant subscribes to and pays for. The subscription price comes from this product active price.',
       span: 1,
     },
     // Record row 2: Public, Sort order
@@ -294,7 +268,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Included quantity',
       type: 'number',
       hiddenWhen: ({ editing }) => editing,
-      help: 'Quantity included by this item: -1 is unlimited, 0 follows the product or price limit, and a positive number sets the package limit.',
+      help: 'Quantity included by this item: -1 is unlimited; a positive number sets the package limit.',
       tab: 'financial',
       span: 1,
     },
@@ -343,12 +317,12 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'productUUID' || key === 'itemProductUUID') return this.lookups.productOptions();
+    if (key === 'itemProductUUID') return this.lookups.productOptions();
     return [];
   }
 
   protected override lookupLabel(key: string, value: unknown): string {
-    if (key === 'productUUID' || key === 'itemProductUUID') return this.lookups.productLabel(value);
+    if (key === 'itemProductUUID') return this.lookups.productLabel(value);
     return super.lookupLabel(key, value);
   }
 

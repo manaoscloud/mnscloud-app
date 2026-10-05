@@ -20,6 +20,7 @@ export interface BillingProduct {
   BprPublicFeaturesJson?: string | null;
   BprPublicSortOrder?: number | null;
   BpdSortOrder?: number | null;
+  BprSalesMode: 'STANDALONE' | 'PACKAGE_ONLY' | 'BOTH';
   BprStatus: number;
   ActivePrices?: number;
   PriceCount?: number;
@@ -50,7 +51,10 @@ export interface BillingProductDefinition {
 
 export interface BillingPrice {
   BpcUUID: string;
-  BillingProductBprUUID: string;
+  BillingProductBprUUID: string | null;
+  BillingPackageBpaUUID: string | null;
+  OfferType: 'PRODUCT' | 'PACKAGE';
+  OfferName: string;
   BprCode?: string | null;
   BprName?: string | null;
   BpcName: string;
@@ -71,9 +75,6 @@ export interface BillingPackage {
   BpaCode: string;
   BpaName: string;
   BpaNotes?: string | null;
-  BillingProductBprUUID: string;
-  BprCode?: string | null;
-  BprName?: string | null;
   BpaIsPublic: number;
   BpaSortOrder: number;
   BpaStatus: number;
@@ -244,6 +245,9 @@ export interface BillingEntitlementGrant {
 
 export type BillingCatalogItem = BillingProduct &
   Omit<BillingPrice, 'BprCode' | 'BprName'> & {
+    OfferUUID: string;
+    OfferBillingScope: string;
+    CoverageStatus: 'INCLUDED' | 'EXTRA';
     SubscriptionStatus?: string | null;
     PromotionCode?: string | null;
     PromotionName?: string | null;
@@ -328,6 +332,9 @@ export interface BillingTenantDashboard {
 interface ApiListResponse<T> {
   data?: {
     items?: T[];
+    total?: number;
+    limit?: number;
+    offset?: number;
     item?: T;
   };
 }
@@ -336,6 +343,19 @@ interface ApiListResponse<T> {
 export class BillingService {
   private readonly api = inject(ApiService);
   readonly entitlementRevision = signal(0);
+
+  private async allPages<T>(endpoint: string, params: URLSearchParams): Promise<T[]> {
+    params.set('limit', '200');
+    const items: T[] = [];
+    for (;;) {
+      params.set('offset', String(items.length));
+      const response = await this.api.get<ApiListResponse<T>>(`${endpoint}${this.query(params)}`);
+      const page = response.data?.items ?? [];
+      items.push(...page);
+      if (!page.length || items.length >= Number(response.data?.total ?? items.length))
+        return items;
+    }
+  }
 
   async getTenantDashboard() {
     const response =
@@ -347,10 +367,7 @@ export class BillingService {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
     if (status !== null) params.set('status', String(status));
-    const response = await this.api.get<ApiListResponse<BillingProduct>>(
-      `system/billing/products${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
+    return this.allPages<BillingProduct>('system/billing/products', params);
   }
 
   async listProductDefinitions(search = '', status: number | null = null) {
@@ -417,10 +434,7 @@ export class BillingService {
     if (search.trim()) params.set('search', search.trim());
     if (productUUID) params.set('productUUID', productUUID);
     if (status !== null) params.set('status', String(status));
-    const response = await this.api.get<ApiListResponse<BillingPrice>>(
-      `system/billing/prices${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
+    return this.allPages<BillingPrice>('system/billing/prices', params);
   }
 
   async createPrice(payload: Record<string, unknown>) {
@@ -616,20 +630,14 @@ export class BillingService {
   async listCatalog(search = '') {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
-    const response = await this.api.get<ApiListResponse<BillingCatalogItem>>(
-      `billing/catalog${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
+    return this.allPages<BillingCatalogItem>('billing/catalog', params);
   }
 
   async listSubscriptions(search = '', status = '') {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
     if (status.trim()) params.set('status', status.trim());
-    const response = await this.api.get<ApiListResponse<BillingSubscription>>(
-      `billing/subscriptions${this.query(params)}`,
-    );
-    return response.data?.items ?? [];
+    return this.allPages<BillingSubscription>('billing/subscriptions', params);
   }
 
   async createSubscription(payload: Record<string, unknown>) {
