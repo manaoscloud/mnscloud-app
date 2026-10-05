@@ -130,9 +130,12 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 
 ## Unified Support, My tickets and "Report problem"
 
-- A single Support navigation group contains My tickets, Customers and Platform. Only Customers
-  inherits the commercial Support entitlement; requester and platform routes use their respective
-  API permissions. Platform is a submenu, never a second top-level module.
+- A single Support navigation group contains My tickets, Customers, Platform and Settings. Only Customers
+  inherits the commercial Support entitlement; requester, platform and settings routes use their respective
+  API permissions. Platform and Settings are submenus, never separate top-level modules.
+- Shared catalogs (teams, types, priorities, origins) are unified under the Settings submenu,
+  mapping `route: '/support/...'` and `masterRoute: '/support/platform/...'` so operators access
+  the matching desk seamlessly.
 - Tenant routes explicitly declare `data.supportDesk = 'tenant'`; platform routes declare
   `data.supportDesk = 'platform'`. FK quick-create forwards this same explicit context.
 - Creation retries keep an idempotency key and frozen payload per draft/environment. Changing the
