@@ -118,7 +118,7 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
 
     const confirmed = await this.confirmAction(
       'Subscribe',
-      'Subscribe to this offer?',
+      'Subscribe to this offer? Monthly contracts renew automatically from your prepaid balance; access is suspended if funds are insufficient.',
       'Subscribe',
     );
     if (!confirmed) return;

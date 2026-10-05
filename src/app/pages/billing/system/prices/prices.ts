@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -117,7 +118,7 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       field: 'OfferType',
       value: (row, t) => t(row['OfferType'] === 'PACKAGE' ? 'Package' : 'Product'),
     },
-    { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode' },
+    { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode', options: BILLING_MODE_OPTIONS },
     { id: 'currency', label: 'Currency', field: 'BpcCurrency' },
     { id: 'unitPrice', label: 'Unit price', field: 'BpcUnitPrice' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpcStatus', className: 'status-col' },
@@ -292,6 +293,15 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
   constructor() {
     super(PRICE_CONFIG);
     void this.lookups.load();
+  }
+
+  override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    const options = super.fieldOptions(field);
+    return field.key === 'billingMode' && this.formValues()['offerType'] === 'PACKAGE'
+      ? options.filter((option) =>
+          ['MONTHLY', 'MODULE_MONTHLY', 'ONE_TIME'].includes(String(option.value)),
+        )
+      : options;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {

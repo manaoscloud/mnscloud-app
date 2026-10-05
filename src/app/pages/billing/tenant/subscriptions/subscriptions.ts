@@ -1,4 +1,4 @@
-import { billingComposition } from '../../shared/billing-composition';
+import { billingComposition, billingCycles } from '../../shared/billing-composition';
 import { Component, inject } from '@angular/core';
 
 import {
@@ -34,6 +34,35 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
   bulkDelete: false,
   serverSidePagination: true,
   rowActions: [
+    ...[true, false].map((enabled): ConfigurableCrudRowAction => ({
+      key: enabled ? 'enableRenewal' : 'disableRenewal',
+      label: enabled ? 'Enable automatic renewal' : 'Disable automatic renewal',
+      icon: enabled ? 'autorenew' : 'pause',
+      visible: (row) =>
+        ['ACTIVE', 'SUSPENDED'].includes(String(row['BsuStatus'])) &&
+        row['BsuBillingScopeSnapshot'] === 'MODULE' &&
+        ['MONTHLY', 'MODULE_MONTHLY'].includes(String(row['BsuBillingModeSnapshot'])) &&
+        Boolean(Number(row['BsuAutoRenew'])) !== enabled,
+      request: {
+        method: 'post',
+        endpoint: (row) => `billing/subscriptions/${row['BsuUUID']}/renewal`,
+        body: () => ({ enabled }),
+        successMessage: 'Renewal preference updated.',
+        confirm: {
+          title: enabled ? 'Enable automatic renewal' : 'Disable automatic renewal',
+          message: enabled
+            ? 'Renew automatically from the prepaid wallet at the contracted recurring price? An expired contract may be charged on the next processing pass.'
+            : 'Stop automatic renewal after the current paid period?',
+          confirmLabel: 'Confirm',
+        },
+      },
+    })),
+    {
+      key: 'cycles',
+      label: 'Paid cycles',
+      icon: 'receipt_long',
+      collection: (row) => billingCycles(`billing/subscriptions/${row['BsuUUID']}/cycles`),
+    },
     {
       key: 'composition',
       label: 'Contracted composition',
@@ -41,11 +70,28 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
       collection: (row) =>
         billingComposition(`billing/subscriptions/${row['BsuUUID']}/items`, true),
     },
-    { key: 'cancel', label: 'Cancel subscription', icon: 'block' },
+    {
+      key: 'cancel',
+      label: 'Cancel subscription',
+      icon: 'block',
+      visible: (row) =>
+        ['ACTIVE', 'SUSPENDED', 'PENDING_PAYMENT', 'PENDING_CANCEL'].includes(
+          String(row['BsuStatus']),
+        ),
+    },
   ],
   ...BILLING_STRING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
+    { id: 'autoRenew', label: 'Automatic renewal', field: 'BsuAutoRenew', kind: 'boolean' },
+    { id: 'scheduled', label: 'Scheduled start', field: 'BsuScheduledStartAt', kind: 'datetime' },
+    {
+      id: 'nextAmount',
+      label: 'Next cycle amount',
+      field: 'NextCycleAmount',
+      kind: 'currency',
+      currencyField: 'BsuCurrency',
+    },
     { id: 'product', label: 'Offer', kind: 'identity', field: 'OfferName', uuidField: 'BsuUUID' },
     { id: 'plan', label: 'Plan', field: 'BpcName' },
     {
@@ -105,12 +151,5 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     } finally {
       this.mutating.set(false);
     }
-  }
-
-  override rowActions(
-    row: BillingSubscription & ConfigurableCrudRecord,
-  ): readonly ConfigurableCrudRowAction[] {
-    if (row.BsuStatus !== 'ACTIVE') return [];
-    return SUBSCRIPTIONS_CONFIG.rowActions ?? [];
   }
 }

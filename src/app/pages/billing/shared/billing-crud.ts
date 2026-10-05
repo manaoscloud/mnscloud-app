@@ -41,9 +41,14 @@ export const BILLING_SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
 export const BILLING_MODE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'ONE_TIME', label: 'One-time' },
   { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'ANNUAL', label: 'Annual' },
-  { value: 'USAGE', label: 'Usage' },
-  { value: 'PREPAID', label: 'Prepaid' },
+  { value: 'MODULE_MONTHLY', label: 'Monthly module' },
+  { value: 'HOURLY', label: 'Hourly' },
+  { value: 'MINUTELY', label: 'Per minute' },
+  { value: 'SECONDLY', label: 'Per second' },
+  { value: 'USAGE_UNIT', label: 'Per usage unit' },
+  { value: 'GB_HOUR', label: 'GB per hour' },
+  { value: 'GB_MONTH', label: 'GB per month' },
+  { value: 'TIERED_USAGE', label: 'Tiered usage' },
 ];
 
 export const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [

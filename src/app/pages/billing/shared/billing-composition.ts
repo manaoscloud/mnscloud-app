@@ -29,3 +29,31 @@ export function billingComposition(endpoint: string, contracted: boolean) {
     fields: [],
   });
 }
+
+export function billingCycles(endpoint: string) {
+  return defineCrud({
+    endpoint,
+    uuidField: 'BscUUID',
+    pageTitle: 'Paid cycles',
+    pageDescription:
+      'Cycle history recorded by this billing version. Earlier charges remain in the wallet ledger.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    serverSidePagination: true,
+    columns: [
+      { id: 'number', label: 'Cycle', field: 'BscNumber', kind: 'number' },
+      { id: 'start', label: 'Period start', field: 'BscPeriodStart', kind: 'datetime' },
+      { id: 'end', label: 'Period end', field: 'BscPeriodEnd', kind: 'datetime' },
+      {
+        id: 'amount',
+        label: 'Amount',
+        field: 'BscAmount',
+        kind: 'currency',
+        currencyField: 'BscCurrency',
+      },
+    ],
+    fields: [],
+  });
+}

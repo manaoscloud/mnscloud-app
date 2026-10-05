@@ -1,4 +1,4 @@
-import { billingComposition } from '../../shared/billing-composition';
+import { billingComposition, billingCycles } from '../../shared/billing-composition';
 import { Component } from '@angular/core';
 
 import {
@@ -35,17 +35,40 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
   serverSidePagination: true,
   rowActions: [
     {
+      key: 'cycles',
+      label: 'Paid cycles',
+      icon: 'receipt_long',
+      collection: (row) => billingCycles(`system/billing/subscriptions/${row['BsuUUID']}/cycles`),
+    },
+    {
       key: 'composition',
       label: 'Contracted composition',
       icon: 'list',
       collection: (row) =>
         billingComposition(`system/billing/subscriptions/${row['BsuUUID']}/items`, true),
     },
-    { key: 'cancel', label: 'Cancel subscription', icon: 'block' },
+    {
+      key: 'cancel',
+      label: 'Cancel subscription',
+      icon: 'block',
+      visible: (row) =>
+        ['ACTIVE', 'SUSPENDED', 'PENDING_PAYMENT', 'PENDING_CANCEL'].includes(
+          String(row['BsuStatus']),
+        ),
+    },
   ],
   ...BILLING_STRING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
+    { id: 'autoRenew', label: 'Automatic renewal', field: 'BsuAutoRenew', kind: 'boolean' },
+    { id: 'scheduled', label: 'Scheduled start', field: 'BsuScheduledStartAt', kind: 'datetime' },
+    {
+      id: 'nextAmount',
+      label: 'Next cycle amount',
+      field: 'NextCycleAmount',
+      kind: 'currency',
+      currencyField: 'BsuCurrency',
+    },
     {
       id: 'product',
       label: 'Product',
@@ -111,12 +134,5 @@ export class BillingSystemSubscriptionsPage extends ConfigurableCrudPageBase<
     } finally {
       this.mutating.set(false);
     }
-  }
-
-  override rowActions(
-    row: BillingSubscription & ConfigurableCrudRecord,
-  ): readonly ConfigurableCrudRowAction[] {
-    if (row.BsuStatus !== 'ACTIVE') return [];
-    return SUBSCRIPTION_CONFIG.rowActions ?? [];
   }
 }
