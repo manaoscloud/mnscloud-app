@@ -6244,5 +6244,6 @@
   "Message visibility": "Visibilidad del mensaje",
   "Public reply": "Respuesta pública",
   "Environment changed. Reopen the form before continuing.": "El entorno cambió. Vuelva a abrir el formulario antes de continuar.",
-  "Ticket revision conflict: reload before saving": "Este ticket cambió. Vuelva a abrirlo antes de guardar."
+  "Ticket revision conflict: reload before saving": "Este ticket cambió. Vuelva a abrirlo antes de guardar.",
+  "Notifications": "Notificaciones"
 }

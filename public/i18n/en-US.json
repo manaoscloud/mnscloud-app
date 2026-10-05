@@ -6244,5 +6244,6 @@
   "Message visibility": "Message visibility",
   "Public reply": "Public reply",
   "Environment changed. Reopen the form before continuing.": "Environment changed. Reopen the form before continuing.",
-  "Ticket revision conflict: reload before saving": "This ticket changed. Reopen it before saving."
+  "Ticket revision conflict: reload before saving": "This ticket changed. Reopen it before saving.",
+  "Notifications": "Notifications"
 }
