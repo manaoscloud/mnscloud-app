@@ -93,11 +93,11 @@ export class SupportReportService {
         y: window.scrollY,
         width: window.innerWidth,
         height: window.innerHeight,
-        ignoreElements: (element) =>
+        ignoreElements: (element: Element) =>
           element.classList?.contains('cdk-overlay-container') ||
           element.classList?.contains('cdk-overlay-backdrop') ||
           element.classList?.contains('mat-mdc-menu-panel'),
-        onclone: (clone) => maskSensitiveContent(clone),
+        onclone: (clone: Document) => maskSensitiveContent(clone),
       });
       return canvas.toDataURL('image/jpeg', 0.82);
     } catch (error) {
