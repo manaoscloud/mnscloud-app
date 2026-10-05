@@ -6243,5 +6243,6 @@
   "Public reply": "Resposta pública",
   "Environment changed. Reopen the form before continuing.": "O ambiente mudou. Reabra o formulário antes de continuar.",
   "Ticket revision conflict: reload before saving": "Este chamado foi alterado. Reabra-o antes de salvar.",
-  "Notifications": "Notificações"
+  "Notifications": "Notificações",
+  "Publish this package on the public internet website/catalogs. Unchecked packages are still available to authenticated tenants in the platform catalog.": "Publica este pacote no site público/catálogo na internet. Pacotes desmarcados continuam disponíveis para contratação por tenants autenticados no catálogo da plataforma."
 }

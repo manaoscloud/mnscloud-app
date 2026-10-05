@@ -276,7 +276,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       source: 'BpaPublicSlug',
       payloadKey: 'publicSlug',
       label: 'Public slug',
-      help: 'Unique slug for public website/internet catalog, for example bundle-starter.',
       span: 2,
     },
     // Record row 3: Public name, Public summary
@@ -285,7 +284,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       source: 'BpaPublicName',
       payloadKey: 'publicName',
       label: 'Public name',
-      help: 'Optional customer-facing public name for website offers.',
       span: 2,
     },
     {
@@ -293,7 +291,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       source: 'BpaPublicSummary',
       payloadKey: 'publicSummary',
       label: 'Public summary',
-      help: 'Short summary shown on public website cards.',
       span: 2,
     },
     // Financial (create only): the first package item, created in the same transaction.
@@ -346,7 +343,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'publicDescription',
       label: 'Public description',
       type: 'textarea',
-      help: 'Detailed description for public website catalog.',
       tab: 'notes',
       span: 4,
       rows: 3,

@@ -6242,5 +6242,6 @@
   "Public reply": "Public reply",
   "Environment changed. Reopen the form before continuing.": "Environment changed. Reopen the form before continuing.",
   "Ticket revision conflict: reload before saving": "This ticket changed. Reopen it before saving.",
-  "Notifications": "Notifications"
+  "Notifications": "Notifications",
+  "Publish this package on the public internet website/catalogs. Unchecked packages are still available to authenticated tenants in the platform catalog.": "Publish this package on the public internet website/catalogs. Unchecked packages are still available to authenticated tenants in the platform catalog."
 }
