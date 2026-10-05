@@ -39,15 +39,14 @@
       </mat-form-field>
 
       @if (statusFilterEnabled()) {
-        <mat-form-field appearance="outline" class="span-1">
-          <mat-label>{{ 'Status' | transloco }}</mat-label>
-          <mat-select [value]="status()" (selectionChange)="status.set($event.value)">
-            <mat-option value="">{{ 'All' | transloco }}</mat-option>
-            @for (option of statusOptions(); track option.value) {
-              <mat-option [value]="option.value">{{ option.label | transloco }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <mns-search-select-field
+          fieldClass="span-1"
+          [label]="'Status' | transloco"
+          [options]="statusFilterOptions()"
+          [translateOptions]="false"
+          [value]="status()"
+          (valueChange)="status.set($any($event))"
+        />
       }
 
       @for (filter of listFilters(); track filter.key) {
@@ -55,32 +54,24 @@
           <mns-search-select-field
             [label]="filter.label | transloco"
             [value]="listFilterValue(filter)"
-            [options]="listFilterOptions(filter)"
+            [options]="translatedListFilterOptions(filter)"
             fieldClass="span-1"
             [placeholder]="filter.placeholder ?? 'Search'"
             [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
             [loading]="listFilterLoading(filter)"
-            [translateOptions]="filter.translateOptions ?? false"
+            [translateOptions]="false"
             (selectionChange)="setListFilterValue(filter, $any($event))"
           />
         } @else {
-          <mat-form-field appearance="outline" class="span-1">
-            <mat-label>{{ filter.label | transloco }}</mat-label>
-            <mat-select
-              [value]="listFilterValue(filter)"
-              (selectionChange)="setListFilterValue(filter, $event.value)"
-            >
-              @for (option of listFilterOptions(filter); track option.value) {
-                <mat-option [value]="option.value">
-                  @if (filter.translateOptions) {
-                    {{ option.label | transloco }}
-                  } @else {
-                    {{ option.label }}
-                  }
-                </mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <mns-search-select-field
+            fieldClass="span-1"
+            [label]="filter.label | transloco"
+            [options]="translatedListFilterOptions(filter)"
+            [translateOptions]="false"
+            [value]="listFilterValue(filter)"
+            [loading]="listFilterLoading(filter)"
+            (valueChange)="setListFilterValue(filter, $any($event))"
+          />
         }
       }
 
@@ -368,25 +359,23 @@
             />
           }
           @case ('select') {
-            <mat-form-field appearance="outline" [class]="fieldClass(field)">
-              <mat-label
-                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-              >
-              <mat-select
-                [value]="fieldValue(field.key)"
-                (selectionChange)="setFieldValue(field.key, $event.value)"
-              >
-                @for (option of fieldOptions(field); track option.value) {
-                  <mat-option [value]="option.value">{{
-                    translatedOptionLabel(field, option)
-                  }}</mat-option>
-                }
-              </mat-select>
-              @if (fieldHelp(field); as help) {
-                <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
-              }
-            </mat-form-field>
+            <mns-search-select-field
+              [attr.data-field-key]="field.key"
+              [fieldClass]="fieldClass(field)"
+              [label]="
+                translatedFieldLabel(field) +
+                currencyLabelSuffix(field) +
+                (isFieldRequired(field) ? '*' : '')
+              "
+              [placeholder]="field.placeholder ?? 'Search' | transloco"
+              [help]="fieldHelp(field)"
+              [options]="translatedSelectOptions(field, fieldOptions(field))"
+              [translateOptions]="false"
+              [disabled]="isFieldDisabled(field)"
+              [multiple]="false"
+              [value]="fieldValue(field.key)"
+              (valueChange)="setFieldValue(field.key, $event)"
+            />
           }
           @default {
             <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -458,29 +447,23 @@
                     </mat-form-field>
                   }
                   @case ('select') {
-                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                      <mat-label
-                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                      >
-                      <mat-select
-                        [value]="fieldValue(field.key)"
-                        (selectionChange)="setFieldValue(field.key, $event.value)"
-                      >
-                        @for (option of fieldOptions(field); track option.value) {
-                          <mat-option [value]="option.value">{{
-                            translatedOptionLabel(field, option)
-                          }}</mat-option>
-                        }
-                      </mat-select>
-                      @if (fieldHelp(field); as help) {
-                        <mns-field-help
-                          matIconSuffix
-                          [label]="translatedFieldLabel(field)"
-                          [text]="help"
-                        />
-                      }
-                    </mat-form-field>
+                    <mns-search-select-field
+                      [attr.data-field-key]="field.key"
+                      [fieldClass]="fieldClass(field)"
+                      [label]="
+                        translatedFieldLabel(field) +
+                        currencyLabelSuffix(field) +
+                        (isFieldRequired(field) ? '*' : '')
+                      "
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [help]="fieldHelp(field)"
+                      [options]="translatedSelectOptions(field, fieldOptions(field))"
+                      [translateOptions]="false"
+                      [disabled]="isFieldDisabled(field)"
+                      [multiple]="false"
+                      [value]="fieldValue(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('search-select') {
                     <mns-search-select-field
@@ -507,29 +490,23 @@
                     />
                   }
                   @case ('status') {
-                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                      <mat-label
-                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                      >
-                      <mat-select
-                        [value]="fieldValue(field.key)"
-                        (selectionChange)="setFieldValue(field.key, $event.value)"
-                      >
-                        @for (option of statusOptions(); track option.value) {
-                          <mat-option [value]="option.value">{{
-                            translatedOptionLabel(field, option)
-                          }}</mat-option>
-                        }
-                      </mat-select>
-                      @if (fieldHelp(field); as help) {
-                        <mns-field-help
-                          matIconSuffix
-                          [label]="translatedFieldLabel(field)"
-                          [text]="help"
-                        />
-                      }
-                    </mat-form-field>
+                    <mns-search-select-field
+                      [attr.data-field-key]="field.key"
+                      [fieldClass]="fieldClass(field)"
+                      [label]="
+                        translatedFieldLabel(field) +
+                        currencyLabelSuffix(field) +
+                        (isFieldRequired(field) ? '*' : '')
+                      "
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [help]="fieldHelp(field)"
+                      [options]="translatedSelectOptions(field, statusOptions())"
+                      [translateOptions]="false"
+                      [disabled]="isFieldDisabled(field)"
+                      [multiple]="false"
+                      [value]="fieldValue(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('checkbox-group') {
                     <mns-checkbox-group-field
@@ -542,31 +519,23 @@
                     />
                   }
                   @case ('multi-select') {
-                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                      <mat-label
-                        >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                        }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                      >
-                      <mat-select
-                        multiple
-                        [disabled]="isFieldDisabled(field)"
-                        [value]="fieldValueArray(field.key)"
-                        (selectionChange)="setFieldValue(field.key, $event.value)"
-                      >
-                        @for (option of fieldOptions(field); track option.value) {
-                          <mat-option [value]="option.value">{{
-                            translatedOptionLabel(field, option)
-                          }}</mat-option>
-                        }
-                      </mat-select>
-                      @if (fieldHelp(field); as help) {
-                        <mns-field-help
-                          matIconSuffix
-                          [label]="translatedFieldLabel(field)"
-                          [text]="help"
-                        />
-                      }
-                    </mat-form-field>
+                    <mns-search-select-field
+                      [attr.data-field-key]="field.key"
+                      [fieldClass]="fieldClass(field)"
+                      [label]="
+                        translatedFieldLabel(field) +
+                        currencyLabelSuffix(field) +
+                        (isFieldRequired(field) ? '*' : '')
+                      "
+                      [placeholder]="field.placeholder ?? 'Search' | transloco"
+                      [help]="fieldHelp(field)"
+                      [options]="translatedSelectOptions(field, fieldOptions(field))"
+                      [translateOptions]="false"
+                      [disabled]="isFieldDisabled(field)"
+                      [multiple]="true"
+                      [value]="fieldValueArray(field.key)"
+                      (valueChange)="setFieldValue(field.key, $event)"
+                    />
                   }
                   @case ('secret-content') {
                     <mns-secret-content-field
@@ -822,30 +791,23 @@
                             />
                           }
                           @case ('select') {
-                            <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                              <mat-label
-                                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                              >
-                              <mat-select
-                                [disabled]="isFieldDisabled(field)"
-                                [value]="fieldValue(field.key)"
-                                (selectionChange)="setFieldValue(field.key, $event.value)"
-                              >
-                                @for (option of fieldOptions(field); track option.value) {
-                                  <mat-option [value]="option.value">{{
-                                    translatedOptionLabel(field, option)
-                                  }}</mat-option>
-                                }
-                              </mat-select>
-                              @if (fieldHelp(field); as help) {
-                                <mns-field-help
-                                  matIconSuffix
-                                  [label]="translatedFieldLabel(field)"
-                                  [text]="help"
-                                />
-                              }
-                            </mat-form-field>
+                            <mns-search-select-field
+                              [attr.data-field-key]="field.key"
+                              [fieldClass]="fieldClass(field)"
+                              [label]="
+                                translatedFieldLabel(field) +
+                                currencyLabelSuffix(field) +
+                                (isFieldRequired(field) ? '*' : '')
+                              "
+                              [placeholder]="field.placeholder ?? 'Search' | transloco"
+                              [help]="fieldHelp(field)"
+                              [options]="translatedSelectOptions(field, fieldOptions(field))"
+                              [translateOptions]="false"
+                              [disabled]="isFieldDisabled(field)"
+                              [multiple]="false"
+                              [value]="fieldValue(field.key)"
+                              (valueChange)="setFieldValue(field.key, $event)"
+                            />
                           }
                           @case ('checkbox-group') {
                             <mns-checkbox-group-field
@@ -858,31 +820,23 @@
                             />
                           }
                           @case ('multi-select') {
-                            <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                              <mat-label
-                                >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                                }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                              >
-                              <mat-select
-                                multiple
-                                [disabled]="isFieldDisabled(field)"
-                                [value]="fieldValueArray(field.key)"
-                                (selectionChange)="setFieldValue(field.key, $event.value)"
-                              >
-                                @for (option of fieldOptions(field); track option.value) {
-                                  <mat-option [value]="option.value">{{
-                                    translatedOptionLabel(field, option)
-                                  }}</mat-option>
-                                }
-                              </mat-select>
-                              @if (fieldHelp(field); as help) {
-                                <mns-field-help
-                                  matIconSuffix
-                                  [label]="translatedFieldLabel(field)"
-                                  [text]="help"
-                                />
-                              }
-                            </mat-form-field>
+                            <mns-search-select-field
+                              [attr.data-field-key]="field.key"
+                              [fieldClass]="fieldClass(field)"
+                              [label]="
+                                translatedFieldLabel(field) +
+                                currencyLabelSuffix(field) +
+                                (isFieldRequired(field) ? '*' : '')
+                              "
+                              [placeholder]="field.placeholder ?? 'Search' | transloco"
+                              [help]="fieldHelp(field)"
+                              [options]="translatedSelectOptions(field, fieldOptions(field))"
+                              [translateOptions]="false"
+                              [disabled]="isFieldDisabled(field)"
+                              [multiple]="true"
+                              [value]="fieldValueArray(field.key)"
+                              (valueChange)="setFieldValue(field.key, $event)"
+                            />
                           }
                           @default {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -975,29 +929,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1010,30 +958,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1115,29 +1056,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1150,30 +1085,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1255,30 +1183,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [disabled]="isFieldDisabled(field)"
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1291,31 +1212,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [disabled]="isFieldDisabled(field)"
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1431,29 +1344,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1466,30 +1373,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('secret-content') {
                       <mns-secret-content-field
@@ -1615,29 +1515,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1650,30 +1544,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1740,29 +1627,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1775,30 +1656,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1865,29 +1739,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -1900,30 +1768,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('secret-content') {
                       <mns-secret-content-field
@@ -2087,29 +1948,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -2122,30 +1977,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -2230,29 +2078,23 @@
                       />
                     }
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -2265,30 +2107,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -2330,29 +2165,23 @@
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          [value]="fieldValue(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
@@ -2365,30 +2194,23 @@
                       />
                     }
                     @case ('multi-select') {
-                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                        <mat-label
-                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                        >
-                        <mat-select
-                          multiple
-                          [value]="fieldValueArray(field.key)"
-                          (selectionChange)="setFieldValue(field.key, $event.value)"
-                        >
-                          @for (option of fieldOptions(field); track option.value) {
-                            <mat-option [value]="option.value">{{
-                              translatedOptionLabel(field, option)
-                            }}</mat-option>
-                          }
-                        </mat-select>
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help
-                            matIconSuffix
-                            [label]="translatedFieldLabel(field)"
-                            [text]="help"
-                          />
-                        }
-                      </mat-form-field>
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
                     }
                     @default {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -2477,58 +2299,42 @@
                         />
                       }
                       @case ('select') {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label
-                            >{{ translatedFieldLabel(field)
-                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                          >
-                          <mat-select
-                            [value]="relatedCollectionFormValue(collection, field)"
-                            (selectionChange)="
-                              setRelatedCollectionFieldValue(collection, field, $event.value)
-                            "
-                          >
-                            @for (option of field.options ?? []; track option.value) {
-                              <mat-option [value]="option.value">{{
-                                translatedOptionLabel(field, option)
-                              }}</mat-option>
-                            }
-                          </mat-select>
-                          @if (fieldHelp(field, collection); as help) {
-                            <mns-field-help
-                              matIconSuffix
-                              [label]="translatedFieldLabel(field)"
-                              [text]="help"
-                            />
-                          }
-                        </mat-form-field>
+                        <mns-search-select-field
+                          [attr.data-field-key]="field.key"
+                          [fieldClass]="fieldClass(field)"
+                          [label]="
+                            translatedFieldLabel(field) +
+                            currencyLabelSuffix(field) +
+                            (isFieldRequired(field) ? '*' : '')
+                          "
+                          [placeholder]="field.placeholder ?? 'Search' | transloco"
+                          [help]="fieldHelp(field, collection)"
+                          [options]="translatedSelectOptions(field, field.options ?? [])"
+                          [translateOptions]="false"
+                          [disabled]="isFieldDisabled(field)"
+                          [multiple]="false"
+                          [value]="relatedCollectionFormValue(collection, field)"
+                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
+                        />
                       }
                       @case ('status') {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label
-                            >{{ translatedFieldLabel(field)
-                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                          >
-                          <mat-select
-                            [value]="relatedCollectionFormValue(collection, field)"
-                            (selectionChange)="
-                              setRelatedCollectionFieldValue(collection, field, $event.value)
-                            "
-                          >
-                            @for (option of statusOptions(); track option.value) {
-                              <mat-option [value]="option.value">{{
-                                translatedOptionLabel(field, option)
-                              }}</mat-option>
-                            }
-                          </mat-select>
-                          @if (fieldHelp(field, collection); as help) {
-                            <mns-field-help
-                              matIconSuffix
-                              [label]="translatedFieldLabel(field)"
-                              [text]="help"
-                            />
-                          }
-                        </mat-form-field>
+                        <mns-search-select-field
+                          [attr.data-field-key]="field.key"
+                          [fieldClass]="fieldClass(field)"
+                          [label]="
+                            translatedFieldLabel(field) +
+                            currencyLabelSuffix(field) +
+                            (isFieldRequired(field) ? '*' : '')
+                          "
+                          [placeholder]="field.placeholder ?? 'Search' | transloco"
+                          [help]="fieldHelp(field, collection)"
+                          [options]="translatedSelectOptions(field, statusOptions())"
+                          [translateOptions]="false"
+                          [disabled]="isFieldDisabled(field)"
+                          [multiple]="false"
+                          [value]="relatedCollectionFormValue(collection, field)"
+                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
+                        />
                       }
                       @default {
                         <mat-form-field appearance="outline" [class]="fieldClass(field)">

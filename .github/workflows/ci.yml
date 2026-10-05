@@ -49,6 +49,8 @@ jobs:
             fi
           fi
           npm run verify:changed -- "$BASE" HEAD
+      - name: Test dependent remote lookup parameters
+        run: node --test scripts/tests/remote-lookup-parameters.test.mjs
       - name: Test dashboard state and tenant isolation
         run: npm run test:dashboard
       - name: Test queued operations and cookie session isolation

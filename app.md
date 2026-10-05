@@ -624,6 +624,7 @@ or cancelling the form they are filling.
   finds it by the label through the list endpoint. Override `quickCreateOption()` in the page only
   to enrich `description`/`searchText`.
 - Filters (`listFilters`) never offer quick-create.
+- Dependent remote FK selects declare `remoteLookup.parameters` as query-parameter → parent-field mappings. The shared renderer waits for every parent value, resets the child selection/search/page when a parent changes, and preserves other typed values. APIs must validate the relationship again; this filtering is UX only.
 - UI gating is UX only: the API still authorizes the create request.
 
 ## System Parameter Defaults

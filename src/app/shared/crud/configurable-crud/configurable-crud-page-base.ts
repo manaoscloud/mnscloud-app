@@ -1,3 +1,4 @@
+import { remoteLookupParameters } from './remote-lookup-parameters';
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
@@ -178,6 +179,8 @@ export type ConfigurableCrudField = {
     uuidField: string;
     labelField: string;
     selectedLabelField?: string;
+    /** Query parameter -> parent form field. Waits until all bound values are present. */
+    parameters?: Readonly<Record<string, string>>;
     searchParam?: string;
   };
   key: string;
@@ -551,9 +554,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly currencyReady = signal(false);
   private readonly selectedRemoteOptions = new Map<string, ConfigurableCrudOption>();
   readonly remoteQueries = signal<Record<string, { search: string; offset: number }>>({});
+  private readonly remoteBoundParameters = computed(() =>
+    JSON.stringify(
+      Object.fromEntries(
+        this.config.fields
+          .filter((field) => field.remoteLookup)
+          .map((field) => [
+            field.key,
+            remoteLookupParameters(field.remoteLookup?.parameters, this.formValues()),
+          ]),
+      ),
+    ),
+  );
   readonly remoteLookups = resource({
     params: () => ({
       queries: this.remoteQueries(),
+      boundParameters: this.remoteBoundParameters(),
       fields: this.config.fields.filter((f) => f.remoteLookup),
     }),
     defaultValue: {} as Record<string, { items: ConfigurableCrudRecord[]; error: boolean }>,
@@ -561,9 +577,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       Object.fromEntries(
         await Promise.all(
           params.fields.map(async (field) => {
+            const bound: { ready: boolean; query: string } = JSON.parse(params.boundParameters)[
+              field.key
+            ];
+            if (!bound.ready) return [field.key, { items: [], error: false }];
             const query = params.queries[field.key] ?? { search: '', offset: 0 };
             const endpoint = field.remoteLookup!.endpoint;
-            const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=50&offset=${query.offset}&${field.remoteLookup!.searchParam ?? 'search'}=${encodeURIComponent(query.search)}`;
+            const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=50&offset=${query.offset}&${field.remoteLookup!.searchParam ?? 'search'}=${encodeURIComponent(query.search)}${bound.query ? `&${bound.query}` : ''}`;
             try {
               const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
                 url,
@@ -1420,6 +1440,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   setFieldValue(key: string, value: unknown): void {
+    const previous = this.formValues()[key];
     const remoteField = this.config.fields.find((field) => field.key === key && field.remoteLookup);
     if (remoteField) {
       const option = this.fieldOptions(remoteField).find((item) => item.value === value);
@@ -1435,6 +1456,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         this.t(error instanceof Error ? error.message : 'Enter a valid JSON object.'),
       );
       return;
+    }
+    if (previous !== this.formValues()[key]) {
+      for (const field of this.config.fields) {
+        if (Object.values(field.remoteLookup?.parameters ?? {}).includes(key)) {
+          this.formValues.update((current) => ({
+            ...current,
+            [field.key]: field.multiple ? [] : '',
+          }));
+          this.selectedRemoteOptions.delete(field.key);
+          this.remoteQueries.update((queries) => ({
+            ...queries,
+            [field.key]: { search: '', offset: 0 },
+          }));
+        }
+      }
     }
     this.onFieldValueChanged(key, value);
     this.syncCopyActionsForSource(key);
@@ -1581,11 +1617,40 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.withQuickCreatedOptions(field, field.options ?? this.lookupOptions(field.key));
   }
 
+  translatedSelectOptions(
+    field: ConfigurableCrudField,
+    options: readonly ConfigurableCrudOption[],
+  ): readonly ConfigurableCrudOption[] {
+    return options.map((option) => ({
+      ...option,
+      label: this.translatedOptionLabel(field, option),
+    }));
+  }
+
+  statusFilterOptions(): readonly ConfigurableCrudOption[] {
+    return [
+      { value: '', label: this.t('All') },
+      ...this.statusOptions().map((option) => ({ ...option, label: this.t(option.label) })),
+    ];
+  }
+
   listFilterOptions(filter: ConfigurableCrudListFilter): readonly ConfigurableCrudOption[] {
     if (filter.type === 'search-select') {
       return filter.options ?? this.lookupOptions(filter.key);
     }
     return [{ value: '', label: 'All' }, ...(filter.options ?? this.lookupOptions(filter.key))];
+  }
+
+  translatedListFilterOptions(
+    filter: ConfigurableCrudListFilter,
+  ): readonly ConfigurableCrudOption[] {
+    return this.listFilterOptions(filter).map((option) => ({
+      ...option,
+      label:
+        filter.translateOptions || (option.value === '' && option.label === 'All')
+          ? this.t(option.label)
+          : option.label,
+    }));
   }
 
   listFilterValue(filter: ConfigurableCrudListFilter): string | number | boolean | null {

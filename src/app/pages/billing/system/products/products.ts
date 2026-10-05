@@ -20,6 +20,7 @@ const PRODUCT_PAYLOAD_KEYS = [
   'code',
   'name',
   'description',
+  'salesMode',
   'isPublic',
   'publicSlug',
   'publicName',
@@ -29,6 +30,12 @@ const PRODUCT_PAYLOAD_KEYS = [
   'publicSortOrder',
   'status',
 ] as const;
+
+const SALES_MODE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'STANDALONE', label: 'Individual sale only' },
+  { value: 'PACKAGE_ONLY', label: 'Package inclusion only' },
+  { value: 'BOTH', label: 'Individual sale and package inclusion' },
+];
 
 const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/products',
@@ -48,11 +55,13 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   deletedMessage: 'Billing product deleted successfully.',
   deleteFailedMessage: 'Failed to delete billing product.',
   bulkDelete: false,
+  serverSidePagination: true,
   ...BILLING_STATUS_OPTIONS,
   initialValues: {
     code: '',
     name: '',
     description: '',
+    salesMode: 'BOTH',
     isPublic: 0,
     publicSlug: '',
     publicName: '',
@@ -67,10 +76,27 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
     { id: 'code', label: 'Code', field: 'BprCode' },
     { id: 'module', label: 'Module', field: 'BprModule' },
     { id: 'scope', label: 'Billing scope', field: 'BprBillingScope' },
+    {
+      id: 'salesMode',
+      label: 'Sales mode',
+      field: 'BprSalesMode',
+      value: (row, t) =>
+        t(SALES_MODE_OPTIONS.find((option) => option.value === row['BprSalesMode'])?.label ?? ''),
+    },
     { id: 'prices', label: 'Prices', field: 'ActivePrices' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BprStatus', className: 'status-col' },
   ],
   fields: [
+    {
+      key: 'salesMode',
+      source: 'BprSalesMode',
+      payloadKey: 'salesMode',
+      label: 'Sales mode',
+      type: 'select',
+      options: SALES_MODE_OPTIONS,
+      required: true,
+      span: 1,
+    },
     {
       key: 'code',
       source: 'BprCode',
@@ -167,6 +193,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemProductsPage extends ConfigurableCrudPageBase<
   BillingProduct & ConfigurableCrudRecord
