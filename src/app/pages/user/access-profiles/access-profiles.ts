@@ -6,11 +6,11 @@ import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   ConfigurableCrudPageBase,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { AuthService } from '../../../services/auth.service';
-import { TenantAccess, TenantService } from '../../../services/tenant.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -50,6 +50,7 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   statusOptions: STATUS_OPTIONS,
   statusFilter: true,
   serverSidePagination: true,
+  canEditRow: (row) => Number(row['system'] ?? 0) !== 1,
   canDeleteRow: (row) => Number(row['system'] ?? 0) !== 1,
   initialValues: {
     code: 'tenant.',
@@ -58,13 +59,10 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
     scope: 'tenant',
     status: 1,
     permissions: [],
-    users: [],
-    environmentUUID: '',
   },
   tabLabels: {
     record: 'Record',
     authentication: 'Permissions',
-    diagnostics: 'Assigned users',
     notes: 'Notes',
   },
   columns: [
@@ -117,32 +115,13 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
       span: 4,
       tab: 'authentication',
     },
+  ],
+  rowActions: [
     {
-      key: 'environmentUUID',
-      source: 'environmentUUID',
-      payloadKey: 'environmentUUID',
-      label: 'Tenant',
-      type: 'search-select',
-      quickCreate: false,
-      quickCreateExemptReason: 'Tenants are provisioned through onboarding; there is no in-place create form.',
-      required: true,
-      span: 4,
-      rows: 2,
-      tab: 'diagnostics',
-      placeholder: 'Search tenant',
-      hiddenWhen: ({ values }) => scopeFromPermissionValues(values['permissions']) === 'platform',
-    },
-    {
-      key: 'users',
-      source: 'users',
-      payloadKey: 'users',
-      label: 'Users',
-      type: 'search-select',
-      placeholder: 'Search users',
-      multiple: true,
-      rows: 2,
-      span: 4,
-      tab: 'diagnostics',
+      key: 'clone',
+      label: 'Duplicate',
+      icon: 'content_copy',
+      tooltip: 'Duplicate',
     },
   ],
 };
@@ -156,14 +135,8 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
 })
 export class UserAccessProfilesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly auth = inject(AuthService);
-  private readonly tenantService = inject(TenantService);
   private readonly permissionOptions = signal<ConfigurableCrudOption[]>([]);
-  private readonly userOptions = signal<ConfigurableCrudOption[]>([]);
-  private readonly tenantOptions = signal<ConfigurableCrudOption[]>([]);
-  private readonly tenantRecords = signal<TenantAccess[]>([]);
   private readonly loadingPermissions = signal(false);
-  private readonly loadingUsers = signal(false);
-  private readonly loadingTenants = signal(false);
   private readonly isMaster = computed(() =>
     (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
@@ -171,8 +144,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   constructor() {
     super(ACCESS_PROFILE_CONFIG);
     void this.loadCatalog();
-    void this.loadTenants();
-    void this.loadUsers();
   }
 
   protected override listEndpoint(): string {
@@ -193,16 +164,27 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'permissions') return this.permissionOptionsForScope();
-    if (key === 'users') return this.userOptions();
-    if (key === 'environmentUUID') return this.tenantOptions();
     return [];
   }
 
   override fieldLoading(field: { key: string }): boolean {
     if (field.key === 'permissions') return this.loadingPermissions();
-    if (field.key === 'users') return this.loadingUsers();
-    if (field.key === 'environmentUUID') return this.loadingTenants();
     return super.fieldLoading(field as never);
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key === 'clone') {
+      this.startCreate();
+      this.setFieldValue('name', `${String(row['name'] ?? '')} (Copy)`);
+      this.setFieldValue('notes', String(row['notes'] ?? ''));
+      this.setFieldValue('permissions', this.permissionsFromRow(row));
+      this.setFieldValue('status', 1);
+      return;
+    }
+    await super.handleRowAction(action, row);
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
@@ -214,17 +196,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
       const scope = this.scopeFromPermissions(value);
       this.setFieldValue('scope', scope);
       this.setFieldValue('code', this.generatedProfileCode(this.fieldValueString('name'), scope));
-      if (scope === 'platform') {
-        this.setFieldValue('environmentUUID', '');
-      }
-    }
-
-    if (key === 'environmentUUID') {
-      const tenant = this.tenantRecords().find(
-        (item) => item.EnvironmentUUID === String(value ?? ''),
-      );
-      if (tenant) this.selectTenantContext(tenant);
-      void this.loadUsers();
     }
   }
 
@@ -232,8 +203,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
     return {
       ...super.formValuesFromRecord(row),
       permissions: this.permissionsFromRow(row),
-      users: [],
-      environmentUUID: this.tenantService.selectedTenant()?.EnvironmentUUID ?? '',
     };
   }
 
@@ -260,26 +229,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
     }));
     const roleBase = this.isMaster() ? 'user/permissions/platform/roles' : 'user/permissions/roles';
     await this.api.put(`${roleBase}/${roleUUID}/permissions`, { permissions });
-
-    const users = this.fieldValueArray('users').map(String).filter(Boolean);
-    if (!users.length) {
-      this.refreshList();
-      return;
-    }
-
-    const assignmentEndpoint = this.isMaster()
-      ? 'user/permissions/platform/role-assignments'
-      : 'user/permissions/role-assignments';
-    const environmentUUID = String(this.formValues()['environmentUUID'] ?? '').trim() || null;
-    await Promise.all(
-      users.map((userUUID) =>
-        this.api.post(assignmentEndpoint, {
-          roleUUID,
-          userUUID,
-          environmentUUID,
-        }),
-      ),
-    );
     this.refreshList();
   }
 
@@ -301,62 +250,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
     }
   }
 
-  private async loadTenants(): Promise<void> {
-    this.loadingTenants.set(true);
-    try {
-      if (this.tenantService.tenants().length === 0) await this.tenantService.loadTenants();
-      let tenants = this.tenantService.tenants();
-      if (this.isMaster()) {
-        const masterLookup = await this.fetchMasterTenantLookup();
-        if (masterLookup.length) tenants = masterLookup;
-      }
-      this.tenantRecords.set(tenants);
-      this.tenantOptions.set(tenants.map((tenant) => this.tenantOption(tenant)));
-      const selected = this.tenantService.selectedTenant()?.EnvironmentUUID;
-      if (selected && !this.fieldValueString('environmentUUID')) {
-        this.setFieldValue('environmentUUID', selected);
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || 'Failed to load tenants.');
-    } finally {
-      this.loadingTenants.set(false);
-    }
-  }
-
-  private async loadUsers(): Promise<void> {
-    this.loadingUsers.set(true);
-    try {
-      const response = await this.api.get<{ data?: { members?: ConfigurableCrudRecord[] } }>(
-        'user/access/members',
-      );
-      this.userOptions.set((response.data?.members ?? []).map((member) => this.userOption(member)));
-    } catch (error) {
-      this.userOptions.set([]);
-      this.snack.error(this.errorMessage(error) || 'Failed to load users.');
-    } finally {
-      this.loadingUsers.set(false);
-    }
-  }
-
-  private async fetchMasterTenantLookup(): Promise<TenantAccess[]> {
-    try {
-      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-        'system/billing/tenants?search=&limit=500&offset=0',
-      );
-      return (response.data?.items ?? [])
-        .map((row) => ({
-          EnvironmentUUID: String(row['EnvironmentUUID'] ?? row['environmentUUID'] ?? ''),
-          EnvironmentName: String(
-            row['EnvironmentName'] ?? row['environmentName'] ?? row['TenantEmail'] ?? '',
-          ),
-          Status: Number(row['TenantStatus'] ?? row['status'] ?? 1),
-        }))
-        .filter((tenant) => tenant.EnvironmentUUID);
-    } catch {
-      return [];
-    }
-  }
-
   private permissionOptionsForScope(): readonly ConfigurableCrudOption[] {
     return this.permissionOptions().filter(
       (option) => this.isMaster() || !String(option.value).startsWith('platform.'),
@@ -373,34 +266,6 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   private savedRoleUUID(response: unknown, record: ConfigurableCrudRecord | null): string {
     const row = response as { data?: Record<string, unknown> };
     return String(row?.data?.['uuid'] ?? record?.['uuid'] ?? '');
-  }
-
-  private tenantOption(tenant: TenantAccess): ConfigurableCrudOption {
-    return {
-      value: tenant.EnvironmentUUID,
-      label: tenant.EnvironmentName || tenant.EnvironmentUUID,
-      description: tenant.EnvironmentUUID,
-      searchText: `${tenant.EnvironmentName} ${tenant.EnvironmentUUID}`,
-    };
-  }
-
-  private selectTenantContext(tenant: TenantAccess): void {
-    this.tenantService.selectedTenant.set(tenant);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('mc_current_env', tenant.EnvironmentUUID);
-    }
-  }
-
-  private userOption(member: ConfigurableCrudRecord): ConfigurableCrudOption {
-    const uuid = String(member['UserUUID'] ?? member['userUUID'] ?? '');
-    const name = String(member['Name'] ?? member['name'] ?? '').trim();
-    const email = String(member['Email'] ?? member['email'] ?? '').trim();
-    return {
-      value: uuid,
-      label: name || email || uuid,
-      description: email || uuid,
-      searchText: `${name} ${email} ${uuid}`,
-    };
   }
 
   private permissionOption(item: Record<string, unknown>): ConfigurableCrudOption {

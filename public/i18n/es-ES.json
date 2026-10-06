@@ -3333,6 +3333,7 @@
   "Softswitch account deleted successfully.": "Cuenta Softswitch eliminada correctamente.",
   "Failed to delete Softswitch account.": "No se pudo eliminar la cuenta Softswitch.",
   "Administrator": "Administrador",
+  "Edit tenant access": "Editar acceso del entorno",
   "Are you sure you want to remove this tenant access or cancel its invitation?": "¿Desea eliminar este acceso al entorno o cancelar la invitación?",
   "Failed to remove tenant access.": "No se pudo eliminar el acceso al entorno.",
   "Manage tenant members and invitations for this environment.": "Administre los miembros y las invitaciones de este entorno.",
