@@ -31,10 +31,10 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   deleteEndpoint: 'user/permissions/roles',
   uuidField: 'uuid',
   pageTitle: 'Access profiles',
-  pageDescription: 'Group permissions once and assign them to users.',
+  pageDescription: 'Group permissions once and assign them to many users.',
   createTitle: 'New access profile',
   editTitle: 'Edit access profile',
-  dialogDescription: 'Name the profile, choose its permissions and save.',
+  dialogDescription: 'Name the profile, choose permissions, then select who receives them.',
   searchPlaceholder: 'Profile name or notes',
   emptyLabel: 'No access profiles found.',
   deleteTitle: 'Delete access profile',
@@ -119,9 +119,9 @@ const ACCESS_PROFILE_CONFIG: ConfigurableCrudConfig = {
   rowActions: [
     {
       key: 'clone',
-      label: 'Duplicate profile',
+      label: 'Duplicate',
       icon: 'content_copy',
-      tooltip: 'Duplicate this profile as a custom role',
+      tooltip: 'Duplicate',
     },
   ],
 };

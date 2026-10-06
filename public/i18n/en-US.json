@@ -3334,6 +3334,7 @@
   "Failed to delete Softswitch account.": "Failed to delete Softswitch account.",
   "Administrator": "Administrator",
   "Are you sure you want to remove this tenant access or cancel its invitation?": "Are you sure you want to remove this tenant access or cancel its invitation?",
+  "Edit tenant access": "Edit tenant access",
   "Failed to remove tenant access.": "Failed to remove tenant access.",
   "Manage tenant members and invitations for this environment.": "Manage tenant members and invitations for this environment.",
   "No tenant members or invitations found.": "No tenant members or invitations found.",

@@ -3334,6 +3334,7 @@
   "Failed to delete Softswitch account.": "Falha ao excluir a conta Softswitch.",
   "Administrator": "Administrador",
   "Are you sure you want to remove this tenant access or cancel its invitation?": "Deseja remover este acesso ao ambiente ou cancelar o convite?",
+  "Edit tenant access": "Editar acesso do tenant",
   "Failed to remove tenant access.": "Falha ao remover acesso ao ambiente.",
   "Manage tenant members and invitations for this environment.": "Gerencie membros e convites deste ambiente.",
   "No tenant members or invitations found.": "Nenhum membro ou convite encontrado.",

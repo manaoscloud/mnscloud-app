@@ -26,8 +26,8 @@ type TenantAccessEntry = ConfigurableCrudRecord & {
 };
 
 const DEFAULT_ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'tenant.admin', label: 'Tenant Admin' },
-  { value: 'tenant.user', label: 'Tenant User' },
+  { value: 'tenant.admin', label: 'Administrator' },
+  { value: 'tenant.user', label: 'User' },
 ];
 
 const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
@@ -39,15 +39,15 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   pageTitle: 'Tenants',
   pageDescription: 'Manage tenant members and invitations for this environment.',
   createTitle: 'Invite a Member',
-  editTitle: 'Edit member access profile',
-  dialogDescription: 'Select an access profile for this member in this environment.',
+  editTitle: 'Edit tenant access',
+  dialogDescription: 'Send a tenant access invitation by email.',
   searchPlaceholder: 'Tenant member or email',
   emptyLabel: 'No tenant members or invitations found.',
   deleteTitle: 'Remove tenant access',
   deleteMessage: 'Are you sure you want to remove this tenant access or cancel its invitation?',
   deleteSelectedTitle: 'Remove selected tenant access entries',
   deleteSelectedMessage: 'Remove {count} selected tenant access entries?',
-  savedMessage: 'Tenant member updated successfully.',
+  savedMessage: 'Tenant invitation sent successfully.',
   deletedMessage: 'Tenant access removed successfully.',
   deleteFailedMessage: 'Failed to remove tenant access.',
   statusMode: 'string',
@@ -65,7 +65,7 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'EntryUUID' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
-    { id: 'role', label: 'Access profile', field: 'RoleName', lookupKey: 'roleCode' },
+    { id: 'role', label: 'Profile', field: 'RoleName', lookupKey: 'roleCode' },
     { id: 'createdAt', label: 'Created at', kind: 'datetime', field: 'DateCreated' },
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
@@ -85,14 +85,14 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
       key: 'roleCode',
       source: 'RoleCode',
       payloadKey: 'roleCode',
-      label: 'Access profile',
+      label: 'Profile',
       type: 'search-select',
       quickCreate: false,
       quickCreateExemptReason: 'Access profiles are managed under User / Access Profiles.',
       options: DEFAULT_ROLE_OPTIONS,
       required: true,
       span: 1,
-      placeholder: 'Select profile',
+      placeholder: 'Search profile',
     },
   ],
   canEdit: true,
