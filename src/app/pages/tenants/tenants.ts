@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth.service';
 
 type TenantAccessEntry = ConfigurableCrudRecord & {
   EntryUUID: string;
+  UserUUID?: string;
   EntryType: 'MEMBER' | 'INVITE';
   Name: string;
   Email: string;
@@ -24,7 +25,7 @@ type TenantAccessEntry = ConfigurableCrudRecord & {
   DateCreated: string | null;
 };
 
-const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
+const DEFAULT_ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'tenant.admin', label: 'Tenant Admin' },
   { value: 'tenant.user', label: 'Tenant User' },
 ];
@@ -32,20 +33,21 @@ const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
 const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'user/access/members',
   createEndpoint: 'user/access/invites',
+  updateEndpoint: 'user/access/members',
   deleteEndpoint: (row) => (row['EntryType'] === 'INVITE' ? 'user/access/invites' : 'user/access'),
   uuidField: 'EntryUUID',
   pageTitle: 'Tenants',
   pageDescription: 'Manage tenant members and invitations for this environment.',
   createTitle: 'Invite a Member',
-  editTitle: 'Edit tenant access',
-  dialogDescription: 'Send a tenant access invitation by email.',
+  editTitle: 'Edit member access profile',
+  dialogDescription: 'Select an access profile for this member in this environment.',
   searchPlaceholder: 'Tenant member or email',
   emptyLabel: 'No tenant members or invitations found.',
   deleteTitle: 'Remove tenant access',
   deleteMessage: 'Are you sure you want to remove this tenant access or cancel its invitation?',
   deleteSelectedTitle: 'Remove selected tenant access entries',
   deleteSelectedMessage: 'Remove {count} selected tenant access entries?',
-  savedMessage: 'Tenant invitation sent successfully.',
+  savedMessage: 'Tenant member updated successfully.',
   deletedMessage: 'Tenant access removed successfully.',
   deleteFailedMessage: 'Failed to remove tenant access.',
   statusMode: 'string',
@@ -77,25 +79,31 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 3,
       autocomplete: 'email',
+      disabledWhen: ({ editing }) => editing,
     },
     {
       key: 'roleCode',
       source: 'RoleCode',
       payloadKey: 'roleCode',
       label: 'Access profile',
-      type: 'select',
-      options: ROLE_OPTIONS,
+      type: 'search-select',
+      quickCreate: false,
+      quickCreateExemptReason: 'Access profiles are managed under User / Access Profiles.',
+      options: DEFAULT_ROLE_OPTIONS,
       required: true,
       span: 1,
+      placeholder: 'Select profile',
     },
   ],
-  canEdit: false,
+  canEdit: true,
+  canEditRow: (row) =>
+    String(row['EntryType'] ?? '').toUpperCase() === 'MEMBER' &&
+    Number(row['Protected'] ?? 0) !== 1,
   canDeleteRow: (row) => {
     const entryType = String(row['EntryType'] ?? '').toUpperCase();
     if (entryType === 'INVITE') return String(row['Status'] ?? '').toUpperCase() === 'PENDING';
     return Number(row['Protected'] ?? 0) !== 1;
   },
-  // Revocation and invitation cancellation use distinct, stateful API endpoints.
   bulkDelete: false,
   rowActions: [{ key: 'resend', label: 'Resend invitation', icon: 'send' }],
 };
@@ -110,12 +118,16 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
 export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEntry> {
   private readonly tenantsService = inject(TenantsService);
   private readonly auth = inject(AuthService);
+  private readonly roleOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly loadingRoles = signal(false);
+
   private readonly canManageTenant = computed(() => {
     const permissions = this.auth.user()?.permissions ?? [];
     return permissions.some((permission) => {
       const normalized = String(permission ?? '').toLowerCase();
       return (
         normalized === 'tenant.access.manage' ||
+        normalized === 'tenant.permissions.manage' ||
         normalized === 'tenant.*' ||
         normalized === 'platform.master.access'
       );
@@ -123,16 +135,28 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
   });
 
   override readonly canCreate = computed(() => this.canManageTenant());
+  override readonly canEdit = computed(() => this.canManageTenant());
   override readonly canDelete = computed(() => this.canManageTenant());
 
   constructor() {
     super(TENANT_ACCESS_CONFIG);
+    void this.loadRoles();
   }
 
   override rowActions(row: TenantAccessEntry) {
     return row.EntryType === 'INVITE' && row.Status === 'PENDING'
       ? (TENANT_ACCESS_CONFIG.rowActions ?? [])
       : [];
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'roleCode') return this.roleOptions();
+    return [];
+  }
+
+  override fieldLoading(field: { key: string }): boolean {
+    if (field.key === 'roleCode') return this.loadingRoles();
+    return super.fieldLoading(field as never);
   }
 
   override async handleRowAction(
@@ -150,6 +174,49 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
     }
   }
 
+  protected override formValuesFromRecord(row: TenantAccessEntry): ConfigurableCrudRecord {
+    return {
+      ...super.formValuesFromRecord(row),
+      email: row.Email,
+      roleCode: row.RoleCode,
+    };
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    if (this.editingRecord()) {
+      return {
+        roleCode: payload['roleCode'],
+      };
+    }
+    return {
+      email: payload['email'],
+      roleCode: payload['roleCode'],
+    };
+  }
+
+  private async loadRoles(): Promise<void> {
+    this.loadingRoles.set(true);
+    try {
+      const response = await this.api.get<{ data?: { items?: Array<Record<string, unknown>> } }>(
+        'user/permissions/roles',
+      );
+      const items = response?.data?.items ?? [];
+      const options = items
+        .filter((r) => String(r['code'] ?? '') !== 'tenant.owner' && Number(r['status'] ?? 1) === 1)
+        .map((r) => ({
+          value: String(r['code'] ?? ''),
+          label: String(r['name'] ?? r['code'] ?? ''),
+          description: String(r['notes'] ?? r['code'] ?? ''),
+          searchText: `${r['name']} ${r['code']}`,
+        }));
+      this.roleOptions.set(options.length ? options : [...DEFAULT_ROLE_OPTIONS]);
+    } catch {
+      this.roleOptions.set([...DEFAULT_ROLE_OPTIONS]);
+    } finally {
+      this.loadingRoles.set(false);
+    }
+  }
+
   protected override async fetchItems(
     filters: ConfigurableCrudFilters,
   ): Promise<TenantAccessEntry[]> {
@@ -160,6 +227,7 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
 
     const members = (membersResponse?.data?.members ?? []).map((member: any) => ({
       EntryUUID: String(member.UscUUID ?? ''),
+      UserUUID: String(member.UserUUID ?? ''),
       EntryType: 'MEMBER' as const,
       Name: String(member.Name ?? member.Email ?? '-'),
       Email: String(member.Email ?? ''),
