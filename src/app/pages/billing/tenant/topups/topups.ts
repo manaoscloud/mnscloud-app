@@ -3,12 +3,12 @@ import { Component, inject, signal } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
-import { BILLING_STATUS_OPTIONS } from '../../shared/billing-crud';
 import { BillingPaymentIntent, BillingService } from '../../shared/billing.service';
 
 /** Brazilian states for the bank payer address (UF codes are not translated). */
@@ -42,9 +42,18 @@ const STATE_OPTIONS = [
   'TO',
 ].map((value) => ({ value, label: value }));
 
+const TOPUP_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'PAID', label: 'Paid' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'EXPIRED', label: 'Expired' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'CANCELED', label: 'Canceled' },
+];
+
 const isPending = (row: ConfigurableCrudRecord) => String(row['BpiStatus'] ?? '') === 'PENDING';
 const isCard = (row: ConfigurableCrudRecord) => row['BpiPaymentMethod'] === 'CREDIT_CARD';
 const isPendingBoleto = (row: ConfigurableCrudRecord) => isPending(row) && !isCard(row);
+const isPaid = (row: ConfigurableCrudRecord) => String(row['BpiStatus'] ?? '').toUpperCase() === 'PAID';
 
 /** Payment methods served by active bank connections, with the card fee passed on to the tenant. */
 type TopupMethod = {
@@ -191,8 +200,18 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
     },
     { key: 'boleto', label: 'Download boleto', icon: 'download', visible: isPendingBoleto },
     { key: 'sync', label: 'Check payment', icon: 'sync', visible: isPending },
+    {
+      key: 'view-receipt',
+      label: 'View receipt',
+      icon: 'receipt_long',
+      visible: (row) => isPaid(row) && Boolean(row['BpiCheckoutUrl']),
+    },
   ],
-  ...BILLING_STATUS_OPTIONS,
+  statusMode: 'string',
+  activeValue: 'PAID',
+  inactiveValue: 'FAILED',
+  activeStatusValues: ['PAID'],
+  statusOptions: TOPUP_STATUS_OPTIONS,
   initialValues: {
     payerType: 'FISICA',
     paymentMethod: 'PIX_BOLETO',
@@ -238,7 +257,20 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'created', label: 'Created at', kind: 'datetime', field: 'BpiDateCreated' },
     { id: 'expires', label: 'Expires at', kind: 'datetime', field: 'BpiExpiresAt' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'BpiStatus' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'BpiStatus',
+      options: TOPUP_STATUS_OPTIONS,
+      chipClass: (val) => {
+        const s = String(val ?? '').toUpperCase();
+        if (s === 'PAID') return 'chip-success is-active';
+        if (s === 'PENDING') return 'chip-warning';
+        if (s === 'FAILED') return 'chip-failed';
+        return 'chip-skipped is-inactive';
+      },
+    },
   ],
   fields: [
     {
@@ -585,7 +617,7 @@ export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
     action: { key: string },
     row: BillingPaymentIntent & ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key === 'open-checkout') {
+    if (action.key === 'open-checkout' || action.key === 'view-receipt') {
       if (!row.BpiCheckoutUrl) return;
       const popup = window.open(row.BpiCheckoutUrl, '_blank', 'noopener,noreferrer');
       if (popup) popup.opener = null;
