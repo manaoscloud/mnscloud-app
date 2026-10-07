@@ -1530,3 +1530,25 @@ The shared access-profile definition catalog is read-only for tenant administrat
 effective platform master authority enables create, edit, delete and duplicate actions. Tenant
 administrators assign approved profiles through the tenant membership page. API/DB enforce
 the same boundary independently of these UI controls.
+
+### Remote relationship list filters
+
+`ConfigurableCrudListFilter.remoteLookup` uses the same canonical API UUID/name mapping as form
+relationships, with independent search and paging state. The shared searchable adapter requests
+50 records at a time, uses the API total, and exposes loading/errors plus previous/next controls.
+Selected UUIDs are forwarded to the list endpoint; filtering must remain server-side. Static
+enum filters declare `translateOptions: true`. Form drafts and filter search state are independent.
+
+## Independent CRM sales module
+
+CRM lives under `crm/*` with its own `module.crm.*` navigation grant. Its accounts,
+contacts, catalogs, leads, opportunities, activities, proposals and handoffs use
+`ConfigurableCrudPageBase`; no ERP record is required. Industry and assignee
+filters query the backend before pagination. All FK forms use canonical registry
+quick-create; assignees intentionally use existing tenant memberships only.
+
+The proposals page opens the canonical proposal-items CRUD in a collection dialog.
+Drafts can be edited; sent versions expose lifecycle transitions and private
+printable downloads. Qualified leads expose conversion, and pipeline settings
+expose idempotent initialization. API/DB permissions and subscription checks remain
+the authority. Dashboard counts come from the CRM summary endpoint, not local rows.

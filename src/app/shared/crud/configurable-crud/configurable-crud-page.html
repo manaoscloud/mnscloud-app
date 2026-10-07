@@ -59,6 +59,12 @@
             [placeholder]="filter.placeholder ?? 'Search'"
             [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
             [loading]="listFilterLoading(filter)"
+            [remoteSearch]="!!filter.remoteLookup"
+            [hasNext]="filterRemoteNext(filter)"
+            [hasPrevious]="filterRemotePrevious(filter)"
+            [loadError]="filterRemoteError(filter)"
+            (searchChange)="filterRemoteSearch(filter, $event)"
+            (pageChange)="filterRemotePage(filter, $event)"
             [translateOptions]="false"
             (selectionChange)="setListFilterValue(filter, $any($event))"
           />
@@ -70,6 +76,12 @@
             [translateOptions]="false"
             [value]="listFilterValue(filter)"
             [loading]="listFilterLoading(filter)"
+            [remoteSearch]="!!filter.remoteLookup"
+            [hasNext]="filterRemoteNext(filter)"
+            [hasPrevious]="filterRemotePrevious(filter)"
+            [loadError]="filterRemoteError(filter)"
+            (searchChange)="filterRemoteSearch(filter, $event)"
+            (pageChange)="filterRemotePage(filter, $event)"
             (valueChange)="setListFilterValue(filter, $any($event))"
           />
         }

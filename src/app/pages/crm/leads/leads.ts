@@ -1,0 +1,362 @@
+import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { Component } from '@angular/core';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { crmActions } from '../crm-actions';
+const config = defineCrud({
+  endpoint: 'crm/leads',
+  uuidField: 'CleUUID',
+  pageTitle: 'crm.title.leads',
+  initialValues: {
+    CleName: '',
+    CleEmail: '',
+    ClePhone: '',
+    CleDocument: '',
+    CrmIndustryCinUUID: '',
+    CrmSourceCsoUUID: '',
+    CrmProductCprUUID: '',
+    CleNeed: '',
+    CleState: 'new',
+    CleNextContactAt: '',
+    CleCloseReason: '',
+    CleStatus: 1,
+    AssignedUserUsrUUID: '',
+  },
+  fields: [
+    {
+      key: 'CleName',
+      source: 'CleName',
+      label: 'crm.field.Name',
+      span: 1,
+      required: true,
+      type: 'text',
+    },
+    {
+      key: 'CleEmail',
+      source: 'CleEmail',
+      label: 'crm.field.Email',
+      span: 1,
+      required: false,
+      type: 'email',
+    },
+    {
+      key: 'ClePhone',
+      source: 'ClePhone',
+      label: 'crm.field.Phone',
+      span: 1,
+      required: false,
+      type: 'text',
+    },
+    {
+      key: 'CleDocument',
+      source: 'CleDocument',
+      label: 'crm.field.Document',
+      span: 1,
+      required: false,
+      type: 'text',
+    },
+    {
+      key: 'CrmIndustryCinUUID',
+      source: 'CrmIndustryCinUUID',
+      label: 'crm.title.industries',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/industries',
+        uuidField: 'CinUUID',
+        labelField: 'CinName',
+        selectedLabelField: 'CrmIndustryCinUUIDName',
+      },
+    },
+    {
+      key: 'CrmSourceCsoUUID',
+      source: 'CrmSourceCsoUUID',
+      label: 'crm.title.sources',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        selectedLabelField: 'CrmSourceCsoUUIDName',
+        endpoint: 'crm/sources',
+        uuidField: 'CsoUUID',
+        labelField: 'CsoName',
+      },
+    },
+    {
+      key: 'CrmProductCprUUID',
+      source: 'CrmProductCprUUID',
+      label: 'crm.title.products',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        selectedLabelField: 'CrmProductCprUUIDName',
+        endpoint: 'crm/products',
+        uuidField: 'CprUUID',
+        labelField: 'CprName',
+      },
+    },
+    {
+      key: 'CleNeed',
+      source: 'CleNeed',
+      label: 'crm.field.Need',
+      span: 1,
+      required: false,
+      type: 'textarea',
+    },
+    {
+      key: 'CleState',
+      source: 'CleState',
+      label: 'crm.field.State',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: [
+        {
+          value: 'new',
+          label: 'crm.enum.new',
+        },
+        {
+          value: 'contacting',
+          label: 'crm.enum.contacting',
+        },
+        {
+          value: 'qualified',
+          label: 'crm.enum.qualified',
+        },
+        {
+          value: 'disqualified',
+          label: 'crm.enum.disqualified',
+        },
+        {
+          value: 'converted',
+          label: 'crm.enum.converted',
+        },
+      ],
+    },
+    {
+      key: 'CleNextContactAt',
+      source: 'CleNextContactAt',
+      label: 'crm.field.NextContactAt',
+      span: 1,
+      required: false,
+      type: 'datetime',
+      fromRecord: crmLocalDateTime,
+    },
+    {
+      key: 'CleCloseReason',
+      source: 'CleCloseReason',
+      label: 'crm.field.CloseReason',
+      span: 1,
+      required: false,
+      type: 'textarea',
+    },
+    {
+      key: 'CleStatus',
+      source: 'CleStatus',
+      label: 'crm.field.Status',
+      span: 1,
+      required: true,
+      type: 'status',
+    },
+    {
+      key: 'AssignedUserUsrUUID',
+      source: 'AssignedUserUsrUUID',
+      label: 'crm.field.AssignedUserUsrUUID',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/members',
+        uuidField: 'UsrUUID',
+        labelField: 'UsrName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
+    },
+    {
+      key: 'CleRevision',
+      source: 'CleRevision',
+      label: 'crm.field.Revision',
+      hidden: true,
+    },
+  ],
+  columns: [
+    {
+      id: 'CrmIndustryCinUUID',
+      field: 'CrmIndustryCinUUIDName',
+      label: 'crm.title.industries',
+      kind: 'text',
+    },
+    {
+      id: 'CrmSourceCsoUUID',
+      field: 'CrmSourceCsoUUIDName',
+      label: 'crm.title.sources',
+      kind: 'text',
+    },
+    {
+      id: 'CrmProductCprUUID',
+      field: 'CrmProductCprUUIDName',
+      label: 'crm.title.products',
+      kind: 'text',
+    },
+    {
+      id: 'CleName',
+      field: 'CleName',
+      label: 'crm.field.Name',
+      kind: 'identity',
+    },
+    {
+      id: 'CleEmail',
+      field: 'CleEmail',
+      label: 'crm.field.Email',
+      kind: 'text',
+    },
+    {
+      id: 'CleDocument',
+      field: 'CleDocument',
+      label: 'crm.field.Document',
+      kind: 'text',
+    },
+    {
+      id: 'CleState',
+      field: 'CleState',
+      label: 'crm.field.State',
+      kind: 'text',
+      options: [
+        {
+          value: 'new',
+          label: 'crm.enum.new',
+        },
+        {
+          value: 'contacting',
+          label: 'crm.enum.contacting',
+        },
+        {
+          value: 'qualified',
+          label: 'crm.enum.qualified',
+        },
+        {
+          value: 'disqualified',
+          label: 'crm.enum.disqualified',
+        },
+        {
+          value: 'converted',
+          label: 'crm.enum.converted',
+        },
+      ],
+    },
+    {
+      id: 'CleNextContactAt',
+      field: 'CleNextContactAt',
+      label: 'crm.field.NextContactAt',
+      kind: 'datetime',
+    },
+    {
+      id: 'CleStatus',
+      field: 'CleStatus',
+      label: 'crm.field.Status',
+      kind: 'status',
+    },
+  ],
+  listFilters: [
+    {
+      key: 'CrmIndustryCinUUID',
+      paramKey: 'CrmIndustryCinUUID',
+      label: 'crm.title.industries',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: { endpoint: 'crm/industries', uuidField: 'CinUUID', labelField: 'CinName' },
+    },
+    {
+      key: 'CrmSourceCsoUUID',
+      paramKey: 'CrmSourceCsoUUID',
+      label: 'crm.title.sources',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: {
+        selectedLabelField: 'CrmSourceCsoUUIDName',
+        endpoint: 'crm/sources',
+        uuidField: 'CsoUUID',
+        labelField: 'CsoName',
+      },
+    },
+    {
+      key: 'CrmProductCprUUID',
+      paramKey: 'CrmProductCprUUID',
+      label: 'crm.title.products',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: {
+        selectedLabelField: 'CrmProductCprUUIDName',
+        endpoint: 'crm/products',
+        uuidField: 'CprUUID',
+        labelField: 'CprName',
+      },
+    },
+    {
+      key: 'AssignedUserUsrUUID',
+      paramKey: 'AssignedUserUsrUUID',
+      label: 'crm.field.AssignedUserUsrUUID',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: { endpoint: 'crm/members', uuidField: 'UsrUUID', labelField: 'UsrName' },
+    },
+    {
+      key: 'CleState',
+      paramKey: 'CleState',
+      label: 'crm.field.State',
+      type: 'select',
+      translateOptions: true,
+      options: [
+        {
+          value: 'new',
+          label: 'crm.enum.new',
+        },
+        {
+          value: 'contacting',
+          label: 'crm.enum.contacting',
+        },
+        {
+          value: 'qualified',
+          label: 'crm.enum.qualified',
+        },
+        {
+          value: 'disqualified',
+          label: 'crm.enum.disqualified',
+        },
+        {
+          value: 'converted',
+          label: 'crm.enum.converted',
+        },
+      ],
+      span: 1,
+    },
+  ],
+  serverSidePagination: true,
+  bulkDelete: false,
+  canEditRow: (row) => row['CleState'] !== 'converted',
+  quickCreateLabelField: 'CleName',
+  payload: (values, editing) =>
+    crmPayload(values, editing, 'CleRevision', ['CleStatus', 'CleRevision'], ['CleNextContactAt']),
+  rowActions: crmActions('leads'),
+});
+@Component({
+  selector: 'app-crm-leads',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class CrmLeadPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  constructor() {
+    super(config);
+  }
+}

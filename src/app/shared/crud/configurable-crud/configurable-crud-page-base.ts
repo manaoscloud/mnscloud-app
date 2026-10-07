@@ -309,6 +309,7 @@ export type ConfigurableCrudColumn = {
 };
 
 export type ConfigurableCrudListFilter = {
+  remoteLookup?: ConfigurableCrudField['remoteLookup'];
   key: string;
   label: string;
   paramKey?: string;
@@ -612,8 +613,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly listFailed = computed(() => !!this.itemsResource.error());
-  readonly rows = computed(() => this.itemsResource.hasValue()
-    ? this.normalizeRows(this.itemsResource.value() as T[]) : [] as T[]);
+  readonly rows = computed(() =>
+    this.itemsResource.hasValue()
+      ? this.normalizeRows(this.itemsResource.value() as T[])
+      : ([] as T[]),
+  );
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     if (this.serverSidePagination()) return this.sortedRows();
@@ -1636,7 +1640,69 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     ];
   }
 
+  readonly filterRemoteQueries = signal<Record<string, { search: string; offset: number }>>({});
+  readonly filterRemoteLookups = resource({
+    params: () => ({
+      queries: this.filterRemoteQueries(),
+      filters: this.config.listFilters?.filter((f) => f.remoteLookup) ?? [],
+    }),
+    defaultValue: {} as Record<
+      string,
+      { items: ConfigurableCrudRecord[]; total: number; error: boolean }
+    >,
+    loader: async ({ params }) =>
+      Object.fromEntries(
+        await Promise.all(
+          params.filters.map(async (f) => {
+            const q = params.queries[f.key] ?? { search: '', offset: 0 };
+            const lookup = f.remoteLookup!;
+            const query = new URLSearchParams({
+              limit: '50',
+              offset: String(q.offset),
+              [lookup.searchParam ?? 'search']: q.search,
+            });
+            try {
+              const response = await this.api.get<{
+                data: { items: ConfigurableCrudRecord[]; total: number };
+              }>(`${lookup.endpoint}${lookup.endpoint.includes('?') ? '&' : '?'}${query}`);
+              return [f.key, { ...response.data, error: false }];
+            } catch {
+              return [f.key, { items: [], total: 0, error: true }];
+            }
+          }),
+        ),
+      ),
+  });
+  filterRemoteSearch(filter: ConfigurableCrudListFilter, search: string) {
+    this.filterRemoteQueries.update((q) => ({ ...q, [filter.key]: { search, offset: 0 } }));
+  }
+  filterRemotePage(filter: ConfigurableCrudListFilter, direction: number) {
+    const old = this.filterRemoteQueries()[filter.key] ?? { search: '', offset: 0 };
+    this.filterRemoteQueries.update((q) => ({
+      ...q,
+      [filter.key]: { ...old, offset: Math.max(0, old.offset + direction * 50) },
+    }));
+  }
+  filterRemoteNext(filter: ConfigurableCrudListFilter) {
+    return (
+      (this.filterRemoteQueries()[filter.key]?.offset ?? 0) + 50 <
+      (this.filterRemoteLookups.value()[filter.key]?.total ?? 0)
+    );
+  }
+  filterRemotePrevious(filter: ConfigurableCrudListFilter) {
+    return (this.filterRemoteQueries()[filter.key]?.offset ?? 0) > 0;
+  }
+  filterRemoteError(filter: ConfigurableCrudListFilter) {
+    return this.filterRemoteLookups.value()[filter.key]?.error ?? false;
+  }
   listFilterOptions(filter: ConfigurableCrudListFilter): readonly ConfigurableCrudOption[] {
+    if (filter.remoteLookup)
+      return (this.filterRemoteLookups.value()[filter.key]?.items ?? []).map(
+        (row: ConfigurableCrudRecord) => ({
+          value: String(row[filter.remoteLookup!.uuidField]),
+          label: String(row[filter.remoteLookup!.labelField] ?? ''),
+        }),
+      );
     if (filter.type === 'search-select') {
       return filter.options ?? this.lookupOptions(filter.key);
     }
@@ -1664,7 +1730,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
-    return filter.loading?.() ?? false;
+    return filter.remoteLookup
+      ? this.filterRemoteLookups.isLoading()
+      : (filter.loading?.() ?? false);
   }
 
   remoteSearchChanged(field: ConfigurableCrudField, search: string): void {

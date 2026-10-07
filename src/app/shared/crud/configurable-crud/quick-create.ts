@@ -35,6 +35,88 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  CrmIndustryCinUUID: {
+    label: 'crm.title.industries',
+    loadComponent: () =>
+      import('../../../pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmSourceCsoUUID: {
+    label: 'crm.title.sources',
+    loadComponent: () => import('../../../pages/crm/sources/sources').then((m) => m.CrmSourcePage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmLossReasonClrUUID: {
+    label: 'crm.title.loss-reasons',
+    loadComponent: () =>
+      import('../../../pages/crm/loss-reasons/loss-reasons').then((m) => m.CrmLossReasonPage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmPipelineCpiUUID: {
+    label: 'crm.title.pipelines',
+    loadComponent: () =>
+      import('../../../pages/crm/pipelines/pipelines').then((m) => m.CrmPipelinePage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmStageCstUUID: {
+    label: 'crm.title.stages',
+    loadComponent: () => import('../../../pages/crm/stages/stages').then((m) => m.CrmStagePage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmAccountCacUUID: {
+    label: 'crm.title.accounts',
+    loadComponent: () =>
+      import('../../../pages/crm/accounts/accounts').then((m) => m.CrmAccountPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmContactCcoUUID: {
+    label: 'crm.title.contacts',
+    loadComponent: () =>
+      import('../../../pages/crm/contacts/contacts').then((m) => m.CrmContactPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmProductCprUUID: {
+    label: 'crm.title.products',
+    loadComponent: () =>
+      import('../../../pages/crm/products/products').then((m) => m.CrmProductPage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmLeadCleUUID: {
+    label: 'crm.title.leads',
+    loadComponent: () => import('../../../pages/crm/leads/leads').then((m) => m.CrmLeadPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmOpportunityCopUUID: {
+    label: 'crm.title.opportunities',
+    loadComponent: () =>
+      import('../../../pages/crm/opportunities/opportunities').then((m) => m.CrmOpportunityPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmActivityCatUUID: {
+    label: 'crm.title.activities',
+    loadComponent: () =>
+      import('../../../pages/crm/activities/activities').then((m) => m.CrmActivityPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmProposalCppUUID: {
+    label: 'crm.title.proposals',
+    loadComponent: () =>
+      import('../../../pages/crm/proposals/proposals').then((m) => m.CrmProposalPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmProposalItemCptUUID: {
+    label: 'crm.title.proposal-items',
+    loadComponent: () =>
+      import('../../../pages/crm/proposal-items/proposal-items').then((m) => m.CrmProposalItemPage),
+    permission: 'tenant.crm.write',
+  },
+  CrmHandoffChoUUID: {
+    label: 'crm.title.handoffs',
+    loadComponent: () =>
+      import('../../../pages/crm/handoffs/handoffs').then((m) => m.CrmHandoffPage),
+    permission: 'tenant.crm.write',
+  },
+
   BillingPackageBpaUUID: {
     label: 'Create package',
     loadComponent: () =>
