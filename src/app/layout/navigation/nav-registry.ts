@@ -22,91 +22,6 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'crm',
-    label: 'nav.crm',
-    icon: 'handshake',
-    entitlementCode: 'module.crm.*',
-    requiresEnvironment: true,
-    children: [
-      {
-        id: 'crm/dashboard',
-        label: 'nav.crm.dashboard',
-        icon: 'dashboard',
-        route: '/crm/dashboard',
-      },
-      {
-        id: 'crm/accounts',
-        label: 'nav.crm.accounts',
-        icon: 'folder_open',
-        route: '/crm/accounts',
-      },
-      {
-        id: 'crm/contacts',
-        label: 'nav.crm.contacts',
-        icon: 'folder_open',
-        route: '/crm/contacts',
-      },
-      { id: 'crm/leads', label: 'nav.crm.leads', icon: 'folder_open', route: '/crm/leads' },
-      {
-        id: 'crm/opportunities',
-        label: 'nav.crm.opportunities',
-        icon: 'folder_open',
-        route: '/crm/opportunities',
-      },
-      {
-        id: 'crm/activities',
-        label: 'nav.crm.activities',
-        icon: 'folder_open',
-        route: '/crm/activities',
-      },
-      {
-        id: 'crm/proposals',
-        label: 'nav.crm.proposals',
-        icon: 'folder_open',
-        route: '/crm/proposals',
-      },
-      {
-        id: 'crm/handoffs',
-        label: 'nav.crm.handoffs',
-        icon: 'folder_open',
-        route: '/crm/handoffs',
-      },
-      {
-        id: 'crm/products',
-        label: 'nav.crm.products',
-        icon: 'inventory_2',
-        route: '/crm/products',
-      },
-      {
-        id: 'crm/settings',
-        label: 'nav.crm.settings',
-        icon: 'settings',
-        children: [
-          {
-            id: 'crm/industries',
-            label: 'nav.crm.industries',
-            icon: 'tune',
-            route: '/crm/industries',
-          },
-          { id: 'crm/sources', label: 'nav.crm.sources', icon: 'tune', route: '/crm/sources' },
-          {
-            id: 'crm/loss-reasons',
-            label: 'nav.crm.loss-reasons',
-            icon: 'tune',
-            route: '/crm/loss-reasons',
-          },
-          {
-            id: 'crm/pipelines',
-            label: 'nav.crm.pipelines',
-            icon: 'tune',
-            route: '/crm/pipelines',
-          },
-          { id: 'crm/stages', label: 'nav.crm.stages', icon: 'tune', route: '/crm/stages' },
-        ],
-      },
-    ],
-  },
   { id: 'dashboard', label: 'nav.dashboard', icon: 'dashboard', route: '/dashboard' },
   {
     id: 'billing',
@@ -404,6 +319,93 @@ export const NAV_ITEMS: NavItem[] = [
             icon: 'work',
             route: '/erp/human-resources/positions',
           },
+        ],
+      },
+    ],
+  },
+
+  // CRM is an independent tenant module, immediately after ERP.
+  {
+    id: 'crm',
+    label: 'nav.crm',
+    icon: 'handshake',
+    entitlementCode: 'module.crm.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'crm/dashboard',
+        label: 'nav.crm.dashboard',
+        icon: 'dashboard',
+        route: '/crm/dashboard',
+      },
+      {
+        id: 'crm/accounts',
+        label: 'nav.crm.accounts',
+        icon: 'business',
+        route: '/crm/accounts',
+      },
+      {
+        id: 'crm/contacts',
+        label: 'nav.crm.contacts',
+        icon: 'contacts',
+        route: '/crm/contacts',
+      },
+      { id: 'crm/leads', label: 'nav.crm.leads', icon: 'person_add', route: '/crm/leads' },
+      {
+        id: 'crm/opportunities',
+        label: 'nav.crm.opportunities',
+        icon: 'trending_up',
+        route: '/crm/opportunities',
+      },
+      {
+        id: 'crm/activities',
+        label: 'nav.crm.activities',
+        icon: 'event_note',
+        route: '/crm/activities',
+      },
+      {
+        id: 'crm/proposals',
+        label: 'nav.crm.proposals',
+        icon: 'description',
+        route: '/crm/proposals',
+      },
+      {
+        id: 'crm/handoffs',
+        label: 'nav.crm.handoffs',
+        icon: 'assignment_turned_in',
+        route: '/crm/handoffs',
+      },
+      {
+        id: 'crm/products',
+        label: 'nav.crm.products',
+        icon: 'inventory_2',
+        route: '/crm/products',
+      },
+      {
+        id: 'crm/settings',
+        label: 'nav.crm.settings',
+        icon: 'settings',
+        children: [
+          {
+            id: 'crm/industries',
+            label: 'nav.crm.industries',
+            icon: 'domain',
+            route: '/crm/industries',
+          },
+          { id: 'crm/sources', label: 'nav.crm.sources', icon: 'campaign', route: '/crm/sources' },
+          {
+            id: 'crm/loss-reasons',
+            label: 'nav.crm.loss-reasons',
+            icon: 'feedback',
+            route: '/crm/loss-reasons',
+          },
+          {
+            id: 'crm/pipelines',
+            label: 'nav.crm.pipelines',
+            icon: 'filter_alt',
+            route: '/crm/pipelines',
+          },
+          { id: 'crm/stages', label: 'nav.crm.stages', icon: 'linear_scale', route: '/crm/stages' },
         ],
       },
     ],
