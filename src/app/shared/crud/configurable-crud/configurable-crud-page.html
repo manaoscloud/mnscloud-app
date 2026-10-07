@@ -147,6 +147,9 @@
       </div>
     </div>
 
+    @if (listFailed()) {
+      <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
+    }
     <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
       @if (loading()) {
         <div class="table-loading">

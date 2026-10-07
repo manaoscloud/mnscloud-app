@@ -49,6 +49,7 @@ export class ApiService {
     if (!this.auth.isLoggedIn()) return false;
 
     const normalized = endpoint.replace(/^\//, '');
+    if (this.tenantUserEndpoint(endpoint)) return true;
     if (/^user\/operations(?:[/?]|$)/.test(normalized))
       return new URLSearchParams(normalized.split('?')[1] ?? '').get('scope') !== 'platform';
     const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
@@ -61,10 +62,20 @@ export class ApiService {
     );
   }
 
+  private tenantUserEndpoint(endpoint: string): boolean {
+    const path = endpoint.replace(/^\//, '').split('?')[0];
+    return /^user\/access\/(members|roles|invites)(?:\/|$)/.test(path) &&
+      !/^user\/access\/invites\/(accept|validate)$/.test(path) ||
+      /^user\/access\/(?:[a-f0-9]{32}|[a-f0-9-]{36})$/i.test(path) ||
+      /^user\/permissions(?:\/|$)/.test(path) &&
+      !/^user\/permissions\/platform(?:\/|$)/.test(path);
+  }
+
   private sendsEnvironment(endpoint: string): boolean {
     if (this.systemCyberSecurityContext(endpoint) || this.systemTelemetryContext(endpoint))
       return false;
-    return this.requiresEnvironment(endpoint) || this.environmentOptional(endpoint);
+    return endpoint.replace(/^\//, '').split('?')[0] === 'user/me' ||
+      this.requiresEnvironment(endpoint) || this.environmentOptional(endpoint);
   }
 
   private systemTelemetryContext(endpoint: string): boolean {

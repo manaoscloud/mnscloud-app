@@ -15,7 +15,7 @@ describe('ApiService auth and tenant context', () => {
     generation = 0;
     localStorage.clear();
     sessionStorage.clear();
-    (window as any).MNSCLOUD_APP_CONFIG = { apiBaseUrl: 'https://dev.publichost.cloud/api/v1' };
+    (window as any).MNSCLOUD_APP_CONFIG = { apiBaseUrl: 'https://api.example.com/api/v1' };
 
     TestBed.configureTestingModule({
       providers: [
@@ -48,7 +48,7 @@ describe('ApiService auth and tenant context', () => {
 
   it('sends credentials and tenant context without an Authorization header', async () => {
     const promise = api.get('hosting/dns/domains');
-    const req = http.expectOne('https://dev.publichost.cloud/api/v1/hosting/dns/domains');
+    const req = http.expectOne('https://api.example.com/api/v1/hosting/dns/domains');
 
     expect(req.request.withCredentials).toBeTrue();
     expect(req.request.headers.has('Authorization')).toBeFalse();
@@ -60,13 +60,32 @@ describe('ApiService auth and tenant context', () => {
     await promise;
   });
 
+  it('uses the selected tenant for membership, profiles and effective permissions after switching', async () => {
+    localStorage.setItem('mc_current_env', '22222222-2222-2222-2222-222222222222');
+    for (const endpoint of ['user/me', 'user/access/members', 'user/access/invites', 'user/access/roles?limit=500', 'user/permissions/roles']) {
+      const pending = api.get(endpoint);
+      const req = http.expectOne('https://api.example.com/api/v1/' + endpoint);
+      expect(req.request.headers.get('X-Environment-UUID')).toBe('22222222-2222-2222-2222-222222222222');
+      req.flush({ data: { items: [] } });
+      await pending;
+    }
+  });
+
+  it('does not attach tenant context to platform permission administration', async () => {
+    const pending = api.get('user/permissions/platform/roles');
+    const req = http.expectOne('https://api.example.com/api/v1/user/permissions/platform/roles');
+    expect(req.request.headers.has('X-Environment-UUID')).toBeFalse();
+    req.flush({ data: { items: [] } });
+    await pending;
+  });
+
   it('does not attach a selected tenant to the master telemetry overview', async () => {
     const previous = window.location.pathname;
     history.replaceState(null, '', '/system/monitoring/overview');
     try {
       const promise = api.get('monitoring/agents/telemetry-overview?limit=12');
       const req = http.expectOne(
-        'https://dev.publichost.cloud/api/v1/monitoring/agents/telemetry-overview?limit=12',
+        'https://api.example.com/api/v1/monitoring/agents/telemetry-overview?limit=12',
       );
       expect(req.request.headers.has('X-Environment-UUID')).toBeFalse();
       req.flush({ status: 'success', data: { items: [], total: 0, limit: 12, offset: 0 } });
