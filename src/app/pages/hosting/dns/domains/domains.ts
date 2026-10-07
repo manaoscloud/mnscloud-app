@@ -1,3 +1,4 @@
+import { dnsCrudConfig } from '../dns-scope';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -11,29 +12,6 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { readStoredEnvironmentUUID } from '../../../../core/environment/environment-context';
-
-type DomainProviderOption = {
-  HdpUUID: string;
-  HdpName: string;
-  HdpProvider: string;
-  HdpStatus: number;
-  HdpIsDefault?: number | null;
-};
-
-type CustomerOption = {
-  CustomerUUID: string;
-  Name: string;
-  Document?: string | null;
-  Status?: number | null;
-};
-
-type HostingDnsRegisterOption = {
-  HrgUUID: string;
-  HrgName: string;
-  CustomerCusUUID?: string | null;
-  CustomerName?: string | null;
-  HrgStatus?: number | null;
-};
 
 const IN_FLIGHT_OPERATION_STATES = new Set(['queued', 'running', 'waiting_retry', 'verifying']);
 
@@ -273,49 +251,16 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
 export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly customers = signal<CustomerOption[]>([]);
-  private readonly providers = signal<DomainProviderOption[]>([]);
-  private readonly registers = signal<HostingDnsRegisterOption[]>([]);
   private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
-  private readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/dns/providers' : 'hosting/dns/providers',
-  );
-
-  private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.customers().map((customer) => ({
-      value: customer.CustomerUUID,
-      label: customer.Name,
-      description: customer.Document ?? undefined,
-      searchText: [customer.Name, customer.Document].filter(Boolean).join(' '),
-    })),
-  );
-  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.providers().map((provider) => ({
-      value: provider.HdpUUID,
-      label: provider.HdpName,
-      description: provider.HdpProvider,
-      searchText: `${provider.HdpName} ${provider.HdpProvider}`,
-    })),
-  );
-  private readonly registerOptions = computed<ConfigurableCrudOption[]>(() => {
-    const customerUUID = String(
-      this.formValues()['customerUUID'] || this.listFilterValues()['customerUUID'] || '',
-    );
-    return this.registers()
-      .filter((register) => register.HrgStatus === undefined || register.HrgStatus === 1)
-      .filter((register) => !customerUUID || register.CustomerCusUUID === customerUUID)
-      .map((register) => ({
-        value: register.HrgUUID,
-        label: register.HrgName,
-        description: register.CustomerName ?? undefined,
-        searchText: `${register.HrgName} ${register.CustomerName ?? ''}`,
-      }));
-  });
   constructor() {
-    super(HOSTING_DNS_DOMAIN_CONFIG);
-    void Promise.all([this.fetchCustomers(), this.fetchDomainProviders(), this.fetchRegisters()]);
+    super(
+      dnsCrudConfig(
+        HOSTING_DNS_DOMAIN_CONFIG,
+        inject(ActivatedRoute).snapshot.data?.['scope'] === 'master',
+      ),
+    );
   }
 
   private domainsPath(): string {
@@ -323,11 +268,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
-    await Promise.all([
-      this.customers().length ? Promise.resolve() : this.fetchCustomers(),
-      this.providers().length ? Promise.resolve() : this.fetchDomainProviders(),
-      this.registers().length ? Promise.resolve() : this.fetchRegisters(),
-    ]);
     const rows = await super.fetchItems(filters);
     const environment = readStoredEnvironmentUUID();
     return rows.map((row) => {
@@ -339,10 +279,15 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       };
       const operationUUID = String(row['MessagingOperationMopUUID'] ?? '');
       const mopState = String(row['MopState'] ?? '');
-      if (operationUUID && IN_FLIGHT_OPERATION_STATES.has(mopState) && environment) {
+      if (
+        operationUUID &&
+        IN_FLIGHT_OPERATION_STATES.has(mopState) &&
+        (this.isMaster() || environment)
+      ) {
         this.operations.watch(
           {
             operationUUID,
+            scope: this.isMaster() ? 'platform' : 'tenant',
             state: mopState,
             errorCode: (row['MopErrorCode'] as string | null | undefined) ?? null,
             environmentUUID: environment,
@@ -355,43 +300,10 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     });
   }
 
-  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'customerUUID') return this.customerOptions();
-    if (key === 'providerUUID') return this.providerOptions();
-    if (key === 'registerUUID') return this.registerOptions();
-    return [];
-  }
-
-  protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'customerUUID') return;
-    const registerUUID = String(this.formValues()['registerUUID'] ?? '');
-    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
-    if (register && register.CustomerCusUUID !== String(value ?? '')) {
-      this.patchFormValues({ registerUUID: '' });
-    }
-  }
-
-  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    this.ensureRegisterOption(row);
-    return super.formValuesFromRecord(row);
-  }
-
-  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (!super.validatePayload(payload)) return false;
-    const registerUUID = String(payload['registerUUID'] ?? '');
-    const customerUUID = String(payload['customerUUID'] ?? '');
-    const register = this.registers().find((item) => item.HrgUUID === registerUUID);
-    if (!register || register.CustomerCusUUID !== customerUUID) {
-      this.snack.warning('Select a register linked to the selected customer.');
-      return false;
-    }
-    return true;
-  }
-
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       registerUUID: payload['registerUUID'],
-      customerUUID: payload['customerUUID'],
+      customerUUID: payload['customerUUID'] || null,
       providerUUID: payload['providerUUID'],
       zoneIP: payload['zoneIP'],
       defaultTtl: payload['defaultTtl'],
@@ -422,7 +334,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   override async startEdit(row: ConfigurableCrudRecord) {
     try {
       const result = await this.api.get<any>(
-        `hosting/dns/domains/${this.recordUUID(row)}/pabx-policy`,
+        `${this.config.endpoint}/${this.recordUUID(row)}/pabx-policy`,
       );
       const p = result?.data?.items?.[0];
       const values = {
@@ -430,7 +342,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
         pabxPolicyBase: p?.base ?? `pabx.${row['HddName']}`,
         pabxPolicyTtl: p?.ttl ?? 300,
         pabxPolicyCapacity: p?.capacity ?? 1000,
-        pabxPolicyPlatform: p?.platform ?? false,
+        pabxPolicyPlatform: p?.platform ?? this.isMaster(),
       };
       this.loadedPolicySignature = JSON.stringify(values);
       super.startEdit({ ...row, ...values });
@@ -465,58 +377,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     if (action.key === 'provision') await this.provisionDomain(row);
   }
 
-  private async fetchDomainProviders() {
-    try {
-      const response = await this.api.get<{ data?: { items?: DomainProviderOption[] } }>(
-        `${this.providerEndpoint()}?status=1&limit=500&offset=0`,
-      );
-      this.providers.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || 'Failed to load domain providers.');
-    }
-  }
-
-  private async fetchCustomers() {
-    try {
-      const response = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        'erp/customers?status=1&limit=500&offset=0',
-      );
-      this.customers.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || 'Failed to load customers.');
-    }
-  }
-
-  private async fetchRegisters() {
-    try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsRegisterOption[] } }>(
-        'hosting/dns/registers?availableFor=domain&status=1&limit=500&offset=0',
-      );
-      this.registers.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.registers.set([]);
-      this.snack.error(this.errorMessage(error) || 'Failed to load domain registers.');
-    }
-  }
-
-  private ensureRegisterOption(row: ConfigurableCrudRecord) {
-    const registerUUID = String(row['HostingDnsRegisterHrgUUID'] ?? '');
-    if (!registerUUID) return;
-    if (this.registers().some((item) => item.HrgUUID === registerUUID)) return;
-    const name = String(row['RegisterName'] ?? row['HddName'] ?? '').trim();
-    if (!name) return;
-    this.registers.update((current) => [
-      ...current,
-      {
-        HrgUUID: registerUUID,
-        HrgName: name,
-        CustomerCusUUID: row['CustomerCusUUID'] as string | null | undefined,
-        CustomerName: row['CustomerName'] as string | null | undefined,
-        HrgStatus: 1,
-      },
-    ]);
-  }
-
   private async provisionDomain(domain: ConfigurableCrudRecord) {
     const domainUUID = this.recordUUID(domain);
     if (!domainUUID || this.provisioningDomainUUIDs().has(domainUUID)) return;
@@ -524,7 +384,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     this.provisioningDomainUUIDs.update((current) => new Set(current).add(domainUUID));
     this.mutating.set(true);
     try {
-      const response = await this.api.post(`hosting/dns/domains/${domainUUID}/provision`, {});
+      const response = await this.api.post(`${this.config.endpoint}/${domainUUID}/provision`, {});
       this.trackOperation(response);
       this.refreshList();
     } catch (error) {

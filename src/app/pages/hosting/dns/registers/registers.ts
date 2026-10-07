@@ -1,4 +1,6 @@
-import { Component, computed, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { dnsCrudConfig } from '../dns-scope';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -12,13 +14,6 @@ import {
   hostingDnsRegistrarCatalogOptions,
   hostingDnsRegistrarLabel,
 } from '../dns-register-catalog';
-
-type CustomerOption = {
-  CustomerUUID: string;
-  Name: string;
-  Document?: string | null;
-  Status?: number | null;
-};
 
 type RegistrarCatalogItem = {
   code: string;
@@ -143,19 +138,9 @@ const HOSTING_DNS_REGISTER_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingDnsRegistersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly customers = signal<CustomerOption[]>([]);
   private readonly registrarCodes = signal<string[]>(
     hostingDnsRegistrarCatalogOptions().map((item) => item.code),
   );
-  private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.customers().map((customer) => ({
-      value: customer.CustomerUUID,
-      label: customer.Name,
-      description: customer.Document ?? undefined,
-      searchText: [customer.Name, customer.Document].filter(Boolean).join(' '),
-    })),
-  );
-
   private readonly registrarOptions = computed<ConfigurableCrudOption[]>(() =>
     this.registrarCodes().map((code) => ({
       value: code,
@@ -165,13 +150,17 @@ export class HostingDnsRegistersPage extends ConfigurableCrudPageBase<Configurab
   );
 
   constructor() {
-    super(HOSTING_DNS_REGISTER_CONFIG);
-    void Promise.all([this.fetchCustomers(), this.fetchRegistrarCatalog()]);
+    super(
+      dnsCrudConfig(
+        HOSTING_DNS_REGISTER_CONFIG,
+        inject(ActivatedRoute).snapshot.data?.['scope'] === 'master',
+      ),
+    );
+    void this.fetchRegistrarCatalog();
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
     await Promise.all([
-      this.customers().length ? Promise.resolve() : this.fetchCustomers(),
       this.registrarCodes().length ? Promise.resolve() : this.fetchRegistrarCatalog(),
     ]);
     const rows = await super.fetchItems(filters);
@@ -182,7 +171,6 @@ export class HostingDnsRegistersPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'customerUUID') return this.customerOptions();
     if (key === 'registrar') return this.registrarOptions();
     return [];
   }
@@ -190,8 +178,10 @@ export class HostingDnsRegistersPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       name: String(payload['name'] ?? '').trim(),
-      customerUUID: payload['customerUUID'],
-      registrar: String(payload['registrar'] ?? '').trim().toLowerCase(),
+      customerUUID: payload['customerUUID'] || null,
+      registrar: String(payload['registrar'] ?? '')
+        .trim()
+        .toLowerCase(),
       status: payload['status'],
       notes: payload['notes'],
     };
@@ -200,25 +190,16 @@ export class HostingDnsRegistersPage extends ConfigurableCrudPageBase<Configurab
   private async fetchRegistrarCatalog() {
     try {
       const response = await this.api.get<{ data?: { items?: RegistrarCatalogItem[] } }>(
-        'hosting/dns/registers/catalog',
+        `${this.config.endpoint}/catalog`,
       );
       const items = response?.data?.items ?? [];
       if (items.length) {
-        this.registrarCodes.set(items.map((item) => String(item.code ?? '').toLowerCase()).filter(Boolean));
+        this.registrarCodes.set(
+          items.map((item) => String(item.code ?? '').toLowerCase()).filter(Boolean),
+        );
       }
     } catch {
       this.registrarCodes.set(hostingDnsRegistrarCatalogOptions().map((item) => item.code));
-    }
-  }
-
-  private async fetchCustomers() {
-    try {
-      const response = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        'erp/customers?status=1&limit=500&offset=0',
-      );
-      this.customers.set(response?.data?.items ?? []);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || 'Failed to load customers.');
     }
   }
 }

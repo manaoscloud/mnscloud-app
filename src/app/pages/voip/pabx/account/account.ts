@@ -169,6 +169,12 @@ function config(): ConfigurableCrudConfig {
       {
         key: 'customerUUID',
         source: 'CustomerCusUUID',
+        remoteLookup: {
+          endpoint: 'erp/customers?status=1',
+          uuidField: 'CustomerUUID',
+          labelField: 'Name',
+          selectedLabelField: 'CustomerName',
+        },
         payloadKey: 'customerUUID',
         label: 'Customer',
         type: 'search-select',
@@ -399,6 +405,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
+    if (field.remoteLookup) return super.fieldLoading(field);
     return (
       [
         'serverUUID',
@@ -463,15 +470,9 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [servers, customers, dialPlans, blacklists, storageAccounts] = await Promise.all([
+      const [servers, dialPlans, blacklists, storageAccounts] = await Promise.all([
         this.fetchPaged('voip/pabx/servers?status=1', (row) =>
           option(row.VpsUUID, row.VpsName, [row.VpsEngine, row.VpsHostname, row.VpsPublicIPv4]),
-        ),
-        this.fetchPaged('erp/customers?status=1', (row) =>
-          option(row.CustomerUUID ?? row.CusUUID, row.Name ?? row.CustomerName ?? row.CusName, [
-            row.Document,
-            row.Email,
-          ]),
         ),
         this.fetchPaged('voip/pabx/dial-plans?status=1', (row) =>
           option(row.uuid ?? row.VdpUUID, row.name ?? row.VdpName),
@@ -484,7 +485,6 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
         ),
       ]);
       this.serverOptions.set(servers);
-      this.customerOptions.set(customers);
       this.dialPlanOptions.set(dialPlans);
       this.blacklistOptions.set(blacklists);
       this.storageAccountOptions.set(storageAccounts);
