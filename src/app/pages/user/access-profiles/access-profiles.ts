@@ -10,6 +10,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -138,8 +139,16 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   private readonly permissionOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly loadingPermissions = signal(false);
   private readonly isMaster = computed(() =>
-    (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
+    hasEffectivePermission(this.auth.user()?.permissions ?? [], 'platform.master.access'),
   );
+
+  override readonly canCreate = computed(() => this.isMaster());
+  override readonly canEdit = computed(() => this.isMaster());
+  override readonly canDelete = computed(() => this.isMaster());
+
+  override rowActions(row: ConfigurableCrudRecord) {
+    return this.isMaster() ? super.rowActions(row) : [];
+  }
 
   constructor() {
     super(ACCESS_PROFILE_CONFIG);
@@ -177,6 +186,7 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
     row: ConfigurableCrudRecord,
   ): Promise<void> {
     if (action.key === 'clone') {
+      if (!this.isMaster()) return;
       this.startCreate();
       this.setFieldValue('name', `${String(row['name'] ?? '')} (Copy)`);
       this.setFieldValue('notes', String(row['notes'] ?? ''));
