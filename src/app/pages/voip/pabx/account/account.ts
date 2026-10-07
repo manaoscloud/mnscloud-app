@@ -130,7 +130,6 @@ function config(): ConfigurableCrudConfig {
         kind: 'related',
         field: 'CustomerName',
         uuidField: 'CustomerCusUUID',
-        lookupKey: 'customerUUID',
       },
       {
         id: 'server',
