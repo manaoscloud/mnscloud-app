@@ -1525,3 +1525,8 @@ membership/invitation management requires `tenant.access.manage`.
 
 The configurable CRUD renderer must guard resource reads with `hasValue()`, show a translated
 load error separately from an empty result, and retain a usable Refresh action after failure.
+
+The shared access-profile definition catalog is read-only for tenant administrators. Only
+effective platform master authority enables create, edit, delete and duplicate actions. Tenant
+administrators assign approved profiles through the tenant membership page. API/DB enforce
+the same boundary independently of these UI controls.
