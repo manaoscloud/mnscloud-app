@@ -59,6 +59,7 @@ run('node', [
   'scripts/pay-i18n-coverage.test.mjs',
   'scripts/pay-error.test.mjs',
   'scripts/validate-nav-labels.test.mjs',
+  'scripts/tests/crm-form-contract.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);

@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -20,12 +21,22 @@ const config = defineCrud({
   },
   fields: [
     {
-      key: 'CstName',
-      source: 'CstName',
-      label: 'crm.field.Name',
+      key: 'CstStatus',
+      source: 'CstStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
+      type: 'status',
+    },
+    {
+      key: 'CstKind',
+      source: 'CstKind',
+      label: 'crm.field.Kind',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.stageKinds,
     },
     {
       key: 'CrmPipelineCpiUUID',
@@ -50,42 +61,14 @@ const config = defineCrud({
       type: 'number',
     },
     {
-      key: 'CstKind',
-      source: 'CstKind',
-      label: 'crm.field.Kind',
-      span: 1,
+      key: 'CstName',
+      source: 'CstName',
+      label: 'crm.field.Name',
+      span: 2,
       required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'open',
-          label: 'crm.enum.open',
-        },
-        {
-          value: 'won',
-          label: 'crm.enum.won',
-        },
-        {
-          value: 'lost',
-          label: 'crm.enum.lost',
-        },
-      ],
+      type: 'text',
     },
-    {
-      key: 'CstStatus',
-      source: 'CstStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
-    },
-    {
-      key: 'CstRevision',
-      source: 'CstRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CstRevision', source: 'CstRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -105,20 +88,7 @@ const config = defineCrud({
       field: 'CstKind',
       label: 'crm.field.Kind',
       kind: 'text',
-      options: [
-        {
-          value: 'open',
-          label: 'crm.enum.open',
-        },
-        {
-          value: 'won',
-          label: 'crm.enum.won',
-        },
-        {
-          value: 'lost',
-          label: 'crm.enum.lost',
-        },
-      ],
+      options: CRM_OPTIONS.stageKinds,
     },
     {
       id: 'CstStatus',
@@ -142,24 +112,12 @@ const config = defineCrud({
       label: 'crm.field.Kind',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'open',
-          label: 'crm.enum.open',
-        },
-        {
-          value: 'won',
-          label: 'crm.enum.won',
-        },
-        {
-          value: 'lost',
-          label: 'crm.enum.lost',
-        },
-      ],
+      options: CRM_OPTIONS.stageKinds,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CstName',
   payload: (values, editing) =>

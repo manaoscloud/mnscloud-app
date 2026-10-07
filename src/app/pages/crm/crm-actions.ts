@@ -1,3 +1,5 @@
+import { CRM_OPTIONS } from './crm-options';
+import { crmPayload } from './crm-input';
 import { config as proposalItemsConfig } from './proposal-items/proposal-items';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 import {
@@ -72,6 +74,8 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
           createTitle: 'crm.convert',
           formOnly: true,
           columns: [],
+          defaultCurrencyFields: ['currency'],
+          payload: (values) => crmPayload(values, true, 'revision', [], []),
           initialValues: {
             revision: r['CleRevision'],
             accountUUID: '',
@@ -122,6 +126,11 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
       icon: 'list',
       collection: (row) => ({
         ...proposalItemsConfig,
+        fields: proposalItemsConfig.fields.map((field) =>
+          field.key === 'CptUnitAmount'
+            ? { ...field, currencyCode: String(row['CppCurrency']) }
+            : field,
+        ),
         listQuery: { CrmProposalCppUUID: String(row['CppUUID']) },
         initialValues: { ...proposalItemsConfig.initialValues, CrmProposalCppUUID: row['CppUUID'] },
         canCreate: row['CppState'] === 'draft',
@@ -155,22 +164,21 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
               type: 'select',
               span: 1,
               required: true,
-              options: (r['CppState'] === 'draft'
-                ? ['sent']
-                : ['accepted', 'rejected', 'expired']
-              ).map((v) => ({
-                value: v,
-                label: (
-                  {
-                    sent: 'crm.enum.sent',
-                    accepted: 'crm.enum.accepted',
-                    rejected: 'crm.enum.rejected',
-                    expired: 'crm.enum.expired',
-                  } as Record<string, string>
-                )[v],
-              })),
+              options: CRM_OPTIONS.proposalStates.filter(({ value }) =>
+                (r['CppState'] === 'draft'
+                  ? ['sent']
+                  : ['accepted', 'rejected', 'expired']
+                ).includes(value),
+              ),
             },
-            { key: 'evidence', label: 'crm.field.Evidence', type: 'textarea', span: 1 },
+            {
+              key: 'evidence',
+              label: 'crm.field.Evidence',
+              type: 'textarea',
+              span: 4,
+              rows: 4,
+              breakBefore: true,
+            },
           ],
         }),
     });

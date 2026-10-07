@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -11,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/proposals',
   uuidField: 'CppUUID',
   pageTitle: 'crm.title.proposals',
+  defaultCurrencyFields: ['CppCurrency'],
   initialValues: {
     CppName: '',
     CrmOpportunityCopUUID: '',
@@ -25,34 +27,12 @@ const config = defineCrud({
   },
   fields: [
     {
-      key: 'CppName',
-      source: 'CppName',
-      label: 'crm.field.Name',
+      key: 'CppStatus',
+      source: 'CppStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
-    },
-    {
-      key: 'CrmOpportunityCopUUID',
-      source: 'CrmOpportunityCopUUID',
-      label: 'crm.title.opportunities',
-      span: 1,
-      required: true,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/opportunities',
-        uuidField: 'CopUUID',
-        labelField: 'CopName',
-        selectedLabelField: 'CrmOpportunityCopUUIDName',
-      },
-    },
-    {
-      key: 'CppVersion',
-      source: 'CppVersion',
-      label: 'crm.field.Version',
-      span: 1,
-      required: true,
-      type: 'number',
+      type: 'status',
     },
     {
       key: 'CppState',
@@ -62,68 +42,15 @@ const config = defineCrud({
       required: true,
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'draft',
-          label: 'crm.enum.draft',
-        },
-        {
-          value: 'sent',
-          label: 'crm.enum.sent',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-        {
-          value: 'rejected',
-          label: 'crm.enum.rejected',
-        },
-        {
-          value: 'expired',
-          label: 'crm.enum.expired',
-        },
-      ],
+      options: CRM_OPTIONS.proposalStates,
     },
     {
-      key: 'CppValidUntil',
-      source: 'CppValidUntil',
-      label: 'crm.field.ValidUntil',
+      key: 'CppVersion',
+      source: 'CppVersion',
+      label: 'crm.field.Version',
       span: 1,
       required: true,
-      type: 'date',
-    },
-    {
-      key: 'CppCurrency',
-      source: 'CppCurrency',
-      label: 'crm.field.Currency',
-      span: 1,
-      required: false,
-      type: 'text',
-    },
-    {
-      key: 'CppTerms',
-      source: 'CppTerms',
-      label: 'crm.field.Terms',
-      span: 1,
-      required: false,
-      type: 'textarea',
-    },
-    {
-      key: 'CppEvidence',
-      source: 'CppEvidence',
-      label: 'crm.field.Evidence',
-      span: 1,
-      required: false,
-      type: 'textarea',
-    },
-    {
-      key: 'CppStatus',
-      source: 'CppStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
+      type: 'number',
     },
     {
       key: 'AssignedUserUsrUUID',
@@ -142,11 +69,68 @@ const config = defineCrud({
         'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
     },
     {
-      key: 'CppRevision',
-      source: 'CppRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
+      key: 'CppName',
+      source: 'CppName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
+      type: 'text',
     },
+    {
+      key: 'CrmOpportunityCopUUID',
+      source: 'CrmOpportunityCopUUID',
+      label: 'crm.title.opportunities',
+      span: 2,
+      required: true,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/opportunities',
+        uuidField: 'CopUUID',
+        labelField: 'CopName',
+        selectedLabelField: 'CrmOpportunityCopUUIDName',
+      },
+    },
+    {
+      key: 'CppValidUntil',
+      source: 'CppValidUntil',
+      label: 'crm.field.ValidUntil',
+      span: 1,
+      required: true,
+      type: 'date',
+      tab: 'financial',
+    },
+    {
+      key: 'CppCurrency',
+      source: 'CppCurrency',
+      label: 'crm.field.Currency',
+      span: 1,
+      required: false,
+      type: 'text',
+      tab: 'financial',
+    },
+    {
+      key: 'CppTerms',
+      source: 'CppTerms',
+      label: 'crm.field.Terms',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      rows: 4,
+      breakBefore: true,
+      tab: 'financial',
+    },
+    {
+      key: 'CppEvidence',
+      source: 'CppEvidence',
+      label: 'crm.field.Evidence',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      rows: 4,
+      breakBefore: true,
+      tab: 'financial',
+    },
+    { key: 'CppRevision', source: 'CppRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -172,28 +156,7 @@ const config = defineCrud({
       field: 'CppState',
       label: 'crm.field.State',
       kind: 'text',
-      options: [
-        {
-          value: 'draft',
-          label: 'crm.enum.draft',
-        },
-        {
-          value: 'sent',
-          label: 'crm.enum.sent',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-        {
-          value: 'rejected',
-          label: 'crm.enum.rejected',
-        },
-        {
-          value: 'expired',
-          label: 'crm.enum.expired',
-        },
-      ],
+      options: CRM_OPTIONS.proposalStates,
     },
     {
       id: 'CppValidUntil',
@@ -231,32 +194,12 @@ const config = defineCrud({
       label: 'crm.field.State',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'draft',
-          label: 'crm.enum.draft',
-        },
-        {
-          value: 'sent',
-          label: 'crm.enum.sent',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-        {
-          value: 'rejected',
-          label: 'crm.enum.rejected',
-        },
-        {
-          value: 'expired',
-          label: 'crm.enum.expired',
-        },
-      ],
+      options: CRM_OPTIONS.proposalStates,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   canEditRow: (row) => row['CppState'] === 'draft',
   canDeleteRow: (row) => row['CppState'] === 'draft',

@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -19,18 +20,18 @@ const config = defineCrud({
     CacOccupation: '',
     CacCity: '',
     CacState: '',
-    CacNotes: '',
+    notes: '',
     CacStatus: 1,
     AssignedUserUsrUUID: '',
   },
   fields: [
     {
-      key: 'CacName',
-      source: 'CacName',
-      label: 'crm.field.Name',
+      key: 'CacStatus',
+      source: 'CacStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
+      type: 'status',
     },
     {
       key: 'CacType',
@@ -40,21 +41,44 @@ const config = defineCrud({
       required: true,
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'company',
-          label: 'crm.enum.company',
-        },
-        {
-          value: 'person',
-          label: 'crm.enum.person',
-        },
-      ],
+      options: CRM_OPTIONS.accountTypes,
     },
     {
       key: 'CacDocument',
       source: 'CacDocument',
       label: 'crm.field.Document',
+      span: 1,
+      required: false,
+      type: 'text',
+    },
+    {
+      key: 'AssignedUserUsrUUID',
+      source: 'AssignedUserUsrUUID',
+      label: 'crm.field.AssignedUserUsrUUID',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/members',
+        uuidField: 'UsrUUID',
+        labelField: 'UsrName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
+    },
+    {
+      key: 'CacName',
+      source: 'CacName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
+      type: 'text',
+    },
+    {
+      key: 'CacOccupation',
+      source: 'CacOccupation',
+      label: 'crm.field.Occupation',
       span: 1,
       required: false,
       type: 'text',
@@ -74,20 +98,13 @@ const config = defineCrud({
       },
     },
     {
-      key: 'CacOccupation',
-      source: 'CacOccupation',
-      label: 'crm.field.Occupation',
-      span: 1,
-      required: false,
-      type: 'text',
-    },
-    {
       key: 'CacCity',
       source: 'CacCity',
       label: 'crm.field.City',
       span: 1,
       required: false,
       type: 'text',
+      tab: 'address',
     },
     {
       key: 'CacState',
@@ -96,45 +113,20 @@ const config = defineCrud({
       span: 1,
       required: false,
       type: 'text',
+      tab: 'address',
     },
     {
-      key: 'CacNotes',
+      key: 'notes',
       source: 'CacNotes',
-      label: 'crm.field.Notes',
-      span: 1,
+      label: 'Notes',
+      span: 4,
       required: false,
       type: 'textarea',
+      payloadKey: 'CacNotes',
+      tab: 'notes',
+      rows: 4,
     },
-    {
-      key: 'CacStatus',
-      source: 'CacStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
-    },
-    {
-      key: 'AssignedUserUsrUUID',
-      source: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/members',
-        uuidField: 'UsrUUID',
-        labelField: 'UsrName',
-      },
-      quickCreate: false,
-      quickCreateExemptReason:
-        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
-    },
-    {
-      key: 'CacRevision',
-      source: 'CacRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CacRevision', source: 'CacRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -191,20 +183,12 @@ const config = defineCrud({
       label: 'crm.field.Type',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'company',
-          label: 'crm.enum.company',
-        },
-        {
-          value: 'person',
-          label: 'crm.enum.person',
-        },
-      ],
+      options: CRM_OPTIONS.accountTypes,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CacName',
   payload: (values, editing) =>

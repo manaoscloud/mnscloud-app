@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -23,10 +24,44 @@ export const config = defineCrud({
   },
   fields: [
     {
+      key: 'CptStatus',
+      source: 'CptStatus',
+      label: 'crm.field.Status',
+      span: 1,
+      required: true,
+      type: 'status',
+    },
+    {
+      key: 'CptPeriod',
+      source: 'CptPeriod',
+      label: 'crm.field.Period',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.productPeriods,
+    },
+    {
+      key: 'CptQuantity',
+      source: 'CptQuantity',
+      label: 'crm.field.Quantity',
+      span: 1,
+      required: true,
+      type: 'number',
+    },
+    {
+      key: 'CptDiscountPercent',
+      source: 'CptDiscountPercent',
+      label: 'crm.field.DiscountPercent',
+      span: 1,
+      required: true,
+      type: 'number',
+    },
+    {
       key: 'CptName',
       source: 'CptName',
       label: 'crm.field.Name',
-      span: 1,
+      span: 2,
       required: true,
       type: 'text',
     },
@@ -59,59 +94,12 @@ export const config = defineCrud({
       },
     },
     {
-      key: 'CptQuantity',
-      source: 'CptQuantity',
-      label: 'crm.field.Quantity',
-      span: 1,
-      required: true,
-      type: 'number',
-    },
-    {
       key: 'CptUnitAmount',
       source: 'CptUnitAmount',
       label: 'crm.field.UnitAmount',
       span: 1,
       required: true,
-      type: 'number',
-    },
-    {
-      key: 'CptDiscountPercent',
-      source: 'CptDiscountPercent',
-      label: 'crm.field.DiscountPercent',
-      span: 1,
-      required: true,
-      type: 'number',
-    },
-    {
-      key: 'CptPeriod',
-      source: 'CptPeriod',
-      label: 'crm.field.Period',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
-    },
-    {
-      key: 'CptStatus',
-      source: 'CptStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
+      type: 'currency',
     },
     {
       key: 'AssignedUserUsrUUID',
@@ -129,12 +117,7 @@ export const config = defineCrud({
       quickCreateExemptReason:
         'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
     },
-    {
-      key: 'CptRevision',
-      source: 'CptRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CptRevision', source: 'CptRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -160,20 +143,7 @@ export const config = defineCrud({
       field: 'CptPeriod',
       label: 'crm.field.Period',
       kind: 'text',
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
+      options: CRM_OPTIONS.productPeriods,
     },
     {
       id: 'CptStatus',
@@ -218,24 +188,12 @@ export const config = defineCrud({
       label: 'crm.field.Period',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
+      options: CRM_OPTIONS.productPeriods,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CptName',
   payload: (values, editing) =>

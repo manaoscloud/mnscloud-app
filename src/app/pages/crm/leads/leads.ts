@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload, crmLocalDate, crmLocalTime } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -28,27 +29,59 @@ const config = defineCrud({
   },
   fields: [
     {
+      key: 'CleStatus',
+      source: 'CleStatus',
+      label: 'crm.field.Status',
+      span: 1,
+      required: true,
+      type: 'status',
+    },
+    {
+      key: 'CleState',
+      source: 'CleState',
+      label: 'crm.field.State',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.leadStates,
+    },
+    {
+      key: 'CrmSourceCsoUUID',
+      source: 'CrmSourceCsoUUID',
+      label: 'crm.title.sources',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        selectedLabelField: 'CrmSourceCsoUUIDName',
+        endpoint: 'crm/sources',
+        uuidField: 'CsoUUID',
+        labelField: 'CsoName',
+      },
+    },
+    {
+      key: 'AssignedUserUsrUUID',
+      source: 'AssignedUserUsrUUID',
+      label: 'crm.field.AssignedUserUsrUUID',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/members',
+        uuidField: 'UsrUUID',
+        labelField: 'UsrName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
+    },
+    {
       key: 'CleName',
       source: 'CleName',
       label: 'crm.field.Name',
-      span: 1,
+      span: 2,
       required: true,
-      type: 'text',
-    },
-    {
-      key: 'CleEmail',
-      source: 'CleEmail',
-      label: 'crm.field.Email',
-      span: 1,
-      required: false,
-      type: 'email',
-    },
-    {
-      key: 'ClePhone',
-      source: 'ClePhone',
-      label: 'crm.field.Phone',
-      span: 1,
-      required: false,
       type: 'text',
     },
     {
@@ -74,18 +107,20 @@ const config = defineCrud({
       },
     },
     {
-      key: 'CrmSourceCsoUUID',
-      source: 'CrmSourceCsoUUID',
-      label: 'crm.title.sources',
+      key: 'CleEmail',
+      source: 'CleEmail',
+      label: 'crm.field.Email',
+      span: 2,
+      required: false,
+      type: 'email',
+    },
+    {
+      key: 'ClePhone',
+      source: 'ClePhone',
+      label: 'crm.field.Phone',
       span: 1,
       required: false,
-      type: 'search-select',
-      remoteLookup: {
-        selectedLabelField: 'CrmSourceCsoUUIDName',
-        endpoint: 'crm/sources',
-        uuidField: 'CsoUUID',
-        labelField: 'CsoName',
-      },
+      type: 'phone',
     },
     {
       key: 'CrmProductCprUUID',
@@ -102,91 +137,46 @@ const config = defineCrud({
       },
     },
     {
-      key: 'CleNeed',
-      source: 'CleNeed',
-      label: 'crm.field.Need',
-      span: 1,
-      required: false,
-      type: 'textarea',
-    },
-    {
-      key: 'CleState',
-      source: 'CleState',
-      label: 'crm.field.State',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'new',
-          label: 'crm.enum.new',
-        },
-        {
-          value: 'contacting',
-          label: 'crm.enum.contacting',
-        },
-        {
-          value: 'qualified',
-          label: 'crm.enum.qualified',
-        },
-        {
-          value: 'disqualified',
-          label: 'crm.enum.disqualified',
-        },
-        {
-          value: 'converted',
-          label: 'crm.enum.converted',
-        },
-      ],
-    },
-    {
       key: 'CleNextContactAt',
       source: 'CleNextContactAt',
       label: 'crm.field.NextContactAt',
       span: 1,
       required: false,
-      type: 'datetime',
-      fromRecord: crmLocalDateTime,
+      type: 'date',
+      fromRecord: crmLocalDate,
+      breakBefore: true,
+      requiredWhen: ({ values }) => Boolean(values['CleNextContactAtTime']),
+    },
+    {
+      key: 'CleNextContactAtTime',
+      source: 'CleNextContactAt',
+      label: 'Time',
+      type: 'time',
+      span: 1,
+      fromRecord: crmLocalTime,
+      requiredWhen: ({ values }) => Boolean(values['CleNextContactAt']),
+    },
+    {
+      key: 'CleNeed',
+      source: 'CleNeed',
+      label: 'crm.field.Need',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      rows: 4,
+      breakBefore: true,
     },
     {
       key: 'CleCloseReason',
       source: 'CleCloseReason',
       label: 'crm.field.CloseReason',
-      span: 1,
+      span: 4,
       required: false,
       type: 'textarea',
+      rows: 4,
+      breakBefore: true,
     },
-    {
-      key: 'CleStatus',
-      source: 'CleStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
-    },
-    {
-      key: 'AssignedUserUsrUUID',
-      source: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/members',
-        uuidField: 'UsrUUID',
-        labelField: 'UsrName',
-      },
-      quickCreate: false,
-      quickCreateExemptReason:
-        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
-    },
-    {
-      key: 'CleRevision',
-      source: 'CleRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CleRevision', source: 'CleRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -230,28 +220,7 @@ const config = defineCrud({
       field: 'CleState',
       label: 'crm.field.State',
       kind: 'text',
-      options: [
-        {
-          value: 'new',
-          label: 'crm.enum.new',
-        },
-        {
-          value: 'contacting',
-          label: 'crm.enum.contacting',
-        },
-        {
-          value: 'qualified',
-          label: 'crm.enum.qualified',
-        },
-        {
-          value: 'disqualified',
-          label: 'crm.enum.disqualified',
-        },
-        {
-          value: 'converted',
-          label: 'crm.enum.converted',
-        },
-      ],
+      options: CRM_OPTIONS.leadStates,
     },
     {
       id: 'CleNextContactAt',
@@ -315,32 +284,12 @@ const config = defineCrud({
       label: 'crm.field.State',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'new',
-          label: 'crm.enum.new',
-        },
-        {
-          value: 'contacting',
-          label: 'crm.enum.contacting',
-        },
-        {
-          value: 'qualified',
-          label: 'crm.enum.qualified',
-        },
-        {
-          value: 'disqualified',
-          label: 'crm.enum.disqualified',
-        },
-        {
-          value: 'converted',
-          label: 'crm.enum.converted',
-        },
-      ],
+      options: CRM_OPTIONS.leadStates,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   canEditRow: (row) => row['CleState'] !== 'converted',
   quickCreateLabelField: 'CleName',
