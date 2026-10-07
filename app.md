@@ -1571,3 +1571,35 @@ watchers must retain platform/tenant scope. These rules apply to desktop and mob
 When expanding to another resource, document its API ownership contract and follow the
 workspace `docs/platform-resource-ownership.md`; this DNS support is not an entitlement
 or master bypass for unrelated tenant modules.
+
+
+## CRM form baseline
+
+CRM uses the shared configurable CRUD renderer for all fourteen resources and action forms.
+Record fields start with Status and workflow/ownership controls, followed by Name (span-2),
+related records and scheduling. Accounts keep City/State in Address. Activities, accounts and
+handoffs use the canonical frontend `notes` key in a dedicated Notes tab (span-4, rows-4);
+`source`/`payloadKey` map to the existing prefixed API fields without changing the wire contract.
+Commercial descriptions, qualification needs, closure reasons and acceptance evidence retain
+business-specific names. Their multiline controls use full rows, four lines, after the compact
+controls; opportunity values and proposal conditions belong in Financial, not Notes.
+
+CRM scheduling composes the shared locale-aware Material datepicker (`type: 'date'`, touch UI,
+manual date mask) with the generic `type: 'time'` input. Each occupies one grid column. Both parts
+are required together; only the resulting UTC instant is sent to the existing API timestamp field.
+Date-only validity/forecast fields remain calendar dates. Date and time use browser-local input
+semantics as before; displayed timestamps still use DateTimeFormatService and DEFAULT_TIMEZONE.
+
+Shared form grids align controls at the start: a multiline neighbor must never stretch a date,
+currency or text field. The generic Record renderer uses PhoneInputComponent for `type: 'phone'`.
+Currency overrides are supported by CRM commercial records. Create defaults resolve through
+SystemParameterService; existing record currency wins on edit. Amounts use `type: 'currency'`
+and the record currency key. Proposal item dialogs inherit their parent proposal currency.
+
+CRM currently exposes individual audited deletion, without a bulk API contract. Its explicit
+bulk-delete exception keeps per-record confirmation until a canonical bulk endpoint is available;
+it does not change the shared default for other modules.
+
+Run `node --test scripts/tests/crm-form-contract.test.mjs` alongside the CRUD template, layout,
+i18n, FK and inventory validators. Visually check create/edit, Notes, compact date/time controls,
+monetary input and FK quick-create at desktop/mobile widths in PT/EN/ES.

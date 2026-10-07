@@ -1,4 +1,4 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -17,14 +17,6 @@ const config = defineCrud({
   },
   fields: [
     {
-      key: 'CsoName',
-      source: 'CsoName',
-      label: 'crm.field.Name',
-      span: 1,
-      required: true,
-      type: 'text',
-    },
-    {
       key: 'CsoStatus',
       source: 'CsoStatus',
       label: 'crm.field.Status',
@@ -33,11 +25,14 @@ const config = defineCrud({
       type: 'status',
     },
     {
-      key: 'CsoRevision',
-      source: 'CsoRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
+      key: 'CsoName',
+      source: 'CsoName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
+      type: 'text',
     },
+    { key: 'CsoRevision', source: 'CsoRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -55,6 +50,7 @@ const config = defineCrud({
   ],
   listFilters: [],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CsoName',
   payload: (values, editing) =>

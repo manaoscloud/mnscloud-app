@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -11,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/products',
   uuidField: 'CprUUID',
   pageTitle: 'crm.title.products',
+  defaultCurrencyFields: ['CprCurrency'],
   initialValues: {
     CprName: '',
     CprDescription: '',
@@ -21,20 +23,30 @@ const config = defineCrud({
   },
   fields: [
     {
-      key: 'CprName',
-      source: 'CprName',
-      label: 'crm.field.Name',
+      key: 'CprStatus',
+      source: 'CprStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
+      type: 'status',
     },
     {
-      key: 'CprDescription',
-      source: 'CprDescription',
-      label: 'crm.field.Description',
+      key: 'CprPeriod',
+      source: 'CprPeriod',
+      label: 'crm.field.Period',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.productPeriods,
+    },
+    {
+      key: 'CprCurrency',
+      source: 'CprCurrency',
+      label: 'crm.field.Currency',
       span: 1,
       required: false,
-      type: 'textarea',
+      type: 'text',
     },
     {
       key: 'CprAmount',
@@ -46,50 +58,24 @@ const config = defineCrud({
       currencyKey: 'CprCurrency',
     },
     {
-      key: 'CprCurrency',
-      source: 'CprCurrency',
-      label: 'crm.field.Currency',
-      span: 1,
-      required: false,
+      key: 'CprName',
+      source: 'CprName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
       type: 'text',
     },
     {
-      key: 'CprPeriod',
-      source: 'CprPeriod',
-      label: 'crm.field.Period',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
+      key: 'CprDescription',
+      source: 'CprDescription',
+      label: 'crm.field.Description',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      rows: 4,
+      breakBefore: true,
     },
-    {
-      key: 'CprStatus',
-      source: 'CprStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
-    },
-    {
-      key: 'CprRevision',
-      source: 'CprRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CprRevision', source: 'CprRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -103,20 +89,7 @@ const config = defineCrud({
       field: 'CprPeriod',
       label: 'crm.field.Period',
       kind: 'text',
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
+      options: CRM_OPTIONS.productPeriods,
     },
     {
       id: 'CprStatus',
@@ -132,24 +105,12 @@ const config = defineCrud({
       label: 'crm.field.Period',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'once',
-          label: 'crm.enum.once',
-        },
-        {
-          value: 'monthly',
-          label: 'crm.enum.monthly',
-        },
-        {
-          value: 'yearly',
-          label: 'crm.enum.yearly',
-        },
-      ],
+      options: CRM_OPTIONS.productPeriods,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CprName',
   payload: (values, editing) =>

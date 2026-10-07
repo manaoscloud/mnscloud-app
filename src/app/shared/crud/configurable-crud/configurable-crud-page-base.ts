@@ -1,3 +1,4 @@
+import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
@@ -100,6 +101,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatSortModule,
   MatTableModule,
   MatTabsModule,
+  PhoneInputComponent,
   MatTooltipModule,
   NgTemplateOutlet,
   NgClass,
@@ -146,6 +148,7 @@ export type ConfigurableCrudQuickCreateConfig = {
 
 export type ConfigurableCrudFieldType =
   | 'secret-content'
+  | 'time'
   | 'datetime'
   | 'text'
   | 'email'
@@ -719,7 +722,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly canCreate = computed(
     () =>
       this.config.canCreate !== false &&
-      (!this.config.defaultCurrencyScope || this.currencyReady()),
+      (!(this.config.defaultCurrencyScope || this.config.defaultCurrencyFields?.length) ||
+        this.currencyReady()),
   );
   readonly canEdit = computed(() => this.config.canEdit !== false);
   readonly canDelete = computed(() => this.config.canDelete !== false);
@@ -732,10 +736,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
     this.pageSize.set(config.initialPageSize ?? 5);
+    let currencyInitialization: Promise<unknown>;
     if (config.defaultCurrencyScope) {
       this.defaultCurrency.set('');
       const scope = config.defaultCurrencyScope === 'master' ? 'system' : 'settings';
-      void this.api
+      currencyInitialization = this.api
         .get<any>(`${scope}/parameters/resolve/DEFAULT_CURRENCY`)
         .then((response) => {
           const currency = String(response?.data?.items?.[0]?.SprValue ?? '')
@@ -747,7 +752,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         })
         .catch(() => this.snack.warning(this.t('Default currency is not configured.')));
     } else {
-      void this.parameters.resolveDefaultCurrency('BRL').then((currency) => {
+      currencyInitialization = this.parameters.resolveDefaultCurrency('BRL').then((currency) => {
         this.defaultCurrency.set(currency);
         this.currencyReady.set(true);
       });
@@ -760,7 +765,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     });
 
     if (this.quickCreateMode) {
-      afterNextRender(() => {
+      afterNextRender(async () => {
+        if (config.defaultCurrencyScope || config.defaultCurrencyFields?.length)
+          await currencyInitialization;
+        if (this.destroyRef.destroyed) return;
         if (this.canCreate()) this.startCreate();
         else this.quickCreateSession?.complete({ option: null });
       });
@@ -1371,7 +1379,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return value === null || value === undefined ? '' : String(value);
   }
 
-  htmlInputType(field: ConfigurableCrudField): 'email' | 'number' | 'password' | 'text' {
+  htmlInputType(field: ConfigurableCrudField): 'email' | 'number' | 'password' | 'text' | 'time' {
+    if (field.type === 'time') return 'time';
     if (field.type === 'number') return 'number';
     if (field.type === 'email') return 'email';
     if (field.type === 'password') {
@@ -2445,7 +2454,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected formValuesFromRecord(row: T): ConfigurableCrudRecord {
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
-      const value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      let value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      if (this.config.defaultCurrencyFields?.includes(field.key) && !String(value).trim()) {
+        value = this.defaultCurrency();
+      }
       const formatted = field.format === 'json' ? this.formatJsonValue(value) : value;
       next[field.key] = field.fromRecord ? field.fromRecord(formatted, row) : formatted;
     }
@@ -2458,7 +2470,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     for (const field of this.config.fields) {
       const payloadKey = field.payloadKey ?? field.key;
       const source = field.source ?? field.key;
-      values[source] = payload[payloadKey] ?? null;
+      // Form-only controls (for example a separate time input) may be consumed by
+      // payload augmentation. They must not erase the persisted source value.
+      if (Object.hasOwn(payload, payloadKey)) values[source] = payload[payloadKey] ?? null;
     }
     this.itemsResource.update((rows) =>
       rows.map((row) => (this.recordUUID(row) === uuid ? ({ ...row, ...values } as T) : row)),

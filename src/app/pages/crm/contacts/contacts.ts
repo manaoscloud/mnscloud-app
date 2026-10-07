@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -24,12 +25,22 @@ const config = defineCrud({
   },
   fields: [
     {
-      key: 'CcoName',
-      source: 'CcoName',
-      label: 'crm.field.Name',
+      key: 'CcoStatus',
+      source: 'CcoStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
+      type: 'status',
+    },
+    {
+      key: 'CcoContactPreference',
+      source: 'CcoContactPreference',
+      label: 'crm.field.ContactPreference',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.contactPreferences,
     },
     {
       key: 'CrmAccountCacUUID',
@@ -44,77 +55,6 @@ const config = defineCrud({
         labelField: 'CacName',
         selectedLabelField: 'CrmAccountCacUUIDName',
       },
-    },
-    {
-      key: 'CcoEmail',
-      source: 'CcoEmail',
-      label: 'crm.field.Email',
-      span: 1,
-      required: false,
-      type: 'email',
-    },
-    {
-      key: 'CcoPhone',
-      source: 'CcoPhone',
-      label: 'crm.field.Phone',
-      span: 1,
-      required: false,
-      type: 'text',
-    },
-    {
-      key: 'CcoPosition',
-      source: 'CcoPosition',
-      label: 'crm.field.Position',
-      span: 1,
-      required: false,
-      type: 'text',
-    },
-    {
-      key: 'CcoContactPreference',
-      source: 'CcoContactPreference',
-      label: 'crm.field.ContactPreference',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'not_recorded',
-          label: 'crm.enum.not_recorded',
-        },
-        {
-          value: 'email',
-          label: 'crm.enum.email',
-        },
-        {
-          value: 'phone',
-          label: 'crm.enum.phone',
-        },
-        {
-          value: 'both',
-          label: 'crm.enum.both',
-        },
-        {
-          value: 'blocked',
-          label: 'crm.enum.blocked',
-        },
-      ],
-    },
-    {
-      key: 'CcoPreferenceEvidence',
-      source: 'CcoPreferenceEvidence',
-      label: 'crm.field.PreferenceEvidence',
-      span: 1,
-      required: false,
-      type: 'textarea',
-    },
-    {
-      key: 'CcoStatus',
-      source: 'CcoStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
     },
     {
       key: 'AssignedUserUsrUUID',
@@ -133,11 +73,48 @@ const config = defineCrud({
         'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
     },
     {
-      key: 'CcoRevision',
-      source: 'CcoRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
+      key: 'CcoName',
+      source: 'CcoName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
+      type: 'text',
     },
+    {
+      key: 'CcoPosition',
+      source: 'CcoPosition',
+      label: 'crm.field.Position',
+      span: 2,
+      required: false,
+      type: 'text',
+    },
+    {
+      key: 'CcoEmail',
+      source: 'CcoEmail',
+      label: 'crm.field.Email',
+      span: 2,
+      required: false,
+      type: 'email',
+    },
+    {
+      key: 'CcoPhone',
+      source: 'CcoPhone',
+      label: 'crm.field.Phone',
+      span: 2,
+      required: false,
+      type: 'phone',
+    },
+    {
+      key: 'CcoPreferenceEvidence',
+      source: 'CcoPreferenceEvidence',
+      label: 'crm.field.PreferenceEvidence',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      rows: 4,
+      breakBefore: true,
+    },
+    { key: 'CcoRevision', source: 'CcoRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -188,32 +165,12 @@ const config = defineCrud({
       label: 'crm.field.ContactPreference',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'not_recorded',
-          label: 'crm.enum.not_recorded',
-        },
-        {
-          value: 'email',
-          label: 'crm.enum.email',
-        },
-        {
-          value: 'phone',
-          label: 'crm.enum.phone',
-        },
-        {
-          value: 'both',
-          label: 'crm.enum.both',
-        },
-        {
-          value: 'blocked',
-          label: 'crm.enum.blocked',
-        },
-      ],
+      options: CRM_OPTIONS.contactPreferences,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CcoName',
   payload: (values, editing) =>

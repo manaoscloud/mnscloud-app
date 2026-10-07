@@ -4,6 +4,7 @@
 
 .form-grid {
   display: grid;
+  align-items: start;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem 0.75rem;
   padding-top: 0.65rem;

@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -15,32 +16,18 @@ const config = defineCrud({
     ChoName: '',
     CrmOpportunityCopUUID: '',
     ChoState: 'pending',
-    ChoNotes: '',
+    notes: '',
     ChoStatus: 1,
     AssignedUserUsrUUID: '',
   },
   fields: [
     {
-      key: 'ChoName',
-      source: 'ChoName',
-      label: 'crm.field.Name',
+      key: 'ChoStatus',
+      source: 'ChoStatus',
+      label: 'crm.field.Status',
       span: 1,
       required: true,
-      type: 'text',
-    },
-    {
-      key: 'CrmOpportunityCopUUID',
-      source: 'CrmOpportunityCopUUID',
-      label: 'crm.title.opportunities',
-      span: 1,
-      required: true,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/opportunities',
-        uuidField: 'CopUUID',
-        labelField: 'CopName',
-        selectedLabelField: 'CrmOpportunityCopUUIDName',
-      },
+      type: 'status',
     },
     {
       key: 'ChoState',
@@ -50,36 +37,7 @@ const config = defineCrud({
       required: true,
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'pending',
-          label: 'crm.enum.pending',
-        },
-        {
-          value: 'forwarded',
-          label: 'crm.enum.forwarded',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-      ],
-    },
-    {
-      key: 'ChoNotes',
-      source: 'ChoNotes',
-      label: 'crm.field.Notes',
-      span: 1,
-      required: false,
-      type: 'textarea',
-    },
-    {
-      key: 'ChoStatus',
-      source: 'ChoStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
+      options: CRM_OPTIONS.handoffStates,
     },
     {
       key: 'AssignedUserUsrUUID',
@@ -98,11 +56,40 @@ const config = defineCrud({
         'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
     },
     {
-      key: 'ChoRevision',
-      source: 'ChoRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
+      key: 'ChoName',
+      source: 'ChoName',
+      label: 'crm.field.Name',
+      span: 2,
+      required: true,
+      type: 'text',
+      breakBefore: true,
     },
+    {
+      key: 'CrmOpportunityCopUUID',
+      source: 'CrmOpportunityCopUUID',
+      label: 'crm.title.opportunities',
+      span: 2,
+      required: true,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/opportunities',
+        uuidField: 'CopUUID',
+        labelField: 'CopName',
+        selectedLabelField: 'CrmOpportunityCopUUIDName',
+      },
+    },
+    {
+      key: 'notes',
+      source: 'ChoNotes',
+      label: 'Notes',
+      span: 4,
+      required: false,
+      type: 'textarea',
+      payloadKey: 'ChoNotes',
+      tab: 'notes',
+      rows: 4,
+    },
+    { key: 'ChoRevision', source: 'ChoRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     {
@@ -122,20 +109,7 @@ const config = defineCrud({
       field: 'ChoState',
       label: 'crm.field.State',
       kind: 'text',
-      options: [
-        {
-          value: 'pending',
-          label: 'crm.enum.pending',
-        },
-        {
-          value: 'forwarded',
-          label: 'crm.enum.forwarded',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-      ],
+      options: CRM_OPTIONS.handoffStates,
     },
     {
       id: 'ChoStatus',
@@ -167,24 +141,12 @@ const config = defineCrud({
       label: 'crm.field.State',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'pending',
-          label: 'crm.enum.pending',
-        },
-        {
-          value: 'forwarded',
-          label: 'crm.enum.forwarded',
-        },
-        {
-          value: 'accepted',
-          label: 'crm.enum.accepted',
-        },
-      ],
+      options: CRM_OPTIONS.handoffStates,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'ChoName',
   payload: (values, editing) =>

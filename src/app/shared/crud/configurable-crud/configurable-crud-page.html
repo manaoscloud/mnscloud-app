@@ -461,6 +461,24 @@
                       }
                     </mat-form-field>
                   }
+                  @case ('phone') {
+                    <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                      <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
+                      <app-phone-input
+                        [value]="fieldValueString(field.key)"
+                        [required]="isFieldRequired(field)"
+                        [disabled]="isFieldDisabled(field)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
+                      @if (fieldHelp(field); as help) {
+                        <mns-field-help
+                          matIconSuffix
+                          [label]="translatedFieldLabel(field)"
+                          [text]="help"
+                        />
+                      }
+                    </mat-form-field>
+                  }
                   @case ('select') {
                     <mns-search-select-field
                       [attr.data-field-key]="field.key"
@@ -2461,7 +2479,7 @@
                     <textarea
                       matInput
                       [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                      [rows]="field.rows ?? 5"
+                      [rows]="field.rows ?? 4"
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                     ></textarea>

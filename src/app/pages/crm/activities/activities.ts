@@ -1,4 +1,5 @@
-import { crmPayload, crmLocalDateTime } from '../crm-input';
+import { CRM_OPTIONS } from '../crm-options';
+import { crmPayload, crmLocalDate, crmLocalTime } from '../crm-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -18,16 +19,60 @@ const config = defineCrud({
     CatKind: 'task',
     CatDueAt: '',
     CatState: 'planned',
-    CatNotes: '',
+    notes: '',
     CatStatus: 1,
     AssignedUserUsrUUID: '',
   },
   fields: [
     {
+      key: 'CatStatus',
+      source: 'CatStatus',
+      label: 'crm.field.Status',
+      span: 1,
+      required: true,
+      type: 'status',
+    },
+    {
+      key: 'CatKind',
+      source: 'CatKind',
+      label: 'crm.field.Kind',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.activityKinds,
+    },
+    {
+      key: 'CatState',
+      source: 'CatState',
+      label: 'crm.field.State',
+      span: 1,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.activityStates,
+    },
+    {
+      key: 'AssignedUserUsrUUID',
+      source: 'AssignedUserUsrUUID',
+      label: 'crm.field.AssignedUserUsrUUID',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'crm/members',
+        uuidField: 'UsrUUID',
+        labelField: 'UsrName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
+    },
+    {
       key: 'CatName',
       source: 'CatName',
       label: 'crm.field.Name',
-      span: 1,
+      span: 2,
       required: true,
       type: 'text',
     },
@@ -60,102 +105,36 @@ const config = defineCrud({
       },
     },
     {
-      key: 'CatKind',
-      source: 'CatKind',
-      label: 'crm.field.Kind',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'task',
-          label: 'crm.enum.task',
-        },
-        {
-          value: 'call',
-          label: 'crm.enum.call',
-        },
-        {
-          value: 'meeting',
-          label: 'crm.enum.meeting',
-        },
-        {
-          value: 'email',
-          label: 'crm.enum.email',
-        },
-      ],
-    },
-    {
       key: 'CatDueAt',
       source: 'CatDueAt',
       label: 'crm.field.DueAt',
       span: 1,
       required: true,
-      type: 'datetime',
-      fromRecord: crmLocalDateTime,
+      type: 'date',
+      fromRecord: crmLocalDate,
+      breakBefore: true,
     },
     {
-      key: 'CatState',
-      source: 'CatState',
-      label: 'crm.field.State',
+      key: 'CatDueAtTime',
+      source: 'CatDueAt',
+      label: 'Time',
+      type: 'time',
       span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: [
-        {
-          value: 'planned',
-          label: 'crm.enum.planned',
-        },
-        {
-          value: 'done',
-          label: 'crm.enum.done',
-        },
-        {
-          value: 'cancelled',
-          label: 'crm.enum.cancelled',
-        },
-      ],
+      fromRecord: crmLocalTime,
+      requiredWhen: ({ values }) => Boolean(values['CatDueAt']),
     },
     {
-      key: 'CatNotes',
+      key: 'notes',
       source: 'CatNotes',
-      label: 'crm.field.Notes',
-      span: 1,
+      label: 'Notes',
+      span: 4,
       required: false,
       type: 'textarea',
+      payloadKey: 'CatNotes',
+      tab: 'notes',
+      rows: 4,
     },
-    {
-      key: 'CatStatus',
-      source: 'CatStatus',
-      label: 'crm.field.Status',
-      span: 1,
-      required: true,
-      type: 'status',
-    },
-    {
-      key: 'AssignedUserUsrUUID',
-      source: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/members',
-        uuidField: 'UsrUUID',
-        labelField: 'UsrName',
-      },
-      quickCreate: false,
-      quickCreateExemptReason:
-        'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
-    },
-    {
-      key: 'CatRevision',
-      source: 'CatRevision',
-      label: 'crm.field.Revision',
-      hidden: true,
-    },
+    { key: 'CatRevision', source: 'CatRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
     { id: 'CrmLeadCleUUID', field: 'CrmLeadCleUUIDName', label: 'crm.title.leads', kind: 'text' },
@@ -176,24 +155,7 @@ const config = defineCrud({
       field: 'CatKind',
       label: 'crm.field.Kind',
       kind: 'text',
-      options: [
-        {
-          value: 'task',
-          label: 'crm.enum.task',
-        },
-        {
-          value: 'call',
-          label: 'crm.enum.call',
-        },
-        {
-          value: 'meeting',
-          label: 'crm.enum.meeting',
-        },
-        {
-          value: 'email',
-          label: 'crm.enum.email',
-        },
-      ],
+      options: CRM_OPTIONS.activityKinds,
     },
     {
       id: 'CatDueAt',
@@ -206,20 +168,7 @@ const config = defineCrud({
       field: 'CatState',
       label: 'crm.field.State',
       kind: 'text',
-      options: [
-        {
-          value: 'planned',
-          label: 'crm.enum.planned',
-        },
-        {
-          value: 'done',
-          label: 'crm.enum.done',
-        },
-        {
-          value: 'cancelled',
-          label: 'crm.enum.cancelled',
-        },
-      ],
+      options: CRM_OPTIONS.activityStates,
     },
     {
       id: 'CatStatus',
@@ -264,24 +213,7 @@ const config = defineCrud({
       label: 'crm.field.Kind',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'task',
-          label: 'crm.enum.task',
-        },
-        {
-          value: 'call',
-          label: 'crm.enum.call',
-        },
-        {
-          value: 'meeting',
-          label: 'crm.enum.meeting',
-        },
-        {
-          value: 'email',
-          label: 'crm.enum.email',
-        },
-      ],
+      options: CRM_OPTIONS.activityKinds,
       span: 1,
     },
     {
@@ -290,24 +222,12 @@ const config = defineCrud({
       label: 'crm.field.State',
       type: 'select',
       translateOptions: true,
-      options: [
-        {
-          value: 'planned',
-          label: 'crm.enum.planned',
-        },
-        {
-          value: 'done',
-          label: 'crm.enum.done',
-        },
-        {
-          value: 'cancelled',
-          label: 'crm.enum.cancelled',
-        },
-      ],
+      options: CRM_OPTIONS.activityStates,
       span: 1,
     },
   ],
   serverSidePagination: true,
+  // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,
   quickCreateLabelField: 'CatName',
   payload: (values, editing) =>
