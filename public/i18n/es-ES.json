@@ -6353,5 +6353,6 @@
   "nav.crm": "CRM",
   "nav.crm.dashboard": "Panel",
   "nav.crm.settings": "Configuración",
-  "crm.document": "Descargar propuesta"
+  "crm.document": "Descargar propuesta",
+  "crm.field.RegionState": "Estado / provincia"
 }

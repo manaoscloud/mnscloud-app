@@ -92,7 +92,7 @@ const config = defineCrud({
     {
       key: 'CacState',
       source: 'CacState',
-      label: 'crm.field.State',
+      label: 'crm.field.RegionState',
       span: 1,
       required: false,
       type: 'text',
@@ -158,7 +158,7 @@ const config = defineCrud({
     {
       id: 'CacState',
       field: 'CacState',
-      label: 'crm.field.State',
+      label: 'crm.field.RegionState',
       kind: 'text',
     },
     {

@@ -6354,5 +6354,6 @@
   "nav.crm": "CRM",
   "nav.crm.dashboard": "Painel",
   "nav.crm.settings": "Configurações",
-  "crm.document": "Baixar proposta"
+  "crm.document": "Baixar proposta",
+  "crm.field.RegionState": "Estado / UF"
 }
