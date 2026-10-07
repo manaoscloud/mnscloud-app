@@ -156,7 +156,7 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
   }
 
   protected override listEndpoint() {
-    return `hosting/dns/domains/${encodeURIComponent(this.route.snapshot.paramMap.get('uuid') ?? '')}/zone-records`;
+    return `${this.route.snapshot.data?.['scope'] === 'master' ? 'system/' : ''}hosting/dns/domains/${encodeURIComponent(this.route.snapshot.paramMap.get('uuid') ?? '')}/zone-records`;
   }
   protected override createEndpoint() {
     return this.listEndpoint();
@@ -218,7 +218,9 @@ export class HostingDnsZoneRecordsPage extends ConfigurableCrudPageBase<Configur
           port: row['type'] === 'SRV' ? Number(data[2]) : 0,
           flags: row['type'] === 'CAA' ? Number(data[0]) : 0,
           tag: row['type'] === 'CAA' ? data[1] : 'issue',
-          syncStatus: String(row['syncStatus'] ?? (row['editable'] === true ? 'synced' : 'skipped')),
+          syncStatus: String(
+            row['syncStatus'] ?? (row['editable'] === true ? 'synced' : 'skipped'),
+          ),
         };
       });
   }

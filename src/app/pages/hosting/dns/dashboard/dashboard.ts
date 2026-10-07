@@ -240,7 +240,11 @@ export class HostingDnsDashboardPage {
         ),
         detailLabel: 'issues',
         icon: 'verified',
-        state: k.ready ? 'good' : k.providersActive > 0 || k.domainsProvisioned > 0 ? 'warn' : 'bad',
+        state: k.ready
+          ? 'good'
+          : k.providersActive > 0 || k.domainsProvisioned > 0
+            ? 'warn'
+            : 'bad',
       },
     ];
   });
@@ -251,7 +255,7 @@ export class HostingDnsDashboardPage {
 
   async loadDashboardSnapshot(): Promise<DnsDashboardSnapshot> {
     const response = await this.api.get<{ data?: DnsDashboardSnapshot }>(
-      'hosting/dns/dashboard?limit=50',
+      `${this.isMaster() ? 'system/' : ''}hosting/dns/dashboard?limit=50`,
       { timeout: 30000 },
     );
     const data = response?.data;

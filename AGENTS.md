@@ -67,3 +67,9 @@ For every CRUD/list resource, use `scripts/create-crud.mjs` and extend
 create local CRUD shells. The template is configuration-only. Enhance shared capabilities
 when needed. Explicit CRUD validation must fail on legacy or unrecognized targets.
 Run template, layout and i18n checks, the build and desktop/mobile PT/EN/ES validation.
+
+## Master-aware fields
+
+Follow `app.md` → Explicit master fields and FK scope. Use explicit route scope and
+canonical quick-create forms, keep child FKs in that scope, and use remote searchable
+lookups. Never infer master authority from a missing environment or add fake customers.

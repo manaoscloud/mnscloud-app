@@ -1552,3 +1552,22 @@ Drafts can be edited; sent versions expose lifecycle transitions and private
 printable downloads. Qualified leads expose conversion, and pipeline settings
 expose idempotent initialization. API/DB permissions and subscription checks remain
 the authority. Dashboard counts come from the CRM summary endpoint, not local rows.
+
+## Explicit master fields and FK scope
+
+Master-aware resources use the guarded route's explicit `scope: 'master'` data to
+select system endpoints and form configuration. Missing tenant selection does not imply
+master scope. The API remains authoritative for effective permissions and FK ownership.
+Reuse the canonical configurable CRUD and propagate route scope to FK quick-create;
+never mount an unrelated tenant module or create a fake ERP customer to satisfy a field.
+
+DNS master registers/zones omit the customer form, filter and column. Tenant forms retain
+the required customer. `pages/hosting/dns/dns-scope.ts` composes the shared configuration
+and remote searchable FK lookups; nested register/provider forms receive the same scope.
+Do not validate relationships against a constructor-only first page of loaded options.
+Use remote search/pagination and preserve selected quick-created records. Async operation
+watchers must retain platform/tenant scope. These rules apply to desktop and mobile forms.
+
+When expanding to another resource, document its API ownership contract and follow the
+workspace `docs/platform-resource-ownership.md`; this DNS support is not an entitlement
+or master bypass for unrelated tenant modules.
