@@ -10,6 +10,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { TenantsService } from './tenants.service';
+import { hasEffectivePermission } from '../../core/guards/permission.guard';
 import { AuthService } from '../../services/auth.service';
 
 type TenantAccessEntry = ConfigurableCrudRecord & {
@@ -24,11 +25,6 @@ type TenantAccessEntry = ConfigurableCrudRecord & {
   Status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'ACCEPTED' | 'CANCELED';
   DateCreated: string | null;
 };
-
-const DEFAULT_ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'tenant.admin', label: 'Administrator' },
-  { value: 'tenant.user', label: 'User' },
-];
 
 const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'user/access/members',
@@ -89,7 +85,6 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       quickCreate: false,
       quickCreateExemptReason: 'Access profiles are managed under User / Access Profiles.',
-      options: DEFAULT_ROLE_OPTIONS,
       required: true,
       span: 1,
       placeholder: 'Search profile',
@@ -121,21 +116,14 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
   private readonly roleOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly loadingRoles = signal(false);
 
-  private readonly canManageTenant = computed(() => {
-    const permissions = this.auth.user()?.permissions ?? [];
-    return permissions.some((permission) => {
-      const normalized = String(permission ?? '').toLowerCase();
-      return (
-        normalized === 'tenant.access.manage' ||
-        normalized === 'tenant.permissions.manage' ||
-        normalized === 'tenant.*' ||
-        normalized === 'platform.master.access'
-      );
-    });
-  });
+  private readonly canManageTenant = computed(() =>
+    hasEffectivePermission(this.auth.user()?.permissions ?? [], 'tenant.access.manage') ||
+    hasEffectivePermission(this.auth.user()?.permissions ?? [], 'platform.master.access'));
 
   override readonly canCreate = computed(() => this.canManageTenant());
-  override readonly canEdit = computed(() => this.canManageTenant());
+  override readonly canEdit = computed(() =>
+    hasEffectivePermission(this.auth.user()?.permissions ?? [], 'tenant.permissions.manage') ||
+    hasEffectivePermission(this.auth.user()?.permissions ?? [], 'platform.master.access'));
   override readonly canDelete = computed(() => this.canManageTenant());
 
   constructor() {
@@ -198,7 +186,7 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
     this.loadingRoles.set(true);
     try {
       const response = await this.api.get<{ data?: { items?: Array<Record<string, unknown>> } }>(
-        'user/permissions/roles',
+        'user/access/roles?limit=500',
       );
       const items = response?.data?.items ?? [];
       const options = items
@@ -209,9 +197,9 @@ export class SettingsTenantsPage extends ConfigurableCrudPageBase<TenantAccessEn
           description: String(r['notes'] ?? r['code'] ?? ''),
           searchText: `${r['name']} ${r['code']}`,
         }));
-      this.roleOptions.set(options.length ? options : [...DEFAULT_ROLE_OPTIONS]);
+      this.roleOptions.set(options);
     } catch {
-      this.roleOptions.set([...DEFAULT_ROLE_OPTIONS]);
+      this.roleOptions.set([]);
     } finally {
       this.loadingRoles.set(false);
     }

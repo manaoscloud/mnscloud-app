@@ -858,9 +858,11 @@ export class MainLayout {
     this.auth.updateUser({
       EnvironmentUUID: environmentUUID,
     });
+    this.auth.updateUser({ permissions: [] });
+    if (!(await this.auth.loadMeFromApi(this.api))) return;
     await this.syncEnvironmentLanguage();
     await this.refreshCommercialEntitlements();
-    this.router.navigate(['/dashboard']);
+    await this.router.navigate(['/dashboard']);
   }
 
   private async syncEnvironmentLanguage() {

@@ -611,7 +611,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     ...this.columns().map((column) => column.id),
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
-  readonly rows = computed(() => this.normalizeRows(this.itemsResource.value() as T[]));
+  readonly listFailed = computed(() => !!this.itemsResource.error());
+  readonly rows = computed(() => this.itemsResource.hasValue()
+    ? this.normalizeRows(this.itemsResource.value() as T[]) : [] as T[]);
   readonly sortedRows = computed(() => this.sortRows(this.rows()));
   readonly visibleRows = computed(() => {
     if (this.serverSidePagination()) return this.sortedRows();

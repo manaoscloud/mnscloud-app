@@ -1510,3 +1510,18 @@ address fields and inline related-collection editors. No per-page opt-in is requ
   opacity and contrast, not only tooltip existence.
 - Verify dark/light, desktop/mobile, keyboard, all languages, conditional guidance,
   unchanged values/payloads and normal create/edit behavior when adding new consumers.
+
+## Tenant authorization context and failed CRUD reads
+
+Tenant-scoped membership and permission calls under `user/access` and `user/permissions`
+carry the selected `X-Environment-UUID`; `user/me` also receives the selected tenant so its
+permission projection matches the screen. Platform permission calls and public invitation
+accept/validate calls remain independent of that selection. On tenant switch, discard the
+previous permission projection and reload it before enabling navigation.
+
+Member invitation choices come from `user/access/roles`, with no hardcoded fallback. The
+server filters assignable profiles. Editing member roles requires `tenant.permissions.manage`;
+membership/invitation management requires `tenant.access.manage`.
+
+The configurable CRUD renderer must guard resource reads with `hasValue()`, show a translated
+load error separately from an empty result, and retain a usable Refresh action after failure.
