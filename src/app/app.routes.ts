@@ -457,6 +457,100 @@ export const routes: Routes = [
                 data: cyberSecurityRouteData(section, 'tenant'),
               })),
 
+              {
+                path: 'crm/dashboard',
+                loadComponent: () =>
+                  import('./pages/crm/dashboard/dashboard').then((m) => m.CrmDashboardPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/industries',
+                loadComponent: () =>
+                  import('./pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/sources',
+                loadComponent: () =>
+                  import('./pages/crm/sources/sources').then((m) => m.CrmSourcePage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/loss-reasons',
+                loadComponent: () =>
+                  import('./pages/crm/loss-reasons/loss-reasons').then((m) => m.CrmLossReasonPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/pipelines',
+                loadComponent: () =>
+                  import('./pages/crm/pipelines/pipelines').then((m) => m.CrmPipelinePage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/stages',
+                loadComponent: () =>
+                  import('./pages/crm/stages/stages').then((m) => m.CrmStagePage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/accounts',
+                loadComponent: () =>
+                  import('./pages/crm/accounts/accounts').then((m) => m.CrmAccountPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/contacts',
+                loadComponent: () =>
+                  import('./pages/crm/contacts/contacts').then((m) => m.CrmContactPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/products',
+                loadComponent: () =>
+                  import('./pages/crm/products/products').then((m) => m.CrmProductPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/leads',
+                loadComponent: () => import('./pages/crm/leads/leads').then((m) => m.CrmLeadPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/opportunities',
+                loadComponent: () =>
+                  import('./pages/crm/opportunities/opportunities').then(
+                    (m) => m.CrmOpportunityPage,
+                  ),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/activities',
+                loadComponent: () =>
+                  import('./pages/crm/activities/activities').then((m) => m.CrmActivityPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/proposals',
+                loadComponent: () =>
+                  import('./pages/crm/proposals/proposals').then((m) => m.CrmProposalPage),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/proposal-items',
+                loadComponent: () =>
+                  import('./pages/crm/proposal-items/proposal-items').then(
+                    (m) => m.CrmProposalItemPage,
+                  ),
+                title: 'CRM',
+              },
+              {
+                path: 'crm/handoffs',
+                loadComponent: () =>
+                  import('./pages/crm/handoffs/handoffs').then((m) => m.CrmHandoffPage),
+                title: 'CRM',
+              },
+
               // ERP Entities
               {
                 path: 'erp/customer',
