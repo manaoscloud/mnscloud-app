@@ -128,6 +128,7 @@ function config(): ConfigurableCrudConfig {
         id: 'customer',
         label: 'Customer',
         kind: 'related',
+        field: 'CustomerName',
         uuidField: 'CustomerCusUUID',
         lookupKey: 'customerUUID',
       },
