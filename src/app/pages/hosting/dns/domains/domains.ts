@@ -315,14 +315,14 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
         pabxPolicyBase: this.formValues()['pabxPolicyBase'],
         pabxPolicyTtl: Number(this.formValues()['pabxPolicyTtl']),
         pabxPolicyCapacity: Number(this.formValues()['pabxPolicyCapacity']),
-        pabxPolicyPlatform: this.formValues()['pabxPolicyPlatform'] === true,
+        pabxPolicyPlatform: this.isMaster() || this.formValues()['pabxPolicyPlatform'] === true,
       }) !== this.loadedPolicySignature
         ? {
             pabxDnsPolicy: {
               base: this.formValues()['pabxPolicyBase'],
               ttl: Number(this.formValues()['pabxPolicyTtl']),
               capacity: Number(this.formValues()['pabxPolicyCapacity']),
-              platform: this.formValues()['pabxPolicyPlatform'] === true,
+              platform: this.isMaster() || this.formValues()['pabxPolicyPlatform'] === true,
               status: this.formValues()['pabxPolicyEnabled'] === true,
             },
           }
@@ -338,11 +338,11 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       );
       const p = result?.data?.items?.[0];
       const values = {
-        pabxPolicyEnabled: p?.status ?? false,
+        pabxPolicyEnabled: p?.status === true || p?.status === 1,
         pabxPolicyBase: p?.base ?? `pabx.${row['HddName']}`,
         pabxPolicyTtl: p?.ttl ?? 300,
         pabxPolicyCapacity: p?.capacity ?? 1000,
-        pabxPolicyPlatform: p?.platform ?? this.isMaster(),
+        pabxPolicyPlatform: this.isMaster() || p?.platform === true || p?.platform === 1,
       };
       this.loadedPolicySignature = JSON.stringify(values);
       super.startEdit({ ...row, ...values });

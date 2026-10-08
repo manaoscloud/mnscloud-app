@@ -1603,3 +1603,12 @@ it does not change the shared default for other modules.
 Run `node --test scripts/tests/crm-form-contract.test.mjs` alongside the CRUD template, layout,
 i18n, FK and inventory validators. Visually check create/edit, Notes, compact date/time controls,
 monetary input and FK quick-create at desktop/mobile widths in PT/EN/ES.
+
+### Hidden scope-derived form values
+
+The configurable CRUD renderer initializes only configured fields. If a guarded route removes a
+field, compute its required request value from the route context when building the payload; do not
+read it back from `formValues()`. For master DNS PABX policy forms, availability is derived from the
+master route. Keep the loaded comparison signature consistent with that effective value so unrelated
+edits do not resend the policy. Normalize numeric API flags to boolean select values when loading.
+The API remains responsible for authorization and scope validation.
