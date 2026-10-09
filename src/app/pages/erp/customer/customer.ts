@@ -85,6 +85,69 @@ function stringValue(value: unknown): string | null {
   return text || null;
 }
 
+function generateAlphanumericUsername(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let random = '';
+  for (let i = 0; i < 8; i++) {
+    random += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `cli${random}`;
+}
+
+function generateRandomPassword(length = 10): string {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
+const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
+  status: 1,
+  type: 'company',
+  complexUUID: '',
+  dueDayUUID: '',
+  name: '',
+  legalName: '',
+  legalDate: '',
+  document: '',
+  email: '',
+  phone: '',
+  addressMainStreet: '',
+  addressMainNumber: '',
+  addressMainDistrict: '',
+  addressMainComplement: '',
+  addressMainCity: '',
+  addressMainState: '',
+  addressMainZip: '',
+  addressMainCountry: '',
+  addressBillingStreet: '',
+  addressBillingNumber: '',
+  addressBillingDistrict: '',
+  addressBillingComplement: '',
+  addressBillingCity: '',
+  addressBillingState: '',
+  addressBillingZip: '',
+  addressBillingCountry: '',
+  addressInstallStreet: '',
+  addressInstallNumber: '',
+  addressInstallDistrict: '',
+  addressInstallComplement: '',
+  addressInstallCity: '',
+  addressInstallState: '',
+  addressInstallZip: '',
+  addressInstallCountry: '',
+  lat: null,
+  lng: null,
+  notes: '',
+  portalStatus: 1,
+  portalUsername: '',
+  portalPassword: '',
+  portalMustChangePassword: false,
+  sendWelcomeEmail: true,
+};
+
 const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'erp/customers',
   uuidField: 'CustomerUUID',
@@ -108,50 +171,34 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   tabLabels: {
     authentication: 'Customer Portal',
   },
-  initialValues: {
-    status: 1,
-    type: 'company',
-    complexUUID: '',
-    dueDayUUID: '',
-    name: '',
-    legalName: '',
-    legalDate: '',
-    document: '',
-    email: '',
-    phone: '',
-    addressMainStreet: '',
-    addressMainNumber: '',
-    addressMainDistrict: '',
-    addressMainComplement: '',
-    addressMainCity: '',
-    addressMainState: '',
-    addressMainZip: '',
-    addressMainCountry: '',
-    addressBillingStreet: '',
-    addressBillingNumber: '',
-    addressBillingDistrict: '',
-    addressBillingComplement: '',
-    addressBillingCity: '',
-    addressBillingState: '',
-    addressBillingZip: '',
-    addressBillingCountry: '',
-    addressInstallStreet: '',
-    addressInstallNumber: '',
-    addressInstallDistrict: '',
-    addressInstallComplement: '',
-    addressInstallCity: '',
-    addressInstallState: '',
-    addressInstallZip: '',
-    addressInstallCountry: '',
-    lat: null,
-    lng: null,
-    notes: '',
-    portalStatus: 1,
-    portalUsername: '',
-    portalPassword: '',
+  initialValues: DEFAULT_CUSTOMER_INITIAL_VALUES,
+  initialValuesFactory: () => ({
+    ...DEFAULT_CUSTOMER_INITIAL_VALUES,
+    portalUsername: generateAlphanumericUsername(),
+    portalPassword: generateRandomPassword(),
     portalMustChangePassword: false,
-    sendWelcomeEmail: false,
-  },
+    sendWelcomeEmail: true,
+  }),
+  rowActions: [
+    {
+      key: 'resendPortalCredentials',
+      label: 'Resend portal credentials',
+      icon: 'mark_email_read',
+      tooltip: 'crud.customer.resendWelcomeEmail',
+      visible: (row) => Boolean(row['Email']),
+      request: {
+        method: 'post',
+        endpoint: (row) =>
+          `erp/customers/${row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
+        successMessage: 'Welcome email with credentials resent successfully.',
+        confirm: {
+          title: 'Resend portal credentials',
+          message: 'Resend portal credentials to this customer by email?',
+          confirmLabel: 'Send',
+        },
+      },
+    },
+  ],
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'CustomerUUID' },
     { id: 'type', label: 'Type', field: 'Type' },
@@ -182,9 +229,17 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'Type',
       type: 'select',
       options: TYPE_OPTIONS,
+      required: true,
       span: 1,
     },
-    { key: 'document', source: 'Document', payloadKey: 'document', label: 'Document', span: 1 },
+    {
+      key: 'document',
+      source: 'Document',
+      payloadKey: 'document',
+      label: 'Document',
+      required: true,
+      span: 1,
+    },
     {
       key: 'legalDate',
       source: 'LegalDate',
@@ -193,6 +248,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       labelWhen: ({ values }) =>
         String(values['type'] ?? '').toLowerCase() === 'person' ? 'Date of birth' : 'Opening date',
       type: 'date',
+      required: true,
       span: 1,
     },
     { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
@@ -201,10 +257,27 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       source: 'LegalName',
       payloadKey: 'legalName',
       label: 'Legal name',
+      required: true,
       span: 2,
     },
-    { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
-    { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
+    {
+      key: 'email',
+      source: 'Email',
+      payloadKey: 'email',
+      label: 'E-mail',
+      type: 'email',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'phone',
+      source: 'Phone',
+      payloadKey: 'phone',
+      label: 'Phone',
+      type: 'phone',
+      required: true,
+      span: 1,
+    },
     {
       key: 'complexUUID',
       source: 'ComplexUUID',
@@ -236,6 +309,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'Zip',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
       postalLookup: {
         streetKey: 'addressMainStreet',
@@ -254,6 +328,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'Street',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
     },
     {
@@ -263,6 +338,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'Number',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
     },
     {
@@ -272,6 +348,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'District',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
     },
     {
@@ -290,6 +367,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'City',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
     },
     {
@@ -299,6 +377,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'State',
       tab: 'address',
       addressSection: 'main',
+      required: true,
       span: 1,
     },
     {
@@ -521,6 +600,17 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       placeholder: 'Unique portal username',
+      required: true,
+      suffixButtons: [
+        {
+          icon: 'autorenew',
+          tooltip: 'crud.generateUsername',
+          visibleWhen: ({ editing }) => !editing,
+          onClick: (_ctx, host) => {
+            host.setFieldValue('portalUsername', generateAlphanumericUsername());
+          },
+        },
+      ],
     },
     {
       key: 'portalPassword',
@@ -531,6 +621,41 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       placeholder: 'Set or change password',
       autocomplete: 'new-password',
+      requiredWhen: ({ editing }) => !editing,
+      suffixButtons: [
+        {
+          icon: 'send',
+          tooltip: 'crud.customer.resendWelcomeEmail',
+          visibleWhen: ({ editing }) => editing,
+          onClick: async ({ values }, host) => {
+            const row = host.editingRecord();
+            const customerUUID = row
+              ? String(row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid'] ?? '')
+              : '';
+            if (!customerUUID) {
+              host.snack.warning('Customer must be saved before resending credentials.');
+              return;
+            }
+            try {
+              const body: { portalPassword?: string } = {};
+              if (values['portalPassword']) {
+                body.portalPassword = String(values['portalPassword']);
+              }
+              await host.api.post(
+                `erp/customers/${customerUUID}/portal/resend-welcome-email`,
+                body,
+              );
+              host.snack.success('Welcome email with credentials resent successfully.');
+            } catch (err: unknown) {
+              const msg =
+                err && typeof err === 'object' && 'message' in err
+                  ? String((err as { message: unknown }).message)
+                  : 'Failed to resend credentials.';
+              host.snack.error(msg);
+            }
+          },
+        },
+      ],
     },
     {
       key: 'portalMustChangePassword',

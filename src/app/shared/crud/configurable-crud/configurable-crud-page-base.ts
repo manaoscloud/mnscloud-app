@@ -255,6 +255,16 @@ export type ConfigurableCrudField = {
   /** Optional supplementary guidance; translated and rendered by the shared help control. */
   help?: string;
   helpWhen?: (context: ConfigurableCrudFieldContext) => string;
+  suffixButtons?: readonly ConfigurableCrudFieldSuffixButton[];
+};
+
+export type ConfigurableCrudFieldSuffixButton = {
+  icon: string;
+  tooltip: string;
+  color?: 'primary' | 'accent' | 'warn';
+  visibleWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+  disabledWhen?: (context: ConfigurableCrudFieldContext) => boolean;
+  onClick: (context: ConfigurableCrudFieldContext, host: ConfigurableCrudPageBase<any>) => void | Promise<void>;
 };
 
 export type ConfigurableCrudFieldContext = {
@@ -433,6 +443,7 @@ export type ConfigurableCrudConfig = {
   fields: readonly ConfigurableCrudField[];
   columns: readonly ConfigurableCrudColumn[];
   initialValues: ConfigurableCrudRecord;
+  initialValuesFactory?: () => ConfigurableCrudRecord;
   statusMode: ConfigurableCrudStatusMode;
   activeValue: string | number;
   inactiveValue: string | number;
@@ -509,9 +520,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.operations.observe(response, this.destroyRef, () => this.refreshList());
   }
 
-  protected readonly api = inject(ApiService);
+  readonly api = inject(ApiService);
   private readonly quickCreateAuth = inject(AuthService);
-  protected readonly snack = inject(SnackbarService);
+  readonly snack = inject(SnackbarService);
   protected readonly dateTime = inject(DateTimeFormatService);
   protected readonly parameters = inject(SystemParameterService);
   protected readonly dialog = inject(MatDialog);
@@ -1424,6 +1435,30 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       else next.add(key);
       return next;
     });
+  }
+
+  generatePasswordField(key: string): void {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    this.setFieldValue(key, pass);
+  }
+
+  fieldContext(): ConfigurableCrudFieldContext {
+    return {
+      editing: this.editingRecord() !== null,
+      values: this.formValues(),
+    };
+  }
+
+  isSuffixButtonDisabled(button: ConfigurableCrudFieldSuffixButton): boolean {
+    return button.disabledWhen ? button.disabledWhen(this.fieldContext()) : false;
+  }
+
+  runSuffixButton(button: ConfigurableCrudFieldSuffixButton): void {
+    void button.onClick(this.fieldContext(), this);
   }
 
   /** Value binding for MatDatepickerInput must always be a Date or null, never typed text. */
@@ -2469,16 +2504,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     );
   }
 
+  private resolveInitialValues(): ConfigurableCrudRecord {
+    return this.config.initialValuesFactory
+      ? this.config.initialValuesFactory()
+      : this.config.initialValues;
+  }
+
   private emptyFormValues(): ConfigurableCrudRecord {
-    const values = { ...this.config.initialValues };
+    const values = { ...this.resolveInitialValues() };
     for (const key of this.config.defaultCurrencyFields ?? []) values[key] = this.defaultCurrency();
     return values;
   }
 
   protected formValuesFromRecord(row: T): ConfigurableCrudRecord {
+    const initial = this.resolveInitialValues();
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
-      let value = row[field.source ?? field.key] ?? this.config.initialValues[field.key] ?? '';
+      let value = row[field.source ?? field.key] ?? initial[field.key] ?? '';
       if (this.config.defaultCurrencyFields?.includes(field.key) && !String(value).trim()) {
         value = this.defaultCurrency();
       }
