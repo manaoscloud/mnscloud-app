@@ -45,10 +45,9 @@ describe('Realm SIP domain selection', () => {
       voipPabxDnsPolicyZoneName: 'example.com',
       voipPabxDnsPolicyBase: 'sip.example.com',
     }));
-    page.dnsPolicies.set([]);
     expect(page.selectedPolicyInvalid()).toBeFalse();
-    expect(page.dnsPolicyOptions()[0].label).toContain('sip.example.com');
-    expect(page.dnsPolicyOptions()[0].label).not.toContain('Unavailable');
+    expect(page.pabxDns.options()[0].label).toContain('sip.example.com');
+    expect(page.pabxDns.options()[0].label).not.toContain('Unavailable');
   });
   it('requests subsequent pages from the server', async () => {
     get.and.resolveTo({
@@ -57,30 +56,47 @@ describe('Realm SIP domain selection', () => {
         total: 70,
       },
     });
-    page.dnsOffset.set(50);
-    page.refreshDnsPolicies();
+    page.pabxDns.page(1);
     TestBed.tick();
     await fixture.whenStable();
     TestBed.tick();
+    expect(get.calls.mostRecent().args[0]).toContain('pabx-dns-policies');
     expect(get.calls.mostRecent().args[0]).toContain('offset=50');
-    expect(page.dnsTotal()).toBe(70);
-    expect(page.dnsPolicies()[0].policyUUID).toBe('p51');
+    expect(page.pabxDns.total()).toBe(70);
+    expect(page.pabxDns.policies()[0].policyUUID).toBe('p51');
   });
   it('does not apply a stale response after a newer request', async () => {
     let resolveOld!: (value: unknown) => void;
     get.and.returnValue(new Promise((resolve) => (resolveOld = resolve)));
-    page.dnsOffset.set(50);
+    page.pabxDns.page(1);
     TestBed.tick();
     get.and.resolveTo({
       data: { items: [{ policyUUID: 'new', base: 'sip.example.com', status: true }], total: 1 },
     });
-    page.dnsOffset.set(0);
+    page.pabxDns.page(-1);
     TestBed.tick();
     await fixture.whenStable();
     resolveOld({ data: { items: [], total: 0 } });
     await Promise.resolve();
     TestBed.tick();
-    expect(page.dnsPolicies()[0].policyUUID).toBe('new');
+    expect(page.pabxDns.policies()[0].policyUUID).toBe('new');
+  });
+  it('loads Softswitch SIP realm policies from its own service selector', async () => {
+    get.and.resolveTo({
+      data: {
+        items: [
+          { policyUUID: 'sw1', base: 'softswitch.example.com', status: true, eligible: true },
+        ],
+        total: 1,
+      },
+    });
+    page.softswitchDns.page(1);
+    TestBed.tick();
+    await fixture.whenStable();
+    TestBed.tick();
+    expect(get.calls.mostRecent().args[0]).toContain('softswitch-dns-policies');
+    expect(page.softswitchDns.policies()[0].policyUUID).toBe('sw1');
+    expect(page.pabxDns.find('sw1')).toBeUndefined();
   });
   it('omits a stale policy when saving identity-only configuration', () => {
     const value = {
