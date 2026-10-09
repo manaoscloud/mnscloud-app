@@ -3,6 +3,7 @@ import { readStoredEnvironmentUUID } from '../../../core/environment/environment
 import { Component, afterNextRender, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SupportReportService } from '../../../services/support-report.service';
@@ -23,7 +24,11 @@ import {
 
 const READ_ALL = 'tenant.help.tickets.read_all';
 
-function config(api: () => ApiService, readAll: () => boolean): ConfigurableCrudConfig {
+function config(
+  api: () => ApiService,
+  dialog: () => MatDialog,
+  readAll: () => boolean,
+): ConfigurableCrudConfig {
   const open = (row: ConfigurableCrudRecord) =>
     !['closed', 'canceled'].includes(String(row['Status'] ?? ''));
   return defineCrud({
@@ -74,7 +79,7 @@ function config(api: () => ApiService, readAll: () => boolean): ConfigurableCrud
         key: 'attachments',
         label: 'Attachments',
         icon: 'attach_file',
-        collection: (row) => attachmentsCollection(api, 'help', row, false),
+        collection: (row) => attachmentsCollection(api, dialog, 'help', row, false),
       },
       {
         key: 'close',
@@ -185,11 +190,13 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
 
   constructor() {
     const api = inject(ApiService);
+    const dialog = inject(MatDialog);
     const auth = inject(AuthService);
     const route = inject(ActivatedRoute);
     super(
       config(
         () => api,
+        () => dialog,
         () => hasEffectivePermission(auth.user()?.permissions ?? [], READ_ALL),
       ),
     );

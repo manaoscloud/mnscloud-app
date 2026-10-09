@@ -9,6 +9,7 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -38,7 +39,11 @@ function priorityChip(row: ConfigurableCrudRecord): string {
   return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
 }
 
-function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfig {
+function config(
+  desk: SupportDesk,
+  api: () => ApiService,
+  dialog: () => MatDialog,
+): ConfigurableCrudConfig {
   const base = supportBase(desk);
   const platform = desk === 'platform';
   const catalogField = (
@@ -116,7 +121,7 @@ function config(desk: SupportDesk, api: () => ApiService): ConfigurableCrudConfi
         key: 'attachments',
         label: 'Attachments',
         icon: 'attach_file',
-        collection: (row) => attachmentsCollection(api, base, row, true),
+        collection: (row) => attachmentsCollection(api, dialog, base, row, true),
       },
       { key: 'assign-me', label: 'Assign to me', icon: 'assignment_ind' },
     ],
@@ -335,7 +340,14 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
     const route = inject(ActivatedRoute);
     const desk = supportDesk(route);
     const api = inject(ApiService);
-    super(config(desk, () => api));
+    const dialog = inject(MatDialog);
+    super(
+      config(
+        desk,
+        () => api,
+        () => dialog,
+      ),
+    );
     this.desk = desk;
     // Email links open one ticket directly: ?ticket=<uuid>.
     const requested = route.snapshot.queryParamMap.get('ticket');

@@ -1,5 +1,7 @@
 import { ActivatedRoute } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
+import { openImagePreview } from '../../../shared/file-preview-dialog/file-preview-dialog';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
@@ -76,8 +78,23 @@ function statusLabel(value: unknown, translate: (key: string) => string): string
   return option ? translate(option.label) : '';
 }
 
-/** Opens a private file in a new tab: the tab opens synchronously so popup blockers allow it. */
-export async function openPrivateFile(api: ApiService, endpoint: string): Promise<void> {
+/**
+ * Opens a private file. Images (screenshots, report images) open in an in-App preview dialog;
+ * other files open in a new tab, opened synchronously so popup blockers allow it.
+ */
+export async function openPrivateFile(
+  api: ApiService,
+  endpoint: string,
+  preview?: { dialog: MatDialog; contentType: string; fileName: string },
+): Promise<void> {
+  if (preview && preview.contentType.toLowerCase().startsWith('image/')) {
+    try {
+      openImagePreview(preview.dialog, await api.getBlob(endpoint), preview.fileName);
+    } catch {
+      /* the API error toast already explains the failure */
+    }
+    return;
+  }
   const tab = window.open('', '_blank');
   try {
     const blob = await api.getBlob(endpoint);
@@ -230,6 +247,7 @@ export function helpConversationCollection(ticket: ConfigurableCrudRecord): Conf
 /** Attachments of a ticket; `base` is support, system/support or help. */
 export function attachmentsCollection(
   api: () => ApiService,
+  dialog: () => MatDialog,
   base: string,
   ticket: ConfigurableCrudRecord,
   agent: boolean,
@@ -270,6 +288,11 @@ export function attachmentsCollection(
           openPrivateFile(
             api(),
             `${endpoint}/${String(row['SupportTicketAttachmentUUID'])}/content`,
+            {
+              dialog: dialog(),
+              contentType: String(row['ContentType'] ?? ''),
+              fileName: String(row['FileName'] ?? 'attachment'),
+            },
           ),
       },
     ],

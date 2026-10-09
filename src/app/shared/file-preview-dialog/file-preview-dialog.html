@@ -1,0 +1,27 @@
+<div class="file-preview-dialog crud-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>{{ data.fileName }}</h2>
+      <p>{{ 'Attachment preview' | transloco }}</p>
+    </div>
+    <mns-report-problem-button />
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    <img class="file-preview-image" [src]="data.url" [alt]="data.fileName" />
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" mat-dialog-close>
+        {{ 'Close' | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions">
+      <a mat-flat-button color="primary" [href]="data.url" [attr.download]="data.fileName">
+        <mat-icon>download</mat-icon>
+        {{ 'Download' | transloco }}
+      </a>
+    </div>
+  </mat-dialog-actions>
+</div>
