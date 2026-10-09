@@ -77,6 +77,30 @@ type SystemParametersItem = {
   voipPabxInheritedZoneName?: string | null;
   voipPabxInheritedPolicyUUID?: string | null;
   voipPabxAutoDomainIsActive: boolean;
+  voipSoftswitchAutoDomainEnabled: boolean;
+  voipSoftswitchAutoDomainBase: string;
+  voipSoftswitchAutoDomainLabelMode: 'uuid_short';
+  voipSoftswitchAutoDomainUuidLength: number;
+  voipSoftswitchAutoDomainSetDefault: boolean;
+  voipSoftswitchAutoDomainDnsMode: 'identity_only' | 'managed_dns';
+  voipSoftswitchRealmSource: 'own' | 'inherit';
+  voipSoftswitchDnsPolicyUUID: string;
+  voipSoftswitchDnsPolicyBase?: string | null;
+  voipSoftswitchDnsPolicyZoneName?: string | null;
+  voipSoftswitchDnsPolicyEligible?: boolean | null;
+  voipSoftswitchDnsPolicyError?: string | null;
+  voipSoftswitchEffectiveSource?: 'tenant' | 'platform';
+  voipSoftswitchEffectiveDnsMode?: 'identity_only' | 'managed_dns';
+  voipSoftswitchEffectiveBase?: string;
+  voipSoftswitchEffectiveZoneName?: string | null;
+  voipSoftswitchEffectivePolicyUUID?: string | null;
+  voipSoftswitchEffectivePolicyEligible?: boolean;
+  voipSoftswitchEffectivePolicyError?: string | null;
+  voipSoftswitchInheritedDnsMode?: 'identity_only' | 'managed_dns';
+  voipSoftswitchInheritedBase?: string;
+  voipSoftswitchInheritedZoneName?: string | null;
+  voipSoftswitchInheritedPolicyUUID?: string | null;
+  voipSoftswitchAutoDomainIsActive: boolean;
   billingSignupTrialEnabled: boolean;
   billingSignupTrialAmount: number;
   billingSignupTrialCurrency: string;
@@ -200,6 +224,30 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxInheritedZoneName: null,
   voipPabxInheritedPolicyUUID: null,
   voipPabxAutoDomainIsActive: true,
+  voipSoftswitchAutoDomainEnabled: true,
+  voipSoftswitchAutoDomainBase: 'softswitch.publichost.cloud',
+  voipSoftswitchAutoDomainLabelMode: 'uuid_short',
+  voipSoftswitchAutoDomainUuidLength: 12,
+  voipSoftswitchAutoDomainSetDefault: true,
+  voipSoftswitchAutoDomainDnsMode: 'identity_only',
+  voipSoftswitchRealmSource: 'inherit',
+  voipSoftswitchDnsPolicyUUID: '',
+  voipSoftswitchDnsPolicyBase: null,
+  voipSoftswitchDnsPolicyZoneName: null,
+  voipSoftswitchDnsPolicyEligible: null,
+  voipSoftswitchDnsPolicyError: null,
+  voipSoftswitchEffectiveSource: 'platform',
+  voipSoftswitchEffectiveDnsMode: 'identity_only',
+  voipSoftswitchEffectiveBase: 'softswitch.publichost.cloud',
+  voipSoftswitchEffectiveZoneName: null,
+  voipSoftswitchEffectivePolicyUUID: null,
+  voipSoftswitchEffectivePolicyEligible: true,
+  voipSoftswitchEffectivePolicyError: null,
+  voipSoftswitchInheritedDnsMode: 'identity_only',
+  voipSoftswitchInheritedBase: 'softswitch.publichost.cloud',
+  voipSoftswitchInheritedZoneName: null,
+  voipSoftswitchInheritedPolicyUUID: null,
+  voipSoftswitchAutoDomainIsActive: true,
   billingSignupTrialEnabled: false,
   billingSignupTrialAmount: 0,
   billingSignupTrialCurrency: 'BRL',
@@ -429,6 +477,112 @@ export class SettingsParametersPage {
       'The inherited platform DNS policy is currently unavailable.'
     );
   });
+
+  selectSoftswitchDnsPolicy(value: unknown) {
+    const uuid = String(value ?? '');
+    const policy = this.dnsPolicies().find((p) => p.policyUUID === uuid);
+    this.updateItem({
+      voipSoftswitchDnsPolicyUUID: uuid,
+      ...(policy
+        ? {
+            voipSoftswitchAutoDomainBase: policy.base,
+            voipSoftswitchDnsPolicyBase: policy.base,
+            voipSoftswitchDnsPolicyZoneName: policy.zoneName,
+            voipSoftswitchDnsPolicyEligible: policy.eligible !== false,
+            voipSoftswitchDnsPolicyError: null,
+          }
+        : {}),
+    });
+  }
+
+  readonly softswitchEffectiveBase = computed(() => {
+    const it = this.item();
+    if (!this.isMaster() && it.voipSoftswitchRealmSource === 'inherit') {
+      return (
+        it.voipSoftswitchInheritedBase ||
+        it.voipSoftswitchEffectiveBase ||
+        'softswitch.publichost.cloud'
+      );
+    }
+    if (it.voipSoftswitchAutoDomainDnsMode === 'managed_dns') {
+      const policy = this.dnsPolicies().find(
+        (p) => p.policyUUID === it.voipSoftswitchDnsPolicyUUID,
+      );
+      return (
+        policy?.base ||
+        it.voipSoftswitchDnsPolicyBase ||
+        it.voipSoftswitchAutoDomainBase ||
+        'softswitch.publichost.cloud'
+      );
+    }
+    return it.voipSoftswitchAutoDomainBase || 'softswitch.publichost.cloud';
+  });
+
+  readonly softswitchInheritedDomainLabel = computed(() => {
+    const it = this.item();
+    const mode = it.voipSoftswitchInheritedDnsMode || it.voipSoftswitchEffectiveDnsMode;
+    const base = this.softswitchEffectiveBase();
+    const zone = it.voipSoftswitchInheritedZoneName || it.voipSoftswitchEffectiveZoneName;
+    if (mode === 'managed_dns' && (zone || base)) {
+      return zone ? `${zone} — Base SIP: ${base}` : base;
+    }
+    return base;
+  });
+
+  readonly softswitchInheritedModeLabel = computed(() => {
+    const mode =
+      this.item().voipSoftswitchInheritedDnsMode || this.item().voipSoftswitchEffectiveDnsMode;
+    return mode === 'managed_dns'
+      ? 'Managed DNS publication'
+      : 'SIP identity without DNS publication';
+  });
+
+  readonly softswitchSelectedPolicyInvalid = computed(() => {
+    const it = this.item();
+    if (it.voipSoftswitchAutoDomainDnsMode !== 'managed_dns') return false;
+    if (it.voipSoftswitchRealmSource === 'inherit' && !this.isMaster()) return false;
+    if (!it.voipSoftswitchDnsPolicyUUID) return false;
+    if (it.voipSoftswitchDnsPolicyEligible === false) return true;
+    const policy = this.dnsPolicies().find(
+      (p) => p.policyUUID === it.voipSoftswitchDnsPolicyUUID,
+    );
+    if (!policy) return it.voipSoftswitchDnsPolicyEligible !== true;
+    if (policy.eligible === false || !policy.status) return true;
+    return false;
+  });
+
+  readonly softswitchSelectedPolicyError = computed(() => {
+    const it = this.item();
+    if (it.voipSoftswitchDnsPolicyError) return it.voipSoftswitchDnsPolicyError;
+    const policy = this.dnsPolicies().find(
+      (p) => p.policyUUID === it.voipSoftswitchDnsPolicyUUID,
+    );
+    if (!policy) {
+      return 'The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.';
+    }
+    if (!policy.status) {
+      return 'The selected DNS domain policy is disabled.';
+    }
+    if (policy.eligible === false) {
+      return 'The selected DNS domain is not fully provisioned or its provider is inactive.';
+    }
+    return 'The selected DNS policy is invalid.';
+  });
+
+  readonly softswitchInheritedPolicyInvalid = computed(() => {
+    const it = this.item();
+    if (this.isMaster() || it.voipSoftswitchRealmSource !== 'inherit') return false;
+    const mode = it.voipSoftswitchInheritedDnsMode || it.voipSoftswitchEffectiveDnsMode;
+    if (mode !== 'managed_dns') return false;
+    return it.voipSoftswitchEffectivePolicyEligible === false;
+  });
+
+  readonly softswitchInheritedPolicyError = computed(() => {
+    return (
+      this.item().voipSoftswitchEffectivePolicyError ||
+      'The inherited platform DNS policy is currently unavailable.'
+    );
+  });
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
 
@@ -457,6 +611,9 @@ export class SettingsParametersPage {
   );
   readonly voipPabxAutoDomainBasePlaceholder = computed(() =>
     this.isMaster() ? 'pabx.publichost.cloud' : 'Master PABX SIP realm base',
+  );
+  readonly voipSoftswitchAutoDomainBasePlaceholder = computed(() =>
+    this.isMaster() ? 'softswitch.publichost.cloud' : 'Master Softswitch SIP realm base',
   );
   readonly baseEndpoint = computed(() =>
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
@@ -768,6 +925,25 @@ export class SettingsParametersPage {
       } else if (key === 'VOIP_PABX_ORPHAN_RETENTION_DAYS') {
         item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
         item.voipPabxOrphanRetentionDays = this.normalizeInteger(value, 30);
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_ENABLED') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainEnabled = value === '' ? true : Number(value) !== 0;
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_BASE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainBase = value || DEFAULT_ITEM.voipSoftswitchAutoDomainBase;
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_LABEL_MODE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainLabelMode = this.normalizePabxAutoDomainLabelMode(value);
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_UUID_LENGTH') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainUuidLength = this.clampInteger(value || 12, 8, 32);
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_SET_DEFAULT') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainSetDefault = value === '' ? true : Number(value) !== 0;
+      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_DNS_MODE') {
+        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
+        item.voipSoftswitchAutoDomainDnsMode = this.normalizePabxAutoDomainDnsMode(value);
+        item.voipSoftswitchAutoDomainIsActive = isActive;
       }
     }
 
@@ -841,6 +1017,49 @@ export class SettingsParametersPage {
         raw?.voipPabxAutoDomainDnsMode,
       ),
       voipPabxAutoDomainIsActive: raw?.voipPabxAutoDomainIsActive !== false,
+      voipSoftswitchRealmSource:
+        raw?.voipSoftswitchRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
+      voipSoftswitchDnsPolicyUUID: String(raw?.voipSoftswitchDnsPolicyUUID ?? ''),
+      voipSoftswitchDnsPolicyBase: raw?.voipSoftswitchDnsPolicyBase ?? null,
+      voipSoftswitchDnsPolicyZoneName: raw?.voipSoftswitchDnsPolicyZoneName ?? null,
+      voipSoftswitchDnsPolicyEligible:
+        raw?.voipSoftswitchDnsPolicyEligible != null
+          ? Boolean(raw.voipSoftswitchDnsPolicyEligible)
+          : null,
+      voipSoftswitchDnsPolicyError: raw?.voipSoftswitchDnsPolicyError ?? null,
+      voipSoftswitchEffectiveSource:
+        raw?.voipSoftswitchEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
+      voipSoftswitchEffectiveDnsMode: raw?.voipSoftswitchEffectiveDnsMode ?? 'identity_only',
+      voipSoftswitchEffectiveBase:
+        raw?.voipSoftswitchEffectiveBase ?? 'softswitch.publichost.cloud',
+      voipSoftswitchEffectiveZoneName: raw?.voipSoftswitchEffectiveZoneName ?? null,
+      voipSoftswitchEffectivePolicyUUID: raw?.voipSoftswitchEffectivePolicyUUID ?? null,
+      voipSoftswitchEffectivePolicyEligible:
+        raw?.voipSoftswitchEffectivePolicyEligible !== false,
+      voipSoftswitchEffectivePolicyError: raw?.voipSoftswitchEffectivePolicyError ?? null,
+      voipSoftswitchInheritedDnsMode: raw?.voipSoftswitchInheritedDnsMode ?? 'identity_only',
+      voipSoftswitchInheritedBase:
+        raw?.voipSoftswitchInheritedBase ?? 'softswitch.publichost.cloud',
+      voipSoftswitchInheritedZoneName: raw?.voipSoftswitchInheritedZoneName ?? null,
+      voipSoftswitchInheritedPolicyUUID: raw?.voipSoftswitchInheritedPolicyUUID ?? null,
+      voipSoftswitchAutoDomainEnabled: raw?.voipSoftswitchAutoDomainEnabled !== false,
+      voipSoftswitchAutoDomainBase:
+        String(
+          raw?.voipSoftswitchAutoDomainBase ?? DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
+        ).trim() || DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
+      voipSoftswitchAutoDomainLabelMode: this.normalizePabxAutoDomainLabelMode(
+        raw?.voipSoftswitchAutoDomainLabelMode,
+      ),
+      voipSoftswitchAutoDomainUuidLength: this.clampInteger(
+        raw?.voipSoftswitchAutoDomainUuidLength ?? 12,
+        8,
+        32,
+      ),
+      voipSoftswitchAutoDomainSetDefault: raw?.voipSoftswitchAutoDomainSetDefault !== false,
+      voipSoftswitchAutoDomainDnsMode: this.normalizePabxAutoDomainDnsMode(
+        raw?.voipSoftswitchAutoDomainDnsMode,
+      ),
+      voipSoftswitchAutoDomainIsActive: raw?.voipSoftswitchAutoDomainIsActive !== false,
       billingSignupTrialEnabled: raw?.billingSignupTrialEnabled === true,
       billingSignupTrialAmount: this.normalizeNumber(raw?.billingSignupTrialAmount, 0),
       billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
@@ -893,6 +1112,28 @@ export class SettingsParametersPage {
       voipPabxDnsPolicyUUID:
         value.voipPabxAutoDomainDnsMode === 'managed_dns' && value.voipPabxRealmSource === 'own'
           ? value.voipPabxDnsPolicyUUID
+          : '',
+      voipSoftswitchAutoDomainBase:
+        value.voipSoftswitchAutoDomainBase
+          .trim()
+          .toLowerCase()
+          .replace(/^\.+|\.+$/g, '') || DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
+      voipSoftswitchAutoDomainLabelMode: this.normalizePabxAutoDomainLabelMode(
+        value.voipSoftswitchAutoDomainLabelMode,
+      ),
+      voipSoftswitchAutoDomainUuidLength: this.clampInteger(
+        value.voipSoftswitchAutoDomainUuidLength,
+        8,
+        32,
+      ),
+      voipSoftswitchAutoDomainDnsMode: this.normalizePabxAutoDomainDnsMode(
+        value.voipSoftswitchAutoDomainDnsMode,
+      ),
+      voipSoftswitchRealmSource: value.voipSoftswitchRealmSource,
+      voipSoftswitchDnsPolicyUUID:
+        value.voipSoftswitchAutoDomainDnsMode === 'managed_dns' &&
+        value.voipSoftswitchRealmSource === 'own'
+          ? value.voipSoftswitchDnsPolicyUUID
           : '',
       billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
       billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
@@ -951,6 +1192,19 @@ export class SettingsParametersPage {
           ? value.voipPabxDnsPolicyUUID
           : '',
       voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
+      voipSoftswitchAutoDomainEnabled: value.voipSoftswitchAutoDomainEnabled,
+      voipSoftswitchAutoDomainBase: value.voipSoftswitchAutoDomainBase,
+      voipSoftswitchAutoDomainLabelMode: value.voipSoftswitchAutoDomainLabelMode,
+      voipSoftswitchAutoDomainUuidLength: value.voipSoftswitchAutoDomainUuidLength,
+      voipSoftswitchAutoDomainSetDefault: value.voipSoftswitchAutoDomainSetDefault,
+      voipSoftswitchAutoDomainDnsMode: value.voipSoftswitchAutoDomainDnsMode,
+      voipSoftswitchRealmSource: value.voipSoftswitchRealmSource,
+      voipSoftswitchDnsPolicyUUID:
+        value.voipSoftswitchAutoDomainDnsMode === 'managed_dns' &&
+        value.voipSoftswitchRealmSource === 'own'
+          ? value.voipSoftswitchDnsPolicyUUID
+          : '',
+      voipSoftswitchAutoDomainIsActive: value.voipSoftswitchAutoDomainIsActive,
       voipPabxCdrRetentionDays: value.voipPabxCdrRetentionDays,
       voipPabxRecordingRetentionDays: value.voipPabxRecordingRetentionDays,
       voipPabxOrphanRetentionDays: value.voipPabxOrphanRetentionDays,

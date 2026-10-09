@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 
+import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
@@ -7,9 +8,20 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudQuickCreateResult,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
+
+const publicationStates: ConfigurableCrudOption[] = [
+  { value: 'not_requested', label: 'Not requested' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'queued', label: 'Queued' },
+  { value: 'published', label: 'Published' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'blocked', label: 'Needs review' },
+  { value: 'deleted', label: 'Deleted' },
+];
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -53,6 +65,13 @@ function config(): ConfigurableCrudConfig {
       notes: '',
     },
     columns: [
+      {
+        id: 'dns',
+        label: 'DNS publication',
+        kind: 'status',
+        field: 'DnsPublicationState',
+        options: publicationStates,
+      },
       { id: 'name', label: 'Name', kind: 'identity', field: 'VssName', uuidField: 'VssUUID' },
       {
         id: 'customer',
@@ -158,6 +177,90 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
     return [];
   }
 
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const state = String(row['DnsPublicationState'] ?? 'not_requested');
+    return state === 'not_requested'
+      ? []
+      : [
+          { key: 'dns-status', label: 'DNS publication', icon: 'dns' },
+          ...(this.canEdit() && state === 'failed'
+            ? [{ key: 'dns-retry', label: 'Retry DNS publication', icon: 'refresh' }]
+            : []),
+          ...(this.canEdit() && state === 'blocked'
+            ? [{ key: 'dns-recheck', label: 'Recheck DNS result', icon: 'fact_check' }]
+            : []),
+        ];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    const endpoint = `voip/softswitch/accounts/${this.recordUUID(row)}/dns-publication`;
+    const result = await this.rawApi.get<any>(endpoint),
+      p = result?.data?.item;
+    if (!p) {
+      this.snack.error(this.t('Unavailable'));
+      return;
+    }
+    if ((action.key === 'dns-retry' || action.key === 'dns-recheck') && Number(p.canRetry) === 1) {
+      await this.rawApi.post(endpoint + '/retry', {});
+      this.refreshList();
+      return;
+    }
+    if (action.key === 'dns-recheck') {
+      if (p.operationUUID && Number(p.canRecheck) === 1) {
+        this.trackOperation(
+          await this.rawApi.post(`user/operations/${p.operationUUID}/recheck`, {}),
+        );
+        this.refreshList();
+      }
+      return;
+    }
+    openDataViewerDialog(this.dialog, {
+      title: 'DNS publication',
+      description: 'Publication confirms provider readback, not SIP readiness or DNS cache expiry.',
+      details: [
+        { label: 'Domain', value: p.name },
+        {
+          label: 'Status',
+          value: this.t(
+            publicationStates.find(
+              (option) =>
+                option.value ===
+                (['failed', 'blocked'].includes(p.operationState) ? p.operationState : p.state),
+            )?.label ?? p.state,
+          ),
+        },
+        { label: 'Operation', value: p.operationUUID },
+        { label: 'Error', value: p.operationError ?? p.errorCode },
+        { label: 'Updated at', value: p.updatedAt, kind: 'datetime' },
+      ],
+      sections: [
+        {
+          title: 'DNS records',
+          table: {
+            columns: [
+              { key: 'type', label: 'Type' },
+              { key: 'name', label: 'Name' },
+              { key: 'value', label: 'Value' },
+              { key: 'ttl', label: 'TTL' },
+            ],
+            rows: (p.records ?? []).map((r: any) => ({ ...r, value: r.data.join(', ') })),
+          },
+        },
+      ],
+    });
+  }
+
+  private realmRequestKey = crypto.randomUUID();
+
+  override startCreate(): void {
+    this.realmRequestKey = crypto.randomUUID();
+    super.startCreate();
+  }
+
+  protected override afterSave(): void {
+    this.realmRequestKey = crypto.randomUUID();
+  }
+
   protected override afterQuickCreate(
     field: ConfigurableCrudField,
     option: ConfigurableCrudOption,
@@ -170,6 +273,7 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       ...payload,
+      ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
       isActive: Number(payload['isActive']) === 1,
       isDefault: Number(payload['isDefault']) === 1,
     };
