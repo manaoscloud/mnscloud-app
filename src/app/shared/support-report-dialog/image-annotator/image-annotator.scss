@@ -18,7 +18,11 @@
   margin: 0 0 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--mat-sys-color-error) 14%, var(--mat-sys-color-surface-container));
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-color-error) 14%,
+    var(--mat-sys-color-surface-container)
+  );
   color: var(--mat-sys-color-on-surface);
 }
 

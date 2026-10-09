@@ -8,7 +8,11 @@
   margin: 0;
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--mat-sys-color-error) 14%, var(--mat-sys-color-surface-container));
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-color-error) 14%,
+    var(--mat-sys-color-surface-container)
+  );
   color: var(--mat-sys-color-on-surface);
 }
 
@@ -170,7 +174,11 @@ summary.support-report-panel-header::-webkit-details-marker {
 
 .support-report-images.is-dragging {
   border-color: var(--mat-sys-color-primary);
-  background: color-mix(in srgb, var(--mat-sys-color-primary) 8%, var(--mat-sys-color-surface-container));
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-color-primary) 8%,
+    var(--mat-sys-color-surface-container)
+  );
 }
 
 .support-report-paste-hint {
