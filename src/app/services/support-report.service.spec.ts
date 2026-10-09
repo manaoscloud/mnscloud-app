@@ -183,6 +183,26 @@ describe('prepareCloneForCapture', () => {
       document.head.lastElementChild?.remove();
     }
   });
+
+  it('does not draw labels covered by a dialog or backdrop over it', () => {
+    const host = document.createElement('div');
+    host.innerHTML = `
+      <label class="mdc-floating-label" style="position: fixed; top: 40px; left: 40px">Buscar</label>
+      <div class="cover" style="position: fixed; inset: 0; z-index: 10; background: #000"></div>`;
+    document.body.appendChild(host);
+    try {
+      prepareCloneForCapture(document);
+      const label = host.querySelector('label')!;
+      expect(label.style.visibility).toBe('hidden');
+      const copy = Array.from(document.body.querySelectorAll('span')).find(
+        (span) => span.textContent === 'Buscar' && span.style.position === 'fixed',
+      );
+      expect(copy).toBeUndefined();
+    } finally {
+      host.remove();
+      document.head.lastElementChild?.remove();
+    }
+  });
 });
 
 describe('maskSensitiveContent', () => {
