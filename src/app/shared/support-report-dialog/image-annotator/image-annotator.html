@@ -1,0 +1,93 @@
+<div class="crud-dialog report-annotator">
+  <!-- report-problem-exempt: part of the report flow itself -->
+  <header class="dialog-header">
+    <div>
+      <h2>{{ 'Mark the problem' | transloco }}</h2>
+      <p>
+        {{
+          'Highlight or point to the exact spot. Blur hides data before the image is sent.'
+            | transloco
+        }}
+      </p>
+    </div>
+  </header>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="report-annotator-toolbar">
+      <mat-chip-listbox
+        hideSingleSelectionIndicator
+        [value]="tool()"
+        (change)="setTool($event.value)"
+        [attr.aria-label]="'Annotation tool' | transloco"
+      >
+        @for (option of tools; track option.value) {
+          <mat-chip-option [value]="option.value" [selectable]="tool() !== option.value">
+            <mat-icon matChipAvatar>{{ option.icon }}</mat-icon>
+            {{ option.label | transloco }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+      <span class="report-annotator-history">
+        <button
+          mat-icon-button
+          type="button"
+          [disabled]="!hasChanges() || saving()"
+          [matTooltip]="'Undo' | transloco"
+          [attr.aria-label]="'Undo' | transloco"
+          (click)="undo()"
+        >
+          <mat-icon>undo</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          [disabled]="!hasChanges() || saving()"
+          [matTooltip]="'Clear marks' | transloco"
+          [attr.aria-label]="'Clear marks' | transloco"
+          (click)="clear()"
+        >
+          <mat-icon>layers_clear</mat-icon>
+        </button>
+      </span>
+    </div>
+
+    @if (error(); as message) {
+      <p class="report-annotator-error" role="alert">{{ message | transloco }}</p>
+    }
+
+    <div class="report-annotator-stage">
+      @if (loading()) {
+        <mat-spinner diameter="28"></mat-spinner>
+      }
+      <canvas
+        #canvas
+        [class.hidden]="loading()"
+        [attr.aria-label]="'Image to mark' | transloco"
+        (pointerdown)="pointerDown($event)"
+        (pointermove)="pointerMove($event)"
+        (pointerup)="pointerUp($event)"
+        (pointercancel)="pointerUp($event)"
+      ></canvas>
+    </div>
+  </mat-dialog-content>
+
+  <div class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" [disabled]="saving()" (click)="cancel()">
+        {{ 'Cancel' | transloco }}
+      </button>
+    </div>
+    <div class="primary-actions">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        [disabled]="loading() || saving() || !hasChanges()"
+        (click)="apply()"
+      >
+        <mat-icon>{{ saving() ? 'hourglass_top' : 'check' }}</mat-icon>
+        {{ 'Apply marks' | transloco }}
+      </button>
+    </div>
+  </div>
+</div>

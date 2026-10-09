@@ -67,7 +67,7 @@ allowlist — fix the label or the tree.
    main collection (`Troncos › Lista`, `Chamados › Lista`, `Segredos › Lista`).
 4. **Groups name the subject, children name the collections**: `Discagem › Planos, Regras`,
    `Bloqueio › Listas, Números`, `RADIUS › Servidores, Clientes PPPoE`, `Tarifas › Planos,
-   Atribuições, Acúmulos`.
+Atribuições, Acúmulos`.
 5. **Length budget** (longest of PT/EN/ES, in characters): level 1 ≤ 24, level 2 ≤ 22,
    level 3 ≤ 18, level 4 ≤ 16; aim for ≤ 16 everywhere. No label may be truncated in any locale
    at 260px desktop, the compact flyout or 360px mobile.
@@ -145,10 +145,9 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 - Ticket queues are server filters (unassigned, mine, my teams, waiting, due, overdue, resolved).
   Notification settings reuse the canonical notification rule form with ticket-only scope.
 
-
-- One Support model, two desks. Tenant desk pages live under `/support/*` (module.support.*,
+- One Support model, two desks. Tenant desk pages live under `/support/*` (module.support._,
   a tenant answers its ERP customers). The platform desk reuses the same pages under
-  `/support/platform/*` with `data.supportDesk = 'platform'` (platform.support.* permissions, so support
+  `/support/platform/*` with `data.supportDesk = 'platform'` (platform.support._ permissions, so support
   agents do not need platform master); they call `/system/support/*`. Pages read the desk with
   `supportDesk(route)` from `pages/support/shared/support-desk.ts`; quick-create inherits it.
 - Ticket types, priorities (SLA) and origins are catalogs (`/support/ticket-types`,
@@ -167,9 +166,34 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   type and priority come from `help/ticket-types` and `help/ticket-priorities` (defaults
   preselected; failed-call reports prefill codes `bug`/`high`). The screenshot is captured behind
   the dialog with `html2canvas-pro` (the theme uses `color-mix()`).
-- Screenshots hide `input[type=password]` and any element marked `data-report-mask`. Mark every
-  element that shows secrets, tokens, card numbers or other sensitive values with
-  `data-report-mask` when it can stay visible on screen.
+- The print shows what the user sees, open dialogs included. Only overlays whose pane or backdrop
+  carries `SUPPORT_REPORT_PANE_CLASS`/`SUPPORT_REPORT_BACKDROP_CLASS` (the report dialog and its
+  image annotator), menus and tooltips are left out (`isExcludedFromReportCapture`). When opened
+  from a dialog, the user may crop the print to that window ("This window only").
+- Screenshots hide `input[type=password]`, credential `autocomplete` inputs and any element marked
+  `data-report-mask` (inputs/textareas show `••••••`). Mark every element that shows secrets,
+  tokens, card numbers or other sensitive values with `data-report-mask` when it can stay visible
+  on screen. `ConfigurableCrudPageBase.reportMask(field)` marks `password`/`secret-content`
+  fields (also while revealed) and credential-named keys automatically.
+- Users can add up to 5 extra images (file picker/camera, paste, drag and drop). The browser
+  re-encodes each one (max 2560 px, WebP or JPEG, no EXIF/GPS metadata) before anything is sent.
+  The ticket is created first; extra images then go one by one to
+  `POST help/tickets/:uuid/attachments`, each with its own status. A retry never creates another
+  ticket and skips images the ticket already holds (unique name + size).
+- The print and every extra image can be marked before sending: highlight box, arrow and blur.
+  Blur is pixelated into the exported image, never an overlay.
+
+### Dialog Report Problem Baseline
+
+- Every dialog header (`.dialog-header`) ends with `<mns-report-problem-button />`, so a problem
+  inside a dialog is reported without closing it, with the dialog visible in the print. The
+  generic CRUD form/collection dialogs already include it and pass resource, mode and record UUID
+  (`reportContext()`); component dialogs add the element and import `ReportProblemButtonComponent`
+  (included in `CONFIGURABLE_CRUD_IMPORTS`).
+- The report records the window title and these details in `systemInfo.context`, never form values.
+- `npm run check:dialog-report` (part of `verify:changed`, app-wide, no allowlist) fails on a
+  header without the button. A header that must not carry it documents
+  `report-problem-exempt: <reason>` right above it (only the report flow itself today).
 - `ClientDiagnosticsService` keeps a bounded, redacted in-memory trail (console errors, uncaught
   errors/rejections, failed API calls with `X-Correlation-ID`, last routes). The dialog shows
   exactly what is sent and the user can turn diagnostics off; the API stores them as an internal
@@ -296,12 +320,12 @@ CSS hook classes (`.erp-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
 the page must use the shared base named here.
 
-| Scenario | Template (scaffold) | Shared base | Validator |
-|---|---|---|---|
-| Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module, not only ERP) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss` | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
-| Read-only summary with indicators and record inventories; Refresh is the only action | `templates/dashboard` | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard` |
-| Singleton configuration with dirty/cancel/save | `templates/settings-page` | `SettingsPageComponent` (on `PageShellComponent`) | `scripts/validate-content-pages.mjs` |
-| Read-only page for one resource | `templates/detail-page` | `DetailPageComponent` (on `PageShellComponent`) | `scripts/validate-content-pages.mjs` |
+| Scenario                                                                                                                                       | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module, not only ERP) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss`              | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
+| Read-only summary with indicators and record inventories; Refresh is the only action                                                           | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
+| Singleton configuration with dirty/cancel/save                                                                                                 | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
+| Read-only page for one resource                                                                                                                | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
 
 - A page that needs behavior the shared base lacks gets a generic extension point in the base
   (row actions, `collection`/`form` factories, related collections, hooks); never page-local
@@ -1233,7 +1257,6 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - CRUD TypeScript feedback/confirmation text must use `TranslocoService` (or the shared app i18n
   service) and must be checked by `npm run check:crud:i18n -- <component-folder-or-html>`.
 
-
 ## Read-only metrics dashboards
 
 - Read-only monitoring uses the dashboard baseline (`erp-page dashboard-page`,
@@ -1279,7 +1302,6 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   than healthy zero counters. Label retained data and unavailable optional counts.
   Dashboard HTTP reads use a bounded timeout (30 seconds) so users can retry via
   the shared refresh button; do not add automatic retry storms.
-
 
 ## Detail and settings pages
 
@@ -1571,7 +1593,6 @@ watchers must retain platform/tenant scope. These rules apply to desktop and mob
 When expanding to another resource, document its API ownership contract and follow the
 workspace `docs/platform-resource-ownership.md`; this DNS support is not an entitlement
 or master bypass for unrelated tenant modules.
-
 
 ## CRM form baseline
 

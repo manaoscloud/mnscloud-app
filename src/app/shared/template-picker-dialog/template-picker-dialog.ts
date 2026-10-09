@@ -13,6 +13,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
 import { openCrudComponentDialog } from '../dialog/crud-dialog.util';
+import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 
 export type TemplatePickerMeta = { icon: string; label: string; value?: string };
 
@@ -46,6 +47,7 @@ export type TemplatePickerDialogData = {
   selector: 'mns-template-picker-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,

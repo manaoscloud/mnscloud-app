@@ -13,6 +13,7 @@ import {
   parseCurrencyAmount,
 } from '../../../../shared/currency-mask/currency-mask.directive';
 import { BillingTenantLookupItem, BillingService } from '../../shared/billing.service';
+import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 
 export type BillingManualCreditDialogData = BillingTenantLookupItem;
 
@@ -20,6 +21,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
   selector: 'app-billing-manual-credit-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -36,6 +38,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
           <h2>{{ 'Manual credit' | transloco }}</h2>
           <p>{{ 'Apply an audited credit to this tenant wallet.' | transloco }}</p>
         </div>
+        <mns-report-problem-button />
       </div>
 
       <div class="dialog-content">

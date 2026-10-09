@@ -64,6 +64,7 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
           <h2>{{ 'Test SMTP route' | transloco }}</h2>
           <p>{{ 'Send a transactional test using the selected route.' | transloco }}</p>
         </div>
+        <mns-report-problem-button />
       </header>
 
       <div class="dialog-body">

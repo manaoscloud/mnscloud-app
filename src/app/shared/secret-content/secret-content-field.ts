@@ -54,6 +54,7 @@ const PORTS: Record<string, number> = {
         } @else if (field.kind === 'textarea') {
           <textarea
             matInput
+            data-report-mask
             rows="4"
             autocomplete="off"
             autocapitalize="off"
@@ -64,6 +65,7 @@ const PORTS: Record<string, number> = {
         } @else {
           <input
             matInput
+            data-report-mask
             [type]="
               field.kind === 'password' && !revealed().has(field.key)
                 ? 'password'
@@ -110,6 +112,7 @@ const PORTS: Record<string, number> = {
           ><mat-label>{{ 'Value' | transloco }}</mat-label
           ><input
             matInput
+            data-report-mask
             autocomplete="off"
             [type]="revealed().has('pair' + i) ? 'text' : 'password'"
             [value]="entry.value"

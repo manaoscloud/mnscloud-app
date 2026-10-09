@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { DateTimeFormatService } from '../../../../../services/date-time-format.service';
+import { ReportProblemButtonComponent } from '../../../../../shared/support-report-dialog/report-problem-button';
 
 export type VoipPabxCdrRecordingDialogData = {
   url: string;
@@ -23,7 +24,13 @@ export type VoipPabxCdrRecordingDialogData = {
 @Component({
   selector: 'app-voip-pabx-cdr-recording-dialog',
   standalone: true,
-  imports: [MatButtonModule, MatDialogModule, MatIconModule, TranslocoPipe],
+  imports: [
+    ReportProblemButtonComponent,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    TranslocoPipe,
+  ],
   templateUrl: './recording-dialog.html',
   styleUrls: ['./recording-dialog.scss'],
 })

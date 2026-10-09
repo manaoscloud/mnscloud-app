@@ -1,4 +1,5 @@
 <div class="crud-dialog">
+  <!-- report-problem-exempt: this is the report dialog -->
   <header class="dialog-header">
     <div>
       <h2>{{ 'Report Problem or Suggestion' | transloco }}</h2>
@@ -17,6 +18,25 @@
           <p>
             {{ 'Your ticket was opened. Follow the conversation in My tickets.' | transloco }}
           </p>
+          @if (images().length) {
+            <ul class="support-report-upload-list" [attr.aria-busy]="uploadingImages()">
+              @for (image of images(); track image.id; let index = $index) {
+                <li [class]="'is-' + image.status">
+                  <mat-icon>{{ imageStatusIcon(image) || 'image' }}</mat-icon>
+                  <span>{{ imageLabel(index) }}</span>
+                  <span class="support-report-upload-status">{{ imageStatusLabel(image) }}</span>
+                </li>
+              }
+            </ul>
+            @if (missingImages() && !uploadingImages()) {
+              <p class="support-report-warning" role="alert">
+                {{
+                  'Some images were not sent. Retry them here; the ticket is already open.'
+                    | transloco
+                }}
+              </p>
+            }
+          }
           @if (report.AttachmentWarnings?.length) {
             <p class="support-report-warning" role="alert">
               {{
@@ -101,6 +121,15 @@
                 {{ 'Capture screen' | transloco }}
               </button>
               @if (screenshot()) {
+                <button
+                  mat-button
+                  type="button"
+                  [disabled]="capturing() || submitting()"
+                  (click)="annotateScreenshot()"
+                >
+                  <mat-icon>draw</mat-icon>
+                  {{ 'Mark' | transloco }}
+                </button>
                 <button mat-button type="button" color="warn" (click)="removeScreenshot()">
                   <mat-icon>delete_outline</mat-icon>
                   {{ 'Remove print' | transloco }}
@@ -108,6 +137,24 @@
               }
             </span>
           </div>
+
+          @if (canCropWindow) {
+            <mat-chip-listbox
+              class="support-report-scope"
+              hideSingleSelectionIndicator
+              [value]="captureScope()"
+              [disabled]="capturing() || submitting()"
+              (change)="setCaptureScope($event.value)"
+              [attr.aria-label]="'Capture area' | transloco"
+            >
+              <mat-chip-option value="viewport" [selectable]="captureScope() !== 'viewport'">{{
+                'Whole screen' | transloco
+              }}</mat-chip-option>
+              <mat-chip-option value="window" [selectable]="captureScope() !== 'window'">{{
+                'This window only' | transloco
+              }}</mat-chip-option>
+            </mat-chip-listbox>
+          }
 
           @if (capturing()) {
             <div class="support-report-placeholder">
@@ -133,6 +180,99 @@
           }
         </section>
 
+        <section
+          class="support-report-panel support-report-images"
+          [class.is-dragging]="dragging()"
+          (dragover)="dragOver($event)"
+          (dragleave)="dragging.set(false)"
+          (drop)="dropFiles($event)"
+        >
+          <div class="support-report-panel-header">
+            <span class="support-report-panel-title">
+              <mat-icon>add_photo_alternate</mat-icon>
+              {{ 'Additional images' | transloco }}
+              <span class="support-report-badge">{{ images().length }}/{{ imageLimit }}</span>
+            </span>
+            <span class="support-report-panel-actions">
+              <input
+                #filePicker
+                type="file"
+                class="support-report-file-input"
+                multiple
+                [accept]="imageAccept"
+                (change)="pickFiles(filePicker)"
+              />
+              <button
+                mat-button
+                type="button"
+                [disabled]="!canAddImages() || submitting()"
+                (click)="filePicker.click()"
+              >
+                @if (addingImages()) {
+                  <mat-spinner diameter="18"></mat-spinner>
+                } @else {
+                  <mat-icon>upload</mat-icon>
+                }
+                {{ 'Add images' | transloco }}
+              </button>
+            </span>
+          </div>
+
+          @if (images().length) {
+            <ul class="support-report-thumbs">
+              @for (image of images(); track image.id; let index = $index) {
+                <li class="support-report-thumb">
+                  <img [src]="image.previewUrl" [alt]="imageLabel(index)" />
+                  <span class="support-report-thumb-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [disabled]="submitting()"
+                      [matTooltip]="'Mark' | transloco"
+                      [attr.aria-label]="'Mark' | transloco"
+                      (click)="annotateImage(image)"
+                    >
+                      <mat-icon>draw</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [disabled]="submitting()"
+                      [matTooltip]="'Remove image' | transloco"
+                      [attr.aria-label]="'Remove image' | transloco"
+                      (click)="removeImage(image)"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="support-report-placeholder support-report-dropzone">
+              <mat-icon>collections</mat-icon>
+              <span>
+                {{ 'Add prints or photos that show where the problem is.' | transloco }}
+                <span class="support-report-paste-hint">{{
+                  'You can also paste (Ctrl+V) or drag images here.' | transloco
+                }}</span>
+              </span>
+            </div>
+          }
+          @for (message of imageErrors(); track message) {
+            <p class="support-report-warning" role="alert">
+              <mat-icon>info</mat-icon>
+              {{ message | transloco: { limit: imageLimit } }}
+            </p>
+          }
+          <p class="support-report-note">
+            {{
+              'PNG, JPEG, WebP or GIF. Images are resized and their metadata (such as location) is removed before sending.'
+                | transloco
+            }}
+          </p>
+        </section>
+
         <details class="support-report-panel">
           <summary class="support-report-panel-header">
             <span class="support-report-panel-title">
@@ -142,6 +282,10 @@
             <span class="support-report-badge">{{ 'Automatic' | transloco }}</span>
           </summary>
           <dl class="support-report-facts">
+            @if (context().dialogTitle; as window) {
+              <dt>{{ 'Window' | transloco }}</dt>
+              <dd>{{ window }}</dd>
+            }
             <dt>{{ 'Page URL' | transloco }}</dt>
             <dd class="monospace">{{ environment.url }}</dd>
             <dt>{{ 'App version' | transloco }}</dt>
@@ -169,13 +313,35 @@
 
   <div class="form-actions">
     <div class="secondary-actions">
-      <button mat-stroked-button type="button" [disabled]="submitting()" (click)="close()">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="submitting() || uploadingImages()"
+        (click)="close()"
+      >
         {{ (created() ? 'Close' : 'Cancel') | transloco }}
       </button>
     </div>
     <div class="primary-actions">
       @if (created()) {
-        <button mat-flat-button color="primary" type="button" (click)="openMyTickets()">
+        @if (missingImages()) {
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="uploadingImages()"
+            (click)="retryImages()"
+          >
+            <mat-icon>refresh</mat-icon>
+            {{ 'Retry images' | transloco }}
+          </button>
+        }
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="uploadingImages()"
+          (click)="openMyTickets()"
+        >
           <mat-icon>confirmation_number</mat-icon>
           {{ 'My tickets' | transloco }}
         </button>
@@ -184,7 +350,7 @@
           mat-flat-button
           color="primary"
           type="button"
-          [disabled]="!isFormValid() || submitting() || capturing()"
+          [disabled]="!isFormValid() || submitting() || capturing() || addingImages()"
           (click)="submit()"
         >
           <mat-icon>{{ submitting() ? 'hourglass_top' : 'send' }}</mat-icon>

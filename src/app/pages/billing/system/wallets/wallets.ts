@@ -64,6 +64,7 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class BillingSystemWalletsPage extends ConfigurableCrudPageBase<
   BillingTenantLookupItem & ConfigurableCrudRecord

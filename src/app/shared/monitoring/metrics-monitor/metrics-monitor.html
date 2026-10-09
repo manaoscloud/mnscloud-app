@@ -5,6 +5,7 @@
         <h2>{{ title() | transloco }}</h2>
         <p>{{ identity() }}</p>
       </div>
+      <mns-report-problem-button />
     </header>
     <div class="dialog-content">
       <div class="read-panel-scroll"><ng-container [ngTemplateOutlet]="content" /></div>
@@ -64,7 +65,7 @@
 
   @if (statusValue()) {
     <p class="monitor-message">
-      {{ (statusLabel() || 'Provider') | transloco }}: <strong>{{ statusValue() }}</strong>
+      {{ statusLabel() || 'Provider' | transloco }}: <strong>{{ statusValue() }}</strong>
     </p>
   }
   @if (message()) {

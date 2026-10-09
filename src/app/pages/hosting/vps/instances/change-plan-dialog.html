@@ -4,6 +4,7 @@
       <h2>{{ 'Upgrade VPS plan' | transloco }}</h2>
       <p>{{ instance.HviName }}</p>
     </div>
+    <mns-report-problem-button />
   </div>
 
   <mat-dialog-content class="change-plan-content">
@@ -57,9 +58,7 @@
 
     @if (!upgradePlanOptions().length) {
       <p class="change-plan-warning">
-        {{
-          'No compatible upgrade plans are available for this instance category.' | transloco
-        }}
+        {{ 'No compatible upgrade plans are available for this instance category.' | transloco }}
       </p>
     }
   </mat-dialog-content>

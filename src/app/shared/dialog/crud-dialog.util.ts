@@ -12,6 +12,8 @@ export type CrudDialogBinding = {
 export type CrudDialogOptions = {
   data?: unknown;
   onEscape?: () => void;
+  /** Extra class on the dialog backdrop, for overlays that must be recognized later. */
+  backdropClass?: string | string[];
 };
 
 function computeDialogLayout(): MatDialogConfig {
@@ -131,7 +133,7 @@ export function openCrudTemplateDialog(
 export function openCrudComponentDialog<T>(
   dialog: MatDialog,
   component: ComponentType<T>,
-  panelClass: string,
+  panelClass: string | string[],
   options: CrudDialogOptions = {},
 ): CrudDialogBinding {
   const initial = computeDialogLayout();
@@ -142,6 +144,7 @@ export function openCrudComponentDialog<T>(
     restoreFocus: true,
     panelClass,
     data: options.data,
+    ...(options.backdropClass ? { backdropClass: options.backdropClass } : {}),
   });
 
   const subscriptions = new Subscription();

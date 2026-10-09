@@ -15,6 +15,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 
 type DossierData = { guideUUID: string };
 type DocumentItem = {
@@ -46,6 +47,7 @@ type DossierResponse = {
   selector: 'app-clinic-bradesco-siad-guide-dossier-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     CommonModule,
     MatDialogModule,
     MatButtonModule,
@@ -65,6 +67,7 @@ type DossierResponse = {
           <h2>{{ 'siad.dossier.title' | transloco }}</h2>
           <p>{{ 'siad.dossier.description' | transloco }}</p>
         </div>
+        <mns-report-problem-button />
       </div>
       <div class="dialog-content">
         @if (loading()) {

@@ -13,12 +13,8 @@
         }}
       </p>
     </div>
-    <button
-      mat-icon-button
-      type="button"
-      [attr.aria-label]="'Close' | transloco"
-      (click)="close()"
-    >
+    <mns-report-problem-button />
+    <button mat-icon-button type="button" [attr.aria-label]="'Close' | transloco" (click)="close()">
       <mat-icon>close</mat-icon>
     </button>
   </header>

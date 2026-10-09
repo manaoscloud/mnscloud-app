@@ -60,6 +60,7 @@ run('node', [
   'scripts/pay-error.test.mjs',
   'scripts/validate-nav-labels.test.mjs',
   'scripts/tests/crm-form-contract.test.mjs',
+  'scripts/validate-dialog-report-button.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -87,6 +88,8 @@ for (const page of [
 run('node', ['scripts/validate-nav-labels.mjs']);
 run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
+// Every dialog header offers "Report problem" (app.md Dialog Report Problem Baseline).
+run('node', ['scripts/validate-dialog-report-button.mjs']);
 
 const crudRoots = [
   ...new Set(

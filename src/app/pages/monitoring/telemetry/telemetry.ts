@@ -13,6 +13,7 @@ import {
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { BreadcrumbLabelsService } from '../../../shared/breadcrumb/breadcrumb-labels.service';
 import { ApiService } from '../../../services/api.service';
+import { ReportProblemButtonComponent } from '../../../shared/support-report-dialog/report-problem-button';
 
 type Resource = { uuid: string; kind: string; name: string; observedAt: string | null };
 type Envelope<T> = { data: { items: T[] } };
@@ -25,7 +26,7 @@ type Snapshot = {
 @Component({
   selector: 'mns-agent-telemetry',
   standalone: true,
-  imports: [MetricsMonitorComponent],
+  imports: [ReportProblemButtonComponent, MetricsMonitorComponent],
   template: `
     <mns-metrics-monitor
       title="Agent monitoring"

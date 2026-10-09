@@ -30,11 +30,13 @@ import {
   formatMetricUnitLabel,
   parseUtcDate,
 } from './metrics-monitor.types';
+import { ReportProblemButtonComponent } from '../../support-report-dialog/report-problem-button';
 
 @Component({
   selector: 'mns-metrics-monitor',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     NgTemplateOutlet,
     DecimalPipe,
     MatDialogModule,

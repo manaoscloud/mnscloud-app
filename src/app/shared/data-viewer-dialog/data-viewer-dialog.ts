@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { SnackbarService } from '../../services/snackbar.service';
 import { DateTimeFormatService } from '../../services/date-time-format.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../dialog/crud-dialog.util';
+import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 
 export type DataViewerTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -75,7 +76,14 @@ export type DataViewerDialogData = {
 @Component({
   selector: 'mns-data-viewer-dialog',
   standalone: true,
-  imports: [ClipboardModule, MatButtonModule, MatDialogModule, MatIconModule, TranslocoPipe],
+  imports: [
+    ReportProblemButtonComponent,
+    ClipboardModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    TranslocoPipe,
+  ],
   templateUrl: './data-viewer-dialog.html',
   styleUrl: './data-viewer-dialog.scss',
 })
