@@ -4,3 +4,17 @@
   font-size: 0.875rem;
   line-height: 1.45;
 }
+
+.toggle-field-align {
+  display: flex;
+  align-items: center;
+  min-height: var(--form-control-height, 40px);
+  padding: 0 4px;
+}
+
+.parameter-toggle-cell {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 2px 4px 6px;
+}
