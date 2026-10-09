@@ -440,13 +440,21 @@ function cropToElement(canvas: HTMLCanvasElement, element: HTMLElement): HTMLCan
 
 /**
  * Works around what html2canvas cannot paint, so the print matches the screen: elements with
- * `backdrop-filter` (dialog footers, sticky tab headers) disappear entirely, and Material floating
- * labels lose their text. Labels are redrawn as plain text at the same place in the clone.
+ * `backdrop-filter` (dialog footers, sticky tab headers) disappear entirely, Material floating
+ * labels lose their text and the select arrow (an SVG centered with `transform`) is misplaced.
+ * Visible labels are redrawn as plain text at the same place in the clone; labels covered by a
+ * dialog or backdrop stay hidden, otherwise the page behind would be drawn over the dialog.
  */
 export function prepareCloneForCapture(clone: Document): void {
   const style = clone.createElement('style');
   style.textContent =
-    '*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }';
+    '*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }' +
+    // html2canvas misdraws the select arrow SVG (centered with a transform); a border triangle
+    // of the same 10x5 size paints identically.
+    ' .mat-mdc-select-arrow svg { display: none !important; }' +
+    ' .mat-mdc-select-arrow { width: 0 !important; height: 0 !important;' +
+    ' border-left: 5px solid transparent !important; border-right: 5px solid transparent !important;' +
+    ' border-top: 5px solid currentColor !important; }';
   clone.head.appendChild(style);
   const view = clone.defaultView;
   if (!view) return;
@@ -454,6 +462,10 @@ export function prepareCloneForCapture(clone: Document): void {
     const rect = label.getBoundingClientRect();
     const text = label.textContent?.trim();
     if (!text || !rect.width || !rect.height) return;
+    if (!isLabelOnTop(clone, label, rect)) {
+      label.style.setProperty('visibility', 'hidden', 'important');
+      return;
+    }
     const computed = view.getComputedStyle(label);
     const scale = label.offsetHeight ? rect.height / label.offsetHeight : 1;
     const copy = clone.createElement('span');
@@ -473,6 +485,15 @@ export function prepareCloneForCapture(clone: Document): void {
     clone.body.appendChild(copy);
     label.style.setProperty('visibility', 'hidden', 'important');
   });
+}
+
+/** True when the label's own form field is what is painted at the label's center. */
+function isLabelOnTop(clone: Document, label: HTMLElement, rect: DOMRect): boolean {
+  const hit = clone.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  if (!hit) return false;
+  // Floating labels ignore pointer events, so the hit is usually another part of the same field.
+  const field = label.closest('.mat-mdc-form-field');
+  return hit === label || label.contains(hit) || !!field?.contains(hit);
 }
 
 /**
