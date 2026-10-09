@@ -4,6 +4,7 @@
       <h2>{{ titleText() | transloco }}</h2>
       <p>{{ descriptionText() | transloco }}</p>
     </div>
+    <mns-report-problem-button />
   </header>
 
   <mat-dialog-content class="dialog-content">
@@ -29,7 +30,7 @@
 
       <section class="install-command-section">
         <h3>{{ 'Command' | transloco }}</h3>
-        <pre class="install-command-shell"><code>{{ commandText() }}</code></pre>
+        <pre class="install-command-shell" data-report-mask><code>{{ commandText() }}</code></pre>
       </section>
     </div>
   </mat-dialog-content>

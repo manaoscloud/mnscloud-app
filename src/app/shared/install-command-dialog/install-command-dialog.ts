@@ -5,6 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../services/snackbar.service';
+import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 
 export type InstallCommandDetail = {
   label: string;
@@ -23,7 +24,14 @@ export type InstallCommandDialogData = {
 @Component({
   selector: 'mns-install-command-dialog',
   standalone: true,
-  imports: [ClipboardModule, MatButtonModule, MatDialogModule, MatIconModule, TranslocoPipe],
+  imports: [
+    ReportProblemButtonComponent,
+    ClipboardModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    TranslocoPipe,
+  ],
   templateUrl: './install-command-dialog.html',
   styleUrl: './install-command-dialog.scss',
 })

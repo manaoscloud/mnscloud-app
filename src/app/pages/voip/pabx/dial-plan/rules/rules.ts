@@ -304,6 +304,7 @@ function config(): ConfigurableCrudConfig {
             }}
           </p>
         </div>
+        <mns-report-problem-button />
       </div>
 
       <mat-dialog-content class="dialog-content">

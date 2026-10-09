@@ -25,6 +25,7 @@ import {
   GovernanceUser,
   LegalHold,
 } from './user-governance.models';
+import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -154,6 +155,7 @@ type GovernanceActionFormModel = {
   selector: 'app-governance-action-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     FormField,
     MatButtonModule,
     MatDialogModule,
@@ -169,6 +171,7 @@ type GovernanceActionFormModel = {
           <h2>{{ titleKey() | transloco }}</h2>
           <p>{{ helpKey() | transloco }}</p>
         </div>
+        <mns-report-problem-button />
       </header>
 
       <mat-dialog-content class="dialog-content">

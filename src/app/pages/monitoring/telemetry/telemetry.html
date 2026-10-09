@@ -5,6 +5,7 @@
         <h2>{{ 'Agent monitoring' | transloco }}</h2>
         <p>{{ name() }}</p>
       </div>
+      <mns-report-problem-button />
     </header>
     <div class="dialog-content">
       <div class="read-panel-scroll"><ng-container [ngTemplateOutlet]="content" /></div>

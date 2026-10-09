@@ -1,6 +1,14 @@
 import { readStoredEnvironmentUUID } from '../../core/environment/environment-context';
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +18,17 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../services/api.service';
-import { SupportReportCreated, SupportReportService } from '../../services/support-report.service';
+import {
+  SUPPORT_REPORT_BACKDROP_CLASS,
+  SUPPORT_REPORT_PANE_CLASS,
+  SupportReportCaptureScope,
+  SupportReportCreated,
+  SupportReportImage,
+  SupportReportService,
+} from '../../services/support-report.service';
+import { openCrudComponentDialog } from '../dialog/crud-dialog.util';
+import { REPORT_IMAGE_ACCEPT, REPORT_SCREENSHOT_MAX_BYTES, blobToDataUrl } from './report-image';
+import type { ImageAnnotatorData } from './image-annotator/image-annotator';
 import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
@@ -43,11 +61,14 @@ function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): Cata
     MatIconModule,
     MatProgressSpinnerModule,
     MatSlideToggleModule,
+    MatButtonToggleModule,
+    MatTooltipModule,
     MnsSearchSelectFieldComponent,
     TranslocoPipe,
   ],
   templateUrl: './support-report-dialog.html',
   styleUrls: ['./support-report-dialog.scss'],
+  host: { '(document:paste)': 'pasteImages($event)' },
 })
 export class SupportReportDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<SupportReportDialogComponent>);
@@ -55,6 +76,7 @@ export class SupportReportDialogComponent {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly api = inject(ApiService);
+  private readonly dialog = inject(MatDialog);
   readonly data = inject<SupportReportDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
 
   private readonly environmentUUID = readStoredEnvironmentUUID();
@@ -86,6 +108,23 @@ export class SupportReportDialogComponent {
   readonly created = signal<SupportReportCreated | null>(null);
   readonly environment = this.reports.environment();
   readonly diagnostics = this.reports.diagnosticsSnapshot();
+  /** Page or dialog the report came from, and the user's extra images. */
+  readonly context = this.reports.context;
+  readonly images = this.reports.images;
+  readonly imageLimit = this.reports.imageLimit;
+  readonly imageAccept = REPORT_IMAGE_ACCEPT;
+  readonly canCropWindow = this.reports.hasOriginWindow();
+  readonly captureScope = signal<SupportReportCaptureScope>('viewport');
+  readonly addingImages = signal(false);
+  readonly imageErrors = signal<string[]>([]);
+  readonly dragging = signal(false);
+  readonly uploadingImages = signal(false);
+  readonly missingImages = computed(
+    () => this.images().filter((image) => image.status === 'failed').length,
+  );
+  readonly canAddImages = computed(
+    () => !this.created() && this.images().length < this.imageLimit && !this.addingImages(),
+  );
 
   readonly isFormValid = computed(() => {
     const draft = this.draft();
@@ -177,9 +216,122 @@ export class SupportReportDialogComponent {
   async capture() {
     this.capturing.set(true);
     try {
-      this.screenshot.set(await this.reports.captureScreen());
+      this.screenshot.set(await this.reports.captureScreen(this.captureScope()));
     } finally {
       this.capturing.set(false);
+    }
+  }
+
+  setCaptureScope(value: unknown) {
+    if (value !== 'viewport' && value !== 'window') return;
+    if (value === this.captureScope()) return;
+    this.captureScope.set(value);
+    void this.capture();
+  }
+
+  async annotateScreenshot() {
+    const image = this.screenshot();
+    if (!image) return;
+    const result = await this.annotate({ src: image, maxBytes: REPORT_SCREENSHOT_MAX_BYTES });
+    if (result) this.screenshot.set(await blobToDataUrl(result));
+  }
+
+  async annotateImage(image: SupportReportImage) {
+    const result = await this.annotate({ src: image.previewUrl });
+    if (result) this.reports.replaceImage(image.id, result);
+  }
+
+  removeImage(image: SupportReportImage) {
+    this.reports.removeImage(image.id);
+  }
+
+  async addFiles(files: FileList | File[] | null | undefined) {
+    const list = Array.from(files ?? []);
+    if (!list.length || !this.canAddImages()) return;
+    this.addingImages.set(true);
+    try {
+      this.imageErrors.set(await this.reports.addImages(list));
+    } finally {
+      this.addingImages.set(false);
+    }
+  }
+
+  async pickFiles(input: HTMLInputElement) {
+    await this.addFiles(input.files);
+    input.value = '';
+  }
+
+  /** Ctrl+V of a print while this dialog is the top one (not while marking an image). */
+  pasteImages(event: ClipboardEvent) {
+    if (this.created() || this.dialog.openDialogs.at(-1) !== this.dialogRef) return;
+    const files = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+      file.type.startsWith('image/'),
+    );
+    if (!files.length) return;
+    event.preventDefault();
+    void this.addFiles(files);
+  }
+
+  dragOver(event: DragEvent) {
+    if (!this.canAddImages() || !event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    this.dragging.set(true);
+  }
+
+  dropFiles(event: DragEvent) {
+    this.dragging.set(false);
+    if (!event.dataTransfer?.files.length) return;
+    event.preventDefault();
+    void this.addFiles(event.dataTransfer.files);
+  }
+
+  imageLabel(index: number): string {
+    return this.transloco.translate('Image {{n}}', { n: index + 1 });
+  }
+
+  imageStatusLabel(image: SupportReportImage): string {
+    const labels: Record<SupportReportImage['status'], string> = {
+      ready: 'Waiting',
+      uploading: 'Sending…',
+      uploaded: 'Sent',
+      failed: 'Not sent',
+    };
+    return this.transloco.translate(labels[image.status]);
+  }
+
+  imageStatusIcon(image: SupportReportImage): string {
+    if (image.status === 'uploaded') return 'cloud_done';
+    if (image.status === 'uploading') return 'cloud_upload';
+    if (image.status === 'failed') return 'error';
+    return '';
+  }
+
+  async retryImages() {
+    const ticket = this.created()?.SupportTicketUUID;
+    if (ticket) await this.sendImages(ticket);
+  }
+
+  private async sendImages(ticketUUID: string) {
+    this.uploadingImages.set(true);
+    try {
+      await this.reports.uploadImages(ticketUUID);
+    } finally {
+      this.uploadingImages.set(false);
+    }
+  }
+
+  private async annotate(data: ImageAnnotatorData): Promise<Blob | null> {
+    const { ReportImageAnnotatorComponent } = await import('./image-annotator/image-annotator');
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      ReportImageAnnotatorComponent,
+      ['crud-form-dialog', SUPPORT_REPORT_PANE_CLASS],
+      { data, backdropClass: ['cdk-overlay-dark-backdrop', SUPPORT_REPORT_BACKDROP_CLASS] },
+    );
+    try {
+      return ((await firstValueFrom(binding.ref.afterClosed())) as Blob | null) ?? null;
+    } finally {
+      binding.stop();
     }
   }
 
@@ -205,6 +357,7 @@ export class SupportReportDialogComponent {
             language: this.environment.language,
             timezone: this.environment.timezone,
             platform: this.environment.platform,
+            context: this.context(),
             consoleLogs: include ? this.diagnostics.consoleLogs : [],
             failedRequests: include ? this.diagnostics.failedRequests : [],
             navigation: include ? this.diagnostics.navigation : [],
@@ -213,6 +366,7 @@ export class SupportReportDialogComponent {
         this.environmentUUID,
       );
       this.created.set(created);
+      if (created.SupportTicketUUID) await this.sendImages(created.SupportTicketUUID);
     } catch {
       // The API interceptor already shows the error; the draft stays for a retry.
     } finally {
@@ -222,11 +376,14 @@ export class SupportReportDialogComponent {
 
   openMyTickets() {
     const ticket = this.created()?.SupportTicketUUID;
+    this.reports.clearImages();
     this.dialogRef.close(true);
     void this.router.navigate(['/support/requests'], ticket ? { queryParams: { ticket } } : {});
   }
 
   close() {
+    // Images belong to the draft until a ticket exists; after that they were sent or reported.
+    if (this.created()) this.reports.clearImages();
     this.dialogRef.close(Boolean(this.created()));
   }
 }

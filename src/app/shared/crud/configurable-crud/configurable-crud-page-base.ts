@@ -69,6 +69,7 @@ import {
 import { MnsPermissionTreeFieldComponent } from '../../forms/mns-permission-tree-field/mns-permission-tree-field';
 import { SecretContentFieldComponent } from '../../secret-content/secret-content-field';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
+import { ReportProblemButtonComponent } from '../../support-report-dialog/report-problem-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
 import {
   buildFileUploadViewModel,
@@ -78,8 +79,13 @@ import {
   runFileUploadExecution,
 } from '../../upload/file-upload-progress';
 
+/** Field keys that hold credentials, masked in problem report prints. */
+const SENSITIVE_FIELD_KEY =
+  /(pass(word|phrase)?|pwd|secret|token|private.?key|api.?key|credential|pin$)/i;
+
 export const CONFIGURABLE_CRUD_IMPORTS = [
   FieldHelpComponent,
+  ReportProblemButtonComponent,
   CheckboxGroupFieldComponent,
   SecretContentFieldComponent,
   RouterLink,
@@ -719,6 +725,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly dialogTitle = computed(() =>
     this.editingRecord() ? this.config.editTitle : this.config.createTitle,
   );
+  /** Window details sent with "Report problem" from the form dialog (never form values). */
+  readonly reportContext = computed(() => {
+    const record = this.editingRecord();
+    return {
+      resource: this.config.endpoint,
+      mode: record ? ('edit' as const) : ('create' as const),
+      recordUUID: record ? this.recordUUID(record) || undefined : undefined,
+    };
+  });
   readonly canCreate = computed(
     () =>
       this.config.canCreate !== false &&
@@ -1387,6 +1402,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return this.revealedPasswordFields().has(field.key) ? 'text' : 'password';
     }
     return 'text';
+  }
+
+  /**
+   * `data-report-mask` value for a form control: passwords stay hidden in the report print even
+   * while revealed, and so do fields named like credentials (UUID references are not secrets).
+   */
+  reportMask(field: { key: string; type?: string }): '' | null {
+    if (field.type === 'password' || field.type === 'secret-content') return '';
+    return SENSITIVE_FIELD_KEY.test(field.key) && !/uuid$/i.test(field.key) ? '' : null;
   }
 
   isPasswordVisible(key: string): boolean {

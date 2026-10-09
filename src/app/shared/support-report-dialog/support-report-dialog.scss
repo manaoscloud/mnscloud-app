@@ -160,7 +160,105 @@ summary.support-report-panel-header::-webkit-details-marker {
   color: var(--mat-sys-primary);
 }
 
+.support-report-scope {
+  align-self: flex-start;
+}
+
+.support-report-file-input {
+  display: none;
+}
+
+.support-report-images.is-dragging {
+  border-color: var(--mat-sys-primary);
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, var(--mat-sys-surface-container));
+}
+
+.support-report-paste-hint {
+  display: block;
+  font-size: 0.8rem;
+}
+
+@media (hover: none) {
+  .support-report-paste-hint {
+    display: none;
+  }
+}
+
+.support-report-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.support-report-thumb {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-lowest);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 110px;
+    object-fit: contain;
+  }
+}
+
+.support-report-thumb-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.support-report-upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(100%, 24rem);
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: left;
+  }
+
+  .is-uploaded mat-icon {
+    color: var(--mat-sys-primary);
+  }
+
+  .is-failed mat-icon {
+    color: var(--mat-sys-error);
+  }
+}
+
+.support-report-upload-status {
+  margin-left: auto;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 600px) {
+  .support-report-scope {
+    width: 100%;
+
+    mat-button-toggle {
+      flex: 1 1 0;
+      min-height: 44px;
+    }
+  }
+
+  .support-report-thumbs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .support-report-facts {
     grid-template-columns: minmax(0, 1fr);
 

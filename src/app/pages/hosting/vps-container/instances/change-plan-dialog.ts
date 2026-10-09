@@ -11,6 +11,7 @@ import type {
   HostingVpsContainerPlan,
   HostingVpsContainerPlanConfig,
 } from '../vps-container.types';
+import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 
 export type VpsContainerChangePlanDialogData = {
   instance: HostingVpsContainerInstance;
@@ -31,6 +32,7 @@ type ChangePlanOption = {
   selector: 'app-hosting-vps-container-change-plan-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,

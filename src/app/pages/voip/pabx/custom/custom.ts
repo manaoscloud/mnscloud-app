@@ -421,6 +421,7 @@ export type VoipCustomStepsDialogData = {
           <h2>{{ 'Pipeline Steps' | transloco }} • {{ customName }}</h2>
           <p>{{ customContext }}</p>
         </div>
+        <mns-report-problem-button />
       </header>
 
       <div class="dialog-content">

@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import type { HostingVpsInstance, HostingVpsPlan, HostingVpsPlanConfig } from '../vps.types';
+import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 
 export type ChangePlanDialogData = {
   instance: HostingVpsInstance;
@@ -26,6 +27,7 @@ type UpgradePlanOption = {
   selector: 'app-hosting-vps-change-plan-dialog',
   standalone: true,
   imports: [
+    ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -68,8 +70,12 @@ export class ChangePlanDialogComponent {
         if (!plan.HvpSize) return false;
 
         if (provider === 'lightsail') {
-          const currentFamily = String(current.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
-          const targetFamily = String(plan.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
+          const currentFamily = String(current.HvpConfig?.sizeFamily ?? '')
+            .trim()
+            .toLowerCase();
+          const targetFamily = String(plan.HvpConfig?.sizeFamily ?? '')
+            .trim()
+            .toLowerCase();
           if (currentFamily && targetFamily && currentFamily !== targetFamily) return false;
           const targetDisk = this.planDiskGb(plan);
           if (currentDisk > 0 && targetDisk > 0 && targetDisk < currentDisk) return false;
@@ -166,7 +172,9 @@ function formatPlanMoney(
 }
 
 function digitalOceanSizeGrouping(slug: string): { family: string; category: string } {
-  const normalized = String(slug ?? '').trim().toLowerCase();
+  const normalized = String(slug ?? '')
+    .trim()
+    .toLowerCase();
   if (
     normalized.startsWith('gpu-') ||
     normalized.includes('-gpu') ||
@@ -190,11 +198,7 @@ function digitalOceanSizeGrouping(slug: string): { family: string; category: str
   ) {
     return { family: 'CPU-Optimized', category: 'Dedicated CPU' };
   }
-  if (
-    normalized.startsWith('m-') ||
-    normalized.startsWith('m3-') ||
-    normalized.startsWith('m6-')
-  ) {
+  if (normalized.startsWith('m-') || normalized.startsWith('m3-') || normalized.startsWith('m6-')) {
     return { family: 'Memory-Optimized', category: 'Dedicated CPU' };
   }
   if (normalized.startsWith('so-') || normalized.startsWith('so1_5-')) {
@@ -223,7 +227,6 @@ function planSizeGrouping(plan: HostingVpsPlan | null | undefined): {
 
 function isGpuSizeGrouping(grouping: { family: string; category: string }) {
   return (
-    grouping.family.toLowerCase().includes('gpu') ||
-    grouping.category.toLowerCase().includes('gpu')
+    grouping.family.toLowerCase().includes('gpu') || grouping.category.toLowerCase().includes('gpu')
   );
 }

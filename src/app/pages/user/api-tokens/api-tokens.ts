@@ -72,6 +72,7 @@ type ApiTokenSecretDialogData = {
           <h2>{{ 'API token generated' | transloco }}</h2>
           <p>{{ 'Copy and store this token now. It will not be shown again.' | transloco }}</p>
         </div>
+        <mns-report-problem-button />
       </header>
 
       <mat-dialog-content class="dialog-content">
@@ -88,7 +89,7 @@ type ApiTokenSecretDialogData = {
 
           <mat-form-field appearance="outline" class="span-4">
             <mat-label>{{ 'TokenApi' | transloco }}</mat-label>
-            <textarea matInput rows="4" [value]="data.token" readonly></textarea>
+            <textarea matInput data-report-mask rows="4" [value]="data.token" readonly></textarea>
           </mat-form-field>
         </div>
       </mat-dialog-content>

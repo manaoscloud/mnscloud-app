@@ -30,6 +30,8 @@ window.MNSCLOUD_APP_CONFIG = {
 - API calls go through `src/app/services/api.service.ts`.
 - Runtime API URL resolution lives in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD page, dialog, table, upload, and filter behavior must follow `app.md`.
+- Every dialog header ends with `<mns-report-problem-button />` (`app.md` → Dialog Report Problem
+  Baseline, enforced by `npm run check:dialog-report`); mark visible secrets with `data-report-mask`.
 - Pick the page template from `app.md` → `Page Template Catalog (Current)`. Every CRUD/list page
   extends `ConfigurableCrudPageBase`; matching CSS hook classes alone is not compliance.
   `npm run check:crud:inventory` enforces this app-wide (no allowlist).
