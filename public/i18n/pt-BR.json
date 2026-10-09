@@ -6524,5 +6524,11 @@
   "LOGJUR": "LOGJUR",
   "RG": "RG",
   "RT": "RT",
-  "SADT": "SADT"
+  "SADT": "SADT",
+  "crud.generatePassword": "Gerar senha",
+  "crud.generateUsername": "Gerar usuário",
+  "crud.customer.resendWelcomeEmail": "Reenviar e-mail de boas-vindas com credenciais",
+  "Resend portal credentials": "Reenviar credenciais do portal",
+  "Resend portal credentials to this customer by email?": "Reenviar credenciais de acesso para este cliente por e-mail?",
+  "Welcome email with credentials resent successfully.": "E-mail de boas-vindas com credenciais reenviado com sucesso."
 }

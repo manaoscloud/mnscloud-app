@@ -695,6 +695,34 @@
                           }
                         </button>
                       }
+                      @if (field.suffixButtons?.length) {
+                        @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                          @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                            <button
+                              mat-icon-button
+                              matSuffix
+                              type="button"
+                              [color]="sBtn.color ?? 'primary'"
+                              [disabled]="isSuffixButtonDisabled(sBtn)"
+                              [matTooltip]="sBtn.tooltip | transloco"
+                              (click)="runSuffixButton(sBtn)"
+                            >
+                              <mat-icon>{{ sBtn.icon }}</mat-icon>
+                            </button>
+                          }
+                        }
+                      }
+                      @if (field.type === 'password') {
+                        <button
+                          mat-icon-button
+                          matSuffix
+                          type="button"
+                          [matTooltip]="'crud.generatePassword' | transloco"
+                          (click)="generatePasswordField(field.key)"
+                        >
+                          <mat-icon>autorenew</mat-icon>
+                        </button>
+                      }
                       @if (field.type === 'password') {
                         <button
                           mat-icon-button
@@ -751,17 +779,6 @@
                             >
                               {{ action.label | transloco }}
                             </mat-checkbox>
-                          }
-                          @if (isAddressSectionCompact(section)) {
-                            <button
-                              mat-stroked-button
-                              color="primary"
-                              type="button"
-                              (click)="editAddressSection(section)"
-                            >
-                              <mat-icon>edit</mat-icon>
-                              {{ 'Edit' | transloco }}
-                            </button>
                           }
                         </div>
                       }
@@ -1043,6 +1060,34 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (field.suffixButtons?.length) {
+                          @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                            @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                              <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                [color]="sBtn.color ?? 'primary'"
+                                [disabled]="isSuffixButtonDisabled(sBtn)"
+                                [matTooltip]="sBtn.tooltip | transloco"
+                                (click)="runSuffixButton(sBtn)"
+                              >
+                                <mat-icon>{{ sBtn.icon }}</mat-icon>
+                              </button>
+                            }
+                          }
+                        }
+                        @if (field.type === 'password') {
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            [matTooltip]="'crud.generatePassword' | transloco"
+                            (click)="generatePasswordField(field.key)"
+                          >
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                        }
                         @if (field.type === 'password') {
                           <button
                             mat-icon-button
@@ -1173,6 +1218,34 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (field.suffixButtons?.length) {
+                          @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                            @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                              <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                [color]="sBtn.color ?? 'primary'"
+                                [disabled]="isSuffixButtonDisabled(sBtn)"
+                                [matTooltip]="sBtn.tooltip | transloco"
+                                (click)="runSuffixButton(sBtn)"
+                              >
+                                <mat-icon>{{ sBtn.icon }}</mat-icon>
+                              </button>
+                            }
+                          }
+                        }
+                        @if (field.type === 'password') {
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            [matTooltip]="'crud.generatePassword' | transloco"
+                            (click)="generatePasswordField(field.key)"
+                          >
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                        }
                         @if (field.type === 'password') {
                           <button
                             mat-icon-button
@@ -1304,6 +1377,34 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (field.suffixButtons?.length) {
+                          @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                            @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                              <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                [color]="sBtn.color ?? 'primary'"
+                                [disabled]="isSuffixButtonDisabled(sBtn)"
+                                [matTooltip]="sBtn.tooltip | transloco"
+                                (click)="runSuffixButton(sBtn)"
+                              >
+                                <mat-icon>{{ sBtn.icon }}</mat-icon>
+                              </button>
+                            }
+                          }
+                        }
+                        @if (field.type === 'password') {
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            [matTooltip]="'crud.generatePassword' | transloco"
+                            (click)="generatePasswordField(field.key)"
+                          >
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                        }
                         @if (field.type === 'password') {
                           <button
                             mat-icon-button
@@ -2086,6 +2187,34 @@
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
+                        @if (field.suffixButtons?.length) {
+                          @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                            @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                              <button
+                                mat-icon-button
+                                matSuffix
+                                type="button"
+                                [color]="sBtn.color ?? 'primary'"
+                                [disabled]="isSuffixButtonDisabled(sBtn)"
+                                [matTooltip]="sBtn.tooltip | transloco"
+                                (click)="runSuffixButton(sBtn)"
+                              >
+                                <mat-icon>{{ sBtn.icon }}</mat-icon>
+                              </button>
+                            }
+                          }
+                        }
+                        @if (field.type === 'password') {
+                          <button
+                            mat-icon-button
+                            matSuffix
+                            type="button"
+                            [matTooltip]="'crud.generatePassword' | transloco"
+                            (click)="generatePasswordField(field.key)"
+                          >
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                        }
                         @if (field.type === 'password') {
                           <button
                             mat-icon-button
