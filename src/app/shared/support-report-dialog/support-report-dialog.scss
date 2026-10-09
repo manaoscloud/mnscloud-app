@@ -8,8 +8,8 @@
   margin: 0;
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
+  background: color-mix(in srgb, var(--mat-sys-color-error) 14%, var(--mat-sys-color-surface-container));
+  color: var(--mat-sys-color-on-surface);
 }
 
 .support-report-panel {
@@ -17,9 +17,9 @@
   flex-direction: column;
   gap: 0.6rem;
   padding: 0.75rem 0.9rem;
-  border: 1px solid var(--mat-sys-outline-variant);
+  border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 12px;
-  background: var(--mat-sys-surface-container);
+  background: var(--mat-sys-color-surface-container);
 }
 
 .support-report-panel-header {
@@ -46,10 +46,10 @@ summary.support-report-panel-header::-webkit-details-marker {
   align-items: center;
   gap: 0.4rem;
   font-weight: 600;
-  color: var(--mat-sys-on-surface);
+  color: var(--mat-sys-color-on-surface);
 
   mat-icon {
-    color: var(--mat-sys-primary);
+    color: var(--mat-sys-color-primary);
   }
 }
 
@@ -64,8 +64,8 @@ summary.support-report-panel-header::-webkit-details-marker {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
+  background: var(--mat-sys-color-primary-container);
+  color: var(--mat-sys-color-on-primary-container);
 }
 
 .support-report-screenshot {
@@ -73,9 +73,9 @@ summary.support-report-panel-header::-webkit-details-marker {
   width: 100%;
   max-height: 280px;
   object-fit: contain;
-  border: 1px solid var(--mat-sys-outline-variant);
+  border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 8px;
-  background: var(--mat-sys-surface-container-lowest);
+  background: var(--mat-sys-color-surface-container-lowest);
 }
 
 .support-report-placeholder {
@@ -85,16 +85,16 @@ summary.support-report-panel-header::-webkit-details-marker {
   gap: 0.6rem;
   min-height: 96px;
   padding: 0.75rem;
-  border: 1px dashed var(--mat-sys-outline-variant);
+  border: 1px dashed var(--mat-sys-color-outline-variant);
   border-radius: 8px;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
   text-align: center;
 }
 
 .support-report-note {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
 }
 
 .support-report-facts {
@@ -106,7 +106,7 @@ summary.support-report-panel-header::-webkit-details-marker {
 
   dt {
     font-weight: 600;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--mat-sys-color-on-surface-variant);
   }
 
   dd {
@@ -129,8 +129,8 @@ summary.support-report-panel-header::-webkit-details-marker {
   font-size: 0.75rem;
   white-space: pre-wrap;
   word-break: break-all;
-  background: var(--mat-sys-surface-container-highest);
-  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-color-surface-container-highest);
+  color: var(--mat-sys-color-on-surface);
 }
 
 .support-report-success {
@@ -149,7 +149,7 @@ summary.support-report-panel-header::-webkit-details-marker {
   p {
     margin: 0;
     max-width: 32rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--mat-sys-color-on-surface-variant);
   }
 }
 
@@ -157,7 +157,7 @@ summary.support-report-panel-header::-webkit-details-marker {
   width: 48px;
   height: 48px;
   font-size: 48px;
-  color: var(--mat-sys-primary);
+  color: var(--mat-sys-color-primary);
 }
 
 .support-report-scope {
@@ -169,8 +169,8 @@ summary.support-report-panel-header::-webkit-details-marker {
 }
 
 .support-report-images.is-dragging {
-  border-color: var(--mat-sys-primary);
-  background: color-mix(in srgb, var(--mat-sys-primary) 8%, var(--mat-sys-surface-container));
+  border-color: var(--mat-sys-color-primary);
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 8%, var(--mat-sys-color-surface-container));
 }
 
 .support-report-paste-hint {
@@ -196,9 +196,9 @@ summary.support-report-panel-header::-webkit-details-marker {
 .support-report-thumb {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--mat-sys-outline-variant);
+  border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 8px;
-  background: var(--mat-sys-surface-container-lowest);
+  background: var(--mat-sys-color-surface-container-lowest);
 
   img {
     display: block;
@@ -211,7 +211,7 @@ summary.support-report-panel-header::-webkit-details-marker {
 .support-report-thumb-actions {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-top: 1px solid var(--mat-sys-color-outline-variant);
 }
 
 .support-report-upload-list {
@@ -231,30 +231,21 @@ summary.support-report-panel-header::-webkit-details-marker {
   }
 
   .is-uploaded mat-icon {
-    color: var(--mat-sys-primary);
+    color: var(--mat-sys-color-primary);
   }
 
   .is-failed mat-icon {
-    color: var(--mat-sys-error);
+    color: var(--mat-sys-color-error);
   }
 }
 
 .support-report-upload-status {
   margin-left: auto;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
   font-size: 0.85rem;
 }
 
 @media (max-width: 600px) {
-  .support-report-scope {
-    width: 100%;
-
-    mat-button-toggle {
-      flex: 1 1 0;
-      min-height: 44px;
-    }
-  }
-
   .support-report-thumbs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -139,7 +139,7 @@
           </div>
 
           @if (canCropWindow) {
-            <mat-button-toggle-group
+            <mat-chip-listbox
               class="support-report-scope"
               hideSingleSelectionIndicator
               [value]="captureScope()"
@@ -147,13 +147,13 @@
               (change)="setCaptureScope($event.value)"
               [attr.aria-label]="'Capture area' | transloco"
             >
-              <mat-button-toggle value="viewport">{{
+              <mat-chip-option value="viewport" [selectable]="captureScope() !== 'viewport'">{{
                 'Whole screen' | transloco
-              }}</mat-button-toggle>
-              <mat-button-toggle value="window">{{
+              }}</mat-chip-option>
+              <mat-chip-option value="window" [selectable]="captureScope() !== 'window'">{{
                 'This window only' | transloco
-              }}</mat-button-toggle>
-            </mat-button-toggle-group>
+              }}</mat-chip-option>
+            </mat-chip-listbox>
           }
 
           @if (capturing()) {

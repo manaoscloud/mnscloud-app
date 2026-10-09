@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -40,7 +40,7 @@ const MARK_HALO = 'rgba(255, 255, 255, 0.85)';
   imports: [
     MatDialogModule,
     MatButtonModule,
-    MatButtonToggleModule,
+    MatChipsModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
@@ -54,6 +54,11 @@ export class ReportImageAnnotatorComponent {
   readonly data = inject<ImageAnnotatorData>(MAT_DIALOG_DATA);
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
 
+  readonly tools: ReadonlyArray<{ value: AnnotationTool; icon: string; label: string }> = [
+    { value: 'rect', icon: 'crop_square', label: 'Highlight' },
+    { value: 'arrow', icon: 'north_east', label: 'Arrow' },
+    { value: 'blur', icon: 'blur_on', label: 'Blur' },
+  ];
   readonly tool = signal<AnnotationTool>('rect');
   readonly annotations = signal<Annotation[]>([]);
   readonly loading = signal(true);

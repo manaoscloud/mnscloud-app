@@ -14,25 +14,19 @@
 
   <mat-dialog-content class="dialog-content">
     <div class="report-annotator-toolbar">
-      <mat-button-toggle-group
+      <mat-chip-listbox
         hideSingleSelectionIndicator
         [value]="tool()"
         (change)="setTool($event.value)"
         [attr.aria-label]="'Annotation tool' | transloco"
       >
-        <mat-button-toggle value="rect">
-          <mat-icon>crop_square</mat-icon>
-          <span class="report-annotator-label">{{ 'Highlight' | transloco }}</span>
-        </mat-button-toggle>
-        <mat-button-toggle value="arrow">
-          <mat-icon>north_east</mat-icon>
-          <span class="report-annotator-label">{{ 'Arrow' | transloco }}</span>
-        </mat-button-toggle>
-        <mat-button-toggle value="blur">
-          <mat-icon>blur_on</mat-icon>
-          <span class="report-annotator-label">{{ 'Blur' | transloco }}</span>
-        </mat-button-toggle>
-      </mat-button-toggle-group>
+        @for (option of tools; track option.value) {
+          <mat-chip-option [value]="option.value" [selectable]="tool() !== option.value">
+            <mat-icon matChipAvatar>{{ option.icon }}</mat-icon>
+            {{ option.label | transloco }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
       <span class="report-annotator-history">
         <button
           mat-icon-button

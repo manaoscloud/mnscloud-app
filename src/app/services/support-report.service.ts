@@ -170,7 +170,10 @@ export class SupportReportService {
         width: window.innerWidth,
         height: window.innerHeight,
         ignoreElements: isExcludedFromReportCapture,
-        onclone: (clone: Document) => maskSensitiveContent(clone),
+        onclone: (clone: Document) => {
+          maskSensitiveContent(clone);
+          prepareCloneForCapture(clone);
+        },
       });
       const origin = scope === 'window' ? this.originElement?.deref() : null;
       const cropped = origin?.isConnected ? cropToElement(canvas, origin) : canvas;
@@ -433,6 +436,43 @@ function cropToElement(canvas: HTMLCanvasElement, element: HTMLElement): HTMLCan
   cropped.height = height;
   cropped.getContext('2d')?.drawImage(canvas, left, top, width, height, 0, 0, width, height);
   return cropped;
+}
+
+/**
+ * Works around what html2canvas cannot paint, so the print matches the screen: elements with
+ * `backdrop-filter` (dialog footers, sticky tab headers) disappear entirely, and Material floating
+ * labels lose their text. Labels are redrawn as plain text at the same place in the clone.
+ */
+export function prepareCloneForCapture(clone: Document): void {
+  const style = clone.createElement('style');
+  style.textContent =
+    '*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }';
+  clone.head.appendChild(style);
+  const view = clone.defaultView;
+  if (!view) return;
+  clone.querySelectorAll<HTMLElement>('.mdc-floating-label').forEach((label) => {
+    const rect = label.getBoundingClientRect();
+    const text = label.textContent?.trim();
+    if (!text || !rect.width || !rect.height) return;
+    const computed = view.getComputedStyle(label);
+    const scale = label.offsetHeight ? rect.height / label.offsetHeight : 1;
+    const copy = clone.createElement('span');
+    copy.textContent = text;
+    Object.assign(copy.style, {
+      position: 'fixed',
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      color: computed.color,
+      fontFamily: computed.fontFamily,
+      fontWeight: computed.fontWeight,
+      fontSize: `${parseFloat(computed.fontSize) * scale}px`,
+      lineHeight: `${rect.height}px`,
+      whiteSpace: 'nowrap',
+      zIndex: '2147483647',
+    });
+    clone.body.appendChild(copy);
+    label.style.setProperty('visibility', 'hidden', 'important');
+  });
 }
 
 /**

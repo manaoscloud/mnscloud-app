@@ -7,7 +7,7 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -61,7 +61,7 @@ function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): Cata
     MatIconModule,
     MatProgressSpinnerModule,
     MatSlideToggleModule,
-    MatButtonToggleModule,
+    MatChipsModule,
     MatTooltipModule,
     MnsSearchSelectFieldComponent,
     TranslocoPipe,
