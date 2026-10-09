@@ -6549,5 +6549,6 @@
   "Softswitch SIP realm automation active": "Automatización del realm SIP del Softswitch activa",
   "Softswitch SIP realm base": "Base del realm SIP del Softswitch",
   "Softswitch SIP realm label": "Etiqueta del realm SIP del Softswitch",
-  "Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.": "Los nombres de realm del Softswitch se generan bajo esta base DNS. Use una base dentro de este dominio, distinta de la base del PABX."
+  "Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.": "Los nombres de realm del Softswitch se generan bajo esta base DNS. Use una base dentro de este dominio, distinta de la base del PABX.",
+  "Attachment preview": "Vista previa del adjunto"
 }
