@@ -1,5 +1,13 @@
 {
   "9000": "9000",
+  "Customer Portal": "Customer Portal",
+  "Portal access": "Portal access",
+  "Portal login (Username)": "Portal login (Username)",
+  "Portal password": "Portal password",
+  "Must change password on next login": "Must change password on next login",
+  "Send welcome email with credentials": "Send welcome email with credentials",
+  "Unique portal username": "Unique portal username",
+  "Set or change password": "Set or change password",
   "Accepted": "Accepted",
   "Accepted at": "Accepted at",
   "Access": "Access",

@@ -1,5 +1,13 @@
 {
   "9000": "9000",
+  "Customer Portal": "Portal del Cliente",
+  "Portal access": "Acceso al portal",
+  "Portal login (Username)": "Login del portal (Usuario)",
+  "Portal password": "Contraseña del portal",
+  "Must change password on next login": "Exigir cambio de contraseña en el próximo inicio de sesión",
+  "Send welcome email with credentials": "Enviar correo de bienvenida con credenciales",
+  "Unique portal username": "Usuario único del portal",
+  "Set or change password": "Definir o cambiar contraseña",
   "Accepted": "Aceptado",
   "Accepted at": "Aceptado el",
   "Access": "Acceso",
