@@ -134,6 +134,7 @@ const GUIDE_CONFIG: ConfigurableCrudConfig = {
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class ClinicBradescoSiadGuidesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly dossierDialog = inject(MatDialog);
