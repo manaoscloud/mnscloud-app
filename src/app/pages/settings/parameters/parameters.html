@@ -689,7 +689,193 @@
           <div class="tab-content empty-tab">{{ 'No SBC defaults configured yet.' | transloco }}</div>
         </mat-tab>
         <mat-tab [label]="'Softswitch' | transloco">
-          <div class="tab-content empty-tab">{{ 'No softswitch defaults configured yet.' | transloco }}</div>
+          <mat-tab-group class="nested-tabs softswitch-parameter-tabs">
+            <mat-tab [label]="'SIP Realm' | transloco">
+              <form class="tab-content form-grid">
+                @if (!isMaster()) {
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Configuration source' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipSoftswitchRealmSource"
+                      (selectionChange)="updateItem({ voipSoftswitchRealmSource: $event.value })"
+                    >
+                      @for (option of realmSources; track option.value) {
+                        <mat-option [value]="option.value">{{
+                          option.label | transloco
+                        }}</mat-option>
+                      }
+                    </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Configuration source' | transloco"
+                      [text]="
+                        'Determines whether Softswitch SIP realms inherit platform defaults or use own managed domain policies.'
+                          | transloco
+                      "
+                    />
+                  </mat-form-field>
+                }
+                @if (isMaster() || item().voipSoftswitchRealmSource === 'own') {
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Softswitch SIP realm DNS mode' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipSoftswitchAutoDomainDnsMode"
+                      (selectionChange)="updateItem({ voipSoftswitchAutoDomainDnsMode: $event.value })"
+                    >
+                      @for (option of realmDnsModes; track option.value) {
+                        <mat-option [value]="option.value">{{
+                          option.label | transloco
+                        }}</mat-option>
+                      }
+                    </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Softswitch SIP realm DNS mode' | transloco"
+                      [text]="
+                        'Publication mode for generated SIP realm names (managed authoritative DNS or identity string only).'
+                          | transloco
+                      "
+                    />
+                  </mat-form-field>
+
+                  @if (item().voipSoftswitchAutoDomainDnsMode === 'managed_dns') {
+                    <mns-search-select-field
+                      data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
+                      fieldClass="span-4"
+                      [label]="'Domain for Realm SIP publication' | transloco"
+                      [options]="dnsPolicyOptions()"
+                      [remoteSearch]="true"
+                      [loading]="dnsLoading()"
+                      [loadError]="dnsLoadError()"
+                      [hasPrevious]="dnsOffset() > 0"
+                      [hasNext]="dnsOffset() + 50 < dnsTotal()"
+                      (searchChange)="searchDnsPolicies($event)"
+                      (pageChange)="pageDnsPolicies($event)"
+                      (openedChange)="$event && refreshDnsPolicies()"
+                      [value]="item().voipSoftswitchDnsPolicyUUID"
+                      [help]="
+                        'Managed DNS publishes A records in an authorized zone. Existing SIP realms are not changed.'
+                          | transloco
+                      "
+                      (valueChange)="selectSoftswitchDnsPolicy($event)"
+                    />
+
+                    @if (softswitchSelectedPolicyInvalid()) {
+                      <p class="span-4 settings-page-feedback" role="alert">
+                        {{ softswitchSelectedPolicyError() | transloco }}
+                      </p>
+                    }
+                  } @else {
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'Softswitch SIP realm base' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [placeholder]="voipSoftswitchAutoDomainBasePlaceholder()"
+                        [value]="item().voipSoftswitchAutoDomainBase"
+                        (input)="updateItem({ voipSoftswitchAutoDomainBase: $any($event.target).value })"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'Softswitch SIP realm base' | transloco"
+                        [text]="
+                          'Base domain suffix for auto-generated Softswitch SIP realms (e.g. softswitch.publichost.cloud).'
+                            | transloco
+                        "
+                      />
+                    </mat-form-field>
+                  }
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Softswitch SIP realm label' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="item().voipSoftswitchAutoDomainLabelMode"
+                      (selectionChange)="updateItem({ voipSoftswitchAutoDomainLabelMode: $event.value })"
+                    >
+                      <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
+                    </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Softswitch SIP realm label' | transloco"
+                      [text]="
+                        'Format of the host prefix generated for each newly provisioned Softswitch realm.'
+                          | transloco
+                      "
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Softswitch SIP realm UUID length' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      min="8"
+                      max="32"
+                      [value]="item().voipSoftswitchAutoDomainUuidLength"
+                      (input)="
+                        updateItem({ voipSoftswitchAutoDomainUuidLength: $any($event.target).value })
+                      "
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Softswitch SIP realm UUID length' | transloco"
+                      [text]="
+                        'Character length of the random short UUID prefix (between 8 and 32 characters).'
+                          | transloco
+                      "
+                    />
+                  </mat-form-field>
+
+                  <div class="span-2 parameter-toggle-cell">
+                    <mat-slide-toggle
+                      [checked]="item().voipSoftswitchAutoDomainEnabled"
+                      (change)="updateItem({ voipSoftswitchAutoDomainEnabled: $event.checked })"
+                    >
+                      {{ 'Create Softswitch SIP realm automatically' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                  <div class="span-2 parameter-toggle-cell">
+                    <mat-slide-toggle
+                      [checked]="item().voipSoftswitchAutoDomainSetDefault"
+                      (change)="updateItem({ voipSoftswitchAutoDomainSetDefault: $event.checked })"
+                    >
+                      {{ 'Set generated Softswitch SIP realm as default' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                  <div class="span-4 parameter-toggle-cell">
+                    <mat-slide-toggle
+                      [checked]="item().voipSoftswitchAutoDomainIsActive"
+                      (change)="updateItem({ voipSoftswitchAutoDomainIsActive: $event.checked })"
+                    >
+                      {{ 'Softswitch SIP realm automation active' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                } @else {
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Inherited publication mode' | transloco }}</mat-label>
+                    <input matInput [value]="softswitchInheritedModeLabel() | transloco" readonly />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Inherited SIP Realm domain' | transloco }}</mat-label>
+                    <input matInput [value]="softswitchInheritedDomainLabel()" readonly />
+                  </mat-form-field>
+
+                  @if (softswitchInheritedPolicyInvalid()) {
+                    <p class="span-4 settings-page-feedback" role="alert">
+                      {{ softswitchInheritedPolicyError() | transloco }}
+                    </p>
+                  }
+
+                  <p class="span-4 empty-tab">
+                    {{
+                      'New Softswitch accounts inherit the complete platform Realm SIP configuration.'
+                        | transloco
+                    }}
+                  </p>
+                }
+              </form>
+            </mat-tab>
+          </mat-tab-group>
         </mat-tab>
         <mat-tab [label]="'PABX' | transloco">
           <mat-tab-group class="nested-tabs pabx-parameter-tabs">
