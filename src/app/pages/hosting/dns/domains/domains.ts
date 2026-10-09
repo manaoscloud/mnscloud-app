@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -34,6 +35,86 @@ const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
   icon: 'cloud_sync',
   tooltip: 'Provision DNS domain',
 };
+
+type VoipDnsService = 'pabx' | 'softswitch';
+
+/** VoIP services with an independent DNS publication policy per zone. */
+const VOIP_DNS_SERVICES: readonly VoipDnsService[] = ['pabx', 'softswitch'];
+
+const VOIP_DNS_HELP: Record<VoipDnsService, { enabled: string; base: string; capacity: string }> = {
+  pabx: {
+    enabled:
+      'Automatically publish the SIP realm DNS records when a PABX account is created. Provision the DNS zone before enabling publication.',
+    base: 'PABX realm names are generated under this DNS base. Use a base within this domain.',
+    capacity: 'Maximum number of PABX DNS publications allowed by this policy.',
+  },
+  softswitch: {
+    enabled:
+      'Automatically publish the SIP realm DNS records when a Softswitch account is created. Provision the DNS zone before enabling publication.',
+    base: 'Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.',
+    capacity: 'Maximum number of Softswitch DNS publications allowed by this policy.',
+  },
+};
+
+function voipPolicyFields(
+  service: VoipDnsService,
+  tab: 'network' | 'routing',
+): ConfigurableCrudField[] {
+  return [
+    {
+      key: `${service}PolicyEnabled`,
+      help: VOIP_DNS_HELP[service].enabled,
+      label: 'Automatic publication',
+      type: 'select',
+      options: [
+        { value: false, label: 'Disabled' },
+        { value: true, label: 'Enabled' },
+      ],
+      tab,
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: `${service}PolicyBase`,
+      help: VOIP_DNS_HELP[service].base,
+      label: 'Realm SIP base',
+      tab,
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: `${service}PolicyTtl`,
+      help: 'Time in seconds that DNS resolvers may cache the published records.',
+      label: 'DNS TTL (seconds)',
+      type: 'number',
+      tab,
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: `${service}PolicyCapacity`,
+      help: VOIP_DNS_HELP[service].capacity,
+      label: 'Publication capacity',
+      type: 'number',
+      tab,
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+    },
+    {
+      key: `${service}PolicyPlatform`,
+      label: 'Availability',
+      type: 'select',
+      options: [
+        { value: false, label: 'Tenant only' },
+        { value: true, label: 'Platform' },
+      ],
+      tab,
+      span: 2,
+      hiddenWhen: ({ editing }) => !editing,
+      help: 'Platform sharing requires master permission and a platform DNS provider.',
+    },
+  ];
+}
 
 const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/dns/domains',
@@ -78,7 +159,12 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
-  tabLabels: { storage: 'DNS settings', network: 'PABX DNS', notes: 'Notes' },
+  tabLabels: {
+    storage: 'DNS settings',
+    network: 'PABX DNS',
+    routing: 'Softswitch DNS',
+    notes: 'Notes',
+  },
   initialValues: {
     registerUUID: '',
     customerUUID: '',
@@ -122,58 +208,8 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'HddStatus', className: 'status-col' },
   ],
   fields: [
-    {
-      key: 'pabxPolicyEnabled',
-      help: 'Automatically publish the SIP realm DNS records when a PABX account is created. Provision the DNS zone before enabling publication.',
-      label: 'Automatic publication',
-      type: 'select',
-      options: [
-        { value: false, label: 'Disabled' },
-        { value: true, label: 'Enabled' },
-      ],
-      tab: 'network',
-      span: 2,
-      hiddenWhen: ({ editing }) => !editing,
-    },
-    {
-      key: 'pabxPolicyBase',
-      help: 'PABX realm names are generated under this DNS base. Use a base within this domain.',
-      label: 'Realm SIP base',
-      tab: 'network',
-      span: 2,
-      hiddenWhen: ({ editing }) => !editing,
-    },
-    {
-      key: 'pabxPolicyTtl',
-      help: 'Time in seconds that DNS resolvers may cache the published records.',
-      label: 'DNS TTL (seconds)',
-      type: 'number',
-      tab: 'network',
-      span: 1,
-      hiddenWhen: ({ editing }) => !editing,
-    },
-    {
-      key: 'pabxPolicyCapacity',
-      help: 'Maximum number of PABX DNS publications allowed by this policy.',
-      label: 'Publication capacity',
-      type: 'number',
-      tab: 'network',
-      span: 1,
-      hiddenWhen: ({ editing }) => !editing,
-    },
-    {
-      key: 'pabxPolicyPlatform',
-      label: 'Availability',
-      type: 'select',
-      options: [
-        { value: false, label: 'Tenant only' },
-        { value: true, label: 'Platform' },
-      ],
-      tab: 'network',
-      span: 2,
-      hiddenWhen: ({ editing }) => !editing,
-      help: 'Platform sharing requires master permission and a platform DNS provider.',
-    },
+    ...voipPolicyFields('pabx', 'network'),
+    ...voipPolicyFields('softswitch', 'routing'),
 
     {
       key: 'status',
@@ -309,43 +345,54 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       defaultTtl: payload['defaultTtl'],
       status: payload['status'],
       notes: payload['notes'],
-      ...(this.editingRecord() &&
-      JSON.stringify({
-        pabxPolicyEnabled: this.formValues()['pabxPolicyEnabled'] === true,
-        pabxPolicyBase: this.formValues()['pabxPolicyBase'],
-        pabxPolicyTtl: Number(this.formValues()['pabxPolicyTtl']),
-        pabxPolicyCapacity: Number(this.formValues()['pabxPolicyCapacity']),
-        pabxPolicyPlatform: this.isMaster() || this.formValues()['pabxPolicyPlatform'] === true,
-      }) !== this.loadedPolicySignature
-        ? {
-            pabxDnsPolicy: {
-              base: this.formValues()['pabxPolicyBase'],
-              ttl: Number(this.formValues()['pabxPolicyTtl']),
-              capacity: Number(this.formValues()['pabxPolicyCapacity']),
-              platform: this.isMaster() || this.formValues()['pabxPolicyPlatform'] === true,
-              status: this.formValues()['pabxPolicyEnabled'] === true,
-            },
-          }
-        : {}),
+      ...(this.editingRecord() ? this.changedVoipDnsPolicies() : {}),
     };
   }
 
-  private loadedPolicySignature = '';
+  private loadedPolicySignatures: Partial<Record<VoipDnsService, string>> = {};
+
+  private voipDnsPolicy(service: VoipDnsService) {
+    const values = this.formValues();
+    return {
+      purpose: service,
+      base: values[`${service}PolicyBase`],
+      ttl: Number(values[`${service}PolicyTtl`]),
+      capacity: Number(values[`${service}PolicyCapacity`]),
+      platform: this.isMaster() || values[`${service}PolicyPlatform`] === true,
+      status: values[`${service}PolicyEnabled`] === true,
+    };
+  }
+
+  /** Sends only the service policies the operator changed, each keeping its own base. */
+  private changedVoipDnsPolicies(): ConfigurableCrudRecord {
+    const changed = VOIP_DNS_SERVICES.map((service) => this.voipDnsPolicy(service)).filter(
+      (policy) => JSON.stringify(policy) !== this.loadedPolicySignatures[policy.purpose],
+    );
+    return changed.length ? { voipDnsPolicies: changed } : {};
+  }
+
   override async startEdit(row: ConfigurableCrudRecord) {
     try {
       const result = await this.api.get<any>(
-        `${this.config.endpoint}/${this.recordUUID(row)}/pabx-policy`,
+        `${this.config.endpoint}/${this.recordUUID(row)}/voip-policies`,
       );
-      const p = result?.data?.items?.[0];
-      const values = {
-        pabxPolicyEnabled: p?.status === true || p?.status === 1,
-        pabxPolicyBase: p?.base ?? `pabx.${row['HddName']}`,
-        pabxPolicyTtl: p?.ttl ?? 300,
-        pabxPolicyCapacity: p?.capacity ?? 1000,
-        pabxPolicyPlatform: this.isMaster() || p?.platform === true || p?.platform === 1,
-      };
-      this.loadedPolicySignature = JSON.stringify(values);
+      const items: any[] = result?.data?.items ?? [];
+      const values: ConfigurableCrudRecord = {};
+      for (const service of VOIP_DNS_SERVICES) {
+        const p = items.find((item) => item?.purpose === service);
+        Object.assign(values, {
+          [`${service}PolicyEnabled`]: p?.status === true || p?.status === 1,
+          [`${service}PolicyBase`]: p?.base ?? `${service}.${row['HddName']}`,
+          [`${service}PolicyTtl`]: p?.ttl ?? 300,
+          [`${service}PolicyCapacity`]: p?.capacity ?? 1000,
+          [`${service}PolicyPlatform`]:
+            this.isMaster() || p?.platform === true || p?.platform === 1,
+        });
+      }
       super.startEdit({ ...row, ...values });
+      this.loadedPolicySignatures = Object.fromEntries(
+        VOIP_DNS_SERVICES.map((service) => [service, JSON.stringify(this.voipDnsPolicy(service))]),
+      );
     } catch (e) {
       this.snack.error(this.errorMessage(e));
     }
