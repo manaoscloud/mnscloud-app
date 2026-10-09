@@ -2,407 +2,878 @@
   [loading]="loading()" [saving]="saving()" [dirty]="hasChanges()"
   [error]="feedback()" [success]="success()"
   (refresh)="refreshItems()" (cancel)="cancelChanges()" (save)="saveAll()">
-        <mat-tab-group class="form-tabs">
-          <mat-tab [label]="'Record' | transloco">
-            <form class="tab-content form-grid">
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Default Currency' | transloco }}</mat-label>
-                <input
-                  matInput
-                  maxlength="3"
-                  [placeholder]="'BRL' | transloco" [value]="item().defaultCurrency" (input)="updateItem({ defaultCurrency: $any($event.target).value })" />
-              </mat-form-field>
+  <mat-tab-group class="form-tabs">
+    <mat-tab [label]="'Record' | transloco">
+      <form class="tab-content form-grid">
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ 'Default Currency' | transloco }}</mat-label>
+          <input
+            matInput
+            maxlength="3"
+            [placeholder]="'BRL' | transloco"
+            [value]="item().defaultCurrency"
+            (input)="updateItem({ defaultCurrency: $any($event.target).value })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'Default Currency' | transloco"
+            [text]="
+              'Global default currency code (ISO 4217). Applied when an account or transaction does not define its own currency.'
+                | transloco
+            "
+          />
+        </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Default Language' | transloco }}</mat-label>
-                <mat-select
-                  [placeholder]="'pt-BR' | transloco" [value]="item().defaultLanguage" (selectionChange)="updateItem({ defaultLanguage: $event.value })">
-                  @for (language of languageOptions; track language.code) {
-                    <mat-option [value]="language.code">
-                      {{ language.labelKey | transloco }}
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ 'Default Language' | transloco }}</mat-label>
+          <mat-select
+            [placeholder]="'pt-BR' | transloco"
+            [value]="item().defaultLanguage"
+            (selectionChange)="updateItem({ defaultLanguage: $event.value })"
+          >
+            @for (language of languageOptions; track language.code) {
+              <mat-option [value]="language.code">
+                {{ language.labelKey | transloco }}
+              </mat-option>
+            }
+          </mat-select>
+          <mns-field-help
+            matIconSuffix
+            [label]="'Default Language' | transloco"
+            [text]="
+              'Default language for notifications, email communications and public user interfaces.'
+                | transloco
+            "
+          />
+        </mat-form-field>
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>{{ 'Default Timezone' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [placeholder]="defaultTimezonePlaceholder()" [value]="item().defaultTimezone" (input)="updateItem({ defaultTimezone: $any($event.target).value })" />
-              </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Default Timezone' | transloco }}</mat-label>
+          <input
+            matInput
+            [placeholder]="defaultTimezonePlaceholder()"
+            [value]="item().defaultTimezone"
+            (input)="updateItem({ defaultTimezone: $any($event.target).value })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'Default Timezone' | transloco"
+            [text]="
+              'Global IANA timezone reference (e.g. America/Sao_Paulo). Used for schedule timers, report windows and CDR timestamps.'
+                | transloco
+            "
+          />
+        </mat-form-field>
 
-              <div class="toggle-grid span-4">
-                <mat-slide-toggle [checked]="item().defaultCurrencyIsActive" (change)="updateItem({ defaultCurrencyIsActive: $event.checked })">
-                  {{ 'Default Currency Active' | transloco }}
-                </mat-slide-toggle>
+        <div class="span-1 parameter-toggle-cell">
+          <mat-slide-toggle
+            [checked]="item().defaultCurrencyIsActive"
+            (change)="updateItem({ defaultCurrencyIsActive: $event.checked })"
+          >
+            {{ 'Default Currency Active' | transloco }}
+          </mat-slide-toggle>
+        </div>
 
-                <mat-slide-toggle [checked]="item().defaultLanguageIsActive" (change)="updateItem({ defaultLanguageIsActive: $event.checked })">
-                  {{ 'Default Language Active' | transloco }}
-                </mat-slide-toggle>
+        <div class="span-1 parameter-toggle-cell">
+          <mat-slide-toggle
+            [checked]="item().defaultLanguageIsActive"
+            (change)="updateItem({ defaultLanguageIsActive: $event.checked })"
+          >
+            {{ 'Default Language Active' | transloco }}
+          </mat-slide-toggle>
+        </div>
 
-                <mat-slide-toggle [checked]="item().defaultTimezoneIsActive" (change)="updateItem({ defaultTimezoneIsActive: $event.checked })">
-                  {{ 'Default Timezone Active' | transloco }}
-                </mat-slide-toggle>
-              </div>
-            </form>
-          </mat-tab>
+        <div class="span-2 parameter-toggle-cell">
+          <mat-slide-toggle
+            [checked]="item().defaultTimezoneIsActive"
+            (change)="updateItem({ defaultTimezoneIsActive: $event.checked })"
+          >
+            {{ 'Default Timezone Active' | transloco }}
+          </mat-slide-toggle>
+        </div>
+      </form>
+    </mat-tab>
 
-          <mat-tab [label]="'Integrations' | transloco">
-            <mat-tab-group class="nested-tabs integration-tabs">
-              <mat-tab [label]="'Google' | transloco">
+    <mat-tab [label]="'Integrations' | transloco">
+      <mat-tab-group class="nested-tabs integration-tabs">
+        <mat-tab [label]="'Google' | transloco">
+          <form class="tab-content form-grid">
+            <mat-form-field appearance="outline" class="span-3">
+              <mat-label>{{ 'Google Maps Embed API Key' | transloco }}</mat-label>
+              <input
+                matInput
+                [type]="showGoogleMapsEmbedApiKey() ? 'text' : 'password'"
+                [placeholder]="'Google Maps Street View embed API key' | transloco"
+                [value]="item().googleMapsEmbedApiKey"
+                (input)="updateItem({ googleMapsEmbedApiKey: $any($event.target).value })"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="
+                  (showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key')
+                    | transloco
+                "
+                (click)="showGoogleMapsEmbedApiKey.set(!showGoogleMapsEmbedApiKey())"
+              >
+                <mat-icon>{{
+                  showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility'
+                }}</mat-icon>
+              </button>
+              <mns-field-help
+                matIconSuffix
+                [label]="'Google Maps Embed API Key' | transloco"
+                [text]="
+                  'Google Maps Embed API key for Street View and embed mapping services.'
+                    | transloco
+                "
+              />
+            </mat-form-field>
+
+            <div class="span-1 toggle-field-align">
+              <mat-slide-toggle
+                [checked]="item().googleMapsEmbedApiKeyIsActive"
+                (change)="updateItem({ googleMapsEmbedApiKeyIsActive: $event.checked })"
+              >
+                {{ 'Google Maps Key Active' | transloco }}
+              </mat-slide-toggle>
+            </div>
+          </form>
+        </mat-tab>
+
+        <mat-tab [label]="'Mapbox' | transloco">
+          <form class="tab-content form-grid">
+            <mat-form-field appearance="outline" class="span-3">
+              <mat-label>{{ 'Mapbox Token' | transloco }}</mat-label>
+              <input
+                matInput
+                [type]="showMapboxToken() ? 'text' : 'password'"
+                [placeholder]="'Mapbox public token' | transloco"
+                [value]="item().mapboxToken"
+                (input)="updateItem({ mapboxToken: $any($event.target).value })"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                [attr.aria-label]="
+                  (showMapboxToken() ? 'Hide Mapbox token' : 'Show Mapbox token') | transloco
+                "
+                (click)="showMapboxToken.set(!showMapboxToken())"
+              >
+                <mat-icon>{{
+                  showMapboxToken() ? 'visibility_off' : 'visibility'
+                }}</mat-icon>
+              </button>
+              <mns-field-help
+                matIconSuffix
+                [label]="'Mapbox Token' | transloco"
+                [text]="
+                  'Mapbox public access token for vector map rendering in ISP and asset geomaps.'
+                    | transloco
+                "
+              />
+            </mat-form-field>
+
+            <div class="span-1 toggle-field-align">
+              <mat-slide-toggle
+                [checked]="item().mapboxTokenIsActive"
+                (change)="updateItem({ mapboxTokenIsActive: $event.checked })"
+              >
+                {{ 'Mapbox Token Active' | transloco }}
+              </mat-slide-toggle>
+            </div>
+          </form>
+        </mat-tab>
+
+        @if (!isMaster()) {
+          <mat-tab [label]="'Bradesco' | transloco">
+            <mat-tab-group class="nested-tabs siad-tabs">
+              <mat-tab [label]="'SIAD' | transloco">
                 <form class="tab-content form-grid">
-                  <mat-form-field appearance="outline" class="span-4">
-                    <mat-label>{{ 'Google Maps Embed API Key' | transloco }}</mat-label>
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'SIAD Environment' | transloco }}</mat-label>
+                    <mat-select
+                      [value]="siadItem().environment"
+                      (selectionChange)="updateSiad({ environment: $event.value })"
+                    >
+                      <mat-option value="dsv">{{ 'Development' | transloco }}</mat-option>
+                      <mat-option value="hml">{{ 'Homologation' | transloco }}</mat-option>
+                      <mat-option value="prd">{{ 'Production' | transloco }}</mat-option>
+                    </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'SIAD Environment' | transloco"
+                      [text]="
+                        'Target environment for Bradesco SIAD banking operations.' | transloco
+                      "
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'Origin' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      maxlength="20"
+                      [value]="siadItem().origin"
+                      (input)="updateSiad({ origin: $any($event.target).value })"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Origin' | transloco"
+                      [text]="'Origin code assigned by Bradesco for this tenant channel.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'Suborigin' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      maxlength="20"
+                      [value]="siadItem().suborigin"
+                      (input)="updateSiad({ suborigin: $any($event.target).value })"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Suborigin' | transloco"
+                      [text]="'Suborigin identifier for SIAD operation routing.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'Referenced' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      maxlength="10"
+                      [value]="siadItem().referenciado"
+                      (input)="updateSiad({ referenciado: $any($event.target).value })"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Referenced' | transloco"
+                      [text]="'Referenced code assigned by Bradesco for this operation.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Client ID' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      [value]="siadCredentials().clientId"
+                      [placeholder]="
+                        siadItem().credentialsConfigured
+                          ? ('Configured. Enter to replace.' | transloco)
+                          : ''
+                      "
+                      (input)="updateSiadCredentials({ clientId: $any($event.target).value })"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Client ID' | transloco"
+                      [text]="'OAuth2 client ID for Bradesco SIAD API authentication.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'Client Secret' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      [type]="showSiadClientSecret() ? 'text' : 'password'"
+                      [value]="siadCredentials().clientSecret"
+                      (input)="updateSiadCredentials({ clientSecret: $any($event.target).value })"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      [attr.aria-label]="'Toggle credential visibility' | transloco"
+                      (click)="showSiadClientSecret.set(!showSiadClientSecret())"
+                    >
+                      <mat-icon>{{
+                        showSiadClientSecret() ? 'visibility_off' : 'visibility'
+                      }}</mat-icon>
+                    </button>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Client Secret' | transloco"
+                      [text]="'OAuth2 client secret for Bradesco SIAD API authentication.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <input
+                    #siadCertificateInput
+                    type="file"
+                    hidden
+                    accept=".pem,.crt,.cer,application/x-pem-file"
+                    (change)="selectSiadCertificate($event)"
+                  />
+                  <input
+                    #siadPrivateKeyInput
+                    type="file"
+                    hidden
+                    accept=".pem,.key,application/x-pem-file"
+                    (change)="selectSiadPrivateKey($event)"
+                  />
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'mTLS Certificate' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      readonly
+                      [value]="
+                        siadCertificateFile()?.name ??
+                        siadItem().credential?.certificateFilename ??
+                        ''
+                      "
+                      [placeholder]="'Select certificate file' | transloco"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      [attr.aria-label]="'Select certificate file' | transloco"
+                      (click)="siadCertificateInput.click()"
+                    >
+                      <mat-icon>upload_file</mat-icon>
+                    </button>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'mTLS Certificate' | transloco"
+                      [text]="'Mutual TLS client certificate file (.pem, .crt, .cer).' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'mTLS Private Key' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      readonly
+                      [value]="siadPrivateKeyFile()?.name ?? ''"
+                      [placeholder]="'Select private key file' | transloco"
+                    />
+                    <button
+                      mat-icon-button
+                      matSuffix
+                      type="button"
+                      [attr.aria-label]="'Select private key file' | transloco"
+                      (click)="siadPrivateKeyInput.click()"
+                    >
+                      <mat-icon>upload_file</mat-icon>
+                    </button>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'mTLS Private Key' | transloco"
+                      [text]="'Mutual TLS private key file (.key, .pem) matching the certificate.' | transloco"
+                    />
+                  </mat-form-field>
+
+                  <p class="integration-secret-state span-3 toggle-field-align">
+                    @if (siadItem().credentialsConfigured && siadItem().credential) {
+                      {{ 'SIAD Credentials Configured' | transloco }} ·
+                      {{ 'Certificate expires' | transloco }}:
+                      {{ siadItem().credential?.certificateNotAfter }}
+                    } @else {
+                      {{ 'SIAD Credentials Pending' | transloco }}
+                    }
+                  </p>
+
+                  <div class="span-1 toggle-field-align">
+                    <mat-slide-toggle
+                      [checked]="siadItem().isActive"
+                      (change)="updateSiad({ isActive: $event.checked })"
+                    >
+                      {{ 'SIAD Integration Active' | transloco }}
+                    </mat-slide-toggle>
+                  </div>
+                </form>
+              </mat-tab>
+            </mat-tab-group>
+          </mat-tab>
+        } @else {
+          <mat-tab [label]="'SignalWire' | transloco">
+            <form class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-3">
+                <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
                 <input
                   matInput
-                  [type]="showGoogleMapsEmbedApiKey() ? 'text' : 'password'"
-                  [placeholder]="'Google Maps Street View embed API key' | transloco" [value]="item().googleMapsEmbedApiKey" (input)="updateItem({ googleMapsEmbedApiKey: $any($event.target).value })" />
+                  [type]="showSignalWireRepoToken() ? 'text' : 'password'"
+                  [placeholder]="
+                    'SignalWire repository token for FreeSWITCH packages' | transloco
+                  "
+                  [value]="item().signalWireRepoToken"
+                  (input)="updateItem({ signalWireRepoToken: $any($event.target).value })"
+                />
                 <button
                   mat-icon-button
                   matSuffix
                   type="button"
                   [attr.aria-label]="
-                    (showGoogleMapsEmbedApiKey() ? 'Hide Google Maps key' : 'Show Google Maps key') | transloco
+                    (showSignalWireRepoToken()
+                      ? 'Hide SignalWire token'
+                      : 'Show SignalWire token') | transloco
                   "
-                  (click)="showGoogleMapsEmbedApiKey.set(!showGoogleMapsEmbedApiKey())"
+                  (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())"
                 >
                   <mat-icon>{{
-                    showGoogleMapsEmbedApiKey() ? 'visibility_off' : 'visibility'
+                    showSignalWireRepoToken() ? 'visibility_off' : 'visibility'
                   }}</mat-icon>
-                  </button>
-                  </mat-form-field>
+                </button>
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'SignalWire Repo Token' | transloco"
+                  [text]="
+                    'SignalWire repository personal token for fetching official FreeSWITCH Debian packages.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
 
-                  <div class="toggle-grid span-4">
-                    <mat-slide-toggle [checked]="item().googleMapsEmbedApiKeyIsActive" (change)="updateItem({ googleMapsEmbedApiKeyIsActive: $event.checked })">
-                      {{ 'Google Maps Key Active' | transloco }}
-                    </mat-slide-toggle>
-                  </div>
-                </form>
-              </mat-tab>
-
-              <mat-tab [label]="'Mapbox' | transloco">
-                <form class="tab-content form-grid">
-                  <mat-form-field appearance="outline" class="span-4">
-                    <mat-label>{{ 'Mapbox Token' | transloco }}</mat-label>
-                <input
-                  matInput
-                  [type]="showMapboxToken() ? 'text' : 'password'"
-                  [placeholder]="'Mapbox public token' | transloco" [value]="item().mapboxToken" (input)="updateItem({ mapboxToken: $any($event.target).value })" />
-                <button
-                  mat-icon-button
-                  matSuffix
-                  type="button"
-                  [attr.aria-label]="(showMapboxToken() ? 'Hide Mapbox token' : 'Show Mapbox token') | transloco"
-                  (click)="showMapboxToken.set(!showMapboxToken())"
+              <div class="span-1 toggle-field-align">
+                <mat-slide-toggle
+                  [checked]="item().signalWireRepoTokenIsActive"
+                  (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })"
                 >
-                  <mat-icon>{{ showMapboxToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                  </mat-form-field>
-                  <div class="toggle-grid span-4">
-                    <mat-slide-toggle [checked]="item().mapboxTokenIsActive" (change)="updateItem({ mapboxTokenIsActive: $event.checked })">
-                      {{ 'Mapbox Token Active' | transloco }}
-                    </mat-slide-toggle>
-                  </div>
-                </form>
-              </mat-tab>
-
-              @if (!isMaster()) {
-                <mat-tab [label]="'Bradesco' | transloco">
-                  <mat-tab-group class="nested-tabs siad-tabs">
-                    <mat-tab [label]="'SIAD' | transloco">
-                      <form class="tab-content form-grid">
-                        <mat-form-field appearance="outline" class="span-1">
-                          <mat-label>{{ 'SIAD Environment' | transloco }}</mat-label>
-                          <mat-select [value]="siadItem().environment" (selectionChange)="updateSiad({ environment: $event.value })">
-                            <mat-option value="dsv">{{ 'Development' | transloco }}</mat-option>
-                            <mat-option value="hml">{{ 'Homologation' | transloco }}</mat-option>
-                            <mat-option value="prd">{{ 'Production' | transloco }}</mat-option>
-                          </mat-select>
-                        </mat-form-field>
-                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Origin' | transloco }}</mat-label><input matInput maxlength="20" [value]="siadItem().origin" (input)="updateSiad({ origin: $any($event.target).value })" /></mat-form-field>
-                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Suborigin' | transloco }}</mat-label><input matInput maxlength="20" [value]="siadItem().suborigin" (input)="updateSiad({ suborigin: $any($event.target).value })" /></mat-form-field>
-                        <mat-form-field appearance="outline" class="span-1"><mat-label>{{ 'Referenced' | transloco }}</mat-label><input matInput maxlength="10" [value]="siadItem().referenciado" (input)="updateSiad({ referenciado: $any($event.target).value })" /></mat-form-field>
-
-                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client ID' | transloco }}</mat-label><input matInput [value]="siadCredentials().clientId" [placeholder]="siadItem().credentialsConfigured ? ('Configured. Enter to replace.' | transloco) : ''" (input)="updateSiadCredentials({ clientId: $any($event.target).value })" /></mat-form-field>
-                        <mat-form-field appearance="outline" class="span-2"><mat-label>{{ 'Client Secret' | transloco }}</mat-label><input matInput [type]="showSiadClientSecret() ? 'text' : 'password'" [value]="siadCredentials().clientSecret" (input)="updateSiadCredentials({ clientSecret: $any($event.target).value })" /><button mat-icon-button matSuffix type="button" [attr.aria-label]="'Toggle credential visibility' | transloco" (click)="showSiadClientSecret.set(!showSiadClientSecret())"><mat-icon>{{ showSiadClientSecret() ? 'visibility_off' : 'visibility' }}</mat-icon></button></mat-form-field>
-                        <input #siadCertificateInput type="file" hidden accept=".pem,.crt,.cer,application/x-pem-file" (change)="selectSiadCertificate($event)" />
-                        <input #siadPrivateKeyInput type="file" hidden accept=".pem,.key,application/x-pem-file" (change)="selectSiadPrivateKey($event)" />
-                        <mat-form-field appearance="outline" class="span-2">
-                          <mat-label>{{ 'mTLS Certificate' | transloco }}</mat-label>
-                          <input matInput readonly [value]="siadCertificateFile()?.name ?? siadItem().credential?.certificateFilename ?? ''" [placeholder]="'Select certificate file' | transloco" />
-                          <button mat-icon-button matSuffix type="button" [attr.aria-label]="'Select certificate file' | transloco" (click)="siadCertificateInput.click()"><mat-icon>upload_file</mat-icon></button>
-                        </mat-form-field>
-                        <mat-form-field appearance="outline" class="span-2">
-                          <mat-label>{{ 'mTLS Private Key' | transloco }}</mat-label>
-                          <input matInput readonly [value]="siadPrivateKeyFile()?.name ?? ''" [placeholder]="'Select private key file' | transloco" />
-                          <button mat-icon-button matSuffix type="button" [attr.aria-label]="'Select private key file' | transloco" (click)="siadPrivateKeyInput.click()"><mat-icon>upload_file</mat-icon></button>
-                        </mat-form-field>
-                        <p class="integration-secret-state span-4">
-                          @if (siadItem().credentialsConfigured && siadItem().credential) {
-                            {{ 'SIAD Credentials Configured' | transloco }} · {{ 'Certificate expires' | transloco }}: {{ siadItem().credential?.certificateNotAfter }}
-                          } @else {
-                            {{ 'SIAD Credentials Pending' | transloco }}
-                          }
-                        </p>
-                        <div class="toggle-grid span-4">
-                          <mat-slide-toggle [checked]="siadItem().isActive" (change)="updateSiad({ isActive: $event.checked })">
-                            {{ 'SIAD Integration Active' | transloco }}
-                          </mat-slide-toggle>
-                        </div>
-                      </form>
-                    </mat-tab>
-                  </mat-tab-group>
-                </mat-tab>
-              } @else {
-                <mat-tab [label]="'SignalWire' | transloco">
-                  <form class="tab-content form-grid">
-                    <mat-form-field appearance="outline" class="span-4">
-                      <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
-                      <input matInput [type]="showSignalWireRepoToken() ? 'text' : 'password'" [placeholder]="'SignalWire repository token for FreeSWITCH packages' | transloco" [value]="item().signalWireRepoToken" (input)="updateItem({ signalWireRepoToken: $any($event.target).value })" />
-                      <button mat-icon-button matSuffix type="button" [attr.aria-label]="(showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token') | transloco" (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())">
-                        <mat-icon>{{ showSignalWireRepoToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                      </button>
-                    </mat-form-field>
-                    <div class="toggle-grid span-4">
-                      <mat-slide-toggle [checked]="item().signalWireRepoTokenIsActive" (change)="updateItem({ signalWireRepoTokenIsActive: $event.checked })">
-                        {{ 'SignalWire Repo Token Active' | transloco }}
-                      </mat-slide-toggle>
-                    </div>
-                  </form>
-                </mat-tab>
-              }
-            </mat-tab-group>
+                  {{ 'SignalWire Repo Token Active' | transloco }}
+                </mat-slide-toggle>
+              </div>
+            </form>
           </mat-tab>
+        }
+      </mat-tab-group>
+    </mat-tab>
 
-          @if (isMaster()) {
-            <mat-tab [label]="'Access' | transloco">
+    @if (isMaster()) {
+      <mat-tab [label]="'Access' | transloco">
+        <form class="tab-content form-grid">
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Trial Credit Amount' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="item().billingSignupTrialAmount"
+              (input)="updateItem({ billingSignupTrialAmount: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Trial Credit Amount' | transloco"
+              [text]="
+                'Initial credit amount automatically granted to new self-registered customer accounts.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Trial Credit Currency' | transloco }}</mat-label>
+            <input
+              matInput
+              maxlength="3"
+              [placeholder]="'BRL' | transloco"
+              [value]="item().billingSignupTrialCurrency"
+              (input)="updateItem({ billingSignupTrialCurrency: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Trial Credit Currency' | transloco"
+              [text]="
+                'Currency code for the welcome signup credit (ISO 4217, e.g. BRL).' | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Trial Expires Days' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="365"
+              [value]="item().billingSignupTrialExpiresDays"
+              (input)="updateItem({ billingSignupTrialExpiresDays: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Trial Expires Days' | transloco"
+              [text]="
+                'Number of calendar days after signup before remaining trial credit expires.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <div class="span-1 toggle-field-align">
+            <mat-slide-toggle
+              [checked]="item().billingSignupTrialEnabled"
+              (change)="updateItem({ billingSignupTrialEnabled: $event.checked })"
+            >
+              {{ 'Trial Credit Active' | transloco }}
+            </mat-slide-toggle>
+          </div>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Max Accounts per IP/Day' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="100"
+              [value]="item().signupMaxAccountsPerIpDay"
+              (input)="updateItem({ signupMaxAccountsPerIpDay: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Max Accounts per IP/Day' | transloco"
+              [text]="
+                'Maximum allowed new account registrations originating from a single IP address per day.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Session Hours' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="168"
+              [value]="item().authSessionHours"
+              (input)="updateItem({ authSessionHours: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Session Hours' | transloco"
+              [text]="
+                'Default lifetime of standard authentication session tokens before re-login is required.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Remember Me Hours' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="2160"
+              [value]="item().authRememberMeHours"
+              (input)="updateItem({ authRememberMeHours: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Remember Me Hours' | transloco"
+              [text]="
+                'Extended lifetime of persistent sessions when Remember Me is selected at login.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <div class="span-1 toggle-field-align">
+            <mat-slide-toggle
+              [checked]="item().authRememberMeEnabled"
+              (change)="updateItem({ authRememberMeEnabled: $event.checked })"
+            >
+              {{ 'Remember Me Active' | transloco }}
+            </mat-slide-toggle>
+          </div>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Captcha Provider' | transloco }}</mat-label>
+            <mat-select
+              [value]="item().signupCaptchaProvider"
+              (selectionChange)="updateItem({ signupCaptchaProvider: $event.value })"
+            >
+              <mat-option value="">{{ 'None' | transloco }}</mat-option>
+              <mat-option value="turnstile">{{ 'Cloudflare Turnstile' | transloco }}</mat-option>
+              <mat-option value="hcaptcha">{{ 'hCaptcha' | transloco }}</mat-option>
+            </mat-select>
+            <mns-field-help
+              matIconSuffix
+              [label]="'Captcha Provider' | transloco"
+              [text]="
+                'Bot protection provider integrated into authentication and registration flows.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Captcha Site Key' | transloco }}</mat-label>
+            <input
+              matInput
+              [placeholder]="'Public site key' | transloco"
+              [value]="item().signupCaptchaSiteKey"
+              (input)="updateItem({ signupCaptchaSiteKey: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Captcha Site Key' | transloco"
+              [text]="
+                'Public client-side site key supplied to the captcha challenge widget in the browser.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Captcha Secret' | transloco }}</mat-label>
+            <input
+              matInput
+              [type]="showSignupCaptchaSecret() ? 'text' : 'password'"
+              [placeholder]="'Private validation secret' | transloco"
+              [value]="item().signupCaptchaSecret"
+              (input)="updateItem({ signupCaptchaSecret: $any($event.target).value })"
+            />
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              [attr.aria-label]="
+                (showSignupCaptchaSecret() ? 'Hide captcha secret' : 'Show captcha secret')
+                  | transloco
+              "
+              (click)="showSignupCaptchaSecret.set(!showSignupCaptchaSecret())"
+            >
+              <mat-icon>{{
+                showSignupCaptchaSecret() ? 'visibility_off' : 'visibility'
+              }}</mat-icon>
+            </button>
+            <mns-field-help
+              matIconSuffix
+              [label]="'Captcha Secret' | transloco"
+              [text]="
+                'Private secret key used server-side to verify challenge responses with the provider.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <div class="span-2 parameter-toggle-cell">
+            <mat-slide-toggle
+              [checked]="item().billingSignupTrialRequireEmailVerified"
+              (change)="updateItem({ billingSignupTrialRequireEmailVerified: $event.checked })"
+            >
+              {{ 'Require Verified Email' | transloco }}
+            </mat-slide-toggle>
+          </div>
+
+          <div class="span-1 parameter-toggle-cell">
+            <mat-slide-toggle
+              [checked]="item().signupCaptchaEnabled"
+              (change)="updateItem({ signupCaptchaEnabled: $event.checked })"
+            >
+              {{ 'Signup Captcha Active' | transloco }}
+            </mat-slide-toggle>
+          </div>
+
+          <div class="span-1 parameter-toggle-cell">
+            <mat-slide-toggle
+              [checked]="item().loginCaptchaEnabled"
+              (change)="updateItem({ loginCaptchaEnabled: $event.checked })"
+            >
+              {{ 'Login Captcha Active' | transloco }}
+            </mat-slide-toggle>
+          </div>
+        </form>
+      </mat-tab>
+    }
+
+    <mat-tab [label]="'VoIP' | transloco">
+      <mat-tab-group class="nested-tabs">
+        <mat-tab [label]="'SBC' | transloco">
+          <div class="tab-content empty-tab">{{ 'No SBC defaults configured yet.' | transloco }}</div>
+        </mat-tab>
+        <mat-tab [label]="'Softswitch' | transloco">
+          <div class="tab-content empty-tab">{{ 'No softswitch defaults configured yet.' | transloco }}</div>
+        </mat-tab>
+        <mat-tab [label]="'PABX' | transloco">
+          <mat-tab-group class="nested-tabs pabx-parameter-tabs">
+            <mat-tab [label]="'Storage' | transloco">
               <form class="tab-content form-grid">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Trial Credit Amount' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="0"
-                    step="0.01" [value]="item().billingSignupTrialAmount" (input)="updateItem({ billingSignupTrialAmount: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Trial Credit Currency' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    maxlength="3"
-                    [placeholder]="'BRL' | transloco" [value]="item().billingSignupTrialCurrency" (input)="updateItem({ billingSignupTrialCurrency: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Trial Expires Days' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="1"
-                    max="365" [value]="item().billingSignupTrialExpiresDays" (input)="updateItem({ billingSignupTrialExpiresDays: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Max Accounts per IP/Day' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="1"
-                    max="100" [value]="item().signupMaxAccountsPerIpDay" (input)="updateItem({ signupMaxAccountsPerIpDay: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Session Hours' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="1"
-                    max="168" [value]="item().authSessionHours" (input)="updateItem({ authSessionHours: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Remember Me Hours' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    min="1"
-                    max="2160" [value]="item().authRememberMeHours" (input)="updateItem({ authRememberMeHours: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'Captcha Provider' | transloco }}</mat-label>
-                  <mat-select [value]="item().signupCaptchaProvider" (selectionChange)="updateItem({ signupCaptchaProvider: $event.value })">
-                    <mat-option value="">{{ 'None' | transloco }}</mat-option>
-                    <mat-option value="turnstile">{{ 'Cloudflare Turnstile' | transloco }}</mat-option>
-                    <mat-option value="hcaptcha">{{ 'hCaptcha' | transloco }}</mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="span-3">
-                  <mat-label>{{ 'Captcha Site Key' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    [placeholder]="'Public site key' | transloco" [value]="item().signupCaptchaSiteKey" (input)="updateItem({ signupCaptchaSiteKey: $any($event.target).value })" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="span-4">
-                  <mat-label>{{ 'Captcha Secret' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    [type]="showSignupCaptchaSecret() ? 'text' : 'password'"
-                    [placeholder]="'Private validation secret' | transloco" [value]="item().signupCaptchaSecret" (input)="updateItem({ signupCaptchaSecret: $any($event.target).value })" />
-                  <button
-                    mat-icon-button
-                    matSuffix
-                    type="button"
-                    [attr.aria-label]="
-                      (showSignupCaptchaSecret() ? 'Hide captcha secret' : 'Show captcha secret') | transloco
-                    "
-                    (click)="showSignupCaptchaSecret.set(!showSignupCaptchaSecret())"
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'Storage - Recording' | transloco }}</mat-label>
+                  <mat-select
+                    [placeholder]="voipPabxRecordingStoragePlaceholder()"
+                    [value]="item().voipPabxRecordingStorageMode"
+                    (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })"
                   >
-                    <mat-icon>{{
-                      showSignupCaptchaSecret() ? 'visibility_off' : 'visibility'
-                    }}</mat-icon>
-                  </button>
+                    <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                    <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                    <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Storage - Recording' | transloco"
+                    [text]="
+                      'Target backend for PABX audio recording storage (local filesystem or object storage).'
+                        | transloco
+                    "
+                  />
                 </mat-form-field>
 
-                <div class="toggle-grid span-4">
-                  <mat-slide-toggle [checked]="item().billingSignupTrialEnabled" (change)="updateItem({ billingSignupTrialEnabled: $event.checked })">
-                    {{ 'Trial Credit Active' | transloco }}
-                  </mat-slide-toggle>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ 'Recording storage account' | transloco }}</mat-label>
+                  <mat-select
+                    [disabled]="item().voipPabxRecordingStorageMode !== 'storage'"
+                    [value]="item().voipPabxRecordingStorageAccountUUID"
+                    (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })"
+                  >
+                    <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
+                    @for (account of storageAccounts(); track account.HsaUUID) {
+                      <mat-option [value]="account.HsaUUID">
+                        {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Recording storage account' | transloco"
+                    [text]="
+                      'Dedicated cloud storage account bucket for saving PABX call recordings.'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
 
-                  <mat-slide-toggle [checked]="item().billingSignupTrialRequireEmailVerified" (change)="updateItem({ billingSignupTrialRequireEmailVerified: $event.checked })">
-                    {{ 'Require Verified Email' | transloco }}
+                <div class="span-1 toggle-field-align">
+                  <mat-slide-toggle
+                    [checked]="item().voipPabxRecordingStorageIsActive"
+                    (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })"
+                  >
+                    {{ 'Recording Storage Active' | transloco }}
                   </mat-slide-toggle>
+                </div>
 
-                  <mat-slide-toggle [checked]="item().signupCaptchaEnabled" (change)="updateItem({ signupCaptchaEnabled: $event.checked })">
-                    {{ 'Signup Captcha Active' | transloco }}
-                  </mat-slide-toggle>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'Storage - Media File' | transloco }}</mat-label>
+                  <mat-select
+                    [placeholder]="voipPabxMediaStoragePlaceholder()"
+                    [value]="item().voipPabxMediaStorageMode"
+                    (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })"
+                  >
+                    <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                    <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
+                    <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Storage - Media File' | transloco"
+                    [text]="
+                      'Target backend for PABX IVR greetings, hold music and uploaded sound files.'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
 
-                  <mat-slide-toggle [checked]="item().loginCaptchaEnabled" (change)="updateItem({ loginCaptchaEnabled: $event.checked })">
-                    {{ 'Login Captcha Active' | transloco }}
-                  </mat-slide-toggle>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ 'Media file storage account' | transloco }}</mat-label>
+                  <mat-select
+                    [disabled]="item().voipPabxMediaStorageMode !== 'storage'"
+                    [value]="item().voipPabxMediaStorageAccountUUID"
+                    (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })"
+                  >
+                    <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
+                    @for (account of storageAccounts(); track account.HsaUUID) {
+                      <mat-option [value]="account.HsaUUID">
+                        {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Media file storage account' | transloco"
+                    [text]="
+                      'Dedicated cloud storage account bucket for serving PABX system media and audio.'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
 
-                  <mat-slide-toggle [checked]="item().authRememberMeEnabled" (change)="updateItem({ authRememberMeEnabled: $event.checked })">
-                    {{ 'Remember Me Active' | transloco }}
+                <div class="span-1 toggle-field-align">
+                  <mat-slide-toggle
+                    [checked]="item().voipPabxMediaStorageIsActive"
+                    (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })"
+                  >
+                    {{ 'Media Storage Active' | transloco }}
                   </mat-slide-toggle>
                 </div>
               </form>
             </mat-tab>
-          }
 
-          <mat-tab [label]="'VoIP' | transloco">
-            <mat-tab-group class="nested-tabs">
-              <mat-tab [label]="'SBC' | transloco">
-                <div class="tab-content empty-tab">{{ 'No SBC defaults configured yet.' | transloco }}</div>
-              </mat-tab>
-              <mat-tab [label]="'Softswitch' | transloco">
-                <div class="tab-content empty-tab">{{ 'No softswitch defaults configured yet.' | transloco }}</div>
-              </mat-tab>
-              <mat-tab [label]="'PABX' | transloco">
-                <mat-tab-group class="nested-tabs pabx-parameter-tabs">
-                  <mat-tab [label]="'Storage' | transloco">
-                    <form class="tab-content form-grid">
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'Storage - Recording' | transloco }}</mat-label>
-                        <mat-select
-                          [placeholder]="voipPabxRecordingStoragePlaceholder()" [value]="item().voipPabxRecordingStorageMode" (selectionChange)="updateItem({ voipPabxRecordingStorageMode: $event.value })">
-                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                          <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
-                          <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
+            <mat-tab [label]="'Media' | transloco">
+              <form class="tab-content form-grid">
+                <mat-form-field appearance="outline" class="span-3">
+                  <mat-label>{{ 'Media File - Delivery Mode' | transloco }}</mat-label>
+                  <mat-select
+                    [placeholder]="voipPabxMediaDeliveryPlaceholder()"
+                    [value]="item().voipPabxMediaDeliveryMode"
+                    (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })"
+                  >
+                    <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                    <mat-option value="online">{{ 'Online' | transloco }}</mat-option>
+                    <mat-option value="offline">{{ 'Offline' | transloco }}</mat-option>
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Media File - Delivery Mode' | transloco"
+                    [text]="
+                      'Audio streaming mechanism for PABX prompts (online streaming or offline pre-fetch).'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
 
-                      <mat-form-field appearance="outline" class="span-2">
-                        <mat-label>{{ 'Recording storage account' | transloco }}</mat-label>
-                        <mat-select
-                          [disabled]="item().voipPabxRecordingStorageMode !== 'storage'" [value]="item().voipPabxRecordingStorageAccountUUID" (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })">
-                          <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
-                          @for (account of storageAccounts(); track account.HsaUUID) {
-                            <mat-option [value]="account.HsaUUID">
-                              {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
-                            </mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
+                <div class="span-1 toggle-field-align">
+                  <mat-slide-toggle
+                    [checked]="item().voipPabxMediaDeliveryModeIsActive"
+                    (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })"
+                  >
+                    {{ 'Media Delivery Active' | transloco }}
+                  </mat-slide-toggle>
+                </div>
+              </form>
+            </mat-tab>
 
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'Storage - Media File' | transloco }}</mat-label>
-                        <mat-select
-                          [placeholder]="voipPabxMediaStoragePlaceholder()" [value]="item().voipPabxMediaStorageMode" (selectionChange)="updateItem({ voipPabxMediaStorageMode: $event.value })">
-                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                          <mat-option value="filesystem">{{ 'Filesystem' | transloco }}</mat-option>
-                          <mat-option value="storage">{{ 'Storage' | transloco }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
+            <mat-tab [label]="'Execution' | transloco">
+              <form class="tab-content form-grid">
+                <mat-form-field appearance="outline" class="span-3">
+                  <mat-label>{{ 'Remote Command Executor' | transloco }}</mat-label>
+                  <mat-select
+                    [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()"
+                    [value]="item().voipPabxRemoteCommandExecutor"
+                    (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })"
+                  >
+                    <mat-option value="">{{ 'Default' | transloco }}</mat-option>
+                    <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
+                    <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
+                  </mat-select>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Remote Command Executor' | transloco"
+                    [text]="
+                      'Transport for PABX runtime configuration actions (enrolled MNS Agent or direct ESL/AMI socket).'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
 
-                      <mat-form-field appearance="outline" class="span-2">
-                        <mat-label>{{ 'Media file storage account' | transloco }}</mat-label>
-                        <mat-select
-                          [disabled]="item().voipPabxMediaStorageMode !== 'storage'" [value]="item().voipPabxMediaStorageAccountUUID" (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })">
-                          <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
-                          @for (account of storageAccounts(); track account.HsaUUID) {
-                            <mat-option [value]="account.HsaUUID">
-                              {{ account.HsaName }} · {{ account.HspProvider || account.HspName }}
-                            </mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
+                <div class="span-1 toggle-field-align">
+                  <mat-slide-toggle
+                    [checked]="item().voipPabxRemoteCommandExecutorIsActive"
+                    (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })"
+                  >
+                    {{ 'Remote Command Active' | transloco }}
+                  </mat-slide-toggle>
+                </div>
+              </form>
+            </mat-tab>
 
-                      <div class="toggle-grid span-4">
-                        <mat-slide-toggle [checked]="item().voipPabxRecordingStorageIsActive" (change)="updateItem({ voipPabxRecordingStorageIsActive: $event.checked })">
-                          {{ 'Recording Storage Active' | transloco }}
-                        </mat-slide-toggle>
-                        <mat-slide-toggle [checked]="item().voipPabxMediaStorageIsActive" (change)="updateItem({ voipPabxMediaStorageIsActive: $event.checked })">
-                          {{ 'Media Storage Active' | transloco }}
-                        </mat-slide-toggle>
-                      </div>
-                    </form>
-                  </mat-tab>
-
-                  <mat-tab [label]="'Media' | transloco">
-                    <form class="tab-content form-grid">
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'Media File - Delivery Mode' | transloco }}</mat-label>
-                        <mat-select
-                          [placeholder]="voipPabxMediaDeliveryPlaceholder()" [value]="item().voipPabxMediaDeliveryMode" (selectionChange)="updateItem({ voipPabxMediaDeliveryMode: $event.value })">
-                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                          <mat-option value="online">{{ 'Online' | transloco }}</mat-option>
-                          <mat-option value="offline">{{ 'Offline' | transloco }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-
-                      <div class="toggle-grid span-4">
-                        <mat-slide-toggle [checked]="item().voipPabxMediaDeliveryModeIsActive" (change)="updateItem({ voipPabxMediaDeliveryModeIsActive: $event.checked })">
-                          {{ 'Media Delivery Active' | transloco }}
-                        </mat-slide-toggle>
-                      </div>
-                    </form>
-                  </mat-tab>
-
-                  <mat-tab [label]="'Execution' | transloco">
-                    <form class="tab-content form-grid">
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'Remote Command Executor' | transloco }}</mat-label>
-                        <mat-select
-                          [placeholder]="voipPabxRemoteCommandExecutorPlaceholder()" [value]="item().voipPabxRemoteCommandExecutor" (selectionChange)="updateItem({ voipPabxRemoteCommandExecutor: $event.value })">
-                          <mat-option value="">{{ 'Default' | transloco }}</mat-option>
-                          <mat-option value="agent">{{ 'Agent' | transloco }}</mat-option>
-                          <mat-option value="esl_ami">{{ 'ESL/AMI' | transloco }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-
-                      <div class="toggle-grid span-4">
-                        <mat-slide-toggle [checked]="item().voipPabxRemoteCommandExecutorIsActive" (change)="updateItem({ voipPabxRemoteCommandExecutorIsActive: $event.checked })">
-                          {{ 'Remote Command Active' | transloco }}
-                        </mat-slide-toggle>
-                      </div>
-                    </form>
-                  </mat-tab>
-
-                  <mat-tab [label]="'SIP Realm' | transloco">
+            <mat-tab [label]="'SIP Realm' | transloco">
               <form class="tab-content form-grid">
                 @if (!isMaster()) {
                   <mat-form-field appearance="outline" class="span-2">
@@ -417,6 +888,14 @@
                         }}</mat-option>
                       }
                     </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'Configuration source' | transloco"
+                      [text]="
+                        'Determines whether PABX SIP realms inherit platform defaults or use own managed domain policies.'
+                          | transloco
+                      "
+                    />
                   </mat-form-field>
                 }
                 @if (isMaster() || item().voipPabxRealmSource === 'own') {
@@ -432,6 +911,14 @@
                         }}</mat-option>
                       }
                     </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'PABX SIP realm DNS mode' | transloco"
+                      [text]="
+                        'Publication mode for generated SIP realm names (managed authoritative DNS or identity string only).'
+                          | transloco
+                      "
+                    />
                   </mat-form-field>
 
                   @if (item().voipPabxAutoDomainDnsMode === 'managed_dns') {
@@ -449,7 +936,10 @@
                       (pageChange)="pageDnsPolicies($event)"
                       (openedChange)="$event && refreshDnsPolicies()"
                       [value]="item().voipPabxDnsPolicyUUID"
-                      [help]="'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.' | transloco"
+                      [help]="
+                        'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.'
+                          | transloco
+                      "
                       (valueChange)="selectDnsPolicy($event)"
                     />
 
@@ -467,6 +957,14 @@
                         [value]="item().voipPabxAutoDomainBase"
                         (input)="updateItem({ voipPabxAutoDomainBase: $any($event.target).value })"
                       />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'PABX SIP realm base' | transloco"
+                        [text]="
+                          'Base domain suffix for auto-generated PABX SIP realms (e.g. pabx.publichost.cloud).'
+                            | transloco
+                        "
+                      />
                     </mat-form-field>
                   }
 
@@ -478,6 +976,14 @@
                     >
                       <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
                     </mat-select>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'PABX SIP realm label' | transloco"
+                      [text]="
+                        'Format of the host prefix generated for each newly provisioned PABX realm.'
+                          | transloco
+                      "
+                    />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="span-2">
@@ -492,21 +998,33 @@
                         updateItem({ voipPabxAutoDomainUuidLength: $any($event.target).value })
                       "
                     />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'PABX SIP realm UUID length' | transloco"
+                      [text]="
+                        'Character length of the random short UUID prefix (between 8 and 32 characters).'
+                          | transloco
+                      "
+                    />
                   </mat-form-field>
 
-                  <div class="toggle-grid span-4">
+                  <div class="span-2 parameter-toggle-cell">
                     <mat-slide-toggle
                       [checked]="item().voipPabxAutoDomainEnabled"
                       (change)="updateItem({ voipPabxAutoDomainEnabled: $event.checked })"
                     >
                       {{ 'Create PABX SIP realm automatically' | transloco }}
                     </mat-slide-toggle>
+                  </div>
+                  <div class="span-2 parameter-toggle-cell">
                     <mat-slide-toggle
                       [checked]="item().voipPabxAutoDomainSetDefault"
                       (change)="updateItem({ voipPabxAutoDomainSetDefault: $event.checked })"
                     >
                       {{ 'Set generated PABX SIP realm as default' | transloco }}
                     </mat-slide-toggle>
+                  </div>
+                  <div class="span-4 parameter-toggle-cell">
                     <mat-slide-toggle
                       [checked]="item().voipPabxAutoDomainIsActive"
                       (change)="updateItem({ voipPabxAutoDomainIsActive: $event.checked })"
@@ -615,8 +1133,8 @@
               </div>
             </mat-tab>
           </mat-tab-group>
-              </mat-tab>
-            </mat-tab-group>
-          </mat-tab>
-        </mat-tab-group>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-tab>
+  </mat-tab-group>
 </mns-settings-page>
