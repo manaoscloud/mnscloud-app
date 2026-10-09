@@ -1,7 +1,15 @@
-<mns-settings-page [title]="pageTitle()" [description]="pageSubtitle()"
-  [loading]="loading()" [saving]="saving()" [dirty]="hasChanges()"
-  [error]="feedback()" [success]="success()"
-  (refresh)="refreshItems()" (cancel)="cancelChanges()" (save)="saveAll()">
+<mns-settings-page
+  [title]="pageTitle()"
+  [description]="pageSubtitle()"
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [error]="feedback()"
+  [success]="success()"
+  (refresh)="refreshItems()"
+  (cancel)="cancelChanges()"
+  (save)="saveAll()"
+>
   <mat-tab-group class="form-tabs">
     <mat-tab [label]="'Record' | transloco">
       <form class="tab-content form-grid">
@@ -162,9 +170,7 @@
                 "
                 (click)="showMapboxToken.set(!showMapboxToken())"
               >
-                <mat-icon>{{
-                  showMapboxToken() ? 'visibility_off' : 'visibility'
-                }}</mat-icon>
+                <mat-icon>{{ showMapboxToken() ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
               <mns-field-help
                 matIconSuffix
@@ -222,7 +228,9 @@
                     <mns-field-help
                       matIconSuffix
                       [label]="'Origin' | transloco"
-                      [text]="'Origin code assigned by Bradesco for this tenant channel.' | transloco"
+                      [text]="
+                        'Origin code assigned by Bradesco for this tenant channel.' | transloco
+                      "
                     />
                   </mat-form-field>
 
@@ -252,7 +260,9 @@
                     <mns-field-help
                       matIconSuffix
                       [label]="'Referenced' | transloco"
-                      [text]="'Referenced code assigned by Bradesco for this operation.' | transloco"
+                      [text]="
+                        'Referenced code assigned by Bradesco for this operation.' | transloco
+                      "
                     />
                   </mat-form-field>
 
@@ -297,7 +307,9 @@
                     <mns-field-help
                       matIconSuffix
                       [label]="'Client Secret' | transloco"
-                      [text]="'OAuth2 client secret for Bradesco SIAD API authentication.' | transloco"
+                      [text]="
+                        'OAuth2 client secret for Bradesco SIAD API authentication.' | transloco
+                      "
                     />
                   </mat-form-field>
 
@@ -364,7 +376,10 @@
                     <mns-field-help
                       matIconSuffix
                       [label]="'mTLS Private Key' | transloco"
-                      [text]="'Mutual TLS private key file (.key, .pem) matching the certificate.' | transloco"
+                      [text]="
+                        'Mutual TLS private key file (.key, .pem) matching the certificate.'
+                          | transloco
+                      "
                     />
                   </mat-form-field>
 
@@ -398,9 +413,7 @@
                 <input
                   matInput
                   [type]="showSignalWireRepoToken() ? 'text' : 'password'"
-                  [placeholder]="
-                    'SignalWire repository token for FreeSWITCH packages' | transloco
-                  "
+                  [placeholder]="'SignalWire repository token for FreeSWITCH packages' | transloco"
                   [value]="item().signalWireRepoToken"
                   (input)="updateItem({ signalWireRepoToken: $any($event.target).value })"
                 />
@@ -409,9 +422,8 @@
                   matSuffix
                   type="button"
                   [attr.aria-label]="
-                    (showSignalWireRepoToken()
-                      ? 'Hide SignalWire token'
-                      : 'Show SignalWire token') | transloco
+                    (showSignalWireRepoToken() ? 'Hide SignalWire token' : 'Show SignalWire token')
+                      | transloco
                   "
                   (click)="showSignalWireRepoToken.set(!showSignalWireRepoToken())"
                 >
@@ -639,9 +651,7 @@
               "
               (click)="showSignupCaptchaSecret.set(!showSignupCaptchaSecret())"
             >
-              <mat-icon>{{
-                showSignupCaptchaSecret() ? 'visibility_off' : 'visibility'
-              }}</mat-icon>
+              <mat-icon>{{ showSignupCaptchaSecret() ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
             <mns-field-help
               matIconSuffix
@@ -686,7 +696,9 @@
     <mat-tab [label]="'VoIP' | transloco">
       <mat-tab-group class="nested-tabs">
         <mat-tab [label]="'SBC' | transloco">
-          <div class="tab-content empty-tab">{{ 'No SBC defaults configured yet.' | transloco }}</div>
+          <div class="tab-content empty-tab">
+            {{ 'No SBC defaults configured yet.' | transloco }}
+          </div>
         </mat-tab>
         <mat-tab [label]="'Softswitch' | transloco">
           <mat-tab-group class="nested-tabs softswitch-parameter-tabs">
@@ -720,7 +732,9 @@
                     <mat-label>{{ 'Softswitch SIP realm DNS mode' | transloco }}</mat-label>
                     <mat-select
                       [value]="item().voipSoftswitchAutoDomainDnsMode"
-                      (selectionChange)="updateItem({ voipSoftswitchAutoDomainDnsMode: $event.value })"
+                      (selectionChange)="
+                        updateItem({ voipSoftswitchAutoDomainDnsMode: $event.value })
+                      "
                     >
                       @for (option of realmDnsModes; track option.value) {
                         <mat-option [value]="option.value">{{
@@ -743,15 +757,15 @@
                       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
                       fieldClass="span-4"
                       [label]="'Domain for Realm SIP publication' | transloco"
-                      [options]="dnsPolicyOptions()"
+                      [options]="softswitchDns.options()"
                       [remoteSearch]="true"
-                      [loading]="dnsLoading()"
-                      [loadError]="dnsLoadError()"
-                      [hasPrevious]="dnsOffset() > 0"
-                      [hasNext]="dnsOffset() + 50 < dnsTotal()"
-                      (searchChange)="searchDnsPolicies($event)"
-                      (pageChange)="pageDnsPolicies($event)"
-                      (openedChange)="$event && refreshDnsPolicies()"
+                      [loading]="softswitchDns.loading()"
+                      [loadError]="softswitchDns.loadError()"
+                      [hasPrevious]="softswitchDns.offset() > 0"
+                      [hasNext]="softswitchDns.offset() + 50 < softswitchDns.total()"
+                      (searchChange)="softswitchDns.search($event)"
+                      (pageChange)="softswitchDns.page($event)"
+                      (openedChange)="$event && softswitchDns.refresh()"
                       [value]="item().voipSoftswitchDnsPolicyUUID"
                       [help]="
                         'Managed DNS publishes A records in an authorized zone. Existing SIP realms are not changed.'
@@ -772,7 +786,9 @@
                         matInput
                         [placeholder]="voipSoftswitchAutoDomainBasePlaceholder()"
                         [value]="item().voipSoftswitchAutoDomainBase"
-                        (input)="updateItem({ voipSoftswitchAutoDomainBase: $any($event.target).value })"
+                        (input)="
+                          updateItem({ voipSoftswitchAutoDomainBase: $any($event.target).value })
+                        "
                       />
                       <mns-field-help
                         matIconSuffix
@@ -789,7 +805,9 @@
                     <mat-label>{{ 'Softswitch SIP realm label' | transloco }}</mat-label>
                     <mat-select
                       [value]="item().voipSoftswitchAutoDomainLabelMode"
-                      (selectionChange)="updateItem({ voipSoftswitchAutoDomainLabelMode: $event.value })"
+                      (selectionChange)="
+                        updateItem({ voipSoftswitchAutoDomainLabelMode: $event.value })
+                      "
                     >
                       <mat-option value="uuid_short">{{ 'Short UUID' | transloco }}</mat-option>
                     </mat-select>
@@ -812,7 +830,9 @@
                       max="32"
                       [value]="item().voipSoftswitchAutoDomainUuidLength"
                       (input)="
-                        updateItem({ voipSoftswitchAutoDomainUuidLength: $any($event.target).value })
+                        updateItem({
+                          voipSoftswitchAutoDomainUuidLength: $any($event.target).value,
+                        })
                       "
                     />
                     <mns-field-help
@@ -907,7 +927,9 @@
                   <mat-select
                     [disabled]="item().voipPabxRecordingStorageMode !== 'storage'"
                     [value]="item().voipPabxRecordingStorageAccountUUID"
-                    (selectionChange)="updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })"
+                    (selectionChange)="
+                      updateItem({ voipPabxRecordingStorageAccountUUID: $event.value })
+                    "
                   >
                     <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
                     @for (account of storageAccounts(); track account.HsaUUID) {
@@ -961,7 +983,9 @@
                   <mat-select
                     [disabled]="item().voipPabxMediaStorageMode !== 'storage'"
                     [value]="item().voipPabxMediaStorageAccountUUID"
-                    (selectionChange)="updateItem({ voipPabxMediaStorageAccountUUID: $event.value })"
+                    (selectionChange)="
+                      updateItem({ voipPabxMediaStorageAccountUUID: $event.value })
+                    "
                   >
                     <mat-option value="">{{ 'Default storage account' | transloco }}</mat-option>
                     @for (account of storageAccounts(); track account.HsaUUID) {
@@ -1112,15 +1136,15 @@
                       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
                       fieldClass="span-4"
                       [label]="'Domain for Realm SIP publication' | transloco"
-                      [options]="dnsPolicyOptions()"
+                      [options]="pabxDns.options()"
                       [remoteSearch]="true"
-                      [loading]="dnsLoading()"
-                      [loadError]="dnsLoadError()"
-                      [hasPrevious]="dnsOffset() > 0"
-                      [hasNext]="dnsOffset() + 50 < dnsTotal()"
-                      (searchChange)="searchDnsPolicies($event)"
-                      (pageChange)="pageDnsPolicies($event)"
-                      (openedChange)="$event && refreshDnsPolicies()"
+                      [loading]="pabxDns.loading()"
+                      [loadError]="pabxDns.loadError()"
+                      [hasPrevious]="pabxDns.offset() > 0"
+                      [hasNext]="pabxDns.offset() + 50 < pabxDns.total()"
+                      (searchChange)="pabxDns.search($event)"
+                      (pageChange)="pabxDns.page($event)"
+                      (openedChange)="$event && pabxDns.refresh()"
                       [value]="item().voipPabxDnsPolicyUUID"
                       [help]="
                         'Managed DNS publishes A and optional AAAA in an authorized zone. Existing SIP realms are not changed.'

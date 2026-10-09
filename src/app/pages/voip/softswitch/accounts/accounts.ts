@@ -65,6 +65,7 @@ function config(): ConfigurableCrudConfig {
       notes: '',
     },
     columns: [
+      { id: 'name', label: 'Name', kind: 'identity', field: 'VssName', uuidField: 'VssUUID' },
       {
         id: 'dns',
         label: 'DNS publication',
@@ -72,7 +73,6 @@ function config(): ConfigurableCrudConfig {
         field: 'DnsPublicationState',
         options: publicationStates,
       },
-      { id: 'name', label: 'Name', kind: 'identity', field: 'VssName', uuidField: 'VssUUID' },
       {
         id: 'customer',
         label: 'Customer',
