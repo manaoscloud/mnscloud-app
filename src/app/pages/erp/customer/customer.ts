@@ -14,6 +14,16 @@ const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'person', label: 'Person' },
 ];
 
+const PORTAL_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Active' },
+  { value: 0, label: 'Inactive' },
+];
+
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+];
+
 export function customerOptionFromResponse(
   response: unknown,
   payload: ConfigurableCrudRecord,
@@ -95,6 +105,9 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
+  tabLabels: {
+    authentication: 'Customer Portal',
+  },
   initialValues: {
     status: 1,
     type: 'company',
@@ -133,6 +146,11 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     lat: null,
     lng: null,
     notes: '',
+    portalStatus: 1,
+    portalUsername: '',
+    portalPassword: '',
+    portalMustChangePassword: false,
+    sendWelcomeEmail: false,
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'CustomerUUID' },
@@ -483,6 +501,56 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       tab: 'notes',
       span: 4,
       rows: 4,
+    },
+    {
+      key: 'portalStatus',
+      source: 'PortalStatus',
+      payloadKey: 'portalStatus',
+      label: 'Portal access',
+      type: 'select',
+      options: PORTAL_STATUS_OPTIONS,
+      fromRecord: (value) => (value !== null && value !== undefined ? Number(value) : 1),
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'portalUsername',
+      source: 'PortalUsername',
+      payloadKey: 'portalUsername',
+      label: 'Portal login (Username)',
+      tab: 'authentication',
+      span: 1,
+      placeholder: 'Unique portal username',
+    },
+    {
+      key: 'portalPassword',
+      payloadKey: 'portalPassword',
+      label: 'Portal password',
+      type: 'password',
+      tab: 'authentication',
+      span: 1,
+      placeholder: 'Set or change password',
+      autocomplete: 'new-password',
+    },
+    {
+      key: 'portalMustChangePassword',
+      source: 'PortalMustChangePassword',
+      payloadKey: 'portalMustChangePassword',
+      label: 'Must change password on next login',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      fromRecord: (value) => Number(value) === 1,
+      tab: 'authentication',
+      span: 1,
+    },
+    {
+      key: 'sendWelcomeEmail',
+      payloadKey: 'sendWelcomeEmail',
+      label: 'Send welcome email with credentials',
+      type: 'select',
+      options: YES_NO_OPTIONS,
+      tab: 'authentication',
+      span: 1,
     },
   ],
   addressSections: [
