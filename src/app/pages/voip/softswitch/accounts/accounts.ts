@@ -28,11 +28,6 @@ const statuses: ConfigurableCrudOption[] = [
   { value: 0, label: 'Inactive' },
 ];
 
-const yesNo: ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
-
 function config(): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/softswitch/accounts',
@@ -58,7 +53,6 @@ function config(): ConfigurableCrudConfig {
     bulkDelete: true,
     initialValues: {
       isActive: 1,
-      isDefault: 0,
       customerUUID: '',
       name: '',
       serverUUID: '',
@@ -66,13 +60,6 @@ function config(): ConfigurableCrudConfig {
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'VssName', uuidField: 'VssUUID' },
-      {
-        id: 'dns',
-        label: 'DNS publication',
-        kind: 'status',
-        field: 'DnsPublicationState',
-        options: publicationStates,
-      },
       {
         id: 'customer',
         label: 'Customer',
@@ -87,7 +74,13 @@ function config(): ConfigurableCrudConfig {
         uuidField: 'VoipSoftswitchServerVsrUUID',
         lookupKey: 'serverUUID',
       },
-      { id: 'default', label: 'Default', kind: 'boolean', field: 'VssIsDefault' },
+      {
+        id: 'dns',
+        label: 'DNS publication',
+        kind: 'status',
+        field: 'DnsPublicationState',
+        options: publicationStates,
+      },
       { id: 'status', label: 'Status', kind: 'status', field: 'VssIsActive' },
     ],
     fields: [
@@ -97,15 +90,6 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'isActive',
         label: 'Status',
         type: 'status',
-        span: 1,
-      },
-      {
-        key: 'isDefault',
-        source: 'VssIsDefault',
-        payloadKey: 'isDefault',
-        label: 'Default',
-        type: 'select',
-        options: yesNo,
         span: 1,
       },
       {
@@ -275,7 +259,6 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
       ...payload,
       ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
       isActive: Number(payload['isActive']) === 1,
-      isDefault: Number(payload['isDefault']) === 1,
     };
   }
 
