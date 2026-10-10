@@ -14,6 +14,7 @@ export type VoipSoftswitchServerItem = {
   RtpengineSocket?: string | null;
   VsrHostname?: string | null;
   VsrPublicIP?: string | null;
+  VsrPublicIPv6?: string | null;
   VsrPrivateIP?: string | null;
   VsrAdvertisedIP?: string | null;
   VsrAdvertisedIPSource?: string | null;
