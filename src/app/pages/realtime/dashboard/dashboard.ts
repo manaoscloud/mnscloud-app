@@ -310,6 +310,7 @@ export class RealtimeDashboardPage {
       details: [
         { label: 'Domain', value: this.text(this.field(item, 'RtdName') || '-') },
         { label: 'Public IP', value: this.text(this.field(item, 'RmsPublicIP') || '-') },
+        { label: 'Public IPv6', value: this.text(this.field(item, 'RmsPublicIPv6') || '-') },
         { label: 'Private IP', value: this.text(this.field(item, 'RmsPrivateIP') || '-') },
         {
           label: 'Control Endpoint',
