@@ -36,10 +36,12 @@ const PROVISION_DOMAIN_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Provision DNS domain',
 };
 
-type VoipDnsService = 'pabx' | 'softswitch';
+type VoipDnsService = 'pabx' | 'softswitch' | 'realtime';
 
-/** VoIP services with an independent DNS publication policy per zone. */
+/** Services with an independent DNS publication policy per zone. Realtime edge domains are
+ * platform-only, so their policy is edited only in the master scope. */
 const VOIP_DNS_SERVICES: readonly VoipDnsService[] = ['pabx', 'softswitch'];
+const PLATFORM_DNS_SERVICES: readonly VoipDnsService[] = [...VOIP_DNS_SERVICES, 'realtime'];
 
 const VOIP_DNS_HELP: Record<VoipDnsService, { enabled: string; base: string; capacity: string }> = {
   pabx: {
@@ -54,11 +56,17 @@ const VOIP_DNS_HELP: Record<VoipDnsService, { enabled: string; base: string; cap
     base: 'Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.',
     capacity: 'Maximum number of Softswitch DNS publications allowed by this policy.',
   },
+  realtime: {
+    enabled:
+      'Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.',
+    base: 'Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.',
+    capacity: 'Maximum number of managed Realtime domains allowed by this policy.',
+  },
 };
 
 function voipPolicyFields(
   service: VoipDnsService,
-  tab: 'network' | 'routing',
+  tab: 'network' | 'routing' | 'monitoring',
 ): ConfigurableCrudField[] {
   return [
     {
@@ -77,7 +85,7 @@ function voipPolicyFields(
     {
       key: `${service}PolicyBase`,
       help: VOIP_DNS_HELP[service].base,
-      label: 'Realm SIP base',
+      label: service === 'realtime' ? 'Domain base' : 'Realm SIP base',
       tab,
       span: 2,
       hiddenWhen: ({ editing }) => !editing,
@@ -110,7 +118,8 @@ function voipPolicyFields(
       ],
       tab,
       span: 2,
-      hiddenWhen: ({ editing }) => !editing,
+      // Realtime policies are always platform policies.
+      hiddenWhen: ({ editing }) => !editing || service === 'realtime',
       help: 'Platform sharing requires master permission and a platform DNS provider.',
     },
   ];
@@ -163,6 +172,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     storage: 'DNS settings',
     network: 'PABX DNS',
     routing: 'Softswitch DNS',
+    monitoring: 'Realtime DNS',
     notes: 'Notes',
   },
   initialValues: {
@@ -210,6 +220,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   fields: [
     ...voipPolicyFields('pabx', 'network'),
     ...voipPolicyFields('softswitch', 'routing'),
+    ...voipPolicyFields('realtime', 'monitoring'),
 
     {
       key: 'status',
@@ -277,6 +288,14 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   ],
 };
 
+/** Realtime DNS policies are platform-only: the tenant scope never shows their fields. */
+function hostingDnsDomainConfig(master: boolean): ConfigurableCrudConfig {
+  const config = dnsCrudConfig(HOSTING_DNS_DOMAIN_CONFIG, master);
+  return master
+    ? config
+    : { ...config, fields: config.fields.filter((field) => !field.key.startsWith('realtime')) };
+}
+
 @Component({
   selector: 'app-hosting-dns-domains',
   standalone: true,
@@ -291,12 +310,11 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   constructor() {
-    super(
-      dnsCrudConfig(
-        HOSTING_DNS_DOMAIN_CONFIG,
-        inject(ActivatedRoute).snapshot.data?.['scope'] === 'master',
-      ),
-    );
+    super(hostingDnsDomainConfig(inject(ActivatedRoute).snapshot.data?.['scope'] === 'master'));
+  }
+
+  private dnsServices(): readonly VoipDnsService[] {
+    return this.isMaster() ? PLATFORM_DNS_SERVICES : VOIP_DNS_SERVICES;
   }
 
   private domainsPath(): string {
@@ -365,9 +383,9 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
 
   /** Sends only the service policies the operator changed, each keeping its own base. */
   private changedVoipDnsPolicies(): ConfigurableCrudRecord {
-    const changed = VOIP_DNS_SERVICES.map((service) => this.voipDnsPolicy(service)).filter(
-      (policy) => JSON.stringify(policy) !== this.loadedPolicySignatures[policy.purpose],
-    );
+    const changed = this.dnsServices()
+      .map((service) => this.voipDnsPolicy(service))
+      .filter((policy) => JSON.stringify(policy) !== this.loadedPolicySignatures[policy.purpose]);
     return changed.length ? { voipDnsPolicies: changed } : {};
   }
 
@@ -378,7 +396,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       );
       const items: any[] = result?.data?.items ?? [];
       const values: ConfigurableCrudRecord = {};
-      for (const service of VOIP_DNS_SERVICES) {
+      for (const service of this.dnsServices()) {
         const p = items.find((item) => item?.purpose === service);
         Object.assign(values, {
           [`${service}PolicyEnabled`]: p?.status === true || p?.status === 1,
@@ -391,7 +409,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       }
       super.startEdit({ ...row, ...values });
       this.loadedPolicySignatures = Object.fromEntries(
-        VOIP_DNS_SERVICES.map((service) => [service, JSON.stringify(this.voipDnsPolicy(service))]),
+        this.dnsServices().map((service) => [service, JSON.stringify(this.voipDnsPolicy(service))]),
       );
     } catch (e) {
       this.snack.error(this.errorMessage(e));
