@@ -6551,5 +6551,16 @@
   "Softswitch SIP realm base": "Base do realm SIP do Softswitch",
   "Softswitch SIP realm label": "Rótulo do realm SIP do Softswitch",
   "Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.": "Os nomes de realm do Softswitch são gerados sob esta base DNS. Use uma base dentro deste domínio, diferente da base do PABX.",
-  "Attachment preview": "Visualização do anexo"
+  "Attachment preview": "Visualização do anexo",
+  "DNS mode": "Modo DNS",
+  "DNS policy": "Policy DNS",
+  "Realtime DNS": "DNS Realtime",
+  "Domain base": "Base do domínio",
+  "Conflict": "Conflito",
+  "External: you maintain the DNS records. Managed: the platform publishes the A/AAAA records of the node bound to this domain.": "Externo: você mantém os registros DNS. Gerenciado: a plataforma publica os registros A/AAAA do nó vinculado a este domínio.",
+  "Platform DNS zone policy with the Realtime service enabled. The domain must be inside its base.": "Policy da zona DNS da plataforma com o serviço Realtime habilitado. O domínio deve estar dentro da base dela.",
+  "Publication confirms provider readback of the records for the node bound to this domain, not DNS cache expiry.": "A publicação confirma a leitura no provedor dos registros do nó vinculado a este domínio, não a expiração do cache DNS.",
+  "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.": "Permite que domínios Realtime da plataforma dentro desta base tenham os registros A/AAAA publicados automaticamente. Provisione a zona DNS antes de habilitar a publicação.",
+  "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.": "Domínios Realtime gerenciados (WebRTC, TURN, mídia) devem estar dentro desta base DNS. Use uma base dentro deste domínio, diferente das bases de VoIP.",
+  "Maximum number of managed Realtime domains allowed by this policy.": "Quantidade máxima de domínios Realtime gerenciados permitida por esta policy."
 }

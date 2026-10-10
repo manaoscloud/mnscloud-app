@@ -6550,5 +6550,16 @@
   "Softswitch SIP realm base": "Base del realm SIP del Softswitch",
   "Softswitch SIP realm label": "Etiqueta del realm SIP del Softswitch",
   "Softswitch realm names are generated under this DNS base. Use a base within this domain, different from the PABX base.": "Los nombres de realm del Softswitch se generan bajo esta base DNS. Use una base dentro de este dominio, distinta de la base del PABX.",
-  "Attachment preview": "Vista previa del adjunto"
+  "Attachment preview": "Vista previa del adjunto",
+  "DNS mode": "Modo DNS",
+  "DNS policy": "Política DNS",
+  "Realtime DNS": "DNS Realtime",
+  "Domain base": "Base del dominio",
+  "Conflict": "Conflicto",
+  "External: you maintain the DNS records. Managed: the platform publishes the A/AAAA records of the node bound to this domain.": "Externo: usted mantiene los registros DNS. Gestionado: la plataforma publica los registros A/AAAA del nodo vinculado a este dominio.",
+  "Platform DNS zone policy with the Realtime service enabled. The domain must be inside its base.": "Política de la zona DNS de la plataforma con el servicio Realtime habilitado. El dominio debe estar dentro de su base.",
+  "Publication confirms provider readback of the records for the node bound to this domain, not DNS cache expiry.": "La publicación confirma la lectura en el proveedor de los registros del nodo vinculado a este dominio, no la expiración de la caché DNS.",
+  "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.": "Permite que los dominios Realtime de la plataforma dentro de esta base publiquen automáticamente sus registros A/AAAA. Aprovisione la zona DNS antes de habilitar la publicación.",
+  "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.": "Los dominios Realtime gestionados (WebRTC, TURN, media) deben estar dentro de esta base DNS. Use una base dentro de este dominio, distinta de las bases de VoIP.",
+  "Maximum number of managed Realtime domains allowed by this policy.": "Cantidad máxima de dominios Realtime gestionados permitida por esta política."
 }
