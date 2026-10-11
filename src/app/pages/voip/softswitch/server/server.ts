@@ -1,4 +1,5 @@
 import {
+  confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../../shared/install-command-dialog/runtime-install-token';
@@ -15,19 +16,12 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { VoipSoftswitchServerItem, VoipSoftswitchServerService } from './server.service';
 import { ApiService } from '../../../../services/api.service';
-import {
-  InstallCommandDialogComponent,
-  type InstallCommandDialogData,
-} from '../../../../shared/install-command-dialog/install-command-dialog';
+import { type InstallCommandDialogData } from '../../../../shared/install-command-dialog/install-command-dialog';
+import { openInstallCommandDialog } from '../../../../shared/install-command-dialog/open-install-command-dialog';
 import {
   openDataViewerDialog,
   type DataViewerTone,
 } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
-import {
-  openCrudTemplateDialog,
-  type CrudDialogBinding,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 
 const ENGINE_OPTIONS = [
   { value: 'kamailio', label: 'Kamailio' },
@@ -233,7 +227,6 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   private readonly rawApi = inject(ApiService);
   readonly mediaServerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
-  private installDialogBinding: CrudDialogBinding | null = null;
 
   constructor() {
     super(SERVER_CONFIG);
@@ -291,10 +284,11 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
       return;
     }
     if (action.key !== 'install-command') return;
-    const confirmed = await this.confirmAction(
-      'Generate install command',
-      `Generate a new install command for "${row.VsrName}"? The previous Softswitch runtime token will be replaced.`,
-      'Generate command',
+    const confirmed = await confirmInstallCommandGeneration(
+      this.dialog,
+      (key, params) => this.t(key, params),
+      row.VsrName,
+      'Softswitch',
     );
     if (!confirmed) return;
     await this.generateInstallCommand(row, true);
@@ -325,22 +319,9 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
         this.snack.warning('Install command was not returned.');
         return;
       }
-      this.installDialogBinding?.ref.close();
-      this.installDialogBinding = openCrudTemplateDialog(
+      openInstallCommandDialog(
         this.dialog,
-        InstallCommandDialogComponent,
-        'crud-form-dialog',
-        {
-          data: this.installCommandData(row, response?.data ?? {}, command),
-          onEscape: () => this.installDialogBinding?.ref.close(),
-        },
-      );
-      bindDialogClosed(
-        this.installDialogBinding.ref,
-        () => {
-          this.installDialogBinding?.stop();
-          this.installDialogBinding = null;
-        },
+        this.installCommandData(row, response?.data ?? {}, command),
         this.destroyRef,
       );
       if (showSuccess) this.snack.success('Softswitch install command generated.');

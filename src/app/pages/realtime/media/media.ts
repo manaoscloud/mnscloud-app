@@ -1,11 +1,10 @@
 import {
+  confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
 import { ApiService } from '../../../services/api.service';
-
-import { firstValueFrom } from 'rxjs';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -15,11 +14,8 @@ import {
   ConfigurableCrudRowAction,
   ConfigurableCrudOption,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import {
-  InstallCommandDialogComponent,
-  InstallCommandDialogData,
-} from '../../../shared/install-command-dialog/install-command-dialog';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { InstallCommandDialogData } from '../../../shared/install-command-dialog/install-command-dialog';
+import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
 import { RealtimeMediaService } from './media.service';
 
 const STATUS_OPTIONS = [
@@ -351,18 +347,11 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key !== 'generate-install') return;
-    const confirmed = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: 'Generate Install Command',
-            message: `Generate a new install command for ${String(row['RmsName'] ?? '')}? The previous media runtime token will be replaced.`,
-            confirmText: 'Generate command',
-          },
-        })
-        .afterClosed(),
+    const confirmed = await confirmInstallCommandGeneration(
+      this.dialog,
+      (key, params) => this.t(key, params),
+      String(row['RmsName'] ?? ''),
+      'media',
     );
     if (!confirmed) return;
     await this.openInstallCommand(row);
@@ -441,10 +430,7 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
           { label: 'Runtime', value: 'mnscloud-media', monospace: true },
         ],
       };
-      this.dialog.open(InstallCommandDialogComponent, {
-        panelClass: 'install-command-dialog-panel',
-        data,
-      });
+      openInstallCommandDialog(this.dialog, data, this.destroyRef);
       this.snack.success('Media install command generated.');
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to generate media install command.');

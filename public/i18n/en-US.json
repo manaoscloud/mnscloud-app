@@ -6573,5 +6573,16 @@
   "Generate automatically": "Generate automatically",
   "Media server (automatic)": "Media server (automatic)",
   "No WebRTC defaults configured yet.": "No WebRTC defaults configured yet.",
-  "No TURN/STUN defaults configured yet.": "No TURN/STUN defaults configured yet."
+  "No TURN/STUN defaults configured yet.": "No TURN/STUN defaults configured yet.",
+  "Generate a new install command for \"{{name}}\"? The previous {{runtime}} runtime token will be replaced and the server must be reinstalled or reconfigured with the new command.": "Generate a new install command for \"{{name}}\"? The previous {{runtime}} runtime token will be replaced and the server must be reinstalled or reconfigured with the new command.",
+  "Media install command": "Media install command",
+  "Media install command generated.": "Media install command generated.",
+  "Run this command on the OpenSIPS SBC server.": "Run this command on the OpenSIPS SBC server.",
+  "Run this command on the target TURN/STUN edge host.": "Run this command on the target TURN/STUN edge host.",
+  "Run this command on the target WebRTC edge host.": "Run this command on the target WebRTC edge host.",
+  "Run this command on the target media edge host.": "Run this command on the target media edge host.",
+  "SBC install command": "SBC install command",
+  "SBC install command generated.": "SBC install command generated.",
+  "SBC server saved, but install command could not be generated.": "SBC server saved, but install command could not be generated.",
+  "TURN/STUN install command generated.": "TURN/STUN install command generated."
 }

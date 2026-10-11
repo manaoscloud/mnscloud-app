@@ -1,4 +1,5 @@
 import {
+  confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../../shared/install-command-dialog/runtime-install-token';
@@ -13,15 +14,8 @@ import {
   ConfigurableCrudSaveContext,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import {
-  InstallCommandDialogComponent,
-  type InstallCommandDialogData,
-} from '../../../../shared/install-command-dialog/install-command-dialog';
-import {
-  openCrudTemplateDialog,
-  type CrudDialogBinding,
-} from '../../../../shared/dialog/crud-dialog.util';
-import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { type InstallCommandDialogData } from '../../../../shared/install-command-dialog/install-command-dialog';
+import { openInstallCommandDialog } from '../../../../shared/install-command-dialog/open-install-command-dialog';
 import { ApiService } from '../../../../services/api.service';
 import { VoipSbcServerItem, VoipSbcServerService } from './server.service';
 
@@ -212,7 +206,6 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
   private readonly rawApi = inject(ApiService);
   readonly mediaServerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
-  private installDialogBinding: CrudDialogBinding | null = null;
 
   constructor() {
     super(SERVER_CONFIG);
@@ -266,10 +259,11 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: VoipSbcServerItem) {
     if (action.key !== 'install-command') return;
-    const confirmed = await this.confirmAction(
-      'Generate install command',
-      `Generate a new install command for "${row.VbsName}"? The previous SBC runtime token will be replaced.`,
-      'Generate command',
+    const confirmed = await confirmInstallCommandGeneration(
+      this.dialog,
+      (key, params) => this.t(key, params),
+      row.VbsName,
+      'SBC',
     );
     if (!confirmed) return;
     await this.generateInstallCommand(row, true);
@@ -301,22 +295,9 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
         this.snack.warning('Install command was not returned.');
         return;
       }
-      this.installDialogBinding?.ref.close();
-      this.installDialogBinding = openCrudTemplateDialog(
+      openInstallCommandDialog(
         this.dialog,
-        InstallCommandDialogComponent,
-        'crud-form-dialog',
-        {
-          data: this.installCommandData(row, response?.data ?? {}, command),
-          onEscape: () => this.installDialogBinding?.ref.close(),
-        },
-      );
-      bindDialogClosed(
-        this.installDialogBinding.ref,
-        () => {
-          this.installDialogBinding?.stop();
-          this.installDialogBinding = null;
-        },
+        this.installCommandData(row, response?.data ?? {}, command),
         this.destroyRef,
       );
       if (showSuccess) this.snack.success('SBC install command generated.');

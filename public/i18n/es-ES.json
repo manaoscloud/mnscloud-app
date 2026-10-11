@@ -6573,5 +6573,16 @@
   "Generate automatically": "Generar automáticamente",
   "Media server (automatic)": "Servidor de medios (automático)",
   "No WebRTC defaults configured yet.": "Aún no hay valores predeterminados de WebRTC configurados.",
-  "No TURN/STUN defaults configured yet.": "Aún no hay valores predeterminados de TURN/STUN configurados."
+  "No TURN/STUN defaults configured yet.": "Aún no hay valores predeterminados de TURN/STUN configurados.",
+  "Generate a new install command for \"{{name}}\"? The previous {{runtime}} runtime token will be replaced and the server must be reinstalled or reconfigured with the new command.": "¿Generar un nuevo comando de instalación para \"{{name}}\"? El token de runtime {{runtime}} anterior será reemplazado y el servidor deberá reinstalarse o reconfigurarse con el nuevo comando.",
+  "Media install command": "Comando de instalación de medios",
+  "Media install command generated.": "Comando de instalación de medios generado.",
+  "Run this command on the OpenSIPS SBC server.": "Ejecute este comando en el servidor SBC OpenSIPS.",
+  "Run this command on the target TURN/STUN edge host.": "Ejecute este comando en el host de borde TURN/STUN de destino.",
+  "Run this command on the target WebRTC edge host.": "Ejecute este comando en el host de borde WebRTC de destino.",
+  "Run this command on the target media edge host.": "Ejecute este comando en el host de borde de medios de destino.",
+  "SBC install command": "Comando de instalación del SBC",
+  "SBC install command generated.": "Comando de instalación del SBC generado.",
+  "SBC server saved, but install command could not be generated.": "Servidor SBC guardado, pero no se pudo generar el comando de instalación.",
+  "TURN/STUN install command generated.": "Comando de instalación TURN/STUN generado."
 }

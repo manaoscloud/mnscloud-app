@@ -1,4 +1,5 @@
 import {
+  confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../../shared/install-command-dialog/runtime-install-token';
@@ -16,8 +17,7 @@ import {
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
-import { InstallCommandDialogComponent } from '../../../../shared/install-command-dialog/install-command-dialog';
+import { openInstallCommandDialog } from '../../../../shared/install-command-dialog/open-install-command-dialog';
 
 type ServerRecord = ConfigurableCrudRecord & {
   VpsUUID: string;
@@ -375,7 +375,13 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
     if (action.key === 'validate-control') {
       await this.validateControl(row);
     } else if (action.key === 'install-command') {
-      await this.openGeneratedInstallCommand(row.VpsUUID, true);
+      const confirmed = await confirmInstallCommandGeneration(
+        this.installDialog,
+        (key, params) => this.t(key, params),
+        String(row.VpsName ?? ''),
+        'PABX',
+      );
+      if (confirmed) await this.openGeneratedInstallCommand(row.VpsUUID, true);
     }
   }
 
@@ -451,31 +457,28 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
         postValidate,
       ].join(' && ');
 
-      openCrudComponentDialog(
+      openInstallCommandDialog(
         this.installDialog,
-        InstallCommandDialogComponent,
-        'install-command-dialog-panel',
         {
-          data: {
-            title: 'PABX server install command',
-            description: 'Run this command on the target PABX server.',
-            warning: runtimeInstallTokenWarning(
-              data,
-              'This runtime token is shown only once. Copy it only to the intended server.',
-            ),
-            details: [
-              { label: 'API base', value: apiBase, monospace: true },
-              { label: 'Node UUID', value: data['nodeUUID'], monospace: true },
-              { label: 'Engine', value: engine || null, monospace: true },
-              {
-                label: 'Runtime',
-                value: engine === 'asterisk' ? 'mnscloud-asterisk' : 'mnscloud-freeswitch',
-                monospace: true,
-              },
-            ],
-            command,
-          },
+          title: 'PABX server install command',
+          description: 'Run this command on the target PABX server.',
+          warning: runtimeInstallTokenWarning(
+            data,
+            'This runtime token is shown only once. Copy it only to the intended server.',
+          ),
+          details: [
+            { label: 'API base', value: apiBase, monospace: true },
+            { label: 'Node UUID', value: data['nodeUUID'], monospace: true },
+            { label: 'Engine', value: engine || null, monospace: true },
+            {
+              label: 'Runtime',
+              value: engine === 'asterisk' ? 'mnscloud-asterisk' : 'mnscloud-freeswitch',
+              monospace: true,
+            },
+          ],
+          command,
         },
+        this.destroyRef,
       );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));

@@ -899,14 +899,19 @@ or cancelling the form they are filling.
 
 - Any modal that renders generated installation, enrollment, runtime, or provisioning shell commands
   must use `InstallCommandDialogComponent` from `src/app/shared/install-command-dialog`.
-- Install command dialogs must open through `openCrudTemplateDialog` (template content) or
-  `openCrudComponentDialog` (component content), using `crud-form-dialog`, so their viewport size,
-  position, resize behavior, footer density, and mobile behavior match CRUD dialogs.
+- Install command dialogs open only through `openInstallCommandDialog(dialog, data, destroyRef,
+  onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.ts`). It uses
+  `openCrudComponentDialog` with `crud-form-dialog`, so viewport size, position, resize behavior,
+  footer density and mobile behavior match CRUD dialogs; it also binds Escape, releases the
+  responsive binding on close, closes the dialog when the owning page is destroyed, keeps a single
+  command dialog open at a time, and calls `onClosed` so the page can clear the generated token.
+  Pages never call `dialog.open`/`openCrud*Dialog` with `InstallCommandDialogComponent` and never
+  use a dedicated panel class (the former `install-command-dialog-panel` is retired).
+- `npm run check:install-command-dialog` (part of `verify:changed`, app-wide, no allowlist) fails on
+  any page referencing `InstallCommandDialogComponent` or on the retired panel class.
 - Footer actions must follow the CRUD action contract: `Copy command` is the primary action,
   `Close` is secondary, desktop keeps secondary left and primary right, and mobile stacks both
   actions at equal full width with the primary action first.
-- Agents use the component helper; release its responsive binding and clear the generated token
-  when the dialog closes. Close the command dialog when its owning page is destroyed.
 - Install command footers must use the same `.crud-dialog .form-actions` margin, padding, desktop
   alignment, mobile stacking, and button inset as CRUD form dialogs. Do not define install-command
   footer margin or padding values that differ from the CRUD footer contract.
@@ -925,9 +930,10 @@ or cancelling the form they are filling.
     command dialog when the API returns the created UUID/item;
   - the first command shown immediately after create does not need an extra confirmation because the
     user is already in the creation flow;
-  - row actions that generate a new command for an existing record must open
-    `SlowConfirmDialogComponent` before calling the API, because the previous runtime token or
-    enrollment secret will be replaced;
+  - row actions that generate a new command for an existing record must confirm first through
+    `confirmInstallCommandGeneration(dialog, translate, serverName, runtime)`
+    (`runtime-install-token.ts`, a `SlowConfirmDialogComponent`) before calling the API, because the
+    previous runtime token or enrollment secret will be replaced;
   - the confirmation text must explicitly say that the previous token/secret will be replaced and
     the target runtime may need to be reinstalled or reconfigured with the new command.
 - Generic CRUD pages that need this lifecycle must use a generic post-save hook/configuration point
