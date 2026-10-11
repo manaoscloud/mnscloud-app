@@ -61,6 +61,12 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/billing/promotions',
       },
       {
+        id: 'billing/price-adjustments',
+        label: 'nav.billing.price-adjustments',
+        icon: 'trending_up',
+        masterRoute: '/system/billing/price-adjustments',
+      },
+      {
         id: 'billing/subscriptions',
         label: 'nav.billing.subscriptions',
         icon: 'subscriptions',
