@@ -6570,9 +6570,9 @@
   "Domain label": "Rótulo do domínio",
   "Prefix of the media server UUID; it never changes when the server is renamed.": "Prefixo do UUID do servidor de mídia; não muda quando o servidor é renomeado.",
   "UUID length": "Tamanho do UUID",
-  "Example": "Exemplo",
-  "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.": "Os registros são publicados depois que a instalação do servidor de mídia informa os IPs públicos. Excluir o servidor remove o domínio gerado e seus registros.",
   "Select an RTP DNS policy.": "Selecione uma política RTP DNS.",
   "Generate automatically": "Gerar automaticamente",
-  "Media server (automatic)": "Servidor de mídia (automático)"
+  "Media server (automatic)": "Servidor de mídia (automático)",
+  "No WebRTC defaults configured yet.": "Nenhum padrão de WebRTC configurado ainda.",
+  "No TURN/STUN defaults configured yet.": "Nenhum padrão de TURN/STUN configurado ainda."
 }
