@@ -3,6 +3,7 @@ import {
   runtimeInstallTokenWarning,
 } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
+import { ApiService } from '../../../services/api.service';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -30,6 +31,9 @@ const ENGINE_OPTIONS = [
   { value: 'rtpengine', label: 'rtpengine' },
   { value: 'custom', label: 'Custom' },
 ] as const;
+
+/** Media domain option that asks the API to generate a managed domain (RTP Media parameters). */
+const AUTO_MEDIA_DOMAIN = '__auto__';
 
 const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/realtime/media/servers',
@@ -299,18 +303,50 @@ const MEDIA_DOMAIN_CONFIG: ConfigurableCrudConfig = {
 
 abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly mediaApi = inject(RealtimeMediaService);
+  private readonly parametersApi = inject(ApiService);
   protected mediaDomainOptions: ConfigurableCrudOption[] = [];
   protected realtimeDomainOptions: ConfigurableCrudOption[] = [];
+  /** Base of the RTP DNS policy when automatic media domains are enabled; null otherwise. */
+  private autoDomainBase: string | null = null;
 
   protected constructor(config: ConfigurableCrudConfig) {
     super(config);
     void this.fetchLookupOptions();
   }
 
+  private get isServerPage(): boolean {
+    return this.config.uuidField === 'RmsUUID';
+  }
+
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'mediaDomainUUID') return this.mediaDomainOptions;
+    if (key === 'mediaDomainUUID') {
+      if (!this.isServerPage || this.editingRecord() || this.autoDomainBase === null) {
+        return this.mediaDomainOptions;
+      }
+      return [
+        {
+          value: AUTO_MEDIA_DOMAIN,
+          label: this.t('Generate automatically'),
+          description: `<uuid>.${this.autoDomainBase}`,
+          searchText: `${this.t('Generate automatically')} ${this.autoDomainBase}`,
+        },
+        ...this.mediaDomainOptions,
+      ];
+    }
     if (key === 'realtimeDomainUUID') return this.realtimeDomainOptions;
     return [];
+  }
+
+  override startCreate(): void {
+    super.startCreate();
+    if (this.isServerPage && this.autoDomainBase !== null) {
+      this.patchFormValues({ mediaDomainUUID: AUTO_MEDIA_DOMAIN });
+    }
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    if (payload['mediaDomainUUID'] !== AUTO_MEDIA_DOMAIN) return super.augmentPayload(payload);
+    return super.augmentPayload({ ...payload, mediaDomainUUID: null, autoDomain: true });
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
@@ -341,10 +377,18 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async fetchLookupOptions() {
-    const [mediaDomains, realtimeDomains] = await Promise.all([
+    const [mediaDomains, realtimeDomains, parameters] = await Promise.all([
       this.mediaApi.list('domains', { status: 1, limit: 5000 }),
       this.mediaApi.listRealtimeDomains({ purpose: 'media', status: 1, limit: 5000 }),
+      this.isServerPage
+        ? this.parametersApi.get<any>('system/parameters').catch(() => null)
+        : Promise.resolve(null),
     ]);
+    const rtpMedia = parameters?.data?.item;
+    this.autoDomainBase =
+      rtpMedia?.realtimeMediaAutoDomainEnabled === true && rtpMedia?.realtimeMediaDnsPolicyBase
+        ? String(rtpMedia.realtimeMediaDnsPolicyBase)
+        : null;
     this.mediaDomainOptions = this.toOptions(
       mediaDomains?.data?.items ?? [],
       'RmdUUID',

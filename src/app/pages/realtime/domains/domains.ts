@@ -27,6 +27,12 @@ const DNS_MODE_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'managed', label: 'Managed' },
 ];
 
+/** `auto_media` domains are generated with, and removed together with, their media server. */
+const SOURCE_OPTIONS = [
+  { value: 'manual', label: 'Manual' },
+  { value: 'auto_media', label: 'Media server (automatic)' },
+] as const;
+
 /** Managed DNS publication state; `external` is shown when the platform does not publish. */
 const DNS_STATE_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'external', label: 'External' },
@@ -118,6 +124,9 @@ function realtimeDomainConfig(
       { id: 'name', label: 'Domain', kind: 'identity', field: 'RtdName', uuidField: 'RtdUUID' },
       { id: 'purpose', label: 'Purpose', field: 'RtdPurpose' },
       { id: 'scope', label: 'Scope', field: 'RtdScope' },
+      ...(platform
+        ? [{ id: 'source', label: 'Source', field: 'RtdSource', options: SOURCE_OPTIONS }]
+        : []),
       ...(platform
         ? [
             {

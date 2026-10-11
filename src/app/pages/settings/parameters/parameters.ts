@@ -118,6 +118,13 @@ type SystemParametersItem = {
   voipPabxCdrRetentionDays: number;
   voipPabxRecordingRetentionDays: number;
   voipPabxOrphanRetentionDays: number;
+  realtimeMediaAutoDomainEnabled: boolean;
+  realtimeMediaDnsPolicyUUID: string;
+  realtimeMediaAutoDomainUuidLength: number;
+  realtimeMediaDnsPolicyBase?: string | null;
+  realtimeMediaDnsPolicyZoneName?: string | null;
+  realtimeMediaDnsPolicyEligible?: boolean | null;
+  realtimeMediaDnsPolicyError?: string | null;
 };
 
 type StorageAccountItem = {
@@ -133,7 +140,7 @@ type ParametersSnapshot = {
 };
 
 /** VoIP services with their own DNS publication policies (one per DNS zone and service). */
-type VoipDnsService = 'pabx' | 'softswitch';
+type VoipDnsService = 'pabx' | 'softswitch' | 'realtime';
 
 type DnsPolicyItem = {
   policyUUID: string;
@@ -276,6 +283,9 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipPabxCdrRetentionDays: 0,
   voipPabxRecordingRetentionDays: 0,
   voipPabxOrphanRetentionDays: 30,
+  realtimeMediaAutoDomainEnabled: false,
+  realtimeMediaDnsPolicyUUID: '',
+  realtimeMediaAutoDomainUuidLength: 12,
 };
 
 @Component({
@@ -317,6 +327,12 @@ export class SettingsParametersPage {
     base: this.item().voipSoftswitchDnsPolicyBase,
     eligible: this.item().voipSoftswitchDnsPolicyEligible,
   }));
+  readonly realtimeMediaDns = this.dnsPolicySelector('realtime', () => ({
+    uuid: this.item().realtimeMediaDnsPolicyUUID,
+    zoneName: this.item().realtimeMediaDnsPolicyZoneName,
+    base: this.item().realtimeMediaDnsPolicyBase,
+    eligible: this.item().realtimeMediaDnsPolicyEligible,
+  }));
 
   /** Server-searched, paginated selector of the authorized DNS policies of one VoIP service. */
   private dnsPolicySelector(service: VoipDnsService, selected: () => SelectedDnsPolicy) {
@@ -328,6 +344,9 @@ export class SettingsParametersPage {
       params: () => ({ endpoint: this.baseEndpoint(), search: term(), offset: offset() }),
       defaultValue: { items: [] as DnsPolicyItem[], total: 0 },
       loader: async ({ params }) => {
+        if (service === 'realtime' && !this.isMaster()) {
+          return { items: [] as DnsPolicyItem[], total: 0 };
+        }
         const query = new URLSearchParams({
           search: params.search,
           limit: '50',
@@ -347,7 +366,9 @@ export class SettingsParametersPage {
       this.i18n.language();
       const list = policies();
       const current = selected();
-      const realmBase = this.translation.translate('SIP realm base');
+      const realmBase = this.translation.translate(
+        service === 'realtime' ? 'Domain base' : 'SIP realm base',
+      );
       const result = list
         .filter((p) => p.status && p.eligible !== false)
         .map((p) => ({
@@ -493,6 +514,41 @@ export class SettingsParametersPage {
       this.item().voipPabxEffectivePolicyError ||
       'The inherited platform DNS policy is currently unavailable.'
     );
+  });
+
+  selectRealtimeMediaDnsPolicy(value: unknown) {
+    const uuid = String(value ?? '');
+    const policy = this.realtimeMediaDns.find(uuid);
+    this.updateItem({
+      realtimeMediaDnsPolicyUUID: uuid,
+      realtimeMediaDnsPolicyBase: policy?.base ?? null,
+      realtimeMediaDnsPolicyZoneName: policy?.zoneName ?? null,
+      realtimeMediaDnsPolicyEligible: policy ? policy.eligible !== false : null,
+      realtimeMediaDnsPolicyError: null,
+    });
+  }
+
+  /** Example of the name generated for the next media server (`<uuid-prefix>.<policy base>`). */
+  readonly realtimeMediaExample = computed(() => {
+    const it = this.item();
+    const base =
+      this.realtimeMediaDns.find(it.realtimeMediaDnsPolicyUUID)?.base ||
+      it.realtimeMediaDnsPolicyBase;
+    if (!base) return '';
+    const length = this.clampInteger(it.realtimeMediaAutoDomainUuidLength, 8, 32);
+    return `${'0123456789abcdef0123456789abcdef'.slice(0, length)}.${base}`;
+  });
+
+  readonly realtimeMediaPolicyError = computed(() => {
+    const it = this.item();
+    if (!it.realtimeMediaDnsPolicyUUID) {
+      return it.realtimeMediaAutoDomainEnabled ? 'Select an RTP DNS policy.' : null;
+    }
+    if (it.realtimeMediaDnsPolicyError) return it.realtimeMediaDnsPolicyError;
+    if (it.realtimeMediaDnsPolicyEligible === false) {
+      return 'The selected DNS policy is invalid.';
+    }
+    return null;
   });
 
   selectSoftswitchDnsPolicy(value: unknown) {
@@ -983,6 +1039,17 @@ export class SettingsParametersPage {
       voipPabxCdrRetentionDays: this.normalizeInteger(raw?.voipPabxCdrRetentionDays, 0),
       voipPabxRecordingRetentionDays: this.normalizeInteger(raw?.voipPabxRecordingRetentionDays, 0),
       voipPabxOrphanRetentionDays: this.normalizeInteger(raw?.voipPabxOrphanRetentionDays, 30),
+      realtimeMediaAutoDomainEnabled: raw?.realtimeMediaAutoDomainEnabled === true,
+      realtimeMediaDnsPolicyUUID: String(raw?.realtimeMediaDnsPolicyUUID ?? ''),
+      realtimeMediaAutoDomainUuidLength: this.clampInteger(
+        raw?.realtimeMediaAutoDomainUuidLength ?? 12,
+        8,
+        32,
+      ),
+      realtimeMediaDnsPolicyBase: raw?.realtimeMediaDnsPolicyBase ?? null,
+      realtimeMediaDnsPolicyZoneName: raw?.realtimeMediaDnsPolicyZoneName ?? null,
+      realtimeMediaDnsPolicyEligible: raw?.realtimeMediaDnsPolicyEligible ?? null,
+      realtimeMediaDnsPolicyError: raw?.realtimeMediaDnsPolicyError ?? null,
       voipPabxRealmSource:
         raw?.voipPabxRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
       voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
@@ -1155,6 +1222,11 @@ export class SettingsParametersPage {
         this.normalizeInteger(value.voipPabxRecordingRetentionDays, 0),
       ),
       voipPabxOrphanRetentionDays: this.clampInteger(value.voipPabxOrphanRetentionDays, 0, 3650),
+      realtimeMediaAutoDomainUuidLength: this.clampInteger(
+        value.realtimeMediaAutoDomainUuidLength,
+        8,
+        32,
+      ),
     };
   }
 
@@ -1210,6 +1282,9 @@ export class SettingsParametersPage {
       voipPabxCdrRetentionDays: value.voipPabxCdrRetentionDays,
       voipPabxRecordingRetentionDays: value.voipPabxRecordingRetentionDays,
       voipPabxOrphanRetentionDays: value.voipPabxOrphanRetentionDays,
+      realtimeMediaAutoDomainEnabled: value.realtimeMediaAutoDomainEnabled,
+      realtimeMediaDnsPolicyUUID: value.realtimeMediaDnsPolicyUUID,
+      realtimeMediaAutoDomainUuidLength: value.realtimeMediaAutoDomainUuidLength,
       billingSignupTrialEnabled: value.billingSignupTrialEnabled,
       billingSignupTrialAmount: value.billingSignupTrialAmount,
       billingSignupTrialCurrency: value.billingSignupTrialCurrency,
