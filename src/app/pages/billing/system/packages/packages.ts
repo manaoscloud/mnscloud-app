@@ -90,7 +90,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       visible: (row) => Number(row['SubscriptionCount'] ?? 0) > 0,
       collection: (row) =>
         defineCrud({
-          endpoint: `system/billing/packages/${row['BpaUUID']}/subscriptions`,
+          endpoint: `system/billing/packages/${row['BpaUUID']}/subscribers`,
           uuidField: 'BsuUUID',
           pageTitle: 'Package subscribers',
           pageDescription:
