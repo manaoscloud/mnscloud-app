@@ -361,6 +361,14 @@ export class BillingService {
     }
   }
 
+  /** Adds an active package item to the live subscriptions of its package (idempotent). */
+  async applyPackageItemToSubscriptions(itemUUID: string) {
+    const response = await this.api.post<{
+      data?: { item?: { appliedCount: number; pendingCount: number } };
+    }>(`system/billing/package-items/${itemUUID}/apply-subscriptions`, {});
+    return response.data?.item ?? { appliedCount: 0, pendingCount: 0 };
+  }
+
   async getTenantDashboard() {
     const response =
       await this.api.get<ApiListResponse<BillingTenantDashboard>>('billing/dashboard');

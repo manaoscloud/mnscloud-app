@@ -6,6 +6,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRelatedCollection,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { BillingPackage, BillingService } from '../../shared/billing.service';
 import {
@@ -63,7 +64,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     sortOrder: 1000,
     itemProductUUID: '',
     itemEntitlementCode: '',
-    itemIncludedQuantity: 1,
+    itemIncludedQuantity: -1,
     itemRequired: 1,
     status: 1,
   },
@@ -71,10 +72,71 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     { id: 'name', label: 'Name', kind: 'identity', field: 'BpaName', uuidField: 'BpaUUID' },
     { id: 'code', label: 'Code', field: 'BpaCode' },
     { id: 'items', label: 'Items', field: 'ItemCount' },
-    { id: 'subscribers', label: 'Subscribers', kind: 'number', field: 'SubscriptionCount' },
+    {
+      id: 'subscribers',
+      label: 'Subscribers',
+      kind: 'number',
+      field: 'SubscriptionCount',
+      rowAction: 'subscribers',
+    },
     { id: 'status', label: 'Status', kind: 'status', field: 'BpaStatus', className: 'status-col' },
   ],
   rowActions: [
+    {
+      key: 'subscribers',
+      label: 'Subscribers',
+      icon: 'groups',
+      tooltip: 'List the current subscribers of this package.',
+      visible: (row) => Number(row['SubscriptionCount'] ?? 0) > 0,
+      collection: (row) =>
+        defineCrud({
+          endpoint: `system/billing/packages/${row['BpaUUID']}/subscriptions`,
+          uuidField: 'BsuUUID',
+          pageTitle: 'Package subscribers',
+          pageDescription:
+            'Current subscriptions of this package and the composition each one holds.',
+          canCreate: false,
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          searchPlaceholder: 'Search subscribers',
+          statusFilter: false,
+          emptyLabel: 'No subscribers found.',
+          initialValues: {},
+          columns: [
+            {
+              id: 'tenant',
+              label: 'Tenant',
+              kind: 'identity',
+              field: 'TenantLabel',
+              uuidField: 'BsuUUID',
+              detail: (subscription) => String(subscription['TenantEmail'] ?? ''),
+            },
+            { id: 'status', label: 'Status', field: 'BsuStatus', translateValue: true },
+            {
+              id: 'price',
+              label: 'Contracted price',
+              kind: 'currency',
+              field: 'BsuUnitPriceSnapshot',
+              currencyField: 'BsuCurrency',
+            },
+            {
+              id: 'renewal',
+              label: 'Current period end',
+              kind: 'datetime',
+              field: 'BsuCurrentPeriodEnd',
+            },
+            { id: 'items', label: 'Items', field: 'ItemNames' },
+            {
+              id: 'missing',
+              label: 'Missing package items',
+              kind: 'number',
+              field: 'MissingItemCount',
+            },
+          ],
+          fields: [],
+        }),
+    },
     {
       key: 'migrateSubscribers',
       label: 'Migrate subscribers',
@@ -106,6 +168,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
                 endpoint: `system/billing/packages/${row['BpaUUID']}/subscriptions`,
                 uuidField: 'BsuUUID',
                 labelField: 'TenantLabel',
+                descriptionField: 'TenantEmail',
               },
               quickCreate: false,
               quickCreateExemptReason:
@@ -163,7 +226,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       initialValues: {
         itemProductUUID: '',
         itemEntitlementCode: '',
-        itemIncludedQuantity: 1,
+        itemIncludedQuantity: -1,
         itemRequired: 1,
       },
       fields: [
@@ -187,9 +250,9 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         {
           key: 'itemIncludedQuantity',
           payloadKey: 'includedQuantity',
-          label: 'Included quantity',
+          label: 'Included quantity (-1 = unlimited)',
           type: 'number',
-          help: 'Quantity included by this item: -1 is unlimited; a positive number sets the package limit.',
+          help: 'How much of this item the package releases: -1 = unlimited (default); a positive number = that limit (for example 10 extensions). 0 is not accepted.',
           span: 1,
         },
         {
@@ -210,13 +273,42 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           label: 'Included quantity',
           kind: 'number',
           field: 'BkiIncludedQuantity',
+          value: (row, t) =>
+            Number(row['BkiIncludedQuantity']) === -1
+              ? t('Unlimited')
+              : String(Number(row['BkiIncludedQuantity'] ?? 0)),
+        },
+        {
+          id: 'pending',
+          label: 'Subscribers without this item',
+          kind: 'number',
+          field: 'PendingSubscriptionCount',
         },
         { id: 'status', label: 'Status', kind: 'status', field: 'BkiStatus' },
+      ],
+      rowActions: [
+        {
+          key: 'applySubscribers',
+          label: 'Apply to current subscribers',
+          icon: 'group_add',
+          visible: (row) => Number(row['PendingSubscriptionCount'] ?? 0) > 0,
+          request: {
+            method: 'post',
+            endpoint: (row) => `system/billing/package-items/${row['BkiUUID']}/apply-subscriptions`,
+            successMessage: 'Package item applied to current subscribers.',
+            confirm: {
+              title: 'Apply to current subscribers',
+              message:
+                'Add this item to every current subscriber of the package? Their price and billing cycle do not change.',
+              confirmLabel: 'Apply',
+            },
+          },
+        },
       ],
       payload: (values) => ({
         productUUID: values['itemProductUUID'],
         entitlementCode: values['itemEntitlementCode'] || null,
-        includedQuantity: numberOrNull(values['itemIncludedQuantity']) ?? 1,
+        includedQuantity: numberOrNull(values['itemIncludedQuantity']) ?? -1,
         required: Number(values['itemRequired'] ?? 1),
         status: 1,
       }),
@@ -318,10 +410,10 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'itemIncludedQuantity',
       payloadKey: 'itemIncludedQuantity',
-      label: 'Included quantity',
+      label: 'Included quantity (-1 = unlimited)',
       type: 'number',
       hiddenWhen: ({ editing }) => editing,
-      help: 'Quantity included by this item: -1 is unlimited; a positive number sets the package limit.',
+      help: 'How much of this item the package releases: -1 = unlimited (default); a positive number = that limit (for example 10 extensions). 0 is not accepted.',
       tab: 'financial',
       span: 1,
     },
@@ -389,6 +481,35 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
     return super.lookupLabel(key, value);
   }
 
+  /** A new item reaches current subscribers only when the master confirms it (prices never change). */
+  protected override async afterRelatedCollectionRowAdded(
+    collection: ConfigurableCrudRelatedCollection,
+    _parentUUID: string,
+    created: ConfigurableCrudRecord | null,
+  ): Promise<void> {
+    if (collection.key !== 'packageItems') return;
+    const itemUUID = String(created?.['BkiUUID'] ?? '');
+    const pending = Number(created?.['PendingSubscriptionCount'] ?? 0);
+    if (!itemUUID || pending <= 0) return;
+    const confirmed = await this.confirmAction(
+      'Apply to current subscribers',
+      this.t(
+        'Also add this item to the {{count}} current subscribers of the package? Their price and billing cycle do not change. New subscriptions always include it.',
+        { count: pending },
+      ),
+      'Apply',
+    );
+    if (!confirmed) return;
+    try {
+      await this.billing.applyPackageItemToSubscriptions(itemUUID);
+      this.snack.success(this.t('Package item applied to current subscribers.'));
+      await this.reloadRelatedCollection(collection);
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
+  }
+
   /** The optional initial item is created by the API in the same transaction as the package. */
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PACKAGE_PAYLOAD_KEYS);
@@ -397,7 +518,7 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
       next['initialItem'] = {
         productUUID: payload['itemProductUUID'],
         entitlementCode: payload['itemEntitlementCode'] || null,
-        includedQuantity: numberOrNull(payload['itemIncludedQuantity']) ?? 1,
+        includedQuantity: numberOrNull(payload['itemIncludedQuantity']) ?? -1,
         required: Number(payload['itemRequired'] ?? 1),
       };
     }

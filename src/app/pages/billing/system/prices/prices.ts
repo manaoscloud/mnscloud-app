@@ -26,7 +26,6 @@ const PRICE_PAYLOAD_KEYS = [
   'unitCode',
   'unitPrice',
   'setupAmount',
-  'includedQuantity',
   'minimumCommitment',
   'config',
   'status',
@@ -104,7 +103,6 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
     unitCode: 'UNIT',
     unitPrice: 0,
     setupAmount: 0,
-    includedQuantity: 0,
     minimumCommitment: 0,
     config: '',
     status: 1,
@@ -245,21 +243,15 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       tab: 'financial',
       span: 1,
     },
-    {
-      key: 'includedQuantity',
-      source: 'BpcIncludedQuantity',
-      payloadKey: 'includedQuantity',
-      label: 'Included quantity',
-      type: 'number',
-      tab: 'financial',
-      span: 1,
-    },
+    // The cycle charge is max(unit price x quantity, this amount); 0 means no minimum.
     {
       key: 'minimumCommitment',
       source: 'BpcMinimumCommitment',
       payloadKey: 'minimumCommitment',
-      label: 'Minimum commitment',
-      type: 'number',
+      label: 'Minimum charge per cycle',
+      type: 'currency',
+      currencyKey: 'currency',
+      help: 'Lowest amount billed each cycle: the charge is the greater of unit price x quantity and this value. Use 0 for no minimum. It is not a loyalty period.',
       tab: 'financial',
       span: 1,
     },
@@ -325,7 +317,7 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
       next['packageUUID'] = null;
     }
     next['currency'] = String(next['currency'] ?? 'BRL').toUpperCase();
-    for (const key of ['unitPrice', 'setupAmount', 'includedQuantity', 'minimumCommitment']) {
+    for (const key of ['unitPrice', 'setupAmount', 'minimumCommitment']) {
       next[key] = numberOrNull(next[key]) ?? 0;
     }
     return next;

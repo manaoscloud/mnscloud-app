@@ -258,6 +258,16 @@
                 >
                   {{ booleanLabel(row[column.field ?? column.id]) | transloco }}
                 </span>
+              } @else if (columnRowAction(row, column); as linkAction) {
+                <button
+                  mat-button
+                  type="button"
+                  class="crud-cell-link"
+                  [matTooltip]="linkAction.tooltip ?? linkAction.label | transloco"
+                  (click)="$event.stopPropagation(); runRowAction(linkAction, row)"
+                >
+                  {{ columnText(row, column) }}
+                </button>
               } @else {
                 @if (canCopyColumn(row, column)) {
                   <div class="crud-copy-cell">
@@ -2620,6 +2630,17 @@
                             <td>{{ relatedCollectionColumnValue(row, column) }}</td>
                           }
                           <td class="related-actions-col">
+                            @for (action of relatedRowActions(collection, row); track action.key) {
+                              <button
+                                mat-icon-button
+                                type="button"
+                                [matTooltip]="action.label | transloco"
+                                [disabled]="isRelatedCollectionSaving(collection)"
+                                (click)="runRelatedRowAction(collection, action, row)"
+                              >
+                                <mat-icon>{{ action.icon }}</mat-icon>
+                              </button>
+                            }
                             <button
                               mat-icon-button
                               color="warn"

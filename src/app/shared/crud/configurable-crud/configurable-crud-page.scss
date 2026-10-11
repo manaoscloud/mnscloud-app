@@ -208,6 +208,15 @@
   min-width: 0;
 }
 
+.crud-cell-link {
+  min-width: 0;
+  height: auto;
+  padding: 0 4px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .crud-copy-cell {
   display: flex;
   align-items: center;

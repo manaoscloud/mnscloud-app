@@ -83,6 +83,23 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-form-field>
           </mat-option>
 
+          @if (multiple() && selectableOptions().length > 1) {
+            <div
+              class="select-toggle-all"
+              role="button"
+              tabindex="0"
+              (click)="$event.stopPropagation(); toggleAllVisible()"
+              (keydown.enter)="$event.stopPropagation(); toggleAllVisible()"
+            >
+              <mat-icon>{{
+                allVisibleSelected() ? 'check_box' : 'check_box_outline_blank'
+              }}</mat-icon>
+              <span>{{
+                (allVisibleSelected() ? 'Clear selection' : 'Select all') | transloco
+              }}</span>
+            </div>
+          }
+
           @if (loadError()) {
             <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
           }
@@ -187,6 +204,23 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
               />
             </mat-form-field>
           </mat-option>
+
+          @if (multiple() && selectableOptions().length > 1) {
+            <div
+              class="select-toggle-all"
+              role="button"
+              tabindex="0"
+              (click)="$event.stopPropagation(); toggleAllVisible()"
+              (keydown.enter)="$event.stopPropagation(); toggleAllVisible()"
+            >
+              <mat-icon>{{
+                allVisibleSelected() ? 'check_box' : 'check_box_outline_blank'
+              }}</mat-icon>
+              <span>{{
+                (allVisibleSelected() ? 'Clear selection' : 'Select all') | transloco
+              }}</span>
+            </div>
+          }
 
           @if (loadError()) {
             <mat-option disabled>{{ 'Failed to load options.' | transloco }}</mat-option>
@@ -379,6 +413,44 @@ export class MnsSearchSelectFieldComponent {
     }
     return options.filter((_, index) => visible.has(index));
   });
+
+  /** Visible, enabled options (respecting the current search) for "Select all". */
+  readonly selectableOptions = computed(() =>
+    this.filteredOptions().filter((option) => !option.disabled),
+  );
+
+  readonly allVisibleSelected = computed(() => {
+    const field = this.field();
+    const value = field ? field().value() : this.value();
+    const selected = Array.isArray(value) ? value : [];
+    const visible = this.selectableOptions();
+    return (
+      visible.length > 0 &&
+      visible.every((option) =>
+        selected.some((item) => this.areOptionValuesEqual(item, option.value)),
+      )
+    );
+  });
+
+  /** Selects every visible option, or clears them when all are already selected. */
+  toggleAllVisible(): void {
+    const field = this.field();
+    const value = field ? field().value() : this.value();
+    const selected = Array.isArray(value) ? [...value] : [];
+    const visible = this.selectableOptions().map((option) => option.value);
+    const next = this.allVisibleSelected()
+      ? selected.filter(
+          (item) => !visible.some((option) => this.areOptionValuesEqual(item, option)),
+        )
+      : [
+          ...selected,
+          ...visible.filter(
+            (option) => !selected.some((item) => this.areOptionValuesEqual(item, option)),
+          ),
+        ];
+    if (field) field().value.set(next as never);
+    this.selectValue(next as MnsSearchSelectValue);
+  }
 
   handleOpenedChange(opened: boolean): void {
     this.openedChange.emit(opened);

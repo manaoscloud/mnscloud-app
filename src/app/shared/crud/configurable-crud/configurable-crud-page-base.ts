@@ -187,6 +187,8 @@ export type ConfigurableCrudField = {
     endpoint: string;
     uuidField: string;
     labelField: string;
+    /** Optional secondary line of each option (for example an e-mail). */
+    descriptionField?: string;
     selectedLabelField?: string;
     /** Query parameter -> parent form field. Waits until all bound values are present. */
     parameters?: Readonly<Record<string, string>>;
@@ -264,7 +266,10 @@ export type ConfigurableCrudFieldSuffixButton = {
   color?: 'primary' | 'accent' | 'warn';
   visibleWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   disabledWhen?: (context: ConfigurableCrudFieldContext) => boolean;
-  onClick: (context: ConfigurableCrudFieldContext, host: ConfigurableCrudPageBase<any>) => void | Promise<void>;
+  onClick: (
+    context: ConfigurableCrudFieldContext,
+    host: ConfigurableCrudPageBase<any>,
+  ) => void | Promise<void>;
 };
 
 export type ConfigurableCrudFieldContext = {
@@ -325,6 +330,8 @@ export type ConfigurableCrudColumn = {
   value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
   /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
+  /** Key of a row action: the cell value becomes a link that runs it (when the action is visible). */
+  rowAction?: string;
 };
 
 export type ConfigurableCrudListFilter = {
@@ -372,6 +379,8 @@ export type ConfigurableCrudRelatedCollectionColumn = {
   field?: string;
   kind?: 'text' | 'number' | 'status' | 'related';
   lookupKey?: string;
+  /** Computed display value; `translate` resolves Transloco keys. */
+  value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
 };
 
 export type ConfigurableCrudRelatedCollection = {
@@ -388,6 +397,16 @@ export type ConfigurableCrudRelatedCollection = {
   fields: readonly ConfigurableCrudField[];
   columns: readonly ConfigurableCrudRelatedCollectionColumn[];
   payload?: (values: ConfigurableCrudRecord) => ConfigurableCrudRecord;
+  /** Declarative per-row API actions rendered before delete; the collection reloads on success. */
+  rowActions?: readonly ConfigurableCrudRelatedRowAction[];
+};
+
+export type ConfigurableCrudRelatedRowAction = {
+  key: string;
+  label: string;
+  icon: string;
+  visible?: (row: ConfigurableCrudRecord) => boolean;
+  request: ConfigurableCrudRowActionRequest;
 };
 
 export type ConfigurableCrudFilterAction = {
@@ -1097,6 +1116,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     row: ConfigurableCrudRecord,
     column: ConfigurableCrudRelatedCollectionColumn,
   ): string {
+    if (column.value) return column.value(row, (key) => this.t(key));
     if (column.kind === 'related' && column.lookupKey) {
       const value = String(row[column.field ?? column.id] ?? '');
       const option = this.lookupOptions(column.lookupKey).find(
@@ -1154,11 +1174,69 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         [collection.key]: { ...collection.initialValues },
       }));
       this.snack.success(this.t(collection.savedMessage ?? 'Record saved successfully.'));
+      const created = (response as { data?: { item?: ConfigurableCrudRecord } } | null)?.data?.item;
+      await this.afterRelatedCollectionRowAdded(collection, parentUUID, created ?? rows[0] ?? null);
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     } finally {
       this.setRelatedSaving(collection.key, false);
     }
+  }
+
+  /** Hook after a related row is created (for example to offer applying it elsewhere). */
+  protected afterRelatedCollectionRowAdded(
+    _collection: ConfigurableCrudRelatedCollection,
+    _parentUUID: string,
+    _created: ConfigurableCrudRecord | null,
+  ): void | Promise<void> {}
+
+  /** Reloads one related collection of the record being edited. */
+  protected async reloadRelatedCollection(collection: ConfigurableCrudRelatedCollection) {
+    const row = this.editingRecord();
+    if (row) await this.loadRelatedCollection(collection, this.recordUUID(row as T));
+  }
+
+  relatedRowActions(
+    collection: ConfigurableCrudRelatedCollection,
+    row: ConfigurableCrudRecord,
+  ): readonly ConfigurableCrudRelatedRowAction[] {
+    return (collection.rowActions ?? []).filter((action) => action.visible?.(row) !== false);
+  }
+
+  async runRelatedRowAction(
+    collection: ConfigurableCrudRelatedCollection,
+    action: ConfigurableCrudRelatedRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    const request = action.request;
+    if (request.confirm) {
+      const confirmed = await this.confirmAction(
+        request.confirm.title,
+        request.confirm.message,
+        request.confirm.confirmLabel,
+      );
+      if (!confirmed) return;
+    }
+    this.setRelatedSaving(collection.key, true);
+    try {
+      const endpoint = request.endpoint(row);
+      const body = request.body?.(row) ?? {};
+      if (request.method === 'put') await this.api.put(endpoint, body);
+      else await this.api.post(endpoint, body);
+      this.snack.success(this.t(request.successMessage));
+      await this.reloadRelatedCollection(collection);
+      this.itemsResource.reload();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.setRelatedSaving(collection.key, false);
+    }
+  }
+
+  /** Row action bound to a column (`column.rowAction`), when visible for the row. */
+  columnRowAction(row: T, column: ConfigurableCrudColumn): ConfigurableCrudRowAction | null {
+    if (!column.rowAction) return null;
+    return this.rowActions(row).find((action) => action.key === column.rowAction) ?? null;
   }
 
   async deleteRelatedCollectionRow(
@@ -1663,28 +1741,45 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.host.nativeElement.querySelector<HTMLInputElement>(`[data-field-key="${key}"]`)?.focus();
   }
 
+  /** Labels seen on remote pages, so multi-selections keep readable chips across pages. */
+  private readonly remoteOptionLabels = new Map<string, string>();
+
   fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
     if (field.remoteLookup) {
       const lookup = field.remoteLookup;
       const result = this.remoteLookups.value()[field.key];
       const options: ConfigurableCrudOption[] = (result?.items ?? []).map(
-        (r: ConfigurableCrudRecord) => ({
-          value: String(r[lookup.uuidField]),
-          label: String(r[lookup.labelField] ?? r[lookup.uuidField]),
-        }),
+        (r: ConfigurableCrudRecord) => {
+          const value = String(r[lookup.uuidField]);
+          const label = String(r[lookup.labelField] ?? r[lookup.uuidField]);
+          this.remoteOptionLabels.set(`${field.key}:${value}`, label);
+          const description = lookup.descriptionField
+            ? String(r[lookup.descriptionField] ?? '').trim()
+            : '';
+          return description ? { value, label, description } : { value, label };
+        },
       );
-      const selected = this.fieldValue(field.key);
-      if (selected && !options.some((o) => o.value === selected))
+      // Keep selected values that are not on the current remote page; an empty selection
+      // (single '' or multiple []) never produces a blank option.
+      const selectedValues = field.multiple
+        ? this.fieldValueArray(field.key).map(String)
+        : [String(this.fieldValue(field.key) ?? '')];
+      for (const selected of selectedValues.filter(Boolean).reverse()) {
+        if (options.some((o) => o.value === selected)) continue;
         options.unshift({
-          value: String(selected),
+          value: selected,
           label: String(
             (this.selectedRemoteOptions.get(field.key)?.value === selected
               ? this.selectedRemoteOptions.get(field.key)?.label
               : undefined) ??
-              this.editingRecord()?.[lookup.selectedLabelField ?? lookup.labelField] ??
+              this.remoteOptionLabels.get(`${field.key}:${selected}`) ??
+              (field.multiple
+                ? undefined
+                : this.editingRecord()?.[lookup.selectedLabelField ?? lookup.labelField]) ??
               selected,
           ),
         });
+      }
       return this.withQuickCreatedOptions(field, options);
     }
 
