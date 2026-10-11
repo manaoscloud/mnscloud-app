@@ -66,15 +66,22 @@ function collectTemplateKeys(content) {
   return keys;
 }
 
+// Source literals are compared by runtime value: `'a\nb'` is the key "a<newline>b".
+function decodeLiteral(text) {
+  return text.replace(/\\([ntr'"\\])/g, (_, char) =>
+    char === 'n' ? '\n' : char === 't' ? '\t' : char === 'r' ? '\r' : char,
+  );
+}
+
 function collectTsKeys(content) {
   const keys = new Set();
   for (const match of content.matchAll(/\bthis\.t\(\s*['"]([^'"]+)['"]/g)) {
-    keys.add(match[1]);
+    keys.add(decodeLiteral(match[1]));
   }
   for (const match of content.matchAll(
     /\b(?:label|pageTitle|pageDescription|createTitle|editTitle|dialogDescription|searchPlaceholder|emptyLabel|deleteTitle|deleteMessage|deleteSelectedTitle|deleteSelectedMessage|savedMessage|deletedMessage|deleteFailedMessage|help|placeholder|tooltip)\s*:\s*['"]([^'"]+)['"]/g,
   ))
-    keys.add(match[1]);
+    keys.add(decodeLiteral(match[1]));
   return keys;
 }
 
