@@ -6561,5 +6561,17 @@
   "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.": "Permite que los dominios Realtime de la plataforma dentro de esta base publiquen automáticamente sus registros A/AAAA. Aprovisione la zona DNS antes de habilitar la publicación.",
   "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.": "Los dominios Realtime gestionados (WebRTC, TURN, media) deben estar dentro de esta base DNS. Use una base dentro de este dominio, distinta de las bases de VoIP.",
   "Maximum number of managed Realtime domains allowed by this policy.": "Cantidad máxima de dominios Realtime gestionados permitida por esta política.",
-  "RTP DNS": "RTP DNS"
+  "RTP DNS": "RTP DNS",
+  "RTP Media": "RTP Media",
+  "Generate media server domain automatically": "Generar dominio del servidor de medios automáticamente",
+  "RTP DNS policy": "Política RTP DNS",
+  "Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).": "Política de plataforma activa de la pestaña RTP DNS de una zona DNS. Cada nuevo servidor de medios recibe su propio dominio gestionado bajo la base, publicado con el IPv4 (A) y el IPv6 (AAAA) del servidor.",
+  "Domain label": "Etiqueta del dominio",
+  "Prefix of the media server UUID; it never changes when the server is renamed.": "Prefijo del UUID del servidor de medios; no cambia cuando se renombra el servidor.",
+  "UUID length": "Longitud del UUID",
+  "Example": "Ejemplo",
+  "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.": "Los registros se publican después de que la instalación del servidor de medios informa sus IP públicas. Eliminar el servidor elimina el dominio generado y sus registros.",
+  "Select an RTP DNS policy.": "Seleccione una política RTP DNS.",
+  "Generate automatically": "Generar automáticamente",
+  "Media server (automatic)": "Servidor de medios (automático)"
 }

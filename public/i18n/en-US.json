@@ -6561,5 +6561,17 @@
   "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.": "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.",
   "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.": "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.",
   "Maximum number of managed Realtime domains allowed by this policy.": "Maximum number of managed Realtime domains allowed by this policy.",
-  "RTP DNS": "RTP DNS"
+  "RTP DNS": "RTP DNS",
+  "RTP Media": "RTP Media",
+  "Generate media server domain automatically": "Generate media server domain automatically",
+  "RTP DNS policy": "RTP DNS policy",
+  "Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).": "Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).",
+  "Domain label": "Domain label",
+  "Prefix of the media server UUID; it never changes when the server is renamed.": "Prefix of the media server UUID; it never changes when the server is renamed.",
+  "UUID length": "UUID length",
+  "Example": "Example",
+  "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.": "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.",
+  "Select an RTP DNS policy.": "Select an RTP DNS policy.",
+  "Generate automatically": "Generate automatically",
+  "Media server (automatic)": "Media server (automatic)"
 }

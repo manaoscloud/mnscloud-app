@@ -1346,5 +1346,95 @@
         </mat-tab>
       </mat-tab-group>
     </mat-tab>
+
+    @if (isMaster()) {
+      <mat-tab [label]="'RTP Media' | transloco">
+        <form class="tab-content form-grid">
+          <div class="span-4 parameter-toggle-cell">
+            <mat-slide-toggle
+              [checked]="item().realtimeMediaAutoDomainEnabled"
+              (change)="updateItem({ realtimeMediaAutoDomainEnabled: $event.checked })"
+            >
+              {{ 'Generate media server domain automatically' | transloco }}
+            </mat-slide-toggle>
+          </div>
+
+          <mns-search-select-field
+            data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
+            fieldClass="span-2"
+            [label]="'RTP DNS policy' | transloco"
+            [options]="realtimeMediaDns.options()"
+            [remoteSearch]="true"
+            [loading]="realtimeMediaDns.loading()"
+            [loadError]="realtimeMediaDns.loadError()"
+            [hasPrevious]="realtimeMediaDns.offset() > 0"
+            [hasNext]="realtimeMediaDns.offset() + 50 < realtimeMediaDns.total()"
+            (searchChange)="realtimeMediaDns.search($event)"
+            (pageChange)="realtimeMediaDns.page($event)"
+            (openedChange)="$event && realtimeMediaDns.refresh()"
+            [value]="item().realtimeMediaDnsPolicyUUID"
+            [help]="
+              'Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).'
+                | transloco
+            "
+            (valueChange)="selectRealtimeMediaDnsPolicy($event)"
+          />
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Domain label' | transloco }}</mat-label>
+            <input matInput [value]="'Short UUID' | transloco" readonly />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Domain label' | transloco"
+              [text]="
+                'Prefix of the media server UUID; it never changes when the server is renamed.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'UUID length' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="8"
+              max="32"
+              [value]="item().realtimeMediaAutoDomainUuidLength"
+              (input)="updateItem({ realtimeMediaAutoDomainUuidLength: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'UUID length' | transloco"
+              [text]="
+                'Character length of the random short UUID prefix (between 8 and 32 characters).'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          @if (realtimeMediaPolicyError(); as policyError) {
+            <p class="span-4 settings-page-feedback" role="alert">
+              {{ policyError | transloco }}
+            </p>
+          }
+
+          @if (realtimeMediaExample()) {
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>{{ 'Example' | transloco }}</mat-label>
+              <input matInput [value]="realtimeMediaExample()" readonly />
+              <mns-field-help
+                matIconSuffix
+                [label]="'Example' | transloco"
+                [text]="
+                  'Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.'
+                    | transloco
+                "
+              />
+            </mat-form-field>
+          }
+        </form>
+      </mat-tab>
+    }
   </mat-tab-group>
 </mns-settings-page>
