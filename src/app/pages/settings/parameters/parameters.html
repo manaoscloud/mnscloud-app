@@ -691,6 +691,50 @@
           </div>
         </form>
       </mat-tab>
+
+      <mat-tab [label]="'Billing' | transloco">
+        <form class="tab-content form-grid">
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Grace period (days)' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              max="60"
+              [value]="item().billingSuspensionGraceDays"
+              (input)="updateItem({ billingSuspensionGraceDays: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Grace period (days)' | transloco"
+              [text]="
+                'Days an unpaid subscription keeps working after the renewal fails. Afterwards the service is blocked (module access denied, DIDs stop receiving calls) until credit is added.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'Release after (days)' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="365"
+              [value]="item().billingSuspensionReleaseDays"
+              (input)="updateItem({ billingSuspensionReleaseDays: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Release after (days)' | transloco"
+              [text]="
+                'Days after the failed renewal before the subscription is canceled and its resource released (DIDs return to inventory). Must be longer than the grace period; tenants are warned 7 days before.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+        </form>
+      </mat-tab>
     }
 
     <mat-tab [label]="'VoIP' | transloco">

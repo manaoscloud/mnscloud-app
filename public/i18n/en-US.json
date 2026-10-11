@@ -6678,5 +6678,10 @@
   "New prices apply from the first renewal on or after the effective date. You can cancel the subscription before it.": "New prices apply from the first renewal on or after the effective date. You can cancel the subscription before it.",
   "IPCA": "IPCA",
   "IGP-M": "IGP-M",
-  "INPC": "INPC"
+  "INPC": "INPC",
+  "Grace period (days)": "Grace period (days)",
+  "Release after (days)": "Release after (days)",
+  "Days an unpaid subscription keeps working after the renewal fails. Afterwards the service is blocked (module access denied, DIDs stop receiving calls) until credit is added.": "Days an unpaid subscription keeps working after the renewal fails. Afterwards the service is blocked (module access denied, DIDs stop receiving calls) until credit is added.",
+  "Days after the failed renewal before the subscription is canceled and its resource released (DIDs return to inventory). Must be longer than the grace period; tenants are warned 7 days before.": "Days after the failed renewal before the subscription is canceled and its resource released (DIDs return to inventory). Must be longer than the grace period; tenants are warned 7 days before.",
+  "Subscriptions are suspended for insufficient balance. Add credit to reactivate them before the service is blocked.": "Subscriptions are suspended for insufficient balance. Add credit to reactivate them before the service is blocked."
 }

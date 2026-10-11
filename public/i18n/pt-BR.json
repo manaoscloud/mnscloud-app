@@ -6679,5 +6679,10 @@
   "New prices apply from the first renewal on or after the effective date. You can cancel the subscription before it.": "Os novos preços valem a partir da primeira renovação na data de vigência ou depois dela. Você pode cancelar a assinatura antes disso.",
   "IPCA": "IPCA",
   "IGP-M": "IGP-M",
-  "INPC": "INPC"
+  "INPC": "INPC",
+  "Grace period (days)": "Carência (dias)",
+  "Release after (days)": "Liberar após (dias)",
+  "Days an unpaid subscription keeps working after the renewal fails. Afterwards the service is blocked (module access denied, DIDs stop receiving calls) until credit is added.": "Dias em que uma assinatura sem pagamento continua funcionando após a falha da renovação. Depois disso o serviço é bloqueado (acesso ao módulo negado, DIDs param de receber chamadas) até a recarga.",
+  "Days after the failed renewal before the subscription is canceled and its resource released (DIDs return to inventory). Must be longer than the grace period; tenants are warned 7 days before.": "Dias após a falha da renovação até a assinatura ser cancelada e o recurso liberado (DIDs voltam ao estoque). Deve ser maior que a carência; os tenants são avisados 7 dias antes.",
+  "Subscriptions are suspended for insufficient balance. Add credit to reactivate them before the service is blocked.": "Há assinaturas suspensas por saldo insuficiente. Adicione saldo para reativá-las antes que o serviço seja bloqueado."
 }

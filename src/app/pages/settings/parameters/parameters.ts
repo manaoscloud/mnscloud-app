@@ -106,6 +106,8 @@ type SystemParametersItem = {
   billingSignupTrialCurrency: string;
   billingSignupTrialExpiresDays: number;
   billingSignupTrialRequireEmailVerified: boolean;
+  billingSuspensionGraceDays: number;
+  billingSuspensionReleaseDays: number;
   signupCaptchaEnabled: boolean;
   signupCaptchaProvider: 'turnstile' | 'hcaptcha' | '';
   signupCaptchaSiteKey: string;
@@ -271,6 +273,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
   billingSignupTrialCurrency: 'BRL',
   billingSignupTrialExpiresDays: 15,
   billingSignupTrialRequireEmailVerified: true,
+  billingSuspensionGraceDays: 3,
+  billingSuspensionReleaseDays: 30,
   signupCaptchaEnabled: false,
   signupCaptchaProvider: '',
   signupCaptchaSiteKey: '',
@@ -1123,6 +1127,8 @@ export class SettingsParametersPage {
       billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
       billingSignupTrialExpiresDays: this.normalizeInteger(raw?.billingSignupTrialExpiresDays, 15),
       billingSignupTrialRequireEmailVerified: raw?.billingSignupTrialRequireEmailVerified !== false,
+      billingSuspensionGraceDays: this.normalizeInteger(raw?.billingSuspensionGraceDays, 3),
+      billingSuspensionReleaseDays: this.normalizeInteger(raw?.billingSuspensionReleaseDays, 30),
       signupCaptchaEnabled: raw?.signupCaptchaEnabled === true,
       signupCaptchaProvider: this.normalizeCaptchaProvider(raw?.signupCaptchaProvider),
       signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),
@@ -1196,6 +1202,11 @@ export class SettingsParametersPage {
       billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
       billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
       billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
+      billingSuspensionGraceDays: this.clampInteger(value.billingSuspensionGraceDays, 0, 60),
+      billingSuspensionReleaseDays: Math.max(
+        this.clampInteger(value.billingSuspensionReleaseDays, 1, 365),
+        this.clampInteger(value.billingSuspensionGraceDays, 0, 60) + 1,
+      ),
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey.trim(),
       signupCaptchaSecret: value.signupCaptchaSecret.trim(),
@@ -1279,6 +1290,8 @@ export class SettingsParametersPage {
       billingSignupTrialCurrency: value.billingSignupTrialCurrency,
       billingSignupTrialExpiresDays: value.billingSignupTrialExpiresDays,
       billingSignupTrialRequireEmailVerified: value.billingSignupTrialRequireEmailVerified,
+      billingSuspensionGraceDays: value.billingSuspensionGraceDays,
+      billingSuspensionReleaseDays: value.billingSuspensionReleaseDays,
       signupCaptchaEnabled: value.signupCaptchaEnabled,
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey,
