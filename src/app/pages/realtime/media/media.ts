@@ -62,7 +62,7 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
     publicIP: '',
     publicIPv6: '',
     privateIP: '',
-    controlIP: '0.0.0.0',
+    controlIP: '',
     controlPort: 2223,
     minMediaPort: 30000,
     maxMediaPort: 40000,
@@ -83,10 +83,11 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'advertisedIP', label: 'IP anunciado', field: 'RmsAdvertisedIP', copyable: true },
     { id: 'publicIPv6', label: 'Public IPv6', field: 'RmsPublicIPv6', copyable: true },
     { id: 'controlIP', label: 'Control IP', field: 'RmsControlIP', copyable: true },
+    // NG socket handed to Softswitch/SBC (the private IPv4 when the control IP is automatic).
     {
-      id: 'effectiveControlIP',
-      label: 'Control efetivo',
-      field: 'RmsEffectiveControlIP',
+      id: 'rtpengineSocket',
+      label: 'Effective control',
+      field: 'RtpengineSocket',
       copyable: true,
     },
     { id: 'controlPort', label: 'Control Port', field: 'RmsControlPort' },
@@ -166,6 +167,7 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
       source: 'RmsControlIP',
       payloadKey: 'controlIP',
       label: 'Control IP',
+      placeholder: 'Automatic (private IPv4)',
       tab: 'network',
       span: 1,
     },
@@ -446,8 +448,10 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
       this.shellQuote(String(token['nodeUUID'] ?? '')),
       '--runtime-token',
       this.shellQuote(String(token['runtimeToken'] ?? '')),
-      '--control-ip',
-      this.shellQuote(String(row['RmsControlIP'] ?? '127.0.0.1')),
+      // Without an explicit control IP the node listens for NG on its private IPv4 only.
+      ...(row['RmsControlIP']
+        ? ['--control-ip', this.shellQuote(String(row['RmsControlIP']))]
+        : []),
       '--control-port',
       this.shellQuote(String(row['RmsControlPort'] ?? '2223')),
     ];

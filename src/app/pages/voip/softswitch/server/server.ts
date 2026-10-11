@@ -459,7 +459,6 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
           .map((row) =>
             option(row.RmsUUID ?? row.uuid, row.RmsName ?? row.name, [
               row.hostname ?? row.RmsHostname,
-              row.controlIP ?? row.RmsControlIP,
               row.RmsEngine ?? row.engine,
               row.RtpengineSocket ?? row.rtpengineSocket,
             ]),
