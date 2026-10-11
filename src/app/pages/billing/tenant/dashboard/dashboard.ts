@@ -1,13 +1,18 @@
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { DateTimeFormatService } from '../../../../services/date-time-format.service';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
-import { BillingService, type BillingTenantDashboard } from '../../shared/billing.service';
+import {
+  BillingService,
+  type BillingTenantDashboard,
+  type BillingUpcomingPriceAdjustment,
+} from '../../shared/billing.service';
 
 const EMPTY_TENANT_DASHBOARD: BillingTenantDashboard = {
   generatedAt: '',
@@ -37,7 +42,7 @@ const EMPTY_TENANT_DASHBOARD: BillingTenantDashboard = {
 @Component({
   selector: 'app-billing-tenant-dashboard',
   standalone: true,
-  imports: [MatIconModule, NgClass, DashboardPageComponent, TranslocoPipe],
+  imports: [MatIconModule, NgClass, DashboardPageComponent, RouterLink, TranslocoPipe],
   template: `<mns-dashboard-page
     class=""
     [title]="'Billing'"
@@ -71,6 +76,50 @@ const EMPTY_TENANT_DASHBOARD: BillingTenantDashboard = {
           </div>
         }
       </div>
+    }
+
+    @if (priceAdjustments().length) {
+      <section class="dashboard-panel price-adjustments-panel" aria-live="polite">
+        <div class="panel-header">
+          <div>
+            <h2>{{ 'Scheduled price adjustments' | transloco }}</h2>
+            <p>
+              {{
+                'New prices apply from the first renewal on or after the effective date. You can cancel the subscription before it.'
+                  | transloco
+              }}
+            </p>
+          </div>
+          <span class="panel-count">{{ priceAdjustments().length }}</span>
+        </div>
+        <div class="dashboard-record-list">
+          @for (adjustment of priceAdjustments(); track adjustment.BsuUUID + adjustment.BpjUUID) {
+            <article class="dashboard-record-row">
+              <div class="dashboard-record-identity">
+                <strong>{{ adjustment.OfferName }}</strong>
+                <span>{{ adjustmentTerms(adjustment) | transloco }}</span>
+              </div>
+              <div>
+                <small>{{ 'Current price' | transloco }}</small>
+                <strong>{{
+                  formatCurrency(adjustment.CurrentUnitPrice, adjustment.Currency)
+                }}</strong>
+              </div>
+              <div>
+                <small>{{ 'New price' | transloco }}</small>
+                <strong>{{ formatCurrency(adjustment.NewUnitPrice, adjustment.Currency) }}</strong>
+              </div>
+              <div>
+                <small>{{ 'Applies at' | transloco }}</small>
+                <strong>{{ formatDate(adjustment.AppliesAt || adjustment.EffectiveAt) }}</strong>
+              </div>
+              <a class="status-chip status-pending" routerLink="/billing/subscriptions">
+                {{ 'Subscriptions' | transloco }}
+              </a>
+            </article>
+          }
+        </div>
+      </section>
     }
 
     <div class="dashboard-sections">
@@ -158,9 +207,21 @@ export class BillingTenantDashboardPage {
   private readonly billing = inject(BillingService);
   private readonly dateTime = inject(DateTimeFormatService);
 
+  readonly priceAdjustments = signal<BillingUpcomingPriceAdjustment[]>([]);
+
   readonly dashboard = dashboardResource({
     defaultValue: EMPTY_TENANT_DASHBOARD,
-    loader: async () => (await this.billing.getTenantDashboard()) ?? EMPTY_TENANT_DASHBOARD,
+    loader: async () => {
+      // Upcoming adjustments are informative; their failure never hides the dashboard.
+      const [dashboard, adjustments] = await Promise.all([
+        this.billing.getTenantDashboard(),
+        this.billing
+          .listUpcomingPriceAdjustments()
+          .catch((): BillingUpcomingPriceAdjustment[] => []),
+      ]);
+      this.priceAdjustments.set(adjustments);
+      return dashboard ?? EMPTY_TENANT_DASHBOARD;
+    },
   });
 
   readonly loading = computed(() => this.dashboard.isLoading());
@@ -254,6 +315,16 @@ export class BillingTenantDashboardPage {
       normalized ||
       '-'
     );
+  }
+
+  adjustmentTerms(adjustment: BillingUpcomingPriceAdjustment): string {
+    if (adjustment.AdjustmentType === 'NEW_PRICE' || adjustment.Percent === null) {
+      return adjustment.Reason || 'Price adjustment';
+    }
+    const percent = `${adjustment.Percent > 0 ? '+' : ''}${Number(adjustment.Percent).toFixed(2)}%`;
+    return adjustment.AdjustmentType === 'INDEX' && adjustment.IndexCode
+      ? `${adjustment.IndexCode} ${percent}`
+      : percent;
   }
 
   alertIcon(severity: string): string {

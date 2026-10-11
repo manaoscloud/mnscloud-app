@@ -314,6 +314,21 @@ export interface BillingTenantDashboardAlert {
   message: string;
 }
 
+export interface BillingUpcomingPriceAdjustment {
+  BpjUUID: string;
+  BsuUUID: string;
+  OfferName: string;
+  Currency: string;
+  CurrentUnitPrice: number;
+  NewUnitPrice: number;
+  EffectiveAt: string;
+  AppliesAt: string | null;
+  AdjustmentType: 'NEW_PRICE' | 'PERCENT' | 'INDEX';
+  IndexCode: string | null;
+  Percent: number | null;
+  Reason: string | null;
+}
+
 export interface BillingTenantDashboard {
   generatedAt: string;
   wallet: BillingTenantDashboardWallet;
@@ -373,6 +388,13 @@ export class BillingService {
     const response =
       await this.api.get<ApiListResponse<BillingTenantDashboard>>('billing/dashboard');
     return response.data?.item ?? null;
+  }
+
+  async listUpcomingPriceAdjustments(): Promise<BillingUpcomingPriceAdjustment[]> {
+    const response = await this.api.get<ApiListResponse<BillingUpcomingPriceAdjustment>>(
+      'billing/price-adjustments/upcoming',
+    );
+    return response.data?.items ?? [];
   }
 
   async listProducts(search = '', status: number | null = null) {

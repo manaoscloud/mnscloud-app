@@ -952,6 +952,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     // config/credentials objects; otherwise required fields look missing.
     const formPayload = this.buildPayload();
     if (!this.validatePayload(formPayload)) return;
+    if (!(await this.confirmBeforeSave(formPayload))) return;
 
     this.saving.set(true);
     this.quickCreateSaving = this.quickCreateMode;
@@ -2235,6 +2236,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected onFieldValueChanged(_key: string, _value: unknown): void {}
+
+  /**
+   * Last chance to show an impact preview/confirmation for the validated flat form payload;
+   * returning false keeps the dialog open without saving.
+   */
+  protected confirmBeforeSave(_payload: ConfigurableCrudRecord): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
   protected afterRelatedFieldChange(
     _collection: ConfigurableCrudRelatedCollection,
