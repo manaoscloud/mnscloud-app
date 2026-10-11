@@ -1,4 +1,3 @@
-import { firstValueFrom } from 'rxjs';
 import { openAgentTelemetry } from '../telemetry/telemetry';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 
@@ -15,8 +14,7 @@ import {
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { InstallCommandDialogComponent } from '../../../shared/install-command-dialog/install-command-dialog';
-import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
+import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
 import { AuthService } from '../../../services/auth.service';
 
 type MonitoringAgent = ConfigurableCrudRecord & {
@@ -543,31 +541,22 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   private openTokenDialog() {
     const token = this.generatedToken();
     if (!token) return;
-    const binding = openCrudComponentDialog(
+    openInstallCommandDialog(
       this.dialog,
-      InstallCommandDialogComponent,
-      'crud-form-dialog',
       {
-        data: {
-          title: 'Agent install command',
-          description: 'Run this command on the server that should be enrolled as an Agent.',
-          warning:
-            'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.',
-          details: [
-            { label: 'API base', value: window.location.origin, monospace: true },
-            { label: 'Resource type', value: 'mnscloud.agent', monospace: true },
-          ],
-          command: this.tokenCommand(token),
-        },
+        title: 'Agent install command',
+        description: 'Run this command on the server that should be enrolled as an Agent.',
+        warning:
+          'This enrollment token is short-lived and shown only once. The runtime Agent token is issued directly to the server and is never displayed in the browser.',
+        details: [
+          { label: 'API base', value: window.location.origin, monospace: true },
+          { label: 'Resource type', value: 'mnscloud.agent', monospace: true },
+        ],
+        command: this.tokenCommand(token),
       },
+      this.commandDialogDestroyRef,
+      () => this.generatedToken.set(''),
     );
-    const unregisterDestroy = this.commandDialogDestroyRef.onDestroy(() => binding.ref.close());
-    const cleanup = () => {
-      binding.stop();
-      unregisterDestroy();
-      this.generatedToken.set('');
-    };
-    void firstValueFrom(binding.ref.afterClosed()).then(cleanup, cleanup);
   }
 
   private decorateAgent(row: MonitoringAgent): MonitoringAgent {

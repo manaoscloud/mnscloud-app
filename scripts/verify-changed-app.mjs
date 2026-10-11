@@ -61,6 +61,7 @@ run('node', [
   'scripts/validate-nav-labels.test.mjs',
   'scripts/tests/crm-form-contract.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
+  'scripts/validate-install-command-dialog.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -90,6 +91,8 @@ run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
 // Every dialog header offers "Report problem" (app.md Dialog Report Problem Baseline).
 run('node', ['scripts/validate-dialog-report-button.mjs']);
+// Generated commands open only through openInstallCommandDialog (app.md Install Command Dialog Baseline).
+run('node', ['scripts/validate-install-command-dialog.mjs']);
 
 const crudRoots = [
   ...new Set(

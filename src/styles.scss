@@ -1860,25 +1860,7 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   padding: 0.85rem 0.75rem 0.75rem !important;
 }
 
-.cdk-overlay-pane:is(.crud-form-dialog, .install-command-dialog-panel)
-  .install-command-dialog
-  .mat-mdc-dialog-actions,
-.cdk-overlay-pane:is(.crud-form-dialog, .install-command-dialog-panel)
-  .install-command-dialog
-  .form-actions {
-  margin: auto 0 0 !important;
-  padding: 0.85rem 0.75rem 0.75rem !important;
-}
-
-.cdk-overlay-pane.install-command-dialog-panel .mat-mdc-dialog-content {
-  min-height: 0;
-  overflow-y: auto !important;
-}
-
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .mat-mdc-dialog-surface {
+.cdk-overlay-pane:is(.crud-form-dialog) .mat-mdc-dialog-surface {
   border-radius: 1.2rem;
   border: 1px solid var(--mat-sys-color-outline-variant);
   background: var(--mat-sys-color-surface-container-high);
@@ -1886,18 +1868,12 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   overflow: hidden;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .mat-mdc-dialog-content {
+.cdk-overlay-pane:is(.crud-form-dialog) .mat-mdc-dialog-content {
   margin: 0 !important;
   padding: 0 !important;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .mat-mdc-dialog-actions {
+.cdk-overlay-pane:is(.crud-form-dialog) .mat-mdc-dialog-actions {
   margin: auto 0.75rem 0 !important;
   padding: 0.85rem 0.75rem 0.75rem !important;
   min-height: 0;
@@ -1907,38 +1883,25 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   justify-content: flex-end !important;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .form-actions {
+.cdk-overlay-pane:is(.crud-form-dialog) .form-actions {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
   justify-content: stretch !important;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .secondary-actions {
+.cdk-overlay-pane:is(.crud-form-dialog) .secondary-actions {
   grid-column: 1;
   grid-row: 1;
   justify-self: start;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .primary-actions {
+.cdk-overlay-pane:is(.crud-form-dialog) .primary-actions {
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
 }
 
-.cdk-overlay-pane:is(
-    .crud-form-dialog
-  )
-  .form-actions
-  .error {
+.cdk-overlay-pane:is(.crud-form-dialog) .form-actions .error {
   grid-column: 1 / -1;
 }
 
@@ -1974,27 +1937,18 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     margin: auto 0 0 !important;
   }
 
-  .cdk-overlay-pane:is(
-      .crud-form-dialog
-    )
-    .form-actions {
+  .cdk-overlay-pane:is(.crud-form-dialog) .form-actions {
     display: flex !important;
     flex-direction: column;
     align-items: stretch;
   }
 
-  .cdk-overlay-pane:is(
-      .crud-form-dialog
-    )
-    .primary-actions {
+  .cdk-overlay-pane:is(.crud-form-dialog) .primary-actions {
     order: 1;
     width: 100%;
   }
 
-  .cdk-overlay-pane:is(
-      .crud-form-dialog
-    )
-    .secondary-actions {
+  .cdk-overlay-pane:is(.crud-form-dialog) .secondary-actions {
     order: 2;
     width: 100%;
   }

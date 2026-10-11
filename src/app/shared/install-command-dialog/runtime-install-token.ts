@@ -73,3 +73,29 @@ export function runtimeInstallTokenWarning(
 ): string {
   return data?.['tokenState'] === 'pending' ? RUNTIME_TOKEN_PENDING_WARNING : activeWarning;
 }
+
+/**
+ * Confirmation before a row action generates a new command for an existing server: the previous
+ * runtime token is replaced and the server must be reinstalled or reconfigured with the new command.
+ */
+export async function confirmInstallCommandGeneration(
+  dialog: MatDialog,
+  translate: (key: string, params?: Record<string, string>) => string,
+  serverName: string,
+  runtime: string,
+): Promise<boolean> {
+  const ref = dialog.open(SlowConfirmDialogComponent, {
+    width: '420px',
+    panelClass: 'slow-confirm-dialog',
+    disableClose: true,
+    data: {
+      title: translate('Generate install command'),
+      message: translate(
+        'Generate a new install command for "{{name}}"? The previous {{runtime}} runtime token will be replaced and the server must be reinstalled or reconfigured with the new command.',
+        { name: serverName, runtime },
+      ),
+      confirmLabel: translate('Generate command'),
+    },
+  });
+  return Boolean(await firstValueFrom(ref.afterClosed()));
+}

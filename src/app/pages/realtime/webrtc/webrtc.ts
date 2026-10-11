@@ -1,10 +1,9 @@
 import {
+  confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../shared/install-command-dialog/runtime-install-token';
 import { Component, inject } from '@angular/core';
-
-import { firstValueFrom } from 'rxjs';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -14,11 +13,8 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import {
-  InstallCommandDialogComponent,
-  InstallCommandDialogData,
-} from '../../../shared/install-command-dialog/install-command-dialog';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { InstallCommandDialogData } from '../../../shared/install-command-dialog/install-command-dialog';
+import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
 import { RealtimeWebRtcService, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
@@ -682,18 +678,11 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
   }
 
   private async confirmAndOpenInstallCommand(row: ConfigurableCrudRecord) {
-    const confirmed = await firstValueFrom(
-      this.dialog
-        .open(SlowConfirmDialogComponent, {
-          panelClass: 'slow-confirm-dialog',
-          disableClose: true,
-          data: {
-            title: 'Generate Install Command',
-            message: `Generate a new install command for ${String(row['RwsName'] ?? '')}? The previous WebRTC runtime token will be replaced.`,
-            confirmText: 'Generate command',
-          },
-        })
-        .afterClosed(),
+    const confirmed = await confirmInstallCommandGeneration(
+      this.dialog,
+      (key, params) => this.t(key, params),
+      String(row['RwsName'] ?? ''),
+      'WebRTC',
     );
     if (confirmed) await this.openInstallCommand(row);
   }
@@ -720,10 +709,7 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
           { label: 'Runtime', value: 'mnscloud-kamailio-webrtc', monospace: true },
         ],
       };
-      this.dialog.open(InstallCommandDialogComponent, {
-        panelClass: 'install-command-dialog-panel',
-        data,
-      });
+      openInstallCommandDialog(this.dialog, data, this.destroyRef);
       this.snack.success('WebRTC install command generated.');
     } catch (error) {
       this.snack.error(this.errorMessage(error) || 'Failed to generate WebRTC install command.');
