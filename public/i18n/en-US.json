@@ -6569,9 +6569,9 @@
   "Domain label": "Domain label",
   "Prefix of the media server UUID; it never changes when the server is renamed.": "Prefix of the media server UUID; it never changes when the server is renamed.",
   "UUID length": "UUID length",
-  "Example": "Example",
-  "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.": "Records are published after the media server installation reports its public IPs. Deleting the server removes the generated domain and its records.",
   "Select an RTP DNS policy.": "Select an RTP DNS policy.",
   "Generate automatically": "Generate automatically",
-  "Media server (automatic)": "Media server (automatic)"
+  "Media server (automatic)": "Media server (automatic)",
+  "No WebRTC defaults configured yet.": "No WebRTC defaults configured yet.",
+  "No TURN/STUN defaults configured yet.": "No TURN/STUN defaults configured yet."
 }

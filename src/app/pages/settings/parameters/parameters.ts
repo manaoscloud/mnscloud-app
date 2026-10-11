@@ -528,17 +528,6 @@ export class SettingsParametersPage {
     });
   }
 
-  /** Example of the name generated for the next media server (`<uuid-prefix>.<policy base>`). */
-  readonly realtimeMediaExample = computed(() => {
-    const it = this.item();
-    const base =
-      this.realtimeMediaDns.find(it.realtimeMediaDnsPolicyUUID)?.base ||
-      it.realtimeMediaDnsPolicyBase;
-    if (!base) return '';
-    const length = this.clampInteger(it.realtimeMediaAutoDomainUuidLength, 8, 32);
-    return `${'0123456789abcdef0123456789abcdef'.slice(0, length)}.${base}`;
-  });
-
   readonly realtimeMediaPolicyError = computed(() => {
     const it = this.item();
     if (!it.realtimeMediaDnsPolicyUUID) {
