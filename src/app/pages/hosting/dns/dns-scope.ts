@@ -43,22 +43,14 @@ export function dnsCrudConfig(
     endpoint: master ? `system/${config.endpoint}` : config.endpoint,
     columns: config.columns.filter((column) => !master || column.id !== 'customer'),
     listFilters: config.listFilters
-      ?.filter(
-        (field) =>
-          !master ||
-          !['customerUUID', 'pabxPolicyPlatform', 'softswitchPolicyPlatform'].includes(field.key),
-      )
+      ?.filter((field) => !master || field.key !== 'customerUUID')
       .map((field) => ({
         ...field,
         span: 1 as const,
         ...(lookups[field.key] ? { remoteLookup: lookups[field.key] } : {}),
       })),
     fields: config.fields
-      .filter(
-        (field) =>
-          !master ||
-          !['customerUUID', 'pabxPolicyPlatform', 'softswitchPolicyPlatform'].includes(field.key),
-      )
+      .filter((field) => !master || field.key !== 'customerUUID')
       .map((field) => ({
         ...field,
         ...(lookups[field.key] ? { remoteLookup: lookups[field.key] } : {}),

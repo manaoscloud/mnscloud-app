@@ -66,8 +66,10 @@ const VOIP_DNS_HELP: Record<VoipDnsService, { enabled: string; base: string; cap
 
 function voipPolicyFields(
   service: VoipDnsService,
-  tab: 'network' | 'routing' | 'monitoring',
+  tab: 'network' | 'routing' | 'storage',
 ): ConfigurableCrudField[] {
+  // One row per service: publication, base, TTL and capacity. The policy audience is derived from
+  // the scope (master = platform, tenant = own zone), so it is not an editable field.
   return [
     {
       key: `${service}PolicyEnabled`,
@@ -79,15 +81,15 @@ function voipPolicyFields(
         { value: true, label: 'Enabled' },
       ],
       tab,
-      span: 2,
+      span: 1,
       hiddenWhen: ({ editing }) => !editing,
     },
     {
       key: `${service}PolicyBase`,
       help: VOIP_DNS_HELP[service].base,
-      label: service === 'realtime' ? 'Domain base' : 'Realm SIP base',
+      label: 'Domain base',
       tab,
-      span: 2,
+      span: 1,
       hiddenWhen: ({ editing }) => !editing,
     },
     {
@@ -107,20 +109,6 @@ function voipPolicyFields(
       tab,
       span: 1,
       hiddenWhen: ({ editing }) => !editing,
-    },
-    {
-      key: `${service}PolicyPlatform`,
-      label: 'Availability',
-      type: 'select',
-      options: [
-        { value: false, label: 'Tenant only' },
-        { value: true, label: 'Platform' },
-      ],
-      tab,
-      span: 2,
-      // Realtime policies are always platform policies.
-      hiddenWhen: ({ editing }) => !editing || service === 'realtime',
-      help: 'Platform sharing requires master permission and a platform DNS provider.',
     },
   ];
 }
@@ -168,11 +156,14 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
+  // Tab slots render in the shared template order: record, network, routing, storage, monitoring,
+  // notes -> Record, PABX DNS, Softswitch DNS, RTP DNS, DNS settings, Notes.
   tabLabels: {
-    storage: 'DNS settings',
+    record: 'Record',
     network: 'PABX DNS',
     routing: 'Softswitch DNS',
-    monitoring: 'Realtime DNS',
+    storage: 'RTP DNS',
+    monitoring: 'DNS settings',
     notes: 'Notes',
   },
   initialValues: {
@@ -220,7 +211,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
   fields: [
     ...voipPolicyFields('pabx', 'network'),
     ...voipPolicyFields('softswitch', 'routing'),
-    ...voipPolicyFields('realtime', 'monitoring'),
+    ...voipPolicyFields('realtime', 'storage'),
 
     {
       key: 'status',
@@ -262,7 +253,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'zoneIP',
       label: 'Zone IP',
       placeholder: '203.0.113.10',
-      tab: 'storage',
+      tab: 'monitoring',
       span: 1,
     },
     {
@@ -271,7 +262,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'defaultTtl',
       label: 'Default TTL',
       type: 'number',
-      tab: 'storage',
+      tab: 'monitoring',
       span: 1,
     },
     {
@@ -369,6 +360,8 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
 
   private loadedPolicySignatures: Partial<Record<VoipDnsService, string>> = {};
 
+  private loadedPolicyPlatform: Partial<Record<VoipDnsService, boolean>> = {};
+
   private voipDnsPolicy(service: VoipDnsService) {
     const values = this.formValues();
     return {
@@ -376,7 +369,8 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       base: values[`${service}PolicyBase`],
       ttl: Number(values[`${service}PolicyTtl`]),
       capacity: Number(values[`${service}PolicyCapacity`]),
-      platform: this.isMaster() || values[`${service}PolicyPlatform`] === true,
+      // Master policies are platform policies; a tenant keeps the stored audience.
+      platform: this.isMaster() || this.loadedPolicyPlatform[service] === true,
       status: values[`${service}PolicyEnabled`] === true,
     };
   }
@@ -403,9 +397,8 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
           [`${service}PolicyBase`]: p?.base ?? `${service}.${row['HddName']}`,
           [`${service}PolicyTtl`]: p?.ttl ?? 300,
           [`${service}PolicyCapacity`]: p?.capacity ?? 1000,
-          [`${service}PolicyPlatform`]:
-            this.isMaster() || p?.platform === true || p?.platform === 1,
         });
+        this.loadedPolicyPlatform[service] = p?.platform === true || p?.platform === 1;
       }
       super.startEdit({ ...row, ...values });
       this.loadedPolicySignatures = Object.fromEntries(

@@ -6553,7 +6553,6 @@
   "Attachment preview": "Attachment preview",
   "DNS mode": "DNS mode",
   "DNS policy": "DNS policy",
-  "Realtime DNS": "Realtime DNS",
   "Domain base": "Domain base",
   "Conflict": "Conflict",
   "External: you maintain the DNS records. Managed: the platform publishes the A/AAAA records of the node bound to this domain.": "External: you maintain the DNS records. Managed: the platform publishes the A/AAAA records of the node bound to this domain.",
@@ -6561,5 +6560,6 @@
   "Publication confirms provider readback of the records for the node bound to this domain, not DNS cache expiry.": "Publication confirms provider readback of the records for the node bound to this domain, not DNS cache expiry.",
   "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.": "Allow platform Realtime domains inside this base to have their A/AAAA records published automatically. Provision the DNS zone before enabling publication.",
   "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.": "Managed Realtime domains (WebRTC, TURN, media) must be inside this DNS base. Use a base within this domain, different from the VoIP bases.",
-  "Maximum number of managed Realtime domains allowed by this policy.": "Maximum number of managed Realtime domains allowed by this policy."
+  "Maximum number of managed Realtime domains allowed by this policy.": "Maximum number of managed Realtime domains allowed by this policy.",
+  "RTP DNS": "RTP DNS"
 }
