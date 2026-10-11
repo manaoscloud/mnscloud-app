@@ -6606,5 +6606,7 @@
   "realtime.turn.manage": "realtime.turn.manage",
   "docker.manage": "docker.manage",
   "e.g. voip.pabx.server": "p. ej. voip.pabx.server",
-  "linux.status\nsecurity.nftables.manage\nsecurity.crowdsec.manage": "linux.status\nsecurity.nftables.manage\nsecurity.crowdsec.manage"
+  "linux.status\nsecurity.nftables.manage\nsecurity.crowdsec.manage": "linux.status\nsecurity.nftables.manage\nsecurity.crowdsec.manage",
+  "Effective control": "Control efectivo",
+  "Automatic (private IPv4)": "Automático (IPv4 privado)"
 }

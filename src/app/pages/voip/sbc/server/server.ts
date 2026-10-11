@@ -352,7 +352,6 @@ export class VoipSbcServerPage extends ConfigurableCrudPageBase<VoipSbcServerIte
           .map((row) =>
             option(row.RmsUUID ?? row.uuid, row.RmsName ?? row.name, [
               row.RmsHostname ?? row.hostname,
-              row.RmsControlIP ?? row.controlIP,
               row.RmsEngine ?? row.engine,
               row.RtpengineSocket ?? row.rtpengineSocket,
             ]),

@@ -314,10 +314,7 @@ export class RealtimeDashboardPage {
         { label: 'Private IP', value: this.text(this.field(item, 'RmsPrivateIP') || '-') },
         {
           label: 'Control Endpoint',
-          value: this.endpoint(
-            this.field(item, 'RmsControlIP'),
-            this.field(item, 'RmsControlPort'),
-          ),
+          value: this.controlEndpoint(item),
         },
         {
           label: 'Media Port Range',
@@ -450,7 +447,7 @@ export class RealtimeDashboardPage {
 
   private endpoint(host: unknown, port: unknown) {
     if (!host && !port) return '-';
-    return `${host || '0.0.0.0'}:${port || '-'}`;
+    return `${host || '-'}:${port || '-'}`;
   }
 
   private range(min: unknown, max: unknown) {
@@ -469,10 +466,16 @@ export class RealtimeDashboardPage {
     return this.firstDistinct(ranges);
   }
 
-  private controlEndpointSummary(items: RealtimeDashboardRecord[]) {
-    const endpoints = items.map((item) =>
-      this.endpoint(this.field(item, 'RmsControlIP'), this.field(item, 'RmsControlPort')),
+  /** The NG socket Softswitch/SBC use; the stored control IP may be empty (automatic). */
+  private controlEndpoint(item: RealtimeDashboardRecord) {
+    const socket = String(this.field(item, 'RtpengineSocket') ?? '').trim();
+    return (
+      socket || this.endpoint(this.field(item, 'RmsControlIP'), this.field(item, 'RmsControlPort'))
     );
+  }
+
+  private controlEndpointSummary(items: RealtimeDashboardRecord[]) {
+    const endpoints = items.map((item) => this.controlEndpoint(item));
     return this.firstDistinct(endpoints);
   }
 
