@@ -6701,5 +6701,9 @@
   "Platform defaults": "Platform defaults",
   "Applies to every tenant": "Applies to every tenant",
   "Inherits": "Inherits",
-  "Corporate contract": "Corporate contract"
+  "Corporate contract": "Corporate contract",
+  "Powering off: unpaid": "Powering off: unpaid",
+  "Powered off: unpaid": "Powered off: unpaid",
+  "Powering on: payment received": "Powering on: payment received",
+  "Releasing: unpaid": "Releasing: unpaid"
 }

@@ -178,6 +178,8 @@ export type HostingVpsInstance = {
   HviExternalId?: string | null;
   HviStatus?: string | null;
   HviIsActive: number;
+  HviBillingPowerState?: 'STOP_PENDING' | 'STOPPED' | 'START_PENDING' | 'DESTROY_PENDING' | null;
+  HviBillingPowerError?: string | null;
   HostingVpsProviderHvrUUID: string;
   ProviderName?: string | null;
   ProviderCode?: string | null;

@@ -6701,5 +6701,9 @@
   "Platform defaults": "Valores de la plataforma",
   "Applies to every tenant": "Se aplica a todos los tenants",
   "Inherits": "Hereda",
-  "Corporate contract": "Contrato corporativo"
+  "Corporate contract": "Contrato corporativo",
+  "Powering off: unpaid": "Apagando: sin pago",
+  "Powered off: unpaid": "Apagada: sin pago",
+  "Powering on: payment received": "Encendiendo: pago recibido",
+  "Releasing: unpaid": "Liberando: sin pago"
 }
