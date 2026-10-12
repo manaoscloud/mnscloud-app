@@ -87,6 +87,12 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/billing/ledger',
         masterRoute: '/system/billing/wallets',
       },
+      {
+        id: 'billing/parameters',
+        label: 'nav.billing.parameters',
+        icon: 'tune',
+        masterRoute: '/system/billing/parameters',
+      },
     ],
   },
 
