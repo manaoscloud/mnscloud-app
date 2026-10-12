@@ -72,7 +72,12 @@ const EMPTY_TENANT_DASHBOARD: BillingTenantDashboard = {
         @for (alert of alerts(); track alert.code) {
           <div class="dashboard-alert" [ngClass]="'alert-' + alert.severity">
             <mat-icon>{{ alertIcon(alert.severity) }}</mat-icon>
-            <span>{{ alert.message | transloco }}</span>
+            <span>
+              {{ alert.message | transloco }}
+              @if (alert.blockAt) {
+                ({{ 'Blocks at' | transloco }} {{ formatDate(alert.blockAt) }})
+              }
+            </span>
           </div>
         }
       </div>
