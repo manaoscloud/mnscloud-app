@@ -221,6 +221,10 @@ export interface BillingSubscription {
   BsuNextBillAt?: string | null;
   BsuCancelAtPeriodEnd?: number | boolean | null;
   BsuCanceledAt?: string | null;
+  BsuSuspendedAt?: string | null;
+  BsuBlockedAt?: string | null;
+  BlockAt?: string | null;
+  ReleaseAt?: string | null;
   BsuDateCreated?: string | null;
   EnvironmentUUID?: string | null;
   EnvironmentName?: string | null;
@@ -312,6 +316,7 @@ export interface BillingTenantDashboardAlert {
   severity: 'info' | 'warning' | 'error';
   code: string;
   message: string;
+  blockAt?: string | null;
 }
 
 export interface BillingUpcomingPriceAdjustment {

@@ -95,6 +95,20 @@ const SUBSCRIPTION_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'nextBill', label: 'Next bill at', kind: 'datetime', field: 'BsuNextBillAt' },
     { id: 'status', label: 'Status', kind: 'status', field: 'BsuStatus', className: 'status-col' },
+    {
+      id: 'blocksReleased',
+      label: 'Blocks at / Released at',
+      value: (row, t) => {
+        if (row['BsuStatus'] !== 'SUSPENDED') return '-';
+        const block = row['BlockAt'] ? String(row['BlockAt']).slice(0, 10) : null;
+        const release = row['ReleaseAt'] ? String(row['ReleaseAt']).slice(0, 10) : null;
+        if (!block && !release) return '-';
+        const parts: string[] = [];
+        if (block) parts.push(`${t('Blocks at')} ${block}`);
+        if (release) parts.push(`${t('Released at')} ${release}`);
+        return parts.join(' / ');
+      },
+    },
   ],
   fields: [],
 };
