@@ -1883,6 +1883,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'billing/parameters',
+                loadComponent: () =>
+                  import('./pages/billing/system/parameters/parameters').then(
+                    (m) => m.BillingSystemParametersPage,
+                  ),
+                title: 'System Billing • Parameters | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'billing/price-adjustments',
                 loadComponent: () =>
                   import('./pages/billing/system/price-adjustments/price-adjustments').then(
