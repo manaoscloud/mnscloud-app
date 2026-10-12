@@ -45,6 +45,11 @@ const BILLING_PARAMETER_CONFIG: ConfigurableCrudConfig = {
     tenantUUID: '',
     suspensionGraceDays: null,
     suspensionReleaseDays: null,
+    signupTrialEnabled: false,
+    signupTrialAmount: 0,
+    signupTrialCurrency: 'BRL',
+    signupTrialExpiresDays: 15,
+    signupTrialRequireEmailVerified: true,
     notes: '',
     status: 1,
   },
@@ -126,6 +131,68 @@ const BILLING_PARAMETER_CONFIG: ConfigurableCrudConfig = {
       help: 'Days after the failed renewal before the subscription is canceled and its resource released (DIDs return to inventory). Must be longer than the grace period; tenants are warned 7 days before.',
     },
     {
+      key: 'signupTrialAmount',
+      source: 'BptSignupTrialAmount',
+      payloadKey: 'signupTrialAmount',
+      label: 'Trial Credit Amount',
+      type: 'number',
+      hiddenWhen: ({ values }) => !isPlatform(values),
+      breakBefore: true,
+      span: 1,
+      help: 'Initial credit amount automatically granted to new self-registered customer accounts.',
+    },
+    {
+      key: 'signupTrialCurrency',
+      source: 'BptSignupTrialCurrency',
+      payloadKey: 'signupTrialCurrency',
+      label: 'Trial Credit Currency',
+      type: 'text',
+      hiddenWhen: ({ values }) => !isPlatform(values),
+      span: 1,
+      placeholder: 'BRL',
+      help: 'Currency code for the welcome signup credit (ISO 4217, e.g. BRL).',
+    },
+    {
+      key: 'signupTrialExpiresDays',
+      source: 'BptSignupTrialExpiresDays',
+      payloadKey: 'signupTrialExpiresDays',
+      label: 'Trial Expires Days',
+      type: 'number',
+      hiddenWhen: ({ values }) => !isPlatform(values),
+      span: 1,
+      help: 'Number of calendar days after signup before remaining trial credit expires.',
+    },
+    {
+      key: 'signupTrialEnabled',
+      source: 'BptSignupTrialEnabled',
+      payloadKey: 'signupTrialEnabled',
+      label: 'Trial Credit Active',
+      type: 'select',
+      options: [
+        { value: 1, label: 'Yes' },
+        { value: 0, label: 'No' },
+      ],
+      hiddenWhen: ({ values }) => !isPlatform(values),
+      span: 1,
+      help: 'Enable signup trial credit after account verification.',
+    },
+    {
+      key: 'signupTrialRequireEmailVerified',
+      source: 'BptSignupTrialRequireEmailVerified',
+      payloadKey: 'signupTrialRequireEmailVerified',
+      label: 'Require Verified Email',
+      type: 'select',
+      options: [
+        { value: 1, label: 'Yes' },
+        { value: 0, label: 'No' },
+      ],
+      hiddenWhen: ({ values }) => !isPlatform(values),
+      breakBefore: true,
+      span: 1,
+      lineFillAfter: 3,
+      help: 'Apply signup trial credit only after e-mail verification.',
+    },
+    {
       key: 'notes',
       source: 'BptNotes',
       payloadKey: 'notes',
@@ -151,17 +218,43 @@ export class BillingSystemParametersPage extends ConfigurableCrudPageBase<Config
   }
 
   protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    // Keeps the scope flag in the form so platform-only rules (required values, no status) apply.
-    return { ...super.formValuesFromRecord(row), IsPlatform: row['IsPlatform'] };
+    // Keeps the scope flag in the form so platform-only rules apply.
+    const values = super.formValuesFromRecord(row);
+    return {
+      ...values,
+      IsPlatform: row['IsPlatform'],
+      signupTrialEnabled: row['BptSignupTrialEnabled'] !== null && row['BptSignupTrialEnabled'] !== undefined
+        ? Number(row['BptSignupTrialEnabled']) === 1 ? 1 : 0
+        : 0,
+      signupTrialAmount: row['BptSignupTrialAmount'] !== null && row['BptSignupTrialAmount'] !== undefined
+        ? Number(row['BptSignupTrialAmount'])
+        : 0,
+      signupTrialCurrency: String(row['BptSignupTrialCurrency'] ?? 'BRL').trim().toUpperCase() || 'BRL',
+      signupTrialExpiresDays: row['BptSignupTrialExpiresDays'] !== null && row['BptSignupTrialExpiresDays'] !== undefined
+        ? Number(row['BptSignupTrialExpiresDays'])
+        : 15,
+      signupTrialRequireEmailVerified: row['BptSignupTrialRequireEmailVerified'] !== null && row['BptSignupTrialRequireEmailVerified'] !== undefined
+        ? Number(row['BptSignupTrialRequireEmailVerified']) === 1 ? 1 : 0
+        : 1,
+    };
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return {
+    const isPlatformRow = isPlatform(this.editingRecord()) || isPlatform(payload);
+    const result: ConfigurableCrudRecord = {
       tenantUUID: payload['tenantUUID'] || null,
       suspensionGraceDays: numberOrNull(payload['suspensionGraceDays']),
       suspensionReleaseDays: numberOrNull(payload['suspensionReleaseDays']),
       notes: String(payload['notes'] ?? '').trim() || null,
       status: Number(payload['status'] ?? 1) === 0 ? 0 : 1,
     };
+    if (isPlatformRow) {
+      result['signupTrialEnabled'] = Number(payload['signupTrialEnabled'] ?? 0) === 1;
+      result['signupTrialAmount'] = Math.max(Number(payload['signupTrialAmount'] ?? 0), 0);
+      result['signupTrialCurrency'] = (String(payload['signupTrialCurrency'] ?? 'BRL').trim() || 'BRL').toUpperCase();
+      result['signupTrialExpiresDays'] = Math.min(Math.max(Number(payload['signupTrialExpiresDays'] ?? 15), 1), 365);
+      result['signupTrialRequireEmailVerified'] = Number(payload['signupTrialRequireEmailVerified'] ?? 1) === 1;
+    }
+    return result;
   }
 }

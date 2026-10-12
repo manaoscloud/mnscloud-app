@@ -101,11 +101,6 @@ type SystemParametersItem = {
   voipSoftswitchInheritedZoneName?: string | null;
   voipSoftswitchInheritedPolicyUUID?: string | null;
   voipSoftswitchAutoDomainIsActive: boolean;
-  billingSignupTrialEnabled: boolean;
-  billingSignupTrialAmount: number;
-  billingSignupTrialCurrency: string;
-  billingSignupTrialExpiresDays: number;
-  billingSignupTrialRequireEmailVerified: boolean;
   signupCaptchaEnabled: boolean;
   signupCaptchaProvider: 'turnstile' | 'hcaptcha' | '';
   signupCaptchaSiteKey: string;
@@ -266,11 +261,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   voipSoftswitchInheritedZoneName: null,
   voipSoftswitchInheritedPolicyUUID: null,
   voipSoftswitchAutoDomainIsActive: true,
-  billingSignupTrialEnabled: false,
-  billingSignupTrialAmount: 0,
-  billingSignupTrialCurrency: 'BRL',
-  billingSignupTrialExpiresDays: 15,
-  billingSignupTrialRequireEmailVerified: true,
   signupCaptchaEnabled: false,
   signupCaptchaProvider: '',
   signupCaptchaSiteKey: '',
@@ -1118,11 +1108,6 @@ export class SettingsParametersPage {
         raw?.voipSoftswitchAutoDomainDnsMode,
       ),
       voipSoftswitchAutoDomainIsActive: raw?.voipSoftswitchAutoDomainIsActive !== false,
-      billingSignupTrialEnabled: raw?.billingSignupTrialEnabled === true,
-      billingSignupTrialAmount: this.normalizeNumber(raw?.billingSignupTrialAmount, 0),
-      billingSignupTrialCurrency: String(raw?.billingSignupTrialCurrency ?? 'BRL') || 'BRL',
-      billingSignupTrialExpiresDays: this.normalizeInteger(raw?.billingSignupTrialExpiresDays, 15),
-      billingSignupTrialRequireEmailVerified: raw?.billingSignupTrialRequireEmailVerified !== false,
       signupCaptchaEnabled: raw?.signupCaptchaEnabled === true,
       signupCaptchaProvider: this.normalizeCaptchaProvider(raw?.signupCaptchaProvider),
       signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),
@@ -1193,9 +1178,6 @@ export class SettingsParametersPage {
         value.voipSoftswitchRealmSource === 'own'
           ? value.voipSoftswitchDnsPolicyUUID
           : '',
-      billingSignupTrialAmount: Math.max(Number(value.billingSignupTrialAmount || 0), 0),
-      billingSignupTrialCurrency: (value.billingSignupTrialCurrency.trim() || 'BRL').toUpperCase(),
-      billingSignupTrialExpiresDays: this.clampInteger(value.billingSignupTrialExpiresDays, 1, 365),
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey.trim(),
       signupCaptchaSecret: value.signupCaptchaSecret.trim(),
@@ -1274,11 +1256,6 @@ export class SettingsParametersPage {
       realtimeMediaAutoDomainEnabled: value.realtimeMediaAutoDomainEnabled,
       realtimeMediaDnsPolicyUUID: value.realtimeMediaDnsPolicyUUID,
       realtimeMediaAutoDomainUuidLength: value.realtimeMediaAutoDomainUuidLength,
-      billingSignupTrialEnabled: value.billingSignupTrialEnabled,
-      billingSignupTrialAmount: value.billingSignupTrialAmount,
-      billingSignupTrialCurrency: value.billingSignupTrialCurrency,
-      billingSignupTrialExpiresDays: value.billingSignupTrialExpiresDays,
-      billingSignupTrialRequireEmailVerified: value.billingSignupTrialRequireEmailVerified,
       signupCaptchaEnabled: value.signupCaptchaEnabled,
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey,
