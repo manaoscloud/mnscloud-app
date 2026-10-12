@@ -39,6 +39,14 @@ type CustomerOption = {
   Status?: number | null;
 };
 
+/** Collection policy power states (non-payment) shown instead of the provider status. */
+const BILLING_POWER_LABELS: Record<string, string> = {
+  STOP_PENDING: 'Powering off: unpaid',
+  STOPPED: 'Powered off: unpaid',
+  START_PENDING: 'Powering on: payment received',
+  DESTROY_PENDING: 'Releasing: unpaid',
+};
+
 const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
   key: 'retry-provision',
   label: 'Retry provisioning',
@@ -155,6 +163,11 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       kind: 'text',
       field: 'HviStatus',
       className: 'runtime-status-col',
+      // The collection policy state wins over the provider status while billing controls power.
+      value: (row, translate) => {
+        const billing = BILLING_POWER_LABELS[String(row['HviBillingPowerState'] ?? '')];
+        return billing ? translate(billing) : String(row['HviStatus'] ?? '');
+      },
     },
     {
       id: 'status',
@@ -602,15 +615,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
     const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
-    const lightsail = plan?.HvpProvider === 'lightsail' ||
+    const lightsail =
+      plan?.HvpProvider === 'lightsail' ||
       String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
     const authMethod = lightsail
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
-          .trim()
-          .toLowerCase() === 'password'
-      ? 'password'
-      : 'ssh_key';
+            .trim()
+            .toLowerCase() === 'password'
+        ? 'password'
+        : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
     const username = lightsail
       ? null
@@ -675,15 +689,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
 
     const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
-    const lightsail = plan?.HvpProvider === 'lightsail' ||
+    const lightsail =
+      plan?.HvpProvider === 'lightsail' ||
       String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
     const authMethod = lightsail
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
-          .trim()
-          .toLowerCase() === 'password'
-      ? 'password'
-      : 'ssh_key';
+            .trim()
+            .toLowerCase() === 'password'
+        ? 'password'
+        : 'ssh_key';
     if (authMethod === 'ssh_key' && !normalizeString(payload['sshKey'])) {
       this.snack.warning(
         this.t(
@@ -705,13 +720,17 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const selectedImageId = normalizeString(payload['image']);
     const imageOption = (this.catalog()?.images ?? []).find((item) => item.id === selectedImageId);
-    if (plan && imageOption && !isImageCompatibleWithPlan(imageOption, {
-      region: normalizeString(plan.HvpRegion) ?? '',
-      diskGb: Number(plan.HvpConfig?.diskGb ?? 0),
-      cpu: Number(plan.HvpConfig?.cpu ?? 0),
-      memoryMb: Number(plan.HvpConfig?.memoryMb ?? 0),
-      platform: lightsailPlatformFromPlan(plan),
-    })) {
+    if (
+      plan &&
+      imageOption &&
+      !isImageCompatibleWithPlan(imageOption, {
+        region: normalizeString(plan.HvpRegion) ?? '',
+        diskGb: Number(plan.HvpConfig?.diskGb ?? 0),
+        cpu: Number(plan.HvpConfig?.cpu ?? 0),
+        memoryMb: Number(plan.HvpConfig?.memoryMb ?? 0),
+        platform: lightsailPlatformFromPlan(plan),
+      })
+    ) {
       this.snack.warning(
         this.t(
           'Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.',
@@ -897,7 +916,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const planChanged = this.activePlanUUID !== normalized;
     this.activePlanUUID = normalized;
-    const provider = String(plan.HvpProvider ?? '').trim().toLowerCase();
+    const provider = String(plan.HvpProvider ?? '')
+      .trim()
+      .toLowerCase();
 
     if (planChangedByUser && planChanged) {
       this.patchFormValues({ image: '' });
@@ -944,9 +965,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const sizeId = normalizeString(plan.HvpSize) ?? '';
     const sizeOption = (this.catalog()?.sizes ?? []).find((item) => item.id === sizeId) ?? null;
     const platform =
-      normalizeString(sizeOption?.platform) ??
-      lightsailPlatformFromPlan(plan) ??
-      null;
+      normalizeString(sizeOption?.platform) ?? lightsailPlatformFromPlan(plan) ?? null;
     const power = Number(sizeOption?.power ?? 0);
     return (this.catalog()?.images ?? []).filter((option) =>
       isImageCompatibleWithPlan(option, {
@@ -1278,9 +1297,7 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
   const specs = [
     option.cpu ? `${option.cpu} vCPU` : null,
     option.memoryMb ? `${option.memoryMb} MB` : null,
-    option.minDiskGb || option.diskGb
-      ? `${option.minDiskGb || option.diskGb} GB`
-      : null,
+    option.minDiskGb || option.diskGb ? `${option.minDiskGb || option.diskGb} GB` : null,
   ].filter(Boolean);
   const meta = [option.source, option.type, ...specs].filter(Boolean).join(' · ');
   return {
@@ -1304,7 +1321,9 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
 }
 
 function lightsailParentRegion(regionOrAz: string | null | undefined): string | null {
-  const value = String(regionOrAz ?? '').trim().toLowerCase();
+  const value = String(regionOrAz ?? '')
+    .trim()
+    .toLowerCase();
   if (!value) return null;
   const match = value.match(/^([a-z0-9-]+?)([a-z])$/i);
   if (!match) return String(regionOrAz ?? '').trim() || null;
@@ -1314,7 +1333,9 @@ function lightsailParentRegion(regionOrAz: string | null | undefined): string | 
 }
 
 function lightsailPlatformFromPlan(plan: HostingVpsPlan): string | null {
-  const family = String(plan.HvpConfig?.sizeFamily ?? '').trim().toLowerCase();
+  const family = String(plan.HvpConfig?.sizeFamily ?? '')
+    .trim()
+    .toLowerCase();
   if (family.includes('windows')) return 'WINDOWS';
   if (family.includes('linux') || family.includes('unix')) return 'LINUX_UNIX';
   const size = String(plan.HvpSize ?? '').toLowerCase();
@@ -1349,8 +1370,12 @@ function isImageCompatibleWithPlan(
     if (!ok) return false;
   }
 
-  const platform = String(context.platform ?? '').trim().toUpperCase();
-  const imagePlatform = String(option.platform ?? '').trim().toUpperCase();
+  const platform = String(context.platform ?? '')
+    .trim()
+    .toUpperCase();
+  const imagePlatform = String(option.platform ?? '')
+    .trim()
+    .toUpperCase();
   if (platform && imagePlatform && platform !== imagePlatform) {
     return false;
   }
