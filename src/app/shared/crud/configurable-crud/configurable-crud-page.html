@@ -204,12 +204,30 @@
             >
               @if (column.kind === 'identity' || column.kind === 'related') {
                 <div class="crud-copy-cell">
-                  <div class="record-stack">
-                    <span class="record-main">{{ columnMain(row, column) }}</span>
+                  <div class="record-stack" [class]="columnWidthClass(column)">
+                    <span class="record-main crud-cell-text" mnsOverflowTooltip>{{
+                      columnMain(row, column)
+                    }}</span>
                     @if (columnUUID(row, column)) {
-                      <span class="record-uuid" [class.record-detail]="!!column.detail">{{
-                        columnUUID(row, column)
-                      }}</span>
+                      @if (columnHasUUIDLine(row, column)) {
+                        <button
+                          type="button"
+                          class="record-uuid crud-uuid-copy"
+                          [matTooltip]="
+                            columnUUID(row, column) + ' · ' + ('Click to copy' | transloco)
+                          "
+                          [attr.aria-label]="
+                            ('Copy' | transloco) + ' UUID ' + columnUUID(row, column)
+                          "
+                          (click)="copyColumnUUID(row, column)"
+                        >
+                          {{ columnUUIDLabel(row, column) }}
+                        </button>
+                      } @else {
+                        <span class="record-uuid record-detail crud-cell-text" mnsOverflowTooltip>{{
+                          columnUUIDLabel(row, column)
+                        }}</span>
+                      }
                     }
                   </div>
                   @if (canCopyColumn(row, column)) {
@@ -271,7 +289,12 @@
               } @else {
                 @if (canCopyColumn(row, column)) {
                   <div class="crud-copy-cell">
-                    <span>{{ columnText(row, column) }}</span>
+                    <span
+                      class="crud-cell-text"
+                      [class]="columnWidthClass(column)"
+                      mnsOverflowTooltip
+                      >{{ columnText(row, column) }}</span
+                    >
                     <button
                       mat-icon-button
                       type="button"
@@ -283,7 +306,12 @@
                     </button>
                   </div>
                 } @else {
-                  {{ columnText(row, column) }}
+                  <span
+                    class="crud-cell-text"
+                    [class]="columnWidthClass(column)"
+                    mnsOverflowTooltip
+                    >{{ columnText(row, column) }}</span
+                  >
                 }
               }
             </td>
@@ -302,30 +330,22 @@
                     mat-icon-button
                     type="button"
                     [matTooltip]="'Edit' | transloco"
+                    [attr.aria-label]="'Edit' | transloco"
                     (click)="startEdit(row)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
                 }
-                @for (action of rowActions(row); track action.key) {
+                @if (rowActions(row).length || canDeleteRow(row)) {
                   <button
                     mat-icon-button
                     type="button"
-                    [matTooltip]="action.tooltip ?? action.label | transloco"
-                    [attr.aria-label]="action.label | transloco"
-                    (click)="runRowAction(action, row)"
+                    [matTooltip]="'More actions' | transloco"
+                    [attr.aria-label]="'More actions' | transloco"
+                    [matMenuTriggerFor]="rowActionsMenu"
+                    [matMenuTriggerData]="{ row: row }"
                   >
-                    <mat-icon>{{ action.icon }}</mat-icon>
-                  </button>
-                }
-                @if (canDeleteRow(row)) {
-                  <button
-                    mat-icon-button
-                    type="button"
-                    [matTooltip]="'Delete' | transloco"
-                    (click)="deleteItem(row)"
-                  >
-                    <mat-icon>delete</mat-icon>
+                    <mat-icon>more_vert</mat-icon>
                   </button>
                 }
               </div>
@@ -342,6 +362,23 @@
         </tr>
       </table>
     </div>
+
+    <mat-menu #rowActionsMenu="matMenu" xPosition="before">
+      <ng-template matMenuContent let-row="row">
+        @for (action of rowActions(row); track action.key) {
+          <button mat-menu-item type="button" (click)="runRowAction(action, row)">
+            <mat-icon>{{ action.icon }}</mat-icon>
+            <span>{{ action.label | transloco }}</span>
+          </button>
+        }
+        @if (canDeleteRow(row)) {
+          <button mat-menu-item type="button" class="crud-menu-danger" (click)="deleteItem(row)">
+            <mat-icon>delete</mat-icon>
+            <span>{{ 'Delete' | transloco }}</span>
+          </button>
+        }
+      </ng-template>
+    </mat-menu>
 
     <mat-paginator
       class="mobile-paginator"

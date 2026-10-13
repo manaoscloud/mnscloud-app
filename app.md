@@ -547,12 +547,19 @@ the page must use the shared base named here.
   - The primary identity column of every CRUD list must render the human-readable main value on
     the first line and the record UUID directly below it on the second line. Use the shared
     `.record-main` and `.record-uuid` classes. The UUID line is mandatory for auditability,
-    support, and fast troubleshooting; do not move it to a tooltip or hide it behind an action.
+    support, and fast troubleshooting; do not remove it or hide it behind an action. The shared
+    CRUD table shows the first 8 characters of the UUID on that line (one line, never wrapped);
+    the full value is in its tooltip and a click copies it.
     When another column represents a related record/FK, its secondary `.record-uuid` line must show
     that related entity UUID instead of repeating the current row UUID. For example, a `Server`
     column shows the server UUID, and a `Realtime Domain` column shows the realtime domain UUID.
     If the API/model field is not literally `UUID`, expose a small component helper that returns
     the canonical record UUID and use that helper in the cell.
+  - Shared CRUD rows stay compact: every cell renders on one line, long values end in an ellipsis
+    and show the full text in a tooltip only when truncated (`mnsOverflowTooltip`), and columns may
+    set `width: 'xs' | 'sm' | 'md' | 'lg' | 'xl'` (default `lg`) for the truncation limit. Copy
+    buttons appear on row hover/keyboard focus and stay visible on touch screens. The actions
+    column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define
     explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
     sorted-row `computed()`.
