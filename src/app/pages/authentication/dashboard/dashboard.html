@@ -1,0 +1,21 @@
+<mns-dashboard-page
+  title="authentication.dashboard"
+  description="authentication.inventoryDescription"
+  [loading]="dashboard.isLoading()"
+  [error]="dashboard.error()"
+  [hasData]="dashboard.hasData()"
+  (refresh)="dashboard.reload()"
+>
+  <div class="dashboard-grid">
+    @for (metric of metrics; track metric) {
+      <article class="dashboard-metric">
+        <div>
+          <span class="dashboard-metric-label">{{
+            'authentication.' + (metric === 'devices' ? 'network-devices' : metric) | transloco
+          }}</span
+          ><strong class="dashboard-metric-value">{{ dashboard.value()[metric] ?? '—' }}</strong>
+        </div>
+      </article>
+    }
+  </div></mns-dashboard-page
+>

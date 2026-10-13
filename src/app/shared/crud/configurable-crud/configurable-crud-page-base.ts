@@ -142,6 +142,10 @@ export type ConfigurableCrudQuickCreateContext = {
  * `loadComponent`) in quick-create mode. Never point this at a lightweight duplicate form.
  */
 export type ConfigurableCrudQuickCreateConfig = {
+  /** Explicit related-resource values, calculated from the parent form; never authority. */
+  initialValues?:
+    | ConfigurableCrudRecord
+    | ((context: ConfigurableCrudQuickCreateContext) => ConfigurableCrudRecord);
   enabled?: boolean | ((context: ConfigurableCrudQuickCreateContext) => boolean);
   label?: string;
   component?: Type<unknown>;
@@ -442,6 +446,8 @@ export type ConfigurableCrudConfig = {
   updateEndpoint?: string;
   /** Optional lifecycle endpoint for delete. The resolver supports mixed lifecycle rows. */
   deleteEndpoint?: string | ((row: ConfigurableCrudRecord) => string);
+  /** Resource-specific concurrency precondition, e.g. the revision confirmed by the user. */
+  deletePayload?: (row: ConfigurableCrudRecord) => ConfigurableCrudRecord;
   /** Optional lifecycle endpoint for bulk delete. */
   bulkDeleteEndpoint?: string;
   uuidField: string;
@@ -1063,6 +1069,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     try {
       const response = await this.api.delete(
         `${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`,
+        this.config.deletePayload?.(row),
       );
       if (!this.trackOperation(response)) this.snack.success(this.t(this.config.deletedMessage));
       this.itemsResource.reload();
@@ -1963,7 +1970,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const quickCreate = this.resolveQuickCreate(field);
     if (!quickCreate || !this.canQuickCreate(field)) return;
     const { openQuickCreate } = await import('./configurable-crud-quick-create-host');
-    const result = await openQuickCreate(this.dialog, quickCreate);
+    const initialValues =
+      typeof quickCreate.initialValues === 'function'
+        ? quickCreate.initialValues({
+            editing: Boolean(this.editingRecord()),
+            values: this.formValues(),
+          })
+        : quickCreate.initialValues;
+    const result = await openQuickCreate(this.dialog, { ...quickCreate, initialValues });
     const option = result?.option;
     if (!result || !option) return;
 
@@ -2615,7 +2629,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   private emptyFormValues(): ConfigurableCrudRecord {
-    const values = { ...this.resolveInitialValues() };
+    const values = { ...this.resolveInitialValues(), ...this.quickCreateSession?.initialValues };
     for (const key of this.config.defaultCurrencyFields ?? []) values[key] = this.defaultCurrency();
     return values;
   }
@@ -2667,7 +2681,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         );
         if (normalizedCurrency !== undefined) value = normalizedCurrency;
       }
-      if (typeof value === 'string') value = value.trim();
+      if (typeof value === 'string' && field.type !== 'password' && field.type !== 'secret-content')
+        value = value.trim();
       if (value === '') value = null;
       payload[key] = value;
     }
