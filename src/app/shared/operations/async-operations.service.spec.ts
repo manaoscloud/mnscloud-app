@@ -122,6 +122,38 @@ describe('Queued operations in cookie sessions', () => {
     expect(get).not.toHaveBeenCalled();
     expect(service.badgeCount()).toBe(0);
   });
+  it('never resumes audit-log writes recorded for a request', async () => {
+    get.and.resolveTo({
+      data: {
+        items: [
+          { operationUUID, state: 'queued', kind: 'activityLog', action: 'accounts.delete' },
+          { operationUUID: '33333333333333333333333333333333', state: 'running', kind: 'vps' },
+        ],
+      },
+    });
+    await service.resume(owner());
+    expect(service.visible().map((item) => item.kind)).toEqual(['vps']);
+  });
+  it('keeps the reported identity when a later receipt carries none', async () => {
+    const ref = owner();
+    service.watch({ operationUUID, state: 'queued' }, ref, () => {});
+    get.and.resolveTo({
+      data: {
+        operationUUID,
+        state: 'blocked',
+        canRecheck: true,
+        kind: 'dns',
+        action: 'record.add',
+        resourceLabel: 'example.com',
+      },
+    });
+    jasmine.clock().tick(3000);
+    await settle();
+    service.watch({ operationUUID, state: 'blocked', canRecheck: true }, ref, () => {});
+    expect(service.visible()[0]).toEqual(
+      jasmine.objectContaining({ kind: 'dns', action: 'record.add', resourceLabel: 'example.com' }),
+    );
+  });
   it('keeps blocked operations until dismiss and excludes them from success auto-clear', () => {
     service.watch({ operationUUID, state: 'blocked', canRecheck: true }, owner(), () => {});
     expect(service.badgeCount()).toBe(1);

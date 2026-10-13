@@ -1470,6 +1470,13 @@ are cleared from the panel after a short retention window; badge count is in-fli
 Never resubmit a mutation because polling failed. `ApiService` retains a request key after an
 uncertain HTTP response. Tenant/session changes clear local operation state.
 
+Each Activity Center item names the work, never only an identifier: `<kind> · <action>` from the
+API `kind`/`action` fields (PT/EN/ES `operations.kind.*` and `operations.action.*` keys, with a
+humanized fallback for an action not yet translated), the target `resourceLabel` when present, and
+the short id plus acceptance time for support (full UUID in the tooltip). Acceptance and recheck
+receipts carry no identity, so the service keeps what the last status read reported. Activity log
+writes (`kind = activityLog`) are request side effects and are never resumed into the panel.
+
 The server advertises `canRecheck` for supported readback. The Activity Center action requests
 verification; it does not force a provider retry or invent completion. Backend permissions and
 immutable intent remain authoritative. Render states and safe error labels through PT/EN/ES
