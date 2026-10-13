@@ -4,6 +4,7 @@ import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudFilterAction,
   ConfigurableCrudFilterActionMenu,
   ConfigurableCrudFilters,
@@ -38,6 +39,8 @@ type MonitoringAgent = ConfigurableCrudRecord & {
   connectionStatus?: string | null;
   lastHeartbeatAt?: string | null;
   uptimeSeconds?: number | null;
+  /** Null for platform Agents (platform infrastructure such as Authentication). */
+  environmentUUID?: string | null;
 };
 
 type RuntimeUpdateTarget = {
@@ -78,6 +81,13 @@ const RECORD_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
 ];
+
+const OWNERSHIP_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'environment', label: 'Environment' },
+  { value: 'platform', label: 'Platform' },
+];
+
+const PLATFORM_AGENTS_ENDPOINT = 'system/monitoring/agents';
 
 const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'linux.status', label: 'linux.status' },
@@ -126,6 +136,7 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
   deletedMessage: 'Agent deleted.',
   deleteFailedMessage: 'Failed to delete agent.',
   initialValues: {
+    ownership: 'environment',
     agentUUID: '',
     name: '',
     hostname: '',
@@ -165,6 +176,17 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
       tab: 'record',
       span: 1,
       required: true,
+    },
+    {
+      key: 'ownership',
+      label: 'Ownership',
+      type: 'select',
+      options: OWNERSHIP_OPTIONS,
+      tab: 'record',
+      span: 1,
+      required: true,
+      hiddenWhen: (context) => context.editing,
+      help: 'Platform Agents serve platform infrastructure such as Authentication and do not belong to the selected environment.',
     },
     { key: 'name', label: 'Name', type: 'text', tab: 'record', span: 1, required: true },
     { key: 'hostname', label: 'Hostname', type: 'text', tab: 'record', span: 1 },
@@ -216,6 +238,7 @@ const AGENTS_CONFIG: ConfigurableCrudConfig = {
       copyable: true,
     },
     { id: 'type', label: 'Type', field: 'type' },
+    { id: 'ownership', label: 'Ownership', field: 'ownershipLabel' },
     {
       id: 'resource',
       label: 'Resource',
@@ -256,6 +279,33 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
 
   constructor() {
     super(AGENTS_CONFIG);
+  }
+
+  // Only platform masters choose platform ownership; the API enforces the same rule.
+  override isFieldVisible(field: ConfigurableCrudField): boolean {
+    if (field.key === 'ownership' && !this.isMaster()) return false;
+    return super.isFieldVisible(field);
+  }
+
+  protected override createEndpoint(): string {
+    return this.isMaster() && this.formValues()['ownership'] === 'platform'
+      ? `${PLATFORM_AGENTS_ENDPOINT}/enrollments`
+      : super.createEndpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    const current = this.editingRecord();
+    return current && this.isPlatformAgent(current)
+      ? PLATFORM_AGENTS_ENDPOINT
+      : super.updateEndpoint();
+  }
+
+  protected override deleteEndpointFor(row: MonitoringAgent): string {
+    return this.isPlatformAgent(row) ? PLATFORM_AGENTS_ENDPOINT : super.deleteEndpointFor(row);
+  }
+
+  private isPlatformAgent(row: MonitoringAgent): boolean {
+    return !row.environmentUUID;
   }
 
   private hasPermission(required: string): boolean {
@@ -432,8 +482,9 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       'Generate command',
     );
     if (!confirmed) return;
+    const base = this.isPlatformAgent(row) ? PLATFORM_AGENTS_ENDPOINT : 'monitoring/agents';
     const response = await this.api.post<{ data?: { enrollmentToken?: string } }>(
-      `monitoring/agents/${row.uuid}/enrollments`,
+      `${base}/${row.uuid}/enrollments`,
       {},
     );
     this.generatedToken.set(response.data?.enrollmentToken ?? '');
@@ -566,6 +617,9 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       resourceLabel: row.resourceLabel || row.resourceUUID || '-',
       agentVersionText: this.agentVersionText(row),
       uptimeText: this.formatUptime(row.uptimeSeconds),
+      ownershipLabel: this.transloco.translate(
+        this.isPlatformAgent(row) ? 'Platform' : 'Environment',
+      ),
     };
   }
 
