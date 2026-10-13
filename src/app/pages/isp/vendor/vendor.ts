@@ -10,6 +10,15 @@ import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-cre
 const config = defineCrud({
   endpoint: 'isp/vendors',
   uuidField: 'VendorUUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['IveRevision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['VendorUUID']), Number(row['IveRevision'])]),
+    ),
+  }),
   pageTitle: 'Vendors',
   pageDescription: 'Equipment vendors linked to ISP inventory.',
   bulkDelete: true,
@@ -30,6 +39,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'VendorStatus', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'IveRevision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'VendorStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'VendorName', label: 'Name', required: true, span: 1 },
     {

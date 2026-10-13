@@ -483,6 +483,8 @@ export type ConfigurableCrudConfig = {
   deletePayload?: (row: ConfigurableCrudRecord) => ConfigurableCrudRecord;
   /** Optional lifecycle endpoint for bulk delete. */
   bulkDeleteEndpoint?: string;
+  /** Preconditions captured from selected rows, such as optimistic revisions. */
+  bulkDeletePayload?: (rows: ConfigurableCrudRecord[]) => ConfigurableCrudRecord;
   uuidField: string;
   pageTitle: string;
   pageDescription: string;
@@ -541,6 +543,8 @@ export type ConfigurableCrudConfig = {
   listQuery?: Readonly<Record<string, string>>;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
+  /** Send canonical column fields to APIs supporting global ordering. */
+  serverSideSorting?: boolean;
   pageSizeOptions?: readonly number[];
   initialPageSize?: number;
   /**
@@ -567,6 +571,8 @@ export type ConfigurableCrudFilters = {
 export type ConfigurableCrudListParams = ConfigurableCrudFilters & {
   limit: number;
   offset: number;
+  sortBy?: string;
+  sortDirection?: string;
   pageIndex: number;
   pageSize: number;
 };
@@ -722,7 +728,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       ? this.normalizeRows(this.itemsResource.value() as T[])
       : ([] as T[]),
   );
-  readonly sortedRows = computed(() => this.sortRows(this.rows()));
+  readonly sortedRows = computed(() =>
+    this.config.serverSideSorting ? this.rows() : this.sortRows(this.rows()),
+  );
   readonly visibleRows = computed(() => {
     if (this.serverSidePagination()) return this.sortedRows();
     const start = this.pageIndex() * this.pageSize();
@@ -1500,6 +1508,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (!this.bulkDeleteEnabled()) return;
     const ids = [...this.selectedUUIDs()];
     if (!ids.length) return;
+    const preconditions = this.config.bulkDeletePayload?.(
+      this.rows().filter((row) => ids.includes(String(row[this.config.uuidField]))),
+    );
 
     const message = this.config.deleteSelectedMessage.replace('{count}', String(ids.length));
     const confirmed = await this.confirm(this.config.deleteSelectedTitle, message);
@@ -1511,12 +1522,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         this.bulkDeleteEndpoint(),
         {
           ids,
+          ...preconditions,
         },
       );
+      const displayedUUIDs = new Map(ids.map((id) => [id.replaceAll('-', '').toLowerCase(), id]));
       this.selectedUUIDs.set(
         new Set(
           (response?.data?.failed ?? [])
             .map((item) => String(item['uuid'] ?? item[this.config.uuidField] ?? ''))
+            .map((id) => displayedUUIDs.get(id.replaceAll('-', '').toLowerCase()) ?? id)
             .filter(Boolean),
         ),
       );
@@ -2609,6 +2623,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const offset = this.serverSidePagination() ? (filters as ConfigurableCrudListParams).offset : 0;
     params.set('limit', String(limit));
     params.set('offset', String(offset));
+    const ordering = filters as ConfigurableCrudListParams;
+    if (this.config.serverSideSorting && ordering.sortBy && ordering.sortDirection) {
+      params.set('sortBy', ordering.sortBy);
+      params.set('sortDirection', ordering.sortDirection);
+    }
     if (filters.search) params.set('search', filters.search);
     if (this.statusFilterEnabled() && filters.status !== '')
       params.set('status', String(filters.status));
@@ -2643,6 +2662,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       pageIndex,
       limit: pageSize,
       offset: pageIndex * pageSize,
+      ...(this.config.serverSideSorting
+        ? {
+            sortBy: this.columns().find((column) => column.id === this.sortActive())?.field,
+            sortDirection: this.sortDirection(),
+          }
+        : {}),
     };
   }
 
