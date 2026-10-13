@@ -19,6 +19,8 @@ const config = defineCrud({
   endpoint: 'system/authentication/servers',
   uuidField: 'AtsUUID',
   pageTitle: 'authentication.servers',
+  pageDescription: 'authentication.serverSetupDescription',
+  dialogDescription: 'authentication.serverSetupDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
@@ -63,6 +65,7 @@ const config = defineCrud({
       span: 1,
       required: true,
       type: 'text',
+      help: 'authentication.hostHelp',
     },
     {
       key: 'databaseUser',

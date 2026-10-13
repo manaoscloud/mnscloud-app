@@ -6745,7 +6745,7 @@
   "authentication.installDescription": "Ejecute en el servidor de autenticación indicado después de configurar su conexión de base de datos.",
   "authentication.installWarning": "Inscripción de un solo uso, válida por 30 minutos. Mantenga este comando privado. La App no lo ejecuta.",
   "authentication.databaseUser": "Usuario de base de datos",
-  "authentication.databaseUserHelp": "Usuario exclusivo del servicio, con permisos limitados al módulo de autenticación. Configure la contraseña en el servidor de destino.",
+  "authentication.databaseUserHelp": "Opcional al registrar el servidor. Antes de instalar, configure un usuario exclusivo de base de datos con permisos limitados y sus credenciales en la máquina de destino.",
   "authentication.sessions": "Sesiones",
   "authentication.sessionId": "Identificador de sesión",
   "authentication.observation": "Observación",
@@ -6759,5 +6759,7 @@
   "nav.authentication.sessions": "Sesiones",
   "authentication.serverUuid": "UUID del servidor",
   "authentication.profileHelp": "El perfil del grupo prevalece sobre el perfil del acceso cuando está configurado.",
-  "authentication.sessionTimeoutHelp": "Límite de sesión en segundos; vacío usa 3600. La caducidad del acceso puede reducirlo."
+  "authentication.sessionTimeoutHelp": "Límite de sesión en segundos; vacío usa 3600. La caducidad del acceso puede reducirlo.",
+  "authentication.serverSetupDescription": "Primero registre la máquina Linux de destino; el servicio de autenticación todavía no necesita estar instalado. Elija un clúster e indique un nombre y el hostname o IP. Después de guardar, copie el comando de instalación y ejecútelo en esa máquina.",
+  "authentication.hostHelp": "Hostname o IP de la máquina Linux donde instalará el servicio. No es la dirección de un NAS o abonado."
 }

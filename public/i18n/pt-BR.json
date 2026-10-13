@@ -6746,7 +6746,7 @@
   "authentication.installDescription": "Execute no servidor de autenticação indicado após configurar sua conexão com o banco.",
   "authentication.installWarning": "Inscrição de uso único, válida por 30 minutos. Mantenha este comando privado. Ele não é executado pelo App.",
   "authentication.databaseUser": "Usuário do banco",
-  "authentication.databaseUserHelp": "Usuário exclusivo do runtime, com permissões limitadas ao módulo de autenticação. Configure a senha no servidor de destino.",
+  "authentication.databaseUserHelp": "Opcional no cadastro do servidor. Antes da instalação, configure um usuário exclusivo do banco, com permissões limitadas, e suas credenciais na máquina de destino.",
   "authentication.sessions": "Sessões",
   "authentication.sessionId": "Identificador da sessão",
   "authentication.observation": "Observação",
@@ -6760,5 +6760,7 @@
   "nav.authentication.sessions": "Sessões",
   "authentication.serverUuid": "UUID do servidor",
   "authentication.profileHelp": "Quando configurado, o perfil do grupo prevalece sobre o perfil do acesso.",
-  "authentication.sessionTimeoutHelp": "Limite da sessão em segundos; vazio usa 3600. A expiração do acesso pode reduzi-lo."
+  "authentication.sessionTimeoutHelp": "Limite da sessão em segundos; vazio usa 3600. A expiração do acesso pode reduzi-lo.",
+  "authentication.serverSetupDescription": "Primeiro cadastre a máquina Linux de destino; o serviço de autenticação ainda não precisa estar instalado. Escolha um cluster e informe um nome e o hostname ou IP. Após salvar, copie o comando de instalação e execute nessa máquina.",
+  "authentication.hostHelp": "Hostname ou IP da máquina Linux onde você instalará o serviço. Não é o endereço de um NAS ou assinante."
 }
