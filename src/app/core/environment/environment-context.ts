@@ -7,6 +7,11 @@ export type EnvironmentAccess = {
   RoleName?: string | null;
   Status?: number | string | null;
   IsDefault?: number | string | null;
+  TenantCode?: string | null;
+  CountryCode?: string | null;
+  PartyType?: string | null;
+  TaxIdLabel?: string | null;
+  TaxIdDisplay?: string | null;
 };
 
 export type NormalizedEnvironmentAccess = {
@@ -16,6 +21,13 @@ export type NormalizedEnvironmentAccess = {
   RoleName: string;
   Status: number;
   IsDefault: number;
+  /** Unique public tenant code (TEN-XXXX-XXXX-XXXX). */
+  TenantCode: string | null;
+  CountryCode: string | null;
+  PartyType: string | null;
+  TaxIdLabel: string | null;
+  /** Formatted tax ID; personal documents arrive already masked by the API. */
+  TaxIdDisplay: string | null;
 };
 
 type EnvironmentAccessResponse = {
@@ -66,6 +78,15 @@ export function writeStoredEnvironmentUUID(value: string | null | undefined): st
   return normalized;
 }
 
+/** Second line of a tenant: tax ID and public code, so equal names stay distinguishable. */
+export function tenantIdentityLine(
+  env: Pick<EnvironmentAccess, 'TaxIdLabel' | 'TaxIdDisplay' | 'TenantCode'> | null | undefined,
+): string {
+  if (!env) return '';
+  const taxId = [env.TaxIdLabel, env.TaxIdDisplay].filter(Boolean).join(' ');
+  return [taxId, env.TenantCode].filter(Boolean).join(' · ');
+}
+
 export function extractEnvironmentAccess(response: EnvironmentAccessResponse | null | undefined) {
   const access = Array.isArray(response?.data?.access) ? response.data.access : [];
 
@@ -83,6 +104,11 @@ export function extractEnvironmentAccess(response: EnvironmentAccessResponse | n
         RoleName: raw.RoleName ?? raw.RoleCode ?? '',
         Status: Number(raw.Status ?? 0),
         IsDefault: Number(raw.IsDefault ?? 0),
+        TenantCode: raw.TenantCode ?? null,
+        CountryCode: raw.CountryCode ?? null,
+        PartyType: raw.PartyType ?? null,
+        TaxIdLabel: raw.TaxIdLabel ?? null,
+        TaxIdDisplay: raw.TaxIdDisplay ?? null,
       };
     })
     .filter((item): item is NormalizedEnvironmentAccess => !!item);
