@@ -81,16 +81,6 @@ const config = defineCrud({
       label: 'authentication.retryInstallation',
       icon: 'refresh',
       visible: (row) => row['AtsProvisioningState'] === 'failed',
-      request: {
-        method: 'post',
-        endpoint: (row) => `system/authentication/servers/${row['AtsUUID']}/retry-installation`,
-        body: () => ({}),
-        successMessage: 'authentication.retryAccepted',
-        confirm: {
-          title: 'authentication.retryInstallation',
-          message: 'authentication.retryConfirmation',
-        },
-      },
     },
   ],
   fields: [
@@ -190,6 +180,7 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'retry') return this.retryInstallation(row);
     if (action.key !== 'install') return super.handleRowAction(action, row);
     const confirmed = await confirmInstallCommandGeneration(
       this.installDialog,
@@ -206,6 +197,43 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
     if (context.mode !== 'create') return;
     const response = context.response as { data?: ConfigurableCrudRecord };
     if (response.data?.['AtsUUID']) await this.showInstaller(String(response.data['AtsUUID']));
+  }
+
+  /** Resumes a failed installation on the latest approved release and shows the resume command. */
+  private async retryInstallation(row: ConfigurableCrudRecord): Promise<void> {
+    const confirmed = await this.confirmAction(
+      'authentication.retryInstallation',
+      'authentication.retryConfirmation',
+      'authentication.retryInstallation',
+    );
+    if (!confirmed) return;
+    const uuid = String(row['AtsUUID']);
+    try {
+      const response = await this.api.post<{ data: Record<string, unknown> }>(
+        `${config.endpoint}/${uuid}/retry-installation`,
+        {},
+      );
+      this.snack.success(this.t('authentication.retryAccepted'));
+      this.refreshList();
+      const apiBase = resolveApiBaseUrl();
+      openInstallCommandDialog(
+        this.installDialog,
+        {
+          title: 'authentication.retryInstallation',
+          description: 'authentication.installDescription',
+          warning: 'authentication.resumeWarning',
+          details: [
+            { label: 'API base', value: apiBase, monospace: true },
+            { label: 'authentication.serverUuid', value: uuid, monospace: true },
+            { label: 'Version', value: response.data['ref'], monospace: true },
+          ],
+          command: installCommand(apiBase, uuid, response.data),
+        },
+        this.destroyRef,
+      );
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 
   private async showInstaller(uuid: string): Promise<void> {
@@ -241,7 +269,10 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
   }
 }
 
-/** Same one-line, `&&`-chained shape as the other runtime modules; ends with the module validator. */
+/**
+ * Same one-line, `&&`-chained shape as the other runtime modules; ends with the module validator.
+ * A resumed installation (after Retry) is already bound to the host, so it carries no token.
+ */
 function installCommand(apiBase: string, uuid: string, data: Record<string, unknown>): string {
   const quote = (value: unknown) => "'" + String(value).replaceAll("'", "'\\''") + "'";
   const repo = 'mnscloud-authentication';
@@ -253,7 +284,10 @@ function installCommand(apiBase: string, uuid: string, data: Record<string, unkn
     `sudo git -C ${repo} fetch --tags --force origin`,
     // The pinned release; the installer also verifies the commit approved by the API.
     `sudo git -C ${repo} checkout --detach ${quote(data['ref'])}`,
-    `sudo bash ${root}/scripts/install-authentication.sh --api-base ${quote(apiBase)} --server-uuid ${quote(uuid)} --installation-token ${quote(data['installationToken'])}`,
+    `sudo bash ${root}/scripts/install-authentication.sh --api-base ${quote(apiBase)} --server-uuid ${quote(uuid)}` +
+      (data['installationToken']
+        ? ` --installation-token ${quote(data['installationToken'])}`
+        : ''),
     `sudo bash ${root}/scripts/validate-authentication.sh`,
   ].join(' && ');
 }
