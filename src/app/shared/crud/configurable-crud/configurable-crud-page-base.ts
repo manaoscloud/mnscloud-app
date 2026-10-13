@@ -1525,10 +1525,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
           ...preconditions,
         },
       );
+      const displayedUUIDs = new Map(ids.map((id) => [id.replaceAll('-', '').toLowerCase(), id]));
       this.selectedUUIDs.set(
         new Set(
           (response?.data?.failed ?? [])
             .map((item) => String(item['uuid'] ?? item[this.config.uuidField] ?? ''))
+            .map((id) => displayedUUIDs.get(id.replaceAll('-', '').toLowerCase()) ?? id)
             .filter(Boolean),
         ),
       );
