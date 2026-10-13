@@ -119,6 +119,9 @@ npm run build
 
 The browser files are generated at `dist/app/browser`.
 
+On a shared host the build is queued (one at a time per machine) and memory-capped by
+`scripts/guarded-build.sh`; see `AGENTS.md` → Shared Host Builds for its settings.
+
 ## GitHub Build Configuration
 
 GitHub Actions generates `public/env.js` during CI, so environment-specific API URLs do not need to

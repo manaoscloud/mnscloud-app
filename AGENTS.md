@@ -6,11 +6,28 @@ This repository contains only the standalone MNSCloud Angular app.
 
 - Install: `npm install`
 - Start: `npm run start`
-- Build: `npm run build`
+- Build: `npm run build` (guarded: one build per host at a time, 14G memory cap; see below)
+- Type check (fast local gate): `npm run typecheck`
 - CRUD validation: `npm run check:crud`
 - Menu label validation: `npm run check:nav`
 - FK quick-create validation: `npm run check:crud:fk -- <page-folder>` (or `-- --all`)
 - Install/update bare-metal Nginx runtime: `sudo ./scripts/update-latest-nginx-runtime.sh`
+
+## Shared Host Builds
+
+- A production build uses ~11.5 GB of RAM. Several AI agents building at once froze the shared
+  developer host, so `npm run build` runs `scripts/guarded-build.sh`: a machine-wide queue (lock
+  `/var/lock/mnscloud-app-build.lock`, shared by every worktree), a per-build memory cap in its own
+  systemd scope (`MNSCLOUD_BUILD_MEMORY_MAX`, default `14G`, no swap) and lower CPU priority.
+- A waiting build prints `[build-guard] another mnscloud-app build is running (...)`; this is normal,
+  keep it waiting. Exit `75` means the slot did not free up in time; exit `137` with
+  `exceeded MNSCLOUD_BUILD_MEMORY_MAX` means the build hit the cap.
+- Never bypass the guard on a shared host (`MNSCLOUD_BUILD_GUARD=0`) and never call
+  `ng build` / `node .../ng.js build` directly. CI (`CI` set) and Docker builds skip the guard.
+- Routine local gate: Prettier, the `check:*` validators, `npm run verify:changed -- origin/main HEAD`
+  and `npm run typecheck`. The PR CI always runs the production build. Run `npm run build` locally
+  only when the change touches `angular.json`, budgets, build/release scripts, dependencies, or
+  a CI build failure must be reproduced.
 
 ## Public Client Boundary
 
