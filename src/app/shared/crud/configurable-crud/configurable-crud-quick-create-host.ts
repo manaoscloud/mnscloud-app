@@ -13,6 +13,7 @@ import { CONFIGURABLE_CRUD_QUICK_CREATE } from './quick-create';
 export type ConfigurableCrudQuickCreateHostData = {
   component: Type<unknown>;
   routeData?: Record<string, unknown>;
+  initialValues?: Record<string, unknown>;
 };
 
 /**
@@ -50,6 +51,7 @@ export class ConfigurableCrudQuickCreateHostComponent {
       {
         provide: CONFIGURABLE_CRUD_QUICK_CREATE,
         useValue: {
+          initialValues: this.data.initialValues,
           complete: (result: ConfigurableCrudQuickCreateResult) => {
             if (this.completed) return;
             this.completed = true;
@@ -68,7 +70,10 @@ export class ConfigurableCrudQuickCreateHostComponent {
  */
 export async function openQuickCreate(
   dialog: MatDialog,
-  quickCreate: Pick<ConfigurableCrudQuickCreateConfig, 'component' | 'loadComponent' | 'routeData'>,
+  quickCreate: Pick<
+    ConfigurableCrudQuickCreateConfig,
+    'component' | 'loadComponent' | 'routeData'
+  > & { initialValues?: Record<string, unknown> },
 ): Promise<ConfigurableCrudQuickCreateResult | null> {
   const component = quickCreate.component ?? (await quickCreate.loadComponent?.());
   if (!component) return null;
@@ -77,7 +82,7 @@ export async function openQuickCreate(
     ConfigurableCrudQuickCreateHostData,
     ConfigurableCrudQuickCreateResult
   >(ConfigurableCrudQuickCreateHostComponent, {
-    data: { component, routeData: quickCreate.routeData },
+    data: { component, routeData: quickCreate.routeData, initialValues: quickCreate.initialValues },
     width: '0',
     height: '0',
     maxWidth: '0',

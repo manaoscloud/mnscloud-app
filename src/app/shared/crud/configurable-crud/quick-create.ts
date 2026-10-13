@@ -10,6 +10,7 @@ import type {
  * the create form of a related FK select: no list, create dialog only, result returned here.
  */
 export type ConfigurableCrudQuickCreateSession = {
+  initialValues?: Record<string, unknown>;
   complete(result: ConfigurableCrudQuickCreateResult): void;
 };
 
@@ -35,6 +36,67 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  AuthenticationClusterAtcUUID: {
+    label: 'authentication.clusters',
+    loadComponent: () =>
+      import('../../../pages/authentication/clusters/clusters').then(
+        (m) => m.AuthenticationClusterPage,
+      ),
+    permission: 'platform.authentication.manage',
+    routeData: { scope: 'master' },
+  },
+  AuthenticationServerAtsUUID: {
+    label: 'authentication.servers',
+    loadComponent: () =>
+      import('../../../pages/authentication/servers/servers').then(
+        (m) => m.AuthenticationServerPage,
+      ),
+    permission: 'platform.authentication.manage',
+    routeData: { scope: 'master' },
+  },
+  AuthenticationAccountAacUUID: {
+    label: 'authentication.accounts',
+    loadComponent: () =>
+      import('../../../pages/authentication/accounts/accounts').then(
+        (m) => m.AuthenticationAccountPage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
+  AuthenticationProfileAapUUID: {
+    label: 'authentication.profiles',
+    loadComponent: () =>
+      import('../../../pages/authentication/profiles/profiles').then(
+        (m) => m.AuthenticationProfilePage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
+  AuthenticationNasAanUUID: {
+    label: 'authentication.network-devices',
+    loadComponent: () =>
+      import('../../../pages/authentication/network-devices/network-devices').then(
+        (m) => m.AuthenticationNasPage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
+  AuthenticationGroupAagUUID: {
+    label: 'authentication.groups',
+    loadComponent: () =>
+      import('../../../pages/authentication/groups/groups').then((m) => m.AuthenticationGroupPage),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
+  AuthenticationAccessAaxUUID: {
+    label: 'authentication.accesses',
+    loadComponent: () =>
+      import('../../../pages/authentication/accesses/accesses').then(
+        (m) => m.AuthenticationAccessPage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
   CrmIndustryCinUUID: {
     label: 'crm.title.industries',
     loadComponent: () =>

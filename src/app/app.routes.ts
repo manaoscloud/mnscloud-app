@@ -458,6 +458,69 @@ export const routes: Routes = [
               })),
 
               {
+                path: 'authentication/dashboard',
+                loadComponent: () =>
+                  import('./pages/authentication/dashboard/dashboard').then(
+                    (m) => m.AuthenticationDashboardPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.dashboard' },
+              },
+              {
+                path: 'authentication/sessions',
+                loadComponent: () =>
+                  import('./pages/authentication/sessions/sessions').then(
+                    (m) => m.AuthenticationSessionPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.sessions' },
+              },
+              {
+                path: 'authentication/accounts',
+                loadComponent: () =>
+                  import('./pages/authentication/accounts/accounts').then(
+                    (m) => m.AuthenticationAccountPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.accounts' },
+              },
+              {
+                path: 'authentication/network-devices',
+                loadComponent: () =>
+                  import('./pages/authentication/network-devices/network-devices').then(
+                    (m) => m.AuthenticationNasPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.network-devices' },
+              },
+              {
+                path: 'authentication/accesses',
+                loadComponent: () =>
+                  import('./pages/authentication/accesses/accesses').then(
+                    (m) => m.AuthenticationAccessPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.accesses' },
+              },
+              {
+                path: 'authentication/profiles',
+                loadComponent: () =>
+                  import('./pages/authentication/profiles/profiles').then(
+                    (m) => m.AuthenticationProfilePage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.profiles' },
+              },
+              {
+                path: 'authentication/groups',
+                loadComponent: () =>
+                  import('./pages/authentication/groups/groups').then(
+                    (m) => m.AuthenticationGroupPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.groups' },
+              },
+              {
                 path: 'crm/dashboard',
                 loadComponent: () =>
                   import('./pages/crm/dashboard/dashboard').then((m) => m.CrmDashboardPage),
@@ -849,22 +912,6 @@ export const routes: Routes = [
                     (m) => m.IspFixedIpv6Page,
                   ),
                 title: 'ISP • Fixed IPv6 | mnscloud',
-              },
-              {
-                path: 'isp/radius-server',
-                loadComponent: () =>
-                  import('./pages/isp/radius-server/radius-server').then(
-                    (m) => m.IspRadiusServerPage,
-                  ),
-                title: 'ISP • Radius Server | mnscloud',
-              },
-              {
-                path: 'isp/radius-server/pppoe-client',
-                loadComponent: () =>
-                  import('./pages/isp/radius-server/pppoe-client/pppoe-client').then(
-                    (m) => m.PppoeClientPage,
-                  ),
-                title: 'ISP • PPPoE Client | mnscloud',
               },
               // InfraGIS
               {
@@ -2261,6 +2308,33 @@ export const routes: Routes = [
                 ],
               },
               {
+                path: 'authentication/dashboard',
+                loadComponent: () =>
+                  import('./pages/authentication/dashboard/dashboard').then(
+                    (m) => m.AuthenticationDashboardPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'master', breadcrumb: 'authentication.dashboard' },
+              },
+              {
+                path: 'authentication/clusters',
+                loadComponent: () =>
+                  import('./pages/authentication/clusters/clusters').then(
+                    (m) => m.AuthenticationClusterPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'master', breadcrumb: 'authentication.clusters' },
+              },
+              {
+                path: 'authentication/servers',
+                loadComponent: () =>
+                  import('./pages/authentication/servers/servers').then(
+                    (m) => m.AuthenticationServerPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'master', breadcrumb: 'authentication.servers' },
+              },
+              {
                 path: 'hosting/webhost',
                 title: 'System Webhost | mnscloud',
                 data: { scope: 'master', context: 'system' },
@@ -2466,15 +2540,6 @@ export const routes: Routes = [
                     data: { scope: 'master', context: 'system' },
                   },
                 ],
-              },
-              {
-                path: 'isp/radius-server',
-                loadComponent: () =>
-                  import('./pages/isp/radius-server/radius-server').then(
-                    (m) => m.IspRadiusServerPage,
-                  ),
-                title: 'System ISP Radius Server | mnscloud',
-                data: { scope: 'master', context: 'system' },
               },
             ],
           },

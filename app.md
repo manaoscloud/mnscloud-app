@@ -900,7 +900,7 @@ or cancelling the form they are filling.
 - Any modal that renders generated installation, enrollment, runtime, or provisioning shell commands
   must use `InstallCommandDialogComponent` from `src/app/shared/install-command-dialog`.
 - Install command dialogs open only through `openInstallCommandDialog(dialog, data, destroyRef,
-  onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.ts`). It uses
+onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.ts`). It uses
   `openCrudComponentDialog` with `crud-form-dialog`, so viewport size, position, resize behavior,
   footer density and mobile behavior match CRUD dialogs; it also binds Escape, releases the
   responsive binding on close, closes the dialog when the owning page is destroyed, keeps a single
@@ -1639,3 +1639,23 @@ read it back from `formValues()`. For master DNS PABX policy forms, availability
 master route. Keep the loaded comparison signature consistent with that effective value so unrelated
 edits do not resend the policy. Normalize numeric API flags to boolean select values when loading.
 The API remains responsible for authorization and scope validation.
+
+### Authentication CRUD extensions
+
+The shared configurable CRUD template supports `deletePayload(row)` for an optimistic revision
+precondition. Resources that use it must publish that DELETE body in OpenAPI and cannot use bulk
+delete without a per-record revision contract. Password and secret-content values preserve their
+exact whitespace; an empty credential is normalized to null and the resource payload decides
+whether omission means preserve. Never populate a write-only credential from a read response.
+
+Canonical FK quick-create supports `initialValues` (a record or parent-context callback). Pass
+only explicit related-resource context, such as the Authentication account, through the generic
+host/session; do not copy the entire parent form or credentials. The referenced canonical page
+still owns its fields, validation and submission. This context is a convenience, never authority:
+API/DB ownership validation remains mandatory. The parent keeps its unsaved values and selects
+the new option when the nested dialog completes.
+
+Password fields may declare `generatedPasswordLength` when the API requires a specific credential
+length. The shared generator uses Web Crypto with rejection sampling. Authentication access
+passwords generate 20 characters and NAS shared secrets generate 32; field policy never replaces
+server-side validation. Existing fields retain their configured/default length.
