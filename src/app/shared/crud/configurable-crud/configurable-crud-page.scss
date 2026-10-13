@@ -530,3 +530,56 @@
     color: inherit;
   }
 }
+
+/* Table view menu: density and visible columns, saved per page in this browser. */
+.actions-col-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.crud-view-button {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+
+  &.is-customized {
+    color: var(--mat-sys-color-primary);
+  }
+}
+
+.crud-view-menu-label {
+  padding: 0.5rem 1rem 0.25rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.crud-secret-value {
+  font-family: var(--mns-mono-font, 'Roboto Mono', monospace);
+  letter-spacing: 0.04em;
+}
+
+.erp-table.crud-density-compact {
+  --mat-table-row-item-container-height: 40px;
+  --mat-table-header-container-height: 44px;
+
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding-block: 0.15rem;
+  }
+
+  .record-stack {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .actions-col .mat-mdc-icon-button {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+}

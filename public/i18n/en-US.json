@@ -6794,5 +6794,13 @@
   "authentication.replaceConfirmation": "Replace the unused installation command? The previous installation authorization will stop working. The Agent identity is preserved.",
   "authentication.lastError": "Diagnostic code",
   "Click to copy": "Click to copy",
-  "More actions": "More actions"
+  "More actions": "More actions",
+  "Table view": "Table view",
+  "Density": "Density",
+  "Comfortable rows": "Comfortable rows",
+  "Compact rows": "Compact rows",
+  "Columns": "Columns",
+  "Restore default view": "Restore default view",
+  "Show": "Show",
+  "Hide": "Hide"
 }
