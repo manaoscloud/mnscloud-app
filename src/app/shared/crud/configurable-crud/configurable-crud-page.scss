@@ -583,3 +583,87 @@
     padding: 4px;
   }
 }
+
+/*
+ * Mobile card list (<= 900px): the same cells as the table, one card per record. Copy and show
+ * actions stay visible (touch), so credentials can be copied into apps from a phone.
+ */
+.crud-card-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+
+  .crud-view-button {
+    margin-left: auto;
+  }
+}
+
+.crud-card-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.crud-card {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  [class*='crud-cell-w-'] {
+    max-width: 100%;
+  }
+
+  .record-main,
+  .record-uuid {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+}
+
+.crud-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.crud-card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.crud-card-actions {
+  flex: 0 0 auto;
+}
+
+.crud-card-fields {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 35%) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.875rem;
+
+  dt {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+
+  dd {
+    min-width: 0;
+    margin: 0;
+  }
+}
+
+.crud-card-empty {
+  margin: 0;
+  padding: 1rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
