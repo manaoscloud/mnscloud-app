@@ -11,6 +11,11 @@ export interface AsyncOperation {
   state: string;
   canRecheck?: boolean;
   scope?: 'platform' | 'tenant';
+  /** Work queue, action and target name reported by the API so the panel can name the work. */
+  kind?: string | null;
+  action?: string | null;
+  resourceLabel?: string | null;
+  createdAt?: string | null;
   errorCode?: string | null;
   environmentUUID?: string | null;
   updatedAt?: string | null;
@@ -45,6 +50,8 @@ function needsAttention(state: string) {
 }
 
 function shouldResume(operation: AsyncOperation) {
+  // Audit-log writes are side effects of a request, not work the user started.
+  if (operation.kind === 'activityLog') return false;
   if (isInFlight(operation.state)) return true;
   if (needsAttention(operation.state) && operation.canRecheck !== false) return true;
   return false;
@@ -144,7 +151,12 @@ export class AsyncOperationsService {
     this.states.update((current) => {
       const next = {
         ...current,
-        [operation.operationUUID]: { ...operation, environmentUUID: environment },
+        // Acceptance and recheck receipts carry no identity; keep what a status read reported.
+        [operation.operationUUID]: {
+          ...current[operation.operationUUID],
+          ...operation,
+          environmentUUID: environment,
+        },
       };
       for (const key of Object.keys(next)) {
         if (Object.keys(next).length <= 100) break;
@@ -165,9 +177,8 @@ export class AsyncOperationsService {
 
   readonly badgeCount = computed(
     () =>
-      this.scopedOperations().filter(
-        (item) => isInFlight(item.state) || needsAttention(item.state),
-      ).length,
+      this.scopedOperations().filter((item) => isInFlight(item.state) || needsAttention(item.state))
+        .length,
   );
 
   readonly hasActivity = computed(() => this.visible().length > 0);

@@ -1,14 +1,59 @@
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AsyncOperationsService } from './async-operations.service';
+import { AsyncOperation, AsyncOperationsService } from './async-operations.service';
+
+const KIND_LABELS: Record<string, string> = {
+  dns: 'operations.kind.dns',
+  vps: 'operations.kind.vps',
+  vpsContainer: 'operations.kind.vpsContainer',
+  webhost: 'operations.kind.webhost',
+  smtp: 'operations.kind.smtp',
+  storage: 'operations.kind.storage',
+  pabxControl: 'operations.kind.pabxControl',
+  clinicBradescoSiad: 'operations.kind.clinicBradescoSiad',
+  activityLog: 'operations.kind.activityLog',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  provision: 'operations.action.provision',
+  update: 'operations.action.update',
+  delete: 'operations.action.delete',
+  deprovision: 'operations.action.deprovision',
+  sync: 'operations.action.sync',
+  suspend: 'operations.action.suspend',
+  unsuspend: 'operations.action.unsuspend',
+  'reset-password': 'operations.action.resetPassword',
+  change_plan: 'operations.action.changePlan',
+  start: 'operations.action.start',
+  stop: 'operations.action.stop',
+  destroy: 'operations.action.destroy',
+  snapshot_create: 'operations.action.snapshotCreate',
+  snapshot_delete: 'operations.action.snapshotDelete',
+  snapshot_restore: 'operations.action.snapshotRestore',
+  network_create: 'operations.action.networkCreate',
+  network_delete: 'operations.action.networkDelete',
+  network_attach: 'operations.action.networkAttach',
+  network_detach: 'operations.action.networkDetach',
+  firewall_sync: 'operations.action.firewallSync',
+  firewall_detach: 'operations.action.firewallDetach',
+  firewall_delete: 'operations.action.firewallDelete',
+  refresh: 'operations.action.refresh',
+  'record.add': 'operations.action.recordAdd',
+  'record.remove': 'operations.action.recordRemove',
+  'pabx.realm.reconcile': 'operations.action.pabxRealm',
+  'softswitch.realm.reconcile': 'operations.action.softswitchRealm',
+  'realtime.domain.reconcile': 'operations.action.realtimeDomain',
+  submit: 'operations.action.submit',
+};
 
 @Component({
   selector: 'mns-async-operation-activity',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoPipe],
+  imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoPipe],
   template: `
     <div class="activity-panel" (click)="$event.stopPropagation()">
       <div class="topbar-menu-title">
@@ -21,7 +66,25 @@ import { AsyncOperationsService } from './async-operations.service';
           @for (operation of operations.visible(); track operation.operationUUID) {
             <li class="activity-item">
               <div class="activity-item-main">
-                <span class="activity-id">{{ shortId(operation.operationUUID) }}</span>
+                <div class="activity-text">
+                  <span class="activity-title">
+                    {{ kindLabel(operation.kind) | transloco }}
+                    @if (actionLabel(operation.action); as action) {
+                      · {{ action | transloco }}
+                    } @else if (operation.action && operation.action !== 'execute') {
+                      · {{ humanize(operation.action) }}
+                    }
+                  </span>
+                  @if (operation.resourceLabel) {
+                    <span class="activity-resource">{{ operation.resourceLabel }}</span>
+                  }
+                  <span class="activity-meta" [attr.title]="operation.operationUUID">
+                    {{ shortId(operation.operationUUID) }}
+                    @if (operation.createdAt) {
+                      · {{ operation.createdAt | date: timeFormat(operation.createdAt) }}
+                    }
+                  </span>
+                </div>
                 <span class="activity-state" [attr.data-state]="operation.state">
                   {{ stateLabel(operation.state) | transloco }}
                 </span>
@@ -126,15 +189,33 @@ import { AsyncOperationsService } from './async-operations.service';
         gap: 0.65rem;
         min-width: 0;
       }
-      .activity-id {
-        flex: 0 0 auto;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 0.8rem;
-        line-height: 1.35;
-      }
-      .activity-state {
+      .activity-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
         flex: 1 1 auto;
         min-width: 0;
+      }
+      .activity-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .activity-resource {
+        font-size: 0.8rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .activity-meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        line-height: 1.35;
+        color: var(--mat-sys-color-on-surface-variant);
+      }
+      .activity-state {
+        flex: 0 0 auto;
+        max-width: 45%;
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -185,6 +266,24 @@ import { AsyncOperationsService } from './async-operations.service';
 export class AsyncOperationActivityComponent {
   readonly operations = inject(AsyncOperationsService);
   readonly destroy = inject(DestroyRef);
+
+  kindLabel(kind: AsyncOperation['kind']) {
+    return (kind && KIND_LABELS[kind]) || 'operations.kind.unknown';
+  }
+
+  actionLabel(action: AsyncOperation['action']) {
+    return action ? (ACTION_LABELS[action] ?? null) : null;
+  }
+
+  /** Readable fallback for an action the panel has no translation for yet. */
+  humanize(action: string) {
+    const text = action.replace(/[._-]+/g, ' ').trim();
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  timeFormat(createdAt: string) {
+    return new Date(createdAt).toDateString() === new Date().toDateString() ? 'shortTime' : 'short';
+  }
 
   shortId(uuid: string) {
     return uuid.replace(/-/g, '').slice(0, 8).toUpperCase();
