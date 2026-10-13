@@ -1,5 +1,13 @@
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
-import { FormField, disabled, form, maxLength, required } from '@angular/forms/signals';
+import {
+  FormField,
+  disabled,
+  email,
+  form,
+  maxLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -39,6 +47,14 @@ export interface TenantIdentity {
   TaxIdDisplay: string | null;
   TidLegalName: string | null;
   TidTradeName: string | null;
+  TidBillingEmail: string | null;
+  TidAddressZip: string | null;
+  TidAddressStreet: string | null;
+  TidAddressNumber: string | null;
+  TidAddressComplement: string | null;
+  TidAddressDistrict: string | null;
+  TidAddressCity: string | null;
+  TidAddressState: string | null;
   IsComplete: number;
   CanManage: number;
 }
@@ -50,7 +66,31 @@ type IdentityForm = {
   taxId: string;
   legalName: string;
   tradeName: string;
+  billingEmail: string;
+  addressZip: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressComplement: string;
+  addressDistrict: string;
+  addressCity: string;
+  addressState: string;
 };
+
+const ADDRESS_KEYS = [
+  'addressZip',
+  'addressStreet',
+  'addressNumber',
+  'addressComplement',
+  'addressDistrict',
+  'addressCity',
+  'addressState',
+] as const;
+
+/** Brazilian states (UF codes are not translated). */
+const BR_STATE_OPTIONS =
+  'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO'
+    .split(' ')
+    .map((value) => ({ value, label: value }));
 
 const EMPTY_FORM: IdentityForm = {
   countryCode: 'BR',
@@ -59,6 +99,14 @@ const EMPTY_FORM: IdentityForm = {
   taxId: '',
   legalName: '',
   tradeName: '',
+  billingEmail: '',
+  addressZip: '',
+  addressStreet: '',
+  addressNumber: '',
+  addressComplement: '',
+  addressDistrict: '',
+  addressCity: '',
+  addressState: '',
 };
 
 /** Same normalization as the database (uppercase, no separators, VAT prefix). */
@@ -136,6 +184,20 @@ export class BillingTenantIdentityPage {
     required(schema.legalName);
     maxLength(schema.legalName, 200);
     maxLength(schema.tradeName, 150);
+    email(schema.billingEmail);
+    required(schema.addressStreet);
+    required(schema.addressCity);
+    // Brazilian addresses need CEP and UF and follow the bank payer limits (checked by the API too).
+    required(schema.addressZip, { when: ({ valueOf }) => valueOf(schema.countryCode) === 'BR' });
+    required(schema.addressState, { when: ({ valueOf }) => valueOf(schema.countryCode) === 'BR' });
+    pattern(schema.addressZip, /^(\d{5}-?\d{3})?$/, {
+      when: ({ valueOf }) => valueOf(schema.countryCode) === 'BR',
+    });
+    maxLength(schema.addressStreet, 100);
+    maxLength(schema.addressNumber, 10);
+    maxLength(schema.addressComplement, 30);
+    maxLength(schema.addressDistrict, 60);
+    maxLength(schema.addressCity, 60);
     const locked = () => !this.canManage();
     disabled(schema.countryCode, locked);
     disabled(schema.partyType, locked);
@@ -143,9 +205,14 @@ export class BillingTenantIdentityPage {
     disabled(schema.taxId, locked);
     disabled(schema.legalName, locked);
     disabled(schema.tradeName, locked);
+    disabled(schema.billingEmail, locked);
+    for (const key of ADDRESS_KEYS) disabled(schema[key], locked);
   });
 
   readonly countryOptions = computed(() => countryOptions(this.i18n.language()));
+  readonly stateOptions = BR_STATE_OPTIONS;
+  readonly isBrazil = computed(() => this.model().countryCode === 'BR');
+  readonly searchingZip = signal(false);
   readonly partyOptions = [
     { value: 'business', label: 'Business (company)' },
     { value: 'individual', label: 'Individual (person)' },
@@ -241,6 +308,8 @@ export class BillingTenantIdentityPage {
           taxId: value.taxId.trim() || null,
           legalName: value.legalName.trim(),
           tradeName: value.tradeName.trim() || null,
+          billingEmail: value.billingEmail.trim() || null,
+          ...Object.fromEntries(ADDRESS_KEYS.map((key) => [key, value[key].trim() || null])),
         },
       );
       this.applyIdentity(response.data?.item ?? null);
@@ -266,6 +335,34 @@ export class BillingTenantIdentityPage {
     }
   }
 
+  /** Fills street, district, city and state from the CEP (platform postal-code lookup). */
+  async searchZip(): Promise<void> {
+    const zip = this.model().addressZip.replace(/\D/g, '');
+    if (zip.length !== 8) {
+      this.snack.warning(this.i18n.t('Invalid postal code. Provide 8 digits.'));
+      return;
+    }
+    this.searchingZip.set(true);
+    try {
+      const response = await this.api.get<{ data?: { item?: Record<string, string | null> } }>(
+        `postal-codes/${zip}`,
+      );
+      const item = response?.data?.item ?? {};
+      this.model.update((current) => ({
+        ...current,
+        addressZip: zip,
+        addressStreet: item['street'] || current.addressStreet,
+        addressDistrict: item['district'] || current.addressDistrict,
+        addressCity: item['city'] || current.addressCity,
+        addressState: item['state'] || current.addressState,
+      }));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error));
+    } finally {
+      this.searchingZip.set(false);
+    }
+  }
+
   private applyIdentity(identity: TenantIdentity | null): void {
     this.identity.set(identity);
     const next: IdentityForm = identity?.TidUUID
@@ -276,6 +373,14 @@ export class BillingTenantIdentityPage {
           taxId: identity.TidTaxId ?? identity.TaxIdDisplay ?? '',
           legalName: identity.TidLegalName ?? '',
           tradeName: identity.TidTradeName ?? '',
+          billingEmail: identity.TidBillingEmail ?? '',
+          addressZip: identity.TidAddressZip ?? '',
+          addressStreet: identity.TidAddressStreet ?? '',
+          addressNumber: identity.TidAddressNumber ?? '',
+          addressComplement: identity.TidAddressComplement ?? '',
+          addressDistrict: identity.TidAddressDistrict ?? '',
+          addressCity: identity.TidAddressCity ?? '',
+          addressState: identity.TidAddressState ?? '',
         }
       : { ...EMPTY_FORM };
     this.baseline.set(next);
