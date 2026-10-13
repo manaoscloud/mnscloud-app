@@ -6829,8 +6829,6 @@
   "authentication.rotateConfirmation": "¿Crear y aplicar una nueva credencial? La anterior se revocará después de la confirmación.",
   "authentication.uninstallConfirmation": "¿Desinstalar el servicio y revocar sus credenciales? El Agent permanecerá instalado.",
   "authentication.states.retiring_credentials": "Revocando credenciales anteriores",
-  "authentication.generateConfirmation": "¿Generar una autorización temporal de instalación para un Agent ya instalado? Se conservará la identidad del Agent.",
-  "authentication.replaceConfirmation": "¿Reemplazar el comando de instalación sin usar? La autorización anterior dejará de funcionar. Se conservará la identidad del Agent.",
   "authentication.lastError": "Código de diagnóstico",
   "Click to copy": "Haga clic para copiar",
   "More actions": "Más acciones",
@@ -6841,5 +6839,7 @@
   "Columns": "Columnas",
   "Restore default view": "Restaurar vista predeterminada",
   "Show": "Mostrar",
-  "Hide": "Ocultar"
+  "Hide": "Ocultar",
+  "AUTHENTICATION_PROFILE_UNAVAILABLE": "El clúster no tiene perfil de aprovisionamiento. Configure el perfil del clúster antes de generar el comando.",
+  "AUTHENTICATION_CLUSTER_UNAVAILABLE": "El clúster del servidor está inactivo o no disponible."
 }
