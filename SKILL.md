@@ -59,11 +59,16 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 
 ## Validation
 
-Run before committing:
+Run before committing (fast gate; the PR CI runs the production build):
 
 ```bash
-npm run build
+npm run verify:changed -- origin/main HEAD
+npm run typecheck
 ```
+
+Run `npm run build` locally only when changing `angular.json`, budgets, build/release scripts or
+dependencies. It is queued machine-wide with a memory cap (`scripts/guarded-build.sh`, see
+`AGENTS.md` → Shared Host Builds).
 
 Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior, and
 `npm run check:crud:fk -- <page-folder>` for every CRUD page with FK fields.
