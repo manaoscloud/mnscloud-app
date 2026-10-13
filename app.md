@@ -560,6 +560,12 @@ the page must use the shared base named here.
     set `width: 'xs' | 'sm' | 'md' | 'lg' | 'xl'` (default `lg`) for the truncation limit. Copy
     buttons appear on row hover/keyboard focus and stay visible on touch screens. The actions
     column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu.
+  - The `tune` button in the actions header opens the table view menu: row density (comfortable or
+    compact) and visible columns, saved per resource in the browser (`crud-view-preferences.ts`,
+    key `mns.crud.view.<endpoint>` with record ids normalized). The first (identity) column cannot
+    be hidden; columns with `optional: true` start hidden. Preferences are UX only.
+  - Credentials shown in a list use column `kind: 'secret'`: masked by default, a show toggle per
+    row that hides again after 10 seconds, and the copy action when `copyable` is set.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define
     explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
     sorted-row `computed()`.

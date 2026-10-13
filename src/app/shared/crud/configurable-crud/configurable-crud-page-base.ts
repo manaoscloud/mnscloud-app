@@ -2,6 +2,20 @@ import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { isRecordUUID, shortRecordUUID } from './record-uuid-label';
+import {
+  CrudDensity,
+  CrudViewPreferences,
+  DEFAULT_CRUD_VIEW,
+  crudViewStorageKey,
+  isCrudColumnVisible,
+  isDefaultCrudView,
+  readCrudViewPreferences,
+  setCrudColumnVisible,
+  writeCrudViewPreferences,
+} from './crud-view-preferences';
+
+/** Revealed secrets hide again after this delay. */
+const SECRET_REVEAL_MS = 10_000;
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
@@ -323,7 +337,9 @@ export type ConfigurableCrudColumn = {
     | 'datetime'
     | 'currency'
     | 'number'
-    | 'image';
+    | 'image'
+    /** Credential shown masked, with per-row show (auto-hides) and copy actions. */
+    | 'secret';
   lookupKey?: string;
   className?: string;
   options?: readonly ConfigurableCrudOption[];
@@ -347,6 +363,8 @@ export type ConfigurableCrudColumn = {
    * full value shows in a tooltip). Defaults to `lg` for text, identity and related columns.
    */
   width?: ConfigurableCrudColumnWidth;
+  /** Hidden by default; users can show it from the table view menu. */
+  optional?: boolean;
 };
 
 export type ConfigurableCrudColumnWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -665,9 +683,17 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly itemsResource;
 
   readonly columns = computed(() => this.config.columns.filter((column) => !column.hiddenWhen?.()));
+  private viewStorageKey = '';
+  readonly viewPreferences = signal<CrudViewPreferences>(DEFAULT_CRUD_VIEW);
+  readonly compactDensity = computed(() => this.viewPreferences().density === 'compact');
+  readonly customizedView = computed(() => !isDefaultCrudView(this.viewPreferences()));
+  /** Columns rendered in the table: the first (identity) column always stays visible. */
+  readonly tableColumns = computed(() =>
+    this.columns().filter((column) => this.isColumnVisible(column)),
+  );
   readonly displayedColumns = computed(() => [
     ...(this.bulkDeleteEnabled() ? ['select'] : []),
-    ...this.columns().map((column) => column.id),
+    ...this.tableColumns().map((column) => column.id),
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly listFailed = computed(() => !!this.itemsResource.error());
@@ -799,6 +825,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected constructor(config: ConfigurableCrudConfig) {
     this.config = config;
+    this.viewStorageKey = crudViewStorageKey(config.endpoint);
+    this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
+    this.destroyRef.onDestroy(() => this.secretTimers.forEach((timer) => clearTimeout(timer)));
     this.pageSize.set(config.initialPageSize ?? 5);
     let currencyInitialization: Promise<unknown>;
     if (config.defaultCurrencyScope) {
@@ -2241,6 +2270,77 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   copyColumnUUID(row: T, column: ConfigurableCrudColumn): Promise<void> {
     return this.copyText(this.columnUUID(row, column));
+  }
+
+  isColumnLocked(column: ConfigurableCrudColumn): boolean {
+    return this.columns()[0]?.id === column.id;
+  }
+
+  isColumnVisible(column: ConfigurableCrudColumn): boolean {
+    return (
+      this.isColumnLocked(column) ||
+      isCrudColumnVisible(this.viewPreferences(), column.id, column.optional === true)
+    );
+  }
+
+  setColumnVisible(column: ConfigurableCrudColumn, visible: boolean): void {
+    if (this.isColumnLocked(column)) return;
+    this.saveViewPreferences(
+      setCrudColumnVisible(this.viewPreferences(), column.id, column.optional === true, visible),
+    );
+  }
+
+  setDensity(density: CrudDensity): void {
+    this.saveViewPreferences({ ...this.viewPreferences(), density });
+  }
+
+  resetView(): void {
+    this.saveViewPreferences(DEFAULT_CRUD_VIEW);
+  }
+
+  private saveViewPreferences(preferences: CrudViewPreferences): void {
+    this.viewPreferences.set(preferences);
+    writeCrudViewPreferences(this.viewStorageKey, preferences);
+  }
+
+  private readonly revealedSecrets = signal<ReadonlySet<string>>(new Set());
+  private readonly secretTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  private secretKey(row: T, column: ConfigurableCrudColumn): string {
+    return `${this.recordUUID(row)}:${column.id}`;
+  }
+
+  hasSecretValue(row: T, column: ConfigurableCrudColumn): boolean {
+    return this.columnCopyValue(row, column) !== '';
+  }
+
+  isSecretRevealed(row: T, column: ConfigurableCrudColumn): boolean {
+    return this.revealedSecrets().has(this.secretKey(row, column));
+  }
+
+  toggleSecret(row: T, column: ConfigurableCrudColumn): void {
+    const key = this.secretKey(row, column);
+    clearTimeout(this.secretTimers.get(key));
+    this.secretTimers.delete(key);
+    const reveal = !this.revealedSecrets().has(key);
+    this.setSecretRevealed(key, reveal);
+    if (!reveal) return;
+    this.secretTimers.set(
+      key,
+      setTimeout(() => {
+        this.secretTimers.delete(key);
+        this.setSecretRevealed(key, false);
+      }, SECRET_REVEAL_MS),
+    );
+  }
+
+  private setSecretRevealed(key: string, revealed: boolean): void {
+    this.revealedSecrets.update((current) => {
+      const next = new Set(current);
+      if (revealed) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   }
 
   columnWidthClass(column: ConfigurableCrudColumn): string {

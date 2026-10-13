@@ -6795,5 +6795,13 @@
   "authentication.replaceConfirmation": "Substituir o comando de instalação ainda não utilizado? A autorização anterior deixará de funcionar. A identidade do Agent será preservada.",
   "authentication.lastError": "Código de diagnóstico",
   "Click to copy": "Clique para copiar",
-  "More actions": "Mais ações"
+  "More actions": "Mais ações",
+  "Table view": "Exibição da tabela",
+  "Density": "Densidade",
+  "Comfortable rows": "Linhas confortáveis",
+  "Compact rows": "Linhas compactas",
+  "Columns": "Colunas",
+  "Restore default view": "Restaurar exibição padrão",
+  "Show": "Mostrar",
+  "Hide": "Ocultar"
 }

@@ -175,6 +175,7 @@
         [dataSource]="visibleRows()"
         (matSortChange)="setSort($event)"
         class="erp-table"
+        [class.crud-density-compact]="compactDensity()"
       >
         @if (bulkDeleteEnabled()) {
           <ng-container matColumnDef="select">
@@ -257,6 +258,47 @@
                 >
                   {{ statusLabelForColumn(row, column) | transloco }}
                 </span>
+              } @else if (column.kind === 'secret') {
+                @if (hasSecretValue(row, column)) {
+                  <div class="crud-copy-cell">
+                    <span
+                      class="crud-cell-text crud-secret-value"
+                      [class]="columnWidthClass(column)"
+                      >{{
+                        isSecretRevealed(row, column) ? columnText(row, column) : '••••••••'
+                      }}</span
+                    >
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="crud-copy-button"
+                      [matTooltip]="(isSecretRevealed(row, column) ? 'Hide' : 'Show') | transloco"
+                      [attr.aria-label]="
+                        (isSecretRevealed(row, column) ? 'Hide' : 'Show') | transloco
+                      "
+                      [attr.aria-pressed]="isSecretRevealed(row, column)"
+                      (click)="toggleSecret(row, column)"
+                    >
+                      <mat-icon>{{
+                        isSecretRevealed(row, column) ? 'visibility_off' : 'visibility'
+                      }}</mat-icon>
+                    </button>
+                    @if (canCopyColumn(row, column)) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="crud-copy-button"
+                        [matTooltip]="'Copy' | transloco"
+                        [attr.aria-label]="'Copy' | transloco"
+                        (click)="copyColumnValue(row, column)"
+                      >
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  -
+                }
               } @else if (column.kind === 'image') {
                 @if (imageUrl(row, column); as src) {
                   <img
@@ -321,7 +363,20 @@
         @if (hasRowActions()) {
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-              {{ 'Actions' | transloco }}
+              <div class="actions-col-heading">
+                {{ 'Actions' | transloco }}
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="crud-view-button"
+                  [class.is-customized]="customizedView()"
+                  [matTooltip]="'Table view' | transloco"
+                  [attr.aria-label]="'Table view' | transloco"
+                  [matMenuTriggerFor]="tableViewMenu"
+                >
+                  <mat-icon>tune</mat-icon>
+                </button>
+              </div>
             </th>
             <td mat-cell *matCellDef="let row" class="actions-cell actions-col-cell">
               <div class="actions-col">
@@ -362,6 +417,56 @@
         </tr>
       </table>
     </div>
+
+    <mat-menu #tableViewMenu="matMenu" xPosition="before" class="crud-view-menu">
+      <ng-template matMenuContent>
+        <div class="crud-view-menu-label">{{ 'Density' | transloco }}</div>
+        <button
+          mat-menu-item
+          type="button"
+          role="menuitemradio"
+          [attr.aria-checked]="!compactDensity()"
+          (click)="$event.stopPropagation(); setDensity('comfortable')"
+        >
+          <mat-icon>{{
+            compactDensity() ? 'radio_button_unchecked' : 'radio_button_checked'
+          }}</mat-icon>
+          <span>{{ 'Comfortable rows' | transloco }}</span>
+        </button>
+        <button
+          mat-menu-item
+          type="button"
+          role="menuitemradio"
+          [attr.aria-checked]="compactDensity()"
+          (click)="$event.stopPropagation(); setDensity('compact')"
+        >
+          <mat-icon>{{
+            compactDensity() ? 'radio_button_checked' : 'radio_button_unchecked'
+          }}</mat-icon>
+          <span>{{ 'Compact rows' | transloco }}</span>
+        </button>
+        <div class="crud-view-menu-label">{{ 'Columns' | transloco }}</div>
+        @for (column of columns(); track column.id) {
+          <button
+            mat-menu-item
+            type="button"
+            role="menuitemcheckbox"
+            [attr.aria-checked]="isColumnVisible(column)"
+            [disabled]="isColumnLocked(column)"
+            (click)="$event.stopPropagation(); setColumnVisible(column, !isColumnVisible(column))"
+          >
+            <mat-icon>{{
+              isColumnVisible(column) ? 'check_box' : 'check_box_outline_blank'
+            }}</mat-icon>
+            <span>{{ column.label | transloco }}</span>
+          </button>
+        }
+        <button mat-menu-item type="button" [disabled]="!customizedView()" (click)="resetView()">
+          <mat-icon>restart_alt</mat-icon>
+          <span>{{ 'Restore default view' | transloco }}</span>
+        </button>
+      </ng-template>
+    </mat-menu>
 
     <mat-menu #rowActionsMenu="matMenu" xPosition="before">
       <ng-template matMenuContent let-row="row">

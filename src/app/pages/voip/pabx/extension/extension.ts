@@ -249,7 +249,7 @@ const config: ConfigurableCrudConfig = {
       uuidField: 'VpeUUID',
       copyable: true,
     },
-    { id: 'password', label: 'Password', field: 'VpePassword', kind: 'text', copyable: true },
+    { id: 'password', label: 'Password', field: 'VpePassword', kind: 'secret', copyable: true },
     { id: 'pabx', label: 'PABX', field: 'PabxName', kind: 'text' },
     { id: 'domain', label: 'Domain', field: 'DomainName', kind: 'text', copyable: true },
     { id: 'engine', label: 'Engine', field: 'VpeEngine', kind: 'text' },
