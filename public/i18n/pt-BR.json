@@ -6822,7 +6822,7 @@
   "authentication.states.uninstalling": "Desinstalando",
   "authentication.states.uninstalled": "Desinstalado",
   "authentication.retryInstallation": "Retomar instalação",
-  "authentication.retryAccepted": "Recuperação solicitada. Execute novamente o comando original no mesmo servidor.",
+  "authentication.retryAccepted": "Recuperação aceita. Execute o comando de retomada exibido no mesmo servidor.",
   "authentication.retryConfirmation": "Retomar a instalação com o mesmo Agent e as mesmas credenciais?",
   "authentication.rotateCredentials": "Rotacionar credenciais",
   "authentication.uninstall": "Desinstalar",
@@ -6879,5 +6879,6 @@
   "Tax ID is required for the selected tax ID type": "Informe o documento do tipo selecionado",
   "Country must be an ISO 3166-1 alpha-2 code": "País inválido",
   "Permission denied: tenant.billing.identity.manage": "Você não tem permissão para alterar os dados fiscais.",
-  "Fill in the tenant tax identity (Billing > Tax identity) before billing.": "Preencha os dados fiscais do tenant (Assinatura > Dados fiscais) antes de recarregar a carteira."
+  "Fill in the tenant tax identity (Billing > Tax identity) before billing.": "Preencha os dados fiscais do tenant (Assinatura > Dados fiscais) antes de recarregar a carteira.",
+  "authentication.resumeWarning": "Retoma a instalação já vinculada a este servidor com a versão aprovada mais recente. Não usa nova autorização e mantém o Agent e as credenciais."
 }
