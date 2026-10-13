@@ -54,6 +54,8 @@ const config = defineCrud({
               type: 'search-select',
               span: 1,
               required: true,
+              // Usually one DB Agent per environment: preselect it, the operator only confirms.
+              autoSelectSingle: true,
               remoteLookup: {
                 endpoint: 'system/authentication/database-agents',
                 uuidField: 'uuid',

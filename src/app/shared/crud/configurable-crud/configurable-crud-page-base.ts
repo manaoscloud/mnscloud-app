@@ -33,6 +33,7 @@ import {
   inject,
   resource,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -276,6 +277,11 @@ export type ConfigurableCrudField = {
   translateOptions?: boolean;
   /** Enables multiple selection for a searchable relation field. */
   multiple?: boolean;
+  /**
+   * Single remote relation only: when creating and the first unfiltered page has exactly one
+   * option, select it. The operator still sees and can change it; nothing is selected on edit.
+   */
+  autoSelectSingle?: boolean;
   loading?: () => boolean;
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
@@ -894,6 +900,20 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         else this.quickCreateSession?.complete({ option: null });
       });
     }
+
+    effect(() => {
+      const lookups = this.remoteLookups.value();
+      if (this.editingRecord()) return;
+      for (const field of this.config.fields) {
+        if (!field.autoSelectSingle || !field.remoteLookup || field.multiple) continue;
+        const query = this.remoteQueries()[field.key];
+        const items = lookups[field.key]?.items ?? [];
+        if (query?.search || query?.offset || items.length !== 1) continue;
+        if (String(this.formValues()[field.key] ?? '')) continue;
+        const value = String(items[0][field.remoteLookup.uuidField] ?? '');
+        if (value) untracked(() => this.setFieldValue(field.key, value));
+      }
+    });
 
     effect(() => {
       const available = new Set(this.rows().map((row) => this.recordUUID(row)));
