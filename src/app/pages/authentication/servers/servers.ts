@@ -1,11 +1,11 @@
+import { resolveApiBaseUrl } from '../../../shared/runtime/app-runtime-config';
 import { authenticationPayload } from '../authentication-input';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
-import {
-  confirmInstallCommandGeneration,
-  requestRuntimeInstallCommand,
-} from '../../../shared/install-command-dialog/runtime-install-token';
+import { firstValueFrom } from 'rxjs';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { isRuntimeTokenReplaceConfirmationRequired } from '../../../shared/install-command-dialog/runtime-install-token';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -32,15 +32,75 @@ const config = defineCrud({
     status: 0,
     revision: 1,
     AuthenticationClusterAtcUUID: '',
-    host: '',
-    databaseUser: '',
-    authPort: 1812,
-    acctPort: 1813,
   },
   payload: (values, editing) => authenticationPayload(values, editing),
-  rowActions: [{ key: 'install', label: 'authentication.install', icon: 'terminal' }],
+  rowActions: [
+    {
+      key: 'rotate',
+      label: 'authentication.rotateCredentials',
+      icon: 'key',
+      visible: (row) => row['AtsProvisioningState'] === 'operational',
+      request: {
+        method: 'post',
+        endpoint: (row) => `system/authentication/servers/${row['AtsUUID']}/rotate`,
+        body: () => ({ confirm: true }),
+        successMessage: 'authentication.lifecycleAccepted',
+        confirm: {
+          title: 'authentication.rotateCredentials',
+          message: 'authentication.rotateConfirmation',
+        },
+      },
+    },
+    {
+      key: 'uninstall',
+      label: 'authentication.uninstall',
+      icon: 'power_settings_new',
+      visible: (row) => ['operational', 'failed'].includes(String(row['AtsProvisioningState'])),
+      request: {
+        method: 'post',
+        endpoint: (row) => `system/authentication/servers/${row['AtsUUID']}/uninstall`,
+        body: () => ({ confirm: true }),
+        successMessage: 'authentication.lifecycleAccepted',
+        confirm: {
+          title: 'authentication.uninstall',
+          message: 'authentication.uninstallConfirmation',
+        },
+      },
+    },
+
+    {
+      key: 'install',
+      label: 'authentication.install',
+      icon: 'terminal',
+      visible: (row) =>
+        ['awaiting_installation', 'uninstalled'].includes(String(row['AtsProvisioningState'])),
+    },
+    {
+      key: 'retry',
+      label: 'authentication.retryInstallation',
+      icon: 'refresh',
+      visible: (row) => row['AtsProvisioningState'] === 'failed',
+      request: {
+        method: 'post',
+        endpoint: (row) => `system/authentication/servers/${row['AtsUUID']}/retry-installation`,
+        body: () => ({}),
+        successMessage: 'authentication.retryAccepted',
+        confirm: {
+          title: 'authentication.retryInstallation',
+          message: 'authentication.retryConfirmation',
+        },
+      },
+    },
+  ],
   fields: [
-    { key: 'status', source: 'AtsStatus', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'AtsStatus',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+    },
     { key: 'name', source: 'AtsName', label: 'Name', required: true, span: 2 },
     { key: 'revision', source: 'AtsRevision', label: 'Revision', type: 'number', hidden: true },
     {
@@ -59,39 +119,7 @@ const config = defineCrud({
       help: 'authentication.scopeHelp',
     },
     {
-      key: 'host',
-      source: 'AtsHost',
-      label: 'authentication.host',
-      span: 1,
-      required: true,
-      type: 'text',
-      help: 'authentication.hostHelp',
-    },
-    {
-      key: 'databaseUser',
-      source: 'AtsDatabaseUser',
-      label: 'authentication.databaseUser',
-      type: 'text',
-      span: 1,
-      help: 'authentication.databaseUserHelp',
-    },
-    {
-      key: 'authPort',
-      source: 'AtsAuthPort',
-      label: 'authentication.authPort',
-      span: 1,
-      required: true,
-      type: 'number',
-    },
-    {
-      key: 'acctPort',
-      source: 'AtsAcctPort',
-      label: 'authentication.acctPort',
-      span: 1,
-      required: true,
-      type: 'number',
-    },
-    {
+      hiddenWhen: ({ editing }) => !editing,
       key: 'notes',
       source: 'AtsNotes',
       label: 'Notes',
@@ -102,7 +130,37 @@ const config = defineCrud({
     },
   ],
   columns: [
-    { id: 'host', field: 'AtsHost', label: 'authentication.host', kind: 'text' },
+    {
+      id: 'provisioning',
+      field: 'AtsProvisioningState',
+      label: 'authentication.installationState',
+      kind: 'text',
+      value: (row, translate) =>
+        translate(
+          'authentication.states.' + String(row['AtsProvisioningState'] ?? 'awaiting_installation'),
+        ),
+    },
+
+    {
+      id: 'host',
+      field: 'AtsHost',
+      label: 'authentication.host',
+      kind: 'identity',
+      detail: (row) => {
+        const raw = row['AtsObservedJson'];
+        try {
+          const o = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          return o
+            ? [o.operatingSystem, o.architecture, o.listenAddress, o.version]
+                .filter(Boolean)
+                .join(' · ')
+            : '';
+        } catch {
+          return '';
+        }
+      },
+    },
+    { id: 'error', field: 'AtsLastErrorCode', label: 'authentication.lastError', kind: 'text' },
     {
       id: 'cluster',
       field: 'AuthenticationClusterAtcUUID',
@@ -132,17 +190,22 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key !== 'install') return;
-    if (
-      await confirmInstallCommandGeneration(
-        this.installDialog,
-        (key, params) => this.t(key, params),
-        String(row['AtsName']),
-        this.t('nav.authentication'),
-      )
-    ) {
+    if (action.key !== 'install') return super.handleRowAction(action, row);
+    if (await this.confirmInstallation('authentication.generateConfirmation')) {
       await this.showInstaller(String(row['AtsUUID']));
     }
+  }
+
+  private async confirmInstallation(message: string): Promise<boolean> {
+    const ref = this.installDialog.open(SlowConfirmDialogComponent, {
+      data: {
+        translate: true,
+        title: 'authentication.install',
+        message,
+        confirmLabel: 'Generate command',
+      },
+    });
+    return Boolean(await firstValueFrom(ref.afterClosed()));
   }
 
   protected override async afterSave(
@@ -155,23 +218,31 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
 
   private async showInstaller(uuid: string): Promise<void> {
     try {
-      const response = await requestRuntimeInstallCommand(this.installDialog, (body) =>
+      const request = (body: { confirmReplace?: boolean }) =>
         this.api.post<{ data: Record<string, unknown> }>(
           `${config.endpoint}/${uuid}/install-command`,
           body,
-        ),
-      );
-      if (!response) return;
+        );
+      let response;
+      try {
+        response = await request({});
+      } catch (error) {
+        if (!isRuntimeTokenReplaceConfirmationRequired(error)) throw error;
+        if (!(await this.confirmInstallation('authentication.replaceConfirmation'))) return;
+        response = await request({ confirmReplace: true });
+      }
       const data = response.data;
       const quote = (value: unknown) => "'" + String(value).replaceAll("'", "'\\''") + "'";
       const root = '/opt/mnscloud/mnscloud-authentication';
       const command = [
         'set -eu',
+        'sudo bash /opt/mnscloud/mnscloud-agent/scripts/validate-agent.sh --require-active --require-enrolled',
         'sudo install -d -m 0755 /opt/mnscloud',
         `if [ ! -d ${root}/.git ]; then sudo git clone https://github.com/manaoscloud/mnscloud-authentication.git ${root}; fi`,
         `sudo git -C ${root} fetch origin tag ${quote(data['ref'])}`,
-        `sudo git -C ${root} checkout --detach ${quote(data['ref'])}`,
-        `sudo bash ${root}/scripts/install-authentication.sh --env /etc/mnscloud/authentication.env --api-base ${quote(window.location.origin)} --server-uuid ${quote(uuid)} --enrollment-token ${quote(data['enrollmentToken'])}`,
+        `test "$(sudo git -C ${root} rev-parse ${quote(String(data['ref']) + '^{commit}')})" = ${quote(data['commitSha'])}`,
+        `sudo git -C ${root} checkout --detach ${quote(data['commitSha'])}`,
+        `sudo bash ${root}/scripts/install-authentication.sh --env /etc/mnscloud/authentication.env --api-base ${quote(resolveApiBaseUrl())} --server-uuid ${quote(uuid)} <<'MNSCLOUD_INSTALL_AUTHORIZATION'\n${String(data['installationToken'])}\nMNSCLOUD_INSTALL_AUTHORIZATION`,
       ].join('\n');
       openInstallCommandDialog(
         this.installDialog,
