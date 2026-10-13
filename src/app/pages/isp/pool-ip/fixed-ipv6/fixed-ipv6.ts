@@ -9,6 +9,15 @@ import { defineCrud } from '../../../../shared/crud/configurable-crud/define-cru
 const config = defineCrud({
   endpoint: 'isp/fixed-ipv6-addresses',
   uuidField: 'If6UUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['If6Revision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['If6UUID']), Number(row['If6Revision'])]),
+    ),
+  }),
   pageTitle: 'Fixed IPv6',
   pageDescription: 'Manage fixed IPv6 CIDR assignments for your ISP environment.',
   bulkDelete: true,
@@ -19,6 +28,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'If6Status', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'If6Revision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'If6Status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'If6Name', label: 'Name', required: true, span: 1 },
     { key: 'cidr', source: 'If6Cidr', label: 'IP/Mask', required: true, span: 1 },

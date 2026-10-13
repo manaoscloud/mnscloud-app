@@ -14,6 +14,15 @@ const modelTypes = ['OLT', 'ONU', 'NAS', 'CPE', 'OPTICAL_CABLE', 'UTP_CABLE', 'S
 const config = defineCrud({
   endpoint: 'isp/vendor-models',
   uuidField: 'VendorModelUUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['IvmRevision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['VendorModelUUID']), Number(row['IvmRevision'])]),
+    ),
+  }),
   pageTitle: 'Vendor Models',
   pageDescription: 'Map vendor equipment models to your ISP inventory.',
   bulkDelete: true,
@@ -31,6 +40,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'VendorModelStatus', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'IvmRevision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'VendorModelStatus', label: 'Status', type: 'status', span: 1 },
     {
       key: 'vendorUUID',

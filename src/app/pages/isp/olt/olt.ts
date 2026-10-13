@@ -9,6 +9,15 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 const config = defineCrud({
   endpoint: 'isp/olts',
   uuidField: 'IolUUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['IolRevision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['IolUUID']), Number(row['IolRevision'])]),
+    ),
+  }),
   pageTitle: 'OLT',
   pageDescription: 'Optical Line Terminals mapped to each POP.',
   bulkDelete: true,
@@ -30,6 +39,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'IolStatus', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'IolRevision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'IolStatus', label: 'Status', type: 'status', span: 1 },
     {
       key: 'popUUID',
@@ -58,6 +68,7 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       remoteLookup: {
+        parameters: { vendorUUID: 'vendorUUID' },
         endpoint: 'isp/vendor-models?type=OLT',
         uuidField: 'VendorModelUUID',
         labelField: 'VendorModelName',

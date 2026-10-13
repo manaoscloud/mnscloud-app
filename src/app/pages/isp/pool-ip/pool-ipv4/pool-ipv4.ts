@@ -12,6 +12,15 @@ function networks(pool: ConfigurableCrudRecord) {
   return defineCrud({
     endpoint: `isp/ipv4-pools/${poolUUID}/networks`,
     uuidField: 'I4nUUID',
+    serverSidePagination: true,
+    serverSideSorting: true,
+    initialPageSize: 50,
+    deletePayload: (row) => ({ revision: Number(row['I4nRevision']) }),
+    bulkDeletePayload: (rows) => ({
+      revisions: Object.fromEntries(
+        rows.map((row) => [String(row['I4nUUID']), Number(row['I4nRevision'])]),
+      ),
+    }),
     pageTitle: 'Networks',
     pageDescription: 'Manage available IPv4 networks for this pool.',
     bulkDelete: false,
@@ -22,6 +31,7 @@ function networks(pool: ConfigurableCrudRecord) {
       { id: 'status', label: 'Status', field: 'I4nStatus', kind: 'status' },
     ],
     fields: [
+      { key: 'revision', source: 'I4nRevision', label: 'Revision', type: 'number', hidden: true },
       { key: 'status', source: 'I4nStatus', label: 'Status', type: 'status', span: 1 },
       { key: 'cidr', source: 'I4nCidr', label: 'IP/Mask', required: true, span: 1 },
       { key: 'description', source: 'I4nDescription', label: 'Description', span: 4 },
@@ -32,6 +42,15 @@ function networks(pool: ConfigurableCrudRecord) {
 const config = defineCrud({
   endpoint: 'isp/ipv4-pools',
   uuidField: 'Ip4UUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['Ip4Revision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['Ip4UUID']), Number(row['Ip4Revision'])]),
+    ),
+  }),
   pageTitle: 'Pool IPv4',
   pageDescription: 'Manage IPv4 pools and available networks.',
   bulkDelete: true,
@@ -42,6 +61,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'Ip4Status', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'Ip4Revision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'Ip4Status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'Ip4Name', label: 'Name', required: true, span: 1 },
     { key: 'description', source: 'Ip4Description', label: 'Description', span: 4 },

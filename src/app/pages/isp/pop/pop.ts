@@ -9,6 +9,15 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 const config = defineCrud({
   endpoint: 'isp/pops',
   uuidField: 'IppUUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['IppRevision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['IppUUID']), Number(row['IppRevision'])]),
+    ),
+  }),
   pageTitle: 'POP',
   pageDescription: 'Point of Presence catalog for your ISP network.',
   bulkDelete: true,
@@ -20,6 +29,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'IppStatus', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'IppRevision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'IppStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'IppName', label: 'Name', required: true, span: 1 },
     { key: 'city', source: 'IppCity', label: 'City', required: true, span: 1 },

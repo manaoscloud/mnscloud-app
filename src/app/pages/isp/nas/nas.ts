@@ -9,6 +9,15 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 const config = defineCrud({
   endpoint: 'isp/nas',
   uuidField: 'InsUUID',
+  serverSidePagination: true,
+  serverSideSorting: true,
+  initialPageSize: 50,
+  deletePayload: (row) => ({ revision: Number(row['InsRevision']) }),
+  bulkDeletePayload: (rows) => ({
+    revisions: Object.fromEntries(
+      rows.map((row) => [String(row['InsUUID']), Number(row['InsRevision'])]),
+    ),
+  }),
   pageTitle: 'NAS',
   pageDescription: 'Network Access Servers connected to your POPs.',
   bulkDelete: true,
@@ -30,6 +39,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'InsStatus', kind: 'status' },
   ],
   fields: [
+    { key: 'revision', source: 'InsRevision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'InsStatus', label: 'Status', type: 'status', span: 1 },
     {
       key: 'popUUID',
@@ -58,6 +68,7 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       remoteLookup: {
+        parameters: { vendorUUID: 'vendorUUID' },
         endpoint: 'isp/vendor-models?type=NAS',
         uuidField: 'VendorModelUUID',
         labelField: 'VendorModelName',

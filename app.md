@@ -315,6 +315,13 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
 
 ## Page Template Catalog (Current)
 
+Paginated APIs with global sorting can opt into `serverSideSorting` alongside
+`serverSidePagination`. The shared renderer sends the selected column's canonical `field`
+as `sortBy` and `asc`/`desc` as `sortDirection`; it preserves the API order instead of sorting
+only the current page. APIs must validate the field and use a deterministic tie-breaker.
+Revision-aware bulk APIs can use `bulkDeletePayload(rows)` to include the selected records'
+displayed preconditions alongside `ids`; never fetch newer revisions to silently retry a conflict.
+
 "Template" in this document always means one of the shared page bases below. Copying the global
 CSS hook classes (`.erp-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
