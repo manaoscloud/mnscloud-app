@@ -6830,8 +6830,6 @@
   "authentication.rotateConfirmation": "Criar e aplicar uma nova credencial do banco? A anterior será revogada após a confirmação.",
   "authentication.uninstallConfirmation": "Desinstalar o serviço e revogar suas credenciais? O Agent permanecerá instalado.",
   "authentication.states.retiring_credentials": "Revogando credenciais anteriores",
-  "authentication.generateConfirmation": "Gerar uma autorização temporária de instalação para um Agent já instalado? A identidade do Agent será preservada.",
-  "authentication.replaceConfirmation": "Substituir o comando de instalação ainda não utilizado? A autorização anterior deixará de funcionar. A identidade do Agent será preservada.",
   "authentication.lastError": "Código de diagnóstico",
   "Click to copy": "Clique para copiar",
   "More actions": "Mais ações",
@@ -6842,5 +6840,7 @@
   "Columns": "Colunas",
   "Restore default view": "Restaurar exibição padrão",
   "Show": "Mostrar",
-  "Hide": "Ocultar"
+  "Hide": "Ocultar",
+  "AUTHENTICATION_PROFILE_UNAVAILABLE": "O cluster não tem perfil de provisionamento. Configure o perfil do cluster antes de gerar o comando.",
+  "AUTHENTICATION_CLUSTER_UNAVAILABLE": "O cluster do servidor está inativo ou indisponível."
 }

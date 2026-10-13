@@ -3,9 +3,10 @@ import { authenticationPayload } from '../authentication-input';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
-import { firstValueFrom } from 'rxjs';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
-import { isRuntimeTokenReplaceConfirmationRequired } from '../../../shared/install-command-dialog/runtime-install-token';
+import {
+  confirmInstallCommandGeneration,
+  requestRuntimeInstallCommand,
+} from '../../../shared/install-command-dialog/runtime-install-token';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -29,7 +30,7 @@ const config = defineCrud({
   initialValues: {
     name: '',
     notes: '',
-    status: 0,
+    status: 1,
     revision: 1,
     AuthenticationClusterAtcUUID: '',
   },
@@ -99,9 +100,8 @@ const config = defineCrud({
       label: 'Status',
       type: 'status',
       span: 1,
-      hiddenWhen: ({ editing }) => !editing,
     },
-    { key: 'name', source: 'AtsName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'AtsName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AtsRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationClusterAtcUUID',
@@ -163,9 +163,9 @@ const config = defineCrud({
     { id: 'error', field: 'AtsLastErrorCode', label: 'authentication.lastError', kind: 'text' },
     {
       id: 'cluster',
-      field: 'AuthenticationClusterAtcUUID',
       label: 'authentication.clusters',
       kind: 'related',
+      uuidField: 'AuthenticationClusterAtcUUID',
       lookupKey: 'AuthenticationClusterAtcUUID',
     },
     { id: 'name', field: 'AtsName', label: 'Name', kind: 'identity' },
@@ -191,21 +191,13 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
     row: ConfigurableCrudRecord,
   ): Promise<void> {
     if (action.key !== 'install') return super.handleRowAction(action, row);
-    if (await this.confirmInstallation('authentication.generateConfirmation')) {
-      await this.showInstaller(String(row['AtsUUID']));
-    }
-  }
-
-  private async confirmInstallation(message: string): Promise<boolean> {
-    const ref = this.installDialog.open(SlowConfirmDialogComponent, {
-      data: {
-        translate: true,
-        title: 'authentication.install',
-        message,
-        confirmLabel: 'Generate command',
-      },
-    });
-    return Boolean(await firstValueFrom(ref.afterClosed()));
+    const confirmed = await confirmInstallCommandGeneration(
+      this.installDialog,
+      (key, params) => this.t(key, params),
+      String(row['AtsName'] ?? ''),
+      'authentication',
+    );
+    if (confirmed) await this.showInstaller(String(row['AtsUUID']));
   }
 
   protected override async afterSave(
@@ -218,35 +210,15 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
 
   private async showInstaller(uuid: string): Promise<void> {
     try {
-      const request = (body: { confirmReplace?: boolean }) =>
+      const response = await requestRuntimeInstallCommand(this.installDialog, (body) =>
         this.api.post<{ data: Record<string, unknown> }>(
           `${config.endpoint}/${uuid}/install-command`,
           body,
-        );
-      let response;
-      try {
-        response = await request({});
-      } catch (error) {
-        if (!isRuntimeTokenReplaceConfirmationRequired(error)) throw error;
-        if (!(await this.confirmInstallation('authentication.replaceConfirmation'))) return;
-        response = await request({ confirmReplace: true });
-      }
+        ),
+      );
+      if (!response) return;
       const data = response.data;
-      const quote = (value: unknown) => "'" + String(value).replaceAll("'", "'\\''") + "'";
-      const root = '/opt/mnscloud/mnscloud-authentication';
-      // A subshell keeps `set -eu` from closing the operator's interactive root shell on failure.
-      const command = [
-        '(',
-        'set -eu',
-        'sudo bash /opt/mnscloud/mnscloud-agent/scripts/validate-agent.sh --require-active --require-enrolled',
-        'sudo install -d -m 0755 /opt/mnscloud',
-        `if [ ! -d ${root}/.git ]; then sudo git clone https://github.com/manaoscloud/mnscloud-authentication.git ${root}; fi`,
-        `sudo git -C ${root} fetch origin tag ${quote(data['ref'])}`,
-        `test "$(sudo git -C ${root} rev-parse ${quote(String(data['ref']) + '^{commit}')})" = ${quote(data['commitSha'])}`,
-        `sudo git -C ${root} checkout --detach ${quote(data['commitSha'])}`,
-        `sudo bash ${root}/scripts/install-authentication.sh --env /etc/mnscloud/authentication.env --api-base ${quote(resolveApiBaseUrl())} --server-uuid ${quote(uuid)} <<'MNSCLOUD_INSTALL_AUTHORIZATION'\n${String(data['installationToken'])}\nMNSCLOUD_INSTALL_AUTHORIZATION`,
-        ')',
-      ].join('\n');
+      const apiBase = resolveApiBaseUrl();
       openInstallCommandDialog(
         this.installDialog,
         {
@@ -254,10 +226,12 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
           description: 'authentication.installDescription',
           warning: 'authentication.installWarning',
           details: [
+            { label: 'API base', value: apiBase, monospace: true },
             { label: 'authentication.serverUuid', value: uuid, monospace: true },
+            { label: 'Version', value: data['ref'], monospace: true },
             { label: 'Expires at', value: data['expiresAt'], monospace: true },
           ],
-          command,
+          command: installCommand(apiBase, uuid, data),
         },
         this.destroyRef,
       );
@@ -265,4 +239,21 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
       this.snack.error(this.t(this.errorMessage(error)));
     }
   }
+}
+
+/** Same one-line, `&&`-chained shape as the other runtime modules; ends with the module validator. */
+function installCommand(apiBase: string, uuid: string, data: Record<string, unknown>): string {
+  const quote = (value: unknown) => "'" + String(value).replaceAll("'", "'\\''") + "'";
+  const repo = 'mnscloud-authentication';
+  const root = `/opt/mnscloud/${repo}`;
+  return [
+    'sudo install -d -m 0755 /opt/mnscloud',
+    'cd /opt/mnscloud',
+    `([ -d ${repo}/.git ] || sudo git clone https://github.com/manaoscloud/${repo}.git)`,
+    `sudo git -C ${repo} fetch --tags --force origin`,
+    // The pinned release; the installer also verifies the commit approved by the API.
+    `sudo git -C ${repo} checkout --detach ${quote(data['ref'])}`,
+    `sudo bash ${root}/scripts/install-authentication.sh --api-base ${quote(apiBase)} --server-uuid ${quote(uuid)} --installation-token ${quote(data['installationToken'])}`,
+    `sudo bash ${root}/scripts/validate-authentication.sh`,
+  ].join(' && ');
 }

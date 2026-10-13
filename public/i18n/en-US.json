@@ -6829,8 +6829,6 @@
   "authentication.rotateConfirmation": "Create and apply a new database credential? The previous one will be revoked after confirmation.",
   "authentication.uninstallConfirmation": "Uninstall the service and revoke its credentials? The Agent will remain installed.",
   "authentication.states.retiring_credentials": "Retiring previous credentials",
-  "authentication.generateConfirmation": "Generate a temporary installation authorization for an already installed Agent? The Agent identity is preserved.",
-  "authentication.replaceConfirmation": "Replace the unused installation command? The previous installation authorization will stop working. The Agent identity is preserved.",
   "authentication.lastError": "Diagnostic code",
   "Click to copy": "Click to copy",
   "More actions": "More actions",
@@ -6841,5 +6839,7 @@
   "Columns": "Columns",
   "Restore default view": "Restore default view",
   "Show": "Show",
-  "Hide": "Hide"
+  "Hide": "Hide",
+  "AUTHENTICATION_PROFILE_UNAVAILABLE": "The cluster has no provisioning profile. Configure the cluster profile before generating the command.",
+  "AUTHENTICATION_CLUSTER_UNAVAILABLE": "The server cluster is inactive or unavailable."
 }
