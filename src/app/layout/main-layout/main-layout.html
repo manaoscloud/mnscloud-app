@@ -424,8 +424,10 @@
               class="tenant-button"
               [matMenuTriggerFor]="tenantMenu"
               [disabled]="loadingEnvironments()"
-              [attr.aria-label]="('topbar.tenant' | transloco) + ': ' + currentEnvironmentName()"
-              [matTooltip]="currentEnvironmentName()"
+              [attr.aria-label]="('topbar.tenant' | transloco) + ': ' + currentEnvironmentTooltip()"
+              [matTooltip]="currentEnvironmentTooltip()"
+              matTooltipClass="tenant-tooltip"
+              (menuClosed)="tenantSearch.set('')"
             >
               <mat-icon class="tenant-icon">business</mat-icon>
               <span class="tenant-name">{{ currentEnvironmentName() }}</span>
@@ -444,8 +446,21 @@
           [aria-label]="'topbar.tenant' | transloco"
         >
           <div class="topbar-menu-title">{{ 'topbar.tenant' | transloco }}</div>
+          @if (showTenantSearch()) {
+            <div class="topbar-menu-search" (click)="$event.stopPropagation()">
+              <mat-icon>search</mat-icon>
+              <input
+                type="search"
+                [value]="tenantSearch()"
+                [attr.aria-label]="'topbar.tenantSearch' | transloco"
+                [placeholder]="'topbar.tenantSearch' | transloco"
+                (input)="tenantSearch.set($any($event.target).value)"
+                (keydown)="$event.stopPropagation()"
+              />
+            </div>
+          }
           <div class="topbar-menu-list">
-            @for (env of environments(); track env.EnvironmentUUID) {
+            @for (env of filteredEnvironments(); track env.EnvironmentUUID) {
               <div class="topbar-menu-tenant-row">
                 <button
                   mat-menu-item
@@ -463,9 +478,15 @@
                   class="topbar-menu-tenant-select"
                   role="menuitemradio"
                   [attr.aria-checked]="env.EnvironmentUUID === activeEnvironmentId()"
+                  [attr.aria-label]="env.EnvironmentName + ' ' + tenantIdentityLine(env)"
                   (click)="switchEnvironment(env)"
                 >
-                  <span class="topbar-menu-label">{{ env.EnvironmentName }}</span>
+                  <span class="topbar-menu-label">
+                    <span class="topbar-menu-tenant-name">{{ env.EnvironmentName }}</span>
+                    @if (tenantIdentityLine(env)) {
+                      <span class="topbar-menu-tenant-identity">{{ tenantIdentityLine(env) }}</span>
+                    }
+                  </span>
                   @if (env.EnvironmentUUID === activeEnvironmentId()) {
                     <mat-icon class="topbar-menu-check">check</mat-icon>
                   }
@@ -474,6 +495,8 @@
             }
             @if (!environments().length) {
               <p class="topbar-menu-empty">{{ 'layout.noEnvironments' | transloco }}</p>
+            } @else if (!filteredEnvironments().length) {
+              <p class="topbar-menu-empty">{{ 'No records found.' | transloco }}</p>
             }
           </div>
         </mat-menu>

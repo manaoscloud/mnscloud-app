@@ -367,6 +367,15 @@ export const routes: Routes = [
                 title: 'Billing • Ledger | mnscloud',
               },
               {
+                path: 'billing/identity',
+                loadComponent: () =>
+                  import('./pages/billing/tenant/identity/identity').then(
+                    (m) => m.BillingTenantIdentityPage,
+                  ),
+                data: { breadcrumb: 'Tax identity' },
+                title: 'Billing • Tax identity | mnscloud',
+              },
+              {
                 path: 'cyber-security',
                 loadComponent: () =>
                   import('./pages/cyber-security/dashboard/dashboard').then(

@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -53,7 +54,8 @@ const TOPUP_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
 const isPending = (row: ConfigurableCrudRecord) => String(row['BpiStatus'] ?? '') === 'PENDING';
 const isCard = (row: ConfigurableCrudRecord) => row['BpiPaymentMethod'] === 'CREDIT_CARD';
 const isPendingBoleto = (row: ConfigurableCrudRecord) => isPending(row) && !isCard(row);
-const isPaid = (row: ConfigurableCrudRecord) => String(row['BpiStatus'] ?? '').toUpperCase() === 'PAID';
+const isPaid = (row: ConfigurableCrudRecord) =>
+  String(row['BpiStatus'] ?? '').toUpperCase() === 'PAID';
 
 /** Payment methods served by active bank connections, with the card fee passed on to the tenant. */
 type TopupMethod = {
@@ -422,6 +424,7 @@ export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
   BillingPaymentIntent & ConfigurableCrudRecord
 > {
   private readonly billing = inject(BillingService);
+  private readonly router = inject(Router);
   /** Billing data of the signed-in user, loaded when a top-up form opens. */
   private readonly profile = signal<UserBillingProfile | null>(null);
 
@@ -453,6 +456,23 @@ export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
   }
 
   override startCreate(): void {
+    void this.startCreateWithIdentity();
+  }
+
+  /** Top-ups need the tenant tax identity; without it the user is sent to fill it in. */
+  private async startCreateWithIdentity(): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: { item?: { IsComplete?: number } } }>(
+        'billing/identity',
+      );
+      if (!response.data?.item?.IsComplete) {
+        this.snack.warning(this.t('Fill in the tax identity to add credit to the wallet.'));
+        await this.router.navigate(['/billing/identity']);
+        return;
+      }
+    } catch {
+      // The API still refuses the top-up with TENANT_IDENTITY_REQUIRED.
+    }
     super.startCreate();
     this.patchFormValues({ idempotencyKey: crypto.randomUUID() });
     void this.applyProfile();

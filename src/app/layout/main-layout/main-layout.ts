@@ -39,6 +39,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 // Services
 import { ThemeMode, ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
+import { TenantService } from '../../services/tenant.service';
 import { NetworkService } from '../../services/network.service';
 import { SessionService } from '../../services/session.service';
 import { ApiService } from '../../services/api.service';
@@ -51,6 +52,7 @@ import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
+  tenantIdentityLine,
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
   resolveSelectedEnvironmentUUID,
@@ -84,7 +86,13 @@ export interface UserEnvironment {
   RoleName: string;
   Status: number;
   IsDefault?: number;
+  TenantCode?: string | null;
+  TaxIdLabel?: string | null;
+  TaxIdDisplay?: string | null;
 }
+
+/** The tenant menu shows a search field above this many tenants. */
+const TENANT_SEARCH_THRESHOLD = 7;
 
 interface UserAccessResponse {
   status: string;
@@ -120,6 +128,7 @@ export class MainLayout {
   // =======================================================
   private readonly themeService = inject(ThemeService);
   private readonly auth = inject(AuthService);
+  private readonly tenantAccess = inject(TenantService);
   private readonly router = inject(Router);
   private readonly network = inject(NetworkService);
   private readonly session = inject(SessionService);
@@ -198,6 +207,28 @@ export class MainLayout {
   readonly currentEnvironmentName = computed(
     () => this.currentEnvironment()?.EnvironmentName ?? this.i18n.t('layout.noEnvironment'),
   );
+  readonly currentEnvironmentTooltip = computed(() =>
+    [this.currentEnvironmentName(), tenantIdentityLine(this.currentEnvironment())]
+      .filter(Boolean)
+      .join('\n'),
+  );
+  readonly tenantIdentityLine = tenantIdentityLine;
+  readonly tenantSearch = signal('');
+  readonly showTenantSearch = computed(() => this.environments().length > TENANT_SEARCH_THRESHOLD);
+  /** Filters the complete membership list by name, public code or tax ID digits. */
+  readonly filteredEnvironments = computed(() => {
+    const term = this.tenantSearch().trim().toLowerCase();
+    const list = this.environments();
+    if (!term) return list;
+    const compact = term.replace(/[^0-9a-z]/g, '');
+    return list.filter((env) => {
+      const text = [env.EnvironmentName, env.TenantCode, env.TaxIdDisplay]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return text.includes(term) || (!!compact && text.replace(/[^0-9a-z]/g, '').includes(compact));
+    });
+  });
 
   private static readonly CONTEXT_MODE_STORAGE_KEY = 'mc_context_mode';
   private static readonly LAYOUT_COMPACT_STORAGE_KEY = 'mc_layout_compact';
@@ -275,8 +306,15 @@ export class MainLayout {
     this.destroyRef.onDestroy(() => this.clearCompactCloseTimer());
     this.scheduleAutoExpandSections();
 
-    // Carrega environments (tenants)
+    // Carrega environments (tenants); reloads when a tenant identity changes.
     this.initEnvironments();
+    let accessRevision = this.tenantAccess.accessRevision();
+    effect(() => {
+      const revision = this.tenantAccess.accessRevision();
+      if (revision === accessRevision) return;
+      accessRevision = revision;
+      void this.initEnvironments();
+    });
     void this.runtimeVersion.refresh();
 
     effect(() => {

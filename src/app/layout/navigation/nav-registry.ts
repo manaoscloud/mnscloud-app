@@ -81,6 +81,13 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'billing/identity',
+        label: 'nav.billing.identity',
+        icon: 'assignment_ind',
+        route: '/billing/identity',
+        requiresEnvironment: true,
+      },
+      {
         id: 'billing/ledger-wallets',
         label: 'nav.billing.ledger-wallets',
         icon: 'receipt_long',

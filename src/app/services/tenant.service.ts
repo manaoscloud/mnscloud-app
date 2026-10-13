@@ -39,6 +39,13 @@ export class TenantService {
   // Estado de carregamento
   readonly loading = signal<boolean>(false);
 
+  /** Bumped when tenant names or identities change, so the tenant switcher reloads. */
+  readonly accessRevision = signal(0);
+
+  notifyAccessChanged(): void {
+    this.accessRevision.update((revision) => revision + 1);
+  }
+
   // Chave única usada também pelo ApiService para enviar o header
   private readonly LS_KEY = 'mc_current_env';
 

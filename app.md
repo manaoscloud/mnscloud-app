@@ -122,6 +122,15 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   checked state; keep Material keyboard navigation, Escape and focus restoration.
 - Tenant default and tenant activation are independent sibling buttons, never nested interactive
   controls. Setting the default keeps the panel open and does not switch the active environment.
+- Each tenant row has two lines: the display name (trade name, legal name or person name) and the
+  identity line `tenantIdentityLine` (tax ID label + formatted tax ID, then the `TEN-` public code),
+  so tenants with the same name stay distinguishable. Personal tax IDs arrive masked from the API;
+  never unmask or rebuild them in the client. The trigger tooltip and accessible name carry both
+  lines. Above 7 tenants the panel shows a search field that filters the complete `user/access`
+  list by name, code or tax ID; it resets when the panel closes.
+- The tenant fiscal identity is edited in `Billing > Tax identity` (`/billing/identity`, settings
+  page template). Saving it calls `TenantService.notifyAccessChanged()` so the switcher reloads.
+  Wallet top-ups check `billing/identity` first and send the user there while it is incomplete.
 - Theme offers explicit light/dark/system choices through ThemeService; retain persistence,
   cross-tab changes and device preference tracking. Keep existing language, tenant, permission,
   operation polling and logout/session-cleanup flows in their services.
