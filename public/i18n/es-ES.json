@@ -6841,7 +6841,5 @@
   "Columns": "Columnas",
   "Restore default view": "Restaurar vista predeterminada",
   "Show": "Mostrar",
-  "Hide": "Ocultar",
-  "Ownership": "Propiedad",
-  "Platform Agents serve platform infrastructure such as Authentication and do not belong to the selected environment.": "Los Agents de plataforma atienden la infraestructura de la plataforma, como Authentication, y no pertenecen al entorno seleccionado."
+  "Hide": "Ocultar"
 }
