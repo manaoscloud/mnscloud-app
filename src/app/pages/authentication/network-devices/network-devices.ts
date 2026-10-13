@@ -63,6 +63,7 @@ const config = defineCrud({
       requiredWhen: ({ editing }) => !editing,
       help: 'authentication.credentialHelp',
       autocomplete: 'new-password',
+      generatedPasswordLength: 32,
     },
     {
       key: 'notes',

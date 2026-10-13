@@ -1654,3 +1654,8 @@ host/session; do not copy the entire parent form or credentials. The referenced 
 still owns its fields, validation and submission. This context is a convenience, never authority:
 API/DB ownership validation remains mandatory. The parent keeps its unsaved values and selects
 the new option when the nested dialog completes.
+
+Password fields may declare `generatedPasswordLength` when the API requires a specific credential
+length. The shared generator uses Web Crypto with rejection sampling. Authentication access
+passwords generate 20 characters and NAS shared secrets generate 32; field policy never replaces
+server-side validation. Existing fields retain their configured/default length.

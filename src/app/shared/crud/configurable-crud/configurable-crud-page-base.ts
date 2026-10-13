@@ -1,3 +1,4 @@
+import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { resolveCrudFieldHelp } from './crud-field-help';
@@ -236,6 +237,8 @@ export type ConfigurableCrudField = {
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
+  /** Generated credential length; APIs remain responsible for credential policy. */
+  generatedPasswordLength?: number;
   /** Discriminator field for a structured secret editor. */
   contentTypeKey?: string;
   accept?: string;
@@ -1524,12 +1527,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   generatePasswordField(key: string): void {
-    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    let pass = '';
-    for (let i = 0; i < 10; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    this.setFieldValue(key, pass);
+    const field = this.config.fields.find((item) => item.key === key);
+    this.setFieldValue(key, generateCrudPassword(field?.generatedPasswordLength ?? 10));
   }
 
   fieldContext(): ConfigurableCrudFieldContext {
