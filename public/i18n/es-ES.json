@@ -6789,5 +6789,7 @@
   "authentication.states.retiring_credentials": "Revocando credenciales anteriores",
   "authentication.generateConfirmation": "¿Generar una autorización temporal de instalación para un Agent ya instalado? Se conservará la identidad del Agent.",
   "authentication.replaceConfirmation": "¿Reemplazar el comando de instalación sin usar? La autorización anterior dejará de funcionar. Se conservará la identidad del Agent.",
-  "authentication.lastError": "Código de diagnóstico"
+  "authentication.lastError": "Código de diagnóstico",
+  "Click to copy": "Haga clic para copiar",
+  "More actions": "Más acciones"
 }

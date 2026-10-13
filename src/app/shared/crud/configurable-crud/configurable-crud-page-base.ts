@@ -1,6 +1,7 @@
 import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
+import { isRecordUUID, shortRecordUUID } from './record-uuid-label';
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
@@ -56,6 +57,7 @@ import {
   parseCurrencyAmount,
 } from '../../currency-mask/currency-mask.directive';
 import { DateMaskDirective } from '../../date-mask/date-mask.directive';
+import { MnsOverflowTooltipDirective } from '../../overflow-tooltip/overflow-tooltip.directive';
 import { formatDateInput, toDateOnly } from '../../date-mask/date-input-format';
 import { MnsDateAdapterModule } from '../../date-mask/mns-date-adapter.module';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
@@ -118,6 +120,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   CurrencyMaskDirective,
   DateMaskDirective,
   MnsDateAdapterModule,
+  MnsOverflowTooltipDirective,
 ];
 
 export type ConfigurableCrudRecord = Record<string, unknown>;
@@ -339,7 +342,14 @@ export type ConfigurableCrudColumn = {
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
   /** Key of a row action: the cell value becomes a link that runs it (when the action is visible). */
   rowAction?: string;
+  /**
+   * Maximum width of the single-line cell value before it is truncated with an ellipsis (the
+   * full value shows in a tooltip). Defaults to `lg` for text, identity and related columns.
+   */
+  width?: ConfigurableCrudColumnWidth;
 };
+
+export type ConfigurableCrudColumnWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type ConfigurableCrudListFilter = {
   remoteLookup?: ConfigurableCrudField['remoteLookup'];
@@ -2217,12 +2227,35 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return column.value(row, (key) => this.transloco.translate(key))?.trim() || '-';
   }
 
+  /** True when the secondary line holds a record UUID (not a readable `detail`). */
+  columnHasUUIDLine(row: T, column: ConfigurableCrudColumn): boolean {
+    const detail = column.detail?.(row, (key) => this.transloco.translate(key))?.trim();
+    return !detail && isRecordUUID(this.columnUUID(row, column));
+  }
+
+  /** Secondary line text: readable detail as is, UUIDs shortened to their first characters. */
+  columnUUIDLabel(row: T, column: ConfigurableCrudColumn): string {
+    const value = this.columnUUID(row, column);
+    return this.columnHasUUIDLine(row, column) ? shortRecordUUID(value) : value;
+  }
+
+  copyColumnUUID(row: T, column: ConfigurableCrudColumn): Promise<void> {
+    return this.copyText(this.columnUUID(row, column));
+  }
+
+  columnWidthClass(column: ConfigurableCrudColumn): string {
+    return `crud-cell-w-${column.width ?? 'lg'}`;
+  }
+
   canCopyColumn(row: T, column: ConfigurableCrudColumn): boolean {
     return column.copyable === true && this.columnCopyValue(row, column) !== '';
   }
 
-  async copyColumnValue(row: T, column: ConfigurableCrudColumn): Promise<void> {
-    const value = this.columnCopyValue(row, column);
+  copyColumnValue(row: T, column: ConfigurableCrudColumn): Promise<void> {
+    return this.copyText(this.columnCopyValue(row, column));
+  }
+
+  protected async copyText(value: string): Promise<void> {
     if (!value) return;
 
     try {

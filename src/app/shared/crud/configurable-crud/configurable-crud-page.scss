@@ -416,3 +416,117 @@
 .crud-image-empty {
   color: var(--mat-sys-color-on-surface-variant);
 }
+
+/*
+ * Compact list rows: every cell stays on one line. Long values end in an ellipsis and show the full
+ * text in a tooltip (`mnsOverflowTooltip`); identity UUIDs show a short prefix that copies the full
+ * value. Copy buttons appear on row hover/focus and stay visible on touch screens.
+ */
+.erp-table {
+  .mat-mdc-header-cell,
+  .mat-mdc-cell {
+    padding-block: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .record-main,
+  .record-uuid {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+
+  .record-stack {
+    gap: 0.1rem;
+  }
+
+  .record-uuid {
+    margin-top: 0;
+  }
+
+  .crud-copy-button {
+    width: 28px;
+    height: 28px;
+    padding: 2px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+
+    .mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+  }
+
+  .mat-mdc-row:hover .crud-copy-button,
+  .mat-mdc-row:focus-within .crud-copy-button {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .erp-table .crud-copy-button {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .erp-table .crud-copy-button {
+    transition: none;
+  }
+}
+
+.crud-cell-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crud-cell-w-xs {
+  max-width: 6rem;
+}
+
+.crud-cell-w-sm {
+  max-width: 9rem;
+}
+
+.crud-cell-w-md {
+  max-width: 13rem;
+}
+
+.crud-cell-w-lg {
+  max-width: 17rem;
+}
+
+.crud-cell-w-xl {
+  max-width: 24rem;
+}
+
+.crud-uuid-copy {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--mat-sys-color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.crud-menu-danger {
+  color: var(--mat-sys-color-error);
+
+  .mat-icon {
+    color: inherit;
+  }
+}

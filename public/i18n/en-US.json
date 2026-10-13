@@ -6789,5 +6789,7 @@
   "authentication.states.retiring_credentials": "Retiring previous credentials",
   "authentication.generateConfirmation": "Generate a temporary installation authorization for an already installed Agent? The Agent identity is preserved.",
   "authentication.replaceConfirmation": "Replace the unused installation command? The previous installation authorization will stop working. The Agent identity is preserved.",
-  "authentication.lastError": "Diagnostic code"
+  "authentication.lastError": "Diagnostic code",
+  "Click to copy": "Click to copy",
+  "More actions": "More actions"
 }
