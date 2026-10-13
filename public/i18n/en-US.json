@@ -6745,7 +6745,7 @@
   "authentication.installDescription": "Run on the intended authentication server after configuring its database connection.",
   "authentication.installWarning": "Single-use enrollment, valid for 30 minutes. Keep this command private. It is not executed by the App.",
   "authentication.databaseUser": "Database principal",
-  "authentication.databaseUserHelp": "Dedicated runtime database user, with only the Authentication runtime grants. Configure the password on the target server.",
+  "authentication.databaseUserHelp": "Optional when registering the server. Before installation, configure a dedicated database principal with restricted permissions and its credentials on the target machine.",
   "authentication.sessions": "Sessions",
   "authentication.sessionId": "Session identifier",
   "authentication.observation": "Observation",
@@ -6759,5 +6759,7 @@
   "nav.authentication.sessions": "Sessions",
   "authentication.serverUuid": "Server UUID",
   "authentication.profileHelp": "A group profile overrides the access profile when configured.",
-  "authentication.sessionTimeoutHelp": "Session limit in seconds; empty uses 3600. Credential expiry can shorten it."
+  "authentication.sessionTimeoutHelp": "Session limit in seconds; empty uses 3600. Credential expiry can shorten it.",
+  "authentication.serverSetupDescription": "Register the target Linux machine first; the authentication service does not need to be installed yet. Choose a cluster and enter a name and hostname or IP. After saving, copy the installation command and run it on that machine.",
+  "authentication.hostHelp": "Hostname or IP of the Linux machine where you will install the service. This is not the address of a NAS or subscriber."
 }
