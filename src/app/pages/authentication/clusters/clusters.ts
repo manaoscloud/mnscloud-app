@@ -16,7 +16,7 @@ const config = defineCrud({
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['AtcRevision']) }),
-  initialValues: { name: '', notes: '', status: 0, revision: 1, region: '', published: 0 },
+  initialValues: { name: '', notes: '', status: 1, revision: 1, region: '', published: 1 },
   payload: (values, editing) => authenticationPayload(values, editing),
   rowActions: [
     {
