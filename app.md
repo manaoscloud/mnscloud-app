@@ -564,6 +564,11 @@ the page must use the shared base named here.
     compact) and visible columns, saved per resource in the browser (`crud-view-preferences.ts`,
     key `mns.crud.view.<endpoint>` with record ids normalized). The first (identity) column cannot
     be hidden; columns with `optional: true` start hidden. Preferences are UX only.
+  - At `<=900px` the shared CRUD lists records as cards (`mobileLayout()`): the first visible column
+    as title, the status chip and the same row actions in the header, every other visible column
+    as a label/value pair. Cards reuse the table cell template (`#crudCell`), so copy and show
+    actions stay available (always visible on touch) for configuring apps from a phone. A toolbar
+    keeps select-all (bulk delete) and the table view menu.
   - Credentials shown in a list use column `kind: 'secret'`: masked by default, a show toggle per
     row that hides again after 10 seconds, and the copy action when `copyable` is set.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define

@@ -35,10 +35,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -690,6 +692,24 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   /** Columns rendered in the table: the first (identity) column always stays visible. */
   readonly tableColumns = computed(() =>
     this.columns().filter((column) => this.isColumnVisible(column)),
+  );
+  /** Phones and narrow windows list records as cards instead of the table. */
+  readonly mobileLayout = toSignal(
+    inject(BreakpointObserver)
+      .observe('(max-width: 900px)')
+      .pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
+  readonly cardTitleColumn = computed(() => this.tableColumns()[0] ?? null);
+  readonly cardStatusColumn = computed(
+    () =>
+      this.tableColumns().find((column, index) => index > 0 && column.kind === 'status') ?? null,
+  );
+  /** Card body: every other visible column, keeping copy and show actions on each value. */
+  readonly cardFieldColumns = computed(() =>
+    this.tableColumns().filter(
+      (column) => column !== this.cardTitleColumn() && column !== this.cardStatusColumn(),
+    ),
   );
   readonly displayedColumns = computed(() => [
     ...(this.bulkDeleteEnabled() ? ['select'] : []),
