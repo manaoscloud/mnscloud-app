@@ -6712,7 +6712,7 @@
   "authentication.network-devices": "Network devices",
   "authentication.groups": "Groups",
   "authentication.accesses": "Accesses",
-  "authentication.clusterStatusHelp": "The cluster starts inactive so it can be configured before use. Activate it when it is ready to authenticate access. It must also be published to appear in the account selection.",
+  "authentication.clusterStatusHelp": "Enables the cluster for authentication. New records start active. The cluster must also be published to appear in the account selection.",
   "authentication.clusterRegionHelp": "Identifies the cluster location, for example, br-norte or br-sudeste. This is organizational information; it does not configure routing or select servers automatically.",
   "authentication.clusterPublishedHelp": "When active and published, the cluster can be selected in customer authentication accounts. Publishing does not install servers or replace cluster configuration.",
   "authentication.region": "Region",
