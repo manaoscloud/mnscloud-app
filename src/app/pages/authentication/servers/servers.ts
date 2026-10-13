@@ -234,7 +234,9 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
       const data = response.data;
       const quote = (value: unknown) => "'" + String(value).replaceAll("'", "'\\''") + "'";
       const root = '/opt/mnscloud/mnscloud-authentication';
+      // A subshell keeps `set -eu` from closing the operator's interactive root shell on failure.
       const command = [
+        '(',
         'set -eu',
         'sudo bash /opt/mnscloud/mnscloud-agent/scripts/validate-agent.sh --require-active --require-enrolled',
         'sudo install -d -m 0755 /opt/mnscloud',
@@ -243,6 +245,7 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
         `test "$(sudo git -C ${root} rev-parse ${quote(String(data['ref']) + '^{commit}')})" = ${quote(data['commitSha'])}`,
         `sudo git -C ${root} checkout --detach ${quote(data['commitSha'])}`,
         `sudo bash ${root}/scripts/install-authentication.sh --env /etc/mnscloud/authentication.env --api-base ${quote(resolveApiBaseUrl())} --server-uuid ${quote(uuid)} <<'MNSCLOUD_INSTALL_AUTHORIZATION'\n${String(data['installationToken'])}\nMNSCLOUD_INSTALL_AUTHORIZATION`,
+        ')',
       ].join('\n');
       openInstallCommandDialog(
         this.installDialog,
