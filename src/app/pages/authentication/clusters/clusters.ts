@@ -18,6 +18,72 @@ const config = defineCrud({
   deletePayload: (row) => ({ revision: Number(row['AtcRevision']) }),
   initialValues: { name: '', notes: '', status: 0, revision: 1, region: '', published: 0 },
   payload: (values, editing) => authenticationPayload(values, editing),
+  rowActions: [
+    {
+      key: 'provisioning',
+      label: 'authentication.provisioning',
+      icon: 'settings',
+      form: (row) =>
+        defineCrud({
+          endpoint: `system/authentication/clusters/${row['AtcUUID']}/provisioning`,
+          uuidField: 'AcpUUID',
+          pageTitle: 'authentication.provisioning',
+          createTitle: 'authentication.provisioning',
+          dialogDescription: 'authentication.provisioningHelp',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: {
+            MonitoringAgentMagUUID: row['MonitoringAgentMagUUID'] ?? '',
+            databaseHost: row['AcpDatabaseHost'] ?? '',
+            databasePort: row['AcpDatabasePort'] ?? 3306,
+            databaseName: row['AcpDatabaseName'] ?? '',
+            networkCidr: row['AcpNetworkCidr'] ?? '',
+            revision: row['AcpRevision'] ?? 0,
+          },
+          payload: (values) => ({
+            ...values,
+            databasePort: Number(values['databasePort']),
+            revision: Number(values['revision']),
+          }),
+          fields: [
+            {
+              key: 'MonitoringAgentMagUUID',
+              label: 'authentication.databaseAgent',
+              type: 'search-select',
+              span: 1,
+              required: true,
+              remoteLookup: {
+                endpoint: 'system/authentication/database-agents',
+                uuidField: 'uuid',
+                labelField: 'name',
+              },
+              quickCreate: false,
+              quickCreateExemptReason:
+                'Agents must be installed and enrolled through the dedicated Agent installation ceremony.',
+            },
+            { key: 'databaseHost', label: 'authentication.databaseHost', span: 1, required: true },
+            {
+              key: 'databasePort',
+              label: 'authentication.databasePort',
+              type: 'number',
+              span: 1,
+              required: true,
+            },
+            { key: 'databaseName', label: 'authentication.databaseName', span: 1, required: true },
+            {
+              key: 'networkCidr',
+              label: 'authentication.networkCidr',
+              span: 1,
+              required: true,
+              help: 'authentication.networkCidrHelp',
+            },
+            { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+          ],
+        }),
+    },
+  ],
   fields: [
     { key: 'status', source: 'AtcStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'AtcName', label: 'Name', required: true, span: 2 },
