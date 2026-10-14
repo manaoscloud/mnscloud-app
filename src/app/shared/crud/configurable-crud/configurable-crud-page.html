@@ -344,7 +344,7 @@
       #tableViewMenu="matMenu"
       xPosition="before"
       class="mns-menu"
-      (closed)="columnSearch.set('')"
+      (closed)="applyColumnDraft()"
     >
       <ng-template matMenuContent>
         <mns-menu-title>{{ 'Density' | transloco }}</mns-menu-title>
@@ -386,9 +386,9 @@
               type="button"
               selection="checkbox"
               keepOpen
-              [checked]="isColumnVisible(column)"
+              [checked]="isColumnChecked(column)"
               [disabled]="isColumnLocked(column)"
-              (click)="setColumnVisible(column, !isColumnVisible(column))"
+              (click)="toggleColumnDraft(column)"
             >
               <mat-icon>{{ isColumnLocked(column) ? 'lock' : 'view_column' }}</mat-icon>
               <mns-menu-label
