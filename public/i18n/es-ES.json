@@ -6800,6 +6800,7 @@
   "authentication.provisioningHelp": "Configure la base de datos y la red del clúster. La configuración queda protegida mientras haya instalaciones en uso.",
   "authentication.databaseAgent": "Agent de base de datos",
   "authentication.databaseHost": "Host de base de datos",
+  "authentication.databaseHostHelp": "Rellenado con la IP privada informada por el Agent de base de datos. Debe ser una dirección de ese servidor de base de datos; la instalación lo verifica antes de crear el usuario de base de datos.",
   "authentication.databasePort": "Puerto de base de datos",
   "authentication.databaseName": "Nombre de base de datos",
   "authentication.networkCidr": "Red del servicio (CIDR)",

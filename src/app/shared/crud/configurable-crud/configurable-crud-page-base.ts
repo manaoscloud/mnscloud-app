@@ -221,6 +221,11 @@ export type ConfigurableCrudField = {
     selectedLabelField?: string;
     /** Query parameter -> parent form field. Waits until all bound values are present. */
     parameters?: Readonly<Record<string, string>>;
+    /**
+     * Form field -> field of the selected item. On selection, each empty (or previously filled)
+     * target receives the item's value; values typed by the operator are never overwritten.
+     */
+    fill?: Readonly<Record<string, string>>;
     searchParam?: string;
   };
   key: string;
@@ -657,6 +662,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly defaultCurrency = signal('BRL');
   readonly currencyReady = signal(false);
   private readonly selectedRemoteOptions = new Map<string, ConfigurableCrudOption>();
+  /** Last value written by remoteLookup.fill per target, so later selections may replace it. */
+  private readonly remoteFilledValues = new Map<string, string>();
   readonly remoteQueries = signal<Record<string, { search: string; offset: number }>>({});
   private readonly remoteBoundParameters = computed(() =>
     JSON.stringify(
@@ -1746,6 +1753,22 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.setFieldValue(key, input.files?.[0] ?? null);
   }
 
+  private fillFromRemoteSelection(field: ConfigurableCrudField, value: unknown): void {
+    const lookup = field.remoteLookup!;
+    const item = (this.remoteLookups.value()[field.key]?.items ?? []).find(
+      (row: ConfigurableCrudRecord) => String(row[lookup.uuidField] ?? '') === String(value ?? ''),
+    );
+    if (!item) return;
+    for (const [target, source] of Object.entries(lookup.fill ?? {})) {
+      const next = item[source];
+      if (next === null || next === undefined || next === '') continue;
+      const current = String(this.formValues()[target] ?? '');
+      if (current && current !== this.remoteFilledValues.get(target)) continue;
+      this.remoteFilledValues.set(target, String(next));
+      this.formValues.update((values) => ({ ...values, [target]: next }));
+    }
+  }
+
   setFieldValue(key: string, value: unknown): void {
     const previous = this.formValues()[key];
     const remoteField = this.config.fields.find((field) => field.key === key && field.remoteLookup);
@@ -1780,6 +1803,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         }
       }
     }
+    if (remoteField?.remoteLookup?.fill && previous !== value)
+      this.fillFromRemoteSelection(remoteField, value);
     this.onFieldValueChanged(key, value);
     this.syncCopyActionsForSource(key);
     this.clearCopyActionsForTarget(key);
