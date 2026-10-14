@@ -34,6 +34,7 @@ const RESOURCE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'mariadb.server', label: 'MariaDB server (99-mnscloud.cnf)' },
   { value: 'workers.handlers', label: 'Worker handlers (WORKER_HANDLERS)' },
   { value: 'webapps.apps', label: 'Enabled webapps (WEBAPPS_ENABLED_APPS)' },
+  { value: 'webapps.listener', label: 'WebApps listener (listen address and allowed clients)' },
   { value: 'nginx.webapps', label: 'Published webapps paths (edge)' },
 ];
 
