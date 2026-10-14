@@ -129,6 +129,7 @@ const config = defineCrud({
     },
   ],
   columns: [
+    { id: 'name', field: 'AtsName', label: 'Name', kind: 'identity' },
     {
       id: 'provisioning',
       field: 'AtsProvisioningState',
@@ -167,7 +168,6 @@ const config = defineCrud({
       field: 'ClusterName',
       uuidField: 'AuthenticationClusterAtcUUID',
     },
-    { id: 'name', field: 'AtsName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AtsStatus', label: 'Status', kind: 'status' },
   ],
 });

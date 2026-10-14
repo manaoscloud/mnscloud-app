@@ -1,5 +1,5 @@
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-import { authenticationPayload } from '../authentication-input';
+import { authenticationPayload, utcToLocalInput } from '../authentication-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -20,7 +20,7 @@ const config = defineCrud({
   initialValues: {
     name: '',
     notes: '',
-    status: 0,
+    status: 1,
     revision: 1,
     AuthenticationAccountAacUUID: '',
     username: '',
@@ -33,7 +33,7 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AaxStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AaxName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'AaxName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AaxRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationAccountAacUUID',
@@ -115,7 +115,8 @@ const config = defineCrud({
       label: 'authentication.expiresAt',
       span: 1,
       required: false,
-      type: 'text',
+      type: 'datetime',
+      fromRecord: (value) => utcToLocalInput(value),
       help: 'authentication.expiryHelp',
     },
     {
@@ -137,23 +138,23 @@ const config = defineCrud({
     },
   ],
   columns: [
+    { id: 'name', field: 'AaxName', label: 'Name', kind: 'identity' },
     { id: 'username', field: 'AaxUsername', label: 'authentication.username', kind: 'text' },
     {
       id: 'account',
-      field: 'AuthenticationAccountAacUUID',
+      field: 'AccountName',
       label: 'authentication.accounts',
       kind: 'related',
-      lookupKey: 'AuthenticationAccountAacUUID',
+      uuidField: 'AuthenticationAccountAacUUID',
     },
     {
       id: 'profile',
-      field: 'AuthenticationProfileAapUUID',
+      field: 'ProfileName',
       label: 'authentication.profiles',
       kind: 'related',
-      lookupKey: 'AuthenticationProfileAapUUID',
+      uuidField: 'AuthenticationProfileAapUUID',
     },
     { id: 'expires', field: 'AaxExpiresAt', label: 'authentication.expiresAt', kind: 'datetime' },
-    { id: 'name', field: 'AaxName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AaxStatus', label: 'Status', kind: 'status' },
   ],
 });
