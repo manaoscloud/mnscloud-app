@@ -1438,9 +1438,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return action.disabledReason?.(row) ?? null;
   }
 
-  /** Record name shown in the row actions menu heading (the card/table identity column). */
+  /**
+   * Record name shown in the row actions menu heading: the first visible column that is not a
+   * status chip (pages such as Agents lead with the status column).
+   */
   rowMenuHint(row: T): string {
-    const column = this.cardTitleColumn();
+    const column = this.tableColumns().find((item) => item.kind !== 'status');
     return column ? this.columnText(row, column) : '';
   }
 
