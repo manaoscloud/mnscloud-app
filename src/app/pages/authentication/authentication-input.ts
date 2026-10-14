@@ -16,6 +16,7 @@ export function authenticationPayload(
     'status',
     'revision',
     'published',
+    'authLog',
     'authPort',
     'acctPort',
     'interimInterval',
