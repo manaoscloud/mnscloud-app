@@ -6879,5 +6879,6 @@
   "Billing e-mail is invalid": "Correo de cobro inválido",
   "CEP must have 8 digits": "El CEP debe tener 8 dígitos",
   "State must be a Brazilian UF": "Informe una UF brasileña válida",
-  "Address exceeds the bank limits (street 100, number 10, complement 30, district 60, city 60)": "La dirección excede los límites del banco (calle 100, número 10, complemento 30, barrio 60, ciudad 60)"
+  "Address exceeds the bank limits (street 100, number 10, complement 30, district 60, city 60)": "La dirección excede los límites del banco (calle 100, número 10, complemento 30, barrio 60, ciudad 60)",
+  "authentication.resumeCommand": "Comando de reanudación"
 }

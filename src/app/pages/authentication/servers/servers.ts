@@ -77,6 +77,15 @@ const config = defineCrud({
         ['awaiting_installation', 'uninstalled'].includes(String(row['AtsProvisioningState'])),
     },
     {
+      // A running installation can always show its resume command again (it carries no secret).
+      key: 'resume',
+      label: 'authentication.resumeCommand',
+      icon: 'terminal',
+      visible: (row) =>
+        ['provisioning', 'installing'].includes(String(row['AtsProvisioningState'])) &&
+        Boolean(row['InstallationReleaseTag']),
+    },
+    {
       key: 'retry',
       label: 'authentication.retryInstallation',
       icon: 'refresh',
@@ -155,8 +164,8 @@ const config = defineCrud({
       id: 'cluster',
       label: 'authentication.clusters',
       kind: 'related',
+      field: 'ClusterName',
       uuidField: 'AuthenticationClusterAtcUUID',
-      lookupKey: 'AuthenticationClusterAtcUUID',
     },
     { id: 'name', field: 'AtsName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AtsStatus', label: 'Status', kind: 'status' },
@@ -181,6 +190,9 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
     row: ConfigurableCrudRecord,
   ): Promise<void> {
     if (action.key === 'retry') return this.retryInstallation(row);
+    if (action.key === 'resume') {
+      return this.showResumeCommand(String(row['AtsUUID']), row['InstallationReleaseTag']);
+    }
     if (action.key !== 'install') return super.handleRowAction(action, row);
     const confirmed = await confirmInstallCommandGeneration(
       this.installDialog,
@@ -215,25 +227,29 @@ export class AuthenticationServerPage extends ConfigurableCrudPageBase<Configura
       );
       this.snack.success(this.t('authentication.retryAccepted'));
       this.refreshList();
-      const apiBase = resolveApiBaseUrl();
-      openInstallCommandDialog(
-        this.installDialog,
-        {
-          title: 'authentication.retryInstallation',
-          description: 'authentication.installDescription',
-          warning: 'authentication.resumeWarning',
-          details: [
-            { label: 'API base', value: apiBase, monospace: true },
-            { label: 'authentication.serverUuid', value: uuid, monospace: true },
-            { label: 'Version', value: response.data['ref'], monospace: true },
-          ],
-          command: installCommand(apiBase, uuid, response.data),
-        },
-        this.destroyRef,
-      );
+      this.showResumeCommand(uuid, response.data['ref']);
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     }
+  }
+
+  private showResumeCommand(uuid: string, ref: unknown): void {
+    const apiBase = resolveApiBaseUrl();
+    openInstallCommandDialog(
+      this.installDialog,
+      {
+        title: 'authentication.resumeCommand',
+        description: 'authentication.installDescription',
+        warning: 'authentication.resumeWarning',
+        details: [
+          { label: 'API base', value: apiBase, monospace: true },
+          { label: 'authentication.serverUuid', value: uuid, monospace: true },
+          { label: 'Version', value: ref, monospace: true },
+        ],
+        command: installCommand(apiBase, uuid, { ref }),
+      },
+      this.destroyRef,
+    );
   }
 
   private async showInstaller(uuid: string): Promise<void> {
