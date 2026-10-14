@@ -19,7 +19,7 @@ const config = defineCrud({
   initialValues: {
     name: '',
     notes: '',
-    status: 0,
+    status: 1,
     revision: 1,
     AuthenticationAccountAacUUID: '',
     sessionTimeout: '',
@@ -30,7 +30,7 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AapStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AapName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'AapName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AapRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationAccountAacUUID',
@@ -91,12 +91,13 @@ const config = defineCrud({
     },
   ],
   columns: [
+    { id: 'name', field: 'AapName', label: 'Name', kind: 'identity' },
     {
       id: 'account',
-      field: 'AuthenticationAccountAacUUID',
+      field: 'AccountName',
       label: 'authentication.accounts',
       kind: 'related',
-      lookupKey: 'AuthenticationAccountAacUUID',
+      uuidField: 'AuthenticationAccountAacUUID',
     },
     {
       id: 'interim',
@@ -105,7 +106,6 @@ const config = defineCrud({
       kind: 'number',
     },
     { id: 'rate', field: 'AapRateLimit', label: 'authentication.rateLimit', kind: 'text' },
-    { id: 'name', field: 'AapName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AapStatus', label: 'Status', kind: 'status' },
   ],
 });

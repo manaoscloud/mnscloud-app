@@ -16,11 +16,11 @@ const config = defineCrud({
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['AacRevision']) }),
-  initialValues: { name: '', notes: '', status: 0, revision: 1, AuthenticationClusterAtcUUID: '' },
+  initialValues: { name: '', notes: '', status: 1, revision: 1, AuthenticationClusterAtcUUID: '' },
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AacStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AacName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'AacName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AacRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationClusterAtcUUID',
@@ -48,14 +48,14 @@ const config = defineCrud({
     },
   ],
   columns: [
+    { id: 'name', field: 'AacName', label: 'Name', kind: 'identity' },
     {
       id: 'cluster',
-      field: 'AuthenticationClusterAtcUUID',
+      field: 'ClusterName',
       label: 'authentication.clusters',
       kind: 'related',
-      lookupKey: 'AuthenticationClusterAtcUUID',
+      uuidField: 'AuthenticationClusterAtcUUID',
     },
-    { id: 'name', field: 'AacName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AacStatus', label: 'Status', kind: 'status' },
   ],
 });

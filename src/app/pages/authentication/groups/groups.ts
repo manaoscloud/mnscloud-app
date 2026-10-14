@@ -20,7 +20,7 @@ const config = defineCrud({
   initialValues: {
     name: '',
     notes: '',
-    status: 0,
+    status: 1,
     revision: 1,
     AuthenticationAccountAacUUID: '',
     AuthenticationProfileAapUUID: '',
@@ -28,7 +28,7 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AagStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AagName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'AagName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AagRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationAccountAacUUID',
@@ -76,21 +76,21 @@ const config = defineCrud({
     },
   ],
   columns: [
+    { id: 'name', field: 'AagName', label: 'Name', kind: 'identity' },
     {
       id: 'account',
-      field: 'AuthenticationAccountAacUUID',
+      field: 'AccountName',
       label: 'authentication.accounts',
       kind: 'related',
-      lookupKey: 'AuthenticationAccountAacUUID',
+      uuidField: 'AuthenticationAccountAacUUID',
     },
     {
       id: 'profile',
-      field: 'AuthenticationProfileAapUUID',
+      field: 'ProfileName',
       label: 'authentication.profiles',
       kind: 'related',
-      lookupKey: 'AuthenticationProfileAapUUID',
+      uuidField: 'AuthenticationProfileAapUUID',
     },
-    { id: 'name', field: 'AagName', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'AagStatus', label: 'Status', kind: 'status' },
   ],
 });
