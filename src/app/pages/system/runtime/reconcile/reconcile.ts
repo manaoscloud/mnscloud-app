@@ -25,22 +25,41 @@ const STATUS_OPTIONS = [
 
 const PRODUCT_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'mnscloud-db', label: 'Database (mnscloud-db)' },
+  { value: 'mnscloud-workers', label: 'Workers (mnscloud-workers)' },
+  { value: 'mnscloud-webapps', label: 'WebApps (mnscloud-webapps)' },
+  { value: 'mnscloud-nginx', label: 'Nginx edge (mnscloud-nginx)' },
 ];
 
 const RESOURCE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'mariadb.server', label: 'MariaDB server (99-mnscloud.cnf)' },
+  { value: 'workers.handlers', label: 'Worker handlers (WORKER_HANDLERS)' },
+  { value: 'webapps.apps', label: 'Enabled webapps (WEBAPPS_ENABLED_APPS)' },
+  { value: 'nginx.webapps', label: 'Published webapps paths (edge)' },
 ];
+
+/** Resource and example desired values per module; the API and the module adapter validate them. */
+const PRODUCT_DEFAULTS: Record<string, { resource: string; desired: Record<string, string> }> = {
+  'mnscloud-db': {
+    resource: 'mariadb.server',
+    desired: { 'character-set-collations': 'utf8mb4=utf8mb4_unicode_ci' },
+  },
+  'mnscloud-workers': { resource: 'workers.handlers', desired: { WORKER_HANDLERS: 'dns' } },
+  'mnscloud-webapps': {
+    resource: 'webapps.apps',
+    desired: { WEBAPPS_ENABLED_APPS: 'phoneweb,pulse,customer-portal' },
+  },
+  'mnscloud-nginx': {
+    resource: 'nginx.webapps',
+    desired: { MNSCLOUD_CUSTOMER_PORTAL_PATH: '/customer-portal/' },
+  },
+};
 
 const RESOLUTION_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: '', label: 'Preserve local changes' },
   { value: 'adopt-desired', label: 'Enforce desired values' },
 ];
 
-const DEFAULT_DESIRED = JSON.stringify(
-  { 'character-set-collations': 'utf8mb4=utf8mb4_unicode_ci' },
-  null,
-  2,
-);
+const DEFAULT_DESIRED = JSON.stringify(PRODUCT_DEFAULTS['mnscloud-db'].desired, null, 2);
 
 function result(row: ConfigurableCrudRecord): Record<string, unknown> {
   const value = row['result'];
@@ -214,12 +233,21 @@ const config = defineCrud({
         confirm: {
           title: 'Apply this plan',
           message:
-            'The Agent writes the configuration, restarts the service once, verifies the live values and rolls back on failure.',
+            'The Agent writes the configuration, activates it, verifies the result and rolls back on failure.',
           confirmLabel: 'Apply',
         },
       },
     },
   ],
+  fieldChange: (key, value, current) => {
+    const defaults = key === 'product' ? PRODUCT_DEFAULTS[String(value)] : undefined;
+    if (!defaults) return current;
+    return {
+      ...current,
+      resource: defaults.resource,
+      desired: JSON.stringify(defaults.desired, null, 2),
+    };
+  },
   payload: (values) => {
     const next: ConfigurableCrudRecord = {
       agentUUID: values['agentUUID'],
