@@ -732,7 +732,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       this.t(column.label).toLocaleLowerCase().includes(term),
     );
   });
-  readonly visibleColumnCount = computed(() => this.tableColumns().length);
+  /**
+   * Column choices staged while the table view menu is open. The menu trigger lives in the table
+   * header, which mat-table re-creates when columns change (closing the menu), so the choices
+   * apply to the table when the menu closes.
+   */
+  readonly columnDraft = signal<CrudViewPreferences | null>(null);
+  readonly visibleColumnCount = computed(
+    () => this.columns().filter((column) => this.isColumnChecked(column)).length,
+  );
   readonly cardStatusColumn = computed(
     () =>
       this.tableColumns().find((column, index) => index > 0 && column.kind === 'status') ?? null,
@@ -2384,11 +2392,49 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     );
   }
 
+  /** Column state shown in the table view menu, including staged (not yet applied) choices. */
+  isColumnChecked(column: ConfigurableCrudColumn): boolean {
+    return (
+      this.isColumnLocked(column) ||
+      isCrudColumnVisible(
+        this.columnDraft() ?? this.viewPreferences(),
+        column.id,
+        column.optional === true,
+      )
+    );
+  }
+
+  toggleColumnDraft(column: ConfigurableCrudColumn): void {
+    if (this.isColumnLocked(column)) return;
+    this.columnDraft.set(
+      setCrudColumnVisible(
+        this.columnDraft() ?? this.viewPreferences(),
+        column.id,
+        column.optional === true,
+        !this.isColumnChecked(column),
+      ),
+    );
+  }
+
+  /** Table view menu closed: apply staged column choices and clear the column search. */
+  applyColumnDraft(): void {
+    this.columnSearch.set('');
+    const draft = this.columnDraft();
+    if (!draft) return;
+    this.columnDraft.set(null);
+    this.saveViewPreferences({
+      ...this.viewPreferences(),
+      hidden: draft.hidden,
+      shown: draft.shown,
+    });
+  }
+
   setDensity(density: CrudDensity): void {
     this.saveViewPreferences({ ...this.viewPreferences(), density });
   }
 
   resetView(): void {
+    this.columnDraft.set(null);
     this.saveViewPreferences(DEFAULT_CRUD_VIEW);
   }
 

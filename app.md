@@ -618,7 +618,9 @@ the page must use the shared base named here.
     be hidden; columns with `optional: true` start hidden. Preferences are UX only.
     The menu shows density as a radio section and columns as a checkbox section with a
     `visible / total` hint; it stays open while toggling, offers a column search above 8 columns,
-    and the locked identity column reads `Always visible`.
+    and the locked identity column reads `Always visible`. Density applies at once; column choices
+    are staged (`columnDraft`) and applied when the menu closes, because mat-table re-creates the
+    header row (and the menu trigger inside it) whenever the displayed columns change.
   - At `<=900px` the shared CRUD lists records as cards (`mobileLayout()`): the first visible column
     as title, the status chip and the same row actions in the header, every other visible column
     as a label/value pair. Cards reuse the table cell template (`#crudCell`), so copy and show
