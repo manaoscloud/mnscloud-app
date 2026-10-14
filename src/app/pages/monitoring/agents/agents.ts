@@ -68,6 +68,20 @@ type RuntimeProductFleet = {
   rolloutStatus?: string | null;
 };
 
+type WebappInventoryRow = {
+  agentUUID: string;
+  agentName?: string | null;
+  app: string;
+  basePath?: string | null;
+  ref?: string | null;
+  installedVersion?: string | null;
+  resolvedRef?: string | null;
+  lastSyncStatus?: string | null;
+  lastSyncAt?: string | null;
+  lastError?: string | null;
+  updateStatus?: 'current' | 'outdated' | 'failed' | 'unknown' | null;
+};
+
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'online', label: 'Online' },
   { value: 'degraded', label: 'Degraded' },
@@ -246,6 +260,9 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   readonly runtimeProducts = signal<RuntimeProductFleet[]>([]);
   readonly updatingIds = signal(new Set<string>());
   readonly updatingProducts = signal(new Set<string>());
+  /** Per-app inventory of the mnscloud-webapps hosts (platform scope only). */
+  readonly webapps = signal<WebappInventoryRow[]>([]);
+  readonly updatingWebapps = signal(new Set<string>());
 
   private readonly isMaster = computed(() =>
     (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
@@ -279,14 +296,22 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       label: 'Runtime updates',
       icon: 'published_with_changes',
       tooltip: 'Queue runtime product updates',
-      actions: this.runtimeProducts()
-        .filter((product) => this.canUpdateRuntimeProduct(product))
-        .map((product) => ({
-          key: `runtime:${product.product}`,
-          label: `${product.label} ${product.latestVersion ?? product.targetRef ?? ''}`.trim(),
-          icon: 'published_with_changes',
-          tooltip: this.runtimeProductReason(product),
+      actions: [
+        ...this.runtimeProducts()
+          .filter((product) => this.canUpdateRuntimeProduct(product))
+          .map((product) => ({
+            key: `runtime:${product.product}`,
+            label: `${product.label} ${product.latestVersion ?? product.targetRef ?? ''}`.trim(),
+            icon: 'published_with_changes',
+            tooltip: this.runtimeProductReason(product),
+          })),
+        ...this.webappApps().map((app) => ({
+          key: `webapp:${app}`,
+          label: this.webappLabel(app),
+          icon: this.webappRows(app).some((row) => row.updateStatus === 'failed') ? 'error' : 'web',
+          tooltip: this.webappTooltip(app),
         })),
+      ],
     };
   }
 
@@ -297,12 +322,19 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   }
 
   override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
+    if (action.key.startsWith('webapp:')) {
+      return this.updatingWebapps().has(action.key.slice('webapp:'.length));
+    }
     if (!action.key.startsWith('runtime:')) return false;
     const product = this.runtimeProducts().find((item) => action.key === `runtime:${item.product}`);
     return !product || !this.canUpdateRuntimeProduct(product);
   }
 
   override async handleFilterAction(action: ConfigurableCrudFilterAction) {
+    if (action.key.startsWith('webapp:')) {
+      await this.queueWebappUpdate(action.key.slice('webapp:'.length));
+      return;
+    }
     if (!action.key.startsWith('runtime:')) return;
     const productName = action.key.slice('runtime:'.length);
     const product = this.runtimeProducts().find((item) => item.product === productName);
@@ -363,12 +395,22 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   protected override async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
   ): Promise<MonitoringAgent[]> {
-    const [agentsResult, runtimeProductsResult] = await Promise.allSettled([
+    const [agentsResult, runtimeProductsResult, webappsResult] = await Promise.allSettled([
       this.api.get<{ data?: { items?: MonitoringAgent[] } }>(
         `monitoring/agents${this.queryString(filters)}`,
       ),
       this.api.get<{ data?: RuntimeProductFleet[] }>('monitoring/agents/runtime-products'),
+      this.isMaster()
+        ? this.api.get<{ data?: { items?: WebappInventoryRow[] } }>(
+            'monitoring/agents/runtime-products/mnscloud-webapps/apps',
+          )
+        : Promise.resolve({ data: { items: [] as WebappInventoryRow[] } }),
     ]);
+
+    // Optional inventory: older APIs do not expose it, so a failure only hides the webapp entries.
+    this.webapps.set(
+      webappsResult.status === 'fulfilled' ? (webappsResult.value.data?.items ?? []) : [],
+    );
 
     if (runtimeProductsResult.status === 'fulfilled') {
       this.runtimeProducts.set(runtimeProductsResult.value.data ?? []);
@@ -596,6 +638,68 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       target.hasCapability === true &&
       this.isRuntimeTargetNewer(target)
     );
+  }
+
+  private webappApps(): string[] {
+    return [...new Set(this.webapps().map((row) => row.app))].sort();
+  }
+
+  private webappRows(app: string): WebappInventoryRow[] {
+    return this.webapps().filter((row) => row.app === app);
+  }
+
+  private webappLabel(app: string): string {
+    const rows = this.webappRows(app);
+    const versions = [...new Set(rows.map((row) => row.installedVersion || '-'))].join(', ');
+    const status = rows.some((row) => row.updateStatus === 'failed')
+      ? 'failed'
+      : rows.some((row) => row.updateStatus === 'outdated')
+        ? 'outdated'
+        : rows.every((row) => row.updateStatus === 'current')
+          ? 'current'
+          : 'unknown';
+    return `Webapp ${app} ${versions} (${this.transloco.translate(status)})`;
+  }
+
+  private webappTooltip(app: string): string {
+    return this.webappRows(app)
+      .map((row) => {
+        const host = row.agentName || row.agentUUID;
+        const resolved = row.resolvedRef ? ` → ${row.resolvedRef}` : '';
+        const error = row.lastError ? `: ${row.lastError}` : '';
+        return `${host}: ${row.installedVersion || '-'}${resolved} [${row.lastSyncStatus || 'unknown'}]${error}`;
+      })
+      .join(' · ');
+  }
+
+  private async queueWebappUpdate(app: string) {
+    const confirmed = await this.confirmAction(
+      `Update webapp ${app}`,
+      `Queue an update of ${app} on every webapps host? Only this app is reinstalled at its configured release; the webapps runtime keeps its version.`,
+      'Queue update',
+    );
+    if (!confirmed) return;
+    this.updatingWebapps.update((current) => new Set(current).add(app));
+    try {
+      const response = await this.api.post<{
+        data?: { jobs?: unknown[]; failed?: Array<{ message?: string }> };
+      }>(`monitoring/agents/runtime-products/mnscloud-webapps/apps/${app}/update`, {});
+      const failed = response.data?.failed ?? [];
+      if (failed.length && !(response.data?.jobs ?? []).length) {
+        this.snack.error(failed[0]?.message || `Failed to queue ${app} update.`);
+      } else {
+        this.snack.success(`${app} ${this.transloco.translate('update queued.')}`);
+      }
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || `Failed to queue ${app} update.`);
+    } finally {
+      this.updatingWebapps.update((current) => {
+        const next = new Set(current);
+        next.delete(app);
+        return next;
+      });
+    }
   }
 
   private canUpdateRuntimeProduct(product: RuntimeProductFleet) {
