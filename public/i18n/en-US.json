@@ -6800,6 +6800,7 @@
   "authentication.provisioningHelp": "Configure the cluster database and network. Settings are protected while installations use them.",
   "authentication.databaseAgent": "Database Agent",
   "authentication.databaseHost": "Database host",
+  "authentication.databaseHostHelp": "Prefilled with the private IP reported by the database Agent. It must be an address of that database server; installation checks it before creating the database user.",
   "authentication.databasePort": "Database port",
   "authentication.databaseName": "Database name",
   "authentication.networkCidr": "Service network (CIDR)",

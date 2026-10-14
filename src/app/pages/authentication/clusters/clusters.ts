@@ -60,12 +60,20 @@ const config = defineCrud({
                 endpoint: 'system/authentication/database-agents',
                 uuidField: 'uuid',
                 labelField: 'name',
+                // The Agent reports its private address: prefill the database host from it.
+                fill: { databaseHost: 'databaseHost' },
               },
               quickCreate: false,
               quickCreateExemptReason:
                 'Agents must be installed and enrolled through the dedicated Agent installation ceremony.',
             },
-            { key: 'databaseHost', label: 'authentication.databaseHost', span: 1, required: true },
+            {
+              key: 'databaseHost',
+              label: 'authentication.databaseHost',
+              span: 1,
+              required: true,
+              help: 'authentication.databaseHostHelp',
+            },
             {
               key: 'databasePort',
               label: 'authentication.databasePort',

@@ -6801,6 +6801,7 @@
   "authentication.provisioningHelp": "Configure o banco e a rede do cluster. A configuração fica protegida enquanto houver instalações em uso.",
   "authentication.databaseAgent": "Agent do banco",
   "authentication.databaseHost": "Host do banco",
+  "authentication.databaseHostHelp": "Preenchido com o IP privado informado pelo Agent de banco. Deve ser um endereço desse servidor de banco; a instalação confere isso antes de criar o usuário de banco.",
   "authentication.databasePort": "Porta do banco",
   "authentication.databaseName": "Nome do banco",
   "authentication.networkCidr": "Rede do serviço (CIDR)",
