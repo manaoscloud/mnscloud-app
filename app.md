@@ -129,8 +129,11 @@ Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact 
   lines. Above 7 tenants the panel shows a search field that filters the complete `user/access`
   list by name, code or tax ID; it resets when the panel closes.
 - The tenant fiscal identity is edited in `Billing > Tax identity` (`/billing/identity`, settings
-  page template). Saving it calls `TenantService.notifyAccessChanged()` so the switcher reloads.
-  Wallet top-ups check `billing/identity` first and send the user there while it is incomplete.
+  page template): tax ID, legal/trade name, billing e-mail and billing address (CEP lookup and UF
+  list for Brazil). Saving it calls `TenantService.notifyAccessChanged()` so the switcher reloads.
+- The identity is the only payer of wallet top-ups: the top-up form shows it read-only and sends
+  no payer data; it opens only when the identity is complete, otherwise it sends the user to
+  `/billing/identity`. `My profile` holds personal data only (no CPF or address).
 - Theme offers explicit light/dark/system choices through ThemeService; retain persistence,
   cross-tab changes and device preference tracking. Keep existing language, tenant, permission,
   operation polling and logout/session-cleanup flows in their services.

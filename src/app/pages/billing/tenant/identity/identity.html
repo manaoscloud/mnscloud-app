@@ -120,6 +120,84 @@
       }
     </div>
 
+    <div class="form-grid span-4">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Billing e-mail' | transloco }}</mat-label>
+        <input matInput type="email" [formField]="identityForm.billingEmail" autocomplete="email" />
+        <mns-field-help
+          matIconSuffix
+          [label]="'Billing e-mail' | transloco"
+          [text]="'Receives charges and receipts. Empty uses the owner e-mail.' | transloco"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'ZIP code' | transloco }}</mat-label>
+        <input
+          matInput
+          [formField]="identityForm.addressZip"
+          autocomplete="postal-code"
+          [attr.inputmode]="isBrazil() ? 'numeric' : null"
+          (keydown.enter)="isBrazil() && searchZip()"
+        />
+        @if (isBrazil()) {
+          <button
+            mat-icon-button
+            matIconSuffix
+            type="button"
+            [attr.aria-label]="'Search' | transloco"
+            [disabled]="searchingZip() || !canManage()"
+            (click)="searchZip()"
+          >
+            <mat-icon>search</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'Address' | transloco }}</mat-label>
+        <input matInput [formField]="identityForm.addressStreet" autocomplete="address-line1" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-grid span-4">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Number' | transloco }}</mat-label>
+        <input matInput [formField]="identityForm.addressNumber" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Complement' | transloco }}</mat-label>
+        <input matInput [formField]="identityForm.addressComplement" autocomplete="address-line2" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Neighborhood' | transloco }}</mat-label>
+        <input matInput [formField]="identityForm.addressDistrict" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'City' | transloco }}</mat-label>
+        <input matInput [formField]="identityForm.addressCity" autocomplete="address-level2" />
+      </mat-form-field>
+
+      @if (isBrazil()) {
+        <mns-search-select-field
+          class="span-1"
+          [label]="'State' | transloco"
+          [field]="identityForm.addressState"
+          [options]="stateOptions"
+          [placeholder]="'Search' | transloco"
+          [emptyLabel]="'No records found.' | transloco"
+        />
+      } @else {
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ 'State or region' | transloco }}</mat-label>
+          <input matInput [formField]="identityForm.addressState" autocomplete="address-level1" />
+        </mat-form-field>
+      }
+    </div>
+
     @if (taxIdError() && model().taxId.trim()) {
       <p class="identity-error span-4" role="alert">{{ taxIdError()! | transloco }}</p>
     }

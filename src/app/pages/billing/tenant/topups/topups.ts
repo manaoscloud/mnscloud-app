@@ -9,39 +9,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudSaveContext,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
-import { BillingPaymentIntent, BillingService } from '../../shared/billing.service';
-
-/** Brazilian states for the bank payer address (UF codes are not translated). */
-const STATE_OPTIONS = [
-  'AC',
-  'AL',
-  'AM',
-  'AP',
-  'BA',
-  'CE',
-  'DF',
-  'ES',
-  'GO',
-  'MA',
-  'MG',
-  'MS',
-  'MT',
-  'PA',
-  'PB',
-  'PE',
-  'PI',
-  'PR',
-  'RJ',
-  'RN',
-  'RO',
-  'RR',
-  'RS',
-  'SC',
-  'SE',
-  'SP',
-  'TO',
-].map((value) => ({ value, label: value }));
+import { BillingPaymentIntent } from '../../shared/billing.service';
 
 const TOPUP_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'PAID', label: 'Paid' },
@@ -90,65 +58,9 @@ export function cardTopupTotal(amount: number, method: TopupMethod | undefined) 
   return { surcharge: (totalCents - amountCents) / 100, total: totalCents / 100 };
 }
 
-type FieldValues = { values: ConfigurableCrudRecord };
-const isCompany = ({ values }: FieldValues) => values['payerType'] === 'JURIDICA';
-const isIndividual = (context: FieldValues) => !isCompany(context);
-/** Company data comes from its registration; the individual's stored CPF is changed only in the profile. */
-const lockedFor =
-  (flag: string) =>
-  ({ values }: FieldValues) =>
-    values['payerType'] === 'JURIDICA' || Boolean(values[flag]);
-
-/** Tenant companies that may pay; Billing read, available without the ERP module. */
-type PayerCompany = {
-  ErpCompanyComUUID: string;
-  ComName: string;
-  ComLegalName: string | null;
-  ComDocument: string | null;
-  ComEmail: string | null;
-  ComAddressZip: string | null;
-  ComAddressStreet: string | null;
-  ComAddressNumber: string | null;
-  ComAddressComplement: string | null;
-  ComAddressDistrict: string | null;
-  ComAddressCity: string | null;
-  ComAddressState: string | null;
-};
-
-/** Billing data of the signed-in user returned by GET /user/profile. */
-type UserBillingProfile = {
-  FirstName?: string | null;
-  LastName?: string | null;
-  Email?: string | null;
-  Document?: string | null;
-  AddressZip?: string | null;
-  AddressStreet?: string | null;
-  AddressNumber?: string | null;
-  AddressComplement?: string | null;
-  AddressDistrict?: string | null;
-  AddressCity?: string | null;
-  AddressState?: string | null;
-};
-
-const PAYER_FIELDS = [
-  'payerName',
-  'payerDocument',
-  'payerEmail',
-  'payerZip',
-  'payerAddress',
-  'payerNumber',
-  'payerComplement',
-  'payerDistrict',
-  'payerCity',
-  'payerState',
-] as const;
-
 function formatBrl(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-
-/** Set by the page: the company quick-create opens the ERP form, so it needs the ERP module. */
-const companyQuickCreateEnabled = signal(false);
 
 /** Payer-facing data returned by the bank on sync; absent until the charge is registered. */
 type TopupPaymentInstructions = {
@@ -162,6 +74,14 @@ type TopupPaymentInstructions = {
 type TopupSyncResult = BillingPaymentIntent & {
   syncStatus?: string | null;
   paymentInstructions?: TopupPaymentInstructions | null;
+};
+
+/** Fields of GET /billing/identity shown as the payer of a top-up. */
+type TenantPayerSummary = {
+  IsComplete?: number;
+  TidLegalName?: string | null;
+  TaxIdLabel?: string | null;
+  TaxIdDisplay?: string | null;
 };
 
 const TOPUPS_CONFIG: ConfigurableCrudConfig = {
@@ -215,21 +135,10 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
   activeStatusValues: ['PAID'],
   statusOptions: TOPUP_STATUS_OPTIONS,
   initialValues: {
-    payerType: 'FISICA',
+    payer: '',
     paymentMethod: 'PIX_BOLETO',
-    ErpCompanyComUUID: '',
     amount: '',
     reference: '',
-    payerName: '',
-    payerDocument: '',
-    payerEmail: '',
-    payerAddress: '',
-    payerNumber: '',
-    payerComplement: '',
-    payerDistrict: '',
-    payerCity: '',
-    payerState: '',
-    payerZip: '',
     dueDate: '',
     idempotencyKey: '',
   },
@@ -276,16 +185,13 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
   ],
   fields: [
     {
-      key: 'payerType',
-      label: 'Payer type',
-      type: 'select',
-      span: 1,
-      lineFillAfter: 3,
-      required: true,
-      options: [
-        { value: 'FISICA', label: 'Individual' },
-        { value: 'JURIDICA', label: 'Company' },
-      ],
+      key: 'payer',
+      label: 'Payer',
+      type: 'text',
+      span: 2,
+      lineFillAfter: 2,
+      disabledWhen: () => true,
+      help: 'The payer is the tenant tax identity. Change it in Billing > Tax identity.',
     },
     { key: 'amount', label: 'Amount', type: 'currency', span: 1, required: true },
     {
@@ -310,105 +216,6 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
     },
     { key: 'dueDate', label: 'Due date', type: 'date', span: 1 },
     { key: 'reference', label: 'Reference', type: 'text', span: 1 },
-    {
-      key: 'ErpCompanyComUUID',
-      source: 'ErpCompanyComUUID',
-      label: 'Company',
-      type: 'search-select',
-      span: 2,
-      remoteLookup: {
-        endpoint: 'billing/payer-companies',
-        uuidField: 'ErpCompanyComUUID',
-        labelField: 'ComName',
-      },
-      quickCreate: quickCreateFor('ErpCompanyComUUID', {
-        enabled: () => companyQuickCreateEnabled(),
-      }),
-      hiddenWhen: isIndividual,
-      requiredWhen: isCompany,
-    },
-    {
-      key: 'payerName',
-      label: 'Payer name',
-      type: 'text',
-      span: 2,
-      hiddenWhen: isCompany,
-      requiredWhen: isIndividual,
-      disabledWhen: lockedFor('payerNameLocked'),
-    },
-    {
-      key: 'payerDocument',
-      label: 'Payer document',
-      labelWhen: (context) => (isCompany(context) ? 'CNPJ' : 'CPF'),
-      translateLabel: false,
-      type: 'text',
-      span: 1,
-      required: true,
-      disabledWhen: lockedFor('payerDocumentLocked'),
-      helpWhen: (context) =>
-        isIndividual(context) && context.values['payerDocumentLocked']
-          ? 'To change the CPF, edit your user profile.'
-          : '',
-    },
-    {
-      key: 'payerEmail',
-      label: 'E-mail',
-      type: 'email',
-      span: 1,
-      requiredWhen: isIndividual,
-      disabledWhen: lockedFor('payerEmailLocked'),
-    },
-    {
-      key: 'payerZip',
-      label: 'ZIP code',
-      type: 'text',
-      span: 1,
-      breakBefore: true,
-      required: true,
-      disabledWhen: isCompany,
-      postalLookup: {
-        streetKey: 'payerAddress',
-        districtKey: 'payerDistrict',
-        cityKey: 'payerCity',
-        stateKey: 'payerState',
-        numberKey: 'payerNumber',
-      },
-    },
-    {
-      key: 'payerAddress',
-      label: 'Address',
-      type: 'text',
-      span: 2,
-      required: true,
-      disabledWhen: isCompany,
-    },
-    { key: 'payerNumber', label: 'Number', type: 'text', span: 1, disabledWhen: isCompany },
-    {
-      key: 'payerComplement',
-      label: 'Complement',
-      type: 'text',
-      span: 1,
-      disabledWhen: isCompany,
-    },
-    { key: 'payerDistrict', label: 'Neighborhood', type: 'text', span: 1, disabledWhen: isCompany },
-    {
-      key: 'payerCity',
-      label: 'City',
-      type: 'text',
-      span: 1,
-      required: true,
-      disabledWhen: isCompany,
-    },
-    {
-      key: 'payerState',
-      label: 'State',
-      type: 'select',
-      span: 1,
-      required: true,
-      options: STATE_OPTIONS,
-      translateOptions: false,
-      disabledWhen: isCompany,
-    },
     { key: 'idempotencyKey', label: 'Idempotency key', type: 'text', hidden: true },
   ],
 };
@@ -423,15 +230,11 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
 export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
   BillingPaymentIntent & ConfigurableCrudRecord
 > {
-  private readonly billing = inject(BillingService);
   private readonly router = inject(Router);
-  /** Billing data of the signed-in user, loaded when a top-up form opens. */
-  private readonly profile = signal<UserBillingProfile | null>(null);
 
   constructor() {
     super(TOPUPS_CONFIG);
     translate = (key, params) => this.t(key, params);
-    void this.loadCompanyQuickCreate();
     void this.loadTopupMethods();
   }
 
@@ -459,161 +262,38 @@ export class BillingTenantTopupsPage extends ConfigurableCrudPageBase<
     void this.startCreateWithIdentity();
   }
 
-  /** Top-ups need the tenant tax identity; without it the user is sent to fill it in. */
+  /** The payer is the tenant tax identity; without a complete one the user is sent to fill it in. */
   private async startCreateWithIdentity(): Promise<void> {
+    let payer = '';
     try {
-      const response = await this.api.get<{ data?: { item?: { IsComplete?: number } } }>(
+      const response = await this.api.get<{ data?: { item?: TenantPayerSummary } }>(
         'billing/identity',
       );
-      if (!response.data?.item?.IsComplete) {
+      const identity = response.data?.item;
+      if (!identity?.IsComplete) {
         this.snack.warning(this.t('Fill in the tax identity to add credit to the wallet.'));
         await this.router.navigate(['/billing/identity']);
         return;
       }
+      payer = [identity.TidLegalName, [identity.TaxIdLabel, identity.TaxIdDisplay].join(' ')]
+        .filter((part) => part?.trim())
+        .join(' · ');
     } catch {
       // The API still refuses the top-up with TENANT_IDENTITY_REQUIRED.
     }
     super.startCreate();
-    this.patchFormValues({ idempotencyKey: crypto.randomUUID() });
-    void this.applyProfile();
+    this.patchFormValues({ payer, idempotencyKey: crypto.randomUUID() });
   }
 
-  protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key === 'payerType') {
-      if (value === 'JURIDICA') {
-        this.patchFormValues({ ErpCompanyComUUID: '', ...this.emptyPayer() });
-      } else {
-        this.patchFormValues({ ErpCompanyComUUID: '' });
-        void this.applyProfile();
-      }
-      return;
-    }
-    if (key === 'ErpCompanyComUUID') void this.applyCompany(String(value ?? ''));
-  }
-
-  /** The API builds the bank payer: the user profile (FISICA) or the tenant company (JURIDICA). */
+  /** The bank payer is resolved by the API from the tenant identity; only the charge is sent. */
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const request: ConfigurableCrudRecord = {
+    return {
       amount: payload['amount'],
       reference: payload['reference'],
       dueDate: payload['dueDate'],
       idempotencyKey: payload['idempotencyKey'],
-      payerType: payload['payerType'],
       paymentMethod: payload['paymentMethod'] || 'PIX_BOLETO',
     };
-    if (payload['payerType'] === 'JURIDICA') {
-      return { ...request, ErpCompanyComUUID: payload['ErpCompanyComUUID'] };
-    }
-    return {
-      ...request,
-      payer: {
-        nome: payload['payerName'],
-        cpfCnpj: String(payload['payerDocument'] ?? '').replace(/\D/g, ''),
-        email: payload['payerEmail'],
-        endereco: payload['payerAddress'],
-        numero: payload['payerNumber'],
-        complemento: payload['payerComplement'],
-        bairro: payload['payerDistrict'],
-        cidade: payload['payerCity'],
-        uf: payload['payerState'],
-        cep: String(payload['payerZip'] ?? '').replace(/\D/g, ''),
-      },
-    };
-  }
-
-  private emptyPayer(): ConfigurableCrudRecord {
-    return {
-      ...Object.fromEntries(PAYER_FIELDS.map((key) => [key, ''])),
-      payerNameLocked: false,
-      payerDocumentLocked: false,
-      payerEmailLocked: false,
-    };
-  }
-
-  /** Prefills an individual payer from the user profile; what is missing is typed and saved. */
-  private async applyProfile(): Promise<void> {
-    let profile = this.profile();
-    if (!profile) {
-      try {
-        const response = await this.api.get<{ data?: UserBillingProfile }>('user/profile');
-        profile = response.data ?? {};
-        this.profile.set(profile);
-      } catch {
-        profile = {};
-      }
-    }
-    if (this.formValues()['payerType'] === 'JURIDICA') return;
-    const name = [profile.FirstName, profile.LastName].filter(Boolean).join(' ');
-    this.patchFormValues({
-      payerName: name,
-      payerDocument: profile.Document ?? '',
-      payerEmail: profile.Email ?? '',
-      payerZip: profile.AddressZip ?? '',
-      payerAddress: profile.AddressStreet ?? '',
-      payerNumber: profile.AddressNumber ?? '',
-      payerComplement: profile.AddressComplement ?? '',
-      payerDistrict: profile.AddressDistrict ?? '',
-      payerCity: profile.AddressCity ?? '',
-      payerState: profile.AddressState ?? '',
-      payerNameLocked: Boolean(name),
-      payerDocumentLocked: Boolean(profile.Document),
-      payerEmailLocked: Boolean(profile.Email),
-    });
-  }
-
-  /** Shows the selected company's registration data (read-only; fixed in the company form). */
-  private async applyCompany(companyUUID: string): Promise<void> {
-    if (!companyUUID) {
-      this.patchFormValues(this.emptyPayer());
-      return;
-    }
-    try {
-      const response = await this.api.get<{ data?: { items?: PayerCompany[] } }>(
-        `billing/payer-companies?ErpCompanyComUUID=${encodeURIComponent(companyUUID)}&limit=1`,
-      );
-      const company = response.data?.items?.[0];
-      if (!company || this.formValues()['ErpCompanyComUUID'] !== companyUUID) return;
-      this.patchFormValues({
-        payerName: company.ComLegalName ?? company.ComName,
-        payerDocument: company.ComDocument ?? '',
-        payerEmail: company.ComEmail ?? '',
-        payerZip: company.ComAddressZip ?? '',
-        payerAddress: company.ComAddressStreet ?? '',
-        payerNumber: company.ComAddressNumber ?? '',
-        payerComplement: company.ComAddressComplement ?? '',
-        payerDistrict: company.ComAddressDistrict ?? '',
-        payerCity: company.ComAddressCity ?? '',
-        payerState: company.ComAddressState ?? '',
-      });
-      const missing = [
-        company.ComDocument,
-        company.ComAddressZip,
-        company.ComAddressStreet,
-        company.ComAddressCity,
-        company.ComAddressState,
-      ].some((item) => !item);
-      if (missing) {
-        this.snack.warning(
-          this.t(
-            'This company is missing CNPJ or address data. Complete the company registration.',
-          ),
-        );
-      }
-    } catch (error) {
-      this.snack.error(this.errorMessage(error));
-    }
-  }
-
-  /** Creating a company opens the ERP company form, which requires the ERP module. */
-  private async loadCompanyQuickCreate(): Promise<void> {
-    try {
-      const grants = await this.billing.listEntitlementGrants();
-      companyQuickCreateEnabled.set(
-        grants.some((grant) => grant.entitlementCode?.toLowerCase().startsWith('module.erp')),
-      );
-    } catch {
-      companyQuickCreateEnabled.set(false);
-    }
   }
 
   protected override afterSave(
