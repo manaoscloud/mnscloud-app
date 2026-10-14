@@ -523,15 +523,7 @@
   }
 }
 
-.crud-menu-danger {
-  color: var(--mat-sys-color-error);
-
-  .mat-icon {
-    color: inherit;
-  }
-}
-
-/* Table view menu: density and visible columns, saved per page in this browser. */
+/* Table view trigger; the menu itself uses the global `mns-menu` shell. */
 .actions-col-heading {
   display: flex;
   align-items: center;
@@ -546,15 +538,6 @@
   &.is-customized {
     color: var(--mat-sys-color-primary);
   }
-}
-
-.crud-view-menu-label {
-  padding: 0.5rem 1rem 0.25rem;
-  color: var(--mat-sys-color-on-surface-variant);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .crud-secret-value {

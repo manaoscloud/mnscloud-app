@@ -56,7 +56,7 @@ const ACTION_LABELS: Record<string, string> = {
   imports: [DatePipe, MatButtonModule, MatIconModule, MatProgressSpinnerModule, TranslocoPipe],
   template: `
     <div class="activity-panel" (click)="$event.stopPropagation()">
-      <div class="topbar-menu-title">
+      <div class="mns-menu-title">
         <span>{{ 'operations.activityTitle' | transloco }}</span>
       </div>
       @if (!operations.visible().length) {

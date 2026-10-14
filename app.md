@@ -107,11 +107,42 @@ Groups are navigation-only and inherit existing commercial visibility. Preserve 
 Route metadata supplies translated breadcrumbs; groups without destinations render as text.
 Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact and mobile menus.
 
+## Menus
+
+Every menu in the App (topbar, CRUD row actions, table view, contextual filter actions, split
+save, and any new one) uses one global design, based on the topbar Activity Center:
+
+- Panel: `<mat-menu class="mns-menu">` from `src/styles/_mns-menu.scss` (22rem, 12px radius,
+  divided rows, viewport-bounded scrolling, 8px side margins at 480px and below). Short action
+  lists add `mns-menu-compact`. Material renders panels in the CDK overlay, outside component
+  styles, so menu styling stays global; never add per-component menu panel CSS.
+- Primitives in `src/app/shared/menu/mns-menu.ts` (`MNS_MENU`):
+  - `mnsMenuItem` on every `button[mat-menu-item]`: `selection="radio" | "checkbox"` with
+    `[checked]` sets `menuitemradio`/`menuitemcheckbox` and `aria-checked`; `tone="danger"` for
+    destructive actions (`Delete`, `Logout`); `keepOpen` for selection lists the user toggles
+    without closing the panel (table view density and columns).
+  - `<mns-menu-label [description]>`: the label, an optional second line (action explanation or
+    the reason a disabled action is unavailable) and the trailing check of a selected item.
+  - `<mns-menu-title [hint]>`: uppercase panel/section heading with a context hint (signed-in
+    e-mail, record name, `visible / total`). A title after items opens a divided section; clicking
+    it never closes the panel.
+  - `<mns-menu-search [(value)] [label]>`: in-panel search. Typing stays in the field; Escape and
+    arrow keys reach the menu. The owner resets the value when the menu closes. Lists use
+    `.mns-menu-list` and `.mns-menu-empty`.
+- Keep Material keyboard navigation, Escape and focus restoration; never wrap `mat-menu` items in
+  another component (MatMenu only sees items projected in its own template).
+- Disabled actions stay listed with their reason (`disabledReason` on CRUD row actions,
+  `filterActionDisabledReason()` on contextual filter actions) instead of disappearing, unless the
+  action does not apply to the record at all (`visible`). Menus remain UX only: actions stay
+  server/Agent authorized.
+- `npm run check:menus` (`scripts/validate-menus.mjs`, run by `verify:changed`) fails on a
+  `<mat-menu>` without `mns-menu`, a `mat-menu-item` without `mnsMenuItem`, or a legacy menu class.
+
 ## Topbar menus
 
-- Activity, language, System/Tenant context, tenant, theme and profile menus share the global
-  `src/styles/_topbar-menu.scss` shell (`topbar-menu`, `topbar-menu-title`, selection/check slots).
-  Material overlays live outside the layout view; keep their shared styling global.
+- Activity, language, System/Tenant context, tenant, theme and profile menus use the global
+  `mns-menu` design (section Menus); `src/styles/_topbar-menu.scss` keeps only the toolbar trigger
+  state layers and the tenant row layout. The profile heading shows the signed-in e-mail.
 - Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
   divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
 - Text and icon triggers share the toolbar-scoped Material state-layer tokens: primary color,
@@ -578,11 +609,16 @@ the page must use the shared base named here.
     and show the full text in a tooltip only when truncated (`mnsOverflowTooltip`), and columns may
     set `width: 'xs' | 'sm' | 'md' | 'lg' | 'xl'` (default `lg`) for the truncation limit. Copy
     buttons appear on row hover/keyboard focus and stay visible on touch screens. The actions
-    column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu.
+    column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu (compact
+    `mns-menu` titled `Actions` with the record name as hint; an action `tooltip` is shown as the
+    second line, and `disabledReason(row)` keeps an action listed but disabled with its reason).
   - The `tune` button in the actions header opens the table view menu: row density (comfortable or
     compact) and visible columns, saved per resource in the browser (`crud-view-preferences.ts`,
     key `mns.crud.view.<endpoint>` with record ids normalized). The first (identity) column cannot
     be hidden; columns with `optional: true` start hidden. Preferences are UX only.
+    The menu shows density as a radio section and columns as a checkbox section with a
+    `visible / total` hint; it stays open while toggling, offers a column search above 8 columns,
+    and the locked identity column reads `Always visible`.
   - At `<=900px` the shared CRUD lists records as cards (`mobileLayout()`): the first visible column
     as title, the status chip and the same row actions in the header, every other visible column
     as a label/value pair. Cards reuse the table cell template (`#crudCell`), so copy and show
@@ -921,7 +957,7 @@ or cancelling the form they are filling.
   - use Angular Material `mat-menu` for the `Save/New` action.
   - label must be `Save/New`.
   - align the menu below the split button; for right-aligned split buttons, prefer `xPosition="before"` and `yPosition="below"`.
-  - style the `mat-menu` panel in global `styles.scss` because Material renders it in the CDK overlay, outside the component stylesheet.
+  - the panel uses `class="mns-menu mns-menu-compact save-more-menu"`; `save-more-menu` in global `styles.scss` only sets its width, because Material renders it in the CDK overlay, outside the component stylesheet.
   - on mobile, make the menu panel visually extend under the save button instead of opening as a tiny panel under only the arrow.
 - Edit mode:
   - hide the arrow and `Save/New` menu.

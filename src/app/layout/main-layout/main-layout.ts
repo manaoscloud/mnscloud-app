@@ -49,6 +49,7 @@ import { SystemParameterService } from '../../services/system-parameter.service'
 import { BillingService } from '../../pages/billing/shared/billing.service';
 import { SupportReportService } from '../../services/support-report.service';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
+import { MNS_MENU } from '../../shared/menu/mns-menu';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
@@ -117,6 +118,7 @@ interface UserAccessResponse {
     MatButtonModule,
     MatToolbarModule,
     MatTooltipModule,
+    MNS_MENU,
     TranslocoPipe,
   ],
   templateUrl: './main-layout.html',
@@ -779,6 +781,9 @@ export class MainLayout {
     const version = u.avatarVersion ?? 0;
     return `${u.avatarUrl}${u.avatarUrl.includes('?') ? '&' : '?'}v=${version}`;
   });
+
+  /** Signed-in account shown in the profile menu heading. */
+  readonly profileHint = computed(() => this.user()?.email ?? '');
 
   get avatarLetter() {
     const u = this.user();

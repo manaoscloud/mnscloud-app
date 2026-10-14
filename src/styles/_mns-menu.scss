@@ -1,0 +1,176 @@
+// Global menu shell (app.md "Menus"), based on the topbar Activity Center. Every <mat-menu>
+// declares `class="mns-menu"` (`mns-menu mns-menu-compact` for short action lists); Material
+// renders panels in the CDK overlay, outside component styles, so this shell stays global.
+.mat-mdc-menu-panel.mns-menu {
+  width: min(22rem, calc(100vw - 1.5rem));
+  min-width: min(18rem, calc(100vw - 1.5rem));
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 4.5rem);
+  overflow-x: hidden;
+  border-radius: 0.75rem;
+  background: var(--mat-sys-color-surface-container-highest);
+
+  &.mns-menu-compact {
+    width: auto;
+    min-width: min(14rem, calc(100vw - 1.5rem));
+    max-width: min(20rem, calc(100vw - 1.5rem));
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0.5rem 0;
+  }
+
+  .mat-mdc-menu-item {
+    min-height: 48px;
+    padding: 0.55rem 0.85rem;
+    border-top: 1px solid var(--mat-sys-color-outline-variant);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  // Without a title the first row needs no divider above it.
+  .mat-mdc-menu-content > .mat-mdc-menu-item:first-child {
+    border-top: 0;
+  }
+
+  .mat-mdc-menu-item-text {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    width: 100%;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  [aria-checked='true'] {
+    background: color-mix(in srgb, var(--mat-sys-color-primary) 7%, transparent);
+  }
+
+  .mns-menu-danger,
+  .mns-menu-danger .mat-icon {
+    color: var(--mat-sys-color-error);
+  }
+}
+
+.mns-menu-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.mns-menu-label-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mns-menu-description {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.mat-mdc-menu-panel.mns-menu .mns-menu-check {
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
+  color: var(--mat-sys-color-primary);
+}
+
+.mns-menu-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--mat-sys-color-on-surface-variant);
+  padding: 0.25rem 0.85rem 0.5rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.mns-menu-title-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.mns-menu-hint {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+// A title after items opens a new section.
+.mat-mdc-menu-content > .mns-menu-title:not(:first-child) {
+  margin-top: 0.25rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--mat-sys-color-outline-variant);
+}
+
+.mns-menu-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.85rem 0.5rem;
+  padding: 0 0.65rem;
+  height: 40px;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.5rem;
+  color: var(--mat-sys-color-on-surface-variant);
+
+  &:focus-within {
+    border-color: var(--mat-sys-color-primary);
+  }
+
+  .mat-icon {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--mat-sys-color-on-surface);
+    font: inherit;
+    font-size: 0.85rem;
+  }
+}
+
+.mns-menu-list {
+  max-height: min(320px, 50dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.mns-menu-empty {
+  margin: 0;
+  padding: 0.5rem 0.85rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+@media (max-width: 480px) {
+  .mat-mdc-menu-panel.mns-menu:not(.mns-menu-compact) {
+    margin-inline: 0.5rem;
+    width: calc(100vw - 1rem);
+    min-width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+  }
+}

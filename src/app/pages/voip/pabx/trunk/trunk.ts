@@ -391,6 +391,10 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
     return action.key === 'runtime-status-all' && !this.selectedPabxUUID();
   }
 
+  override filterActionDisabledReason(action: ConfigurableCrudFilterAction): string | null {
+    return this.isFilterActionDisabled(action) ? 'Select a PABX in the filter first' : null;
+  }
+
   override handleFilterAction(action: ConfigurableCrudFilterAction): void {
     if (action.key !== 'runtime-status-all') return;
     const pabxUUID = this.selectedPabxUUID();

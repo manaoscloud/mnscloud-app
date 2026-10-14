@@ -62,6 +62,7 @@ run('node', [
   'scripts/tests/crm-form-contract.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',
+  'scripts/validate-menus.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -93,6 +94,8 @@ run('node', ['scripts/validate-content-pages.mjs']);
 run('node', ['scripts/validate-dialog-report-button.mjs']);
 // Generated commands open only through openInstallCommandDialog (app.md Install Command Dialog Baseline).
 run('node', ['scripts/validate-install-command-dialog.mjs']);
+// Every menu uses the global mns-menu shell and primitives (app.md Menus).
+run('node', ['scripts/validate-menus.mjs']);
 
 const crudRoots = [
   ...new Set(
