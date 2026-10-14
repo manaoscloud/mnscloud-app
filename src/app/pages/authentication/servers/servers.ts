@@ -103,6 +103,21 @@ const config = defineCrud({
       type: 'status',
       span: 1,
     },
+    {
+      key: 'AuthenticationClusterAtcUUID',
+      source: 'AuthenticationClusterAtcUUID',
+      label: 'authentication.clusters',
+      span: 1,
+      required: true,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'system/authentication/clusters',
+        uuidField: 'AtcUUID',
+        labelField: 'AtcName',
+      },
+      disabledWhen: ({ editing }) => editing,
+      help: 'authentication.scopeHelp',
+    },
     { key: 'name', source: 'AtsName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AtsRevision', label: 'Revision', type: 'number', hidden: true },
     {
@@ -124,21 +139,6 @@ const config = defineCrud({
       span: 1,
       required: true,
       help: 'authentication.authLogRetentionHelp',
-    },
-    {
-      key: 'AuthenticationClusterAtcUUID',
-      source: 'AuthenticationClusterAtcUUID',
-      label: 'authentication.clusters',
-      span: 1,
-      required: true,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'system/authentication/clusters',
-        uuidField: 'AtcUUID',
-        labelField: 'AtcName',
-      },
-      disabledWhen: ({ editing }) => editing,
-      help: 'authentication.scopeHelp',
     },
     {
       hiddenWhen: ({ editing }) => !editing,
