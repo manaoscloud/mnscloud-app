@@ -6887,5 +6887,20 @@
   "Address exceeds the bank limits (street 100, number 10, complement 30, district 60, city 60)": "La dirección excede los límites del banco (calle 100, número 10, complemento 30, barrio 60, ciudad 60)",
   "authentication.resumeCommand": "Comando de reanudación",
   "authentication.authLog": "Registro de autenticación",
-  "authentication.authLogHelp": "Registra en el servidor el usuario, el NAS y el resultado de cada inicio de sesión (nunca la contraseña). Se aplica en hasta 1 minuto."
+  "authentication.authLogHelp": "Registra en el servidor el usuario, el NAS y el resultado de cada inicio de sesión (nunca la contraseña). Se aplica en hasta 1 minuto.",
+  "Are you sure you want to delete this SBC peer?": "¿Está seguro de que desea eliminar este peer SBC?",
+  "Delete SBC peer": "Eliminar peer SBC",
+  "Delete selected SBC peers": "Eliminar peers SBC seleccionados",
+  "Delete {count} selected SBC peers?": "¿Eliminar {count} peers SBC seleccionados?",
+  "Edit SBC peer": "Editar peer SBC",
+  "Failed to delete SBC peer.": "No se pudo eliminar el peer SBC.",
+  "Maintain interconnection, authentication and monitoring data.": "Mantenga los datos de interconexión, autenticación y monitoreo.",
+  "Manage SIP interconnection identity, authentication and monitoring.": "Gestione la identidad, la autenticación y el monitoreo de la interconexión SIP.",
+  "New SBC peer": "Nuevo peer SBC",
+  "No SBC peers found.": "No se encontraron peers SBC.",
+  "SBC peer deleted successfully.": "Peer SBC eliminado correctamente.",
+  "SBC peer saved successfully.": "Peer SBC guardado correctamente.",
+  "SBC peers": "Peers SBC",
+  "Save CDR": "Guardar CDR",
+  "Search SBC": "Buscar SBC"
 }
