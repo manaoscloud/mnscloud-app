@@ -558,7 +558,7 @@ export const NAV_ITEMS: NavItem[] = [
       {
         id: 'authentication/clusters',
         label: 'nav.authentication.clusters',
-        icon: 'dns',
+        icon: 'hub',
         masterRoute: '/system/authentication/clusters',
         permissions: ['platform.authentication.manage'],
       },
