@@ -6912,5 +6912,6 @@
   "Worker handlers (WORKER_HANDLERS)": "Worker handlers (WORKER_HANDLERS)",
   "Enabled webapps (WEBAPPS_ENABLED_APPS)": "Enabled webapps (WEBAPPS_ENABLED_APPS)",
   "Published webapps paths (edge)": "Published webapps paths (edge)",
-  "The Agent writes the configuration, activates it, verifies the result and rolls back on failure.": "The Agent writes the configuration, activates it, verifies the result and rolls back on failure."
+  "The Agent writes the configuration, activates it, verifies the result and rolls back on failure.": "The Agent writes the configuration, activates it, verifies the result and rolls back on failure.",
+  "WebApps listener (listen address and allowed clients)": "WebApps listener (listen address and allowed clients)"
 }
