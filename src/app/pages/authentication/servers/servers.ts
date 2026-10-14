@@ -1,5 +1,5 @@
 import { resolveApiBaseUrl } from '../../../shared/runtime/app-runtime-config';
-import { authenticationPayload } from '../authentication-input';
+import { authenticationPayload, AUTHENTICATION_BOOLEAN_OPTIONS } from '../authentication-input';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
@@ -31,6 +31,7 @@ const config = defineCrud({
     name: '',
     notes: '',
     status: 1,
+    authLog: 0,
     revision: 1,
     AuthenticationClusterAtcUUID: '',
   },
@@ -102,6 +103,15 @@ const config = defineCrud({
     },
     { key: 'name', source: 'AtsName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AtsRevision', label: 'Revision', type: 'number', hidden: true },
+    {
+      key: 'authLog',
+      source: 'AtsAuthLog',
+      label: 'authentication.authLog',
+      type: 'select',
+      options: AUTHENTICATION_BOOLEAN_OPTIONS,
+      span: 1,
+      help: 'authentication.authLogHelp',
+    },
     {
       key: 'AuthenticationClusterAtcUUID',
       source: 'AuthenticationClusterAtcUUID',

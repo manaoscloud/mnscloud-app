@@ -6881,5 +6881,7 @@
   "CEP must have 8 digits": "O CEP deve ter 8 dígitos",
   "State must be a Brazilian UF": "Informe uma UF brasileira válida",
   "Address exceeds the bank limits (street 100, number 10, complement 30, district 60, city 60)": "O endereço excede os limites do banco (logradouro 100, número 10, complemento 30, bairro 60, cidade 60)",
-  "authentication.resumeCommand": "Comando de retomada"
+  "authentication.resumeCommand": "Comando de retomada",
+  "authentication.authLog": "Log de autenticação",
+  "authentication.authLogHelp": "Registra no servidor o usuário, o NAS e o resultado de cada login (nunca a senha). Aplicado em até 1 minuto."
 }
