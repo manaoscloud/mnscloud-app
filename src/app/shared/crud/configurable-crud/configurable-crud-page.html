@@ -105,18 +105,24 @@
                 {{ actionMenu.label | transloco }}
                 <mat-icon>arrow_drop_down</mat-icon>
               </button>
-              <mat-menu #contextualActionMenu="matMenu">
+              <mat-menu #contextualActionMenu="matMenu" class="mns-menu">
+                <mns-menu-title>{{ actionMenu.label | transloco }}</mns-menu-title>
                 @for (action of actionMenu.actions; track action.key) {
                   <button
                     mat-menu-item
+                    mnsMenuItem
                     type="button"
                     [disabled]="isFilterActionDisabled(action)"
-                    [matTooltip]="action.tooltip ?? action.label | transloco"
-                    [attr.aria-label]="action.label | transloco"
                     (click)="handleFilterAction(action)"
                   >
                     <mat-icon>{{ action.icon }}</mat-icon>
-                    <span>{{ action.label | transloco }}</span>
+                    <mns-menu-label
+                      [description]="
+                        (isFilterActionDisabled(action) && filterActionDisabledReason(action)) ||
+                          action.tooltip | transloco
+                      "
+                      >{{ action.label | transloco }}</mns-menu-label
+                    >
                   </button>
                 }
               </mat-menu>
@@ -334,68 +340,101 @@
       }
     </div>
 
-    <mat-menu #tableViewMenu="matMenu" xPosition="before" class="crud-view-menu">
+    <mat-menu
+      #tableViewMenu="matMenu"
+      xPosition="before"
+      class="mns-menu"
+      (closed)="columnSearch.set('')"
+    >
       <ng-template matMenuContent>
-        <div class="crud-view-menu-label">{{ 'Density' | transloco }}</div>
+        <mns-menu-title>{{ 'Density' | transloco }}</mns-menu-title>
         <button
           mat-menu-item
+          mnsMenuItem
           type="button"
-          role="menuitemradio"
-          [attr.aria-checked]="!compactDensity()"
-          (click)="$event.stopPropagation(); setDensity('comfortable')"
+          selection="radio"
+          keepOpen
+          [checked]="!compactDensity()"
+          (click)="setDensity('comfortable')"
         >
-          <mat-icon>{{
-            compactDensity() ? 'radio_button_unchecked' : 'radio_button_checked'
-          }}</mat-icon>
-          <span>{{ 'Comfortable rows' | transloco }}</span>
+          <mat-icon>density_medium</mat-icon>
+          <mns-menu-label>{{ 'Comfortable rows' | transloco }}</mns-menu-label>
         </button>
         <button
           mat-menu-item
+          mnsMenuItem
           type="button"
-          role="menuitemradio"
-          [attr.aria-checked]="compactDensity()"
-          (click)="$event.stopPropagation(); setDensity('compact')"
+          selection="radio"
+          keepOpen
+          [checked]="compactDensity()"
+          (click)="setDensity('compact')"
         >
-          <mat-icon>{{
-            compactDensity() ? 'radio_button_checked' : 'radio_button_unchecked'
-          }}</mat-icon>
-          <span>{{ 'Compact rows' | transloco }}</span>
+          <mat-icon>density_small</mat-icon>
+          <mns-menu-label>{{ 'Compact rows' | transloco }}</mns-menu-label>
         </button>
-        <div class="crud-view-menu-label">{{ 'Columns' | transloco }}</div>
-        @for (column of columns(); track column.id) {
-          <button
-            mat-menu-item
-            type="button"
-            role="menuitemcheckbox"
-            [attr.aria-checked]="isColumnVisible(column)"
-            [disabled]="isColumnLocked(column)"
-            (click)="$event.stopPropagation(); setColumnVisible(column, !isColumnVisible(column))"
-          >
-            <mat-icon>{{
-              isColumnVisible(column) ? 'check_box' : 'check_box_outline_blank'
-            }}</mat-icon>
-            <span>{{ column.label | transloco }}</span>
-          </button>
+        <mns-menu-title [hint]="visibleColumnCount() + ' / ' + columns().length">{{
+          'Columns' | transloco
+        }}</mns-menu-title>
+        @if (columnSearchEnabled()) {
+          <mns-menu-search [(value)]="columnSearch" [label]="'Search columns' | transloco" />
         }
-        <button mat-menu-item type="button" [disabled]="!customizedView()" (click)="resetView()">
+        <div class="mns-menu-list">
+          @for (column of viewMenuColumns(); track column.id) {
+            <button
+              mat-menu-item
+              mnsMenuItem
+              type="button"
+              selection="checkbox"
+              keepOpen
+              [checked]="isColumnVisible(column)"
+              [disabled]="isColumnLocked(column)"
+              (click)="setColumnVisible(column, !isColumnVisible(column))"
+            >
+              <mat-icon>{{ isColumnLocked(column) ? 'lock' : 'view_column' }}</mat-icon>
+              <mns-menu-label
+                [description]="isColumnLocked(column) ? ('Always visible' | transloco) : null"
+                >{{ column.label | transloco }}</mns-menu-label
+              >
+            </button>
+          } @empty {
+            <p class="mns-menu-empty">{{ 'No records found.' | transloco }}</p>
+          }
+        </div>
+        <button
+          mat-menu-item
+          mnsMenuItem
+          type="button"
+          [disabled]="!customizedView()"
+          (click)="resetView()"
+        >
           <mat-icon>restart_alt</mat-icon>
-          <span>{{ 'Restore default view' | transloco }}</span>
+          <mns-menu-label>{{ 'Restore default view' | transloco }}</mns-menu-label>
         </button>
       </ng-template>
     </mat-menu>
 
-    <mat-menu #rowActionsMenu="matMenu" xPosition="before">
+    <mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
       <ng-template matMenuContent let-row="row">
+        <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
         @for (action of rowActions(row); track action.key) {
-          <button mat-menu-item type="button" (click)="runRowAction(action, row)">
+          <button
+            mat-menu-item
+            mnsMenuItem
+            type="button"
+            [disabled]="!!rowActionDisabledReason(action, row)"
+            (click)="runRowAction(action, row)"
+          >
             <mat-icon>{{ action.icon }}</mat-icon>
-            <span>{{ action.label | transloco }}</span>
+            <mns-menu-label
+              [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
+              >{{ action.label | transloco }}</mns-menu-label
+            >
           </button>
         }
         @if (canDeleteRow(row)) {
-          <button mat-menu-item type="button" class="crud-menu-danger" (click)="deleteItem(row)">
+          <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleteItem(row)">
             <mat-icon>delete</mat-icon>
-            <span>{{ 'Delete' | transloco }}</span>
+            <mns-menu-label>{{ 'Delete' | transloco }}</mns-menu-label>
           </button>
         }
       </ng-template>
@@ -2970,10 +3009,15 @@
             >
               <mat-icon>expand_more</mat-icon>
             </button>
-            <mat-menu #saveMenu="matMenu" xPosition="before" yPosition="below">
-              <button mat-menu-item type="button" (click)="saveItem(true)">
+            <mat-menu
+              #saveMenu="matMenu"
+              xPosition="before"
+              yPosition="below"
+              class="mns-menu mns-menu-compact save-more-menu"
+            >
+              <button mat-menu-item mnsMenuItem type="button" (click)="saveItem(true)">
                 <mat-icon>add</mat-icon>
-                {{ 'Save/New' | transloco }}
+                <mns-menu-label>{{ 'Save/New' | transloco }}</mns-menu-label>
               </button>
             </mat-menu>
           }

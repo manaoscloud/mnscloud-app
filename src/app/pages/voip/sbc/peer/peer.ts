@@ -682,6 +682,10 @@ export class VoipSbcPeerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     return action.key === 'runtime-status-all' && !this.selectedAccountUUID();
   }
 
+  override filterActionDisabledReason(action: ConfigurableCrudFilterAction): string | null {
+    return this.isFilterActionDisabled(action) ? 'Select an SBC in the filter first' : null;
+  }
+
   override handleFilterAction(action: ConfigurableCrudFilterAction): void {
     if (action.key !== 'runtime-status-all') return;
     const accountUUID = this.selectedAccountUUID();

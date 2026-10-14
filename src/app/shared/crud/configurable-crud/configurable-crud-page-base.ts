@@ -2,6 +2,7 @@ import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { isRecordUUID, shortRecordUUID } from './record-uuid-label';
+import { MNS_MENU } from '../../menu/mns-menu';
 import {
   CrudDensity,
   CrudViewPreferences,
@@ -16,6 +17,8 @@ import {
 
 /** Revealed secrets hide again after this delay. */
 const SECRET_REVEAL_MS = 10_000;
+/** Table view menus with more columns than this offer a column search. */
+const COLUMN_SEARCH_MIN = 8;
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
@@ -120,6 +123,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   MatIconModule,
   MatInputModule,
   MatMenuModule,
+  MNS_MENU,
   MatPaginatorModule,
   MatProgressBarModule,
   MatProgressSpinnerModule,
@@ -399,6 +403,11 @@ export type ConfigurableCrudRowAction = {
   icon: string;
   tooltip?: string;
   visible?: (row: ConfigurableCrudRecord) => boolean;
+  /**
+   * Keeps the action listed but disabled for this row; the returned translation key tells the
+   * user why (shown under the label). Return `null` when the action is available.
+   */
+  disabledReason?: (row: ConfigurableCrudRecord) => string | null;
   collection?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   form?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   /** Declarative one-click API call (for example "set as cover"); reloads the list on success. */
@@ -713,6 +722,17 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     { initialValue: false },
   );
   readonly cardTitleColumn = computed(() => this.tableColumns()[0] ?? null);
+  /** Table view menu: column search appears for long column lists and resets on close. */
+  readonly columnSearch = signal('');
+  readonly columnSearchEnabled = computed(() => this.columns().length > COLUMN_SEARCH_MIN);
+  readonly viewMenuColumns = computed(() => {
+    const term = this.columnSearch().trim().toLocaleLowerCase();
+    if (!term) return this.columns();
+    return this.columns().filter((column) =>
+      this.t(column.label).toLocaleLowerCase().includes(term),
+    );
+  });
+  readonly visibleColumnCount = computed(() => this.tableColumns().length);
   readonly cardStatusColumn = computed(
     () =>
       this.tableColumns().find((column, index) => index > 0 && column.kind === 'status') ?? null,
@@ -1389,6 +1409,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return false;
   }
 
+  /**
+   * Translation key shown under a disabled contextual filter action (for example "select a
+   * PABX first"). Pages that disable actions override it; `null` keeps only the tooltip line.
+   */
+  filterActionDisabledReason(_action: ConfigurableCrudFilterAction): string | null {
+    return null;
+  }
+
   canEditRow(row: T): boolean {
     return this.canEdit() && (this.config.canEditRow?.(row) ?? true);
   }
@@ -1397,8 +1425,20 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.canDelete() && (this.config.canDeleteRow?.(row) ?? true);
   }
 
+  /** Translation key explaining why a listed row action is disabled, or `null`. */
+  rowActionDisabledReason(action: ConfigurableCrudRowAction, row: T): string | null {
+    return action.disabledReason?.(row) ?? null;
+  }
+
+  /** Record name shown in the row actions menu heading (the card/table identity column). */
+  rowMenuHint(row: T): string {
+    const column = this.cardTitleColumn();
+    return column ? this.columnText(row, column) : '';
+  }
+
   async runRowAction(action: ConfigurableCrudRowAction, row: T): Promise<void> {
     if (action.visible?.(row) === false) return;
+    if (this.rowActionDisabledReason(action, row)) return;
     if (action.run) {
       await action.run(row);
       return;

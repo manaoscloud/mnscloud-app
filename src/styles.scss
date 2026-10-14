@@ -1,3 +1,4 @@
+@use './styles/mns-menu';
 @use './styles/topbar-menu';
 @use './styles/field-help';
 @use './styles/operations';
@@ -1926,25 +1927,10 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   grid-column: 1 / -1;
 }
 
-.mat-mdc-menu-panel.save-more-menu {
+.mat-mdc-menu-panel.mns-menu.save-more-menu {
+  width: 204px;
   min-width: 204px;
   max-width: 204px;
-  border-radius: 0.75rem !important;
-  background: var(--mat-sys-color-surface-container-highest);
-}
-
-.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-content {
-  padding: 0.35rem;
-}
-
-.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-item {
-  min-height: 40px;
-  border-radius: 0.55rem;
-  justify-content: center;
-}
-
-.mat-mdc-menu-panel.save-more-menu .mat-mdc-menu-item .mat-icon {
-  margin-right: 0.45rem;
 }
 
 @media (max-width: 900px) {
@@ -1974,7 +1960,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
     width: 100%;
   }
 
-  .mat-mdc-menu-panel.save-more-menu {
+  .mat-mdc-menu-panel.mns-menu.save-more-menu {
+    width: min(298px, calc(100vw - 90px));
     min-width: min(298px, calc(100vw - 90px));
     max-width: min(298px, calc(100vw - 90px));
   }

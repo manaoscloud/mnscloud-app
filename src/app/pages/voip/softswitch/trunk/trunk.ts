@@ -251,6 +251,7 @@ export class VoipSoftswitchTrunkPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean { return action.key === 'runtime-status-all' && !this.selectedAccountUUID(); }
+  override filterActionDisabledReason(action: ConfigurableCrudFilterAction): string | null { return this.isFilterActionDisabled(action) ? 'Select a Softswitch in the filter first' : null; }
   override handleFilterAction(action: ConfigurableCrudFilterAction): void {
     if (action.key !== 'runtime-status-all') return;
     const accountUUID = this.selectedAccountUUID();

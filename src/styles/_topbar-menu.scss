@@ -28,54 +28,10 @@
   );
 }
 
-// One overlay shell for every topbar menu, based on the Activity Center.
-.mat-mdc-menu-panel.topbar-menu {
-  width: min(22rem, calc(100vw - 1.5rem));
-  min-width: min(18rem, calc(100vw - 1.5rem));
-  max-width: min(22rem, calc(100vw - 1.5rem));
-  max-height: calc(100dvh - 4.5rem);
-  overflow-x: hidden;
-  border-radius: 0.75rem;
-  background: var(--mat-sys-color-surface-container-highest);
-
-  .mat-mdc-menu-content {
-    padding: 0.5rem 0;
-  }
-
-  .mat-mdc-menu-item {
-    min-height: 48px;
-    padding: 0.55rem 0.85rem;
-    border-top: 1px solid var(--mat-sys-color-outline-variant);
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .mat-mdc-menu-item-text {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
-    width: 100%;
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-
-  .topbar-menu-label {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .topbar-menu-check {
-    order: 1;
-    margin: 0 0 0 auto;
-    color: var(--mat-sys-color-primary);
-  }
-
-  [aria-checked='true'] {
-    background: color-mix(in srgb, var(--mat-sys-color-primary) 7%, transparent);
-  }
-
-  .topbar-menu-tenant-row {
+// Tenant switcher rows inside the global `mns-menu` shell (`_mns-menu.scss`): the default star
+// and the activation are sibling buttons, never nested controls.
+.mat-mdc-menu-panel.mns-menu {
+  .topbar-tenant-row {
     display: flex;
     border-top: 1px solid var(--mat-sys-color-outline-variant);
 
@@ -84,7 +40,7 @@
     }
   }
 
-  .topbar-menu-default {
+  .topbar-tenant-default {
     width: 44px;
     min-width: 44px;
     flex: 0 0 44px;
@@ -104,95 +60,14 @@
     }
   }
 
-  .topbar-menu-tenant-select {
+  .topbar-tenant-select {
     flex: 1;
     min-width: 0;
     padding-left: 0.35rem;
 
-    .topbar-menu-label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
+    .mns-menu-description {
+      font-variant-numeric: tabular-nums;
     }
-  }
-
-  .topbar-menu-tenant-identity {
-    font-size: 0.75rem;
-    line-height: 1.3;
-    color: var(--mat-sys-color-on-surface-variant);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .topbar-menu-search {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 0.85rem 0.5rem;
-    padding: 0 0.65rem;
-    height: 40px;
-    border: 1px solid var(--mat-sys-color-outline-variant);
-    border-radius: 0.5rem;
-    color: var(--mat-sys-color-on-surface-variant);
-
-    &:focus-within {
-      border-color: var(--mat-sys-color-primary);
-    }
-
-    .mat-icon {
-      flex: 0 0 auto;
-      width: 20px;
-      height: 20px;
-      font-size: 20px;
-    }
-
-    input {
-      flex: 1;
-      min-width: 0;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: var(--mat-sys-color-on-surface);
-      font: inherit;
-      font-size: 0.85rem;
-    }
-  }
-
-  .topbar-menu-danger,
-  .topbar-menu-danger .mat-icon {
-    color: var(--mat-sys-color-error);
-  }
-}
-
-.topbar-menu-title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--mat-sys-color-on-surface-variant);
-  padding: 0.25rem 0.85rem 0.5rem;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.topbar-menu-list {
-  max-height: min(320px, 50dvh);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.topbar-menu-empty {
-  margin: 0;
-  padding: 0.5rem 0.85rem 0.75rem;
-  font-size: 0.85rem;
-  color: var(--mat-sys-color-on-surface-variant);
-}
-
-@media (max-width: 480px) {
-  .mat-mdc-menu-panel.topbar-menu {
-    margin-inline: 0.5rem;
-    width: calc(100vw - 1rem);
-    min-width: calc(100vw - 1rem);
-    max-width: calc(100vw - 1rem);
   }
 }
 

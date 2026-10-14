@@ -449,11 +449,20 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
   }
 
   override isFilterActionDisabled(action: ConfigurableCrudFilterAction): boolean {
-    return action.key === 'runtime-status-all' && !String(this.listFilterValue({
-      key: 'pabxUUID',
-      label: 'PABX',
-      type: 'search-select',
-    })).trim();
+    return (
+      action.key === 'runtime-status-all' &&
+      !String(
+        this.listFilterValue({
+          key: 'pabxUUID',
+          label: 'PABX',
+          type: 'search-select',
+        }),
+      ).trim()
+    );
+  }
+
+  override filterActionDisabledReason(action: ConfigurableCrudFilterAction): string | null {
+    return this.isFilterActionDisabled(action) ? 'Select a PABX in the filter first' : null;
   }
 
   override handleFilterAction(action: ConfigurableCrudFilterAction): void {
@@ -468,7 +477,8 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
 
     void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
       title: 'PABX extension runtime status',
-      description: 'Read-only registration and connectivity status of extensions assigned to the selected PABX.',
+      description:
+        'Read-only registration and connectivity status of extensions assigned to the selected PABX.',
       startEndpoint: `voip/pabx/accounts/${pabxUUID}/extensions/runtime-status`,
       statusEndpoint: (jobUUID) =>
         `voip/pabx/accounts/${pabxUUID}/extensions/runtime-status/${jobUUID}`,
