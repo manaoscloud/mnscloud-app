@@ -6906,5 +6906,12 @@
   "SBC peer saved successfully.": "Peer SBC salvo com sucesso.",
   "SBC peers": "Peers SBC",
   "Save CDR": "Salvar CDR",
-  "Search SBC": "Buscar SBC"
+  "Search SBC": "Buscar SBC",
+  "Workers (mnscloud-workers)": "Workers (mnscloud-workers)",
+  "WebApps (mnscloud-webapps)": "WebApps (mnscloud-webapps)",
+  "Nginx edge (mnscloud-nginx)": "Edge Nginx (mnscloud-nginx)",
+  "Worker handlers (WORKER_HANDLERS)": "Handlers dos workers (WORKER_HANDLERS)",
+  "Enabled webapps (WEBAPPS_ENABLED_APPS)": "WebApps habilitados (WEBAPPS_ENABLED_APPS)",
+  "Published webapps paths (edge)": "Caminhos de webapps publicados (edge)",
+  "The Agent writes the configuration, activates it, verifies the result and rolls back on failure.": "O Agent grava a configuração, ativa, verifica o resultado e desfaz em caso de falha."
 }
