@@ -529,6 +529,10 @@ export type ConfigurableCrudConfig = {
   listFilters?: readonly ConfigurableCrudListFilter[];
   rowActions?: readonly ConfigurableCrudRowAction[];
   relatedCollections?: readonly ConfigurableCrudRelatedCollection[];
+  /**
+   * Derives dependent form values after a field changes. `current` already holds the new `value`
+   * under `key`; return the complete next record.
+   */
   fieldChange?: (
     key: string,
     value: unknown,
@@ -1751,9 +1755,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       else this.selectedRemoteOptions.delete(key);
     }
     try {
-      this.formValues.update(
-        (current) => this.config.fieldChange?.(key, value, current) ?? { ...current, [key]: value },
-      );
+      this.formValues.update((current) => {
+        const next = { ...current, [key]: value };
+        return this.config.fieldChange?.(key, value, next) ?? next;
+      });
     } catch (error) {
       this.snack.error(
         this.t(error instanceof Error ? error.message : 'Enter a valid JSON object.'),
