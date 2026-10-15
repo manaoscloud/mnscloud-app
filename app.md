@@ -426,6 +426,14 @@ the page must use the shared base named here.
   page that does not extend `ConfigurableCrudPageBase`. There is no allowlist; the only opt-out is
   the documented `crud-template-exempt` marker for non-CRUD table pages.
 
+## Global Table Component Baseline (Mandatory)
+
+- Every tabular presentation, list of records, collection dialog, or sub-table in any page, modal, or dialog across the entire application must use the canonical global table component (`ConfigurableCrudPageBase` / `defineCrud` / `ConfigurableCrudCollectionDialog`).
+- Creating one-off `<table>`, `<table mat-table>`, hand-rolled paginators, or page-local list tables is strictly prohibited for any AI/LLM or human developer.
+- All core table capabilities must come from the shared base: density toggle (comfortable/compact), column customization menu (`tune` button), search input, status/list filters, pagination, responsive cards for mobile viewports, loading indicator, selection/bulk delete, and problem reporting button.
+- If tabular data needs to be presented inside a modal or dialog, use `ConfigurableCrudCollectionDialog` or a component extending `ConfigurableCrudPageBase`. Never construct a custom table dialog.
+- In collection dialogs (`ConfigurableCrudCollectionDialog`), actions must be placed in `.dialog-header .header-actions`: `Close`, `Refresh` (`app-refresh-button`), `New` (if `canCreate()`), and `<mns-report-problem-button>`. Do not split actions across top and bottom, do not float actions in the middle of the header, and do not attach an empty `form-actions` footer beneath the paginator.
+
 ## Commercial Menu Projection
 
 - The app may hide tenant-facing commercial modules based on API-provided billing grants, but this is

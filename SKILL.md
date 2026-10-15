@@ -17,6 +17,13 @@ Use this repository as an independent public frontend client for the MNSCloud AP
 - API calls must go through `src/app/services/api.service.ts`.
 - Runtime URL resolution must stay in `src/app/shared/runtime/app-runtime-config.ts`.
 - CRUD pages must follow `app.md`.
+- Tables anywhere in the application (pages, dialogs, collections, sub-tables) must use the canonical
+  global table component (`ConfigurableCrudPageBase` / `defineCrud` / `ConfigurableCrudCollectionDialog`).
+  Hand-rolled `<table>`, `<table mat-table>`, custom paginators, or one-off list tables are strictly
+  forbidden for any AI/LLM or human developer. All table capabilities (density toggle, column picker,
+  search, filters, pagination, responsive cards, loading states, and problem reporting button) must
+  come from the canonical component. In collection dialogs (`ConfigurableCrudCollectionDialog`),
+  actions belong in `.dialog-header .header-actions` (`Close`, `Refresh`, `New`, and report problem).
 - Sidebar labels follow `app.md` → `Navigation Label Contract`: entries live in
   `src/app/layout/navigation/nav-registry.ts` with `nav.<id>` keys in PT/EN/ES, never repeat an
   ancestor's words, respect the per-level length budget, use sentence case and the glossary in
