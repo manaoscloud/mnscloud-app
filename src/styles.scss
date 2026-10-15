@@ -481,6 +481,22 @@ mat-card.erp-card,
   button mat-icon {
     margin-right: 0.25rem;
   }
+
+  mns-report-problem-button {
+    margin: 0 0 0 0.25rem;
+    align-self: center;
+
+    button.report-problem-button {
+      width: 40px !important;
+      min-width: 40px !important;
+      height: 40px !important;
+      padding: 0 !important;
+
+      mat-icon {
+        margin-right: 0 !important;
+      }
+    }
+  }
 }
 
 .filter-grid {

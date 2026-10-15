@@ -44,7 +44,7 @@ export class ReportProblemButtonComponent {
 
   open() {
     const element = this.host.nativeElement;
-    const header = element.closest('.dialog-header');
+    const header = element.closest('.dialog-header, .erp-header');
     const title = header?.querySelector('h1, h2, h3')?.textContent?.trim() ?? '';
     void this.reports.openReportDialog(undefined, {
       context: { ...(this.context() ?? {}), dialogTitle: title },

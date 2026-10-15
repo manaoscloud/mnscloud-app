@@ -640,6 +640,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   readonly formDialog = viewChild<TemplateRef<unknown>>('crudFormDialog');
   protected dialogBinding: CrudDialogBinding | null = null;
+  readonly isFormDialogOpen = signal(false);
 
   readonly search = signal('');
   readonly status = signal<'' | string | number>('');
@@ -885,10 +886,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   /** Window details sent with "Report problem" from the form dialog (never form values). */
   readonly reportContext = computed(() => {
+    const isForm = this.isFormDialogOpen();
     const record = this.editingRecord();
     return {
       resource: this.config.endpoint,
-      mode: record ? ('edit' as const) : ('create' as const),
+      mode: isForm ? (record ? ('edit' as const) : ('create' as const)) : undefined,
       recordUUID: record ? this.recordUUID(record) || undefined : undefined,
     };
   });
@@ -1487,16 +1489,27 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const { ConfigurableCrudCollectionDialog } =
       await import('./configurable-crud-collection-dialog');
     const formOnly = Boolean(action.form);
+    if (!formOnly) {
+      const binding = openCrudTemplateDialog(
+        this.dialog,
+        ConfigurableCrudCollectionDialog,
+        ['crud-form-dialog', 'crud-collection-dialog'],
+        { data: { ...factory(row), collectionDialog: true, formOnly: false } },
+      );
+      await firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
+      this.refreshList();
+      return;
+    }
     const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
-      data: { ...factory(row), collectionDialog: true, formOnly },
-      width: formOnly ? '0' : '96vw',
-      maxWidth: formOnly ? '0' : '1400px',
-      height: formOnly ? '0' : '90dvh',
-      maxHeight: '96dvh',
+      data: { ...factory(row), collectionDialog: true, formOnly: true },
+      width: '0',
+      maxWidth: '0',
+      height: '0',
+      maxHeight: '0',
       autoFocus: false,
       restoreFocus: true,
-      panelClass: formOnly ? 'quick-create-host-dialog' : 'crud-collection-dialog',
-      disableClose: formOnly,
+      panelClass: 'quick-create-host-dialog',
+      disableClose: true,
     });
     await firstValueFrom(ref.afterClosed());
     this.refreshList();
@@ -1642,6 +1655,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   closeDialog(): void {
+    this.isFormDialogOpen.set(false);
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.dialogBinding?.ref.close();
@@ -2999,12 +3013,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const dialog = this.formDialog();
     if (!dialog) return;
 
+    this.isFormDialogOpen.set(true);
     this.dialogBinding = openCrudTemplateDialog(this.dialog, dialog, 'crud-form-dialog', {
       onEscape: () => this.closeDialog(),
     });
     bindDialogClosed(
       this.dialogBinding.ref,
       () => {
+        this.isFormDialogOpen.set(false);
         this.dialogBinding?.stop();
         this.dialogBinding = null;
       },

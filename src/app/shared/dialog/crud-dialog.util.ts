@@ -93,7 +93,7 @@ function bindResponsiveCrudLayout(ref: MatDialogRef<unknown>): () => void {
 export function openCrudTemplateDialog(
   dialog: MatDialog,
   template: any,
-  panelClass: string,
+  panelClass: string | string[],
   options: CrudDialogOptions = {},
 ): CrudDialogBinding {
   const initial = computeDialogLayout();

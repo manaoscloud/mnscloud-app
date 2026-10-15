@@ -1,22 +1,13 @@
-<section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
-  <mat-card class="erp-card">
-    <div class="erp-header">
+@if (config.collectionDialog && !config.formOnly) {
+  <div class="crud-dialog collection-dialog">
+    <header class="dialog-header">
       <div>
-        <h1>{{ config.pageTitle | transloco }}</h1>
-        <p>{{ config.pageDescription | transloco }}</p>
+        <h2>{{ config.pageTitle | transloco }}</h2>
+        @if (config.pageDescription) {
+          <p>{{ config.pageDescription | transloco }}</p>
+        }
       </div>
-      <div class="header-actions">
-        @if (config.collectionDialog) {
-          <button mat-stroked-button type="button" (click)="closeCollectionDialog()">
-            {{ 'Close' | transloco }}
-          </button>
-        }
-        @if (backLink(); as destination) {
-          <a mat-stroked-button color="primary" [routerLink]="destination">
-            <mat-icon>arrow_back</mat-icon>
-            {{ 'Back' | transloco }}
-          </a>
-        }
+      <div class="collection-header-actions">
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         @if (canCreate()) {
           <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
@@ -25,432 +16,467 @@
           </button>
         }
       </div>
+      <mns-report-problem-button [context]="reportContext()" />
+    </header>
+
+    <div class="dialog-content">
+      <ng-container [ngTemplateOutlet]="crudTableBody" />
     </div>
 
-    <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-1">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input
-          matInput
-          [value]="search()"
-          (input)="search.set($any($event.target).value)"
-          (keyup.enter)="applySearchFilters()"
-        />
-      </mat-form-field>
-
-      @if (statusFilterEnabled()) {
-        <mns-search-select-field
-          fieldClass="span-1"
-          [label]="'Status' | transloco"
-          [options]="statusFilterOptions()"
-          [translateOptions]="false"
-          [value]="status()"
-          (valueChange)="status.set($any($event))"
-        />
-      }
-
-      @for (filter of listFilters(); track filter.key) {
-        @if (filter.type === 'search-select') {
-          <mns-search-select-field
-            [label]="filter.label | transloco"
-            [value]="listFilterValue(filter)"
-            [options]="translatedListFilterOptions(filter)"
-            fieldClass="span-1"
-            [placeholder]="filter.placeholder ?? 'Search'"
-            [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
-            [loading]="listFilterLoading(filter)"
-            [remoteSearch]="!!filter.remoteLookup"
-            [hasNext]="filterRemoteNext(filter)"
-            [hasPrevious]="filterRemotePrevious(filter)"
-            [loadError]="filterRemoteError(filter)"
-            (searchChange)="filterRemoteSearch(filter, $event)"
-            (pageChange)="filterRemotePage(filter, $event)"
-            [translateOptions]="false"
-            (selectionChange)="setListFilterValue(filter, $any($event))"
-          />
-        } @else {
-          <mns-search-select-field
-            fieldClass="span-1"
-            [label]="filter.label | transloco"
-            [options]="translatedListFilterOptions(filter)"
-            [translateOptions]="false"
-            [value]="listFilterValue(filter)"
-            [loading]="listFilterLoading(filter)"
-            [remoteSearch]="!!filter.remoteLookup"
-            [hasNext]="filterRemoteNext(filter)"
-            [hasPrevious]="filterRemotePrevious(filter)"
-            [loadError]="filterRemoteError(filter)"
-            (searchChange)="filterRemoteSearch(filter, $event)"
-            (pageChange)="filterRemotePage(filter, $event)"
-            (valueChange)="setListFilterValue(filter, $any($event))"
-          />
-        }
-      }
-
-      <div class="filter-actions">
-        @if (
-          filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
-        ) {
-          <div class="filter-actions-start">
-            @if (filterActionMenu(); as actionMenu) {
-              <button
-                mat-stroked-button
-                type="button"
-                [disabled]="isFilterActionMenuDisabled(actionMenu)"
-                [matTooltip]="actionMenu.tooltip ? (actionMenu.tooltip | transloco) : ''"
-                [matTooltipDisabled]="!actionMenu.tooltip"
-                [matMenuTriggerFor]="contextualActionMenu"
-              >
-                <mat-icon>{{ actionMenu.icon }}</mat-icon>
-                {{ actionMenu.label | transloco }}
-                <mat-icon>arrow_drop_down</mat-icon>
-              </button>
-              <mat-menu #contextualActionMenu="matMenu" class="mns-menu">
-                <mns-menu-title>{{ actionMenu.label | transloco }}</mns-menu-title>
-                @for (action of actionMenu.actions; track action.key) {
-                  <button
-                    mat-menu-item
-                    mnsMenuItem
-                    type="button"
-                    [disabled]="isFilterActionDisabled(action)"
-                    (click)="handleFilterAction(action)"
-                  >
-                    <mat-icon>{{ action.icon }}</mat-icon>
-                    <mns-menu-label
-                      [description]="
-                        (isFilterActionDisabled(action) && filterActionDisabledReason(action)) ||
-                          action.tooltip | transloco
-                      "
-                      >{{ action.label | transloco }}</mns-menu-label
-                    >
-                  </button>
-                }
-              </mat-menu>
-            }
-            @for (action of filterActions(); track action.key) {
-              <button
-                mat-stroked-button
-                color="primary"
-                type="button"
-                [disabled]="isFilterActionDisabled(action)"
-                [matTooltip]="action.tooltip ?? action.label | transloco"
-                [attr.aria-label]="action.label | transloco"
-                (click)="handleFilterAction(action)"
-              >
-                <mat-icon>{{ action.icon }}</mat-icon>
-                {{ action.label | transloco }}
-              </button>
-            }
-            @if (bulkDeleteEnabled() && selectedCount()) {
-              <span class="selection-count"
-                >{{ selectedCount() }} {{ 'selected' | transloco }}</span
-              >
-              <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
-                <mat-icon>delete</mat-icon>
-                {{ 'Delete selected' | transloco }}
-              </button>
-            }
-          </div>
-        }
-        <div class="filter-actions-end">
-          <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
-            <mat-icon>filter_alt</mat-icon>
-            {{ 'Apply' | transloco }}
-          </button>
-          <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
-            <mat-icon>backspace</mat-icon>
-            {{ 'Clear' | transloco }}
-          </button>
+    <div class="form-actions">
+      <div class="secondary-actions">
+        <button mat-stroked-button type="button" (click)="closeCollectionDialog()">
+          {{ 'Close' | transloco }}
+        </button>
+      </div>
+      <div class="primary-actions"></div>
+    </div>
+  </div>
+} @else {
+  <section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
+    <mat-card class="erp-card">
+      <div class="erp-header">
+        <div>
+          <h1>{{ config.pageTitle | transloco }}</h1>
+          <p>{{ config.pageDescription | transloco }}</p>
+        </div>
+        <div class="header-actions">
+          @if (backLink(); as destination) {
+            <a mat-stroked-button color="primary" [routerLink]="destination">
+              <mat-icon>arrow_back</mat-icon>
+              {{ 'Back' | transloco }}
+            </a>
+          }
+          <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+          @if (canCreate()) {
+            <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+              <mat-icon>add</mat-icon>
+              {{ 'New' | transloco }}
+            </button>
+          }
+          <mns-report-problem-button [context]="reportContext()" />
         </div>
       </div>
-    </div>
 
-    @if (listFailed()) {
-      <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
+      <ng-container [ngTemplateOutlet]="crudTableBody" />
+    </mat-card>
+  </section>
+}
+
+<ng-template #crudTableBody>
+  <div class="filter-grid">
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Search' | transloco }}</mat-label>
+      <input
+        matInput
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+        (keyup.enter)="applySearchFilters()"
+      />
+    </mat-form-field>
+
+    @if (statusFilterEnabled()) {
+      <mns-search-select-field
+        fieldClass="span-1"
+        [label]="'Status' | transloco"
+        [options]="statusFilterOptions()"
+        [translateOptions]="false"
+        [value]="status()"
+        (valueChange)="status.set($any($event))"
+      />
     }
-    <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
-      @if (loading()) {
-        <div class="table-loading">
-          <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+
+    @for (filter of listFilters(); track filter.key) {
+      @if (filter.type === 'search-select') {
+        <mns-search-select-field
+          [label]="filter.label | transloco"
+          [value]="listFilterValue(filter)"
+          [options]="translatedListFilterOptions(filter)"
+          fieldClass="span-1"
+          [placeholder]="filter.placeholder ?? 'Search'"
+          [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
+          [loading]="listFilterLoading(filter)"
+          [remoteSearch]="!!filter.remoteLookup"
+          [hasNext]="filterRemoteNext(filter)"
+          [hasPrevious]="filterRemotePrevious(filter)"
+          [loadError]="filterRemoteError(filter)"
+          (searchChange)="filterRemoteSearch(filter, $event)"
+          (pageChange)="filterRemotePage(filter, $event)"
+          [translateOptions]="false"
+          (selectionChange)="setListFilterValue(filter, $any($event))"
+        />
+      } @else {
+        <mns-search-select-field
+          fieldClass="span-1"
+          [label]="filter.label | transloco"
+          [options]="translatedListFilterOptions(filter)"
+          [translateOptions]="false"
+          [value]="listFilterValue(filter)"
+          [loading]="listFilterLoading(filter)"
+          [remoteSearch]="!!filter.remoteLookup"
+          [hasNext]="filterRemoteNext(filter)"
+          [hasPrevious]="filterRemotePrevious(filter)"
+          [loadError]="filterRemoteError(filter)"
+          (searchChange)="filterRemoteSearch(filter, $event)"
+          (pageChange)="filterRemotePage(filter, $event)"
+          (valueChange)="setListFilterValue(filter, $any($event))"
+        />
+      }
+    }
+
+    <div class="filter-actions">
+      @if (
+        filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
+      ) {
+        <div class="filter-actions-start">
+          @if (filterActionMenu(); as actionMenu) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="isFilterActionMenuDisabled(actionMenu)"
+              [matTooltip]="actionMenu.tooltip ? (actionMenu.tooltip | transloco) : ''"
+              [matTooltipDisabled]="!actionMenu.tooltip"
+              [matMenuTriggerFor]="contextualActionMenu"
+            >
+              <mat-icon>{{ actionMenu.icon }}</mat-icon>
+              {{ actionMenu.label | transloco }}
+              <mat-icon>arrow_drop_down</mat-icon>
+            </button>
+            <mat-menu #contextualActionMenu="matMenu" class="mns-menu">
+              <mns-menu-title>{{ actionMenu.label | transloco }}</mns-menu-title>
+              @for (action of actionMenu.actions; track action.key) {
+                <button
+                  mat-menu-item
+                  mnsMenuItem
+                  type="button"
+                  [disabled]="isFilterActionDisabled(action)"
+                  (click)="handleFilterAction(action)"
+                >
+                  <mat-icon>{{ action.icon }}</mat-icon>
+                  <mns-menu-label
+                    [description]="
+                      (isFilterActionDisabled(action) && filterActionDisabledReason(action)) ||
+                        action.tooltip | transloco
+                    "
+                    >{{ action.label | transloco }}</mns-menu-label
+                  >
+                </button>
+              }
+            </mat-menu>
+          }
+          @for (action of filterActions(); track action.key) {
+            <button
+              mat-stroked-button
+              color="primary"
+              type="button"
+              [disabled]="isFilterActionDisabled(action)"
+              [matTooltip]="action.tooltip ?? action.label | transloco"
+              [attr.aria-label]="action.label | transloco"
+              (click)="handleFilterAction(action)"
+            >
+              <mat-icon>{{ action.icon }}</mat-icon>
+              {{ action.label | transloco }}
+            </button>
+          }
+          @if (bulkDeleteEnabled() && selectedCount()) {
+            <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
+            <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
+              <mat-icon>delete</mat-icon>
+              {{ 'Delete selected' | transloco }}
+            </button>
+          }
         </div>
       }
+      <div class="filter-actions-end">
+        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
+          <mat-icon>filter_alt</mat-icon>
+          {{ 'Apply' | transloco }}
+        </button>
+        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
+          <mat-icon>backspace</mat-icon>
+          {{ 'Clear' | transloco }}
+        </button>
+      </div>
+    </div>
+  </div>
 
-      @if (mobileLayout()) {
-        <div class="crud-card-toolbar">
-          @if (bulkDeleteEnabled()) {
-            <mat-checkbox
-              [checked]="allVisibleSelected()"
-              [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
-              (change)="toggleVisibleRows($event.checked)"
-              >{{ 'Select all' | transloco }}</mat-checkbox
-            >
-          }
-          <button
-            mat-icon-button
-            type="button"
-            class="crud-view-button"
-            [class.is-customized]="customizedView()"
-            [matTooltip]="'Table view' | transloco"
-            [attr.aria-label]="'Table view' | transloco"
-            [matMenuTriggerFor]="tableViewMenu"
+  @if (listFailed()) {
+    <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
+  }
+  <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
+    @if (loading()) {
+      <div class="table-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+      </div>
+    }
+
+    @if (mobileLayout()) {
+      <div class="crud-card-toolbar">
+        @if (bulkDeleteEnabled()) {
+          <mat-checkbox
+            [checked]="allVisibleSelected()"
+            [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
+            (change)="toggleVisibleRows($event.checked)"
+            >{{ 'Select all' | transloco }}</mat-checkbox
           >
-            <mat-icon>tune</mat-icon>
-          </button>
-        </div>
-        <div class="crud-card-list" role="list">
-          @for (row of visibleRows(); track recordUUID(row)) {
-            <article class="crud-card" role="listitem">
-              <div class="crud-card-head">
-                @if (bulkDeleteEnabled()) {
-                  <mat-checkbox
-                    [checked]="isSelected(row)"
-                    [aria-label]="'Select' | transloco"
-                    (change)="toggleRow(row, $event.checked)"
-                  />
-                }
-                @if (cardTitleColumn(); as titleColumn) {
-                  <div class="crud-card-title">
-                    <ng-container
-                      [ngTemplateOutlet]="crudCell"
-                      [ngTemplateOutletContext]="{ $implicit: row, column: titleColumn }"
-                    />
-                  </div>
-                }
-                @if (cardStatusColumn(); as statusColumn) {
-                  <ng-container
-                    [ngTemplateOutlet]="crudCell"
-                    [ngTemplateOutletContext]="{ $implicit: row, column: statusColumn }"
-                  />
-                }
-                @if (hasRowActions()) {
-                  <div class="actions-col crud-card-actions">
-                    <ng-container
-                      [ngTemplateOutlet]="crudRowActions"
-                      [ngTemplateOutletContext]="{ $implicit: row }"
-                    />
-                  </div>
-                }
-              </div>
-              @if (cardFieldColumns().length) {
-                <dl class="crud-card-fields">
-                  @for (column of cardFieldColumns(); track column.id) {
-                    <dt>{{ column.label | transloco }}</dt>
-                    <dd>
-                      <ng-container
-                        [ngTemplateOutlet]="crudCell"
-                        [ngTemplateOutletContext]="{ $implicit: row, column: column }"
-                      />
-                    </dd>
-                  }
-                </dl>
-              }
-            </article>
-          } @empty {
-            <p class="crud-card-empty">{{ config.emptyLabel | transloco }}</p>
-          }
-        </div>
-      } @else {
-        <table
-          mat-table
-          matSort
-          [dataSource]="visibleRows()"
-          (matSortChange)="setSort($event)"
-          class="erp-table"
-          [class.crud-density-compact]="compactDensity()"
+        }
+        <button
+          mat-icon-button
+          type="button"
+          class="crud-view-button"
+          [class.is-customized]="customizedView()"
+          [matTooltip]="'Table view' | transloco"
+          [attr.aria-label]="'Table view' | transloco"
+          [matMenuTriggerFor]="tableViewMenu"
         >
-          @if (bulkDeleteEnabled()) {
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef class="select-col">
-                <mat-checkbox
-                  [checked]="allVisibleSelected()"
-                  [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
-                  (change)="toggleVisibleRows($event.checked)"
-                />
-              </th>
-              <td mat-cell *matCellDef="let row" class="select-col">
+          <mat-icon>tune</mat-icon>
+        </button>
+      </div>
+      <div class="crud-card-list" role="list">
+        @for (row of visibleRows(); track recordUUID(row)) {
+          <article class="crud-card" role="listitem">
+            <div class="crud-card-head">
+              @if (bulkDeleteEnabled()) {
                 <mat-checkbox
                   [checked]="isSelected(row)"
+                  [aria-label]="'Select' | transloco"
                   (change)="toggleRow(row, $event.checked)"
                 />
-              </td>
-            </ng-container>
-          }
-
-          @for (column of columns(); track column.id) {
-            <ng-container [matColumnDef]="column.id">
-              <th
-                mat-header-cell
-                *matHeaderCellDef
-                mat-sort-header
-                [class]="column.className ?? ''"
-              >
-                {{ column.label | transloco }}
-              </th>
-              <td
-                mat-cell
-                *matCellDef="let row"
-                [class]="column.className ?? ''"
-                [class.status-col]="column.kind === 'status'"
-              >
+              }
+              @if (cardTitleColumn(); as titleColumn) {
+                <div class="crud-card-title">
+                  <ng-container
+                    [ngTemplateOutlet]="crudCell"
+                    [ngTemplateOutletContext]="{ $implicit: row, column: titleColumn }"
+                  />
+                </div>
+              }
+              @if (cardStatusColumn(); as statusColumn) {
                 <ng-container
                   [ngTemplateOutlet]="crudCell"
-                  [ngTemplateOutletContext]="{ $implicit: row, column: column }"
+                  [ngTemplateOutletContext]="{ $implicit: row, column: statusColumn }"
                 />
-              </td>
-            </ng-container>
-          }
-
-          @if (hasRowActions()) {
-            <ng-container matColumnDef="actions" stickyEnd>
-              <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-                <div class="actions-col-heading">
-                  {{ 'Actions' | transloco }}
-                  <button
-                    mat-icon-button
-                    type="button"
-                    class="crud-view-button"
-                    [class.is-customized]="customizedView()"
-                    [matTooltip]="'Table view' | transloco"
-                    [attr.aria-label]="'Table view' | transloco"
-                    [matMenuTriggerFor]="tableViewMenu"
-                  >
-                    <mat-icon>tune</mat-icon>
-                  </button>
-                </div>
-              </th>
-              <td mat-cell *matCellDef="let row" class="actions-cell actions-col-cell">
-                <div class="actions-col">
+              }
+              @if (hasRowActions()) {
+                <div class="actions-col crud-card-actions">
                   <ng-container
                     [ngTemplateOutlet]="crudRowActions"
                     [ngTemplateOutletContext]="{ $implicit: row }"
                   />
                 </div>
-              </td>
-            </ng-container>
-          }
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="displayedColumns().length">
-              {{ config.emptyLabel | transloco }}
-            </td>
-          </tr>
-        </table>
-      }
-    </div>
-
-    <mat-menu
-      #tableViewMenu="matMenu"
-      xPosition="before"
-      class="mns-menu"
-      (closed)="applyColumnDraft()"
-    >
-      <ng-template matMenuContent>
-        <mns-menu-title>{{ 'Density' | transloco }}</mns-menu-title>
-        <button
-          mat-menu-item
-          mnsMenuItem
-          type="button"
-          selection="radio"
-          keepOpen
-          [checked]="!compactDensity()"
-          (click)="setDensity('comfortable')"
-        >
-          <mat-icon>density_medium</mat-icon>
-          <mns-menu-label>{{ 'Comfortable rows' | transloco }}</mns-menu-label>
-        </button>
-        <button
-          mat-menu-item
-          mnsMenuItem
-          type="button"
-          selection="radio"
-          keepOpen
-          [checked]="compactDensity()"
-          (click)="setDensity('compact')"
-        >
-          <mat-icon>density_small</mat-icon>
-          <mns-menu-label>{{ 'Compact rows' | transloco }}</mns-menu-label>
-        </button>
-        <mns-menu-title [hint]="visibleColumnCount() + ' / ' + columns().length">{{
-          'Columns' | transloco
-        }}</mns-menu-title>
-        @if (columnSearchEnabled()) {
-          <mns-menu-search [(value)]="columnSearch" [label]="'Search columns' | transloco" />
+              }
+            </div>
+            @if (cardFieldColumns().length) {
+              <dl class="crud-card-fields">
+                @for (column of cardFieldColumns(); track column.id) {
+                  <dt>{{ column.label | transloco }}</dt>
+                  <dd>
+                    <ng-container
+                      [ngTemplateOutlet]="crudCell"
+                      [ngTemplateOutletContext]="{ $implicit: row, column: column }"
+                    />
+                  </dd>
+                }
+              </dl>
+            }
+          </article>
+        } @empty {
+          <p class="crud-card-empty">{{ config.emptyLabel | transloco }}</p>
         }
-        <div class="mns-menu-list">
-          @for (column of viewMenuColumns(); track column.id) {
-            <button
-              mat-menu-item
-              mnsMenuItem
-              type="button"
-              selection="checkbox"
-              keepOpen
-              [checked]="isColumnChecked(column)"
-              [disabled]="isColumnLocked(column)"
-              (click)="toggleColumnDraft(column)"
-            >
-              <mat-icon>{{ isColumnLocked(column) ? 'lock' : 'view_column' }}</mat-icon>
-              <mns-menu-label
-                [description]="isColumnLocked(column) ? ('Always visible' | transloco) : null"
-                >{{ column.label | transloco }}</mns-menu-label
-              >
-            </button>
-          } @empty {
-            <p class="mns-menu-empty">{{ 'No records found.' | transloco }}</p>
-          }
-        </div>
-        <button
-          mat-menu-item
-          mnsMenuItem
-          type="button"
-          [disabled]="!customizedView()"
-          (click)="resetView()"
-        >
-          <mat-icon>restart_alt</mat-icon>
-          <mns-menu-label>{{ 'Restore default view' | transloco }}</mns-menu-label>
-        </button>
-      </ng-template>
-    </mat-menu>
+      </div>
+    } @else {
+      <table
+        mat-table
+        matSort
+        [dataSource]="visibleRows()"
+        (matSortChange)="setSort($event)"
+        class="erp-table"
+        [class.crud-density-compact]="compactDensity()"
+      >
+        @if (bulkDeleteEnabled()) {
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="select-col">
+              <mat-checkbox
+                [checked]="allVisibleSelected()"
+                [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
+                (change)="toggleVisibleRows($event.checked)"
+              />
+            </th>
+            <td mat-cell *matCellDef="let row" class="select-col">
+              <mat-checkbox [checked]="isSelected(row)" (change)="toggleRow(row, $event.checked)" />
+            </td>
+          </ng-container>
+        }
 
-    <mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
-      <ng-template matMenuContent let-row="row">
-        <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
-        @for (action of rowActions(row); track action.key) {
+        @for (column of columns(); track column.id) {
+          <ng-container [matColumnDef]="column.id">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header [class]="column.className ?? ''">
+              {{ column.label | transloco }}
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let row"
+              [class]="column.className ?? ''"
+              [class.status-col]="column.kind === 'status'"
+            >
+              <ng-container
+                [ngTemplateOutlet]="crudCell"
+                [ngTemplateOutletContext]="{ $implicit: row, column: column }"
+              />
+            </td>
+          </ng-container>
+        }
+
+        @if (hasRowActions()) {
+          <ng-container matColumnDef="actions" stickyEnd>
+            <th mat-header-cell *matHeaderCellDef class="actions-col-header">
+              <div class="actions-col-heading">
+                {{ 'Actions' | transloco }}
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="crud-view-button"
+                  [class.is-customized]="customizedView()"
+                  [matTooltip]="'Table view' | transloco"
+                  [attr.aria-label]="'Table view' | transloco"
+                  [matMenuTriggerFor]="tableViewMenu"
+                >
+                  <mat-icon>tune</mat-icon>
+                </button>
+              </div>
+            </th>
+            <td mat-cell *matCellDef="let row" class="actions-cell actions-col-cell">
+              <div class="actions-col">
+                <ng-container
+                  [ngTemplateOutlet]="crudRowActions"
+                  [ngTemplateOutletContext]="{ $implicit: row }"
+                />
+              </div>
+            </td>
+          </ng-container>
+        }
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns().length">
+            {{ config.emptyLabel | transloco }}
+          </td>
+        </tr>
+      </table>
+    }
+  </div>
+
+  <mat-menu
+    #tableViewMenu="matMenu"
+    xPosition="before"
+    class="mns-menu"
+    (closed)="applyColumnDraft()"
+  >
+    <ng-template matMenuContent>
+      <mns-menu-title>{{ 'Density' | transloco }}</mns-menu-title>
+      <button
+        mat-menu-item
+        mnsMenuItem
+        type="button"
+        selection="radio"
+        keepOpen
+        [checked]="!compactDensity()"
+        (click)="setDensity('comfortable')"
+      >
+        <mat-icon>density_medium</mat-icon>
+        <mns-menu-label>{{ 'Comfortable rows' | transloco }}</mns-menu-label>
+      </button>
+      <button
+        mat-menu-item
+        mnsMenuItem
+        type="button"
+        selection="radio"
+        keepOpen
+        [checked]="compactDensity()"
+        (click)="setDensity('compact')"
+      >
+        <mat-icon>density_small</mat-icon>
+        <mns-menu-label>{{ 'Compact rows' | transloco }}</mns-menu-label>
+      </button>
+      <mns-menu-title [hint]="visibleColumnCount() + ' / ' + columns().length">{{
+        'Columns' | transloco
+      }}</mns-menu-title>
+      @if (columnSearchEnabled()) {
+        <mns-menu-search [(value)]="columnSearch" [label]="'Search columns' | transloco" />
+      }
+      <div class="mns-menu-list">
+        @for (column of viewMenuColumns(); track column.id) {
           <button
             mat-menu-item
             mnsMenuItem
             type="button"
-            [disabled]="!!rowActionDisabledReason(action, row)"
-            (click)="runRowAction(action, row)"
+            selection="checkbox"
+            keepOpen
+            [checked]="isColumnChecked(column)"
+            [disabled]="isColumnLocked(column)"
+            (click)="toggleColumnDraft(column)"
           >
-            <mat-icon>{{ action.icon }}</mat-icon>
+            <mat-icon>{{ isColumnLocked(column) ? 'lock' : 'view_column' }}</mat-icon>
             <mns-menu-label
-              [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
-              >{{ action.label | transloco }}</mns-menu-label
+              [description]="isColumnLocked(column) ? ('Always visible' | transloco) : null"
+              >{{ column.label | transloco }}</mns-menu-label
             >
           </button>
+        } @empty {
+          <p class="mns-menu-empty">{{ 'No records found.' | transloco }}</p>
         }
-        @if (canDeleteRow(row)) {
-          <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleteItem(row)">
-            <mat-icon>delete</mat-icon>
-            <mns-menu-label>{{ 'Delete' | transloco }}</mns-menu-label>
-          </button>
-        }
-      </ng-template>
-    </mat-menu>
+      </div>
+      <button
+        mat-menu-item
+        mnsMenuItem
+        type="button"
+        [disabled]="!customizedView()"
+        (click)="resetView()"
+      >
+        <mat-icon>restart_alt</mat-icon>
+        <mns-menu-label>{{ 'Restore default view' | transloco }}</mns-menu-label>
+      </button>
+    </ng-template>
+  </mat-menu>
 
-    <mat-paginator
-      class="mobile-paginator"
-      [length]="paginatorLength()"
-      [pageIndex]="pageIndex()"
-      [pageSize]="pageSize()"
-      [pageSizeOptions]="pageSizeOptions()"
-      showFirstLastButtons
-      (page)="setPage($event)"
-    />
-  </mat-card>
-</section>
+  <mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
+    <ng-template matMenuContent let-row="row">
+      <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
+      @for (action of rowActions(row); track action.key) {
+        <button
+          mat-menu-item
+          mnsMenuItem
+          type="button"
+          [disabled]="!!rowActionDisabledReason(action, row)"
+          (click)="runRowAction(action, row)"
+        >
+          <mat-icon>{{ action.icon }}</mat-icon>
+          <mns-menu-label
+            [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
+            >{{ action.label | transloco }}</mns-menu-label
+          >
+        </button>
+      }
+      @if (canDeleteRow(row)) {
+        <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleteItem(row)">
+          <mat-icon>delete</mat-icon>
+          <mns-menu-label>{{ 'Delete' | transloco }}</mns-menu-label>
+        </button>
+      }
+    </ng-template>
+  </mat-menu>
+
+  <mat-paginator
+    class="mobile-paginator"
+    [length]="paginatorLength()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions()"
+    showFirstLastButtons
+    (page)="setPage($event)"
+  />
+</ng-template>
 
 <ng-template #crudRowActions let-row>
   @if (canEditRow(row)) {
