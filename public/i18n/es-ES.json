@@ -7117,5 +7117,12 @@
   "Log settings are not managed for this server engine.": "La configuración de logs no se gestiona para el motor de este servidor.",
   "Log level must be error, warning, notice, info or debug.": "El nivel de log debe ser error, advertencia, notificación, información o depuración.",
   "Log retention must be between 1 and 90 days.": "La retención de logs debe estar entre 1 y 90 días.",
-  "Log enabled must be 0 or 1.": "Activar logs debe ser 0 o 1."
+  "Log enabled must be 0 or 1.": "Activar logs debe ser 0 o 1.",
+  "Tech prefix": "Prefijo técnico",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the PABX account; empty inherits them.": "Prefijo técnico (tech prefix) enviado al operador antes del número marcado en la salida. Tiene prioridad sobre la troncal y la cuenta PABX; vacío los hereda.",
+  "Outbound tech prefix required by this carrier. Used when the extension has none; empty inherits the PABX account. Digits, # or *.": "Prefijo técnico exigido por este operador en la salida. Se usa cuando la extensión no tiene uno; vacío hereda de la cuenta PABX. Dígitos, # o *.",
+  "Outbound tech prefix used when neither the extension nor the trunk defines one. Digits, # or *.": "Prefijo técnico de salida usado cuando ni la extensión ni la troncal definen uno. Dígitos, # o *.",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the Softswitch account; empty inherits them.": "Prefijo técnico (tech prefix) enviado al operador antes del número marcado en la salida. Tiene prioridad sobre la troncal y la cuenta Softswitch; vacío los hereda.",
+  "Outbound tech prefix required by this carrier. Used when the subscriber has none; empty inherits the Softswitch account. Digits, # or *.": "Prefijo técnico exigido por este operador en la salida. Se usa cuando el suscriptor no tiene uno; vacío hereda de la cuenta Softswitch. Dígitos, # o *.",
+  "Outbound tech prefix used when neither the subscriber nor the trunk defines one. Digits, # or *.": "Prefijo técnico de salida usado cuando ni el suscriptor ni la troncal definen uno. Dígitos, # o *."
 }

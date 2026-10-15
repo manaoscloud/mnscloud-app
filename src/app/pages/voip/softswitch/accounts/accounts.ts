@@ -57,6 +57,7 @@ function config(): ConfigurableCrudConfig {
       name: '',
       serverUUID: '',
       notes: '',
+      techPrefix: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'VssName', uuidField: 'VssUUID' },
@@ -117,6 +118,16 @@ function config(): ConfigurableCrudConfig {
         label: 'Name',
         required: true,
         span: 1,
+      },
+      {
+        key: 'techPrefix',
+        source: 'VssTechPrefix',
+        payloadKey: 'techPrefix',
+        label: 'Tech prefix',
+        type: 'text',
+        span: 1,
+        autocomplete: 'off',
+        help: 'Outbound tech prefix used when neither the subscriber nor the trunk defines one. Digits, # or *.',
       },
       {
         key: 'notes',

@@ -7118,5 +7118,12 @@
   "Log settings are not managed for this server engine.": "As configurações de log não são gerenciadas para a engine deste servidor.",
   "Log level must be error, warning, notice, info or debug.": "O nível de log deve ser erro, aviso, notificação, informação ou debug.",
   "Log retention must be between 1 and 90 days.": "A retenção de logs deve ficar entre 1 e 90 dias.",
-  "Log enabled must be 0 or 1.": "Ativar logs deve ser 0 ou 1."
+  "Log enabled must be 0 or 1.": "Ativar logs deve ser 0 ou 1.",
+  "Tech prefix": "Prefixo técnico",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the PABX account; empty inherits them.": "Prefixo técnico (tech prefix) enviado à operadora antes do número discado na saída. Tem prioridade sobre o tronco e a conta PABX; vazio herda deles.",
+  "Outbound tech prefix required by this carrier. Used when the extension has none; empty inherits the PABX account. Digits, # or *.": "Prefixo técnico exigido por esta operadora na saída. Usado quando o ramal não tem um; vazio herda da conta PABX. Dígitos, # ou *.",
+  "Outbound tech prefix used when neither the extension nor the trunk defines one. Digits, # or *.": "Prefixo técnico de saída usado quando nem o ramal nem o tronco definem um. Dígitos, # ou *.",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the Softswitch account; empty inherits them.": "Prefixo técnico (tech prefix) enviado à operadora antes do número discado na saída. Tem prioridade sobre o tronco e a conta Softswitch; vazio herda deles.",
+  "Outbound tech prefix required by this carrier. Used when the subscriber has none; empty inherits the Softswitch account. Digits, # or *.": "Prefixo técnico exigido por esta operadora na saída. Usado quando o assinante não tem um; vazio herda da conta Softswitch. Dígitos, # ou *.",
+  "Outbound tech prefix used when neither the subscriber nor the trunk defines one. Digits, # or *.": "Prefixo técnico de saída usado quando nem o assinante nem o tronco definem um. Dígitos, # ou *."
 }
