@@ -73,6 +73,12 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     { id: 'code', label: 'Code', field: 'BpaCode' },
     { id: 'items', label: 'Items', field: 'ItemCount' },
     {
+      id: 'requirements',
+      label: 'Missing required modules',
+      kind: 'number',
+      field: 'UnmetRequirementCount',
+    },
+    {
       id: 'subscribers',
       label: 'Subscribers',
       kind: 'number',
@@ -239,7 +245,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           type: 'search-select',
           quickCreate: quickCreateFor('BillingProductBprUUID'),
           required: true,
-          help: 'Product included in the package.',
+          help: 'Product included in the package. A product that requires a module (for example DNS requires Hosting) is accepted only when the package also includes that module.',
           span: 1,
         },
         {
@@ -270,6 +276,18 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       columns: [
         { id: 'product', label: 'Product', field: 'BprName' },
         { id: 'entitlement', label: 'Item entitlement', field: 'BkiEntitlementCode' },
+        {
+          id: 'requires',
+          label: 'Required module',
+          field: 'BprRequiresEntitlementCode',
+          value: (row, t) => {
+            const required = String(row['BprRequiresEntitlementCode'] ?? '');
+            if (!required) return '-';
+            return Number(row['RequirementMet'] ?? 1) === 0
+              ? `${required} · ${t('Not included in the package')}`
+              : required;
+          },
+        },
         {
           id: 'quantity',
           label: 'Included quantity',
@@ -396,7 +414,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       quickCreate: quickCreateFor('BillingProductBprUUID'),
       requiredWhen: ({ editing }) => !editing,
       hiddenWhen: ({ editing }) => editing,
-      help: 'First product included in the package, created together with it. Add more items later in the package Items list.',
+      help: 'First product included in the package, created together with it. Add more items later in the package Items list. A product that requires another module cannot be the first item; add the module first.',
       tab: 'financial',
       span: 1,
     },
