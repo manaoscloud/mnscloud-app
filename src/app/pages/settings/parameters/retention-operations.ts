@@ -224,6 +224,7 @@ export class VoipPabxRetentionOperationsComponent {
       pabx_deleted: 'PABX deleted',
       pabx_missing: 'PABX missing',
       no_pabx: 'No PABX',
+      unrouted: 'Unrouted calls',
     };
     return labels[type ?? ''] ?? 'Orphan';
   }

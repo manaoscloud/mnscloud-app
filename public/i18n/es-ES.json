@@ -6936,5 +6936,7 @@
   "authentication.burstThresholdHelp": "Consumo medio por debajo del cual se permite el burst. Debe ser menor o igual a la velocidad máxima.",
   "authentication.burstTimeHelp": "Ventana en segundos (1 a 3600) usada para calcular el consumo medio del burst.",
   "authentication.priorityHelp": "Opcional. Prioridad de la cola en el equipo, de 1 (mayor) a 8 (menor). Vacío usa 8 cuando hay velocidad mínima.",
-  "authentication.minimumRateHelp": "Opcional. Velocidad garantizada en kbit/s; la subida y bajada mínimas se completan juntas y no pueden superar el máximo."
+  "authentication.minimumRateHelp": "Opcional. Velocidad garantizada en kbit/s; la subida y bajada mínimas se completan juntas y no pueden superar el máximo.",
+  "Unrouted calls": "Llamadas sin ruta",
+  "Immediate": "Inmediata"
 }

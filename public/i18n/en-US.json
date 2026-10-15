@@ -6936,5 +6936,7 @@
   "authentication.burstThresholdHelp": "Average usage below which burst is allowed. Must be lower than or equal to the maximum speed.",
   "authentication.burstTimeHelp": "Window in seconds (1 to 3600) used to compute the average burst usage.",
   "authentication.priorityHelp": "Optional. Queue priority on the access device, from 1 (highest) to 8 (lowest). Empty uses 8 when a minimum speed is set.",
-  "authentication.minimumRateHelp": "Optional. Guaranteed speed in kbit/s; minimum upload and download are filled together and cannot exceed the maximum."
+  "authentication.minimumRateHelp": "Optional. Guaranteed speed in kbit/s; minimum upload and download are filled together and cannot exceed the maximum.",
+  "Unrouted calls": "Unrouted calls",
+  "Immediate": "Immediate"
 }
