@@ -32,4 +32,19 @@ describe('Global CRUD field guidance', () => {
     ).toBe('translated:Second provider');
     expect(resolveCrudFieldHelp({}, { editing: false, values: {} }, translate)).toBe('');
   });
+  it('passes interpolation values computed from the editor to the translation', () => {
+    const field = {
+      helpWhen: ({ values }: { values: Record<string, unknown> }) =>
+        values['ip'] ? 'Allow {{ ip }}' : '',
+      helpParams: ({ values }: { values: Record<string, unknown> }) => ({
+        ip: String(values['ip'] ?? ''),
+      }),
+    };
+    const withParams = (key: string, params?: Record<string, string | number>) =>
+      key.replace('{{ ip }}', String(params?.['ip'] ?? ''));
+    expect(
+      resolveCrudFieldHelp(field, { editing: false, values: { ip: '192.0.2.10' } }, withParams),
+    ).toBe('Allow 192.0.2.10');
+    expect(resolveCrudFieldHelp(field, { editing: false, values: {} }, withParams)).toBe('');
+  });
 });
