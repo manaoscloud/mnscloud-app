@@ -6937,5 +6937,7 @@
   "authentication.burstThresholdHelp": "Consumo médio abaixo do qual o burst é liberado. Deve ser menor ou igual à velocidade máxima.",
   "authentication.burstTimeHelp": "Janela em segundos (1 a 3600) usada para calcular o consumo médio do burst.",
   "authentication.priorityHelp": "Opcional. Prioridade da fila no equipamento, de 1 (maior) a 8 (menor). Vazio usa 8 quando houver velocidade mínima.",
-  "authentication.minimumRateHelp": "Opcional. Velocidade garantida em kbit/s; upload e download mínimos são preenchidos juntos e não podem passar do máximo."
+  "authentication.minimumRateHelp": "Opcional. Velocidade garantida em kbit/s; upload e download mínimos são preenchidos juntos e não podem passar do máximo.",
+  "Unrouted calls": "Chamadas sem rota",
+  "Immediate": "Imediata"
 }
