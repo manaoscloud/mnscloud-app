@@ -6738,6 +6738,7 @@
   "Releasing: unpaid": "Liberando: sem pagamento",
   "authentication.clusters": "Clusters",
   "authentication.servers": "Servidores",
+  "authentication.accessProfileHelp": "Opcional quando o grupo tem perfil: o acesso herda o perfil do grupo, que sempre prevalece.",
   "authentication.accounts": "Contas",
   "authentication.profiles": "Perfis",
   "authentication.network-devices": "Dispositivos de rede",

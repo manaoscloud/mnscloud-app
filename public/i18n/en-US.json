@@ -6737,6 +6737,7 @@
   "Releasing: unpaid": "Releasing: unpaid",
   "authentication.clusters": "Clusters",
   "authentication.servers": "Servers",
+  "authentication.accessProfileHelp": "Optional when the group has a profile: the access inherits the group profile, which always prevails.",
   "authentication.accounts": "Accounts",
   "authentication.profiles": "Profiles",
   "authentication.network-devices": "Network devices",

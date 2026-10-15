@@ -18,11 +18,11 @@ const config = defineCrud({
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['AaxRevision']) }),
   initialValues: {
-    name: '',
     notes: '',
     status: 1,
     revision: 1,
     AuthenticationAccountAacUUID: '',
+    CustomerCusUUID: '',
     username: '',
     password: '',
     AuthenticationProfileAapUUID: '',
@@ -49,6 +49,22 @@ const config = defineCrud({
       help: 'authentication.scopeHelp',
     },
     {
+      key: 'CustomerCusUUID',
+      source: 'CustomerCusUUID',
+      label: 'Customer',
+      span: 1,
+      required: true,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'erp/customers?status=1',
+        searchParam: 'q',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+      quickCreate: quickCreateFor('CustomerCusUUID'),
+    },
+    {
       key: 'AuthenticationGroupAagUUID',
       source: 'AuthenticationGroupAagUUID',
       quickCreate: quickCreateFor('AuthenticationGroupAagUUID', {
@@ -70,7 +86,7 @@ const config = defineCrud({
     {
       key: 'AuthenticationProfileAapUUID',
       source: 'AuthenticationProfileAapUUID',
-      help: 'authentication.profileHelp',
+      help: 'authentication.accessProfileHelp',
       quickCreate: quickCreateFor('AuthenticationProfileAapUUID', {
         initialValues: ({ values }) => ({
           AuthenticationAccountAacUUID: values['AuthenticationAccountAacUUID'],
@@ -78,7 +94,9 @@ const config = defineCrud({
       }),
       label: 'authentication.profiles',
       span: 1,
-      required: true,
+      required: false,
+      // The group profile is inherited (and prevails) when the selected group has one.
+      requiredWhen: ({ values }) => !values['AuthenticationGroupAagUUID'],
       type: 'search-select',
       remoteLookup: {
         endpoint: 'authentication/profiles',
@@ -91,6 +109,7 @@ const config = defineCrud({
       key: 'username',
       source: 'AaxUsername',
       label: 'authentication.username',
+      tab: 'authentication',
       span: 1,
       required: true,
       type: 'text',
@@ -99,6 +118,7 @@ const config = defineCrud({
       key: 'password',
       source: 'AaxPasswordHash',
       label: 'authentication.password',
+      tab: 'authentication',
       span: 1,
       required: false,
       type: 'password',
@@ -111,6 +131,7 @@ const config = defineCrud({
       key: 'framedIp',
       source: 'AaxFramedIp',
       label: 'authentication.framedIp',
+      tab: 'authentication',
       span: 1,
       required: false,
       type: 'text',
@@ -119,13 +140,13 @@ const config = defineCrud({
       key: 'expiresAt',
       source: 'AaxExpiresAt',
       label: 'authentication.expiresAt',
+      tab: 'authentication',
       span: 1,
       required: false,
       type: 'datetime',
       fromRecord: (value) => utcToLocalInput(value),
       help: 'authentication.expiryHelp',
     },
-    { key: 'name', source: 'AaxName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AaxRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'notes',
@@ -138,7 +159,7 @@ const config = defineCrud({
     },
   ],
   columns: [
-    { id: 'name', field: 'AaxName', label: 'Name', kind: 'identity' },
+    { id: 'customer', field: 'CustomerName', label: 'Customer', kind: 'identity' },
     { id: 'username', field: 'AaxUsername', label: 'authentication.username', kind: 'text' },
     {
       id: 'account',
@@ -147,12 +168,12 @@ const config = defineCrud({
       kind: 'related',
       uuidField: 'AuthenticationAccountAacUUID',
     },
+    // Effective profile: the group profile when the group has one, else the access profile.
     {
       id: 'profile',
-      field: 'ProfileName',
+      field: 'EffectiveProfileName',
       label: 'authentication.profiles',
-      kind: 'related',
-      uuidField: 'AuthenticationProfileAapUUID',
+      kind: 'text',
     },
     { id: 'expires', field: 'AaxExpiresAt', label: 'authentication.expiresAt', kind: 'datetime' },
     { id: 'status', field: 'AaxStatus', label: 'Status', kind: 'status' },
