@@ -523,6 +523,10 @@ export type ConfigurableCrudConfig = {
   fields: readonly ConfigurableCrudField[];
   columns: readonly ConfigurableCrudColumn[];
   initialValues: ConfigurableCrudRecord;
+  /**
+   * Fresh values for each create dialog (generated usernames, passwords, codes). Never used to
+   * fill an edit dialog: a generated value would look persisted and be saved over the record.
+   */
   initialValuesFactory?: () => ConfigurableCrudRecord;
   statusMode: ConfigurableCrudStatusMode;
   activeValue: string | number;
@@ -2951,7 +2955,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected formValuesFromRecord(row: T): ConfigurableCrudRecord {
-    const initial = this.resolveInitialValues();
+    // Static defaults only: create-time generated values never fill an existing record.
+    const initial = this.config.initialValues;
     const next: ConfigurableCrudRecord = {};
     for (const field of this.config.fields) {
       let value = row[field.source ?? field.key] ?? initial[field.key] ?? '';
