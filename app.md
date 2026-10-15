@@ -217,7 +217,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   `data-report-mask` (inputs/textareas show `••••••`). Mark every element that shows secrets,
   tokens, card numbers or other sensitive values with `data-report-mask` when it can stay visible
   on screen. `ConfigurableCrudPageBase.reportMask(field)` marks `password`/`secret-content`
-  fields (also while revealed) and credential-named keys automatically.
+  fields (also while revealed) and credential-named keys automatically. Non-secret controls
+  such as a boolean password-change policy may explicitly declare `reportMask: false`; actual
+  `password`/`secret-content` controls always remain masked, regardless of this setting.
 - Users can add up to 5 extra images (file picker/camera, paste, drag and drop). The browser
   re-encodes each one (max 2560 px, WebP or JPEG, no EXIF/GPS metadata) before anything is sent.
   The ticket is created first; extra images then go one by one to
@@ -1168,6 +1170,12 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - update dialog size/position dynamically
 
 ## Generic CRUD Implementation Contract
+
+- Conditional/repeated `suffixButtons` must be wrapped in a single `matIconSuffix` element
+  outside their loop. The shared `.crud-field-suffix-actions` keeps them on one line. Do not
+  rely on suffix directives nested inside loops to project into Material’s suffix slot: they
+  can render inside the input area and increase the control height. Preserve action visibility,
+  disabled state and the standard password generate/reveal controls.
 
 - This document is the source of truth for frontend CRUD behavior.
 - Do not use any existing page/component as the canonical reference for a refactor or new CRUD page.

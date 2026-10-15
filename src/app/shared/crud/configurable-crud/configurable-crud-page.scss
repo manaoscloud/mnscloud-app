@@ -650,3 +650,10 @@
   padding: 1rem;
   color: var(--mat-sys-color-on-surface-variant);
 }
+
+// Keep conditional/repeated actions in Material's icon suffix projection slot.
+.crud-field-suffix-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
