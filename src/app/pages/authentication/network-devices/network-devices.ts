@@ -28,7 +28,6 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AanStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AanName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AanRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationAccountAacUUID',
@@ -45,10 +44,12 @@ const config = defineCrud({
       disabledWhen: ({ editing }) => editing,
       help: 'authentication.scopeHelp',
     },
+    { key: 'name', source: 'AanName', label: 'Name', required: true, span: 1 },
     {
       key: 'address',
       source: 'AanAddress',
       label: 'authentication.address',
+      tab: 'authentication',
       span: 1,
       required: true,
       type: 'text',
@@ -57,6 +58,7 @@ const config = defineCrud({
       key: 'secret',
       source: 'AanSecretEncrypted',
       label: 'authentication.secret',
+      tab: 'authentication',
       span: 1,
       required: false,
       type: 'password',
