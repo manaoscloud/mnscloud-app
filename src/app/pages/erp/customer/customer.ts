@@ -639,9 +639,9 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
               return;
             }
             try {
-              const body: { portalPassword?: string } = {};
+              const body: { password?: string } = {};
               if (values['portalPassword']) {
-                body.portalPassword = String(values['portalPassword']);
+                body.password = String(values['portalPassword']);
               }
               await host.api.post(
                 `erp/customers/${customerUUID}/portal/resend-welcome-email`,
