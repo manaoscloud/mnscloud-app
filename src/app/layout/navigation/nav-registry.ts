@@ -540,6 +540,14 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'authentication/rate-limits',
+        label: 'nav.authentication.rate-limits',
+        icon: 'speed',
+        route: '/authentication/rate-limits',
+        entitlementCode: 'module.authentication.account',
+        requiresEnvironment: true,
+      },
+      {
         id: 'authentication/groups',
         label: 'nav.authentication.groups',
         icon: 'groups',

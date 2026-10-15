@@ -23,6 +23,16 @@ export function authenticationPayload(
     'interimInterval',
     'idleTimeout',
     'sessionTimeout',
+    'uploadKbps',
+    'downloadKbps',
+    'burstUploadKbps',
+    'burstDownloadKbps',
+    'burstThresholdUploadKbps',
+    'burstThresholdDownloadKbps',
+    'burstTimeSeconds',
+    'priority',
+    'minUploadKbps',
+    'minDownloadKbps',
   ]) {
     if (field in payload && payload[field] != null && payload[field] !== '')
       payload[field] = Number(payload[field]);

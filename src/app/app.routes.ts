@@ -512,6 +512,15 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'authentication.accesses' },
               },
               {
+                path: 'authentication/rate-limits',
+                loadComponent: () =>
+                  import('./pages/authentication/rate-limits/rate-limits').then(
+                    (m) => m.AuthenticationRateLimitPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.rate-limits' },
+              },
+              {
                 path: 'authentication/profiles',
                 loadComponent: () =>
                   import('./pages/authentication/profiles/profiles').then(

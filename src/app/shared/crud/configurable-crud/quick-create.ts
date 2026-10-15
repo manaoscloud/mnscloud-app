@@ -63,6 +63,15 @@ export const QUICK_CREATE_REGISTRY = {
     permission: 'tenant.authentication.write',
     routeData: { scope: 'tenant' },
   },
+  AuthenticationRateLimitArlUUID: {
+    label: 'authentication.rate-limits',
+    loadComponent: () =>
+      import('../../../pages/authentication/rate-limits/rate-limits').then(
+        (m) => m.AuthenticationRateLimitPage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
   AuthenticationProfileAapUUID: {
     label: 'authentication.profiles',
     loadComponent: () =>
