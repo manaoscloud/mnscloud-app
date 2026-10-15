@@ -30,6 +30,7 @@ type Snapshot = {
   template: `
     <mns-metrics-monitor
       title="Agent monitoring"
+      description="monitoring.description.agentTelemetry"
       [identity]="name()"
       [recordId]="uuid"
       [dialogMode]="!!dialog"

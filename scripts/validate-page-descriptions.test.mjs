@@ -49,3 +49,17 @@ test('page shells declare a translated description', () => {
     /no description paragraph/,
   );
 });
+
+test('inline component templates are checked too', () => {
+  assert.match(
+    checkSource(ts, 'template: `<mns-metrics-monitor title="T">`')[0],
+    /has no description/,
+  );
+  assert.deepEqual(
+    checkSource(
+      ts,
+      'template: `<mns-metrics-monitor title="T" description="crm.description.dashboard">`',
+    ),
+    [],
+  );
+});

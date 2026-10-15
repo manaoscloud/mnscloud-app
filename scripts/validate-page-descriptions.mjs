@@ -112,7 +112,9 @@ export function checkSource(path, source) {
         problems.push(`${file}:${line} pageDescription repeats the page title.`);
       }
     }
-  } else {
+  }
+  // Page shells live in .html templates and in inline `template:` strings of components.
+  {
     for (const shell of SHELLS) {
       for (const match of source.matchAll(new RegExp(`<${shell}\\b([^>]*)>`, 'g'))) {
         const attributes = match[1];
