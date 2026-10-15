@@ -1,3 +1,4 @@
+import { crudReportMask } from './crud-report-mask';
 import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
@@ -101,10 +102,6 @@ import {
   FileUploadProgress,
   runFileUploadExecution,
 } from '../../upload/file-upload-progress';
-
-/** Field keys that hold credentials, masked in problem report prints. */
-const SENSITIVE_FIELD_KEY =
-  /(pass(word|phrase)?|pwd|secret|token|private.?key|api.?key|credential|pin$)/i;
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
   FieldHelpComponent,
@@ -229,6 +226,8 @@ export type ConfigurableCrudField = {
     searchParam?: string;
   };
   key: string;
+  /** Explicit capture classification for non-secret controls with credential-like names. */
+  reportMask?: boolean;
   label: string;
   labelWhen?: (context: ConfigurableCrudFieldContext) => string;
   /** Set to false for protocol/vendor terms that must remain literal. */
@@ -1667,9 +1666,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    * `data-report-mask` value for a form control: passwords stay hidden in the report print even
    * while revealed, and so do fields named like credentials (UUID references are not secrets).
    */
-  reportMask(field: { key: string; type?: string }): '' | null {
-    if (field.type === 'password' || field.type === 'secret-content') return '';
-    return SENSITIVE_FIELD_KEY.test(field.key) && !/uuid$/i.test(field.key) ? '' : null;
+  reportMask(field: { key: string; type?: string; reportMask?: boolean }): '' | null {
+    return crudReportMask(field);
   }
 
   isPasswordVisible(key: string): boolean {
