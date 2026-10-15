@@ -1,3 +1,4 @@
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { authenticationPayload } from '../authentication-input';
 import { Component } from '@angular/core';
 import {
@@ -25,7 +26,7 @@ const config = defineCrud({
     sessionTimeout: '',
     idleTimeout: '',
     interimInterval: 300,
-    rateLimit: '',
+    AuthenticationRateLimitArlUUID: '',
   },
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
@@ -48,13 +49,25 @@ const config = defineCrud({
     },
     { key: 'name', source: 'AapName', label: 'Name', required: true, span: 1 },
     {
-      key: 'rateLimit',
-      source: 'AapRateLimit',
+      key: 'AuthenticationRateLimitArlUUID',
+      source: 'AuthenticationRateLimitArlUUID',
       label: 'authentication.rateLimit',
       help: 'authentication.rateLimitHelp',
+      quickCreate: quickCreateFor('AuthenticationRateLimitArlUUID', {
+        initialValues: ({ values }) => ({
+          AuthenticationAccountAacUUID: values['AuthenticationAccountAacUUID'],
+        }),
+      }),
       span: 1,
       required: false,
-      type: 'text',
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'authentication/rate-limits',
+        uuidField: 'ArlUUID',
+        labelField: 'ArlName',
+        descriptionField: 'ArlRateLimit',
+        parameters: { accountUUID: 'AuthenticationAccountAacUUID' },
+      },
     },
     {
       key: 'sessionTimeout',
@@ -111,7 +124,19 @@ const config = defineCrud({
       label: 'authentication.interimInterval',
       kind: 'number',
     },
-    { id: 'rate', field: 'AapRateLimit', label: 'authentication.rateLimit', kind: 'text' },
+    {
+      id: 'rate',
+      field: 'RateLimitName',
+      label: 'authentication.rateLimit',
+      kind: 'related',
+      uuidField: 'AuthenticationRateLimitArlUUID',
+    },
+    {
+      id: 'rateValue',
+      field: 'RateLimitValue',
+      label: 'authentication.rateLimitValue',
+      kind: 'text',
+    },
     { id: 'status', field: 'AapStatus', label: 'Status', kind: 'status' },
   ],
 });
