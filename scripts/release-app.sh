@@ -132,8 +132,19 @@ console.log(stable?.artifact?.sha256 ?? "");
     git push origin "$release_tag"
   fi
   if ! gh release view "$release_tag" --repo manaoscloud/mnscloud-app >/dev/null 2>&1; then
+    # GitHub's previous-tag auto-detection for generated notes can fail with HTTP 502; pass the
+    # latest published release explicitly and fall back to a plain note if generation still fails.
+    local previous_tag
+    local -a notes_args=(--generate-notes)
+    previous_tag="$(gh release list --repo manaoscloud/mnscloud-app --exclude-drafts --limit 1 \
+      --json tagName --jq '.[0].tagName // ""' 2>/dev/null || true)"
+    [[ -n "$previous_tag" && "$previous_tag" != "$release_tag" ]] &&
+      notes_args+=(--notes-start-tag "$previous_tag")
     gh release create "$release_tag" --repo manaoscloud/mnscloud-app --title "mnscloud-app v${version}" \
-      --generate-notes
+      "${notes_args[@]}" ||
+      gh release view "$release_tag" --repo manaoscloud/mnscloud-app >/dev/null 2>&1 ||
+      gh release create "$release_tag" --repo manaoscloud/mnscloud-app --title "mnscloud-app v${version}" \
+        --notes "Release mnscloud-app v${version}"
   fi
   gh release upload "$release_tag" --repo manaoscloud/mnscloud-app --clobber \
     "releases/${artifact_name}" "releases/${artifact_name}.sha256"

@@ -688,14 +688,11 @@ html.dark {
     gap: 0;
   }
 
+  // The footer is an in-flow sibling below the scroll area and already applies the bottom safe
+  // area, so the content only keeps its regular inset.
   .page-content {
     padding: var(--layout-content-padding-mobile);
-    padding-bottom: calc(
-      var(--layout-content-padding-mobile) + env(safe-area-inset-bottom) + 5.5rem
-    );
-    scroll-padding-bottom: calc(
-      var(--layout-content-padding-mobile) + env(safe-area-inset-bottom) + 5.5rem
-    );
+    scroll-padding-bottom: var(--layout-content-padding-mobile);
   }
 
   .footer {

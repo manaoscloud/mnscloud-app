@@ -1,8 +1,10 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+import { openCrudComponentDialog } from '../dialog/crud-dialog.util';
 import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 
 export type FilePreviewDialogData = {
@@ -31,19 +33,22 @@ export type FilePreviewDialogData = {
 })
 export class FilePreviewDialogComponent {
   readonly data = inject<FilePreviewDialogData>(MAT_DIALOG_DATA);
-
-  constructor() {
-    inject(DestroyRef).onDestroy(() => URL.revokeObjectURL(this.data.url));
-  }
 }
 
 /** Opens an image blob in the preview dialog; the dialog owns and revokes its object URL. */
 export function openImagePreview(dialog: MatDialog, blob: Blob, fileName: string): void {
-  dialog.open(FilePreviewDialogComponent, {
-    panelClass: 'file-preview-dialog-panel',
-    width: 'min(1200px, 96vw)',
-    maxWidth: '96vw',
-    maxHeight: '92vh',
-    data: { fileName, url: URL.createObjectURL(blob) } satisfies FilePreviewDialogData,
+  const url = URL.createObjectURL(blob);
+  const binding = openCrudComponentDialog(
+    dialog,
+    FilePreviewDialogComponent,
+    'crud-form-dialog',
+    {
+      data: { fileName, url } satisfies FilePreviewDialogData,
+    },
+  );
+  void firstValueFrom(binding.ref.afterClosed()).finally(() => {
+    binding.stop();
+    URL.revokeObjectURL(url);
   });
 }
+

@@ -23,7 +23,8 @@ Use this repository as an independent public frontend client for the MNSCloud AP
   forbidden for any AI/LLM or human developer. All table capabilities (density toggle, column picker,
   search, filters, pagination, responsive cards, loading states, and problem reporting button) must
   come from the canonical component. In collection dialogs (`ConfigurableCrudCollectionDialog`),
-  actions belong in `.dialog-header .header-actions` (`Close`, `Refresh`, `New`, and report problem).
+  header actions belong in `.dialog-header .header-actions` (`Refresh`, `New`, and report problem),
+  while `Close` belongs in `.form-actions .secondary-actions` at the bottom of the dialog.
 - Sidebar labels follow `app.md` → `Navigation Label Contract`: entries live in
   `src/app/layout/navigation/nav-registry.ts` with `nav.<id>` keys in PT/EN/ES, never repeat an
   ancestor's words, respect the per-level length budget, use sentence case and the glossary in
