@@ -651,8 +651,14 @@
   min-width: 0;
 }
 
+/*
+ * The global `.actions-col` reserves the table column width (112px); a card header sizes the
+ * actions to their buttons and ends them at the card edge, so the title takes the free space.
+ */
 .crud-card-actions {
   flex: 0 0 auto;
+  min-width: 0;
+  justify-content: flex-end;
 }
 
 .crud-card-fields {
@@ -685,7 +691,6 @@
   align-items: center;
   flex-wrap: nowrap;
 }
-
 
 .crud-dialog.collection-dialog {
   .dialog-content {
