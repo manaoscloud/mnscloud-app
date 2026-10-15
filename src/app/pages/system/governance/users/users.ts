@@ -74,6 +74,20 @@ const RELEASE_HOLD_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Release legal hold',
 };
 
+const VERIFY_EMAIL_ACTION: ConfigurableCrudRowAction = {
+  key: 'verify-email',
+  label: 'Mark e-mail as verified',
+  icon: 'mark_email_read',
+  tooltip: 'Mark e-mail as verified',
+};
+
+const RESEND_VERIFICATION_ACTION: ConfigurableCrudRowAction = {
+  key: 'resend-verification',
+  label: 'Resend verification e-mail',
+  icon: 'forward_to_inbox',
+  tooltip: 'Resend verification e-mail',
+};
+
 const GOVERNANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/governance/users',
   uuidField: 'uuid',
@@ -181,7 +195,7 @@ type GovernanceActionFormModel = {
             <textarea matInput rows="3" [formField]="actionForm.reason"></textarea>
           </mat-form-field>
 
-          @if (data.action !== 'release-hold') {
+          @if (data.action !== 'release-hold' && data.action !== 'resend-verification') {
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Legal basis' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.legalBasis" />
@@ -208,7 +222,7 @@ type GovernanceActionFormModel = {
             mat-flat-button
             color="primary"
             type="button"
-            [disabled]="!actionForm().valid() || saving()"
+            [disabled]="!canConfirm()"
             (click)="confirm()"
           >
             <mat-icon>check</mat-icon>
@@ -236,7 +250,17 @@ export class GovernanceActionDialogComponent {
     minLength(schema.reason, 4);
   });
 
+  /** Manual verification is an override: it always needs a legal basis besides the reason. */
+  canConfirm(): boolean {
+    if (!this.actionForm().valid() || this.saving()) return false;
+    return (
+      this.data.action !== 'verify-email' || this.actionFormModel().legalBasis.trim().length >= 2
+    );
+  }
+
   titleKey(): string {
+    if (this.data.action === 'verify-email') return 'Mark e-mail as verified';
+    if (this.data.action === 'resend-verification') return 'Resend verification e-mail';
     if (this.data.action === 'legal-hold') return 'Create legal hold';
     if (this.data.action === 'release-hold') return 'Release legal hold';
     if (this.data.action === 'close') return 'Close account';
@@ -245,6 +269,12 @@ export class GovernanceActionDialogComponent {
   }
 
   helpKey(): string {
+    if (this.data.action === 'verify-email') {
+      return 'Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.';
+    }
+    if (this.data.action === 'resend-verification') {
+      return 'Sends a new verification link to the account e-mail (one per minute, five per day).';
+    }
     if (this.data.action === 'anonymize') {
       return 'This removes personal identifiers while preserving relational history. Active legal holds block this action.';
     }
@@ -261,7 +291,7 @@ export class GovernanceActionDialogComponent {
   }
 
   confirm() {
-    if (!this.actionForm().valid() || this.saving()) return;
+    if (!this.canConfirm()) return;
     this.saving.set(true);
     const payload = this.actionFormModel();
     this.dialogRef.close({
@@ -295,6 +325,9 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
     if (Number(row['activeLegalHoldCount'] ?? 0) > 0) {
       actions.push(RELEASE_HOLD_ACTION);
     }
+    if (!row['emailVerifiedAt'] && Number(row['status'] ?? 0) === 1) {
+      actions.push(RESEND_VERIFICATION_ACTION, VERIFY_EMAIL_ACTION);
+    }
     return actions;
   }
 
@@ -310,7 +343,9 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
       accountAction !== 'close' &&
       accountAction !== 'anonymize' &&
       accountAction !== 'legal-hold' &&
-      accountAction !== 'release-hold'
+      accountAction !== 'release-hold' &&
+      accountAction !== 'verify-email' &&
+      accountAction !== 'resend-verification'
     ) {
       return;
     }
@@ -347,6 +382,7 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
       statusLabel: closed ? 'Closed' : Number(row.Status ?? 0) === 1 ? 'Active' : 'Inactive',
       emailVerifiedAt: row.EmailVerifiedAt ?? null,
       emailVerifiedLabel: row.EmailVerifiedAt ? 'Yes' : 'No',
+      emailVerificationDeadlineAt: row.EmailVerificationDeadlineAt ?? null,
       dateDeleted: row.DateDeleted ?? null,
       dateCreated: row.DateCreated ?? null,
       accessCount: Number(row.AccessCount ?? 0),
@@ -381,6 +417,11 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
           { label: 'E-mail', value: row['email'], wide: true },
           { label: 'Access', value: row['accessCount'] },
           { label: 'Email verified', value: row['emailVerifiedLabel'], translate: true },
+          {
+            label: 'Verification deadline',
+            value: row['emailVerificationDeadlineAt'],
+            kind: 'datetime',
+          },
           { label: 'Legal holds', value: row['activeLegalHoldCount'] },
           { label: 'Last action', value: row['lastAction'] },
           { label: 'Created', value: row['dateCreated'], kind: 'datetime' },
@@ -481,12 +522,20 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
     const body =
       action === 'legal-hold'
         ? payload
-        : { reason: payload.reason, legalBasis: payload.legalBasis };
+        : action === 'resend-verification'
+          ? { reason: payload.reason }
+          : { reason: payload.reason, legalBasis: payload.legalBasis };
 
     this.mutating.set(true);
     try {
       await this.api.post(endpoint, body);
-      this.snack.success(this.t('User governance action completed.'));
+      this.snack.success(
+        this.t(
+          action === 'resend-verification'
+            ? 'Verification e-mail sent.'
+            : 'User governance action completed.',
+        ),
+      );
       this.itemsResource.reload();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to execute action.'));

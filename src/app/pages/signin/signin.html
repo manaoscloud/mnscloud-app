@@ -84,9 +84,28 @@
 
       <!-- 🔹 FORGOT PASSWORD LINK -->
 
+      @if (verificationResult() === 'verified') {
+        <p class="verify-notice">{{ 'signin.verification.verified' | transloco }}</p>
+      } @else if (verificationResult() === 'failed') {
+        <p class="api-error">{{ 'signin.verification.linkInvalid' | transloco }}</p>
+      }
+
       <!-- API ERROR -->
       @if (apiError()) {
         <p class="api-error">{{ apiError() }}</p>
+      }
+
+      @if (emailNotVerified() || verificationResult() === 'failed') {
+        <button
+          mat-stroked-button
+          type="button"
+          class="resend-btn"
+          [disabled]="!canResendVerification"
+          (click)="resendVerification()"
+        >
+          <mat-icon>forward_to_inbox</mat-icon>
+          {{ 'signin.verification.resend' | transloco }}
+        </button>
       }
 
       <!-- SUBMIT — mesmo padrão do Forgot Password -->

@@ -85,6 +85,13 @@ export class Signin {
   readonly isLoading = signal(false);
   readonly showPassword = signal(false);
   readonly apiError = signal<string | null>(null);
+  /** Sign-in refused with EMAIL_NOT_VERIFIED (only after a valid password). */
+  readonly emailNotVerified = signal(false);
+  readonly resendingVerification = signal(false);
+  /** Result of the e-mail verification link: /signin?verified=1|0. */
+  readonly verificationResult = signal<'verified' | 'failed' | null>(
+    this.verificationResultFromUrl(),
+  );
   readonly emailError = computed(() => {
     const value = this.formModel().email.trim();
     if (!value) return this.i18n.t('signin.error.requiredEmail');
@@ -137,6 +144,7 @@ export class Signin {
 
     this.isLoading.set(true);
     this.apiError.set(null);
+    this.emailNotVerified.set(false);
 
     try {
       const { email, password, rememberMe } = this.formModel();
@@ -160,6 +168,12 @@ export class Signin {
       }
 
       this.snack.success(this.i18n.t('signin.success.welcomeBack'));
+      const user = result?.data?.user;
+      if (user?.emailVerificationPending) {
+        this.snack.warning('signin.verification.pendingUntil', 10000, {
+          date: this.formatDeadline(user.emailVerificationDeadlineAt),
+        });
+      }
 
       // 🔗 Se veio de um convite, volta para o fluxo de ACCEPT
       if (this.inviteTokenFromUrl) {
@@ -170,8 +184,11 @@ export class Signin {
         await this.router.navigate(['/dashboard']);
       }
     } catch (err: any) {
-      const msg =
-        err?.error?.error || err?.message || this.i18n.t('signin.error.invalidCredentials');
+      const notVerified = err?.error?.code === 'EMAIL_NOT_VERIFIED';
+      this.emailNotVerified.set(notVerified);
+      const msg = notVerified
+        ? this.i18n.t('signin.error.emailNotVerified')
+        : err?.error?.error || err?.message || this.i18n.t('signin.error.invalidCredentials');
       this.apiError.set(msg);
       this.snack.error(msg);
       this.captchaToken.set(null);
@@ -179,6 +196,41 @@ export class Signin {
     }
 
     this.isLoading.set(false);
+  }
+
+  get canResendVerification(): boolean {
+    const captchaReady = !this.signinPolicy().captchaEnabled || !!this.captchaToken();
+    return !this.emailError() && captchaReady && !this.resendingVerification();
+  }
+
+  /** The API answers the same way for every e-mail, so the message never reveals an account. */
+  async resendVerification() {
+    if (!this.canResendVerification) return;
+    this.resendingVerification.set(true);
+    try {
+      await this.api.post<any>('auth/verify-email/resend', {
+        email: this.formModel().email.trim(),
+        captchaToken: this.captchaToken(),
+      });
+      this.snack.success(this.i18n.t('signin.verification.resent'), 6000);
+    } catch (err: any) {
+      this.snack.error(err?.error?.error || this.i18n.t('signin.verification.resendFailed'));
+    } finally {
+      this.captchaToken.set(null);
+      await this.renderCaptcha(true);
+      this.resendingVerification.set(false);
+    }
+  }
+
+  private verificationResultFromUrl(): 'verified' | 'failed' | null {
+    const value = this.route.snapshot.queryParamMap.get('verified');
+    return value === '1' ? 'verified' : value === '0' ? 'failed' : null;
+  }
+
+  private formatDeadline(value: unknown): string {
+    const date = typeof value === 'string' && value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString(this.i18n.language());
   }
 
   togglePassword(event?: MouseEvent) {

@@ -7009,5 +7009,22 @@
   "Manage SIP header and number manipulations for SBC pipes.": "Manipulações de cabeçalhos SIP e de números aplicadas aos pipes do SBC.",
   "Operational health, accounts, subscribers, trunks and routing.": "Saúde operacional, contas, assinantes, troncos e roteamento.",
   "Manage DID routing for tenant Softswitch accounts.": "Roteamento de DIDs das contas Softswitch do tenant.",
-  "settings.description.themes": "Domínios públicos do tenant com a sua identidade visual (tema), publicados pelo Nginx com certificado Certbot."
+  "settings.description.themes": "Domínios públicos do tenant com a sua identidade visual (tema), publicados pelo Nginx com certificado Certbot.",
+  "signin.error.emailNotVerified": "Confirme seu e-mail antes de entrar. Use o link que enviamos ou peça um novo.",
+  "signin.verification.resend": "Reenviar e-mail de verificação",
+  "signin.verification.resent": "Se a conta precisar de verificação, enviamos um novo link para o e-mail informado.",
+  "signin.verification.resendFailed": "Não foi possível reenviar o e-mail agora. Tente novamente.",
+  "signin.verification.verified": "E-mail verificado. Você já pode entrar.",
+  "signin.verification.linkInvalid": "Link de verificação inválido ou expirado. Peça um novo link abaixo.",
+  "signin.verification.pendingUntil": "Verifique seu e-mail até {{date}} para manter o acesso. Enviamos um link para sua caixa de entrada.",
+  "Mark e-mail as verified": "Marcar e-mail como verificado",
+  "Resend verification e-mail": "Reenviar e-mail de verificação",
+  "Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.": "Use apenas quando a identidade foi confirmada por outro canal. Motivo e base legal são obrigatórios e ficam registrados no histórico da conta.",
+  "Sends a new verification link to the account e-mail (one per minute, five per day).": "Envia um novo link de verificação para o e-mail da conta (um por minuto, cinco por dia).",
+  "Verification deadline": "Prazo para verificação",
+  "Verification e-mail sent.": "E-mail de verificação enviado.",
+  "Tenant e-mail is not verified.": "E-mail do tenant não verificado.",
+  "Tenant is inactive.": "Tenant inativo.",
+  "The tenant has not verified its e-mail address yet. Resend the verification e-mail or verify it in Governance.": "O tenant ainda não verificou o e-mail. Reenvie a verificação ou verifique manualmente na Governança.",
+  "The tenant account is inactive.": "A conta do tenant está inativa."
 }

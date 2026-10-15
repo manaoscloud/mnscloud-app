@@ -166,6 +166,8 @@ export interface BillingTenantLookupItem {
   EnvironmentName?: string | null;
   TenantEmail?: string | null;
   TenantStatus: number;
+  /** Null while the tenant owner has not verified its e-mail; master writes are refused. */
+  TenantEmailVerifiedAt?: string | null;
   DefaultCurrency?: string | null;
   WalletCount?: number | null;
   WalletSummary?: string | null;
