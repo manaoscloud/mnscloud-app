@@ -1,4 +1,4 @@
-<div class="file-preview-dialog crud-dialog">
+<div class="crud-dialog file-preview-dialog">
   <header class="dialog-header">
     <div>
       <h2>{{ data.fileName }}</h2>
@@ -7,9 +7,11 @@
     <mns-report-problem-button />
   </header>
 
-  <mat-dialog-content class="dialog-content">
-    <img class="file-preview-image" [src]="data.url" [alt]="data.fileName" />
-  </mat-dialog-content>
+  <div class="dialog-content">
+    <div class="dialog-scroll file-preview-scroll">
+      <img class="file-preview-image" [src]="data.url" [alt]="data.fileName" />
+    </div>
+  </div>
 
   <mat-dialog-actions class="form-actions">
     <div class="secondary-actions">
@@ -18,7 +20,13 @@
       </button>
     </div>
     <div class="primary-actions">
-      <a mat-flat-button color="primary" [href]="data.url" [attr.download]="data.fileName">
+      <a
+        mat-flat-button
+        color="primary"
+        class="dialog-action-primary"
+        [href]="data.url"
+        [attr.download]="data.fileName"
+      >
         <mat-icon>download</mat-icon>
         {{ 'Download' | transloco }}
       </a>
