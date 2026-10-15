@@ -4,6 +4,8 @@ import { defineCrud } from '__ROOT__shared/crud/configurable-crud/define-crud';
 
 const config = defineCrud({
   endpoint: '__ENDPOINT__', uuidField: '__UUID__', pageTitle: 'Records',
+  // Page Description Contract: say what the resource is for, then add the key in PT/EN/ES.
+  pageDescription: 'Describe what this resource is for.',
   initialValues: { name: '', status: 1 },
   fields: [
     { key: 'status', source: 'Status', label: 'Status', type: 'status', span: 1 },

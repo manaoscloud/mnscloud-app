@@ -367,6 +367,13 @@ export type ConfigurableCrudColumn = {
   translateValue?: boolean;
   /** Renders a copy action beside the displayed value when the record has a value. */
   copyable?: boolean;
+  /**
+   * `secret` columns whose value is not in the list: fetched only on Show/Copy (for example a
+   * generated password revealed by a dedicated audited endpoint) and dropped again on hide.
+   */
+  secretLoader?: (row: ConfigurableCrudRecord) => Promise<string>;
+  /** With `secretLoader`: whether this row has a value to load (defaults to true). */
+  secretAvailable?: (row: ConfigurableCrudRecord) => boolean;
   hiddenWhen?: () => boolean;
   /** Computed display value (also used for sorting); `translate` resolves Transloco keys. */
   value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
@@ -1561,6 +1568,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const body = request.body?.(row) ?? {};
       if (request.method === 'put') await this.api.put(endpoint, body);
       else await this.api.post(endpoint, body);
+      // A row action may replace a loaded secret (e.g. a regenerated password): never show the old one.
+      for (const column of this.config.columns) {
+        if (column.secretLoader) this.resetSecret(row, column.id);
+      }
       this.snack.success(this.t(request.successMessage));
       this.itemsResource.reload();
     } catch (error) {
@@ -2481,12 +2492,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private readonly revealedSecrets = signal<ReadonlySet<string>>(new Set());
   private readonly secretTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Values fetched by `secretLoader`, kept only while revealed. */
+  private readonly loadedSecrets = signal<ReadonlyMap<string, string>>(new Map());
+  readonly loadingSecrets = signal<ReadonlySet<string>>(new Set());
 
   private secretKey(row: T, column: ConfigurableCrudColumn): string {
     return `${this.recordUUID(row)}:${column.id}`;
   }
 
   hasSecretValue(row: T, column: ConfigurableCrudColumn): boolean {
+    if (column.secretLoader) return column.secretAvailable?.(row) ?? true;
     return this.columnCopyValue(row, column) !== '';
   }
 
@@ -2494,11 +2509,54 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.revealedSecrets().has(this.secretKey(row, column));
   }
 
-  toggleSecret(row: T, column: ConfigurableCrudColumn): void {
+  isSecretLoading(row: T, column: ConfigurableCrudColumn): boolean {
+    return this.loadingSecrets().has(this.secretKey(row, column));
+  }
+
+  secretText(row: T, column: ConfigurableCrudColumn): string {
+    if (!column.secretLoader) return this.columnText(row, column);
+    return this.loadedSecrets().get(this.secretKey(row, column)) ?? '';
+  }
+
+  /** Loads a `secretLoader` value; null (with an error toast) when it cannot be read. */
+  private async loadSecret(row: T, column: ConfigurableCrudColumn): Promise<string | null> {
+    const key = this.secretKey(row, column);
+    const cached = this.loadedSecrets().get(key);
+    if (cached !== undefined) return cached;
+    this.loadingSecrets.update((current) => new Set(current).add(key));
+    try {
+      return await column.secretLoader!(row);
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+      return null;
+    } finally {
+      this.loadingSecrets.update((current) => {
+        const next = new Set(current);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  private forgetSecret(key: string): void {
+    if (!this.loadedSecrets().has(key)) return;
+    this.loadedSecrets.update((current) => {
+      const next = new Map(current);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  async toggleSecret(row: T, column: ConfigurableCrudColumn): Promise<void> {
     const key = this.secretKey(row, column);
     clearTimeout(this.secretTimers.get(key));
     this.secretTimers.delete(key);
     const reveal = !this.revealedSecrets().has(key);
+    if (reveal && column.secretLoader) {
+      const value = await this.loadSecret(row, column);
+      if (value === null) return;
+      this.loadedSecrets.update((current) => new Map(current).set(key, value));
+    }
     this.setSecretRevealed(key, reveal);
     if (!reveal) return;
     this.secretTimers.set(
@@ -2511,6 +2569,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   private setSecretRevealed(key: string, revealed: boolean): void {
+    if (!revealed) this.forgetSecret(key);
     this.revealedSecrets.update((current) => {
       const next = new Set(current);
       if (revealed) next.add(key);
@@ -2524,11 +2583,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   canCopyColumn(row: T, column: ConfigurableCrudColumn): boolean {
+    if (column.secretLoader) return column.copyable === true && this.hasSecretValue(row, column);
     return column.copyable === true && this.columnCopyValue(row, column) !== '';
   }
 
-  copyColumnValue(row: T, column: ConfigurableCrudColumn): Promise<void> {
-    return this.copyText(this.columnCopyValue(row, column));
+  async copyColumnValue(row: T, column: ConfigurableCrudColumn): Promise<void> {
+    if (!column.secretLoader) return this.copyText(this.columnCopyValue(row, column));
+    // Copy without revealing: the loaded value is not kept unless the secret is shown.
+    const value = await this.loadSecret(row, column);
+    if (value !== null) await this.copyText(value);
+  }
+
+  /** Drops a loaded `secretLoader` value (for example after the secret was regenerated). */
+  protected resetSecret(row: T, columnId: string): void {
+    const key = `${this.recordUUID(row)}:${columnId}`;
+    clearTimeout(this.secretTimers.get(key));
+    this.secretTimers.delete(key);
+    this.setSecretRevealed(key, false);
   }
 
   protected async copyText(value: string): Promise<void> {

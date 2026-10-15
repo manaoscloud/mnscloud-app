@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/contacts',
   uuidField: 'CcoUUID',
   pageTitle: 'crm.title.contacts',
+  pageDescription: 'crm.description.contacts',
   initialValues: {
     CcoName: '',
     CrmAccountCacUUID: '',

@@ -97,6 +97,15 @@ export const QUICK_CREATE_REGISTRY = {
     permission: 'tenant.authentication.write',
     routeData: { scope: 'tenant' },
   },
+  AuthenticationDomainAadUUID: {
+    label: 'authentication.domains',
+    loadComponent: () =>
+      import('../../../pages/authentication/domains/domains').then(
+        (m) => m.AuthenticationDomainPage,
+      ),
+    permission: 'tenant.authentication.write',
+    routeData: { scope: 'tenant' },
+  },
   AuthenticationAccessAaxUUID: {
     label: 'authentication.accesses',
     loadComponent: () =>

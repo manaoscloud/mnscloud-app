@@ -531,13 +531,17 @@
   } @else if (column.kind === 'secret') {
     @if (hasSecretValue(row, column)) {
       <div class="crud-copy-cell">
-        <span class="crud-cell-text crud-secret-value" [class]="columnWidthClass(column)">{{
-          isSecretRevealed(row, column) ? columnText(row, column) : '••••••••'
-        }}</span>
+        <span
+          class="crud-cell-text crud-secret-value"
+          [class]="columnWidthClass(column)"
+          data-report-mask
+          >{{ isSecretRevealed(row, column) ? secretText(row, column) : '••••••••' }}</span
+        >
         <button
           mat-icon-button
           type="button"
           class="crud-copy-button"
+          [disabled]="isSecretLoading(row, column)"
           [matTooltip]="(isSecretRevealed(row, column) ? 'Hide' : 'Show') | transloco"
           [attr.aria-label]="(isSecretRevealed(row, column) ? 'Hide' : 'Show') | transloco"
           [attr.aria-pressed]="isSecretRevealed(row, column)"

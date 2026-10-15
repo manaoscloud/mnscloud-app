@@ -33,6 +33,10 @@ mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, selector + '.ts'), source);
 console.log('Created generic CRUD configuration: ' + directory);
 console.log(
+  'Write its pageDescription (what the resource is for) in PT/EN/ES: npm run check:page-descriptions ' +
+    'fails on the placeholder (app.md Page Description Contract).',
+);
+console.log(
   'If other forms reference this resource, register ' +
     className +
     ' in QUICK_CREATE_REGISTRY (src/app/shared/crud/configurable-crud/quick-create.ts) ' +

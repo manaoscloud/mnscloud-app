@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'crm/industries',
   uuidField: 'CinUUID',
   pageTitle: 'crm.title.industries',
+  pageDescription: 'crm.description.industries',
   initialValues: {
     CinName: '',
     CinStatus: 1,

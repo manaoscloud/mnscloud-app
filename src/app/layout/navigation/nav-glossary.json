@@ -10,18 +10,84 @@
   },
   "properNouns": ["Bradesco", "Pay"],
   "canonicalLeaves": {
-    "dashboard": { "pt-BR": "Painel", "en-US": "Dashboard", "es-ES": "Panel" }
+    "dashboard": {
+      "pt-BR": "Painel",
+      "en-US": "Dashboard",
+      "es-ES": "Panel"
+    }
   },
   "forbiddenLabels": {
     "pt-BR": ["Visão geral", "Cadastro", "Registro"],
     "en-US": ["Overview", "Registry", "Registration"],
     "es-ES": ["Vista general", "Registro"]
   },
+  "forbiddenVerbs": {
+    "pt-BR": [
+      "permitir",
+      "bloquear",
+      "gerenciar",
+      "configurar",
+      "cadastrar",
+      "criar",
+      "editar",
+      "excluir",
+      "reconciliar",
+      "vincular"
+    ],
+    "en-US": [
+      "allow",
+      "block",
+      "manage",
+      "configure",
+      "create",
+      "edit",
+      "delete",
+      "reconcile",
+      "link",
+      "register"
+    ],
+    "es-ES": [
+      "permitir",
+      "bloquear",
+      "gestionar",
+      "configurar",
+      "registrar",
+      "crear",
+      "editar",
+      "eliminar",
+      "reconciliar",
+      "vincular"
+    ]
+  },
   "forbiddenTerms": {
     "pt-BR": ["Cyber Security", "Reconcile", " menu "],
     "en-US": ["Cyber Security", " menu "],
     "es-ES": ["Reconcile", " menu "]
   },
+  "$sharedTermsComment": "Words spelled the same in pt-BR/es-ES and en-US that are correct in every locale.",
+  "sharedTerms": [
+    "Interfaces",
+    "Hosts",
+    "Snapshots",
+    "Firewalls",
+    "Containers",
+    "Peers",
+    "Pipes",
+    "Custom",
+    "Gateways",
+    "Boletos",
+    "Tenants",
+    "Webhosts",
+    "Softswitch",
+    "Media",
+    "Leads",
+    "Clusters",
+    "Tokens",
+    "E-mails",
+    "Tickets",
+    "Editor",
+    "General"
+  ],
   "productTerms": [
     "VoIP",
     "PABX",

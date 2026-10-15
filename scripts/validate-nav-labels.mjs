@@ -47,13 +47,27 @@ export function readRegistry(source, file = REGISTRY_PATH) {
   throw new Error(`${file}: NAV_ITEMS array not found`);
 }
 
-const fold = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const fold = (text) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 
 function tokens(label, stopWords) {
   return fold(label)
     .split(/[^a-z0-9]+/)
     .filter((word) => word && !stopWords.has(word))
     .map((word) => word.replace(/(oes|aes|ais|eis|ns|es|s)$/, '') || word);
+}
+
+/**
+ * Same word stem as an ancestor: equal, or a prefix/suffix of at least 4 letters
+ * (Fatura/Faturamento, Host/Webhosts, Cliente/Clientes).
+ */
+export function sharesStem(word, ancestor) {
+  if (word === ancestor) return true;
+  const [short, long] = word.length <= ancestor.length ? [word, ancestor] : [ancestor, word];
+  return short.length >= 4 && (long.startsWith(short) || long.endsWith(short));
 }
 
 function isAllowedCapital(word, allowed) {
@@ -108,18 +122,64 @@ export function validateNavigation({ items, dictionaries, glossary }) {
           tokens(dictionaries[locale]?.[navLabelKey(a.id)] ?? '', stopWords),
         ),
       );
-      const repeated = tokens(label, stopWords).filter((t) => ancestorTokens.has(t));
+      const repeated = tokens(label, stopWords).filter((t) =>
+        [...ancestorTokens].some((ancestor) => sharesStem(t, ancestor)),
+      );
       if (repeated.length) {
         errors.push(
           `${at}: repeats ancestor context (${repeated.join(', ')}); the parent already implies it`,
         );
       }
 
-      const words = label.split(/\s+/).slice(1);
+      // Sentence case: the first word starts upper case; later words (also after "/") do not.
+      const first = label.split(/\s+/)[0];
+      if (/^\p{Ll}/u.test(first) && !isAllowedCapital(first, allowedCapitals)) {
+        errors.push(`${at}: start with an upper-case letter`);
+      }
+      const words = label
+        .split(/\s+/)
+        .flatMap((word, index) =>
+          allowedCapitals.has(word) ? [] : word.split('/').slice(index === 0 ? 1 : 0),
+        );
       const badCase = words.filter(
         (w) => /^\p{Lu}/u.test(w) && !isAllowedCapital(w, allowedCapitals),
       );
       if (badCase.length) errors.push(`${at}: use sentence case (${badCase.join(', ')})`);
+
+      // Collections are nouns: no actions such as "Allow/block" or "Reconcile".
+      const verbs = new Set((glossary.forbiddenVerbs?.[locale] ?? []).map(fold));
+      const actions = fold(label)
+        .split(/[^a-z0-9]+/)
+        .filter((word) => verbs.has(word));
+      if (actions.length) {
+        errors.push(`${at}: use a noun, not the action (${actions.join(', ')})`);
+      }
+
+      // English leftovers: a pt-BR/es-ES word equal to the en-US one must be a glossary term.
+      if (locale !== 'en-US') {
+        const english = new Set(
+          fold(dictionaries['en-US']?.[key] ?? '')
+            .split(/[^a-z0-9]+/)
+            .filter((word) => word.length >= 3),
+        );
+        const glossaryWords = new Set(
+          [...allowedCapitals, ...(glossary.sharedTerms ?? [])].map(fold),
+        );
+        const leftovers = label
+          .split(/[\s/]+/)
+          .filter(
+            (word) =>
+              english.has(fold(word)) &&
+              !glossaryWords.has(fold(word)) &&
+              !/\d/.test(word) &&
+              (word.match(/\p{Lu}/gu) ?? []).length < 2,
+          );
+        if (leftovers.length) {
+          errors.push(
+            `${at}: English word without a glossary entry (${leftovers.join(', ')}); translate it or add it to productTerms/sharedTerms`,
+          );
+        }
+      }
 
       for (const forbidden of glossary.forbiddenLabels[locale] ?? []) {
         if (fold(label) === fold(forbidden))
@@ -136,6 +196,10 @@ export function validateNavigation({ items, dictionaries, glossary }) {
       if (canonical && label !== canonical)
         errors.push(`${at}: must use the canonical "${canonical}"`);
     }
+
+    // The dashboard entry always comes first in its module.
+    const dashboard = (item.children ?? []).findIndex((child) => child.id?.endsWith('dashboard'));
+    if (dashboard > 0) errors.push(`${where}: the dashboard entry must be the first child`);
 
     for (const child of item.children ?? []) visit(child, [...ancestors, item]);
   };

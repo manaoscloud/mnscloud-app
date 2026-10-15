@@ -10,6 +10,7 @@ const config = defineCrud({
   endpoint: 'authentication/sessions',
   uuidField: 'AseUUID',
   pageTitle: 'authentication.sessions',
+  pageDescription: 'authentication.sessionsDescription',
   canCreate: false,
   canEdit: false,
   canDelete: false,

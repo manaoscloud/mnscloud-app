@@ -63,6 +63,7 @@ run('node', [
   'scripts/validate-dialog-report-button.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',
   'scripts/validate-menus.test.mjs',
+  'scripts/validate-page-descriptions.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -96,6 +97,8 @@ run('node', ['scripts/validate-dialog-report-button.mjs']);
 run('node', ['scripts/validate-install-command-dialog.mjs']);
 // Every menu uses the global mns-menu shell and primitives (app.md Menus).
 run('node', ['scripts/validate-menus.mjs']);
+// Every page header says what the resource is for (app.md Page Description Contract).
+run('node', ['scripts/validate-page-descriptions.mjs']);
 
 const crudRoots = [
   ...new Set(

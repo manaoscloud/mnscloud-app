@@ -56,6 +56,8 @@ export class MetricsMonitorComponent {
   private readonly translate = inject(TranslocoService);
 
   readonly title = input.required<string>();
+  /** What the monitored resource shows (Page Description Contract). */
+  readonly description = input.required<string>();
   readonly identity = input('');
   readonly recordId = input('');
   readonly points = input<MetricsMonitorPoint[]>([]);

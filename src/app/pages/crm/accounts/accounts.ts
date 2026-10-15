@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/accounts',
   uuidField: 'CacUUID',
   pageTitle: 'crm.title.accounts',
+  pageDescription: 'crm.description.accounts',
   initialValues: {
     CacName: '',
     CacType: 'company',

@@ -39,13 +39,19 @@ const labels: Record<Service, string> = {
   sbc: 'SBC',
 };
 
+const descriptions: Record<Service, string> = {
+  pabx: 'voip.description.pabxDomains',
+  softswitch: 'voip.description.softswitchDomains',
+  sbc: 'voip.description.sbcDomains',
+};
+
 function config(service: Service): ConfigurableCrudConfig {
   const label = labels[service];
   return {
     endpoint: `voip/${service}/domains`,
     uuidField: 'BindingUUID',
     pageTitle: `${label} Domains`,
-    pageDescription: `Manage canonical domains bound to ${label} accounts.`,
+    pageDescription: descriptions[service],
     createTitle: `New ${label} domain`,
     editTitle: `Edit ${label} domain`,
     dialogDescription: 'Bind one canonical VoIP domain to the selected service account.',

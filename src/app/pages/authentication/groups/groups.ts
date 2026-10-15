@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'authentication/groups',
   uuidField: 'AagUUID',
   pageTitle: 'authentication.groups',
+  pageDescription: 'authentication.groupsDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
@@ -24,6 +25,7 @@ const config = defineCrud({
     revision: 1,
     AuthenticationAccountAacUUID: '',
     AuthenticationProfileAapUUID: '',
+    AuthenticationDomainAadUUID: '',
   },
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
@@ -63,6 +65,27 @@ const config = defineCrud({
         parameters: { accountUUID: 'AuthenticationAccountAacUUID' },
       },
     },
+    {
+      key: 'AuthenticationDomainAadUUID',
+      source: 'AuthenticationDomainAadUUID',
+      help: 'authentication.groupDomainHelp',
+      quickCreate: quickCreateFor('AuthenticationDomainAadUUID', {
+        initialValues: ({ values }) => ({
+          AuthenticationAccountAacUUID: values['AuthenticationAccountAacUUID'],
+        }),
+      }),
+      label: 'authentication.defaultDomain',
+      span: 1,
+      required: false,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'authentication/domains?status=1',
+        uuidField: 'AadUUID',
+        labelField: 'AadName',
+        selectedLabelField: 'DomainName',
+        parameters: { accountUUID: 'AuthenticationAccountAacUUID' },
+      },
+    },
     { key: 'name', source: 'AagName', label: 'Name', required: true, span: 1 },
     { key: 'revision', source: 'AagRevision', label: 'Revision', type: 'number', hidden: true },
     {
@@ -91,6 +114,7 @@ const config = defineCrud({
       kind: 'related',
       uuidField: 'AuthenticationProfileAapUUID',
     },
+    { id: 'domain', field: 'DomainName', label: 'authentication.defaultDomain', kind: 'text' },
     { id: 'status', field: 'AagStatus', label: 'Status', kind: 'status' },
   ],
 });

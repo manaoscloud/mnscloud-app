@@ -148,6 +148,8 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           endpoint: `system/billing/packages/${row['BpaUUID']}/migrate-subscriptions`,
           uuidField: 'BpaUUID',
           pageTitle: 'Migrate subscribers',
+          pageDescription:
+            'Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.',
           createTitle: 'Migrate subscribers',
           dialogDescription:
             'Choose the subscribers that accepted the change and the package that receives them. The target price applies from the next cycle.',

@@ -35,6 +35,7 @@ export type VpsInstanceMonitorData = {
   template: `
     <mns-metrics-monitor
       title="VPS instance monitoring"
+      description="hosting.description.vpsInstanceMonitor"
       [identity]="name()"
       [recordId]="uuid"
       [dialogMode]="!!dialog"

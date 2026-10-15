@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/stages',
   uuidField: 'CstUUID',
   pageTitle: 'crm.title.stages',
+  pageDescription: 'crm.description.stages',
   initialValues: {
     CstName: '',
     CrmPipelineCpiUUID: '',

@@ -22,6 +22,7 @@ const config = defineCrud({
   endpoint: 'system/pay/fee-plan-assignments',
   uuidField: 'PfaUUID',
   pageTitle: 'Pay — Fee Plan Assignments',
+  pageDescription: 'pay.description.feePlanAssignments',
   bulkDelete: false,
   statusOptions: statuses,
   initialValues: { status: 1, billingMode: 'PREPAID', tenantUUID: '', planUUID: '', notes: '' },
@@ -64,7 +65,8 @@ const config = defineCrud({
       label: 'Tenant',
       type: 'search-select',
       quickCreate: false,
-      quickCreateExemptReason: 'Tenants are provisioned through onboarding; there is no in-place create form.',
+      quickCreateExemptReason:
+        'Tenants are provisioned through onboarding; there is no in-place create form.',
       required: true,
       span: 1,
       disabledWhen: ({ editing }) => editing,

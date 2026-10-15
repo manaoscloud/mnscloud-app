@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'crm/loss-reasons',
   uuidField: 'ClrUUID',
   pageTitle: 'crm.title.loss-reasons',
+  pageDescription: 'crm.description.loss-reasons',
   initialValues: {
     ClrName: '',
     ClrStatus: 1,

@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/products',
   uuidField: 'CprUUID',
   pageTitle: 'crm.title.products',
+  pageDescription: 'crm.description.products',
   defaultCurrencyFields: ['CprCurrency'],
   initialValues: {
     CprName: '',

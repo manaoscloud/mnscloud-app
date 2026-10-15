@@ -72,3 +72,36 @@ test('the registry must stay data only', () => {
     /must be literals/,
   );
 });
+
+test('word stems of an ancestor are repetition too (Faturamento › Faturas, Webhosts › Hosts)', () => {
+  const tree = [
+    {
+      id: 'billing',
+      label: 'nav.billing',
+      children: [leaf('billing/invoices'), leaf('billing/list')],
+    },
+  ];
+  const errors = check(tree, {
+    'nav.billing': ['Faturamento', 'Webhosts', 'Facturación'],
+    'nav.billing.invoices': ['Faturas', 'Hosts', 'Facturas'],
+    'nav.billing.list': ['Lista', 'List', 'Lista'],
+  });
+  assert.equal(errors.filter((e) => e.includes('repeats ancestor context')).length, 3);
+});
+
+test('verbs, English leftovers, first-word case and dashboard position fail', () => {
+  const errors = check(support([leaf('support/teams'), leaf('support/dashboard')]), {
+    ...base,
+    'nav.support.teams': ['Permitir/bloquear', 'reconcile', 'Leads abiertos'],
+    'nav.support.dashboard': ['Painel', 'Dashboard', 'Panel'],
+  });
+  assert.ok(errors.some((e) => e.includes('[pt-BR]') && e.includes('not the action')));
+  assert.ok(errors.some((e) => e.includes('[en-US]') && e.includes('upper-case letter')));
+  assert.ok(errors.some((e) => e.includes('dashboard entry must be the first child')));
+  const english = check(support([leaf('support/teams'), leaf('support/list')]), {
+    ...base,
+    'nav.support.teams': ['Pools', 'Pools', 'Pools'],
+    'nav.support.list': ['Lista', 'List', 'Lista'],
+  });
+  assert.equal(english.filter((e) => e.includes('English word')).length, 2);
+});

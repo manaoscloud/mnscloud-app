@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'crm/sources',
   uuidField: 'CsoUUID',
   pageTitle: 'crm.title.sources',
+  pageDescription: 'crm.description.sources',
   initialValues: {
     CsoName: '',
     CsoStatus: 1,

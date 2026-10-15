@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'crm/pipelines',
   uuidField: 'CpiUUID',
   pageTitle: 'crm.title.pipelines',
+  pageDescription: 'crm.description.pipelines',
   initialValues: {
     CpiName: '',
     CpiStatus: 1,

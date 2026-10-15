@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/handoffs',
   uuidField: 'ChoUUID',
   pageTitle: 'crm.title.handoffs',
+  pageDescription: 'crm.description.handoffs',
   initialValues: {
     ChoName: '',
     CrmOpportunityCopUUID: '',
