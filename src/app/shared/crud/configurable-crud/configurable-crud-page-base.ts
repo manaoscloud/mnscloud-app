@@ -787,8 +787,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       ? this.normalizeRows(this.itemsResource.value() as T[])
       : ([] as T[]),
   );
+  readonly filteredRows = computed(() => {
+    const raw = this.rows();
+    if (this.serverSidePagination()) return raw;
+    return this.filterRows(raw);
+  });
   readonly sortedRows = computed(() =>
-    this.config.serverSideSorting ? this.rows() : this.sortRows(this.rows()),
+    this.config.serverSideSorting ? this.filteredRows() : this.sortRows(this.filteredRows()),
   );
   readonly visibleRows = computed(() => {
     if (this.serverSidePagination()) return this.sortedRows();
@@ -991,6 +996,26 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.search.set('');
     this.status.set('');
     this.listFilterValues.set({});
+    this.applySearchFilters();
+  }
+
+  onSearchInput(value: string): void {
+    this.search.set(value);
+    if (!value.trim() && this.appliedFilters().search) {
+      this.applySearchFilters();
+    }
+  }
+
+  onStatusFilterChange(value: '' | string | number): void {
+    this.status.set(value);
+    this.applySearchFilters();
+  }
+
+  onListFilterChange(
+    filter: ConfigurableCrudListFilter,
+    value: string | number | boolean | null,
+  ): void {
+    this.setListFilterValue(filter, value);
     this.applySearchFilters();
   }
 
@@ -2903,6 +2928,118 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private normalizeRows(rows: T[] | undefined): T[] {
     return Array.isArray(rows) ? rows : [];
+  }
+
+  private filterRows(rows: T[]): T[] {
+    const filters = this.appliedFilters();
+    const searchTerm = filters.search?.trim().toLowerCase();
+    const statusFilter = filters.status;
+    const extraFilters = filters.extra ?? {};
+    const columns = this.columns();
+
+    return rows.filter((row) => {
+      if (
+        this.statusFilterEnabled() &&
+        statusFilter !== '' &&
+        statusFilter !== null &&
+        statusFilter !== undefined
+      ) {
+        if (!this.matchesStatusFilter(row, statusFilter)) return false;
+      }
+
+      for (const filter of this.listFilters()) {
+        const filterVal = extraFilters[filter.key];
+        if (filterVal !== null && filterVal !== undefined && filterVal !== '') {
+          if (!this.matchesListFilter(row, filter, filterVal)) return false;
+        }
+      }
+
+      if (searchTerm) {
+        if (!this.matchesSearchFilter(row, searchTerm, columns)) return false;
+      }
+
+      return true;
+    });
+  }
+
+  private matchesStatusFilter(row: T, statusFilter: string | number): boolean {
+    const statusCol =
+      this.columns().find((c) => c.kind === 'status') ??
+      this.columns().find((c) => c.id === 'status');
+    const statusField =
+      statusCol?.field ??
+      this.config.fields.find((f) => f.type === 'status' || f.key === 'status')?.source ??
+      'status';
+    const rowStatus = row[statusField] ?? row['status'];
+
+    if (String(statusFilter) === 'active') {
+      return this.isActiveStatus(rowStatus);
+    }
+    return String(rowStatus ?? '') === String(statusFilter);
+  }
+
+  private matchesListFilter(
+    row: T,
+    filter: ConfigurableCrudListFilter,
+    filterVal: unknown,
+  ): boolean {
+    const target = String(filterVal ?? '');
+    if (!target) return true;
+
+    if (String(row[filter.key] ?? '') === target) return true;
+    if (filter.paramKey && String(row[filter.paramKey] ?? '') === target) return true;
+
+    const mappedField = this.config.fields.find(
+      (f) => f.key === filter.key || f.payloadKey === filter.key,
+    );
+    if (mappedField?.source && String(row[mappedField.source] ?? '') === target) return true;
+
+    const matchedCol = this.columns().find(
+      (c) =>
+        c.uuidField === filter.key ||
+        c.field === filter.key ||
+        (mappedField?.source && c.uuidField === mappedField.source),
+    );
+    if (matchedCol?.uuidField && String(row[matchedCol.uuidField] ?? '') === target) return true;
+
+    return false;
+  }
+
+  private matchesSearchFilter(
+    row: T,
+    term: string,
+    columns: readonly ConfigurableCrudColumn[],
+  ): boolean {
+    for (const column of columns) {
+      const copyVal = this.columnCopyValue(row, column).toLowerCase();
+      if (copyVal && copyVal.includes(term)) return true;
+
+      const text = this.columnText(row, column).toLowerCase();
+      if (text && text.includes(term)) return true;
+
+      const detail = column
+        .detail?.(row, (key) => this.transloco.translate(key))
+        ?.toLowerCase();
+      if (detail && detail.includes(term)) return true;
+
+      const field = column.field ?? column.id;
+      if (column.lookupKey) {
+        const lookup = this.lookupLabel(column.lookupKey, row[field])?.toLowerCase();
+        if (lookup && lookup.includes(term)) return true;
+      }
+
+      const raw = row[field];
+      if (typeof raw === 'string' && raw.toLowerCase().includes(term)) return true;
+      if (typeof raw === 'number' && String(raw).includes(term)) return true;
+    }
+
+    for (const field of this.config.fields) {
+      const val = row[field.source ?? field.key];
+      if (typeof val === 'string' && val.toLowerCase().includes(term)) return true;
+      if (typeof val === 'number' && String(val).includes(term)) return true;
+    }
+
+    return false;
   }
 
   private sortRows(rows: T[]): T[] {

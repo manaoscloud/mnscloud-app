@@ -14,6 +14,7 @@ import {
   HostBinding,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -31,7 +32,7 @@ import { AsyncOperationsService } from '../../shared/operations/async-operations
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -158,6 +159,7 @@ export class MainLayout {
   readonly user = this.auth.user;
   readonly online = this.network.online;
 
+  readonly sidenav = viewChild(MatSidenav);
   readonly drawerOpened = signal(true);
   readonly drawerCompact = signal(false);
   readonly isDesktopCompact = computed(() => this.drawerCompact() && !this.isHandset());
@@ -341,6 +343,10 @@ export class MainLayout {
       return;
     }
 
+    if (!this.drawerOpened()) {
+      this.drawerOpened.set(true);
+      void this.sidenav()?.open();
+    }
     this.closeCompactFlyouts();
     this.setDesktopCompact(!this.drawerCompact());
   }
