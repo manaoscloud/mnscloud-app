@@ -46,7 +46,12 @@ const parse = (value) => {
 const highest = versions.map((value) => ({ value, parts: parse(value) })).sort((a, b) =>
   b.parts[0] - a.parts[0] || b.parts[1] - a.parts[1] || b.parts[2] - a.parts[2],
 )[0];
-console.log(`${highest.parts[0]}.${highest.parts[1]}.${highest.parts[2] + 1}`);
+const [major, minor, patch] = highest.parts;
+if (patch >= 999) {
+  console.log(`${major}.${minor + 1}.0`);
+} else {
+  console.log(`${major}.${minor}.${patch + 1}`);
+}
 ' "$current_version" "$latest_tag_version")"
 fi
 [[ "$version" =~ ^[0-9]+[.][0-9]+[.][0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || {
