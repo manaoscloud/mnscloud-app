@@ -7117,5 +7117,12 @@
   "Log settings are not managed for this server engine.": "Log settings are not managed for this server engine.",
   "Log level must be error, warning, notice, info or debug.": "Log level must be error, warning, notice, info or debug.",
   "Log retention must be between 1 and 90 days.": "Log retention must be between 1 and 90 days.",
-  "Log enabled must be 0 or 1.": "Log enabled must be 0 or 1."
+  "Log enabled must be 0 or 1.": "Log enabled must be 0 or 1.",
+  "Tech prefix": "Tech prefix",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the PABX account; empty inherits them.": "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the PABX account; empty inherits them.",
+  "Outbound tech prefix required by this carrier. Used when the extension has none; empty inherits the PABX account. Digits, # or *.": "Outbound tech prefix required by this carrier. Used when the extension has none; empty inherits the PABX account. Digits, # or *.",
+  "Outbound tech prefix used when neither the extension nor the trunk defines one. Digits, # or *.": "Outbound tech prefix used when neither the extension nor the trunk defines one. Digits, # or *.",
+  "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the Softswitch account; empty inherits them.": "Outbound tech prefix sent to the carrier before the dialed number. It has priority over the trunk and the Softswitch account; empty inherits them.",
+  "Outbound tech prefix required by this carrier. Used when the subscriber has none; empty inherits the Softswitch account. Digits, # or *.": "Outbound tech prefix required by this carrier. Used when the subscriber has none; empty inherits the Softswitch account. Digits, # or *.",
+  "Outbound tech prefix used when neither the subscriber nor the trunk defines one. Digits, # or *.": "Outbound tech prefix used when neither the subscriber nor the trunk defines one. Digits, # or *."
 }
