@@ -440,33 +440,6 @@
     </ng-template>
   </mat-menu>
 
-  <mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
-    <ng-template matMenuContent let-row="row">
-      <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
-      @for (action of rowActions(row); track action.key) {
-        <button
-          mat-menu-item
-          mnsMenuItem
-          type="button"
-          [disabled]="!!rowActionDisabledReason(action, row)"
-          (click)="runRowAction(action, row)"
-        >
-          <mat-icon>{{ action.icon }}</mat-icon>
-          <mns-menu-label
-            [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
-            >{{ action.label | transloco }}</mns-menu-label
-          >
-        </button>
-      }
-      @if (canDeleteRow(row)) {
-        <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleteItem(row)">
-          <mat-icon>delete</mat-icon>
-          <mns-menu-label>{{ 'Delete' | transloco }}</mns-menu-label>
-        </button>
-      }
-    </ng-template>
-  </mat-menu>
-
   <mat-paginator
     class="mobile-paginator"
     [length]="paginatorLength()"
@@ -503,6 +476,33 @@
     </button>
   }
 </ng-template>
+
+<mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
+  <ng-template matMenuContent let-row="row">
+    <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
+    @for (action of rowActions(row); track action.key) {
+      <button
+        mat-menu-item
+        mnsMenuItem
+        type="button"
+        [disabled]="!!rowActionDisabledReason(action, row)"
+        (click)="runRowAction(action, row)"
+      >
+        <mat-icon>{{ action.icon }}</mat-icon>
+        <mns-menu-label
+          [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
+          >{{ action.label | transloco }}</mns-menu-label
+        >
+      </button>
+    }
+    @if (canDeleteRow(row)) {
+      <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleteItem(row)">
+        <mat-icon>delete</mat-icon>
+        <mns-menu-label>{{ 'Delete' | transloco }}</mns-menu-label>
+      </button>
+    }
+  </ng-template>
+</mat-menu>
 
 <ng-template #crudCell let-row let-column="column">
   @if (column.kind === 'identity' || column.kind === 'related') {
