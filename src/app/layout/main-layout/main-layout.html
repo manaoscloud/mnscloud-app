@@ -4,6 +4,7 @@
     [class.compact]="isDesktopCompact()"
     [mode]="isHandset() ? 'over' : 'side'"
     [opened]="isHandset() ? drawerOpened() : true"
+    [disableClose]="!isHandset()"
     (openedChange)="drawerOpened.set($event)"
   >
     <!-- HEADER -->

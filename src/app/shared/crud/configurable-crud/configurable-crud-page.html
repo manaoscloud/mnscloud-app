@@ -70,7 +70,7 @@
       <input
         matInput
         [value]="search()"
-        (input)="search.set($any($event.target).value)"
+        (input)="onSearchInput($any($event.target).value)"
         (keyup.enter)="applySearchFilters()"
       />
     </mat-form-field>
@@ -82,7 +82,7 @@
         [options]="statusFilterOptions()"
         [translateOptions]="false"
         [value]="status()"
-        (valueChange)="status.set($any($event))"
+        (valueChange)="onStatusFilterChange($any($event))"
       />
     }
 
@@ -103,7 +103,7 @@
           (searchChange)="filterRemoteSearch(filter, $event)"
           (pageChange)="filterRemotePage(filter, $event)"
           [translateOptions]="false"
-          (selectionChange)="setListFilterValue(filter, $any($event))"
+          (selectionChange)="onListFilterChange(filter, $any($event))"
         />
       } @else {
         <mns-search-select-field
@@ -119,7 +119,7 @@
           [loadError]="filterRemoteError(filter)"
           (searchChange)="filterRemoteSearch(filter, $event)"
           (pageChange)="filterRemotePage(filter, $event)"
-          (valueChange)="setListFilterValue(filter, $any($event))"
+          (valueChange)="onListFilterChange(filter, $any($event))"
         />
       }
     }
