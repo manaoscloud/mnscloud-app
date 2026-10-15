@@ -20,8 +20,6 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AacStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AacName', label: 'Name', required: true, span: 1 },
-    { key: 'revision', source: 'AacRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationClusterAtcUUID',
       source: 'AuthenticationClusterAtcUUID',
@@ -37,6 +35,8 @@ const config = defineCrud({
       disabledWhen: ({ editing }) => editing,
       help: 'authentication.scopeHelp',
     },
+    { key: 'name', source: 'AacName', label: 'Name', required: true, span: 1 },
+    { key: 'revision', source: 'AacRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'notes',
       source: 'AacNotes',
