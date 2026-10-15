@@ -194,6 +194,34 @@
   text-align: left;
 }
 
+/*
+ * The Actions column is `stickyEnd`: it stays pinned to the right while the other columns scroll
+ * inside `.table-wrapper`. Pinned cells need an opaque background (following row hover) so the
+ * scrolled content does not show through, and `isolation` keeps Material's inline sticky z-index
+ * below the `.table-loading` overlay.
+ */
+.erp-table {
+  isolation: isolate;
+
+  .mat-mdc-header-cell.actions-col-header {
+    background: var(--mat-sys-color-surface-container-high);
+  }
+
+  .mat-mdc-cell.actions-col-cell {
+    background: var(--mat-sys-color-surface-container);
+  }
+
+  .mat-mdc-row:hover .mat-mdc-cell.actions-col-cell {
+    background: var(--mat-sys-color-surface-container-low);
+  }
+
+  .mat-mdc-table-sticky-border-elem-right {
+    border-left: 1px solid var(--mat-sys-color-outline-variant);
+    box-shadow: -6px 0 8px -6px
+      color-mix(in srgb, var(--mat-sys-color-shadow, #000) 45%, transparent);
+  }
+}
+
 .actions-col {
   display: flex;
   align-items: center;

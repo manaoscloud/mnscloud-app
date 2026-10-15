@@ -301,7 +301,7 @@
           }
 
           @if (hasRowActions()) {
-            <ng-container matColumnDef="actions">
+            <ng-container matColumnDef="actions" stickyEnd>
               <th mat-header-cell *matHeaderCellDef class="actions-col-header">
                 <div class="actions-col-heading">
                   {{ 'Actions' | transloco }}

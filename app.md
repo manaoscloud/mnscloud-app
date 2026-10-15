@@ -518,6 +518,9 @@ the page must use the shared base named here.
   - Layout menus may read `NavigationLoadingService.isNavigating` to prevent repeated clicks while
     the router is already processing a navigation.
   - Use list loading state + overlay (`.table-loading`) on table wrapper.
+  - The desktop table `Actions` column is `stickyEnd`: it stays pinned to the right edge while the
+    other columns scroll horizontally inside `.table-wrapper`, with an opaque background that follows
+    row hover and a left separator shadow. Mobile cards are unaffected.
   - Keep minimum visible loading duration around `600ms`.
   - Header-level refresh actions must show local progress inside the refresh button. Do not rely
     only on the table overlay or a silent network request after the user clicks refresh.
