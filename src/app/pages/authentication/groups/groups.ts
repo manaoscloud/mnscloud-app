@@ -28,8 +28,6 @@ const config = defineCrud({
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
     { key: 'status', source: 'AagStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'AagName', label: 'Name', required: true, span: 1 },
-    { key: 'revision', source: 'AagRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'AuthenticationAccountAacUUID',
       source: 'AuthenticationAccountAacUUID',
@@ -65,6 +63,8 @@ const config = defineCrud({
         parameters: { accountUUID: 'AuthenticationAccountAacUUID' },
       },
     },
+    { key: 'name', source: 'AagName', label: 'Name', required: true, span: 1 },
+    { key: 'revision', source: 'AagRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'notes',
       source: 'AagNotes',
