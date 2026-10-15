@@ -661,6 +661,8 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'portalMustChangePassword',
+      // This is a boolean policy choice, never the credential itself.
+      reportMask: false,
       source: 'PortalMustChangePassword',
       payloadKey: 'portalMustChangePassword',
       label: 'Must change password on next login',
