@@ -114,11 +114,13 @@
           ></ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="columns.length">
-              {{ 'No monitoring samples available' | transloco }}
-            </td>
-          </tr>
+          @if (!page.isLoading() && !page.error()) {
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="columns.length">
+                {{ 'No monitoring samples available' | transloco }}
+              </td>
+            </tr>
+          }
         </table>
       </div>
     } @else {
