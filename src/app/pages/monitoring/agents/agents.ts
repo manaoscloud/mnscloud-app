@@ -298,6 +298,8 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       tooltip: 'Queue runtime product updates',
       actions: [
         ...this.runtimeProducts()
+          // Web clients are listed once, as webapps apps below (with their sync health).
+          .filter((product) => !this.webappForProduct(product.product))
           .filter((product) => this.canUpdateRuntimeProduct(product))
           .map((product) => ({
             key: `runtime:${product.product}`,
@@ -672,10 +674,25 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
       .join(' · ');
   }
 
+  /** Web client products (PhoneWeb, Pulse, customer portal, website) are webapps apps. */
+  private webappForProduct(product: string): string | null {
+    const app = product.startsWith('mnscloud-') ? product.slice('mnscloud-'.length) : '';
+    return app && this.webapps().some((row) => row.app === app) ? app : null;
+  }
+
+  /** Registry (DEV-validated or promoted) release of the app's product, when it has one. */
+  private webappReleaseRef(app: string): string | null {
+    const version = this.runtimeProducts().find(
+      (item) => item.product === `mnscloud-${app}`,
+    )?.latestVersion;
+    return version ? `v${version}` : null;
+  }
+
   private async queueWebappUpdate(app: string) {
+    const appRef = this.webappReleaseRef(app);
     const confirmed = await this.confirmAction(
       `Update webapp ${app}`,
-      `Queue an update of ${app} on every webapps host? Only this app is reinstalled at its configured release; the webapps runtime keeps its version.`,
+      `Queue an update of ${app} on every webapps host${appRef ? ` to ${appRef}` : ''}? Only this app is reinstalled; the webapps runtime keeps its version.`,
       'Queue update',
     );
     if (!confirmed) return;
@@ -683,7 +700,10 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
     try {
       const response = await this.api.post<{
         data?: { jobs?: unknown[]; failed?: Array<{ message?: string }> };
-      }>(`monitoring/agents/runtime-products/mnscloud-webapps/apps/${app}/update`, {});
+      }>(
+        `monitoring/agents/runtime-products/mnscloud-webapps/apps/${app}/update`,
+        appRef ? { appRef } : {},
+      );
       const failed = response.data?.failed ?? [];
       if (failed.length && !(response.data?.jobs ?? []).length) {
         this.snack.error(failed[0]?.message || `Failed to queue ${app} update.`);
