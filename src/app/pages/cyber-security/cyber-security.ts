@@ -87,6 +87,7 @@ function assignProfile(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
     endpoint: 'cyber-security/servers/profile',
     uuidField: 'agentUUID',
     pageTitle: 'Assign security profile',
+    pageDescription: 'cyberSecurity.description.assignProfile',
     createTitle: 'Assign security profile',
     savedMessage: 'Security profile assigned.',
     ...readOnly,

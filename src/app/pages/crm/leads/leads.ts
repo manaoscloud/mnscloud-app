@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/leads',
   uuidField: 'CleUUID',
   pageTitle: 'crm.title.leads',
+  pageDescription: 'crm.description.leads',
   initialValues: {
     CleName: '',
     CleEmail: '',

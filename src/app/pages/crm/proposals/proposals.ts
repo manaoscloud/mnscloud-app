@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'crm/proposals',
   uuidField: 'CppUUID',
   pageTitle: 'crm.title.proposals',
+  pageDescription: 'crm.description.proposals',
   defaultCurrencyFields: ['CppCurrency'],
   initialValues: {
     CppName: '',

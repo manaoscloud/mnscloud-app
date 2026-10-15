@@ -11,6 +11,7 @@ export const config = defineCrud({
   endpoint: 'crm/proposal-items',
   uuidField: 'CptUUID',
   pageTitle: 'crm.title.proposal-items',
+  pageDescription: 'crm.description.proposal-items',
   initialValues: {
     CptName: '',
     CrmProposalCppUUID: '',

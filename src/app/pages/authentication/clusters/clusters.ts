@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'system/authentication/clusters',
   uuidField: 'AtcUUID',
   pageTitle: 'authentication.clusters',
+  pageDescription: 'authentication.clustersDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
@@ -28,6 +29,7 @@ const config = defineCrud({
           endpoint: `system/authentication/clusters/${row['AtcUUID']}/provisioning`,
           uuidField: 'AcpUUID',
           pageTitle: 'authentication.provisioning',
+          pageDescription: 'authentication.provisioningHelp',
           createTitle: 'authentication.provisioning',
           dialogDescription: 'authentication.provisioningHelp',
           canEdit: false,

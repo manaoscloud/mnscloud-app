@@ -539,6 +539,15 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'authentication.groups' },
               },
               {
+                path: 'authentication/domains',
+                loadComponent: () =>
+                  import('./pages/authentication/domains/domains').then(
+                    (m) => m.AuthenticationDomainPage,
+                  ),
+                title: 'Authentication',
+                data: { scope: 'tenant', breadcrumb: 'authentication.domains' },
+              },
+              {
                 path: 'crm/dashboard',
                 loadComponent: () =>
                   import('./pages/crm/dashboard/dashboard').then((m) => m.CrmDashboardPage),

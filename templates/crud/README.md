@@ -9,7 +9,9 @@ node scripts/create-crud.mjs src/app/pages/area/resources area/resources Resourc
 ```
 
 The generator refuses existing directories. Configure the endpoint, field/source mappings,
-columns, translated labels, statuses and authorized actions. Use resources for FK lookups,
+columns, translated labels, statuses and authorized actions. Replace the placeholder
+`pageDescription` with one sentence on what the resource is for (app.md Page Description
+Contract); `npm run check:page-descriptions` fails until it is translated. Use resources for FK lookups,
 searchable shared fields, `type: 'currency'` and system currency defaults. Add keys in PT/EN/ES.
 The shared base owns filters, sorting, pagination, dialogs, selection and notifications.
 Bulk deletion requires a real authorized API contract; document lifecycle exceptions.

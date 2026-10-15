@@ -22,6 +22,7 @@ const config = defineCrud({
   endpoint: 'erp/financial/invoicing/boletos',
   uuidField: 'ErpFinInvBoletoUUID',
   pageTitle: 'Boletos',
+  pageDescription: 'erp.description.boletos',
   bulkDelete: false,
   statusMode: 'string',
   activeValue: 'open',

@@ -13,9 +13,9 @@ import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-
 const YES_NO: readonly ConfigurableCrudOption[] = [{ value: 1, label: 'Yes' }, { value: 0, label: 'No' }];
 const RELATIONSHIPS: readonly ConfigurableCrudOption[] = [{ value: 'holder', label: 'Holder' }, { value: 'dependent', label: 'Dependent' }];
 
-function config(endpoint: string, uuidField: string, noun: string, fields: ConfigurableCrudConfig['fields'], columns: ConfigurableCrudConfig['columns']): ConfigurableCrudConfig {
+function config(endpoint: string, uuidField: string, noun: string, description: string, fields: ConfigurableCrudConfig['fields'], columns: ConfigurableCrudConfig['columns']): ConfigurableCrudConfig {
   return {
-    endpoint, uuidField, pageTitle: noun, pageDescription: `Manage clinic ${noun.toLowerCase()}.`, createTitle: `New ${noun.slice(0, -1)}`, editTitle: `Edit ${noun.slice(0, -1)}`,
+    endpoint, uuidField, pageTitle: noun, pageDescription: description, createTitle: `New ${noun.slice(0, -1)}`, editTitle: `Edit ${noun.slice(0, -1)}`,
     dialogDescription: `Maintain clinic ${noun.toLowerCase()} data.`, searchPlaceholder: 'Search', emptyLabel: `No ${noun.toLowerCase()} found.`, deleteTitle: `Delete ${noun.slice(0, -1)}`,
     deleteMessage: `Delete this ${noun.slice(0, -1).toLowerCase()}?`, deleteSelectedTitle: `Delete selected ${noun.toLowerCase()}`, deleteSelectedMessage: 'Delete {count} selected records?',
     savedMessage: 'Record saved successfully.', deletedMessage: 'Record deleted successfully.', deleteFailedMessage: 'Failed to delete record.', statusMode: 'number', activeValue: 1, inactiveValue: 0,
@@ -24,30 +24,30 @@ function config(endpoint: string, uuidField: string, noun: string, fields: Confi
 }
 
 const CONFIGS: Record<string, ConfigurableCrudConfig> = {
-  agreements: config('clinic/agreements', 'AgreementUUID', 'Clinic agreements', [
+  agreements: config('clinic/agreements', 'AgreementUUID', 'Clinic agreements', 'clinic.description.agreements', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'code', source: 'Code', payloadKey: 'code', label: 'Code', required: true, span: 1 },
     { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
     { key: 'registration', source: 'Registration', payloadKey: 'registration', label: 'Registration', span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ], [{ id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'AgreementUUID' }, { id: 'code', label: 'Code', field: 'Code' }, { id: 'registration', label: 'Registration', field: 'Registration' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }]),
-  plans: config('clinic/plans', 'PlanUUID', 'Agreement plans', [
+  plans: config('clinic/plans', 'PlanUUID', 'Agreement plans', 'clinic.description.plans', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'agreementUUID', source: 'AgreementUUID', payloadKey: 'agreementUUID', label: 'Agreement', type: 'search-select', quickCreate: quickCreateFor('ClinicAgreementCagUUID'), required: true, span: 1 },
     { key: 'code', source: 'Code', payloadKey: 'code', label: 'Code', required: true, span: 1 }, { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     { key: 'validFrom', source: 'ValidFrom', payloadKey: 'validFrom', label: 'Valid from', type: 'date', span: 1 }, { key: 'validUntil', source: 'ValidUntil', payloadKey: 'validUntil', label: 'Valid until', type: 'date', span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ], [{ id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'PlanUUID' }, { id: 'agreement', label: 'Agreement', field: 'AgreementName' }, { id: 'code', label: 'Code', field: 'Code' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }]),
-  procedures: config('clinic/procedures', 'ProcedureUUID', 'Clinic procedures', [
+  procedures: config('clinic/procedures', 'ProcedureUUID', 'Clinic procedures', 'clinic.description.procedures', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 }, { key: 'code', source: 'Code', payloadKey: 'code', label: 'Code', required: true, span: 1 }, { key: 'tussCode', source: 'TussCode', payloadKey: 'tussCode', label: 'TUSS code', span: 1 }, { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ], [{ id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'ProcedureUUID' }, { id: 'code', label: 'Code', field: 'Code' }, { id: 'tuss', label: 'TUSS code', field: 'TussCode' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }]),
-  coverages: config('clinic/coverages', 'CoverageUUID', 'Plan coverages', [
+  coverages: config('clinic/coverages', 'CoverageUUID', 'Plan coverages', 'clinic.description.coverages', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 }, { key: 'planUUID', source: 'PlanUUID', payloadKey: 'planUUID', label: 'Plan', type: 'search-select', quickCreate: quickCreateFor('ClinicAgreementPlanCapUUID'), required: true, span: 1 }, { key: 'procedureUUID', source: 'ProcedureUUID', payloadKey: 'procedureUUID', label: 'Procedure', type: 'search-select', quickCreate: quickCreateFor('ClinicProcedureCprUUID'), required: true, span: 1 }, { key: 'allowed', source: 'Allowed', payloadKey: 'allowed', label: 'Allowed', type: 'select', options: YES_NO, span: 1 },
     { key: 'authorizationRequired', source: 'AuthorizationRequired', payloadKey: 'authorizationRequired', label: 'Authorization required', type: 'select', options: YES_NO, span: 1 }, { key: 'quantityLimit', source: 'QuantityLimit', payloadKey: 'quantityLimit', label: 'Quantity limit', type: 'number', span: 1 }, { key: 'periodDays', source: 'PeriodDays', payloadKey: 'periodDays', label: 'Period days', type: 'number', span: 1 }, { key: 'validFrom', source: 'ValidFrom', payloadKey: 'validFrom', label: 'Valid from', type: 'date', span: 1 }, { key: 'validUntil', source: 'ValidUntil', payloadKey: 'validUntil', label: 'Valid until', type: 'date', span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ], [{ id: 'plan', label: 'Plan', field: 'PlanName' }, { id: 'procedure', label: 'Procedure', field: 'ProcedureName' }, { id: 'allowed', label: 'Allowed', kind: 'boolean', field: 'Allowed' }, { id: 'authorization', label: 'Authorization required', kind: 'boolean', field: 'AuthorizationRequired' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }]),
-  'customer-agreements': config('clinic/customer-agreements', 'CustomerAgreementUUID', 'Customer agreements', [
+  'customer-agreements': config('clinic/customer-agreements', 'CustomerAgreementUUID', 'Customer agreements', 'clinic.description.customer-agreements', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 }, { key: 'customerUUID', source: 'CustomerUUID', payloadKey: 'customerUUID', label: 'Customer', type: 'search-select', quickCreate: quickCreateFor('CustomerCusUUID'), required: true, span: 1 }, { key: 'agreementUUID', source: 'AgreementUUID', payloadKey: 'agreementUUID', label: 'Agreement', type: 'search-select', quickCreate: quickCreateFor('ClinicAgreementCagUUID'), required: true, span: 1 }, { key: 'planUUID', source: 'PlanUUID', payloadKey: 'planUUID', label: 'Plan', type: 'search-select', quickCreate: quickCreateFor('ClinicAgreementPlanCapUUID'), span: 1 },
     { key: 'insuredNumber', source: 'InsuredNumber', payloadKey: 'insuredNumber', label: 'Insured number', required: true, span: 1 }, { key: 'memberNumber', source: 'MemberNumber', payloadKey: 'memberNumber', label: 'Member number', span: 1 }, { key: 'relationship', source: 'Relationship', payloadKey: 'relationship', label: 'Relationship', type: 'select', options: RELATIONSHIPS, span: 1 }, { key: 'validFrom', source: 'ValidFrom', payloadKey: 'validFrom', label: 'Valid from', type: 'date', span: 1 }, { key: 'validUntil', source: 'ValidUntil', payloadKey: 'validUntil', label: 'Valid until', type: 'date', span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },

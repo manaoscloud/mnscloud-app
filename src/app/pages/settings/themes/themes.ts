@@ -44,7 +44,7 @@ const config = defineCrud({
   endpoint: ENDPOINT,
   uuidField: 'ThemeUUID',
   pageTitle: 'Themes',
-  pageDescription: 'Register and manage domains published through Nginx/Certbot.',
+  pageDescription: 'settings.description.themes',
   searchPlaceholder: 'Domain or page title',
   emptyLabel: 'No domains found.',
   createTitle: 'New domain',

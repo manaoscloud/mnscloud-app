@@ -23,6 +23,7 @@ const config = defineCrud({
   endpoint: 'authentication/rate-limits',
   uuidField: 'ArlUUID',
   pageTitle: 'authentication.rate-limits',
+  pageDescription: 'authentication.rateLimitsDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and in-use confirmation; no bulk deletion contract.

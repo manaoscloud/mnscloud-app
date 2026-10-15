@@ -57,8 +57,9 @@ allowlist — fix the label or the tree.
    in `en-US`, `pt-BR` and `es-ES`. Never reuse shared CRUD keys (`Registry`, `Accounts`) in the
    menu and never invent disambiguation keys such as `DID menu operators`; the namespace already
    disambiguates. Removing an entry removes its `nav.*` keys (orphans fail the check).
-2. **No ancestor context.** A label never repeats a word of any ancestor in any locale (accents
-   and plurals ignored): `Suporte › Chamados › Origens`, not `Origens de chamado`;
+2. **No ancestor context.** A label never repeats a word or word stem of any ancestor in any
+   locale (accents and plurals ignored; a shared prefix or suffix of 4+ letters counts:
+   `Faturamento › Faturas`, `Webhosts › Hosts`): `Suporte › Chamados › Origens`, not `Origens de chamado`;
    `Segredos › Contas`, not `Contas de segredos`; `Suporte da plataforma › Equipes`, not
    `Equipes de suporte`.
 3. **Child named like its group.** Use, in order: (a) the entity noun (`PABX › Contas`,
@@ -66,7 +67,7 @@ allowlist — fix the label or the tree.
    (`PABX › Filas`, `PABX › Agentes`); (c) the canonical `Lista` / `List` / `Lista` for the
    main collection (`Troncos › Lista`, `Chamados › Lista`, `Segredos › Lista`).
 4. **Groups name the subject, children name the collections**: `Discagem › Planos, Regras`,
-   `Bloqueio › Listas, Números`, `RADIUS › Servidores, Clientes PPPoE`, `Tarifas › Planos,
+   `Bloqueio › Listas, Números`, `Autenticação › Acessos, Domínios`, `Tarifas › Planos,
 Atribuições, Acúmulos`.
 5. **Length budget** (longest of PT/EN/ES, in characters): level 1 ≤ 24, level 2 ≤ 22,
    level 3 ≤ 18, level 4 ≤ 16; aim for ≤ 16 everywhere. No label may be truncated in any locale
@@ -74,16 +75,21 @@ Atribuições, Acúmulos`.
 6. **Shortening order**: drop context already given by an ancestor → drop prepositions and
    qualifiers → use the glossary's short term → use an established acronym (DNS, CDR, URA).
    Never invent abbreviations (`Config.`, `Prior.`).
-7. **Sentence case** in every locale; acronyms, product names and proper nouns keep their form.
-8. **Nouns, not verbs.** Collections are plural (`Servidores`, `Rotas`); groups are a subject
-   noun; no actions (`Vínculos`, not `Vincular clientes`). The dashboard entry is always `Painel` /
-   `Dashboard` / `Panel` and comes first.
+7. **Sentence case** in every locale, starting with an upper-case letter; later words, also after
+   `/`, stay lower case. Acronyms, product names and proper nouns keep their form.
+8. **Nouns, not verbs.** Collections are plural (`Servidores`, `Rotas`, `IPv4 fixos`); groups are a
+   subject noun; no actions (`Vínculos`, not `Vincular clientes`; `Listas de acesso`, not
+   `Permitir/bloquear`; `Reconciliation`, not `Reconcile`). `nav-glossary.json` `forbiddenVerbs`
+   lists the actions the check rejects per locale. The dashboard entry is always `Painel` /
+   `Dashboard` / `Panel` and comes first (checked).
 9. **Glossary.** One term per concept, translated in each locale: `Painel` (never
    `Visão geral`), `Lista` (never `Cadastro`/`Registro` as a leaf), `Fornecedores` = ERP
    suppliers vs `Fabricantes` = ISP equipment vendors, `Assinatura` = the platform billing
    module (its subscriptions are `Adesões`), `Cibersegurança` (never `Cyber Security` in PT).
    English words stay only for product names and established terms listed in
-   `nav-glossary.json` `productTerms` (for example `Custom`, the PABX custom call flow product).
+   `nav-glossary.json` `productTerms` (for example `Custom`, the PABX custom call flow product);
+   a pt-BR/es-ES word spelled like the en-US label fails unless it is a product term or a
+   `sharedTerms` word that is correct in every locale (`Interfaces`, `Leads`, `Tickets`).
 10. **Scope lives in the group.** Platform versus tenant is stated once by the group
     (`Suporte da plataforma`); its leaves reuse the tenant names (`Chamados`, `Equipes`, `Tipos`,
     `Prioridades`, `Origens`).
@@ -96,10 +102,32 @@ Atribuições, Acúmulos`.
 New menu entries: add the entry to `nav-registry.ts`, add `nav.<id>` to the three dictionaries,
 run `npm run check:nav`, then validate PT/EN/ES at desktop (expanded and compact) and mobile width.
 
+The check cannot judge meaning. Review by hand, for every new or renamed entry: the three
+translations name the same thing (`Handoffs` is `Repasses`, not `Entregas` = deliveries), one
+concept keeps one term in every module (`Operadoras` = `Operators`, never the freight
+`Carriers`), and the label is not a generic placeholder such as `Especiais`.
+
+## Page Description Contract
+
+Every page header says, in one sentence, what the resource is for and how it relates to its
+neighbours: the paragraph under the title (`Gerencie regras de correspondência, transformação de
+número e roteamento dos planos de discagem.`). It is mandatory for every CRUD configuration
+(including collection dialogs and one-shot `form` dialogs), dashboard, settings page, detail page
+and metrics monitor; `defineCrud` has no default, so a missing `pageDescription` does not compile.
+
+- Write a Transloco key (or an English source string) translated in PT/EN/ES; never an empty
+  string, never the page title again, never a template with interpolated words (one key per
+  variant; only record data such as `#123 · Subject` may be interpolated).
+- `mns-dashboard-page`, `mns-settings-page`, `mns-detail-page`, `mns-page-shell` and
+  `mns-metrics-monitor` require `description`; hand-written `erp-header` blocks need the `<p>`.
+- `npm run check:page-descriptions` enforces this app-wide in CI (`verify:changed`), without an
+  allowlist; the CRUD/dashboard/detail/settings templates and `scripts/create-crud.mjs` start
+  with a placeholder that fails the check until it is replaced and translated.
+
 ## Cyber Security navigation
 
 Cybersecurity groups the existing resources by operator task: Dashboard; Protection
-(Servers, Profiles, Services, Allow/block); Threats (Alerts, Decisions, Events); Access
+(Servers, Profiles, Services, Access lists); Threats (Alerts, Decisions, Events); Access
 (Trusted nodes, API policies); and Secrets (Dashboard, List, Accounts, master-only Servers).
 Menu labels follow the Navigation Label Contract; page titles keep the full names.
 Groups are navigation-only and inherit existing commercial visibility. Preserve the canonical
@@ -632,7 +660,10 @@ the page must use the shared base named here.
     actions stay available (always visible on touch) for configuring apps from a phone. A toolbar
     keeps select-all (bulk delete) and the table view menu.
   - Credentials shown in a list use column `kind: 'secret'`: masked by default, a show toggle per
-    row that hides again after 10 seconds, and the copy action when `copyable` is set.
+    row that hides again after 10 seconds, and the copy action when `copyable` is set. A secret
+    that is not in the list (for example a generated password behind an audited reveal endpoint)
+    declares `secretLoader(row)` and `secretAvailable(row)`: it is fetched only on show/copy, kept
+    only while shown, marked `data-report-mask`, and dropped after a row action replaces it.
   - If column ids differ from API/model fields, or if displayed values are derived labels, define
     explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
     sorted-row `computed()`.

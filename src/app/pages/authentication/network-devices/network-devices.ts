@@ -11,6 +11,7 @@ const config = defineCrud({
   endpoint: 'authentication/network-devices',
   uuidField: 'AanUUID',
   pageTitle: 'authentication.network-devices',
+  pageDescription: 'authentication.networkDevicesDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.

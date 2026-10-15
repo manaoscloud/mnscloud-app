@@ -12,6 +12,7 @@ const config = defineCrud({
   endpoint: 'authentication/profiles',
   uuidField: 'AapUUID',
   pageTitle: 'authentication.profiles',
+  pageDescription: 'authentication.profilesDescription',
   serverSidePagination: true,
   initialPageSize: 50,
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.

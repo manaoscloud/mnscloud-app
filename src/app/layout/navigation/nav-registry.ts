@@ -239,23 +239,16 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'account_balance',
         children: [
           {
-            id: 'erp/financial/accounts',
-            label: 'nav.erp.financial.accounts',
-            icon: 'account_balance_wallet',
-            children: [
-              {
-                id: 'erp/financial/account/payables',
-                label: 'nav.erp.financial.account.payables',
-                icon: 'payments',
-                route: '/erp/financial/account/payables',
-              },
-              {
-                id: 'erp/financial/account/receivables',
-                label: 'nav.erp.financial.account.receivables',
-                icon: 'receipt_long',
-                route: '/erp/financial/account/receivables',
-              },
-            ],
+            id: 'erp/financial/account/payables',
+            label: 'nav.erp.financial.account.payables',
+            icon: 'payments',
+            route: '/erp/financial/account/payables',
+          },
+          {
+            id: 'erp/financial/account/receivables',
+            label: 'nav.erp.financial.account.receivables',
+            icon: 'receipt_long',
+            route: '/erp/financial/account/receivables',
           },
           {
             id: 'erp/financial/payment',
@@ -552,6 +545,14 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.authentication.groups',
         icon: 'groups',
         route: '/authentication/groups',
+        entitlementCode: 'module.authentication.account',
+        requiresEnvironment: true,
+      },
+      {
+        id: 'authentication/domains',
+        label: 'nav.authentication.domains',
+        icon: 'alternate_email',
+        route: '/authentication/domains',
         entitlementCode: 'module.authentication.account',
         requiresEnvironment: true,
       },
