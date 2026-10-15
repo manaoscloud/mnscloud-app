@@ -432,7 +432,7 @@ the page must use the shared base named here.
 - Creating one-off `<table>`, `<table mat-table>`, hand-rolled paginators, or page-local list tables is strictly prohibited for any AI/LLM or human developer.
 - All core table capabilities must come from the shared base: density toggle (comfortable/compact), column customization menu (`tune` button), search input, status/list filters, pagination, responsive cards for mobile viewports, loading indicator, selection/bulk delete, and problem reporting button.
 - If tabular data needs to be presented inside a modal or dialog, use `ConfigurableCrudCollectionDialog` or a component extending `ConfigurableCrudPageBase`. Never construct a custom table dialog.
-- In collection dialogs (`ConfigurableCrudCollectionDialog`), actions must be placed in `.dialog-header .header-actions`: `Close`, `Refresh` (`app-refresh-button`), `New` (if `canCreate()`), and `<mns-report-problem-button>`. Do not split actions across top and bottom, do not float actions in the middle of the header, and do not attach an empty `form-actions` footer beneath the paginator.
+- In collection dialogs (`ConfigurableCrudCollectionDialog`), header actions (`Refresh`, `New` if `canCreate()`, and `<mns-report-problem-button>`) belong in `.dialog-header .header-actions`, while `Close` belongs in `.form-actions .secondary-actions` at the bottom of the dialog, preserving the standard dialog action footer.
 
 ## Commercial Menu Projection
 
