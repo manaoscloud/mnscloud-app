@@ -307,12 +307,16 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
             icon: 'published_with_changes',
             tooltip: this.runtimeProductReason(product),
           })),
-        ...this.webappApps().map((app) => ({
-          key: `webapp:${app}`,
-          label: this.webappLabel(app),
-          icon: this.webappRows(app).some((row) => row.updateStatus === 'failed') ? 'error' : 'web',
-          tooltip: this.webappTooltip(app),
-        })),
+        ...this.webappApps()
+          .filter((app) => this.webappNeedsAction(app))
+          .map((app) => ({
+            key: `webapp:${app}`,
+            label: this.webappLabel(app),
+            icon: this.webappRows(app).some((row) => row.updateStatus === 'failed')
+              ? 'error'
+              : 'web',
+            tooltip: this.webappTooltip(app),
+          })),
       ],
     };
   }
@@ -644,6 +648,14 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
 
   private webappApps(): string[] {
     return [...new Set(this.webapps().map((row) => row.app))].sort();
+  }
+
+  /** Like runtime products, an app is offered only while a host is not current (or it is updating). */
+  private webappNeedsAction(app: string): boolean {
+    return (
+      this.updatingWebapps().has(app) ||
+      this.webappRows(app).some((row) => row.updateStatus !== 'current')
+    );
   }
 
   private webappRows(app: string): WebappInventoryRow[] {
