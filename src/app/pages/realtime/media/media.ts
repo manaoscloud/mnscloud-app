@@ -1,4 +1,9 @@
 import {
+  SERVER_LOG_INITIAL_VALUES,
+  serverLogFields,
+  serverLogPayload,
+} from '../../../shared/crud/server-log-fields';
+import {
   confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
@@ -31,6 +36,8 @@ const ENGINE_OPTIONS = [
 /** Media domain option that asks the API to generate a managed domain (RTP Media parameters). */
 const AUTO_MEDIA_DOMAIN = '__auto__';
 
+const RMS_LOG_MANAGED_ENGINES = ['rtpengine'];
+
 const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/realtime/media/servers',
   uuidField: 'RmsUUID',
@@ -52,7 +59,9 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
   activeValue: 1,
   inactiveValue: 0,
   statusOptions: STATUS_OPTIONS,
+  tabLabels: { diagnostics: 'Logs' },
   initialValues: {
+    ...SERVER_LOG_INITIAL_VALUES,
     status: 1,
     name: '',
     engine: 'rtpengine',
@@ -227,6 +236,7 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
       span: 4,
       rows: 4,
     },
+    ...serverLogFields('Rms', RMS_LOG_MANAGED_ENGINES),
   ],
 };
 
@@ -343,8 +353,9 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    if (payload['mediaDomainUUID'] !== AUTO_MEDIA_DOMAIN) return super.augmentPayload(payload);
-    return super.augmentPayload({ ...payload, mediaDomainUUID: null, autoDomain: true });
+    const values = this.isServerPage ? serverLogPayload(payload, RMS_LOG_MANAGED_ENGINES) : payload;
+    if (values['mediaDomainUUID'] !== AUTO_MEDIA_DOMAIN) return super.augmentPayload(values);
+    return super.augmentPayload({ ...values, mediaDomainUUID: null, autoDomain: true });
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {

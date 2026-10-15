@@ -1,4 +1,9 @@
 import {
+  SERVER_LOG_INITIAL_VALUES,
+  serverLogFields,
+  serverLogPayload,
+} from '../../../../shared/crud/server-log-fields';
+import {
   confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
@@ -77,6 +82,8 @@ const installCommandAction: ConfigurableCrudRowAction = {
   icon: 'terminal',
 };
 
+const VPS_LOG_MANAGED_ENGINES = ['freeswitch', 'asterisk'];
+
 const config: ConfigurableCrudConfig = {
   endpoint: 'system/voip/pabx/servers',
   uuidField: 'VpsUUID',
@@ -105,9 +112,11 @@ const config: ConfigurableCrudConfig = {
     network: 'Network',
     authentication: 'Control',
     codecs: 'Codecs',
+    diagnostics: 'Logs',
     notes: 'Notes',
   },
   initialValues: {
+    ...SERVER_LOG_INITIAL_VALUES,
     status: 1,
     engine: 'freeswitch',
     name: '',
@@ -337,6 +346,7 @@ const config: ConfigurableCrudConfig = {
       span: 4,
       rows: 4,
     },
+    ...serverLogFields('Vps', VPS_LOG_MANAGED_ENGINES),
   ],
 };
 
@@ -393,12 +403,15 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return {
-      ...payload,
-      status: Number(payload['status']),
-      controlPort: payload['controlPort'] ? Number(payload['controlPort']) : null,
-      allowedCodecs: codecList(payload['allowedCodecs']),
-    };
+    return serverLogPayload(
+      {
+        ...payload,
+        status: Number(payload['status']),
+        controlPort: payload['controlPort'] ? Number(payload['controlPort']) : null,
+        allowedCodecs: codecList(payload['allowedCodecs']),
+      },
+      VPS_LOG_MANAGED_ENGINES,
+    );
   }
 
   protected override async afterSave(

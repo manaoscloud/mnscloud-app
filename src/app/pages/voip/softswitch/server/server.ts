@@ -1,4 +1,9 @@
 import {
+  SERVER_LOG_INITIAL_VALUES,
+  serverLogFields,
+  serverLogPayload,
+} from '../../../../shared/crud/server-log-fields';
+import {
   confirmInstallCommandGeneration,
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
@@ -51,6 +56,8 @@ const CODEC_OPTIONS = [
 
 const DEFAULT_ALLOWED_CODECS = ['PCMU', 'PCMA', 'G729', 'G722', 'OPUS'];
 
+const VSR_LOG_MANAGED_ENGINES = ['kamailio'];
+
 const SERVER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/voip/softswitch/servers',
   uuidField: 'VsrUUID',
@@ -75,7 +82,9 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
     { key: 'runtime-inventory', label: 'Runtime inventory', icon: 'monitor_heart' },
     { key: 'install-command', label: 'Install command', icon: 'terminal' },
   ],
+  tabLabels: { diagnostics: 'Logs' },
   initialValues: {
+    ...SERVER_LOG_INITIAL_VALUES,
     name: '',
     nodeUUID: '',
     engine: 'kamailio',
@@ -212,6 +221,7 @@ const SERVER_CONFIG: ConfigurableCrudConfig = {
       span: 4,
       rows: 4,
     },
+    ...serverLogFields('Vsr', VSR_LOG_MANAGED_ENGINES),
   ],
 };
 
@@ -250,11 +260,14 @@ export class VoipSoftswitchServerPage extends ConfigurableCrudPageBase<VoipSofts
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return {
-      ...payload,
-      status: Number(payload['status']),
-      allowedCodecs: this.codecCsv(payload['allowedCodecs']),
-    };
+    return serverLogPayload(
+      {
+        ...payload,
+        status: Number(payload['status']),
+        allowedCodecs: this.codecCsv(payload['allowedCodecs']),
+      },
+      VSR_LOG_MANAGED_ENGINES,
+    );
   }
 
   private codecList(value: unknown, fallback: readonly string[]): string[] {
