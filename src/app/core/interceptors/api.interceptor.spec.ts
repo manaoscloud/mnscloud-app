@@ -71,6 +71,46 @@ describe('apiInterceptor', () => {
     expect(snack.error).not.toHaveBeenCalled();
   });
 
+  it('translates billing codes and names the missing module', async () => {
+    const promise = httpClient.post('/api/v1/billing/subscriptions', {}).toPromise();
+    const req = http.expectOne('/api/v1/billing/subscriptions');
+    req.flush(
+      {
+        error: 'Package requires an entitlement that is not contracted or included',
+        code: 'BILLING_PACKAGE_REQUIREMENT_MISSING',
+        requiredEntitlement: 'module.hosting.*',
+        requiredModule: 'hosting',
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.error).toHaveBeenCalledWith(
+      'This package includes a resource that requires the {{module}} module. Subscribe to {{module}} first or choose a package that includes it.',
+      3000,
+      { module: 'i18n:commercial.module.hosting' },
+    );
+  });
+
+  it('translates billing codes without parameters', async () => {
+    const promise = httpClient.post('/api/v1/billing/subscriptions', {}).toPromise();
+    const req = http.expectOne('/api/v1/billing/subscriptions');
+    req.flush(
+      {
+        error: 'Offer is already subscribed for this tenant',
+        code: 'BILLING_OFFER_ALREADY_SUBSCRIBED',
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    await expectAsync(promise).toBeRejected();
+    expect(snack.error).toHaveBeenCalledWith(
+      'You already subscribe to this offer.',
+      3000,
+      undefined,
+    );
+  });
+
   it('still toasts other conflicts', async () => {
     const promise = httpClient.post('/api/v1/example', {}).toPromise();
     const req = http.expectOne('/api/v1/example');

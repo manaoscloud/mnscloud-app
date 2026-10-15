@@ -23,6 +23,7 @@ const COLUMN_SEARCH_MIN = 8;
 import { resolveCrudFieldHelp } from './crud-field-help';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
+import { billingErrorText } from '../../billing/billing-error';
 import { CheckboxGroupFieldComponent } from '../../forms/checkbox-group-field';
 import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
@@ -3239,6 +3240,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected errorMessage(error: unknown): string {
     const payMessage = payErrorMessage(error);
     if (payMessage) return payMessage;
+    const billing = billingErrorText(error);
+    if (billing) {
+      const module = billing.params?.['module'];
+      return billing.params
+        ? this.t(billing.key, {
+            module: module?.startsWith('i18n:') ? this.t(module.slice(5)) : (module ?? ''),
+          })
+        : billing.key;
+    }
     if (error && typeof error === 'object') {
       const maybe = error as { error?: { error?: string; message?: string }; message?: string };
       return maybe.error?.error ?? maybe.error?.message ?? maybe.message ?? 'Operation failed.';
