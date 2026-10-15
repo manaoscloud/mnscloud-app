@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, signal } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
@@ -14,6 +14,7 @@ import {
 import { runRuntimeDiagnostic } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import type { RuntimeDiagnosticResult } from '../../../../shared/runtime-diagnostic/runtime-diagnostic.util';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+import { sipResponseLabel, trunkDiagnosisSections } from './trunk-registration-diagnosis';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -65,7 +66,30 @@ function codecList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function config(): ConfigurableCrudConfig {
+type PabxServerAddress = { ip: string; engine: string };
+
+/** FreeSWITCH registers trunks from its external SIP profile, fixed on this port. */
+const FREESWITCH_TRUNK_SIP_PORT = 5080;
+
+function providerAllowHelp(servers: Signal<ReadonlyMap<string, PabxServerAddress>>) {
+  const server = (values: ConfigurableCrudRecord) =>
+    servers().get(String(values['pabxUUID'] ?? '')) ?? null;
+  return {
+    helpWhen: ({ values }: { values: ConfigurableCrudRecord }) => {
+      const current = server(values);
+      if (!current?.ip || String(values['authMode']) === 'none') return '';
+      return current.engine === 'freeswitch'
+        ? 'At the provider, allow this PABX: IP {{ ip }}, SIP port {{ port }}.'
+        : 'At the provider, allow this PABX: IP {{ ip }}.';
+    },
+    helpParams: ({ values }: { values: ConfigurableCrudRecord }) => ({
+      ip: server(values)?.ip ?? '',
+      port: FREESWITCH_TRUNK_SIP_PORT,
+    }),
+  };
+}
+
+function config(servers: Signal<ReadonlyMap<string, PabxServerAddress>>): ConfigurableCrudConfig {
   return {
     endpoint: 'voip/pabx/trunks',
     uuidField: 'uuid',
@@ -244,6 +268,7 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         breakBeforeWhen: ({ values }) => String(values['authMode']) === 'ip_acl',
         hiddenWhen: ({ values }) => String(values['authMode']) === 'none',
+        ...providerAllowHelp(servers),
       },
       {
         key: 'realm',
@@ -333,10 +358,13 @@ function config(): ConfigurableCrudConfig {
 })
 export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly pabxServers: WritableSignal<ReadonlyMap<string, PabxServerAddress>>;
   readonly pabxLoading = signal(false);
 
   constructor() {
-    super(config());
+    const servers = signal<ReadonlyMap<string, PabxServerAddress>>(new Map());
+    super(config(servers));
+    this.pabxServers = servers;
     void this.loadPabxOptions();
   }
 
@@ -384,6 +412,7 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
         'Reads the outbound registration and connectivity status from the assigned PABX runtime.',
       startEndpoint: `voip/pabx/trunks/${uuid}/runtime-status`,
       statusEndpoint: (jobUUID) => `voip/pabx/trunks/${uuid}/runtime-status/${jobUUID}`,
+      sections: trunkDiagnosisSections,
     });
   }
 
@@ -426,6 +455,19 @@ export class VoipPabxTrunkPage extends ConfigurableCrudPageBase<ConfigurableCrud
         'voip/pabx/accounts?status=1&limit=500&offset=0',
       );
       const rows = response?.data?.items ?? [];
+      this.pabxServers.set(
+        new Map(
+          rows
+            .map((row): [string, PabxServerAddress] => [
+              String(row['VpaUUID'] ?? row['uuid'] ?? ''),
+              {
+                ip: String(row['ServerPublicIP'] ?? '').trim(),
+                engine: String(row['ServerEngine'] ?? '').toLowerCase(),
+              },
+            ])
+            .filter(([uuid]) => Boolean(uuid)),
+        ),
+      );
       this.pabxOptions.set(
         rows.map((row) => ({
           value: String(row['VpaUUID'] ?? row['uuid'] ?? ''),
@@ -472,12 +514,14 @@ function trunkStatusSections(result: RuntimeDiagnosticResult) {
           { key: 'trunk', label: 'Trunk' },
           { key: 'runtimeName', label: 'Runtime name', monospace: true },
           { key: 'registration', label: 'Registration', translate: true },
+          { key: 'lastResponse', label: 'Last SIP response', monospace: true },
           { key: 'method', label: 'Method' },
         ],
         rows: trunks.map((item) => ({
           trunk: item['name'] ?? '-',
           runtimeName: item['runtimeName'] ?? '-',
           registration: trunkRegistrationLabel(item['registrationStatus'] ?? 'unknown'),
+          lastResponse: sipResponseLabel(item['lastFailure']) || '-',
           method: item['method'] ?? '-',
         })),
         emptyLabel: 'No trunk statuses were returned.',

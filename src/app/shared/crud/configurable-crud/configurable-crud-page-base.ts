@@ -297,6 +297,8 @@ export type ConfigurableCrudField = {
   /** Optional supplementary guidance; translated and rendered by the shared help control. */
   help?: string;
   helpWhen?: (context: ConfigurableCrudFieldContext) => string;
+  /** Interpolation values for the guidance key (e.g. `{{ ip }}`), so the text stays translatable. */
+  helpParams?: (context: ConfigurableCrudFieldContext) => Record<string, string | number>;
   suffixButtons?: readonly ConfigurableCrudFieldSuffixButton[];
 };
 
@@ -1924,7 +1926,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
             editing: Boolean(this.editingRecord()),
             values: this.formValues(),
           },
-      (text) => this.t(text),
+      (text, params) => this.t(text, params),
     );
   }
 
