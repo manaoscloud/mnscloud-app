@@ -1,4 +1,11 @@
-export type AccountAction = 'suspend' | 'close' | 'anonymize' | 'legal-hold' | 'release-hold';
+export type AccountAction =
+  | 'suspend'
+  | 'close'
+  | 'anonymize'
+  | 'legal-hold'
+  | 'release-hold'
+  | 'verify-email'
+  | 'resend-verification';
 
 export interface ApiListResponse<T> {
   data?: {
@@ -14,6 +21,7 @@ export interface GovernanceUser {
   Email?: string | null;
   Status?: number | null;
   EmailVerifiedAt?: string | null;
+  EmailVerificationDeadlineAt?: string | null;
   DateDeleted?: string | null;
   DateCreated?: string | null;
   AccessCount?: number | null;

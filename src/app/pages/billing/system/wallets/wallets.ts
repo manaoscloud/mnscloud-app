@@ -33,7 +33,20 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
   canEdit: false,
   canDelete: false,
   bulkDelete: false,
-  rowActions: [{ key: 'manual-credit', label: 'Manual credit', icon: 'add_card' }],
+  rowActions: [
+    {
+      key: 'manual-credit',
+      label: 'Manual credit',
+      icon: 'add_card',
+      // Mirrors the API gate (409): only active tenants with a verified e-mail receive credit.
+      disabledReason: (row) =>
+        Number(row['TenantStatus'] ?? 0) !== 1
+          ? 'Tenant is inactive.'
+          : row['TenantEmailVerifiedAt']
+            ? null
+            : 'Tenant e-mail is not verified.',
+    },
+  ],
   ...BILLING_STATUS_OPTIONS,
   initialValues: {},
   columns: [
@@ -45,6 +58,11 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'EnvironmentUUID',
     },
     { id: 'email', label: 'E-mail', field: 'TenantEmail' },
+    {
+      id: 'emailVerified',
+      label: 'Email verified',
+      value: (row, translate) => translate(row['TenantEmailVerifiedAt'] ? 'Yes' : 'No'),
+    },
     { id: 'currency', label: 'Currency', field: 'DefaultCurrency' },
     { id: 'wallets', label: 'Wallets', field: 'WalletCount' },
     { id: 'summary', label: 'Wallet summary', field: 'WalletSummary' },

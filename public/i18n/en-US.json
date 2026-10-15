@@ -7008,5 +7008,22 @@
   "Manage SIP header and number manipulations for SBC pipes.": "Manage SIP header and number manipulations for SBC pipes.",
   "Operational health, accounts, subscribers, trunks and routing.": "Operational health, accounts, subscribers, trunks and routing.",
   "Manage DID routing for tenant Softswitch accounts.": "Manage DID routing for tenant Softswitch accounts.",
-  "settings.description.themes": "Public tenant domains with their visual identity (theme), published by Nginx with a Certbot certificate."
+  "settings.description.themes": "Public tenant domains with their visual identity (theme), published by Nginx with a Certbot certificate.",
+  "signin.error.emailNotVerified": "Verify your e-mail before signing in. Use the link we sent or request a new one.",
+  "signin.verification.resend": "Resend verification e-mail",
+  "signin.verification.resent": "If the account still needs verification, a new link was sent to that e-mail.",
+  "signin.verification.resendFailed": "Could not resend the e-mail now. Please try again.",
+  "signin.verification.verified": "E-mail verified. You can sign in now.",
+  "signin.verification.linkInvalid": "Invalid or expired verification link. Request a new link below.",
+  "signin.verification.pendingUntil": "Verify your e-mail by {{date}} to keep access. We sent a link to your inbox.",
+  "Mark e-mail as verified": "Mark e-mail as verified",
+  "Resend verification e-mail": "Resend verification e-mail",
+  "Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.": "Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.",
+  "Sends a new verification link to the account e-mail (one per minute, five per day).": "Sends a new verification link to the account e-mail (one per minute, five per day).",
+  "Verification deadline": "Verification deadline",
+  "Verification e-mail sent.": "Verification e-mail sent.",
+  "Tenant e-mail is not verified.": "Tenant e-mail is not verified.",
+  "Tenant is inactive.": "Tenant is inactive.",
+  "The tenant has not verified its e-mail address yet. Resend the verification e-mail or verify it in Governance.": "The tenant has not verified its e-mail address yet. Resend the verification e-mail or verify it in Governance.",
+  "The tenant account is inactive.": "The tenant account is inactive."
 }
