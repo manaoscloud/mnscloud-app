@@ -566,6 +566,11 @@ the page must use the shared base named here.
   - Operational feedback (`success`, `error`, `warning`, `info`) must use `SnackbarService` / app snackbar.
   - Do not render transient CRUD success/error/warning/info messages inline in pages, tables, dialogs, or form footers.
   - Inline state blocks are reserved for persistent empty/error states that require page-level action, not save/delete/load notifications.
+  - API error text is English and is not a translation key. When an API family returns stable
+    codes, translate by code in one shared map (`shared/payment/pay-error.ts` for `PAY_*`,
+    `shared/billing/billing-error.ts` for `BILLING_*`) consulted by `api.interceptor.ts` and
+    `ConfigurableCrudPageBase.errorMessage`, with every message in `en-US`, `pt-BR` and `es-ES`.
+    Billing requirement codes name the module through `commercial.module.<module>`.
 - Dashboard visual baseline:
   - Summary dashboards MUST instantiate `DashboardPageComponent` (`mns-dashboard-page`) and
     `dashboardResource` from `src/app/shared/dashboard`. Start new pages from `templates/dashboard`.
