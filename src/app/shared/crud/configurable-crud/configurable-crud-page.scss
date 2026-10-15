@@ -686,22 +686,6 @@
   flex-wrap: nowrap;
 }
 
-.collection-header-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: auto;
-
-  button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: var(--crud-action-button-width, 120px);
-    height: var(--form-control-height, 40px);
-    line-height: normal;
-    white-space: nowrap;
-  }
-}
 
 .crud-dialog.collection-dialog {
   .dialog-content {

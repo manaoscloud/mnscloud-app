@@ -7,7 +7,10 @@
           <p>{{ config.pageDescription | transloco }}</p>
         }
       </div>
-      <div class="collection-header-actions">
+      <div class="header-actions">
+        <button mat-stroked-button type="button" (click)="closeCollectionDialog()">
+          {{ 'Close' | transloco }}
+        </button>
         <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
         @if (canCreate()) {
           <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
@@ -15,21 +18,12 @@
             {{ 'New' | transloco }}
           </button>
         }
+        <mns-report-problem-button [context]="reportContext()" />
       </div>
-      <mns-report-problem-button [context]="reportContext()" />
     </header>
 
     <div class="dialog-content">
       <ng-container [ngTemplateOutlet]="crudTableBody" />
-    </div>
-
-    <div class="form-actions">
-      <div class="secondary-actions">
-        <button mat-stroked-button type="button" (click)="closeCollectionDialog()">
-          {{ 'Close' | transloco }}
-        </button>
-      </div>
-      <div class="primary-actions"></div>
     </div>
   </div>
 } @else {
