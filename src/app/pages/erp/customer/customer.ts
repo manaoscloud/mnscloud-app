@@ -297,7 +297,8 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       label: 'Due day',
       type: 'search-select',
       quickCreate: false,
-      quickCreateExemptReason: 'Due days are a fixed billing calendar catalog without a create form.',
+      quickCreateExemptReason:
+        'Due days are a fixed billing calendar catalog without a create form.',
       placeholder: 'Search due days',
       tab: 'financial',
       span: 1,
@@ -600,7 +601,8 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       placeholder: 'Unique portal username',
-      required: true,
+      // Customers created before every customer had a portal identity get one from the API.
+      requiredWhen: ({ editing }) => !editing,
       suffixButtons: [
         {
           icon: 'autorenew',
