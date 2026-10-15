@@ -2351,7 +2351,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const label = this.columnOptionLabel(row, column);
     if (label !== undefined) return label;
     if (column.lookupKey && column.uuidField) {
-      return this.lookupLabel(column.lookupKey, row[column.uuidField]) || '-';
+      const lookup = this.lookupLabel(column.lookupKey, row[column.uuidField]);
+      if (lookup) return lookup;
     }
     const field = column.field ?? column.id;
     const value = this.displayValue(row[field]);
