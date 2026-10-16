@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b8c1855dda03",
+  "version": "3a1e858a553c",
   "language": "pt-BR",
   "entries": [
     {
@@ -3806,12 +3806,12 @@
           "help": "API oficial da Anthropic, OpenAI ou Google Gemini. Trocar o provedor exige uma nova chave de API."
         },
         {
-          "label": "Chave de API",
-          "help": ""
-        },
-        {
           "label": "Modelo padrão",
           "help": "Modelos listados pelo provedor para esta chave. Cada recurso de IA pode usar outro modelo do mesmo provedor."
+        },
+        {
+          "label": "Chave de API",
+          "help": ""
         },
         {
           "label": "Máximo de tokens de saída",
