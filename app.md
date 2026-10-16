@@ -598,6 +598,11 @@ the page must use the shared base named here.
   CRUD pages responsible for closing their own dialogs on 401 responses.
 - Sensitive one-time artifacts shown in dialogs, such as install commands and runtime tokens, must
   never remain visible behind the sign-in screen after a 401 redirect.
+- Deep links survive sign-in: `authGuard`, `userResolver` and session expiry send the user to
+  `/signin?returnUrl=<path>` (`core/navigation/return-url.ts`), and sign-in (or an already signed-in
+  visit to `/signin`) opens that path instead of `/dashboard`. Only App-internal paths are accepted
+  (`safeReturnUrl`: one leading slash, no scheme/host/backslash/control characters, never `/signin`);
+  an explicit logout carries no return path. E-mail links (tickets `?ticket=<uuid>`) rely on this.
 
 ## ERP CRUD Baseline (Current)
 

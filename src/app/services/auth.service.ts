@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { signinUrlTree } from '../core/navigation/return-url';
 import { ApiService } from './api.service';
 import { SessionUiCleanupService } from './session-ui-cleanup.service';
 import {
@@ -152,8 +153,11 @@ export class AuthService {
 
   expireSession() {
     this.logout();
-    if (this.router.url !== '/signin') {
-      void this.router.navigate(['/signin'], { replaceUrl: true });
+    if (!this.router.url.startsWith('/signin')) {
+      // An expired session returns to the same page after the new sign-in.
+      void this.router.navigateByUrl(signinUrlTree(this.router, this.router.url), {
+        replaceUrl: true,
+      });
     }
   }
 
