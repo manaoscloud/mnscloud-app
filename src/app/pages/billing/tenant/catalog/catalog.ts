@@ -8,8 +8,15 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { BillingCatalogItem, BillingService } from '../../shared/billing.service';
+import {
+  BillingCatalogItem,
+  BillingService,
+  BillingSwitchPreview,
+} from '../../shared/billing.service';
 import { BILLING_STRING_STATUS_OPTIONS } from '../../shared/billing-crud';
+import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { BillingSwitchDialogComponent } from './switch-dialog';
 
 const CATALOG_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'billing/catalog',
@@ -118,18 +125,33 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
   ): Promise<void> {
     if (action.key !== 'subscribe') return super.handleRowAction(action, row);
     if (this.mutating()) return;
+    const priceUUID = this.recordUUID(row);
 
-    const confirmed = await this.confirmAction(
-      'Subscribe',
-      'Subscribe to this offer? Monthly contracts renew automatically from your prepaid balance; access is suspended if funds are insufficient.',
-      'Subscribe',
-    );
+    // The API quotes the offer against the current contracts; a paid entitlement is never billed twice.
+    let preview: BillingSwitchPreview | null;
+    this.mutating.set(true);
+    try {
+      preview = await this.billing.switchPreview(priceUUID, String(row.OfferType), row.OfferUUID);
+    } catch {
+      // The API interceptor already presents the server-side billing rejection.
+      return;
+    } finally {
+      this.mutating.set(false);
+    }
+    const isSwitch = Boolean(preview && preview.contracts.length);
+    const confirmed = isSwitch
+      ? await this.confirmSwitch(String(row['OfferName'] ?? ''), preview!)
+      : await this.confirmAction(
+          'Subscribe',
+          'Subscribe to this offer? Monthly contracts renew automatically from your prepaid balance; access is suspended if funds are insufficient.',
+          'Subscribe',
+        );
     if (!confirmed) return;
 
     this.mutating.set(true);
     try {
-      const priceUUID = this.recordUUID(row);
-      const requestKey = `${localStorage.getItem('mc_current_env')}:${priceUUID}`;
+      // A switch confirmation is a different request than a plain checkout, so it gets its own key.
+      const requestKey = `${localStorage.getItem('mc_current_env')}:${priceUUID}:${isSwitch ? preview!.quotedAt : ''}`;
       const idempotencyKey = this.checkoutKeys.get(requestKey) ?? crypto.randomUUID();
       this.checkoutKeys.set(requestKey, idempotencyKey);
       await this.billing.createSubscription({
@@ -137,9 +159,12 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
         offerType: row.OfferType,
         offerUUID: row.OfferUUID,
         idempotencyKey,
+        ...(isSwitch
+          ? { switch: { quotedAt: preview!.quotedAt, expectedCredit: preview!.creditAmount } }
+          : {}),
       });
       this.checkoutKeys.delete(requestKey);
-      this.snack.success('Subscription created.');
+      this.snack.success(isSwitch ? 'Plan switched.' : 'Subscription created.');
       this.refreshList();
     } catch {
       // The API interceptor already presents the server-side billing rejection.
@@ -147,5 +172,24 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
     } finally {
       this.mutating.set(false);
     }
+  }
+
+  private confirmSwitch(offerName: string, preview: BillingSwitchPreview): Promise<boolean> {
+    return new Promise((resolve) => {
+      const binding = openCrudComponentDialog(
+        this.dialog,
+        BillingSwitchDialogComponent,
+        'crud-form-dialog',
+        { data: { offerName, preview }, onEscape: () => binding.ref.close(false) },
+      );
+      bindDialogClosed(
+        binding.ref,
+        (confirmed) => {
+          binding.stop();
+          resolve(confirmed === true);
+        },
+        this.destroyRef,
+      );
+    });
   }
 }

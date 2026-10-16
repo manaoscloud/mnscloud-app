@@ -74,6 +74,8 @@ export interface BillingPackage {
   BpaID: string;
   BpaCode: string;
   BpaName: string;
+  /** BASE: tenant main plan (one per tenant); ADDON: complement. */
+  BpaKind?: 'BASE' | 'ADDON';
   BpaNotes?: string | null;
   BpaPublicSlug?: string | null;
   BpaPublicName?: string | null;
@@ -285,6 +287,32 @@ export type BillingCatalogItem = BillingProduct &
     PromotionDiscountType?: string | null;
     PromotionDiscountValue?: number | null;
   };
+
+export interface BillingSwitchContract {
+  subscriptionUUID: string;
+  subscriptionID: string;
+  offerType: 'PRODUCT' | 'PACKAGE';
+  offerName: string;
+  status: string;
+  currentPeriodEnd: string | null;
+  /** FULL/BASE end now with a prorated credit; PARTIAL stay billed. */
+  coverage: 'FULL' | 'BASE' | 'PARTIAL';
+  creditAmount: number;
+}
+
+/** Server quote of a checkout against the current contracts (no double billing). */
+export interface BillingSwitchPreview {
+  quotedAt: string;
+  currency: string;
+  setupAmount: number;
+  chargeAmount: number;
+  creditAmount: number;
+  netAmount: number;
+  availableBalance: number;
+  replaceCount: number;
+  partialCount: number;
+  contracts: BillingSwitchContract[];
+}
 
 export interface BillingTenantDashboardWallet {
   currency: string;
@@ -700,6 +728,14 @@ export class BillingService {
     if (search.trim()) params.set('search', search.trim());
     if (status.trim()) params.set('status', status.trim());
     return this.allPages<BillingSubscription>('billing/subscriptions', params);
+  }
+
+  async switchPreview(priceUUID: string, offerType: string, offerUUID: string) {
+    const params = new URLSearchParams({ offerType, offerUUID });
+    const response = await this.api.get<{ data?: { item?: BillingSwitchPreview } }>(
+      `billing/catalog/${priceUUID}/switch-preview?${params}`,
+    );
+    return response.data?.item ?? null;
   }
 
   async createSubscription(payload: Record<string, unknown>) {
