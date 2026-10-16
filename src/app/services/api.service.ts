@@ -6,6 +6,7 @@ import { SnackbarService } from './snackbar.service';
 import { createInitialFileUploadProgress } from '../shared/upload/file-upload-progress';
 import type { FileUploadProgress } from '../shared/upload/file-upload-progress';
 import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
+import { silentErrorsContext } from '../core/interceptors/silent-errors';
 import {
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
@@ -64,18 +65,23 @@ export class ApiService {
 
   private tenantUserEndpoint(endpoint: string): boolean {
     const path = endpoint.replace(/^\//, '').split('?')[0];
-    return /^user\/access\/(members|roles|invites)(?:\/|$)/.test(path) &&
-      !/^user\/access\/invites\/(accept|validate)$/.test(path) ||
+    return (
+      (/^user\/access\/(members|roles|invites)(?:\/|$)/.test(path) &&
+        !/^user\/access\/invites\/(accept|validate)$/.test(path)) ||
       /^user\/access\/(?:[a-f0-9]{32}|[a-f0-9-]{36})$/i.test(path) ||
-      /^user\/permissions(?:\/|$)/.test(path) &&
-      !/^user\/permissions\/platform(?:\/|$)/.test(path);
+      (/^user\/permissions(?:\/|$)/.test(path) &&
+        !/^user\/permissions\/platform(?:\/|$)/.test(path))
+    );
   }
 
   private sendsEnvironment(endpoint: string): boolean {
     if (this.systemCyberSecurityContext(endpoint) || this.systemTelemetryContext(endpoint))
       return false;
-    return endpoint.replace(/^\//, '').split('?')[0] === 'user/me' ||
-      this.requiresEnvironment(endpoint) || this.environmentOptional(endpoint);
+    return (
+      endpoint.replace(/^\//, '').split('?')[0] === 'user/me' ||
+      this.requiresEnvironment(endpoint) ||
+      this.environmentOptional(endpoint)
+    );
   }
 
   private systemTelemetryContext(endpoint: string): boolean {
@@ -114,11 +120,13 @@ export class ApiService {
     }
   }
 
-  async get<T>(endpoint: string, options: { timeout?: number } = {}): Promise<T> {
+  /** `silent` is for background reads: failures are thrown without an error toast. */
+  async get<T>(endpoint: string, options: { timeout?: number; silent?: boolean } = {}): Promise<T> {
     this.assertEnvironment(endpoint);
     return await firstValueFrom(
       this.http.get<T>(this.url(endpoint), {
         timeout: options.timeout,
+        ...(options.silent ? { context: silentErrorsContext() } : {}),
         headers: this.getHeaders(endpoint),
         withCredentials: true,
       }),

@@ -90,6 +90,8 @@ for (const page of [
 }
 // Sidebar labels follow the Navigation Label Contract app-wide (app.md).
 run('node', ['scripts/validate-nav-labels.mjs']);
+// The support AI assistant reads the committed App screen catalog (menu, titles, field help).
+run('node', ['scripts/generate-app-catalog.mjs', '--check']);
 run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
 // Every dialog header offers "Report problem" (app.md Dialog Report Problem Baseline).

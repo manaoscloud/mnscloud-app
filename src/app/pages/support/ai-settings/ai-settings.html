@@ -1,0 +1,159 @@
+<mns-settings-page
+  [title]="'AI assistant' | transloco"
+  [description]="
+    'Automatic triage of platform tickets: answers usage questions and reports platform bugs to the team.'
+      | transloco
+  "
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="dirty()"
+  [valid]="valid()"
+  [error]="apiError()"
+  (refresh)="reload()"
+  (save)="save()"
+  (cancel)="cancel()"
+>
+  <div class="form-grid">
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Assistant' | transloco"
+      [field]="settingsForm.enabled"
+      [options]="onOffOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'When on, tickets opened from now on in My tickets and Report problem are sent to the selected AI provider for analysis. Older tickets are never analysed.'
+          | transloco
+      "
+    />
+
+    <mns-search-select-field
+      class="span-2"
+      [label]="'AI provider' | transloco"
+      [field]="settingsForm.providerUUID"
+      [options]="providerOptions()"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [canCreate]="true"
+      [createLabel]="'Create AI provider' | transloco"
+      (createRecord)="createProvider()"
+      [help]="
+        'Ticket subject, messages and redacted diagnostics are sent to this provider. E-mails, tax IDs, IP addresses and secrets are removed first.'
+          | transloco
+      "
+    />
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Analyses in the last hour' | transloco }}</mat-label>
+      <input matInput [value]="usageLabel()" readonly />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Analyses in the last hour' | transloco"
+        [text]="'Used / hourly limit. New tickets wait when the limit is reached.' | transloco"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Minimum confidence to answer (%)' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="50"
+        max="100"
+        [formField]="settingsForm.autoReplyPercent"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Minimum confidence to answer (%)' | transloco"
+        [text]="
+          'Usage questions below this confidence are not answered automatically; the team receives the analysis instead.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Minimum confidence for bugs (%)' | transloco }}</mat-label>
+      <input matInput type="number" min="50" max="100" [formField]="settingsForm.bugPercent" />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Minimum confidence for bugs (%)' | transloco"
+        [text]="
+          'Above this confidence the requester is told the problem was identified and the team receives the report and the fix prompt.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Automatic answers per ticket' | transloco }}</mat-label>
+      <input matInput type="number" min="0" max="5" [formField]="settingsForm.maxAutoReplies" />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Automatic answers per ticket' | transloco"
+        [text]="
+          'When the requester replies, the assistant answers again up to this limit; then the team takes over.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Analyses per hour' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="1"
+        max="1000"
+        [formField]="settingsForm.maxTriagesPerHour"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Analyses per hour' | transloco"
+        [text]="'Cost control: maximum number of AI analyses in any hour.' | transloco"
+      />
+    </mat-form-field>
+
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Send diagnostics' | transloco"
+      [field]="settingsForm.includeDiagnostics"
+      [options]="yesNoOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'Includes the redacted Report problem diagnostics: screen, versions, failed requests and console errors.'
+          | transloco
+      "
+    />
+
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Fix prompt in team e-mail' | transloco"
+      [field]="settingsForm.emailPromptToTeam"
+      [options]="yesNoOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'When off, the prompt for developers stays only in the AI analysis of the ticket in the App.'
+          | transloco
+      "
+    />
+
+    <mat-form-field appearance="outline" class="span-4">
+      <mat-label>{{ 'Reply when a bug is identified' | transloco }}</mat-label>
+      <textarea matInput rows="4" [formField]="settingsForm.bugReplyMessage"></textarea>
+      <mns-field-help
+        matIconSuffix
+        [label]="'Reply when a bug is identified' | transloco"
+        [text]="
+          'Fixed message sent to the requester. The technical report and the fix prompt are never sent to the requester.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+  </div>
+</mns-settings-page>

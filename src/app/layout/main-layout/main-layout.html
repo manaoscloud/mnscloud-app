@@ -55,6 +55,9 @@
             }
             <span class="menu-label">{{ item.label }}</span>
             <span class="menu-spacer"></span>
+            @if (hasNavBadge(item) && !isExpanded(item.id)) {
+              <span class="menu-badge-dot" aria-hidden="true"></span>
+            }
             @if (item.children?.length) {
               <mat-icon class="collapse-icon">
                 {{ isExpanded(item.id) ? 'expand_less' : 'expand_more' }}
@@ -78,6 +81,9 @@
                       }
                       <span class="menu-label">{{ child.label }}</span>
                       <span class="menu-spacer"></span>
+                      @if (hasNavBadge(child) && !isExpanded(child.id)) {
+                        <span class="menu-badge-dot" aria-hidden="true"></span>
+                      }
                       <mat-icon class="collapse-icon">
                         {{ isExpanded(child.id) ? 'expand_less' : 'expand_more' }}
                       </mat-icon>
@@ -153,6 +159,9 @@
                       <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
                     }
                     <span class="menu-label">{{ child.label }}</span>
+                    @if (navBadge(child); as count) {
+                      <span class="menu-badge" [attr.aria-label]="count">{{ count }}</span>
+                    }
                   </button>
                 }
               }

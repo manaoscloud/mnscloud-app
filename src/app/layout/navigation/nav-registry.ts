@@ -19,7 +19,13 @@ export interface NavItem {
 
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
+
+  /** Live counter shown beside the label (a dot on collapsed ancestors). */
+  badge?: NavBadge;
 }
+
+/** Counters the shell can show; each maps to a client service fed by the API. */
+export type NavBadge = 'supportUnread';
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'nav.dashboard', icon: 'dashboard', route: '/dashboard' },
@@ -1483,6 +1489,7 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/support/requests',
         scope: 'public',
         requiresEnvironment: true,
+        badge: 'supportUnread',
       },
       {
         id: 'support/customers',
@@ -1527,6 +1534,38 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/support/platform/notification-rules',
             scope: 'public',
             permissions: ['platform.support.notifications.manage'],
+          },
+          {
+            id: 'support/platform/ai',
+            label: 'nav.support.platform.ai',
+            icon: 'smart_toy',
+            scope: 'public',
+            children: [
+              {
+                id: 'support/platform/ai/settings',
+                label: 'nav.support.platform.ai.settings',
+                icon: 'tune',
+                route: '/support/platform/ai/settings',
+                scope: 'public',
+                permissions: ['platform.support.ai.manage'],
+              },
+              {
+                id: 'support/platform/ai/providers',
+                label: 'nav.support.platform.ai.providers',
+                icon: 'hub',
+                route: '/support/platform/ai/providers',
+                scope: 'public',
+                permissions: ['platform.support.ai.manage'],
+              },
+              {
+                id: 'support/platform/ai/articles',
+                label: 'nav.support.platform.ai.articles',
+                icon: 'menu_book',
+                route: '/support/platform/knowledge-articles',
+                scope: 'public',
+                permissions: ['platform.support.settings.manage'],
+              },
+            ],
           },
         ],
       },

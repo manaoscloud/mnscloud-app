@@ -161,6 +161,51 @@ export const routes: Routes = [
             },
           },
           {
+            path: 'support/platform/ai/settings',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/ai-settings/ai-settings').then(
+                (m) => m.SupportAiSettingsPage,
+              ),
+            title: 'Support • Platform • AI assistant | mnscloud',
+            data: {
+              scope: 'master',
+              supportDesk: 'platform',
+              permission: 'platform.support.ai.manage',
+              breadcrumb: 'AI assistant',
+            },
+          },
+          {
+            path: 'support/platform/ai/providers',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/ai-providers/ai-providers').then(
+                (m) => m.SupportAiProvidersPage,
+              ),
+            title: 'Support • Platform • AI providers | mnscloud',
+            data: {
+              scope: 'master',
+              supportDesk: 'platform',
+              permission: 'platform.support.ai.manage',
+              breadcrumb: 'AI providers',
+            },
+          },
+          {
+            path: 'support/platform/knowledge-articles',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/knowledge-articles/knowledge-articles').then(
+                (m) => m.SupportKnowledgeArticlesPage,
+              ),
+            title: 'Support • Platform • Knowledge articles | mnscloud',
+            data: {
+              scope: 'master',
+              supportDesk: 'platform',
+              permission: 'platform.support.settings.manage',
+              breadcrumb: 'Knowledge articles',
+            },
+          },
+          {
             path: 'support/platform/notification-rules',
             canActivate: [permissionGuard],
             loadComponent: () =>

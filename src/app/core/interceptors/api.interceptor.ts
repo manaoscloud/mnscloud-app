@@ -4,6 +4,7 @@ import { billingErrorMessage } from '../../shared/billing/billing-error';
 import { Injector, inject } from '@angular/core';
 import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
+import { SILENT_ERRORS } from './silent-errors';
 
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -174,6 +175,10 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Background reads stay quiet; an expired session is still handled below.
+      if (req.context.get(SILENT_ERRORS) && error.status !== 401) {
+        return throwError(() => error);
+      }
       // Offline / erro de rede
       if (error.status === 0) {
         recordFailure(diagnostics, req, error, 'Network error');
