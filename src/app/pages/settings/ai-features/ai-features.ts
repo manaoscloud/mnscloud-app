@@ -12,6 +12,16 @@ import { aiModelOptions, aiProviderKindLabel } from '../ai-providers/ai-provider
 /** AI features of the platform (catalog of the API, `GET system/ai/features`). */
 export const AI_FEATURE_OPTIONS = [{ value: 'support.triage', label: 'Support ticket triage' }];
 
+/** Prompt cache of a feature: the gateway decides per provider when it pays (`auto`). */
+export const PROMPT_CACHE_OPTIONS = [
+  { value: 'auto', label: 'Automatic' },
+  { value: 'off', label: 'Off' },
+];
+export const PROMPT_CACHE_TTL_OPTIONS = [
+  { value: '5m', label: '5 minutes' },
+  { value: '1h', label: '1 hour' },
+];
+
 export function aiFeatureLabel(feature: unknown): string {
   return (
     AI_FEATURE_OPTIONS.find((option) => option.value === feature)?.label ?? String(feature ?? '')
@@ -45,6 +55,8 @@ const config = defineCrud({
     model: '',
     maxOutputTokens: '',
     maxCallsPerHour: 120,
+    promptCache: 'auto',
+    promptCacheTtl: '5m',
   },
   columns: [
     {
@@ -69,6 +81,18 @@ const config = defineCrud({
       label: 'Calls in the last hour',
       value: (row) =>
         `${Number(row['CallsLastHour'] ?? 0)} / ${Number(row['MaxCallsPerHour'] ?? 0)}`,
+    },
+    {
+      id: 'cache',
+      field: 'PromptCache',
+      label: 'Prompt cache',
+      value: (row, translate) =>
+        row['PromptCache'] === 'off'
+          ? translate('Off')
+          : `${translate('Automatic')} · ${translate(
+              PROMPT_CACHE_TTL_OPTIONS.find((o) => o.value === row['PromptCacheTtl'])?.label ??
+                '5 minutes',
+            )}`,
     },
     { id: 'ready', field: 'Ready', label: 'Ready', kind: 'boolean' },
     { id: 'status', field: 'Status', label: 'Status', kind: 'status', className: 'status-col' },
@@ -139,6 +163,30 @@ const config = defineCrud({
       help: 'Cost control: calls above this limit fail until the hour rolls over.',
       span: 1,
     },
+    {
+      key: 'promptCache',
+      source: 'PromptCache',
+      payloadKey: 'promptCache',
+      label: 'Prompt cache',
+      type: 'search-select',
+      options: PROMPT_CACHE_OPTIONS,
+      translateOptions: true,
+      required: true,
+      help: 'The provider reuses the fixed instructions of the feature at about 10% of the input price. Automatic only uses it when the feature is busy enough to pay off; OpenAI and Gemini also cache on their own.',
+      span: 1,
+    },
+    {
+      key: 'promptCacheTtl',
+      source: 'PromptCacheTtl',
+      payloadKey: 'promptCacheTtl',
+      label: 'Cache duration',
+      type: 'search-select',
+      options: PROMPT_CACHE_TTL_OPTIONS,
+      translateOptions: true,
+      hiddenWhen: ({ values }) => values['promptCache'] === 'off',
+      help: 'Anthropic: 5 minutes for steady traffic; 1 hour for calls spread over the hour (the cache write costs more).',
+      span: 1,
+    },
   ],
   payload: (values) => ({
     status: Number(values['status'] ?? 1),
@@ -147,6 +195,8 @@ const config = defineCrud({
     model: values['model'] || null,
     maxOutputTokens: values['maxOutputTokens'] ? Number(values['maxOutputTokens']) : null,
     maxCallsPerHour: Number(values['maxCallsPerHour'] || 120),
+    promptCache: values['promptCache'] || 'auto',
+    promptCacheTtl: values['promptCacheTtl'] || '5m',
   }),
 });
 

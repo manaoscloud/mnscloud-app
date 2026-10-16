@@ -208,6 +208,14 @@ export const routes: Routes = [
           },
           // Platform AI (Settings › AI): providers shared by every AI feature, no tenant needed.
           {
+            path: 'settings/ai/dashboard',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/ai-dashboard/ai-dashboard').then((m) => m.AiDashboardPage),
+            title: 'Settings • AI • Dashboard | mnscloud',
+            data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI dashboard' },
+          },
+          {
             path: 'settings/ai/providers',
             canActivate: [permissionGuard],
             loadComponent: () =>
