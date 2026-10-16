@@ -7379,7 +7379,6 @@
   "The API key is encrypted by the platform and never shown again; leave it blank to keep the stored key.": "A chave de API é criptografada pela plataforma e nunca mais é exibida; deixe em branco para manter a chave armazenada.",
   "Ticket marked as fixed.": "Chamado marcado como corrigido.",
   "Ticket subject, messages and redacted diagnostics are sent to this provider. E-mails, tax IDs, IP addresses and secrets are removed first.": "Assunto, mensagens e diagnóstico anonimizado do chamado são enviados a este provedor. E-mails, documentos, endereços IP e segredos são removidos antes.",
-  "Timeout (seconds)": "Tempo limite (segundos)",
   "Title, keywords, menu path or content": "Título, palavras-chave, caminho ou conteúdo",
   "Tokens (input / output)": "Tokens (entrada / saída)",
   "Upper bound of each answer (256 to 32000). Limits cost per ticket.": "Limite de cada resposta (256 a 32000). Limita o custo por chamado.",
@@ -7498,5 +7497,6 @@
   "Your vote was added to the existing idea.": "Seu voto foi adicionado à ideia existente.",
   "nav.support.ideas": "Ideias",
   "nav.support.platform.ideas": "Ideias",
-  "Improvements for the platform can be voted by other tenants on the ideas board.": "Melhorias para a plataforma podem ser votadas por outros tenants no quadro de ideias."
+  "Improvements for the platform can be voted by other tenants on the ideas board.": "Melhorias para a plataforma podem ser votadas por outros tenants no quadro de ideias.",
+  "Ai": "IA"
 }

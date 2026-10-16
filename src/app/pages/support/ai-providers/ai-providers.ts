@@ -73,13 +73,15 @@ const config = defineCrud({
       detail: (row) => String(row['Model'] ?? ''),
     },
     {
+      // Text, not a status chip: the mobile card header keeps the record status chip.
       id: 'kind',
       field: 'Kind',
       label: 'Provider',
-      kind: 'status',
-      options: [...AI_PROVIDER_KIND_OPTIONS],
-      translateValue: true,
-      chipClass: () => 'chip-skipped',
+      value: (row, translate) =>
+        translate(
+          AI_PROVIDER_KIND_OPTIONS.find((option) => option.value === row['Kind'])?.label ??
+            String(row['Kind'] ?? ''),
+        ),
     },
     { id: 'key', field: 'ApiKeyConfigured', label: 'API key', kind: 'boolean' },
     {

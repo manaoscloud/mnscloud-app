@@ -6684,7 +6684,7 @@
   "TXT": "TXT",
   "Target node": "Nodo de destino",
   "Temp URL": "URL temporal",
-  "Timeout (seconds)": "Tiempo de espera (segundos)",
+  "Timeout (seconds)": "Tiempo límite (segundos)",
   "Transfer GB": "Transferencia GB",
   "Unsuspend": "Reactivar",
   "VPS Container Plans": "Planes de VPS Container",
@@ -7378,7 +7378,6 @@
   "The API key is encrypted by the platform and never shown again; leave it blank to keep the stored key.": "La clave de API la cifra la plataforma y no se vuelve a mostrar; déjela en blanco para conservar la clave almacenada.",
   "Ticket marked as fixed.": "Ticket marcado como corregido.",
   "Ticket subject, messages and redacted diagnostics are sent to this provider. E-mails, tax IDs, IP addresses and secrets are removed first.": "El asunto, los mensajes y el diagnóstico anonimizado del ticket se envían a este proveedor. Correos, documentos fiscales, direcciones IP y secretos se eliminan antes.",
-  "Timeout (seconds)": "Tiempo límite (segundos)",
   "Title, keywords, menu path or content": "Título, palabras clave, ruta o contenido",
   "Tokens (input / output)": "Tokens (entrada / salida)",
   "Upper bound of each answer (256 to 32000). Limits cost per ticket.": "Límite de cada respuesta (256 a 32000). Limita el costo por ticket.",
@@ -7497,5 +7496,6 @@
   "Your vote was added to the existing idea.": "Tu voto se sumó a la idea existente.",
   "nav.support.ideas": "Ideas",
   "nav.support.platform.ideas": "Ideas",
-  "Improvements for the platform can be voted by other tenants on the ideas board.": "Las mejoras para la plataforma pueden ser votadas por otros tenants en el tablero de ideas."
+  "Improvements for the platform can be voted by other tenants on the ideas board.": "Las mejoras para la plataforma pueden ser votadas por otros tenants en el tablero de ideas.",
+  "Ai": "IA"
 }
