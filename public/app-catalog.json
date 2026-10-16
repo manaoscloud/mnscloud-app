@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b131065d1da5",
+  "version": "21dc898872ef",
   "language": "pt-BR",
   "entries": [
     {
@@ -4723,6 +4723,10 @@
         {
           "label": "Nome",
           "help": "Nome comercial do pacote exibido para operadores e tenants."
+        },
+        {
+          "label": "Tipo de pacote",
+          "help": "Plano base: o plano principal do tenant; cada tenant tem um plano base por vez, e trocar para outro plano base o substitui com crédito proporcional. Complemento: complementa o plano base."
         },
         {
           "label": "Público",

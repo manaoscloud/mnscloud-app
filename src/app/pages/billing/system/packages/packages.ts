@@ -30,7 +30,15 @@ const PACKAGE_PAYLOAD_KEYS = [
   'isPublic',
   'sortOrder',
   'status',
+  'kind',
 ] as const;
+
+/** BASE is the tenant main plan (one live contract per tenant); ADDON complements it. */
+const PACKAGE_KIND_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'ADDON', label: 'Add-on' },
+  { value: 'BASE', label: 'Base plan' },
+];
+const packageKindLabel = (value: unknown) => (value === 'BASE' ? 'Base plan' : 'Add-on');
 
 const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/packages',
@@ -62,6 +70,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     publicDescription: '',
     isPublic: 0,
     sortOrder: 1000,
+    kind: 'ADDON',
     itemProductUUID: '',
     itemEntitlementCode: '',
     itemIncludedQuantity: -1,
@@ -71,6 +80,12 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'BpaName', uuidField: 'BpaUUID' },
     { id: 'code', label: 'Code', field: 'BpaCode' },
+    {
+      id: 'kind',
+      label: 'Package type',
+      field: 'BpaKind',
+      value: (row, t) => t(packageKindLabel(row['BpaKind'])),
+    },
     { id: 'items', label: 'Items', field: 'ItemCount' },
     {
       id: 'requirements',
@@ -363,7 +378,17 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       help: 'Commercial name of the package shown to operators and tenants.',
       span: 2,
     },
-    // Record row 2: Public, Sort order, Public slug
+    // Record row 2: Package type, Public, Sort order, Public slug
+    {
+      key: 'kind',
+      source: 'BpaKind',
+      payloadKey: 'kind',
+      label: 'Package type',
+      type: 'select',
+      options: PACKAGE_KIND_OPTIONS,
+      help: 'Base plan: the main plan of the tenant; a tenant has one base plan at a time and switching to another base plan replaces it with a prorated credit. Add-on: complements the base plan.',
+      span: 1,
+    },
     {
       key: 'isPublic',
       source: 'BpaIsPublic',
@@ -388,7 +413,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       source: 'BpaPublicSlug',
       payloadKey: 'publicSlug',
       label: 'Public slug',
-      span: 2,
+      span: 1,
     },
     // Record row 3: Public name, Public summary
     {
