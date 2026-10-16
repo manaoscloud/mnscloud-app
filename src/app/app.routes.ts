@@ -202,24 +202,36 @@ export const routes: Routes = [
             data: {
               scope: 'master',
               supportDesk: 'platform',
-              permission: 'platform.support.ai.manage',
+              permission: 'platform.support.settings.manage',
               breadcrumb: 'AI assistant',
             },
           },
+          // Platform AI (Settings › AI): providers shared by every AI feature, no tenant needed.
           {
-            path: 'support/platform/ai/providers',
+            path: 'settings/ai/providers',
             canActivate: [permissionGuard],
             loadComponent: () =>
-              import('./pages/support/ai-providers/ai-providers').then(
-                (m) => m.SupportAiProvidersPage,
+              import('./pages/settings/ai-providers/ai-providers').then((m) => m.AiProvidersPage),
+            title: 'Settings • AI • Providers | mnscloud',
+            data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI providers' },
+          },
+          {
+            path: 'settings/ai/features',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/ai-features/ai-features').then(
+                (m) => m.AiFeatureBindingsPage,
               ),
-            title: 'Support • Platform • AI providers | mnscloud',
-            data: {
-              scope: 'master',
-              supportDesk: 'platform',
-              permission: 'platform.support.ai.manage',
-              breadcrumb: 'AI providers',
-            },
+            title: 'Settings • AI • Features | mnscloud',
+            data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI features' },
+          },
+          {
+            path: 'settings/ai/usage',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/ai-usage/ai-usage').then((m) => m.AiUsagePage),
+            title: 'Settings • AI • Usage | mnscloud',
+            data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI usage' },
           },
           {
             path: 'support/platform/knowledge-articles',

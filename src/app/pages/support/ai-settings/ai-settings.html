@@ -23,26 +23,32 @@
       [placeholder]="'Search' | transloco"
       [emptyLabel]="'No records found.' | transloco"
       [help]="
-        'When on, tickets opened from now on in My tickets and Report problem are sent to the selected AI provider for analysis. Older tickets are never analysed.'
+        'When on, tickets opened from now on in My tickets and Report problem are analysed by the AI provider of the support triage feature. Older tickets are never analysed.'
           | transloco
       "
     />
 
-    <mns-search-select-field
-      class="span-2"
-      [label]="'AI provider' | transloco"
-      [field]="settingsForm.providerUUID"
-      [options]="providerOptions()"
-      [placeholder]="'Search' | transloco"
-      [emptyLabel]="'No records found.' | transloco"
-      [canCreate]="true"
-      [createLabel]="'Create AI provider' | transloco"
-      (createRecord)="createProvider()"
-      [help]="
-        'Ticket subject, messages and redacted diagnostics are sent to this provider. E-mails, tax IDs, IP addresses and secrets are removed first.'
-          | transloco
-      "
-    />
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>{{ 'AI provider' | transloco }}</mat-label>
+      <input matInput [value]="providerLabel()" readonly />
+      <span matIconSuffix class="crud-field-suffix-actions">
+        <a
+          mat-icon-button
+          routerLink="/settings/ai/features"
+          [matTooltip]="'Configure in Settings › AI' | transloco"
+          [attr.aria-label]="'Configure in Settings › AI' | transloco"
+        >
+          <mat-icon>open_in_new</mat-icon>
+        </a>
+        <mns-field-help
+          [label]="'AI provider' | transloco"
+          [text]="
+            'Provider and model of the support triage AI feature, set in Settings › AI › Features. Ticket subject, messages and redacted diagnostics are sent to it; e-mails, tax IDs, IP addresses and secrets are removed first.'
+              | transloco
+          "
+        />
+      </span>
+    </mat-form-field>
 
     <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Analyses in the last hour' | transloco }}</mat-label>

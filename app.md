@@ -46,6 +46,25 @@
   - `src/app/layout/navigation/nav-glossary.json` (label contract data)
 - Every sidebar label follows the Navigation Label Contract below.
 
+## Platform AI (Settings › AI)
+
+- AI providers are a platform resource shared by every AI feature; only `platform.ai.manage` (or
+  master) sees `Settings › AI` (`scope: 'public'` entries with that permission, no tenant needed).
+  Tenants never register keys: they use AI through the features of the modules they contract.
+- Providers (`/settings/ai/providers`, CRUD, `system/ai/providers`): only `anthropic`, `openai`,
+  `gemini` (no base URL); write-only API key; "Test connection" row action; registered in
+  `QUICK_CREATE_REGISTRY` as `AiProviderAipUUID`. The default model is never typed: the form
+  loads the provider catalog (`POST system/ai/providers/models` with the typed key, which is not
+  stored, or `GET system/ai/providers/:uuid/models` with the stored key) into a searchable select;
+  a selected model that left the catalog stays listed.
+- Features (`/settings/ai/features`, CRUD, `system/ai/feature-bindings`): one row per feature
+  (`support.triage` today) with provider (FK, quick-create), model (catalog of the selected
+  provider; empty = provider default), output limit and calls per hour.
+- Usage (`/settings/ai/usage`, read-only list, `system/ai/usage`): every gateway call with tenant
+  (empty = platform), provider, model, tokens, latency and result. Prompts are never stored.
+- A new AI feature adds its option to `AI_FEATURE_OPTIONS` (`pages/settings/ai-features`) and its
+  own behaviour settings in its module; it never asks for a provider or key.
+
 ## Navigation Label Contract
 
 Sidebar labels are short and contextual: the tree already tells the user where they are, so a
@@ -281,9 +300,8 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   Blur is pixelated into the exported image, never an overlay.
 
 - AI assistant (platform desk): `Support › Platform › AI` holds Settings (`/support/platform/ai/settings`,
-  `mns-settings-page`, `platform.support.ai.manage`), Providers (`/support/platform/ai/providers`,
-  CRUD, write-only API key, "Test connection" row action, registered in `QUICK_CREATE_REGISTRY` as
-  `SupportAiProviderSapUUID`) and Articles (`/support/platform/knowledge-articles`, CRUD,
+  `mns-settings-page`, `platform.support.settings.manage`; the provider and model are read-only there,
+  with a link to Settings › AI › Features) and Articles (`/support/platform/knowledge-articles`, CRUD,
   `platform.support.settings.manage`). Platform tickets show an `AI` column (classification) and
   the row actions `AI analysis` (data viewer: summary, team report, copyable fix prompt, citations),
   `Analyse again with AI` (internal note only) and `Mark as fixed` (public reply + `resolved`).

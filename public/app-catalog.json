@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "479b6c8d5fb3",
+  "version": "cbfc1f542943",
   "language": "pt-BR",
   "entries": [
     {
@@ -3738,6 +3738,84 @@
       "fields": []
     },
     {
+      "route": "/settings/ai/features",
+      "menuPath": "Configurações › IA › Recursos",
+      "scope": "platform",
+      "title": "Recursos de IA",
+      "description": "Qual provedor e modelo de IA cada recurso da plataforma usa, com o limite de custo por hora.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Recurso",
+          "help": "Cada recurso tem uma única configuração."
+        },
+        {
+          "label": "Provedor de IA",
+          "help": "Provedor ativo da plataforma. Os dados do recurso são enviados a ele em cada chamada."
+        },
+        {
+          "label": "Modelo",
+          "help": "Modelos listados pelo provedor selecionado. Deixe vazio para usar o modelo padrão dele."
+        },
+        {
+          "label": "Máximo de tokens de saída",
+          "help": "Deixe vazio para usar o limite do provedor (256 a 32000)."
+        },
+        {
+          "label": "Chamadas por hora",
+          "help": "Controle de custo: chamadas acima deste limite falham até a hora virar."
+        }
+      ]
+    },
+    {
+      "route": "/settings/ai/providers",
+      "menuPath": "Configurações › IA › Provedores",
+      "scope": "platform",
+      "title": "Provedores de IA",
+      "description": "Provedores de modelos de linguagem da plataforma, compartilhados por todos os recursos de IA (suporte, chat, CRM e outros).",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Provedor",
+          "help": "API oficial da Anthropic, OpenAI ou Google Gemini. Trocar o provedor exige uma nova chave de API."
+        },
+        {
+          "label": "Chave de API",
+          "help": ""
+        },
+        {
+          "label": "Modelo padrão",
+          "help": "Modelos listados pelo provedor para esta chave. Cada recurso de IA pode usar outro modelo do mesmo provedor."
+        },
+        {
+          "label": "Máximo de tokens de saída",
+          "help": "Limite padrão de cada resposta (256 a 32000). Limita o custo por chamada."
+        },
+        {
+          "label": "Tempo limite (segundos)",
+          "help": "Uma resposta mais lenta falha e o recurso tenta de novo depois (5 a 300 segundos)."
+        }
+      ]
+    },
+    {
+      "route": "/settings/ai/usage",
+      "menuPath": "Configurações › IA › Uso",
+      "scope": "platform",
+      "title": "Uso de IA",
+      "description": "Cada chamada feita por um recurso de IA: tenant, provedor, modelo, tokens e resultado, para acompanhar custo e falhas.",
+      "fields": []
+    },
+    {
       "route": "/settings/parameters",
       "menuPath": "Configurações › Parâmetros",
       "scope": "tenant",
@@ -3991,47 +4069,6 @@
       ]
     },
     {
-      "route": "/support/platform/ai/providers",
-      "menuPath": "Suporte › Plataforma › IA › Provedores",
-      "scope": "platform",
-      "title": "Provedores de IA",
-      "description": "Modelos de linguagem que o assistente de suporte usa para classificar e responder os chamados da plataforma.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Provedor",
-          "help": "Compatível com OpenAI abrange servidores próprios ou de terceiros que falam a API Chat Completions."
-        },
-        {
-          "label": "Modelo",
-          "help": "Identificador do modelo no provedor, por exemplo claude-sonnet-5-5 ou claude-haiku-5-5."
-        },
-        {
-          "label": "Chave de API",
-          "help": ""
-        },
-        {
-          "label": "URL base",
-          "help": "Obrigatória apenas para provedores compatíveis com OpenAI. Endereço https:// público; endereços internos são recusados."
-        },
-        {
-          "label": "Máximo de tokens de saída",
-          "help": "Limite de cada resposta (256 a 32000). Limita o custo por chamado."
-        },
-        {
-          "label": "Tempo limite (segundos)",
-          "help": "Uma resposta mais lenta é tentada novamente depois (5 a 300 segundos)."
-        }
-      ]
-    },
-    {
       "route": "/support/platform/ai/settings",
       "menuPath": "Suporte › Plataforma › IA › Configurações",
       "scope": "platform",
@@ -4040,11 +4077,11 @@
       "fields": [
         {
           "label": "Assistente",
-          "help": "Ligado, os chamados abertos a partir de agora em Meus chamados e Reportar problema são enviados ao provedor de IA selecionado para análise. Chamados anteriores nunca são analisados."
+          "help": "Quando ligado, os chamados abertos a partir de agora em Meus chamados e Reportar problema são analisados pelo provedor de IA do recurso de triagem do suporte. Chamados anteriores nunca são analisados."
         },
         {
           "label": "Provedor de IA",
-          "help": "Assunto, mensagens e diagnóstico anonimizado do chamado são enviados a este provedor. E-mails, documentos, endereços IP e segredos são removidos antes."
+          "help": "Provedor e modelo do recurso de IA de triagem do suporte, definidos em Configurações › IA › Recursos. Assunto, mensagens e diagnóstico redigido do chamado são enviados a ele; e-mails, CPF/CNPJ, endereços IP e segredos são removidos antes."
         },
         {
           "label": "Análises na última hora",
