@@ -39,11 +39,8 @@ const messages: Record<string, string> = {
     'The switch quote expired. Open the offer again to get a new quote.',
   BILLING_SWITCH_QUOTE_CHANGED:
     'Your contracts changed since the quote. Open the offer again to review the switch.',
-  BILLING_SWITCH_REQUIREMENT_MISSING:
-    'This switch would leave another contract without the {{module}} module. Keep a plan that includes {{module}} or cancel that contract first.',
   BILLING_SWITCH_CURRENCY_MISMATCH: 'Contracts in another currency cannot be switched.',
   BILLING_SWITCH_SCOPE_INVALID: 'Only modules and packages can be switched.',
-  BILLING_PACKAGE_KIND_INVALID: 'The package type must be Base plan or Add-on.',
   BILLING_FAILED: 'Unable to complete the billing operation.',
 };
 

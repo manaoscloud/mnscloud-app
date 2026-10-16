@@ -6,7 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 import { AppI18nService } from '../../../../services/app-i18n.service';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
-import { BillingSwitchContract, BillingSwitchPreview } from '../../shared/billing.service';
+import { BillingSwitchPreview } from '../../shared/billing.service';
 
 export interface BillingSwitchDialogData {
   offerName: string;
@@ -53,7 +53,7 @@ export interface BillingSwitchDialogData {
                 <mat-icon>swap_horiz</mat-icon>
                 <div class="switch-line">
                   <strong>{{ contract.offerName }}</strong>
-                  <span>{{ coverageLabel(contract) | transloco }}</span>
+                  <span>{{ 'Everything in it is included in the new offer.' | transloco }}</span>
                 </div>
                 <span class="switch-amount">{{ money(contract.creditAmount) }}</span>
               </li>
@@ -191,7 +191,7 @@ export class BillingSwitchDialogComponent {
   private readonly appI18n = inject(AppI18nService);
 
   readonly replaced = computed(() =>
-    this.data.preview.contracts.filter((c) => c.coverage === 'FULL' || c.coverage === 'BASE'),
+    this.data.preview.contracts.filter((c) => c.coverage === 'FULL'),
   );
   readonly partial = computed(() =>
     this.data.preview.contracts.filter((c) => c.coverage === 'PARTIAL'),
@@ -200,12 +200,6 @@ export class BillingSwitchDialogComponent {
   readonly insufficient = computed(
     () => this.data.preview.netAmount > this.data.preview.availableBalance,
   );
-
-  coverageLabel(contract: BillingSwitchContract): string {
-    return contract.coverage === 'BASE'
-      ? 'Your current base plan is replaced.'
-      : 'Everything in it is included in the new offer.';
-  }
 
   money(value: number): string {
     const currency = /^[A-Z]{3}$/.test(this.data.preview.currency)
