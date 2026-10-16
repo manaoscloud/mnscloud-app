@@ -147,8 +147,9 @@ const PORTS: Record<string, number> = {
   styles: [
     `
       .secret-content-error {
-        color: var(--mat-sys-error);
-        font: var(--mat-sys-body-small);
+        color: var(--mat-sys-color-error);
+        font-size: 0.75rem;
+        line-height: 1.25;
       }
     `,
   ],

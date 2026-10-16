@@ -1,31 +1,40 @@
 // Required Field Feedback Baseline (app.md): tabs and custom controls holding an invalid
-// field after a save attempt. Material inputs/selects turn red through ErrorStateMatcher.
+// field after a save attempt. Material inputs/selects turn red through [mnsInvalid].
+// The App theme exposes the error color as --mat-sys-color-error (not --mat-sys-error).
 
-.mat-mdc-tab.crud-tab-invalid .mdc-tab__text-label {
-  color: var(--mat-sys-error);
+// Material styles the tab label through its tokens (and loads after this sheet), so the
+// invalid tab overrides the tokens instead of competing on selector specificity.
+.mat-mdc-tab-group .mat-mdc-tab.crud-tab-invalid {
+  --mat-tab-inactive-label-text-color: var(--mat-sys-color-error);
+  --mat-tab-inactive-hover-label-text-color: var(--mat-sys-color-error);
+  --mat-tab-inactive-focus-label-text-color: var(--mat-sys-color-error);
+  --mat-tab-active-label-text-color: var(--mat-sys-color-error);
+  --mat-tab-active-hover-label-text-color: var(--mat-sys-color-error);
+  --mat-tab-active-focus-label-text-color: var(--mat-sys-color-error);
 
-  &::after {
+  .mdc-tab__text-label::after {
     content: '';
-    display: inline-block;
+    flex: none;
     width: 8px;
     height: 8px;
     margin-inline-start: 6px;
     border-radius: 50%;
-    background: var(--mat-sys-error);
+    background: var(--mat-sys-color-error);
   }
 }
 
 .crud-file-field.crud-file-field-invalid {
-  border-color: var(--mat-sys-error);
+  border-color: var(--mat-sys-color-error);
 
   .crud-file-field-label {
-    color: var(--mat-sys-error);
+    color: var(--mat-sys-color-error);
     opacity: 1;
   }
 }
 
 .crud-field-error {
   grid-column: 1;
-  color: var(--mat-sys-error);
-  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-color-error);
+  font-size: 0.75rem;
+  line-height: 1.25;
 }

@@ -143,16 +143,17 @@ const ACTION_LABELS: Record<string, string> = {
       }
 
       :host(.is-invalid) .permission-tree-panel {
-        border-color: var(--mat-sys-error);
+        border-color: var(--mat-sys-color-error);
       }
 
       :host(.is-invalid) .permission-tree-label,
       .permission-tree-error {
-        color: var(--mat-sys-error);
+        color: var(--mat-sys-color-error);
       }
 
       .permission-tree-error {
-        font: var(--mat-sys-body-small);
+        font-size: 0.75rem;
+        line-height: 1.25;
         padding: 4px 16px 0;
       }
 
