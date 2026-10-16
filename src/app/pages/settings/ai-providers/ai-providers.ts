@@ -5,6 +5,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
@@ -31,6 +32,13 @@ const HEALTH_OPTIONS = [
 const MIN_KEY_LENGTH = 8;
 
 type AiModelOption = { id: string; label: string };
+
+type ConnectionTestResult = {
+  Healthy?: number;
+  LatencyMs?: number | null;
+  Error?: string | null;
+  Suggestion?: string | null;
+};
 
 /** Options of a model select: the provider catalog plus the current value when it left the list. */
 export function aiModelOptions(
@@ -84,11 +92,6 @@ const config = defineCrud({
       icon: 'network_check',
       tooltip:
         'Sends a minimal request with the stored key and default model and records the result.',
-      request: {
-        method: 'post',
-        endpoint: (row) => `system/ai/providers/${String(row['AiProviderUUID'])}/test`,
-        successMessage: 'Connection test finished. Check the connection column.',
-      },
     },
   ],
   columns: [
@@ -117,7 +120,14 @@ const config = defineCrud({
       translateValue: true,
       chipClass: (value) =>
         value === 'healthy' ? 'chip-success' : value === 'failed' ? 'chip-failed' : 'chip-skipped',
-      detail: (row) => String(row['LastHealthError'] ?? ''),
+    },
+    {
+      // Status chips show no detail line: the provider reason of the last failed test lives here.
+      id: 'reason',
+      field: 'LastHealthError',
+      label: 'Failure reason',
+      width: 'xl',
+      value: (row) => String(row['LastHealthError'] ?? '') || '-',
     },
     { id: 'tested', field: 'LastHealthAt', label: 'Last test', kind: 'datetime', optional: true },
     { id: 'status', field: 'Status', label: 'Status', kind: 'status', className: 'status-col' },
@@ -248,6 +258,32 @@ export class AiProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     if (key === 'kind') this.models.set([]);
     clearTimeout(this.modelsTimer);
     this.modelsTimer = setTimeout(() => void this.loadModels(false), 600);
+  }
+
+  /** Test connection: shows the provider reason and what to do right away, then refreshes the list. */
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key !== 'test') return;
+    try {
+      const response = await this.api.post<{ data?: ConnectionTestResult }>(
+        `system/ai/providers/${String(row['AiProviderUUID'])}/test`,
+        {},
+      );
+      const result = response.data;
+      if (Number(result?.Healthy) === 1) {
+        this.snack.success(this.t('Connection OK ({{ ms }} ms).', { ms: result?.LatencyMs ?? 0 }));
+      } else {
+        const suggestion = result?.Suggestion ? ` ${this.t(result.Suggestion)}` : '';
+        this.snack.error(
+          `${this.t('Connection failed')}: ${result?.Error ?? ''}.${suggestion}`,
+          15000,
+        );
+      }
+    } finally {
+      this.refreshList();
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord) {

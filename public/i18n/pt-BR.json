@@ -7393,7 +7393,6 @@
   "Where the customer finds it, exactly as the menu shows it, for example Suporte › Meus chamados.": "Onde o cliente encontra, exatamente como o menu mostra, por exemplo Suporte › Meus chamados.",
   "Words customers use for this subject, separated by spaces or commas.": "Palavras que os clientes usam para este assunto, separadas por espaços ou vírgulas.",
   "Write the steps the way a customer should follow them. Only published articles are used by the assistant.": "Escreva os passos como o cliente deve segui-los. Somente artigos publicados são usados pelo assistente.",
-  "Connection test finished. Check the connection column.": "Teste de conexão concluído. Confira a coluna Conexão.",
   "Leave blank to keep the stored key. A new key replaces it.": "Deixe em branco para manter a chave armazenada. Uma nova chave a substitui.",
   "Prompt to fix the bug (paste into any LLM)": "Prompt para corrigir o bug (cole em qualquer LLM)",
   "Report for the team": "Relatório para a equipe",
@@ -7565,5 +7564,13 @@
   "Created by": "Criado por",
   "Entry": "Lançamento",
   "Statement": "Extrato",
-  "nav.billing.wallets": "Carteiras"
+  "nav.billing.wallets": "Carteiras",
+  "Failure reason": "Motivo da falha",
+  "Connection OK ({{ ms }} ms).": "Conexão OK ({{ ms }} ms).",
+  "The provider account has no credits or quota: add credits in the provider console (billing) and test again.": "A conta do provedor está sem créditos ou cota: adicione créditos no console do provedor (cobrança) e teste de novo.",
+  "The provider rejected the API key: create a new key in the provider console and save it here.": "O provedor recusou a chave de API: gere uma nova chave no console do provedor e salve aqui.",
+  "The provider does not offer this model to this key: pick another default model from the list.": "O provedor não oferece este modelo para esta chave: escolha outro modelo padrão na lista.",
+  "The provider rate limit was reached: wait a moment and test again.": "O limite de requisições do provedor foi atingido: aguarde um pouco e teste de novo.",
+  "The provider did not answer in time: raise the timeout or test again later.": "O provedor não respondeu a tempo: aumente o timeout ou teste mais tarde.",
+  "Check the provider status page and the message above, then test again.": "Verifique a página de status do provedor e a mensagem acima e teste de novo."
 }
