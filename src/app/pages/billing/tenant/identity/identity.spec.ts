@@ -1,5 +1,5 @@
 import { tenantIdentityLine } from '../../../../core/environment/environment-context';
-import { normalizeTaxId, TaxIdType, taxIdTypesFor } from './identity';
+import { firstInvalidTab, normalizeTaxId, TaxIdType, taxIdTypesFor } from './identity';
 
 const type = (item: Partial<TaxIdType>): TaxIdType => ({
   TaxIdType: 'other',
@@ -32,6 +32,18 @@ describe('tenant tax identity helpers', () => {
     expect(taxIdTypesFor(CATALOG, 'BR', 'business').map((t) => t.TaxIdType)).toEqual(['br_cnpj']);
     expect(taxIdTypesFor(CATALOG, 'AR', 'individual').map((t) => t.TaxIdType)).toEqual(['ar_cuit']);
     expect(taxIdTypesFor(CATALOG, 'JP', 'business').map((t) => t.TaxIdType)).toEqual(['other']);
+  });
+
+  it('selects the tab of the first invalid field', () => {
+    const invalid =
+      (...keys: string[]) =>
+      (key: string) =>
+        keys.includes(key);
+    expect(firstInvalidTab(invalid())).toBe(-1);
+    expect(firstInvalidTab(invalid(), true)).toBe(0);
+    expect(firstInvalidTab(invalid('addressZip', 'legalName'))).toBe(0);
+    expect(firstInvalidTab(invalid('addressCity', 'billingEmail'))).toBe(1);
+    expect(firstInvalidTab(invalid('addressZip'))).toBe(2);
   });
 
   it('builds the tenant switcher identity line', () => {
