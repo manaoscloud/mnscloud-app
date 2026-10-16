@@ -365,10 +365,10 @@
             [matBadge]="notificationsBadge()"
             matBadgeSize="small"
             matBadgeColor="warn"
-            [matBadgeHidden]="!supportUnread.unreadTickets()"
+            [matBadgeHidden]="!inbox.unreadCount()"
             [matBadgeDescription]="notificationsLabel()"
           >
-            {{ supportUnread.unreadTickets() ? 'notifications_active' : 'notifications' }}
+            {{ inbox.unreadCount() ? 'notifications_active' : 'notifications' }}
           </mat-icon>
         </button>
         <span class="cdk-visually-hidden" aria-live="polite">{{
@@ -384,33 +384,45 @@
             <mns-menu-title [hint]="notificationsHint()">{{
               'topbar.notifications' | transloco
             }}</mns-menu-title>
-            @switch (supportUnread.unreadItemsState()) {
+            @switch (inbox.state()) {
               @case ('loading') {
-                <p class="mns-menu-empty">{{ 'topbar.notificationsLoading' | transloco }}</p>
+                @if (!inbox.items().length) {
+                  <p class="mns-menu-empty">{{ 'topbar.notificationsLoading' | transloco }}</p>
+                }
               }
               @case ('error') {
                 <p class="mns-menu-empty">{{ 'topbar.notificationsError' | transloco }}</p>
               }
               @default {
-                @if (!supportUnread.unreadItems().length) {
+                @if (!inbox.items().length) {
                   <p class="mns-menu-empty">{{ 'topbar.notificationsEmpty' | transloco }}</p>
                 }
               }
             }
             <div class="mns-menu-list">
-              @for (item of supportUnread.unreadItems(); track item.uuid) {
-                <button mat-menu-item mnsMenuItem (click)="openUnreadTicket(item.uuid)">
-                  <mat-icon>mark_chat_unread</mat-icon>
-                  <mns-menu-label [description]="unreadTicketDescription(item)">{{
-                    item.subject || item.protocol
+              @for (item of inbox.items(); track item.notificationUUID) {
+                <button
+                  mat-menu-item
+                  mnsMenuItem
+                  class="notification-item"
+                  [class.is-unread]="!item.readAt"
+                  [attr.data-severity]="item.severity"
+                  [attr.aria-label]="notificationAriaLabel(item)"
+                  (click)="openNotification(item)"
+                >
+                  <mat-icon>{{ notificationIcon(item) }}</mat-icon>
+                  <mns-menu-label [description]="notificationDescription(item)">{{
+                    notificationTitle(item)
                   }}</mns-menu-label>
                 </button>
               }
             </div>
-            <button mat-menu-item mnsMenuItem routerLink="/support/requests">
-              <mat-icon>confirmation_number</mat-icon>
-              <mns-menu-label>{{ 'topbar.notificationsViewAll' | transloco }}</mns-menu-label>
-            </button>
+            @if (inbox.unreadCount()) {
+              <button mat-menu-item mnsMenuItem keepOpen (click)="inbox.markAllRead()">
+                <mat-icon>done_all</mat-icon>
+                <mns-menu-label>{{ 'topbar.notificationsMarkAll' | transloco }}</mns-menu-label>
+              </button>
+            }
           </ng-template>
         </mat-menu>
 

@@ -27,7 +27,12 @@ import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
 import { AsyncOperationsService } from '../../shared/operations/async-operations.service';
-import { SupportUnreadService, UnreadTicket } from '../../services/support-unread.service';
+import { SupportUnreadService } from '../../services/support-unread.service';
+import {
+  InboxNotification,
+  NotificationInboxService,
+} from '../../services/notification-inbox.service';
+import { featureRequestStatusLabel } from '../../pages/support/shared/feature-requests';
 
 // Material
 import { MatBadgeModule } from '@angular/material/badge';
@@ -146,7 +151,8 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
-  protected readonly supportUnread = inject(SupportUnreadService);
+  private readonly supportUnread = inject(SupportUnreadService);
+  protected readonly inbox = inject(NotificationInboxService);
   private readonly reportService = inject(SupportReportService);
   private readonly dialogs = inject(MatDialog);
 
@@ -704,7 +710,7 @@ export class MainLayout {
   readonly notificationsAnnouncement = signal('');
   private lastUnreadCount = 0;
   private readonly announceUnread = effect(() => {
-    const count = this.supportUnread.unreadTickets();
+    const count = this.inbox.unreadCount();
     if (count > this.lastUnreadCount) {
       this.notificationsAnnouncement.set(
         this.i18n.t('topbar.notificationsUnread', { count: String(count) }),
@@ -714,34 +720,86 @@ export class MainLayout {
   });
 
   notificationsBadge(): string | null {
-    const count = this.supportUnread.unreadTickets();
+    const count = this.inbox.unreadCount();
     return count > 9 ? '9+' : count > 0 ? String(count) : null;
   }
 
   notificationsLabel() {
-    const count = this.supportUnread.unreadTickets();
+    const count = this.inbox.unreadCount();
     return count
       ? this.i18n.t('topbar.notificationsUnread', { count: String(count) })
       : this.i18n.t('topbar.notifications');
   }
 
   notificationsHint() {
-    const count = this.supportUnread.unreadTickets();
+    const count = this.inbox.unreadCount();
     return count ? this.i18n.t('topbar.notificationsHint', { count: String(count) }) : null;
   }
 
-  unreadTicketDescription(item: UnreadTicket) {
-    const replies = this.i18n.t('topbar.notificationsNewReplies', { count: String(item.unread) });
-    return [item.protocol, replies].filter(Boolean).join(' · ');
+  notificationIcon(item: InboxNotification) {
+    switch (item.type) {
+      case 'support.ticket.reply':
+        return 'mark_chat_unread';
+      case 'billing.subscription':
+        return 'payments';
+      case 'feature_request.status':
+        return 'lightbulb';
+      default:
+        return 'notifications';
+    }
+  }
+
+  notificationTitle(item: InboxNotification) {
+    const param = (key: string) => String(item.params[key] ?? '');
+    switch (item.type) {
+      case 'support.ticket.reply':
+        return this.i18n.t('notifications.ticketReply', { protocol: param('protocol') });
+      case 'billing.subscription':
+        return this.i18n.t(`notifications.billing.${param('kind') || 'PAYMENT_FAILED'}`);
+      case 'feature_request.status':
+        return this.i18n.t('notifications.ideaStatus', {
+          code: param('code'),
+          status: featureRequestStatusLabel(param('status'), (key) => this.i18n.t(key)),
+        });
+      default:
+        return this.i18n.t('notifications.generic');
+    }
+  }
+
+  notificationDescription(item: InboxNotification) {
+    const subject =
+      item.type === 'billing.subscription'
+        ? item.params['offer']
+        : item.type === 'feature_request.status'
+          ? item.params['title']
+          : item.params['subject'];
+    return [subject ? String(subject) : '', this.notificationTime(item.lastEventAt)]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  notificationAriaLabel(item: InboxNotification) {
+    const state = item.readAt ? '' : `${this.i18n.t('notifications.unread')}: `;
+    return `${state}${this.notificationTitle(item)}. ${this.notificationDescription(item)}`;
+  }
+
+  private notificationTime(value: string | null) {
+    const date = value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat(this.i18n.language(), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(date);
   }
 
   openNotifications() {
-    void this.supportUnread.loadUnreadItems();
-    void this.supportUnread.refresh();
+    void this.inbox.load();
+    void this.inbox.refresh();
   }
 
-  openUnreadTicket(uuid: string) {
-    void this.router.navigate(['/support/requests'], { queryParams: { ticket: uuid } });
+  openNotification(item: InboxNotification) {
+    void this.inbox.markRead(item);
+    void this.router.navigateByUrl(item.route || '/');
   }
 
   private hasPermission(required: string): boolean {
