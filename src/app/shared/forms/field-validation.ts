@@ -1,5 +1,4 @@
 import { signal } from '@angular/core';
-import { FormGroupDirective, NgForm, type AbstractControl } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 /**
@@ -58,10 +57,14 @@ export function isBlankFieldValue(value: unknown): boolean {
 export class FlagErrorStateMatcher implements ErrorStateMatcher {
   private readonly fallback = new ErrorStateMatcher();
 
-  constructor(private readonly flag: () => boolean) {}
+  private readonly flag: () => boolean;
 
-  isErrorState(control: AbstractControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    return this.flag() || this.fallback.isErrorState(control, form);
+  constructor(flag: () => boolean) {
+    this.flag = flag;
+  }
+
+  isErrorState(...args: Parameters<ErrorStateMatcher['isErrorState']>): boolean {
+    return this.flag() || this.fallback.isErrorState(...args);
   }
 }
 
@@ -206,7 +209,11 @@ export function signalFieldErrorKey(
 export class FieldRules<K extends string> {
   private readonly attempted = signal(false);
 
-  constructor(private readonly rules: Readonly<Record<K, () => boolean>>) {}
+  private readonly rules: Readonly<Record<K, () => boolean>>;
+
+  constructor(rules: Readonly<Record<K, () => boolean>>) {
+    this.rules = rules;
+  }
 
   invalid(key: K): boolean {
     return this.attempted() && !this.rules[key]();
