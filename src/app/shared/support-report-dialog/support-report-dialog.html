@@ -74,6 +74,18 @@
             [value]="draft().priorityUUID"
             (valueChange)="setPriority($event)"
           />
+          @if (suggestionSelected()) {
+            <p class="support-report-warning span-4" role="note">
+              <mat-icon>lightbulb</mat-icon>
+              {{
+                'Improvements for the platform can be voted by other tenants on the ideas board.'
+                  | transloco
+              }}
+              <button mat-button type="button" (click)="openIdeas()">
+                {{ 'Propose an idea' | transloco }}
+              </button>
+            </p>
+          }
 
           <mat-form-field appearance="outline" class="span-4">
             <mat-label>{{ 'Summary' | transloco }}</mat-label>

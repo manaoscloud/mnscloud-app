@@ -101,6 +101,12 @@ export class SupportReportDialogComponent {
     },
   });
   readonly typeOptions = computed(() => this.catalogs.value()?.types ?? []);
+  /** Suggestions for the platform belong on the idea board, where other tenants can vote. */
+  readonly suggestionSelected = computed(
+    () =>
+      this.typeOptions().find((option) => option.value === this.draft().typeUUID)?.code ===
+      'suggestion',
+  );
   readonly priorityOptions = computed(() => this.catalogs.value()?.priorities ?? []);
   /** Tickets belong to an environment: without one selected, the catalogs cannot load. */
   readonly unavailable = computed(() => this.catalogs.status() === 'error');
@@ -391,6 +397,11 @@ export class SupportReportDialogComponent {
     this.reports.clearImages();
     this.dialogRef.close(true);
     void this.router.navigate(['/support/requests'], ticket ? { queryParams: { ticket } } : {});
+  }
+
+  openIdeas() {
+    this.dialogRef.close(false);
+    void this.router.navigate(['/support/ideas'], { queryParams: { new: 1 } });
   }
 
   close() {

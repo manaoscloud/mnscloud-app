@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0a0237b012e6",
+  "version": "479b6c8d5fb3",
   "language": "pt-BR",
   "entries": [
     {
@@ -3970,6 +3970,27 @@
       ]
     },
     {
+      "route": "/support/ideas",
+      "menuPath": "Suporte › Ideias",
+      "scope": "public",
+      "title": "Quadro de ideias",
+      "description": "Ideias para melhorar a plataforma: proponha, vote no que você precisa e acompanhe cada uma da triagem até a produção.",
+      "fields": [
+        {
+          "label": "Ideias parecidas",
+          "help": "Digite algumas palavras da sua ideia. Escolher uma existente vota nela em vez de criar uma duplicada."
+        },
+        {
+          "label": "Título",
+          "help": "Uma frase curta com a melhoria (8 a 160 caracteres)."
+        },
+        {
+          "label": "Descrição",
+          "help": "Qual problema resolve e quem ajuda. Não inclua senhas nem dados de clientes: ideias publicadas são públicas."
+        }
+      ]
+    },
+    {
       "route": "/support/platform/ai/providers",
       "menuPath": "Suporte › Plataforma › IA › Provedores",
       "scope": "platform",
@@ -4056,6 +4077,47 @@
         {
           "label": "Resposta quando um bug é identificado",
           "help": "Mensagem fixa enviada ao solicitante. O relatório técnico e o prompt de correção nunca são enviados ao solicitante."
+        }
+      ]
+    },
+    {
+      "route": "/support/platform/ideas",
+      "menuPath": "Suporte › Plataforma › Ideias",
+      "scope": "platform",
+      "title": "Ideias da plataforma",
+      "description": "Modere as ideias propostas pelos tenants: publique no quadro público, marque duplicadas e avance cada uma no ciclo de vida.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Publicada no quadro",
+          "help": ""
+        },
+        {
+          "label": "Quem se beneficia",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Ideia original",
+          "help": "Os apoiadores desta ideia são somados à original uma única vez."
+        },
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": "Remova dados de clientes ou segredos antes de publicar."
+        },
+        {
+          "label": "Nota da equipe",
+          "help": "Exibida no quadro e no e-mail de status, por exemplo a versão prevista."
         }
       ]
     },

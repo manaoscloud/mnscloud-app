@@ -6,6 +6,7 @@ import {
   ConfigurableCrudField,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
@@ -22,6 +23,7 @@ import {
   supportDesk,
   ticketStatusChip,
 } from '../shared/support-desk';
+import { refinementForm } from '../shared/feature-requests';
 
 const SUPPORT_QUEUE_OPTIONS = [
   { value: '', label: 'All' },
@@ -225,6 +227,7 @@ function config(
             },
           ]
         : []),
+      { key: 'refinement', label: 'Refinement', icon: 'fact_check' },
     ],
     initialValues: {
       customerUUID: '',
@@ -483,6 +486,10 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
     if (action.key === 'ai-analysis') return await this.openTriage(row);
+    if (action.key === 'refinement') {
+      await this.openRefinement(action as ConfigurableCrudRowAction, row);
+      return;
+    }
     if (action.key !== 'assign-me') return;
     const me = this.auth.user()?.uuid;
     if (!me) return;
@@ -614,6 +621,22 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
           : []),
       ],
     });
+  }
+
+  /** Human triage of the ticket: loads the current refinement, then opens its one-shot form. */
+  private async openRefinement(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `${supportBase(this.desk)}/tickets/${this.recordUUID(row)}/refinement`,
+      );
+      const current = response?.data ?? {};
+      await this.runRowAction(
+        { ...action, form: () => refinementForm(this.desk, row, current) },
+        row,
+      );
+    } catch {
+      // The API interceptor shows the error.
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
