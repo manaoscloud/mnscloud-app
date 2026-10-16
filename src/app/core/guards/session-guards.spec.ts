@@ -33,6 +33,28 @@ describe('session guards', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('sends anonymous users to sign-in with the requested page', () => {
+    const router = jasmine.createSpyObj<Router>('Router', ['navigate', 'createUrlTree']);
+    const tree = {} as any;
+    router.createUrlTree.and.returnValue(tree);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: AuthService, useValue: { isLoggedIn: () => false } },
+        { provide: Router, useValue: router },
+      ],
+    });
+
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as any, { url: '/support/requests?ticket=AB' } as any),
+    );
+
+    expect(result).toBe(tree);
+    expect(router.createUrlTree).toHaveBeenCalledWith(['/signin'], {
+      queryParams: { returnUrl: '/support/requests?ticket=AB' },
+    });
+  });
+
   it('recovers tenant context from user access on refresh', async () => {
     const router = jasmine.createSpyObj<Router>('Router', ['parseUrl']);
     const authUser = signal({
