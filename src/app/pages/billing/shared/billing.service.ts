@@ -17,7 +17,6 @@ export interface BillingProduct {
   BprPublicName?: string | null;
   BprPublicSummary?: string | null;
   BprPublicDescription?: string | null;
-  BprPublicFeaturesJson?: string | null;
   BprPublicSortOrder?: number | null;
   BpdSortOrder?: number | null;
   BprSalesMode: 'STANDALONE' | 'PACKAGE_ONLY' | 'BOTH';
@@ -43,7 +42,6 @@ export interface BillingProductDefinition {
   BpdPublicName?: string | null;
   BpdPublicSummary?: string | null;
   BpdPublicDescription?: string | null;
-  BpdPublicFeaturesJson?: string | null;
   BpdPublicSortOrder?: number | null;
   BpdSortOrder?: number | null;
   BpdStatus: number;

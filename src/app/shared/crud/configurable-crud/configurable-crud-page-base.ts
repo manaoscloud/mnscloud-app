@@ -252,6 +252,7 @@ export type ConfigurableCrudField = {
   type?: ConfigurableCrudFieldType;
   tab?:
     | 'record'
+    | 'public'
     | 'address'
     | 'financial'
     | 'network'
@@ -853,6 +854,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.config.fields.filter(
       (field) => this.isFieldVisible(field) && (!field.tab || field.tab === 'record'),
     ),
+  );
+  readonly publicFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'public'),
   );
   readonly addressFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'address'),

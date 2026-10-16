@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d6ca63116501",
+  "version": "d9687f97e237",
   "language": "pt-BR",
   "entries": [
     {
@@ -4949,7 +4949,7 @@
       "description": "Configure produtos comerciais a partir de definições oficiais elegíveis para tenant.",
       "fields": [
         {
-          "label": "Modalidade de venda",
+          "label": "Status",
           "help": ""
         },
         {
@@ -4957,7 +4957,7 @@
           "help": ""
         },
         {
-          "label": "Status",
+          "label": "Modalidade de venda",
           "help": ""
         },
         {
@@ -4969,7 +4969,7 @@
           "help": ""
         },
         {
-          "label": "Ordem pública",
+          "label": "Nome público",
           "help": ""
         },
         {
@@ -4977,7 +4977,7 @@
           "help": ""
         },
         {
-          "label": "Nome público",
+          "label": "Ordem pública",
           "help": ""
         },
         {
@@ -4985,15 +4985,11 @@
           "help": ""
         },
         {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
           "label": "Descrição pública",
           "help": ""
         },
         {
-          "label": "Recursos públicos em JSON",
+          "label": "Descrição",
           "help": ""
         }
       ]

@@ -692,6 +692,30 @@
               (valueChange)="setFieldValue(field.key, $event)"
             />
           }
+          @case ('textarea') {
+            <mat-form-field appearance="outline" [class]="fieldClass(field)">
+              <mat-label
+                >{{ translatedFieldLabel(field) }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+              >
+              <textarea
+                matInput
+                [mnsInvalid]="hasFieldError(field)"
+                [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                [rows]="field.rows ?? 4"
+                [autocomplete]="field.autocomplete ?? 'off'"
+                [attr.data-field-key]="field.key"
+                [attr.data-report-mask]="reportMask(field)"
+                [value]="fieldValueString(field.key)"
+                (input)="setFieldValue(field.key, $any($event.target).value)"
+              ></textarea>
+              @if (fieldHelp(field); as help) {
+                <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
+              }
+              @if (hasFieldError(field)) {
+                <mat-error>{{ fieldErrorText(field) }}</mat-error>
+              }
+            </mat-form-field>
+          }
           @default {
             <mat-form-field appearance="outline" [class]="fieldClass(field)">
               <mat-label
@@ -1105,6 +1129,18 @@
             }
           </div>
         </mat-tab>
+
+        @if (publicFields().length) {
+          <mat-tab
+            [label]="tabLabel('public', 'Public') | transloco"
+            [labelClass]="tabLabelClass('public')"
+          >
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: publicFields() }"
+            />
+          </mat-tab>
+        }
 
         @if (config.authenticationTabAfterRecord && authenticationFields().length) {
           <ng-container [ngTemplateOutlet]="authenticationTab" />
