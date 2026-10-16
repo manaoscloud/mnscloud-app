@@ -36,6 +36,12 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  AiProviderAipUUID: {
+    label: 'Create AI provider',
+    loadComponent: () =>
+      import('../../../pages/settings/ai-providers/ai-providers').then((m) => m.AiProvidersPage),
+    permission: 'platform.ai.manage',
+  },
   AuthenticationClusterAtcUUID: {
     label: 'authentication.clusters',
     loadComponent: () =>
@@ -548,14 +554,6 @@ export const QUICK_CREATE_REGISTRY = {
   SaleUnitSunUUID: {
     label: 'Create unit',
     loadComponent: () => import('../../../pages/sales/unit/unit').then((m) => m.SaleUnitPage),
-  },
-  SupportAiProviderSapUUID: {
-    label: 'Create AI provider',
-    loadComponent: () =>
-      import('../../../pages/support/ai-providers/ai-providers').then(
-        (m) => m.SupportAiProvidersPage,
-      ),
-    permission: 'platform.support.ai.manage',
   },
   SupportTicketPriorityStpUUID: {
     routeData: { supportDesk: 'tenant' },

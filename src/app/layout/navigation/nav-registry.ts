@@ -1563,15 +1563,7 @@ export const NAV_ITEMS: NavItem[] = [
                 icon: 'tune',
                 route: '/support/platform/ai/settings',
                 scope: 'public',
-                permissions: ['platform.support.ai.manage'],
-              },
-              {
-                id: 'support/platform/ai/providers',
-                label: 'nav.support.platform.ai.providers',
-                icon: 'hub',
-                route: '/support/platform/ai/providers',
-                scope: 'public',
-                permissions: ['platform.support.ai.manage'],
+                permissions: ['platform.support.settings.manage'],
               },
               {
                 id: 'support/platform/ai/articles',
@@ -1998,6 +1990,39 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/settings/tenants',
         permissions: ['tenant.access.manage'],
         requiresEnvironment: true,
+      },
+      // Platform AI providers shared by every AI feature (platform.ai.manage, no tenant needed).
+      {
+        id: 'settings/ai',
+        label: 'nav.settings.ai',
+        icon: 'smart_toy',
+        scope: 'public',
+        children: [
+          {
+            id: 'settings/ai/providers',
+            label: 'nav.settings.ai.providers',
+            icon: 'hub',
+            route: '/settings/ai/providers',
+            scope: 'public',
+            permissions: ['platform.ai.manage'],
+          },
+          {
+            id: 'settings/ai/features',
+            label: 'nav.settings.ai.features',
+            icon: 'tune',
+            route: '/settings/ai/features',
+            scope: 'public',
+            permissions: ['platform.ai.manage'],
+          },
+          {
+            id: 'settings/ai/usage',
+            label: 'nav.settings.ai.usage',
+            icon: 'query_stats',
+            route: '/settings/ai/usage',
+            scope: 'public',
+            permissions: ['platform.ai.manage'],
+          },
+        ],
       },
       {
         id: 'settings/parameters',
