@@ -99,3 +99,34 @@
 .mat-mdc-tooltip.tenant-tooltip .mdc-tooltip__surface {
   white-space: pre-line;
 }
+
+// Notifications panel: unread items are bold with a leading dot; the icon follows the severity.
+.mat-mdc-menu-panel.mns-menu.notifications-menu {
+  .notification-item {
+    position: relative;
+
+    &.is-unread .mns-menu-label-primary {
+      font-weight: 600;
+    }
+
+    &.is-unread::before {
+      content: '';
+      position: absolute;
+      left: 0.3rem;
+      top: 50%;
+      width: 0.4rem;
+      height: 0.4rem;
+      margin-top: -0.2rem;
+      border-radius: 50%;
+      background: var(--mat-sys-color-primary);
+    }
+
+    &[data-severity='warning'] .mat-icon {
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+
+    &[data-severity='error'] .mat-icon {
+      color: var(--mat-sys-color-error);
+    }
+  }
+}

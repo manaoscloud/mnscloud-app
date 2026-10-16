@@ -208,12 +208,16 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   (`tenantIdentityParts()`); the panel (`mns-menu-fit`) widens instead of breaking them. When the
   viewport is narrower, the line wraps only between the parts and the separator is hidden. The
   panel width is locked on open so the tenant search does not resize it while filtering.
-- Notifications bell (phase 1): count from `SupportUnreadService.unreadTickets()` (the same poll as
-  the menu badge, `9+` above nine, `matBadgeDescription` and a polite live region announcing
-  increases). Opening it lazily loads (`matMenuContent`) `help/tickets?status=unread` (newest five)
-  and links to `/support/requests?ticket=<uuid>`; the page follows later `ticket` changes because
-  the route is reused. A generic notification inbox is planned in
-  `docs/handoffs/2026-10-16-topbar-notifications-and-icon-triggers.md` (workspace repository).
+- Notifications bell: `NotificationInboxService` polls `user/notifications/unread-count` every
+  60 s (tenant selected, tab visible); `9+` above nine, `matBadgeDescription` and a polite live
+  region announcing increases. Opening it lazily loads (`matMenuContent`) the newest eight
+  `user/notifications`: icon by type, translated title (`notifications.*`), subject/offer/title
+  plus local date, unread items bold with a dot, error severity in the error color. A click marks
+  the item read and opens its `route` (internal path from the API); `Marcar todas como lidas`
+  keeps the panel open. Types: `support.ticket.reply` (opening the conversation reads it),
+  `billing.subscription` (latest dunning notice) and `feature_request.status` (author and voters).
+  The My tickets menu badge keeps `SupportUnreadService`; the page follows later `ticket` query
+  changes because the route is reused.
 - Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
   divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
 - Text and icon triggers share the toolbar-scoped Material state-layer tokens: primary color,
