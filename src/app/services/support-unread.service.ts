@@ -6,9 +6,23 @@ import { AuthService } from './auth.service';
 import { TenantService } from './tenant.service';
 
 const POLL_MS = 60_000;
+/** Tickets listed in the topbar notifications panel; the rest is in "My tickets". */
+export const UNREAD_PANEL_LIMIT = 5;
+
+/** One of my tickets with answers I have not read yet (topbar notifications panel). */
+export interface UnreadTicket {
+  uuid: string;
+  protocol: string;
+  subject: string;
+  unread: number;
+  lastActivityAt: string | null;
+}
+
+export type UnreadTicketsState = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
- * Unread answers of the signed-in user's help center tickets (menu badge of "My tickets").
+ * Unread answers of the signed-in user's help center tickets (menu badge of "My tickets" and the
+ * topbar notifications bell).
  * Polls while a tenant is selected and the tab is visible; reading a conversation refreshes it.
  * UX only: the API decides what is unread.
  */
@@ -22,6 +36,9 @@ export class SupportUnreadService {
 
   /** Tickets with answers the user has not read yet. */
   readonly unreadTickets = signal(0);
+  /** Newest tickets with unread answers, loaded when the notifications panel opens. */
+  readonly unreadItems = signal<UnreadTicket[]>([]);
+  readonly unreadItemsState = signal<UnreadTicketsState>('idle');
 
   constructor() {
     effect(() => {
@@ -31,6 +48,8 @@ export class SupportUnreadService {
       this.tenants.selectedTenant();
       this.generation++;
       this.unreadTickets.set(0);
+      this.unreadItems.set([]);
+      this.unreadItemsState.set('idle');
       void this.refresh();
     });
     inject(DestroyRef).onDestroy(() => this.stop());
@@ -59,6 +78,33 @@ export class SupportUnreadService {
     }
   }
 
+  /** Loads the tickets of the notifications panel (`status=unread`, same set as the counter). */
+  async loadUnreadItems(): Promise<void> {
+    const environment = readStoredEnvironmentUUID();
+    if (!this.auth.isLoggedIn() || !environment) {
+      this.unreadItems.set([]);
+      this.unreadItemsState.set('ready');
+      return;
+    }
+    const generation = this.generation;
+    this.unreadItemsState.set('loading');
+    try {
+      const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
+        `help/tickets?scope=mine&status=unread&limit=${UNREAD_PANEL_LIMIT}&offset=0`,
+        { timeout: 10_000, silent: true },
+      );
+      if (generation !== this.generation || environment !== readStoredEnvironmentUUID()) return;
+      const items = (response?.data?.items ?? [])
+        .map(toUnreadTicket)
+        .filter((item): item is UnreadTicket => item !== null)
+        .sort((a, b) => (b.lastActivityAt ?? '').localeCompare(a.lastActivityAt ?? ''));
+      this.unreadItems.set(items);
+      this.unreadItemsState.set('ready');
+    } catch {
+      if (generation === this.generation) this.unreadItemsState.set('error');
+    }
+  }
+
   private start() {
     if (this.timer || typeof window === 'undefined') return;
     this.timer = setInterval(() => void this.refresh(), POLL_MS);
@@ -68,4 +114,16 @@ export class SupportUnreadService {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
   }
+}
+
+function toUnreadTicket(row: Record<string, unknown>): UnreadTicket | null {
+  const uuid = typeof row['SupportTicketUUID'] === 'string' ? row['SupportTicketUUID'] : '';
+  if (!uuid) return null;
+  return {
+    uuid,
+    protocol: String(row['SupportTicketID'] ?? ''),
+    subject: String(row['Subject'] ?? ''),
+    unread: Math.max(0, Number(row['UnreadCount'] ?? 0) || 0),
+    lastActivityAt: typeof row['LastActivityAt'] === 'string' ? row['LastActivityAt'] : null,
+  };
 }

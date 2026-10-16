@@ -1,6 +1,8 @@
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { SupportRequestDraft } from '../../../services/support-request-draft';
 import { readStoredEnvironmentUUID } from '../../../core/environment/environment-context';
-import { Component, afterNextRender, inject } from '@angular/core';
+import { Component, afterNextRender, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { MatDialog } from '@angular/material/dialog';
@@ -219,9 +221,17 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         () => hasEffectivePermission(auth.user()?.permissions ?? [], READ_ALL),
       ),
     );
-    // Email links and "My tickets" after a report open the ticket conversation: ?ticket=<uuid>.
-    const requested = route.snapshot.queryParamMap.get('ticket');
-    if (requested) afterNextRender(() => void this.openConversation(requested));
+    // Email links, the topbar notifications and "My tickets" after a report open the ticket
+    // conversation: ?ticket=<uuid>. The route is reused, so follow later changes too.
+    const rendered = signal(false);
+    const requested = toSignal(route.queryParamMap.pipe(map((params) => params.get('ticket'))), {
+      initialValue: null,
+    });
+    afterNextRender(() => rendered.set(true));
+    effect(() => {
+      const ticket = requested();
+      if (ticket && rendered()) untracked(() => void this.openConversation(ticket));
+    });
   }
 
   private async openConversation(uuid: string) {
