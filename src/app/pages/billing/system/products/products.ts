@@ -19,7 +19,7 @@ import {
 const PRODUCT_PAYLOAD_KEYS = [
   'code',
   'name',
-  'description',
+  'notes',
   'salesMode',
   'isPublic',
   'publicSlug',
@@ -59,7 +59,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     code: '',
     name: '',
-    description: '',
+    notes: '',
     salesMode: 'BOTH',
     isPublic: 0,
     publicSlug: '',
@@ -175,14 +175,14 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       rows: 3,
     },
     {
-      key: 'description',
-      source: 'BprDescription',
-      payloadKey: 'description',
-      label: 'Description',
+      key: 'notes',
+      source: 'BprNotes',
+      payloadKey: 'notes',
+      label: 'Notes',
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 3,
+      rows: 4,
     },
   ],
 };

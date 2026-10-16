@@ -8,7 +8,7 @@ export interface BillingProduct {
   BprName: string;
   BprModule: string;
   BprBillingScope: 'MODULE' | 'RESOURCE' | 'USAGE';
-  BprDescription?: string | null;
+  BprNotes?: string | null;
   BprEntitlementPattern?: string | null;
   BprRequiresEntitlementCode?: string | null;
   BprResourceType?: string | null;

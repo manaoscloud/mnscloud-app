@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d9687f97e237",
+  "version": "b8c1855dda03",
   "language": "pt-BR",
   "entries": [
     {
@@ -4989,7 +4989,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
