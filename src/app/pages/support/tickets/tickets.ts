@@ -46,6 +46,7 @@ export const TRIAGE_CLASSIFICATION_OPTIONS = [
 const TRIAGE_ACTION_OPTIONS = [
   { value: 'bug_ack', label: 'Requester told the problem was identified' },
   { value: 'knowledge_reply', label: 'Answer sent to the requester' },
+  { value: 'clarify', label: 'More details requested from the requester' },
   { value: 'note_only', label: 'Internal note for the team' },
 ];
 
@@ -537,6 +538,14 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
     const citations = Array.isArray(triage['Citations'])
       ? (triage['Citations'] as ConfigurableCrudRecord[])
       : [];
+    const attachments = (
+      Array.isArray(triage['Attachments'])
+        ? (triage['Attachments'] as ConfigurableCrudRecord[])
+        : []
+    ).map((item) => ({
+      ...item,
+      result: item['read'] ? `read (${String(item['as'] ?? '')})` : String(item['reason'] ?? ''),
+    }));
     const { openDataViewerDialog } =
       await import('../../../shared/data-viewer-dialog/data-viewer-dialog');
     openDataViewerDialog(this.dialog, {
@@ -599,8 +608,23 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         ...(triage['RequesterReply']
           ? [
               {
-                title: 'Answer sent to the requester',
+                title: 'Message sent to the requester',
                 code: { value: triage['RequesterReply'], format: 'text' as const },
+              },
+            ]
+          : []),
+        ...(attachments.length
+          ? [
+              {
+                title: 'Attachments analysed',
+                table: {
+                  columns: [
+                    { key: 'kind', label: 'Kind' },
+                    { key: 'contentType', label: 'Type', monospace: true },
+                    { key: 'result', label: 'Result', monospace: true },
+                  ],
+                  rows: attachments,
+                },
               },
             ]
           : []),

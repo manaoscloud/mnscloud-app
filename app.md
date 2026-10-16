@@ -318,6 +318,12 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   `Analyse again with AI` (internal note only) and `Mark as fixed` (public reply + `resolved`).
   Assistant messages have `AuthorKind = system` and read as "Support assistant". The fix prompt and
   the team report are API data for agents only; the help center never receives them.
+  Settings also hold what the assistant may read from requester attachments (images, PDFs, text
+  files, attachments per analysis) and the analyses per requester and hour; they are saved by a
+  second `PUT system/support/ai/settings/attachments` only when one of them changed. The AI analysis
+  lists the attachments read or skipped (audit, no content) and the action `clarify` ("More details
+  requested"). The Report problem dialog tells the requester that the description, prints, files
+  and diagnostics may be analysed by the support assistant (AI).
 - Unread answers: `NavItem.badge = 'supportUnread'` on `support/requests`; `SupportUnreadService`
   polls `help/tickets/unread-count` every 60 s while a tenant is selected and the tab is visible,
   and the shell shows the count on the entry, a dot on collapsed groups and the topbar

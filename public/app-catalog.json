@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "167b3ac1b914",
+  "version": "2fa79f130ed8",
   "language": "pt-BR",
   "entries": [
     {
@@ -4017,7 +4017,7 @@
       "menuPath": "Suporte › Plataforma › IA › Configurações",
       "scope": "platform",
       "title": "Assistente de IA",
-      "description": "Triagem automática dos chamados da plataforma: responde dúvidas de uso e informa bugs da plataforma à equipe.",
+      "description": "Triagem automática dos chamados da plataforma: responde dúvidas de uso, pede detalhes quando necessário e reporta bugs da plataforma à equipe.",
       "fields": [
         {
           "label": "Assistente",
@@ -4025,7 +4025,7 @@
         },
         {
           "label": "Provedor de IA",
-          "help": "Provedor e modelo do recurso de IA de triagem do suporte, definidos em Configurações › IA › Recursos. Assunto, mensagens e diagnóstico redigido do chamado são enviados a ele; e-mails, CPF/CNPJ, endereços IP e segredos são removidos antes."
+          "help": "Provedor e modelo do recurso de IA de triagem de suporte, definidos em Configurações › IA › Recursos. Assunto, mensagens, diagnóstico redigido e os anexos permitidos são enviados a ele; e-mails, CPF/CNPJ, endereços IP, segredos e domínios da plataforma são removidos dos textos antes."
         },
         {
           "label": "Análises na última hora",
@@ -4041,7 +4041,7 @@
         },
         {
           "label": "Respostas automáticas por chamado",
-          "help": "Quando o solicitante responde, o assistente responde de novo até este limite; depois a equipe assume."
+          "help": "Respostas e pedidos de detalhes por chamado. Quando o solicitante responde, o assistente analisa de novo até este limite; depois a equipe assume."
         },
         {
           "label": "Análises por hora",
@@ -4056,8 +4056,28 @@
           "help": "Desligado, o prompt para desenvolvedores fica apenas na análise da IA do chamado no App."
         },
         {
+          "label": "Análises por solicitante e hora",
+          "help": "Justiça: um tenant não consome todo o limite por hora. Reexecuções manuais da equipe não contam."
+        },
+        {
+          "label": "Ler imagens anexadas",
+          "help": "O print e as imagens anexadas pelo solicitante são enviados ao provedor de IA sem metadados. Imagens não podem ser anonimizadas como texto."
+        },
+        {
+          "label": "Ler PDFs anexados",
+          "help": "PDFs sem criptografia de até 20 páginas e 10 MB anexados pelo solicitante são enviados ao provedor de IA."
+        },
+        {
+          "label": "Ler arquivos de texto anexados",
+          "help": "Arquivos de texto, log, CSV e JSON são enviados como trechos anonimizados (sem e-mails, CPF/CNPJ, endereços IP e segredos)."
+        },
+        {
+          "label": "Anexos por análise",
+          "help": "Somente arquivos anexados pelo solicitante são lidos, primeiro o print e depois os mais recentes. 0 não lê nenhum."
+        },
+        {
           "label": "Resposta quando um bug é identificado",
-          "help": "Mensagem fixa enviada ao solicitante. O relatório técnico e o prompt de correção nunca são enviados ao solicitante."
+          "help": "Usada quando o assistente não escreve uma confirmação personalizada. O relatório técnico e o prompt de correção nunca são enviados ao solicitante."
         }
       ]
     },

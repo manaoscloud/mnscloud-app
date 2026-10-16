@@ -30,6 +30,12 @@ export interface SupportAiSettings {
   IncludeDiagnostics: number;
   EmailPromptToTeam: number;
   BugReplyMessage: string;
+  /** Requester attachments the model may read (absent on older APIs). */
+  IncludeImages?: number;
+  IncludeDocuments?: number;
+  IncludeTextFiles?: number;
+  MaxAttachments?: number;
+  MaxTriagesPerRequesterHour?: number;
   TriagesLastHour: number;
   Revision: number;
 }
@@ -43,7 +49,21 @@ type SettingsForm = {
   includeDiagnostics: string;
   emailPromptToTeam: string;
   bugReplyMessage: string;
+  includeImages: string;
+  includeDocuments: string;
+  includeTextFiles: string;
+  maxAttachments: number;
+  maxTriagesPerRequesterHour: number;
 };
+
+/** Fields saved by PUT system/support/ai/settings/attachments. */
+const ATTACHMENT_FIELDS: Array<keyof SettingsForm> = [
+  'includeImages',
+  'includeDocuments',
+  'includeTextFiles',
+  'maxAttachments',
+  'maxTriagesPerRequesterHour',
+];
 
 const EMPTY_FORM: SettingsForm = {
   enabled: '0',
@@ -54,7 +74,17 @@ const EMPTY_FORM: SettingsForm = {
   includeDiagnostics: '1',
   emailPromptToTeam: '1',
   bugReplyMessage: '',
+  includeImages: '1',
+  includeDocuments: '1',
+  includeTextFiles: '1',
+  maxAttachments: 4,
+  maxTriagesPerRequesterHour: 10,
 };
+
+/** Whether the attachment settings differ from the saved ones (they have their own endpoint). */
+export function attachmentSettingsChanged(next: SettingsForm, saved: SettingsForm): boolean {
+  return ATTACHMENT_FIELDS.some((field) => String(next[field]) !== String(saved[field]));
+}
 
 /** Percent shown in the form; the API stores a 0-1 confidence. */
 export function toPercent(value: unknown, fallback: number): number {
@@ -133,6 +163,10 @@ export class SupportAiSettingsPage {
     max(schema.maxTriagesPerHour, 1000);
     required(schema.bugReplyMessage);
     maxLength(schema.bugReplyMessage, 2000);
+    min(schema.maxAttachments, 0);
+    max(schema.maxAttachments, 10);
+    min(schema.maxTriagesPerRequesterHour, 1);
+    max(schema.maxTriagesPerRequesterHour, 100);
   });
 
   readonly dirty = computed(() => JSON.stringify(this.model()) !== JSON.stringify(this.baseline()));
@@ -182,7 +216,22 @@ export class SupportAiSettingsPage {
           expectedRevision: this.settings()?.Revision ?? null,
         },
       );
-      this.apply(response.data ?? null);
+      let saved = response.data ?? null;
+      if (saved && attachmentSettingsChanged(value, this.baseline())) {
+        const attachments = await this.api.put<{ data?: SupportAiSettings }>(
+          'system/support/ai/settings/attachments',
+          {
+            includeImages: Number(value.includeImages),
+            includeDocuments: Number(value.includeDocuments),
+            includeTextFiles: Number(value.includeTextFiles),
+            maxAttachments: Number(value.maxAttachments),
+            maxTriagesPerRequesterHour: Number(value.maxTriagesPerRequesterHour),
+            expectedRevision: saved.Revision ?? null,
+          },
+        );
+        saved = attachments.data ?? saved;
+      }
+      this.apply(saved);
       this.snack.success(this.i18n.t('AI assistant settings saved.'));
     } catch (error) {
       const message = this.errorMessage(error);
@@ -205,6 +254,11 @@ export class SupportAiSettingsPage {
           includeDiagnostics: String(settings.IncludeDiagnostics ?? 1),
           emailPromptToTeam: String(settings.EmailPromptToTeam ?? 1),
           bugReplyMessage: settings.BugReplyMessage ?? '',
+          includeImages: String(settings.IncludeImages ?? 1),
+          includeDocuments: String(settings.IncludeDocuments ?? 1),
+          includeTextFiles: String(settings.IncludeTextFiles ?? 1),
+          maxAttachments: Number(settings.MaxAttachments ?? 4),
+          maxTriagesPerRequesterHour: Number(settings.MaxTriagesPerRequesterHour ?? 10),
         }
       : { ...EMPTY_FORM };
     this.baseline.set(next);
