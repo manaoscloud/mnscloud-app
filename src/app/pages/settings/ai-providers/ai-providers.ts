@@ -141,7 +141,7 @@ const config = defineCrud({
       type: 'status',
       span: 1,
     },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 3 },
+    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     {
       key: 'kind',
       source: 'Kind',
@@ -152,7 +152,24 @@ const config = defineCrud({
       translateOptions: true,
       required: true,
       help: 'Official Anthropic, OpenAI or Google Gemini API. Changing the provider requires a new API key.',
-      span: 2,
+      span: 1,
+    },
+    {
+      key: 'defaultModel',
+      source: 'DefaultModel',
+      payloadKey: 'defaultModel',
+      label: 'Default model',
+      type: 'search-select',
+      required: true,
+      help: 'Models listed by the provider for this key. Each AI feature may use another model of the same provider.',
+      span: 1,
+      suffixButtons: [
+        {
+          icon: 'refresh',
+          tooltip: 'Reload the models of the provider',
+          onClick: (_context, host) => void (host as AiProvidersPage).loadModels(true),
+        },
+      ],
     },
     {
       key: 'apiKey',
@@ -166,23 +183,6 @@ const config = defineCrud({
           ? 'Leave blank to keep the stored key. A new key replaces it.'
           : 'Stored encrypted and never shown again. The models of the provider load once the key is filled in.',
       span: 2,
-    },
-    {
-      key: 'defaultModel',
-      source: 'DefaultModel',
-      payloadKey: 'defaultModel',
-      label: 'Default model',
-      type: 'search-select',
-      required: true,
-      help: 'Models listed by the provider for this key. Each AI feature may use another model of the same provider.',
-      span: 2,
-      suffixButtons: [
-        {
-          icon: 'refresh',
-          tooltip: 'Reload the models of the provider',
-          onClick: (_context, host) => void (host as AiProvidersPage).loadModels(true),
-        },
-      ],
     },
     {
       key: 'maxOutputTokens',
