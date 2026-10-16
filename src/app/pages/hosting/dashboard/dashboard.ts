@@ -251,8 +251,10 @@ export class HostingDashboardPage {
     const endpointMap = this.endpointMap();
     const entries = Object.entries(endpointMap) as [HostingDatasetKey, string][];
 
+    // A null endpoint is a section this user has no API for (for example the master-only
+    // Webhost provider catalog); it stays empty instead of failing the dashboard.
     const results = await Promise.allSettled(
-      entries.map(([, endpoint]) => this.fetchItems(endpoint)),
+      entries.map(([, endpoint]) => (endpoint ? this.fetchItems(endpoint) : Promise.resolve([]))),
     );
     const nextData: Record<HostingDatasetKey, GenericRow[]> = { ...EMPTY_HOSTING_DATA };
     const failedSections = results.filter((result) => result.status === 'rejected').length;
@@ -262,7 +264,8 @@ export class HostingDashboardPage {
       nextData[key] = result.status === 'fulfilled' ? result.value : [];
     });
 
-    if (failedSections > 0) {
+    // One unavailable section must not hide the others: only a total failure is an error.
+    if (entries.length > 0 && failedSections === entries.length) {
       throw new Error('Failed to load hosting dashboard.');
     }
 
@@ -295,6 +298,7 @@ export class HostingDashboardPage {
     if (routePath === 'hosting/vps/plans') return ['/system/vps/plans'];
     if (routePath === 'hosting/vps-container/instances') return ['/system/vps-container/instances'];
     if (routePath === 'hosting/vps-container/provider') return ['/system/vps-container/provider'];
+    if (routePath === 'hosting/webhost/providers') return ['/system/hosting/webhost/providers'];
     return ['/', ...route];
   }
 
@@ -313,7 +317,7 @@ export class HostingDashboardPage {
     return 'chip-success is-active';
   }
 
-  private endpointMap(): Record<HostingDatasetKey, string> {
+  private endpointMap(): Record<HostingDatasetKey, string | null> {
     return {
       dnsDomains: 'hosting/dns/domains',
       dnsProviders: 'hosting/dns/providers',
@@ -328,8 +332,10 @@ export class HostingDashboardPage {
       containerProviders: `${this.containerRoot()}/providers`,
       containerPlans: `${this.containerRoot()}/plans`,
       containerInstances: `${this.containerRoot()}/instances`,
-      webhostProviders: 'hosting/webhost/providers',
-      webhostPlans: 'hosting/webhost/plans',
+      webhostProviders: this.hasPlatformMasterAccess() ? 'system/hosting/webhost/providers' : null,
+      webhostPlans: this.hasPlatformMasterAccess()
+        ? 'system/hosting/webhost/plans'
+        : 'hosting/webhost/plans',
       webhostHosts: 'hosting/webhost/hosts',
       webhostEmails: 'hosting/webhost/emails',
       webhostDatabases: 'hosting/webhost/databases',
@@ -502,7 +508,7 @@ export class HostingDashboardPage {
         ['HwpIsDefault'],
         ['hosting', 'webhost', 'providers'],
       ),
-    ];
+    ].filter((row) => row.key !== 'webhost-providers' || this.hasPlatformMasterAccess());
   }
 
   private issues(): IssueRow[] {
