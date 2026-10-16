@@ -23,7 +23,10 @@ import { MNS_MENU } from './mns-menu';
         <mns-menu-label description="Always visible">Name</mns-menu-label>
       </button>
       <button mat-menu-item mnsMenuItem type="button" selection="radio" [checked]="false">
-        <mns-menu-label>Compact rows</mns-menu-label>
+        <mns-menu-label
+          >Compact rows
+          <span mnsMenuDescription class="mns-menu-description">Projected detail</span>
+        </mns-menu-label>
       </button>
       <button mat-menu-item mnsMenuItem type="button" tone="danger" (click)="deleted.set(true)">
         <mns-menu-label>Delete</mns-menu-label>
@@ -69,6 +72,11 @@ describe('Global mns-menu primitives', () => {
     expect(density.getAttribute('role')).toBe('menuitemradio');
     expect(density.getAttribute('aria-checked')).toBe('false');
     expect(density.querySelector('.mns-menu-check')).toBeNull();
+    const projected = density.querySelector('.mns-menu-label-text > .mns-menu-description');
+    expect(projected?.textContent).toContain('Projected detail');
+    expect(density.querySelector('.mns-menu-label-primary')?.textContent).not.toContain(
+      'Projected',
+    );
 
     expect(remove.getAttribute('role')).toBe('menuitem');
     expect(remove.hasAttribute('aria-checked')).toBeFalse();

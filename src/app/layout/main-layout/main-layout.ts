@@ -32,7 +32,7 @@ import { SupportUnreadService, UnreadTicket } from '../../services/support-unrea
 // Material
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenu, MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -56,6 +56,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
   tenantIdentityLine,
+  tenantIdentityParts,
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
   resolveSelectedEnvironmentUUID,
@@ -219,6 +220,8 @@ export class MainLayout {
       .join('\n'),
   );
   readonly tenantIdentityLine = tenantIdentityLine;
+  readonly tenantIdentityParts = tenantIdentityParts;
+  readonly scopeMenu = viewChild<MatMenu>('scopeMenu');
   readonly tenantSearch = signal('');
   readonly showTenantSearch = computed(() => this.environments().length > TENANT_SEARCH_THRESHOLD);
   /** Filters the complete membership list by name, public code or tax ID digits. */
@@ -637,6 +640,15 @@ export class MainLayout {
     return localStorage.getItem(MainLayout.CONTEXT_MODE_STORAGE_KEY) === 'tenant'
       ? 'tenant'
       : 'master';
+  }
+
+  /** Keeps the content-sized scope panel from shrinking while the tenant search filters it. */
+  lockScopeMenuWidth(): void {
+    const panelId = this.scopeMenu()?.panelId;
+    requestAnimationFrame(() => {
+      const panel = panelId ? document.getElementById(panelId) : null;
+      if (panel) panel.style.minWidth = `${panel.offsetWidth}px`;
+    });
   }
 
   setContextMode(mode: ContextMode) {

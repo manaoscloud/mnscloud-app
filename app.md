@@ -142,7 +142,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
 
 - Panel: `<mat-menu class="mns-menu">` from `src/styles/_mns-menu.scss` (22rem, 12px radius,
   divided rows, viewport-bounded scrolling, 8px side margins at 480px and below). Short action
-  lists add `mns-menu-compact`. Material renders panels in the CDK overlay, outside component
+  lists add `mns-menu-compact`; lists whose rows carry identifiers that must stay on one line (the
+  scope/tenant switcher) add `mns-menu-fit`, which sizes the panel by its longest row up to the
+  viewport. Material renders panels in the CDK overlay, outside component
   styles, so menu styling stays global; never add per-component menu panel CSS.
 - Primitives in `src/app/shared/menu/mns-menu.ts` (`MNS_MENU`):
   - `mnsMenuItem` on every `button[mat-menu-item]`: `selection="radio" | "checkbox"` with
@@ -150,7 +152,8 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
     destructive actions (`Delete`, `Logout`); `keepOpen` for selection lists the user toggles
     without closing the panel (table view density and columns).
   - `<mns-menu-label [description]>`: the label, an optional second line (action explanation or
-    the reason a disabled action is unavailable) and the trailing check of a selected item.
+    the reason a disabled action is unavailable) and the trailing check of a selected item. Rich
+    second lines are projected as `<span mnsMenuDescription class="mns-menu-description">`.
   - `<mns-menu-title [hint]>`: uppercase panel/section heading with a context hint (signed-in
     e-mail, record name, `visible / total`). A title after items opens a divided section; clicking
     it never closes the panel.
@@ -182,6 +185,10 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   tonal error-container background, so the platform scope never looks like a tenant. One menu holds
   the master's context radios (`Tenant` keeps the panel open to show the list) and the tenant list;
   non-master users see only the tenant list. Below 768px it collapses to the icon.
+- Each tenant row shows the name and, below it, the tax ID and tenant code on one line
+  (`tenantIdentityParts()`); the panel (`mns-menu-fit`) widens instead of breaking them. When the
+  viewport is narrower, the line wraps only between the parts and the separator is hidden. The
+  panel width is locked on open so the tenant search does not resize it while filtering.
 - Notifications bell (phase 1): count from `SupportUnreadService.unreadTickets()` (the same poll as
   the menu badge, `9+` above nine, `matBadgeDescription` and a polite live region announcing
   increases). Opening it lazily loads (`matMenuContent`) `help/tickets?status=unread` (newest five)

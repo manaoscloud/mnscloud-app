@@ -69,6 +69,30 @@
       font-variant-numeric: tabular-nums;
     }
   }
+
+  // Tax ID and tenant code never break inside; a narrow panel wraps only between them, and the
+  // separator of a part that starts a line is clipped by the negative margin.
+  .topbar-tenant-identity {
+    display: block;
+    overflow: hidden;
+  }
+
+  .topbar-tenant-identity-parts {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -1.1em;
+  }
+
+  .topbar-tenant-identity-part {
+    white-space: nowrap;
+
+    &::before {
+      content: '·';
+      display: inline-block;
+      width: 1.1em;
+      text-align: center;
+    }
+  }
 }
 
 // Tenant trigger tooltip: name and identity line on separate lines.
