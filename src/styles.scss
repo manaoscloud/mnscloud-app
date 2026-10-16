@@ -1021,6 +1021,14 @@ mat-chip.status-pill.is-inactive,
   -webkit-overflow-scrolling: touch;
 }
 
+/* Several actions in one `matIconSuffix` slot (CRUD suffix buttons, link + help on settings
+   pages): one line, centred, so the field keeps the standard height. */
+.crud-field-suffix-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
 .form-grid {
   display: grid;
   align-items: start;

@@ -116,7 +116,7 @@ const config = defineCrud({
       translateOptions: true,
       required: true,
       help: 'Each feature has one configuration.',
-      span: 3,
+      span: 1,
     },
     {
       key: 'AiProviderAipUUID',
@@ -133,7 +133,7 @@ const config = defineCrud({
         selectedLabelField: 'ProviderName',
       },
       help: 'Active platform provider. Feature data is sent to it on every call.',
-      span: 2,
+      span: 1,
     },
     {
       key: 'model',
@@ -142,7 +142,7 @@ const config = defineCrud({
       label: 'Model',
       type: 'search-select',
       help: 'Models listed by the selected provider. Leave empty to use its default model.',
-      span: 2,
+      span: 1,
     },
     {
       key: 'maxOutputTokens',

@@ -28,9 +28,9 @@
       "
     />
 
-    <mat-form-field appearance="outline" class="span-2">
+    <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'AI provider' | transloco }}</mat-label>
-      <input matInput [value]="providerLabel()" readonly />
+      <input matInput [value]="providerLabel()" [matTooltip]="providerLabel()" readonly />
       <span matIconSuffix class="crud-field-suffix-actions">
         <a
           mat-icon-button
