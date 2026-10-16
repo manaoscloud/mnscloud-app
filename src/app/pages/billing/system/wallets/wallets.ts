@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -34,6 +35,7 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
   canDelete: false,
   bulkDelete: false,
   rowActions: [
+    { key: 'statement', label: 'Statement', icon: 'receipt_long' },
     {
       key: 'manual-credit',
       label: 'Manual credit',
@@ -87,6 +89,8 @@ const WALLETS_CONFIG: ConfigurableCrudConfig = {
 export class BillingSystemWalletsPage extends ConfigurableCrudPageBase<
   BillingTenantLookupItem & ConfigurableCrudRecord
 > {
+  private readonly router = inject(Router);
+
   constructor() {
     super(WALLETS_CONFIG);
   }
@@ -95,6 +99,12 @@ export class BillingSystemWalletsPage extends ConfigurableCrudPageBase<
     action: { key: string },
     row: BillingTenantLookupItem & ConfigurableCrudRecord,
   ): void {
+    if (action.key === 'statement') {
+      void this.router.navigate(['/system/billing/ledger'], {
+        queryParams: { environmentUUID: row.EnvironmentUUID },
+      });
+      return;
+    }
     if (action.key !== 'manual-credit') return;
     const binding = openCrudComponentDialog(
       this.dialog,

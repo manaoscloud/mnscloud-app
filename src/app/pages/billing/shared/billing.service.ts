@@ -186,6 +186,27 @@ export interface BillingLedgerEntry {
   BleDateCreated?: string | null;
 }
 
+export interface BillingSystemLedgerEntry extends BillingLedgerEntry {
+  BleID: string;
+  EnvironmentUUID: string;
+  EnvironmentName?: string | null;
+  TenantEmail?: string | null;
+  EntryOrigin: 'GATEWAY' | 'MANUAL' | 'SYSTEM';
+  BleResourceLabel?: string | null;
+  CreatedByUserUsrUUID?: string | null;
+  CreatedByName?: string | null;
+  CreatedByEmail?: string | null;
+  BpiUUID?: string | null;
+  BpiID?: string | null;
+  BpiStatus?: string | null;
+  BpiPaymentMethod?: string | null;
+  BpiProviderReference?: string | null;
+  BpiChargeAmount?: number | null;
+  BpiSurchargeAmount?: number | null;
+  BpiPaidAt?: string | null;
+  PbcName?: string | null;
+}
+
 export interface BillingPaymentIntent {
   BpiUUID: string;
   BpiID: string;

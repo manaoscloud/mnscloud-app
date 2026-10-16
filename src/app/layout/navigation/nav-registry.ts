@@ -98,6 +98,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.billing.ledger-wallets',
         icon: 'receipt_long',
         route: '/billing/ledger',
+        masterRoute: '/system/billing/ledger',
+      },
+      {
+        id: 'billing/wallets',
+        label: 'nav.billing.wallets',
+        icon: 'account_balance_wallet',
         masterRoute: '/system/billing/wallets',
       },
       {
