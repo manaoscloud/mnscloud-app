@@ -56,13 +56,7 @@
 
     <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Minimum confidence to answer (%)' | transloco }}</mat-label>
-      <input
-        matInput
-        type="number"
-        min="50"
-        max="100"
-        [formField]="settingsForm.autoReplyPercent"
-      />
+      <input matInput type="number" [formField]="settingsForm.autoReplyPercent" />
       <mns-field-help
         matIconSuffix
         [label]="'Minimum confidence to answer (%)' | transloco"
@@ -75,7 +69,7 @@
 
     <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Minimum confidence for bugs (%)' | transloco }}</mat-label>
-      <input matInput type="number" min="50" max="100" [formField]="settingsForm.bugPercent" />
+      <input matInput type="number" [formField]="settingsForm.bugPercent" />
       <mns-field-help
         matIconSuffix
         [label]="'Minimum confidence for bugs (%)' | transloco"
@@ -88,7 +82,7 @@
 
     <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Automatic answers per ticket' | transloco }}</mat-label>
-      <input matInput type="number" min="0" max="5" [formField]="settingsForm.maxAutoReplies" />
+      <input matInput type="number" [formField]="settingsForm.maxAutoReplies" />
       <mns-field-help
         matIconSuffix
         [label]="'Automatic answers per ticket' | transloco"
@@ -101,13 +95,7 @@
 
     <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Analyses per hour' | transloco }}</mat-label>
-      <input
-        matInput
-        type="number"
-        min="1"
-        max="1000"
-        [formField]="settingsForm.maxTriagesPerHour"
-      />
+      <input matInput type="number" [formField]="settingsForm.maxTriagesPerHour" />
       <mns-field-help
         matIconSuffix
         [label]="'Analyses per hour' | transloco"
