@@ -11,6 +11,11 @@ on:
         required: false
         type: string
 
+# CI only reads the code: tests, builds and artifact uploads need no write access.
+# Publishing happens in auto-release.yml, which declares its own permissions.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
