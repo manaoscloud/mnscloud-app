@@ -74,8 +74,6 @@ export interface BillingPackage {
   BpaID: string;
   BpaCode: string;
   BpaName: string;
-  /** BASE: tenant main plan (one per tenant); ADDON: complement. */
-  BpaKind?: 'BASE' | 'ADDON';
   BpaNotes?: string | null;
   BpaPublicSlug?: string | null;
   BpaPublicName?: string | null;
@@ -295,8 +293,8 @@ export interface BillingSwitchContract {
   offerName: string;
   status: string;
   currentPeriodEnd: string | null;
-  /** FULL/BASE end now with a prorated credit; PARTIAL stay billed. */
-  coverage: 'FULL' | 'BASE' | 'PARTIAL';
+  /** FULL ends now with a prorated credit; PARTIAL stays billed. */
+  coverage: 'FULL' | 'PARTIAL';
   creditAmount: number;
 }
 
