@@ -83,8 +83,11 @@ const FOCUSABLE =
   'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), ' +
   '[role="combobox"]:not([aria-disabled="true"]), [tabindex]:not([tabindex="-1"]), button:not([disabled])';
 
+/** Value for a quoted attribute selector; the fallback escapes backslashes and quotes. */
 function cssEscape(value: string): string {
-  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value.replace(/"/g, '\\"');
+  return typeof CSS !== 'undefined' && CSS.escape
+    ? CSS.escape(value)
+    : value.replace(/["\\]/g, '\\$&');
 }
 
 /** The element to focus for a `[data-field-key]` marker (the control itself or its inner one). */
