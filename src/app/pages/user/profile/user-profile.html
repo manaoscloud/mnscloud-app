@@ -48,11 +48,17 @@
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'First Name' | transloco }}</mat-label>
             <input matInput [formField]="profileForm.firstName" autocomplete="given-name" />
+            <mat-error>{{
+              profileForm.firstName().errors() | mnsFieldErrorKey | transloco
+            }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Last Name' | transloco }}</mat-label>
             <input matInput [formField]="profileForm.lastName" autocomplete="family-name" />
+            <mat-error>{{
+              profileForm.lastName().errors() | mnsFieldErrorKey | transloco
+            }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-1">
@@ -73,6 +79,9 @@
               [label]="'New Password' | transloco"
               [text]="'Leave blank to keep current password.' | transloco"
             />
+            <mat-error>{{
+              profileForm.newPassword().errors() | mnsFieldErrorKey | transloco
+            }}</mat-error>
           </mat-form-field>
         </div>
         <div class="form-grid span-4">
@@ -86,11 +95,15 @@
             />
             <mat-datepicker-toggle matSuffix [for]="picker" />
             <mat-datepicker #picker touchUi />
+            <mat-error>{{
+              profileForm.dateBirth().errors() | mnsFieldErrorKey | transloco
+            }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Phone' | transloco }}</mat-label>
             <input matInput [formField]="profileForm.phone" autocomplete="tel" />
+            <mat-error>{{ profileForm.phone().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
         </div>
       </div>

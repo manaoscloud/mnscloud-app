@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { FieldInvalidDirective } from '../field-invalid.directive';
 
 type SignalFormField = Field<any, any>;
 
@@ -31,6 +32,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
   },
   imports: [
     FieldHelpComponent,
+    FieldInvalidDirective,
     FormField,
     MatButtonModule,
     MatFormFieldModule,
@@ -48,6 +50,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           [formField]="formField"
           [multiple]="multiple()"
           [compareWith]="compareOptionValues"
+          [mnsInvalid]="invalid()"
           (selectionChange)="selectValue($event.value)"
           (openedChange)="handleOpenedChange($event)"
         >
@@ -170,6 +173,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
           [multiple]="multiple()"
           [disabled]="disabled()"
           [compareWith]="compareOptionValues"
+          [mnsInvalid]="invalid()"
           (selectionChange)="selectValue($event.value)"
           (openedChange)="handleOpenedChange($event)"
         >
@@ -303,6 +307,10 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
       @if (help()) {
         <mns-field-help matIconSuffix [label]="label()" [text]="help()" />
       }
+      @if (errorMessage()) {
+        <!-- Material shows it only in error state (invalid flag or invalid touched control). -->
+        <mat-error>{{ errorMessage() }}</mat-error>
+      }
     </mat-form-field>
   `,
   styles: [
@@ -359,6 +367,9 @@ export class MnsSearchSelectFieldComponent {
   readonly hasPrevious = input(false);
   readonly hasNext = input(false);
   readonly loadError = input(false);
+  /** Required Field Feedback Baseline: red outline and `errorMessage` under the field. */
+  readonly invalid = input(false);
+  readonly errorMessage = input('');
   readonly searchChange = output<string>();
   readonly pageChange = output<number>();
   readonly search = signal('');

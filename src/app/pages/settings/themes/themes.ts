@@ -160,20 +160,19 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
     const text = (key: string) => String(payload[key] ?? '').trim();
     if (!DOMAIN.test(text('domain').toLowerCase())) {
-      this.snack.warning(this.t('Use only the hostname, without scheme, port, or path.'));
-      return false;
+      return this.rejectField('domain', 'Use only the hostname, without scheme, port, or path.');
     }
-    if (['logoUrl', 'faviconUrl'].some((key) => text(key) && !HTTP_URL.test(text(key)))) {
-      this.snack.warning(this.t('Please use valid http(s) URLs.'));
-      return false;
-    }
+    const invalidUrl = ['logoUrl', 'faviconUrl'].find(
+      (key) => text(key) && !HTTP_URL.test(text(key)),
+    );
+    if (invalidUrl) return this.rejectField(invalidUrl, 'Please use valid http(s) URLs.');
     if (text('primaryColor') && !HEX_COLOR.test(text('primaryColor'))) {
-      this.snack.warning(this.t('Please use #RRGGBB format for the primary color.'));
-      return false;
+      return this.rejectField('primaryColor', 'Please use #RRGGBB format for the primary color.');
     }
-    return super.validatePayload(payload);
+    return true;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

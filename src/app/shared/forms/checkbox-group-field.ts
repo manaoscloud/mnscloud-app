@@ -5,27 +5,31 @@ import { TranslocoPipe } from '@jsverse/transloco';
 @Component({
   selector: 'mns-checkbox-group-field',
   imports: [MatCheckboxModule, TranslocoPipe],
-  template: ` <fieldset [disabled]="disabled()">
-    <legend>{{ label() }}</legend>
-    <mat-checkbox
-      [disabled]="disabled()"
-      [checked]="allSelected()"
-      [indeterminate]="value().length > 0 && !allSelected()"
-      (change)="valueChange.emit($event.checked ? options().map(optionValue) : [])"
-    >
-      {{ 'Select all' | transloco }}
-    </mat-checkbox>
-    <div class="options">
-      @for (option of options(); track option.value) {
-        <mat-checkbox
-          [disabled]="disabled()"
-          [checked]="value().includes(option.value)"
-          (change)="toggle(option.value, $event.checked)"
-          >{{ option.label }}</mat-checkbox
-        >
-      }
-    </div>
-  </fieldset>`,
+  host: { '[class.is-invalid]': 'invalid()' },
+  template: ` <fieldset [disabled]="disabled()" [attr.aria-invalid]="invalid() || null">
+      <legend>{{ label() }}</legend>
+      <mat-checkbox
+        [disabled]="disabled()"
+        [checked]="allSelected()"
+        [indeterminate]="value().length > 0 && !allSelected()"
+        (change)="valueChange.emit($event.checked ? options().map(optionValue) : [])"
+      >
+        {{ 'Select all' | transloco }}
+      </mat-checkbox>
+      <div class="options">
+        @for (option of options(); track option.value) {
+          <mat-checkbox
+            [disabled]="disabled()"
+            [checked]="value().includes(option.value)"
+            (change)="toggle(option.value, $event.checked)"
+            >{{ option.label }}</mat-checkbox
+          >
+        }
+      </div>
+    </fieldset>
+    @if (invalid() && errorMessage()) {
+      <div class="field-error" role="alert">{{ errorMessage() }}</div>
+    }`,
   styles: [
     `
       :host {
@@ -49,6 +53,17 @@ import { TranslocoPipe } from '@jsverse/transloco';
       mat-checkbox {
         min-height: 44px;
       }
+      :host(.is-invalid) fieldset {
+        border-color: var(--mat-sys-error);
+      }
+      :host(.is-invalid) legend,
+      .field-error {
+        color: var(--mat-sys-error);
+      }
+      .field-error {
+        font: var(--mat-sys-body-small);
+        padding: 4px 16px 0;
+      }
       @media (max-width: 600px) {
         .options {
           grid-template-columns: 1fr;
@@ -62,6 +77,8 @@ export class CheckboxGroupFieldComponent {
   readonly options = input<readonly { value: unknown; label: string }[]>([]);
   readonly value = input<readonly unknown[]>([]);
   readonly disabled = input(false);
+  readonly invalid = input(false);
+  readonly errorMessage = input('');
   readonly valueChange = output<unknown[]>();
   readonly allSelected = computed(
     () => this.options().length > 0 && this.options().every((o) => this.value().includes(o.value)),

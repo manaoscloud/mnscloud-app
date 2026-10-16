@@ -360,16 +360,17 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
     }
 
     const values = this.formValues();
+    this.clearFieldErrors(null);
     const pabx = this.validateSelectedPabx(values['pabxUUID']);
     if (!pabx) return;
 
     const range = parseRange(values['extensionRange']);
     if (!range) {
-      this.snack.warning(this.t('Range must follow the format 1000-1010.'));
+      this.rejectField('extensionRange', 'Range must follow the format 1000-1010.');
       return;
     }
     if (range.total > 100) {
-      this.snack.warning(this.t('Range exceeds max size of 100 extensions per operation.'));
+      this.rejectField('extensionRange', 'Range exceeds max size of 100 extensions per operation.');
       return;
     }
 
@@ -578,12 +579,13 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       (option) => String(option.value) === String(value ?? ''),
     );
     if (!pabx) {
-      this.snack.warning(this.t('Select a PABX account.'));
+      this.rejectField('pabxUUID', 'Select a PABX account.');
       return null;
     }
     if (pabx.disabled) {
-      this.snack.warning(
-        this.t('PABX account requires a domain before extensions can be provisioned.'),
+      this.rejectField(
+        'pabxUUID',
+        'PABX account requires a domain before extensions can be provisioned.',
       );
       return null;
     }

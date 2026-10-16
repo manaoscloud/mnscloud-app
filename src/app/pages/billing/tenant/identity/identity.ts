@@ -23,6 +23,8 @@ import { countryOptions } from '../../../../shared/i18n/countries';
 import { FieldHelpComponent } from '../../../../shared/forms/field-help';
 import { MnsSearchSelectFieldComponent } from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { SettingsPageComponent } from '../../../../shared/pages/settings-page';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../../../shared/forms/field-error-key.pipe';
 
 /** One entry of GET /billing/identity/tax-id-types. */
 export interface TaxIdType {
@@ -131,6 +133,7 @@ export function taxIdTypesFor(
   selector: 'app-billing-tenant-identity',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
     FormField,
     MatButtonModule,
     MatFormFieldModule,
@@ -293,8 +296,11 @@ export class BillingTenantIdentityPage {
     this.model.set({ ...this.baseline() });
   }
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
   async save(): Promise<void> {
-    if (this.saving() || !this.valid() || !this.canManage()) return;
+    if (this.saving() || !this.canManage()) return;
+    if (!this.valid()) return this.revealInvalid(this.identityForm());
     const value = this.model();
     this.saving.set(true);
     this.apiError.set(null);

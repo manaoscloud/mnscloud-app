@@ -92,7 +92,13 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       field: 'HwpIsDefault',
       className: 'status-col',
     },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HwpIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HwpIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -219,9 +225,7 @@ export class HostingWebhostProvidersPage extends ConfigurableCrudPageBase<Config
     return [];
   }
 
-  protected override async fetchItems(
-    filters: ConfigurableCrudFilters,
-  ) {
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
     const items = await super.fetchItems(filters);
     return items.map((item) => {
       const config = asRecord(item['HwpConfig']);
@@ -257,12 +261,10 @@ export class HostingWebhostProvidersPage extends ConfigurableCrudPageBase<Config
     if (!super.validatePayload(payload)) return false;
     const port = Number(payload['port'] ?? 0);
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
-      this.snack.warning(this.t('Port must be between 1 and 65535.'));
-      return false;
+      return this.rejectField('port', 'Port must be between 1 and 65535.');
     }
     if (!this.editingRecord() && !String(payload['apiToken'] ?? '').trim()) {
-      this.snack.warning(this.t('API token is required for new providers.'));
-      return false;
+      return this.rejectField('apiToken', 'API token is required for new providers.');
     }
     return true;
   }
@@ -303,9 +305,7 @@ export class HostingWebhostProvidersPage extends ConfigurableCrudPageBase<Config
   }
 }
 
-function cleanCredentials(
-  value: Record<string, string | null>,
-): Record<string, string> | null {
+function cleanCredentials(value: Record<string, string | null>): Record<string, string> | null {
   const cleaned = Object.fromEntries(
     Object.entries(value).filter(([, item]) => Boolean(item)),
   ) as Record<string, string>;

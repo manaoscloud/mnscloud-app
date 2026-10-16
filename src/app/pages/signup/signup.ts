@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   Component,
   DestroyRef,
@@ -28,6 +29,8 @@ import { SnackbarService } from '../../services/snackbar.service';
 import { PhoneInputComponent } from '../../shared/phone-input/phone-input.component';
 import { DateMaskDirective } from '../../shared/date-mask/date-mask.directive';
 import { MnsDateAdapterModule } from '../../shared/date-mask/mns-date-adapter.module';
+import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
 
 type SignupPolicy = {
   captchaEnabled: boolean;
@@ -39,6 +42,8 @@ type SignupPolicy = {
   selector: 'app-signup',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
+    TranslocoPipe,
     FormField,
     RouterModule,
     MatCardModule,
@@ -126,15 +131,19 @@ export class Signup {
     queueMicrotask(() => void this.renderCaptcha());
   });
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
+  /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
   get canSubmit(): boolean {
     const policy = this.signupPolicy();
     const captchaReady = !policy.captchaEnabled || !!this.captchaToken();
-    return this.form().valid() && captchaReady && !this.isLoading();
+    return captchaReady && !this.isLoading();
   }
 
   async onSubmit(event?: Event) {
     event?.preventDefault();
 
+    if (!this.form().valid()) return this.revealInvalid(this.form());
     if (!this.canSubmit) return;
 
     this.isLoading.set(true);

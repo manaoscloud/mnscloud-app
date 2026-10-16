@@ -684,9 +684,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (this.isProvisionedEdit()) {
-      return super.validatePayload(payload);
-    }
+    if (!super.validatePayload(payload)) return false;
+    if (this.isProvisionedEdit()) return true;
 
     const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
     const lightsail =
@@ -700,22 +699,18 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         ? 'password'
         : 'ssh_key';
     if (authMethod === 'ssh_key' && !normalizeString(payload['sshKey'])) {
-      this.snack.warning(
-        this.t(
-          lightsail
-            ? 'SSH key is required for Lightsail instances.'
-            : 'SSH key is required for SSH key authentication.',
-        ),
+      return this.rejectField(
+        'sshKey',
+        lightsail
+          ? 'SSH key is required for Lightsail instances.'
+          : 'SSH key is required for SSH key authentication.',
       );
-      return false;
     }
     if (authMethod === 'password' && !normalizeString(payload['password'])) {
-      this.snack.warning(this.t('Password is required for password authentication.'));
-      return false;
+      return this.rejectField('password', 'Password is required for password authentication.');
     }
     if (!normalizeString(payload['image'])) {
-      this.snack.warning(this.t('Select an image compatible with the selected plan.'));
-      return false;
+      return this.rejectField('image', 'Select an image compatible with the selected plan.');
     }
 
     const selectedImageId = normalizeString(payload['image']);
@@ -731,15 +726,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         platform: lightsailPlatformFromPlan(plan),
       })
     ) {
-      this.snack.warning(
-        this.t(
-          'Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.',
-        ),
+      return this.rejectField(
+        'image',
+        'Selected image exceeds plan CPU, memory, or disk minimums. Choose another image or raise the plan specs.',
       );
-      return false;
     }
 
-    return super.validatePayload(payload);
+    return true;
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {

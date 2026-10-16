@@ -377,8 +377,10 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     const customerUUID = String(payload['customerUUID'] ?? '');
     const register = this.registers().find((item) => item.HrgUUID === registerUUID);
     if (!register || register.CustomerCusUUID !== customerUUID) {
-      this.snack.warning(this.t('Select a register linked to the selected customer.'));
-      return false;
+      return this.rejectField(
+        'hostingDnsRegisterUUID',
+        'Select a register linked to the selected customer.',
+      );
     }
     return true;
   }

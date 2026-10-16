@@ -84,7 +84,9 @@
               [value]="draft().title"
               (input)="update('title', $any($event.target).value)"
               [placeholder]="'e.g. Error saving client form' | transloco"
+              [mnsInvalid]="rules.invalid('title')"
             />
+            <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-4" floatLabel="always">
@@ -96,11 +98,13 @@
               maxlength="10000"
               [value]="draft().description"
               (input)="update('description', $any($event.target).value)"
+              [mnsInvalid]="rules.invalid('description')"
               [placeholder]="
                 'Describe what you were doing, what went wrong, and what you expected to happen...'
                   | transloco
               "
             ></textarea>
+            <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
         </div>
 
@@ -350,7 +354,7 @@
           mat-flat-button
           color="primary"
           type="button"
-          [disabled]="!isFormValid() || submitting() || capturing() || addingImages()"
+          [disabled]="unavailable() || submitting() || capturing() || addingImages()"
           (click)="submit()"
         >
           <mat-icon>{{ submitting() ? 'hourglass_top' : 'send' }}</mat-icon>

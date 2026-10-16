@@ -28,6 +28,8 @@ import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { AppI18nService, AppLanguage, LanguageOptionCode } from '../../services/app-i18n.service';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
 
 type SigninPolicy = {
   captchaEnabled: boolean;
@@ -40,6 +42,7 @@ type SigninPolicy = {
   selector: 'app-signin',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
     FormField,
     RouterModule,
     MatCardModule,
@@ -131,15 +134,19 @@ export class Signin {
     queueMicrotask(() => void this.renderCaptcha());
   });
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
+  /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
   get canSubmit(): boolean {
     const policy = this.signinPolicy();
     const captchaReady = !policy.captchaEnabled || !!this.captchaToken();
-    return this.form().valid() && captchaReady && !this.isLoading();
+    return captchaReady && !this.isLoading();
   }
 
   async onSubmit(event?: Event) {
     event?.preventDefault();
 
+    if (!this.form().valid()) return this.revealInvalid(this.form());
     if (!this.canSubmit) return;
 
     this.isLoading.set(true);

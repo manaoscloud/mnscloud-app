@@ -26,6 +26,8 @@ import {
   LegalHold,
 } from './user-governance.models';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../../../shared/forms/field-error-key.pipe';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -169,6 +171,7 @@ type GovernanceActionFormModel = {
   selector: 'app-governance-action-dialog',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
     ReportProblemButtonComponent,
     FormField,
     MatButtonModule,
@@ -193,12 +196,16 @@ type GovernanceActionFormModel = {
           <mat-form-field appearance="outline" class="span-4">
             <mat-label>{{ 'Reason' | transloco }}</mat-label>
             <textarea matInput rows="3" [formField]="actionForm.reason"></textarea>
+            <mat-error>{{ actionForm.reason().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           @if (data.action !== 'release-hold' && data.action !== 'resend-verification') {
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Legal basis' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.legalBasis" />
+              <mat-error>{{
+                actionForm.legalBasis().errors() | mnsFieldErrorKey | transloco
+              }}</mat-error>
             </mat-form-field>
           }
 
@@ -206,6 +213,9 @@ type GovernanceActionFormModel = {
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Reference' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.reference" />
+              <mat-error>{{
+                actionForm.reference().errors() | mnsFieldErrorKey | transloco
+              }}</mat-error>
             </mat-form-field>
           }
         </form>
@@ -248,14 +258,15 @@ export class GovernanceActionDialogComponent {
   readonly actionForm = createForm(this.actionFormModel, (schema) => {
     required(schema.reason);
     minLength(schema.reason, 4);
+    // Manual verification is an override: it always needs a legal basis besides the reason.
+    required(schema.legalBasis, { when: () => this.data.action === 'verify-email' });
+    minLength(schema.legalBasis, 2, { when: () => this.data.action === 'verify-email' });
   });
+  private readonly revealInvalid = injectRevealInvalidFields();
 
-  /** Manual verification is an override: it always needs a legal basis besides the reason. */
+  /** Invalid fields do not disable Confirm: confirming reveals them (app.md baseline). */
   canConfirm(): boolean {
-    if (!this.actionForm().valid() || this.saving()) return false;
-    return (
-      this.data.action !== 'verify-email' || this.actionFormModel().legalBasis.trim().length >= 2
-    );
+    return !this.saving();
   }
 
   titleKey(): string {
@@ -292,6 +303,7 @@ export class GovernanceActionDialogComponent {
 
   confirm() {
     if (!this.canConfirm()) return;
+    if (!this.actionForm().valid()) return this.revealInvalid(this.actionForm());
     this.saving.set(true);
     const payload = this.actionFormModel();
     this.dialogRef.close({

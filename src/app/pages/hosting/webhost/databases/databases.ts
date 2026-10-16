@@ -356,7 +356,7 @@ export class HostingWebhostDatabasesPage extends ConfigurableCrudPageBase<Config
     if (!action) return super.saveItem(saveAndNew);
     const p = this.formValues()['password'];
     if (typeof p !== 'string' || p.length < 12) {
-      this.snack.error(this.t('Password must have at least 12 characters.'));
+      this.rejectField('password', 'Password must have at least 12 characters.');
       return;
     }
     this.saving.set(true);

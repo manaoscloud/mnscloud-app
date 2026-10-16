@@ -36,6 +36,7 @@ const ACTION_LABELS: Record<string, string> = {
   standalone: true,
   host: {
     '[class]': 'fieldClass()',
+    '[class.is-invalid]': 'invalid()',
   },
   imports: [
     MatButtonModule,
@@ -125,6 +126,9 @@ const ACTION_LABELS: Record<string, string> = {
           }
         </div>
       </ng-template>
+      @if (invalid() && errorMessage()) {
+        <div class="permission-tree-error" role="alert">{{ errorMessage() }}</div>
+      }
     </section>
   `,
   styles: [
@@ -136,6 +140,20 @@ const ACTION_LABELS: Record<string, string> = {
 
       .permission-tree-field {
         min-width: 0;
+      }
+
+      :host(.is-invalid) .permission-tree-panel {
+        border-color: var(--mat-sys-error);
+      }
+
+      :host(.is-invalid) .permission-tree-label,
+      .permission-tree-error {
+        color: var(--mat-sys-error);
+      }
+
+      .permission-tree-error {
+        font: var(--mat-sys-body-small);
+        padding: 4px 16px 0;
       }
 
       .permission-tree-label {
@@ -210,6 +228,8 @@ export class MnsPermissionTreeFieldComponent {
   readonly label = input.required<string>();
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
   readonly fieldClass = input('');
+  readonly invalid = input(false);
+  readonly errorMessage = input('');
   readonly placeholder = input('Search permissions');
   readonly emptyLabel = input('No permissions found.');
   readonly loadingLabel = input('Loading permissions...');

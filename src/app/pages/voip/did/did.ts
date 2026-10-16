@@ -10,6 +10,7 @@ import {
   ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { FieldError, fieldError } from '../../../shared/forms/field-validation';
 import { VoipDidItem, VoipDidService } from './did.service';
 
 function isSystemScope() {
@@ -89,7 +90,13 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
             { id: 'available', label: 'Available', field: 'IsAvailable' },
           ]
         : []),
-      { id: 'status', label: 'Status', kind: 'status', field: 'VddStatus', className: 'status-col' },
+      {
+        id: 'status',
+        label: 'Status',
+        kind: 'status',
+        field: 'VddStatus',
+        className: 'status-col',
+      },
     ],
     fields: [
       {
@@ -264,13 +271,17 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     const status = Number(values['status'] ?? 1);
     const parsedRange = this.parseRange(String(values['didRange'] ?? ''));
 
+    this.clearFieldErrors(null);
     if (!operatorUUID || !parsedRange) {
-      this.snack.warning('Required fields are missing.');
+      const missing = new Map<string, FieldError>();
+      if (!operatorUUID) missing.set('operatorUUID', fieldError('required'));
+      if (!parsedRange) missing.set('didRange', fieldError('required'));
+      this.reportFieldErrors(missing);
       return;
     }
 
     if (parsedRange.total > 100) {
-      this.snack.warning('Number range exceeds max size of 100 DIDs per operation.');
+      this.rejectField('didRange', 'Number range exceeds max size of 100 DIDs per operation.');
       return;
     }
 

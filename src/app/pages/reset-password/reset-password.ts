@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -10,6 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ApiService } from '../../services/api.service';
+import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
 
 @Component({
   standalone: true,
@@ -17,6 +20,8 @@ import { ApiService } from '../../services/api.service';
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.scss'],
   imports: [
+    FieldErrorKeyPipe,
+    TranslocoPipe,
     FormField,
     RouterModule,
     MatCardModule,
@@ -64,9 +69,10 @@ export class ResetPasswordComponent {
     this.destroyRef.onDestroy(() => this.clearRedirectTimer());
   }
 
-  readonly canSubmit = computed(
-    () => this.form().valid() && !this.passwordMismatch() && !this.isLoading(),
-  );
+  private readonly revealInvalid = injectRevealInvalidFields();
+
+  /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
+  readonly canSubmit = computed(() => !this.passwordMismatch() && !this.isLoading());
 
   togglePassword() {
     this.showPassword.update((v) => !v);
@@ -75,6 +81,7 @@ export class ResetPasswordComponent {
   async onSubmit(event: Event) {
     event.preventDefault();
 
+    if (!this.form().valid()) return this.revealInvalid(this.form());
     if (!this.canSubmit()) {
       return;
     }
