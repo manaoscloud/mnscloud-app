@@ -1483,6 +1483,14 @@ export const NAV_ITEMS: NavItem[] = [
     scope: 'public',
     children: [
       {
+        id: 'support/ideas',
+        label: 'nav.support.ideas',
+        icon: 'lightbulb',
+        route: '/support/ideas',
+        scope: 'public',
+        requiresEnvironment: true,
+      },
+      {
         id: 'support/requests',
         label: 'nav.support.requests',
         icon: 'confirmation_number',
@@ -1490,14 +1498,6 @@ export const NAV_ITEMS: NavItem[] = [
         scope: 'public',
         requiresEnvironment: true,
         badge: 'supportUnread',
-      },
-      {
-        id: 'support/ideas',
-        label: 'nav.support.ideas',
-        icon: 'lightbulb',
-        route: '/support/ideas',
-        scope: 'public',
-        requiresEnvironment: true,
       },
       {
         id: 'support/customers',
@@ -1528,18 +1528,18 @@ export const NAV_ITEMS: NavItem[] = [
         scope: 'public',
         children: [
           {
-            id: 'support/platform/tickets',
-            label: 'nav.support.platform.tickets',
-            icon: 'confirmation_number',
-            route: '/support/platform/tickets',
-            scope: 'public',
-            permissions: ['platform.support.tickets.manage'],
-          },
-          {
             id: 'support/platform/ideas',
             label: 'nav.support.platform.ideas',
             icon: 'lightbulb',
             route: '/support/platform/ideas',
+            scope: 'public',
+            permissions: ['platform.support.tickets.manage'],
+          },
+          {
+            id: 'support/platform/tickets',
+            label: 'nav.support.platform.tickets',
+            icon: 'confirmation_number',
+            route: '/support/platform/tickets',
             scope: 'public',
             permissions: ['platform.support.tickets.manage'],
           },
