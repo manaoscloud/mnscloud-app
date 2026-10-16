@@ -13,6 +13,8 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
+import { FieldRules } from '../../../../shared/forms/field-validation';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
 
 type SmtpAccount = {
   HsaUUID: string;
@@ -77,8 +79,10 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
               autocomplete="email"
               [value]="to()"
               (input)="to.set($any($event.target).value)"
+              [mnsInvalid]="rules.invalid('to')"
               required
             />
+            <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-2">
@@ -87,8 +91,10 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
               matInput
               [value]="subject()"
               (input)="subject.set($any($event.target).value)"
+              [mnsInvalid]="rules.invalid('subject')"
               required
             />
+            <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="span-4">
@@ -98,8 +104,10 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
               rows="8"
               [value]="html()"
               (input)="html.set($any($event.target).value)"
+              [mnsInvalid]="rules.invalid('html')"
               required
             ></textarea>
+            <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
         </div>
       </div>
@@ -117,7 +125,6 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
               color="primary"
               type="button"
               class="save-main-button"
-              [disabled]="!canSubmit()"
               (click)="submit()"
             >
               <mat-icon>outgoing_mail</mat-icon>
@@ -136,17 +143,20 @@ export class HostingSmtpRouteTestDialogComponent {
   readonly to = signal('');
   readonly subject = signal(this.data.subject);
   readonly html = signal(this.data.html);
-  readonly canSubmit = computed(
-    () =>
-      Boolean(this.to().trim()) && Boolean(this.subject().trim()) && Boolean(this.html().trim()),
-  );
+  /** Required Field Feedback Baseline: missing fields turn red when sending. */
+  readonly rules = new FieldRules({
+    to: () => Boolean(this.to().trim()),
+    subject: () => Boolean(this.subject().trim()),
+    html: () => Boolean(this.html().trim()),
+  });
+  private readonly revealInvalid = injectRevealInvalidFields();
 
   cancel(): void {
     this.dialogRef.close(null);
   }
 
   submit(): void {
-    if (!this.canSubmit()) return;
+    if (!this.rules.check()) return this.revealInvalid();
     this.dialogRef.close({
       to: this.to().trim(),
       subject: this.subject().trim(),

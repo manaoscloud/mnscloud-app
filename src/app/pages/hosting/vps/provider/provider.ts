@@ -791,20 +791,20 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
           ) ||
           Number(start) > Number(end))
       ) {
-        this.snack.warning(this.t('Enter both ends of an ordered reserved VLAN/VNI range.'));
-        return false;
+        return this.rejectField(
+          'sdnTagStart',
+          'Enter both ends of an ordered reserved VLAN/VNI range.',
+        );
       }
     }
 
     if (!editing && !credentials) {
-      if (selected === 'sangfor_scp') {
-        this.snack.warning(
-          this.t('Sangfor requires an API token, Access Key/Secret Key, or username/password.'),
-        );
-      } else {
-        this.snack.warning(this.t('Credentials are required for new providers.'));
-      }
-      return false;
+      return this.rejectField(
+        this.firstVisibleField(CREDENTIAL_FIELD_KEYS),
+        selected === 'sangfor_scp'
+          ? 'Sangfor requires an API token, Access Key/Secret Key, or username/password.'
+          : 'Credentials are required for new providers.',
+      );
     }
 
     if (selected === 'sangfor_scp' && !editing) {
@@ -814,10 +814,10 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       const hasLogin =
         !!normalizeString(payload['username']) && !!normalizeString(payload['password']);
       if (!hasToken && !hasAccessKeyPair && !hasLogin) {
-        this.snack.warning(
-          this.t('Sangfor requires an API token, Access Key/Secret Key, or username/password.'),
+        return this.rejectField(
+          'apiToken',
+          'Sangfor requires an API token, Access Key/Secret Key, or username/password.',
         );
-        return false;
       }
     }
 

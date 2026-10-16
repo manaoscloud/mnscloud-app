@@ -64,7 +64,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTabGroup, MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -93,6 +93,16 @@ import {
 } from '../../forms/mns-search-select-field/mns-search-select-field';
 import { MnsPermissionTreeFieldComponent } from '../../forms/mns-permission-tree-field/mns-permission-tree-field';
 import { SecretContentFieldComponent } from '../../secret-content/secret-content-field';
+import { FieldInvalidDirective } from '../../forms/field-invalid.directive';
+import {
+  FieldError,
+  customFieldError,
+  fieldError,
+  focusFirstInvalidField,
+  isBlankFieldValue,
+  missingFieldsToast,
+} from '../../forms/field-validation';
+import { apiErrorFields } from '../../../services/api-error-fields';
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { ReportProblemButtonComponent } from '../../support-report-dialog/report-problem-button';
 import { SlowConfirmDialogComponent } from '../../slow-confirm-dialog/slow-confirm-dialog';
@@ -105,6 +115,7 @@ import {
 } from '../../upload/file-upload-progress';
 
 export const CONFIGURABLE_CRUD_IMPORTS = [
+  FieldInvalidDirective,
   FieldHelpComponent,
   ReportProblemButtonComponent,
   CheckboxGroupFieldComponent,
@@ -672,6 +683,28 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<ConfigurableCrudRecord>({});
+  /**
+   * Required Field Feedback Baseline (app.md): after a save attempt, invalid fields turn red,
+   * show the reason under the field and the first one receives focus. Keys are field keys;
+   * related collection drafts use `<collectionKey>::<fieldKey>`.
+   */
+  readonly submitAttempted = signal(false);
+  private readonly rawFieldErrors = signal<ReadonlyMap<string, FieldError>>(new Map());
+  readonly fieldErrors = computed<ReadonlyMap<string, FieldError>>(() => {
+    const errors = this.rawFieldErrors();
+    if (!errors.size) return errors;
+    const visible = new Map<string, FieldError>();
+    for (const [key, error] of errors) {
+      const field = key.includes(RELATED_FIELD_SEPARATOR)
+        ? undefined
+        : this.config.fields.find((item) => item.key === key);
+      if (field && !this.isFieldVisible(field)) continue;
+      if (field && error.kind === 'required' && !this.isFieldRequired(field)) continue;
+      visible.set(key, error);
+    }
+    return visible;
+  });
+  readonly formTabGroup = viewChild<MatTabGroup>('crudFormTabs');
   readonly enabledCopyActions = signal(new Set<string>());
   readonly defaultCurrency = signal('BRL');
   readonly currencyReady = signal(false);
@@ -1073,6 +1106,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   startCreate(): void {
     if (!this.canCreate()) return;
+    this.resetFieldErrors();
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
@@ -1092,6 +1126,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    */
   protected startCreateWithValues(values: ConfigurableCrudRecord): void {
     if (!this.canCreate()) return;
+    this.resetFieldErrors();
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
@@ -1106,6 +1141,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   startEdit(row: T): void {
+    this.resetFieldErrors();
     if (!this.canEditRow(row)) return;
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
@@ -1121,6 +1157,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async saveItem(saveAndNew = false): Promise<void> {
     if (this.editingRecord() ? !this.canEdit() : !this.canCreate()) return;
+    this.clearFieldErrors(null);
     if (!this.commitDateDrafts()) return;
     this.copyEnabledAddressValues();
     // Validate the flat form payload before augmentPayload reshapes nested
@@ -1150,6 +1187,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (current && !asynchronous) this.reflectSavedRecord(current, payload);
       this.itemsResource.reload();
       if (saveAndNew) {
+        this.resetFieldErrors();
         this.editingRecord.set(null);
         this.formValues.set(this.emptyFormValues());
         this.dateDrafts.clear();
@@ -1174,6 +1212,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       }
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
+      this.markServerRejectedFields(error);
     } finally {
       this.saving.set(false);
       this.quickCreateSaving = false;
@@ -1282,6 +1321,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       [field.key]: value,
     };
     this.relatedForms.set(forms);
+    this.refreshRelatedFieldError(collection, field, value);
     this.afterRelatedFieldChange(collection, field, value);
   }
 
@@ -1318,16 +1358,31 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   relatedCollectionFormValid(collection: ConfigurableCrudRelatedCollection): boolean {
+    return this.missingRelatedFields(collection).length === 0;
+  }
+
+  private missingRelatedFields(
+    collection: ConfigurableCrudRelatedCollection,
+  ): ConfigurableCrudField[] {
     const form = this.relatedForms()[collection.key] ?? collection.initialValues;
-    return collection.fields.every((field) => {
-      if (!this.isFieldRequired(field)) return true;
-      const value = form[field.key];
-      return value !== null && value !== undefined && String(value).trim() !== '';
-    });
+    return collection.fields.filter(
+      (field) => this.isFieldRequired(field) && isBlankFieldValue(form[field.key]),
+    );
   }
 
   async addRelatedCollectionRow(collection: ConfigurableCrudRelatedCollection): Promise<void> {
-    if (!this.editingRecord() || !this.relatedCollectionFormValid(collection)) return;
+    if (!this.editingRecord()) return;
+    const missing = this.missingRelatedFields(collection);
+    if (missing.length) {
+      this.reportFieldErrors(
+        new Map(
+          missing.map((field) => [this.fieldErrorKey(field, collection), fieldError('required')]),
+        ),
+        collection.key,
+      );
+      return;
+    }
+    this.clearFieldErrors(collection.key);
     const parentUUID = this.recordUUID(this.editingRecord() as T);
     const values = this.relatedForms()[collection.key] ?? collection.initialValues;
     const payload = collection.payload
@@ -1684,6 +1739,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   closeDialog(): void {
     this.isFormDialogOpen.set(false);
+    this.resetFieldErrors();
     this.dateDrafts.clear();
     this.revealedPasswordFields.set(new Set());
     this.dialogBinding?.ref.close();
@@ -1863,6 +1919,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.onFieldValueChanged(key, value);
     this.syncCopyActionsForSource(key);
     this.clearCopyActionsForTarget(key);
+    this.refreshFieldError(key);
   }
 
   async searchPostalCode(field: ConfigurableCrudField, event?: Event): Promise<void> {
@@ -1974,7 +2031,260 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected focusField(key: string): void {
-    this.host.nativeElement.querySelector<HTMLInputElement>(`[data-field-key="${key}"]`)?.focus();
+    focusFirstInvalidField(() => this.formRoots(), [key], 0);
+  }
+
+  // ---- Required Field Feedback Baseline (app.md) ----
+
+  hasFieldError(field: { key: string }, collection?: ConfigurableCrudRelatedCollection): boolean {
+    return this.fieldErrors().has(this.fieldErrorKey(field, collection));
+  }
+
+  /** Translated reason shown under the field, or '' when the field is valid. */
+  fieldErrorText(field: { key: string }, collection?: ConfigurableCrudRelatedCollection): string {
+    const error = this.fieldErrors().get(this.fieldErrorKey(field, collection));
+    return error ? this.t(error.message, error.params) : '';
+  }
+
+  /** `labelClass` of a form tab: identifies it for focus and marks it while it holds errors. */
+  tabLabelClass(tab: string): string {
+    const marker = `crud-tab-${tab}`;
+    return this.tabHasErrors(marker) ? `${marker} crud-tab-invalid` : marker;
+  }
+
+  relatedTabLabelClass(collection: ConfigurableCrudRelatedCollection): string {
+    return this.tabLabelClass(`related-${collection.key}`);
+  }
+
+  private tabHasErrors(marker: string): boolean {
+    for (const key of this.fieldErrors().keys()) {
+      if (this.errorTabMarker(key) === marker) return true;
+    }
+    return false;
+  }
+
+  private errorTabMarker(key: string): string {
+    const [collectionKey] = key.split(RELATED_FIELD_SEPARATOR, 1);
+    if (key.includes(RELATED_FIELD_SEPARATOR)) return `crud-tab-related-${collectionKey}`;
+    const field = this.config.fields.find((item) => item.key === key);
+    return `crud-tab-${field?.tab ?? 'record'}`;
+  }
+
+  protected fieldErrorKey(
+    field: { key: string },
+    collection?: ConfigurableCrudRelatedCollection | string | null,
+  ): string {
+    const scope = typeof collection === 'string' ? collection : collection?.key;
+    return scope ? `${scope}${RELATED_FIELD_SEPARATOR}${field.key}` : field.key;
+  }
+
+  /** First of `keys` whose field is visible, to point a rule about a group of fields at one. */
+  protected firstVisibleField(keys: readonly string[]): string {
+    return (
+      keys.find((key) => {
+        const field = this.config.fields.find((item) => item.key === key);
+        return !!field && this.isFieldVisible(field);
+      }) ?? keys[0]
+    );
+  }
+
+  /**
+   * Page-specific validation: marks `key` invalid with `message`, shows it as a toast and
+   * focuses the field. Returns false so overrides can `return this.rejectField(...)`.
+   */
+  protected rejectField(
+    key: string,
+    message: string,
+    params?: Record<string, string | number>,
+  ): false {
+    this.reportFieldErrors(new Map([[key, customFieldError(message, params)]]), null, {
+      key: message,
+      params: params ?? {},
+    });
+    return false;
+  }
+
+  /**
+   * Marks `errors` (replacing the previous errors of the same scope: the main form when
+   * `scope` is null, otherwise one related collection), shows one toast and focuses the first
+   * invalid field in visual order, switching tab or expanding a compact address section.
+   */
+  protected reportFieldErrors(
+    errors: ReadonlyMap<string, FieldError>,
+    scope: string | null = null,
+    toast?: { key: string; params: Record<string, string | number> },
+  ): void {
+    if (!errors.size) return;
+    this.submitAttempted.set(true);
+    const next = new Map(
+      [...this.rawFieldErrors()].filter(([key]) => this.errorScope(key) !== scope),
+    );
+    for (const [key, error] of errors) next.set(key, error);
+    this.rawFieldErrors.set(next);
+
+    const ordered = this.orderedErrorKeys([...errors.keys()]);
+    const message = toast ?? this.errorToast(ordered, errors);
+    this.snack.warning(message.key, 5000, message.params);
+    this.revealField(ordered[0], ordered);
+  }
+
+  protected clearFieldErrors(scope: string | null): void {
+    const current = this.rawFieldErrors();
+    if (![...current.keys()].some((key) => this.errorScope(key) === scope)) return;
+    this.rawFieldErrors.set(
+      new Map([...current].filter(([key]) => this.errorScope(key) !== scope)),
+    );
+  }
+
+  protected resetFieldErrors(): void {
+    this.submitAttempted.set(false);
+    if (this.rawFieldErrors().size) this.rawFieldErrors.set(new Map());
+  }
+
+  private errorScope(key: string): string | null {
+    return key.includes(RELATED_FIELD_SEPARATOR) ? key.split(RELATED_FIELD_SEPARATOR, 1)[0] : null;
+  }
+
+  private errorToast(
+    ordered: readonly string[],
+    errors: ReadonlyMap<string, FieldError>,
+  ): { key: string; params: Record<string, string | number> } {
+    const required = ordered.filter((key) => errors.get(key)?.kind === 'required');
+    if (required.length)
+      return missingFieldsToast(required.map((key) => this.errorFieldLabel(key)));
+    const first = errors.get(ordered[0])!;
+    return {
+      key: 'form.validation.invalidField',
+      params: {
+        field: this.errorFieldLabel(ordered[0]),
+        reason: this.t(first.message, first.params),
+      },
+    };
+  }
+
+  private errorField(key: string): ConfigurableCrudField | undefined {
+    const scope = this.errorScope(key);
+    if (!scope) return this.config.fields.find((field) => field.key === key);
+    const fieldKey = key.slice(scope.length + RELATED_FIELD_SEPARATOR.length);
+    return this.relatedCollections()
+      .find((collection) => collection.key === scope)
+      ?.fields.find((field) => field.key === fieldKey);
+  }
+
+  private errorFieldLabel(key: string): string {
+    const field = this.errorField(key);
+    return field ? this.translatedFieldLabel(field) : key;
+  }
+
+  /** Visual order: rendered tab order first, then declaration order inside the tab. */
+  private orderedErrorKeys(keys: readonly string[]): string[] {
+    const tabs = this.formTabGroup()?._tabs?.toArray() ?? [];
+    const tabIndex = (key: string) => {
+      const marker = this.errorTabMarker(key);
+      const index = tabs.findIndex((tab) => labelClassList(tab.labelClass).includes(marker));
+      return index < 0 ? Number.MAX_SAFE_INTEGER : index;
+    };
+    const declarationIndex = (key: string) => {
+      const scope = this.errorScope(key);
+      const fields = scope
+        ? (this.relatedCollections().find((collection) => collection.key === scope)?.fields ?? [])
+        : this.config.fields;
+      const field = this.errorField(key);
+      return field ? fields.indexOf(field) : Number.MAX_SAFE_INTEGER;
+    };
+    return [...keys].sort(
+      (left, right) =>
+        tabIndex(left) - tabIndex(right) || declarationIndex(left) - declarationIndex(right),
+    );
+  }
+
+  private revealField(key: string | undefined, ordered: readonly string[] = []): void {
+    if (!key) return;
+    const field = this.errorField(key);
+    if (field?.tab === 'address' && !this.errorScope(key)) {
+      const section = this.addressSections().find((item) =>
+        item.fields.some((candidate) => candidate.key === key),
+      );
+      if (section && this.isAddressSectionCompact(section)) this.editAddressSection(section);
+    }
+    const marker = this.errorTabMarker(key);
+    const group = this.formTabGroup();
+    const index = group?._tabs
+      ?.toArray()
+      .findIndex((tab) => labelClassList(tab.labelClass).includes(marker));
+    if (group && index !== undefined && index >= 0 && group.selectedIndex !== index) {
+      group.selectedIndex = index;
+    }
+    const fieldKey = (candidate: string) => {
+      const scope = this.errorScope(candidate);
+      return scope ? candidate.slice(scope.length + RELATED_FIELD_SEPARATOR.length) : candidate;
+    };
+    const keys = [key, ...ordered.filter((candidate) => candidate !== key)].map(fieldKey);
+    focusFirstInvalidField(() => this.formRoots(), keys);
+  }
+
+  private formRoots(): ParentNode[] {
+    const dialogId = this.dialogBinding?.ref.id;
+    const dialog = dialogId ? document.getElementById(dialogId) : null;
+    return [dialog, this.host.nativeElement].filter((root): root is HTMLElement => !!root);
+  }
+
+  /** After a save attempt, editing a field clears its error or re-flags a still-empty one. */
+  private refreshFieldError(key: string): void {
+    const current = this.rawFieldErrors();
+    if (!current.has(key) && !this.submitAttempted()) return;
+    const next = new Map(current);
+    next.delete(key);
+    const field = this.config.fields.find((item) => item.key === key);
+    if (
+      this.submitAttempted() &&
+      field &&
+      this.isFieldVisible(field) &&
+      this.isFieldRequired(field) &&
+      isBlankFieldValue(this.formValues()[key])
+    ) {
+      next.set(key, fieldError('required'));
+    }
+    if (next.size !== current.size || next.get(key) !== current.get(key)) {
+      this.rawFieldErrors.set(next);
+    }
+  }
+
+  private refreshRelatedFieldError(
+    collection: ConfigurableCrudRelatedCollection,
+    field: ConfigurableCrudField,
+    value: unknown,
+  ): void {
+    const key = this.fieldErrorKey(field, collection);
+    if (!this.rawFieldErrors().has(key) || isBlankFieldValue(value)) return;
+    const next = new Map(this.rawFieldErrors());
+    next.delete(key);
+    this.rawFieldErrors.set(next);
+  }
+
+  /**
+   * A 400 whose body lists `fields` (API `VALIDATION_FAILED` contract) marks those fields;
+   * the API message itself was already shown as a toast.
+   */
+  private markServerRejectedFields(error: unknown): void {
+    const names = apiErrorFields(error);
+    if (!names.length) return;
+    const errors = new Map<string, FieldError>();
+    for (const name of names) {
+      const leaf = name.split('.').pop() ?? name;
+      const field =
+        this.config.fields.find((item) => (item.payloadKey ?? item.key) === name) ??
+        this.config.fields.find((item) => item.key === name) ??
+        this.config.fields.find((item) => (item.payloadKey ?? item.key) === leaf);
+      if (field && this.isFieldVisible(field)) {
+        errors.set(field.key, customFieldError('form.validation.serverRejected'));
+      }
+    }
+    if (!errors.size) return;
+    this.submitAttempted.set(true);
+    this.rawFieldErrors.set(errors);
+    const ordered = this.orderedErrorKeys([...errors.keys()]);
+    this.revealField(ordered[0], ordered);
   }
 
   /** Labels seen on remote pages, so multi-selections keep readable chips across pages. */
@@ -3017,9 +3327,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const text = this.columnText(row, column).toLowerCase();
       if (text && text.includes(term)) return true;
 
-      const detail = column
-        .detail?.(row, (key) => this.transloco.translate(key))
-        ?.toLowerCase();
+      const detail = column.detail?.(row, (key) => this.transloco.translate(key))?.toLowerCase();
       if (detail && detail.includes(term)) return true;
 
       const field = column.field ?? column.id;
@@ -3278,35 +3586,39 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
+  /**
+   * Collects every invalid visible field (malformed JSON, invalid date, missing required value)
+   * and reports them together. Overrides add page rules with `rejectField(...)`.
+   */
   protected validatePayload(payload: ConfigurableCrudRecord): boolean {
+    const errors = new Map<string, FieldError>();
     for (const field of this.config.fields) {
-      if (field.format === 'json' && this.isFieldVisible(field)) {
+      if (!this.isFieldVisible(field)) continue;
+      if (field.format === 'json') {
         const raw = this.formValues()[field.key];
         if (typeof raw === 'string' && raw.trim()) {
           try {
             JSON.parse(raw);
           } catch {
-            this.snack.warning(this.t('Invalid JSON in {field}.', { field: this.t(field.label) }));
-            return false;
+            errors.set(field.key, fieldError('invalidJson'));
+            continue;
           }
         }
       }
-    }
-    for (const field of this.config.fields) {
       const value = payload[field.payloadKey ?? field.key];
-      if (this.isFieldVisible(field) && field.type === 'date' && value !== null && value !== '') {
+      if (field.type === 'date' && value !== null && value !== '' && value !== undefined) {
         if (this.normalizeDateForPayload(value) === undefined) {
-          this.snack.warning('Invalid date. Use the system date format.');
-          return false;
+          errors.set(field.key, fieldError('invalidDate'));
+          continue;
         }
       }
-      if (!this.isFieldVisible(field) || !this.isFieldRequired(field)) continue;
-      if (value === null || value === undefined || value === '') {
-        this.snack.warning('Required fields are missing.');
-        return false;
+      if (this.isFieldRequired(field) && isBlankFieldValue(value)) {
+        errors.set(field.key, fieldError('required'));
       }
     }
-    return true;
+    if (!errors.size) return true;
+    this.reportFieldErrors(errors);
+    return false;
   }
 
   /**
@@ -3318,13 +3630,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (this.dateDrafts.size === 0) return true;
 
     const committed: ConfigurableCrudRecord = {};
+    const invalid = new Map<string, FieldError>();
     for (const [key, draft] of this.dateDrafts) {
       const normalized = this.normalizeDateForPayload(draft);
-      if (!normalized) {
-        this.snack.warning('Invalid date. Use the system date format.');
-        return false;
-      }
-      committed[key] = normalized;
+      if (!normalized) invalid.set(key, fieldError('invalidDate'));
+      else committed[key] = normalized;
+    }
+    if (invalid.size) {
+      this.reportFieldErrors(invalid);
+      return false;
     }
 
     this.formValues.update((values) => ({ ...values, ...committed }));
@@ -3396,6 +3710,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected t(key: string, params?: Record<string, string | number>): string {
     return this.transloco.translate(key, params);
   }
+}
+
+const RELATED_FIELD_SEPARATOR = '::';
+
+function labelClassList(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  return (Array.isArray(value) ? value : value.split(/\s+/)).filter(Boolean);
 }
 
 function extractCrudItems(response: unknown): ConfigurableCrudRecord[] {

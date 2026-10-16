@@ -455,10 +455,7 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (!String(payload['name'] ?? '').trim()) {
-      this.snack.error(this.transloco.translate('Name is required.'));
-      return false;
-    }
+    if (!String(payload['name'] ?? '').trim()) return this.rejectField('name', 'Name is required.');
     return true;
   }
 

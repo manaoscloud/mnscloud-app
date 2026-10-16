@@ -132,11 +132,30 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       field: 'HspProvider',
       lookupKey: 'provider',
     },
-    { id: 'default', label: 'Default', kind: 'boolean', field: 'HspIsDefault', className: 'status-col' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HspIsActive', className: 'status-col' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HspIsDefault',
+      className: 'status-col',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HspIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
-    { key: 'status', source: 'HspIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'HspIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     {
       key: 'provider',
       source: 'HspProvider',
@@ -485,10 +504,10 @@ export class HostingStorageProvidersPage extends ConfigurableCrudPageBase<Config
       String(payload['password'] ?? '').trim().length > 0;
     if (hasToken || hasAccessKeyPair || hasLogin) return true;
 
-    this.snack.warning(
-      this.t('Sangfor requires an API token, Access Key/Secret Key, or username/password.'),
+    return this.rejectField(
+      'apiToken',
+      'Sangfor requires an API token, Access Key/Secret Key, or username/password.',
     );
-    return false;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -548,11 +567,16 @@ function usesSecretAccessKey(values: ConfigurableCrudRecord): boolean {
 }
 
 function requiresSecretAccessKey(values: ConfigurableCrudRecord): boolean {
-  return storageProvider(values['provider']) === 's3' || storageProvider(values['provider']) === 'spaces';
+  return (
+    storageProvider(values['provider']) === 's3' || storageProvider(values['provider']) === 'spaces'
+  );
 }
 
 function usesSangforScpConfig(values: ConfigurableCrudRecord): boolean {
-  return storageProvider(values['provider']) === 'sangfor_scp' && sangforMode(values['mode']) === 'scp_storage';
+  return (
+    storageProvider(values['provider']) === 'sangfor_scp' &&
+    sangforMode(values['mode']) === 'scp_storage'
+  );
 }
 
 function providerDefaults(
@@ -665,8 +689,6 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(value).filter(
-      ([, item]) => item !== null && item !== undefined && item !== '',
-    ),
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined && item !== ''),
   );
 }

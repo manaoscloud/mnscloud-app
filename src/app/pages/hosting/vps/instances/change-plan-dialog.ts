@@ -8,6 +8,9 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 import type { HostingVpsInstance, HostingVpsPlan, HostingVpsPlanConfig } from '../vps.types';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
+import { FieldRules } from '../../../../shared/forms/field-validation';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
+import { FieldInvalidDirective } from '../../../../shared/forms/field-invalid.directive';
 
 export type ChangePlanDialogData = {
   instance: HostingVpsInstance;
@@ -27,6 +30,7 @@ type UpgradePlanOption = {
   selector: 'app-hosting-vps-change-plan-dialog',
   standalone: true,
   imports: [
+    FieldInvalidDirective,
     ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
@@ -46,6 +50,9 @@ export class ChangePlanDialogComponent {
 
   readonly instance = this.data.instance;
   readonly targetPlanUUID = signal('');
+  /** Required Field Feedback Baseline: the plan turns red when confirming without one. */
+  readonly rules = new FieldRules({ targetPlan: () => !!this.targetPlanUUID().trim() });
+  private readonly revealInvalid = injectRevealInvalidFields();
 
   readonly currentPlan = computed(() => this.planById(this.instance.HostingVpsPlanHvpUUID));
 
@@ -156,7 +163,7 @@ export class ChangePlanDialogComponent {
 
   confirm() {
     const targetPlanUUID = this.targetPlanUUID().trim();
-    if (!targetPlanUUID) return;
+    if (!this.rules.check()) return this.revealInvalid();
     this.dialogRef.close({ targetPlanUUID });
   }
 }

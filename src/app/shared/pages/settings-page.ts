@@ -35,7 +35,7 @@ import { PageShellComponent } from './page-shell';
         <button
           mat-flat-button
           type="button"
-          [disabled]="!dirty() || saving() || loading() || !valid()"
+          [disabled]="!dirty() || saving() || loading()"
           (click)="save.emit()"
         >
           <mat-icon>save</mat-icon>{{ (saving() ? 'Saving...' : 'Save') | transloco }}

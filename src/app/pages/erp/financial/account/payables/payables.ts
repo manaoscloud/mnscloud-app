@@ -102,9 +102,9 @@ export class FinancialPayablesPage extends ConfigurableCrudPageBase<Configurable
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (Number(payload['amount']) > 0) return super.validatePayload(payload);
-    this.snack.warning(this.t('Amount must be greater than zero.'));
-    return false;
+    if (!super.validatePayload(payload)) return false;
+    if (Number(payload['amount']) > 0) return true;
+    return this.rejectField('amount', 'Amount must be greater than zero.');
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

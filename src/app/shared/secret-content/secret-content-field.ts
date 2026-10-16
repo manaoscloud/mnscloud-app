@@ -140,11 +140,24 @@ const PORTS: Record<string, number> = {
         <mat-icon>add</mat-icon>{{ 'Add field' | transloco }}
       </button>
     }
+    @if (invalid() && errorMessage()) {
+      <div class="span-4 secret-content-error" role="alert">{{ errorMessage() }}</div>
+    }
   </div>`,
+  styles: [
+    `
+      .secret-content-error {
+        color: var(--mat-sys-error);
+        font: var(--mat-sys-body-small);
+      }
+    `,
+  ],
 })
 export class SecretContentFieldComponent {
   readonly type = input('generic');
   readonly value = input<unknown>(null);
+  readonly invalid = input(false);
+  readonly errorMessage = input('');
   readonly valueChange = output<Record<string, unknown>>();
   readonly revealed = signal(new Set<string>());
   readonly data = computed<Record<string, any>>(() => ({

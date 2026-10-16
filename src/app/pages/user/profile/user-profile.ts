@@ -30,6 +30,8 @@ import { MnsDateAdapterModule } from '../../../shared/date-mask/mns-date-adapter
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { UserProfile } from '../../../models/user-profile.model';
+import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../../shared/forms/field-error-key.pipe';
 
 type ProfileFormModel = {
   firstName: string;
@@ -44,6 +46,7 @@ type ProfileFormModel = {
   selector: 'app-user-profile',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
     FormField,
     MatFormFieldModule,
     MatInputModule,
@@ -240,8 +243,11 @@ export class UserProfileComponent {
     }
   }
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
   async onSave() {
-    if (this.saving() || this.loading() || !this.profileForm().valid()) return;
+    if (this.saving() || this.loading()) return;
+    if (!this.profileForm().valid()) return this.revealInvalid(this.profileForm());
 
     this.saving.set(true);
     this.apiError.set(null);

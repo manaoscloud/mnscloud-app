@@ -33,6 +33,9 @@ import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
 } from '../forms/mns-search-select-field/mns-search-select-field';
+import { FieldRules } from '../forms/field-validation';
+import { injectRevealInvalidFields } from '../forms/reveal-invalid-fields';
+import { FieldInvalidDirective } from '../forms/field-invalid.directive';
 
 export interface SupportReportDialogData {
   url?: string;
@@ -54,6 +57,7 @@ function catalogOptions(rows: CatalogRow[] | undefined, uuidField: string): Cata
   selector: 'app-support-report-dialog',
   standalone: true,
   imports: [
+    FieldInvalidDirective,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -125,6 +129,13 @@ export class SupportReportDialogComponent {
   readonly canAddImages = computed(
     () => !this.created() && this.images().length < this.imageLimit && !this.addingImages(),
   );
+
+  /** Required Field Feedback Baseline: summary and details turn red when sending empty. */
+  readonly rules = new FieldRules({
+    title: () => this.draft().title.trim().length > 0,
+    description: () => this.draft().description.trim().length > 0,
+  });
+  private readonly revealInvalid = injectRevealInvalidFields();
 
   readonly isFormValid = computed(() => {
     const draft = this.draft();
@@ -336,7 +347,8 @@ export class SupportReportDialogComponent {
   }
 
   async submit() {
-    if (!this.isFormValid() || this.submitting()) return;
+    if (this.submitting()) return;
+    if (!this.rules.check() || !this.isFormValid()) return this.revealInvalid();
     this.submitting.set(true);
     const draft = this.draft();
     const include = draft.includeDiagnostics;

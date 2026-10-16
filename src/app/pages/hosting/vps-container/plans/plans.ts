@@ -34,8 +34,7 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps-container/plans',
   uuidField: 'HcnUUID',
   pageTitle: 'VPS Container Plans',
-  pageDescription:
-    'Define commercial prices and technical defaults for provider instance sizes.',
+  pageDescription: 'Define commercial prices and technical defaults for provider instance sizes.',
   createTitle: 'New VPS Container plan',
   editTitle: 'Edit VPS Container plan',
   dialogDescription: 'Create a commercial VPS Container plan from provider catalog data.',
@@ -44,8 +43,7 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
   deleteTitle: 'Delete VPS Container plan',
   deleteMessage: 'Are you sure you want to delete this VPS Container plan?',
   deleteSelectedTitle: 'Delete selected VPS Container plans',
-  deleteSelectedMessage:
-    'Are you sure you want to delete {count} selected VPS Container plan(s)?',
+  deleteSelectedMessage: 'Are you sure you want to delete {count} selected VPS Container plan(s)?',
   savedMessage: 'VPS Container plan saved successfully.',
   deletedMessage: 'VPS Container plan deleted successfully.',
   deleteFailedMessage: 'Failed to delete VPS Container plan.',
@@ -386,9 +384,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly providerEndpoint = computed(() =>
-    this.isMaster()
-      ? 'system/hosting/vps-container/providers'
-      : 'hosting/vps-container/providers',
+    this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
   );
   private readonly planEndpoint = computed(() =>
     this.isMaster()
@@ -478,15 +474,14 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
     const option = (this.catalog()?.sizes ?? []).find((item) => item.id === size);
     return Boolean(
       option &&
-        (catalogNumber(option.cpu) !== null ||
-          catalogNumber(option.memoryMb) !== null ||
-          catalogNumber(option.diskGb) !== null),
+      (catalogNumber(option.cpu) !== null ||
+        catalogNumber(option.memoryMb) !== null ||
+        catalogNumber(option.diskGb) !== null),
     );
   });
 
   constructor() {
-    const masterScope =
-      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    const masterScope = (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
     super({
       ...HOSTING_VPS_CONTAINER_PLAN_CONFIG,
       canCreate: masterScope,
@@ -497,7 +492,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.regions?.length),
+            hiddenWhen: () => !this.catalog()?.regions?.length,
             requiredWhen: () => Boolean(this.catalog()?.regions?.length),
           };
         }
@@ -511,7 +506,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.sizes?.length),
+            hiddenWhen: () => !this.catalog()?.sizes?.length,
             requiredWhen: () => Boolean(this.catalog()?.sizes?.length),
           };
         }
@@ -525,7 +520,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.images?.length),
+            hiddenWhen: () => !this.catalog()?.images?.length,
           };
         }
         if (field.key === 'imageManual') {
@@ -538,7 +533,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.profiles?.length),
+            hiddenWhen: () => !this.catalog()?.profiles?.length,
           };
         }
         if (field.key === 'profileManual') {
@@ -551,7 +546,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.storagePools?.length),
+            hiddenWhen: () => !this.catalog()?.storagePools?.length,
           };
         }
         if (field.key === 'storagePoolManual') {
@@ -564,7 +559,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.networks?.length),
+            hiddenWhen: () => !this.catalog()?.networks?.length,
           };
         }
         if (field.key === 'networkManual') {
@@ -807,8 +802,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const providerUUID = normalizeString(payload['providerUUID']);
     const providerRecord = this.providerById(providerUUID);
-    const region =
-      normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
+    const region = normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
     const size = normalizeString(payload['size']) ?? normalizeString(payload['sizeManual']);
     const image = normalizeString(payload['image']) ?? normalizeString(payload['imageManual']);
     const profile =
@@ -854,12 +848,12 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
     const providerUUID = normalizeString(payload['providerUUID']);
     if (!providerUUID || !this.providerById(providerUUID)) {
-      this.snack.warning(this.t('Select a valid VPS Container provider.'));
-      return false;
+      return this.rejectField('providerUUID', 'Select a valid VPS Container provider.');
     }
-    return super.validatePayload(payload);
+    return true;
   }
 
   private async fetchProviders() {
@@ -875,7 +869,9 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
         })),
       );
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS Container providers.'));
+      this.snack.error(
+        this.errorMessage(error) || this.t('Failed to load VPS Container providers.'),
+      );
     }
   }
 

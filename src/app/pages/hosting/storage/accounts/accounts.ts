@@ -88,11 +88,30 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingStorageProviderHspUUID',
     },
     { id: 'bucket', label: 'Bucket', field: 'HsaBucketLabel' },
-    { id: 'default', label: 'Default', kind: 'boolean', field: 'HsaIsDefault', className: 'status-col' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HsaIsActive', className: 'status-col' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HsaIsDefault',
+      className: 'status-col',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HsaIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
-    { key: 'status', source: 'HsaIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'HsaIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     {
       key: 'providerUuid',
       source: 'HostingStorageProviderHspUUID',
@@ -234,7 +253,8 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
     if (key !== 'providerUuid') return;
     const provider = this.providers().find((item) => item.HspUUID === String(value ?? ''));
     this.patchFormValues({
-      linkedProviderType: provider?.HspProvider ?? String(this.formValues()['linkedProviderType'] ?? ''),
+      linkedProviderType:
+        provider?.HspProvider ?? String(this.formValues()['linkedProviderType'] ?? ''),
     });
   }
 
@@ -261,12 +281,10 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
     if (!super.validatePayload(payload)) return false;
     const provider = accountProviderType(payload);
     if (requiresBucketField(provider) && !String(payload['bucket'] ?? '').trim()) {
-      this.snack.warning(this.t('Bucket is required for the selected provider.'));
-      return false;
+      return this.rejectField('bucket', 'Bucket is required for the selected provider.');
     }
     if (provider === 'azure' && !String(payload['container'] ?? '').trim()) {
-      this.snack.warning(this.t('Container is required for Azure Blob Storage.'));
-      return false;
+      return this.rejectField('container', 'Container is required for Azure Blob Storage.');
     }
     return true;
   }
@@ -385,10 +403,7 @@ function accountProviderType(values: ConfigurableCrudRecord): StorageProvider | 
 
 function usesBucketField(provider: StorageProvider | ''): boolean {
   return (
-    provider === 's3' ||
-    provider === 'spaces' ||
-    provider === 'gcs' ||
-    provider === 'sangfor_scp'
+    provider === 's3' || provider === 'spaces' || provider === 'gcs' || provider === 'sangfor_scp'
   );
 }
 
@@ -412,13 +427,15 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 function stringValue(value: unknown): string {
-  return typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value);
+  return typeof value === 'string'
+    ? value
+    : value === null || value === undefined
+      ? ''
+      : String(value);
 }
 
 function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(value).filter(
-      ([, item]) => item !== null && item !== undefined && item !== '',
-    ),
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined && item !== ''),
   );
 }

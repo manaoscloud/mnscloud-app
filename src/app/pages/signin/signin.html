@@ -65,6 +65,7 @@
             {{ showPassword() ? 'visibility_off' : 'visibility' }}
           </mat-icon>
         </button>
+        <mat-error>{{ form.password().errors() | mnsFieldErrorKey | transloco }}</mat-error>
       </mat-form-field>
 
       <div class="signin-options">

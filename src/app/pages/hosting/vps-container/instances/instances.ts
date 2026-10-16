@@ -229,14 +229,10 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
   private readonly providerEndpoint = computed(() =>
-    this.isMaster()
-      ? 'system/hosting/vps-container/providers'
-      : 'hosting/vps-container/providers',
+    this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.isMaster()
-      ? 'system/hosting/vps-container/instances'
-      : 'hosting/vps-container/instances',
+    this.isMaster() ? 'system/hosting/vps-container/instances' : 'hosting/vps-container/instances',
   );
   private readonly planEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans',
@@ -449,18 +445,15 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (this.isProvisionedEdit()) {
-      return super.validatePayload(payload);
-    }
+    if (!super.validatePayload(payload)) return false;
+    if (this.isProvisionedEdit()) return true;
     if (!normalizeString(payload['sshKey'])) {
-      this.snack.warning(this.t('SSH key is required.'));
-      return false;
+      return this.rejectField('sshKey', 'SSH key is required.');
     }
     if (!normalizeString(payload['image'])) {
-      this.snack.warning(this.t('Select an image from the provider catalog.'));
-      return false;
+      return this.rejectField('image', 'Select an image from the provider catalog.');
     }
-    return super.validatePayload(payload);
+    return true;
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
@@ -525,8 +518,9 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
     const uuid = this.recordUUID(row);
     if (!this.canRetryProvision(row) || this.retryingInstanceUUIDs().has(uuid)) return;
 
-    const errorMessage = parseConfig<HostingVpsContainerInstanceConfig>(row['HciConfig'])
-      ?.provisionError;
+    const errorMessage = parseConfig<HostingVpsContainerInstanceConfig>(
+      row['HciConfig'],
+    )?.provisionError;
     const details =
       typeof errorMessage === 'string' && errorMessage.trim()
         ? ` Last error: ${errorMessage.trim()}`
@@ -545,8 +539,9 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
         `${this.instanceEndpoint()}/${uuid}/retry-provision`,
         {},
       );
-      const updated = (response as { data?: { item?: HostingVpsContainerInstance } } | null | undefined)
-        ?.data?.item;
+      const updated = (
+        response as { data?: { item?: HostingVpsContainerInstance } } | null | undefined
+      )?.data?.item;
       if ((updated?.HciStatus ?? '').toLowerCase() === 'queue_failed') {
         this.snack.error(this.t('VPS Container provisioning retry could not be queued.'));
       } else {
@@ -801,7 +796,9 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
     if (!uuid) return this.t('Default provider');
     const named = this.providers().find((acc) => acc.HcpUUID === uuid)?.HcpName;
     if (named) return named;
-    const linkedPlan = this.plans().find((plan) => plan.HostingVpsContainerProviderHcpUUID === uuid);
+    const linkedPlan = this.plans().find(
+      (plan) => plan.HostingVpsContainerProviderHcpUUID === uuid,
+    );
     if (linkedPlan?.HcnProvider) return linkedPlan.HcnProvider;
     return this.t('Unknown provider');
   }

@@ -53,6 +53,7 @@
         class="span-1"
         [label]="'Country' | transloco"
         [field]="identityForm.countryCode"
+        [errorMessage]="identityForm.countryCode().errors() | mnsFieldErrorKey | transloco"
         [options]="countryOptions()"
         [placeholder]="'Search' | transloco"
         [emptyLabel]="'No records found.' | transloco"
@@ -62,6 +63,7 @@
         class="span-1"
         [label]="'Party type' | transloco"
         [field]="identityForm.partyType"
+        [errorMessage]="identityForm.partyType().errors() | mnsFieldErrorKey | transloco"
         [options]="partyOptions"
         [translateOptions]="true"
         [placeholder]="'Search' | transloco"
@@ -72,6 +74,7 @@
         class="span-1"
         [label]="'Tax ID type' | transloco"
         [field]="identityForm.taxIdType"
+        [errorMessage]="identityForm.taxIdType().errors() | mnsFieldErrorKey | transloco"
         [options]="typeOptions()"
         [placeholder]="'Search' | transloco"
         [emptyLabel]="'No records found.' | transloco"
@@ -98,6 +101,7 @@
           [label]="'Tax ID' | transloco"
           [text]="'Separators are optional. Check digits are validated when saving.' | transloco"
         />
+        <mat-error>{{ identityForm.taxId().errors() | mnsFieldErrorKey | transloco }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-2">
@@ -105,6 +109,9 @@
           (model().partyType === 'individual' ? 'Full name' : 'Legal name') | transloco
         }}</mat-label>
         <input matInput [formField]="identityForm.legalName" autocomplete="organization" />
+        <mat-error>{{
+          identityForm.legalName().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       @if (model().partyType === 'business') {
@@ -116,6 +123,9 @@
             [label]="'Trade name' | transloco"
             [text]="'Shown in the tenant switcher instead of the legal name.' | transloco"
           />
+          <mat-error>{{
+            identityForm.tradeName().errors() | mnsFieldErrorKey | transloco
+          }}</mat-error>
         </mat-form-field>
       }
     </div>
@@ -129,6 +139,9 @@
           [label]="'Billing e-mail' | transloco"
           [text]="'Receives charges and receipts. Empty uses the owner e-mail.' | transloco"
         />
+        <mat-error>{{
+          identityForm.billingEmail().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
@@ -152,11 +165,17 @@
             <mat-icon>search</mat-icon>
           </button>
         }
+        <mat-error>{{
+          identityForm.addressZip().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-2">
         <mat-label>{{ 'Address' | transloco }}</mat-label>
         <input matInput [formField]="identityForm.addressStreet" autocomplete="address-line1" />
+        <mat-error>{{
+          identityForm.addressStreet().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
     </div>
 
@@ -164,21 +183,33 @@
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Number' | transloco }}</mat-label>
         <input matInput [formField]="identityForm.addressNumber" />
+        <mat-error>{{
+          identityForm.addressNumber().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Complement' | transloco }}</mat-label>
         <input matInput [formField]="identityForm.addressComplement" autocomplete="address-line2" />
+        <mat-error>{{
+          identityForm.addressComplement().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Neighborhood' | transloco }}</mat-label>
         <input matInput [formField]="identityForm.addressDistrict" />
+        <mat-error>{{
+          identityForm.addressDistrict().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'City' | transloco }}</mat-label>
         <input matInput [formField]="identityForm.addressCity" autocomplete="address-level2" />
+        <mat-error>{{
+          identityForm.addressCity().errors() | mnsFieldErrorKey | transloco
+        }}</mat-error>
       </mat-form-field>
 
       @if (isBrazil()) {
@@ -186,6 +217,7 @@
           class="span-1"
           [label]="'State' | transloco"
           [field]="identityForm.addressState"
+          [errorMessage]="identityForm.addressState().errors() | mnsFieldErrorKey | transloco"
           [options]="stateOptions"
           [placeholder]="'Search' | transloco"
           [emptyLabel]="'No records found.' | transloco"
@@ -194,6 +226,9 @@
         <mat-form-field appearance="outline" class="span-1">
           <mat-label>{{ 'State or region' | transloco }}</mat-label>
           <input matInput [formField]="identityForm.addressState" autocomplete="address-level1" />
+          <mat-error>{{
+            identityForm.addressState().errors() | mnsFieldErrorKey | transloco
+          }}</mat-error>
         </mat-form-field>
       }
     </div>

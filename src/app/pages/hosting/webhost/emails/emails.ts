@@ -308,8 +308,7 @@ export class HostingWebhostEmailsPage extends ConfigurableCrudPageBase<Configura
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
     if (!this.editingRecord() && !String(payload['password'] ?? '').trim()) {
-      this.snack.warning(this.t('Password is required when auto-provisioning a mailbox.'));
-      return false;
+      return this.rejectField('password', 'Password is required when auto-provisioning a mailbox.');
     }
     return true;
   }

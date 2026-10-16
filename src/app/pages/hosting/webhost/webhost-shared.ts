@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, viewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -17,6 +17,7 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
 
 export const WEBHOST_PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'cpanel_whm', label: 'cPanel/WHM' },
@@ -118,9 +119,7 @@ export function normalizeString(value: unknown): string | null {
 
 export function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(value).filter(
-      ([, item]) => item !== null && item !== undefined && item !== '',
-    ),
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined && item !== ''),
   );
 }
 
@@ -176,21 +175,18 @@ export function lifecycleChipClass(value: unknown): string {
         <input
           matInput
           type="password"
+          required
+          minlength="8"
           [(ngModel)]="password"
           autocomplete="new-password"
           (keydown.enter)="confirm()"
         />
+        <mat-error>{{ 'Password must have at least 8 characters.' | transloco }}</mat-error>
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" (click)="cancel()">{{ 'Cancel' | transloco }}</button>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        [disabled]="password.trim().length < 8"
-        (click)="confirm()"
-      >
+      <button mat-flat-button color="primary" type="button" (click)="confirm()">
         {{ 'Confirm' | transloco }}
       </button>
     </mat-dialog-actions>
@@ -205,9 +201,15 @@ export class WebhostPasswordPromptDialog {
     this.dialogRef.close(null);
   }
 
+  private readonly passwordModel = viewChild(NgModel);
+  private readonly revealInvalid = injectRevealInvalidFields();
+
   confirm() {
     const value = this.password.trim();
-    if (value.length < 8) return;
+    if (value.length < 8) {
+      this.passwordModel()?.control.setErrors({ minlength: true });
+      return this.revealInvalid(this.passwordModel()?.control);
+    }
     this.dialogRef.close(value);
   }
 }

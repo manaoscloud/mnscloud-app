@@ -322,7 +322,9 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const sizes = this.catalog()?.sizes ?? [];
     const region = this.selectedRegion();
     if (!region) return sizes;
-    const regionAware = sizes.some((size) => Array.isArray(size.regions) && size.regions.length > 0);
+    const regionAware = sizes.some(
+      (size) => Array.isArray(size.regions) && size.regions.length > 0,
+    );
     if (!regionAware) return sizes;
     const parent = lightsailParentRegion(region);
     return sizes.filter((size) => {
@@ -360,8 +362,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   });
 
   private readonly locksCatalogSpecs = computed(() => {
-    const provider =
-      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    const provider = this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
     if (provider === 'digitalocean' || provider === 'lightsail') return true;
     const size =
       normalizeString(this.formValues()['size']) ??
@@ -370,16 +371,15 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const option = (this.catalog()?.sizes ?? []).find((item) => item.id === size);
     return Boolean(
       option &&
-        (catalogNumber(option.cpu) !== null ||
-          catalogNumber(option.memoryMb) !== null ||
-          catalogNumber(option.diskGb) !== null ||
-          catalogNumber(option.transferGb) !== null),
+      (catalogNumber(option.cpu) !== null ||
+        catalogNumber(option.memoryMb) !== null ||
+        catalogNumber(option.diskGb) !== null ||
+        catalogNumber(option.transferGb) !== null),
     );
   });
 
   constructor() {
-    const masterScope =
-      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    const masterScope = (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
     super({
       ...HOSTING_VPS_PLAN_CONFIG,
       canCreate: masterScope,
@@ -390,7 +390,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
           return {
             ...field,
             loading: () => this.catalogLoading(),
-            hiddenWhen: () => !(this.catalog()?.regions?.length),
+            hiddenWhen: () => !this.catalog()?.regions?.length,
             requiredWhen: () => Boolean(this.catalog()?.regions?.length),
           };
         }
@@ -407,12 +407,12 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
             ...field,
             loading: () => this.catalogLoading(),
             hiddenWhen: () => {
-              if (!(this.catalog()?.sizes?.length)) return true;
+              if (!this.catalog()?.sizes?.length) return true;
               if (this.catalog()?.regions?.length && !this.selectedRegion()) return true;
               return false;
             },
             requiredWhen: () => {
-              if (!(this.catalog()?.sizes?.length)) return false;
+              if (!this.catalog()?.sizes?.length) return false;
               if (this.catalog()?.regions?.length) return Boolean(this.selectedRegion());
               return true;
             },
@@ -477,9 +477,9 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       );
       if (option?.label) return option.label;
       const provider = String(
-        this.rows().find((row) => String(row['HostingVpsProviderHvrUUID'] ?? '') === String(value ?? ''))?.[
-          'HvpProvider'
-        ] ?? '',
+        this.rows().find(
+          (row) => String(row['HostingVpsProviderHvrUUID'] ?? '') === String(value ?? ''),
+        )?.['HvpProvider'] ?? '',
       );
       return provider ? providerTypeLabel(provider) : '';
     }
@@ -613,8 +613,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const providerUUID = normalizeString(payload['providerUUID']);
     const providerRecord = this.providerById(providerUUID);
-    const region =
-      normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
+    const region = normalizeString(payload['region']) ?? normalizeString(payload['regionManual']);
     const size = normalizeString(payload['size']) ?? normalizeString(payload['sizeManual']);
     const notes = normalizeString(payload['notes']);
     const setupFee = Number(
@@ -632,9 +631,8 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       normalizeString(sizeOption?.category) ?? normalizeString(existingConfig?.sizeCategory);
     const provider = providerRecord?.HvrProvider ?? this.catalog()?.provider ?? null;
     const lightsailAz = provider === 'lightsail' ? lightsailAvailabilityZone(region) : null;
-    const lightsailAwsRegion = provider === 'lightsail'
-      ? lightsailParentRegion(region) || region
-      : null;
+    const lightsailAwsRegion =
+      provider === 'lightsail' ? lightsailParentRegion(region) || region : null;
 
     return {
       name: String(payload['name'] ?? '').trim(),
@@ -663,12 +661,12 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
     const providerUUID = normalizeString(payload['providerUUID']);
     if (!providerUUID || !this.providerById(providerUUID)) {
-      this.snack.warning(this.t('Select a valid VPS provider.'));
-      return false;
+      return this.rejectField('providerUUID', 'Select a valid VPS provider.');
     }
-    return super.validatePayload(payload);
+    return true;
   }
 
   private async fetchProviders() {
@@ -692,8 +690,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const providerUUID =
       normalizeString(this.formValues()['providerUUID']) ?? this.catalogProviderUUID();
     if (!providerUUID) return;
-    const provider =
-      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    const provider = this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
     // DigitalOcean already returns size.regions[] in one catalog payload.
     if (provider !== 'lightsail') return;
     void this.fetchProviderCatalog(providerUUID, {
@@ -714,7 +711,8 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       return;
     }
 
-    const region = normalizeString(options?.region) ??
+    const region =
+      normalizeString(options?.region) ??
       normalizeString(this.formValues()['region']) ??
       normalizeString(this.formValues()['regionManual']);
     const fetchKey = `${uuid}:${region ?? ''}`;
@@ -779,8 +777,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (!option) return;
 
     const region = this.selectedRegion();
-    const provider =
-      this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
+    const provider = this.catalog()?.provider ?? this.selectedProvider()?.HvrProvider ?? null;
     const requiresCatalogSize = provider === 'digitalocean' || provider === 'lightsail';
     if (
       requiresCatalogSize &&
@@ -826,7 +823,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   private clearSizeSelection(message?: string): void {
     const hadSize = Boolean(
       normalizeString(this.formValues()['size']) ??
-        normalizeString(this.formValues()['sizeManual']),
+      normalizeString(this.formValues()['sizeManual']),
     );
     this.patchFormValues({
       size: '',
@@ -904,7 +901,9 @@ function catalogNumber(value: unknown): number | null {
 
 /** `us-east-1a` → `us-east-1`; plain regions pass through. */
 function lightsailParentRegion(regionOrAz: string | null | undefined): string | null {
-  const value = String(regionOrAz ?? '').trim().toLowerCase();
+  const value = String(regionOrAz ?? '')
+    .trim()
+    .toLowerCase();
   if (!value) return null;
   const match = value.match(/^([a-z0-9-]+?)([a-z])$/i);
   if (!match) return String(regionOrAz ?? '').trim() || null;
@@ -964,8 +963,12 @@ function sizeOptionCategory(option: VpsCatalogOption) {
 function deriveLightsailGrouping(
   option: VpsCatalogOption,
 ): { family: string; category: string } | null {
-  const id = String(option.slug ?? option.id ?? '').trim().toLowerCase();
-  const name = String(option.name ?? option.label ?? '').trim().toLowerCase();
+  const id = String(option.slug ?? option.id ?? '')
+    .trim()
+    .toLowerCase();
+  const name = String(option.name ?? option.label ?? '')
+    .trim()
+    .toLowerCase();
   const looksLightsail =
     /^(?:\d+xlarge|xlarge|large|medium|small|micro|nano)(?:_win)?(?:_\d+_\d+)?$/i.test(id) ||
     /_(?:win_)?\d+_\d+$/i.test(id);
@@ -980,7 +983,9 @@ function deriveLightsailGrouping(
   const tierMatch =
     id.match(/^(\d+xlarge|xlarge|large|medium|small|micro|nano)/i) ||
     name.match(/(\d+\s*x\s*large|\d+xlarge|xlarge|large|medium|small|micro|nano)/i);
-  const rawTier = String(tierMatch?.[1] ?? 'other').replace(/\s+/g, '').toLowerCase();
+  const rawTier = String(tierMatch?.[1] ?? 'other')
+    .replace(/\s+/g, '')
+    .toLowerCase();
   let category = 'Other';
   if (/^\d+xlarge$/.test(rawTier)) {
     category = rawTier.replace(/xlarge$/, 'Xlarge');
@@ -1058,10 +1063,7 @@ function sizeOptionPlanLabel(option: VpsCatalogOption) {
 }
 
 function sizeOptionDescription(option: VpsCatalogOption) {
-  const parts = [
-    sizeOptionMeta(option),
-    sizeOptionPrice(option),
-  ].filter(Boolean);
+  const parts = [sizeOptionMeta(option), sizeOptionPrice(option)].filter(Boolean);
   return parts.join(' · ') || undefined;
 }
 

@@ -1,5 +1,6 @@
 import {
   Component,
+  DoCheck,
   DestroyRef,
   ElementRef,
   HostBinding,
@@ -25,7 +26,9 @@ import { Subject } from 'rxjs';
     },
   ],
 })
-export class PhoneInputComponent implements ControlValueAccessor, MatFormFieldControl<string> {
+export class PhoneInputComponent
+  implements ControlValueAccessor, MatFormFieldControl<string>, DoCheck
+{
   ngControl = inject(NgControl, { optional: true, self: true });
 
   static nextId = 0;
@@ -42,6 +45,8 @@ export class PhoneInputComponent implements ControlValueAccessor, MatFormFieldCo
   readonly placeholderInput = input('', { alias: 'placeholder' });
   readonly requiredInput = input(false, { alias: 'required' });
   readonly disabledInput = input(false, { alias: 'disabled' });
+  /** Set by forms without an NgControl (Required Field Feedback Baseline). */
+  readonly invalidInput = input(false, { alias: 'invalid' });
   readonly valueInput = input<string | null>(null, { alias: 'value' });
   readonly valueChange = output<string>();
   private readonly disabledState = signal(false);
@@ -80,7 +85,8 @@ export class PhoneInputComponent implements ControlValueAccessor, MatFormFieldCo
   }
 
   get errorState(): boolean {
-    return !!this.ngControl && !!this.ngControl.invalid && this.touched;
+    const touched = this.touched || !!this.ngControl?.touched;
+    return this.invalidInput() || (!!this.ngControl && !!this.ngControl.invalid && touched);
   }
 
   userAriaDescribedBy = '';
@@ -99,6 +105,17 @@ export class PhoneInputComponent implements ControlValueAccessor, MatFormFieldCo
         this.value = nextValue;
       }
     });
+  }
+
+  private lastErrorState = false;
+
+  /** mat-form-field is OnPush: re-render when the error state changes (flag or touched form). */
+  ngDoCheck(): void {
+    const errorState = this.errorState;
+    if (errorState !== this.lastErrorState) {
+      this.lastErrorState = errorState;
+      this.stateChanges.next();
+    }
   }
 
   private readonly cleanupOnDestroy = inject(DestroyRef).onDestroy(() => {

@@ -64,6 +64,7 @@ run('node', [
   'scripts/validate-install-command-dialog.test.mjs',
   'scripts/validate-menus.test.mjs',
   'scripts/validate-page-descriptions.test.mjs',
+  'scripts/validate-required-fields.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -99,6 +100,8 @@ run('node', ['scripts/validate-install-command-dialog.mjs']);
 run('node', ['scripts/validate-menus.mjs']);
 // Every page header says what the resource is for (app.md Page Description Contract).
 run('node', ['scripts/validate-page-descriptions.mjs']);
+// Invalid fields turn red, are named and focused on save (app.md Required Field Feedback Baseline).
+run('node', ['scripts/validate-required-fields.mjs']);
 
 const crudRoots = [
   ...new Set(

@@ -150,8 +150,7 @@ export class InvoicingBoletosPage extends ConfigurableCrudPageBase<ConfigurableC
   override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
     if (!Number.isFinite(Number(payload['amount'])) || Number(payload['amount']) <= 0) {
-      this.snack.warning(this.t('Amount must be greater than zero.'));
-      return false;
+      return this.rejectField('amount', 'Amount must be greater than zero.');
     }
     return true;
   }

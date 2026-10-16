@@ -21,6 +21,7 @@
     "check:nav": "node scripts/validate-nav-labels.mjs",
     "check:page-descriptions": "node scripts/validate-page-descriptions.mjs",
     "check:dialog-report": "node scripts/validate-dialog-report-button.mjs",
+    "check:required-fields": "node scripts/validate-required-fields.mjs",
     "check:menus": "node scripts/validate-menus.mjs",
     "check:install-command-dialog": "node scripts/validate-install-command-dialog.mjs",
     "check:dashboard": "node scripts/validate-dashboard-template.mjs",

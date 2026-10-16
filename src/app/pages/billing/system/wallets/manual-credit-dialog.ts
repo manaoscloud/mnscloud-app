@@ -14,6 +14,8 @@ import {
 } from '../../../../shared/currency-mask/currency-mask.directive';
 import { BillingTenantLookupItem, BillingService } from '../../shared/billing.service';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
+import { FieldInvalidDirective } from '../../../../shared/forms/field-invalid.directive';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
 
 export type BillingManualCreditDialogData = BillingTenantLookupItem;
 
@@ -21,6 +23,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
   selector: 'app-billing-manual-credit-dialog',
   standalone: true,
   imports: [
+    FieldInvalidDirective,
     ReportProblemButtonComponent,
     MatButtonModule,
     MatDialogModule,
@@ -62,8 +65,10 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                   [appCurrencyMaskCurrency]="currency()"
                   [value]="amount()"
                   (input)="amount.set($any($event.target).value)"
+                  [mnsInvalid]="amountInvalid()"
                   required
                 />
+                <mat-error>{{ 'Amount must be greater than zero.' | transloco }}</mat-error>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-4">
                 <mat-label>{{ 'Reason' | transloco }}*</mat-label>
@@ -72,7 +77,9 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                   rows="4"
                   [value]="reason()"
                   (input)="reason.set($any($event.target).value)"
+                  [mnsInvalid]="reasonInvalid()"
                 ></textarea>
+                <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
               </mat-form-field>
               <mat-form-field appearance="outline" class="span-2">
                 <mat-label>{{ 'Reference' | transloco }}</mat-label>
@@ -100,7 +107,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
               color="primary"
               type="button"
               class="save-main-button"
-              [disabled]="!valid() || saving()"
+              [disabled]="saving()"
               (click)="save()"
             >
               <mat-icon>save</mat-icon>{{ 'Manual credit' | transloco }}
@@ -127,13 +134,22 @@ export class BillingManualCreditDialogComponent {
     () => parseCurrencyAmount(this.amount(), this.currencyLocale()) ?? 0,
   );
   readonly valid = computed(() => this.amountValue() > 0 && Boolean(this.reason().trim()));
+  /** Required Field Feedback Baseline: invalid fields turn red after the first save attempt. */
+  readonly submitAttempted = signal(false);
+  readonly amountInvalid = computed(() => this.submitAttempted() && this.amountValue() <= 0);
+  readonly reasonInvalid = computed(() => this.submitAttempted() && !this.reason().trim());
+  private readonly revealInvalid = injectRevealInvalidFields();
 
   close(): void {
     this.dialogRef.close(false);
   }
 
   async save(): Promise<void> {
-    if (!this.valid() || this.saving()) return;
+    if (this.saving()) return;
+    if (!this.valid()) {
+      this.submitAttempted.set(true);
+      return this.revealInvalid();
+    }
     this.saving.set(true);
     try {
       await this.billing.manualCredit({

@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../services/api.service';
+import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fields';
 
 @Component({
   standalone: true,
@@ -50,14 +51,18 @@ export class ForgotPasswordComponent {
     return '';
   });
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
+  /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
   get canSubmit(): boolean {
-    return this.form().valid() && !this.isLoading() && !this.hasSubmitted();
+    return !this.isLoading() && !this.hasSubmitted();
   }
 
   async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
 
     if (!this.canSubmit) return;
+    if (!this.form().valid()) return this.revealInvalid(this.form());
 
     this.isLoading.set(true);
     this.infoMessage.set(null);

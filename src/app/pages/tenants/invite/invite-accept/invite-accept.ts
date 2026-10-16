@@ -18,11 +18,14 @@ import { AppI18nService } from '../../../../services/app-i18n.service';
 import { DateMaskDirective } from '../../../../shared/date-mask/date-mask.directive';
 import { MnsDateAdapterModule } from '../../../../shared/date-mask/mns-date-adapter.module';
 import { PhoneInputComponent } from '../../../../shared/phone-input/phone-input.component';
+import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
+import { FieldErrorKeyPipe } from '../../../../shared/forms/field-error-key.pipe';
 
 @Component({
   selector: 'invite-accept',
   standalone: true,
   imports: [
+    FieldErrorKeyPipe,
     RouterModule,
     FormField,
     StateMessageComponent,
@@ -82,8 +85,11 @@ export class InviteAcceptPage {
     afterNextRender(() => void this.initializeInvite());
   }
 
+  private readonly revealInvalid = injectRevealInvalidFields();
+
+  /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
   get canSubmit(): boolean {
-    return this.form().valid() && !this.submitting();
+    return !this.submitting();
   }
 
   togglePassword() {
@@ -165,6 +171,7 @@ export class InviteAcceptPage {
     event?.preventDefault();
 
     if (!this.canSubmit || !this.token) return;
+    if (!this.form().valid()) return this.revealInvalid(this.form());
 
     this.submitting.set(true);
     this.error.set(null);

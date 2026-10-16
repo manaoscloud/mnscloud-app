@@ -791,6 +791,50 @@ the page must use the shared base named here.
   - The DOM translation service is a safety net only; it is not the source of truth for CRUD
     component labels.
 
+## Required Field Feedback Baseline (Current)
+
+Clicking Save with a missing or invalid field must show which field is wrong: the field turns red,
+its reason appears under it, a toast names it and the first one receives focus.
+
+- Save/Confirm/Submit buttons are never disabled by form validity (only while saving, loading or
+  for a non-field gate such as a captcha). The click reveals the invalid fields instead.
+- Generic CRUD (`ConfigurableCrudPageBase`): `validatePayload` collects every invalid visible
+  field (required, invalid date, invalid JSON) into `fieldErrors()`; the toast names the first
+  (`form.validation.missingOne` / `missingMany`); the form switches to the tab of the first
+  invalid field in visual order (tab order, then declaration order), expands a compact address
+  section and focuses it. Tabs holding errors get `crud-tab-invalid` (red label + dot). Errors
+  clear as the field is filled and re-flag a required field emptied again; they reset when the
+  dialog opens/closes or after Save/New.
+- Page rules in `validatePayload` overrides call `super.validatePayload` first and then
+  `return this.rejectField('<fieldKey>', '<translated message key>')`; a rule about a group of
+  fields points at one with `firstVisibleField([...])`. Flows that bypass the base save use
+  `reportFieldErrors(new Map([[key, fieldError('required')]]))`. Never a toast without a field.
+- Related collection drafts validate on Add with the same marking (`<collection>::<field>` keys).
+- API validation failures may return `{ error, code: 'VALIDATION_FAILED', fields: [...] }`
+  (mnscloud-api `docs/api-patterns.md`); the base marks those fields
+  (`form.validation.serverRejected`) and focuses the first. The API stays the enforcement layer.
+- Template contract (`configurable-crud-page.html`): every `matInput` binds
+  `[mnsInvalid]="hasFieldError(field)"` (`FieldInvalidDirective`: Material has no `NgControl`
+  here, so the directive installs the matcher and refreshes the error state) and
+  `[attr.data-field-key]`; every field `mat-form-field` has
+  `<mat-error>{{ fieldErrorText(field) }}</mat-error>`; shared field components
+  (`mns-search-select-field`, `mns-checkbox-group-field`, `mns-permission-tree-field`,
+  `mns-secret-content-field`, `app-phone-input`) take `[invalid]` (+ `[errorMessage]`) and the
+  marker; field tabs bind `[labelClass]="tabLabelClass('<tab>')"`.
+- Forms outside the generic CRUD use `src/app/shared/forms/`:
+  - signal forms: keep the button enabled and on submit
+    `if (!this.form().valid()) return this.revealInvalid(this.form());` with
+    `private readonly revealInvalid = injectRevealInvalidFields();`; show messages with
+    `<mat-error>{{ form.x().errors() | mnsFieldErrorKey | transloco }}</mat-error>`;
+  - plain signal dialogs: `rules = new FieldRules({ x: () => ... })`, bind
+    `[mnsInvalid]="rules.invalid('x')"` + `<mat-error>`, and on save
+    `if (!this.rules.check()) return this.revealInvalid();`.
+- Messages use only field labels, never values (secrets and `data-report-mask` fields included).
+- `npm run check:required-fields` (part of `verify:changed`, app-wide, no allowlist) fails on a
+  CRUD field control without the bindings, on the anonymous "Required fields are missing." toast
+  and on a button disabled by form validity. A button that must stay disabled documents
+  `required-feedback-exempt: <reason>` in the three lines above it.
+
 ## FK Quick-Create Baseline (Current)
 
 Users must be able to create a missing related record from the FK select itself, without leaving

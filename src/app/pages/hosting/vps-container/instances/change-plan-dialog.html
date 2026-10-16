@@ -27,7 +27,11 @@
 
     <mat-form-field appearance="outline" class="change-plan-select">
       <mat-label>{{ 'Target plan' | transloco }}</mat-label>
-      <mat-select [value]="targetPlanUUID()" (selectionChange)="targetPlanUUID.set($event.value)">
+      <mat-select
+        [value]="targetPlanUUID()"
+        [mnsInvalid]="rules.invalid('targetPlan')"
+        (selectionChange)="targetPlanUUID.set($event.value)"
+      >
         @for (option of changePlanOptions(); track option.plan.HcnUUID) {
           <mat-option [value]="option.plan.HcnUUID" [disabled]="option.blocked">
             <div class="plan-change-option">
@@ -44,6 +48,7 @@
           </mat-option>
         }
       </mat-select>
+      <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
     </mat-form-field>
 
     @if (!changePlanOptions().length) {
@@ -60,13 +65,7 @@
       </button>
     </div>
     <div class="primary-actions">
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        [disabled]="!targetPlanUUID()"
-        (click)="confirm()"
-      >
+      <button mat-flat-button color="primary" type="button" (click)="confirm()">
         <mat-icon>swap_vert</mat-icon>
         {{ 'Change plan' | transloco }}
       </button>

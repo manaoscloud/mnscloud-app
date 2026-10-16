@@ -113,7 +113,13 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       field: 'HcpIsDefault',
       className: 'status-col',
     },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HcpIsActive', className: 'status-col' },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HcpIsActive',
+      className: 'status-col',
+    },
   ],
   fields: [
     {
@@ -287,8 +293,7 @@ export class HostingVpsContainerProviderPage extends ConfigurableCrudPageBase<Co
   );
 
   constructor() {
-    const masterScope =
-      (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
+    const masterScope = (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master';
     super({
       ...HOSTING_VPS_CONTAINER_PROVIDER_CONFIG,
       pageDescription:
@@ -386,8 +391,10 @@ export class HostingVpsContainerProviderPage extends ConfigurableCrudPageBase<Co
     const editing = !!this.editingRecord();
     const credentials = buildCredentialsPayload(payload);
     if (!editing && !credentials) {
-      this.snack.warning(this.t('Credentials are required for new providers.'));
-      return false;
+      return this.rejectField(
+        this.firstVisibleField(CREDENTIAL_FIELD_KEYS),
+        'Credentials are required for new providers.',
+      );
     }
     return true;
   }

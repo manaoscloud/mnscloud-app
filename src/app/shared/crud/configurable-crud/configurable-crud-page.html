@@ -646,6 +646,9 @@
         @switch (field.type) {
           @case ('search-select') {
             <mns-search-select-field
+              [attr.data-field-key]="field.key"
+              [invalid]="hasFieldError(field)"
+              [errorMessage]="fieldErrorText(field)"
               [help]="fieldHelp(field)"
               [fieldClass]="fieldClass(field)"
               [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -669,6 +672,8 @@
           }
           @case ('select') {
             <mns-search-select-field
+              [invalid]="hasFieldError(field)"
+              [errorMessage]="fieldErrorText(field)"
               [attr.data-field-key]="field.key"
               [attr.data-report-mask]="reportMask(field)"
               [fieldClass]="fieldClass(field)"
@@ -695,6 +700,7 @@
               >
               <input
                 matInput
+                [mnsInvalid]="hasFieldError(field)"
                 [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                 [type]="htmlInputType(field)"
                 [autocomplete]="field.autocomplete ?? 'off'"
@@ -705,6 +711,9 @@
               />
               @if (fieldHelp(field); as help) {
                 <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
+              }
+              @if (hasFieldError(field)) {
+                <mat-error>{{ fieldErrorText(field) }}</mat-error>
               }
             </mat-form-field>
           }
@@ -725,8 +734,11 @@
     </div>
 
     <div class="dialog-content">
-      <mat-tab-group class="form-tabs crud-tabs">
-        <mat-tab [label]="tabLabel('record', 'Record') | transloco">
+      <mat-tab-group #crudFormTabs class="form-tabs crud-tabs">
+        <mat-tab
+          [label]="tabLabel('record', 'Record') | transloco"
+          [labelClass]="tabLabelClass('record')"
+        >
           <div class="tab-content form-grid">
             @for (field of recordFields(); track field.key) {
               <div class="crud-field-contents">
@@ -739,6 +751,7 @@
                       >
                       <input
                         matInput
+                        [mnsInvalid]="hasFieldError(field)"
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [matDatepicker]="recordDatePicker"
                         appDateMask
@@ -757,12 +770,17 @@
                           [text]="help"
                         />
                       }
+                      @if (hasFieldError(field)) {
+                        <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                      }
                     </mat-form-field>
                   }
                   @case ('phone') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                       <app-phone-input
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
                         [value]="fieldValueString(field.key)"
                         [required]="isFieldRequired(field)"
                         [disabled]="isFieldDisabled(field)"
@@ -775,10 +793,15 @@
                           [text]="help"
                         />
                       }
+                      @if (hasFieldError(field)) {
+                        <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                      }
                     </mat-form-field>
                   }
                   @case ('select') {
                     <mns-search-select-field
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       [attr.data-field-key]="field.key"
                       [attr.data-report-mask]="reportMask(field)"
                       [fieldClass]="fieldClass(field)"
@@ -799,6 +822,9 @@
                   }
                   @case ('search-select') {
                     <mns-search-select-field
+                      [attr.data-field-key]="field.key"
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       [help]="fieldHelp(field)"
                       [fieldClass]="fieldClass(field)"
                       [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -823,6 +849,8 @@
                   }
                   @case ('status') {
                     <mns-search-select-field
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       [attr.data-field-key]="field.key"
                       [attr.data-report-mask]="reportMask(field)"
                       [fieldClass]="fieldClass(field)"
@@ -843,6 +871,9 @@
                   }
                   @case ('checkbox-group') {
                     <mns-checkbox-group-field
+                      [attr.data-field-key]="field.key"
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       [class]="fieldClass(field)"
                       [label]="translatedFieldLabel(field)"
                       [options]="fieldOptions(field)"
@@ -853,6 +884,8 @@
                   }
                   @case ('multi-select') {
                     <mns-search-select-field
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       [attr.data-field-key]="field.key"
                       [attr.data-report-mask]="reportMask(field)"
                       [fieldClass]="fieldClass(field)"
@@ -873,6 +906,9 @@
                   }
                   @case ('secret-content') {
                     <mns-secret-content-field
+                      [attr.data-field-key]="field.key"
+                      [invalid]="hasFieldError(field)"
+                      [errorMessage]="fieldErrorText(field)"
                       class="span-4"
                       [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
                       [value]="formValues()[field.key]"
@@ -884,7 +920,9 @@
                       ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
                       ><input
                         matInput
+                        [mnsInvalid]="hasFieldError(field)"
                         type="datetime-local"
+                        [attr.data-field-key]="field.key"
                         [value]="fieldValueString(field.key)"
                         (input)="setFieldValue(field.key, $any($event.target).value)"
                       />
@@ -894,6 +932,9 @@
                           [label]="translatedFieldLabel(field)"
                           [text]="help"
                         />
+                      }
+                      @if (hasFieldError(field)) {
+                        <mat-error>{{ fieldErrorText(field) }}</mat-error>
                       }
                     </mat-form-field>
                   }
@@ -905,6 +946,7 @@
                       >
                       <textarea
                         matInput
+                        [mnsInvalid]="hasFieldError(field)"
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [rows]="field.rows ?? 4"
                         [autocomplete]="field.autocomplete ?? 'off'"
@@ -920,10 +962,16 @@
                           [text]="help"
                         />
                       }
+                      @if (hasFieldError(field)) {
+                        <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                      }
                     </mat-form-field>
                   }
                   @case ('file') {
-                    <div [class]="'crud-file-field ' + fieldClass(field)">
+                    <div
+                      [class]="'crud-file-field ' + fieldClass(field)"
+                      [class.crud-file-field-invalid]="hasFieldError(field)"
+                    >
                       <label class="crud-file-field-label"
                         >{{ translatedFieldLabel(field)
                         }}{{ isFieldRequired(field) ? '*' : '' }}</label
@@ -944,6 +992,9 @@
                       <div class="crud-file-field-status">
                         {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
                       </div>
+                      @if (hasFieldError(field)) {
+                        <div class="crud-field-error" role="alert">{{ fieldErrorText(field) }}</div>
+                      }
                     </div>
                   }
                   @default {
@@ -954,6 +1005,7 @@
                       >
                       <input
                         matInput
+                        [mnsInvalid]="hasFieldError(field)"
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                         [type]="htmlInputType(field)"
                         [appCurrencyMask]="field.type === 'currency'"
@@ -1043,6 +1095,9 @@
                           [text]="help"
                         />
                       }
+                      @if (hasFieldError(field)) {
+                        <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                      }
                     </mat-form-field>
                   }
                 }
@@ -1056,7 +1111,10 @@
         }
 
         @if (addressFields().length) {
-          <mat-tab [label]="tabLabel('address', 'Address') | transloco">
+          <mat-tab
+            [label]="tabLabel('address', 'Address') | transloco"
+            [labelClass]="tabLabelClass('address')"
+          >
             <div class="tab-content address-section-list">
               @for (section of addressSections(); track section.key) {
                 <section class="address-section">
@@ -1096,6 +1154,7 @@
                               >
                               <input
                                 matInput
+                                [mnsInvalid]="hasFieldError(field)"
                                 [placeholder]="
                                   field.placeholder ? (field.placeholder | transloco) : ''
                                 "
@@ -1117,10 +1176,16 @@
                                   [text]="help"
                                 />
                               }
+                              @if (hasFieldError(field)) {
+                                <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                              }
                             </mat-form-field>
                           }
                           @case ('search-select') {
                             <mns-search-select-field
+                              [attr.data-field-key]="field.key"
+                              [invalid]="hasFieldError(field)"
+                              [errorMessage]="fieldErrorText(field)"
                               [help]="fieldHelp(field)"
                               [fieldClass]="fieldClass(field)"
                               [label]="
@@ -1148,6 +1213,8 @@
                           }
                           @case ('select') {
                             <mns-search-select-field
+                              [invalid]="hasFieldError(field)"
+                              [errorMessage]="fieldErrorText(field)"
                               [attr.data-field-key]="field.key"
                               [attr.data-report-mask]="reportMask(field)"
                               [fieldClass]="fieldClass(field)"
@@ -1168,6 +1235,9 @@
                           }
                           @case ('checkbox-group') {
                             <mns-checkbox-group-field
+                              [attr.data-field-key]="field.key"
+                              [invalid]="hasFieldError(field)"
+                              [errorMessage]="fieldErrorText(field)"
                               [class]="fieldClass(field)"
                               [label]="translatedFieldLabel(field)"
                               [options]="fieldOptions(field)"
@@ -1178,6 +1248,8 @@
                           }
                           @case ('multi-select') {
                             <mns-search-select-field
+                              [invalid]="hasFieldError(field)"
+                              [errorMessage]="fieldErrorText(field)"
                               [attr.data-field-key]="field.key"
                               [attr.data-report-mask]="reportMask(field)"
                               [fieldClass]="fieldClass(field)"
@@ -1201,6 +1273,7 @@
                               <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                               <input
                                 matInput
+                                [mnsInvalid]="hasFieldError(field)"
                                 [placeholder]="
                                   field.placeholder ? (field.placeholder | transloco) : ''
                                 "
@@ -1244,6 +1317,9 @@
                                   [text]="help"
                                 />
                               }
+                              @if (hasFieldError(field)) {
+                                <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                              }
                             </mat-form-field>
                           }
                         }
@@ -1257,13 +1333,19 @@
         }
 
         @if (networkFields().length) {
-          <mat-tab [label]="tabLabel('network', 'Network') | transloco">
+          <mat-tab
+            [label]="tabLabel('network', 'Network') | transloco"
+            [labelClass]="tabLabelClass('network')"
+          >
             <div class="tab-content form-grid">
               @for (field of networkFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -1289,6 +1371,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1309,6 +1393,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -1319,6 +1406,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1345,6 +1434,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -1408,6 +1498,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -1419,13 +1512,19 @@
         }
 
         @if (routingFields().length) {
-          <mat-tab [label]="tabLabel('routing', 'Routing') | transloco">
+          <mat-tab
+            [label]="tabLabel('routing', 'Routing') | transloco"
+            [labelClass]="tabLabelClass('routing')"
+          >
             <div class="tab-content form-grid">
               @for (field of routingFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -1448,6 +1547,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1468,6 +1569,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -1478,6 +1582,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1504,6 +1610,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -1568,6 +1675,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -1578,13 +1688,19 @@
         }
 
         @if (storageFields().length) {
-          <mat-tab [label]="tabLabel('storage', 'Storage') | transloco">
+          <mat-tab
+            [label]="tabLabel('storage', 'Storage') | transloco"
+            [labelClass]="tabLabelClass('storage')"
+          >
             <div class="tab-content form-grid">
               @for (field of storageFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -1607,6 +1723,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1627,6 +1745,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -1637,6 +1758,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1663,6 +1786,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [disabled]="isFieldDisabled(field)"
@@ -1728,6 +1852,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -1741,7 +1868,10 @@
         }
 
         @if (financialFields().length) {
-          <mat-tab [label]="tabLabel('financial', 'Financial') | transloco">
+          <mat-tab
+            [label]="tabLabel('financial', 'Financial') | transloco"
+            [labelClass]="tabLabelClass('financial')"
+          >
             <div class="tab-content form-grid">
               @for (field of financialFields(); track field.key) {
                 <div class="crud-field-contents">
@@ -1754,6 +1884,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [matDatepicker]="financialDatePicker"
                           appDateMask
@@ -1772,10 +1903,16 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -1801,6 +1938,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1821,6 +1960,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -1831,6 +1973,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1851,6 +1995,9 @@
                     }
                     @case ('secret-content') {
                       <mns-secret-content-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         class="span-4"
                         [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
                         [value]="formValues()[field.key]"
@@ -1862,7 +2009,9 @@
                         ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
                         ><input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           type="datetime-local"
+                          [attr.data-field-key]="field.key"
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
@@ -1872,6 +2021,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -1883,6 +2035,7 @@
                         >
                         <textarea
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [rows]="field.rows ?? 4"
                           [autocomplete]="field.autocomplete ?? 'off'"
@@ -1898,6 +2051,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -1908,6 +2064,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="
                             field.type === 'number'
@@ -1931,6 +2088,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -1944,13 +2104,19 @@
         }
 
         @if (monitoringFields().length) {
-          <mat-tab [label]="tabLabel('monitoring', 'Monitoring') | transloco">
+          <mat-tab
+            [label]="tabLabel('monitoring', 'Monitoring') | transloco"
+            [labelClass]="tabLabelClass('monitoring')"
+          >
             <div class="tab-content form-grid">
               @for (field of monitoringFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -1976,6 +2142,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -1996,6 +2164,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2006,6 +2177,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2032,6 +2205,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2048,6 +2222,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -2059,13 +2236,19 @@
         }
 
         @if (matchFields().length) {
-          <mat-tab [label]="tabLabel('match', 'Match') | transloco">
+          <mat-tab
+            [label]="tabLabel('match', 'Match') | transloco"
+            [labelClass]="tabLabelClass('match')"
+          >
             <div class="tab-content form-grid">
               @for (field of matchFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -2091,6 +2274,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2111,6 +2296,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2121,6 +2309,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2147,6 +2337,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2164,6 +2355,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -2174,13 +2368,19 @@
         }
 
         @if (transformFields().length) {
-          <mat-tab [label]="tabLabel('transform', 'Transform') | transloco">
+          <mat-tab
+            [label]="tabLabel('transform', 'Transform') | transloco"
+            [labelClass]="tabLabelClass('transform')"
+          >
             <div class="tab-content form-grid">
               @for (field of transformFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -2206,6 +2406,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2226,6 +2428,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2236,6 +2441,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2256,6 +2463,9 @@
                     }
                     @case ('secret-content') {
                       <mns-secret-content-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         class="span-4"
                         [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
                         [value]="formValues()[field.key]"
@@ -2267,7 +2477,9 @@
                         ><mat-label>{{ translatedFieldLabel(field) }}</mat-label
                         ><input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           type="datetime-local"
+                          [attr.data-field-key]="field.key"
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
                         />
@@ -2277,6 +2489,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -2288,6 +2503,8 @@
                         >
                         <textarea
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
+                          [attr.data-field-key]="field.key"
                           [rows]="field.rows ?? 4"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [value]="fieldValueString(field.key)"
@@ -2300,6 +2517,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                     @default {
@@ -2310,6 +2530,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2326,6 +2547,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -2341,13 +2565,19 @@
         }
 
         <ng-template #authenticationTab>
-          <mat-tab [label]="tabLabel('authentication', 'Authentication') | transloco">
+          <mat-tab
+            [label]="tabLabel('authentication', 'Authentication') | transloco"
+            [labelClass]="tabLabelClass('authentication')"
+          >
             <div class="tab-content form-grid">
               @for (field of authenticationFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('secret-content') {
                       <mns-secret-content-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         class="span-4"
                         [type]="fieldValueString(field.contentTypeKey ?? 'secretType')"
                         [value]="formValues()[field.key]"
@@ -2356,7 +2586,10 @@
                     }
 
                     @case ('file') {
-                      <div [class]="'crud-file-field ' + fieldClass(field)">
+                      <div
+                        [class]="'crud-file-field ' + fieldClass(field)"
+                        [class.crud-file-field-invalid]="hasFieldError(field)"
+                      >
                         <label class="crud-file-field-label"
                           >{{ translatedFieldLabel(field)
                           }}{{ isFieldRequired(field) ? '*' : '' }}</label
@@ -2377,11 +2610,19 @@
                         <div class="crud-file-field-status">
                           {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
                         </div>
+                        @if (hasFieldError(field)) {
+                          <div class="crud-field-error" role="alert">
+                            {{ fieldErrorText(field) }}
+                          </div>
+                        }
                       </div>
                     }
 
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -2407,6 +2648,9 @@
                     }
                     @case ('permission-tree') {
                       <mns-permission-tree-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
                         [placeholder]="field.placeholder ?? 'Search permissions' | transloco"
@@ -2419,6 +2663,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2439,6 +2685,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2449,6 +2698,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2475,6 +2726,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2539,6 +2791,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -2549,13 +2804,19 @@
         </ng-template>
 
         @if (limitsFields().length) {
-          <mat-tab [label]="tabLabel('limits', 'Limits') | transloco">
+          <mat-tab
+            [label]="tabLabel('limits', 'Limits') | transloco"
+            [labelClass]="tabLabelClass('limits')"
+          >
             <div class="tab-content form-grid">
               @for (field of limitsFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('search-select') {
                       <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [help]="fieldHelp(field)"
                         [fieldClass]="fieldClass(field)"
                         [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
@@ -2581,6 +2842,8 @@
                     }
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2601,6 +2864,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2611,6 +2877,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2637,6 +2905,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2653,6 +2922,9 @@
                             [label]="translatedFieldLabel(field)"
                             [text]="help"
                           />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
                         }
                       </mat-form-field>
                     }
@@ -2664,13 +2936,18 @@
         }
 
         @if (codecFields().length) {
-          <mat-tab [label]="tabLabel('codecs', 'Codecs') | transloco">
+          <mat-tab
+            [label]="tabLabel('codecs', 'Codecs') | transloco"
+            [labelClass]="tabLabelClass('codecs')"
+          >
             <div class="tab-content form-grid">
               @for (field of codecFields(); track field.key) {
                 <div class="crud-field-contents">
                   @switch (field.type) {
                     @case ('select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2691,6 +2968,9 @@
                     }
                     @case ('checkbox-group') {
                       <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [class]="fieldClass(field)"
                         [label]="translatedFieldLabel(field)"
                         [options]="fieldOptions(field)"
@@ -2701,6 +2981,8 @@
                     }
                     @case ('multi-select') {
                       <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
                         [fieldClass]="fieldClass(field)"
@@ -2727,6 +3009,7 @@
                         >
                         <input
                           matInput
+                          [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [type]="htmlInputType(field)"
                           [appCurrencyMask]="field.type === 'currency'"
@@ -2744,6 +3027,9 @@
                             [text]="help"
                           />
                         }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
                       </mat-form-field>
                     }
                   }
@@ -2754,7 +3040,10 @@
         }
 
         @if (diagnosticsFields().length) {
-          <mat-tab [label]="tabLabel('diagnostics', 'Diagnostics') | transloco">
+          <mat-tab
+            [label]="tabLabel('diagnostics', 'Diagnostics') | transloco"
+            [labelClass]="tabLabelClass('diagnostics')"
+          >
             <ng-container
               [ngTemplateOutlet]="simpleFieldTab"
               [ngTemplateOutletContext]="{ $implicit: diagnosticsFields() }"
@@ -2763,7 +3052,10 @@
         }
 
         @if (retentionFields().length) {
-          <mat-tab [label]="tabLabel('retention', 'Retention') | transloco">
+          <mat-tab
+            [label]="tabLabel('retention', 'Retention') | transloco"
+            [labelClass]="tabLabelClass('retention')"
+          >
             <ng-container
               [ngTemplateOutlet]="simpleFieldTab"
               [ngTemplateOutletContext]="{ $implicit: retentionFields() }"
@@ -2787,13 +3079,19 @@
         }
         @if (showRelatedCollections()) {
           @for (collection of relatedCollections(); track collection.key) {
-            <mat-tab [label]="collection.label | transloco">
+            <mat-tab
+              [label]="collection.label | transloco"
+              [labelClass]="relatedTabLabelClass(collection)"
+            >
               <div class="tab-content related-collection-tab">
                 <div class="related-collection-form form-grid">
                   @for (field of collection.fields; track field.key) {
                     @switch (field.type) {
                       @case ('search-select') {
                         <mns-search-select-field
+                          [attr.data-field-key]="field.key"
+                          [invalid]="hasFieldError(field, collection)"
+                          [errorMessage]="fieldErrorText(field, collection)"
                           [help]="fieldHelp(field, collection)"
                           [fieldClass]="fieldClass(field)"
                           [label]="
@@ -2808,6 +3106,8 @@
                       }
                       @case ('select') {
                         <mns-search-select-field
+                          [invalid]="hasFieldError(field, collection)"
+                          [errorMessage]="fieldErrorText(field, collection)"
                           [attr.data-field-key]="field.key"
                           [attr.data-report-mask]="reportMask(field)"
                           [fieldClass]="fieldClass(field)"
@@ -2828,6 +3128,8 @@
                       }
                       @case ('status') {
                         <mns-search-select-field
+                          [invalid]="hasFieldError(field, collection)"
+                          [errorMessage]="fieldErrorText(field, collection)"
                           [attr.data-field-key]="field.key"
                           [attr.data-report-mask]="reportMask(field)"
                           [fieldClass]="fieldClass(field)"
@@ -2854,6 +3156,8 @@
                           >
                           <input
                             matInput
+                            [mnsInvalid]="hasFieldError(field, collection)"
+                            [attr.data-field-key]="field.key"
                             [type]="htmlInputType(field)"
                             [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                             [value]="relatedCollectionFieldValueString(collection, field)"
@@ -2872,6 +3176,9 @@
                               [text]="help"
                             />
                           }
+                          @if (hasFieldError(field, collection)) {
+                            <mat-error>{{ fieldErrorText(field, collection) }}</mat-error>
+                          }
                         </mat-form-field>
                       }
                     }
@@ -2882,10 +3189,7 @@
                       mat-stroked-button
                       color="primary"
                       type="button"
-                      [disabled]="
-                        !relatedCollectionFormValid(collection) ||
-                        isRelatedCollectionSaving(collection)
-                      "
+                      [disabled]="isRelatedCollectionSaving(collection)"
                       (click)="addRelatedCollectionRow(collection)"
                     >
                       <mat-icon>add</mat-icon>
@@ -2958,7 +3262,10 @@
         }
 
         @if (notesFields().length) {
-          <mat-tab [label]="tabLabel('notes', 'Notes') | transloco">
+          <mat-tab
+            [label]="tabLabel('notes', 'Notes') | transloco"
+            [labelClass]="tabLabelClass('notes')"
+          >
             <div class="tab-content form-grid">
               @for (field of notesFields(); track field.key) {
                 <div class="crud-field-contents">
@@ -2966,6 +3273,8 @@
                     <mat-label>{{ translatedFieldLabel(field) }}</mat-label>
                     <textarea
                       matInput
+                      [mnsInvalid]="hasFieldError(field)"
+                      [attr.data-field-key]="field.key"
                       [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                       [rows]="field.rows ?? 4"
                       [value]="fieldValueString(field.key)"
@@ -2977,6 +3286,9 @@
                         [label]="translatedFieldLabel(field)"
                         [text]="help"
                       />
+                    }
+                    @if (hasFieldError(field)) {
+                      <mat-error>{{ fieldErrorText(field) }}</mat-error>
                     }
                   </mat-form-field>
                 </div>

@@ -24,17 +24,20 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ 'First Name' | transloco }}</mat-label>
             <input matInput type="text" [formField]="form.firstName" />
+            <mat-error>{{ form.firstName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Last Name' | transloco }}</mat-label>
             <input matInput type="text" [formField]="form.lastName" />
+            <mat-error>{{ form.lastName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ 'Phone' | transloco }}</mat-label>
             <app-phone-input [formField]="form.phone" />
             <mat-icon matSuffix>phone</mat-icon>
+            <mat-error>{{ form.phone().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           @if (error()) {
@@ -46,6 +49,7 @@
             <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" appDateMask />
             <mat-datepicker-toggle matSuffix [for]="picker" />
             <mat-datepicker #picker touchUi />
+            <mat-error>{{ form.dateBirth().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -72,6 +76,7 @@
                 {{ showPassword() ? 'visibility_off' : 'visibility' }}
               </mat-icon>
             </button>
+            <mat-error>{{ form.password().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
           <button
