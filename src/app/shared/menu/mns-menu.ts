@@ -65,7 +65,8 @@ export class MnsMenuItem {
 
 /**
  * Item label with an optional second line (`description`, for example the reason a disabled
- * action is unavailable) and the trailing check mark of a selected `mnsMenuItem`.
+ * action is unavailable, or projected `[mnsMenuDescription]` markup) and the trailing check mark
+ * of a selected `mnsMenuItem`.
  */
 @Component({
   selector: 'mns-menu-label',
@@ -77,6 +78,7 @@ export class MnsMenuItem {
       @if (description()) {
         <span class="mns-menu-description">{{ description() }}</span>
       }
+      <ng-content select="[mnsMenuDescription]" />
     </span>
     @if (item?.showsCheck()) {
       <mat-icon class="mns-menu-check" aria-hidden="true">check</mat-icon>

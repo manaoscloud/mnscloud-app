@@ -82,9 +82,16 @@ export function writeStoredEnvironmentUUID(value: string | null | undefined): st
 export function tenantIdentityLine(
   env: Pick<EnvironmentAccess, 'TaxIdLabel' | 'TaxIdDisplay' | 'TenantCode'> | null | undefined,
 ): string {
-  if (!env) return '';
+  return tenantIdentityParts(env).join(' · ');
+}
+
+/** Parts of the tenant identity line; each one is shown unbroken in the tenant switcher. */
+export function tenantIdentityParts(
+  env: Pick<EnvironmentAccess, 'TaxIdLabel' | 'TaxIdDisplay' | 'TenantCode'> | null | undefined,
+): string[] {
+  if (!env) return [];
   const taxId = [env.TaxIdLabel, env.TaxIdDisplay].filter(Boolean).join(' ');
-  return [taxId, env.TenantCode].filter(Boolean).join(' · ');
+  return [taxId, env.TenantCode ?? ''].filter(Boolean);
 }
 
 export function extractEnvironmentAccess(response: EnvironmentAccessResponse | null | undefined) {

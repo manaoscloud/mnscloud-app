@@ -1,4 +1,7 @@
-import { tenantIdentityLine } from '../../../../core/environment/environment-context';
+import {
+  tenantIdentityLine,
+  tenantIdentityParts,
+} from '../../../../core/environment/environment-context';
 import { firstInvalidTab, normalizeTaxId, TaxIdType, taxIdTypesFor } from './identity';
 
 const type = (item: Partial<TaxIdType>): TaxIdType => ({
@@ -56,5 +59,20 @@ describe('tenant tax identity helpers', () => {
     ).toBe('CPF ***.982.247-** · TEN-7K3Q-X9M2-HD4P');
     expect(tenantIdentityLine({ TenantCode: 'TEN-7K3Q-X9M2-HD4P' })).toBe('TEN-7K3Q-X9M2-HD4P');
     expect(tenantIdentityLine(null)).toBe('');
+  });
+
+  it('splits the identity into unbreakable switcher parts', () => {
+    expect(
+      tenantIdentityParts({
+        TaxIdLabel: 'CNPJ',
+        TaxIdDisplay: '53.372.251/0001-63',
+        TenantCode: 'TEN-NNQ2-PJKQ-HUD3',
+      }),
+    ).toEqual(['CNPJ 53.372.251/0001-63', 'TEN-NNQ2-PJKQ-HUD3']);
+    expect(tenantIdentityParts({ TenantCode: 'TEN-3TCJ-52AF-PMLB' })).toEqual([
+      'TEN-3TCJ-52AF-PMLB',
+    ]);
+    expect(tenantIdentityParts({ TenantCode: null })).toEqual([]);
+    expect(tenantIdentityParts(undefined)).toEqual([]);
   });
 });

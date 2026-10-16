@@ -448,6 +448,7 @@
             [attr.aria-label]="scopeAriaLabel()"
             [matTooltip]="scopeTooltip()"
             matTooltipClass="tenant-tooltip"
+            (menuOpened)="lockScopeMenuWidth()"
             (menuClosed)="tenantSearch.set('')"
           >
             <mat-icon class="tenant-icon">{{
@@ -463,7 +464,7 @@
 
         <mat-menu
           #scopeMenu="matMenu"
-          class="mns-menu"
+          class="mns-menu mns-menu-fit"
           xPosition="before"
           [aria-label]="scopeMenuLabel()"
         >
@@ -525,9 +526,19 @@
                     [attr.aria-label]="env.EnvironmentName + ' ' + tenantIdentityLine(env)"
                     (click)="switchEnvironment(env)"
                   >
-                    <mns-menu-label [description]="tenantIdentityLine(env)">{{
-                      env.EnvironmentName
-                    }}</mns-menu-label>
+                    <mns-menu-label
+                      >{{ env.EnvironmentName }}
+                      @let parts = tenantIdentityParts(env);
+                      @if (parts.length) {
+                        <span mnsMenuDescription class="mns-menu-description topbar-tenant-identity"
+                          ><span class="topbar-tenant-identity-parts">
+                            @for (part of parts; track $index) {
+                              <span class="topbar-tenant-identity-part">{{ part }}</span>
+                            }
+                          </span></span
+                        >
+                      }
+                    </mns-menu-label>
                   </button>
                 </div>
               }

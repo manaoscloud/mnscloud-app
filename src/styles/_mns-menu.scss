@@ -1,6 +1,7 @@
 // Global menu shell (app.md "Menus"), based on the topbar Activity Center. Every <mat-menu>
-// declares `class="mns-menu"` (`mns-menu mns-menu-compact` for short action lists); Material
-// renders panels in the CDK overlay, outside component styles, so this shell stays global.
+// declares `class="mns-menu"` (`mns-menu mns-menu-compact` for short action lists,
+// `mns-menu mns-menu-fit` for lists sized by their longest row); Material renders panels in the
+// CDK overlay, outside component styles, so this shell stays global.
 .mat-mdc-menu-panel.mns-menu {
   width: min(22rem, calc(100vw - 1.5rem));
   min-width: min(18rem, calc(100vw - 1.5rem));
@@ -14,6 +15,12 @@
     width: auto;
     min-width: min(14rem, calc(100vw - 1.5rem));
     max-width: min(20rem, calc(100vw - 1.5rem));
+  }
+
+  // Grows with its longest row (up to the viewport) so identifiers stay on one line.
+  &.mns-menu-fit {
+    width: max-content;
+    max-width: calc(100vw - 1.5rem);
   }
 
   .mat-mdc-menu-content {
