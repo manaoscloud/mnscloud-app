@@ -1,0 +1,42 @@
+@if (update.noticeVisible()) {
+  <aside
+    class="app-update-notice"
+    role="status"
+    aria-live="polite"
+    [attr.aria-label]="'appUpdate.title' | transloco"
+  >
+    <mat-icon class="app-update-icon" aria-hidden="true">auto_awesome</mat-icon>
+    <div class="app-update-body">
+      <p class="app-update-title">
+        {{ 'appUpdate.title' | transloco }}
+        @if (update.deployed(); as deployed) {
+          <span class="app-update-version">v{{ deployed.version }}</span>
+        }
+      </p>
+      @if (confirmOpenWork()) {
+        <p class="app-update-text">{{ 'appUpdate.openWork' | transloco }}</p>
+      } @else {
+        <p class="app-update-text">{{ 'appUpdate.message' | transloco }}</p>
+      }
+      <div class="app-update-actions">
+        <button mat-button type="button" (click)="later()">
+          {{ 'appUpdate.later' | transloco }}
+        </button>
+        <button mat-flat-button type="button" (click)="reload()">
+          <mat-icon aria-hidden="true">refresh</mat-icon>
+          {{ (confirmOpenWork() ? 'appUpdate.reloadAnyway' : 'appUpdate.reloadNow') | transloco }}
+        </button>
+      </div>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="app-update-close"
+      [matTooltip]="'appUpdate.remindLater' | transloco"
+      [attr.aria-label]="'appUpdate.remindLater' | transloco"
+      (click)="later()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </aside>
+}

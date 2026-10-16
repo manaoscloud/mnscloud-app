@@ -187,6 +187,10 @@ export class MainLayout {
   readonly currentLanguageOption = this.i18n.selectedLanguageOption;
   readonly languageOptions = this.i18n.languageOptions;
   readonly appVersion = this.runtimeVersion.appVersion;
+
+  showUpdateNotice() {
+    if (this.appVersion().updateAvailable) this.runtimeVersion.showUpdateNotice();
+  }
   readonly navigationLoading = this.navigationLoadingService.isNavigating;
 
   // =======================================================

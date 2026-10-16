@@ -705,8 +705,14 @@ mat-card.erp-card,
 }
 
 .sidenav-version.has-update {
-  border-color: color-mix(in srgb, #ffca5d 68%, transparent);
-  color: #ffca5d;
+  border-color: color-mix(in srgb, var(--mat-sys-color-primary) 60%, transparent);
+  color: var(--mat-sys-color-primary);
+  cursor: pointer;
+}
+
+.sidenav-version.has-update:focus-visible {
+  outline: 2px solid var(--mat-sys-color-primary);
+  outline-offset: 2px;
 }
 
 .version-product {
@@ -722,7 +728,7 @@ mat-card.erp-card,
 }
 
 .sidenav-version.has-update .version-current {
-  color: #ffca5d;
+  color: var(--mat-sys-color-primary);
 }
 
 .version-latest {

@@ -48,6 +48,8 @@ const hardCheckAllowedFiles = new Map([
     'direct observable subscription',
     new Set([
       'src/app/shared/dialog/dialog-events.util.ts',
+      // Must react synchronously to NavigationStart/NavigationError; a signal can miss them.
+      'src/app/services/app-update.service.ts',
       'src/app/shared/upload/file-upload-progress.ts',
     ]),
   ],

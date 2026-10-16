@@ -1,26 +1,12 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { computed, inject, Injectable } from '@angular/core';
 import { APP_BUILD_INFO } from '../app-build-info';
-import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
-
-type RuntimeReleaseInfo = {
-  product?: string | null;
-  version?: string | null;
-  buildRef?: string | null;
-  ref?: string | null;
-  releasedAt?: string | null;
-};
-
-type RuntimeReleaseApiResponse = {
-  status?: string;
-  data?: RuntimeReleaseInfo | null;
-};
+import { AppUpdateService } from './app-update.service';
 
 export type AppRuntimeVersionInfo = {
   product: string;
   version: string;
   channel: string;
+  /** Version deployed in this environment (from the App nodes), not the release catalog. */
   latestVersion: string | null;
   latestBuildRef: string | null;
   updateAvailable: boolean;
@@ -28,54 +14,26 @@ export type AppRuntimeVersionInfo = {
 
 @Injectable({ providedIn: 'root' })
 export class RuntimeVersionService {
-  private readonly http = inject(HttpClient);
-  private readonly latestAppRelease = signal<RuntimeReleaseInfo | null>(null);
+  private readonly appUpdate = inject(AppUpdateService);
 
   readonly appVersion = computed<AppRuntimeVersionInfo>(() => {
-    const latest = this.latestAppRelease();
-    const latestVersion = latest?.version?.trim() || null;
+    const deployed = this.appUpdate.deployed();
     return {
       product: APP_BUILD_INFO.product,
       version: APP_BUILD_INFO.version,
       channel: APP_BUILD_INFO.channel,
-      latestVersion,
-      latestBuildRef: latest?.buildRef?.trim() || null,
-      updateAvailable: Boolean(
-        latestVersion && compareSemver(latestVersion, APP_BUILD_INFO.version) > 0,
-      ),
+      latestVersion: deployed?.version ?? null,
+      latestBuildRef: deployed?.buildRef ?? null,
+      updateAvailable: this.appUpdate.updateAvailable(),
     };
   });
 
   async refresh() {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<RuntimeReleaseApiResponse>(
-          resolveApiUrl('runtime/releases/latest?product=mnscloud-app'),
-        ),
-      );
-      const release = response.data ?? null;
-      const version = release?.version?.trim() || null;
-      this.latestAppRelease.set(version ? release : null);
-    } catch {
-      this.latestAppRelease.set(null);
-    }
+    await this.appUpdate.check(true);
   }
-}
 
-function compareSemver(left: string, right: string) {
-  const leftParts = left
-    .replace(/^v/i, '')
-    .split(/[+-]/)[0]
-    .split('.')
-    .map((item) => Number(item));
-  const rightParts = right
-    .replace(/^v/i, '')
-    .split(/[+-]/)[0]
-    .split('.')
-    .map((item) => Number(item));
-  for (let index = 0; index < 3; index += 1) {
-    const diff = (leftParts[index] || 0) - (rightParts[index] || 0);
-    if (diff !== 0) return diff;
+  /** Brings back the update notice after the user postponed it. */
+  showUpdateNotice() {
+    this.appUpdate.showNotice();
   }
-  return 0;
 }
