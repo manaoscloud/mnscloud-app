@@ -13,6 +13,7 @@ import {
 
 import { FormField, email, form, minLength, required } from '@angular/forms/signals';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { RETURN_URL_PARAM, safeReturnUrl } from '../../core/navigation/return-url';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -123,6 +124,10 @@ export class Signin {
   private readonly inviteTokenFromUrl: string | null =
     this.route.snapshot.queryParamMap.get('inviteToken');
 
+  private readonly returnUrlFromUrl: string | null = safeReturnUrl(
+    this.route.snapshot.queryParamMap.get(RETURN_URL_PARAM),
+  );
+
   private readonly applySigninPolicy = effect(() => {
     if (!this.signinPolicy().rememberMeEnabled) {
       this.formModel.update((value) => ({ ...value, rememberMe: false }));
@@ -188,7 +193,8 @@ export class Signin {
           queryParams: { token: this.inviteTokenFromUrl },
         });
       } else {
-        await this.router.navigate(['/dashboard']);
+        // E-mail links send users here with the page they asked for; only App paths are honoured.
+        await this.router.navigateByUrl(this.returnUrlFromUrl ?? '/dashboard');
       }
     } catch (err: any) {
       const notVerified = err?.error?.code === 'EMAIL_NOT_VERIFIED';
