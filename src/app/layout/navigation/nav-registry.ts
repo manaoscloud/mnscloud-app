@@ -2005,6 +2005,14 @@ export const NAV_ITEMS: NavItem[] = [
         scope: 'public',
         children: [
           {
+            id: 'settings/ai/dashboard',
+            label: 'nav.settings.ai.dashboard',
+            icon: 'dashboard',
+            route: '/settings/ai/dashboard',
+            scope: 'public',
+            permissions: ['platform.ai.manage'],
+          },
+          {
             id: 'settings/ai/providers',
             label: 'nav.settings.ai.providers',
             icon: 'hub',

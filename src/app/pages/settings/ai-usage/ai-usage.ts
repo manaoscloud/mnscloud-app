@@ -77,6 +77,22 @@ const config = defineCrud({
     { id: 'output', field: 'OutputTokens', label: 'Output tokens', kind: 'number' },
     { id: 'latency', field: 'LatencyMs', label: 'Latency (ms)', kind: 'number', optional: true },
     {
+      id: 'cached',
+      field: 'CacheReadTokens',
+      label: 'Cached tokens',
+      kind: 'number',
+      optional: true,
+    },
+    {
+      // Cost recorded at call time (cache included); empty when the model has no price.
+      id: 'cost',
+      field: 'EstimatedCostUsd',
+      label: 'Estimated cost',
+      kind: 'currency',
+      currencyCode: 'USD',
+      maximumFractionDigits: 6,
+    },
+    {
       id: 'outcome',
       field: 'Outcome',
       label: 'Result',

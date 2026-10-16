@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "21dc898872ef",
+  "version": "a4314f7fd0c6",
   "language": "pt-BR",
   "entries": [
     {
@@ -3738,6 +3738,14 @@
       "fields": []
     },
     {
+      "route": "/settings/ai/dashboard",
+      "menuPath": "Configurações › IA › Painel",
+      "scope": "platform",
+      "title": "Painel",
+      "description": "Uso da IA da plataforma nos últimos 30 dias: chamadas, custo estimado, erros e onde economizar.",
+      "fields": []
+    },
+    {
       "route": "/settings/ai/features",
       "menuPath": "Configurações › IA › Recursos",
       "scope": "platform",
@@ -3767,6 +3775,14 @@
         {
           "label": "Chamadas por hora",
           "help": "Controle de custo: chamadas acima deste limite falham até a hora virar."
+        },
+        {
+          "label": "Cache de prompt",
+          "help": "O provedor reaproveita as instruções fixas do recurso por cerca de 10% do preço de entrada. O Automático só usa quando o recurso tem chamadas suficientes para compensar; OpenAI e Gemini também fazem cache por conta própria."
+        },
+        {
+          "label": "Duração do cache",
+          "help": "Anthropic: 5 minutos para tráfego contínuo; 1 hora para chamadas espalhadas ao longo da hora (gravar o cache custa mais)."
         }
       ]
     },

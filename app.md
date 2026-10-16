@@ -59,9 +59,16 @@
   a selected model that left the catalog stays listed.
 - Features (`/settings/ai/features`, CRUD, `system/ai/feature-bindings`): one row per feature
   (`support.triage` today) with provider (FK, quick-create), model (catalog of the selected
-  provider; empty = provider default), output limit and calls per hour.
+  provider; empty = provider default), output limit, calls per hour and prompt cache (`Automatic`/`Off`, duration 5 minutes/1 hour,
+  hidden when off).
 - Usage (`/settings/ai/usage`, read-only list, `system/ai/usage`): every gateway call with tenant
-  (empty = platform), provider, model, tokens, latency and result. Prompts are never stored.
+  (empty = platform), provider, model, tokens, latency, result and list-price estimated cost (USD). Prompts are never stored.
+- Dashboard (`/settings/ai/dashboard`, first entry, `mns-dashboard-page`, `system/ai/usage/summary?days=30`):
+  calls, estimated cost, tokens, error rate, latency and the prompt cache saving/hit rate; consumption
+  by feature and model; and
+  recommendations (`aiTip.<code>` keys with API params: errors, truncated answers, hourly limit,
+  cheaper model with the estimated saving, prompt cache to turn on, cache writes never read back,
+  unpriced model).
 - A new AI feature adds its option to `AI_FEATURE_OPTIONS` (`pages/settings/ai-features`) and its
   own behaviour settings in its module; it never asks for a provider or key.
 

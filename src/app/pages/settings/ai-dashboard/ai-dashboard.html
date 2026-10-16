@@ -1,0 +1,39 @@
+<mns-dashboard-page
+  title="AI dashboard"
+  description="Use of the platform AI in the last 30 days: calls, estimated cost, errors and where to save."
+  [loading]="dashboard.isLoading()"
+  [error]="dashboard.error()"
+  [hasData]="dashboard.hasData()"
+  (refresh)="dashboard.reload()"
+>
+  <div class="dashboard-grid">
+    @for (metric of metrics(); track metric.label) {
+      <article class="dashboard-metric">
+        <div>
+          <span class="dashboard-metric-label">{{ metric.label | transloco }}</span>
+          <strong class="dashboard-metric-value">{{ metric.value }}</strong>
+          @if (metric.hint) {
+            <small class="dashboard-metric-hint">{{ metric.hint | transloco }}</small>
+          }
+        </div>
+      </article>
+    }
+  </div>
+
+  <div class="dashboard-sections">
+    <mns-dashboard-record-list
+      title="Consumption by feature and model"
+      [items]="consumption()"
+      emptyLabel="No AI calls in the last 30 days."
+    >
+      <a routerLink="/settings/ai/usage">{{ 'Open the call history' | transloco }}</a>
+    </mns-dashboard-record-list>
+    <mns-dashboard-record-list
+      title="Where to improve"
+      [items]="improvements()"
+      emptyLabel="No recommendation: errors, limits and costs are in order."
+    >
+      <a routerLink="/settings/ai/features">{{ 'Adjust models and limits' | transloco }}</a>
+    </mns-dashboard-record-list>
+  </div>
+</mns-dashboard-page>
