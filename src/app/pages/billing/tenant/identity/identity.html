@@ -202,9 +202,7 @@
               identityForm.addressStreet().errors() | mnsFieldErrorKey | transloco
             }}</mat-error>
           </mat-form-field>
-        </div>
 
-        <div class="form-grid span-4">
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Number' | transloco }}</mat-label>
             <input matInput [formField]="identityForm.addressNumber" />
@@ -212,7 +210,9 @@
               identityForm.addressNumber().errors() | mnsFieldErrorKey | transloco
             }}</mat-error>
           </mat-form-field>
+        </div>
 
+        <div class="form-grid span-4">
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Complement' | transloco }}</mat-label>
             <input
