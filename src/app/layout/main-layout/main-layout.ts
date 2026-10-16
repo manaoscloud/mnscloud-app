@@ -27,6 +27,7 @@ import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
 import { AsyncOperationsService } from '../../shared/operations/async-operations.service';
+import { SupportUnreadService } from '../../services/support-unread.service';
 
 // Material
 import { MatBadgeModule } from '@angular/material/badge';
@@ -144,6 +145,7 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
+  private readonly supportUnread = inject(SupportUnreadService);
   private readonly reportService = inject(SupportReportService);
   private readonly dialogs = inject(MatDialog);
 
@@ -381,6 +383,18 @@ export class MainLayout {
       return item.route;
     }
     return mode === 'tenant' ? item.route : undefined;
+  }
+
+  /** Counter of a menu entry with a live badge (0 hides it). */
+  navBadge(item: NavItem): number {
+    return item.badge === 'supportUnread' ? this.supportUnread.unreadTickets() : 0;
+  }
+
+  /** A collapsed group shows a dot when any entry below it has a counter. */
+  hasNavBadge(item: NavItem): boolean {
+    return (
+      this.navBadge(item) > 0 || (item.children ?? []).some((child) => this.hasNavBadge(child))
+    );
   }
 
   isActiveItem(item: NavItem): boolean {

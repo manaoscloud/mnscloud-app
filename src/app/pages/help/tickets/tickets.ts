@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SupportReportService } from '../../../services/support-report.service';
+import { SupportUnreadService } from '../../../services/support-unread.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -151,6 +152,14 @@ function config(
         label: 'Subject',
         detail: (row) => String(row['TypeName'] ?? ''),
       },
+      {
+        id: 'unread',
+        field: 'UnreadCount',
+        label: 'New replies',
+        width: 'xs',
+        // Answers from the team or the assistant you have not opened yet (see the menu badge).
+        value: (row) => (Number(row['UnreadCount'] ?? 0) > 0 ? String(row['UnreadCount']) : ''),
+      },
       { id: 'priority', field: 'PriorityName', label: 'Priority' },
       { id: 'origin', field: 'ChannelName', label: 'Origin' },
       { id: 'author', field: 'CreatedByName', label: 'Opened by', hiddenWhen: () => !readAll() },
@@ -187,6 +196,16 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   private readonly reports = inject(SupportReportService);
+  private readonly unread = inject(SupportUnreadService);
+
+  /** Opening the conversation marks it as read on the API: refresh the menu badge afterwards. */
+  override async runRowAction(
+    action: Parameters<ConfigurableCrudPageBase<ConfigurableCrudRecord>['runRowAction']>[0],
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    await super.runRowAction(action, row);
+    if (action.key === 'conversation') void this.unread.refresh();
+  }
 
   constructor() {
     const api = inject(ApiService);

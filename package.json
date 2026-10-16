@@ -19,6 +19,8 @@
     "test": "ng test",
     "build-watch": "ng build --configuration production --watch",
     "check:nav": "node scripts/validate-nav-labels.mjs",
+    "catalog:app": "node scripts/generate-app-catalog.mjs",
+    "check:app-catalog": "node scripts/generate-app-catalog.mjs --check",
     "check:page-descriptions": "node scripts/validate-page-descriptions.mjs",
     "check:dialog-report": "node scripts/validate-dialog-report-button.mjs",
     "check:required-fields": "node scripts/validate-required-fields.mjs",

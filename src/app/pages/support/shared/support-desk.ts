@@ -53,7 +53,8 @@ export const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
 const AUTHOR_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'agent', label: 'Support team' },
   { value: 'requester', label: 'Requester' },
-  { value: 'system', label: 'System' },
+  // AI triage replies and automatic status changes.
+  { value: 'system', label: 'Support assistant' },
 ];
 
 const EVENT_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [

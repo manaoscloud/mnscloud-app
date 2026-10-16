@@ -7,6 +7,7 @@ import { apiInterceptor } from './api.interceptor';
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { ClientDiagnosticsService } from '../../services/client-diagnostics.service';
+import { silentErrorsContext } from './silent-errors';
 
 describe('apiInterceptor', () => {
   let httpClient: HttpClient;
@@ -55,6 +56,27 @@ describe('apiInterceptor', () => {
     await expectAsync(promise).toBeRejected();
     expect(auth.expireSession).toHaveBeenCalled();
     expect(snack.error).toHaveBeenCalledWith('Your session has expired. Please sign in again.');
+  });
+
+  it('keeps background reads quiet but still expires the session', async () => {
+    const failing = httpClient
+      .get('/api/v1/help/tickets/unread-count', { context: silentErrorsContext() })
+      .toPromise();
+    http
+      .expectOne('/api/v1/help/tickets/unread-count')
+      .flush({ error: 'Down' }, { status: 503, statusText: 'Service Unavailable' });
+    await expectAsync(failing).toBeRejected();
+    expect(snack.error).not.toHaveBeenCalled();
+    expect(snack.errorWithAction).not.toHaveBeenCalled();
+
+    const expired = httpClient
+      .get('/api/v1/help/tickets/unread-count', { context: silentErrorsContext() })
+      .toPromise();
+    http
+      .expectOne('/api/v1/help/tickets/unread-count')
+      .flush({ error: 'Invalid or expired token.' }, { status: 401, statusText: 'Unauthorized' });
+    await expectAsync(expired).toBeRejected();
+    expect(auth.expireSession).toHaveBeenCalled();
   });
 
   it('does not toast the runtime install token replacement confirmation', async () => {

@@ -34,6 +34,68 @@ const SUPPORT_QUEUE_OPTIONS = [
   { value: 'resolved', label: 'Resolved or closed' },
 ];
 
+/** AI triage classification of platform tickets (support assistant). */
+export const TRIAGE_CLASSIFICATION_OPTIONS = [
+  { value: 'bug', label: 'Platform bug' },
+  { value: 'knowledge', label: 'Usage question' },
+  { value: 'unclear', label: 'Needs a person' },
+];
+
+const TRIAGE_ACTION_OPTIONS = [
+  { value: 'bug_ack', label: 'Requester told the problem was identified' },
+  { value: 'knowledge_reply', label: 'Answer sent to the requester' },
+  { value: 'note_only', label: 'Internal note for the team' },
+];
+
+const TRIAGE_STATUS_OPTIONS = [
+  { value: 'pending', label: 'Waiting for analysis' },
+  { value: 'running', label: 'Analysing' },
+  { value: 'done', label: 'Analysed' },
+  { value: 'failed', label: 'Analysis failed' },
+  { value: 'skipped', label: 'Not analysed' },
+  { value: 'handed_off', label: 'Handled by the team' },
+];
+
+function triageChip(value: unknown): string {
+  if (value === 'bug') return 'chip-failed';
+  if (value === 'knowledge') return 'chip-success';
+  return value ? 'chip-running' : 'chip-skipped';
+}
+
+const FIXED_MESSAGE =
+  'Corrigimos o problema que você relatou. Se ele voltar a acontecer, responda este chamado.';
+
+/** Public reply that closes a bug found by the AI analysis once the team fixed it. */
+function markFixedForm(desk: SupportDesk, row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `${supportBase(desk)}/tickets/${String(row['SupportTicketUUID'] ?? '')}/events`,
+    uuidField: 'SupportTicketEventUUID',
+    pageTitle: 'Mark as fixed',
+    pageDescription: `#${String(row['SupportTicketID'] ?? '')} · ${String(row['Subject'] ?? '')}`,
+    createTitle: 'Mark as fixed',
+    dialogDescription:
+      'Sends this reply to the requester by the App and e-mail and moves the ticket to resolved.',
+    savedMessage: 'Ticket marked as fixed.',
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: { message: FIXED_MESSAGE },
+    fields: [
+      {
+        key: 'message',
+        label: 'Reply to the requester',
+        type: 'textarea',
+        rows: 5,
+        span: 4,
+        required: true,
+      },
+    ],
+    payload: (values) => ({ message: values['message'], isInternal: 0, status: 'resolved' }),
+    columns: [{ id: 'message', field: 'Message', label: 'Message', kind: 'identity' }],
+  });
+}
+
 function priorityChip(row: ConfigurableCrudRecord): string {
   const rank = Number(row['PriorityRank'] ?? 100);
   return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
@@ -124,6 +186,45 @@ function config(
         collection: (row) => attachmentsCollection(api, dialog, base, row, true),
       },
       { key: 'assign-me', label: 'Assign to me', icon: 'assignment_ind' },
+      ...(platform
+        ? [
+            {
+              key: 'ai-analysis',
+              label: 'AI analysis',
+              icon: 'smart_toy',
+              tooltip: 'Classification, report for the team and the prompt to fix a bug.',
+            },
+            {
+              key: 'ai-rerun',
+              label: 'Analyse again with AI',
+              icon: 'auto_mode',
+              tooltip: 'Records a new internal note; the requester receives nothing.',
+              visible: (row: ConfigurableCrudRecord) =>
+                !['closed', 'canceled'].includes(String(row['Status'] ?? '')),
+              request: {
+                method: 'post' as const,
+                endpoint: (row: ConfigurableCrudRecord) =>
+                  `${base}/tickets/${String(row['SupportTicketUUID'])}/triage/run`,
+                successMessage: 'AI analysis requested. The result appears in about a minute.',
+                confirm: {
+                  title: 'Analyse again with AI',
+                  message:
+                    'Send this ticket to the AI provider again? The result is an internal note for the team.',
+                },
+              },
+            },
+            {
+              key: 'mark-fixed',
+              label: 'Mark as fixed',
+              icon: 'task_alt',
+              tooltip: 'Tells the requester the bug was fixed and resolves the ticket.',
+              visible: (row: ConfigurableCrudRecord) =>
+                row['TriageClassification'] === 'bug' &&
+                !['resolved', 'closed', 'canceled'].includes(String(row['Status'] ?? '')),
+              form: (row: ConfigurableCrudRecord) => markFixedForm(desk, row),
+            },
+          ]
+        : []),
     ],
     initialValues: {
       customerUUID: '',
@@ -172,6 +273,21 @@ function config(
         translateValue: true,
         chipClass: (value) => (Number(value) === 1 ? 'chip-failed' : 'chip-success'),
       },
+      ...(platform
+        ? [
+            {
+              id: 'ai',
+              field: 'TriageClassification',
+              label: 'AI',
+              kind: 'status' as const,
+              options: TRIAGE_CLASSIFICATION_OPTIONS,
+              translateValue: true,
+              width: 'sm' as const,
+              chipClass: triageChip,
+              rowAction: 'ai-analysis',
+            },
+          ]
+        : []),
       { id: 'team', field: 'TeamName', label: 'Team' },
       { id: 'assigned', field: 'AssignedToName', label: 'Assigned to' },
       { id: 'activity', field: 'LastActivityAt', label: 'Last activity', kind: 'datetime' },
@@ -366,6 +482,7 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+    if (action.key === 'ai-analysis') return await this.openTriage(row);
     if (action.key !== 'assign-me') return;
     const me = this.auth.user()?.uuid;
     if (!me) return;
@@ -392,6 +509,111 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
     } catch {
       // The API interceptor shows the error.
     }
+  }
+
+  /** Read-only AI analysis: report and fix prompt are for the team only (never sent to requesters). */
+  private async openTriage(row: ConfigurableCrudRecord) {
+    let triage: ConfigurableCrudRecord | undefined;
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `${supportBase(this.desk)}/tickets/${this.recordUUID(row)}/triage`,
+      );
+      triage = response?.data;
+    } catch {
+      return; // The API interceptor shows the error.
+    }
+    if (!triage) return;
+    const label = (options: readonly { value: string; label: string }[], value: unknown) =>
+      options.find((item) => item.value === value)?.label ?? String(value ?? '');
+    const classification = triage['Classification'];
+    const confidence = Number(triage['Confidence']);
+    const citations = Array.isArray(triage['Citations'])
+      ? (triage['Citations'] as ConfigurableCrudRecord[])
+      : [];
+    const { openDataViewerDialog } =
+      await import('../../../shared/data-viewer-dialog/data-viewer-dialog');
+    openDataViewerDialog(this.dialog, {
+      title: 'AI analysis',
+      description: `#${String(row['SupportTicketID'] ?? '')} · ${String(row['Subject'] ?? '')}`,
+      status: {
+        value: classification
+          ? label(TRIAGE_CLASSIFICATION_OPTIONS, classification)
+          : label(TRIAGE_STATUS_OPTIONS, triage['Status'] ?? 'skipped'),
+        tone:
+          classification === 'bug' ? 'danger' : classification === 'knowledge' ? 'success' : 'info',
+      },
+      details: [
+        {
+          label: 'Analysis',
+          value: label(TRIAGE_STATUS_OPTIONS, triage['Status']),
+          translate: true,
+        },
+        {
+          label: 'Confidence',
+          value:
+            Number.isFinite(confidence) && triage['Confidence'] !== null
+              ? `${Math.round(confidence * 100)}%`
+              : '-',
+        },
+        { label: 'Action', value: label(TRIAGE_ACTION_OPTIONS, triage['Action']), translate: true },
+        { label: 'Suspected area', value: triage['SuspectedArea'] },
+        { label: 'Provider', value: triage['ProviderName'] },
+        { label: 'Model', value: triage['Model'], monospace: true },
+        {
+          label: 'Tokens (input / output)',
+          value:
+            triage['InputTokens'] === null || triage['InputTokens'] === undefined
+              ? '-'
+              : `${String(triage['InputTokens'])} / ${String(triage['OutputTokens'] ?? 0)}`,
+        },
+        { label: 'Analysed at', value: triage['CompletedAt'], kind: 'datetime' },
+        { label: 'Last error', value: triage['LastErrorCode'], monospace: true },
+      ],
+      sections: [
+        ...(triage['Summary']
+          ? [{ title: 'Summary', code: { value: triage['Summary'], format: 'text' as const } }]
+          : []),
+        ...(triage['AdminReport']
+          ? [
+              {
+                title: 'Report for the team',
+                code: { value: triage['AdminReport'], format: 'text' as const, copy: true },
+              },
+            ]
+          : []),
+        ...(triage['DeveloperPrompt']
+          ? [
+              {
+                title: 'Prompt to fix the bug (paste into any LLM)',
+                code: { value: triage['DeveloperPrompt'], format: 'text' as const, copy: true },
+              },
+            ]
+          : []),
+        ...(triage['RequesterReply']
+          ? [
+              {
+                title: 'Answer sent to the requester',
+                code: { value: triage['RequesterReply'], format: 'text' as const },
+              },
+            ]
+          : []),
+        ...(citations.length
+          ? [
+              {
+                title: 'Knowledge used',
+                table: {
+                  columns: [
+                    { key: 'title', label: 'Title' },
+                    { key: 'menuPath', label: 'Menu path' },
+                    { key: 'route', label: 'App route', monospace: true },
+                  ],
+                  rows: citations,
+                },
+              },
+            ]
+          : []),
+      ],
+    });
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
