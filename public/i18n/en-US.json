@@ -7392,7 +7392,6 @@
   "Where the customer finds it, exactly as the menu shows it, for example Suporte › Meus chamados.": "Where the customer finds it, exactly as the menu shows it, for example Suporte › Meus chamados.",
   "Words customers use for this subject, separated by spaces or commas.": "Words customers use for this subject, separated by spaces or commas.",
   "Write the steps the way a customer should follow them. Only published articles are used by the assistant.": "Write the steps the way a customer should follow them. Only published articles are used by the assistant.",
-  "Connection test finished. Check the connection column.": "Connection test finished. Check the connection column.",
   "Leave blank to keep the stored key. A new key replaces it.": "Leave blank to keep the stored key. A new key replaces it.",
   "Prompt to fix the bug (paste into any LLM)": "Prompt to fix the bug (paste into any LLM)",
   "Report for the team": "Report for the team",
@@ -7564,5 +7563,13 @@
   "Created by": "Created by",
   "Entry": "Entry",
   "Statement": "Statement",
-  "nav.billing.wallets": "Wallets"
+  "nav.billing.wallets": "Wallets",
+  "Failure reason": "Failure reason",
+  "Connection OK ({{ ms }} ms).": "Connection OK ({{ ms }} ms).",
+  "The provider account has no credits or quota: add credits in the provider console (billing) and test again.": "The provider account has no credits or quota: add credits in the provider console (billing) and test again.",
+  "The provider rejected the API key: create a new key in the provider console and save it here.": "The provider rejected the API key: create a new key in the provider console and save it here.",
+  "The provider does not offer this model to this key: pick another default model from the list.": "The provider does not offer this model to this key: pick another default model from the list.",
+  "The provider rate limit was reached: wait a moment and test again.": "The provider rate limit was reached: wait a moment and test again.",
+  "The provider did not answer in time: raise the timeout or test again later.": "The provider did not answer in time: raise the timeout or test again later.",
+  "Check the provider status page and the message above, then test again.": "Check the provider status page and the message above, then test again."
 }
