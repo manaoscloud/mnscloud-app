@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a1022f521eb2",
+  "version": "0a0237b012e6",
   "language": "pt-BR",
   "entries": [
     {
@@ -2825,7 +2825,7 @@
           "help": ""
         },
         {
-          "label": "Quota (MB)",
+          "label": "Cota (MB)",
           "help": ""
         },
         {
@@ -5813,7 +5813,7 @@
           "help": ""
         },
         {
-          "label": "Force path-style URLs",
+          "label": "Forçar URLs no estilo path",
           "help": ""
         },
         {
@@ -5821,7 +5821,7 @@
           "help": ""
         },
         {
-          "label": "Client email",
+          "label": "E-mail do cliente",
           "help": ""
         },
         {
@@ -5829,7 +5829,7 @@
           "help": ""
         },
         {
-          "label": "API mode",
+          "label": "Modo da API",
           "help": ""
         },
         {
@@ -5877,7 +5877,7 @@
           "help": ""
         },
         {
-          "label": "Account key",
+          "label": "Chave da conta",
           "help": ""
         },
         {
@@ -5922,11 +5922,11 @@
           "help": ""
         },
         {
-          "label": "Disk (MB)",
+          "label": "Disco (MB)",
           "help": ""
         },
         {
-          "label": "Bandwidth (MB)",
+          "label": "Banda (MB)",
           "help": ""
         },
         {
@@ -5934,11 +5934,11 @@
           "help": ""
         },
         {
-          "label": "Subdomains",
+          "label": "Subdomínios",
           "help": ""
         },
         {
-          "label": "Email accounts",
+          "label": "Contas de e-mail",
           "help": ""
         },
         {
@@ -5946,7 +5946,7 @@
           "help": ""
         },
         {
-          "label": "FTP accounts",
+          "label": "Contas FTP",
           "help": ""
         },
         {
@@ -7162,7 +7162,7 @@
       "route": "/system/vps-container/plans",
       "menuPath": "Hospedagem › Containers › Planos",
       "scope": "platform",
-      "title": "VPS Container Plans",
+      "title": "Planos de VPS Container",
       "description": "Preços comerciais e padrões técnicos dos tamanhos de instância do provedor.",
       "fields": [
         {
@@ -7190,7 +7190,7 @@
           "help": ""
         },
         {
-          "label": "Size / Bundle",
+          "label": "Tamanho / Pacote",
           "help": ""
         },
         {
@@ -7202,15 +7202,15 @@
           "help": ""
         },
         {
-          "label": "Memory MB",
+          "label": "Memória MB",
           "help": ""
         },
         {
-          "label": "Disk GB",
+          "label": "Disco GB",
           "help": ""
         },
         {
-          "label": "Transfer GB",
+          "label": "Transferência GB",
           "help": ""
         },
         {
@@ -7218,7 +7218,7 @@
           "help": ""
         },
         {
-          "label": "Storage pool",
+          "label": "Pool de armazenamento",
           "help": ""
         },
         {
@@ -7230,7 +7230,7 @@
           "help": ""
         },
         {
-          "label": "Image server",
+          "label": "Servidor de imagens",
           "help": ""
         },
         {
@@ -7243,7 +7243,7 @@
       "route": "/system/vps-container/provider",
       "menuPath": "Hospedagem › Containers › Provedores",
       "scope": "platform",
-      "title": "VPS Container Provider",
+      "title": "Provedor de VPS Container",
       "description": "Provedores Incus usados para provisionar VPS Container.",
       "fields": [
         {
@@ -7263,7 +7263,7 @@
           "help": ""
         },
         {
-          "label": "Incus API URL",
+          "label": "URL da API Incus",
           "help": ""
         },
         {
@@ -7271,11 +7271,11 @@
           "help": ""
         },
         {
-          "label": "Target node",
+          "label": "Nó de destino",
           "help": ""
         },
         {
-          "label": "Storage pool",
+          "label": "Pool de armazenamento",
           "help": ""
         },
         {
@@ -7287,11 +7287,11 @@
           "help": ""
         },
         {
-          "label": "Image server",
+          "label": "Servidor de imagens",
           "help": ""
         },
         {
-          "label": "Default image alias",
+          "label": "Alias da imagem padrão",
           "help": ""
         },
         {
@@ -7299,19 +7299,19 @@
           "help": ""
         },
         {
-          "label": "Bearer token",
+          "label": "Token Bearer",
           "help": ""
         },
         {
-          "label": "Client certificate",
+          "label": "Certificado do cliente",
           "help": ""
         },
         {
-          "label": "Client private key",
+          "label": "Chave privada do cliente",
           "help": ""
         },
         {
-          "label": "Server certificate",
+          "label": "Certificado do servidor",
           "help": ""
         }
       ]
@@ -7421,7 +7421,7 @@
           "help": ""
         },
         {
-          "label": "Size / Bundle",
+          "label": "Tamanho / Pacote",
           "help": ""
         },
         {
@@ -7429,15 +7429,15 @@
           "help": ""
         },
         {
-          "label": "Memory MB",
+          "label": "Memória MB",
           "help": ""
         },
         {
-          "label": "Disk GB",
+          "label": "Disco GB",
           "help": ""
         },
         {
-          "label": "Transfer GB",
+          "label": "Transferência GB",
           "help": ""
         },
         {
