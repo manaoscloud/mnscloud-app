@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -20,6 +21,7 @@ import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
   styleUrls: ['./reset-password.scss'],
   imports: [
     FieldErrorKeyPipe,
+    TranslocoPipe,
     FormField,
     RouterModule,
     MatCardModule,

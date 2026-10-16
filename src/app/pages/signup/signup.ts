@@ -1,3 +1,4 @@
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   Component,
   DestroyRef,
@@ -42,6 +43,7 @@ type SignupPolicy = {
   standalone: true,
   imports: [
     FieldErrorKeyPipe,
+    TranslocoPipe,
     FormField,
     RouterModule,
     MatCardModule,
