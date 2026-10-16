@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "04c8d21bd1ed",
+  "version": "d6ca63116501",
   "language": "pt-BR",
   "entries": [
     {
@@ -6187,6 +6187,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/monitoring/client-versions",
+      "menuPath": "Monitoramento › Versões em uso",
+      "scope": "platform",
+      "title": "Versões em uso",
+      "description": "Sessões ativas nos últimos 15 minutos por versão do cliente, para ver quantos usuários ainda usam um App desatualizado após um release.",
+      "fields": []
     },
     {
       "route": "/system/monitoring/notification-rules",

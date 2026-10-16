@@ -2,13 +2,30 @@ import { isRuntimeTokenReplaceConfirmationRequired } from '../../shared/install-
 import { payErrorMessage } from '../../shared/payment/pay-error';
 import { billingErrorMessage } from '../../shared/billing/billing-error';
 import { Injector, inject } from '@angular/core';
-import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
+import {
+  HttpErrorResponse,
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
+import { catchError, tap, throwError } from 'rxjs';
 import { SILENT_ERRORS } from './silent-errors';
 
 import { AuthService } from '../../services/auth.service';
 import { SnackbarService } from '../../services/snackbar.service';
 import { ClientDiagnosticsService } from '../../services/client-diagnostics.service';
+import { APP_BUILD_INFO } from '../../app-build-info';
+import { AppUpdateService } from '../../services/app-update.service';
+import { resolveApiBaseUrl } from '../../shared/runtime/app-runtime-config';
+
+/** Client identity sent to the API (versions in use metric). */
+export const CLIENT_VERSION_HEADER = 'X-Mns-Client';
+/** App version installed on every App node, announced by the API on each response. */
+export const APP_VERSION_HEADER = 'X-Mns-App-Version';
+
+function isApiRequest(url: string) {
+  return url.startsWith(`${resolveApiBaseUrl()}/`);
+}
 
 function isExternalRequest(url: string) {
   if (!/^https?:\/\//i.test(url)) return false;
@@ -163,6 +180,10 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const csrfToken = isMutatingRequest(req.method) ? cookieValue('mnscloud_csrf') : null;
   const bootstrapToken = auth.sessionBootstrapToken();
   const setHeaders: Record<string, string> = {};
+  const apiRequest = isApiRequest(req.url);
+  if (apiRequest) {
+    setHeaders[CLIENT_VERSION_HEADER] = `${APP_BUILD_INFO.product}/${APP_BUILD_INFO.version}`;
+  }
   if (csrfToken) setHeaders['X-CSRF-Token'] = csrfToken;
   if (bootstrapToken && !req.headers.has('Authorization')) {
     setHeaders['Authorization'] = `Bearer ${bootstrapToken}`;
@@ -173,8 +194,15 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     ...(Object.keys(setHeaders).length ? { setHeaders } : {}),
   });
 
+  const appUpdate = apiRequest ? injector.get(AppUpdateService) : null;
   return next(authReq).pipe(
+    tap((event) => {
+      if (appUpdate && event instanceof HttpResponse) {
+        appUpdate.hint(event.headers.get(APP_VERSION_HEADER));
+      }
+    }),
     catchError((error: HttpErrorResponse) => {
+      appUpdate?.hint(error.headers?.get(APP_VERSION_HEADER));
       // Background reads stay quiet; an expired session is still handled below.
       if (req.context.get(SILENT_ERRORS) && error.status !== 401) {
         return throwError(() => error);

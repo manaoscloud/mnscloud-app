@@ -164,14 +164,28 @@ write_env_js() {
 EOF
 }
 
+# minimumVersion of the release's update-policy.json (public/update-policy.json in the App repo),
+# as a JSON value: a quoted semantic version, or null when unset or invalid.
+update_policy_minimum_version() {
+  local policy="${APP_WEB_ROOT}/update-policy.json" value=""
+  [[ -r "$policy" ]] &&
+    value="$(sed -n 's/.*"minimumVersion"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$policy" | head -n 1)"
+  if [[ "$value" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+    printf '"%s"' "$value"
+  else
+    printf 'null'
+  fi
+}
+
 write_build_metadata() {
-  local version build_ref build_date git_ref metadata
+  local version build_ref build_date git_ref metadata minimum_version
 
   version="0.0.0"
   [[ -r "${REPO_ROOT}/VERSION" ]] && version="$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")"
   build_ref="$(git -C "$REPO_ROOT" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
   build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   git_ref="$(git -C "$REPO_ROOT" describe --tags --exact-match 2>/dev/null || printf '%s' "$build_ref")"
+  minimum_version="$(update_policy_minimum_version)"
   metadata="$(cat <<EOF
 {
   "product": "mnscloud-app",
@@ -179,7 +193,8 @@ write_build_metadata() {
   "buildRef": "${build_ref}",
   "buildDate": "${build_date}",
   "updateChannel": "${APP_UPDATE_CHANNEL}",
-  "gitRef": "${git_ref}"
+  "gitRef": "${git_ref}",
+  "minimumVersion": ${minimum_version}
 }
 EOF
 )"

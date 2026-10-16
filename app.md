@@ -573,6 +573,19 @@ the page must use the shared base named here.
   open dialog and no navigation `state` becomes a full page load of the same URL, so users move to
   the new version between tasks without losing work. A lazy chunk that fails to load reloads the
   target route once.
+- Critical updates: a release that fixes a serious problem sets `minimumVersion` in
+  `public/update-policy.json` (normally to its own version, in the same PR). The installer copies it
+  into `/build.json`; tabs running below it get `Important update` without `Later`/close. It still
+  never reloads by itself. Leave it `null` for regular releases; raising it is a review decision.
+- Faster detection without extra requests: every API response carries `X-Mns-App-Version` (App
+  version installed on every App node, from the Agent inventory). The interceptor passes it to
+  `AppUpdateService.hint()`, which reads `/build.json` at once when it differs; the header is only
+  a hint and `/build.json` stays the source of truth. The topbar bell polls every 60 s, so a
+  signed-in user learns of a release within about a minute. There is no push channel today.
+- Every API request sends `X-Mns-Client: mnscloud-app/<version>`; the API stores it on the login
+  session when it changes. `System > Monitoring > Versions in use`
+  (`/system/monitoring/client-versions`) lists active sessions per client version and flags App
+  sessions on an outdated version.
 - All texts use `appUpdate.*` keys in PT/EN/ES. Validate desktop and mobile (full-width card above
   the safe area), light/dark, and keyboard access before changing it.
 

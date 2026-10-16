@@ -1680,6 +1680,14 @@ export const NAV_ITEMS: NavItem[] = [
         scope: 'master',
         requiresEnvironment: false,
       },
+      {
+        id: 'monitoring/client-versions',
+        label: 'nav.monitoring.client-versions',
+        icon: 'update',
+        masterRoute: '/system/monitoring/client-versions',
+        scope: 'master',
+        requiresEnvironment: false,
+      },
     ],
   },
   {

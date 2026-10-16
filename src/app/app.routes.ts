@@ -1908,6 +1908,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'monitoring/client-versions',
+                loadComponent: () =>
+                  import('./pages/system/runtime/client-versions/client-versions').then(
+                    (m) => m.SystemRuntimeClientVersionsPage,
+                  ),
+                title: 'System Monitoring • Versions in use | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'governance/users',
                 loadComponent: () =>
                   import('./pages/system/governance/users/users').then(

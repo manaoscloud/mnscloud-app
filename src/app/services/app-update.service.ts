@@ -20,7 +20,12 @@ const CHANNEL_NAME = 'mnscloud-app-update';
 const CHUNK_ERROR_PATTERN =
   /Loading chunk|ChunkLoadError|dynamically imported module|Importing a module script failed|error loading dynamically imported/i;
 
-export type DeployedAppBuild = { version: string; buildRef: string | null };
+export type DeployedAppBuild = {
+  version: string;
+  buildRef: string | null;
+  /** Releases below this version must update (critical fix); null when no policy is set. */
+  minimumVersion?: string | null;
+};
 
 type Snooze = { version: string; until: number };
 
@@ -46,12 +51,23 @@ export class AppUpdateService {
     const deployed = this.deployed();
     return Boolean(deployed && deployed.version !== this.runningVersion);
   });
+  /**
+   * The running bundle is below the deployed `minimumVersion`: the notice cannot be postponed.
+   * It still never reloads by itself, so the user can save before updating.
+   */
+  readonly critical = computed(() => {
+    const minimum = this.deployed()?.minimumVersion;
+    return Boolean(
+      minimum && this.updateAvailable() && compareSemver(this.runningVersion, minimum) < 0,
+    );
+  });
   private readonly snooze = signal<Snooze | null>(readSnooze());
   private readonly now = signal(Date.now());
   /** The notice is visible when an update is pending and it was not postponed for that version. */
   readonly noticeVisible = computed(() => {
     const deployed = this.deployed();
     if (!deployed || !this.updateAvailable()) return false;
+    if (this.critical()) return true;
     const snooze = this.snooze();
     return !snooze || snooze.version !== deployed.version || snooze.until <= this.now();
   });
@@ -60,6 +76,7 @@ export class AppUpdateService {
   private lastCheckAt = 0;
   private inFlight: Promise<void> | null = null;
   private candidate: { version: string; buildRef: string | null; seenAt: number } | null = null;
+  private lastHint: string | null = null;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private confirmTimer: ReturnType<typeof setTimeout> | null = null;
   private channel: BroadcastChannel | null = null;
@@ -89,7 +106,17 @@ export class AppUpdateService {
       this.channel = new BroadcastChannel(CHANNEL_NAME);
       this.channel.onmessage = (event: MessageEvent<DeployedAppBuild>) => {
         const version = normalizeVersion(event.data?.version);
-        if (version) this.accept({ version, buildRef: event.data?.buildRef ?? null }, false);
+        const minimum = normalizeVersion(event.data?.minimumVersion);
+        if (version) {
+          this.accept(
+            {
+              version,
+              buildRef: event.data?.buildRef ?? null,
+              minimumVersion: isReleaseVersion(minimum) ? minimum : null,
+            },
+            false,
+          );
+        }
       };
     }
 
@@ -129,6 +156,17 @@ export class AppUpdateService {
     return this.inFlight;
   }
 
+  /**
+   * Version announced by the API (`X-Mns-App-Version` on every response). Only a hint: a new
+   * value triggers an immediate `/build.json` read, which stays the source of truth.
+   */
+  hint(value: string | null | undefined) {
+    const version = normalizeVersion(value);
+    if (!isReleaseVersion(version) || version === this.lastHint) return;
+    this.lastHint = version;
+    if (version !== (this.deployed()?.version ?? this.runningVersion)) void this.check(true);
+  }
+
   /** "Later": hide the notice for this version for a few hours (shared by every tab). */
   postpone() {
     const deployed = this.deployed();
@@ -160,7 +198,9 @@ export class AppUpdateService {
       // Nothing changed (or one node of an unfinished rollout answered): stay as we are.
       this.candidate = null;
       this.clearConfirmTimer();
-      if (!current) this.deployed.set(build);
+      if (!current || (current.minimumVersion ?? null) !== (build.minimumVersion ?? null)) {
+        this.deployed.set(build);
+      }
       return;
     }
     const candidate = this.candidate;
@@ -177,7 +217,13 @@ export class AppUpdateService {
     this.candidate = null;
     this.clearConfirmTimer();
     const current = this.deployed();
-    if (current?.version === build.version && current.buildRef === build.buildRef) return;
+    if (
+      current?.version === build.version &&
+      current.buildRef === build.buildRef &&
+      (current.minimumVersion ?? null) === (build.minimumVersion ?? null)
+    ) {
+      return;
+    }
     this.deployed.set(build);
     if (broadcast) this.channel?.postMessage(build);
   }
@@ -237,9 +283,30 @@ export function parseBuildMetadata(value: unknown): DeployedAppBuild | null {
   const row = value as Record<string, unknown>;
   if (row['product'] !== APP_BUILD_INFO.product) return null;
   const version = normalizeVersion(row['version']);
-  if (!/^\d+\.\d+\.\d+([-+][0-9A-Za-z.-]+)?$/.test(version)) return null;
+  if (!isReleaseVersion(version)) return null;
   const buildRef = typeof row['buildRef'] === 'string' ? row['buildRef'].trim() || null : null;
-  return { version, buildRef };
+  const minimum = normalizeVersion(row['minimumVersion']);
+  return { version, buildRef, minimumVersion: isReleaseVersion(minimum) ? minimum : null };
+}
+
+export function isReleaseVersion(value: string) {
+  return /^\d+\.\d+\.\d+([-+][0-9A-Za-z.-]+)?$/.test(value);
+}
+
+/** Compares the numeric `major.minor.patch` part; suffixes are ignored. */
+export function compareSemver(left: string, right: string) {
+  const parts = (value: string) =>
+    normalizeVersion(value)
+      .split(/[+-]/)[0]
+      .split('.')
+      .map((item) => Number(item) || 0);
+  const a = parts(left);
+  const b = parts(right);
+  for (let index = 0; index < 3; index += 1) {
+    const diff = (a[index] ?? 0) - (b[index] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
 }
 
 async function fetchDeployedBuild(): Promise<DeployedAppBuild | null> {
