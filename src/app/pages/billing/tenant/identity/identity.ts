@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -61,7 +62,7 @@ export interface TenantIdentity {
   CanManage: number;
 }
 
-type IdentityForm = {
+export type IdentityForm = {
   countryCode: string;
   partyType: string;
   taxIdType: string;
@@ -87,6 +88,28 @@ const ADDRESS_KEYS = [
   'addressCity',
   'addressState',
 ] as const;
+
+const RECORD_KEYS = [
+  'countryCode',
+  'partyType',
+  'taxIdType',
+  'taxId',
+  'legalName',
+  'tradeName',
+] as const;
+
+/**
+ * Tab (0 Record, 1 Financial, 2 Address) of the first invalid field, or -1. Inactive tab bodies
+ * are not rendered, so the page selects this tab before revealing the invalid fields.
+ */
+export function firstInvalidTab(
+  invalid: (key: keyof IdentityForm) => boolean,
+  taxIdInvalid = false,
+): number {
+  if (taxIdInvalid || RECORD_KEYS.some(invalid)) return 0;
+  if (invalid('billingEmail')) return 1;
+  return ADDRESS_KEYS.some(invalid) ? 2 : -1;
+}
 
 /** Brazilian states (UF codes are not translated). */
 const BR_STATE_OPTIONS =
@@ -139,6 +162,7 @@ export function taxIdTypesFor(
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatTabsModule,
     MatTooltipModule,
     TranslocoPipe,
     FieldHelpComponent,
@@ -174,6 +198,7 @@ export class BillingTenantIdentityPage {
     () => this.catalogResource.isLoading() || this.identityResource.isLoading(),
   );
   readonly saving = signal(false);
+  readonly tab = signal(0);
   readonly apiError = signal<string | null>(null);
   readonly identity = signal<TenantIdentity | null>(null);
   readonly canManage = computed(() => this.identity()?.CanManage === 1);
@@ -300,7 +325,11 @@ export class BillingTenantIdentityPage {
 
   async save(): Promise<void> {
     if (this.saving() || !this.canManage()) return;
-    if (!this.valid()) return this.revealInvalid(this.identityForm());
+    if (!this.valid()) {
+      const tab = firstInvalidTab((key) => this.identityForm[key]().invalid(), !!this.taxIdError());
+      if (tab >= 0) this.tab.set(tab);
+      return this.revealInvalid(this.identityForm());
+    }
     const value = this.model();
     this.saving.set(true);
     this.apiError.set(null);
