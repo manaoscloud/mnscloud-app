@@ -343,6 +343,11 @@ server {
     try_files /index.html =404;
   }
 
+  location = /build.json {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    try_files /build.json =404;
+  }
+
   location = /env.js {
     add_header Cache-Control "no-cache, no-store, must-revalidate";
     try_files /env.js =404;

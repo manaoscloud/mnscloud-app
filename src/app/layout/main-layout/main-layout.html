@@ -281,7 +281,15 @@
       }
     </div>
 
-    <div class="sidenav-version" [class.has-update]="appVersion().updateAvailable">
+    <div
+      class="sidenav-version"
+      [class.has-update]="appVersion().updateAvailable"
+      [attr.role]="appVersion().updateAvailable ? 'button' : null"
+      [attr.tabindex]="appVersion().updateAvailable ? 0 : null"
+      [attr.title]="appVersion().updateAvailable ? ('appUpdate.title' | transloco) : null"
+      (click)="showUpdateNotice()"
+      (keydown.enter)="showUpdateNotice()"
+    >
       <span class="version-product">APP</span>
       <span class="version-current">v{{ appVersion().version }}</span>
       @if (!isDesktopCompact()) {

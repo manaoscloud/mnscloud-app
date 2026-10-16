@@ -521,6 +521,32 @@ the page must use the shared base named here.
 - Optional future fields belong in `BrandingConfig` or explicit nullable ThemeDomain columns; do not move runtime branding into `.env`.
 - Do not reintroduce legacy `UrlName`/`Title` frontend model fields; use `Domain` and `PageTitle`.
 
+## Live Update Notice
+
+- A tab left open must learn that a newer App was deployed without a page refresh. Detection lives
+  in `src/app/services/app-update.service.ts`; the notice is `mns-app-update-notice`
+  (`src/app/shared/app-update/`), rendered once by the root component.
+- Source of truth is the same-origin `/build.json` written by `scripts/install-nginx-runtime.sh`
+  on every App node (served `no-store`), never the release catalog: a promoted release is not yet
+  installed, and only the App nodes know what a reload would load. The service compares its
+  `version` with `APP_BUILD_INFO.version` of the running bundle.
+- Reads happen on start, every ~5 min (jittered) while the tab is visible, and on focus,
+  visibility, `online` and route changes (at most once a minute). Nodes behind the edge answer
+  different versions during a rolling rollout, so a different version is accepted only after two
+  reads agree at least 45 s apart; a rollback to the running version clears the notice the same way.
+  Tabs share the accepted version (`BroadcastChannel`) and the postpone choice (`localStorage`).
+- The notice is informative (primary color, `auto_awesome`, `role="status"`, `aria-live="polite"`),
+  never a modal, warning or error, and never reloads by itself while the user works. Actions:
+  `Update now` (asks first when a dialog is open, then `Update anyway`) and `Later` (hides it for
+  4 h for that version; a newer version shows it again). The sidebar version footer turns primary
+  and reopens the notice.
+- With an update pending, a router navigation to a different path (menu, link, back button) with no
+  open dialog and no navigation `state` becomes a full page load of the same URL, so users move to
+  the new version between tasks without losing work. A lazy chunk that fails to load reloads the
+  target route once.
+- All texts use `appUpdate.*` keys in PT/EN/ES. Validate desktop and mobile (full-width card above
+  the safe area), light/dark, and keyboard access before changing it.
+
 ## Session Expiration UI
 
 - When a user session expires or logout is executed, the app must leave only the unauthenticated
