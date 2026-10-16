@@ -19,6 +19,11 @@
   animation: app-update-in 220ms ease-out;
 }
 
+.app-update-notice.critical {
+  padding-right: 16px;
+  border: 2px solid var(--mat-sys-color-primary, #3f51b5);
+}
+
 .app-update-icon {
   flex: none;
   margin-top: 2px;

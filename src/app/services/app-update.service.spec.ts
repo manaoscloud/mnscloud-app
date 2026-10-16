@@ -25,7 +25,7 @@ describe('AppUpdateService', () => {
   it('parses only App build metadata with a semantic version', () => {
     expect(
       parseBuildMetadata({ product: 'mnscloud-app', version: 'v1.2.3', buildRef: 'abc' }),
-    ).toEqual({ version: '1.2.3', buildRef: 'abc' });
+    ).toEqual({ version: '1.2.3', buildRef: 'abc', minimumVersion: null });
     expect(parseBuildMetadata({ product: 'mnscloud-api', version: '1.2.3' })).toBeNull();
     expect(parseBuildMetadata({ product: 'mnscloud-app', version: '<script>' })).toBeNull();
     expect(parseBuildMetadata('1.2.3')).toBeNull();
@@ -74,6 +74,44 @@ describe('AppUpdateService', () => {
     service.postpone();
     service.showNotice();
     expect(service.noticeVisible()).toBe(true);
+  });
+
+  it('reads the critical minimum version from the build metadata', () => {
+    expect(
+      parseBuildMetadata({ product: 'mnscloud-app', version: '1.2.3', minimumVersion: '1.2.0' }),
+    ).toEqual({ version: '1.2.3', buildRef: null, minimumVersion: '1.2.0' });
+    expect(
+      parseBuildMetadata({ product: 'mnscloud-app', version: '1.2.3', minimumVersion: 'x' }),
+    ).toEqual({ version: '1.2.3', buildRef: null, minimumVersion: null });
+  });
+
+  it('cannot postpone a critical update (running below the minimum version)', () => {
+    const critical = { version: newer, buildRef: 'n1', minimumVersion: newer };
+    service.observe(critical, 0);
+    service.observe(critical, APP_UPDATE_CONFIRM_DELAY_MS);
+    expect(service.critical()).toBe(true);
+    service.postpone();
+    expect(service.noticeVisible()).toBe(true);
+  });
+
+  it('keeps a regular update postponable when the running version meets the minimum', () => {
+    const regular = { version: newer, buildRef: 'n1', minimumVersion: running };
+    service.observe(regular, 0);
+    service.observe(regular, APP_UPDATE_CONFIRM_DELAY_MS);
+    expect(service.critical()).toBe(false);
+    service.postpone();
+    expect(service.noticeVisible()).toBe(false);
+  });
+
+  it('turns a new API version hint into one immediate build.json read', () => {
+    const check = spyOn(service, 'check').and.returnValue(Promise.resolve());
+    service.hint(running);
+    expect(check).not.toHaveBeenCalled();
+    service.hint(newer);
+    service.hint(newer);
+    service.hint('not-a-version');
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(check).toHaveBeenCalledWith(true);
   });
 
   it('clears the update when the environment returns to the running version (rollback)', () => {
