@@ -2089,6 +2089,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'billing/ledger',
+                loadComponent: () =>
+                  import('./pages/billing/system/ledger/ledger').then(
+                    (m) => m.BillingSystemLedgerPage,
+                  ),
+                title: 'System Billing • Statement | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'voip',
                 loadComponent: () =>
                   import('./pages/voip/dashboard/dashboard').then((m) => m.VoipDashboardPage),

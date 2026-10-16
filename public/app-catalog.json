@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "cbfc1f542943",
+  "version": "b131065d1da5",
   "language": "pt-BR",
   "entries": [
     {
@@ -4698,6 +4698,14 @@
       "fields": []
     },
     {
+      "route": "/system/billing/ledger",
+      "menuPath": "Assinatura › Extrato",
+      "scope": "platform",
+      "title": "Extrato de faturamento",
+      "description": "Audite todas as movimentações de carteira dos tenants: recargas via gateway, créditos manuais e débitos.",
+      "fields": []
+    },
+    {
       "route": "/system/billing/packages",
       "menuPath": "Assinatura › Pacotes",
       "scope": "platform",
@@ -5085,7 +5093,7 @@
     },
     {
       "route": "/system/billing/wallets",
-      "menuPath": "Assinatura › Extrato",
+      "menuPath": "Assinatura › Carteiras",
       "scope": "platform",
       "title": "Carteiras de faturamento",
       "description": "Monitore carteiras dos tenants e aplique créditos manuais auditáveis.",
