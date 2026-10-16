@@ -6,6 +6,7 @@ import { MainLayout } from './layout/main-layout/main-layout';
 import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
+import { publicBoardGuard } from './core/guards/public-board.guard';
 
 export const routes: Routes = [
   // Raiz → dashboard
@@ -61,6 +62,22 @@ export const routes: Routes = [
     title: 'Accept Invitation | mnscloud',
   },
 
+  // Public idea board: published ideas, status and votes, readable without signing in.
+  {
+    path: 'ideas',
+    canActivate: [publicBoardGuard],
+    loadComponent: () => import('./pages/support/ideas/ideas').then((m) => m.FeatureRequestsPage),
+    title: 'Ideas board | mnscloud',
+    data: { publicBoard: true },
+  },
+  {
+    path: 'ideas/:code',
+    canActivate: [publicBoardGuard],
+    loadComponent: () => import('./pages/support/ideas/ideas').then((m) => m.FeatureRequestsPage),
+    title: 'Ideas board | mnscloud',
+    data: { publicBoard: true },
+  },
+
   // =====================================================
   // 🔒 PRIVADAS
   // =====================================================
@@ -100,6 +117,20 @@ export const routes: Routes = [
               supportDesk: 'platform',
               permission: 'platform.support.tickets.manage',
               breadcrumb: 'Platform tickets',
+            },
+          },
+          {
+            path: 'support/platform/ideas',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/support/platform-ideas/platform-ideas').then(
+                (m) => m.PlatformFeatureRequestsPage,
+              ),
+            title: 'Platform support • Ideas | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.support.tickets.manage',
+              breadcrumb: 'Platform ideas',
             },
           },
           {
@@ -906,6 +937,14 @@ export const routes: Routes = [
                   ),
                 title: 'Support • Ticket priorities | mnscloud',
                 data: { supportDesk: 'tenant', breadcrumb: 'Ticket priorities' },
+              },
+              {
+                // Idea board inside the App: every tenant user proposes and votes.
+                path: 'support/ideas',
+                loadComponent: () =>
+                  import('./pages/support/ideas/ideas').then((m) => m.FeatureRequestsPage),
+                title: 'Ideas board | mnscloud',
+                data: { breadcrumb: 'Ideas board' },
               },
               {
                 // Help center: every tenant user, no Support module needed.
