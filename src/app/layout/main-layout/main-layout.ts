@@ -27,7 +27,7 @@ import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
 import { AsyncOperationsService } from '../../shared/operations/async-operations.service';
-import { SupportUnreadService } from '../../services/support-unread.service';
+import { SupportUnreadService, UnreadTicket } from '../../services/support-unread.service';
 
 // Material
 import { MatBadgeModule } from '@angular/material/badge';
@@ -145,7 +145,7 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
-  private readonly supportUnread = inject(SupportUnreadService);
+  protected readonly supportUnread = inject(SupportUnreadService);
   private readonly reportService = inject(SupportReportService);
   private readonly dialogs = inject(MatDialog);
 
@@ -650,10 +650,82 @@ export class MainLayout {
     this.scheduleAutoExpandSections();
   }
 
-  contextModeLabel() {
-    return this.i18n.t(
-      this.effectiveContextMode() === 'master' ? 'topbar.system' : 'topbar.tenant',
-    );
+  // =======================================================
+  // Scope trigger: System/Tenant context and active tenant (always named)
+  // =======================================================
+  readonly showScopeSwitch = computed(() => this.isMasterUser() || !!this.environments().length);
+
+  scopeName() {
+    return this.effectiveContextMode() === 'master'
+      ? this.i18n.t('topbar.system')
+      : this.currentEnvironmentName();
+  }
+
+  scopeTooltip() {
+    return this.effectiveContextMode() === 'master'
+      ? `${this.i18n.t('topbar.context')}: ${this.i18n.t('topbar.system')}`
+      : this.currentEnvironmentTooltip();
+  }
+
+  scopeAriaLabel() {
+    return this.effectiveContextMode() === 'master'
+      ? this.scopeTooltip()
+      : `${this.i18n.t('topbar.tenant')}: ${this.currentEnvironmentTooltip()}`;
+  }
+
+  scopeMenuLabel() {
+    return this.i18n.t(this.isMasterUser() ? 'topbar.context' : 'topbar.tenant');
+  }
+
+  languageTriggerLabel() {
+    return `${this.i18n.t('topbar.language')}: ${this.i18n.t(this.currentLanguageLabel())}`;
+  }
+
+  // =======================================================
+  // Notifications bell (things that happened to me; Activity is the work I started)
+  // =======================================================
+  /** Text read by screen readers when the unread count grows (WCAG 4.1.3). */
+  readonly notificationsAnnouncement = signal('');
+  private lastUnreadCount = 0;
+  private readonly announceUnread = effect(() => {
+    const count = this.supportUnread.unreadTickets();
+    if (count > this.lastUnreadCount) {
+      this.notificationsAnnouncement.set(
+        this.i18n.t('topbar.notificationsUnread', { count: String(count) }),
+      );
+    }
+    this.lastUnreadCount = count;
+  });
+
+  notificationsBadge(): string | null {
+    const count = this.supportUnread.unreadTickets();
+    return count > 9 ? '9+' : count > 0 ? String(count) : null;
+  }
+
+  notificationsLabel() {
+    const count = this.supportUnread.unreadTickets();
+    return count
+      ? this.i18n.t('topbar.notificationsUnread', { count: String(count) })
+      : this.i18n.t('topbar.notifications');
+  }
+
+  notificationsHint() {
+    const count = this.supportUnread.unreadTickets();
+    return count ? this.i18n.t('topbar.notificationsHint', { count: String(count) }) : null;
+  }
+
+  unreadTicketDescription(item: UnreadTicket) {
+    const replies = this.i18n.t('topbar.notificationsNewReplies', { count: String(item.unread) });
+    return [item.protocol, replies].filter(Boolean).join(' · ');
+  }
+
+  openNotifications() {
+    void this.supportUnread.loadUnreadItems();
+    void this.supportUnread.refresh();
+  }
+
+  openUnreadTicket(uuid: string) {
+    void this.router.navigate(['/support/requests'], { queryParams: { ticket: uuid } });
   }
 
   private hasPermission(required: string): boolean {

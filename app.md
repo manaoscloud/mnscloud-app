@@ -168,14 +168,31 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
 
 ## Topbar menus
 
-- Activity, language, System/Tenant context, tenant, theme and profile menus use the global
-  `mns-menu` design (section Menus); `src/styles/_topbar-menu.scss` keeps only the toolbar trigger
-  state layers and the tenant row layout. The profile heading shows the signed-in e-mail.
+- Activity, notifications, language, scope (System/Tenant context and tenant), theme and profile
+  menus use the global `mns-menu` design (section Menus); `src/styles/_topbar-menu.scss` keeps only
+  the toolbar trigger state layers and the tenant row layout. The profile heading shows the
+  signed-in e-mail.
+- Order: Activity, Notifications, Language, Scope, Report problem, Theme, Avatar. Activity is the
+  work the user started (queued operations); Notifications are things that happened to the user.
+  Never merge the two.
+- Icon-only triggers: Activity, Notifications, Language, Report problem, Theme and Avatar. Each has
+  a translated tooltip and accessible name that carry the current value (`Idioma: Automático`).
+- The scope trigger is the only text trigger and always names the active scope on desktop: the
+  tenant display name (truncated, full name and identity line in the tooltip) or `Sistema` with a
+  tonal error-container background, so the platform scope never looks like a tenant. One menu holds
+  the master's context radios (`Tenant` keeps the panel open to show the list) and the tenant list;
+  non-master users see only the tenant list. Below 768px it collapses to the icon.
+- Notifications bell (phase 1): count from `SupportUnreadService.unreadTickets()` (the same poll as
+  the menu badge, `9+` above nine, `matBadgeDescription` and a polite live region announcing
+  increases). Opening it lazily loads (`matMenuContent`) `help/tickets?status=unread` (newest five)
+  and links to `/support/requests?ticket=<uuid>`; the page follows later `ticket` changes because
+  the route is reused. A generic notification inbox is planned in
+  `docs/handoffs/2026-10-16-topbar-notifications-and-icon-triggers.md` (workspace repository).
 - Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
   divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
 - Text and icon triggers share the toolbar-scoped Material state-layer tokens: primary color,
   8% hover, 12% keyboard focus/press, rounded shape and 44px icon targets. Mobile rules hide only
-  the trigger label, never Material ripple/focus spans. Verify hover, keyboard focus, press and
+  the scope label, never Material ripple/focus spans. Verify hover, keyboard focus, press and
   disabled states on every trigger in both themes; do not validate only the opened panels.
 - All labels and accessible names use first-class PT/EN/ES translations. Selection menus expose
   checked state; keep Material keyboard navigation, Escape and focus restoration.
@@ -267,7 +284,8 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   the team report are API data for agents only; the help center never receives them.
 - Unread answers: `NavItem.badge = 'supportUnread'` on `support/requests`; `SupportUnreadService`
   polls `help/tickets/unread-count` every 60 s while a tenant is selected and the tab is visible,
-  and the shell shows the count on the entry and a dot on collapsed groups. Opening the
+  and the shell shows the count on the entry, a dot on collapsed groups and the topbar
+  notifications bell (section Topbar menus). Opening the
   conversation marks it read (API) and refreshes the badge; My tickets lists `New replies`.
   Background reads pass `api.get(..., { silent: true })` (`SILENT_ERRORS` context): failures throw
   without a toast, a 401 still expires the session.
