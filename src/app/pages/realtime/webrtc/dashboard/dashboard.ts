@@ -3,21 +3,24 @@ import { dashboardResource } from '../../../../shared/dashboard/dashboard-resour
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
-import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
+import {
+  activeStatusColumn,
+  lastSeenColumn,
+  serverHealthColumn,
+} from '../../../../shared/dashboard/dashboard-table-columns';
 import {
   RealtimeWebRtcDashboardService,
-  WebRtcDashboardDomain,
   WebRtcDashboardData,
   WebRtcDashboardFilters,
   WebRtcDashboardMetric,
-  WebRtcDashboardServer,
 } from './dashboard.service';
 
 type WebRtcDashboardRequest = Required<Pick<WebRtcDashboardFilters, 'period'>> &
@@ -40,14 +43,11 @@ const EMPTY_WEBRTC_DASHBOARD: WebRtcDashboardData = {
   selector: 'app-realtime-webrtc-dashboard',
   standalone: true,
   imports: [
-    MnsDateTimePipe,
     DashboardPageComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -59,14 +59,6 @@ export class RealtimeWebRtcDashboardPage {
   readonly period = () => 'today';
   readonly serverUUID = () => '';
   readonly domainUUID = () => '';
-  readonly serverSortActive = signal('');
-  readonly serverSortDirection = signal<Sort['direction']>('');
-  readonly serverPageIndex = signal(0);
-  readonly serverPageSize = signal(5);
-  readonly domainSortActive = signal('');
-  readonly domainSortDirection = signal<Sort['direction']>('');
-  readonly domainPageIndex = signal(0);
-  readonly domainPageSize = signal(5);
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly isMaster = computed(() => this.scope() === 'master');
   private readonly summaryRequest = computed<WebRtcDashboardRequest>(() => ({
@@ -87,26 +79,41 @@ export class RealtimeWebRtcDashboardPage {
   readonly summary = computed(() => this.dashboard().summary);
   readonly certificateBreakdown = computed(() => this.dashboard().certificateBreakdown);
   readonly jobBreakdown = computed(() => this.dashboard().jobBreakdown);
-  readonly serverColumns = [
-    'health',
-    'name',
-    'engine',
-    'hostname',
-    'publicDomain',
-    'version',
-    'domains',
-    'lastSeenAt',
-  ];
-  readonly domainColumns = [
-    'status',
-    'domainName',
-    'serverName',
-    'certificateStatus',
-    'nginxStatus',
-    'autoProvision',
-    'lastSyncedAt',
-    'lastError',
-  ];
+  readonly serverTable = defineGlobalTable({
+    key: 'realtime/webrtc/dashboard/servers',
+    uuidField: 'serverUUID',
+    emptyLabel: 'No WebRTC servers found.',
+    columns: [
+      serverHealthColumn(),
+      { id: 'name', label: 'Name', field: 'name' },
+      { id: 'engine', label: 'Engine', field: 'engine' },
+      { id: 'hostname', label: 'Host', field: 'hostname' },
+      { id: 'publicDomain', label: 'Public Domain', field: 'publicDomain' },
+      { id: 'version', label: 'Version', field: 'version' },
+      { id: 'domains', label: 'Domains', field: 'domains', kind: 'number' },
+      lastSeenColumn(),
+    ],
+  });
+  readonly domainTable = defineGlobalTable({
+    key: 'realtime/webrtc/dashboard/domains',
+    uuidField: 'domainUUID',
+    emptyLabel: 'No WebRTC domains found.',
+    columns: [
+      activeStatusColumn(),
+      { id: 'domainName', label: 'Domain', field: 'domainName' },
+      { id: 'serverName', label: 'Server', field: 'serverName' },
+      {
+        id: 'certificateStatus',
+        label: 'Certificate',
+        field: 'certificateStatus',
+        translateValue: true,
+      },
+      { id: 'nginxStatus', label: 'Nginx', field: 'nginxStatus', translateValue: true },
+      { id: 'autoProvision', label: 'Auto Provision', field: 'autoProvision', kind: 'boolean' },
+      lastSeenColumn('lastSyncedAt', 'Last Sync'),
+      { id: 'lastError', label: 'Last Error', field: 'lastError' },
+    ],
+  });
   readonly kpis = computed(() => {
     const item = this.summary();
     return [
@@ -145,63 +152,11 @@ export class RealtimeWebRtcDashboardPage {
 
   readonly serverRows = computed(() => this.dashboard().servers);
   readonly domainRows = computed(() => this.dashboard().domains);
-  readonly sortedServers = computed(() =>
-    this.sortRows(this.serverRows(), this.serverSortActive(), this.serverSortDirection()),
-  );
-  readonly sortedDomains = computed(() =>
-    this.sortRows(this.domainRows(), this.domainSortActive(), this.domainSortDirection()),
-  );
-  readonly visibleServers = computed(() => {
-    const start = this.serverPageIndex() * this.serverPageSize();
-    return this.sortedServers().slice(start, start + this.serverPageSize());
-  });
-  readonly visibleDomains = computed(() => {
-    const start = this.domainPageIndex() * this.domainPageSize();
-    return this.sortedDomains().slice(start, start + this.domainPageSize());
-  });
-
   private readonly reportDashboardError = effect(() => {
     const error = this.dashboardResource.error();
     if (!error) return;
     this.snack.error(this.errorMessage(error, 'Failed to load WebRTC dashboard.'));
   });
-
-  setServerSort(sort: Sort): void {
-    this.serverSortActive.set(sort.active || '');
-    this.serverSortDirection.set(sort.direction || '');
-    this.serverPageIndex.set(0);
-  }
-
-  setDomainSort(sort: Sort): void {
-    this.domainSortActive.set(sort.active || '');
-    this.domainSortDirection.set(sort.direction || '');
-    this.domainPageIndex.set(0);
-  }
-
-  setServerPage(page: PageEvent): void {
-    this.serverPageIndex.set(page.pageIndex);
-    this.serverPageSize.set(page.pageSize);
-  }
-
-  setDomainPage(page: PageEvent): void {
-    this.domainPageIndex.set(page.pageIndex);
-    this.domainPageSize.set(page.pageSize);
-  }
-
-  private sortRows<T extends WebRtcDashboardServer | WebRtcDashboardDomain>(
-    rows: T[],
-    active: string,
-    direction: Sort['direction'],
-  ): T[] {
-    if (!active || !direction) return rows;
-    const multiplier = direction === 'asc' ? 1 : -1;
-    return [...rows].sort(
-      (left, right) =>
-        String((left as any)[active] ?? '')
-          .toLowerCase()
-          .localeCompare(String((right as any)[active] ?? '').toLowerCase()) * multiplier,
-    );
-  }
 
   refreshList() {
     this.dashboardResource.reload();
@@ -210,24 +165,6 @@ export class RealtimeWebRtcDashboardPage {
   metricPercent(item: WebRtcDashboardMetric, items: WebRtcDashboardMetric[]) {
     const total = items.reduce((sum, metric) => sum + Number(metric.value ?? 0), 0);
     return total > 0 ? Math.round((Number(item.value ?? 0) / total) * 100) : 0;
-  }
-
-  healthLabel(value: string) {
-    const labels: Record<string, string> = {
-      online: 'ONLINE',
-      offline: 'OFFLINE',
-      inactive: 'INACTIVE',
-      unknown: 'UNKNOWN',
-    };
-    return labels[value] ?? String(value || 'unknown').toUpperCase();
-  }
-
-  statusLabel(value: number) {
-    return Number(value) === 1 ? 'Active' : 'Inactive';
-  }
-
-  yesNo(value: number | boolean) {
-    return Number(value) === 1 || value === true ? 'Yes' : 'No';
   }
 
   private async fetchDashboardSnapshot(

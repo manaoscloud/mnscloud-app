@@ -32,82 +32,10 @@
           </div>
         </div>
 
-        <div class="table-wrapper mat-elevation-z8">
-          <table
-            mat-table
-            [dataSource]="workloadDataSource.visibleRows()"
-            matSort
-            [matSortActive]="workloadDataSource.sortActive()"
-            [matSortDirection]="workloadDataSource.sortDirection()"
-            (matSortChange)="workloadDataSource.setSort($event)"
-          >
-            <ng-container matColumnDef="resource">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Resource' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">
-                <div class="resource-cell">
-                  <mat-icon>{{ row.icon }}</mat-icon>
-                  <span>{{ row.label | transloco }}</span>
-                </div>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="total">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Total' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.total }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Active' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">{{ row.active }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="issues">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Issues' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">
-                <span class="status-pill status-chip state-chip" [ngClass]="chipClass(row.issues)">
-                  {{ row.issues }}
-                </span>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <a [routerLink]="hostingRoute(row.route)" [attr.aria-label]="'View' | transloco">
-                  <mat-icon>chevron_right</mat-icon>
-                  {{ 'View' | transloco }}
-                </a>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="workloadColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: workloadColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="workloadColumns.length">
-                {{
-                  loading()
-                    ? ('Loading hosting workloads...' | transloco)
-                    : ('No workloads found.' | transloco)
-                }}
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <mat-paginator
-          class="mobile-paginator"
-          [length]="workloadDataSource.sortedRows().length"
-          [pageIndex]="workloadDataSource.pageIndex()"
-          [pageSize]="workloadDataSource.pageSize()"
-          [pageSizeOptions]="[5, 10, 25]"
-          (page)="workloadDataSource.setPage($event)"
-          showFirstLastButtons
+        <mns-global-table
+          [config]="workloadTable"
+          [rows]="workloadTableRows()"
+          [loading]="loading()"
         />
       </section>
 
@@ -121,73 +49,10 @@
           </div>
         </div>
 
-        <div class="table-wrapper mat-elevation-z8">
-          <table
-            mat-table
-            [dataSource]="providerDataSource.visibleRows()"
-            matSort
-            [matSortActive]="providerDataSource.sortActive()"
-            [matSortDirection]="providerDataSource.sortDirection()"
-            (matSortChange)="providerDataSource.setSort($event)"
-          >
-            <ng-container matColumnDef="provider">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Provider' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">{{ row.label | transloco }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="total">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Total' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.total }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Active' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">{{ row.active }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="defaults">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                {{ 'Defaults' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">{{ row.defaults }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <a [routerLink]="hostingRoute(row.route)" [attr.aria-label]="'View' | transloco">
-                  <mat-icon>chevron_right</mat-icon>
-                  {{ 'View' | transloco }}
-                </a>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="providerColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: providerColumns"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="providerColumns.length">
-                {{
-                  loading()
-                    ? ('Loading hosting providers...' | transloco)
-                    : ('No providers found.' | transloco)
-                }}
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <mat-paginator
-          class="mobile-paginator"
-          [length]="providerDataSource.sortedRows().length"
-          [pageIndex]="providerDataSource.pageIndex()"
-          [pageSize]="providerDataSource.pageSize()"
-          [pageSizeOptions]="[5, 10, 25]"
-          (page)="providerDataSource.setPage($event)"
-          showFirstLastButtons
+        <mns-global-table
+          [config]="providerTable"
+          [rows]="providerTableRows()"
+          [loading]="loading()"
         />
       </section>
     </div>
@@ -202,75 +67,7 @@
         </div>
       </div>
 
-      <div class="table-wrapper mat-elevation-z8">
-        <table
-          mat-table
-          [dataSource]="issueDataSource.visibleRows()"
-          matSort
-          [matSortActive]="issueDataSource.sortActive()"
-          [matSortDirection]="issueDataSource.sortDirection()"
-          (matSortChange)="issueDataSource.setSort($event)"
-        >
-          <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Type' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.type | transloco }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Name' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Status' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              <span
-                class="status-pill status-chip state-chip"
-                [ngClass]="statusChipClass(row.status)"
-              >
-                {{ row.status | transloco }}
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="message">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'Message' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">{{ row.message | transloco }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Actions' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              <a [routerLink]="hostingRoute(row.route)" [attr.aria-label]="'View' | transloco">
-                <mat-icon>chevron_right</mat-icon>
-                {{ 'View' | transloco }}
-              </a>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="issueColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: issueColumns"></tr>
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" [attr.colspan]="issueColumns.length">
-              {{
-                loading()
-                  ? ('Loading provisioning issues...' | transloco)
-                  : ('No provisioning issues found.' | transloco)
-              }}
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <mat-paginator
-        class="mobile-paginator"
-        [length]="issueDataSource.sortedRows().length"
-        [pageIndex]="issueDataSource.pageIndex()"
-        [pageSize]="issueDataSource.pageSize()"
-        [pageSizeOptions]="[5, 10, 25]"
-        (page)="issueDataSource.setPage($event)"
-        showFirstLastButtons
-      />
+      <mns-global-table [config]="issueTable" [rows]="issueTableRows()" [loading]="loading()" />
     </section>
   </div>
 </mns-dashboard-page>

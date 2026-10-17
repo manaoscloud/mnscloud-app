@@ -275,6 +275,20 @@
   gap: 0.85rem;
 }
 
+.crud-icon-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.crud-icon-cell mat-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
 .embedded-collection-header {
   display: flex;
   align-items: center;

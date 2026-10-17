@@ -129,103 +129,7 @@
     </mat-button-toggle-group>
 
     @if (visibleRows().length) {
-      <div class="retention-table-container">
-        <table mat-table [dataSource]="visibleRows()" class="retention-table">
-          <ng-container matColumnDef="customer">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Customer' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              @if (row.kind === 'orphan') {
-                <mat-chip class="status-pill orphan-pill" disableRipple>{{
-                  'Orphan' | transloco
-                }}</mat-chip>
-              }
-              <span>{{ row.customerName || ('No customer' | transloco) }}</span>
-              @if (row.kind === 'orphan' && (row.tenantName || row.serverName)) {
-                <span class="retention-secondary"
-                  >{{ row.tenantName || ('Unknown tenant' | transloco) }}
-                  @if (row.serverName) {
-                    · {{ row.serverName }}
-                  }
-                </span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="pabx">
-            <th mat-header-cell *matHeaderCellDef>{{ 'PABX' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              <span>{{ row.pabxName || (orphanTypeLabel(row.orphanType) | transloco) }}</span>
-              @if (row.kind === 'orphan') {
-                <span class="retention-secondary">
-                  {{ orphanTypeLabel(row.orphanType) | transloco }}
-                  @if (row.pabxDeletedAt) {
-                    · {{ row.pabxDeletedAt | date: 'dd/MM/yyyy' }}
-                  }
-                </span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="cdrRetention">
-            <th mat-header-cell *matHeaderCellDef>{{ 'CDR Retention' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              @if (row.orphanType === 'unrouted') {
-                {{ 'Immediate' | transloco }}
-              } @else if (row.cdrDays > 0) {
-                {{ row.cdrDays }} {{ 'days' | transloco }} ({{
-                  retentionSourceLabel(row.cdrSource) | transloco
-                }})
-              } @else {
-                {{ 'Keep forever' | transloco }}
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="recRetention">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Recording Retention' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              @if (row.recordingDays > 0) {
-                {{ row.recordingDays }} {{ 'days' | transloco }} ({{
-                  retentionSourceLabel(row.recordingSource) | transloco
-                }})
-              } @else {
-                {{ 'Keep forever' | transloco }}
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="expiredCdrs">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Expired CDRs' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.expiredCdrs | number }}
-              @if (row.totalCdrs !== null) {
-                <span class="retention-secondary"
-                  >{{ 'of' | transloco }} {{ row.totalCdrs | number }}</span
-                >
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="expiredRecs">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Expired Recordings' | transloco }}</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.expiredRecordings | number }}
-              @if (row.totalRecordings !== null) {
-                <span class="retention-secondary"
-                  >{{ 'of' | transloco }} {{ row.totalRecordings | number }}</span
-                >
-              }
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="columns"></tr>
-          <tr
-            mat-row
-            *matRowDef="let row; columns: columns"
-            [class.orphan-row]="row.kind === 'orphan'"
-          ></tr>
-        </table>
-      </div>
+      <mns-global-table [config]="retentionTable" [rows]="visibleRows()" />
     } @else {
       <p class="empty-tab">
         {{ 'No expired records detected across current retention policies.' | transloco }}
@@ -274,44 +178,7 @@
       </p>
     }
     @if (result.targets.length) {
-      <div class="retention-table-container">
-        <table mat-table [dataSource]="result.targets" class="retention-table">
-          <ng-container matColumnDef="tenant">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Tenant' | transloco }}</th>
-            <td mat-cell *matCellDef="let target">
-              {{ target.tenantName || target.tenantUUID }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="storage">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Storage account' | transloco }}</th>
-            <td mat-cell *matCellDef="let target">
-              {{ target.storageAccountName || ('Tenant default storage' | transloco) }}
-              @if (target.error) {
-                <span class="retention-secondary retention-error">{{ target.error }}</span>
-              }
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="scanned">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Objects scanned' | transloco }}</th>
-            <td mat-cell *matCellDef="let target">
-              {{ target.scannedObjects | number }}
-              <span class="retention-secondary">{{ formatBytes(target.scannedBytes) }}</span>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="unreferenced">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Unreferenced objects' | transloco }}</th>
-            <td mat-cell *matCellDef="let target">
-              {{ target.unreferencedObjects | number }}
-              <span class="retention-secondary">{{ formatBytes(target.unreferencedBytes) }}</span>
-              @for (sample of target.samples.slice(0, 3); track sample.key) {
-                <span class="retention-secondary retention-key">{{ sample.key }}</span>
-              }
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="scanColumns"></tr>
-          <tr mat-row *matRowDef="let target; columns: scanColumns"></tr>
-        </table>
-      </div>
+      <mns-global-table [config]="scanTable" [rows]="scanRows()" />
     } @else {
       <p class="empty-tab">{{ 'No recording storage is in use.' | transloco }}</p>
     }
@@ -394,41 +261,7 @@
       </div>
     </div>
     @if (job.result?.tables?.length) {
-      <div class="retention-table-container">
-        <table mat-table [dataSource]="job.result?.tables ?? []" class="retention-table">
-          <ng-container matColumnDef="table">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Table' | transloco }}</th>
-            <td mat-cell *matCellDef="let table">{{ table.table }}</td>
-          </ng-container>
-          <ng-container matColumnDef="size">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Size on disk' | transloco }}</th>
-            <td mat-cell *matCellDef="let table">
-              {{ formatBytes(table.fileBytes ?? (table.dataBytes ?? 0) + (table.indexBytes ?? 0)) }}
-              @if (table.fileBytesAfter !== undefined && table.fileBytesAfter !== null) {
-                → {{ formatBytes(table.fileBytesAfter) }}
-              }
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="reclaimable">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Reclaimable' | transloco }}</th>
-            <td mat-cell *matCellDef="let table">{{ formatBytes(table.reclaimableBytes) }}</td>
-          </ng-container>
-          <ng-container matColumnDef="outcome">
-            <th mat-header-cell *matHeaderCellDef>{{ 'Status' | transloco }}</th>
-            <td mat-cell *matCellDef="let table">
-              {{ table.status ?? '' | transloco }}
-              @if (table.reclaimedBytes) {
-                <span class="retention-secondary">{{ formatBytes(table.reclaimedBytes) }}</span>
-              }
-              @if (table.message && table.status !== 'optimized') {
-                <span class="retention-secondary">{{ table.message }}</span>
-              }
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
-          <tr mat-row *matRowDef="let table; columns: tableColumns"></tr>
-        </table>
-      </div>
+      <mns-global-table [config]="maintenanceTable" [rows]="maintenanceTableRows()" />
     }
   }
 </div>

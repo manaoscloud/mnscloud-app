@@ -1,17 +1,21 @@
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
-import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
+import {
+  activeStatusColumn,
+  lastSeenColumn,
+  serverHealthColumn,
+} from '../../../../shared/dashboard/dashboard-table-columns';
 import {
   PabxDashboardMetric,
   PabxDashboardQueue,
@@ -47,14 +51,11 @@ const EMPTY_PABX_DASHBOARD: PabxDashboardSnapshot = {
   selector: 'app-voip-pabx-dashboard',
   standalone: true,
   imports: [
-    MnsDateTimePipe,
     DashboardPageComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -93,19 +94,45 @@ export class VoipPabxDashboardPage {
   readonly queueRows = computed(() => this.dashboard().queues);
   readonly trunkRows = computed(() => this.dashboard().trunks);
 
-  readonly serverColumns = ['health', 'name', 'engine', 'hostname', 'pabxAccounts', 'lastSeenAt'];
-  readonly queueColumns = ['name', 'pabxName', 'strategy', 'members', 'availableAgents', 'status'];
-  readonly trunkColumns = ['name', 'pabxName', 'direction', 'host', 'transport', 'status'];
-  readonly serverTable = createSignalCrudTable<PabxDashboardServer>(
-    this.serverRows,
-    (row, column) => this.serverSortValue(row, column),
-  );
-  readonly queueTable = createSignalCrudTable<PabxDashboardQueue>(this.queueRows, (row, column) =>
-    this.defaultSortValue(row, column),
-  );
-  readonly trunkTable = createSignalCrudTable<PabxDashboardTrunk>(this.trunkRows, (row, column) =>
-    this.defaultSortValue(row, column),
-  );
+  readonly serverTable = defineGlobalTable({
+    key: 'voip/pabx/dashboard/servers',
+    uuidField: 'serverUUID',
+    emptyLabel: 'No servers found.',
+    columns: [
+      serverHealthColumn(),
+      { id: 'name', label: 'Name', field: 'name' },
+      { id: 'engine', label: 'Engine', field: 'engine' },
+      { id: 'hostname', label: 'Host', field: 'hostname' },
+      { id: 'pabxAccounts', label: 'PABX', field: 'pabxAccounts', kind: 'number' },
+      lastSeenColumn(),
+    ],
+  });
+  readonly queueTable = defineGlobalTable({
+    key: 'voip/pabx/dashboard/queues',
+    uuidField: 'queueUUID',
+    emptyLabel: 'No queues found.',
+    columns: [
+      { id: 'name', label: 'Name', field: 'name' },
+      { id: 'pabxName', label: 'PABX', field: 'pabxName' },
+      { id: 'strategy', label: 'Strategy', field: 'strategy' },
+      { id: 'members', label: 'Members', field: 'members', kind: 'number' },
+      { id: 'availableAgents', label: 'Available', field: 'availableAgents', kind: 'number' },
+      activeStatusColumn(),
+    ],
+  });
+  readonly trunkTable = defineGlobalTable({
+    key: 'voip/pabx/dashboard/trunks',
+    uuidField: 'trunkUUID',
+    emptyLabel: 'No trunks found.',
+    columns: [
+      { id: 'name', label: 'Name', field: 'name' },
+      { id: 'pabxName', label: 'PABX', field: 'pabxName' },
+      { id: 'direction', label: 'Direction', field: 'direction' },
+      { id: 'host', label: 'Host', field: 'host' },
+      { id: 'transport', label: 'Transport', field: 'transport' },
+      activeStatusColumn(),
+    ],
+  });
   readonly kpis = computed(() => {
     const item = this.summary();
     return [
@@ -149,43 +176,9 @@ export class VoipPabxDashboardPage {
     this.dashboardResource.reload();
   }
 
-  setServerSort(sort: Sort) {
-    this.serverTable.setSort(sort);
-  }
-
-  setServerPage(page: PageEvent) {
-    this.serverTable.setPage(page);
-  }
-
-  setQueueSort(sort: Sort) {
-    this.queueTable.setSort(sort);
-  }
-
-  setQueuePage(page: PageEvent) {
-    this.queueTable.setPage(page);
-  }
-
-  setTrunkSort(sort: Sort) {
-    this.trunkTable.setSort(sort);
-  }
-
-  setTrunkPage(page: PageEvent) {
-    this.trunkTable.setPage(page);
-  }
-
   metricPercent(item: PabxDashboardMetric, items: PabxDashboardMetric[]) {
     const total = items.reduce((sum, metric) => sum + Number(metric.value ?? 0), 0);
     return total > 0 ? Math.round((Number(item.value ?? 0) / total) * 100) : 0;
-  }
-
-  healthLabel(value: string) {
-    const labels: Record<string, string> = {
-      online: 'ONLINE',
-      offline: 'OFFLINE',
-      inactive: 'INACTIVE',
-      unknown: 'UNKNOWN',
-    };
-    return labels[value] ?? value.toUpperCase();
   }
 
   private async loadDashboardSnapshot(params: {
@@ -223,16 +216,6 @@ export class VoipPabxDashboardPage {
 
   private number(value?: number | null) {
     return String(Number(value ?? 0));
-  }
-
-  private serverSortValue(row: PabxDashboardServer, column: string): string | number {
-    if (column === 'lastSeenAt') return row.lastSeenAt ?? '';
-    return this.defaultSortValue(row, column);
-  }
-
-  private defaultSortValue(row: Record<string, unknown>, column: string): string | number {
-    const value = row[column];
-    return typeof value === 'number' ? value : String(value ?? '').toLowerCase();
   }
 
   private errorMessage(error: unknown, fallback: string) {

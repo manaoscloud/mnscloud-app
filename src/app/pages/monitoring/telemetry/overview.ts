@@ -5,13 +5,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatTableModule } from '@angular/material/table';
-import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { RefreshButtonComponent } from '../../../shared/refresh-button/refresh-button';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import { DateTimeFormatService } from '../../../services/date-time-format.service';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../shared/crud/configurable-crud/global-table';
 import { openAgentTelemetry } from './telemetry';
 
 type Agent = {
@@ -27,9 +30,8 @@ type Agent = {
   transmitBps: number | null;
 };
 type DisplayMode = 'cards' | 'list' | 'compact';
-// Read-only paginated dashboard: no create/delete or local filters over an incomplete fleet.
-// crud-template-exempt: Metrics fleet explorer (app.md Read-only metrics dashboards) is a read-only
-// analysis surface with Cards/List/Compact modes, not a record CRUD.
+// Read-only paginated analysis surface (app.md Read-only metrics dashboards): Cards/List/Compact
+// share the server pagination; List mode is the read-only global table over the current page.
 @Component({
   selector: 'mns-telemetry-overview',
   standalone: true,
@@ -40,9 +42,8 @@ type DisplayMode = 'cards' | 'list' | 'compact';
     MatCardModule,
     MatIconModule,
     MatTooltipModule,
-    MatTableModule,
-    MatSortModule,
     MatPaginatorModule,
+    GlobalTableComponent,
     TranslocoPipe,
     RefreshButtonComponent,
     MnsDateTimePipe,
@@ -67,8 +68,64 @@ export class TelemetryOverviewPage {
     { key: 'memory', label: 'Memory' },
     { key: 'disk', label: 'System disk' },
   ];
-  readonly columns = ['name', 'status', 'cpu', 'memory', 'disk', 'network', 'heartbeat', 'actions'];
-  readonly sort = signal<Sort>({ active: 'name', direction: 'asc' });
+  private readonly dateTime = inject(DateTimeFormatService);
+  /** List mode: the current server page, sorted locally ("Sort the current page"). */
+  readonly listTable = defineGlobalTable({
+    key: 'monitoring/telemetry/agents',
+    uuidField: 'uuid',
+    emptyLabel: 'No monitoring samples available',
+    pagination: false,
+    columns: [
+      {
+        id: 'name',
+        label: 'Agent',
+        field: 'name',
+        kind: 'identity',
+        uuidField: 'uuid',
+        value: (row) => String(row['name'] || row['hostname'] || ''),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        field: 'heartbeat',
+        kind: 'status',
+        value: (row) => (this.stale(row['heartbeat'] as string | null) ? 'Offline' : 'Online'),
+        chipClass: (value) =>
+          this.stale(value as string | null)
+            ? 'chip-skipped is-inactive'
+            : 'chip-success is-active',
+      },
+      ...this.fields.map((field) => ({
+        id: field.key,
+        label: field.label,
+        field: field.key,
+        value: (row: Record<string, unknown>) => this.percent(row[field.key]),
+      })),
+      {
+        id: 'network',
+        label: 'Interface traffic',
+        field: 'receiveBps',
+        value: (row) => this.traffic(row as Agent),
+      },
+      {
+        id: 'heartbeat',
+        label: 'Heartbeat',
+        field: 'heartbeat',
+        value: (row, t) =>
+          row['heartbeat']
+            ? this.dateTime.formatDateTime(this.utc(String(row['heartbeat'])))
+            : t('No data'),
+      },
+    ],
+    rowActions: [
+      {
+        key: 'monitor',
+        label: 'Monitor',
+        icon: 'show_chart',
+        run: (row) => this.monitor(row as unknown as Agent),
+      },
+    ],
+  });
   readonly page = resource({
     defaultValue: { items: [] as Agent[], total: 0 },
     params: () => ({ index: this.index(), size: this.pageSize() }),
@@ -82,16 +139,7 @@ export class TelemetryOverviewPage {
   readonly view = computed(() =>
     this.page.hasValue() ? this.page.value() : { items: [] as Agent[], total: 0 },
   );
-  readonly rows = computed(() => {
-    const { active, direction } = this.sort();
-    return [...this.view().items].sort((a, b) => {
-      const x = this.sortValue(a, active),
-        y = this.sortValue(b, active);
-      const result =
-        typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
-      return direction === 'desc' ? -result : direction === 'asc' ? result : 0;
-    });
-  });
+  readonly rows = computed(() => this.view().items);
   constructor() {
     let failures = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -126,11 +174,17 @@ export class TelemetryOverviewPage {
     this.pageSize.set(event.pageSize);
     this.index.set(event.pageIndex);
   }
-  private sortValue(agent: Agent, field: string): string | number {
-    if (field === 'status') return this.stale(agent.heartbeat) ? 0 : 1;
-    if (field === 'network') return agent.receiveBps ?? -1;
-    if (field === 'name') return agent.name || agent.hostname || '';
-    return agent[field as keyof Agent] ?? -1;
+  private percent(value: unknown): string {
+    return value === null || value === undefined
+      ? '—'
+      : `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+  }
+  private traffic(agent: Agent): string {
+    const mbps = (value: number | null) =>
+      value === null
+        ? '—'
+        : (value / 1000000).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return `↓ ${mbps(agent.receiveBps)} / ↑ ${mbps(agent.transmitBps)} Mbps`;
   }
   utc(value: string) {
     return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');

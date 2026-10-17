@@ -1,32 +1,30 @@
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
-import { MnsDateTimePipe } from '../../../../shared/date-time/date-time.pipe';
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
+import {
+  lastSeenColumn,
+  serverHealthColumn,
+} from '../../../../shared/dashboard/dashboard-table-columns';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
-import { SoftswitchDashboardServer, VoipSoftswitchDashboardService } from './dashboard.service';
+import { VoipSoftswitchDashboardService } from './dashboard.service';
 
 @Component({
   selector: 'app-voip-softswitch-dashboard',
   standalone: true,
   imports: [
-    MnsDateTimePipe,
     DashboardPageComponent,
     RouterModule,
-    MatChipsModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -44,11 +42,18 @@ export class VoipSoftswitchDashboardPage {
   readonly loading = this.dashboardResource.isLoading;
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly servers = computed(() => this.dashboard()?.servers ?? []);
-  readonly serverColumns = ['health', 'name', 'engine', 'hostname', 'lastSeenAt'];
-  readonly serverTable = createSignalCrudTable<SoftswitchDashboardServer>(
-    this.servers,
-    (row, column) => this.serverSortValue(row, column),
-  );
+  readonly serverTable = defineGlobalTable({
+    key: 'voip/softswitch/dashboard/servers',
+    uuidField: 'uuid',
+    emptyLabel: 'No servers found.',
+    columns: [
+      serverHealthColumn(),
+      { id: 'name', label: 'Name', field: 'name' },
+      { id: 'engine', label: 'Engine', field: 'engine' },
+      { id: 'hostname', label: 'Host', field: 'hostname' },
+      lastSeenColumn(),
+    ],
+  });
 
   readonly kpis = computed(() => {
     const data = this.dashboard();
@@ -104,28 +109,7 @@ export class VoipSoftswitchDashboardPage {
     this.dashboardResource.reload();
   }
 
-  setServerSort(sort: Sort) {
-    this.serverTable.setSort(sort);
-  }
-
-  setServerPage(page: PageEvent) {
-    this.serverTable.setPage(page);
-  }
-
-  healthLabel(health: string) {
-    if (health === 'online') return 'Online';
-    if (health === 'offline') return 'Offline';
-    if (health === 'inactive') return 'Inactive';
-    return 'Unknown';
-  }
-
   private ratio(value?: number, total?: number) {
     return `${Number(value ?? 0)}/${Number(total ?? 0)}`;
-  }
-
-  private serverSortValue(row: SoftswitchDashboardServer, column: string): string | number {
-    const value = row[column as keyof SoftswitchDashboardServer];
-    if (typeof value === 'number') return value;
-    return String(value ?? '');
   }
 }
