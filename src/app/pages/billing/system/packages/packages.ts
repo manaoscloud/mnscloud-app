@@ -335,7 +335,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    // Record row 1: Status, Code, Name
+    // Record: Status, Code, Name on one row
     {
       key: 'status',
       source: 'BpaStatus',
@@ -363,7 +363,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       help: 'Commercial name of the package shown to operators and tenants.',
       span: 2,
     },
-    // Record row 2: Public, Sort order, Public slug
+    // Public: catalog visibility, name, slug, sort order; summary; description.
     {
       key: 'isPublic',
       source: 'BpaIsPublic',
@@ -372,6 +372,23 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: YES_NO_OPTIONS,
       help: 'Publish this package on the public internet website/catalogs. Unchecked packages are still available to authenticated tenants in the platform catalog.',
+      tab: 'public',
+      span: 1,
+    },
+    {
+      key: 'publicName',
+      source: 'BpaPublicName',
+      payloadKey: 'publicName',
+      label: 'Public name',
+      tab: 'public',
+      span: 1,
+    },
+    {
+      key: 'publicSlug',
+      source: 'BpaPublicSlug',
+      payloadKey: 'publicSlug',
+      label: 'Public slug',
+      tab: 'public',
       span: 1,
     },
     {
@@ -381,29 +398,26 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Sort order',
       type: 'number',
       help: 'Position of the package in lists and in the catalog. Lower numbers appear first.',
+      tab: 'public',
       span: 1,
-    },
-    {
-      key: 'publicSlug',
-      source: 'BpaPublicSlug',
-      payloadKey: 'publicSlug',
-      label: 'Public slug',
-      span: 2,
-    },
-    // Record row 3: Public name, Public summary
-    {
-      key: 'publicName',
-      source: 'BpaPublicName',
-      payloadKey: 'publicName',
-      label: 'Public name',
-      span: 2,
     },
     {
       key: 'publicSummary',
       source: 'BpaPublicSummary',
       payloadKey: 'publicSummary',
       label: 'Public summary',
-      span: 2,
+      tab: 'public',
+      span: 4,
+    },
+    {
+      key: 'publicDescription',
+      source: 'BpaPublicDescription',
+      payloadKey: 'publicDescription',
+      label: 'Public description',
+      type: 'textarea',
+      tab: 'public',
+      span: 4,
+      rows: 3,
     },
     // Financial (create only): the first package item, created in the same transaction.
     {
@@ -448,17 +462,6 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       tab: 'financial',
       span: 1,
     },
-    // Notes & Public Description:
-    {
-      key: 'publicDescription',
-      source: 'BpaPublicDescription',
-      payloadKey: 'publicDescription',
-      label: 'Public description',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 3,
-    },
     {
       key: 'notes',
       source: 'BpaNotes',
@@ -468,7 +471,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       help: 'Internal annotations about the package, visible only to the platform team.',
       tab: 'notes',
       span: 4,
-      rows: 3,
+      rows: 4,
     },
   ],
 };

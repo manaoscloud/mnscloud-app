@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3a1e858a553c",
+  "version": "e16c035204ed",
   "language": "pt-BR",
   "entries": [
     {
@@ -4745,19 +4745,23 @@
           "help": "Publica este pacote no site público/catálogo na internet. Pacotes desmarcados continuam disponíveis para contratação por tenants autenticados no catálogo da plataforma."
         },
         {
-          "label": "Ordem",
-          "help": "Posição do pacote nas listas e no catálogo. Números menores aparecem primeiro."
+          "label": "Nome público",
+          "help": ""
         },
         {
           "label": "Slug público",
           "help": ""
         },
         {
-          "label": "Nome público",
-          "help": ""
+          "label": "Ordem",
+          "help": "Posição do pacote nas listas e no catálogo. Números menores aparecem primeiro."
         },
         {
           "label": "Resumo público",
+          "help": ""
+        },
+        {
+          "label": "Descrição pública",
           "help": ""
         },
         {
@@ -4775,10 +4779,6 @@
         {
           "label": "Obrigatório",
           "help": "Marca o item como parte obrigatória da oferta. Apenas informativo: a liberação é concedida de qualquer forma."
-        },
-        {
-          "label": "Descrição pública",
-          "help": ""
         },
         {
           "label": "Anotações",
