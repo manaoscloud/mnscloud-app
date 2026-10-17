@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudFieldContext,
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -25,6 +26,25 @@ const PROVIDER_TYPE_OPTIONS: readonly { value: VpsProvider; label: string }[] = 
   { value: 'proxmox', label: 'Proxmox VE' },
   { value: 'vmware_vcenter', label: 'VMware vCenter' },
 ];
+
+/** Master-only reseller cost model; tenants never receive these values. */
+const COMMERCIAL_FIELD_KEYS = new Set([
+  'sku',
+  'providerCostAmount',
+  'providerCostCurrency',
+  'fxRate',
+  'fxRateDate',
+  'taxReservePct',
+  'targetMarginPct',
+  'providerCostLocal',
+  'minimumPrice',
+  'isPromotional',
+  'promotionalReason',
+  'costSource',
+  'costCheckedOn',
+]);
+/** Server computed from the cost model; shown as a preview while editing. */
+const COMPUTED_FIELD_KEYS = new Set(['providerCostLocal', 'minimumPrice']);
 
 const COPY_PLAN_ACTION: ConfigurableCrudRowAction = {
   key: 'copy',
@@ -87,10 +107,28 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
     memoryMb: 0,
     diskGb: 0,
     transferGb: 0,
+    diskType: '',
+    diskIops: '',
+    diskIopsSource: '',
+    dedicatedCpu: '',
+    sku: '',
+    providerCostAmount: '',
+    providerCostCurrency: 'USD',
+    fxRate: '',
+    fxRateDate: '',
+    taxReservePct: '',
+    targetMarginPct: '',
+    providerCostLocal: '',
+    minimumPrice: '',
+    isPromotional: '0',
+    promotionalReason: '',
+    costSource: '',
+    costCheckedOn: '',
     notes: '',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HvpName', uuidField: 'HvpUUID' },
+    { id: 'sku', label: 'SKU', field: 'HvpSku' },
     {
       id: 'provider',
       label: 'Provider',
@@ -150,6 +188,15 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'sku',
+      source: 'HvpSku',
+      payloadKey: 'sku',
+      label: 'SKU',
+      placeholder: 'MNS-DO-US-START',
+      help: 'Internal commercial identifier, unique among plans. Never shown to tenants.',
+      span: 1,
+    },
+    {
       key: 'price',
       source: 'HvpPrice',
       payloadKey: 'price',
@@ -165,6 +212,127 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'setupFee',
       label: 'Setup fee',
       type: 'currency',
+      tab: 'financial',
+      span: 1,
+      lineFillAfter: 2,
+    },
+    {
+      key: 'providerCostAmount',
+      source: 'HvpProviderCostAmount',
+      payloadKey: 'providerCostAmount',
+      label: 'Provider cost / month',
+      type: 'number',
+      tab: 'financial',
+      span: 1,
+      breakBefore: true,
+      help: 'Monthly cost charged by the provider, in the provider currency.',
+    },
+    {
+      key: 'providerCostCurrency',
+      source: 'HvpProviderCostCurrency',
+      payloadKey: 'providerCostCurrency',
+      label: 'Provider cost currency',
+      placeholder: 'USD',
+      tab: 'financial',
+      span: 1,
+    },
+    {
+      key: 'fxRate',
+      source: 'HvpFxRate',
+      payloadKey: 'fxRate',
+      label: 'FX rate',
+      type: 'number',
+      tab: 'financial',
+      span: 1,
+      help: 'Reference rate: 1 unit of the provider currency in the plan currency.',
+    },
+    {
+      key: 'fxRateDate',
+      source: 'HvpFxRateDate',
+      payloadKey: 'fxRateDate',
+      label: 'FX rate date',
+      type: 'date',
+      tab: 'financial',
+      span: 1,
+    },
+    {
+      key: 'taxReservePct',
+      source: 'HvpTaxReservePct',
+      payloadKey: 'taxReservePct',
+      label: 'Tax reserve %',
+      type: 'number',
+      tab: 'financial',
+      span: 1,
+      help: 'Share of the selling price reserved for taxes and fees.',
+    },
+    {
+      key: 'targetMarginPct',
+      source: 'HvpTargetMarginPct',
+      payloadKey: 'targetMarginPct',
+      label: 'Target margin %',
+      type: 'number',
+      tab: 'financial',
+      span: 1,
+      help: 'Intended margin as a share of the selling price, before support and other costs.',
+    },
+    {
+      key: 'providerCostLocal',
+      source: 'HvpProviderCostLocal',
+      label: 'Converted cost',
+      type: 'currency',
+      tab: 'financial',
+      span: 1,
+    },
+    {
+      key: 'minimumPrice',
+      source: 'HvpMinimumPrice',
+      label: 'Minimum price',
+      type: 'currency',
+      tab: 'financial',
+      span: 1,
+      help: 'Cost / (1 - (tax reserve + margin) / 100). An active plan cannot be priced below it unless it is promotional.',
+    },
+    {
+      key: 'isPromotional',
+      source: 'HvpIsPromotional',
+      payloadKey: 'isPromotional',
+      label: 'Promotional / free',
+      type: 'select',
+      tab: 'financial',
+      span: 1,
+      breakBefore: true,
+      options: [
+        { value: '0', label: 'No' },
+        { value: '1', label: 'Yes' },
+      ],
+      fromRecord: (value) => (Number(value ?? 0) === 1 ? '1' : '0'),
+    },
+    {
+      key: 'promotionalReason',
+      source: 'HvpPromotionalReason',
+      payloadKey: 'promotionalReason',
+      label: 'Promotional reason',
+      tab: 'financial',
+      span: 3,
+      requiredWhen: (context) => String(context.values['isPromotional'] ?? '0') === '1',
+      hiddenWhen: (context) => String(context.values['isPromotional'] ?? '0') !== '1',
+    },
+    {
+      key: 'costSource',
+      source: 'HvpCostSource',
+      payloadKey: 'costSource',
+      label: 'Cost source',
+      placeholder: 'https://www.digitalocean.com/pricing/droplets',
+      tab: 'financial',
+      span: 3,
+      breakBefore: true,
+    },
+    {
+      key: 'costCheckedOn',
+      source: 'HvpCostCheckedOn',
+      payloadKey: 'costCheckedOn',
+      label: 'Cost checked on',
+      type: 'date',
       tab: 'financial',
       span: 1,
     },
@@ -247,6 +415,66 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       tab: 'storage',
       span: 1,
       fromRecord: (value) => Number(parsePlanConfig(value)?.transferGb ?? 0),
+    },
+    {
+      key: 'diskType',
+      source: 'HvpConfig',
+      payloadKey: 'diskType',
+      label: 'Disk type',
+      type: 'select',
+      tab: 'storage',
+      span: 1,
+      breakBefore: true,
+      options: [
+        { value: 'ssd', label: 'SSD' },
+        { value: 'nvme', label: 'NVMe SSD' },
+        { value: 'hdd', label: 'HDD' },
+      ],
+      translateOptions: false,
+      fromRecord: (value) => String(parsePlanConfig(value)?.diskType ?? ''),
+    },
+    {
+      key: 'diskIops',
+      source: 'HvpConfig',
+      payloadKey: 'diskIops',
+      label: 'Disk IOPS',
+      type: 'number',
+      tab: 'storage',
+      span: 1,
+      help: 'Fill only with a value published by the provider or measured. Empty means not published.',
+      fromRecord: (value) => parsePlanConfig(value)?.diskIops ?? '',
+    },
+    {
+      key: 'diskIopsSource',
+      source: 'HvpConfig',
+      payloadKey: 'diskIopsSource',
+      label: 'IOPS source',
+      type: 'select',
+      tab: 'storage',
+      span: 1,
+      options: [
+        { value: 'provider', label: 'Published by the provider' },
+        { value: 'measured', label: 'Measured' },
+      ],
+      requiredWhen: (context) => Number(context.values['diskIops'] ?? 0) > 0,
+      fromRecord: (value) => String(parsePlanConfig(value)?.diskIopsSource ?? ''),
+    },
+    {
+      key: 'dedicatedCpu',
+      source: 'HvpConfig',
+      payloadKey: 'dedicatedCpu',
+      label: 'Dedicated CPU',
+      type: 'select',
+      tab: 'storage',
+      span: 1,
+      options: [
+        { value: '0', label: 'No' },
+        { value: '1', label: 'Yes' },
+      ],
+      fromRecord: (value) => {
+        const dedicated = parsePlanConfig(value)?.dedicatedCpu;
+        return dedicated === true ? '1' : dedicated === false ? '0' : '';
+      },
     },
     {
       key: 'notes',
@@ -430,8 +658,20 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
             disabledWhen: () => this.locksCatalogSpecs(),
           };
         }
+        if (COMMERCIAL_FIELD_KEYS.has(field.key)) {
+          const hiddenWhen = field.hiddenWhen;
+          return {
+            ...field,
+            hiddenWhen: (context: ConfigurableCrudFieldContext) =>
+              !masterScope || Boolean(hiddenWhen?.(context)),
+            ...(COMPUTED_FIELD_KEYS.has(field.key) ? { disabledWhen: () => true } : {}),
+          };
+        }
         return field;
       }),
+      columns: HOSTING_VPS_PLAN_CONFIG.columns.map((column) =>
+        column.id === 'sku' ? { ...column, hiddenWhen: () => !masterScope } : column,
+      ),
     });
     void this.fetchProviders();
   }
@@ -537,6 +777,24 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     next['memoryMb'] = Number(config?.memoryMb ?? 0);
     next['diskGb'] = Number(config?.diskGb ?? 0);
     next['transferGb'] = Number(config?.transferGb ?? 0);
+    next['diskType'] = String(config?.diskType ?? '');
+    next['diskIops'] = config?.diskIops ?? '';
+    next['diskIopsSource'] = String(config?.diskIopsSource ?? '');
+    next['dedicatedCpu'] =
+      config?.dedicatedCpu === true ? '1' : config?.dedicatedCpu === false ? '0' : '';
+    next['sku'] = String(row['HvpSku'] ?? '');
+    next['providerCostAmount'] = row['HvpProviderCostAmount'] ?? '';
+    next['providerCostCurrency'] = String(row['HvpProviderCostCurrency'] ?? '');
+    next['fxRate'] = row['HvpFxRate'] ?? '';
+    next['fxRateDate'] = String(row['HvpFxRateDate'] ?? '');
+    next['taxReservePct'] = row['HvpTaxReservePct'] ?? '';
+    next['targetMarginPct'] = row['HvpTargetMarginPct'] ?? '';
+    next['providerCostLocal'] = row['HvpProviderCostLocal'] ?? '';
+    next['minimumPrice'] = row['HvpMinimumPrice'] ?? '';
+    next['isPromotional'] = Number(row['HvpIsPromotional'] ?? 0) === 1 ? '1' : '0';
+    next['promotionalReason'] = String(row['HvpPromotionalReason'] ?? '');
+    next['costSource'] = String(row['HvpCostSource'] ?? '');
+    next['costCheckedOn'] = String(row['HvpCostCheckedOn'] ?? '');
     next['notes'] = String(config?.notes ?? '');
     next['isActive'] = Number(row['HvpIsActive'] ?? 0) === 1 ? 1 : 0;
     next['price'] = Number(row['HvpPrice'] ?? 0);
@@ -565,10 +823,15 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const values = this.formValuesFromRecord(row);
     const sourceName = String(values['name'] ?? row['HvpName'] ?? '').trim();
     values['name'] = sourceName ? `${sourceName} COPY` : 'COPY';
+    values['sku'] = '';
     this.startCreateWithValues(values);
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (['providerCostAmount', 'fxRate', 'taxReservePct', 'targetMarginPct'].includes(key)) {
+      this.patchFormValues(costPreview(this.formValues()));
+      return;
+    }
     if (key === 'providerUUID') {
       this.patchFormValues({
         region: '',
@@ -634,6 +897,24 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     const lightsailAwsRegion =
       provider === 'lightsail' ? lightsailParentRegion(region) || region : null;
 
+    const diskIops = optionalNumber(payload['diskIops']);
+    const dedicatedCpu = normalizeString(payload['dedicatedCpu']);
+    const commercial = this.isMaster()
+      ? {
+          sku: normalizeString(payload['sku']),
+          providerCostAmount: optionalNumber(payload['providerCostAmount']),
+          providerCostCurrency: normalizeString(payload['providerCostCurrency']),
+          fxRate: optionalNumber(payload['fxRate']),
+          fxRateDate: normalizeString(payload['fxRateDate']),
+          taxReservePct: optionalNumber(payload['taxReservePct']),
+          targetMarginPct: optionalNumber(payload['targetMarginPct']),
+          costSource: normalizeString(payload['costSource']),
+          costCheckedOn: normalizeString(payload['costCheckedOn']),
+          isPromotional: truthyNumber(payload['isPromotional']) === 1,
+          promotionalReason: normalizeString(payload['promotionalReason']),
+        }
+      : {};
+
     return {
       name: String(payload['name'] ?? '').trim(),
       providerUUID: providerRecord?.HvrUUID ?? providerUUID,
@@ -641,7 +922,10 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
       size,
       price: Number(payload['price'] ?? 0),
       setupFee: Number.isFinite(setupFee) ? setupFee : 0,
+      ...commercial,
       config: {
+        // Keep keys this form does not edit (for example provider-specific options).
+        ...(existingConfig ?? {}),
         cpu: Number(payload['cpu'] ?? 0) || null,
         memoryMb: Number(payload['memoryMb'] ?? 0) || null,
         diskGb: Number(payload['diskGb'] ?? 0) || null,
@@ -652,6 +936,16 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
         providerSizeId: size,
         sizeFamily,
         sizeCategory,
+        diskType:
+          (normalizeString(payload['diskType']) as HostingVpsPlanConfig['diskType']) ?? null,
+        diskIops,
+        diskIopsSource: diskIops
+          ? ((normalizeString(
+              payload['diskIopsSource'],
+            ) as HostingVpsPlanConfig['diskIopsSource']) ?? null)
+          : null,
+        dedicatedCpu: dedicatedCpu === null ? null : dedicatedCpu === '1',
+        publicIpv4: existingConfig?.publicIpv4 ?? true,
         notes,
       } satisfies HostingVpsPlanConfig,
       isActive: truthyNumber(payload['isActive']) === 1,
@@ -803,17 +1097,27 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (diskGb !== null) patch['diskGb'] = diskGb;
     if (transferGb !== null) patch['transferGb'] = transferGb;
 
+    const category = normalizeString(option.category) ?? '';
+    if (provider === 'digitalocean' || provider === 'lightsail') {
+      patch['diskType'] = /premium/i.test(category) ? 'nvme' : 'ssd';
+      patch['dedicatedCpu'] = /dedicated/i.test(category) ? '1' : '0';
+      // Providers charge no setup; a setup fee is a deliberate commercial decision.
+      patch['setupFee'] = 0;
+    }
+
     const usdMonthly = catalogNumber(option.priceMonthly);
     if (usdMonthly !== null && usdMonthly > 0) {
-      const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
-      const convertedMonthly = await convertUsdAmount(usdMonthly, targetCurrency);
-      // Mirror provider instance list price into both commercial price and setup.
-      // Providers often charge $0 setup; operators can clear setup later if unused.
-      patch['price'] = roundMoney(convertedMonthly);
-      patch['setupFee'] = roundMoney(convertedMonthly);
-    } else if (provider === 'digitalocean' || provider === 'lightsail') {
-      // Keep previous zeroing behavior when catalog has no list price.
-      patch['setupFee'] = 0;
+      // The provider list price is the cost; the selling price comes from the cost model.
+      patch['providerCostAmount'] = usdMonthly;
+      patch['providerCostCurrency'] = 'USD';
+      const preview = costPreview({ ...this.formValues(), ...patch });
+      Object.assign(patch, preview);
+      if (preview['minimumPrice'] !== '') {
+        patch['price'] = preview['minimumPrice'];
+      } else {
+        const targetCurrency = (this.defaultCurrency() || 'BRL').toUpperCase();
+        patch['price'] = roundMoney(await convertUsdAmount(usdMonthly, targetCurrency));
+      }
     }
 
     if (!Object.keys(patch).length) return;
@@ -892,6 +1196,33 @@ function normalizeString(value: unknown): string | null {
 function truthyNumber(value: unknown): 0 | 1 {
   if (value === true || value === 1 || value === '1' || value === 'true') return 1;
   return 0;
+}
+
+function optionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Preview of the server-computed cost model (the API/DB recompute and enforce it on save):
+ * converted cost = cost × fx and minimum price = cost × fx ÷ (1 − (reserve + margin) ÷ 100),
+ * from the unrounded cost, rounded at the end.
+ */
+function costPreview(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
+  const cost = optionalNumber(values['providerCostAmount']);
+  const fx = optionalNumber(values['fxRate']);
+  const share =
+    (optionalNumber(values['taxReservePct']) ?? 0) +
+    (optionalNumber(values['targetMarginPct']) ?? 0);
+  if (cost === null || fx === null || fx <= 0 || share < 0 || share >= 100) {
+    return { providerCostLocal: '', minimumPrice: '' };
+  }
+  const converted = cost * fx;
+  return {
+    providerCostLocal: roundMoney(converted),
+    minimumPrice: roundMoney(converted / (1 - share / 100)),
+  };
 }
 
 function catalogNumber(value: unknown): number | null {
