@@ -23,6 +23,7 @@
     "check:app-catalog": "node scripts/generate-app-catalog.mjs --check",
     "check:page-descriptions": "node scripts/validate-page-descriptions.mjs",
     "check:dialog-report": "node scripts/validate-dialog-report-button.mjs",
+    "check:tables": "node scripts/validate-global-table.mjs",
     "check:required-fields": "node scripts/validate-required-fields.mjs",
     "check:menus": "node scripts/validate-menus.mjs",
     "check:install-command-dialog": "node scripts/validate-install-command-dialog.mjs",

@@ -553,6 +553,16 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   see `Read-Only Data Viewer Dialog Baseline`), `DashboardRecordListComponent` (dashboard record
   cards) and the server paginator shared by the Cards/List/Compact modes of the Metrics fleet
   explorer.
+- Enforced in CI (`verify:changed`) by `npm run check:tables`
+  (`scripts/validate-global-table.mjs`): any `<table>`, `mat-table`/`matColumnDef`,
+  `MatTableModule`/`MatTableDataSource`, `<mat-paginator>` or `MatPaginatorModule` outside the
+  global table fails the build. There is no per-page opt-out marker: the only exceptions are the
+  `NOT_TABLE_SURFACES` of the validator (the global table and the "Not tables" list above), and a new
+  one needs the same change here. `crud-template-exempt` does not exempt a page from this check.
+- Before writing any list, an AI agent answers in its plan which of the four surfaces above renders
+  it. "The page already has the data", "it is read-only", "it is a dashboard", "it is a small
+  sub-table" or "it is inside a dialog" are not reasons to hand-roll a table: those are exactly the
+  cases `mns-global-table`, `ConfigurableCrudCollectionDialog` and `relatedCollections` exist for.
 
 ## Commercial Menu Projection
 
@@ -1400,6 +1410,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `Apply/Clear` order or placement differs from baseline
   - `confirm()` browser dialog used instead of `SlowConfirmDialogComponent`
   - a searchable FK form field without quick-create and without a documented exemption
+  - any list of rows rendered without the global table (`<table>`, `mat-table`, page-local
+    paginator, custom list markup); `npm run check:tables` must pass
 
 ## Request Template (recommended)
 
