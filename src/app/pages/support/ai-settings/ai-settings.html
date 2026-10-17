@@ -1,7 +1,7 @@
 <mns-settings-page
   [title]="'AI assistant' | transloco"
   [description]="
-    'Automatic triage of platform tickets: answers usage questions and reports platform bugs to the team.'
+    'Automatic triage of platform tickets: answers usage questions, asks for details when needed and reports platform bugs to the team.'
       | transloco
   "
   [loading]="loading()"
@@ -43,7 +43,7 @@
         <mns-field-help
           [label]="'AI provider' | transloco"
           [text]="
-            'Provider and model of the support triage AI feature, set in Settings › AI › Features. Ticket subject, messages and redacted diagnostics are sent to it; e-mails, tax IDs, IP addresses and secrets are removed first.'
+            'Provider and model of the support triage AI feature, set in Settings › AI › Features. Ticket subject, messages, redacted diagnostics and the allowed attachments are sent to it; e-mails, tax IDs, IP addresses, secrets and platform domains are removed from texts first.'
               | transloco
           "
         />
@@ -93,7 +93,7 @@
         matIconSuffix
         [label]="'Automatic answers per ticket' | transloco"
         [text]="
-          'When the requester replies, the assistant answers again up to this limit; then the team takes over.'
+          'Answers and requests for details per ticket. When the requester replies, the assistant analyses again up to this limit; then the team takes over.'
             | transloco
         "
       />
@@ -137,6 +137,74 @@
       "
     />
 
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Analyses per requester and hour' | transloco }}</mat-label>
+      <input matInput type="number" [formField]="settingsForm.maxTriagesPerRequesterHour" />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Analyses per requester and hour' | transloco"
+        [text]="
+          'Fairness: one tenant cannot use the whole hourly limit. Manual runs by the team are not counted against it.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Read attached images' | transloco"
+      [field]="settingsForm.includeImages"
+      [options]="yesNoOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'The screenshot and images the requester attached are sent to the AI provider without metadata. Images cannot be anonymized like text.'
+          | transloco
+      "
+    />
+
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Read attached PDFs' | transloco"
+      [field]="settingsForm.includeDocuments"
+      [options]="yesNoOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'Unencrypted PDFs up to 20 pages and 10 MB attached by the requester are sent to the AI provider.'
+          | transloco
+      "
+    />
+
+    <mns-search-select-field
+      class="span-1"
+      [label]="'Read attached text files' | transloco"
+      [field]="settingsForm.includeTextFiles"
+      [options]="yesNoOptions"
+      [translateOptions]="true"
+      [placeholder]="'Search' | transloco"
+      [emptyLabel]="'No records found.' | transloco"
+      [help]="
+        'Text, log, CSV and JSON files are sent as anonymized excerpts (e-mails, tax IDs, IP addresses and secrets removed).'
+          | transloco
+      "
+    />
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Attachments per analysis' | transloco }}</mat-label>
+      <input matInput type="number" [formField]="settingsForm.maxAttachments" />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Attachments per analysis' | transloco"
+        [text]="
+          'Only files the requester attached are read, the screenshot first and then the newest. 0 reads none.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
     <mat-form-field appearance="outline" class="span-4">
       <mat-label>{{ 'Reply when a bug is identified' | transloco }}</mat-label>
       <textarea matInput rows="4" [formField]="settingsForm.bugReplyMessage"></textarea>
@@ -144,7 +212,7 @@
         matIconSuffix
         [label]="'Reply when a bug is identified' | transloco"
         [text]="
-          'Fixed message sent to the requester. The technical report and the fix prompt are never sent to the requester.'
+          'Used when the assistant does not write a personalized acknowledgement. The technical report and the fix prompt are never sent to the requester.'
             | transloco
         "
       />
