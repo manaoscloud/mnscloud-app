@@ -676,6 +676,11 @@
     padding-right: 0.25rem;
   }
 
+  /* The content scrolls as a whole: its blocks keep their height (a shrunk wrapper hid the mobile cards). */
+  .dialog-content > * {
+    flex-shrink: 0;
+  }
+
   .table-wrapper {
     margin-bottom: 0.5rem;
   }
