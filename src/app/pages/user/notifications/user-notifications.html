@@ -1,0 +1,92 @@
+<mns-page-shell
+  title="notifications.pageTitle"
+  description="notifications.pageDescription"
+  [loading]="loading()"
+  (refresh)="reload()"
+>
+  <div class="notifications-toolbar">
+    <mat-button-toggle-group
+      hideSingleSelectionIndicator
+      [value]="filter()"
+      (change)="setFilter($event.value)"
+      [attr.aria-label]="'notifications.filter' | transloco"
+    >
+      <mat-button-toggle value="all">{{ 'notifications.filterAll' | transloco }}</mat-button-toggle>
+      <mat-button-toggle value="unread">{{
+        'topbar.notificationsFilterUnread' | transloco
+      }}</mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (inbox.unreadCount()) {
+      <button mat-stroked-button type="button" (click)="markAllRead()">
+        <mat-icon>done_all</mat-icon>
+        {{ 'topbar.notificationsMarkAll' | transloco }}
+      </button>
+    }
+  </div>
+
+  @if (failed()) {
+    <p class="notifications-empty" role="alert">{{ 'topbar.notificationsError' | transloco }}</p>
+  } @else if (!loading() && !items().length) {
+    <p class="notifications-empty">
+      {{
+        (filter() === 'unread' ? 'topbar.notificationsEmptyUnread' : 'notifications.emptyAll')
+          | transloco
+      }}
+    </p>
+  }
+
+  <ul class="notifications-list">
+    @for (item of items(); track item.notificationUUID) {
+      <li
+        class="notification-row"
+        [class.is-unread]="!item.readAt"
+        [attr.data-severity]="item.severity"
+      >
+        <button
+          type="button"
+          class="notification-open"
+          [attr.aria-label]="ariaLabel(item)"
+          (click)="open(item)"
+        >
+          <mat-icon class="notification-icon" aria-hidden="true">{{ icon(item) }}</mat-icon>
+          <span class="notification-text">
+            <span class="notification-title">{{ title(item) }}</span>
+            <span class="notification-description">{{ description(item) }}</span>
+          </span>
+          @if (!item.readAt) {
+            <span class="notification-dot" aria-hidden="true"></span>
+          }
+        </button>
+        @if (item.readAt) {
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'notifications.markUnread' | transloco"
+            [attr.aria-label]="'notifications.markUnread' | transloco"
+            (click)="markUnread(item)"
+          >
+            <mat-icon>mark_email_unread</mat-icon>
+          </button>
+        } @else {
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'notifications.markRead' | transloco"
+            [attr.aria-label]="'notifications.markRead' | transloco"
+            (click)="markRead(item)"
+          >
+            <mat-icon>mark_email_read</mat-icon>
+          </button>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (hasMore()) {
+    <div class="notifications-more">
+      <button mat-stroked-button type="button" [disabled]="loading()" (click)="showMore()">
+        {{ 'notifications.loadMore' | transloco }}
+      </button>
+    </div>
+  }
+</mns-page-shell>

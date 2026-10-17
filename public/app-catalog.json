@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2fa79f130ed8",
+  "version": "516b8d23c147",
   "language": "pt-BR",
   "entries": [
     {
@@ -7854,6 +7854,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/user/notifications",
+      "menuPath": "Usuário › Notificações",
+      "scope": "tenant",
+      "title": "Notificações",
+      "description": "Acompanhe o que aconteceu com você neste tenant nos últimos 90 dias (respostas em chamados, avisos de cobrança e status de ideias) e abra cada item onde ele precisa de ação.",
+      "fields": []
     },
     {
       "route": "/user/permissions",

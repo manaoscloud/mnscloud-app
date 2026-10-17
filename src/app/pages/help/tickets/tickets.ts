@@ -9,7 +9,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SupportReportService } from '../../../services/support-report.service';
-import { SupportUnreadService } from '../../../services/support-unread.service';
 import { NotificationInboxService } from '../../../services/notification-inbox.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -199,10 +198,9 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   private readonly reports = inject(SupportReportService);
-  private readonly unread = inject(SupportUnreadService);
   private readonly inbox = inject(NotificationInboxService);
 
-  /** Opening the conversation marks it as read on the API: refresh the menu badge and the bell. */
+  /** Opening the conversation marks it as read on the API: refresh the bell and the menu path. */
   override async runRowAction(
     action: Parameters<ConfigurableCrudPageBase<ConfigurableCrudRecord>['runRowAction']>[0],
     row: ConfigurableCrudRecord,
@@ -210,7 +208,6 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     await super.runRowAction(action, row);
     if (action.key === 'conversation') {
       // Reading the conversation also reads its bell notification (API).
-      void this.unread.refresh();
       void this.inbox.refresh();
     }
   }

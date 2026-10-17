@@ -215,16 +215,32 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   (`tenantIdentityParts()`); the panel (`mns-menu-fit`) widens instead of breaking them. When the
   viewport is narrower, the line wraps only between the parts and the separator is hidden. The
   panel width is locked on open so the tenant search does not resize it while filtering.
-- Notifications bell: `NotificationInboxService` polls `user/notifications/unread-count` every
-  60 s (tenant selected, tab visible); `9+` above nine, `matBadgeDescription` and a polite live
-  region announcing increases. Opening it lazily loads (`matMenuContent`) the newest eight
-  `user/notifications`: icon by type, translated title (`notifications.*`), subject/offer/title
-  plus local date, unread items bold with a dot, error severity in the error color. A click marks
-  the item read and opens its `route` (internal path from the API); `Marcar todas como lidas`
-  keeps the panel open. Types: `support.ticket.reply` (opening the conversation reads it),
-  `billing.subscription` (latest dunning notice) and `feature_request.status` (author and voters).
-  The My tickets menu badge keeps `SupportUnreadService`; the page follows later `ticket` query
-  changes because the route is reused.
+- Notifications bell: `NotificationInboxService` is the single unread source of the bell and the
+  menu. It polls `user/notifications/unread-summary` every 60 s (tenant selected, tab visible):
+  the total feeds the bell (`9+` above nine, singular/plural labels, `matBadgeDescription`, polite
+  live region on increases) and the per-page counts feed the menu path (section Navigation unread
+  path). Opening the bell lazily loads (`matMenuContent`) the newest eight `user/notifications`
+  with an `Unread only` checkbox filter, a `New` section (unread) and an `Earlier` section (read).
+  Unread rows carry three redundant signals (12% primary tonal background, 3px leading primary bar,
+  trailing primary dot) plus a bold `on-surface` title and a primary icon; read rows use a regular
+  `on-surface-variant` title and a muted icon. The icon follows the type, never the state
+  (`forum`, `payments`, `lightbulb`); error severity keeps the error icon color. A click marks the
+  item read, opens its `route` (internal path from the API) and briefly highlights the menu leaf
+  (`is-notified`, no animation with reduced motion). Footer: `Marcar todas como lidas` (keeps the
+  panel open) and `Ver todas as notificações` → `/user/notifications` (filter All/Unread, mark
+  read/unread per row, mark all read, 25 per page with Load more; `resource()` read model).
+  Types: `support.ticket.reply` (opening the conversation reads it), `billing.subscription`
+  (latest dunning notice) and `feature_request.status` (author and voters). Shared display rules
+  live in `src/app/services/notification-display.ts`.
+- Navigation unread path: `navUnreadCounts()` (`src/app/layout/navigation/nav-unread.ts`) maps the
+  summary onto the visible menu (`localizedNavItems`, already filtered by permission, scope and
+  entitlement): a page lights the leaf whose resolved route is that page (or, failing that, the
+  deepest leaf containing it) and every ancestor. The single `navIndicator` template renders a
+  count pill on the leaf (`99+`) and a dot on every group above it, at all four levels of the
+  expanded/mobile menu, on the compact rail (dot only) and in the three compact flyouts, with a
+  visually hidden translated suffix for screen readers. Hidden items never light an ancestor and a
+  page without a menu entry lights only the bell, so new notification types need no App change
+  when their route is a menu page. There are no per-item badge flags in `nav-registry.ts`.
 - Preserve the activity panel's 22rem desktop width, 12px radius, compact uppercase heading,
   divided rows and viewport-bounded scrolling. At 480px and below use 8px side margins.
 - Text and icon triggers share the toolbar-scoped Material state-layer tokens: primary color,
@@ -324,11 +340,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   lists the attachments read or skipped (audit, no content) and the action `clarify` ("More details
   requested"). The Report problem dialog tells the requester that the description, prints, files
   and diagnostics may be analysed by the support assistant (AI).
-- Unread answers: `NavItem.badge = 'supportUnread'` on `support/requests`; `SupportUnreadService`
-  polls `help/tickets/unread-count` every 60 s while a tenant is selected and the tab is visible,
-  and the shell shows the count on the entry, a dot on collapsed groups and the topbar
-  notifications bell (section Topbar menus). Opening the
-  conversation marks it read (API) and refreshes the badge; My tickets lists `New replies`.
+- Unread answers: the `support.ticket.reply` inbox notifications light My tickets through the
+  navigation unread path and the bell (section Topbar menus). Opening the conversation marks it
+  read (API) and refreshes the inbox; My tickets lists `New replies`.
   Background reads pass `api.get(..., { silent: true })` (`SILENT_ERRORS` context): failures throw
   without a toast, a 401 still expires the session.
 - App screen catalog: `public/app-catalog.json` (menu path in pt-BR, scope, title, page
