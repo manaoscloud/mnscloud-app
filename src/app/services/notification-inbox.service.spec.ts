@@ -24,17 +24,25 @@ describe('NotificationInboxService', () => {
   beforeEach(() => {
     localStorage.setItem('mc_current_env', ENV);
     unread = 2;
-    get = jasmine
-      .createSpy('get')
-      .and.callFake(async (endpoint: string) =>
-        endpoint.startsWith('user/notifications?')
-          ? {
-              data: {
-                items: [item('a'), item('b', '2026-10-16T13:05:00Z'), { notificationUUID: '' }],
-              },
-            }
-          : { data: { UnreadCount: unread } },
-      );
+    get = jasmine.createSpy('get').and.callFake(async (endpoint: string) =>
+      endpoint.startsWith('user/notifications?')
+        ? {
+            data: {
+              items: [item('a'), item('b', '2026-10-16T13:05:00Z'), { notificationUUID: '' }],
+            },
+          }
+        : {
+            data: {
+              UnreadCount: unread,
+              routes: unread
+                ? [
+                    { route: '/support/requests', count: unread },
+                    { route: '//evil.example', count: 1 },
+                  ]
+                : [],
+            },
+          },
+    );
     post = jasmine.createSpy('post').and.resolveTo({});
     TestBed.configureTestingModule({
       providers: [
@@ -56,7 +64,7 @@ describe('NotificationInboxService', () => {
     await inbox.refresh();
     await inbox.load();
 
-    expect(get).toHaveBeenCalledWith('user/notifications/unread-count', {
+    expect(get).toHaveBeenCalledWith('user/notifications/unread-summary', {
       timeout: 10_000,
       silent: true,
     });
@@ -65,6 +73,7 @@ describe('NotificationInboxService', () => {
       silent: true,
     });
     expect(inbox.unreadCount()).toBe(2);
+    expect([...inbox.unreadByRoute()]).toEqual([['/support/requests', 2]]);
     expect(inbox.state()).toBe('ready');
     expect(inbox.items().map((entry) => entry.notificationUUID)).toEqual(['a', 'b']);
   });
@@ -83,10 +92,33 @@ describe('NotificationInboxService', () => {
     await inbox.markRead(inbox.items()[1]);
     expect(post).not.toHaveBeenCalled();
 
+    unread = 2;
+    await inbox.markUnread(inbox.items()[0]);
+    expect(post).toHaveBeenCalledWith('user/notifications/a/unread', {});
+    expect(inbox.items()[0].readAt).toBeNull();
+
     unread = 0;
     await inbox.markAllRead();
     expect(post).toHaveBeenCalledWith('user/notifications/read-all', {});
     expect(inbox.unreadCount()).toBe(0);
+    expect(inbox.unreadByRoute().size).toBe(0);
+  });
+
+  it('filters the panel to unread ones and pages the full list', async () => {
+    const inbox = TestBed.inject(NotificationInboxService);
+    inbox.setFilter('unread');
+    await inbox.load();
+    expect(get).toHaveBeenCalledWith(
+      `user/notifications?limit=${INBOX_PANEL_LIMIT}&offset=0&unread=true`,
+      { timeout: 10_000, silent: true },
+    );
+    get.calls.reset();
+    const page = await inbox.page(25, 50, false);
+    expect(get).toHaveBeenCalledWith('user/notifications?limit=25&offset=50', {
+      timeout: 10_000,
+      silent: true,
+    });
+    expect(page.items.length).toBe(2);
   });
 
   it('shows an error state when the panel cannot be loaded and skips calls without a tenant', async () => {

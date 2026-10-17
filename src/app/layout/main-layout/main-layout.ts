@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -27,12 +28,17 @@ import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
 import { AsyncOperationsService } from '../../shared/operations/async-operations.service';
-import { SupportUnreadService } from '../../services/support-unread.service';
 import {
   InboxNotification,
   NotificationInboxService,
 } from '../../services/notification-inbox.service';
-import { featureRequestStatusLabel } from '../../pages/support/shared/feature-requests';
+import { navUnreadCounts, routePath } from '../navigation/nav-unread';
+import {
+  notificationAriaLabel,
+  notificationDescription,
+  notificationIcon,
+  notificationTitle,
+} from '../../services/notification-display';
 
 // Material
 import { MatBadgeModule } from '@angular/material/badge';
@@ -115,6 +121,7 @@ interface UserAccessResponse {
   selector: 'app-main-layout',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     RouterOutlet,
     RouterLink,
     BreadcrumbComponent,
@@ -151,7 +158,6 @@ export class MainLayout {
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
-  private readonly supportUnread = inject(SupportUnreadService);
   protected readonly inbox = inject(NotificationInboxService);
   private readonly reportService = inject(SupportReportService);
   private readonly dialogs = inject(MatDialog);
@@ -398,16 +404,53 @@ export class MainLayout {
     return mode === 'tenant' ? item.route : undefined;
   }
 
-  /** Counter of a menu entry with a live badge (0 hides it). */
-  navBadge(item: NavItem): number {
-    return item.badge === 'supportUnread' ? this.supportUnread.unreadTickets() : 0;
+  /**
+   * Unread notifications projected on the visible menu (inbox summary per App page): the leaf
+   * shows the count and every ancestor a dot, so the path to the page is marked at every level,
+   * in the expanded menu and in the compact flyouts alike.
+   */
+  readonly navUnread = computed(() =>
+    navUnreadCounts(
+      this.localizedNavItems(),
+      (item) => this.routeForItem(item),
+      this.inbox.unreadByRoute(),
+    ),
+  );
+
+  /** Unread notifications at or below a menu entry (0 = nothing). */
+  navUnreadCount(item: NavItem): number {
+    return this.navUnread().get(item.id) ?? 0;
   }
 
-  /** A collapsed group shows a dot when any entry below it has a counter. */
-  hasNavBadge(item: NavItem): boolean {
-    return (
-      this.navBadge(item) > 0 || (item.children ?? []).some((child) => this.hasNavBadge(child))
-    );
+  /** Screen reader suffix of a menu entry with unread notifications. */
+  navUnreadLabel(item: NavItem, count: number): string {
+    if (item.children?.length) return this.i18n.t('notifications.navUnreadInside');
+    return count === 1
+      ? this.i18n.t('notifications.navUnreadOne')
+      : this.i18n.t('notifications.navUnreadMany', { count: String(count) });
+  }
+
+  /** Menu leaf briefly highlighted after opening a notification from the bell. */
+  readonly notifiedNavId = signal<string | null>(null);
+  private notifiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private highlightNavFor(route: string) {
+    const path = routePath(route);
+    let found: string | null = null;
+    const walk = (items: NavItem[]) => {
+      for (const item of items) {
+        if (found) return;
+        if (item.children?.length) walk(item.children);
+        else {
+          const target = this.routeForItem(item);
+          if (target && routePath(target) === path) found = item.id;
+        }
+      }
+    };
+    walk(this.localizedNavItems());
+    if (this.notifiedTimer) clearTimeout(this.notifiedTimer);
+    this.notifiedNavId.set(found);
+    if (found) this.notifiedTimer = setTimeout(() => this.notifiedNavId.set(null), 4000);
   }
 
   isActiveItem(item: NavItem): boolean {
@@ -712,12 +755,16 @@ export class MainLayout {
   private readonly announceUnread = effect(() => {
     const count = this.inbox.unreadCount();
     if (count > this.lastUnreadCount) {
-      this.notificationsAnnouncement.set(
-        this.i18n.t('topbar.notificationsUnread', { count: String(count) }),
-      );
+      this.notificationsAnnouncement.set(this.unreadLabel(count));
     }
     this.lastUnreadCount = count;
   });
+
+  private unreadLabel(count: number) {
+    return count === 1
+      ? this.i18n.t('topbar.notificationsUnreadOne')
+      : this.i18n.t('topbar.notificationsUnread', { count: String(count) });
+  }
 
   notificationsBadge(): string | null {
     const count = this.inbox.unreadCount();
@@ -726,70 +773,34 @@ export class MainLayout {
 
   notificationsLabel() {
     const count = this.inbox.unreadCount();
-    return count
-      ? this.i18n.t('topbar.notificationsUnread', { count: String(count) })
-      : this.i18n.t('topbar.notifications');
+    return count ? this.unreadLabel(count) : this.i18n.t('topbar.notifications');
   }
 
   notificationsHint() {
     const count = this.inbox.unreadCount();
-    return count ? this.i18n.t('topbar.notificationsHint', { count: String(count) }) : null;
+    if (!count) return null;
+    return count === 1
+      ? this.i18n.t('topbar.notificationsHintOne')
+      : this.i18n.t('topbar.notificationsHint', { count: String(count) });
   }
 
+  private readonly translate = (key: string, params?: Record<string, string>) =>
+    this.i18n.t(key, params);
+
   notificationIcon(item: InboxNotification) {
-    switch (item.type) {
-      case 'support.ticket.reply':
-        return 'mark_chat_unread';
-      case 'billing.subscription':
-        return 'payments';
-      case 'feature_request.status':
-        return 'lightbulb';
-      default:
-        return 'notifications';
-    }
+    return notificationIcon(item);
   }
 
   notificationTitle(item: InboxNotification) {
-    const param = (key: string) => String(item.params[key] ?? '');
-    switch (item.type) {
-      case 'support.ticket.reply':
-        return this.i18n.t('notifications.ticketReply', { protocol: param('protocol') });
-      case 'billing.subscription':
-        return this.i18n.t(`notifications.billing.${param('kind') || 'PAYMENT_FAILED'}`);
-      case 'feature_request.status':
-        return this.i18n.t('notifications.ideaStatus', {
-          code: param('code'),
-          status: featureRequestStatusLabel(param('status'), (key) => this.i18n.t(key)),
-        });
-      default:
-        return this.i18n.t('notifications.generic');
-    }
+    return notificationTitle(item, this.translate);
   }
 
   notificationDescription(item: InboxNotification) {
-    const subject =
-      item.type === 'billing.subscription'
-        ? item.params['offer']
-        : item.type === 'feature_request.status'
-          ? item.params['title']
-          : item.params['subject'];
-    return [subject ? String(subject) : '', this.notificationTime(item.lastEventAt)]
-      .filter(Boolean)
-      .join(' · ');
+    return notificationDescription(item, this.i18n.language());
   }
 
   notificationAriaLabel(item: InboxNotification) {
-    const state = item.readAt ? '' : `${this.i18n.t('notifications.unread')}: `;
-    return `${state}${this.notificationTitle(item)}. ${this.notificationDescription(item)}`;
-  }
-
-  private notificationTime(value: string | null) {
-    const date = value ? new Date(value) : null;
-    if (!date || Number.isNaN(date.getTime())) return '';
-    return new Intl.DateTimeFormat(this.i18n.language(), {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(date);
+    return notificationAriaLabel(item, this.translate, this.i18n.language());
   }
 
   openNotifications() {
@@ -799,7 +810,21 @@ export class MainLayout {
 
   openNotification(item: InboxNotification) {
     void this.inbox.markRead(item);
-    void this.router.navigateByUrl(item.route || '/');
+    const route = item.route || '/';
+    // Navigation auto-expands the menu path; the leaf is highlighted for a few seconds.
+    void this.router.navigateByUrl(route).then(() => this.highlightNavFor(route));
+  }
+
+  /** Panel order: unread first ("New" section), then the read ones ("Earlier"). */
+  readonly panelItems = computed(() => {
+    const items = this.inbox.items();
+    return [...items.filter((item) => !item.readAt), ...items.filter((item) => !!item.readAt)];
+  });
+
+  /** A section heading opens the list and the first read item after unread ones. */
+  startsPanelSection(index: number): boolean {
+    const items = this.panelItems();
+    return index === 0 || !!items[index].readAt !== !!items[index - 1]?.readAt;
   }
 
   private hasPermission(required: string): boolean {
