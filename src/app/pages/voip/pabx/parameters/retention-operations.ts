@@ -10,8 +10,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { ApiService } from '../../../services/api.service';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { ApiService } from '../../../../services/api.service';
+import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 
 // crud-template-exempt: Master retention operations panel (dry-run counters, batch purge,
 // storage scan and database maintenance) embedded in Parameters; not a resource CRUD list.

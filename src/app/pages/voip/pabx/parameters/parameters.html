@@ -1,0 +1,367 @@
+<mns-settings-page
+  title="PABX parameters"
+  [description]="pageDescription()"
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [error]="feedback()"
+  [success]="success()"
+  (refresh)="refresh()"
+  (cancel)="cancel()"
+  (save)="save()"
+>
+  <mat-tab-group
+    class="form-tabs"
+    [selectedIndex]="selectedTab()"
+    (selectedIndexChange)="selectedTab.set($event)"
+  >
+    <mat-tab [label]="'Storage' | transloco">
+      <form class="tab-content form-grid">
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="recordingStorageMode"
+          [label]="'Call recordings storage' | transloco"
+          [options]="storageModeOptions()"
+          [translateOptions]="true"
+          [value]="form().recordingStorageMode"
+          [help]="
+            'Where PABX call recordings are kept: local filesystem of the PABX server or object storage.'
+              | transloco
+          "
+          (valueChange)="update({ recordingStorageMode: $any($event) })"
+        />
+        @if (form().recordingStorageMode === 'storage') {
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="recordingStorageAccountUUID"
+            [label]="'Recording storage account' | transloco"
+            [options]="storageAccountOptions()"
+            [value]="form().recordingStorageAccountUUID"
+            [invalid]="invalid('recordingStorageAccountUUID')"
+            [errorMessage]="'form.validation.required' | transloco"
+            [canCreate]="true"
+            [createLabel]="'Create storage account' | transloco"
+            (createRecord)="createStorageAccount('recordingStorageAccountUUID')"
+            [help]="'Storage account that receives the PABX call recordings.' | transloco"
+            (valueChange)="update({ recordingStorageAccountUUID: $any($event) })"
+          />
+        }
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="mediaStorageMode"
+          [label]="'Media files storage' | transloco"
+          [options]="storageModeOptions()"
+          [translateOptions]="true"
+          [value]="form().mediaStorageMode"
+          [help]="
+            'Where IVR prompts, hold music and uploaded audio are kept: local filesystem or object storage.'
+              | transloco
+          "
+          (valueChange)="update({ mediaStorageMode: $any($event) })"
+        />
+        @if (form().mediaStorageMode === 'storage') {
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="mediaStorageAccountUUID"
+            [label]="'Media file storage account' | transloco"
+            [options]="storageAccountOptions()"
+            [value]="form().mediaStorageAccountUUID"
+            [canCreate]="true"
+            [createLabel]="'Create storage account' | transloco"
+            (createRecord)="createStorageAccount('mediaStorageAccountUUID')"
+            [help]="
+              'Storage account of the media files. Empty uses the recording storage account.'
+                | transloco
+            "
+            (valueChange)="update({ mediaStorageAccountUUID: $any($event) })"
+          />
+        }
+        @if (!isMaster()) {
+          <p class="span-4 settings-page-note">
+            {{ 'Platform value' | transloco }}:
+            {{ modeLabel(info().platform.recordingStorageMode) | transloco }} /
+            {{ modeLabel(info().platform.mediaStorageMode) | transloco }}
+          </p>
+        }
+      </form>
+    </mat-tab>
+
+    <mat-tab [label]="'Media' | transloco">
+      <form class="tab-content form-grid">
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="mediaDeliveryMode"
+          [label]="'Media file delivery' | transloco"
+          [options]="deliveryModeOptions()"
+          [translateOptions]="true"
+          [value]="form().mediaDeliveryMode"
+          [help]="
+            'Online streams prompts from the platform when played; offline syncs the files to each PABX server first.'
+              | transloco
+          "
+          (valueChange)="update({ mediaDeliveryMode: $any($event) })"
+        />
+        @if (!isMaster()) {
+          <p class="span-2 settings-page-note">
+            {{ 'Platform value' | transloco }}:
+            {{ modeLabel(info().platform.mediaDeliveryMode) | transloco }}
+          </p>
+        }
+      </form>
+    </mat-tab>
+
+    <mat-tab [label]="'SIP Realm' | transloco">
+      <form class="tab-content form-grid">
+        @if (!isMaster()) {
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="realmSource"
+            [label]="'Configuration source' | transloco"
+            [options]="realmSourceOptions"
+            [translateOptions]="true"
+            [value]="form().realmSource"
+            [help]="
+              'Inherit uses the complete platform SIP realm configuration; own uses the values below.'
+                | transloco
+            "
+            (valueChange)="update({ realmSource: $any($event) })"
+          />
+        }
+        @if (ownRealm()) {
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="autoDomainDnsMode"
+            [label]="'SIP realm DNS mode' | transloco"
+            [options]="dnsModeOptions"
+            [translateOptions]="true"
+            [value]="form().autoDomainDnsMode"
+            [help]="
+              'Publication mode of generated SIP realms: managed authoritative DNS or SIP identity only.'
+                | transloco
+            "
+            (valueChange)="update({ autoDomainDnsMode: $any($event) })"
+          />
+          @if (managedDns()) {
+            <mns-search-select-field
+              data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
+              fieldClass="span-4"
+              data-field-key="dnsPolicyUUID"
+              [label]="'Domain for SIP realm publication' | transloco"
+              [options]="dns.options()"
+              [remoteSearch]="true"
+              [loading]="dns.loading()"
+              [loadError]="dns.loadError()"
+              [hasPrevious]="dns.offset() > 0"
+              [hasNext]="dns.hasNext()"
+              (searchChange)="dns.search($event)"
+              (pageChange)="dns.page($event)"
+              (openedChange)="$event && dns.refresh()"
+              [value]="form().dnsPolicyUUID"
+              [invalid]="invalid('dnsPolicyUUID')"
+              [errorMessage]="'form.validation.required' | transloco"
+              [help]="
+                'Managed DNS publishes A and optional AAAA records in an authorized zone. Existing SIP realms are not changed.'
+                  | transloco
+              "
+              (valueChange)="selectDnsPolicy($event)"
+            />
+            @if (selectedPolicyError(); as policyError) {
+              <p class="span-4 settings-page-feedback" role="alert">
+                {{ policyError | transloco }}
+              </p>
+            }
+          } @else {
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>{{ 'SIP realm base' | transloco }}</mat-label>
+              <input
+                matInput
+                data-field-key="autoDomainBase"
+                [value]="form().autoDomainBase"
+                [mnsInvalid]="invalid('autoDomainBase')"
+                (input)="update({ autoDomainBase: $any($event.target).value })"
+              />
+              <mns-field-help
+                matIconSuffix
+                [label]="'SIP realm base' | transloco"
+                [text]="
+                  'Domain suffix of generated PABX SIP realms (e.g. pabx.publichost.cloud).'
+                    | transloco
+                "
+              />
+              <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
+            </mat-form-field>
+          }
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Domain label' | transloco }}</mat-label>
+            <input matInput [value]="'Short UUID' | transloco" readonly />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Domain label' | transloco"
+              [text]="
+                'Prefix of the PABX account UUID; it never changes when the account is renamed.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'UUID length' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="8"
+              max="32"
+              data-field-key="autoDomainUuidLength"
+              [value]="form().autoDomainUuidLength"
+              [mnsInvalid]="invalid('autoDomainUuidLength')"
+              (input)="update({ autoDomainUuidLength: numberValue($event) })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'UUID length' | transloco"
+              [text]="
+                'Character length of the random short UUID prefix (between 8 and 32 characters).'
+                  | transloco
+              "
+            />
+            <mat-error>{{ 'Enter a number between 8 and 32.' | transloco }}</mat-error>
+          </mat-form-field>
+
+          <div class="span-2 settings-page-toggle">
+            <mat-slide-toggle
+              [checked]="form().autoDomainEnabled"
+              (change)="update({ autoDomainEnabled: $event.checked })"
+            >
+              {{ 'Create PABX SIP realm automatically' | transloco }}
+            </mat-slide-toggle>
+          </div>
+          <div class="span-2 settings-page-toggle">
+            <mat-slide-toggle
+              [checked]="form().autoDomainSetDefault"
+              (change)="update({ autoDomainSetDefault: $event.checked })"
+            >
+              {{ 'Set generated PABX SIP realm as default' | transloco }}
+            </mat-slide-toggle>
+          </div>
+        } @else {
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Inherited publication mode' | transloco }}</mat-label>
+            <input
+              matInput
+              [value]="
+                (info().platform.dnsMode === 'managed_dns'
+                  ? 'Managed DNS publication'
+                  : 'SIP identity without DNS publication'
+                ) | transloco
+              "
+              readonly
+            />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Inherited SIP Realm domain' | transloco }}</mat-label>
+            <input matInput [value]="inheritedRealmLabel()" readonly />
+          </mat-form-field>
+          @if (info().platform.dnsMode === 'managed_dns' && info().platform.dnsPolicyError) {
+            <p class="span-4 settings-page-feedback" role="alert">
+              {{ info().platform.dnsPolicyError! | transloco }}
+            </p>
+          }
+          <p class="span-4 settings-page-note">
+            {{
+              'New PABX accounts inherit the complete platform Realm SIP configuration.' | transloco
+            }}
+          </p>
+        }
+      </form>
+    </mat-tab>
+
+    <mat-tab [label]="'Retention' | transloco">
+      <form class="tab-content form-grid">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'CDR history retention (days)' | transloco }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            data-field-key="cdrRetentionDays"
+            [placeholder]="
+              isMaster() ? ('Keep forever' | transloco) : info().platform.cdrRetentionDays + ''
+            "
+            [value]="form().cdrRetentionDays"
+            [mnsInvalid]="invalid('cdrRetentionDays')"
+            (input)="update({ cdrRetentionDays: numberValue($event) })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'CDR history retention (days)' | transloco"
+            [text]="
+              (isMaster()
+                ? 'Platform default for tenants and PABXs without their own value. Empty or 0 keeps call history forever. Order: PABX, then tenant, then platform. A CDR is kept while its recording is still stored.'
+                : 'Tenant default for PABXs without their own value. Empty inherits the platform value; 0 keeps call history forever. Order: PABX, then tenant, then platform. A CDR is kept while its recording is still stored.'
+              ) | transloco
+            "
+          />
+          <mat-error>{{ 'Enter zero or a positive whole number.' | transloco }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Call recordings retention (days)' | transloco }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            data-field-key="recordingRetentionDays"
+            [placeholder]="
+              isMaster()
+                ? ('Keep forever' | transloco)
+                : info().platform.recordingRetentionDays + ''
+            "
+            [value]="form().recordingRetentionDays"
+            [mnsInvalid]="invalid('recordingRetentionDays')"
+            (input)="update({ recordingRetentionDays: numberValue($event) })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'Call recordings retention (days)' | transloco"
+            [text]="
+              (isMaster()
+                ? 'Platform default for tenants and PABXs without their own value. Empty or 0 keeps recordings forever. Order: PABX, then tenant, then platform.'
+                : 'Tenant default for PABXs without their own value. Empty inherits the platform value; 0 keeps recordings forever. Order: PABX, then tenant, then platform.'
+              ) | transloco
+            "
+          />
+          <mat-error>{{ 'Enter zero or a positive whole number.' | transloco }}</mat-error>
+        </mat-form-field>
+
+        @if (isMaster()) {
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Orphan records grace (days)' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              max="3650"
+              placeholder="30"
+              data-field-key="orphanRetentionDays"
+              [value]="form().orphanRetentionDays"
+              [mnsInvalid]="invalid('orphanRetentionDays')"
+              (input)="update({ orphanRetentionDays: numberValue($event) })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Orphan records grace (days)' | transloco"
+              [text]="
+                'Applies to CDRs and recordings whose PABX was deleted or no longer exists. Counted from the PABX deletion date (or from the record date when no PABX is known). Empty uses 30 days; 0 never purges orphan records.'
+                  | transloco
+              "
+            />
+            <mat-error>{{ 'Enter a number between 0 and 3650.' | transloco }}</mat-error>
+          </mat-form-field>
+
+          <mns-voip-pabx-retention-operations class="span-4" />
+        }
+      </form>
+    </mat-tab>
+  </mat-tab-group>
+</mns-settings-page>

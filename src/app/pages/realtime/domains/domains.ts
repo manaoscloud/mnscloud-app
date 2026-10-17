@@ -71,7 +71,7 @@ const DNS_FIELDS: ConfigurableCrudField[] = [
     label: 'DNS policy',
     type: 'search-select',
     remoteLookup: {
-      endpoint: 'system/parameters/realtime-dns-policies',
+      endpoint: 'system/realtime/media/parameters/dns-policies',
       uuidField: 'policyUUID',
       labelField: 'base',
       selectedLabelField: 'DnsPolicyBase',

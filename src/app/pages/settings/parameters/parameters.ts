@@ -1,6 +1,5 @@
 import {
   Component,
-  DestroyRef,
   ViewEncapsulation,
   computed,
   effect,
@@ -23,11 +22,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
-import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
-import { VoipPabxRetentionOperationsComponent } from './retention-operations';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -43,64 +40,6 @@ type SystemParametersItem = {
   defaultLanguageIsActive: boolean;
   defaultTimezone: string;
   defaultTimezoneIsActive: boolean;
-  voipPabxRecordingStorageMode: 'filesystem' | 'storage' | '';
-  voipPabxRecordingStorageAccountUUID: string;
-  voipPabxRecordingStorageIsActive: boolean;
-  voipPabxMediaStorageMode: 'filesystem' | 'storage' | '';
-  voipPabxMediaStorageAccountUUID: string;
-  voipPabxMediaStorageIsActive: boolean;
-  voipPabxMediaDeliveryMode: 'online' | 'offline' | '';
-  voipPabxMediaDeliveryModeIsActive: boolean;
-  voipPabxRemoteCommandExecutor: 'agent' | 'esl_ami' | '';
-  voipPabxRemoteCommandExecutorIsActive: boolean;
-  voipPabxAutoDomainEnabled: boolean;
-  voipPabxAutoDomainBase: string;
-  voipPabxAutoDomainLabelMode: 'uuid_short';
-  voipPabxAutoDomainUuidLength: number;
-  voipPabxAutoDomainSetDefault: boolean;
-  voipPabxAutoDomainDnsMode: 'identity_only' | 'managed_dns';
-  voipPabxRealmSource: 'own' | 'inherit';
-  voipPabxDnsPolicyUUID: string;
-  voipPabxDnsPolicyBase?: string | null;
-  voipPabxDnsPolicyZoneName?: string | null;
-  voipPabxDnsPolicyEligible?: boolean | null;
-  voipPabxDnsPolicyError?: string | null;
-  voipPabxEffectiveSource?: 'tenant' | 'platform';
-  voipPabxEffectiveDnsMode?: 'identity_only' | 'managed_dns';
-  voipPabxEffectiveBase?: string;
-  voipPabxEffectiveZoneName?: string | null;
-  voipPabxEffectivePolicyUUID?: string | null;
-  voipPabxEffectivePolicyEligible?: boolean;
-  voipPabxEffectivePolicyError?: string | null;
-  voipPabxInheritedDnsMode?: 'identity_only' | 'managed_dns';
-  voipPabxInheritedBase?: string;
-  voipPabxInheritedZoneName?: string | null;
-  voipPabxInheritedPolicyUUID?: string | null;
-  voipPabxAutoDomainIsActive: boolean;
-  voipSoftswitchAutoDomainEnabled: boolean;
-  voipSoftswitchAutoDomainBase: string;
-  voipSoftswitchAutoDomainLabelMode: 'uuid_short';
-  voipSoftswitchAutoDomainUuidLength: number;
-  voipSoftswitchAutoDomainSetDefault: boolean;
-  voipSoftswitchAutoDomainDnsMode: 'identity_only' | 'managed_dns';
-  voipSoftswitchRealmSource: 'own' | 'inherit';
-  voipSoftswitchDnsPolicyUUID: string;
-  voipSoftswitchDnsPolicyBase?: string | null;
-  voipSoftswitchDnsPolicyZoneName?: string | null;
-  voipSoftswitchDnsPolicyEligible?: boolean | null;
-  voipSoftswitchDnsPolicyError?: string | null;
-  voipSoftswitchEffectiveSource?: 'tenant' | 'platform';
-  voipSoftswitchEffectiveDnsMode?: 'identity_only' | 'managed_dns';
-  voipSoftswitchEffectiveBase?: string;
-  voipSoftswitchEffectiveZoneName?: string | null;
-  voipSoftswitchEffectivePolicyUUID?: string | null;
-  voipSoftswitchEffectivePolicyEligible?: boolean;
-  voipSoftswitchEffectivePolicyError?: string | null;
-  voipSoftswitchInheritedDnsMode?: 'identity_only' | 'managed_dns';
-  voipSoftswitchInheritedBase?: string;
-  voipSoftswitchInheritedZoneName?: string | null;
-  voipSoftswitchInheritedPolicyUUID?: string | null;
-  voipSoftswitchAutoDomainIsActive: boolean;
   signupCaptchaEnabled: boolean;
   signupCaptchaProvider: 'turnstile' | 'hcaptcha' | '';
   signupCaptchaSiteKey: string;
@@ -110,47 +49,6 @@ type SystemParametersItem = {
   authRememberMeEnabled: boolean;
   authSessionHours: number;
   authRememberMeHours: number;
-  voipPabxCdrRetentionDays: number;
-  voipPabxRecordingRetentionDays: number;
-  voipPabxOrphanRetentionDays: number;
-  realtimeMediaAutoDomainEnabled: boolean;
-  realtimeMediaDnsPolicyUUID: string;
-  realtimeMediaAutoDomainUuidLength: number;
-  realtimeMediaDnsPolicyBase?: string | null;
-  realtimeMediaDnsPolicyZoneName?: string | null;
-  realtimeMediaDnsPolicyEligible?: boolean | null;
-  realtimeMediaDnsPolicyError?: string | null;
-};
-
-type StorageAccountItem = {
-  HsaUUID: string;
-  HsaName: string;
-  HspName?: string | null;
-  HspProvider?: string | null;
-};
-
-type ParametersSnapshot = {
-  item: SystemParametersItem;
-  storageAccounts: StorageAccountItem[];
-};
-
-/** VoIP services with their own DNS publication policies (one per DNS zone and service). */
-type VoipDnsService = 'pabx' | 'softswitch' | 'realtime';
-
-type DnsPolicyItem = {
-  policyUUID: string;
-  domainUUID?: string;
-  base: string;
-  zoneName?: string;
-  status: boolean;
-  eligible?: boolean;
-};
-
-type SelectedDnsPolicy = {
-  uuid: string;
-  zoneName?: string | null;
-  base?: string | null;
-  eligible?: boolean | null;
 };
 
 type BradescoSiadItem = {
@@ -203,64 +101,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   defaultLanguageIsActive: true,
   defaultTimezone: '',
   defaultTimezoneIsActive: true,
-  voipPabxRecordingStorageMode: '',
-  voipPabxRecordingStorageAccountUUID: '',
-  voipPabxRecordingStorageIsActive: true,
-  voipPabxMediaStorageMode: '',
-  voipPabxMediaStorageAccountUUID: '',
-  voipPabxMediaStorageIsActive: true,
-  voipPabxMediaDeliveryMode: '',
-  voipPabxMediaDeliveryModeIsActive: true,
-  voipPabxRemoteCommandExecutor: '',
-  voipPabxRemoteCommandExecutorIsActive: true,
-  voipPabxAutoDomainEnabled: true,
-  voipPabxAutoDomainBase: 'pabx.publichost.cloud',
-  voipPabxAutoDomainLabelMode: 'uuid_short',
-  voipPabxAutoDomainUuidLength: 12,
-  voipPabxAutoDomainSetDefault: true,
-  voipPabxAutoDomainDnsMode: 'identity_only',
-  voipPabxRealmSource: 'inherit',
-  voipPabxDnsPolicyUUID: '',
-  voipPabxDnsPolicyBase: null,
-  voipPabxDnsPolicyZoneName: null,
-  voipPabxDnsPolicyEligible: null,
-  voipPabxDnsPolicyError: null,
-  voipPabxEffectiveSource: 'platform',
-  voipPabxEffectiveDnsMode: 'identity_only',
-  voipPabxEffectiveBase: 'pabx.publichost.cloud',
-  voipPabxEffectiveZoneName: null,
-  voipPabxEffectivePolicyUUID: null,
-  voipPabxEffectivePolicyEligible: true,
-  voipPabxEffectivePolicyError: null,
-  voipPabxInheritedDnsMode: 'identity_only',
-  voipPabxInheritedBase: 'pabx.publichost.cloud',
-  voipPabxInheritedZoneName: null,
-  voipPabxInheritedPolicyUUID: null,
-  voipPabxAutoDomainIsActive: true,
-  voipSoftswitchAutoDomainEnabled: true,
-  voipSoftswitchAutoDomainBase: 'softswitch.publichost.cloud',
-  voipSoftswitchAutoDomainLabelMode: 'uuid_short',
-  voipSoftswitchAutoDomainUuidLength: 12,
-  voipSoftswitchAutoDomainSetDefault: true,
-  voipSoftswitchAutoDomainDnsMode: 'identity_only',
-  voipSoftswitchRealmSource: 'inherit',
-  voipSoftswitchDnsPolicyUUID: '',
-  voipSoftswitchDnsPolicyBase: null,
-  voipSoftswitchDnsPolicyZoneName: null,
-  voipSoftswitchDnsPolicyEligible: null,
-  voipSoftswitchDnsPolicyError: null,
-  voipSoftswitchEffectiveSource: 'platform',
-  voipSoftswitchEffectiveDnsMode: 'identity_only',
-  voipSoftswitchEffectiveBase: 'softswitch.publichost.cloud',
-  voipSoftswitchEffectiveZoneName: null,
-  voipSoftswitchEffectivePolicyUUID: null,
-  voipSoftswitchEffectivePolicyEligible: true,
-  voipSoftswitchEffectivePolicyError: null,
-  voipSoftswitchInheritedDnsMode: 'identity_only',
-  voipSoftswitchInheritedBase: 'softswitch.publichost.cloud',
-  voipSoftswitchInheritedZoneName: null,
-  voipSoftswitchInheritedPolicyUUID: null,
-  voipSoftswitchAutoDomainIsActive: true,
   signupCaptchaEnabled: false,
   signupCaptchaProvider: '',
   signupCaptchaSiteKey: '',
@@ -270,12 +110,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   authRememberMeEnabled: true,
   authSessionHours: 12,
   authRememberMeHours: 720,
-  voipPabxCdrRetentionDays: 0,
-  voipPabxRecordingRetentionDays: 0,
-  voipPabxOrphanRetentionDays: 30,
-  realtimeMediaAutoDomainEnabled: false,
-  realtimeMediaDnsPolicyUUID: '',
-  realtimeMediaAutoDomainUuidLength: 12,
 };
 
 @Component({
@@ -283,7 +117,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
   standalone: true,
   imports: [
     SettingsPageComponent,
-    MnsSearchSelectFieldComponent,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -293,7 +126,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
     TranslocoPipe,
     MatSelectModule,
     MatDialogModule,
-    VoipPabxRetentionOperationsComponent,
     FieldHelpComponent,
   ],
   templateUrl: './parameters.html',
@@ -303,332 +135,6 @@ const DEFAULT_ITEM: SystemParametersItem = {
 })
 export class SettingsParametersPage {
   private readonly api = inject(ApiService);
-  private readonly translation = inject(TranslocoService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly pabxDns = this.dnsPolicySelector('pabx', () => ({
-    uuid: this.item().voipPabxDnsPolicyUUID,
-    zoneName: this.item().voipPabxDnsPolicyZoneName,
-    base: this.item().voipPabxDnsPolicyBase,
-    eligible: this.item().voipPabxDnsPolicyEligible,
-  }));
-  readonly softswitchDns = this.dnsPolicySelector('softswitch', () => ({
-    uuid: this.item().voipSoftswitchDnsPolicyUUID,
-    zoneName: this.item().voipSoftswitchDnsPolicyZoneName,
-    base: this.item().voipSoftswitchDnsPolicyBase,
-    eligible: this.item().voipSoftswitchDnsPolicyEligible,
-  }));
-  readonly realtimeMediaDns = this.dnsPolicySelector('realtime', () => ({
-    uuid: this.item().realtimeMediaDnsPolicyUUID,
-    zoneName: this.item().realtimeMediaDnsPolicyZoneName,
-    base: this.item().realtimeMediaDnsPolicyBase,
-    eligible: this.item().realtimeMediaDnsPolicyEligible,
-  }));
-
-  /** Server-searched, paginated selector of the authorized DNS policies of one VoIP service. */
-  private dnsPolicySelector(service: VoipDnsService, selected: () => SelectedDnsPolicy) {
-    const policies = signal<DnsPolicyItem[]>([]);
-    const offset = signal(0);
-    const term = signal('');
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const source = resource({
-      params: () => ({ endpoint: this.baseEndpoint(), search: term(), offset: offset() }),
-      defaultValue: { items: [] as DnsPolicyItem[], total: 0 },
-      loader: async ({ params }) => {
-        if (service === 'realtime' && !this.isMaster()) {
-          return { items: [] as DnsPolicyItem[], total: 0 };
-        }
-        const query = new URLSearchParams({
-          search: params.search,
-          limit: '50',
-          offset: String(params.offset),
-        });
-        const result = await this.api.get<any>(
-          `${params.endpoint}/${service}-dns-policies?${query}`,
-        );
-        return { items: result?.data?.items ?? [], total: Number(result?.data?.total ?? 0) };
-      },
-    });
-    effect(() => {
-      if (source.hasValue()) policies.set(source.value().items);
-    });
-    this.destroyRef.onDestroy(() => clearTimeout(timer));
-    const options = computed(() => {
-      this.i18n.language();
-      const list = policies();
-      const current = selected();
-      const realmBase = this.translation.translate(
-        service === 'realtime' ? 'Domain base' : 'SIP realm base',
-      );
-      const result = list
-        .filter((p) => p.status && p.eligible !== false)
-        .map((p) => ({
-          value: p.policyUUID,
-          label: `${p.zoneName || p.base} — ${realmBase}: ${p.base}`,
-          searchText: `${p.zoneName ?? ''} ${p.base}`,
-        }));
-      if (current.uuid && !result.some((o) => o.value === current.uuid)) {
-        const policy = list.find((p) => p.policyUUID === current.uuid);
-        const zoneName = policy?.zoneName || current.zoneName || '';
-        const base = policy?.base || current.base || '';
-        const suffix =
-          current.eligible !== true ? ` (${this.translation.translate('Unavailable')})` : '';
-        result.unshift({
-          value: current.uuid,
-          label:
-            zoneName || base
-              ? `${zoneName || base} — ${realmBase}: ${base}${suffix}`
-              : `${current.uuid}${suffix}`,
-          searchText: current.uuid,
-        });
-      }
-      return result;
-    });
-    return {
-      policies: policies.asReadonly(),
-      options,
-      offset: offset.asReadonly(),
-      total: computed(() => source.value()?.total ?? 0),
-      loading: computed(() => source.isLoading()),
-      loadError: computed(() => !!source.error()),
-      search: (value: string) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          offset.set(0);
-          term.set(value);
-        }, 250);
-      },
-      page: (direction: number) => offset.update((value) => Math.max(0, value + direction * 50)),
-      refresh: () => source.reload(),
-      find: (uuid: string) => policies().find((p) => p.policyUUID === uuid),
-    };
-  }
-
-  readonly realmSources = [
-    { value: 'inherit', label: 'Inherit platform configuration' },
-    { value: 'own', label: 'Use own configuration' },
-  ];
-  readonly realmDnsModes = [
-    { value: 'identity_only', label: 'SIP identity without DNS publication' },
-    { value: 'managed_dns', label: 'Managed DNS publication' },
-  ];
-  selectDnsPolicy(value: unknown) {
-    const uuid = String(value ?? '');
-    const policy = this.pabxDns.find(uuid);
-    this.updateItem({
-      voipPabxDnsPolicyUUID: uuid,
-      ...(policy
-        ? {
-            voipPabxAutoDomainBase: policy.base,
-            voipPabxDnsPolicyBase: policy.base,
-            voipPabxDnsPolicyZoneName: policy.zoneName,
-            voipPabxDnsPolicyEligible: policy.eligible !== false,
-            voipPabxDnsPolicyError: null,
-          }
-        : {}),
-    });
-  }
-
-  readonly effectiveBase = computed(() => {
-    const it = this.item();
-    if (!this.isMaster() && it.voipPabxRealmSource === 'inherit') {
-      return it.voipPabxInheritedBase || it.voipPabxEffectiveBase || 'pabx.publichost.cloud';
-    }
-    if (it.voipPabxAutoDomainDnsMode === 'managed_dns') {
-      const policy = this.pabxDns.find(it.voipPabxDnsPolicyUUID);
-      return (
-        policy?.base ||
-        it.voipPabxDnsPolicyBase ||
-        it.voipPabxAutoDomainBase ||
-        'pabx.publichost.cloud'
-      );
-    }
-    return it.voipPabxAutoDomainBase || 'pabx.publichost.cloud';
-  });
-
-  readonly inheritedDomainLabel = computed(() => {
-    const it = this.item();
-    const mode = it.voipPabxInheritedDnsMode || it.voipPabxEffectiveDnsMode;
-    const base = this.effectiveBase();
-    const zone = it.voipPabxInheritedZoneName || it.voipPabxEffectiveZoneName;
-    if (mode === 'managed_dns' && (zone || base)) {
-      return zone ? `${zone} — Base SIP: ${base}` : base;
-    }
-    return base;
-  });
-
-  readonly inheritedModeLabel = computed(() => {
-    const mode = this.item().voipPabxInheritedDnsMode || this.item().voipPabxEffectiveDnsMode;
-    return mode === 'managed_dns'
-      ? 'Managed DNS publication'
-      : 'SIP identity without DNS publication';
-  });
-
-  readonly selectedPolicyInvalid = computed(() => {
-    const it = this.item();
-    if (it.voipPabxAutoDomainDnsMode !== 'managed_dns') return false;
-    if (it.voipPabxRealmSource === 'inherit' && !this.isMaster()) return false;
-    if (!it.voipPabxDnsPolicyUUID) return false;
-    if (it.voipPabxDnsPolicyEligible === false) return true;
-    const policy = this.pabxDns.find(it.voipPabxDnsPolicyUUID);
-    if (!policy) return it.voipPabxDnsPolicyEligible !== true;
-    if (policy.eligible === false || !policy.status) return true;
-    return false;
-  });
-
-  readonly selectedPolicyError = computed(() => {
-    const it = this.item();
-    if (it.voipPabxDnsPolicyError) return it.voipPabxDnsPolicyError;
-    const policy = this.pabxDns.find(it.voipPabxDnsPolicyUUID);
-    if (!policy) {
-      return 'The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.';
-    }
-    if (!policy.status) {
-      return 'The selected DNS domain policy is disabled.';
-    }
-    if (policy.eligible === false) {
-      return 'The selected DNS domain is not fully provisioned or its provider is inactive.';
-    }
-    return 'The selected DNS policy is invalid.';
-  });
-
-  readonly inheritedPolicyInvalid = computed(() => {
-    const it = this.item();
-    if (this.isMaster() || it.voipPabxRealmSource !== 'inherit') return false;
-    const mode = it.voipPabxInheritedDnsMode || it.voipPabxEffectiveDnsMode;
-    if (mode !== 'managed_dns') return false;
-    return it.voipPabxEffectivePolicyEligible === false;
-  });
-
-  readonly inheritedPolicyError = computed(() => {
-    return (
-      this.item().voipPabxEffectivePolicyError ||
-      'The inherited platform DNS policy is currently unavailable.'
-    );
-  });
-
-  selectRealtimeMediaDnsPolicy(value: unknown) {
-    const uuid = String(value ?? '');
-    const policy = this.realtimeMediaDns.find(uuid);
-    this.updateItem({
-      realtimeMediaDnsPolicyUUID: uuid,
-      realtimeMediaDnsPolicyBase: policy?.base ?? null,
-      realtimeMediaDnsPolicyZoneName: policy?.zoneName ?? null,
-      realtimeMediaDnsPolicyEligible: policy ? policy.eligible !== false : null,
-      realtimeMediaDnsPolicyError: null,
-    });
-  }
-
-  readonly realtimeMediaPolicyError = computed(() => {
-    const it = this.item();
-    if (!it.realtimeMediaDnsPolicyUUID) {
-      return it.realtimeMediaAutoDomainEnabled ? 'Select an RTP DNS policy.' : null;
-    }
-    if (it.realtimeMediaDnsPolicyError) return it.realtimeMediaDnsPolicyError;
-    if (it.realtimeMediaDnsPolicyEligible === false) {
-      return 'The selected DNS policy is invalid.';
-    }
-    return null;
-  });
-
-  selectSoftswitchDnsPolicy(value: unknown) {
-    const uuid = String(value ?? '');
-    const policy = this.softswitchDns.find(uuid);
-    this.updateItem({
-      voipSoftswitchDnsPolicyUUID: uuid,
-      ...(policy
-        ? {
-            voipSoftswitchAutoDomainBase: policy.base,
-            voipSoftswitchDnsPolicyBase: policy.base,
-            voipSoftswitchDnsPolicyZoneName: policy.zoneName,
-            voipSoftswitchDnsPolicyEligible: policy.eligible !== false,
-            voipSoftswitchDnsPolicyError: null,
-          }
-        : {}),
-    });
-  }
-
-  readonly softswitchEffectiveBase = computed(() => {
-    const it = this.item();
-    if (!this.isMaster() && it.voipSoftswitchRealmSource === 'inherit') {
-      return (
-        it.voipSoftswitchInheritedBase ||
-        it.voipSoftswitchEffectiveBase ||
-        'softswitch.publichost.cloud'
-      );
-    }
-    if (it.voipSoftswitchAutoDomainDnsMode === 'managed_dns') {
-      const policy = this.softswitchDns.find(it.voipSoftswitchDnsPolicyUUID);
-      return (
-        policy?.base ||
-        it.voipSoftswitchDnsPolicyBase ||
-        it.voipSoftswitchAutoDomainBase ||
-        'softswitch.publichost.cloud'
-      );
-    }
-    return it.voipSoftswitchAutoDomainBase || 'softswitch.publichost.cloud';
-  });
-
-  readonly softswitchInheritedDomainLabel = computed(() => {
-    const it = this.item();
-    const mode = it.voipSoftswitchInheritedDnsMode || it.voipSoftswitchEffectiveDnsMode;
-    const base = this.softswitchEffectiveBase();
-    const zone = it.voipSoftswitchInheritedZoneName || it.voipSoftswitchEffectiveZoneName;
-    if (mode === 'managed_dns' && (zone || base)) {
-      return zone ? `${zone} — Base SIP: ${base}` : base;
-    }
-    return base;
-  });
-
-  readonly softswitchInheritedModeLabel = computed(() => {
-    const mode =
-      this.item().voipSoftswitchInheritedDnsMode || this.item().voipSoftswitchEffectiveDnsMode;
-    return mode === 'managed_dns'
-      ? 'Managed DNS publication'
-      : 'SIP identity without DNS publication';
-  });
-
-  readonly softswitchSelectedPolicyInvalid = computed(() => {
-    const it = this.item();
-    if (it.voipSoftswitchAutoDomainDnsMode !== 'managed_dns') return false;
-    if (it.voipSoftswitchRealmSource === 'inherit' && !this.isMaster()) return false;
-    if (!it.voipSoftswitchDnsPolicyUUID) return false;
-    if (it.voipSoftswitchDnsPolicyEligible === false) return true;
-    const policy = this.softswitchDns.find(it.voipSoftswitchDnsPolicyUUID);
-    if (!policy) return it.voipSoftswitchDnsPolicyEligible !== true;
-    if (policy.eligible === false || !policy.status) return true;
-    return false;
-  });
-
-  readonly softswitchSelectedPolicyError = computed(() => {
-    const it = this.item();
-    if (it.voipSoftswitchDnsPolicyError) return it.voipSoftswitchDnsPolicyError;
-    const policy = this.softswitchDns.find(it.voipSoftswitchDnsPolicyUUID);
-    if (!policy) {
-      return 'The selected DNS domain policy is unavailable or has been deleted. Please select an active domain.';
-    }
-    if (!policy.status) {
-      return 'The selected DNS domain policy is disabled.';
-    }
-    if (policy.eligible === false) {
-      return 'The selected DNS domain is not fully provisioned or its provider is inactive.';
-    }
-    return 'The selected DNS policy is invalid.';
-  });
-
-  readonly softswitchInheritedPolicyInvalid = computed(() => {
-    const it = this.item();
-    if (this.isMaster() || it.voipSoftswitchRealmSource !== 'inherit') return false;
-    const mode = it.voipSoftswitchInheritedDnsMode || it.voipSoftswitchEffectiveDnsMode;
-    if (mode !== 'managed_dns') return false;
-    return it.voipSoftswitchEffectivePolicyEligible === false;
-  });
-
-  readonly softswitchInheritedPolicyError = computed(() => {
-    return (
-      this.item().voipSoftswitchEffectivePolicyError ||
-      'The inherited platform DNS policy is currently unavailable.'
-    );
-  });
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
 
@@ -643,24 +149,6 @@ export class SettingsParametersPage {
   readonly defaultTimezonePlaceholder = computed(() =>
     this.isMaster() ? 'UTC' : 'Master timezone',
   );
-  readonly voipPabxRecordingStoragePlaceholder = computed(() =>
-    this.isMaster() ? 'Filesystem' : 'Master recording storage',
-  );
-  readonly voipPabxMediaStoragePlaceholder = computed(() =>
-    this.isMaster() ? 'Filesystem' : 'Master media file storage',
-  );
-  readonly voipPabxMediaDeliveryPlaceholder = computed(() =>
-    this.isMaster() ? 'Offline' : 'Master media file delivery',
-  );
-  readonly voipPabxRemoteCommandExecutorPlaceholder = computed(() =>
-    this.isMaster() ? 'Agent' : 'Master remote command executor',
-  );
-  readonly voipPabxAutoDomainBasePlaceholder = computed(() =>
-    this.isMaster() ? 'pabx.publichost.cloud' : 'Master PABX SIP realm base',
-  );
-  readonly voipSoftswitchAutoDomainBasePlaceholder = computed(() =>
-    this.isMaster() ? 'softswitch.publichost.cloud' : 'Master Softswitch SIP realm base',
-  );
   readonly baseEndpoint = computed(() =>
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
   );
@@ -671,11 +159,8 @@ export class SettingsParametersPage {
       endpoint: this.baseEndpoint(),
       isMaster: this.isMaster(),
     }),
-    defaultValue: {
-      item: { ...DEFAULT_ITEM },
-      storageAccounts: [],
-    } as ParametersSnapshot,
-    loader: ({ params }) => this.loadParametersSnapshot(params.endpoint, params.isMaster),
+    defaultValue: { ...DEFAULT_ITEM },
+    loader: async ({ params }) => this.readItem(await this.api.get<any>(params.endpoint)),
   });
 
   private readonly siadResource = resource({
@@ -697,7 +182,6 @@ export class SettingsParametersPage {
   readonly showSignupCaptchaSecret = signal(false);
   readonly item = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
   readonly baselineItem = signal<SystemParametersItem>({ ...DEFAULT_ITEM });
-  readonly storageAccounts = signal<StorageAccountItem[]>([]);
   readonly baselineSignature = signal('');
   readonly siadItem = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
   readonly baselineSiad = signal<BradescoSiadItem>({ ...DEFAULT_SIAD_ITEM });
@@ -718,14 +202,11 @@ export class SettingsParametersPage {
 
   constructor() {
     effect(() => {
-      const snapshot = this.parametersResource.hasValue()
-        ? this.parametersResource.value()
-        : undefined;
-      if (!snapshot) return;
-      this.storageAccounts.set(snapshot.storageAccounts);
-      this.item.set(snapshot.item);
-      this.baselineItem.set({ ...snapshot.item });
-      this.baselineSignature.set(this.buildSignature(snapshot.item));
+      const item = this.parametersResource.hasValue() ? this.parametersResource.value() : undefined;
+      if (!item) return;
+      this.item.set(item);
+      this.baselineItem.set({ ...item });
+      this.baselineSignature.set(this.buildSignature(item));
     });
 
     effect(() => {
@@ -744,7 +225,6 @@ export class SettingsParametersPage {
       this.feedback.set(this.friendlyError(error, 'Failed to load parameters.'));
       this.item.set({ ...DEFAULT_ITEM });
       this.baselineItem.set({ ...DEFAULT_ITEM });
-      this.storageAccounts.set([]);
       this.baselineSignature.set(this.buildSignature(DEFAULT_ITEM));
     });
 
@@ -870,122 +350,8 @@ export class SettingsParametersPage {
   }
 
   private readItem(result: any): SystemParametersItem {
-    const direct = result?.data?.item;
-    if (direct && typeof direct === 'object') {
-      return this.normalizeIncoming(direct);
-    }
-
-    const items = Array.isArray(result?.data?.items) ? result.data.items : [];
-
-    return this.fromLegacyItems(items);
-  }
-
-  private fromLegacyItems(items: any[]): SystemParametersItem {
-    const item: SystemParametersItem = { ...DEFAULT_ITEM };
-
-    for (const row of items) {
-      const key = String(row?.SprKey ?? '').toUpperCase();
-      const value =
-        row?.SprValue === null || row?.SprValue === undefined ? '' : String(row.SprValue);
-      const isActive = Number(row?.SprIsActive ?? 1) === 1;
-
-      if (key === 'GOOGLE_MAPS_EMBED_API_KEY') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.googleMapsEmbedApiKey = value;
-        item.googleMapsEmbedApiKeyIsActive = isActive;
-      } else if (key === 'MAPBOX_TOKEN') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.mapboxToken = value;
-        item.mapboxTokenIsActive = isActive;
-      } else if (key === 'SIGNALWIRE_REPO_TOKEN') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.signalWireRepoToken = value;
-        item.signalWireRepoTokenIsActive = isActive;
-      } else if (key === 'DEFAULT_CURRENCY') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.defaultCurrency = value || 'BRL';
-        item.defaultCurrencyIsActive = isActive;
-      } else if (key === 'DEFAULT_LANGUAGE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.defaultLanguage = value || 'pt-BR';
-        item.defaultLanguageIsActive = isActive;
-      } else if (key === 'DEFAULT_TIMEZONE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.defaultTimezone = value;
-        item.defaultTimezoneIsActive = isActive;
-      } else if (key === 'VOIP_PABX_RECORDING_STORAGE_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxRecordingStorageMode = this.normalizeStorageMode(value);
-        item.voipPabxRecordingStorageIsActive = isActive;
-      } else if (key === 'VOIP_PABX_RECORDING_STORAGE_ACCOUNT') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxRecordingStorageAccountUUID = value;
-      } else if (key === 'VOIP_PABX_MEDIA_STORAGE_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxMediaStorageMode = this.normalizeStorageMode(value);
-        item.voipPabxMediaStorageIsActive = isActive;
-      } else if (key === 'VOIP_PABX_MEDIA_STORAGE_ACCOUNT') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxMediaStorageAccountUUID = value;
-      } else if (key === 'VOIP_PABX_MEDIA_DELIVERY_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxMediaDeliveryMode = this.normalizeDeliveryMode(value);
-        item.voipPabxMediaDeliveryModeIsActive = isActive;
-      } else if (key === 'VOIP_PABX_REMOTE_COMMAND_EXECUTOR') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxRemoteCommandExecutor = this.normalizeRemoteCommandExecutor(value);
-        item.voipPabxRemoteCommandExecutorIsActive = isActive;
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_ENABLED') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainEnabled = value === '' ? true : Number(value) !== 0;
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_BASE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainBase = value || DEFAULT_ITEM.voipPabxAutoDomainBase;
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_LABEL_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainLabelMode = this.normalizeVoipAutoDomainLabelMode(value);
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_UUID_LENGTH') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainUuidLength = this.clampInteger(value || 12, 8, 32);
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_SET_DEFAULT') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainSetDefault = value === '' ? true : Number(value) !== 0;
-      } else if (key === 'VOIP_PABX_AUTO_DOMAIN_DNS_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxAutoDomainDnsMode = this.normalizeVoipAutoDomainDnsMode(value);
-        item.voipPabxAutoDomainIsActive = isActive;
-      } else if (key === 'VOIP_PABX_CDR_RETENTION_DAYS') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxCdrRetentionDays = this.normalizeInteger(value, 0);
-      } else if (key === 'VOIP_PABX_RECORDING_RETENTION_DAYS') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxRecordingRetentionDays = this.normalizeInteger(value, 0);
-      } else if (key === 'VOIP_PABX_ORPHAN_RETENTION_DAYS') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipPabxOrphanRetentionDays = this.normalizeInteger(value, 30);
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_ENABLED') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainEnabled = value === '' ? true : Number(value) !== 0;
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_BASE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainBase = value || DEFAULT_ITEM.voipSoftswitchAutoDomainBase;
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_LABEL_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainLabelMode = this.normalizeVoipAutoDomainLabelMode(value);
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_UUID_LENGTH') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainUuidLength = this.clampInteger(value || 12, 8, 32);
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_SET_DEFAULT') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainSetDefault = value === '' ? true : Number(value) !== 0;
-      } else if (key === 'VOIP_SOFTSWITCH_AUTO_DOMAIN_DNS_MODE') {
-        item.sprUUID = item.sprUUID || String(row?.SprUUID ?? '');
-        item.voipSoftswitchAutoDomainDnsMode = this.normalizeVoipAutoDomainDnsMode(value);
-        item.voipSoftswitchAutoDomainIsActive = isActive;
-      }
-    }
-
-    return item;
+    const item = result?.data?.item;
+    return this.normalizeIncoming(item && typeof item === 'object' ? item : {});
   }
 
   private normalizeIncoming(raw: any): SystemParametersItem {
@@ -1003,111 +369,6 @@ export class SettingsParametersPage {
       defaultLanguageIsActive: raw?.defaultLanguageIsActive !== false,
       defaultTimezone: String(raw?.defaultTimezone ?? ''),
       defaultTimezoneIsActive: raw?.defaultTimezoneIsActive !== false,
-      voipPabxRecordingStorageMode: this.normalizeStorageMode(raw?.voipPabxRecordingStorageMode),
-      voipPabxRecordingStorageAccountUUID: String(raw?.voipPabxRecordingStorageAccountUUID ?? ''),
-      voipPabxRecordingStorageIsActive: raw?.voipPabxRecordingStorageIsActive !== false,
-      voipPabxMediaStorageMode: this.normalizeStorageMode(raw?.voipPabxMediaStorageMode),
-      voipPabxMediaStorageAccountUUID: String(raw?.voipPabxMediaStorageAccountUUID ?? ''),
-      voipPabxMediaStorageIsActive: raw?.voipPabxMediaStorageIsActive !== false,
-      voipPabxMediaDeliveryMode: this.normalizeDeliveryMode(raw?.voipPabxMediaDeliveryMode),
-      voipPabxMediaDeliveryModeIsActive: raw?.voipPabxMediaDeliveryModeIsActive !== false,
-      voipPabxRemoteCommandExecutor: this.normalizeRemoteCommandExecutor(
-        raw?.voipPabxRemoteCommandExecutor,
-      ),
-      voipPabxRemoteCommandExecutorIsActive: raw?.voipPabxRemoteCommandExecutorIsActive !== false,
-      voipPabxCdrRetentionDays: this.normalizeInteger(raw?.voipPabxCdrRetentionDays, 0),
-      voipPabxRecordingRetentionDays: this.normalizeInteger(raw?.voipPabxRecordingRetentionDays, 0),
-      voipPabxOrphanRetentionDays: this.normalizeInteger(raw?.voipPabxOrphanRetentionDays, 30),
-      realtimeMediaAutoDomainEnabled: raw?.realtimeMediaAutoDomainEnabled === true,
-      realtimeMediaDnsPolicyUUID: String(raw?.realtimeMediaDnsPolicyUUID ?? ''),
-      realtimeMediaAutoDomainUuidLength: this.clampInteger(
-        raw?.realtimeMediaAutoDomainUuidLength ?? 12,
-        8,
-        32,
-      ),
-      realtimeMediaDnsPolicyBase: raw?.realtimeMediaDnsPolicyBase ?? null,
-      realtimeMediaDnsPolicyZoneName: raw?.realtimeMediaDnsPolicyZoneName ?? null,
-      realtimeMediaDnsPolicyEligible: raw?.realtimeMediaDnsPolicyEligible ?? null,
-      realtimeMediaDnsPolicyError: raw?.realtimeMediaDnsPolicyError ?? null,
-      voipPabxRealmSource:
-        raw?.voipPabxRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
-      voipPabxDnsPolicyUUID: String(raw?.voipPabxDnsPolicyUUID ?? ''),
-      voipPabxDnsPolicyBase: raw?.voipPabxDnsPolicyBase ?? null,
-      voipPabxDnsPolicyZoneName: raw?.voipPabxDnsPolicyZoneName ?? null,
-      voipPabxDnsPolicyEligible:
-        raw?.voipPabxDnsPolicyEligible != null ? Boolean(raw.voipPabxDnsPolicyEligible) : null,
-      voipPabxDnsPolicyError: raw?.voipPabxDnsPolicyError ?? null,
-      voipPabxEffectiveSource:
-        raw?.voipPabxEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
-      voipPabxEffectiveDnsMode: raw?.voipPabxEffectiveDnsMode ?? 'identity_only',
-      voipPabxEffectiveBase: raw?.voipPabxEffectiveBase ?? 'pabx.publichost.cloud',
-      voipPabxEffectiveZoneName: raw?.voipPabxEffectiveZoneName ?? null,
-      voipPabxEffectivePolicyUUID: raw?.voipPabxEffectivePolicyUUID ?? null,
-      voipPabxEffectivePolicyEligible: raw?.voipPabxEffectivePolicyEligible !== false,
-      voipPabxEffectivePolicyError: raw?.voipPabxEffectivePolicyError ?? null,
-      voipPabxInheritedDnsMode: raw?.voipPabxInheritedDnsMode ?? 'identity_only',
-      voipPabxInheritedBase: raw?.voipPabxInheritedBase ?? 'pabx.publichost.cloud',
-      voipPabxInheritedZoneName: raw?.voipPabxInheritedZoneName ?? null,
-      voipPabxInheritedPolicyUUID: raw?.voipPabxInheritedPolicyUUID ?? null,
-      voipPabxAutoDomainEnabled: raw?.voipPabxAutoDomainEnabled !== false,
-      voipPabxAutoDomainBase:
-        String(raw?.voipPabxAutoDomainBase ?? DEFAULT_ITEM.voipPabxAutoDomainBase).trim() ||
-        DEFAULT_ITEM.voipPabxAutoDomainBase,
-      voipPabxAutoDomainLabelMode: this.normalizeVoipAutoDomainLabelMode(
-        raw?.voipPabxAutoDomainLabelMode,
-      ),
-      voipPabxAutoDomainUuidLength: this.clampInteger(
-        raw?.voipPabxAutoDomainUuidLength ?? 12,
-        8,
-        32,
-      ),
-      voipPabxAutoDomainSetDefault: raw?.voipPabxAutoDomainSetDefault !== false,
-      voipPabxAutoDomainDnsMode: this.normalizeVoipAutoDomainDnsMode(
-        raw?.voipPabxAutoDomainDnsMode,
-      ),
-      voipPabxAutoDomainIsActive: raw?.voipPabxAutoDomainIsActive !== false,
-      voipSoftswitchRealmSource:
-        raw?.voipSoftswitchRealmSource === 'own' || this.isMaster() ? 'own' : 'inherit',
-      voipSoftswitchDnsPolicyUUID: String(raw?.voipSoftswitchDnsPolicyUUID ?? ''),
-      voipSoftswitchDnsPolicyBase: raw?.voipSoftswitchDnsPolicyBase ?? null,
-      voipSoftswitchDnsPolicyZoneName: raw?.voipSoftswitchDnsPolicyZoneName ?? null,
-      voipSoftswitchDnsPolicyEligible:
-        raw?.voipSoftswitchDnsPolicyEligible != null
-          ? Boolean(raw.voipSoftswitchDnsPolicyEligible)
-          : null,
-      voipSoftswitchDnsPolicyError: raw?.voipSoftswitchDnsPolicyError ?? null,
-      voipSoftswitchEffectiveSource:
-        raw?.voipSoftswitchEffectiveSource ?? (this.isMaster() ? 'platform' : 'tenant'),
-      voipSoftswitchEffectiveDnsMode: raw?.voipSoftswitchEffectiveDnsMode ?? 'identity_only',
-      voipSoftswitchEffectiveBase:
-        raw?.voipSoftswitchEffectiveBase ?? 'softswitch.publichost.cloud',
-      voipSoftswitchEffectiveZoneName: raw?.voipSoftswitchEffectiveZoneName ?? null,
-      voipSoftswitchEffectivePolicyUUID: raw?.voipSoftswitchEffectivePolicyUUID ?? null,
-      voipSoftswitchEffectivePolicyEligible: raw?.voipSoftswitchEffectivePolicyEligible !== false,
-      voipSoftswitchEffectivePolicyError: raw?.voipSoftswitchEffectivePolicyError ?? null,
-      voipSoftswitchInheritedDnsMode: raw?.voipSoftswitchInheritedDnsMode ?? 'identity_only',
-      voipSoftswitchInheritedBase:
-        raw?.voipSoftswitchInheritedBase ?? 'softswitch.publichost.cloud',
-      voipSoftswitchInheritedZoneName: raw?.voipSoftswitchInheritedZoneName ?? null,
-      voipSoftswitchInheritedPolicyUUID: raw?.voipSoftswitchInheritedPolicyUUID ?? null,
-      voipSoftswitchAutoDomainEnabled: raw?.voipSoftswitchAutoDomainEnabled !== false,
-      voipSoftswitchAutoDomainBase:
-        String(
-          raw?.voipSoftswitchAutoDomainBase ?? DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
-        ).trim() || DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
-      voipSoftswitchAutoDomainLabelMode: this.normalizeVoipAutoDomainLabelMode(
-        raw?.voipSoftswitchAutoDomainLabelMode,
-      ),
-      voipSoftswitchAutoDomainUuidLength: this.clampInteger(
-        raw?.voipSoftswitchAutoDomainUuidLength ?? 12,
-        8,
-        32,
-      ),
-      voipSoftswitchAutoDomainSetDefault: raw?.voipSoftswitchAutoDomainSetDefault !== false,
-      voipSoftswitchAutoDomainDnsMode: this.normalizeVoipAutoDomainDnsMode(
-        raw?.voipSoftswitchAutoDomainDnsMode,
-      ),
-      voipSoftswitchAutoDomainIsActive: raw?.voipSoftswitchAutoDomainIsActive !== false,
       signupCaptchaEnabled: raw?.signupCaptchaEnabled === true,
       signupCaptchaProvider: this.normalizeCaptchaProvider(raw?.signupCaptchaProvider),
       signupCaptchaSiteKey: String(raw?.signupCaptchaSiteKey ?? ''),
@@ -1129,75 +390,12 @@ export class SettingsParametersPage {
       defaultCurrency: (value.defaultCurrency.trim() || 'BRL').toUpperCase(),
       defaultLanguage: isAppLanguage(value.defaultLanguage) ? value.defaultLanguage : 'pt-BR',
       defaultTimezone: value.defaultTimezone.trim(),
-      voipPabxRecordingStorageMode: value.voipPabxRecordingStorageMode,
-      voipPabxRecordingStorageAccountUUID:
-        value.voipPabxRecordingStorageMode === 'storage'
-          ? value.voipPabxRecordingStorageAccountUUID
-          : '',
-      voipPabxMediaStorageMode: value.voipPabxMediaStorageMode,
-      voipPabxMediaStorageAccountUUID:
-        value.voipPabxMediaStorageMode === 'storage' ? value.voipPabxMediaStorageAccountUUID : '',
-      voipPabxMediaDeliveryMode: value.voipPabxMediaDeliveryMode,
-      voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
-      voipPabxAutoDomainBase:
-        value.voipPabxAutoDomainBase
-          .trim()
-          .toLowerCase()
-          .replace(/^\.+|\.+$/g, '') || DEFAULT_ITEM.voipPabxAutoDomainBase,
-      voipPabxAutoDomainLabelMode: this.normalizeVoipAutoDomainLabelMode(
-        value.voipPabxAutoDomainLabelMode,
-      ),
-      voipPabxAutoDomainUuidLength: this.clampInteger(value.voipPabxAutoDomainUuidLength, 8, 32),
-      voipPabxAutoDomainDnsMode: this.normalizeVoipAutoDomainDnsMode(
-        value.voipPabxAutoDomainDnsMode,
-      ),
-      voipPabxRealmSource: value.voipPabxRealmSource,
-      voipPabxDnsPolicyUUID:
-        value.voipPabxAutoDomainDnsMode === 'managed_dns' && value.voipPabxRealmSource === 'own'
-          ? value.voipPabxDnsPolicyUUID
-          : '',
-      voipSoftswitchAutoDomainBase:
-        value.voipSoftswitchAutoDomainBase
-          .trim()
-          .toLowerCase()
-          .replace(/^\.+|\.+$/g, '') || DEFAULT_ITEM.voipSoftswitchAutoDomainBase,
-      voipSoftswitchAutoDomainLabelMode: this.normalizeVoipAutoDomainLabelMode(
-        value.voipSoftswitchAutoDomainLabelMode,
-      ),
-      voipSoftswitchAutoDomainUuidLength: this.clampInteger(
-        value.voipSoftswitchAutoDomainUuidLength,
-        8,
-        32,
-      ),
-      voipSoftswitchAutoDomainDnsMode: this.normalizeVoipAutoDomainDnsMode(
-        value.voipSoftswitchAutoDomainDnsMode,
-      ),
-      voipSoftswitchRealmSource: value.voipSoftswitchRealmSource,
-      voipSoftswitchDnsPolicyUUID:
-        value.voipSoftswitchAutoDomainDnsMode === 'managed_dns' &&
-        value.voipSoftswitchRealmSource === 'own'
-          ? value.voipSoftswitchDnsPolicyUUID
-          : '',
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey.trim(),
       signupCaptchaSecret: value.signupCaptchaSecret.trim(),
       signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
       authSessionHours: this.clampInteger(value.authSessionHours, 1, 168),
       authRememberMeHours: this.clampInteger(value.authRememberMeHours, 1, 2160),
-      voipPabxCdrRetentionDays: Math.max(
-        0,
-        this.normalizeInteger(value.voipPabxCdrRetentionDays, 0),
-      ),
-      voipPabxRecordingRetentionDays: Math.max(
-        0,
-        this.normalizeInteger(value.voipPabxRecordingRetentionDays, 0),
-      ),
-      voipPabxOrphanRetentionDays: this.clampInteger(value.voipPabxOrphanRetentionDays, 0, 3650),
-      realtimeMediaAutoDomainUuidLength: this.clampInteger(
-        value.realtimeMediaAutoDomainUuidLength,
-        8,
-        32,
-      ),
     };
   }
 
@@ -1215,47 +413,6 @@ export class SettingsParametersPage {
       defaultLanguageIsActive: value.defaultLanguageIsActive,
       defaultTimezone: value.defaultTimezone,
       defaultTimezoneIsActive: value.defaultTimezoneIsActive,
-      voipPabxRecordingStorageMode: value.voipPabxRecordingStorageMode,
-      voipPabxRecordingStorageAccountUUID: value.voipPabxRecordingStorageAccountUUID,
-      voipPabxRecordingStorageIsActive: value.voipPabxRecordingStorageIsActive,
-      voipPabxMediaStorageMode: value.voipPabxMediaStorageMode,
-      voipPabxMediaStorageAccountUUID: value.voipPabxMediaStorageAccountUUID,
-      voipPabxMediaStorageIsActive: value.voipPabxMediaStorageIsActive,
-      voipPabxMediaDeliveryMode: value.voipPabxMediaDeliveryMode,
-      voipPabxMediaDeliveryModeIsActive: value.voipPabxMediaDeliveryModeIsActive,
-      voipPabxRemoteCommandExecutor: value.voipPabxRemoteCommandExecutor,
-      voipPabxRemoteCommandExecutorIsActive: value.voipPabxRemoteCommandExecutorIsActive,
-      voipPabxAutoDomainEnabled: value.voipPabxAutoDomainEnabled,
-      voipPabxAutoDomainBase: value.voipPabxAutoDomainBase,
-      voipPabxAutoDomainLabelMode: value.voipPabxAutoDomainLabelMode,
-      voipPabxAutoDomainUuidLength: value.voipPabxAutoDomainUuidLength,
-      voipPabxAutoDomainSetDefault: value.voipPabxAutoDomainSetDefault,
-      voipPabxAutoDomainDnsMode: value.voipPabxAutoDomainDnsMode,
-      voipPabxRealmSource: value.voipPabxRealmSource,
-      voipPabxDnsPolicyUUID:
-        value.voipPabxAutoDomainDnsMode === 'managed_dns' && value.voipPabxRealmSource === 'own'
-          ? value.voipPabxDnsPolicyUUID
-          : '',
-      voipPabxAutoDomainIsActive: value.voipPabxAutoDomainIsActive,
-      voipSoftswitchAutoDomainEnabled: value.voipSoftswitchAutoDomainEnabled,
-      voipSoftswitchAutoDomainBase: value.voipSoftswitchAutoDomainBase,
-      voipSoftswitchAutoDomainLabelMode: value.voipSoftswitchAutoDomainLabelMode,
-      voipSoftswitchAutoDomainUuidLength: value.voipSoftswitchAutoDomainUuidLength,
-      voipSoftswitchAutoDomainSetDefault: value.voipSoftswitchAutoDomainSetDefault,
-      voipSoftswitchAutoDomainDnsMode: value.voipSoftswitchAutoDomainDnsMode,
-      voipSoftswitchRealmSource: value.voipSoftswitchRealmSource,
-      voipSoftswitchDnsPolicyUUID:
-        value.voipSoftswitchAutoDomainDnsMode === 'managed_dns' &&
-        value.voipSoftswitchRealmSource === 'own'
-          ? value.voipSoftswitchDnsPolicyUUID
-          : '',
-      voipSoftswitchAutoDomainIsActive: value.voipSoftswitchAutoDomainIsActive,
-      voipPabxCdrRetentionDays: value.voipPabxCdrRetentionDays,
-      voipPabxRecordingRetentionDays: value.voipPabxRecordingRetentionDays,
-      voipPabxOrphanRetentionDays: value.voipPabxOrphanRetentionDays,
-      realtimeMediaAutoDomainEnabled: value.realtimeMediaAutoDomainEnabled,
-      realtimeMediaDnsPolicyUUID: value.realtimeMediaDnsPolicyUUID,
-      realtimeMediaAutoDomainUuidLength: value.realtimeMediaAutoDomainUuidLength,
       signupCaptchaEnabled: value.signupCaptchaEnabled,
       signupCaptchaProvider: value.signupCaptchaProvider,
       signupCaptchaSiteKey: value.signupCaptchaSiteKey,
@@ -1306,71 +463,11 @@ export class SettingsParametersPage {
     };
   }
 
-  private async loadParametersSnapshot(
-    endpoint: string,
-    isMaster: boolean,
-  ): Promise<ParametersSnapshot> {
-    const [parametersResult, storageAccounts] = await Promise.all([
-      this.api.get<any>(endpoint),
-      this.fetchStorageAccounts(isMaster),
-    ]);
-
-    return {
-      item: this.readItem(parametersResult),
-      storageAccounts,
-    };
-  }
-
-  private async fetchStorageAccounts(isMaster: boolean): Promise<StorageAccountItem[]> {
-    const endpoint = isMaster ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts';
-    try {
-      const response = await this.api.get<any>(endpoint);
-      const rows = response?.data?.items ?? [];
-      return rows as StorageAccountItem[];
-    } catch {
-      return [];
-    }
-  }
-
-  private normalizeStorageMode(value: unknown): 'filesystem' | 'storage' | '' {
-    const normalized = String(value ?? '')
-      .trim()
-      .toLowerCase();
-    return normalized === 'filesystem' || normalized === 'storage' ? normalized : '';
-  }
-
-  private normalizeDeliveryMode(value: unknown): 'online' | 'offline' | '' {
-    const normalized = String(value ?? '')
-      .trim()
-      .toLowerCase();
-    return normalized === 'online' || normalized === 'offline' ? normalized : '';
-  }
-
-  private normalizeRemoteCommandExecutor(value: unknown): 'agent' | 'esl_ami' | '' {
-    const normalized = String(value ?? '')
-      .trim()
-      .toLowerCase();
-    return normalized === 'agent' || normalized === 'esl_ami' ? normalized : '';
-  }
-
-  private normalizeVoipAutoDomainLabelMode(_value: unknown): 'uuid_short' {
-    return 'uuid_short';
-  }
-
-  private normalizeVoipAutoDomainDnsMode(value: unknown): 'identity_only' | 'managed_dns' {
-    return value === 'managed_dns' ? 'managed_dns' : 'identity_only';
-  }
-
   private normalizeCaptchaProvider(value: unknown): 'turnstile' | 'hcaptcha' | '' {
     const normalized = String(value ?? '')
       .trim()
       .toLowerCase();
     return normalized === 'turnstile' || normalized === 'hcaptcha' ? normalized : '';
-  }
-
-  private normalizeNumber(value: unknown, fallback: number): number {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
   private normalizeInteger(value: unknown, fallback: number): number {
