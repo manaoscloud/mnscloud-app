@@ -405,6 +405,8 @@ export type ConfigurableCrudColumn = {
     translate: (key: string) => string,
     filters: Readonly<Record<string, string | number | boolean | null>>,
   ) => string;
+  /** Material icon shown before a text cell value (for example the resource type). */
+  icon?: (row: ConfigurableCrudRecord) => string;
   /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
   /** Key of a row action: the cell value becomes a link that runs it (when the action is visible). */
@@ -546,6 +548,17 @@ export type ConfigurableCrudConfig = {
   embedded?: boolean;
   /** Label of the header create button (defaults to `New`). */
   createLabel?: string;
+  /**
+   * Read-only global table (`mns-global-table`): no filters, header actions, create, edit, delete
+   * or selection; sorting, density, columns, pagination, mobile cards and row actions remain.
+   */
+  readOnly?: boolean;
+  /** Local rows instead of an API list (dashboards and result panels); `endpoint` is not read. */
+  rows?: () => readonly ConfigurableCrudRecord[];
+  /** Loading state of local `rows`. */
+  rowsLoading?: () => boolean;
+  /** `false` hides the paginator when the page paginates the rows itself. */
+  pagination?: boolean;
   defaultCurrencyFields?: readonly string[];
   defaultCurrencyScope?: 'master' | 'tenant';
   payload?: (values: ConfigurableCrudRecord, editing: boolean) => ConfigurableCrudRecord;
@@ -853,11 +866,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly listFailed = computed(() => !!this.itemsResource.error());
-  readonly rows = computed(() =>
-    this.itemsResource.hasValue()
+  readonly rows = computed(() => {
+    if (this.config.rows) return this.normalizeRows([...this.config.rows()] as T[]);
+    return this.itemsResource.hasValue()
       ? this.normalizeRows(this.itemsResource.value() as T[])
-      : ([] as T[]),
-  );
+      : ([] as T[]);
+  });
   readonly filteredRows = computed(() => {
     const raw = this.rows();
     if (this.serverSidePagination()) return raw;
@@ -875,7 +889,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.serverSidePagination() ? this.serverTotal() : this.sortedRows().length,
   );
   readonly pageSizeOptions = computed(() => this.config.pageSizeOptions ?? [5, 10, 25, 50]);
-  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
+  readonly loading = computed(
+    () =>
+      (this.config.rowsLoading?.() ?? false) || this.itemsResource.isLoading() || this.mutating(),
+  );
   readonly selectedCount = computed(() => this.selectedUUIDs().size);
   readonly allVisibleSelected = computed(() => {
     const visible = this.visibleRows();
@@ -978,14 +995,17 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   });
   readonly canCreate = computed(
     () =>
+      !this.config.readOnly &&
       this.config.canCreate !== false &&
       (!(this.config.defaultCurrencyScope || this.config.defaultCurrencyFields?.length) ||
         this.currencyReady()),
   );
-  readonly canEdit = computed(() => this.config.canEdit !== false);
-  readonly canDelete = computed(() => this.config.canDelete !== false);
+  readonly canEdit = computed(() => !this.config.readOnly && this.config.canEdit !== false);
+  readonly canDelete = computed(() => !this.config.readOnly && this.config.canDelete !== false);
   readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
-  readonly statusFilterEnabled = computed(() => this.config.statusFilter !== false);
+  readonly statusFilterEnabled = computed(
+    () => !this.config.readOnly && this.config.statusFilter !== false,
+  );
   readonly hasRowActions = computed(
     () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
@@ -1019,7 +1039,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
-      params: () => (this.quickCreateMode ? undefined : this.listResourceParams()),
+      params: () =>
+        this.quickCreateMode || this.config.rows ? undefined : this.listResourceParams(),
       defaultValue: [] as T[],
       loader: ({ params }) => this.fetchItems(params),
     });
@@ -2651,6 +2672,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   statusLabelForColumn(row: T, column: ConfigurableCrudColumn): string {
+    // A computed label (translation key) wins, for example a readable sync state.
+    if (column.value) return this.columnComputedValue(row, column) ?? '-';
     const value = row[column.field ?? column.id];
     const options = column.options ?? this.statusOptions();
     const option = options.find(

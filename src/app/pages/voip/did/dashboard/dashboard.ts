@@ -1,12 +1,8 @@
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
-import { MatSortModule, type Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -14,6 +10,11 @@ import { VoipDidItem, VoipDidService } from '../did.service';
 import { VoipDidExternalItem, VoipDidExternalService } from '../external/external.service';
 import { VoipDidOperatorItem, VoipDidOperatorService } from '../operator/operator.service';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
+import { ConfigurableCrudRowAction } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type KpiTile = {
   label: string;
@@ -72,11 +73,9 @@ const EMPTY_DID_DASHBOARD: DidDashboardSnapshot = {
     DashboardPageComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -100,19 +99,6 @@ export class VoipDidDashboardPage {
   readonly operators = signal<VoipDidOperatorItem[]>([]);
   readonly dids = signal<VoipDidItem[]>([]);
   readonly externalDids = signal<VoipDidExternalItem[]>([]);
-
-  readonly operatorColumns = [
-    'operator',
-    'nick',
-    'active',
-    'numbers',
-    'available',
-    'assigned',
-    'issues',
-    'actions',
-  ];
-  readonly statusColumns = ['status', 'total', 'available', 'assigned', 'issues', 'actions'];
-  readonly externalColumns = ['number', 'provider', 'billing', 'active', 'actions'];
 
   private readonly syncDashboard = effect(() => {
     const snapshot = this.dashboardResource.value();
@@ -178,15 +164,85 @@ export class VoipDidDashboardPage {
     })),
   );
 
-  readonly operatorTable = createSignalCrudTable<OperatorRow>(this.operatorRows, (row, column) =>
-    this.operatorSortValue(row, column),
-  );
-  readonly statusTable = createSignalCrudTable<NumberStatusRow>(this.statusRows, (row, column) =>
-    this.statusSortValue(row, column),
-  );
-  readonly externalTable = createSignalCrudTable<ExternalRow>(this.externalRows, (row, column) =>
-    this.externalSortValue(row, column),
-  );
+  private readonly router = inject(Router);
+
+  private viewAction(section: 'operator' | 'number' | 'external'): ConfigurableCrudRowAction {
+    return {
+      key: 'view',
+      label: 'View',
+      icon: 'chevron_right',
+      run: () => void this.router.navigate(this.routeTo(section)),
+    };
+  }
+
+  private readonly activeColumn = {
+    id: 'active',
+    label: 'Active',
+    field: 'active',
+    kind: 'status' as const,
+    options: [
+      { value: true, label: 'Active' },
+      { value: false, label: 'Inactive' },
+    ],
+    chipClass: (value: unknown) => this.chipClass(Boolean(value)),
+  };
+
+  private readonly issuesColumn = {
+    id: 'issues',
+    label: 'Issues',
+    field: 'issues',
+    kind: 'status' as const,
+    chipClass: (value: unknown) => this.issueChipClass(Number(value)),
+  };
+
+  readonly operatorTable = defineGlobalTable({
+    key: 'voip/did/dashboard/operators',
+    uuidField: 'uuid',
+    emptyLabel: 'No DID operators found.',
+    columns: [
+      { id: 'operator', label: 'DID operator', field: 'name' },
+      { id: 'nick', label: 'Nick', field: 'nick' },
+      this.activeColumn,
+      { id: 'numbers', label: 'Numbers', field: 'numbers', kind: 'number' },
+      { id: 'available', label: 'Available', field: 'available', kind: 'number' },
+      { id: 'assigned', label: 'Assigned', field: 'assigned', kind: 'number' },
+      this.issuesColumn,
+    ],
+    rowActions: [this.viewAction('operator')],
+  });
+
+  readonly statusTable = defineGlobalTable({
+    key: 'voip/did/dashboard/status',
+    uuidField: 'status',
+    emptyLabel: 'No DIDs found.',
+    columns: [
+      {
+        id: 'status',
+        label: 'Status',
+        field: 'status',
+        kind: 'status',
+        chipClass: (value) => this.statusChipClass(String(value ?? '')),
+      },
+      { id: 'total', label: 'Total', field: 'total', kind: 'number' },
+      { id: 'available', label: 'Available', field: 'available', kind: 'number' },
+      { id: 'assigned', label: 'Assigned', field: 'assigned', kind: 'number' },
+      this.issuesColumn,
+    ],
+    rowActions: [this.viewAction('number')],
+  });
+
+  readonly externalTable = defineGlobalTable({
+    key: 'voip/did/dashboard/external',
+    uuidField: 'uuid',
+    emptyLabel: 'No external DIDs found.',
+    columns: [
+      { id: 'number', label: 'Number', field: 'number' },
+      { id: 'provider', label: 'Provider', field: 'provider' },
+      { id: 'billing', label: 'Billing', field: 'billing', translateValue: true },
+      this.activeColumn,
+    ],
+    rowActions: [this.viewAction('external')],
+  });
 
   private readonly reportDashboardError = effect(() => {
     const error = this.dashboardResource.error();
@@ -273,30 +329,6 @@ export class VoipDidDashboardPage {
 
   refreshList() {
     this.dashboardResource.reload();
-  }
-
-  setOperatorSort(sort: Sort) {
-    this.operatorTable.setSort(sort);
-  }
-
-  setOperatorPage(page: PageEvent) {
-    this.operatorTable.setPage(page);
-  }
-
-  setStatusSort(sort: Sort) {
-    this.statusTable.setSort(sort);
-  }
-
-  setStatusPage(page: PageEvent) {
-    this.statusTable.setPage(page);
-  }
-
-  setExternalSort(sort: Sort) {
-    this.externalTable.setSort(sort);
-  }
-
-  setExternalPage(page: PageEvent) {
-    this.externalTable.setPage(page);
   }
 
   routeTo(section: 'operator' | 'number' | 'external') {
@@ -388,52 +420,6 @@ export class VoipDidDashboardPage {
       return (wrapped.data as { items: T[] }).items;
     }
     return [];
-  }
-
-  private operatorSortValue(row: OperatorRow, column: string) {
-    if (column === 'operator') return row.name;
-    if (column === 'nick') return row.nick;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'numbers') return row.numbers;
-    if (column === 'available') return row.available;
-    if (column === 'assigned') return row.assigned;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private statusSortValue(row: NumberStatusRow, column: string) {
-    if (column === 'status') return row.status;
-    if (column === 'total') return row.total;
-    if (column === 'available') return row.available;
-    if (column === 'assigned') return row.assigned;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private externalSortValue(row: ExternalRow, column: string) {
-    if (column === 'number') return row.number;
-    if (column === 'provider') return row.provider;
-    if (column === 'billing') return row.billing;
-    if (column === 'active') return row.active ? 1 : 0;
-    return '';
-  }
-
-  private resetDashboardPages() {
-    this.operatorTable.setPage({
-      pageIndex: 0,
-      pageSize: this.operatorTable.pageSize(),
-      length: this.operatorRows().length,
-    });
-    this.statusTable.setPage({
-      pageIndex: 0,
-      pageSize: this.statusTable.pageSize(),
-      length: this.statusRows().length,
-    });
-    this.externalTable.setPage({
-      pageIndex: 0,
-      pageSize: this.externalTable.pageSize(),
-      length: this.externalRows().length,
-    });
   }
 
   private errorMessage(error: unknown, fallback: string) {

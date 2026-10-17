@@ -9,7 +9,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,11 +20,15 @@ import { MnsSearchSelectFieldComponent } from '../../forms/mns-search-select-fie
 import { RefreshButtonComponent } from '../../refresh-button/refresh-button';
 import { MnsDateTimePipe } from '../../date-time/date-time.pipe';
 import { AppI18nService } from '../../../services/app-i18n.service';
+import { DateTimeFormatService } from '../../../services/date-time-format.service';
+import { GlobalTableComponent, defineGlobalTable } from '../../crud/configurable-crud/global-table';
+import { ConfigurableCrudRecord } from '../../crud/configurable-crud/configurable-crud-page-base';
 import {
   METRICS_MONITOR_PERIODS,
   MetricsMonitorPeriodOption,
   MetricsMonitorPoint,
   MetricsMonitorResourceOption,
+  MetricsMonitorSeries,
   buildMetricsMonitorSeries,
   formatMetricDisplay,
   formatMetricUnitLabel,
@@ -38,7 +42,6 @@ import { ReportProblemButtonComponent } from '../../support-report-dialog/report
   imports: [
     ReportProblemButtonComponent,
     NgTemplateOutlet,
-    DecimalPipe,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
@@ -47,6 +50,7 @@ import { ReportProblemButtonComponent } from '../../support-report-dialog/report
     MnsSearchSelectFieldComponent,
     RefreshButtonComponent,
     MnsDateTimePipe,
+    GlobalTableComponent,
   ],
   templateUrl: './metrics-monitor.html',
   styleUrl: './metrics-monitor.scss',
@@ -87,6 +91,57 @@ export class MetricsMonitorComponent {
   readonly series = computed(() =>
     buildMetricsMonitorSeries(this.points(), Number(this.hours()) || 1, this.clock()),
   );
+
+  private readonly dateTime = inject(DateTimeFormatService);
+  /** "View measurements" rows of each series, keyed for the read-only global table. */
+  readonly measurementRows = computed(
+    () =>
+      new Map<MetricsMonitorSeries, ConfigurableCrudRecord[]>(
+        this.series().map((item) => [
+          item,
+          item.points.map((point) => ({
+            ...point,
+            key: `${point.metricKey}:${point.bucketEpoch}`,
+          })),
+        ]),
+      ),
+  );
+  readonly measurementTable = defineGlobalTable({
+    key: 'monitoring/metrics/measurements',
+    uuidField: 'key',
+    emptyLabel: 'No monitoring samples available',
+    columns: [
+      { id: 'label', label: 'Metric', field: 'label', translateValue: true },
+      {
+        id: 'observedAt',
+        label: 'Time',
+        field: 'observedAt',
+        value: (row) =>
+          this.dateTime.formatDateTime(this.utc(String(row['observedAt'] ?? '')), 'short', 'short'),
+      },
+      {
+        id: 'average',
+        label: 'Average',
+        field: 'average',
+        kind: 'number',
+        maximumFractionDigits: 2,
+      },
+      {
+        id: 'minimum',
+        label: 'Minimum',
+        field: 'minimum',
+        kind: 'number',
+        maximumFractionDigits: 2,
+      },
+      {
+        id: 'maximum',
+        label: 'Maximum',
+        field: 'maximum',
+        kind: 'number',
+        maximumFractionDigits: 2,
+      },
+    ],
+  });
 
   constructor() {
     effect((onCleanup) => {

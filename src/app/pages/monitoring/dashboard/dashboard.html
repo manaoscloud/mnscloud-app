@@ -128,71 +128,7 @@
           </div>
         </div>
 
-        <div class="table-wrapper mat-elevation-z8">
-          <table
-            mat-table
-            class="activity-table"
-            [dataSource]="pagedActivityLogs()"
-            matSort
-            [matSortActive]="activitySortColumn()"
-            [matSortDirection]="activitySortDirection()"
-            matSortDisableClear
-            (matSortChange)="changeActivitySort($event)"
-          >
-            @for (column of activityColumns; track column.id) {
-              <ng-container [matColumnDef]="column.id">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>
-                  {{ column.label | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let row">
-                  @switch (column.id) {
-                    @case ('created') {
-                      {{ row.dateCreated ? (row.dateCreated | mnsDateTime) : '-' }}
-                    }
-                    @case ('level') {
-                      <span class="status-pill status-chip" [ngClass]="chipClass(row.level)">{{
-                        activityLabel(row.level)
-                      }}</span>
-                    }
-                    @case ('status') {
-                      <span class="status-pill status-chip" [ngClass]="chipClass(row.status)">{{
-                        activityLabel(row.status)
-                      }}</span>
-                    }
-                    @case ('action') {
-                      <strong>{{ row.action || '-' }}</strong
-                      ><small>{{ row.category || row.hostname || '-' }}</small>
-                    }
-                    @case ('resource') {
-                      {{ resourceLabel(row) }}
-                    }
-                    @case ('message') {
-                      <span>{{ row.message || row.errorCode || '-' }}</span
-                      ><small>{{ formatDuration(row.durationMs) }}</small>
-                    }
-                  }
-                </td>
-              </ng-container>
-            }
-            <tr mat-header-row *matHeaderRowDef="displayedActivityColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedActivityColumns"></tr>
-            <tr *matNoDataRow>
-              <td class="empty-state" [attr.colspan]="activityColumns.length">
-                {{ 'No activity logs found.' | transloco }}
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <mat-paginator
-          class="mobile-paginator"
-          [length]="sortedActivityLogs().length"
-          [pageIndex]="activityPageIndex()"
-          [pageSize]="activityPageSize()"
-          [pageSizeOptions]="[5, 10, 25, 100]"
-          showFirstLastButtons
-          (page)="onActivityPageChange($event)"
-        />
+        <mns-global-table [config]="activityTable" [rows]="latestLogs()" [loading]="loading()" />
       </section>
     }
   </div>
