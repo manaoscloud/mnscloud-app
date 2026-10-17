@@ -110,15 +110,6 @@ mns-voip-pabx-retention-operations {
       }
     }
   }
-
-  .retention-table-container {
-    overflow-x: auto;
-
-    .retention-table {
-      width: 100%;
-      background: transparent;
-    }
-  }
 }
 
 @media (max-width: 600px) {
@@ -160,29 +151,5 @@ mns-voip-pabx-retention-operations {
     align-self: flex-start;
     max-width: 100%;
     overflow-x: auto;
-  }
-
-  .retention-secondary {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--mat-sys-color-on-surface-variant);
-  }
-
-  .retention-error {
-    color: var(--mat-sys-color-error);
-  }
-
-  .retention-key {
-    font-family: monospace;
-    overflow-wrap: anywhere;
-  }
-
-  .orphan-pill {
-    margin-inline-end: 0.5rem;
-    vertical-align: middle;
-  }
-
-  .orphan-row {
-    background: var(--mat-sys-color-surface-container, rgb(0 0 0 / 3%));
   }
 }

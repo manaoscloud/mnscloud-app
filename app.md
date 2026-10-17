@@ -509,9 +509,26 @@ the page must use the shared base named here.
 
 ## Global Table Component Baseline (Mandatory)
 
-- Every tabular presentation, list of records, collection dialog, or sub-table in any page, modal, or dialog across the entire application must use the canonical global table component (`ConfigurableCrudPageBase` / `defineCrud` / `ConfigurableCrudCollectionDialog`).
-- Creating one-off `<table>`, `<table mat-table>`, hand-rolled paginators, or page-local list tables is strictly prohibited for any AI/LLM or human developer.
-- All core table capabilities must come from the shared base: density toggle (comfortable/compact), column customization menu (`tune` button), search input, status/list filters, pagination, responsive cards for mobile viewports, loading indicator, selection/bulk delete, and problem reporting button.
+There is exactly one table in the App: `ConfigurableCrudPageBase` with its shared
+`configurable-crud-page.html/.scss`. Every list of rows, in a page, tab, dialog, dashboard panel or
+result panel, is rendered by it. Pick the surface by where the rows live:
+
+| Rows | Surface | How |
+| --- | --- | --- |
+| A resource list page | `ConfigurableCrudPageBase` page | `defineCrud`/config + shared template (`templates/crud`) |
+| Child records of a resource, in a dialog | `ConfigurableCrudCollectionDialog` | `rowActions[].collection`, or `openCrudTemplateDialog(this.dialog, ConfigurableCrudCollectionDialog, ...)` |
+| Child records inside a parent form tab | `ConfigurableCrudEmbeddedCollection` | `relatedCollections` (rendered automatically) |
+| Rows the page already holds (dashboard inventory, operation result, measurements, the current page of an analysis surface) | `mns-global-table` (read-only) | `<mns-global-table [config]="defineGlobalTable({...})" [rows]="rows()" [loading]="loading()" />` |
+
+- Creating `<table>`, `<table mat-table>`, `MatTableDataSource`, `createSignalCrudTable`, a
+  page-local `mat-paginator` for rows, or any page-local list table is prohibited for any AI/LLM or
+  human developer. A missing capability is added to the shared base (generic option, column kind,
+  hook), never to a page.
+- All table capabilities come from the shared base: density toggle and column menu (`tune`),
+  sorting, pagination, responsive mobile cards, loading indicator, empty label, row actions, column
+  links (`column.rowAction`), copy, chips (`kind: 'status'` + `chipClass`/`options`/`value`), dates,
+  numbers, icons (`column.icon`). Editable surfaces also get Search, Status/list filters,
+  selection/bulk delete, create/edit dialogs and the report problem button.
 - If tabular data needs to be presented inside a modal or dialog, use `ConfigurableCrudCollectionDialog` or a component extending `ConfigurableCrudPageBase`. Never construct a custom table dialog.
 - Child records inside a parent form tab (`relatedCollections`: package items, queue/group
   members, IVR options, network instances, firewall rules) render
@@ -524,7 +541,18 @@ the page must use the shared base named here.
   form, `relatedCollectionFieldChange` for dependent child values, `relatedCollectionColumnValue`
   for cell text, `afterRelatedCollectionRowAdded` and `reloadRelatedCollection`. Never render a
   plain `<table>` or an inline add form for child records again.
+- Read-only tables (`mns-global-table`, `src/app/shared/crud/configurable-crud/global-table.ts`)
+  take a constant `defineGlobalTable({ key, uuidField, columns, emptyLabel, rowActions? })`: `key`
+  names the table for the per-user column preferences, `uuidField` must be unique per row (add a
+  computed `key` when the data has none). The base runs with `readOnly` (no filters, header
+  actions, create, edit, delete or selection) over local `rows`; `pagination: false` when the page
+  paginates on the server itself (Metrics fleet explorer). Navigation from a row is a row action
+  (`run: (row) => router.navigate(...)`), never a link inside a custom cell.
 - In collection dialogs (`ConfigurableCrudCollectionDialog`), header actions (`Refresh`, `New` if `canCreate()`, and `<mns-report-problem-button>`) belong in `.dialog-header .header-actions`, while `Close` belongs in `.form-actions .secondary-actions` at the bottom of the dialog, preserving the standard dialog action footer.
+- Not tables (allowed): `DataViewerDialogComponent` sections (read-only key/value payload viewer,
+  see `Read-Only Data Viewer Dialog Baseline`), `DashboardRecordListComponent` (dashboard record
+  cards) and the server paginator shared by the Cards/List/Compact modes of the Metrics fleet
+  explorer.
 
 ## Commercial Menu Projection
 
@@ -714,6 +742,8 @@ the page must use the shared base named here.
     Do not project competing headers/toolbars.
     Do not render a metadata strip with last update, period or inventory-limit notices between
     the header and indicators. Internal snapshot timestamps remain part of the read model.
+  - Dashboard inventories (servers, queues, trunks, providers, domains, activity) are read-only
+    global tables (`mns-global-table`, Global Table Component Baseline), never `mat-table` markup.
   - No Search/Status forms, Apply/Clear, New/Edit/Delete, bulk actions or commercial action buttons
     belong in summary dashboards. Use the existing authorized management/detail routes. A plain
     contextual navigation link is permitted; it is not a mutation or a second action toolbar.
@@ -1584,7 +1614,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   translated tooltips, accessible labels and `aria-pressed`. The shared
   `dashboard-view-switch` owns their styling; preferences may store only the mode,
   never telemetry/customer data. All modes retain the same server pagination.
-- List mode uses a real Material table/paginator, identity plus UUID, status chips,
+- List mode is the read-only global table (`mns-global-table`, `pagination: false` because the
+  page keeps the shared server paginator): identity plus UUID, status chips,
   sortable data columns and icon-only actions. If sorting is limited to the current
   server page, label that scope explicitly. Do not present local sorting/filtering as
   a fleet-wide query. Cards and compact mode must retain freshness, metrics, network
@@ -1613,7 +1644,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   only and rendered as text; unavailable names retain the normal segment fallback.
 
 - The Monitoring Dashboard is refresh-only: no search form or Apply/Clear actions.
-  Keep its operational summaries and sortable/paginated recent activity table.
+  Keep its operational summaries and the sortable/paginated recent activity read-only global
+  table (`mns-global-table`).
   Guard resource values with hasValue(); a derived linkedSignal may retain the last
   successful snapshot on refresh errors. Initial failures must show an error rather
   than healthy zero counters. Label retained data and unavailable optional counts.

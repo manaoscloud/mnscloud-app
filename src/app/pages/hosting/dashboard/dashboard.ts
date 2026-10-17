@@ -1,18 +1,19 @@
-import { createSignalCrudTable } from '../../../shared/crud/signal-crud-table';
 import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../shared/crud/configurable-crud/global-table';
+import { ConfigurableCrudRowAction } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 type HostingDatasetKey =
   | 'dnsDomains'
@@ -117,11 +118,9 @@ const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
     DashboardPageComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -141,22 +140,76 @@ export class HostingDashboardPage {
   readonly data = computed(() => this.dashboard().data);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
 
-  readonly workloadDataSource = createSignalCrudTable<WorkloadRow>(
-    computed(() => this.workloads()),
-    (row, column) => this.workloadSortValue(row, column),
-  );
-  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
-    computed(() => this.providers()),
-    (row, column) => this.providerSortValue(row, column),
-  );
-  readonly issueDataSource = createSignalCrudTable<IssueRow>(
-    computed(() => this.issues()),
-    (row, column) => this.issueSortValue(row, column),
-  );
+  private readonly router = inject(Router);
 
-  readonly workloadColumns = ['resource', 'total', 'active', 'issues', 'actions'];
-  readonly providerColumns = ['provider', 'total', 'active', 'defaults', 'actions'];
-  readonly issueColumns = ['type', 'name', 'status', 'message', 'actions'];
+  readonly workloadTableRows = computed(() => this.workloads());
+  readonly providerTableRows = computed(() => this.providers());
+  readonly issueTableRows = computed(() => this.issues());
+
+  /** Opens the management page of a dashboard row (`route`). */
+  private readonly viewAction: ConfigurableCrudRowAction = {
+    key: 'view',
+    label: 'View',
+    icon: 'chevron_right',
+    run: (row) => void this.router.navigate(this.hostingRoute(row['route'] as string[])),
+  };
+
+  readonly workloadTable = defineGlobalTable({
+    key: 'hosting/dashboard/workloads',
+    uuidField: 'key',
+    emptyLabel: 'No workloads found.',
+    columns: [
+      {
+        id: 'resource',
+        label: 'Resource',
+        field: 'label',
+        translateValue: true,
+        icon: (row) => String(row['icon'] ?? ''),
+      },
+      { id: 'total', label: 'Total', field: 'total', kind: 'number' },
+      { id: 'active', label: 'Active', field: 'active', kind: 'number' },
+      {
+        id: 'issues',
+        label: 'Issues',
+        field: 'issues',
+        kind: 'status',
+        chipClass: (value) => this.chipClass(Number(value)),
+      },
+    ],
+    rowActions: [this.viewAction],
+  });
+
+  readonly providerTable = defineGlobalTable({
+    key: 'hosting/dashboard/providers',
+    uuidField: 'key',
+    emptyLabel: 'No providers found.',
+    columns: [
+      { id: 'provider', label: 'Provider', field: 'label', translateValue: true },
+      { id: 'total', label: 'Total', field: 'total', kind: 'number' },
+      { id: 'active', label: 'Active', field: 'active', kind: 'number' },
+      { id: 'defaults', label: 'Defaults', field: 'defaults', kind: 'number' },
+    ],
+    rowActions: [this.viewAction],
+  });
+
+  readonly issueTable = defineGlobalTable({
+    key: 'hosting/dashboard/issues',
+    uuidField: 'key',
+    emptyLabel: 'No provisioning issues found.',
+    columns: [
+      { id: 'type', label: 'Type', field: 'type', translateValue: true },
+      { id: 'name', label: 'Name', field: 'name' },
+      {
+        id: 'status',
+        label: 'Status',
+        field: 'status',
+        kind: 'status',
+        chipClass: (value) => this.statusChipClass(String(value ?? '')),
+      },
+      { id: 'message', label: 'Message', field: 'message', translateValue: true },
+    ],
+    rowActions: [this.viewAction],
+  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -669,30 +722,6 @@ export class HostingDashboardPage {
   private stringValue(value: unknown) {
     if (value === null || value === undefined) return '';
     return String(value);
-  }
-
-  private workloadSortValue(row: WorkloadRow, column: string) {
-    if (column === 'resource') return row.label;
-    if (column === 'total') return row.total;
-    if (column === 'active') return row.active;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private providerSortValue(row: ProviderRow, column: string) {
-    if (column === 'provider') return row.label;
-    if (column === 'total') return row.total;
-    if (column === 'active') return row.active;
-    if (column === 'defaults') return row.defaults;
-    return '';
-  }
-
-  private issueSortValue(row: IssueRow, column: string) {
-    if (column === 'type') return row.type;
-    if (column === 'name') return row.name;
-    if (column === 'status') return row.status;
-    if (column === 'message') return row.message;
-    return '';
   }
 
   private errorMessage(error: unknown, fallback: string) {
