@@ -6,7 +6,7 @@ This repository contains only the standalone MNSCloud Angular app.
 
 - Install: `npm install`
 - Start: `npm run start`
-- Build: `npm run build` (guarded: one build per host at a time, 14G memory cap; see below)
+- Build: `npm run build` (guarded: two builds per host at a time, 14G per build, 22G RAM + 6G swap combined; see below)
 - Type check (fast local gate): `npm run typecheck`
 - CRUD validation: `npm run check:crud`
 - Menu label validation: `npm run check:nav`
@@ -15,13 +15,22 @@ This repository contains only the standalone MNSCloud Angular app.
 
 ## Shared Host Builds
 
-- A production build uses ~11.5 GB of RAM. Several AI agents building at once froze the shared
-  developer host, so `npm run build` runs `scripts/guarded-build.sh`: a machine-wide queue (lock
-  `/var/lock/mnscloud-app-build.lock`, shared by every worktree), a per-build memory cap in its own
-  systemd scope (`MNSCLOUD_BUILD_MEMORY_MAX`, default `14G`, no swap) and lower CPU priority.
-- A waiting build prints `[build-guard] another mnscloud-app build is running (...)`; this is normal,
-  keep it waiting. Exit `75` means the slot did not free up in time; exit `137` with
-  `exceeded MNSCLOUD_BUILD_MEMORY_MAX` means the build hit the cap.
+- A production build peaks at ~12-13.5 GB of RAM. Several AI agents building at once without limits
+  froze the shared developer host, so `npm run build` runs `scripts/guarded-build.sh`: a
+  machine-wide queue of two slots (`MNSCLOUD_BUILD_SLOTS`, locks `/var/lock/mnscloud-app-build.lock`
+  and `.lock.2`, shared by every worktree), a per-build memory cap in its own systemd scope
+  (`MNSCLOUD_BUILD_MEMORY_MAX`, default `14G`), a combined cap for all running builds in
+  `mnscloud-app-build.slice` (`MNSCLOUD_BUILD_TOTAL_MEMORY_MAX`, default `22G` RAM, plus
+  `MNSCLOUD_BUILD_TOTAL_SWAP_MAX`, default `6G` swap) and lower CPU priority. Without the combined
+  cap the guard uses one slot, without swap.
+- Measured on the 32 GB + 8 GB swap host: two builds started together peak at ~25.7 GB in the
+  final optimization phase. A hard 24 GB cap without swap killed both; with 22G RAM + 6G swap both
+  finish (~22 min instead of ~20) while the rest of the host keeps ≥3.7 GB RAM. Do not raise these
+  defaults or the slot count without measuring again.
+- A waiting build prints `[build-guard] another mnscloud-app build is running in each of the 2
+slot(s) (...)`; this is normal, keep it waiting. Exit `75` means no slot freed up in time; exit
+  `137` with `exceeding MNSCLOUD_BUILD_MEMORY_MAX` means the build hit a cap. A running build shows
+  as `ng build (app)` (`pgrep -fa 'ng build'`).
 - Never bypass the guard on a shared host (`MNSCLOUD_BUILD_GUARD=0`) and never call
   `ng build` / `node .../ng.js build` directly. CI (`CI` set) and Docker builds skip the guard.
 - Routine local gate: Prettier, the `check:*` validators, `npm run verify:changed -- origin/main HEAD`
