@@ -82,6 +82,14 @@ export type HostingVpsPlanConfig = {
   backupEnabled?: boolean | null;
   ipv6Enabled?: boolean | null;
   monitoringEnabled?: boolean | null;
+  /** Disk media of the plan (ssd, nvme, hdd). */
+  diskType?: 'ssd' | 'nvme' | 'hdd' | null;
+  /** Only when published by the provider or measured (diskIopsSource); never estimated. */
+  diskIops?: number | null;
+  diskIopsSource?: 'provider' | 'measured' | null;
+  /** True only for dedicated vCPU sizes; shared/burstable plans never advertise it. */
+  dedicatedCpu?: boolean | null;
+  publicIpv4?: boolean | null;
   notes?: string | null;
 };
 
@@ -99,6 +107,20 @@ export type HostingVpsPlan = {
   BillingPriceBpcUUID?: string | null;
   HvpConfig?: HostingVpsPlanConfig | null;
   HvpIsActive: number;
+  /** Master-only reseller cost model; null for tenants. Converted cost and minimum are DB computed. */
+  HvpSku?: string | null;
+  HvpProviderCostAmount?: number | null;
+  HvpProviderCostCurrency?: string | null;
+  HvpFxRate?: number | null;
+  HvpFxRateDate?: string | null;
+  HvpProviderCostLocal?: number | null;
+  HvpTaxReservePct?: number | null;
+  HvpTargetMarginPct?: number | null;
+  HvpMinimumPrice?: number | null;
+  HvpCostSource?: string | null;
+  HvpCostCheckedOn?: string | null;
+  HvpIsPromotional?: number | null;
+  HvpPromotionalReason?: string | null;
 };
 
 export type HostingVpsInstanceConfig = {
