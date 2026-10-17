@@ -396,8 +396,15 @@ export type ConfigurableCrudColumn = {
   /** With `secretLoader`: whether this row has a value to load (defaults to true). */
   secretAvailable?: (row: ConfigurableCrudRecord) => boolean;
   hiddenWhen?: () => boolean;
-  /** Computed display value (also used for sorting); `translate` resolves Transloco keys. */
-  value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
+  /**
+   * Computed display value (also used for sorting); `translate` resolves Transloco keys and
+   * `filters` holds the applied list filter values (for example a test number).
+   */
+  value?: (
+    row: ConfigurableCrudRecord,
+    translate: (key: string) => string,
+    filters: Readonly<Record<string, string | number | boolean | null>>,
+  ) => string;
   /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
   /** Key of a row action: the cell value becomes a link that runs it (when the action is visible). */
@@ -418,7 +425,13 @@ export type ConfigurableCrudListFilter = {
   key: string;
   label: string;
   paramKey?: string;
-  type: 'select' | 'search-select';
+  /** `text` is a free-form input applied like Search (Enter or Apply). */
+  type: 'select' | 'search-select' | 'text';
+  /**
+   * Client-side predicate over the loaded rows. A filter with `match` is never sent to the API
+   * (for example testing a number against each row regex).
+   */
+  match?: (row: ConfigurableCrudRecord, value: string | number | boolean) => boolean;
   /** List filters follow the standard single-column grid contract. */
   span?: 1;
   placeholder?: string;
@@ -2418,6 +2431,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.listFilterValues.update((current) => ({ ...current, [filter.key]: value }));
   }
 
+  /** Text filters apply like Search: on Enter/Apply, or at once when cleared. */
+  onListFilterInput(filter: ConfigurableCrudListFilter, value: string): void {
+    this.setListFilterValue(filter, value);
+    if (!value.trim() && this.appliedFilters().extra[filter.key]) this.applySearchFilters();
+  }
+
   listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
     return filter.remoteLookup
       ? this.filterRemoteLookups.isLoading()
@@ -2734,7 +2753,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private columnComputedValue(row: T, column: ConfigurableCrudColumn): string | undefined {
     if (!column.value) return undefined;
-    return column.value(row, (key) => this.transloco.translate(key))?.trim() || '-';
+    return (
+      column
+        .value(row, (key) => this.transloco.translate(key), this.appliedFilters().extra)
+        ?.trim() || '-'
+    );
   }
 
   /** True when the secondary line holds a record UUID (not a readable `detail`). */
@@ -3102,7 +3125,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       params.set('status', String(filters.status));
     for (const filter of this.listFilters()) {
       const value = filters.extra[filter.key];
-      if (value === null || value === undefined || value === '') continue;
+      if (filter.match || value === null || value === undefined || value === '') continue;
       params.set(filter.paramKey ?? filter.key, String(value));
     }
     for (const [key, value] of Object.entries(this.config.listQuery ?? {})) params.set(key, value);
@@ -3199,6 +3222,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   ): boolean {
     const target = String(filterVal ?? '');
     if (!target) return true;
+    if (filter.match) return filter.match(row, filterVal as string | number | boolean);
 
     if (String(row[filter.key] ?? '') === target) return true;
     if (filter.paramKey && String(row[filter.paramKey] ?? '') === target) return true;
