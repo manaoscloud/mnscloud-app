@@ -1,4 +1,6 @@
 import { DestroyRef, computed, effect, inject, resource, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
@@ -35,6 +37,11 @@ export function dnsPolicySelector(
   const api = inject(ApiService);
   const translation = inject(TranslocoService);
   const i18n = inject(AppI18nService);
+  // Option labels are built in code: rebuild them once the language file has loaded.
+  const translationsLoaded = toSignal(
+    translation.events$.pipe(filter((event) => event.type === 'translationLoadSuccess')),
+    { initialValue: null },
+  );
   const policies = signal<DnsPolicyItem[]>([]);
   const offset = signal(0);
   const term = signal('');
@@ -61,6 +68,7 @@ export function dnsPolicySelector(
 
   const options = computed(() => {
     i18n.language();
+    translationsLoaded();
     const list = policies();
     const current = selected();
     const realmBase = translation.translate(baseLabel);
