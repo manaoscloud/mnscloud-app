@@ -53,6 +53,18 @@ mns-settings-page {
 .settings-page-feedback[role='alert'] {
   color: var(--mat-sys-color-error);
 }
+.settings-page-note {
+  margin: 0;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.settings-page-toggle {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 2px 4px 6px;
+}
 @media (max-width: 900px) {
   .content-page .form-grid,
   .content-page .toggle-grid {

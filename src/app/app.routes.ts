@@ -1821,6 +1821,24 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • Media Files | mnscloud',
               },
               {
+                path: 'voip/pabx/parameters',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/parameters/parameters').then(
+                    (m) => m.VoipPabxParametersPage,
+                  ),
+                title: 'VoIP • PABX • Parameters | mnscloud',
+                data: { scope: 'tenant' },
+              },
+              {
+                path: 'voip/softswitch/parameters',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/parameters/parameters').then(
+                    (m) => m.VoipSoftswitchParametersPage,
+                  ),
+                title: 'VoIP • Softswitch • Parameters | mnscloud',
+                data: { scope: 'tenant' },
+              },
+              {
                 path: 'voip/pabx/ivr',
                 loadComponent: () =>
                   import('./pages/voip/pabx/ivr/ivr').then((m) => m.VoipPabxIvrPage),
@@ -2140,6 +2158,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'softswitch/parameters',
+                loadComponent: () =>
+                  import('./pages/voip/softswitch/parameters/parameters').then(
+                    (m) => m.VoipSoftswitchParametersPage,
+                  ),
+                title: 'System Softswitch Parameters | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'sbc',
                 redirectTo: 'sbc/dashboard',
                 pathMatch: 'full',
@@ -2269,6 +2296,15 @@ export const routes: Routes = [
                 data: { scope: 'master', resource: 'domains' },
               },
               {
+                path: 'realtime/media/parameters',
+                loadComponent: () =>
+                  import('./pages/realtime/media/parameters/parameters').then(
+                    (m) => m.RealtimeMediaParametersPage,
+                  ),
+                title: 'System Realtime • Media Parameters | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'pabx',
                 loadComponent: () =>
                   import('./pages/voip/pabx/dashboard/dashboard').then(
@@ -2282,6 +2318,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/voip/pabx/server/server').then((m) => m.VoipPabxServerPage),
                 title: 'System PABX Server | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'pabx/parameters',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/parameters/parameters').then(
+                    (m) => m.VoipPabxParametersPage,
+                  ),
+                title: 'System PABX Parameters | mnscloud',
                 data: { scope: 'master' },
               },
               {
