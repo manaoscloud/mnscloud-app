@@ -266,53 +266,20 @@
 }
 
 .related-collection-tab {
-  display: grid;
-  gap: 0.85rem;
   padding-top: 0;
 }
 
-.related-collection-actions {
-  /* Dedicated full-width row, right-aligned like filter-actions, whatever the field spans. */
-  grid-column: 1 / -1;
+/* Global table inside a parent form tab (related collections): same table, no page shell. */
+.embedded-collection {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.embedded-collection-header {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-
-.related-collection-actions button {
-  min-width: 128px;
-  height: var(--form-control-height, 40px);
-}
-
-.related-collection-table {
-  position: relative;
-  overflow: auto;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  border-radius: 10px;
-}
-
-.related-collection-table table {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-}
-
-.related-collection-table th,
-.related-collection-table td {
-  padding: 0.7rem 0.85rem;
-  text-align: left;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  vertical-align: middle;
-}
-
-.related-collection-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.related-actions-col {
-  width: 88px;
-  text-align: center;
-  white-space: nowrap;
+  gap: 0.5rem;
 }
 
 .crud-file-field {

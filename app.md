@@ -509,6 +509,17 @@ the page must use the shared base named here.
 - Creating one-off `<table>`, `<table mat-table>`, hand-rolled paginators, or page-local list tables is strictly prohibited for any AI/LLM or human developer.
 - All core table capabilities must come from the shared base: density toggle (comfortable/compact), column customization menu (`tune` button), search input, status/list filters, pagination, responsive cards for mobile viewports, loading indicator, selection/bulk delete, and problem reporting button.
 - If tabular data needs to be presented inside a modal or dialog, use `ConfigurableCrudCollectionDialog` or a component extending `ConfigurableCrudPageBase`. Never construct a custom table dialog.
+- Child records inside a parent form tab (`relatedCollections`: package items, queue/group
+  members, IVR options, network instances, firewall rules) render
+  `ConfigurableCrudEmbeddedCollection`: the same global table (Refresh, create button named by
+  `addLabel`, report problem, Search, Status when a column has `kind: 'status'`, density, columns,
+  pagination, mobile cards, loading) with the standard create/edit dialog for the declared
+  `fields` (`createTitle`, `editTitle`; editing only when `updateEndpoint` exists). The parent page
+  keeps the lookups and hooks: `lookupOptions`/`lookupLabel`/`fieldLoading`,
+  `relatedCollectionFieldOptions(field, collection, values)` for options that depend on the child
+  form, `relatedCollectionFieldChange` for dependent child values, `relatedCollectionColumnValue`
+  for cell text, `afterRelatedCollectionRowAdded` and `reloadRelatedCollection`. Never render a
+  plain `<table>` or an inline add form for child records again.
 - In collection dialogs (`ConfigurableCrudCollectionDialog`), header actions (`Refresh`, `New` if `canCreate()`, and `<mns-report-problem-button>`) belong in `.dialog-header .header-actions`, while `Close` belongs in `.form-actions .secondary-actions` at the bottom of the dialog, preserving the standard dialog action footer.
 
 ## Commercial Menu Projection
@@ -930,7 +941,8 @@ its reason appears under it, a toast names it and the first one receives focus.
   `return this.rejectField('<fieldKey>', '<translated message key>')`; a rule about a group of
   fields points at one with `firstVisibleField([...])`. Flows that bypass the base save use
   `reportFieldErrors(new Map([[key, fieldError('required')]]))`. Never a toast without a field.
-- Related collection drafts validate on Add with the same marking (`<collection>::<field>` keys).
+- Related collection rows are created and edited in the standard create/edit dialog of their
+  embedded global table, so they get the same Required Field Feedback with no extra code.
 - API validation failures may return `{ error, code: 'VALIDATION_FAILED', fields: [...] }`
   (mnscloud-api `docs/api-patterns.md`); the base marks those fields
   (`form.validation.serverRejected`) and focuses the first. The API stays the enforcement layer.
@@ -1805,17 +1817,14 @@ not silently become BRL. Currency is never inferred from the browser's language.
 Global styles live in `src/styles/_field-help.scss`; `FieldHelpComponent` owns the
 accessible interaction. Do not add page-local sizing, positioning, color, or tooltip CSS.
 All generic CRUD forms use this contract by default, including collection dialogs,
-address fields and inline related-collection editors. No per-page opt-in is required.
+address fields and the create/edit dialogs of related collections. No per-page opt-in is required.
 
 - `help: 'Translation key'` provides supplementary guidance inside the field outline.
 - `helpWhen: ({ editing, values }) => 'Translation key'` supplies conditional guidance.
   An empty result hides the help button; it does not fall back to the static text.
-  Related-collection guidance uses its own draft values, never the parent form values.
-- Related-collection editors (`relatedCollections`) render the draft fields in the shared 4-column
-  grid with the declared spans, and the `Add` action on its own full-width row, right-aligned like
-  `filter-actions`, with the 40px control height. Do not give the action a grid span or a taller
-  cell than the inputs. Related columns should display a name returned by the child list (for
-  example `BprName`) instead of relying on a parent lookup that can miss and show the UUID.
+  Related-collection guidance uses the child form values, never the parent form values.
+- Related columns should display a name returned by the child list (for example `BprName`)
+  instead of relying on a parent lookup that can miss and show the UUID.
 - Use `matIconSuffix` on Material fields and the shared `help` input on searchable
   relation fields. Native file controls place help inside their existing outline;
   the selected filename remains visible as operational state.

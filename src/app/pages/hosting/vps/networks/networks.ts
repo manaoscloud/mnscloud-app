@@ -260,6 +260,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           label: 'Instances',
           emptyLabel: 'No instances attached',
           addLabel: 'Attach',
+          createTitle: 'Attach instance',
           savedMessage: 'Instance attach requested.',
           deletedMessage: 'Instance detach requested.',
           endpoint: (uuid) => `${this.networkEndpoint()}/${uuid}/instances`,
