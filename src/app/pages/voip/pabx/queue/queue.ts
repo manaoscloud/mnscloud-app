@@ -70,12 +70,25 @@ function config(): ConfigurableCrudConfig {
         uuidField: 'VoipPabxAccountVpaUUID',
         lookupKey: 'pabxUUID',
       },
-      { id: 'strategy', label: 'Strategy', kind: 'text', field: 'VpqStrategy', translateValue: true },
+      {
+        id: 'strategy',
+        label: 'Strategy',
+        kind: 'text',
+        field: 'VpqStrategy',
+        translateValue: true,
+      },
       { id: 'timeout', label: 'Timeout', kind: 'number', field: 'VpqTimeoutSeconds' },
       { id: 'status', label: 'Status', kind: 'status', field: 'VpqEnabled' },
     ],
     fields: [
-      { key: 'enabled', source: 'VpqEnabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
+      {
+        key: 'enabled',
+        source: 'VpqEnabled',
+        payloadKey: 'enabled',
+        label: 'Status',
+        type: 'status',
+        span: 1,
+      },
       {
         key: 'pabxUUID',
         source: 'VoipPabxAccountVpaUUID',
@@ -85,7 +98,14 @@ function config(): ConfigurableCrudConfig {
         required: true,
         span: 1,
       },
-      { key: 'name', source: 'VpqName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+      {
+        key: 'name',
+        source: 'VpqName',
+        payloadKey: 'name',
+        label: 'Name',
+        required: true,
+        span: 1,
+      },
       {
         key: 'strategy',
         source: 'VpqStrategy',
@@ -140,6 +160,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Members',
         emptyLabel: 'No members linked',
         addLabel: 'Add',
+        createTitle: 'New queue member',
         endpoint: (queueUUID) => `voip/pabx/queues/${queueUUID}/members`,
         deleteEndpoint: (queueUUID, row) =>
           `voip/pabx/queues/${queueUUID}/members/${row['VqmUUID']}`,
@@ -218,7 +239,9 @@ export class VoipPabxQueuePage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['pabxUUID', 'mediaFileUUID', 'extensionUUID'].includes(field.key) && this.lookupsLoading();
+    return (
+      ['pabxUUID', 'mediaFileUUID', 'extensionUUID'].includes(field.key) && this.lookupsLoading()
+    );
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -293,7 +316,12 @@ function option(
     .map((item) => String(item ?? '').trim())
     .filter(Boolean)
     .join(' - ');
-  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
 
 function numberOrNull(value: unknown): number | null {

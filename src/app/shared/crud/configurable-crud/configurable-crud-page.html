@@ -32,6 +32,20 @@
       <div class="primary-actions"></div>
     </div>
   </div>
+} @else if (config.embedded) {
+  <div class="embedded-collection">
+    <div class="embedded-collection-header header-actions">
+      <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+      @if (canCreate()) {
+        <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+          <mat-icon>add</mat-icon>
+          {{ config.createLabel ?? 'New' | transloco }}
+        </button>
+      }
+      <mns-report-problem-button [context]="reportContext()" />
+    </div>
+    <ng-container [ngTemplateOutlet]="crudTableBody" />
+  </div>
 } @else {
   <section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
     <mat-card class="erp-card">
@@ -3120,178 +3134,14 @@
               [labelClass]="relatedTabLabelClass(collection)"
             >
               <div class="tab-content related-collection-tab">
-                <div class="related-collection-form form-grid">
-                  @for (field of collection.fields; track field.key) {
-                    @switch (field.type) {
-                      @case ('search-select') {
-                        <mns-search-select-field
-                          [attr.data-field-key]="field.key"
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [help]="fieldHelp(field, collection)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [options]="relatedCollectionFieldOptions(field)"
-                          [loading]="fieldLoading(field)"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @case ('select') {
-                        <mns-search-select-field
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [attr.data-field-key]="field.key"
-                          [attr.data-report-mask]="reportMask(field)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) +
-                            currencyLabelSuffix(field) +
-                            (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [help]="fieldHelp(field, collection)"
-                          [options]="translatedSelectOptions(field, field.options ?? [])"
-                          [translateOptions]="false"
-                          [disabled]="isFieldDisabled(field)"
-                          [multiple]="false"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @case ('status') {
-                        <mns-search-select-field
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [attr.data-field-key]="field.key"
-                          [attr.data-report-mask]="reportMask(field)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) +
-                            currencyLabelSuffix(field) +
-                            (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [help]="fieldHelp(field, collection)"
-                          [options]="translatedSelectOptions(field, statusOptions())"
-                          [translateOptions]="false"
-                          [disabled]="isFieldDisabled(field)"
-                          [multiple]="false"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @default {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label
-                            >{{ translatedFieldLabel(field)
-                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                          >
-                          <input
-                            matInput
-                            [mnsInvalid]="hasFieldError(field, collection)"
-                            [attr.data-field-key]="field.key"
-                            [type]="htmlInputType(field)"
-                            [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                            [value]="relatedCollectionFieldValueString(collection, field)"
-                            (input)="
-                              setRelatedCollectionFieldValue(
-                                collection,
-                                field,
-                                $any($event.target).value
-                              )
-                            "
-                          />
-                          @if (fieldHelp(field, collection); as help) {
-                            <mns-field-help
-                              matIconSuffix
-                              [label]="translatedFieldLabel(field)"
-                              [text]="help"
-                            />
-                          }
-                          @if (hasFieldError(field, collection)) {
-                            <mat-error>{{ fieldErrorText(field, collection) }}</mat-error>
-                          }
-                        </mat-form-field>
-                      }
-                    }
-                  }
-
-                  <div class="related-collection-actions">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      type="button"
-                      [disabled]="isRelatedCollectionSaving(collection)"
-                      (click)="addRelatedCollectionRow(collection)"
-                    >
-                      <mat-icon>add</mat-icon>
-                      {{ collection.addLabel ?? 'Add' | transloco }}
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  class="related-collection-table"
-                  [class.is-loading]="isRelatedCollectionLoading(collection)"
-                >
-                  @if (isRelatedCollectionLoading(collection)) {
-                    <div class="table-loading" aria-live="polite" aria-busy="true">
-                      <mat-progress-spinner diameter="28" mode="indeterminate" />
-                    </div>
-                  }
-                  <table>
-                    <thead>
-                      <tr>
-                        @for (column of collection.columns; track column.id) {
-                          <th>{{ column.label | transloco }}</th>
-                        }
-                        <th class="related-actions-col">{{ 'Actions' | transloco }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of relatedCollectionRows(collection); track $index) {
-                        <tr>
-                          @for (column of collection.columns; track column.id) {
-                            <td>{{ relatedCollectionColumnValue(row, column) }}</td>
-                          }
-                          <td class="related-actions-col">
-                            @for (action of relatedRowActions(collection, row); track action.key) {
-                              <button
-                                mat-icon-button
-                                type="button"
-                                [matTooltip]="action.label | transloco"
-                                [disabled]="isRelatedCollectionSaving(collection)"
-                                (click)="runRelatedRowAction(collection, action, row)"
-                              >
-                                <mat-icon>{{ action.icon }}</mat-icon>
-                              </button>
-                            }
-                            <button
-                              mat-icon-button
-                              color="warn"
-                              type="button"
-                              [matTooltip]="'Delete' | transloco"
-                              [disabled]="isRelatedCollectionSaving(collection)"
-                              (click)="deleteRelatedCollectionRow(collection, row)"
-                            >
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          </td>
-                        </tr>
-                      } @empty {
-                        <tr>
-                          <td [attr.colspan]="collection.columns.length + 1">
-                            {{ collection.emptyLabel | transloco }}
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
+                @if (embeddedCollectionComponent(); as embeddedTable) {
+                  <ng-container
+                    *ngComponentOutlet="
+                      embeddedTable;
+                      injector: relatedCollectionInjector(collection)
+                    "
+                  />
+                }
               </div>
             </mat-tab>
           }

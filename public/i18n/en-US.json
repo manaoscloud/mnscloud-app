@@ -7650,5 +7650,13 @@
   "Pulse": "Pulse",
   "PhoneWeb": "PhoneWeb",
   "No active sessions in the last 15 minutes.": "No active sessions in the last 15 minutes.",
-  "Sessions active in the last 15 minutes by client version, to see how many users still run an outdated App after a release.": "Sessions active in the last 15 minutes by client version, to see how many users still run an outdated App after a release."
+  "Sessions active in the last 15 minutes by client version, to see how many users still run an outdated App after a release.": "Sessions active in the last 15 minutes by client version, to see how many users still run an outdated App after a release.",
+  "New IVR option": "New IVR option",
+  "New package item": "New package item",
+  "Edit package item": "Edit package item",
+  "New queue member": "New queue member",
+  "New group member": "New group member",
+  "Attach instance": "Attach instance",
+  "New firewall rule": "New firewall rule",
+  "Apply firewall profile": "Apply firewall profile"
 }

@@ -121,6 +121,7 @@ const config: ConfigurableCrudConfig = {
       label: 'Members',
       emptyLabel: 'No members linked',
       addLabel: 'Add',
+      createTitle: 'New group member',
       endpoint: (groupUUID) => `voip/pabx/groups/${groupUUID}/members`,
       deleteEndpoint: (groupUUID, row) => `voip/pabx/groups/${groupUUID}/members/${row['VgmUUID']}`,
       uuidField: 'VgmUUID',
