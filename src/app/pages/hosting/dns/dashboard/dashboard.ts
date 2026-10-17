@@ -1,17 +1,17 @@
-import { createSignalCrudTable } from '../../../../shared/crud/signal-crud-table';
 import { dashboardResource } from '../../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
 
 type DnsDashboardKpis = {
   providersTotal: number;
@@ -137,11 +137,9 @@ const EMPTY_DNS_DASHBOARD: DnsDashboardSnapshot = {
     DashboardPageComponent,
     RouterModule,
     MatIconModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatTableModule,
     TranslocoPipe,
     NgClass,
+    GlobalTableComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -163,39 +161,115 @@ export class HostingDnsDashboardPage {
   readonly dashboard = computed(() => this.dashboardResource.value());
   readonly kpisModel = computed(() => this.dashboard().kpis ?? EMPTY_KPIS);
 
-  readonly providerDataSource = createSignalCrudTable<ProviderRow>(
-    computed(() => this.providerRows()),
-    (row, column) => this.providerSortValue(row, column),
-  );
-  readonly domainDataSource = createSignalCrudTable<DomainRow>(
-    computed(() => this.domainRows()),
-    (row, column) => this.domainSortValue(row, column),
-  );
-  readonly platformDataSource = createSignalCrudTable<PlatformRow>(
-    computed(() => this.platformRows()),
-    (row, column) => this.platformSortValue(row, column),
-  );
+  private readonly router = inject(Router);
 
-  readonly providerColumns = [
-    'provider',
-    'platform',
-    'scope',
-    'active',
-    'default',
-    'domains',
-    'issues',
-    'actions',
-  ];
-  readonly domainColumns = [
-    'domain',
-    'provider',
-    'customer',
-    'sync',
-    'active',
-    'zoneIp',
-    'actions',
-  ];
-  readonly platformColumns = ['platform', 'providers', 'domains', 'provisioned', 'issues'];
+  readonly providerTableRows = computed(() => this.providerRows());
+  readonly domainTableRows = computed(() => this.domainRows());
+  readonly platformTableRows = computed(() => this.platformRows());
+
+  private readonly activeColumn = {
+    id: 'active',
+    label: 'Active',
+    field: 'active',
+    kind: 'status' as const,
+    options: [
+      { value: true, label: 'Active' },
+      { value: false, label: 'Inactive' },
+    ],
+    chipClass: (value: unknown) => this.chipClass(Boolean(value)),
+  };
+
+  private readonly issuesColumn = {
+    id: 'issues',
+    label: 'Issues',
+    field: 'issues',
+    kind: 'status' as const,
+    chipClass: (value: unknown) => this.issueChipClass(Number(value)),
+  };
+
+  readonly providerTable = defineGlobalTable({
+    key: 'hosting/dns/dashboard/providers',
+    uuidField: 'uuid',
+    emptyLabel: 'No DNS providers found.',
+    columns: [
+      { id: 'provider', label: 'Provider', field: 'name' },
+      {
+        id: 'platform',
+        label: 'Platform',
+        field: 'platform',
+        value: (row) => this.platformLabel(String(row['platform'] ?? '')),
+      },
+      { id: 'scope', label: 'Scope', field: 'scope' },
+      this.activeColumn,
+      { id: 'default', label: 'Default', field: 'isDefault', kind: 'boolean' },
+      { id: 'domains', label: 'Domains', field: 'domains', kind: 'number' },
+      this.issuesColumn,
+    ],
+    rowActions: [
+      {
+        key: 'view',
+        label: 'View',
+        icon: 'chevron_right',
+        run: () => void this.router.navigate(this.routeTo('providers')),
+      },
+    ],
+  });
+
+  readonly domainTable = defineGlobalTable({
+    key: 'hosting/dns/dashboard/domains',
+    uuidField: 'uuid',
+    emptyLabel: 'No DNS domains found.',
+    columns: [
+      { id: 'domain', label: 'Domain', field: 'name', kind: 'identity', uuidField: 'uuid' },
+      { id: 'provider', label: 'Provider', field: 'provider' },
+      { id: 'customer', label: 'Customer', field: 'customer' },
+      {
+        id: 'sync',
+        label: 'Sync',
+        field: 'sync',
+        kind: 'status',
+        value: (row) => this.syncLabel(String(row['sync'] ?? '')),
+        chipClass: (value) => this.syncChipClass(String(value ?? '')),
+      },
+      this.activeColumn,
+      { id: 'zoneIp', label: 'Zone IP', field: 'zoneIp' },
+    ],
+    rowActions: [
+      {
+        key: 'records',
+        label: 'Records',
+        icon: 'dns',
+        visible: (row) => Boolean(row['canOpenRecords']),
+        run: (row) =>
+          void this.router.navigate(this.domainRecordsLink(row as unknown as DomainRow)),
+      },
+      {
+        key: 'view',
+        label: 'View',
+        icon: 'chevron_right',
+        visible: (row) => !row['canOpenRecords'],
+        run: () => void this.router.navigate(this.routeTo('domains')),
+      },
+    ],
+  });
+
+  readonly platformTable = defineGlobalTable({
+    key: 'hosting/dns/dashboard/platforms',
+    uuidField: 'platform',
+    emptyLabel: 'No DNS platforms found.',
+    columns: [
+      {
+        id: 'platform',
+        label: 'Platform',
+        field: 'platform',
+        value: (row) => this.platformLabel(String(row['platform'] ?? '')),
+      },
+      { id: 'providers', label: 'Providers', field: 'providers', kind: 'number' },
+      { id: 'domains', label: 'Domains', field: 'domains', kind: 'number' },
+      { id: 'provisioned', label: 'Provisioned', field: 'provisioned', kind: 'number' },
+      this.issuesColumn,
+    ],
+  });
 
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
@@ -355,36 +429,6 @@ export class HostingDnsDashboardPage {
     }
     if (provision) return provision;
     return mop || 'unknown';
-  }
-
-  private providerSortValue(row: ProviderRow, column: string) {
-    if (column === 'provider') return row.name;
-    if (column === 'platform') return row.platform;
-    if (column === 'scope') return row.scope;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'default') return row.isDefault ? 1 : 0;
-    if (column === 'domains') return row.domains;
-    if (column === 'issues') return row.issues;
-    return '';
-  }
-
-  private domainSortValue(row: DomainRow, column: string) {
-    if (column === 'domain') return row.name;
-    if (column === 'provider') return row.provider;
-    if (column === 'customer') return row.customer;
-    if (column === 'sync') return row.sync;
-    if (column === 'active') return row.active ? 1 : 0;
-    if (column === 'zoneIp') return row.zoneIp;
-    return '';
-  }
-
-  private platformSortValue(row: PlatformRow, column: string) {
-    if (column === 'platform') return row.platform;
-    if (column === 'providers') return row.providers;
-    if (column === 'domains') return row.domains;
-    if (column === 'provisioned') return row.provisioned;
-    if (column === 'issues') return row.issues;
-    return '';
   }
 
   private errorMessage(error: unknown, fallback: string) {

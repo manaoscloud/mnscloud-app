@@ -1,20 +1,23 @@
 import { Component, DestroyRef, ViewEncapsulation, computed, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatTableModule } from '@angular/material/table';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { ApiService } from '../../../services/api.service';
-import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { ApiService } from '../../../../services/api.service';
+import { SlowConfirmDialogComponent } from '../../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+import { DateTimeFormatService } from '../../../../services/date-time-format.service';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../../shared/crud/configurable-crud/global-table';
 
-// crud-template-exempt: Master retention operations panel (dry-run counters, batch purge,
-// storage scan and database maintenance) embedded in Parameters; not a resource CRUD list.
+// Master retention operations panel (dry-run counters, batch purge, storage scan and database
+// maintenance) embedded in Parameters; its result lists are read-only global tables.
 
 type RetentionRow = {
   key: string;
@@ -111,16 +114,14 @@ const MAX_PURGE_ROUNDS = 500;
   selector: 'mns-voip-pabx-retention-operations',
   standalone: true,
   imports: [
-    DatePipe,
     DecimalPipe,
     MatButtonModule,
     MatButtonToggleModule,
-    MatChipsModule,
     MatIconModule,
     MatProgressBarModule,
     MatSlideToggleModule,
-    MatTableModule,
     TranslocoPipe,
+    GlobalTableComponent,
   ],
   templateUrl: './retention-operations.html',
   styleUrls: ['./retention-operations.scss'],
@@ -172,16 +173,152 @@ export class VoipPabxRetentionOperationsComponent {
     const job = this.latestJob();
     return !!job && ACTIVE_JOB_STATES.has(job.status);
   });
-  readonly columns = [
-    'customer',
-    'pabx',
-    'cdrRetention',
-    'recRetention',
-    'expiredCdrs',
-    'expiredRecs',
-  ];
-  readonly scanColumns = ['tenant', 'storage', 'scanned', 'unreferenced'];
-  readonly tableColumns = ['table', 'size', 'reclaimable', 'outcome'];
+  private readonly dateTime = inject(DateTimeFormatService);
+
+  readonly scanRows = computed(() =>
+    (this.scan()?.targets ?? []).map((target) => ({
+      ...target,
+      key: `${target.tenantUUID}:${target.storageAccountName ?? ''}`,
+    })),
+  );
+  readonly maintenanceTableRows = computed(() => this.latestJob()?.result?.tables ?? []);
+
+  readonly retentionTable = defineGlobalTable({
+    key: 'settings/retention/expired',
+    uuidField: 'key',
+    emptyLabel: 'No expired records detected across current retention policies.',
+    columns: [
+      {
+        id: 'customer',
+        label: 'Customer',
+        field: 'customerName',
+        kind: 'related',
+        value: (row, tr) => String(row['customerName'] ?? '') || tr('No customer'),
+        detail: (row, tr) =>
+          row['kind'] === 'orphan' ? this.orphanDetail(row as RetentionRow, tr) : '',
+      },
+      {
+        id: 'pabx',
+        label: 'PABX',
+        field: 'pabxName',
+        kind: 'related',
+        value: (row, tr) =>
+          String(row['pabxName'] ?? '') ||
+          tr(this.orphanTypeLabel(row['orphanType'] as string | null)),
+        detail: (row, tr) =>
+          row['kind'] === 'orphan' ? this.orphanPabxDetail(row as RetentionRow, tr) : '',
+      },
+      {
+        id: 'cdrRetention',
+        label: 'CDR Retention',
+        field: 'cdrDays',
+        value: (row, tr) =>
+          row['orphanType'] === 'unrouted'
+            ? tr('Immediate')
+            : this.retentionText(Number(row['cdrDays']), String(row['cdrSource'] ?? ''), tr),
+      },
+      {
+        id: 'recRetention',
+        label: 'Recording Retention',
+        field: 'recordingDays',
+        value: (row, tr) =>
+          this.retentionText(
+            Number(row['recordingDays']),
+            String(row['recordingSource'] ?? ''),
+            tr,
+          ),
+      },
+      {
+        id: 'expiredCdrs',
+        label: 'Expired CDRs',
+        field: 'expiredCdrs',
+        kind: 'related',
+        value: (row) => this.count(row['expiredCdrs']),
+        detail: (row, tr) => this.ofTotal(row['totalCdrs'], tr),
+      },
+      {
+        id: 'expiredRecs',
+        label: 'Expired Recordings',
+        field: 'expiredRecordings',
+        kind: 'related',
+        value: (row) => this.count(row['expiredRecordings']),
+        detail: (row, tr) => this.ofTotal(row['totalRecordings'], tr),
+      },
+    ],
+  });
+
+  readonly scanTable = defineGlobalTable({
+    key: 'settings/retention/storage-scan',
+    uuidField: 'key',
+    emptyLabel: 'No recording storage is in use.',
+    columns: [
+      {
+        id: 'tenant',
+        label: 'Tenant',
+        field: 'tenantName',
+        value: (row) => String(row['tenantName'] || row['tenantUUID'] || ''),
+      },
+      {
+        id: 'storage',
+        label: 'Storage account',
+        field: 'storageAccountName',
+        kind: 'related',
+        value: (row, tr) => String(row['storageAccountName'] ?? '') || tr('Tenant default storage'),
+        detail: (row) => String(row['error'] ?? ''),
+      },
+      {
+        id: 'scanned',
+        label: 'Objects scanned',
+        field: 'scannedObjects',
+        kind: 'related',
+        value: (row) => this.count(row['scannedObjects']),
+        detail: (row) => this.formatBytes(row['scannedBytes'] as number),
+      },
+      {
+        id: 'unreferenced',
+        label: 'Unreferenced objects',
+        field: 'unreferencedObjects',
+        kind: 'related',
+        value: (row) => this.count(row['unreferencedObjects']),
+        detail: (row) =>
+          [
+            this.formatBytes(row['unreferencedBytes'] as number),
+            ...((row['samples'] as StorageScanTarget['samples']) ?? [])
+              .slice(0, 3)
+              .map((sample) => sample.key),
+          ].join(' · '),
+      },
+    ],
+  });
+
+  readonly maintenanceTable = defineGlobalTable({
+    key: 'settings/retention/maintenance',
+    uuidField: 'table',
+    emptyLabel: 'No records found.',
+    columns: [
+      { id: 'table', label: 'Table', field: 'table' },
+      {
+        id: 'size',
+        label: 'Size on disk',
+        field: 'fileBytes',
+        value: (row) => this.tableSize(row as MaintenanceTable),
+      },
+      {
+        id: 'reclaimable',
+        label: 'Reclaimable',
+        field: 'reclaimableBytes',
+        value: (row) => this.formatBytes(row['reclaimableBytes'] as number),
+      },
+      {
+        id: 'outcome',
+        label: 'Status',
+        field: 'status',
+        kind: 'related',
+        value: (row, tr) => tr(String(row['status'] ?? '')),
+        detail: (row) => this.tableOutcomeDetail(row as MaintenanceTable),
+      },
+    ],
+  });
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -217,6 +354,49 @@ export class VoipPabxRetentionOperationsComponent {
       orphan: 'Orphan grace',
     };
     return labels[source] ?? 'Keep forever';
+  }
+
+  private count(value: unknown): string {
+    return Number(value ?? 0).toLocaleString();
+  }
+
+  private ofTotal(total: unknown, tr: (key: string) => string): string {
+    return total === null || total === undefined ? '' : `${tr('of')} ${this.count(total)}`;
+  }
+
+  private retentionText(days: number, source: string, tr: (key: string) => string): string {
+    return days > 0
+      ? `${days} ${tr('days')} (${tr(this.retentionSourceLabel(source))})`
+      : tr('Keep forever');
+  }
+
+  private orphanDetail(row: RetentionRow, tr: (key: string) => string): string {
+    const owner =
+      row.tenantName || row.serverName ? (row.tenantName ?? '') || tr('Unknown tenant') : '';
+    return [tr('Orphan'), owner, row.serverName].filter(Boolean).join(' · ');
+  }
+
+  private orphanPabxDetail(row: RetentionRow, tr: (key: string) => string): string {
+    const deleted = row.pabxDeletedAt ? this.dateTime.formatDate(row.pabxDeletedAt) : '';
+    return [tr(this.orphanTypeLabel(row.orphanType)), deleted].filter(Boolean).join(' · ');
+  }
+
+  private tableSize(table: MaintenanceTable): string {
+    const before = this.formatBytes(
+      table.fileBytes ?? (table.dataBytes ?? 0) + (table.indexBytes ?? 0),
+    );
+    return table.fileBytesAfter === undefined || table.fileBytesAfter === null
+      ? before
+      : `${before} → ${this.formatBytes(table.fileBytesAfter)}`;
+  }
+
+  private tableOutcomeDetail(table: MaintenanceTable): string {
+    return [
+      table.reclaimedBytes ? this.formatBytes(table.reclaimedBytes) : '',
+      table.message && table.status !== 'optimized' ? table.message : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   orphanTypeLabel(type: string | null): string {

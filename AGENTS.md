@@ -61,6 +61,12 @@ window.MNSCLOUD_APP_CONFIG = {
 - Pick the page template from `app.md` → `Page Template Catalog (Current)`. Every CRUD/list page
   extends `ConfigurableCrudPageBase`; matching CSS hook classes alone is not compliance.
   `npm run check:crud:inventory` enforces this app-wide (no allowlist).
+- Every list of rows uses the one global table (`app.md` → Global Table Component Baseline):
+  a `ConfigurableCrudPageBase` page, `ConfigurableCrudCollectionDialog` (rows in a dialog),
+  `relatedCollections` (rows in a form tab) or the read-only
+  `<mns-global-table [config]="defineGlobalTable({...})" [rows]>` (dashboards, result panels,
+  measurements). Never `<table>`, `mat-table` or a page-local paginator; `npm run check:tables`
+  enforces it in CI with no per-page opt-out.
 - Use Angular Material and existing shared helpers before introducing new UI patterns.
 
 ## Sidebar navigation labels

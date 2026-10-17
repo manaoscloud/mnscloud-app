@@ -490,7 +490,11 @@ the page must use the shared base named here.
 - A page that renders a table but is not a record CRUD (for example the Metrics fleet explorer)
   opts out with a `// crud-template-exempt: <reason>` comment in its component. The reason is
   mandatory (a bare marker stays legacy) and must point to the contract that defines the page.
-- Columns may declare `value(row, translate)` for a computed display/sort value and
+- List filters may be `type: 'text'` (free input applied like Search) and may declare
+  `match(row, value)`: a client-side predicate over the loaded rows that is never sent to the API
+  (for example the Dial pattern examples `Test number`, which keeps only the regexes that match).
+- Columns may declare `value(row, translate, filters)` for a computed display/sort value (`filters`
+  holds the applied list filter values, for example the test result of each regex) and
   `detail(row, translate)` for the secondary line of `identity`/`related` cells (shown instead of the
   UUID), for example a PABX with its engine and domain, or a route type with its target name.
 - Shared base capabilities for non-trivial resources (prefer these over page code):
@@ -505,11 +509,60 @@ the page must use the shared base named here.
 
 ## Global Table Component Baseline (Mandatory)
 
-- Every tabular presentation, list of records, collection dialog, or sub-table in any page, modal, or dialog across the entire application must use the canonical global table component (`ConfigurableCrudPageBase` / `defineCrud` / `ConfigurableCrudCollectionDialog`).
-- Creating one-off `<table>`, `<table mat-table>`, hand-rolled paginators, or page-local list tables is strictly prohibited for any AI/LLM or human developer.
-- All core table capabilities must come from the shared base: density toggle (comfortable/compact), column customization menu (`tune` button), search input, status/list filters, pagination, responsive cards for mobile viewports, loading indicator, selection/bulk delete, and problem reporting button.
+There is exactly one table in the App: `ConfigurableCrudPageBase` with its shared
+`configurable-crud-page.html/.scss`. Every list of rows, in a page, tab, dialog, dashboard panel or
+result panel, is rendered by it. Pick the surface by where the rows live:
+
+| Rows | Surface | How |
+| --- | --- | --- |
+| A resource list page | `ConfigurableCrudPageBase` page | `defineCrud`/config + shared template (`templates/crud`) |
+| Child records of a resource, in a dialog | `ConfigurableCrudCollectionDialog` | `rowActions[].collection`, or `openCrudTemplateDialog(this.dialog, ConfigurableCrudCollectionDialog, ...)` |
+| Child records inside a parent form tab | `ConfigurableCrudEmbeddedCollection` | `relatedCollections` (rendered automatically) |
+| Rows the page already holds (dashboard inventory, operation result, measurements, the current page of an analysis surface) | `mns-global-table` (read-only) | `<mns-global-table [config]="defineGlobalTable({...})" [rows]="rows()" [loading]="loading()" />` |
+
+- Creating `<table>`, `<table mat-table>`, `MatTableDataSource`, `createSignalCrudTable`, a
+  page-local `mat-paginator` for rows, or any page-local list table is prohibited for any AI/LLM or
+  human developer. A missing capability is added to the shared base (generic option, column kind,
+  hook), never to a page.
+- All table capabilities come from the shared base: density toggle and column menu (`tune`),
+  sorting, pagination, responsive mobile cards, loading indicator, empty label, row actions, column
+  links (`column.rowAction`), copy, chips (`kind: 'status'` + `chipClass`/`options`/`value`), dates,
+  numbers, icons (`column.icon`). Editable surfaces also get Search, Status/list filters,
+  selection/bulk delete, create/edit dialogs and the report problem button.
 - If tabular data needs to be presented inside a modal or dialog, use `ConfigurableCrudCollectionDialog` or a component extending `ConfigurableCrudPageBase`. Never construct a custom table dialog.
+- Child records inside a parent form tab (`relatedCollections`: package items, queue/group
+  members, IVR options, network instances, firewall rules) render
+  `ConfigurableCrudEmbeddedCollection`: the same global table (Refresh, create button named by
+  `addLabel`, report problem, Search, Status when a column has `kind: 'status'`, density, columns,
+  pagination, mobile cards, loading) with the standard create/edit dialog for the declared
+  `fields` (`createTitle`, `editTitle`; editing only when `updateEndpoint` exists). The parent page
+  keeps the lookups and hooks: `lookupOptions`/`lookupLabel`/`fieldLoading`,
+  `relatedCollectionFieldOptions(field, collection, values)` for options that depend on the child
+  form, `relatedCollectionFieldChange` for dependent child values, `relatedCollectionColumnValue`
+  for cell text, `afterRelatedCollectionRowAdded` and `reloadRelatedCollection`. Never render a
+  plain `<table>` or an inline add form for child records again.
+- Read-only tables (`mns-global-table`, `src/app/shared/crud/configurable-crud/global-table.ts`)
+  take a constant `defineGlobalTable({ key, uuidField, columns, emptyLabel, rowActions? })`: `key`
+  names the table for the per-user column preferences, `uuidField` must be unique per row (add a
+  computed `key` when the data has none). The base runs with `readOnly` (no filters, header
+  actions, create, edit, delete or selection) over local `rows`; `pagination: false` when the page
+  paginates on the server itself (Metrics fleet explorer). Navigation from a row is a row action
+  (`run: (row) => router.navigate(...)`), never a link inside a custom cell.
 - In collection dialogs (`ConfigurableCrudCollectionDialog`), header actions (`Refresh`, `New` if `canCreate()`, and `<mns-report-problem-button>`) belong in `.dialog-header .header-actions`, while `Close` belongs in `.form-actions .secondary-actions` at the bottom of the dialog, preserving the standard dialog action footer.
+- Not tables (allowed): `DataViewerDialogComponent` sections (read-only key/value payload viewer,
+  see `Read-Only Data Viewer Dialog Baseline`), `DashboardRecordListComponent` (dashboard record
+  cards) and the server paginator shared by the Cards/List/Compact modes of the Metrics fleet
+  explorer.
+- Enforced in CI (`verify:changed`) by `npm run check:tables`
+  (`scripts/validate-global-table.mjs`): any `<table>`, `mat-table`/`matColumnDef`,
+  `MatTableModule`/`MatTableDataSource`, `<mat-paginator>` or `MatPaginatorModule` outside the
+  global table fails the build. There is no per-page opt-out marker: the only exceptions are the
+  `NOT_TABLE_SURFACES` of the validator (the global table and the "Not tables" list above), and a new
+  one needs the same change here. `crud-template-exempt` does not exempt a page from this check.
+- Before writing any list, an AI agent answers in its plan which of the four surfaces above renders
+  it. "The page already has the data", "it is read-only", "it is a dashboard", "it is a small
+  sub-table" or "it is inside a dialog" are not reasons to hand-roll a table: those are exactly the
+  cases `mns-global-table`, `ConfigurableCrudCollectionDialog` and `relatedCollections` exist for.
 
 ## Commercial Menu Projection
 
@@ -699,6 +752,8 @@ the page must use the shared base named here.
     Do not project competing headers/toolbars.
     Do not render a metadata strip with last update, period or inventory-limit notices between
     the header and indicators. Internal snapshot timestamps remain part of the read model.
+  - Dashboard inventories (servers, queues, trunks, providers, domains, activity) are read-only
+    global tables (`mns-global-table`, Global Table Component Baseline), never `mat-table` markup.
   - No Search/Status forms, Apply/Clear, New/Edit/Delete, bulk actions or commercial action buttons
     belong in summary dashboards. Use the existing authorized management/detail routes. A plain
     contextual navigation link is permitted; it is not a mutation or a second action toolbar.
@@ -930,7 +985,8 @@ its reason appears under it, a toast names it and the first one receives focus.
   `return this.rejectField('<fieldKey>', '<translated message key>')`; a rule about a group of
   fields points at one with `firstVisibleField([...])`. Flows that bypass the base save use
   `reportFieldErrors(new Map([[key, fieldError('required')]]))`. Never a toast without a field.
-- Related collection drafts validate on Add with the same marking (`<collection>::<field>` keys).
+- Related collection rows are created and edited in the standard create/edit dialog of their
+  embedded global table, so they get the same Required Field Feedback with no extra code.
 - API validation failures may return `{ error, code: 'VALIDATION_FAILED', fields: [...] }`
   (mnscloud-api `docs/api-patterns.md`); the base marks those fields
   (`form.validation.serverRejected`) and focuses the first. The API stays the enforcement layer.
@@ -1354,6 +1410,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `Apply/Clear` order or placement differs from baseline
   - `confirm()` browser dialog used instead of `SlowConfirmDialogComponent`
   - a searchable FK form field without quick-create and without a documented exemption
+  - any list of rows rendered without the global table (`<table>`, `mat-table`, page-local
+    paginator, custom list markup); `npm run check:tables` must pass
 
 ## Request Template (recommended)
 
@@ -1568,7 +1626,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   translated tooltips, accessible labels and `aria-pressed`. The shared
   `dashboard-view-switch` owns their styling; preferences may store only the mode,
   never telemetry/customer data. All modes retain the same server pagination.
-- List mode uses a real Material table/paginator, identity plus UUID, status chips,
+- List mode is the read-only global table (`mns-global-table`, `pagination: false` because the
+  page keeps the shared server paginator): identity plus UUID, status chips,
   sortable data columns and icon-only actions. If sorting is limited to the current
   server page, label that scope explicitly. Do not present local sorting/filtering as
   a fleet-wide query. Cards and compact mode must retain freshness, metrics, network
@@ -1597,7 +1656,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   only and rendered as text; unavailable names retain the normal segment fallback.
 
 - The Monitoring Dashboard is refresh-only: no search form or Apply/Clear actions.
-  Keep its operational summaries and sortable/paginated recent activity table.
+  Keep its operational summaries and the sortable/paginated recent activity read-only global
+  table (`mns-global-table`).
   Guard resource values with hasValue(); a derived linkedSignal may retain the last
   successful snapshot on refresh errors. Initial failures must show an error rather
   than healthy zero counters. Label retained data and unavailable optional counts.
@@ -1805,17 +1865,14 @@ not silently become BRL. Currency is never inferred from the browser's language.
 Global styles live in `src/styles/_field-help.scss`; `FieldHelpComponent` owns the
 accessible interaction. Do not add page-local sizing, positioning, color, or tooltip CSS.
 All generic CRUD forms use this contract by default, including collection dialogs,
-address fields and inline related-collection editors. No per-page opt-in is required.
+address fields and the create/edit dialogs of related collections. No per-page opt-in is required.
 
 - `help: 'Translation key'` provides supplementary guidance inside the field outline.
 - `helpWhen: ({ editing, values }) => 'Translation key'` supplies conditional guidance.
   An empty result hides the help button; it does not fall back to the static text.
-  Related-collection guidance uses its own draft values, never the parent form values.
-- Related-collection editors (`relatedCollections`) render the draft fields in the shared 4-column
-  grid with the declared spans, and the `Add` action on its own full-width row, right-aligned like
-  `filter-actions`, with the 40px control height. Do not give the action a grid span or a taller
-  cell than the inputs. Related columns should display a name returned by the child list (for
-  example `BprName`) instead of relying on a parent lookup that can miss and show the UUID.
+  Related-collection guidance uses the child form values, never the parent form values.
+- Related columns should display a name returned by the child list (for example `BprName`)
+  instead of relying on a parent lookup that can miss and show the UUID.
 - Use `matIconSuffix` on Material fields and the shared `help` input on searchable
   relation fields. Native file controls place help inside their existing outline;
   the selected filename remains visible as operational state.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e16c035204ed",
+  "version": "167b3ac1b914",
   "language": "pt-BR",
   "entries": [
     {
@@ -3917,78 +3917,6 @@
         {
           "label": "Segredo de CAPTCHA",
           "help": "Private secret key used server-side to verify challenge responses with the provider."
-        },
-        {
-          "label": "Origem da configuração",
-          "help": "Define se os realms SIP do Softswitch herdam os padrões da plataforma ou usam políticas de domínio próprias."
-        },
-        {
-          "label": "Modo DNS do realm SIP do Softswitch",
-          "help": "Modo de publicação dos nomes de realm SIP gerados (DNS autoritativo gerenciado ou apenas identidade)."
-        },
-        {
-          "label": "Base do realm SIP do Softswitch",
-          "help": "Sufixo de domínio base dos realms SIP do Softswitch gerados automaticamente (ex.: softswitch.publichost.cloud)."
-        },
-        {
-          "label": "Rótulo do realm SIP do Softswitch",
-          "help": "Formato do prefixo de host gerado para cada novo realm do Softswitch."
-        },
-        {
-          "label": "Tamanho do UUID do realm SIP do Softswitch",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
-        },
-        {
-          "label": "Armazenamento - Gravação",
-          "help": "Target backend for PABX audio recording storage (local filesystem or object storage)."
-        },
-        {
-          "label": "Conta de armazenamento de gravações",
-          "help": "Dedicated cloud storage account bucket for saving PABX call recordings."
-        },
-        {
-          "label": "Armazenamento - Arquivo de mídia",
-          "help": "Target backend for PABX IVR greetings, hold music and uploaded sound files."
-        },
-        {
-          "label": "Conta de armazenamento de arquivos de mídia",
-          "help": "Dedicated cloud storage account bucket for serving PABX system media and audio."
-        },
-        {
-          "label": "Arquivo de mídia - Modo de entrega",
-          "help": "Audio streaming mechanism for PABX prompts (online streaming or offline pre-fetch)."
-        },
-        {
-          "label": "Executor de comando remoto",
-          "help": "Transport for PABX runtime configuration actions (enrolled MNS Agent or direct ESL/AMI socket)."
-        },
-        {
-          "label": "Modo DNS do realm SIP do PABX",
-          "help": "Modo de publicação dos nomes de realm SIP gerados (DNS autoritativo gerenciado ou apenas identidade)."
-        },
-        {
-          "label": "Base do realm SIP do PABX",
-          "help": "Base domain suffix for auto-generated PABX SIP realms (e.g. pabx.publichost.cloud)."
-        },
-        {
-          "label": "Rótulo do realm SIP do PABX",
-          "help": "Format of the host prefix generated for each newly provisioned PABX realm."
-        },
-        {
-          "label": "Tamanho do UUID do realm SIP do PABX",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
-        },
-        {
-          "label": "Carência de registros órfãos (dias)",
-          "help": "Vale para CDRs e gravações cujo PABX foi excluído ou não existe mais. Contado a partir da data de exclusão do PABX (ou da data do registro quando não há PABX). 0 nunca expurga registros órfãos."
-        },
-        {
-          "label": "Rótulo do domínio",
-          "help": "Prefixo do UUID do servidor de mídia; não muda quando o servidor é renomeado."
-        },
-        {
-          "label": "Tamanho do UUID",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
         }
       ]
     },
@@ -6283,6 +6211,59 @@
       "fields": []
     },
     {
+      "route": "/system/pabx/parameters",
+      "menuPath": "VoIP › PABX › Parâmetros",
+      "scope": "platform",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": [
+        {
+          "label": "Armazenamento das gravações",
+          "help": "Onde as gravações das chamadas PABX ficam: filesystem local do servidor PABX ou object storage."
+        },
+        {
+          "label": "Conta de armazenamento de gravações",
+          "help": "Conta de storage que recebe as gravações das chamadas PABX."
+        },
+        {
+          "label": "Armazenamento das mídias",
+          "help": "Onde ficam os áudios de URA, música de espera e arquivos enviados: filesystem local ou object storage."
+        },
+        {
+          "label": "Conta de armazenamento de arquivos de mídia",
+          "help": "Conta de storage das mídias. Vazio usa a conta das gravações."
+        },
+        {
+          "label": "Entrega das mídias",
+          "help": "Online transmite os áudios a partir da plataforma ao tocar; offline sincroniza os arquivos antes em cada servidor PABX."
+        },
+        {
+          "label": "Origem da configuração",
+          "help": "Herdar usa a configuração completa de Realm SIP da plataforma; própria usa os valores abaixo."
+        },
+        {
+          "label": "Modo DNS do Realm SIP",
+          "help": "Modo de publicação dos Realms SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos Realms SIP de PABX gerados (ex.: pabx.publichost.cloud)."
+        },
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID da conta PABX; não muda quando a conta é renomeada."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
+        },
+        {
+          "label": "Carência de registros órfãos (dias)",
+          "help": "Aplica-se a CDRs e gravações cujo PABX foi excluído ou não existe mais. Contado a partir da data de exclusão do PABX (ou da data do registro quando nenhum PABX é conhecido). Vazio usa 30 dias; 0 nunca expurga registros órfãos."
+        }
+      ]
+    },
+    {
       "route": "/system/pabx/server",
       "menuPath": "VoIP › PABX › Servidores",
       "scope": "platform",
@@ -6449,78 +6430,6 @@
         {
           "label": "Segredo de CAPTCHA",
           "help": "Private secret key used server-side to verify challenge responses with the provider."
-        },
-        {
-          "label": "Origem da configuração",
-          "help": "Define se os realms SIP do Softswitch herdam os padrões da plataforma ou usam políticas de domínio próprias."
-        },
-        {
-          "label": "Modo DNS do realm SIP do Softswitch",
-          "help": "Modo de publicação dos nomes de realm SIP gerados (DNS autoritativo gerenciado ou apenas identidade)."
-        },
-        {
-          "label": "Base do realm SIP do Softswitch",
-          "help": "Sufixo de domínio base dos realms SIP do Softswitch gerados automaticamente (ex.: softswitch.publichost.cloud)."
-        },
-        {
-          "label": "Rótulo do realm SIP do Softswitch",
-          "help": "Formato do prefixo de host gerado para cada novo realm do Softswitch."
-        },
-        {
-          "label": "Tamanho do UUID do realm SIP do Softswitch",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
-        },
-        {
-          "label": "Armazenamento - Gravação",
-          "help": "Target backend for PABX audio recording storage (local filesystem or object storage)."
-        },
-        {
-          "label": "Conta de armazenamento de gravações",
-          "help": "Dedicated cloud storage account bucket for saving PABX call recordings."
-        },
-        {
-          "label": "Armazenamento - Arquivo de mídia",
-          "help": "Target backend for PABX IVR greetings, hold music and uploaded sound files."
-        },
-        {
-          "label": "Conta de armazenamento de arquivos de mídia",
-          "help": "Dedicated cloud storage account bucket for serving PABX system media and audio."
-        },
-        {
-          "label": "Arquivo de mídia - Modo de entrega",
-          "help": "Audio streaming mechanism for PABX prompts (online streaming or offline pre-fetch)."
-        },
-        {
-          "label": "Executor de comando remoto",
-          "help": "Transport for PABX runtime configuration actions (enrolled MNS Agent or direct ESL/AMI socket)."
-        },
-        {
-          "label": "Modo DNS do realm SIP do PABX",
-          "help": "Modo de publicação dos nomes de realm SIP gerados (DNS autoritativo gerenciado ou apenas identidade)."
-        },
-        {
-          "label": "Base do realm SIP do PABX",
-          "help": "Base domain suffix for auto-generated PABX SIP realms (e.g. pabx.publichost.cloud)."
-        },
-        {
-          "label": "Rótulo do realm SIP do PABX",
-          "help": "Format of the host prefix generated for each newly provisioned PABX realm."
-        },
-        {
-          "label": "Tamanho do UUID do realm SIP do PABX",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
-        },
-        {
-          "label": "Carência de registros órfãos (dias)",
-          "help": "Vale para CDRs e gravações cujo PABX foi excluído ou não existe mais. Contado a partir da data de exclusão do PABX (ou da data do registro quando não há PABX). 0 nunca expurga registros órfãos."
-        },
-        {
-          "label": "Rótulo do domínio",
-          "help": "Prefixo do UUID do servidor de mídia; não muda quando o servidor é renomeado."
-        },
-        {
-          "label": "Tamanho do UUID",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
         }
       ]
     },
@@ -6730,6 +6639,23 @@
         {
           "label": "Anotações",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/realtime/media/parameters",
+      "menuPath": "Tempo real › Media/RTP › Parâmetros",
+      "scope": "platform",
+      "title": "Parâmetros",
+      "description": "Domínio gerenciado automático dos novos servidores de mídia, publicado em uma policy DNS RTP habilitada da plataforma.",
+      "fields": [
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID do servidor de mídia; não muda quando o servidor é renomeado."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
         }
       ]
     },
@@ -7143,6 +7069,35 @@
       "fields": []
     },
     {
+      "route": "/system/softswitch/parameters",
+      "menuPath": "VoIP › Softswitch › Parâmetros",
+      "scope": "platform",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": [
+        {
+          "label": "Origem da configuração",
+          "help": "Herdar usa a configuração completa de domínio SIP da plataforma; própria usa os valores abaixo."
+        },
+        {
+          "label": "Modo DNS do Realm SIP",
+          "help": "Modo de publicação dos domínios SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
+        },
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID da conta Softswitch; não muda quando a conta é renomeada."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
+        }
+      ]
+    },
+    {
       "route": "/system/softswitch/server",
       "menuPath": "VoIP › Softswitch › Servidores",
       "scope": "platform",
@@ -7536,11 +7491,63 @@
           "help": ""
         },
         {
+          "label": "SKU",
+          "help": "Identificador comercial interno, único entre os planos. Nunca é exibido aos tenants."
+        },
+        {
           "label": "Preço",
           "help": ""
         },
         {
           "label": "Taxa de setup",
+          "help": ""
+        },
+        {
+          "label": "Custo do fornecedor / mês",
+          "help": "Custo mensal cobrado pelo fornecedor, na moeda do fornecedor."
+        },
+        {
+          "label": "Moeda do custo do fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Câmbio",
+          "help": "Câmbio de referência: 1 unidade da moeda do fornecedor na moeda do plano."
+        },
+        {
+          "label": "Data do câmbio",
+          "help": ""
+        },
+        {
+          "label": "Reserva de impostos %",
+          "help": "Parte do preço de venda reservada para impostos e taxas."
+        },
+        {
+          "label": "Margem pretendida %",
+          "help": "Margem pretendida como parte do preço de venda, antes de suporte e outras despesas."
+        },
+        {
+          "label": "Custo convertido",
+          "help": ""
+        },
+        {
+          "label": "Preço mínimo",
+          "help": "Custo / (1 - (reserva + margem) / 100). Um plano ativo não pode ter preço abaixo dele, exceto se for promocional."
+        },
+        {
+          "label": "Promocional / gratuito",
+          "help": ""
+        },
+        {
+          "label": "Motivo da promoção",
+          "help": ""
+        },
+        {
+          "label": "Fonte do custo",
+          "help": ""
+        },
+        {
+          "label": "Custo conferido em",
           "help": ""
         },
         {
@@ -7565,6 +7572,22 @@
         },
         {
           "label": "Transferência GB",
+          "help": ""
+        },
+        {
+          "label": "Tipo de disco",
+          "help": ""
+        },
+        {
+          "label": "IOPS do disco",
+          "help": "Preencha só com valor publicado pelo fornecedor ou medido. Vazio significa não informado."
+        },
+        {
+          "label": "Origem do IOPS",
+          "help": ""
+        },
+        {
+          "label": "CPU dedicada",
           "help": ""
         },
         {
@@ -8434,6 +8457,59 @@
         {
           "label": "Descrição",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/pabx/parameters",
+      "menuPath": "VoIP › PABX › Parâmetros",
+      "scope": "tenant",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": [
+        {
+          "label": "Armazenamento das gravações",
+          "help": "Onde as gravações das chamadas PABX ficam: filesystem local do servidor PABX ou object storage."
+        },
+        {
+          "label": "Conta de armazenamento de gravações",
+          "help": "Conta de storage que recebe as gravações das chamadas PABX."
+        },
+        {
+          "label": "Armazenamento das mídias",
+          "help": "Onde ficam os áudios de URA, música de espera e arquivos enviados: filesystem local ou object storage."
+        },
+        {
+          "label": "Conta de armazenamento de arquivos de mídia",
+          "help": "Conta de storage das mídias. Vazio usa a conta das gravações."
+        },
+        {
+          "label": "Entrega das mídias",
+          "help": "Online transmite os áudios a partir da plataforma ao tocar; offline sincroniza os arquivos antes em cada servidor PABX."
+        },
+        {
+          "label": "Origem da configuração",
+          "help": "Herdar usa a configuração completa de Realm SIP da plataforma; própria usa os valores abaixo."
+        },
+        {
+          "label": "Modo DNS do Realm SIP",
+          "help": "Modo de publicação dos Realms SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos Realms SIP de PABX gerados (ex.: pabx.publichost.cloud)."
+        },
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID da conta PABX; não muda quando a conta é renomeada."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
+        },
+        {
+          "label": "Carência de registros órfãos (dias)",
+          "help": "Aplica-se a CDRs e gravações cujo PABX foi excluído ou não existe mais. Contado a partir da data de exclusão do PABX (ou da data do registro quando nenhum PABX é conhecido). Vazio usa 30 dias; 0 nunca expurga registros órfãos."
         }
       ]
     },
@@ -9318,6 +9394,35 @@
         {
           "label": "Padrão",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/softswitch/parameters",
+      "menuPath": "VoIP › Softswitch › Parâmetros",
+      "scope": "tenant",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": [
+        {
+          "label": "Origem da configuração",
+          "help": "Herdar usa a configuração completa de domínio SIP da plataforma; própria usa os valores abaixo."
+        },
+        {
+          "label": "Modo DNS do Realm SIP",
+          "help": "Modo de publicação dos domínios SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
+        },
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID da conta Softswitch; não muda quando a conta é renomeada."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
         }
       ]
     },

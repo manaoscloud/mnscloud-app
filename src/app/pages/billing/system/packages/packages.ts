@@ -226,9 +226,12 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Items',
       emptyLabel: 'No package items yet.',
       addLabel: 'Add',
+      createTitle: 'New package item',
+      editTitle: 'Edit package item',
       savedMessage: 'Billing package item saved successfully.',
       deletedMessage: 'Billing package item deleted successfully.',
       endpoint: (packageUUID) => `system/billing/packages/${packageUUID}/items?limit=200`,
+      updateEndpoint: () => 'system/billing/package-items',
       deleteEndpoint: (_packageUUID, row) => `system/billing/package-items/${row['BkiUUID']}`,
       uuidField: 'BkiUUID',
       initialValues: {
@@ -240,6 +243,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       fields: [
         {
           key: 'itemProductUUID',
+          source: 'BillingProductBprUUID',
           payloadKey: 'productUUID',
           label: 'Product',
           type: 'search-select',
@@ -250,6 +254,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         },
         {
           key: 'itemEntitlementCode',
+          source: 'BkiEntitlementCode',
           payloadKey: 'entitlementCode',
           label: 'Item entitlement',
           span: 1,
@@ -257,6 +262,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         },
         {
           key: 'itemIncludedQuantity',
+          source: 'BkiIncludedQuantity',
           payloadKey: 'includedQuantity',
           label: 'Included quantity (-1 = unlimited)',
           type: 'number',
@@ -265,6 +271,7 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         },
         {
           key: 'itemRequired',
+          source: 'BkiRequired',
           payloadKey: 'required',
           label: 'Required',
           type: 'select',
@@ -526,7 +533,7 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
     try {
       await this.billing.applyPackageItemToSubscriptions(itemUUID);
       this.snack.success(this.t('Package item applied to current subscribers.'));
-      await this.reloadRelatedCollection(collection);
+      this.reloadRelatedCollection(collection);
       this.refreshList();
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));

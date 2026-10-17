@@ -1,16 +1,16 @@
 import { dashboardResource } from '../../../shared/dashboard/dashboard-resource';
 import { NgClass } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
-import { MatTableModule } from '@angular/material/table';
-import { MatSortModule, type Sort } from '@angular/material/sort';
+import { Component, computed, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, type PageEvent } from '@angular/material/paginator';
 
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { ApiService } from '../../../services/api.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { DashboardPageComponent } from '../../../shared/dashboard/dashboard-page';
-import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../shared/crud/configurable-crud/global-table';
 
 type MonitoringAgent = {
   uuid: string;
@@ -67,9 +67,6 @@ type KpiTile = {
   state: 'good' | 'warn' | 'bad' | 'neutral';
 };
 
-type ActivitySortColumn = 'created' | 'level' | 'status' | 'action' | 'resource' | 'message';
-type SortDirection = 'asc' | 'desc';
-
 type MonitoringDashboardSnapshot = {
   agents: MonitoringAgent[];
   runtimeProducts: RuntimeProductFleet[];
@@ -91,16 +88,7 @@ const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
 @Component({
   selector: 'app-monitoring-dashboard',
   standalone: true,
-  imports: [
-    MnsDateTimePipe,
-    DashboardPageComponent,
-    MatTableModule,
-    MatSortModule,
-    MatIconModule,
-    MatPaginatorModule,
-    TranslocoPipe,
-    NgClass,
-  ],
+  imports: [DashboardPageComponent, MatIconModule, TranslocoPipe, NgClass, GlobalTableComponent],
   templateUrl: './dashboard.html',
 })
 export class MonitoringDashboardPage {
@@ -120,18 +108,52 @@ export class MonitoringDashboardPage {
   readonly failedTotal = computed(() => this.dashboard().failedTotal);
   readonly errorTotal = computed(() => this.dashboard().errorTotal);
   readonly generatedAt = computed(() => this.dashboard().generatedAt);
-  readonly activityPageIndex = signal(0);
-  readonly activityPageSize = signal(5);
-  readonly activitySortColumn = signal<ActivitySortColumn>('created');
-  readonly activitySortDirection = signal<SortDirection>('desc');
-  readonly activityColumns = [
-    { id: 'created' as const, label: 'Created' },
-    { id: 'level' as const, label: 'Level' },
-    { id: 'status' as const, label: 'Status' },
-    { id: 'action' as const, label: 'Action' },
-    { id: 'resource' as const, label: 'Resource' },
-    { id: 'message' as const, label: 'Message' },
-  ];
+  readonly activityTable = defineGlobalTable({
+    key: 'monitoring/dashboard/activity',
+    uuidField: 'uuid',
+    emptyLabel: 'No activity logs found.',
+    pageSizeOptions: [5, 10, 25, 100],
+    columns: [
+      { id: 'created', label: 'Created', field: 'dateCreated', kind: 'datetime' },
+      {
+        id: 'level',
+        label: 'Level',
+        field: 'level',
+        kind: 'status',
+        value: (row) => this.activityLabel(row['level'] as string | null),
+        chipClass: (value) => this.chipClass(value as string | null),
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        field: 'status',
+        kind: 'status',
+        value: (row) => this.activityLabel(row['status'] as string | null),
+        chipClass: (value) => this.chipClass(value as string | null),
+      },
+      {
+        id: 'action',
+        label: 'Action',
+        field: 'action',
+        kind: 'related',
+        detail: (row) => String(row['category'] || row['hostname'] || '-'),
+      },
+      {
+        id: 'resource',
+        label: 'Resource',
+        field: 'resourceLabel',
+        value: (row) => this.resourceLabel(row as ActivityLog),
+      },
+      {
+        id: 'message',
+        label: 'Message',
+        field: 'message',
+        kind: 'related',
+        value: (row) => String(row['message'] || row['errorCode'] || '-'),
+        detail: (row) => this.formatDuration(row['durationMs'] as number | null),
+      },
+    ],
+  });
 
   readonly agentSummary = computed(() => {
     const rows = this.agents();
@@ -201,16 +223,6 @@ export class MonitoringDashboardPage {
     ];
   });
 
-  readonly sortedActivityLogs = computed(() =>
-    [...this.latestLogs()].sort((left, right) => this.compareActivityRows(left, right)),
-  );
-  readonly displayedActivityColumns = this.activityColumns.map((column) => column.id);
-
-  readonly pagedActivityLogs = computed(() => {
-    const start = this.activityPageIndex() * this.activityPageSize();
-    return this.sortedActivityLogs().slice(start, start + this.activityPageSize());
-  });
-
   refreshList() {
     this.dashboardResource.reload();
   }
@@ -276,41 +288,8 @@ export class MonitoringDashboardPage {
     return value ? value.slice(0, 12) : '-';
   }
 
-  changeActivitySort(sort: Sort) {
-    this.activitySortColumn.set(sort.active as ActivitySortColumn);
-    this.activitySortDirection.set(sort.direction === 'asc' ? 'asc' : 'desc');
-  }
-
-  onActivityPageChange(event: PageEvent) {
-    this.activityPageIndex.set(event.pageIndex);
-    this.activityPageSize.set(event.pageSize);
-  }
-
   private ratio(value: number, total: number) {
     return `${Number(value || 0)} / ${Number(total || 0)}`;
-  }
-
-  private compareActivityRows(left: ActivityLog, right: ActivityLog) {
-    const column = this.activitySortColumn();
-    const direction = this.activitySortDirection() === 'asc' ? 1 : -1;
-    const leftValue = this.activitySortValue(left, column);
-    const rightValue = this.activitySortValue(right, column);
-    return (
-      leftValue.localeCompare(rightValue, undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      }) * direction
-    );
-  }
-
-  private activitySortValue(row: ActivityLog, column: ActivitySortColumn) {
-    if (column === 'created') return row.dateCreated ?? '';
-    if (column === 'level') return this.activityLabel(row.level);
-    if (column === 'status') return this.activityLabel(row.status);
-    if (column === 'action') return row.action ?? '';
-    if (column === 'resource') return this.resourceLabel(row);
-    if (column === 'message') return row.message ?? '';
-    return '';
   }
 
   private async loadDashboardSnapshot(): Promise<MonitoringDashboardSnapshot> {

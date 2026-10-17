@@ -32,6 +32,22 @@
       <div class="primary-actions"></div>
     </div>
   </div>
+} @else if (config.embedded) {
+  <div class="embedded-collection" [class.read-only-table]="config.readOnly">
+    @if (!config.readOnly) {
+      <div class="embedded-collection-header header-actions">
+        <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+        @if (canCreate()) {
+          <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
+            <mat-icon>add</mat-icon>
+            {{ config.createLabel ?? 'New' | transloco }}
+          </button>
+        }
+        <mns-report-problem-button [context]="reportContext()" />
+      </div>
+    }
+    <ng-container [ngTemplateOutlet]="crudTableBody" />
+  </div>
 } @else {
   <section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
     <mat-card class="erp-card">
@@ -64,141 +80,156 @@
 }
 
 <ng-template #crudTableBody>
-  <div class="filter-grid">
-    <mat-form-field appearance="outline" class="span-1">
-      <mat-label>{{ 'Search' | transloco }}</mat-label>
-      <input
-        matInput
-        [value]="search()"
-        (input)="onSearchInput($any($event.target).value)"
-        (keyup.enter)="applySearchFilters()"
-      />
-    </mat-form-field>
-
-    @if (statusFilterEnabled()) {
-      <mns-search-select-field
-        fieldClass="span-1"
-        [label]="'Status' | transloco"
-        [options]="statusFilterOptions()"
-        [translateOptions]="false"
-        [value]="status()"
-        (valueChange)="onStatusFilterChange($any($event))"
-      />
-    }
-
-    @for (filter of listFilters(); track filter.key) {
-      @if (filter.type === 'search-select') {
-        <mns-search-select-field
-          [label]="filter.label | transloco"
-          [value]="listFilterValue(filter)"
-          [options]="translatedListFilterOptions(filter)"
-          fieldClass="span-1"
-          [placeholder]="filter.placeholder ?? 'Search'"
-          [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
-          [loading]="listFilterLoading(filter)"
-          [remoteSearch]="!!filter.remoteLookup"
-          [hasNext]="filterRemoteNext(filter)"
-          [hasPrevious]="filterRemotePrevious(filter)"
-          [loadError]="filterRemoteError(filter)"
-          (searchChange)="filterRemoteSearch(filter, $event)"
-          (pageChange)="filterRemotePage(filter, $event)"
-          [translateOptions]="false"
-          (selectionChange)="onListFilterChange(filter, $any($event))"
+  @if (!config.readOnly) {
+    <div class="filter-grid">
+      <mat-form-field appearance="outline" class="span-1">
+        <mat-label>{{ 'Search' | transloco }}</mat-label>
+        <input
+          matInput
+          [value]="search()"
+          (input)="onSearchInput($any($event.target).value)"
+          (keyup.enter)="applySearchFilters()"
         />
-      } @else {
+      </mat-form-field>
+
+      @if (statusFilterEnabled()) {
         <mns-search-select-field
           fieldClass="span-1"
-          [label]="filter.label | transloco"
-          [options]="translatedListFilterOptions(filter)"
+          [label]="'Status' | transloco"
+          [options]="statusFilterOptions()"
           [translateOptions]="false"
-          [value]="listFilterValue(filter)"
-          [loading]="listFilterLoading(filter)"
-          [remoteSearch]="!!filter.remoteLookup"
-          [hasNext]="filterRemoteNext(filter)"
-          [hasPrevious]="filterRemotePrevious(filter)"
-          [loadError]="filterRemoteError(filter)"
-          (searchChange)="filterRemoteSearch(filter, $event)"
-          (pageChange)="filterRemotePage(filter, $event)"
-          (valueChange)="onListFilterChange(filter, $any($event))"
+          [value]="status()"
+          (valueChange)="onStatusFilterChange($any($event))"
         />
       }
-    }
 
-    <div class="filter-actions">
-      @if (
-        filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
-      ) {
-        <div class="filter-actions-start">
-          @if (filterActionMenu(); as actionMenu) {
-            <button
-              mat-stroked-button
-              type="button"
-              [disabled]="isFilterActionMenuDisabled(actionMenu)"
-              [matTooltip]="actionMenu.tooltip ? (actionMenu.tooltip | transloco) : ''"
-              [matTooltipDisabled]="!actionMenu.tooltip"
-              [matMenuTriggerFor]="contextualActionMenu"
-            >
-              <mat-icon>{{ actionMenu.icon }}</mat-icon>
-              {{ actionMenu.label | transloco }}
-              <mat-icon>arrow_drop_down</mat-icon>
-            </button>
-            <mat-menu #contextualActionMenu="matMenu" class="mns-menu">
-              <mns-menu-title>{{ actionMenu.label | transloco }}</mns-menu-title>
-              @for (action of actionMenu.actions; track action.key) {
-                <button
-                  mat-menu-item
-                  mnsMenuItem
-                  type="button"
-                  [disabled]="isFilterActionDisabled(action)"
-                  (click)="handleFilterAction(action)"
-                >
-                  <mat-icon>{{ action.icon }}</mat-icon>
-                  <mns-menu-label
-                    [description]="
-                      (isFilterActionDisabled(action) && filterActionDisabledReason(action)) ||
-                        action.tooltip | transloco
-                    "
-                    >{{ action.label | transloco }}</mns-menu-label
+      @for (filter of listFilters(); track filter.key) {
+        @if (filter.type === 'text') {
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ filter.label | transloco }}</mat-label>
+            <input
+              matInput
+              [placeholder]="filter.placeholder ? (filter.placeholder | transloco) : ''"
+              [value]="listFilterValue(filter)"
+              (input)="onListFilterInput(filter, $any($event.target).value)"
+              (keyup.enter)="applySearchFilters()"
+            />
+          </mat-form-field>
+        } @else if (filter.type === 'search-select') {
+          <mns-search-select-field
+            [label]="filter.label | transloco"
+            [value]="listFilterValue(filter)"
+            [options]="translatedListFilterOptions(filter)"
+            fieldClass="span-1"
+            [placeholder]="filter.placeholder ?? 'Search'"
+            [emptyLabel]="filter.emptyLabel ?? 'No records found.'"
+            [loading]="listFilterLoading(filter)"
+            [remoteSearch]="!!filter.remoteLookup"
+            [hasNext]="filterRemoteNext(filter)"
+            [hasPrevious]="filterRemotePrevious(filter)"
+            [loadError]="filterRemoteError(filter)"
+            (searchChange)="filterRemoteSearch(filter, $event)"
+            (pageChange)="filterRemotePage(filter, $event)"
+            [translateOptions]="false"
+            (selectionChange)="onListFilterChange(filter, $any($event))"
+          />
+        } @else {
+          <mns-search-select-field
+            fieldClass="span-1"
+            [label]="filter.label | transloco"
+            [options]="translatedListFilterOptions(filter)"
+            [translateOptions]="false"
+            [value]="listFilterValue(filter)"
+            [loading]="listFilterLoading(filter)"
+            [remoteSearch]="!!filter.remoteLookup"
+            [hasNext]="filterRemoteNext(filter)"
+            [hasPrevious]="filterRemotePrevious(filter)"
+            [loadError]="filterRemoteError(filter)"
+            (searchChange)="filterRemoteSearch(filter, $event)"
+            (pageChange)="filterRemotePage(filter, $event)"
+            (valueChange)="onListFilterChange(filter, $any($event))"
+          />
+        }
+      }
+
+      <div class="filter-actions">
+        @if (
+          filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
+        ) {
+          <div class="filter-actions-start">
+            @if (filterActionMenu(); as actionMenu) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="isFilterActionMenuDisabled(actionMenu)"
+                [matTooltip]="actionMenu.tooltip ? (actionMenu.tooltip | transloco) : ''"
+                [matTooltipDisabled]="!actionMenu.tooltip"
+                [matMenuTriggerFor]="contextualActionMenu"
+              >
+                <mat-icon>{{ actionMenu.icon }}</mat-icon>
+                {{ actionMenu.label | transloco }}
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #contextualActionMenu="matMenu" class="mns-menu">
+                <mns-menu-title>{{ actionMenu.label | transloco }}</mns-menu-title>
+                @for (action of actionMenu.actions; track action.key) {
+                  <button
+                    mat-menu-item
+                    mnsMenuItem
+                    type="button"
+                    [disabled]="isFilterActionDisabled(action)"
+                    (click)="handleFilterAction(action)"
                   >
-                </button>
-              }
-            </mat-menu>
-          }
-          @for (action of filterActions(); track action.key) {
-            <button
-              mat-stroked-button
-              color="primary"
-              type="button"
-              [disabled]="isFilterActionDisabled(action)"
-              [matTooltip]="action.tooltip ?? action.label | transloco"
-              [attr.aria-label]="action.label | transloco"
-              (click)="handleFilterAction(action)"
-            >
-              <mat-icon>{{ action.icon }}</mat-icon>
-              {{ action.label | transloco }}
-            </button>
-          }
-          @if (bulkDeleteEnabled() && selectedCount()) {
-            <span class="selection-count">{{ selectedCount() }} {{ 'selected' | transloco }}</span>
-            <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
-              <mat-icon>delete</mat-icon>
-              {{ 'Delete selected' | transloco }}
-            </button>
-          }
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                    <mns-menu-label
+                      [description]="
+                        (isFilterActionDisabled(action) && filterActionDisabledReason(action)) ||
+                          action.tooltip | transloco
+                      "
+                      >{{ action.label | transloco }}</mns-menu-label
+                    >
+                  </button>
+                }
+              </mat-menu>
+            }
+            @for (action of filterActions(); track action.key) {
+              <button
+                mat-stroked-button
+                color="primary"
+                type="button"
+                [disabled]="isFilterActionDisabled(action)"
+                [matTooltip]="action.tooltip ?? action.label | transloco"
+                [attr.aria-label]="action.label | transloco"
+                (click)="handleFilterAction(action)"
+              >
+                <mat-icon>{{ action.icon }}</mat-icon>
+                {{ action.label | transloco }}
+              </button>
+            }
+            @if (bulkDeleteEnabled() && selectedCount()) {
+              <span class="selection-count"
+                >{{ selectedCount() }} {{ 'selected' | transloco }}</span
+              >
+              <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
+                <mat-icon>delete</mat-icon>
+                {{ 'Delete selected' | transloco }}
+              </button>
+            }
+          </div>
+        }
+        <div class="filter-actions-end">
+          <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            {{ 'Apply' | transloco }}
+          </button>
+          <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
+            <mat-icon>backspace</mat-icon>
+            {{ 'Clear' | transloco }}
+          </button>
         </div>
-      }
-      <div class="filter-actions-end">
-        <button mat-stroked-button color="primary" type="button" (click)="applySearchFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          {{ 'Apply' | transloco }}
-        </button>
-        <button mat-stroked-button color="primary" type="button" (click)="clearSearchFilters()">
-          <mat-icon>backspace</mat-icon>
-          {{ 'Clear' | transloco }}
-        </button>
       </div>
     </div>
-  </div>
+  }
 
   @if (listFailed()) {
     <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
@@ -285,6 +316,21 @@
         }
       </div>
     } @else {
+      @if (!hasRowActions()) {
+        <div class="crud-card-toolbar">
+          <button
+            mat-icon-button
+            type="button"
+            class="crud-view-button"
+            [class.is-customized]="customizedView()"
+            [matTooltip]="'Table view' | transloco"
+            [attr.aria-label]="'Table view' | transloco"
+            [matMenuTriggerFor]="tableViewMenu"
+          >
+            <mat-icon>tune</mat-icon>
+          </button>
+        </div>
+      }
       <table
         mat-table
         matSort
@@ -440,15 +486,17 @@
     </ng-template>
   </mat-menu>
 
-  <mat-paginator
-    class="mobile-paginator"
-    [length]="paginatorLength()"
-    [pageIndex]="pageIndex()"
-    [pageSize]="pageSize()"
-    [pageSizeOptions]="pageSizeOptions()"
-    showFirstLastButtons
-    (page)="setPage($event)"
-  />
+  @if (config.pagination !== false) {
+    <mat-paginator
+      class="mobile-paginator"
+      [length]="paginatorLength()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions()"
+      showFirstLastButtons
+      (page)="setPage($event)"
+    />
+  }
 </ng-template>
 
 <ng-template #crudRowActions let-row>
@@ -631,6 +679,13 @@
           <mat-icon>content_copy</mat-icon>
         </button>
       </div>
+    } @else if (column.icon?.(row); as cellIcon) {
+      <span class="crud-icon-cell">
+        <mat-icon aria-hidden="true">{{ cellIcon }}</mat-icon>
+        <span class="crud-cell-text" [class]="columnWidthClass(column)" mnsOverflowTooltip>{{
+          columnText(row, column)
+        }}</span>
+      </span>
     } @else {
       <span class="crud-cell-text" [class]="columnWidthClass(column)" mnsOverflowTooltip>{{
         columnText(row, column)
@@ -3120,178 +3175,14 @@
               [labelClass]="relatedTabLabelClass(collection)"
             >
               <div class="tab-content related-collection-tab">
-                <div class="related-collection-form form-grid">
-                  @for (field of collection.fields; track field.key) {
-                    @switch (field.type) {
-                      @case ('search-select') {
-                        <mns-search-select-field
-                          [attr.data-field-key]="field.key"
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [help]="fieldHelp(field, collection)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [options]="relatedCollectionFieldOptions(field)"
-                          [loading]="fieldLoading(field)"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @case ('select') {
-                        <mns-search-select-field
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [attr.data-field-key]="field.key"
-                          [attr.data-report-mask]="reportMask(field)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) +
-                            currencyLabelSuffix(field) +
-                            (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [help]="fieldHelp(field, collection)"
-                          [options]="translatedSelectOptions(field, field.options ?? [])"
-                          [translateOptions]="false"
-                          [disabled]="isFieldDisabled(field)"
-                          [multiple]="false"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @case ('status') {
-                        <mns-search-select-field
-                          [invalid]="hasFieldError(field, collection)"
-                          [errorMessage]="fieldErrorText(field, collection)"
-                          [attr.data-field-key]="field.key"
-                          [attr.data-report-mask]="reportMask(field)"
-                          [fieldClass]="fieldClass(field)"
-                          [label]="
-                            translatedFieldLabel(field) +
-                            currencyLabelSuffix(field) +
-                            (isFieldRequired(field) ? '*' : '')
-                          "
-                          [placeholder]="field.placeholder ?? 'Search' | transloco"
-                          [help]="fieldHelp(field, collection)"
-                          [options]="translatedSelectOptions(field, statusOptions())"
-                          [translateOptions]="false"
-                          [disabled]="isFieldDisabled(field)"
-                          [multiple]="false"
-                          [value]="relatedCollectionFormValue(collection, field)"
-                          (valueChange)="setRelatedCollectionFieldValue(collection, field, $event)"
-                        />
-                      }
-                      @default {
-                        <mat-form-field appearance="outline" [class]="fieldClass(field)">
-                          <mat-label
-                            >{{ translatedFieldLabel(field)
-                            }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
-                          >
-                          <input
-                            matInput
-                            [mnsInvalid]="hasFieldError(field, collection)"
-                            [attr.data-field-key]="field.key"
-                            [type]="htmlInputType(field)"
-                            [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                            [value]="relatedCollectionFieldValueString(collection, field)"
-                            (input)="
-                              setRelatedCollectionFieldValue(
-                                collection,
-                                field,
-                                $any($event.target).value
-                              )
-                            "
-                          />
-                          @if (fieldHelp(field, collection); as help) {
-                            <mns-field-help
-                              matIconSuffix
-                              [label]="translatedFieldLabel(field)"
-                              [text]="help"
-                            />
-                          }
-                          @if (hasFieldError(field, collection)) {
-                            <mat-error>{{ fieldErrorText(field, collection) }}</mat-error>
-                          }
-                        </mat-form-field>
-                      }
-                    }
-                  }
-
-                  <div class="related-collection-actions">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      type="button"
-                      [disabled]="isRelatedCollectionSaving(collection)"
-                      (click)="addRelatedCollectionRow(collection)"
-                    >
-                      <mat-icon>add</mat-icon>
-                      {{ collection.addLabel ?? 'Add' | transloco }}
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  class="related-collection-table"
-                  [class.is-loading]="isRelatedCollectionLoading(collection)"
-                >
-                  @if (isRelatedCollectionLoading(collection)) {
-                    <div class="table-loading" aria-live="polite" aria-busy="true">
-                      <mat-progress-spinner diameter="28" mode="indeterminate" />
-                    </div>
-                  }
-                  <table>
-                    <thead>
-                      <tr>
-                        @for (column of collection.columns; track column.id) {
-                          <th>{{ column.label | transloco }}</th>
-                        }
-                        <th class="related-actions-col">{{ 'Actions' | transloco }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of relatedCollectionRows(collection); track $index) {
-                        <tr>
-                          @for (column of collection.columns; track column.id) {
-                            <td>{{ relatedCollectionColumnValue(row, column) }}</td>
-                          }
-                          <td class="related-actions-col">
-                            @for (action of relatedRowActions(collection, row); track action.key) {
-                              <button
-                                mat-icon-button
-                                type="button"
-                                [matTooltip]="action.label | transloco"
-                                [disabled]="isRelatedCollectionSaving(collection)"
-                                (click)="runRelatedRowAction(collection, action, row)"
-                              >
-                                <mat-icon>{{ action.icon }}</mat-icon>
-                              </button>
-                            }
-                            <button
-                              mat-icon-button
-                              color="warn"
-                              type="button"
-                              [matTooltip]="'Delete' | transloco"
-                              [disabled]="isRelatedCollectionSaving(collection)"
-                              (click)="deleteRelatedCollectionRow(collection, row)"
-                            >
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          </td>
-                        </tr>
-                      } @empty {
-                        <tr>
-                          <td [attr.colspan]="collection.columns.length + 1">
-                            {{ collection.emptyLabel | transloco }}
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
+                @if (embeddedCollectionComponent(); as embeddedTable) {
+                  <ng-container
+                    *ngComponentOutlet="
+                      embeddedTable;
+                      injector: relatedCollectionInjector(collection)
+                    "
+                  />
+                }
               </div>
             </mat-tab>
           }

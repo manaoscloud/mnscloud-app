@@ -30,6 +30,7 @@ import {
   Directive,
   DestroyRef,
   ElementRef,
+  Injector,
   TemplateRef,
   Type,
   afterNextRender,
@@ -44,7 +45,7 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom, map, Observable } from 'rxjs';
 
@@ -84,6 +85,10 @@ import { formatDateInput, toDateOnly } from '../../date-mask/date-input-format';
 import { MnsDateAdapterModule } from '../../date-mask/mns-date-adapter.module';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../../dialog/crud-dialog.util';
 import { CONFIGURABLE_CRUD_QUICK_CREATE, quickCreateRegistryEntry } from './quick-create';
+import {
+  CONFIGURABLE_CRUD_EMBEDDED,
+  ConfigurableCrudEmbeddedHost,
+} from './configurable-crud-embedded';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
 import { bindDialogClosed } from '../../dialog/dialog-events.util';
@@ -143,6 +148,7 @@ export const CONFIGURABLE_CRUD_IMPORTS = [
   PhoneInputComponent,
   MatTooltipModule,
   NgTemplateOutlet,
+  NgComponentOutlet,
   NgClass,
   MnsSearchSelectFieldComponent,
   MnsPermissionTreeFieldComponent,
@@ -390,8 +396,17 @@ export type ConfigurableCrudColumn = {
   /** With `secretLoader`: whether this row has a value to load (defaults to true). */
   secretAvailable?: (row: ConfigurableCrudRecord) => boolean;
   hiddenWhen?: () => boolean;
-  /** Computed display value (also used for sorting); `translate` resolves Transloco keys. */
-  value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
+  /**
+   * Computed display value (also used for sorting); `translate` resolves Transloco keys and
+   * `filters` holds the applied list filter values (for example a test number).
+   */
+  value?: (
+    row: ConfigurableCrudRecord,
+    translate: (key: string) => string,
+    filters: Readonly<Record<string, string | number | boolean | null>>,
+  ) => string;
+  /** Material icon shown before a text cell value (for example the resource type). */
+  icon?: (row: ConfigurableCrudRecord) => string;
   /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
   /** Key of a row action: the cell value becomes a link that runs it (when the action is visible). */
@@ -412,7 +427,13 @@ export type ConfigurableCrudListFilter = {
   key: string;
   label: string;
   paramKey?: string;
-  type: 'select' | 'search-select';
+  /** `text` is a free-form input applied like Search (Enter or Apply). */
+  type: 'select' | 'search-select' | 'text';
+  /**
+   * Client-side predicate over the loaded rows. A filter with `match` is never sent to the API
+   * (for example testing a number against each row regex).
+   */
+  match?: (row: ConfigurableCrudRecord, value: string | number | boolean) => boolean;
   /** List filters follow the standard single-column grid contract. */
   span?: 1;
   placeholder?: string;
@@ -461,15 +482,28 @@ export type ConfigurableCrudRelatedCollectionColumn = {
   value?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;
 };
 
+/**
+ * Child records edited inside a parent form tab. The tab renders the global table
+ * (`ConfigurableCrudEmbeddedCollection`): search, status filter, density, columns, pagination,
+ * mobile cards, report problem and the standard create/edit dialog for `fields`.
+ */
 export type ConfigurableCrudRelatedCollection = {
   key: string;
   label: string;
   emptyLabel: string;
+  /** Label of the header create button (defaults to `New`). */
   addLabel?: string;
+  /** Title of the create dialog (defaults to `addLabel`, then `New`). */
+  createTitle?: string;
+  /** Title of the edit dialog; editing needs `updateEndpoint`. */
+  editTitle?: string;
+  dialogDescription?: string;
   savedMessage?: string;
   deletedMessage?: string;
   endpoint: (parentUUID: string) => string;
   deleteEndpoint: (parentUUID: string, row: ConfigurableCrudRecord) => string;
+  /** Update route without the record UUID (the table appends it); enables the edit action. */
+  updateEndpoint?: (parentUUID: string) => string;
   uuidField: string;
   initialValues: ConfigurableCrudRecord;
   fields: readonly ConfigurableCrudField[];
@@ -510,6 +544,21 @@ export type ConfigurableCrudStatusMode = 'number' | 'string';
 export type ConfigurableCrudConfig = {
   collectionDialog?: boolean;
   formOnly?: boolean;
+  /** Set by `ConfigurableCrudEmbeddedCollection`: the table renders inside a parent form tab. */
+  embedded?: boolean;
+  /** Label of the header create button (defaults to `New`). */
+  createLabel?: string;
+  /**
+   * Read-only global table (`mns-global-table`): no filters, header actions, create, edit, delete
+   * or selection; sorting, density, columns, pagination, mobile cards and row actions remain.
+   */
+  readOnly?: boolean;
+  /** Local rows instead of an API list (dashboards and result panels); `endpoint` is not read. */
+  rows?: () => readonly ConfigurableCrudRecord[];
+  /** Loading state of local `rows`. */
+  rowsLoading?: () => boolean;
+  /** `false` hides the paginator when the page paginates the rows itself. */
+  pagination?: boolean;
   defaultCurrencyFields?: readonly string[];
   defaultCurrencyScope?: 'master' | 'tenant';
   payload?: (values: ConfigurableCrudRecord, editing: boolean) => ConfigurableCrudRecord;
@@ -677,10 +726,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     buildFileUploadViewModel(this.fileUploadProgress(), this.fileUploadActive()),
   );
   private fileUploadExecution: FileUploadExecution | null = null;
-  readonly relatedRows = signal<Record<string, ConfigurableCrudRecord[]>>({});
-  readonly relatedForms = signal<Record<string, ConfigurableCrudRecord>>({});
-  readonly relatedLoading = signal(new Set<string>());
-  readonly relatedSaving = signal(new Set<string>());
+  /** Global table component of related collection tabs, loaded on the first edit. */
+  readonly embeddedCollectionComponent = signal<Type<unknown> | null>(null);
+  private readonly embeddedInjectors = new Map<string, Injector>();
+  private readonly embeddedReloads = new Map<string, () => void>();
+  private readonly pageInjector = inject(Injector);
   readonly postalLookupLoadingKey = signal<string | null>(null);
   readonly editingRecord = signal<T | null>(null);
   readonly formValues = signal<ConfigurableCrudRecord>({});
@@ -816,11 +866,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     ...(this.hasRowActions() ? ['actions'] : []),
   ]);
   readonly listFailed = computed(() => !!this.itemsResource.error());
-  readonly rows = computed(() =>
-    this.itemsResource.hasValue()
+  readonly rows = computed(() => {
+    if (this.config.rows) return this.normalizeRows([...this.config.rows()] as T[]);
+    return this.itemsResource.hasValue()
       ? this.normalizeRows(this.itemsResource.value() as T[])
-      : ([] as T[]),
-  );
+      : ([] as T[]);
+  });
   readonly filteredRows = computed(() => {
     const raw = this.rows();
     if (this.serverSidePagination()) return raw;
@@ -838,7 +889,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.serverSidePagination() ? this.serverTotal() : this.sortedRows().length,
   );
   readonly pageSizeOptions = computed(() => this.config.pageSizeOptions ?? [5, 10, 25, 50]);
-  readonly loading = computed(() => this.itemsResource.isLoading() || this.mutating());
+  readonly loading = computed(
+    () =>
+      (this.config.rowsLoading?.() ?? false) || this.itemsResource.isLoading() || this.mutating(),
+  );
   readonly selectedCount = computed(() => this.selectedUUIDs().size);
   readonly allVisibleSelected = computed(() => {
     const visible = this.visibleRows();
@@ -941,14 +995,17 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   });
   readonly canCreate = computed(
     () =>
+      !this.config.readOnly &&
       this.config.canCreate !== false &&
       (!(this.config.defaultCurrencyScope || this.config.defaultCurrencyFields?.length) ||
         this.currencyReady()),
   );
-  readonly canEdit = computed(() => this.config.canEdit !== false);
-  readonly canDelete = computed(() => this.config.canDelete !== false);
+  readonly canEdit = computed(() => !this.config.readOnly && this.config.canEdit !== false);
+  readonly canDelete = computed(() => !this.config.readOnly && this.config.canDelete !== false);
   readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
-  readonly statusFilterEnabled = computed(() => this.config.statusFilter !== false);
+  readonly statusFilterEnabled = computed(
+    () => !this.config.readOnly && this.config.statusFilter !== false,
+  );
   readonly hasRowActions = computed(
     () => this.canEdit() || this.canDelete() || Boolean(this.config.rowActions?.length),
   );
@@ -982,7 +1039,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     this.formValues.set(this.emptyFormValues());
     this.itemsResource = resource({
-      params: () => (this.quickCreateMode ? undefined : this.listResourceParams()),
+      params: () =>
+        this.quickCreateMode || this.config.rows ? undefined : this.listResourceParams(),
       defaultValue: [] as T[],
       loader: ({ params }) => this.fetchItems(params),
     });
@@ -1115,8 +1173,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
     this.formValues.set(this.emptyFormValues());
-    this.relatedForms.set({});
-    this.relatedRows.set({});
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
     for (const action of this.addressCopyActions()) {
       if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
@@ -1135,8 +1191,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(null);
     this.formValues.set({ ...this.emptyFormValues(), ...values });
-    this.relatedForms.set({});
-    this.relatedRows.set({});
     this.enabledCopyActions.set(this.defaultCopyActionKeys());
     for (const action of this.addressCopyActions()) {
       if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
@@ -1151,12 +1205,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.revealedPasswordFields.set(new Set());
     this.editingRecord.set(row);
     this.formValues.set(this.formValuesFromRecord(row));
-    this.relatedForms.set(this.emptyRelatedForms());
-    this.relatedRows.set({});
     this.enabledCopyActions.set(this.inferredCopyActionKeys());
     this.copyEnabledAddressValues();
+    this.prepareRelatedCollections();
     this.openDialog();
-    void this.loadRelatedCollections();
   }
 
   async saveItem(saveAndNew = false): Promise<void> {
@@ -1280,11 +1332,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.mutating.set(true);
     try {
       const response = await this.api.delete(
-        `${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`,
+        this.deleteUrlFor(row),
         this.config.deletePayload?.(row),
       );
       if (!this.trackOperation(response)) this.snack.success(this.t(this.config.deletedMessage));
       this.itemsResource.reload();
+      this.afterDelete(row);
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || this.config.deleteFailedMessage));
     } finally {
@@ -1292,45 +1345,29 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
-  relatedCollectionRows(collection: ConfigurableCrudRelatedCollection): ConfigurableCrudRecord[] {
-    return this.relatedRows()[collection.key] ?? [];
-  }
-
-  relatedCollectionFormValue(
-    collection: ConfigurableCrudRelatedCollection,
+  /**
+   * Options of a related collection form field. `values` is the child form being edited, so
+   * dependent options (for example an IVR destination per route type) follow the child draft.
+   */
+  relatedCollectionFieldOptions(
     field: ConfigurableCrudField,
-  ): string | number | boolean | null {
-    const value = this.relatedForms()[collection.key]?.[field.key];
-    if (value === undefined) return '';
-    return value as string | number | boolean | null;
+    _collection: ConfigurableCrudRelatedCollection,
+    _values: ConfigurableCrudRecord,
+  ): readonly ConfigurableCrudOption[] {
+    return this.lookupOptions(field.key);
   }
 
-  relatedCollectionFieldValueString(
-    collection: ConfigurableCrudRelatedCollection,
-    field: ConfigurableCrudField,
-  ): string {
-    const value = this.relatedForms()[collection.key]?.[field.key];
-    if (value === undefined || value === null) return '';
-    return String(value);
-  }
-
-  setRelatedCollectionFieldValue(
-    collection: ConfigurableCrudRelatedCollection,
-    field: ConfigurableCrudField,
-    value: unknown,
-  ): void {
-    const forms = { ...this.relatedForms() };
-    forms[collection.key] = {
-      ...(forms[collection.key] ?? collection.initialValues),
-      [field.key]: value,
-    };
-    this.relatedForms.set(forms);
-    this.refreshRelatedFieldError(collection, field, value);
-    this.afterRelatedFieldChange(collection, field, value);
-  }
-
-  relatedCollectionFieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
-    return this.lookupOptions(field.key) ?? field.options ?? [];
+  /**
+   * Derives dependent child form values after a related field changes (same contract as
+   * `config.fieldChange`); return the complete next child record.
+   */
+  protected relatedCollectionFieldChange(
+    _collection: ConfigurableCrudRelatedCollection,
+    _key: string,
+    _value: unknown,
+    current: ConfigurableCrudRecord,
+  ): ConfigurableCrudRecord {
+    return current;
   }
 
   relatedCollectionColumnValue(
@@ -1353,72 +1390,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return this.displayValue(row[column.field ?? column.id]);
   }
 
-  isRelatedCollectionLoading(collection: ConfigurableCrudRelatedCollection): boolean {
-    return this.relatedLoading().has(collection.key);
-  }
-
-  isRelatedCollectionSaving(collection: ConfigurableCrudRelatedCollection): boolean {
-    return this.relatedSaving().has(collection.key);
-  }
-
-  relatedCollectionFormValid(collection: ConfigurableCrudRelatedCollection): boolean {
-    return this.missingRelatedFields(collection).length === 0;
-  }
-
-  private missingRelatedFields(
-    collection: ConfigurableCrudRelatedCollection,
-  ): ConfigurableCrudField[] {
-    const form = this.relatedForms()[collection.key] ?? collection.initialValues;
-    return collection.fields.filter(
-      (field) => this.isFieldRequired(field) && isBlankFieldValue(form[field.key]),
-    );
-  }
-
-  async addRelatedCollectionRow(collection: ConfigurableCrudRelatedCollection): Promise<void> {
-    if (!this.editingRecord()) return;
-    const missing = this.missingRelatedFields(collection);
-    if (missing.length) {
-      this.reportFieldErrors(
-        new Map(
-          missing.map((field) => [this.fieldErrorKey(field, collection), fieldError('required')]),
-        ),
-        collection.key,
-      );
-      return;
-    }
-    this.clearFieldErrors(collection.key);
-    const parentUUID = this.recordUUID(this.editingRecord() as T);
-    const values = this.relatedForms()[collection.key] ?? collection.initialValues;
-    const payload = collection.payload
-      ? collection.payload(values)
-      : this.relatedPayload(values, collection.fields);
-    this.setRelatedSaving(collection.key, true);
-    try {
-      const response = await this.api.post(
-        this.relatedCollectionEndpoint(collection, parentUUID),
-        payload,
-      );
-      const rows = extractCrudItems(response);
-      // Child endpoints may answer with the refreshed list or only the created record.
-      if (rows.length) {
-        this.relatedRows.update((current) => ({ ...current, [collection.key]: rows }));
-      } else {
-        await this.loadRelatedCollection(collection, parentUUID);
-      }
-      this.relatedForms.update((current) => ({
-        ...current,
-        [collection.key]: { ...collection.initialValues },
-      }));
-      this.snack.success(this.t(collection.savedMessage ?? 'Record saved successfully.'));
-      const created = (response as { data?: { item?: ConfigurableCrudRecord } } | null)?.data?.item;
-      await this.afterRelatedCollectionRowAdded(collection, parentUUID, created ?? rows[0] ?? null);
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    } finally {
-      this.setRelatedSaving(collection.key, false);
-    }
-  }
-
   /** Hook after a related row is created (for example to offer applying it elsewhere). */
   protected afterRelatedCollectionRowAdded(
     _collection: ConfigurableCrudRelatedCollection,
@@ -1426,78 +1397,136 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     _created: ConfigurableCrudRecord | null,
   ): void | Promise<void> {}
 
-  /** Reloads one related collection of the record being edited. */
-  protected async reloadRelatedCollection(collection: ConfigurableCrudRelatedCollection) {
+  /** Reloads the global table of one related collection of the record being edited. */
+  protected reloadRelatedCollection(collection: ConfigurableCrudRelatedCollection): void {
+    this.embeddedReloads.get(collection.key)?.();
+  }
+
+  /** Injector of a related collection tab: carries the embedded host for the record being edited. */
+  relatedCollectionInjector(collection: ConfigurableCrudRelatedCollection): Injector | undefined {
     const row = this.editingRecord();
-    if (row) await this.loadRelatedCollection(collection, this.recordUUID(row as T));
+    if (!row) return undefined;
+    const parentUUID = this.recordUUID(row);
+    const cacheKey = `${collection.key}:${parentUUID}`;
+    let injector = this.embeddedInjectors.get(cacheKey);
+    if (!injector) {
+      injector = Injector.create({
+        parent: this.pageInjector,
+        providers: [
+          {
+            provide: CONFIGURABLE_CRUD_EMBEDDED,
+            useValue: this.embeddedCollectionHost(collection, parentUUID),
+          },
+          // The child table is never the create form of an FK select of this page.
+          { provide: CONFIGURABLE_CRUD_QUICK_CREATE, useValue: null },
+        ],
+      });
+      this.embeddedInjectors.set(cacheKey, injector);
+    }
+    return injector;
   }
 
-  relatedRowActions(
-    collection: ConfigurableCrudRelatedCollection,
-    row: ConfigurableCrudRecord,
-  ): readonly ConfigurableCrudRelatedRowAction[] {
-    return (collection.rowActions ?? []).filter((action) => action.visible?.(row) !== false);
+  private prepareRelatedCollections(): void {
+    this.embeddedInjectors.clear();
+    if (!this.relatedCollections().length || this.embeddedCollectionComponent()) return;
+    void import('./configurable-crud-embedded-collection').then(
+      ({ ConfigurableCrudEmbeddedCollection }) =>
+        this.embeddedCollectionComponent.set(ConfigurableCrudEmbeddedCollection),
+    );
   }
 
-  async runRelatedRowAction(
+  private embeddedCollectionHost(
     collection: ConfigurableCrudRelatedCollection,
-    action: ConfigurableCrudRelatedRowAction,
-    row: ConfigurableCrudRecord,
-  ): Promise<void> {
-    const request = action.request;
-    if (request.confirm) {
-      const confirmed = await this.confirmAction(
-        request.confirm.title,
-        request.confirm.message,
-        request.confirm.confirmLabel,
-      );
-      if (!confirmed) return;
-    }
-    this.setRelatedSaving(collection.key, true);
-    try {
-      const endpoint = request.endpoint(row);
-      const body = request.body?.(row) ?? {};
-      if (request.method === 'put') await this.api.put(endpoint, body);
-      else await this.api.post(endpoint, body);
-      this.snack.success(this.t(request.successMessage));
-      await this.reloadRelatedCollection(collection);
-      this.itemsResource.reload();
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    } finally {
-      this.setRelatedSaving(collection.key, false);
-    }
+    parentUUID: string,
+  ): ConfigurableCrudEmbeddedHost {
+    return {
+      config: this.embeddedCollectionConfig(collection, parentUUID),
+      options: (field, values) => this.relatedCollectionFieldOptions(field, collection, values),
+      label: (key, value) => this.lookupLabel(key, value),
+      loading: (field) => !field.remoteLookup && this.fieldLoading(field),
+      deleteUrl: (row) => collection.deleteEndpoint(parentUUID, row),
+      rowAdded: async (created) => {
+        this.refreshList();
+        await this.afterRelatedCollectionRowAdded(collection, parentUUID, created);
+      },
+      changed: () => this.refreshList(),
+      attach: (reload) => {
+        this.embeddedReloads.set(collection.key, reload);
+        return () => {
+          if (this.embeddedReloads.get(collection.key) === reload)
+            this.embeddedReloads.delete(collection.key);
+        };
+      },
+    };
+  }
+
+  private embeddedCollectionConfig(
+    collection: ConfigurableCrudRelatedCollection,
+    parentUUID: string,
+  ): ConfigurableCrudConfig {
+    const [path, query = ''] = collection.endpoint(parentUUID).split('?', 2);
+    const updateEndpoint = collection.updateEndpoint?.(parentUUID);
+    return {
+      endpoint: path,
+      listQuery: Object.fromEntries(new URLSearchParams(query)),
+      updateEndpoint,
+      uuidField: collection.uuidField,
+      pageTitle: collection.label,
+      // Not rendered: the parent tab label names the collection.
+      pageDescription: collection.dialogDescription ?? collection.label,
+      createTitle: collection.createTitle ?? collection.addLabel ?? 'New',
+      editTitle: collection.editTitle ?? 'Edit',
+      createLabel: collection.addLabel,
+      dialogDescription: collection.dialogDescription ?? '',
+      searchPlaceholder: 'Search',
+      emptyLabel: collection.emptyLabel,
+      deleteTitle: 'Delete',
+      deleteMessage: 'Delete this record?',
+      deleteSelectedTitle: 'Delete selected',
+      deleteSelectedMessage: 'Delete {count} records?',
+      savedMessage: collection.savedMessage ?? 'Record saved successfully.',
+      deletedMessage: collection.deletedMessage ?? 'Record deleted successfully.',
+      deleteFailedMessage: 'Failed to delete record.',
+      canEdit: Boolean(updateEndpoint),
+      bulkDelete: false,
+      statusFilter: collection.columns.some((column) => column.kind === 'status'),
+      statusMode: 'number',
+      activeValue: 1,
+      inactiveValue: 0,
+      activeStatusValues: [1, 'true'],
+      initialValues: collection.initialValues,
+      fields: collection.fields,
+      columns: collection.columns.map((column) =>
+        column.kind === 'status'
+          ? { id: column.id, label: column.label, field: column.field, kind: 'status' as const }
+          : {
+              id: column.id,
+              label: column.label,
+              field: column.field,
+              kind: column.kind === 'number' ? ('number' as const) : ('text' as const),
+              value: (row: ConfigurableCrudRecord) =>
+                this.relatedCollectionColumnValue(row, column),
+            },
+      ),
+      rowActions: (collection.rowActions ?? []).map((action) => ({
+        key: action.key,
+        label: action.label,
+        icon: action.icon,
+        tooltip: action.label,
+        visible: action.visible,
+        request: action.request,
+      })),
+      payload: (values) =>
+        collection.payload ? collection.payload(values) : relatedPayload(values, collection.fields),
+      fieldChange: (key, value, current) =>
+        this.relatedCollectionFieldChange(collection, key, value, current),
+    };
   }
 
   /** Row action bound to a column (`column.rowAction`), when visible for the row. */
   columnRowAction(row: T, column: ConfigurableCrudColumn): ConfigurableCrudRowAction | null {
     if (!column.rowAction) return null;
     return this.rowActions(row).find((action) => action.key === column.rowAction) ?? null;
-  }
-
-  async deleteRelatedCollectionRow(
-    collection: ConfigurableCrudRelatedCollection,
-    row: ConfigurableCrudRecord,
-  ): Promise<void> {
-    if (!this.editingRecord()) return;
-    const parentUUID = this.recordUUID(this.editingRecord() as T);
-    const confirmed = await this.confirm('Delete', 'Delete this record?');
-    if (!confirmed) return;
-    this.setRelatedSaving(collection.key, true);
-    try {
-      await this.api.delete(this.relatedCollectionDeleteEndpoint(collection, parentUUID, row));
-      this.relatedRows.update((current) => ({
-        ...current,
-        [collection.key]: this.relatedCollectionRows(collection).filter(
-          (candidate) => candidate[collection.uuidField] !== row[collection.uuidField],
-        ),
-      }));
-      this.snack.success(this.t(collection.deletedMessage ?? 'Record deleted successfully.'));
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    } finally {
-      this.setRelatedSaving(collection.key, false);
-    }
   }
 
   collectionActions(): readonly ConfigurableCrudRowAction[] {
@@ -1674,6 +1703,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       }
       this.snack.success(this.t(request.successMessage));
       this.itemsResource.reload();
+      this.afterRowActionRequest(row);
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     } finally {
@@ -2000,19 +2030,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return field.translateLabel === false ? label : this.t(label);
   }
 
-  /** Supplemental guidance follows the values of its own editor, including child drafts. */
-  fieldHelp(field: ConfigurableCrudField, collection?: ConfigurableCrudRelatedCollection): string {
+  /** Supplemental guidance follows the values of its own form (child tables have their own). */
+  fieldHelp(field: ConfigurableCrudField): string {
     return resolveCrudFieldHelp(
       field,
-      collection
-        ? {
-            editing: false,
-            values: this.relatedForms()[collection.key] ?? {},
-          }
-        : {
-            editing: Boolean(this.editingRecord()),
-            values: this.formValues(),
-          },
+      { editing: Boolean(this.editingRecord()), values: this.formValues() },
       (text, params) => this.t(text, params),
     );
   }
@@ -2254,18 +2276,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
-  private refreshRelatedFieldError(
-    collection: ConfigurableCrudRelatedCollection,
-    field: ConfigurableCrudField,
-    value: unknown,
-  ): void {
-    const key = this.fieldErrorKey(field, collection);
-    if (!this.rawFieldErrors().has(key) || isBlankFieldValue(value)) return;
-    const next = new Map(this.rawFieldErrors());
-    next.delete(key);
-    this.rawFieldErrors.set(next);
-  }
-
   /**
    * A 400 whose body lists `fields` (API `VALIDATION_FAILED` contract) marks those fields;
    * the API message itself was already shown as a toast.
@@ -2440,6 +2450,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   setListFilterValue(filter: ConfigurableCrudListFilter, value: string | number | boolean | null) {
     this.listFilterValues.update((current) => ({ ...current, [filter.key]: value }));
+  }
+
+  /** Text filters apply like Search: on Enter/Apply, or at once when cleared. */
+  onListFilterInput(filter: ConfigurableCrudListFilter, value: string): void {
+    this.setListFilterValue(filter, value);
+    if (!value.trim() && this.appliedFilters().extra[filter.key]) this.applySearchFilters();
   }
 
   listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
@@ -2656,6 +2672,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   statusLabelForColumn(row: T, column: ConfigurableCrudColumn): string {
+    // A computed label (translation key) wins, for example a readable sync state.
+    if (column.value) return this.columnComputedValue(row, column) ?? '-';
     const value = row[column.field ?? column.id];
     const options = column.options ?? this.statusOptions();
     const option = options.find(
@@ -2758,7 +2776,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   private columnComputedValue(row: T, column: ConfigurableCrudColumn): string | undefined {
     if (!column.value) return undefined;
-    return column.value(row, (key) => this.transloco.translate(key))?.trim() || '-';
+    return (
+      column
+        .value(row, (key) => this.transloco.translate(key), this.appliedFilters().extra)
+        ?.trim() || '-'
+    );
   }
 
   /** True when the secondary line holds a record UUID (not a readable `detail`). */
@@ -2994,11 +3016,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return Promise.resolve(true);
   }
 
-  protected afterRelatedFieldChange(
-    _collection: ConfigurableCrudRelatedCollection,
-    _field: ConfigurableCrudField,
-    _value: unknown,
-  ): void {}
+  /** Full URL of the delete request of one row. */
+  protected deleteUrlFor(row: T): string {
+    return `${this.deleteEndpointFor(row)}/${this.recordUUID(row)}`;
+  }
+
+  /** Hook after a row was deleted. */
+  protected afterDelete(_row: T): void {}
+
+  /** Hook after a declarative row action request succeeded. */
+  protected afterRowActionRequest(_row: T): void {}
 
   protected deleteEndpointFor(row: T): string {
     const endpoint = this.config.deleteEndpoint;
@@ -3019,21 +3046,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   protected bulkDeleteEndpoint(): string {
     return this.config.bulkDeleteEndpoint ?? `${this.config.endpoint}/bulk`;
-  }
-
-  protected relatedCollectionEndpoint(
-    collection: ConfigurableCrudRelatedCollection,
-    parentUUID: string,
-  ): string {
-    return collection.endpoint(parentUUID);
-  }
-
-  protected relatedCollectionDeleteEndpoint(
-    collection: ConfigurableCrudRelatedCollection,
-    parentUUID: string,
-    row: ConfigurableCrudRecord,
-  ): string {
-    return collection.deleteEndpoint(parentUUID, row);
   }
 
   protected patchFormValues(values: ConfigurableCrudRecord): void {
@@ -3115,72 +3127,6 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
-  private emptyRelatedForms(): Record<string, ConfigurableCrudRecord> {
-    const forms: Record<string, ConfigurableCrudRecord> = {};
-    for (const collection of this.relatedCollections()) {
-      forms[collection.key] = { ...collection.initialValues };
-    }
-    return forms;
-  }
-
-  private async loadRelatedCollections(): Promise<void> {
-    const row = this.editingRecord();
-    if (!row) return;
-    const parentUUID = this.recordUUID(row);
-    await Promise.all(
-      this.relatedCollections().map((collection) =>
-        this.loadRelatedCollection(collection, parentUUID),
-      ),
-    );
-  }
-
-  private async loadRelatedCollection(
-    collection: ConfigurableCrudRelatedCollection,
-    parentUUID: string,
-  ): Promise<void> {
-    this.setRelatedLoading(collection.key, true);
-    try {
-      const response = await this.api.get(collection.endpoint(parentUUID));
-      this.relatedRows.update((current) => ({
-        ...current,
-        [collection.key]: extractCrudItems(response),
-      }));
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    } finally {
-      this.setRelatedLoading(collection.key, false);
-    }
-  }
-
-  private relatedPayload(
-    values: ConfigurableCrudRecord,
-    fields: readonly ConfigurableCrudField[],
-  ): ConfigurableCrudRecord {
-    const payload: ConfigurableCrudRecord = {};
-    for (const field of fields) {
-      payload[field.payloadKey ?? field.key] = values[field.key] ?? null;
-    }
-    return payload;
-  }
-
-  private setRelatedLoading(key: string, loading: boolean): void {
-    this.relatedLoading.update((current) => {
-      const next = new Set(current);
-      if (loading) next.add(key);
-      else next.delete(key);
-      return next;
-    });
-  }
-
-  private setRelatedSaving(key: string, saving: boolean): void {
-    this.relatedSaving.update((current) => {
-      const next = new Set(current);
-      if (saving) next.add(key);
-      else next.delete(key);
-      return next;
-    });
-  }
-
   protected async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
   ): Promise<T[]> {
@@ -3202,7 +3148,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       params.set('status', String(filters.status));
     for (const filter of this.listFilters()) {
       const value = filters.extra[filter.key];
-      if (value === null || value === undefined || value === '') continue;
+      if (filter.match || value === null || value === undefined || value === '') continue;
       params.set(filter.paramKey ?? filter.key, String(value));
     }
     for (const [key, value] of Object.entries(this.config.listQuery ?? {})) params.set(key, value);
@@ -3299,6 +3245,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   ): boolean {
     const target = String(filterVal ?? '');
     if (!target) return true;
+    if (filter.match) return filter.match(row, filterVal as string | number | boolean);
 
     if (String(row[filter.key] ?? '') === target) return true;
     if (filter.paramKey && String(row[filter.paramKey] ?? '') === target) return true;
@@ -3717,6 +3664,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 }
 
 const RELATED_FIELD_SEPARATOR = '::';
+
+/** Default child payload: every related field under its payload key. */
+function relatedPayload(
+  values: ConfigurableCrudRecord,
+  fields: readonly ConfigurableCrudField[],
+): ConfigurableCrudRecord {
+  const payload: ConfigurableCrudRecord = {};
+  for (const field of fields) payload[field.payloadKey ?? field.key] = values[field.key] ?? null;
+  return payload;
+}
 
 function labelClassList(value: string | string[] | undefined): string[] {
   if (!value) return [];

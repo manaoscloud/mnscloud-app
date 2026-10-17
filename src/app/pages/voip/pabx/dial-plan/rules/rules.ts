@@ -1,10 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
 import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../../services/api.service';
-import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ConfigurableCrudCollectionDialog } from '../../../../../shared/crud/configurable-crud/configurable-crud-collection-dialog';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
@@ -15,7 +13,8 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { openCrudComponentDialog } from '../../../../../shared/dialog/crud-dialog.util';
+import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+import { openCrudTemplateDialog } from '../../../../../shared/dialog/crud-dialog.util';
 import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses: ConfigurableCrudOption[] = [
@@ -290,465 +289,143 @@ function config(): ConfigurableCrudConfig {
   };
 }
 
-@Component({
-  selector: 'app-voip-dial-pattern-examples-dialog',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  template: `
-    <div class="crud-dialog dial-pattern-examples-dialog">
-      <div class="dialog-header">
-        <div>
-          <h2>{{ 'Dial pattern examples' | transloco }}</h2>
-          <p>
-            {{
-              'Select a reusable regex example for PABX, SBC, or Softswitch dial rules.' | transloco
-            }}
-          </p>
-        </div>
-        <mns-report-problem-button />
-      </div>
+const SAFE_REGEX_LABELS: Record<string, string> = {
+  safe: 'Safe regex',
+  warning: 'Warning',
+  blocked: 'Blocked',
+};
 
-      <mat-dialog-content class="dialog-content">
-        <div class="examples-content-shell">
-          <div class="dialog-filter-grid form-grid">
-            <mat-form-field appearance="outline" class="span-1">
-              <mat-label>{{ 'Pattern profile' | transloco }}</mat-label>
-              <mat-select
-                [value]="selectedProfile"
-                (selectionChange)="setSelectedProfile($event.value)"
-              >
-                <mat-option value="">{{ 'All profiles' | transloco }}</mat-option>
-                @for (profile of data.profiles; track profile.profileUUID) {
-                  <mat-option [value]="profile.profileUUID">{{ profile.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-1">
-              <mat-label>{{ 'Direction' | transloco }}</mat-label>
-              <mat-select
-                [value]="selectedDirection"
-                (selectionChange)="setSelectedDirection($event.value)"
-              >
-                <mat-option value="">{{ 'All directions' | transloco }}</mat-option>
-                @for (dir of directions; track dir.value) {
-                  <mat-option [value]="dir.value">{{ dir.label | transloco }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-1">
-              <mat-label>{{ 'Search examples' | transloco }}</mat-label>
-              <input matInput [value]="search" (input)="setSearch($any($event.target).value)" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" class="span-1">
-              <mat-label>{{ 'Test number' | transloco }}</mat-label>
-              <input
-                matInput
-                [value]="testNumber"
-                (input)="setTestNumber($any($event.target).value)"
-              />
-            </mat-form-field>
-          </div>
-
-          <div class="table-wrapper mat-elevation-z8">
-            <table mat-table [dataSource]="pagedTemplates()" class="erp-table">
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Name' | transloco }}</th>
-                <td mat-cell *matCellDef="let template">
-                  <div class="record-stack">
-                    <span class="record-main">{{ template.name }}</span>
-                    <span class="record-uuid">{{
-                      template.profileName || profileName(template.profileUUID)
-                    }}</span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="regex">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Regex' | transloco }}</th>
-                <td mat-cell *matCellDef="let template">
-                  <div class="record-stack">
-                    <span class="record-main regex-text">{{ template.regex }}</span>
-                    @if (template.replacement) {
-                      <span class="record-uuid">
-                        {{ 'Replacement' | transloco }}:
-                        <span class="regex-text">{{ template.replacement }}</span>
-                      </span>
-                    }
-                    <span class="record-uuid">{{ template.description || '-' }}</span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="direction">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Direction' | transloco }}</th>
-                <td mat-cell *matCellDef="let template">
-                  {{ optionLabel(directions, template.direction) | transloco }}
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="category">
-                <th mat-header-cell *matHeaderCellDef>{{ 'Category' | transloco }}</th>
-                <td mat-cell *matCellDef="let template">
-                  <div class="record-stack">
-                    <span>{{ template.category || '-' }}</span>
-                    <span class="record-uuid">{{
-                      (template.exampleMatches ?? []).join(', ') || '-'
-                    }}</span>
-                  </div>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="test">
-                <th mat-header-cell *matHeaderCellDef class="status-col">
-                  {{ 'Test' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let template" class="status-col">
-                  @if (testNumber.trim()) {
-                    <div class="record-stack">
-                      <span
-                        class="status-pill status-chip state-chip"
-                        [class.status-active]="matches(template.regex)"
-                        [class.status-inactive]="!matches(template.regex)"
-                      >
-                        {{
-                          matches(template.regex)
-                            ? ('Matches' | transloco)
-                            : ('Does not match' | transloco)
-                        }}
-                      </span>
-                      @if (matches(template.regex) && template.replacement) {
-                        <span class="record-uuid">
-                          {{ 'Result' | transloco }}:
-                          <span class="regex-text">{{
-                            transform(template.regex, template.replacement)
-                          }}</span>
-                        </span>
-                      }
-                    </div>
-                  } @else {
-                    <span
-                      class="status-pill status-chip state-chip"
-                      [class.status-neutral]="safeRegexStatus(template) === 'safe'"
-                      [class.status-warning]="safeRegexStatus(template) !== 'safe'"
-                    >
-                      {{ safeRegexStatus(template) | transloco }}
-                    </span>
-                  }
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="actions-col-header">
-                  {{ 'Actions' | transloco }}
-                </th>
-                <td mat-cell *matCellDef="let template" class="actions-cell actions-col-cell">
-                  <div class="actions-col">
-                    <button
-                      mat-icon-button
-                      type="button"
-                      [matTooltip]="'Copy regex' | transloco"
-                      (click)="copy(template.regex)"
-                    >
-                      <mat-icon>content_copy</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="primary"
-                      type="button"
-                      [matTooltip]="'Open new rule with this regex' | transloco"
-                      (click)="apply(template)"
-                    >
-                      <mat-icon>check</mat-icon>
-                    </button>
-                  </div>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="exampleColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: exampleColumns"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" [attr.colspan]="exampleColumns.length">
-                  {{ 'No regex examples found.' | transloco }}
-                </td>
-              </tr>
-            </table>
-          </div>
-
-          <mat-paginator
-            class="mobile-paginator dialog-paginator"
-            [length]="filteredTemplates().length"
-            [pageSize]="pageSize"
-            [pageIndex]="pageIndex"
-            [pageSizeOptions]="pageSizeOptions"
-            showFirstLastButtons
-            (page)="handlePage($event)"
-          ></mat-paginator>
-        </div>
-      </mat-dialog-content>
-
-      <mat-dialog-actions class="form-actions">
-        <div class="secondary-actions">
-          <button mat-stroked-button type="button" (click)="close()">
-            {{ 'Close' | transloco }}
-          </button>
-        </div>
-        <div class="primary-actions"></div>
-      </mat-dialog-actions>
-    </div>
-  `,
-  styles: [
-    `
-      .dial-pattern-examples-dialog {
-        min-height: 0;
-      }
-
-      .dial-pattern-examples-dialog,
-      .dial-pattern-examples-dialog .dialog-content,
-      .examples-content-shell,
-      .dialog-filter-grid,
-      .dial-pattern-examples-dialog .table-wrapper,
-      .dial-pattern-examples-dialog .dialog-paginator,
-      .dial-pattern-examples-dialog .form-actions {
-        box-sizing: border-box;
-        min-width: 0;
-        max-width: 100%;
-      }
-
-      .examples-content-shell {
-        display: flex;
-        flex: 1 1 auto;
-        flex-direction: column;
-        gap: 0.75rem;
-        min-height: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        padding: 0.65rem 0 0.25rem;
-        scrollbar-gutter: stable;
-      }
-
-      .dialog-filter-grid {
-        flex: 0 0 auto;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        margin-bottom: 0;
-        padding-top: 0;
-      }
-
-      .dial-pattern-examples-dialog .table-wrapper {
-        flex: 0 0 auto;
-        width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
-      }
-
-      .dial-pattern-examples-dialog .form-actions {
-        width: 100%;
-        margin: 0 !important;
-      }
-
-      .regex-text {
-        font-family: var(--mns-mono-font, 'Roboto Mono', monospace);
-        font-size: 0.82rem;
-      }
-
-      .dial-pattern-examples-dialog .state-chip.status-active {
-        background: color-mix(in srgb, #1db954 34%, transparent);
-        border-color: color-mix(in srgb, #1db954 82%, transparent);
-        color: #d8ffe5;
-      }
-
-      .dial-pattern-examples-dialog .state-chip.status-inactive {
-        background: color-mix(in srgb, #ff5252 22%, transparent);
-        border-color: color-mix(in srgb, #ff5252 72%, transparent);
-        color: #ffdada;
-      }
-
-      .dial-pattern-examples-dialog .state-chip.status-warning {
-        background: color-mix(in srgb, #ffb020 24%, transparent);
-        border-color: color-mix(in srgb, #ffb020 78%, transparent);
-        color: #ffe8b3;
-      }
-
-      .dial-pattern-examples-dialog .state-chip.status-neutral {
-        background: color-mix(in srgb, currentColor 6%, transparent);
-        border-color: color-mix(in srgb, currentColor 32%, transparent);
-        color: color-mix(in srgb, currentColor 82%, transparent);
-      }
-
-      .dialog-paginator {
-        flex: 0 0 auto;
-        width: 100%;
-        margin-top: 0;
-        overflow: hidden;
-      }
-
-      .dialog-paginator ::ng-deep .mat-mdc-paginator-container {
-        flex-wrap: nowrap;
-        justify-content: flex-end;
-        min-height: 48px;
-        padding: 0;
-        gap: 0.35rem;
-      }
-
-      .dialog-paginator ::ng-deep .mat-mdc-paginator-page-size {
-        width: auto;
-        justify-content: flex-end;
-        margin-right: 0.75rem;
-      }
-
-      .dialog-paginator ::ng-deep .mat-mdc-paginator-range-actions {
-        width: auto;
-        justify-content: flex-end;
-        flex-wrap: nowrap;
-        gap: 0.25rem;
-      }
-
-      .dialog-paginator ::ng-deep .mat-mdc-paginator-range-label {
-        margin: 0 0.75rem;
-        white-space: nowrap;
-      }
-
-      .dialog-paginator ::ng-deep .mat-mdc-paginator-page-size-select {
-        width: 84px;
-      }
-
-      @media (max-width: 760px) {
-        .dial-pattern-examples-dialog .erp-table {
-          min-width: 980px;
-        }
-
-        .dialog-filter-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    `,
-  ],
-})
-export class VoipDialPatternExamplesDialogComponent {
-  readonly data = inject<{
-    profiles: DialPatternProfile[];
-    templates: DialPatternTemplate[];
-  }>(MAT_DIALOG_DATA);
-  private readonly dialogRef = inject(MatDialogRef<VoipDialPatternExamplesDialogComponent>);
-  private readonly snack = inject(SnackbarService);
-
-  readonly directions = directions;
-  readonly exampleColumns = ['name', 'regex', 'direction', 'category', 'test', 'actions'];
-  readonly pageSizeOptions = [5, 10, 25];
-  selectedProfile = '';
-  selectedDirection = '';
-  search = '';
-  testNumber = '';
-  pageIndex = 0;
-  pageSize = 5;
-
-  filteredTemplates(): DialPatternTemplate[] {
-    const term = this.search.trim().toLowerCase();
-    const test = this.testNumber.trim();
-    return this.data.templates.filter((template) => {
-      const profileMatches = !this.selectedProfile || template.profileUUID === this.selectedProfile;
-      const directionMatches =
-        !this.selectedDirection || template.direction === this.selectedDirection;
-      const textMatches =
-        !term ||
-        [
-          template.name,
-          template.code,
-          template.profileName,
-          template.category,
-          template.regex,
-          template.replacement,
-        ]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(term));
-      const testMatches = !test || this.matches(template.regex);
-      return profileMatches && directionMatches && textMatches && testMatches;
-    });
+function regexMatches(regex: unknown, value: unknown): boolean {
+  try {
+    return new RegExp(String(regex ?? '')).test(String(value ?? '').trim());
+  } catch {
+    return false;
   }
+}
 
-  pagedTemplates(): DialPatternTemplate[] {
-    const start = this.pageIndex * this.pageSize;
-    return this.filteredTemplates().slice(start, start + this.pageSize);
+function regexResult(regex: unknown, replacement: unknown, value: unknown): string {
+  try {
+    return String(value ?? '')
+      .trim()
+      .replace(new RegExp(String(regex ?? '')), String(replacement ?? ''));
+  } catch {
+    return '-';
   }
+}
 
-  setSelectedProfile(value: string): void {
-    this.selectedProfile = value;
-    this.resetPage();
-  }
-
-  setSelectedDirection(value: string): void {
-    this.selectedDirection = value;
-    this.resetPage();
-  }
-
-  setSearch(value: string): void {
-    this.search = value;
-    this.resetPage();
-  }
-
-  setTestNumber(value: string): void {
-    this.testNumber = value;
-    this.resetPage();
-  }
-
-  handlePage(event: PageEvent): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
-  }
-
-  resetPage(): void {
-    this.pageIndex = 0;
-  }
-
-  profileName(profileUUID: string): string {
-    return this.data.profiles.find((profile) => profile.profileUUID === profileUUID)?.name ?? '-';
-  }
-
-  optionLabel(options: readonly ConfigurableCrudOption[], value: unknown): string {
-    return (
-      options.find((option) => String(option.value) === String(value))?.label ??
-      String(value ?? '-')
-    );
-  }
-
-  matches(regex: string): boolean {
-    try {
-      return new RegExp(regex).test(this.testNumber.trim());
-    } catch {
-      return false;
-    }
-  }
-
-  transform(regex: string, replacement: string): string {
-    try {
-      return this.testNumber.trim().replace(new RegExp(regex), replacement);
-    } catch {
-      return '-';
-    }
-  }
-
-  safeRegexStatus(template: DialPatternTemplate): string {
-    return String(template.safeRegexStatus || 'safe').toLowerCase();
-  }
-
-  async copy(regex: string): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(regex);
-      this.snack.success('Regex copied.');
-    } catch {
-      this.snack.error('Failed to copy regex.');
-    }
-  }
-
-  apply(template: DialPatternTemplate): void {
-    this.dialogRef.close(template);
-  }
-
-  close(): void {
-    this.dialogRef.close();
-  }
+/**
+ * Reusable dial pattern examples, listed by the global table (collection dialog). `use` opens a
+ * new rule prefilled from the chosen example; `copy` copies its regex.
+ */
+function dialPatternExamplesConfig(
+  profiles: readonly DialPatternProfile[],
+  actions: {
+    use: (template: DialPatternTemplate) => void;
+    copy: (regex: string) => Promise<void>;
+  },
+): ConfigurableCrudConfig {
+  const profileName = (uuid: unknown) =>
+    profiles.find((profile) => profile.profileUUID === uuid)?.name ?? '';
+  return defineCrud({
+    endpoint: 'voip/dial-patterns/templates',
+    listQuery: { status: '1', limit: '1000' },
+    uuidField: 'templateUUID',
+    pageTitle: 'Dial pattern examples',
+    pageDescription: 'Select a reusable regex example for PABX, SBC, or Softswitch dial rules.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    emptyLabel: 'No regex examples found.',
+    pageSizeOptions: [5, 10, 25],
+    listFilters: [
+      {
+        key: 'profileUUID',
+        label: 'Pattern profile',
+        type: 'search-select',
+        options: [
+          { value: '', label: 'All' },
+          ...profiles.map((profile) => ({ value: profile.profileUUID, label: profile.name })),
+        ],
+        match: (row, value) => row['profileUUID'] === value,
+      },
+      {
+        key: 'direction',
+        label: 'Direction',
+        type: 'search-select',
+        options: [{ value: '', label: 'All' }, ...directions],
+        translateOptions: true,
+        match: (row, value) => row['direction'] === value,
+      },
+      {
+        key: 'testNumber',
+        label: 'Test number',
+        type: 'text',
+        match: (row, value) => regexMatches(row['regex'], value),
+      },
+    ],
+    columns: [
+      {
+        id: 'name',
+        label: 'Name',
+        kind: 'identity',
+        field: 'name',
+        uuidField: 'templateUUID',
+        detail: (row) => String(row['profileName'] || profileName(row['profileUUID'])),
+      },
+      { id: 'regex', label: 'Regex', field: 'regex', copyable: true },
+      { id: 'replacement', label: 'Replacement', field: 'replacement' },
+      {
+        id: 'direction',
+        label: 'Direction',
+        field: 'direction',
+        options: directions,
+        translateValue: true,
+      },
+      { id: 'category', label: 'Category', field: 'category' },
+      {
+        id: 'examples',
+        label: 'Examples',
+        field: 'exampleMatches',
+        value: (row) =>
+          (Array.isArray(row['exampleMatches']) ? row['exampleMatches'] : []).join(', '),
+        optional: true,
+      },
+      { id: 'description', label: 'Description', field: 'description', optional: true },
+      {
+        id: 'test',
+        label: 'Test',
+        field: 'safeRegexStatus',
+        value: (row, t, filters) => {
+          const test = String(filters['testNumber'] ?? '').trim();
+          if (!test) {
+            const status = String(row['safeRegexStatus'] || 'safe').toLowerCase();
+            return t(SAFE_REGEX_LABELS[status] ?? status);
+          }
+          if (!regexMatches(row['regex'], test)) return t('Does not match');
+          return row['replacement']
+            ? `${t('Matches')} · ${t('Result')}: ${regexResult(row['regex'], row['replacement'], test)}`
+            : t('Matches');
+        },
+      },
+    ],
+    rowActions: [
+      {
+        key: 'copyRegex',
+        label: 'Copy regex',
+        icon: 'content_copy',
+        run: (row) => actions.copy(String(row['regex'] ?? '')),
+      },
+      {
+        key: 'useRegex',
+        label: 'Open new rule with this regex',
+        icon: 'check',
+        run: (row) => actions.use(row as unknown as DialPatternTemplate),
+      },
+    ],
+    fields: [],
+  });
 }
 
 @Component({
@@ -763,7 +440,6 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
   readonly dialPlans = signal<ConfigurableCrudOption[]>([]);
   readonly trunks = signal<ConfigurableCrudOption[]>([]);
   readonly patternProfiles = signal<DialPatternProfile[]>([]);
-  readonly patternTemplates = signal<DialPatternTemplate[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -792,45 +468,64 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
 
   override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {
     if (action.key !== 'regexExamples') return;
-    await this.loadPatternLookups();
-    const binding = openCrudComponentDialog(
+    await this.loadPatternProfiles();
+    let chosen: DialPatternTemplate | null = null;
+    const binding = openCrudTemplateDialog(
       this.dialog,
-      VoipDialPatternExamplesDialogComponent,
-      'crud-form-dialog',
+      ConfigurableCrudCollectionDialog,
+      ['crud-form-dialog', 'crud-collection-dialog'],
       {
         data: {
-          profiles: this.patternProfiles(),
-          templates: this.patternTemplates(),
+          ...dialPatternExamplesConfig(this.patternProfiles(), {
+            use: (template) => {
+              chosen = template;
+              binding.ref.close();
+            },
+            copy: (regex) => this.copyRegex(regex),
+          }),
+          collectionDialog: true,
+          formOnly: false,
         },
       },
     );
     try {
-      const template = (await firstValueFrom(binding.ref.afterClosed())) as
-        DialPatternTemplate | undefined;
-      if (!template) return;
-      this.startCreate();
-      const nextValues: ConfigurableCrudRecord = {
-        operator: 'regex',
-        pattern: template.regex,
-        name: template.name,
-      };
-      if (template.replacement) {
-        nextValues['replacement'] = template.replacement;
-      }
-      if (template.direction && template.direction !== 'any') {
-        nextValues['direction'] = template.direction;
-      }
-      if (template.category === 'emergency') {
-        nextValues['resultType'] = 'emergency';
-      } else if (template.category === 'service') {
-        nextValues['resultType'] = 'feature_code';
-      } else if (template.direction === 'inbound') {
-        nextValues['resultType'] = 'extension';
-      }
-      this.patchFormValues(nextValues);
-      this.snack.success(this.t('Regex applied to a new dial plan rule.'));
+      await firstValueFrom(binding.ref.afterClosed());
     } finally {
       binding.stop();
+    }
+    if (chosen) this.startRuleFromTemplate(chosen);
+  }
+
+  private startRuleFromTemplate(template: DialPatternTemplate): void {
+    this.startCreate();
+    const nextValues: ConfigurableCrudRecord = {
+      operator: 'regex',
+      pattern: template.regex,
+      name: template.name,
+    };
+    if (template.replacement) {
+      nextValues['replacement'] = template.replacement;
+    }
+    if (template.direction && template.direction !== 'any') {
+      nextValues['direction'] = template.direction;
+    }
+    if (template.category === 'emergency') {
+      nextValues['resultType'] = 'emergency';
+    } else if (template.category === 'service') {
+      nextValues['resultType'] = 'feature_code';
+    } else if (template.direction === 'inbound') {
+      nextValues['resultType'] = 'extension';
+    }
+    this.patchFormValues(nextValues);
+    this.snack.success(this.t('Regex applied to a new dial plan rule.'));
+  }
+
+  private async copyRegex(regex: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(regex);
+      this.snack.success(this.t('Regex copied.'));
+    } catch {
+      this.snack.error(this.t('Failed to copy regex.'));
     }
   }
 
@@ -883,13 +578,11 @@ export class VoipPabxDialPlanRulesPage extends ConfigurableCrudPageBase<Configur
     }
   }
 
-  private async loadPatternLookups(): Promise<void> {
-    if (this.patternProfiles().length && this.patternTemplates().length) return;
-    const [profiles, templates] = await Promise.all([
-      this.rawApi.get<any>('voip/dial-patterns/profiles?status=1&limit=500&offset=0'),
-      this.rawApi.get<any>('voip/dial-patterns/templates?status=1&limit=1000&offset=0'),
-    ]);
+  private async loadPatternProfiles(): Promise<void> {
+    if (this.patternProfiles().length) return;
+    const profiles = await this.rawApi.get<any>(
+      'voip/dial-patterns/profiles?status=1&limit=500&offset=0',
+    );
     this.patternProfiles.set(profiles?.data?.items ?? []);
-    this.patternTemplates.set(templates?.data?.items ?? []);
   }
 }

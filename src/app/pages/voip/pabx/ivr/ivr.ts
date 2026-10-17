@@ -71,13 +71,26 @@ function config(): ConfigurableCrudConfig {
         uuidField: 'VoipPabxAccountVpaUUID',
         lookupKey: 'pabxUUID',
       },
-      { id: 'media', label: 'Media file', kind: 'related', field: 'VoipPabxMediaFileVmfUUID', lookupKey: 'mediaFileUUID' },
+      {
+        id: 'media',
+        label: 'Media file',
+        kind: 'related',
+        field: 'VoipPabxMediaFileVmfUUID',
+        lookupKey: 'mediaFileUUID',
+      },
       { id: 'timeout', label: 'Timeout', kind: 'number', field: 'VpiTimeoutSeconds' },
       { id: 'retries', label: 'Invalid retries', kind: 'number', field: 'VpiInvalidRetries' },
       { id: 'status', label: 'Status', kind: 'status', field: 'VpiEnabled' },
     ],
     fields: [
-      { key: 'enabled', source: 'VpiEnabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
+      {
+        key: 'enabled',
+        source: 'VpiEnabled',
+        payloadKey: 'enabled',
+        label: 'Status',
+        type: 'status',
+        span: 1,
+      },
       {
         key: 'pabxUUID',
         source: 'VoipPabxAccountVpaUUID',
@@ -87,7 +100,14 @@ function config(): ConfigurableCrudConfig {
         required: true,
         span: 1,
       },
-      { key: 'name', source: 'VpiName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+      {
+        key: 'name',
+        source: 'VpiName',
+        payloadKey: 'name',
+        label: 'Name',
+        required: true,
+        span: 1,
+      },
       {
         key: 'mediaFileUUID',
         source: 'VoipPabxMediaFileVmfUUID',
@@ -132,6 +152,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Options',
         emptyLabel: 'No options linked',
         addLabel: 'Add',
+        createTitle: 'New IVR option',
         endpoint: (ivrUUID) => `voip/pabx/ivrs/${ivrUUID}/options`,
         deleteEndpoint: (ivrUUID, row) => `voip/pabx/ivrs/${ivrUUID}/options/${row['VioUUID']}`,
         uuidField: 'VioUUID',
@@ -172,7 +193,13 @@ function config(): ConfigurableCrudConfig {
         columns: [
           { id: 'digit', label: 'Digit', field: 'VioDigit' },
           { id: 'route', label: 'Route type', field: 'VioRouteType' },
-          { id: 'destination', label: 'Destination', field: 'VioRouteTargetUUID', kind: 'related', lookupKey: 'routeTargetUUID' },
+          {
+            id: 'destination',
+            label: 'Destination',
+            field: 'VioRouteTargetUUID',
+            kind: 'related',
+            lookupKey: 'routeTargetUUID',
+          },
           { id: 'description', label: 'Description', field: 'VioDescription' },
           { id: 'status', label: 'Status', field: 'VioEnabled', kind: 'status' },
         ],
@@ -212,23 +239,36 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['pabxUUID', 'mediaFileUUID', 'routeTargetUUID'].includes(field.key) && this.lookupsLoading();
+    return (
+      ['pabxUUID', 'mediaFileUUID', 'routeTargetUUID'].includes(field.key) && this.lookupsLoading()
+    );
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'pabxUUID') return this.pabxOptions();
     if (key === 'mediaFileUUID') return [{ value: '', label: 'None' }, ...this.mediaFileOptions()];
-    if (key === 'routeTargetUUID') return this.routeTargetOptions();
     return [];
   }
 
-  protected override afterRelatedFieldChange(
-    collection: ConfigurableCrudRelatedCollection,
+  /** The destination list follows the route type of the option being edited. */
+  override relatedCollectionFieldOptions(
     field: ConfigurableCrudField,
+    collection: ConfigurableCrudRelatedCollection,
+    values: ConfigurableCrudRecord,
+  ): readonly ConfigurableCrudOption[] {
+    if (field.key === 'routeTargetUUID') return this.routeTargetOptions(values['routeType']);
+    return super.relatedCollectionFieldOptions(field, collection, values);
+  }
+
+  /** A new route type clears the destination chosen for the previous one. */
+  protected override relatedCollectionFieldChange(
+    collection: ConfigurableCrudRelatedCollection,
+    key: string,
     _value: unknown,
-  ): void {
-    if (collection.key !== 'ivrOptions' || field.key !== 'routeType') return;
-    this.setRelatedCollectionFieldValue(collection, { key: 'routeTargetUUID', label: 'Destination' }, '');
+    current: ConfigurableCrudRecord,
+  ): ConfigurableCrudRecord {
+    if (collection.key !== 'ivrOptions' || key !== 'routeType') return current;
+    return { ...current, routeTargetUUID: '' };
   }
 
   override relatedCollectionColumnValue(
@@ -299,8 +339,8 @@ export class VoipPabxIvrPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     }
   }
 
-  private routeTargetOptions(): ConfigurableCrudOption[] {
-    const routeType = String(this.relatedForms()['ivrOptions']?.['routeType'] ?? 'extension');
+  private routeTargetOptions(type: unknown): ConfigurableCrudOption[] {
+    const routeType = String(type || 'extension');
     if (routeType === 'ivr') return this.ivrOptions();
     if (routeType === 'queue') return this.queueOptions();
     if (routeType === 'group') return this.groupOptions();
@@ -343,7 +383,12 @@ function option(
     .map((item) => String(item ?? '').trim())
     .filter(Boolean)
     .join(' - ');
-  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
 
 function text(value: unknown): string | null {

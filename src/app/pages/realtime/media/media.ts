@@ -383,13 +383,13 @@ abstract class RealtimeMediaCrudPage extends ConfigurableCrudPageBase<Configurab
       this.mediaApi.list('domains', { status: 1, limit: 5000 }),
       this.mediaApi.listRealtimeDomains({ purpose: 'media', status: 1, limit: 5000 }),
       this.isServerPage
-        ? this.parametersApi.get<any>('system/parameters').catch(() => null)
+        ? this.parametersApi.get<any>('system/realtime/media/parameters').catch(() => null)
         : Promise.resolve(null),
     ]);
     const rtpMedia = parameters?.data?.item;
     this.autoDomainBase =
-      rtpMedia?.realtimeMediaAutoDomainEnabled === true && rtpMedia?.realtimeMediaDnsPolicyBase
-        ? String(rtpMedia.realtimeMediaDnsPolicyBase)
+      rtpMedia?.autoDomainEnabled === true && rtpMedia?.dnsPolicyBase
+        ? String(rtpMedia.dnsPolicyBase)
         : null;
     this.mediaDomainOptions = this.toOptions(
       mediaDomains?.data?.items ?? [],

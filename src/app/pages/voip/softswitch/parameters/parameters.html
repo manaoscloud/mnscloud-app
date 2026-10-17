@@ -1,0 +1,175 @@
+<mns-settings-page
+  title="Softswitch parameters"
+  [description]="pageDescription()"
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [error]="feedback()"
+  [success]="success()"
+  (refresh)="refresh()"
+  (cancel)="cancel()"
+  (save)="save()"
+>
+  <form class="form-grid">
+    @if (!isMaster()) {
+      <mns-search-select-field
+        fieldClass="span-2"
+        data-field-key="realmSource"
+        [label]="'Configuration source' | transloco"
+        [options]="realmSourceOptions"
+        [translateOptions]="true"
+        [value]="form().realmSource"
+        [help]="
+          'Inherit uses the complete platform SIP domain configuration; own uses the values below.'
+            | transloco
+        "
+        (valueChange)="update({ realmSource: $any($event) })"
+      />
+    }
+    @if (ownRealm()) {
+      <mns-search-select-field
+        fieldClass="span-2"
+        data-field-key="autoDomainDnsMode"
+        [label]="'SIP realm DNS mode' | transloco"
+        [options]="dnsModeOptions"
+        [translateOptions]="true"
+        [value]="form().autoDomainDnsMode"
+        [help]="
+          'Publication mode of generated SIP domains: managed authoritative DNS or SIP identity only.'
+            | transloco
+        "
+        (valueChange)="update({ autoDomainDnsMode: $any($event) })"
+      />
+      @if (managedDns()) {
+        <mns-search-select-field
+          data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
+          fieldClass="span-4"
+          data-field-key="dnsPolicyUUID"
+          [label]="'Domain for SIP realm publication' | transloco"
+          [options]="dns.options()"
+          [remoteSearch]="true"
+          [loading]="dns.loading()"
+          [loadError]="dns.loadError()"
+          [hasPrevious]="dns.offset() > 0"
+          [hasNext]="dns.hasNext()"
+          (searchChange)="dns.search($event)"
+          (pageChange)="dns.page($event)"
+          (openedChange)="$event && dns.refresh()"
+          [value]="form().dnsPolicyUUID"
+          [invalid]="invalid('dnsPolicyUUID')"
+          [errorMessage]="'form.validation.required' | transloco"
+          [help]="
+            'Managed DNS publishes A records in an authorized zone. Existing SIP realms are not changed.'
+              | transloco
+          "
+          (valueChange)="selectDnsPolicy($event)"
+        />
+        @if (selectedPolicyError(); as policyError) {
+          <p class="span-4 settings-page-feedback" role="alert">{{ policyError | transloco }}</p>
+        }
+      } @else {
+        <mat-form-field appearance="outline" class="span-4">
+          <mat-label>{{ 'SIP realm base' | transloco }}</mat-label>
+          <input
+            matInput
+            data-field-key="autoDomainBase"
+            [value]="form().autoDomainBase"
+            [mnsInvalid]="invalid('autoDomainBase')"
+            (input)="update({ autoDomainBase: $any($event.target).value })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'SIP realm base' | transloco"
+            [text]="
+              'Domain suffix of generated Softswitch SIP domains (e.g. softswitch.publichost.cloud).'
+                | transloco
+            "
+          />
+          <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'Domain label' | transloco }}</mat-label>
+        <input matInput [value]="'Short UUID' | transloco" readonly />
+        <mns-field-help
+          matIconSuffix
+          [label]="'Domain label' | transloco"
+          [text]="
+            'Prefix of the Softswitch account UUID; it never changes when the account is renamed.'
+              | transloco
+          "
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'UUID length' | transloco }}</mat-label>
+        <input
+          matInput
+          type="number"
+          min="8"
+          max="32"
+          data-field-key="autoDomainUuidLength"
+          [value]="form().autoDomainUuidLength"
+          [mnsInvalid]="invalid('autoDomainUuidLength')"
+          (input)="update({ autoDomainUuidLength: numberValue($event) })"
+        />
+        <mns-field-help
+          matIconSuffix
+          [label]="'UUID length' | transloco"
+          [text]="
+            'Character length of the random short UUID prefix (between 8 and 32 characters).'
+              | transloco
+          "
+        />
+        <mat-error>{{ 'Enter a number between 8 and 32.' | transloco }}</mat-error>
+      </mat-form-field>
+
+      <div class="span-2 settings-page-toggle">
+        <mat-slide-toggle
+          [checked]="form().autoDomainEnabled"
+          (change)="update({ autoDomainEnabled: $event.checked })"
+        >
+          {{ 'Create Softswitch SIP realm automatically' | transloco }}
+        </mat-slide-toggle>
+      </div>
+      <div class="span-2 settings-page-toggle">
+        <mat-slide-toggle
+          [checked]="form().autoDomainSetDefault"
+          (change)="update({ autoDomainSetDefault: $event.checked })"
+        >
+          {{ 'Set generated Softswitch SIP realm as default' | transloco }}
+        </mat-slide-toggle>
+      </div>
+    } @else {
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'Inherited publication mode' | transloco }}</mat-label>
+        <input
+          matInput
+          [value]="
+            (info().platform.dnsMode === 'managed_dns'
+              ? 'Managed DNS publication'
+              : 'SIP identity without DNS publication'
+            ) | transloco
+          "
+          readonly
+        />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'Inherited SIP Realm domain' | transloco }}</mat-label>
+        <input matInput [value]="inheritedRealmLabel()" readonly />
+      </mat-form-field>
+      @if (info().platform.dnsMode === 'managed_dns' && info().platform.dnsPolicyError) {
+        <p class="span-4 settings-page-feedback" role="alert">
+          {{ info().platform.dnsPolicyError! | transloco }}
+        </p>
+      }
+      <p class="span-4 settings-page-note">
+        {{
+          'New Softswitch accounts inherit the complete platform Realm SIP configuration.'
+            | transloco
+        }}
+      </p>
+    }
+  </form>
+</mns-settings-page>
