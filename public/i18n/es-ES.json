@@ -7658,5 +7658,9 @@
   "New group member": "Nuevo miembro del grupo",
   "Attach instance": "Adjuntar instancia",
   "New firewall rule": "Nueva regla de firewall",
-  "Apply firewall profile": "Aplicar perfil de firewall"
+  "Apply firewall profile": "Aplicar perfil de firewall",
+  "Regex copied.": "Regex copiada.",
+  "Failed to copy regex.": "No se pudo copiar la regex.",
+  "Open new rule with this regex": "Abrir nueva regla con esta regex",
+  "Safe regex": "Regex segura"
 }

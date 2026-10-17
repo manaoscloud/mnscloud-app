@@ -101,7 +101,18 @@
     }
 
     @for (filter of listFilters(); track filter.key) {
-      @if (filter.type === 'search-select') {
+      @if (filter.type === 'text') {
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ filter.label | transloco }}</mat-label>
+          <input
+            matInput
+            [placeholder]="filter.placeholder ? (filter.placeholder | transloco) : ''"
+            [value]="listFilterValue(filter)"
+            (input)="onListFilterInput(filter, $any($event.target).value)"
+            (keyup.enter)="applySearchFilters()"
+          />
+        </mat-form-field>
+      } @else if (filter.type === 'search-select') {
         <mns-search-select-field
           [label]="filter.label | transloco"
           [value]="listFilterValue(filter)"

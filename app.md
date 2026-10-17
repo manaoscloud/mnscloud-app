@@ -490,7 +490,11 @@ the page must use the shared base named here.
 - A page that renders a table but is not a record CRUD (for example the Metrics fleet explorer)
   opts out with a `// crud-template-exempt: <reason>` comment in its component. The reason is
   mandatory (a bare marker stays legacy) and must point to the contract that defines the page.
-- Columns may declare `value(row, translate)` for a computed display/sort value and
+- List filters may be `type: 'text'` (free input applied like Search) and may declare
+  `match(row, value)`: a client-side predicate over the loaded rows that is never sent to the API
+  (for example the Dial pattern examples `Test number`, which keeps only the regexes that match).
+- Columns may declare `value(row, translate, filters)` for a computed display/sort value (`filters`
+  holds the applied list filter values, for example the test result of each regex) and
   `detail(row, translate)` for the secondary line of `identity`/`related` cells (shown instead of the
   UUID), for example a PABX with its engine and domain, or a route type with its target name.
 - Shared base capabilities for non-trivial resources (prefer these over page code):
