@@ -61,6 +61,7 @@ run('node', [
   'scripts/validate-nav-labels.test.mjs',
   'scripts/tests/crm-form-contract.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
+  'scripts/validate-global-table.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',
   'scripts/validate-menus.test.mjs',
   'scripts/validate-page-descriptions.test.mjs',
@@ -96,6 +97,8 @@ run('node', ['scripts/validate-dashboard-template.mjs']);
 run('node', ['scripts/validate-content-pages.mjs']);
 // Every dialog header offers "Report problem" (app.md Dialog Report Problem Baseline).
 run('node', ['scripts/validate-dialog-report-button.mjs']);
+// Global Table Component Baseline (app.md): no table primitive outside the global table.
+run('node', ['scripts/validate-global-table.mjs']);
 // Generated commands open only through openInstallCommandDialog (app.md Install Command Dialog Baseline).
 run('node', ['scripts/validate-install-command-dialog.mjs']);
 // Every menu uses the global mns-menu shell and primitives (app.md Menus).
