@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3122501b4955",
+  "version": "167b3ac1b914",
   "language": "pt-BR",
   "entries": [
     {
@@ -7491,11 +7491,63 @@
           "help": ""
         },
         {
+          "label": "SKU",
+          "help": "Identificador comercial interno, único entre os planos. Nunca é exibido aos tenants."
+        },
+        {
           "label": "Preço",
           "help": ""
         },
         {
           "label": "Taxa de setup",
+          "help": ""
+        },
+        {
+          "label": "Custo do fornecedor / mês",
+          "help": "Custo mensal cobrado pelo fornecedor, na moeda do fornecedor."
+        },
+        {
+          "label": "Moeda do custo do fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Câmbio",
+          "help": "Câmbio de referência: 1 unidade da moeda do fornecedor na moeda do plano."
+        },
+        {
+          "label": "Data do câmbio",
+          "help": ""
+        },
+        {
+          "label": "Reserva de impostos %",
+          "help": "Parte do preço de venda reservada para impostos e taxas."
+        },
+        {
+          "label": "Margem pretendida %",
+          "help": "Margem pretendida como parte do preço de venda, antes de suporte e outras despesas."
+        },
+        {
+          "label": "Custo convertido",
+          "help": ""
+        },
+        {
+          "label": "Preço mínimo",
+          "help": "Custo / (1 - (reserva + margem) / 100). Um plano ativo não pode ter preço abaixo dele, exceto se for promocional."
+        },
+        {
+          "label": "Promocional / gratuito",
+          "help": ""
+        },
+        {
+          "label": "Motivo da promoção",
+          "help": ""
+        },
+        {
+          "label": "Fonte do custo",
+          "help": ""
+        },
+        {
+          "label": "Custo conferido em",
           "help": ""
         },
         {
@@ -7520,6 +7572,22 @@
         },
         {
           "label": "Transferência GB",
+          "help": ""
+        },
+        {
+          "label": "Tipo de disco",
+          "help": ""
+        },
+        {
+          "label": "IOPS do disco",
+          "help": "Preencha só com valor publicado pelo fornecedor ou medido. Vazio significa não informado."
+        },
+        {
+          "label": "Origem do IOPS",
+          "help": ""
+        },
+        {
+          "label": "CPU dedicada",
           "help": ""
         },
         {
