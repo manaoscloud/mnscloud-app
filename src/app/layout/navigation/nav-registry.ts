@@ -913,6 +913,26 @@ export const NAV_ITEMS: NavItem[] = [
         ],
       },
       {
+        id: 'voip/phone',
+        label: 'nav.voip.phone',
+        icon: 'headset_mic',
+        entitlementCode: 'module.voip.phone.user',
+        children: [
+          {
+            id: 'voip/phone/users',
+            label: 'nav.voip.phone.users',
+            icon: 'badge',
+            route: '/voip/phone/users',
+          },
+          {
+            id: 'voip/phone/sessions',
+            label: 'nav.voip.phone.sessions',
+            icon: 'devices',
+            route: '/voip/phone/sessions',
+          },
+        ],
+      },
+      {
         id: 'voip/pabx',
         label: 'nav.voip.pabx',
         icon: 'phone_in_talk',

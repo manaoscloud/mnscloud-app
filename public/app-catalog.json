@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "efc8a088fb7a",
+  "version": "1f525cee2f5e",
   "language": "pt-BR",
   "entries": [
     {
@@ -9391,6 +9391,47 @@
         },
         {
           "label": "Duração da captura (segundos)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/phone/sessions",
+      "menuPath": "VoIP › PhoneWeb › Sessões",
+      "scope": "tenant",
+      "title": "Sessões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/voip/phone/users",
+      "menuPath": "VoIP › PhoneWeb › Usuários",
+      "scope": "tenant",
+      "title": "Usuários de telefone",
+      "description": "Pessoas do tenant ou dos clientes dele que usam o PhoneWeb. Cada uma entra com uma identidade que já tem (e-mail do App, login do Pulse ou login do portal do cliente); o PhoneWeb não guarda senha.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Login",
+          "help": "Membro do App: entra com o e-mail da MNSCloud. Funcionário: entra com o código de login do Pulse (RH › Acesso Pulse). Cliente: entra com o login do portal do cliente e só vê as linhas desse cliente."
+        },
+        {
+          "label": "Pessoa",
+          "help": ""
+        },
+        {
+          "label": "Nome de exibição",
+          "help": ""
+        },
+        {
+          "label": "Sessões simultâneas",
+          "help": "Dispositivos conectados ao mesmo tempo. Acima do limite, a sessão mais antiga é encerrada."
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
