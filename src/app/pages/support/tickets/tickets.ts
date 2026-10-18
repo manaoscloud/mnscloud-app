@@ -40,6 +40,7 @@ const SUPPORT_QUEUE_OPTIONS = [
 export const TRIAGE_CLASSIFICATION_OPTIONS = [
   { value: 'bug', label: 'Platform bug' },
   { value: 'knowledge', label: 'Usage question' },
+  { value: 'commercial', label: 'Commercial' },
   { value: 'unclear', label: 'Needs a person' },
 ];
 
@@ -62,6 +63,7 @@ const TRIAGE_STATUS_OPTIONS = [
 function triageChip(value: unknown): string {
   if (value === 'bug') return 'chip-failed';
   if (value === 'knowledge') return 'chip-success';
+  if (value === 'commercial') return 'chip-warning';
   return value ? 'chip-running' : 'chip-skipped';
 }
 

@@ -7351,6 +7351,7 @@
   "Connection failed": "Falha na conexão",
   "Cost control: maximum number of AI analyses in any hour.": "Controle de custo: número máximo de análises de IA em qualquer hora.",
   "Create AI provider": "Criar provedor de IA",
+  "Commercial": "Comercial",
   "Delete AI provider": "Excluir provedor de IA",
   "Delete knowledge article": "Excluir artigo",
   "Delete this AI provider? Its stored API key is erased.": "Excluir este provedor de IA? A chave de API armazenada será apagada.",
