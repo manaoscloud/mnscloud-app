@@ -45,6 +45,13 @@ const config = defineCrud({
     { id: 'priceList', label: 'Price list', field: 'PriceListName' },
     { id: 'session', label: 'Open register', field: 'OpenSessionUUID', kind: 'boolean' },
     { id: 'offline', label: 'Offline sales', field: 'PtmOfflineEnabled', kind: 'boolean' },
+    {
+      id: 'fiscalOffline',
+      label: 'Offline NFC-e',
+      field: 'PtmFiscalOffline',
+      kind: 'boolean',
+      optional: true,
+    },
     { id: 'status', label: 'Status', field: 'PtmStatus', kind: 'status' },
   ],
   fields: [
@@ -152,6 +159,40 @@ const config = defineCrud({
       tab: 'notes',
       span: 4,
       rows: 4,
+    },
+  ],
+  rowActions: [
+    {
+      key: 'fiscal-offline-on',
+      label: 'Enable offline NFC-e',
+      icon: 'receipt_long',
+      visible: (row) =>
+        Number(row['PtmOfflineEnabled']) === 1 && Number(row['PtmFiscalOffline']) !== 1,
+      request: {
+        method: 'post',
+        endpoint: (row) => `pos/terminals/${row['PtmUUID']}/fiscal-offline`,
+        body: () => ({ enabled: 1 }),
+        successMessage: 'Offline NFC-e enabled for the terminal.',
+        confirm: {
+          title: 'Enable offline NFC-e',
+          message:
+            'The installed device of this register will receive the A1 certificate key and the CSC (audited) and sign NFC-e in contingency with its own number range. Create the offline series of the register in Fiscal › Series.',
+          confirmLabel: 'Enable',
+        },
+      },
+    },
+    {
+      key: 'fiscal-offline-off',
+      label: 'Disable offline NFC-e',
+      icon: 'block',
+      visible: (row) => Number(row['PtmFiscalOffline']) === 1,
+      request: {
+        method: 'post',
+        endpoint: (row) => `pos/terminals/${row['PtmUUID']}/fiscal-offline`,
+        body: () => ({ enabled: 0 }),
+        successMessage:
+          'Offline NFC-e disabled; the device wipes its fiscal credentials at the next sync.',
+      },
     },
   ],
   payload: (values, editing) => ({

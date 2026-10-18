@@ -930,6 +930,12 @@ export const routes: Routes = [
                 title: 'Fiscal • Documents | mnscloud',
               },
               {
+                path: 'fiscal/contingency',
+                loadComponent: () =>
+                  import('./pages/fiscal/contingency').then((m) => m.FiscalContingencyPage),
+                title: 'Fiscal • Contingency | mnscloud',
+              },
+              {
                 path: 'fiscal/certificates',
                 loadComponent: () =>
                   import('./pages/fiscal/certificates').then((m) => m.FiscalCertificatesPage),

@@ -8081,5 +8081,17 @@
   "nav.fiscal.certificates": "Certificados A1",
   "nav.fiscal.csc": "CSC de NFC-e",
   "nav.fiscal.series": "Series",
-  "nav.fiscal.rule-packages": "Reglas tributarias"
+  "nav.fiscal.rule-packages": "Reglas tributarias",
+  "Offline NFC-e": "NFC-e offline",
+  "Enable offline NFC-e": "Activar NFC-e offline",
+  "Disable offline NFC-e": "Desactivar NFC-e offline",
+  "Offline NFC-e enabled for the terminal.": "NFC-e offline activada para la caja.",
+  "The installed device of this register will receive the A1 certificate key and the CSC (audited) and sign NFC-e in contingency with its own number range. Create the offline series of the register in Fiscal › Series.": "El equipo instalado de esta caja recibirá la clave del certificado A1 y el CSC (auditado) y firmará NFC-e en contingencia con su propio rango de numeración. Cree la serie offline de la caja en Fiscal › Series.",
+  "Enable": "Activar",
+  "Offline NFC-e disabled; the device wipes its fiscal credentials at the next sync.": "NFC-e offline desactivada; el equipo borra sus credenciales fiscales en la próxima sincronización.",
+  "Offline contingency": "Contingencia offline",
+  "NFC-e signed offline by the registers and still to be authorized, the nearest transmission deadline first.": "NFC-e firmadas offline por las cajas y aún no autorizadas, con el plazo de transmisión más cercano primero.",
+  "Deadline": "Plazo",
+  "Transmit now": "Transmitir ahora",
+  "nav.fiscal.contingency": "Contingencia"
 }
