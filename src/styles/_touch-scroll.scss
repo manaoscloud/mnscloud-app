@@ -1,0 +1,7 @@
+// On iOS/Android MatTooltip (default `touchGestures: 'auto'`) writes an inline `touch-action: none`
+// on its trigger, so a finger drag that starts on any element with a tooltip (sidebar resources,
+// table cells, card actions) cannot scroll the list under it. Keep native panning and pinch zoom on
+// every tooltip trigger; the long-press tooltip still opens. app.md "Touch Scroll Baseline".
+.mat-mdc-tooltip-trigger:not(.cdk-drag):not(.cdk-drag-handle) {
+  touch-action: manipulation !important;
+}
