@@ -1925,6 +1925,45 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    id: 'customer-billing',
+    label: 'nav.customer-billing',
+    icon: 'receipt',
+    entitlementCode: 'module.customer-billing.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'customer-billing/contracts',
+        label: 'nav.customer-billing.contracts',
+        icon: 'description',
+        route: '/customer-billing/contracts',
+      },
+      {
+        id: 'customer-billing/charges',
+        label: 'nav.customer-billing.charges',
+        icon: 'request_quote',
+        route: '/customer-billing/charges',
+      },
+      {
+        id: 'customer-billing/usage',
+        label: 'nav.customer-billing.usage',
+        icon: 'data_usage',
+        route: '/customer-billing/usage',
+      },
+      {
+        id: 'customer-billing/events',
+        label: 'nav.customer-billing.events',
+        icon: 'notifications_active',
+        route: '/customer-billing/events',
+      },
+      {
+        id: 'customer-billing/modules',
+        label: 'nav.customer-billing.modules',
+        icon: 'extension',
+        route: '/customer-billing/modules',
+      },
+    ],
+  },
+  {
     id: 'fiscal',
     label: 'nav.fiscal',
     icon: 'receipt_long',
