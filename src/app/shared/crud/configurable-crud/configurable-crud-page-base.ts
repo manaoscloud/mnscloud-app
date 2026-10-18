@@ -967,6 +967,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly fiscalFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'fiscal'),
   );
+  /** Tabs rendered by one shared template block (keeps the template small for every CRUD page). */
+  readonly simpleTabs = computed(() => [
+    { key: 'limits' as const, label: 'Limits', fields: this.limitsFields() },
+    { key: 'fiscal' as const, label: 'Fiscal', fields: this.fiscalFields() },
+  ]);
   readonly codecFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'codecs'),
   );
