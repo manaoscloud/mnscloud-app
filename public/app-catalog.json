@@ -1,8 +1,99 @@
 {
   "schemaVersion": 1,
-  "version": "de01cda92631",
+  "version": "c96fd17c736d",
   "language": "pt-BR",
   "entries": [
+    {
+      "route": "/accounting/cost-centers",
+      "menuPath": "Contabilidade › Centros de custo",
+      "scope": "tenant",
+      "title": "Centros de custo",
+      "description": "Centros de custo do plano do seu contador, usados nos mapeamentos de contas dos eventos contábeis.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/accounting/events",
+      "menuPath": "Contabilidade › Eventos",
+      "scope": "tenant",
+      "title": "Eventos contábeis",
+      "description": "Um evento por fato financeiro, fiscal e de estoque, com as contas definidas pelos mapeamentos. Eventos nunca são editados; estornos e cancelamentos são novos eventos.",
+      "fields": []
+    },
+    {
+      "route": "/accounting/exports",
+      "menuPath": "Contabilidade › Exportações",
+      "scope": "tenant",
+      "title": "Exportações contábeis",
+      "description": "Arquivos para o seu contador com todos os eventos contabilizados de um período; cada evento é exportado uma vez. Eventos sem mapeamento ficam de fora até serem mapeados.",
+      "fields": [
+        {
+          "label": "Início do período",
+          "help": ""
+        },
+        {
+          "label": "Fim do período",
+          "help": "Inclusivo; no máximo um ano."
+        }
+      ]
+    },
+    {
+      "route": "/accounting/mappings",
+      "menuPath": "Contabilidade › Mapeamento de contas",
+      "scope": "tenant",
+      "title": "Mapeamento de contas",
+      "description": "Contas a débito e a crédito de cada evento contábil; um mapeamento por estabelecimento ou atributo prevalece sobre o geral.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Evento",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": "Vazio vale para todos os estabelecimentos."
+        },
+        {
+          "label": "Atributo",
+          "help": "Vazio vale para todos os eventos do tipo. Senão, a origem do título (manual, bill_charge, pos_sale), a origem da baixa (manual, gateway, pos), o modelo fiscal (55, 65, 62, nfse) ou o tipo de movimento de estoque (receipt, issue, sale...)."
+        },
+        {
+          "label": "Conta a débito",
+          "help": ""
+        },
+        {
+          "label": "Conta a crédito",
+          "help": ""
+        },
+        {
+          "label": "Centro de custo",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
     {
       "route": "/authentication/accesses",
       "menuPath": "Autenticação › Acessos",

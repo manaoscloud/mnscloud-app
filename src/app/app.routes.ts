@@ -922,6 +922,33 @@ export const routes: Routes = [
                 title: 'Stock • Transfers | mnscloud',
               },
 
+              // Accounting
+              {
+                path: 'accounting/events',
+                loadComponent: () =>
+                  import('./pages/accounting/events').then((m) => m.AccountingEventsPage),
+                title: 'Accounting • Events | mnscloud',
+              },
+              {
+                path: 'accounting/mappings',
+                loadComponent: () =>
+                  import('./pages/accounting/mappings').then((m) => m.AccountingMappingsPage),
+                title: 'Accounting • Mappings | mnscloud',
+              },
+              {
+                path: 'accounting/cost-centers',
+                loadComponent: () =>
+                  import('./pages/accounting/cost-centers').then(
+                    (m) => m.AccountingCostCentersPage,
+                  ),
+                title: 'Accounting • Cost centers | mnscloud',
+              },
+              {
+                path: 'accounting/exports',
+                loadComponent: () =>
+                  import('./pages/accounting/exports').then((m) => m.AccountingExportsPage),
+                title: 'Accounting • Exports | mnscloud',
+              },
               // Customer billing
               {
                 path: 'customer-billing/contracts',
