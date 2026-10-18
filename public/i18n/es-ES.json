@@ -7988,5 +7988,5 @@
   "Operations done after the revocation become conflicts when the device reconnects.": "Las operaciones hechas después de la revocación se vuelven conflictos cuando el equipo se reconecta.",
   "The device stops synchronizing and must be provisioned again; its pending operations stay on it until then.": "El equipo deja de sincronizar y debe habilitarse de nuevo; sus operaciones pendientes quedan en él hasta entonces.",
   "nav.pos.devices": "Equipos",
-  "nav.pos.sync-conflicts": "Conflictos de sincronización"
+  "nav.pos.sync-conflicts": "Conflictos"
 }

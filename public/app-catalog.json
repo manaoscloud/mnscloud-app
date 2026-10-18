@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "548680902837",
+  "version": "13143c442b19",
   "language": "pt-BR",
   "entries": [
     {
@@ -3618,7 +3618,7 @@
     },
     {
       "route": "/point-of-sale/sync-conflicts",
-      "menuPath": "PDV › Conflitos de sincronização",
+      "menuPath": "PDV › Conflitos",
       "scope": "tenant",
       "title": "Resolver conflito",
       "description": "Registre o que foi conferido ou ajustado. Uma venda sem conflito aberto volta a ficar sincronizada.",
