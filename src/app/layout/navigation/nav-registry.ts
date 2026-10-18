@@ -1892,31 +1892,45 @@ export const NAV_ITEMS: NavItem[] = [
 
   // ✅ Sale (tenant) — requer ambiente selecionado
   {
+    id: 'stock',
+    label: 'nav.stock',
+    icon: 'inventory_2',
+    entitlementCode: 'module.stock.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'stock/locations',
+        label: 'nav.stock.locations',
+        icon: 'warehouse',
+        route: '/stock/locations',
+      },
+      {
+        id: 'stock/balances',
+        label: 'nav.stock.balances',
+        icon: 'inventory',
+        route: '/stock/balances',
+      },
+      {
+        id: 'stock/movements',
+        label: 'nav.stock.movements',
+        icon: 'swap_vert',
+        route: '/stock/movements',
+      },
+      {
+        id: 'stock/transfers',
+        label: 'nav.stock.transfers',
+        icon: 'local_shipping',
+        route: '/stock/transfers',
+      },
+    ],
+  },
+  {
     id: 'sale',
     label: 'nav.sale',
     icon: 'point_of_sale',
     entitlementCode: 'module.sale.*',
     requiresEnvironment: true,
     children: [
-      {
-        id: 'sale/stock',
-        label: 'nav.sale.stock',
-        icon: 'inventory_2',
-        children: [
-          {
-            id: 'sale/stock/registry',
-            label: 'nav.sale.stock.registry',
-            icon: 'badge',
-            route: '/sale/stock',
-          },
-          {
-            id: 'sale/stock/type',
-            label: 'nav.sale.stock.type',
-            icon: 'category',
-            route: '/sale/stock-type',
-          },
-        ],
-      },
       { id: 'sale/unit', label: 'nav.sale.unit', icon: 'straighten', route: '/sale/unit' },
       {
         id: 'sale/brand',

@@ -5,10 +5,12 @@ import {
   ConfigurableCrudRecord,
 } from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+import { settlementsCollection } from '../settlements';
 import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
 
 const statuses = [
   { value: 'open', label: 'Open' },
+  { value: 'partial', label: 'Partially paid' },
   { value: 'paid', label: 'Paid' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'canceled', label: 'Canceled' },
@@ -24,7 +26,7 @@ const config = defineCrud({
   activeValue: 'open',
   inactiveValue: 'canceled',
   statusOptions: statuses,
-  activeStatusValues: ['open', 'paid'],
+  activeStatusValues: ['open', 'partial', 'paid'],
   initialValues: {
     status: 'open',
     supplierUUID: '',
@@ -46,6 +48,7 @@ const config = defineCrud({
     { id: 'docNumber', label: 'Document number', field: 'DocNumber' },
     { id: 'dueDate', label: 'Due date', field: 'DueDate', kind: 'date' },
     { id: 'amount', label: 'Amount', field: 'Amount', kind: 'currency' },
+    { id: 'open', label: 'Open balance', field: 'OpenAmount', kind: 'currency' },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
   ],
   fields: [
@@ -85,6 +88,14 @@ const config = defineCrud({
       tab: 'notes',
       span: 4,
       rows: 4,
+    },
+  ],
+  rowActions: [
+    {
+      key: 'settlements',
+      label: 'Payments',
+      icon: 'payments',
+      collection: settlementsCollection('payable', 'ErpFinAccPayableUUID'),
     },
   ],
 });

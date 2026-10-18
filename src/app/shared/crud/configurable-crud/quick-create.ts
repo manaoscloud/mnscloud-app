@@ -299,6 +299,13 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.FinancialPaymentGatewayPage,
       ),
   },
+  ErpFinPayMethodEfmUUID: {
+    label: 'Create payment method',
+    loadComponent: () =>
+      import('../../../pages/erp/financial/payment/method/payment-method').then(
+        (m) => m.FinancialPaymentMethodPage,
+      ),
+  },
   ErpHrDepartmentEhdUUID: {
     label: 'Create department',
     loadComponent: () =>
@@ -558,14 +565,13 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/sales/product/product').then((m) => m.SaleProductPage),
   },
-  SaleStockTypeSstUUID: {
-    label: 'Create stock type',
-    loadComponent: () =>
-      import('../../../pages/sales/stock-type/stock-type').then((m) => m.SaleStockTypePage),
-  },
   SaleUnitSunUUID: {
     label: 'Create unit',
     loadComponent: () => import('../../../pages/sales/unit/unit').then((m) => m.SaleUnitPage),
+  },
+  StockLocationStlUUID: {
+    label: 'Create stock location',
+    loadComponent: () => import('../../../pages/stock/locations').then((m) => m.StockLocationsPage),
   },
   SupportTicketPriorityStpUUID: {
     routeData: { supportDesk: 'tenant' },

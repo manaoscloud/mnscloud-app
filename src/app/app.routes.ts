@@ -896,19 +896,33 @@ export const routes: Routes = [
 
               // Estoque
 
+              // Stock
+              {
+                path: 'stock/locations',
+                loadComponent: () =>
+                  import('./pages/stock/locations').then((m) => m.StockLocationsPage),
+                title: 'Stock • Locations | mnscloud',
+              },
+              {
+                path: 'stock/balances',
+                loadComponent: () =>
+                  import('./pages/stock/balances').then((m) => m.StockBalancesPage),
+                title: 'Stock • Balances | mnscloud',
+              },
+              {
+                path: 'stock/movements',
+                loadComponent: () =>
+                  import('./pages/stock/movements').then((m) => m.StockMovementsPage),
+                title: 'Stock • Movements | mnscloud',
+              },
+              {
+                path: 'stock/transfers',
+                loadComponent: () =>
+                  import('./pages/stock/transfers').then((m) => m.StockTransfersPage),
+                title: 'Stock • Transfers | mnscloud',
+              },
+
               // Sale
-              {
-                path: 'sale/stock',
-                loadComponent: () =>
-                  import('./pages/sales/stocks/stocks').then((m) => m.SalesStocksPage),
-                title: 'Sale • Stock | mnscloud',
-              },
-              {
-                path: 'sale/stock-type',
-                loadComponent: () =>
-                  import('./pages/sales/stock-type/stock-type').then((m) => m.SaleStockTypePage),
-                title: 'Sale • Stock Type | mnscloud',
-              },
               {
                 path: 'sale/unit',
                 loadComponent: () => import('./pages/sales/unit/unit').then((m) => m.SaleUnitPage),
