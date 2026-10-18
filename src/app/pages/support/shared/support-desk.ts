@@ -2,10 +2,12 @@ import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { openImagePreview } from '../../../shared/file-preview-dialog/file-preview-dialog';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
@@ -108,10 +110,62 @@ export async function openPrivateFile(
   }
 }
 
+const optionLabel = (options: readonly ConfigurableCrudOption[], value: unknown) =>
+  options.find((item) => item.value === value)?.label ?? String(value ?? '');
+
+/**
+ * Read-only view of one conversation entry: the whole message laid out in paragraphs and
+ * lists, with who wrote it and when. Bound to the message cell and the row actions menu.
+ */
+function viewMessageAction(
+  dialog: () => MatDialog,
+  ticket: ConfigurableCrudRecord,
+  team: boolean,
+): ConfigurableCrudRowAction {
+  return {
+    key: 'view-message',
+    label: 'View message',
+    icon: 'visibility',
+    run: (row) => {
+      const status = TICKET_STATUS_OPTIONS.find((item) => item.value === row['StatusTo']);
+      openDataViewerDialog(dialog(), {
+        title: 'Message',
+        description: `#${String(ticket['SupportTicketID'] ?? '')} · ${String(ticket['Subject'] ?? '')}`,
+        details: [
+          { label: 'Date', value: row['DateCreated'], kind: 'datetime' },
+          {
+            label: 'Author',
+            value: optionLabel(AUTHOR_OPTIONS, row['AuthorKind']),
+            translate: true,
+          },
+          { label: 'Name', value: row['CreatedByName'] },
+          ...(team
+            ? [
+                {
+                  label: 'Event',
+                  value: optionLabel(EVENT_TYPE_OPTIONS, row['Type']),
+                  translate: true,
+                },
+                {
+                  label: 'Internal',
+                  value: Number(row['IsInternal']) ? 'Yes' : 'No',
+                  translate: true,
+                },
+              ]
+            : []),
+          { label: 'Status', value: status?.label, translate: true },
+        ],
+        sections: [{ title: 'Message', message: row['Message'] }],
+      });
+    },
+  };
+}
+
 /** Agent timeline: public replies, internal notes and status moves in one place. */
 export function agentTimelineCollection(
   desk: SupportDesk,
   ticket: ConfigurableCrudRecord,
+  dialog: () => MatDialog,
 ): ConfigurableCrudConfig {
   const uuid = String(ticket['SupportTicketUUID'] ?? '');
   return defineCrud({
@@ -129,6 +183,7 @@ export function agentTimelineCollection(
     bulkDelete: false,
     statusFilter: false,
     initialPageSize: 25,
+    rowActions: [viewMessageAction(dialog, ticket, true)],
     initialValues: { message: '', isInternal: 0, status: '' },
     fields: [
       { key: 'message', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
@@ -187,6 +242,7 @@ export function agentTimelineCollection(
         id: 'message',
         field: 'Message',
         label: 'Message',
+        rowAction: 'view-message',
         value: (row, translate) =>
           String(row['Message'] ?? '') || statusLabel(row['StatusTo'], translate),
       },
@@ -196,7 +252,10 @@ export function agentTimelineCollection(
 }
 
 /** Requester conversation in the help center: public messages only. */
-export function helpConversationCollection(ticket: ConfigurableCrudRecord): ConfigurableCrudConfig {
+export function helpConversationCollection(
+  ticket: ConfigurableCrudRecord,
+  dialog: () => MatDialog,
+): ConfigurableCrudConfig {
   const uuid = String(ticket['SupportTicketUUID'] ?? '');
   const open = !['closed', 'canceled'].includes(String(ticket['Status'] ?? ''));
   return defineCrud({
@@ -214,6 +273,7 @@ export function helpConversationCollection(ticket: ConfigurableCrudRecord): Conf
     bulkDelete: false,
     statusFilter: false,
     initialPageSize: 25,
+    rowActions: [viewMessageAction(dialog, ticket, false)],
     initialValues: { message: '' },
     fields: [
       { key: 'message', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
@@ -238,6 +298,7 @@ export function helpConversationCollection(ticket: ConfigurableCrudRecord): Conf
         id: 'message',
         field: 'Message',
         label: 'Message',
+        rowAction: 'view-message',
         value: (row, translate) =>
           String(row['Message'] ?? '') || statusLabel(row['StatusTo'], translate),
       },

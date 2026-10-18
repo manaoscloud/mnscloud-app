@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { SnackbarService } from '../../services/snackbar.service';
 import { DateTimeFormatService } from '../../services/date-time-format.service';
 import { CrudDialogBinding, openCrudTemplateDialog } from '../dialog/crud-dialog.util';
+import { MessageBlock, messageBlocks } from '../message-layout/message-layout';
 import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 
 export type DataViewerTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -62,6 +63,8 @@ export type DataViewerSection = {
   details?: readonly DataViewerDetail[];
   table?: DataViewerTable;
   code?: DataViewerCodeBlock;
+  /** Conversation text (replies, notes) shown as readable paragraphs and lists. */
+  message?: unknown;
 };
 
 export type DataViewerDialogData = {
@@ -107,9 +110,17 @@ export class DataViewerDialogComponent {
       .map((section) => ({
         ...section,
         details: this.visibleDetails(section.details ?? []),
+        messageBlocks: messageBlocks(section.message),
       }))
-      .filter((section) => section.details.length || section.table || section.code),
+      .filter(
+        (section) =>
+          section.details.length || section.table || section.code || section.messageBlocks.length,
+      ),
   );
+
+  messageBlockItems(block: MessageBlock): string[] {
+    return block.kind === 'paragraph' ? block.lines : block.items;
+  }
 
   statusTone(status: DataViewerStatus): DataViewerTone {
     return status.tone ?? 'neutral';

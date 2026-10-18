@@ -1346,6 +1346,12 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
 - Pages must pass structured `details`, `sections`, and optional `code` blocks to the viewer. Pages
   must not define page-local `ng-template` detail modals, local `*-detail-dialog` wrappers, local
   clipboard handlers, or resource-specific SCSS for read-only payload viewing.
+- Human-written conversation text (ticket replies, AI answers, notes) uses a section `message`, never
+  a `code` block: the viewer lays it out with `shared/message-layout` (paragraphs, numbered and
+  bulleted items on their own lines, including `1) ... 2) ...` written inside one sentence). The API
+  e-mails apply the same rules (`mnscloud-api` `services/messageLayout.ts`). A list column showing
+  such text binds `rowAction` to a `View message` action that opens it, so the whole message is
+  never reachable only through the truncation tooltip (support conversations do this).
 - Copy buttons are allowed only on explicitly safe code/payload blocks. The shared viewer owns copy
   feedback with the standard success/error snackbar.
 - JSON/code payloads that contain multiline strings such as `stdout`, `stderr`, logs, command

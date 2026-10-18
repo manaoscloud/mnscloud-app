@@ -76,7 +76,7 @@ function config(
         key: 'conversation',
         label: 'Conversation',
         icon: 'forum',
-        collection: (row) => helpConversationCollection(row),
+        collection: (row) => helpConversationCollection(row, dialog),
       },
       {
         key: 'attachments',

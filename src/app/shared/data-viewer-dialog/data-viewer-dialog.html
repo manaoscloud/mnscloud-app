@@ -116,6 +116,39 @@
             </div>
           }
 
+          @if (section.messageBlocks.length) {
+            <div class="data-viewer-message">
+              @for (block of section.messageBlocks; track $index) {
+                @switch (block.kind) {
+                  @case ('ordered') {
+                    <ol>
+                      @for (item of messageBlockItems(block); track $index) {
+                        <li>{{ item }}</li>
+                      }
+                    </ol>
+                  }
+                  @case ('bullets') {
+                    <ul>
+                      @for (item of messageBlockItems(block); track $index) {
+                        <li>{{ item }}</li>
+                      }
+                    </ul>
+                  }
+                  @default {
+                    <p>
+                      @for (line of messageBlockItems(block); track $index) {
+                        @if (!$first) {
+                          <br />
+                        }
+                        {{ line }}
+                      }
+                    </p>
+                  }
+                }
+              }
+            </div>
+          }
+
           @if (section.code; as block) {
             <div class="data-viewer-code-header">
               @if (block.title && block.title !== section.title) {
