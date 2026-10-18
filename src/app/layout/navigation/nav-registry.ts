@@ -1935,15 +1935,15 @@ export const NAV_ITEMS: NavItem[] = [
         id: 'pos/terminals',
         label: 'nav.pos.terminals',
         icon: 'point_of_sale',
-        route: '/pos/terminals',
+        route: '/point-of-sale/terminals',
       },
       {
         id: 'pos/sessions',
         label: 'nav.pos.sessions',
         icon: 'account_balance_wallet',
-        route: '/pos/sessions',
+        route: '/point-of-sale/sessions',
       },
-      { id: 'pos/sales', label: 'nav.pos.sales', icon: 'receipt_long', route: '/pos/sales' },
+      { id: 'pos/sales', label: 'nav.pos.sales', icon: 'receipt_long', route: '/point-of-sale/sales' },
     ],
   },
   {

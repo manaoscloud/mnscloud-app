@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "9bf3d05c0edb",
+  "version": "c3b61dd4450e",
   "language": "pt-BR",
   "entries": [
     {
@@ -3563,7 +3563,7 @@
       "fields": []
     },
     {
-      "route": "/pos/sales",
+      "route": "/point-of-sale/sales",
       "menuPath": "PDV › Vendas",
       "scope": "tenant",
       "title": "Cancelar venda",
@@ -3576,7 +3576,7 @@
       ]
     },
     {
-      "route": "/pos/sessions",
+      "route": "/point-of-sale/sessions",
       "menuPath": "PDV › Caixas",
       "scope": "tenant",
       "title": "Sessões de caixa",
@@ -3584,7 +3584,7 @@
       "fields": []
     },
     {
-      "route": "/pos/terminals",
+      "route": "/point-of-sale/terminals",
       "menuPath": "PDV › Terminais",
       "scope": "tenant",
       "title": "Terminais de PDV",

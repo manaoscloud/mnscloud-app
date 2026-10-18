@@ -924,19 +924,19 @@ export const routes: Routes = [
 
               // POS
               {
-                path: 'pos/terminals',
+                path: 'point-of-sale/terminals',
                 loadComponent: () =>
                   import('./pages/pos/terminals').then((m) => m.PosTerminalsPage),
                 title: 'POS • Terminals | mnscloud',
               },
               {
-                path: 'pos/sessions',
+                path: 'point-of-sale/sessions',
                 loadComponent: () =>
                   import('./pages/pos/sessions').then((m) => m.PosSessionsPage),
                 title: 'POS • Cash sessions | mnscloud',
               },
               {
-                path: 'pos/sales',
+                path: 'point-of-sale/sales',
                 loadComponent: () => import('./pages/pos/sales').then((m) => m.PosSalesPage),
                 title: 'POS • Sales | mnscloud',
               },
