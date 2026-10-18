@@ -922,6 +922,37 @@ export const routes: Routes = [
                 title: 'Stock • Transfers | mnscloud',
               },
 
+              // Fiscal
+              {
+                path: 'fiscal/documents',
+                loadComponent: () =>
+                  import('./pages/fiscal/documents').then((m) => m.FiscalDocumentsPage),
+                title: 'Fiscal • Documents | mnscloud',
+              },
+              {
+                path: 'fiscal/certificates',
+                loadComponent: () =>
+                  import('./pages/fiscal/certificates').then((m) => m.FiscalCertificatesPage),
+                title: 'Fiscal • Certificates | mnscloud',
+              },
+              {
+                path: 'fiscal/csc',
+                loadComponent: () => import('./pages/fiscal/csc').then((m) => m.FiscalCscPage),
+                title: 'Fiscal • CSC | mnscloud',
+              },
+              {
+                path: 'fiscal/series',
+                loadComponent: () =>
+                  import('./pages/fiscal/series').then((m) => m.FiscalSeriesPage),
+                title: 'Fiscal • Series | mnscloud',
+              },
+              {
+                path: 'fiscal/rule-packages',
+                loadComponent: () =>
+                  import('./pages/fiscal/rule-packages').then((m) => m.FiscalRulePackagesPage),
+                title: 'Fiscal • Rules | mnscloud',
+              },
+
               // POS
               {
                 path: 'point-of-sale/terminals',

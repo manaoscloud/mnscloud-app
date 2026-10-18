@@ -639,7 +639,12 @@ export type ConfigurableCrudConfig = {
    * Create sends the selected file field as multipart/form-data with upload progress instead of
    * JSON (for upload-only collections such as product images). Updates stay JSON.
    */
-  createUpload?: { fileField: string; formField: string };
+  createUpload?: {
+    fileField: string;
+    formField: string;
+    /** Also send the other scalar payload values as form fields (for example a certificate and its password). */
+    includeFields?: boolean;
+  };
   /** Fixed list query parameters sent with every list request (for example `scope=all`). */
   listQuery?: Readonly<Record<string, string>>;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
@@ -1729,6 +1734,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const file = formPayload[upload.fileField];
     if (!(file instanceof File)) throw new Error(this.t('Select a file to upload.'));
     const body = new FormData();
+    if (upload.includeFields) {
+      for (const [key, value] of Object.entries(formPayload)) {
+        if (key === upload.fileField || value === null || value === undefined || value === '') continue;
+        if (typeof value === 'object') continue;
+        body.append(key, String(value));
+      }
+    }
     body.append(upload.formField, file);
     const progress = await this.runManagedFileUpload(
       this.api.postFormWithProgress(this.createEndpoint(), body),

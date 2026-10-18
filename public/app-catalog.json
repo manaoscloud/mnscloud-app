@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "13143c442b19",
+  "version": "c96df216a7b3",
   "language": "pt-BR",
   "entries": [
     {
@@ -2326,6 +2326,231 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/certificates",
+      "menuPath": "Fiscal › Certificados A1",
+      "scope": "tenant",
+      "title": "Certificados A1",
+      "description": "Certificados A1 ICP-Brasil que assinam os documentos fiscais de cada estabelecimento, por ambiente.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Ambiente",
+          "help": ""
+        },
+        {
+          "label": "Arquivo do certificado (.pfx)",
+          "help": "O certificado do CNPJ do estabelecimento. Fica guardado cifrado e nunca mais é exibido."
+        },
+        {
+          "label": "Senha do certificado",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/csc",
+      "menuPath": "Fiscal › CSC da NFC-e",
+      "scope": "tenant",
+      "title": "CSC da NFC-e",
+      "description": "Códigos de segurança do contribuinte (CSC) emitidos pela SEFAZ para o QR Code da NFC-e, por estabelecimento e ambiente.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Ambiente",
+          "help": ""
+        },
+        {
+          "label": "Id do CSC",
+          "help": "O cIdToken, por exemplo 000001."
+        },
+        {
+          "label": "CSC",
+          "help": "Deixe vazio ao editar para manter o código salvo."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/documents",
+      "menuPath": "Fiscal › Documentos",
+      "scope": "tenant",
+      "title": "Cancelar documento fiscal",
+      "description": "O evento de cancelamento vai para a SEFAZ; só é aceito dentro do prazo do modelo.",
+      "fields": [
+        {
+          "label": "Motivo",
+          "help": "Pelo menos 15 caracteres."
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/rule-packages",
+      "menuPath": "Fiscal › Regras tributárias",
+      "scope": "tenant",
+      "title": "Regras fiscais",
+      "description": "Os seletores decidem quando a regra se aplica (vazio = qualquer); vence a menor prioridade e depois a regra mais específica.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Prioridade",
+          "help": ""
+        },
+        {
+          "label": "Modelo",
+          "help": ""
+        },
+        {
+          "label": "Operação",
+          "help": ""
+        },
+        {
+          "label": "Regime tributário",
+          "help": ""
+        },
+        {
+          "label": "UF de origem",
+          "help": ""
+        },
+        {
+          "label": "UF de destino",
+          "help": ""
+        },
+        {
+          "label": "Natureza do item",
+          "help": ""
+        },
+        {
+          "label": "Prefixo do NCM",
+          "help": ""
+        },
+        {
+          "label": "Destinatário",
+          "help": ""
+        },
+        {
+          "label": "CFOP",
+          "help": ""
+        },
+        {
+          "label": "CST do ICMS ou CSOSN",
+          "help": ""
+        },
+        {
+          "label": "ICMS (%)",
+          "help": ""
+        },
+        {
+          "label": "Redução da base do ICMS (%)",
+          "help": ""
+        },
+        {
+          "label": "FCP (%)",
+          "help": ""
+        },
+        {
+          "label": "CST do PIS",
+          "help": ""
+        },
+        {
+          "label": "PIS (%)",
+          "help": ""
+        },
+        {
+          "label": "CST da COFINS",
+          "help": ""
+        },
+        {
+          "label": "COFINS (%)",
+          "help": ""
+        },
+        {
+          "label": "Texto legal",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/series",
+      "menuPath": "Fiscal › Séries",
+      "scope": "tenant",
+      "title": "Séries fiscais",
+      "description": "Numeração dos documentos fiscais por estabelecimento, modelo e ambiente; um caixa pode ter série própria.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Modelo",
+          "help": ""
+        },
+        {
+          "label": "Série",
+          "help": ""
+        },
+        {
+          "label": "Próximo número",
+          "help": "Nunca abaixo de um número já usado."
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Ambiente",
+          "help": ""
+        },
+        {
+          "label": "Terminal",
+          "help": "Opcional: a série de um caixa (usada antes da série do estabelecimento)."
+        },
+        {
+          "label": "Modo",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
