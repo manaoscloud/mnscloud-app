@@ -2294,6 +2294,15 @@ export const NAV_ITEMS: NavItem[] = [
           },
         ],
       },
+      // Tutorial videos shown beside Report problem (platform.help.videos.manage, no tenant needed).
+      {
+        id: 'settings/help-videos',
+        label: 'nav.settings.help-videos',
+        icon: 'smart_display',
+        route: '/settings/help-videos',
+        scope: 'public',
+        permissions: ['platform.help.videos.manage'],
+      },
       {
         id: 'settings/parameters',
         label: 'nav.settings.parameters',
