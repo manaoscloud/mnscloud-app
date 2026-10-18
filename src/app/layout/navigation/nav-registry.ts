@@ -1925,6 +1925,39 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    id: 'accounting',
+    label: 'nav.accounting',
+    icon: 'calculate',
+    entitlementCode: 'module.accounting.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'accounting/events',
+        label: 'nav.accounting.events',
+        icon: 'list_alt',
+        route: '/accounting/events',
+      },
+      {
+        id: 'accounting/mappings',
+        label: 'nav.accounting.mappings',
+        icon: 'account_tree',
+        route: '/accounting/mappings',
+      },
+      {
+        id: 'accounting/cost-centers',
+        label: 'nav.accounting.cost-centers',
+        icon: 'hub',
+        route: '/accounting/cost-centers',
+      },
+      {
+        id: 'accounting/exports',
+        label: 'nav.accounting.exports',
+        icon: 'file_download',
+        route: '/accounting/exports',
+      },
+    ],
+  },
+  {
     id: 'customer-billing',
     label: 'nav.customer-billing',
     icon: 'receipt',
