@@ -1925,6 +1925,40 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    id: 'fiscal',
+    label: 'nav.fiscal',
+    icon: 'receipt_long',
+    entitlementCode: 'module.fiscal.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'fiscal/documents',
+        label: 'nav.fiscal.documents',
+        icon: 'description',
+        route: '/fiscal/documents',
+      },
+      {
+        id: 'fiscal/certificates',
+        label: 'nav.fiscal.certificates',
+        icon: 'verified',
+        route: '/fiscal/certificates',
+      },
+      { id: 'fiscal/csc', label: 'nav.fiscal.csc', icon: 'pin', route: '/fiscal/csc' },
+      {
+        id: 'fiscal/series',
+        label: 'nav.fiscal.series',
+        icon: 'format_list_numbered',
+        route: '/fiscal/series',
+      },
+      {
+        id: 'fiscal/rule-packages',
+        label: 'nav.fiscal.rule-packages',
+        icon: 'gavel',
+        route: '/fiscal/rule-packages',
+      },
+    ],
+  },
+  {
     id: 'pos',
     label: 'nav.pos',
     icon: 'point_of_sale',

@@ -67,6 +67,19 @@ const config = defineCrud({
   fields: [],
   rowActions: [
     {
+      key: 'nfce',
+      label: 'Issue NFC-e',
+      icon: 'receipt',
+      visible: (row) =>
+        row['PsaCommercialState'] === 'confirmed' &&
+        ['none', 'rejected'].includes(String(row['PsaFiscalState'])),
+      request: {
+        method: 'post',
+        endpoint: (row) => `fiscal/pos-sales/${row['PsaUUID']}/nfce`,
+        successMessage: 'NFC-e requested; follow it in Fiscal › Documents.',
+      },
+    },
+    {
       key: 'cancel',
       label: 'Cancel sale',
       icon: 'block',
