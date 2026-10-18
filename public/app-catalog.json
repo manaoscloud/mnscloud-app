@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2ce29f2d0684",
+  "version": "6c5aad5b75b5",
   "language": "pt-BR",
   "entries": [
     {
@@ -3809,36 +3809,6 @@
       ]
     },
     {
-      "route": "/sale/stock",
-      "menuPath": "Vendas › Estoque › Lista",
-      "scope": "tenant",
-      "title": "Ações",
-      "description": "Gerencie definições de estoque de PDV para seu ambiente.",
-      "fields": [
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Tipo de estoque",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/sale/stock-type",
-      "menuPath": "Vendas › Estoque › Tipos",
-      "scope": "tenant",
-      "title": "Tipo de estoque",
-      "description": "Cadastre definições de tipo de estoque para PDV.",
-      "fields": [
-        {
-          "label": "Nome",
-          "help": ""
-        }
-      ]
-    },
-    {
       "route": "/sale/unit",
       "menuPath": "Vendas › Unidades",
       "scope": "tenant",
@@ -4092,6 +4062,105 @@
         },
         {
           "label": "Cor primária",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/stock/balances",
+      "menuPath": "Estoque › Saldos",
+      "scope": "tenant",
+      "title": "Saldos de estoque",
+      "description": "Quantidade física, reservada e disponível de cada item por local, mantida pelo razão de movimentos.",
+      "fields": []
+    },
+    {
+      "route": "/stock/locations",
+      "menuPath": "Estoque › Locais",
+      "scope": "tenant",
+      "title": "Locais de estoque",
+      "description": "Depósitos, lojas, rotas de venda e dispositivos PDV que guardam estoque dos itens do catálogo.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": "Estabelecimento dono do estoque deste local."
+        },
+        {
+          "label": "Estoque negativo",
+          "help": "Permitido deixa as vendas continuarem sem saldo aqui, por exemplo em rotas; a divergência fica registrada no razão."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/stock/movements",
+      "menuPath": "Estoque › Movimentos",
+      "scope": "tenant",
+      "title": "Movimentos de estoque",
+      "description": "Razão imutável de entradas, saídas, ajustes, transferências e vendas; erros são estornados, nunca editados.",
+      "fields": [
+        {
+          "label": "Localização",
+          "help": ""
+        },
+        {
+          "label": "Item",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Quantidade",
+          "help": "Entradas somam, saídas subtraem; um ajuste pode ser negativo para corrigir uma contagem."
+        },
+        {
+          "label": "Custo unitário",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Chave de idempotência",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/stock/transfers",
+      "menuPath": "Estoque › Transferências",
+      "scope": "tenant",
+      "title": "Transferências de estoque",
+      "description": "Movimentações de estoque entre depósitos, lojas, rotas e dispositivos; ao concluir, as duas pontas são lançadas juntas.",
+      "fields": [
+        {
+          "label": "Origem",
+          "help": ""
+        },
+        {
+          "label": "Destino",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]
