@@ -1938,6 +1938,12 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/fiscal/documents',
       },
       {
+        id: 'fiscal/contingency',
+        label: 'nav.fiscal.contingency',
+        icon: 'cloud_off',
+        route: '/fiscal/contingency',
+      },
+      {
         id: 'fiscal/certificates',
         label: 'nav.fiscal.certificates',
         icon: 'verified',

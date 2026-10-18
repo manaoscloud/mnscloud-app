@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c96df216a7b3",
+  "version": "6d91ba83d6f3",
   "language": "pt-BR",
   "entries": [
     {
@@ -2370,6 +2370,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/fiscal/contingency",
+      "menuPath": "Fiscal › Contingência",
+      "scope": "tenant",
+      "title": "Contingência offline",
+      "description": "NFC-e assinadas offline pelos caixas e ainda não autorizadas, com o prazo de transmissão mais próximo primeiro.",
+      "fields": []
     },
     {
       "route": "/fiscal/csc",
