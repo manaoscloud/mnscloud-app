@@ -1943,7 +1943,12 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'account_balance_wallet',
         route: '/point-of-sale/sessions',
       },
-      { id: 'pos/sales', label: 'nav.pos.sales', icon: 'receipt_long', route: '/point-of-sale/sales' },
+      {
+        id: 'pos/sales',
+        label: 'nav.pos.sales',
+        icon: 'receipt_long',
+        route: '/point-of-sale/sales',
+      },
     ],
   },
   {

@@ -931,8 +931,7 @@ export const routes: Routes = [
               },
               {
                 path: 'point-of-sale/sessions',
-                loadComponent: () =>
-                  import('./pages/pos/sessions').then((m) => m.PosSessionsPage),
+                loadComponent: () => import('./pages/pos/sessions').then((m) => m.PosSessionsPage),
                 title: 'POS • Cash sessions | mnscloud',
               },
               {

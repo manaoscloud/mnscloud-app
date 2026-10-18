@@ -76,7 +76,8 @@ const config = defineCrud({
           endpoint: `pos/sales/${row['PsaUUID']}/cancel`,
           uuidField: 'PsaUUID',
           pageTitle: 'Cancel sale',
-          pageDescription: 'Returns the stock, reverses the receipts and refunds the cash of the sale.',
+          pageDescription:
+            'Returns the stock, reverses the receipts and refunds the cash of the sale.',
           createTitle: 'Cancel sale',
           savedMessage: 'Sale canceled.',
           statusFilter: false,

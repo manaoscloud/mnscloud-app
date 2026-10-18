@@ -16,7 +16,8 @@ const config = defineCrud({
   endpoint: 'pos/sessions',
   uuidField: 'PcsUUID',
   pageTitle: 'Cash sessions',
-  pageDescription: 'Opening, sales, expected and counted cash of each register shift of the point of sale.',
+  pageDescription:
+    'Opening, sales, expected and counted cash of each register shift of the point of sale.',
   canCreate: false,
   canEdit: false,
   canDelete: false,
@@ -32,7 +33,15 @@ const config = defineCrud({
       span: 1,
       remoteLookup: { endpoint: 'pos/terminals', uuidField: 'PtmUUID', labelField: 'PtmName' },
     },
-    { key: 'status', label: 'Status', paramKey: 'status', type: 'select', span: 1, options: STATUSES, emptyLabel: 'All' },
+    {
+      key: 'status',
+      label: 'Status',
+      paramKey: 'status',
+      type: 'select',
+      span: 1,
+      options: STATUSES,
+      emptyLabel: 'All',
+    },
   ],
   columns: [
     { id: 'id', label: 'ID', field: 'PcsID', uuidField: 'PcsUUID', kind: 'identity' },

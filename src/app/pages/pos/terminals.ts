@@ -124,7 +124,10 @@ const config = defineCrud({
       type: 'checkbox-group',
       options: POS_PAYMENT_METHODS,
       required: true,
-      fromRecord: (value) => String(value ?? '').split(',').filter(Boolean),
+      fromRecord: (value) =>
+        String(value ?? '')
+          .split(',')
+          .filter(Boolean),
       span: 2,
     },
     {
@@ -141,7 +144,15 @@ const config = defineCrud({
       span: 2,
     },
     { key: 'revision', source: 'PtmRevision', label: 'Revision', hidden: true },
-    { key: 'notes', source: 'PtmNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
+    {
+      key: 'notes',
+      source: 'PtmNotes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
   ],
   payload: (values, editing) => ({
     ...(editing ? { revision: Number(values['revision']) } : {}),
