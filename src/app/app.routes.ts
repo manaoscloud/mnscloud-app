@@ -922,6 +922,24 @@ export const routes: Routes = [
                 title: 'Stock • Transfers | mnscloud',
               },
 
+              // POS
+              {
+                path: 'point-of-sale/terminals',
+                loadComponent: () =>
+                  import('./pages/pos/terminals').then((m) => m.PosTerminalsPage),
+                title: 'POS • Terminals | mnscloud',
+              },
+              {
+                path: 'point-of-sale/sessions',
+                loadComponent: () => import('./pages/pos/sessions').then((m) => m.PosSessionsPage),
+                title: 'POS • Cash sessions | mnscloud',
+              },
+              {
+                path: 'point-of-sale/sales',
+                loadComponent: () => import('./pages/pos/sales').then((m) => m.PosSalesPage),
+                title: 'POS • Sales | mnscloud',
+              },
+
               // Sale
               {
                 path: 'sale/unit',

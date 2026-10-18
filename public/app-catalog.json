@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6c5aad5b75b5",
+  "version": "c3b61dd4450e",
   "language": "pt-BR",
   "entries": [
     {
@@ -3561,6 +3561,80 @@
       "title": "Métricas",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/point-of-sale/sales",
+      "menuPath": "PDV › Vendas",
+      "scope": "tenant",
+      "title": "Cancelar venda",
+      "description": "Devolve o estoque, estorna os recebimentos e devolve o dinheiro da venda.",
+      "fields": [
+        {
+          "label": "Motivo",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/point-of-sale/sessions",
+      "menuPath": "PDV › Caixas",
+      "scope": "tenant",
+      "title": "Sessões de caixa",
+      "description": "Abertura, vendas, dinheiro esperado e contado de cada turno de caixa do PDV.",
+      "fields": []
+    },
+    {
+      "route": "/point-of-sale/terminals",
+      "menuPath": "PDV › Terminais",
+      "scope": "tenant",
+      "title": "Terminais de PDV",
+      "description": "Caixas do PDV com estabelecimento, local de estoque, tabela de preços e formas de pagamento.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Desconto máximo (%)",
+          "help": "Desconto por item que o operador pode dar sem autorização; o servidor confere."
+        },
+        {
+          "label": "Empresa",
+          "help": "Estabelecimento que vende por este terminal e emite seus documentos fiscais."
+        },
+        {
+          "label": "Local de estoque",
+          "help": ""
+        },
+        {
+          "label": "Tabela de preços",
+          "help": "Vazio usa a melhor tabela de preços vigente e, depois, o preço base de cada item."
+        },
+        {
+          "label": "Cliente padrão",
+          "help": "Vazio usa o cliente CONSUMIDOR FINAL, criado uma única vez."
+        },
+        {
+          "label": "Formas de pagamento",
+          "help": ""
+        },
+        {
+          "label": "Vendas offline",
+          "help": "Os apps instalados continuam vendendo sem internet dentro da autorização offline; a versão web é sempre online."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/realtime/domain",

@@ -33,7 +33,9 @@ cd "$(dirname "$0")/.."
 if [[ -n "${MNSCLOUD_BUILD_COMMAND:-}" ]]; then
   build=(bash -c "$MNSCLOUD_BUILD_COMMAND")
 else
-  build=(node --max-old-space-size=6144 node_modules/@angular/cli/bin/ng.js build "$@")
+  # ~190 CRUD pages each compile the shared CRUD template; 6 GB of heap stopped being enough for
+  # the Angular compiler worker (JS heap out of memory in CI). The per-build cgroup cap stays 14G.
+  build=(node --max-old-space-size=8192 node_modules/@angular/cli/bin/ng.js build "$@")
 fi
 
 if [[ -n "${CI:-}" || "${MNSCLOUD_BUILD_GUARD:-1}" == "0" ]]; then
