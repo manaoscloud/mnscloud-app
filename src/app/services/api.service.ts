@@ -53,7 +53,15 @@ export class ApiService {
     if (this.tenantUserEndpoint(endpoint)) return true;
     if (/^user\/operations(?:[/?]|$)/.test(normalized))
       return new URLSearchParams(normalized.split('?')[1] ?? '').get('scope') !== 'platform';
-    const allowPrefixes = ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'system'];
+    const allowPrefixes = [
+      'auth',
+      'user',
+      'health',
+      'openapi.yaml',
+      'docs',
+      'system',
+      'help/videos',
+    ];
 
     if (this.systemTelemetryContext(endpoint)) return false;
     if (this.environmentOptional(endpoint)) return false;

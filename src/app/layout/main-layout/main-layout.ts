@@ -64,6 +64,8 @@ import { RuntimeVersionService } from '../../services/runtime-version.service';
 import { SystemParameterService } from '../../services/system-parameter.service';
 import { BillingService } from '../../pages/billing/shared/billing.service';
 import { SupportReportService } from '../../services/support-report.service';
+import { HelpVideoService } from '../../services/help-video.service';
+import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import { MNS_MENU } from '../../shared/menu/mns-menu';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -131,6 +133,7 @@ interface UserAccessResponse {
     AsyncOperationActivityComponent,
     PhoneDock,
     PhoneDockButton,
+    HelpVideoButtonComponent,
     MatBadgeModule,
     MatIconModule,
     MatMenuModule,
@@ -166,6 +169,7 @@ export class MainLayout {
   readonly asyncOperations = inject(AsyncOperationsService);
   protected readonly inbox = inject(NotificationInboxService);
   private readonly reportService = inject(SupportReportService);
+  readonly helpVideos = inject(HelpVideoService);
   private readonly dialogs = inject(MatDialog);
 
   // =======================================================
@@ -1024,6 +1028,13 @@ export class MainLayout {
 
   openSupportReport() {
     void this.reportService.openReportDialog();
+  }
+
+  async openHelpVideo() {
+    const video = this.helpVideos.current();
+    if (!video) return;
+    const { openHelpVideo } = await import('../../shared/help-video/help-video-dialog');
+    openHelpVideo(this.dialogs, video);
   }
 
   changeLanguage(language: LanguageOptionCode) {

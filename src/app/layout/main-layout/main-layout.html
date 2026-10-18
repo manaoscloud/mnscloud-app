@@ -640,6 +640,9 @@
           }
         </mat-menu>
 
+        <!-- Tutorial video of the open page (only when one exists) -->
+        <mns-help-video-button />
+
         <!-- Bug Report / Feedback -->
         <button
           mat-icon-button
@@ -727,6 +730,13 @@
           <mat-icon>settings</mat-icon>
           <mns-menu-label>{{ 'menu.settings' | transloco }}</mns-menu-label>
         </button>
+
+        @if (helpVideos.current()) {
+          <button mat-menu-item mnsMenuItem (click)="openHelpVideo()">
+            <mat-icon>smart_display</mat-icon>
+            <mns-menu-label>{{ 'Tutorial video' | transloco }}</mns-menu-label>
+          </button>
+        }
 
         <button mat-menu-item mnsMenuItem (click)="openSupportReport()">
           <mat-icon>bug_report</mat-icon>

@@ -4,17 +4,28 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SupportReportContext, SupportReportService } from '../../services/support-report.service';
+import { HelpVideoButtonComponent } from '../help-video/help-video-button';
 
 /**
  * "Report problem" for dialog headers (app.md `Dialog Report Problem Baseline`). The report opens
  * over the dialog, the print keeps the dialog visible and the ticket records which window it was.
  * The dialog title is read from the header; pages may add resource/mode/record details.
+ * The tutorial video of the page, when one exists, sits right before it (app.md `Help Videos`).
  */
 @Component({
   selector: 'mns-report-problem-button',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, TranslocoPipe],
+  imports: [
+    HelpVideoButtonComponent,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    TranslocoPipe,
+  ],
   template: `
+    @if (helpVideo()) {
+      <mns-help-video-button />
+    }
     <button
       mat-icon-button
       type="button"
@@ -28,6 +39,8 @@ import { SupportReportContext, SupportReportService } from '../../services/suppo
   `,
   styles: `
     :host {
+      display: inline-flex;
+      align-items: center;
       flex: 0 0 auto;
       align-self: flex-start;
       margin: -0.5rem -0.5rem 0 auto;
@@ -41,6 +54,8 @@ export class ReportProblemButtonComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly reports = inject(SupportReportService);
   readonly context = input<Omit<SupportReportContext, 'surface' | 'dialogTitle'> | null>(null);
+  /** False inside the tutorial video dialog itself. */
+  readonly helpVideo = input(true);
 
   open() {
     const element = this.host.nativeElement;
