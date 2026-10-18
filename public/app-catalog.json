@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c96fd17c736d",
+  "version": "61d89405a42a",
   "language": "pt-BR",
   "entries": [
     {
@@ -55,7 +55,7 @@
     },
     {
       "route": "/accounting/mappings",
-      "menuPath": "Contabilidade › Mapeamento de contas",
+      "menuPath": "Contabilidade › Mapeamentos",
       "scope": "tenant",
       "title": "Mapeamento de contas",
       "description": "Contas a débito e a crédito de cada evento contábil; um mapeamento por estabelecimento ou atributo prevalece sobre o geral.",
