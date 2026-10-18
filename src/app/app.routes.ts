@@ -922,6 +922,45 @@ export const routes: Routes = [
                 title: 'Stock • Transfers | mnscloud',
               },
 
+              // Customer billing
+              {
+                path: 'customer-billing/contracts',
+                loadComponent: () =>
+                  import('./pages/customer-billing/contracts').then(
+                    (m) => m.CustomerBillingContractsPage,
+                  ),
+                title: 'Customer billing • Contracts | mnscloud',
+              },
+              {
+                path: 'customer-billing/charges',
+                loadComponent: () =>
+                  import('./pages/customer-billing/charges').then(
+                    (m) => m.CustomerBillingChargesPage,
+                  ),
+                title: 'Customer billing • Charges | mnscloud',
+              },
+              {
+                path: 'customer-billing/usage',
+                loadComponent: () =>
+                  import('./pages/customer-billing/usage').then((m) => m.CustomerBillingUsagePage),
+                title: 'Customer billing • Usage | mnscloud',
+              },
+              {
+                path: 'customer-billing/events',
+                loadComponent: () =>
+                  import('./pages/customer-billing/events').then(
+                    (m) => m.CustomerBillingEventsPage,
+                  ),
+                title: 'Customer billing • Events | mnscloud',
+              },
+              {
+                path: 'customer-billing/modules',
+                loadComponent: () =>
+                  import('./pages/customer-billing/modules').then(
+                    (m) => m.CustomerBillingModulesPage,
+                  ),
+                title: 'Customer billing • Modules | mnscloud',
+              },
               // Fiscal
               {
                 path: 'fiscal/documents',
