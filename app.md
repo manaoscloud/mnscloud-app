@@ -2059,3 +2059,21 @@ Password fields may declare `generatedPasswordLength` when the API requires a sp
 length. The shared generator uses Web Crypto with rejection sampling. Authentication access
 passwords generate 20 characters and NAS shared secrets generate 32; field policy never replaces
 server-side validation. Existing fields retain their configured/default length.
+
+## Phone dock (PhoneWeb inside the App)
+
+- `mns-phone-dock` lives in `main-layout` outside `<router-outlet>`, so the phone survives
+  navigation. It frames PhoneWeb at `/phoneweb/?embed=app` (same origin) and is shown from the
+  topbar phone button only when the tenant has `module.voip.phone.user` (never in master context).
+- Never build a second softphone in Angular: pages call `PhoneDockService` (`dial(number)`,
+  `answer()`, `hangup()`, `state()`, `callActive()`), which speaks Phone Bridge v1
+  (`shared/phone-dock/phone-bridge.ts`; contract in `mnscloud-phoneweb/docs/phone-bridge.md`):
+  exact origin and frame checks, versioned messages, no secret or token on the bridge.
+- Sign-in uses a single-use App handoff code in the frame URL fragment; App sign-out sends
+  `phone.signOut` before unloading the frame. One browser registers the lines once: the tab
+  holding the Web Lock `mnscloud-phone-dock` owns the phone, other tabs show where it is and can
+  take it over (refused during a call). Pop-out opens standalone PhoneWeb in its own window.
+- Minimizing hides the panel without unloading the frame. While a tab holds the phone, the App
+  update notice never reloads it on its own (`AppUpdateService.registerBusySource`).
+- The edge must allow it: App `Permissions-Policy: microphone=(self)`, `/phoneweb/` CSP
+  `frame-ancestors 'self'` with `microphone=(self)` (mnscloud-agent vhosts, mnscloud-nginx).
