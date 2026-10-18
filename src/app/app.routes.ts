@@ -105,6 +105,14 @@ export const routes: Routes = [
               import('./pages/user/profile/user-profile').then((m) => m.UserProfileComponent),
             title: 'My Profile | mnscloud',
           },
+          {
+            path: 'user/notifications',
+            loadComponent: () =>
+              import('./pages/user/notifications/user-notifications').then(
+                (m) => m.UserNotificationsPage,
+              ),
+            title: 'Notifications | mnscloud',
+          },
           // Platform support desk: platform.support.* agents (masters included), no tenant needed.
           {
             path: 'support/platform/tickets',

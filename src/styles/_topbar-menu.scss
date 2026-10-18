@@ -100,29 +100,64 @@
   white-space: pre-line;
 }
 
-// Notifications panel: unread items are bold with a leading dot; the icon follows the severity.
+// Notifications panel: unread items carry three redundant signals (tonal background, leading
+// accent bar and trailing dot, plus a strong title); read items step back (regular weight, muted
+// text and icon). The icon follows the type; error severity keeps the error color in both states.
 .mat-mdc-menu-panel.mns-menu.notifications-menu {
+  .mns-menu-list > .mns-menu-title:not(:first-child) {
+    margin-top: 0.25rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--mat-sys-color-outline-variant);
+  }
+
   .notification-item {
     position: relative;
 
-    &.is-unread .mns-menu-label-primary {
-      font-weight: 600;
+    .mns-menu-label-primary {
+      font-weight: 400;
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+
+    .mat-icon {
+      color: var(--mat-sys-color-on-surface-variant);
+    }
+
+    &.is-unread {
+      background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+
+      &:hover,
+      &.cdk-keyboard-focused {
+        background: color-mix(in srgb, var(--mat-sys-color-primary) 20%, transparent);
+      }
+
+      .mns-menu-label-primary {
+        font-weight: 700;
+        color: var(--mat-sys-color-on-surface);
+      }
+
+      .mat-icon {
+        color: var(--mat-sys-color-primary);
+      }
     }
 
     &.is-unread::before {
       content: '';
       position: absolute;
-      left: 0.3rem;
-      top: 50%;
-      width: 0.4rem;
-      height: 0.4rem;
-      margin-top: -0.2rem;
-      border-radius: 50%;
+      left: 0;
+      top: 0.35rem;
+      bottom: 0.35rem;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
       background: var(--mat-sys-color-primary);
     }
 
-    &[data-severity='warning'] .mat-icon {
-      color: var(--mat-sys-color-on-surface-variant);
+    .notification-dot {
+      flex: 0 0 auto;
+      width: 0.6rem;
+      height: 0.6rem;
+      margin-left: 0.5rem;
+      border-radius: 50%;
+      background: var(--mat-sys-color-primary);
     }
 
     &[data-severity='error'] .mat-icon {

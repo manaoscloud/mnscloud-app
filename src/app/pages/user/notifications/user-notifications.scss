@@ -1,0 +1,124 @@
+// Same read/unread treatment as the topbar panel (src/styles/_topbar-menu.scss): unread rows have
+// a tonal background, a leading accent bar, a trailing dot and a strong title; read rows step back.
+.notifications-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.notifications-empty {
+  margin: 1.5rem 0;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.notifications-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--mat-sys-color-outline-variant);
+}
+
+.notification-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 0.25rem;
+  border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+
+  &.is-unread {
+    background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.4rem;
+      bottom: 0.4rem;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--mat-sys-color-primary);
+    }
+
+    .notification-title {
+      font-weight: 700;
+      color: var(--mat-sys-color-on-surface);
+    }
+
+    .notification-icon {
+      color: var(--mat-sys-color-primary);
+    }
+  }
+
+  &[data-severity='error'] .notification-icon {
+    color: var(--mat-sys-color-error);
+  }
+}
+
+.notification-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  min-height: 3.5rem;
+  padding: 0.6rem 0.5rem 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-color-primary) 8%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.notification-icon {
+  flex: 0 0 auto;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+.notification-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: 400;
+  color: var(--mat-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.notification-description {
+  font-size: 0.8rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.notification-dot {
+  flex: 0 0 auto;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--mat-sys-color-primary);
+}
+
+.notifications-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}

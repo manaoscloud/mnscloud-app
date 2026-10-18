@@ -35,6 +35,18 @@
       </div>
     }
 
+    <!-- Unread path: dot on every group above a page with unread notifications, count on the page -->
+    <ng-template #navIndicator let-entry>
+      @if (navUnreadCount(entry); as count) {
+        @if (entry.children?.length) {
+          <span class="menu-badge-dot" aria-hidden="true"></span>
+        } @else {
+          <span class="menu-badge" aria-hidden="true">{{ count > 99 ? '99+' : count }}</span>
+        }
+        <span class="cdk-visually-hidden">, {{ navUnreadLabel(entry, count) }}</span>
+      }
+    </ng-template>
+
     <!-- MENU -->
     <div class="sidenav-scroll">
       <nav class="nav-menu" [class.is-navigation-pending]="navigationLoading()">
@@ -55,9 +67,7 @@
             }
             <span class="menu-label">{{ item.label }}</span>
             <span class="menu-spacer"></span>
-            @if (hasNavBadge(item) && !isExpanded(item.id)) {
-              <span class="menu-badge-dot" aria-hidden="true"></span>
-            }
+            <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: item }" />
             @if (item.children?.length) {
               <mat-icon class="collapse-icon">
                 {{ isExpanded(item.id) ? 'expand_less' : 'expand_more' }}
@@ -81,9 +91,9 @@
                       }
                       <span class="menu-label">{{ child.label }}</span>
                       <span class="menu-spacer"></span>
-                      @if (hasNavBadge(child) && !isExpanded(child.id)) {
-                        <span class="menu-badge-dot" aria-hidden="true"></span>
-                      }
+                      <ng-container
+                        *ngTemplateOutlet="navIndicator; context: { $implicit: child }"
+                      />
                       <mat-icon class="collapse-icon">
                         {{ isExpanded(child.id) ? 'expand_less' : 'expand_more' }}
                       </mat-icon>
@@ -103,6 +113,9 @@
                                 }
                                 <span class="menu-label">{{ grand.label }}</span>
                                 <span class="menu-spacer"></span>
+                                <ng-container
+                                  *ngTemplateOutlet="navIndicator; context: { $implicit: grand }"
+                                />
                                 <mat-icon class="collapse-icon">
                                   {{ isExpanded(grand.id) ? 'expand_less' : 'expand_more' }}
                                 </mat-icon>
@@ -117,11 +130,18 @@
                                       matTooltipPosition="right"
                                       [matTooltipShowDelay]="600"
                                       [class.active-grand]="isActiveItem(great)"
+                                      [class.is-notified]="notifiedNavId() === great.id"
                                     >
                                       @if (great.icon) {
                                         <mat-icon class="menu-icon">{{ great.icon }}</mat-icon>
                                       }
                                       <span class="menu-label">{{ great.label }}</span>
+                                      <ng-container
+                                        *ngTemplateOutlet="
+                                          navIndicator;
+                                          context: { $implicit: great }
+                                        "
+                                      />
                                     </button>
                                   }
                                 </div>
@@ -135,11 +155,15 @@
                               matTooltipPosition="right"
                               [matTooltipShowDelay]="600"
                               [class.active-grand]="isActiveItem(grand)"
+                              [class.is-notified]="notifiedNavId() === grand.id"
                             >
                               @if (grand.icon) {
                                 <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
                               }
                               <span class="menu-label">{{ grand.label }}</span>
+                              <ng-container
+                                *ngTemplateOutlet="navIndicator; context: { $implicit: grand }"
+                              />
                             </button>
                           }
                         }
@@ -154,14 +178,13 @@
                     matTooltipPosition="right"
                     [matTooltipShowDelay]="600"
                     [class.active-child]="isActiveItem(child)"
+                    [class.is-notified]="notifiedNavId() === child.id"
                   >
                     @if (child.icon) {
                       <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
                     }
                     <span class="menu-label">{{ child.label }}</span>
-                    @if (navBadge(child); as count) {
-                      <span class="menu-badge" [attr.aria-label]="count">{{ count }}</span>
-                    }
+                    <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: child }" />
                   </button>
                 }
               }
@@ -184,6 +207,7 @@
               type="button"
               class="compact-flyout-item"
               [class.is-active]="isActiveSection(child)"
+              [class.is-notified]="notifiedNavId() === child.id"
               [class.has-children]="child.children?.length"
               [matTooltip]="child.path"
               matTooltipPosition="right"
@@ -202,6 +226,7 @@
                 }}</mat-icon>
                 <span>{{ child.label }}</span>
               </span>
+              <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: child }" />
               @if (child.children?.length) {
                 <mat-icon>chevron_right</mat-icon>
               }
@@ -224,6 +249,7 @@
               type="button"
               class="compact-flyout-item"
               [class.is-active]="isActiveSection(grand)"
+              [class.is-notified]="notifiedNavId() === grand.id"
               [class.has-children]="grand.children?.length"
               [matTooltip]="grand.path"
               matTooltipPosition="right"
@@ -242,6 +268,7 @@
                 }}</mat-icon>
                 <span>{{ grand.label }}</span>
               </span>
+              <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: grand }" />
               @if (grand.children?.length) {
                 <mat-icon>chevron_right</mat-icon>
               }
@@ -264,6 +291,7 @@
               type="button"
               class="compact-flyout-item"
               [class.is-active]="isActiveItem(great)"
+              [class.is-notified]="notifiedNavId() === great.id"
               (click)="onCompactFlyoutNavigate(great)"
               [matTooltip]="great.path"
               matTooltipPosition="right"
@@ -275,6 +303,7 @@
                 }}</mat-icon>
                 <span>{{ great.label }}</span>
               </span>
+              <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: great }" />
             </button>
           }
         </div>
@@ -384,6 +413,17 @@
             <mns-menu-title [hint]="notificationsHint()">{{
               'topbar.notifications' | transloco
             }}</mns-menu-title>
+            <button
+              mat-menu-item
+              mnsMenuItem
+              keepOpen
+              selection="checkbox"
+              [checked]="inbox.filter() === 'unread'"
+              (click)="inbox.setFilter(inbox.filter() === 'unread' ? 'all' : 'unread')"
+            >
+              <mat-icon>filter_list</mat-icon>
+              <mns-menu-label>{{ 'topbar.notificationsFilterUnread' | transloco }}</mns-menu-label>
+            </button>
             @switch (inbox.state()) {
               @case ('loading') {
                 @if (!inbox.items().length) {
@@ -395,12 +435,27 @@
               }
               @default {
                 @if (!inbox.items().length) {
-                  <p class="mns-menu-empty">{{ 'topbar.notificationsEmpty' | transloco }}</p>
+                  <p class="mns-menu-empty">
+                    {{
+                      (inbox.filter() === 'unread'
+                        ? 'topbar.notificationsEmptyUnread'
+                        : 'topbar.notificationsEmpty'
+                      ) | transloco
+                    }}
+                  </p>
                 }
               }
             }
             <div class="mns-menu-list">
-              @for (item of inbox.items(); track item.notificationUUID) {
+              @for (item of panelItems(); track item.notificationUUID; let i = $index) {
+                @if (startsPanelSection(i)) {
+                  <mns-menu-title>{{
+                    (item.readAt
+                      ? 'topbar.notificationsSectionEarlier'
+                      : 'topbar.notificationsSectionNew'
+                    ) | transloco
+                  }}</mns-menu-title>
+                }
                 <button
                   mat-menu-item
                   mnsMenuItem
@@ -414,6 +469,9 @@
                   <mns-menu-label [description]="notificationDescription(item)">{{
                     notificationTitle(item)
                   }}</mns-menu-label>
+                  @if (!item.readAt) {
+                    <span class="notification-dot" aria-hidden="true"></span>
+                  }
                 </button>
               }
             </div>
@@ -423,6 +481,10 @@
                 <mns-menu-label>{{ 'topbar.notificationsMarkAll' | transloco }}</mns-menu-label>
               </button>
             }
+            <button mat-menu-item mnsMenuItem routerLink="/user/notifications">
+              <mat-icon>inbox</mat-icon>
+              <mns-menu-label>{{ 'topbar.notificationsViewAll' | transloco }}</mns-menu-label>
+            </button>
           </ng-template>
         </mat-menu>
 

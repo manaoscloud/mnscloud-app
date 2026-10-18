@@ -19,13 +19,7 @@ export interface NavItem {
 
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
-
-  /** Live counter shown beside the label (a dot on collapsed ancestors). */
-  badge?: NavBadge;
 }
-
-/** Counters the shell can show; each maps to a client service fed by the API. */
-export type NavBadge = 'supportUnread';
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'nav.dashboard', icon: 'dashboard', route: '/dashboard' },
@@ -121,6 +115,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'person',
     children: [
       { id: 'user/profile', label: 'nav.user.profile', icon: 'badge', route: '/user/profile' },
+      {
+        id: 'user/notifications',
+        label: 'nav.user.notifications',
+        icon: 'notifications',
+        route: '/user/notifications',
+        requiresEnvironment: true,
+      },
       {
         id: 'user/permission-management',
         label: 'nav.user.permission-management',
@@ -1524,7 +1525,6 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/support/requests',
         scope: 'public',
         requiresEnvironment: true,
-        badge: 'supportUnread',
       },
       {
         id: 'support/customers',
