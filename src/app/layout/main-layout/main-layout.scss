@@ -523,7 +523,6 @@ mat-sidenav.sidenav.compact {
 }
 
 .activity-button mat-icon,
-.phone-button mat-icon,
 .notifications-button mat-icon {
   font-size: 20px !important;
   width: 20px;
@@ -773,30 +772,5 @@ html.dark {
     justify-content: flex-end;
     flex: 1;
     min-width: 0;
-  }
-}
-
-/* Phone dock: incoming call on the topbar phone button */
-.phone-button.is-ringing mat-icon {
-  color: var(--mat-sys-color-primary);
-  animation: phone-ring 1s ease-in-out infinite;
-}
-
-@keyframes phone-ring {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
-  25% {
-    transform: rotate(-12deg);
-  }
-  75% {
-    transform: rotate(12deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .phone-button.is-ringing mat-icon {
-    animation: none;
   }
 }

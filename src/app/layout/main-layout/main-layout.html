@@ -358,20 +358,7 @@
         }
 
         @if (phoneDock.available()) {
-          <button
-            mat-icon-button
-            type="button"
-            class="phone-button"
-            [class.is-ringing]="phoneDock.ringing()"
-            (click)="phoneDock.toggle()"
-            [matTooltip]="'phoneDock.title' | transloco"
-            [attr.aria-label]="'phoneDock.title' | transloco"
-            [attr.aria-pressed]="phoneDock.visible()"
-          >
-            <mat-icon>{{
-              phoneDock.callActive() || phoneDock.elsewhereCallActive() ? 'phone_in_talk' : 'phone'
-            }}</mat-icon>
-          </button>
+          <mns-phone-dock-button />
         }
 
         <button

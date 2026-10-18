@@ -25,6 +25,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
 import { PhoneDock } from '../../shared/phone-dock/phone-dock';
+import { PhoneDockButton } from '../../shared/phone-dock/phone-dock-button';
 import { PhoneDockService } from '../../shared/phone-dock/phone-dock.service';
 import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
@@ -129,6 +130,7 @@ interface UserAccessResponse {
     BreadcrumbComponent,
     AsyncOperationActivityComponent,
     PhoneDock,
+    PhoneDockButton,
     MatBadgeModule,
     MatIconModule,
     MatMenuModule,
