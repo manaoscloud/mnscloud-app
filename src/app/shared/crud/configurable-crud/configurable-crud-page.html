@@ -3026,6 +3026,138 @@
           </mat-tab>
         }
 
+        @if (fiscalFields().length) {
+          <mat-tab
+            [label]="tabLabel('fiscal', 'Fiscal') | transloco"
+            [labelClass]="tabLabelClass('fiscal')"
+          >
+            <div class="tab-content form-grid">
+              @for (field of fiscalFields(); track field.key) {
+                <div class="crud-field-contents">
+                  @switch (field.type) {
+                    @case ('search-select') {
+                      <mns-search-select-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
+                        [help]="fieldHelp(field)"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [options]="fieldOptions(field)"
+                        [remoteSearch]="!!field.remoteLookup"
+                        [hasNext]="remoteHasNext(field)"
+                        [hasPrevious]="remoteHasPrevious(field)"
+                        [loadError]="remoteError(field)"
+                        (searchChange)="remoteSearchChanged(field, $event)"
+                        (pageChange)="remotePageChanged(field, $event)"
+                        [loading]="fieldLoading(field)"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="field.multiple ?? false"
+                        [value]="
+                          field.multiple ? fieldValueArray(field.key) : fieldValue(field.key)
+                        "
+                        [canCreate]="canQuickCreate(field)"
+                        [createLabel]="quickCreateLabel(field)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                        (createRecord)="quickCreateField(field)"
+                      />
+                    }
+                    @case ('select') {
+                      <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
+                        [attr.data-field-key]="field.key"
+                        [attr.data-report-mask]="reportMask(field)"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="false"
+                        [value]="fieldValue(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
+                    }
+                    @case ('checkbox-group') {
+                      <mns-checkbox-group-field
+                        [attr.data-field-key]="field.key"
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
+                        [class]="fieldClass(field)"
+                        [label]="translatedFieldLabel(field)"
+                        [options]="fieldOptions(field)"
+                        [disabled]="isFieldDisabled(field)"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
+                    }
+                    @case ('multi-select') {
+                      <mns-search-select-field
+                        [invalid]="hasFieldError(field)"
+                        [errorMessage]="fieldErrorText(field)"
+                        [attr.data-field-key]="field.key"
+                        [attr.data-report-mask]="reportMask(field)"
+                        [fieldClass]="fieldClass(field)"
+                        [label]="
+                          translatedFieldLabel(field) +
+                          currencyLabelSuffix(field) +
+                          (isFieldRequired(field) ? '*' : '')
+                        "
+                        [placeholder]="field.placeholder ?? 'Search' | transloco"
+                        [help]="fieldHelp(field)"
+                        [options]="translatedSelectOptions(field, fieldOptions(field))"
+                        [translateOptions]="false"
+                        [disabled]="isFieldDisabled(field)"
+                        [multiple]="true"
+                        [value]="fieldValueArray(field.key)"
+                        (valueChange)="setFieldValue(field.key, $event)"
+                      />
+                    }
+                    @default {
+                      <mat-form-field appearance="outline" [class]="fieldClass(field)">
+                        <mat-label
+                          >{{ translatedFieldLabel(field) }}{{ currencyLabelSuffix(field)
+                          }}{{ isFieldRequired(field) ? '*' : '' }}</mat-label
+                        >
+                        <input
+                          matInput
+                          [mnsInvalid]="hasFieldError(field)"
+                          [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
+                          [type]="htmlInputType(field)"
+                          [appCurrencyMask]="field.type === 'currency'"
+                          [appCurrencyMaskCurrency]="currencyForField(field)"
+                          [autocomplete]="field.autocomplete ?? 'off'"
+                          [attr.data-field-key]="field.key"
+                          [attr.data-report-mask]="reportMask(field)"
+                          [value]="fieldValueString(field.key)"
+                          (input)="setFieldValue(field.key, $any($event.target).value)"
+                        />
+                        @if (fieldHelp(field); as help) {
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="translatedFieldLabel(field)"
+                            [text]="help"
+                          />
+                        }
+                        @if (hasFieldError(field)) {
+                          <mat-error>{{ fieldErrorText(field) }}</mat-error>
+                        }
+                      </mat-form-field>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (codecFields().length) {
           <mat-tab
             [label]="tabLabel('codecs', 'Codecs') | transloco"

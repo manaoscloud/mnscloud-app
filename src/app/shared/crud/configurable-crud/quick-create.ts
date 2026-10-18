@@ -281,6 +281,13 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/erp/companies/companies').then((m) => m.ErpCompaniesPage),
   },
+  FiscalIssuerProfileFipUUID: {
+    label: 'Create fiscal issuer',
+    loadComponent: () =>
+      import('../../../pages/erp/fiscal-issuers/fiscal-issuers').then(
+        (m) => m.ErpFiscalIssuersPage,
+      ),
+  },
   ErpComplexEcxUUID: {
     label: 'Create complex',
     loadComponent: () => import('../../../pages/erp/complex/complex').then((m) => m.ErpComplexPage),
@@ -540,6 +547,11 @@ export const QUICK_CREATE_REGISTRY = {
     label: 'Create category',
     loadComponent: () =>
       import('../../../pages/sales/category/category').then((m) => m.SaleCategoryPage),
+  },
+  SalePriceListSplUUID: {
+    label: 'Create price list',
+    loadComponent: () =>
+      import('../../../pages/sales/price-list/price-list').then((m) => m.SalePriceListPage),
   },
   SaleProductSprUUID: {
     label: 'Create product',

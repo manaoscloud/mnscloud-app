@@ -880,6 +880,14 @@ export const routes: Routes = [
                 title: 'ERP • Companies | mnscloud',
               },
               {
+                path: 'erp/fiscal-issuers',
+                loadComponent: () =>
+                  import('./pages/erp/fiscal-issuers/fiscal-issuers').then(
+                    (m) => m.ErpFiscalIssuersPage,
+                  ),
+                title: 'ERP • Fiscal Issuers | mnscloud',
+              },
+              {
                 path: 'erp/complex',
                 loadComponent: () =>
                   import('./pages/erp/complex/complex').then((m) => m.ErpComplexPage),
@@ -923,6 +931,12 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/sales/product/product').then((m) => m.SaleProductPage),
                 title: 'Sale • Product | mnscloud',
+              },
+              {
+                path: 'sale/price-list',
+                loadComponent: () =>
+                  import('./pages/sales/price-list/price-list').then((m) => m.SalePriceListPage),
+                title: 'Sale • Price Lists | mnscloud',
               },
               {
                 path: 'sale/quotation',
