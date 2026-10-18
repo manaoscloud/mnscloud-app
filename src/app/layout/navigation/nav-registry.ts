@@ -303,12 +303,6 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/erp/financial/invoicing/boletos',
           },
           {
-            id: 'erp/financial/invoicing/invoices',
-            label: 'nav.erp.financial.invoicing.invoices',
-            icon: 'request_quote',
-            route: '/erp/financial/invoicing/invoices',
-          },
-          {
             id: 'erp/financial/invoicing/contracts',
             label: 'nav.erp.financial.invoicing.contracts',
             icon: 'description',

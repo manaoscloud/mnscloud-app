@@ -849,14 +849,6 @@ export const routes: Routes = [
                 title: 'ERP • Financial • Invoicing • Boletos | mnscloud',
               },
               {
-                path: 'erp/financial/invoicing/invoices',
-                loadComponent: () =>
-                  import('./pages/erp/financial/invoicing/invoices/invoices').then(
-                    (m) => m.InvoicingInvoicesPage,
-                  ),
-                title: 'ERP • Financial • Invoicing • Invoices | mnscloud',
-              },
-              {
                 path: 'erp/financial/invoicing/contracts',
                 loadComponent: () =>
                   import('./pages/erp/financial/invoicing/contracts/contracts').then(
