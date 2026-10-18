@@ -8448,5 +8448,12 @@
   "A new account is created and applied on the host. The current account is revoked only after the module works with the new one.": "Uma conta nova é criada e aplicada no servidor. A conta atual só é revogada depois que o módulo funcionar com a nova.",
   "Account revocation requested.": "Revogação da conta solicitada.",
   "If this account is active, the module host loses access to the database until a new account is requested.": "Se esta conta estiver ativa, o servidor do módulo perde o acesso ao banco até uma nova conta ser solicitada.",
-  "nav.monitoring.database-access": "Acesso ao banco"
+  "nav.monitoring.database-access": "Acesso ao banco",
+  "CRM contact": "Contato do CRM",
+  "CRM lead": "Lead do CRM",
+  "Contact linked.": "Contato vinculado.",
+  "Link contact": "Vincular contato",
+  "Linked to": "Vinculado a",
+  "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.": "Novos contatos são vinculados automaticamente quando o telefone corresponde a um cliente, contato ou lead. Limpe um campo para desvincular.",
+  "Who this contact is in the ERP and the CRM, so the team sees the history.": "Quem é este contato no ERP e no CRM, para a equipe ver o histórico."
 }

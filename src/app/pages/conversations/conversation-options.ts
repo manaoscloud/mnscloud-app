@@ -206,3 +206,80 @@ export function messagesCollection(
     ],
   });
 }
+
+/** Links the conversation contact to the tenant's ERP customer and CRM contact/lead. */
+export function linkContactForm(conversation: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `conversations/${conversation['CnvUUID']}/contact`,
+    uuidField: 'CnvUUID',
+    pageTitle: 'Link contact',
+    pageDescription: 'Who this contact is in the ERP and the CRM, so the team sees the history.',
+    createTitle: 'Link contact',
+    dialogDescription:
+      'New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.',
+    savedMessage: 'Contact linked.',
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    columns: [],
+    initialValues: {
+      customer: conversation['CustomerCusUUID'] ?? '',
+      contact: conversation['CrmContactCcoUUID'] ?? '',
+      lead: conversation['CrmLeadCleUUID'] ?? '',
+    },
+    fields: [
+      {
+        key: 'customer',
+        source: 'CustomerCusUUID',
+        label: 'Customer',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'erp/customers',
+          searchParam: 'q',
+          uuidField: 'CustomerUUID',
+          labelField: 'Name',
+          selectedLabelField: 'CustomerName',
+        },
+        span: 4,
+      },
+      {
+        key: 'contact',
+        source: 'CrmContactCcoUUID',
+        label: 'CRM contact',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'crm/contacts',
+          uuidField: 'CcoUUID',
+          labelField: 'CcoName',
+          selectedLabelField: 'CrmContactName',
+        },
+        span: 2,
+      },
+      {
+        key: 'lead',
+        source: 'CrmLeadCleUUID',
+        label: 'CRM lead',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'crm/leads',
+          uuidField: 'CleUUID',
+          labelField: 'CleName',
+          selectedLabelField: 'CrmLeadName',
+        },
+        span: 2,
+      },
+    ],
+    payload: (values) => ({
+      CustomerCusUUID: values['customer'] || null,
+      CrmContactCcoUUID: values['contact'] || null,
+      CrmLeadCleUUID: values['lead'] || null,
+    }),
+  });
+}
+
+/** "Customer · CRM contact · lead" names the conversation contact is linked to. */
+export function linkedLabel(row: ConfigurableCrudRecord): string {
+  return [row['CustomerName'], row['CrmContactName'], row['CrmLeadName']]
+    .filter(Boolean)
+    .join(' · ');
+}

@@ -14,6 +14,8 @@ import {
   CONVERSATION_STATES,
   MEMBER_EXEMPT,
   MEMBER_LOOKUP,
+  linkContactForm,
+  linkedLabel,
   messagesCollection,
 } from '../conversation-options';
 import { watchConversationChanges } from '../conversation-events';
@@ -93,6 +95,12 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         collection: (row) => messagesCollection(row, dialog),
       },
       {
+        key: 'link',
+        label: 'Link contact',
+        icon: 'link',
+        form: (row) => linkContactForm(row),
+      },
+      {
         key: 'read',
         label: 'Mark as read',
         icon: 'mark_chat_read',
@@ -116,6 +124,7 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         detail: (row) => String(row['ContactPhone'] ?? row['ContactEmail'] ?? ''),
       },
       { id: 'channel', label: 'Channel', field: 'ChannelName' },
+      { id: 'linked', label: 'Linked to', value: (row) => linkedLabel(row) },
       { id: 'last', label: 'Last message', field: 'LastMessage' },
       {
         id: 'unread',
