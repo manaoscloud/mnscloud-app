@@ -1,0 +1,95 @@
+:host {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+}
+
+.phone-dock {
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  height: min(640px, calc(100dvh - 96px));
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--mat-sys-color-surface-container);
+  color: var(--mat-sys-color-on-surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 24%);
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+
+  // Minimized: off screen but alive (the frame keeps the registration and any call).
+  &.is-hidden {
+    transform: translateY(calc(100% + 32px));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &.is-ringing {
+    outline: 2px solid var(--mat-sys-color-primary);
+  }
+
+  &.is-handset {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+.phone-dock-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 16px;
+  border-bottom: 1px solid var(--mat-sys-color-outline-variant);
+
+  > mat-icon {
+    flex: none;
+  }
+}
+
+.phone-dock-title {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+
+  strong,
+  .phone-dock-status {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .phone-dock-status {
+    font-size: 12px;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.phone-dock-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.phone-dock-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.phone-dock-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+}

@@ -182,9 +182,26 @@ export class AppUpdateService {
     removeStorage(SNOOZE_STORAGE_KEY);
   }
 
-  /** True while a dialog is open, i.e. reloading could interrupt the user's work. */
+  private readonly busySources: Array<{ key: string; busy: () => boolean }> = [];
+
+  /**
+   * Registers work that a reload would interrupt (e.g. the phone dock: a reload drops the
+   * registration and any call). `key` is the i18n message shown before reloading anyway.
+   */
+  registerBusySource(key: string, busy: () => boolean) {
+    this.busySources.push({ key, busy });
+  }
+
+  /** True while a dialog is open or a registered source is busy: reloading would interrupt it. */
   hasOpenWork() {
-    return this.dialog.openDialogs.length > 0;
+    return this.openWorkKey() !== null;
+  }
+
+  /** Message for the first open work found (null when nothing would be interrupted). */
+  openWorkKey(): string | null {
+    const source = this.busySources.find((item) => item.busy());
+    if (source) return source.key;
+    return this.dialog.openDialogs.length > 0 ? 'appUpdate.openWork' : null;
   }
 
   reloadNow() {

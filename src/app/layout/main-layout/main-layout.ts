@@ -24,6 +24,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 // Shared
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
+import { PhoneDock } from '../../shared/phone-dock/phone-dock';
+import { PhoneDockButton } from '../../shared/phone-dock/phone-dock-button';
+import { PhoneDockService } from '../../shared/phone-dock/phone-dock.service';
 import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
 import { AsyncOperationActivityComponent } from '../../shared/operations/async-operation-activity';
@@ -126,6 +129,8 @@ interface UserAccessResponse {
     RouterLink,
     BreadcrumbComponent,
     AsyncOperationActivityComponent,
+    PhoneDock,
+    PhoneDockButton,
     MatBadgeModule,
     MatIconModule,
     MatMenuModule,
@@ -151,6 +156,7 @@ export class MainLayout {
   private readonly session = inject(SessionService);
   private readonly api = inject(ApiService);
   private readonly i18n = inject(AppI18nService);
+  readonly phoneDock = inject(PhoneDockService);
   private readonly runtimeVersion = inject(RuntimeVersionService);
   private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
@@ -279,6 +285,19 @@ export class MainLayout {
       if (this.auth.isLoggedIn() && this.activeEnvironmentId()) {
         void this.refreshCommercialEntitlements();
       }
+    });
+
+    // Phone dock: tenants with PhoneWeb (fail-closed entitlement), never in master context.
+    effect(() => {
+      this.phoneDock.available.set(
+        this.auth.isLoggedIn() &&
+          Boolean(this.activeEnvironmentId()) &&
+          this.effectiveContextMode() !== 'master' &&
+          this.hasCommercialEntitlement('module.voip.phone.user'),
+      );
+    });
+    effect(() => {
+      this.phoneDock.environmentChanged(this.activeEnvironmentId());
     });
 
     effect(() => {
@@ -1165,6 +1184,7 @@ export class MainLayout {
   async logout() {
     if (this.isLoggingOut()) return;
     this.isLoggingOut.set(true);
+    await this.phoneDock.signOut();
     this.commercialEntitlements.set([]);
     this.activeEnvironmentId.set(null);
     this.environments.set([]);

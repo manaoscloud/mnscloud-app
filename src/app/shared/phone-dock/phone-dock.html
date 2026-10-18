@@ -1,0 +1,87 @@
+@if (dock.visible() || dock.mounted()) {
+  <section
+    class="phone-dock"
+    [class.is-hidden]="!dock.visible()"
+    [class.is-handset]="handset()"
+    [class.is-ringing]="dock.ringing()"
+    role="region"
+    [attr.aria-label]="'phoneDock.title' | transloco"
+    [attr.aria-hidden]="!dock.visible()"
+  >
+    <header class="phone-dock-header">
+      <mat-icon aria-hidden="true">{{ dock.callActive() ? 'phone_in_talk' : 'phone' }}</mat-icon>
+      <div class="phone-dock-title">
+        <strong>{{ 'phoneDock.title' | transloco }}</strong>
+        <span class="phone-dock-status" aria-live="polite">{{ statusKey() | transloco }}</span>
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        (click)="dock.popOut()"
+        [matTooltip]="'phoneDock.popOut' | transloco"
+        [attr.aria-label]="'phoneDock.popOut' | transloco"
+      >
+        <mat-icon>open_in_new</mat-icon>
+      </button>
+      @if (dock.mounted()) {
+        <button
+          mat-icon-button
+          type="button"
+          (click)="dock.close()"
+          [matTooltip]="'phoneDock.turnOff' | transloco"
+          [attr.aria-label]="'phoneDock.turnOff' | transloco"
+        >
+          <mat-icon>power_settings_new</mat-icon>
+        </button>
+      }
+      <button
+        mat-icon-button
+        type="button"
+        (click)="dock.minimize()"
+        [matTooltip]="'phoneDock.minimize' | transloco"
+        [attr.aria-label]="'phoneDock.minimize' | transloco"
+      >
+        <mat-icon>{{ handset() ? 'close' : 'remove' }}</mat-icon>
+      </button>
+    </header>
+
+    <div class="phone-dock-body">
+      @if (dock.mounted() && dock.frameUrl(); as url) {
+        <iframe
+          #frame
+          class="phone-dock-frame"
+          [src]="url"
+          allow="microphone; autoplay"
+          [title]="'phoneDock.title' | transloco"
+          (load)="onFrameLoad()"
+        ></iframe>
+      } @else if (dock.opening()) {
+        <div class="phone-dock-message">
+          <mat-spinner diameter="32" />
+          <p>{{ 'phoneDock.status.starting' | transloco }}</p>
+        </div>
+      } @else if (dock.elsewhere()) {
+        <div class="phone-dock-message">
+          <mat-icon aria-hidden="true">tab</mat-icon>
+          <p>
+            {{
+              (dock.elsewhereCallActive() ? 'phoneDock.elsewhereInCall' : 'phoneDock.elsewhereHint')
+                | transloco
+            }}
+          </p>
+          <button mat-stroked-button type="button" (click)="dock.takeOver()">
+            {{ 'phoneDock.useHere' | transloco }}
+          </button>
+        </div>
+      } @else if (dock.poppedOut()) {
+        <div class="phone-dock-message">
+          <mat-icon aria-hidden="true">open_in_new</mat-icon>
+          <p>{{ 'phoneDock.poppedOutHint' | transloco }}</p>
+          <button mat-stroked-button type="button" (click)="dock.open()">
+            {{ 'phoneDock.showWindow' | transloco }}
+          </button>
+        </div>
+      }
+    </div>
+  </section>
+}

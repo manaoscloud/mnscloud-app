@@ -18,7 +18,9 @@
         }
       </p>
       @if (confirmOpenWork()) {
-        <p class="app-update-text">{{ 'appUpdate.openWork' | transloco }}</p>
+        <p class="app-update-text">
+          {{ update.openWorkKey() ?? 'appUpdate.openWork' | transloco }}
+        </p>
       } @else {
         <p class="app-update-text">
           {{ (critical ? 'appUpdate.criticalMessage' : 'appUpdate.message') | transloco }}

@@ -357,6 +357,10 @@
           </div>
         }
 
+        @if (phoneDock.available()) {
+          <mns-phone-dock-button />
+        }
+
         <button
           mat-icon-button
           type="button"
@@ -756,3 +760,7 @@
     <footer class="footer">© {{ currentYear }} mnscloud - {{ 'layout.footer' | transloco }}</footer>
   </mat-sidenav-content>
 </mat-sidenav-container>
+
+@if (phoneDock.available() || phoneDock.mounted()) {
+  <mns-phone-dock [handset]="isHandset()" />
+}
