@@ -8447,5 +8447,12 @@
   "A new account is created and applied on the host. The current account is revoked only after the module works with the new one.": "A new account is created and applied on the host. The current account is revoked only after the module works with the new one.",
   "Account revocation requested.": "Account revocation requested.",
   "If this account is active, the module host loses access to the database until a new account is requested.": "If this account is active, the module host loses access to the database until a new account is requested.",
-  "nav.monitoring.database-access": "Database access"
+  "nav.monitoring.database-access": "Database access",
+  "CRM contact": "CRM contact",
+  "CRM lead": "CRM lead",
+  "Contact linked.": "Contact linked.",
+  "Link contact": "Link contact",
+  "Linked to": "Linked to",
+  "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.": "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.",
+  "Who this contact is in the ERP and the CRM, so the team sees the history.": "Who this contact is in the ERP and the CRM, so the team sees the history."
 }
