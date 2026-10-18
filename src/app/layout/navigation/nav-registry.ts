@@ -1925,6 +1925,28 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    id: 'pos',
+    label: 'nav.pos',
+    icon: 'point_of_sale',
+    entitlementCode: 'module.pos.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'pos/terminals',
+        label: 'nav.pos.terminals',
+        icon: 'point_of_sale',
+        route: '/pos/terminals',
+      },
+      {
+        id: 'pos/sessions',
+        label: 'nav.pos.sessions',
+        icon: 'account_balance_wallet',
+        route: '/pos/sessions',
+      },
+      { id: 'pos/sales', label: 'nav.pos.sales', icon: 'receipt_long', route: '/pos/sales' },
+    ],
+  },
+  {
     id: 'sale',
     label: 'nav.sale',
     icon: 'point_of_sale',
