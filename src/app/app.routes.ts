@@ -1971,6 +1971,14 @@ export const routes: Routes = [
                 title: 'VoIP • PhoneWeb • Users | mnscloud',
               },
               {
+                path: 'voip/phone/pool-lines',
+                loadComponent: () =>
+                  import('./pages/voip/phone/pool-lines/pool-lines').then(
+                    (m) => m.VoipPhonePoolLinesPage,
+                  ),
+                title: 'VoIP • PhoneWeb • Free lines | mnscloud',
+              },
+              {
                 path: 'voip/phone/sessions',
                 loadComponent: () =>
                   import('./pages/voip/phone/sessions/sessions').then(

@@ -5,7 +5,15 @@ import {
   ConfigurableCrudRecord,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
-import { PHONE_BLOCK_REASONS, PHONE_REALMS, phoneSessionsConfig } from '../phone-options';
+import {
+  LINE_TARGET_EXEMPT,
+  LINE_TARGET_LOOKUP,
+  PHONE_BLOCK_REASONS,
+  PHONE_LINE_MODES,
+  PHONE_REALMS,
+  phoneSessionsConfig,
+  YES_NO,
+} from '../phone-options';
 
 /** API field that carries the identity of each sign-in realm. */
 const IDENTITY_FIELD: Record<string, string> = {
@@ -145,6 +153,65 @@ const config = defineCrud({
     VhuMaxSessions: Number(values['maxSessions']),
     VhuStatus: Number(values['status']),
   }),
+  relatedCollections: [
+    {
+      key: 'lines',
+      label: 'Lines',
+      emptyLabel: 'No lines assigned. Without lines, the person can only use pool lines or manual accounts.',
+      addLabel: 'Assign line',
+      createTitle: 'Assign line',
+      editTitle: 'Edit line',
+      dialogDescription: 'Extension or subscriber that this person registers in PhoneWeb.',
+      savedMessage: 'Line saved successfully.',
+      deletedMessage: 'Line removed.',
+      endpoint: (phoneUser) => `voip/phone/users/${phoneUser}/lines`,
+      updateEndpoint: (phoneUser) => `voip/phone/users/${phoneUser}/lines`,
+      deleteEndpoint: (phoneUser, row) => `voip/phone/users/${phoneUser}/lines/${row['VhlUUID']}`,
+      uuidField: 'VhlUUID',
+      initialValues: { status: 1, target: '', mode: 'dedicated', primary: 0, revision: null },
+      fields: [
+        { key: 'status', source: 'VhlStatus', label: 'Status', type: 'status', span: 1 },
+        {
+          key: 'target',
+          source: 'TargetUUID',
+          label: 'Line',
+          type: 'search-select',
+          required: true,
+          remoteLookup: LINE_TARGET_LOOKUP,
+          quickCreate: false,
+          quickCreateExemptReason: LINE_TARGET_EXEMPT,
+          disabledWhen: ({ editing }) => editing,
+          help: 'PABX extension or Softswitch subscriber. Customer logins only accept lines of their customer.',
+          span: 2,
+        },
+        { key: 'mode', source: 'VhlMode', label: 'Use', type: 'select', options: PHONE_LINE_MODES, required: true, span: 2 },
+        { key: 'primary', source: 'VhlIsPrimary', label: 'Primary line', type: 'select', options: YES_NO, required: true, span: 1 },
+        { key: 'revision', source: 'VhlRevision', label: 'Revision', hidden: true },
+      ],
+      columns: [
+        { id: 'line', label: 'Line', field: 'TargetLabel' },
+        {
+          id: 'mode',
+          label: 'Use',
+          value: (row, translate) =>
+            translate(PHONE_LINE_MODES.find((o) => o.value === row['VhlMode'])?.label ?? String(row['VhlMode'])),
+        },
+        { id: 'primary', label: 'Primary line', value: (row, translate) => translate(Number(row['VhlIsPrimary']) === 1 ? 'Yes' : 'No') },
+        {
+          id: 'webrtc',
+          label: 'WebRTC',
+          value: (row, translate) => translate(row['WebRtcReady'] === true ? 'Ready' : 'No WebRTC domain'),
+        },
+        { id: 'status', label: 'Status', field: 'VhlStatus', kind: 'status' },
+      ],
+      payload: (values) => ({
+        ...(values['revision'] ? { VhlRevision: Number(values['revision']) } : { TargetUUID: values['target'] }),
+        VhlMode: values['mode'],
+        VhlIsPrimary: Number(values['primary']),
+        VhlStatus: Number(values['status']),
+      }),
+    },
+  ],
   rowActions: [
     {
       key: 'sessions',

@@ -925,6 +925,12 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/voip/phone/users',
           },
           {
+            id: 'voip/phone/pool-lines',
+            label: 'nav.voip.phone.pool-lines',
+            icon: 'event_seat',
+            route: '/voip/phone/pool-lines',
+          },
+          {
             id: 'voip/phone/sessions',
             label: 'nav.voip.phone.sessions',
             icon: 'devices',

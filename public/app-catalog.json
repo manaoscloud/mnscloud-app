@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1f525cee2f5e",
+  "version": "1b002695a700",
   "language": "pt-BR",
   "entries": [
     {
@@ -9391,6 +9391,27 @@
         },
         {
           "label": "Duração da captura (segundos)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/phone/pool-lines",
+      "menuPath": "VoIP › PhoneWeb › Ramais livres",
+      "scope": "tenant",
+      "title": "Ramais livres",
+      "description": "Linhas que qualquer pessoa do tenant (ou do cliente da linha) pode pegar no PhoneWeb durante um turno, para posições rotativas e de callcenter. A linha volta para cá quando a pessoa sai.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Linha",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]

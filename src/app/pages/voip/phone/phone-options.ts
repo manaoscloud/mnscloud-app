@@ -34,6 +34,28 @@ export const PHONE_CLIENT_KINDS: readonly ConfigurableCrudOption[] = [
   { value: 'native', label: 'Installed app' },
 ];
 
+export const PHONE_LINE_MODES: readonly ConfigurableCrudOption[] = [
+  { value: 'dedicated', label: 'Dedicated (only this person)' },
+  { value: 'shared', label: 'Shared (rings for several people)' },
+];
+
+export const YES_NO: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+/** Lines (PABX extensions and Softswitch subscribers) of the tenant for assignment and pool. */
+export const LINE_TARGET_LOOKUP = {
+  endpoint: 'voip/phone/line-targets',
+  uuidField: 'TargetUUID',
+  labelField: 'Label',
+  selectedLabelField: 'TargetLabel',
+  searchParam: 'search',
+} as const;
+
+export const LINE_TARGET_EXEMPT =
+  'Polymorphic target: a line is a PABX extension or a Softswitch subscriber, created in their own VoIP pages.';
+
 /** PhoneWeb sessions, of one phone user (collection dialog) or of the whole tenant (page). */
 export function phoneSessionsConfig(phoneUserUUID: string | null): ConfigurableCrudConfig {
   return defineCrud({
