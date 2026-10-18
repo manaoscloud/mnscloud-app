@@ -385,6 +385,23 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   `helpConversationCollection`, `attachmentsCollection`); private files open through
   `openPrivateFile` (authorized API stream, never a storage URL).
 
+### Help Videos
+
+- A tutorial video (YouTube) teaches one App page in one language. The platform registers it in
+  Settings › Tutorial videos (`/settings/help-videos`, `platform.help.videos.manage`): App page
+  (Angular Router pattern from the route config, e.g. `/voip/pabx/trunks`), language
+  (`pt-BR`/`en-US`/`es-ES`), title and YouTube link (the API keeps only the video id).
+- `HelpVideoService` reads `GET /help/videos` once per session (and every 10 minutes, no
+  environment needed) and exposes `current()`: the video of the open route pattern in the user
+  language, else English, Portuguese, Spanish.
+- `<mns-help-video-button />` shows only when `current()` exists. `ReportProblemButtonComponent`
+  renders it right before "Report problem", so every page header, CRUD dialog and component
+  dialog gets it without extra markup; the topbar has it beside its bug button and the profile menu
+  has a "Tutorial video" item. The video dialog passes `[helpVideo]="false"`.
+- The video plays in `HelpVideoDialogComponent` (`openHelpVideo`) over the current window,
+  embedded from `https://www.youtube-nocookie.com/embed/<id>` built from a validated id, never a
+  stored URL. The edge CSP of the App allows only that frame origin (`frame-src`).
+
 ## Angular Runtime Baseline
 
 - The app targets Angular 22+ and must use the modern Angular template/runtime model for all new

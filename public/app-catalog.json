@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3b34298ec340",
+  "version": "ed7aea9cd7e0",
   "language": "pt-BR",
   "entries": [
     {
@@ -4508,6 +4508,35 @@
       "title": "Uso de IA",
       "description": "Cada chamada feita por um recurso de IA: tenant, provedor, modelo, tokens e resultado, para acompanhar custo e falhas.",
       "fields": []
+    },
+    {
+      "route": "/settings/help-videos",
+      "menuPath": "Configurações › Vídeos tutoriais",
+      "scope": "platform",
+      "title": "Vídeos tutoriais",
+      "description": "Vídeos do YouTube que ensinam cada página do App, por idioma. O vídeo abre dentro do App pelo botão ao lado de Reportar problema.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Idioma",
+          "help": "Idioma falado no vídeo. Grave um vídeo por idioma."
+        },
+        {
+          "label": "Página do App",
+          "help": "O vídeo aparece nesta página e nas janelas dela."
+        },
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Link do YouTube",
+          "help": "Cole o link do vídeo (watch, youtu.be, shorts ou embed). Vídeos não listados funcionam."
+        }
+      ]
     },
     {
       "route": "/settings/parameters",

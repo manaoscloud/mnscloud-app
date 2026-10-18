@@ -214,6 +214,19 @@ export const routes: Routes = [
               breadcrumb: 'AI assistant',
             },
           },
+          // Tutorial videos of the App pages (YouTube, per language), no tenant needed.
+          {
+            path: 'settings/help-videos',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/help-videos/help-videos').then((m) => m.HelpVideosPage),
+            title: 'Settings • Tutorial videos | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.help.videos.manage',
+              breadcrumb: 'Tutorial videos',
+            },
+          },
           // Platform AI (Settings › AI): providers shared by every AI feature, no tenant needed.
           {
             path: 'settings/ai/dashboard',
