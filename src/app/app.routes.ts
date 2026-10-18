@@ -1965,6 +1965,20 @@ export const routes: Routes = [
                 title: 'VoIP • PABX • Queue | mnscloud',
               },
               {
+                path: 'voip/phone/users',
+                loadComponent: () =>
+                  import('./pages/voip/phone/users/users').then((m) => m.VoipPhoneUsersPage),
+                title: 'VoIP • PhoneWeb • Users | mnscloud',
+              },
+              {
+                path: 'voip/phone/sessions',
+                loadComponent: () =>
+                  import('./pages/voip/phone/sessions/sessions').then(
+                    (m) => m.VoipPhoneSessionsPage,
+                  ),
+                title: 'VoIP • PhoneWeb • Sessions | mnscloud',
+              },
+              {
                 path: 'voip/pabx/queue-agents',
                 loadComponent: () =>
                   import('./pages/voip/pabx/queue-agent/queue-agent').then(

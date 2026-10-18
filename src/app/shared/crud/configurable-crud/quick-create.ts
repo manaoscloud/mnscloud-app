@@ -665,6 +665,11 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/voip/pabx/trunk/trunk').then((m) => m.VoipPabxTrunkPage),
   },
+  VoipPhoneUserVhuUUID: {
+    label: 'Create phone user',
+    loadComponent: () =>
+      import('../../../pages/voip/phone/users/users').then((m) => m.VoipPhoneUsersPage),
+  },
   VoipPortabilityReasonVprUUID: {
     label: 'Create reason',
     loadComponent: () =>
