@@ -24,7 +24,7 @@ const config = defineCrud({
       label: 'Event',
       paramKey: 'eventType',
       type: 'select',
-      span: 2,
+      span: 1,
       options: ACCOUNTING_EVENT_TYPES,
       emptyLabel: 'All',
     },

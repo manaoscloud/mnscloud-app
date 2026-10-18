@@ -11,7 +11,7 @@ const config = defineCrud({
   uuidField: 'AccUUID',
   pageTitle: 'Cost centers',
   pageDescription:
-    "Cost centers of your accountant's plan, used by the account mappings of the accounting events.",
+    'Cost centers of the plan used by your accountant, applied by the account mappings of the accounting events.',
   createTitle: 'New cost center',
   editTitle: 'Edit cost center',
   bulkDelete: false,

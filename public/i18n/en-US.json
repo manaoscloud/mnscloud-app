@@ -8194,7 +8194,7 @@
   "Posted": "Posted",
   "Exported": "Exported",
   "Cost centers": "Cost centers",
-  "Cost centers of your accountant's plan, used by the account mappings of the accounting events.": "Cost centers of your accountant's plan, used by the account mappings of the accounting events.",
+  "Cost centers of the plan used by your accountant, applied by the account mappings of the accounting events.": "Cost centers of the plan used by your accountant, applied by the account mappings of the accounting events.",
   "New cost center": "New cost center",
   "Edit cost center": "Edit cost center",
   "Accounting events": "Accounting events",

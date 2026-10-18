@@ -8195,7 +8195,7 @@
   "Posted": "Contabilizado",
   "Exported": "Exportado",
   "Cost centers": "Centros de custo",
-  "Cost centers of your accountant's plan, used by the account mappings of the accounting events.": "Centros de custo do plano do seu contador, usados nos mapeamentos de contas dos eventos contábeis.",
+  "Cost centers of the plan used by your accountant, applied by the account mappings of the accounting events.": "Centros de custo do plano usado pelo seu contador, aplicados pelos mapeamentos de contas dos eventos contábeis.",
   "New cost center": "Novo centro de custo",
   "Edit cost center": "Editar centro de custo",
   "Accounting events": "Eventos contábeis",
