@@ -46,6 +46,17 @@
   - `src/app/layout/navigation/nav-glossary.json` (label contract data)
 - Every sidebar label follows the Navigation Label Contract below.
 
+## Touch Scroll Baseline
+
+- A finger drag scrolls every list (sidebar, tables, mobile cards, dialogs) wherever it starts,
+  including on rows and buttons with a tooltip.
+- On iOS/Android `MatTooltip` writes an inline `touch-action: none` on its trigger, which blocked
+  the sidebar drag on resource rows (only module rows, without a tooltip, scrolled). The global
+  `src/styles/_touch-scroll.scss` rule restores `touch-action: manipulation` on every
+  `.mat-mdc-tooltip-trigger`; never set `touch-action: none` on a scrollable row or button.
+- Sidebar entries use `matTooltipTouchGestures="off"`: their route tooltip is a desktop hint and a
+  long press while scrolling must not open it. Covered by `src/app/layout/navigation/touch-scroll.spec.ts`.
+
 ## Platform AI (Settings › AI)
 
 - AI providers are a platform resource shared by every AI feature; only `platform.ai.manage` (or
