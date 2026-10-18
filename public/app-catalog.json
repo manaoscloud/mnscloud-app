@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "359d46f372ac",
+  "version": "efc8a088fb7a",
   "language": "pt-BR",
   "entries": [
     {
@@ -2113,35 +2113,6 @@
         },
         {
           "label": "Mês fechado",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/financial/invoicing/invoices",
-      "menuPath": "ERP › Faturamento › Lista",
-      "scope": "tenant",
-      "title": "Faturas",
-      "description": "Acompanhe a emissão de faturas e atualizações de status.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Data de emissão",
-          "help": ""
-        },
-        {
-          "label": "Valor",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
           "help": ""
         }
       ]
