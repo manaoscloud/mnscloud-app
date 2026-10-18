@@ -2135,6 +2135,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'monitoring/database-access',
+                loadComponent: () =>
+                  import('./pages/system/database/principals/principals').then(
+                    (m) => m.SystemDatabasePrincipalsPage,
+                  ),
+                title: 'System Monitoring • Database access | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'monitoring/client-versions',
                 loadComponent: () =>
                   import('./pages/system/runtime/client-versions/client-versions').then(

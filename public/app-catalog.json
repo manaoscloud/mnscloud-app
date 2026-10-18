@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ed7aea9cd7e0",
+  "version": "8cd858873962",
   "language": "pt-BR",
   "entries": [
     {
@@ -6945,6 +6945,27 @@
       "title": "Versões em uso",
       "description": "Sessões ativas nos últimos 15 minutos por versão do cliente, para ver quantos usuários ainda usam um App desatualizado após um release.",
       "fields": []
+    },
+    {
+      "route": "/system/monitoring/database-access",
+      "menuPath": "Monitoramento › Acesso ao banco",
+      "scope": "platform",
+      "title": "Acesso ao banco",
+      "description": "Cada servidor de módulo acessa o banco com a própria conta: nome e senha aleatórios, aceitos só a partir do endereço do servidor. A troca mantém a conta atual até a nova funcionar.",
+      "fields": [
+        {
+          "label": "Servidor do módulo",
+          "help": ""
+        },
+        {
+          "label": "Servidor do banco",
+          "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/system/monitoring/notification-rules",

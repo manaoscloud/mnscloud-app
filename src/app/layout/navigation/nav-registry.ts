@@ -1750,6 +1750,14 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: false,
       },
       {
+        id: 'monitoring/database-access',
+        label: 'nav.monitoring.database-access',
+        icon: 'key',
+        masterRoute: '/system/monitoring/database-access',
+        scope: 'master',
+        requiresEnvironment: false,
+      },
+      {
         id: 'monitoring/client-versions',
         label: 'nav.monitoring.client-versions',
         icon: 'update',
