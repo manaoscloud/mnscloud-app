@@ -939,6 +939,17 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/pos/sales').then((m) => m.PosSalesPage),
                 title: 'POS • Sales | mnscloud',
               },
+              {
+                path: 'point-of-sale/devices',
+                loadComponent: () => import('./pages/pos/devices').then((m) => m.PosDevicesPage),
+                title: 'POS • Devices | mnscloud',
+              },
+              {
+                path: 'point-of-sale/sync-conflicts',
+                loadComponent: () =>
+                  import('./pages/pos/sync-conflicts').then((m) => m.PosSyncConflictsPage),
+                title: 'POS • Sync conflicts | mnscloud',
+              },
 
               // Sale
               {

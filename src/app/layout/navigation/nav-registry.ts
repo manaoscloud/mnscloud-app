@@ -1949,6 +1949,18 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'receipt_long',
         route: '/point-of-sale/sales',
       },
+      {
+        id: 'pos/devices',
+        label: 'nav.pos.devices',
+        icon: 'phonelink_lock',
+        route: '/point-of-sale/devices',
+      },
+      {
+        id: 'pos/sync-conflicts',
+        label: 'nav.pos.sync-conflicts',
+        icon: 'sync_problem',
+        route: '/point-of-sale/sync-conflicts',
+      },
     ],
   },
   {

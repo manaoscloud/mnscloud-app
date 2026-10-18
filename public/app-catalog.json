@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c3b61dd4450e",
+  "version": "13143c442b19",
   "language": "pt-BR",
   "entries": [
     {
@@ -3563,6 +3563,39 @@
       "fields": []
     },
     {
+      "route": "/point-of-sale/devices",
+      "menuPath": "PDV › Aparelhos",
+      "scope": "tenant",
+      "title": "Emitir autorização offline",
+      "description": "Quem pode vender offline neste aparelho, os limites e até quando. Substitui a autorização vigente.",
+      "fields": [
+        {
+          "label": "Operadores",
+          "help": ""
+        },
+        {
+          "label": "Valor máximo por venda",
+          "help": ""
+        },
+        {
+          "label": "Total máximo vendido offline",
+          "help": ""
+        },
+        {
+          "label": "Máximo de itens por venda",
+          "help": ""
+        },
+        {
+          "label": "Desconto máximo (%)",
+          "help": "Até o desconto máximo do caixa."
+        },
+        {
+          "label": "Válido até",
+          "help": "No máximo 31 dias a partir de agora."
+        }
+      ]
+    },
+    {
       "route": "/point-of-sale/sales",
       "menuPath": "PDV › Vendas",
       "scope": "tenant",
@@ -3582,6 +3615,19 @@
       "title": "Sessões de caixa",
       "description": "Abertura, vendas, dinheiro esperado e contado de cada turno de caixa do PDV.",
       "fields": []
+    },
+    {
+      "route": "/point-of-sale/sync-conflicts",
+      "menuPath": "PDV › Conflitos",
+      "scope": "tenant",
+      "title": "Resolver conflito",
+      "description": "Registre o que foi conferido ou ajustado. Uma venda sem conflito aberto volta a ficar sincronizada.",
+      "fields": [
+        {
+          "label": "Resolução",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/point-of-sale/terminals",
