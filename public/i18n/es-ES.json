@@ -8093,5 +8093,6 @@
   "NFC-e signed offline by the registers and still to be authorized, the nearest transmission deadline first.": "NFC-e firmadas offline por las cajas y aún no autorizadas, con el plazo de transmisión más cercano primero.",
   "Deadline": "Plazo",
   "Transmit now": "Transmitir ahora",
-  "nav.fiscal.contingency": "Contingencia"
+  "nav.fiscal.contingency": "Contingencia",
+  "View message": "Ver mensaje"
 }

@@ -180,7 +180,7 @@ function config(
         key: 'conversation',
         label: 'Conversation',
         icon: 'forum',
-        collection: (row) => agentTimelineCollection(desk, row),
+        collection: (row) => agentTimelineCollection(desk, row, dialog),
       },
       {
         key: 'attachments',
