@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ApiService } from '../../../services/api.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -15,6 +16,7 @@ import {
   MEMBER_LOOKUP,
   messagesCollection,
 } from '../conversation-options';
+import { watchConversationChanges } from '../conversation-events';
 
 function isoOrNull(value: unknown): string | null {
   if (value === null || value === undefined || value === '') return null;
@@ -264,8 +266,21 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class ConversationsInboxPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
     const dialog = inject(MatDialog);
     super(inboxConfig(() => dialog));
+    // Push gateway: new messages and changes made by colleagues show up without a manual refresh.
+    watchConversationChanges(inject(ApiService), this.destroyRef, () => this.scheduleRefresh());
+    this.destroyRef.onDestroy(() => this.refreshTimer && clearTimeout(this.refreshTimer));
+  }
+
+  private scheduleRefresh() {
+    if (this.refreshTimer) clearTimeout(this.refreshTimer);
+    this.refreshTimer = setTimeout(() => {
+      this.refreshTimer = null;
+      this.refreshList();
+    }, 400);
   }
 }
