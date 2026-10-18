@@ -129,6 +129,7 @@
                                       [matTooltip]="great.path"
                                       matTooltipPosition="right"
                                       [matTooltipShowDelay]="600"
+                                      matTooltipTouchGestures="off"
                                       [class.active-grand]="isActiveItem(great)"
                                       [class.is-notified]="notifiedNavId() === great.id"
                                     >
@@ -154,6 +155,7 @@
                               [matTooltip]="grand.path"
                               matTooltipPosition="right"
                               [matTooltipShowDelay]="600"
+                              matTooltipTouchGestures="off"
                               [class.active-grand]="isActiveItem(grand)"
                               [class.is-notified]="notifiedNavId() === grand.id"
                             >
@@ -177,6 +179,7 @@
                     [matTooltip]="child.path"
                     matTooltipPosition="right"
                     [matTooltipShowDelay]="600"
+                    matTooltipTouchGestures="off"
                     [class.active-child]="isActiveItem(child)"
                     [class.is-notified]="notifiedNavId() === child.id"
                   >
