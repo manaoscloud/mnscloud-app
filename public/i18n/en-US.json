@@ -7350,6 +7350,7 @@
   "Connection failed": "Connection failed",
   "Cost control: maximum number of AI analyses in any hour.": "Cost control: maximum number of AI analyses in any hour.",
   "Create AI provider": "Create AI provider",
+  "Commercial": "Commercial",
   "Delete AI provider": "Delete AI provider",
   "Delete knowledge article": "Delete knowledge article",
   "Delete this AI provider? Its stored API key is erased.": "Delete this AI provider? Its stored API key is erased.",
