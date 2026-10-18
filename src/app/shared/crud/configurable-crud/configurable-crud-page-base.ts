@@ -223,6 +223,8 @@ export type ConfigurableCrudPostalCodeLookup = {
   cityKey?: string;
   stateKey?: string;
   countryKey?: string;
+  /** Receives the IBGE municipality code (7 digits) of Brazilian postal codes. */
+  municipalityCodeKey?: string;
   numberKey?: string;
 };
 
@@ -269,6 +271,7 @@ export type ConfigurableCrudField = {
     | 'transform'
     | 'authentication'
     | 'limits'
+    | 'fiscal'
     | 'diagnostics'
     | 'codecs'
     | 'retention'
@@ -961,6 +964,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly limitsFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'limits'),
   );
+  readonly fiscalFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'fiscal'),
+  );
+  /** Tabs rendered by one shared template block (keeps the template small for every CRUD page). */
+  readonly simpleTabs = computed(() => [
+    { key: 'limits' as const, label: 'Limits', fields: this.limitsFields() },
+    { key: 'fiscal' as const, label: 'Fiscal', fields: this.fiscalFields() },
+  ]);
   readonly codecFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'codecs'),
   );
@@ -1987,6 +1998,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       this.assignPostalLookupValue(next, lookup.cityKey, item['city']);
       this.assignPostalLookupValue(next, lookup.stateKey, item['state']);
       this.assignPostalLookupValue(next, lookup.countryKey, item['country']);
+      this.assignPostalLookupValue(next, lookup.municipalityCodeKey, item['ibgeCode']);
 
       this.formValues.update((current) => ({ ...current, ...next }));
       for (const key of Object.keys(next)) {

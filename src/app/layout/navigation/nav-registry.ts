@@ -221,6 +221,13 @@ export const NAV_ITEMS: NavItem[] = [
           },
           { id: 'erp/customer', label: 'nav.erp.customer', icon: 'person', route: '/erp/customer' },
           {
+            id: 'erp/fiscal-issuers',
+            label: 'nav.erp.fiscal-issuers',
+            icon: 'receipt_long',
+            route: '/erp/fiscal-issuers',
+            entitlementCode: 'module.fiscal.*',
+          },
+          {
             id: 'erp/supplier',
             label: 'nav.erp.supplier',
             icon: 'inventory_2',
@@ -1923,6 +1930,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.sale.product',
         icon: 'shopping_bag',
         route: '/sale/product',
+      },
+      {
+        id: 'sale/price-list',
+        label: 'nav.sale.price-list',
+        icon: 'price_change',
+        route: '/sale/price-list',
       },
       {
         id: 'sale/quotation',

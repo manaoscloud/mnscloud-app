@@ -534,6 +534,10 @@ the page must use the shared base named here.
   `createUpload` (create sends a file field as multipart with the shared upload progress, e.g.
   product images), column `kind: 'image'` (thumbnail), `addressSections`/`addressCopyActions`,
   `relatedCollections`, `afterSave`/`keepDialogOpenAfterSave` + `runManagedFileUpload`.
+- Form tabs include `fiscal` (field `tab: 'fiscal'`, label `Fiscal`) for the fiscal group of a
+  record (product classification, customer IE/indicators); the database owns the fiscal rules.
+  `postalLookup.municipalityCodeKey` receives the IBGE code returned by the postal code search,
+  so fiscal documents get the municipality without manual typing.
 - `check:crud:inventory` scans the whole app in CI (`verify:changed`) and fails on any CRUD/list
   page that does not extend `ConfigurableCrudPageBase`. There is no allowlist; the only opt-out is
   the documented `crud-template-exempt` marker for non-CRUD table pages.

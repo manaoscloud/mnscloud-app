@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "516b8d23c147",
+  "version": "2ce29f2d0684",
   "language": "pt-BR",
   "entries": [
     {
@@ -1647,6 +1647,10 @@
           "help": ""
         },
         {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
           "label": "CEP de cobrança",
           "help": ""
         },
@@ -1677,6 +1681,10 @@
         {
           "label": "País de cobrança",
           "help": ""
+        },
+        {
+          "label": "Código IBGE do município de cobrança",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
         },
         {
           "label": "CEP de instalação",
@@ -1711,6 +1719,10 @@
           "help": ""
         },
         {
+          "label": "Código IBGE do município de instalação",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
           "label": "Latitude",
           "help": ""
         },
@@ -1719,20 +1731,8 @@
           "help": ""
         },
         {
-          "label": "Anotações",
-          "help": ""
-        },
-        {
-          "label": "Acesso ao portal",
-          "help": ""
-        },
-        {
-          "label": "Login do portal (Usuário)",
-          "help": ""
-        },
-        {
-          "label": "Senha do portal",
-          "help": ""
+          "label": "Tipo de documento",
+          "help": "Automático identifica CPF ou CNPJ pelo documento de clientes brasileiros."
         }
       ]
     },
@@ -2007,6 +2007,51 @@
         },
         {
           "label": "Código",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/erp/fiscal-issuers",
+      "menuPath": "ERP › Cadastros › Emitentes fiscais",
+      "scope": "tenant",
+      "title": "Emitentes fiscais",
+      "description": "Perfil fiscal de cada estabelecimento que emite documentos fiscais para Vendas, PDV, ISP, Hosting e VoIP.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": "A empresa precisa ter CNPJ válido; cada empresa tem um perfil fiscal."
+        },
+        {
+          "label": "Ambiente",
+          "help": "Documentos de homologação não têm valor fiscal; mude para produção somente após os testes de homologação."
+        },
+        {
+          "label": "Regime tributário",
+          "help": ""
+        },
+        {
+          "label": "CNAE",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Sete dígitos do município do estabelecimento."
+        },
+        {
+          "label": "Inscrição municipal",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         },
         {
@@ -3593,6 +3638,43 @@
       ]
     },
     {
+      "route": "/sale/price-list",
+      "menuPath": "Vendas › Tabelas de preço",
+      "scope": "tenant",
+      "title": "Tabelas de preço",
+      "description": "Tabelas de preço com moeda, vigência e prioridade usadas por orçamentos, pedidos e PDV.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Moeda",
+          "help": "Código ISO 4217; vazio usa a moeda padrão do tenant."
+        },
+        {
+          "label": "Prioridade",
+          "help": "Entre as tabelas vigentes, vence o menor número."
+        },
+        {
+          "label": "Válido a partir de",
+          "help": ""
+        },
+        {
+          "label": "Válido até",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/sale/product",
       "menuPath": "Vendas › Produtos",
       "scope": "tenant",
@@ -3637,6 +3719,50 @@
         },
         {
           "label": "Etiquetas (CSV)",
+          "help": ""
+        },
+        {
+          "label": "Natureza fiscal",
+          "help": "Natureza real do item; ela decide qual documento fiscal é emitido para ele."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "NCM",
+          "help": ""
+        },
+        {
+          "label": "Origem da mercadoria",
+          "help": ""
+        },
+        {
+          "label": "CEST",
+          "help": ""
+        },
+        {
+          "label": "EX TIPI",
+          "help": ""
+        },
+        {
+          "label": "Item da lista de serviços (LC 116)",
+          "help": ""
+        },
+        {
+          "label": "Código de tributação municipal",
+          "help": ""
+        },
+        {
+          "label": "NBS",
+          "help": ""
+        },
+        {
+          "label": "Classificação do item de comunicação (cClass)",
+          "help": ""
+        },
+        {
+          "label": "Classificação IBS/CBS (cClassTrib)",
           "help": ""
         }
       ]
