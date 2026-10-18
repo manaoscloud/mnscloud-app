@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "17999bc31d7c",
+  "version": "de01cda92631",
   "language": "pt-BR",
   "entries": [
     {
@@ -1004,7 +1004,7 @@
     },
     {
       "route": "/customer-billing/charges",
-      "menuPath": "Cobrança de clientes › Cobranças",
+      "menuPath": "Faturamento de clientes › Cobranças",
       "scope": "tenant",
       "title": "Cobranças",
       "description": "Uma cobrança por ciclo do contrato, com seu título a receber; o pagamento do título marca a cobrança como paga e reativa o contrato suspenso por atraso.",
@@ -1012,7 +1012,7 @@
     },
     {
       "route": "/customer-billing/contracts",
-      "menuPath": "Cobrança de clientes › Contratos",
+      "menuPath": "Faturamento de clientes › Contratos",
       "scope": "tenant",
       "title": "Contratos de cobrança",
       "description": "Faturamento recorrente dos seus clientes para qualquer módulo (provedor, hospedagem, VoIP, vendas ou itens manuais): ciclo, itens, uso e ajustes viram uma cobrança por ciclo com seu título a receber.",
@@ -1057,7 +1057,7 @@
     },
     {
       "route": "/customer-billing/events",
-      "menuPath": "Cobrança de clientes › Eventos",
+      "menuPath": "Faturamento de clientes › Eventos",
       "scope": "tenant",
       "title": "Eventos de cobrança",
       "description": "Pedidos de suspensão, reativação e cancelamento enviados ao módulo de cada item do contrato; o módulo confirma cada um depois de aplicá-lo.",
@@ -1065,7 +1065,7 @@
     },
     {
       "route": "/customer-billing/modules",
-      "menuPath": "Cobrança de clientes › Módulos",
+      "menuPath": "Faturamento de clientes › Módulos",
       "scope": "tenant",
       "title": "Módulos faturáveis",
       "description": "Módulos cujos recursos podem ser cobrados em contratos. Um novo módulo passa a ser faturável ao se registrar, informar uso e aplicar os eventos de ciclo de vida.",
@@ -1073,7 +1073,7 @@
     },
     {
       "route": "/customer-billing/usage",
-      "menuPath": "Cobrança de clientes › Uso",
+      "menuPath": "Faturamento de clientes › Uso",
       "scope": "tenant",
       "title": "Uso faturável",
       "description": "Uso informado pelos módulos (minutos, tráfego, armazenamento...). O uso pendente é cobrado na próxima cobrança acima da quantidade incluída; uso sem item não tem item de uso para seu recurso e métrica.",

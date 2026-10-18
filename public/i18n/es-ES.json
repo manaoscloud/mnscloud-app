@@ -8174,7 +8174,7 @@
   "Contract version": "Versión del contrato",
   "Billing usage": "Uso facturable",
   "Usage reported by the modules (minutes, traffic, storage...). Pending usage is billed on the next charge above the included quantity; unmatched usage has no usage item for its resource and metric.": "Uso informado por los módulos (minutos, tráfico, almacenamiento...). El uso pendiente se cobra en el próximo cobro por encima de la cantidad incluida; el uso sin ítem no tiene ítem de uso para su recurso y métrica.",
-  "nav.customer-billing": "Cobro de clientes",
+  "nav.customer-billing": "Facturación de clientes",
   "nav.customer-billing.contracts": "Contratos",
   "nav.customer-billing.charges": "Cobros",
   "nav.customer-billing.usage": "Uso",
