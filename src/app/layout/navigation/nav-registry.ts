@@ -352,6 +352,27 @@ export const NAV_ITEMS: NavItem[] = [
 
   // CRM is an independent tenant module, immediately after ERP.
   {
+    id: 'conversations',
+    label: 'nav.conversations',
+    icon: 'forum',
+    entitlementCode: 'module.conversations.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'conversations/inbox',
+        label: 'nav.conversations.inbox',
+        icon: 'inbox',
+        route: '/conversations/inbox',
+      },
+      {
+        id: 'conversations/connections',
+        label: 'nav.conversations.connections',
+        icon: 'hub',
+        route: '/conversations/connections',
+      },
+    ],
+  },
+  {
     id: 'crm',
     label: 'nav.crm',
     icon: 'handshake',

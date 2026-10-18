@@ -121,6 +121,13 @@ export const QUICK_CREATE_REGISTRY = {
     permission: 'tenant.authentication.write',
     routeData: { scope: 'tenant' },
   },
+  ChannelConnectionChcUUID: {
+    label: 'Create channel connection',
+    loadComponent: () =>
+      import('../../../pages/conversations/connections/connections').then(
+        (m) => m.ConversationConnectionsPage,
+      ),
+  },
   CrmIndustryCinUUID: {
     label: 'crm.title.industries',
     loadComponent: () =>

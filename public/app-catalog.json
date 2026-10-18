@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1b002695a700",
+  "version": "3b34298ec340",
   "language": "pt-BR",
   "entries": [
     {
@@ -531,6 +531,96 @@
       "title": "Procedimentos",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/conversations/connections",
+      "menuPath": "Conversas › Conexões",
+      "scope": "tenant",
+      "title": "Conexões de canal",
+      "description": "Canais que alimentam a caixa de entrada: o canal interno da equipe agora, e WhatsApp, chat do site e outros canais conforme forem conectados. As credenciais ficam seladas e nunca são exibidas de novo.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Canal",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "ID do canal",
+          "help": "Identificador do provedor que encaminha as mensagens recebidas para cá (no WhatsApp, o ID do número de telefone)."
+        },
+        {
+          "label": "Configurações (JSON)",
+          "help": "Configurações opcionais, não sigilosas, como objeto JSON."
+        },
+        {
+          "label": "Credenciais (JSON ou token)",
+          "help": "Selado ao salvar e nunca exibido de novo. Deixe em branco para manter as credenciais salvas."
+        },
+        {
+          "label": "Apagar credenciais salvas",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/conversations/inbox",
+      "menuPath": "Conversas › Caixa de entrada",
+      "scope": "tenant",
+      "title": "Caixa de entrada",
+      "description": "Conversas com clientes e contatos de todos os canais conectados, em um só lugar: responda, adicione notas internas, atribua e resolva.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Canal",
+          "help": ""
+        },
+        {
+          "label": "Nome do contato",
+          "help": ""
+        },
+        {
+          "label": "Telefone do contato",
+          "help": "Formato internacional com o código do país."
+        },
+        {
+          "label": "E-mail do contato",
+          "help": ""
+        },
+        {
+          "label": "Assunto",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "Prioridade",
+          "help": ""
+        },
+        {
+          "label": "Responsável",
+          "help": ""
+        },
+        {
+          "label": "Adiada até",
+          "help": "Obrigatório quando o estado é Adiada; a conversa volta para a caixa de entrada neste horário."
+        }
+      ]
     },
     {
       "route": "/crm/accounts",
