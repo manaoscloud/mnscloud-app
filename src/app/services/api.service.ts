@@ -150,7 +150,7 @@ export class ApiService {
     method: 'POST' | 'PUT' | 'DELETE',
     endpoint: string,
     body?: any,
-    options?: { idempotencyKey?: string },
+    options?: { idempotencyKey?: string; silent?: boolean },
   ): Promise<T> {
     this.assertEnvironment(endpoint);
     const session = this.auth.sessionGeneration();
@@ -182,6 +182,7 @@ export class ApiService {
           headers: headers.set('Idempotency-Key', key),
           body,
           withCredentials: true,
+          ...(options?.silent ? { context: silentErrorsContext() } : {}),
         }),
       );
       this.pendingMutationKeys.delete(digest);
@@ -194,7 +195,12 @@ export class ApiService {
     }
   }
 
-  async post<T>(endpoint: string, body: any, options?: { idempotencyKey?: string }): Promise<T> {
+  /** `silent`: failures are thrown without an error toast (optional background calls). */
+  async post<T>(
+    endpoint: string,
+    body: any,
+    options?: { idempotencyKey?: string; silent?: boolean },
+  ): Promise<T> {
     return await this.mutation<T>('POST', endpoint, body, options);
   }
 

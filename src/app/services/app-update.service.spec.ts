@@ -31,6 +31,16 @@ describe('AppUpdateService', () => {
     expect(parseBuildMetadata('1.2.3')).toBeNull();
   });
 
+  it('treats a busy registered source (the phone dock) as open work with its own message', () => {
+    expect(service.openWorkKey()).toBeNull();
+    let phoneActive = true;
+    service.registerBusySource('phoneDock.updateOpenWork', () => phoneActive);
+    expect(service.hasOpenWork()).toBe(true);
+    expect(service.openWorkKey()).toBe('phoneDock.updateOpenWork');
+    phoneActive = false;
+    expect(service.hasOpenWork()).toBe(false);
+  });
+
   it('stays quiet while the deployed version equals the running bundle', () => {
     service.observe({ version: running, buildRef: null }, 0);
     expect(service.updateAvailable()).toBe(false);
