@@ -82,7 +82,7 @@ const config = defineCrud({
       quickCreate: false,
       quickCreateExemptReason:
         'Agents enroll from the host installer; they cannot be created from a form.',
-      span: 2,
+      span: 1,
     },
     {
       key: 'databaseAgentUUID',
@@ -99,7 +99,7 @@ const config = defineCrud({
       quickCreate: false,
       quickCreateExemptReason:
         'Agents enroll from the host installer; they cannot be created from a form.',
-      span: 2,
+      span: 1,
     },
     {
       key: 'profile',
@@ -108,7 +108,7 @@ const config = defineCrud({
       type: 'select',
       options: PROFILE_OPTIONS,
       required: true,
-      span: 2,
+      span: 1,
     },
   ],
   rowActions: [
