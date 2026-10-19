@@ -256,6 +256,11 @@ export const QUICK_CREATE_REGISTRY = {
       ),
     routeData: { catalog: 'procedures' },
   },
+  BillDueDayBddUUID: {
+    label: 'Create due-day rule',
+    loadComponent: () =>
+      import('../../../pages/customer-billing/due-days').then((m) => m.CustomerBillingDueDaysPage),
+  },
   CustomerCusUUID: {
     label: 'Create customer',
     loadComponent: () =>

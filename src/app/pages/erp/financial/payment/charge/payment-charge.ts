@@ -14,15 +14,16 @@ const statuses = [
   { value: 'overdue', label: 'Overdue' },
   { value: 'canceled', label: 'Canceled' },
 ];
+// Charges issued at the tenant gateway (boleto or Pix) for receivables, POS Pix and manual billing.
 // Financial records use individual deletion only; bank-backed records remain protected by DB/API.
 const config = defineCrud({
   serverSidePagination: true,
   canEditRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
   canDeleteRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
-  endpoint: 'erp/financial/invoicing/boletos',
-  uuidField: 'ErpFinInvBoletoUUID',
-  pageTitle: 'Boletos',
-  pageDescription: 'erp.description.boletos',
+  endpoint: 'erp/financial/payment/charges',
+  uuidField: 'ErpFinPayChargeUUID',
+  pageTitle: 'Boletos and Pix',
+  pageDescription: 'erp.description.payment-charges',
   bulkDelete: false,
   statusMode: 'string',
   activeValue: 'open',
@@ -123,13 +124,13 @@ const config = defineCrud({
 });
 
 @Component({
-  selector: 'app-boletos',
+  selector: 'app-financial-payment-charge',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class InvoicingBoletosPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class FinancialPaymentChargePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
   }

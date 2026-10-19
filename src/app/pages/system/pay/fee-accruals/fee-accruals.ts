@@ -28,7 +28,7 @@ const config = defineCrud({
   columns: [
     { id: 'tenant', label: 'Tenant', field: 'TenantEmail', kind: 'identity' },
     { id: 'charge', label: 'Fee charge', field: 'PfcID', kind: 'text' },
-    { id: 'boleto', label: 'Boleto', field: 'EibID', kind: 'text' },
+    { id: 'boleto', label: 'Boleto', field: 'EfcID', kind: 'text' },
     {
       id: 'amount',
       label: 'Amount',

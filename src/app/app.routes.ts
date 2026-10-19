@@ -843,6 +843,14 @@ export const routes: Routes = [
                 title: 'ERP • Financial • Payment Methods | mnscloud',
               },
               {
+                path: 'erp/financial/payment-charge',
+                loadComponent: () =>
+                  import('./pages/erp/financial/payment/charge/payment-charge').then(
+                    (m) => m.FinancialPaymentChargePage,
+                  ),
+                title: 'ERP • Financial • Boletos and Pix | mnscloud',
+              },
+              {
                 path: 'erp/financial/payment-gateway',
                 loadComponent: () =>
                   import('./pages/erp/financial/payment/gateway/payment-gateway').then(
@@ -850,32 +858,6 @@ export const routes: Routes = [
                   ),
                 title: 'ERP • Financial • Payment Gateways | mnscloud',
                 data: { scope: 'tenant', context: 'financial' },
-              },
-
-              // Invoicing
-              {
-                path: 'erp/financial/invoicing/boletos',
-                loadComponent: () =>
-                  import('./pages/erp/financial/invoicing/boletos/boletos').then(
-                    (m) => m.InvoicingBoletosPage,
-                  ),
-                title: 'ERP • Financial • Invoicing • Boletos | mnscloud',
-              },
-              {
-                path: 'erp/financial/invoicing/contracts',
-                loadComponent: () =>
-                  import('./pages/erp/financial/invoicing/contracts/contracts').then(
-                    (m) => m.InvoicingContractsPage,
-                  ),
-                title: 'ERP • Financial • Invoicing • Contracts | mnscloud',
-              },
-              {
-                path: 'erp/financial/invoicing/duedays',
-                loadComponent: () =>
-                  import('./pages/erp/financial/invoicing/duedays/duedays').then(
-                    (m) => m.InvoicingDueDaysPage,
-                  ),
-                title: 'ERP • Financial • Invoicing • Due Days | mnscloud',
               },
 
               {
@@ -954,14 +936,22 @@ export const routes: Routes = [
                   import('./pages/accounting/exports').then((m) => m.AccountingExportsPage),
                 title: 'Accounting • Exports | mnscloud',
               },
-              // Customer billing
+              // Invoicing (customer billing, shared by every module)
               {
                 path: 'customer-billing/contracts',
                 loadComponent: () =>
                   import('./pages/customer-billing/contracts').then(
                     (m) => m.CustomerBillingContractsPage,
                   ),
-                title: 'Customer billing • Contracts | mnscloud',
+                title: 'Invoicing • Contracts | mnscloud',
+              },
+              {
+                path: 'customer-billing/due-days',
+                loadComponent: () =>
+                  import('./pages/customer-billing/due-days').then(
+                    (m) => m.CustomerBillingDueDaysPage,
+                  ),
+                title: 'Invoicing • Due-day rules | mnscloud',
               },
               {
                 path: 'customer-billing/charges',
@@ -969,13 +959,13 @@ export const routes: Routes = [
                   import('./pages/customer-billing/charges').then(
                     (m) => m.CustomerBillingChargesPage,
                   ),
-                title: 'Customer billing • Charges | mnscloud',
+                title: 'Invoicing • Charges | mnscloud',
               },
               {
                 path: 'customer-billing/usage',
                 loadComponent: () =>
                   import('./pages/customer-billing/usage').then((m) => m.CustomerBillingUsagePage),
-                title: 'Customer billing • Usage | mnscloud',
+                title: 'Invoicing • Usage | mnscloud',
               },
               {
                 path: 'customer-billing/events',
@@ -983,7 +973,7 @@ export const routes: Routes = [
                   import('./pages/customer-billing/events').then(
                     (m) => m.CustomerBillingEventsPage,
                   ),
-                title: 'Customer billing • Events | mnscloud',
+                title: 'Invoicing • Events | mnscloud',
               },
               {
                 path: 'customer-billing/modules',
@@ -991,7 +981,7 @@ export const routes: Routes = [
                   import('./pages/customer-billing/modules').then(
                     (m) => m.CustomerBillingModulesPage,
                   ),
-                title: 'Customer billing • Modules | mnscloud',
+                title: 'Invoicing • Modules | mnscloud',
               },
               // Fiscal
               {

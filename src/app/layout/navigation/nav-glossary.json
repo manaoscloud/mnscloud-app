@@ -8,7 +8,7 @@
     "en-US": ["a", "an", "the", "and", "of", "for", "to", "by", "in", "on"],
     "es-ES": ["a", "el", "la", "los", "las", "y", "de", "del", "en", "con", "para", "por"]
   },
-  "properNouns": ["Bradesco", "Pay"],
+  "properNouns": ["Bradesco", "Pay", "Pix"],
   "canonicalLeaves": {
     "dashboard": {
       "pt-BR": "Painel",
