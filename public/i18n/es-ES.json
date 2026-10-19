@@ -8452,5 +8452,7 @@
   "Link contact": "Vincular contacto",
   "Linked to": "Vinculado a",
   "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.": "Los contactos nuevos se vinculan automáticamente cuando el teléfono coincide con un cliente, contacto o lead. Vacíe un campo para desvincularlo.",
-  "Who this contact is in the ERP and the CRM, so the team sees the history.": "Quién es este contacto en el ERP y en el CRM, para que el equipo vea el historial."
+  "Who this contact is in the ERP and the CRM, so the team sees the history.": "Quién es este contacto en el ERP y en el CRM, para que el equipo vea el historial.",
+  "Asterisk (PABX)": "Asterisk (PABX)",
+  "Old shared account": "Cuenta compartida antigua"
 }
