@@ -597,6 +597,28 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  {
+    id: 'logs',
+    label: 'nav.logs',
+    icon: 'receipt_long',
+    children: [
+      {
+        id: 'logs/clusters',
+        label: 'nav.logs.clusters',
+        icon: 'hub',
+        masterRoute: '/system/logs/clusters',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'logs/servers',
+        label: 'nav.logs.servers',
+        icon: 'dns',
+        masterRoute: '/system/logs/servers',
+        permissions: ['platform.master.access'],
+      },
+    ],
+  },
+
   // ✅ InfraGIS (tenant)
   {
     id: 'infragis',

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2ef002e500e1",
+  "version": "044d364224d4",
   "language": "pt-BR",
   "entries": [
     {
@@ -6800,6 +6800,76 @@
         {
           "label": "Token de API",
           "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/logs/clusters",
+      "menuPath": "Logs › Clusters",
+      "scope": "platform",
+      "title": "Clusters",
+      "description": "Clusters da plataforma que hospedam os servidores de Logs de uma região. Publique um cluster para que os tenants possam escolhê-lo nas contas de Logs.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": "Habilita o cluster. Comandos de instalação só são gerados para servidores de um cluster ativo."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Região",
+          "help": "Identifica a localização do cluster com letras minúsculas, números e hífens, por exemplo br-norte-1. É organizacional: não roteia tráfego."
+        },
+        {
+          "label": "Publicado",
+          "help": "Quando ativo e publicado, os tenants podem selecionar este cluster nas contas de Logs. Publicar não instala servidores."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/logs/servers",
+      "menuPath": "Logs › Servidores",
+      "scope": "platform",
+      "title": "Servidores",
+      "description": "Informe o nome e selecione o cluster. Após salvar, execute o comando gerado como root no host com o MNSCloud Agent instalado e registrado. O nó é configurado e verificado automaticamente.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": "Servidores ativos recebem a configuração. O servidor fica ativo quando a instalação é verificada; desative-o para interromper a entrega de configuração."
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Porta syslog UDP",
+          "help": "Porta em que os equipamentos enviam syslog para este nó (padrão 514). O nó escuta só no endereço privado e aceita apenas fontes cadastradas."
+        },
+        {
+          "label": "Porta syslog TCP",
+          "help": "Porta em que os equipamentos enviam syslog para este nó (padrão 514). O nó escuta só no endereço privado e aceita apenas fontes cadastradas."
         },
         {
           "label": "Anotações",
