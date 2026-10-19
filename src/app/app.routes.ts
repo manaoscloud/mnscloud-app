@@ -1154,11 +1154,11 @@ export const routes: Routes = [
                 title: 'Support • Teams | mnscloud',
                 data: { supportDesk: 'tenant' },
               },
+              // Channel connections moved to the Conversations module.
               {
                 path: 'support/channels',
-                loadComponent: () =>
-                  import('./pages/support/channels/channels').then((m) => m.SupportChannelsPage),
-                title: 'Support • Channels | mnscloud',
+                redirectTo: 'conversations/connections',
+                pathMatch: 'full',
               },
 
               // ISP

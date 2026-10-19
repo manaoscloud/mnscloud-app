@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "8cd858873962",
+  "version": "08482148df2b",
   "language": "pt-BR",
   "entries": [
     {
@@ -4777,27 +4777,6 @@
       ]
     },
     {
-      "route": "/support/channels",
-      "menuPath": "Suporte › Clientes › Canais",
-      "scope": "tenant",
-      "title": "Canais de suporte",
-      "description": "Gerencie as identidades dos canais de suporte do tenant.",
-      "fields": [
-        {
-          "label": "Provedor",
-          "help": ""
-        },
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        }
-      ]
-    },
-    {
       "route": "/support/ideas",
       "menuPath": "Suporte › Ideias",
       "scope": "public",
@@ -5338,7 +5317,7 @@
     },
     {
       "route": "/support/tickets",
-      "menuPath": "Suporte › Clientes › Chamados",
+      "menuPath": "Suporte › Chamados de clientes",
       "scope": "tenant",
       "title": "Tickets de suporte",
       "description": "Chamados dos seus clientes e o ciclo de atendimento.",
