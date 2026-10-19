@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "aef95931d9cb",
+  "version": "2ef002e500e1",
   "language": "pt-BR",
   "entries": [
     {
@@ -7861,16 +7861,16 @@
           "help": "Modo de publicação dos domínios SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
         },
         {
-          "label": "Base do Realm SIP",
-          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
-        },
-        {
           "label": "Rótulo do domínio",
           "help": "Prefixo do UUID da conta Softswitch; não muda quando a conta é renomeada."
         },
         {
           "label": "Tamanho do UUID",
           "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
         }
       ]
     },
@@ -10293,16 +10293,16 @@
           "help": "Modo de publicação dos domínios SIP gerados: DNS autoritativo gerenciado ou somente identidade SIP."
         },
         {
-          "label": "Base do Realm SIP",
-          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
-        },
-        {
           "label": "Rótulo do domínio",
           "help": "Prefixo do UUID da conta Softswitch; não muda quando a conta é renomeada."
         },
         {
           "label": "Tamanho do UUID",
           "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
+        },
+        {
+          "label": "Base do Realm SIP",
+          "help": "Sufixo de domínio dos domínios SIP de Softswitch gerados (ex.: softswitch.publichost.cloud)."
         }
       ]
     },
