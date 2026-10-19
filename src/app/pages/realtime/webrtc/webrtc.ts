@@ -17,6 +17,10 @@ import { InstallCommandDialogData } from '../../../shared/install-command-dialog
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
 import { RealtimeWebRtcService, WebRtcResource, WebRtcScope } from './webrtc.service';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
+import { ApiService } from '../../../services/api.service';
+
+/** Option value of the server primary domain select that asks the platform to generate it. */
+const AUTO_WEBRTC_DOMAIN = '__auto__';
 
 const STATUS_OPTIONS = [
   { value: 1, label: 'Active' },
@@ -101,6 +105,11 @@ const WEBRTC_SERVER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'realtimeDomainUUID',
       label: 'Primary Domain',
       type: 'search-select',
+      // Realtime domains created from a WebRTC form are WebRTC domains.
+      quickCreate: quickCreateFor('RealtimeDomainRtdUUID', {
+        initialValues: { purpose: 'webrtc' },
+      }),
+      help: 'Generate automatically creates <uuid>.<base> of the WebRTC automatic DNS with managed DNS and a free certificate; or choose an existing platform WebRTC domain.',
       span: 1,
     },
     {
@@ -258,6 +267,7 @@ function webRtcDomainConfig(endpoint: string, titlePrefix = 'WebRTC'): Configura
         // Tenant WebRTC domains bind the tenant's own realtime domains.
         quickCreate: quickCreateFor(
           endpoint.startsWith('system/') ? 'RealtimeDomainRtdUUID' : 'RealtimeDomainTenantRtdUUID',
+          { initialValues: { purpose: 'webrtc' } },
         ),
         payloadKey: 'realtimeDomainUUID',
         label: 'Realtime Domain',
@@ -540,7 +550,10 @@ const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
 
 abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly webRtcApi = inject(RealtimeWebRtcService);
+  private readonly parametersApi = inject(ApiService);
   private readonly resourceName: WebRtcResource;
+  /** Base of the WebRTC DNS policy when automatic server domains are enabled; null otherwise. */
+  private autoDomainBase: string | null = null;
   private readonly resourceScope: WebRtcScope;
   protected servers: ConfigurableCrudOption[] = [];
   protected domains: ConfigurableCrudOption[] = [];
@@ -561,7 +574,20 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.servers;
-    if (key === 'realtimeDomainUUID') return this.domains;
+    if (key === 'realtimeDomainUUID') {
+      if (this.resourceName !== 'servers' || this.editingRecord() || this.autoDomainBase === null) {
+        return this.domains;
+      }
+      return [
+        {
+          value: AUTO_WEBRTC_DOMAIN,
+          label: this.t('Generate automatically'),
+          description: `<uuid>.${this.autoDomainBase}`,
+          searchText: `${this.t('Generate automatically')} ${this.autoDomainBase}`,
+        },
+        ...this.domains,
+      ];
+    }
     if (key === 'mediaServerUUID') return this.mediaServers;
     if (key === 'webRtcDomainUUID') return this.domains;
     if (key === 'pabxAccountUUID') return this.pabxAccounts;
@@ -569,8 +595,19 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
     return [];
   }
 
+  override startCreate(): void {
+    super.startCreate();
+    if (this.resourceName === 'servers' && this.autoDomainBase !== null) {
+      this.patchFormValues({ realtimeDomainUUID: AUTO_WEBRTC_DOMAIN });
+    }
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     if (this.resourceName === 'servers') payload['engine'] = 'kamailio';
+    if (this.resourceName === 'servers' && payload['realtimeDomainUUID'] === AUTO_WEBRTC_DOMAIN) {
+      payload['realtimeDomainUUID'] = null;
+      payload['autoDomain'] = true;
+    }
     if (this.resourceName === 'sip-targets') {
       payload['port'] = Number(payload['port'] || 5060);
       payload['priority'] = Number(payload['priority'] || 100);
@@ -613,24 +650,35 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
   private async fetchLookupOptions() {
     const needsSipTargets = this.resourceName === 'sip-targets';
     const needsServerLookups = this.resourceName === 'servers';
-    const [servers, domains, mediaServers, pabxAccounts, softswitchAccounts] = await Promise.all([
-      this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
-      this.resourceName === 'sip-targets'
-        ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, this.resourceScope)
-        : this.webRtcApi.listRealtimeDomains(
-            { limit: 5000, purpose: 'webrtc', status: 1 },
-            this.resourceScope,
-          ),
-      needsServerLookups
-        ? this.webRtcApi.listMediaServers({ status: 1, limit: 5000 })
-        : Promise.resolve({ data: { items: [] } }),
-      needsSipTargets
-        ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 })
-        : Promise.resolve({ data: { items: [] } }),
-      needsSipTargets
-        ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 })
-        : Promise.resolve({ data: { items: [] } }),
-    ]);
+    const [servers, domains, mediaServers, pabxAccounts, softswitchAccounts, parameters] =
+      await Promise.all([
+        this.webRtcApi.list('servers', { status: 1, limit: 5000 }, this.resourceScope),
+        this.resourceName === 'sip-targets'
+          ? this.webRtcApi.list('domains', { status: 1, limit: 5000 }, this.resourceScope)
+          : this.webRtcApi.listRealtimeDomains(
+              { limit: 5000, purpose: 'webrtc', status: 1 },
+              this.resourceScope,
+            ),
+        needsServerLookups
+          ? this.webRtcApi.listMediaServers({ status: 1, limit: 5000 })
+          : Promise.resolve({ data: { items: [] } }),
+        needsSipTargets
+          ? this.webRtcApi.listPabxAccounts({ status: 1, limit: 5000 })
+          : Promise.resolve({ data: { items: [] } }),
+        needsSipTargets
+          ? this.webRtcApi.listSoftswitchAccounts({ status: 1, limit: 5000 })
+          : Promise.resolve({ data: { items: [] } }),
+        needsServerLookups
+          ? this.parametersApi
+              .get<any>('system/realtime/webrtc/domain-parameters')
+              .catch(() => null)
+          : Promise.resolve(null),
+      ]);
+    const domainParameters = parameters?.data?.item;
+    this.autoDomainBase =
+      domainParameters?.autoDomainEnabled === true && domainParameters?.dnsPolicyBase
+        ? String(domainParameters.dnsPolicyBase)
+        : null;
     this.servers = this.toOptions(servers?.data?.items ?? [], 'RwsUUID', 'RwsName', 'RwsHostname');
     this.domains =
       this.resourceName === 'sip-targets'

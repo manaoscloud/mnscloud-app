@@ -19,6 +19,7 @@ import {
   ConfigurableCrudRowAction,
   ConfigurableCrudOption,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { InstallCommandDialogData } from '../../../shared/install-command-dialog/install-command-dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
 import { RealtimeMediaService } from './media.service';
@@ -294,6 +295,8 @@ const MEDIA_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       label: 'Realtime Domain',
       type: 'search-select',
       required: true,
+      // Realtime domains created from a media form are media domains.
+      quickCreate: quickCreateFor('RealtimeDomainRtdUUID', { initialValues: { purpose: 'media' } }),
       span: 1,
     },
     {

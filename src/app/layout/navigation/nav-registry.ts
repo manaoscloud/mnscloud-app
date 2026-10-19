@@ -1172,6 +1172,13 @@ export const NAV_ITEMS: NavItem[] = [
             masterRoute: '/system/realtime/webrtc/parameter',
             permissions: ['platform.master.access'],
           },
+          {
+            id: 'realtime/webrtc/automatic-dns',
+            label: 'nav.realtime.webrtc.automatic-dns',
+            icon: 'tune',
+            masterRoute: '/system/realtime/webrtc/automatic-dns',
+            permissions: ['platform.master.access'],
+          },
         ],
       },
       {
@@ -1235,6 +1242,13 @@ export const NAV_ITEMS: NavItem[] = [
             label: 'nav.realtime.turn.server',
             icon: 'dns',
             masterRoute: '/system/realtime/turn/server',
+            permissions: ['platform.master.access'],
+          },
+          {
+            id: 'realtime/turn/parameters',
+            label: 'nav.realtime.turn.parameters',
+            icon: 'tune',
+            masterRoute: '/system/realtime/turn/parameters',
             permissions: ['platform.master.access'],
           },
         ],

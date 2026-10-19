@@ -8761,5 +8761,20 @@
   "home.rows.fiscal.rows.needing_action": "Documentos que pedem ação",
   "home.rows.pos.rows.open_sessions": "Caixas abertos",
   "No selection": "Sem seleção",
-  "Optional. Empty uses the dial plan of the PABX account.": "Opcional. Vazio usa o plano de discagem da conta PABX."
+  "Optional. Empty uses the dial plan of the PABX account.": "Opcional. Vazio usa o plano de discagem da conta PABX.",
+  "nav.realtime.turn.parameters": "Parâmetros",
+  "nav.realtime.webrtc.automatic-dns": "DNS automático",
+  "TURN/STUN parameters": "Parâmetros TURN/STUN",
+  "WebRTC domain parameters": "DNS automático do WebRTC",
+  "Automatic managed domain of new TURN/STUN servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.": "Domínio gerenciado automático dos novos servidores TURN/STUN, publicado sob uma policy DNS Realtime ativa da plataforma e protegido com certificado gratuito.",
+  "Automatic managed primary domain of new WebRTC servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.": "Domínio principal gerenciado automático dos novos servidores WebRTC, publicado sob uma policy DNS Realtime ativa da plataforma e protegido com certificado gratuito.",
+  "Generate TURN/STUN server domain automatically": "Gerar domínio do servidor TURN/STUN automaticamente",
+  "Generate WebRTC server domain automatically": "Gerar domínio do servidor WebRTC automaticamente",
+  "Realtime DNS policy": "Policy DNS Realtime",
+  "Enabled platform policy of the Realtime DNS tab of a DNS zone. Each new TURN/STUN server gets its own managed domain under its base: it is the coturn realm and the platform TURN domain, published with the advertised IPv4 (A) and issued a Let’s Encrypt certificate by the server.": "Policy ativa da plataforma na aba DNS Realtime de uma zona DNS. Cada novo servidor TURN/STUN recebe seu próprio domínio gerenciado sob essa base: ele é o realm do coturn e o domínio TURN da plataforma, publicado com o IPv4 anunciado (A) e com certificado Let’s Encrypt emitido pelo servidor.",
+  "Enabled platform policy of the Realtime DNS tab of a DNS zone. Each new WebRTC server gets its own managed primary domain under its base, published with the server IPv4 (A) and IPv6 (AAAA) and issued a Let’s Encrypt certificate by the edge.": "Policy ativa da plataforma na aba DNS Realtime de uma zona DNS. Cada novo servidor WebRTC recebe seu próprio domínio principal gerenciado sob essa base, publicado com o IPv4 (A) e o IPv6 (AAAA) do servidor e com certificado Let’s Encrypt emitido pelo edge.",
+  "Prefix of the TURN/STUN server UUID; it never changes when the server is renamed.": "Prefixo do UUID do servidor TURN/STUN; não muda quando o servidor é renomeado.",
+  "Prefix of the WebRTC server UUID; it never changes when the server is renamed.": "Prefixo do UUID do servidor WebRTC; não muda quando o servidor é renomeado.",
+  "Generate automatically creates <uuid>.<base> of the TURN/STUN parameters with managed DNS and a free certificate; or choose an existing TURN/STUN domain.": "Gerar automaticamente cria <uuid>.<base> dos parâmetros TURN/STUN com DNS gerenciado e certificado gratuito; ou escolha um domínio TURN/STUN existente.",
+  "Generate automatically creates <uuid>.<base> of the WebRTC automatic DNS with managed DNS and a free certificate; or choose an existing platform WebRTC domain.": "Gerar automaticamente cria <uuid>.<base> do DNS automático do WebRTC com DNS gerenciado e certificado gratuito; ou escolha um domínio WebRTC da plataforma existente."
 }

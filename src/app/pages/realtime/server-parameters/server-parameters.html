@@ -1,6 +1,6 @@
 <mns-settings-page
-  title="RTP media parameters"
-  description="Automatic managed domain of new media servers, published under an enabled platform RTP DNS policy."
+  [title]="config.title"
+  [description]="config.description"
   [loading]="loading()"
   [saving]="saving()"
   [dirty]="hasChanges()"
@@ -16,7 +16,7 @@
         [checked]="form().autoDomainEnabled"
         (change)="update({ autoDomainEnabled: $event.checked })"
       >
-        {{ 'Generate media server domain automatically' | transloco }}
+        {{ config.toggle | transloco }}
       </mat-slide-toggle>
     </div>
 
@@ -24,7 +24,7 @@
       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
       fieldClass="span-2"
       data-field-key="dnsPolicyUUID"
-      [label]="'RTP DNS policy' | transloco"
+      [label]="config.policyLabel | transloco"
       [options]="dns.options()"
       [remoteSearch]="true"
       [loading]="dns.loading()"
@@ -37,10 +37,7 @@
       [value]="form().dnsPolicyUUID"
       [invalid]="invalid('dnsPolicyUUID')"
       [errorMessage]="'form.validation.required' | transloco"
-      [help]="
-        'Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).'
-          | transloco
-      "
+      [help]="config.policyHelp | transloco"
       (valueChange)="selectDnsPolicy($event)"
     />
 
@@ -50,10 +47,7 @@
       <mns-field-help
         matIconSuffix
         [label]="'Domain label' | transloco"
-        [text]="
-          'Prefix of the media server UUID; it never changes when the server is renamed.'
-            | transloco
-        "
+        [text]="config.labelHelp | transloco"
       />
     </mat-form-field>
 
