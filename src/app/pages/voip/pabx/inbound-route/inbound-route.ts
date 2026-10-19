@@ -74,24 +74,11 @@ function config(): ConfigurableCrudConfig {
         lookupKey: 'pabxUUID',
       },
       { id: 'did', label: 'DID', kind: 'text', field: 'didNumber' },
-      {
-        id: 'routeType',
-        label: 'Route type',
-        kind: 'text',
-        field: 'routeType',
-        translateValue: true,
-      },
+      { id: 'routeType', label: 'Route type', kind: 'text', field: 'routeType', translateValue: true },
       { id: 'status', label: 'Status', kind: 'status', field: 'enabled' },
     ],
     fields: [
-      {
-        key: 'enabled',
-        source: 'enabled',
-        payloadKey: 'enabled',
-        label: 'Status',
-        type: 'status',
-        span: 1,
-      },
+      { key: 'enabled', source: 'enabled', payloadKey: 'enabled', label: 'Status', type: 'status', span: 1 },
       {
         key: 'pabxUUID',
         source: 'pabxUUID',
@@ -141,8 +128,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Destination',
         type: 'search-select',
         quickCreate: false,
-        quickCreateExemptReason:
-          'Route target is polymorphic (extension, queue, IVR, group, custom) and depends on the selected target type.',
+        quickCreateExemptReason: 'Route target is polymorphic (extension, queue, IVR, group, custom) and depends on the selected target type.',
         required: true,
         tab: 'routing',
         span: 1,
@@ -211,9 +197,7 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const did = this.didOptions().find(
-      (item) => String(item.value) === String(payload['didUUID'] ?? ''),
-    );
+    const did = this.didOptions().find((item) => String(item.value) === String(payload['didUUID'] ?? ''));
     const didNumber = String(did?.label ?? '').trim();
     return {
       ...payload,
@@ -281,7 +265,10 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
 
   private async loadDependentLookups(includeDidUUID = ''): Promise<void> {
     const sequence = ++this.lookupSequence;
-    await Promise.all([this.loadDids(includeDidUUID, sequence), this.loadRouteTargets(sequence)]);
+    await Promise.all([
+      this.loadDids(includeDidUUID, sequence),
+      this.loadRouteTargets(sequence),
+    ]);
   }
 
   private async loadDids(includeDidUUID = '', sequence = this.lookupSequence): Promise<void> {
@@ -299,9 +286,9 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     );
     if (sequence !== this.lookupSequence) return;
     this.didOptions.set(
-      extractItems(response)
-        .map((row) => option(row.VddUUID, row.VddNumber, [row.CustomerName]))
-        .filter(Boolean) as ConfigurableCrudOption[],
+      extractItems(response).map((row) =>
+        option(row.VddUUID, row.VddNumber, [row.CustomerName]),
+      ).filter(Boolean) as ConfigurableCrudOption[],
     );
   }
 
@@ -318,9 +305,7 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     );
     if (sequence !== this.lookupSequence) return;
     this.routeTargetOptions.set(
-      extractItems(response)
-        .map((row) => targetOption(routeType, row))
-        .filter(Boolean) as ConfigurableCrudOption[],
+      extractItems(response).map((row) => targetOption(routeType, row)).filter(Boolean) as ConfigurableCrudOption[],
     );
   }
 
@@ -331,10 +316,7 @@ export class VoipPabxInboundRoutePage extends ConfigurableCrudPageBase<Configura
     const didNumber = did.label;
     this.patchFormValues({
       name: currentName || `DID ${didNumber}`,
-      pattern:
-        String(did.description ?? '')
-          .split(' - ')
-          .pop() || `^${didNumber}$`,
+      pattern: String(did.description ?? '').split(' - ').pop() || `^${didNumber}$`,
     });
   }
 
@@ -365,18 +347,11 @@ function targetEndpoint(routeType: RouteTargetType): string {
 }
 
 function targetOption(routeType: RouteTargetType, row: any): ConfigurableCrudOption | null {
-  if (routeType === 'group')
-    return option(row.VpgUUID ?? row.uuid, row.VpgName ?? row.name, [row.PabxName]);
-  if (routeType === 'queue')
-    return option(row.VpqUUID ?? row.uuid, row.VpqName ?? row.name, [row.PabxName]);
-  if (routeType === 'ivr')
-    return option(row.VpiUUID ?? row.uuid, row.VpiName ?? row.name, [row.PabxName]);
-  if (routeType === 'custom')
-    return option(row.VpcUUID ?? row.uuid, row.VpcName ?? row.name, [row.pabxName ?? row.PabxName]);
-  return option(row.VpeUUID ?? row.uuid, row.VpeUsername ?? row.username, [
-    row.PabxName,
-    row.DomainName,
-  ]);
+  if (routeType === 'group') return option(row.VpgUUID ?? row.uuid, row.VpgName ?? row.name, [row.PabxName]);
+  if (routeType === 'queue') return option(row.VpqUUID ?? row.uuid, row.VpqName ?? row.name, [row.PabxName]);
+  if (routeType === 'ivr') return option(row.VpiUUID ?? row.uuid, row.VpiName ?? row.name, [row.PabxName]);
+  if (routeType === 'custom') return option(row.VpcUUID ?? row.uuid, row.VpcName ?? row.name, [row.pabxName ?? row.PabxName]);
+  return option(row.VpeUUID ?? row.uuid, row.VpeUsername ?? row.username, [row.PabxName, row.DomainName]);
 }
 
 function extractItems(response: any): any[] {

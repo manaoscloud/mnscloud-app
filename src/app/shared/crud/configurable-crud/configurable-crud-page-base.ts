@@ -690,33 +690,11 @@ export type ConfigurableCrudListParams = ConfigurableCrudFilters & {
   pageSize: number;
 };
 
-/** What a shared row-action helper needs from its CRUD page (see `rowActionContext()`). */
-export type CrudRowActionContext = {
-  api: ApiService;
-  dialog: MatDialog;
-  t: (key: string) => string;
-  notifyError: (message: string) => void;
-  refresh: () => void;
-  trackOperation: (response: unknown) => unknown;
-};
-
 @Directive()
 export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord> {
   protected readonly operations = inject(AsyncOperationsService);
   protected trackOperation(response: unknown): boolean {
     return this.operations.observe(response, this.destroyRef, () => this.refreshList());
-  }
-
-  /** Dependencies of row-action helpers shared by several pages (messages are translation keys). */
-  protected rowActionContext(): CrudRowActionContext {
-    return {
-      api: this.api,
-      dialog: this.dialog,
-      t: (key) => this.t(key),
-      notifyError: (message) => this.snack.error(this.t(message)),
-      refresh: () => this.refreshList(),
-      trackOperation: (response) => this.trackOperation(response),
-    };
   }
 
   readonly api = inject(ApiService);

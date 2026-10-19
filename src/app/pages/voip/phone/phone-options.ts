@@ -1,8 +1,4 @@
-import {
-  ConfigurableCrudConfig,
-  ConfigurableCrudOption,
-  ConfigurableCrudRecord,
-} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { ConfigurableCrudConfig, ConfigurableCrudOption, ConfigurableCrudRecord } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 /** PhoneWeb sign-in identity of a phone user (API `VhuRealm`). */
@@ -95,13 +91,7 @@ export function phoneSessionsConfig(phoneUserUUID: string | null): ConfigurableC
       },
     ],
     columns: [
-      {
-        id: 'device',
-        label: 'Device',
-        field: 'VhsDeviceName',
-        uuidField: 'VhsUUID',
-        kind: 'identity',
-      },
+      { id: 'device', label: 'Device', field: 'VhsDeviceName', uuidField: 'VhsUUID', kind: 'identity' },
       { id: 'client', label: 'Client', field: 'VhsClientKind', options: PHONE_CLIENT_KINDS },
       { id: 'platform', label: 'Platform', field: 'VhsPlatform' },
       { id: 'ip', label: 'IP', field: 'VhsIP', optional: true },
@@ -109,12 +99,7 @@ export function phoneSessionsConfig(phoneUserUUID: string | null): ConfigurableC
       { id: 'expires', label: 'Expires', field: 'VhsExpiresAt', kind: 'datetime', optional: true },
       { id: 'active', label: 'Active', field: 'Active', kind: 'boolean' },
       { id: 'revoked', label: 'Ended', field: 'VhsRevokedAt', kind: 'datetime', optional: true },
-      {
-        id: 'reason',
-        label: 'End reason',
-        field: 'VhsRevokeReason',
-        options: PHONE_REVOKE_REASONS,
-      },
+      { id: 'reason', label: 'End reason', field: 'VhsRevokeReason', options: PHONE_REVOKE_REASONS },
     ],
     fields: [],
   });

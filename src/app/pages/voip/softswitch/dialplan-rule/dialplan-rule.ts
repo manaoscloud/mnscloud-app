@@ -82,141 +82,20 @@ const CONFIG: ConfigurableCrudConfig = {
     status: 1,
   },
   fields: [
-    {
-      key: 'dialplanUUID',
-      source: 'dialplanUUID',
-      payloadKey: 'dialplanUUID',
-      label: 'Dialplan',
-      type: 'search-select',
-      quickCreate: quickCreateFor('VoipSoftswitchDialplanVdpUUID'),
-      required: true,
-      span: 1,
-      tab: 'record',
-    },
-    {
-      key: 'status',
-      source: 'status',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-      tab: 'record',
-    },
-    {
-      key: 'name',
-      source: 'name',
-      payloadKey: 'name',
-      label: 'Name',
-      required: true,
-      span: 2,
-      tab: 'record',
-    },
-    {
-      key: 'direction',
-      source: 'direction',
-      payloadKey: 'direction',
-      label: 'Direction',
-      type: 'select',
-      options: directions,
-      required: true,
-      span: 1,
-      tab: 'match',
-    },
-    {
-      key: 'matchType',
-      source: 'matchType',
-      payloadKey: 'matchType',
-      label: 'Match type',
-      type: 'select',
-      options: matchTypes,
-      required: true,
-      span: 1,
-      tab: 'match',
-    },
-    {
-      key: 'matchValue',
-      source: 'matchValue',
-      payloadKey: 'matchValue',
-      label: 'Match value',
-      required: true,
-      span: 1,
-      tab: 'match',
-    },
-    {
-      key: 'priority',
-      source: 'priority',
-      payloadKey: 'priority',
-      label: 'Priority',
-      type: 'number',
-      span: 1,
-      tab: 'match',
-    },
-    {
-      key: 'action',
-      source: 'action',
-      payloadKey: 'action',
-      label: 'Action',
-      type: 'select',
-      options: actions,
-      required: true,
-      span: 1,
-      tab: 'routing',
-    },
-    {
-      key: 'trunkGroupUUID',
-      source: 'trunkGroupUUID',
-      payloadKey: 'trunkGroupUUID',
-      label: 'Trunk group',
-      type: 'search-select',
-      quickCreate: quickCreateFor('VoipSoftswitchTrunkGroupVtgUUID'),
-      span: 1,
-      tab: 'routing',
-      hiddenWhen: ({ values }) => !['route', 'trunk_group'].includes(String(values['action'])),
-    },
-    {
-      key: 'trunkUUID',
-      source: 'trunkUUID',
-      payloadKey: 'trunkUUID',
-      label: 'Trunk',
-      type: 'search-select',
-      quickCreate: quickCreateFor('VoipSoftswitchTrunkVtkUUID'),
-      span: 1,
-      tab: 'routing',
-      hiddenWhen: ({ values }) => String(values['action']) !== 'trunk',
-    },
-    {
-      key: 'failoverSipCodes',
-      source: 'failoverSipCodes',
-      payloadKey: 'failoverSipCodes',
-      label: 'Failover SIP codes',
-      span: 1,
-      tab: 'routing',
-    },
-    {
-      key: 'stripDigits',
-      source: 'stripDigits',
-      payloadKey: 'stripDigits',
-      label: 'Strip digits',
-      type: 'number',
-      span: 1,
-      tab: 'transform',
-    },
-    {
-      key: 'prepend',
-      source: 'prepend',
-      payloadKey: 'prepend',
-      label: 'Prepend',
-      span: 1,
-      tab: 'transform',
-    },
-    {
-      key: 'normalizedPrefix',
-      source: 'normalizedPrefix',
-      payloadKey: 'normalizedPrefix',
-      label: 'Normalized prefix',
-      span: 1,
-      tab: 'transform',
-    },
+    { key: 'dialplanUUID', source: 'dialplanUUID', payloadKey: 'dialplanUUID', label: 'Dialplan', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchDialplanVdpUUID'), required: true, span: 1, tab: 'record' },
+    { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1, tab: 'record' },
+    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2, tab: 'record' },
+    { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', type: 'select', options: directions, required: true, span: 1, tab: 'match' },
+    { key: 'matchType', source: 'matchType', payloadKey: 'matchType', label: 'Match type', type: 'select', options: matchTypes, required: true, span: 1, tab: 'match' },
+    { key: 'matchValue', source: 'matchValue', payloadKey: 'matchValue', label: 'Match value', required: true, span: 1, tab: 'match' },
+    { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'match' },
+    { key: 'action', source: 'action', payloadKey: 'action', label: 'Action', type: 'select', options: actions, required: true, span: 1, tab: 'routing' },
+    { key: 'trunkGroupUUID', source: 'trunkGroupUUID', payloadKey: 'trunkGroupUUID', label: 'Trunk group', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchTrunkGroupVtgUUID'), span: 1, tab: 'routing', hiddenWhen: ({ values }) => !['route', 'trunk_group'].includes(String(values['action'])) },
+    { key: 'trunkUUID', source: 'trunkUUID', payloadKey: 'trunkUUID', label: 'Trunk', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchTrunkVtkUUID'), span: 1, tab: 'routing', hiddenWhen: ({ values }) => String(values['action']) !== 'trunk' },
+    { key: 'failoverSipCodes', source: 'failoverSipCodes', payloadKey: 'failoverSipCodes', label: 'Failover SIP codes', span: 1, tab: 'routing' },
+    { key: 'stripDigits', source: 'stripDigits', payloadKey: 'stripDigits', label: 'Strip digits', type: 'number', span: 1, tab: 'transform' },
+    { key: 'prepend', source: 'prepend', payloadKey: 'prepend', label: 'Prepend', span: 1, tab: 'transform' },
+    { key: 'normalizedPrefix', source: 'normalizedPrefix', payloadKey: 'normalizedPrefix', label: 'Normalized prefix', span: 1, tab: 'transform' },
   ],
 };
 
@@ -240,9 +119,7 @@ export class VoipSoftswitchDialplanRulePage extends ConfigurableCrudPageBase<Con
   }
 
   override fieldLoading(field: { key: string }): boolean {
-    return ['dialplanUUID', 'trunkGroupUUID', 'trunkUUID'].includes(field.key)
-      ? this.lookupLoading()
-      : false;
+    return ['dialplanUUID', 'trunkGroupUUID', 'trunkUUID'].includes(field.key) ? this.lookupLoading() : false;
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -272,29 +149,17 @@ export class VoipSoftswitchDialplanRulePage extends ConfigurableCrudPageBase<Con
         this.rawApi.get<any>('voip/softswitch/trunk-groups?status=1&limit=5000&offset=0'),
         this.rawApi.get<any>('voip/softswitch/trunks?status=1&limit=5000&offset=0'),
       ]);
-      this.dialplanOptions.set(
-        toOptions(dialplans, (row) => option(row.uuid, row.name, [row.accountName, row.scope])),
-      );
-      this.trunkGroupOptions.set(
-        toOptions(groups, (row) => option(row.uuid, row.name, [row.accountName, row.strategy])),
-      );
-      this.trunkOptions.set(
-        toOptions(trunks, (row) => option(row.uuid, row.name, [row.accountName, row.host])),
-      );
+      this.dialplanOptions.set(toOptions(dialplans, (row) => option(row.uuid, row.name, [row.accountName, row.scope])));
+      this.trunkGroupOptions.set(toOptions(groups, (row) => option(row.uuid, row.name, [row.accountName, row.strategy])));
+      this.trunkOptions.set(toOptions(trunks, (row) => option(row.uuid, row.name, [row.accountName, row.host])));
     } finally {
       this.lookupLoading.set(false);
     }
   }
 }
 
-function toOptions(
-  response: any,
-  mapItem: (row: any) => ConfigurableCrudOption | null,
-): ConfigurableCrudOption[] {
-  return extractItems(response)
-    .map(mapItem)
-    .filter(isOption)
-    .sort((left, right) => left.label.localeCompare(right.label));
+function toOptions(response: any, mapItem: (row: any) => ConfigurableCrudOption | null): ConfigurableCrudOption[] {
+  return extractItems(response).map(mapItem).filter(isOption).sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function extractItems(response: any): any[] {
@@ -302,24 +167,12 @@ function extractItems(response: any): any[] {
   return [];
 }
 
-function option(
-  value: unknown,
-  label: unknown,
-  descriptionParts: unknown[] = [],
-): ConfigurableCrudOption | null {
+function option(value: unknown, label: unknown, descriptionParts: unknown[] = []): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
   if (!normalizedValue || !normalizedLabel) return null;
-  const description = descriptionParts
-    .map((item) => String(item ?? '').trim())
-    .filter(Boolean)
-    .join(' - ');
-  return {
-    value: normalizedValue,
-    label: normalizedLabel,
-    description,
-    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
-  };
+  const description = descriptionParts.map((item) => String(item ?? '').trim()).filter(Boolean).join(' - ');
+  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
 }
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {
