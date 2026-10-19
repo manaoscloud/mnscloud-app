@@ -54,6 +54,17 @@ describe('Home dashboard', () => {
         ],
       }),
       tab('customer-billing', {
+        chart: {
+          code: 'customer_billing.chart.received',
+          kind: 'bars',
+          unit: 'money',
+          currency: 'BRL',
+          series: [{ key: '', code: 'customer_billing.series.received' }],
+          points: [
+            { day: '2026-10-18', values: { '': 1200 } },
+            { day: '2026-10-19', values: { '': 0 } },
+          ],
+        },
         kpis: [
           {
             code: 'customer_billing.received_month',
@@ -183,6 +194,17 @@ describe('Home dashboard', () => {
     expect(received.value).toBe('R$1,500.00');
     expect(received.hint).toBe('home.compare.previous_month{"delta":"+R$500.00"}');
     expect(page.rows()[0].details).toEqual([{ label: 'home.row.amount', value: 'R$200.00' }]);
+    const trend = page.chart();
+    expect(trend?.title).toBe('home.chart.customer_billing.chart.received');
+    expect(trend?.series).toEqual([
+      { key: '', label: 'home.chart.customer_billing.series.received' },
+    ]);
+    expect(trend?.format(1200)).toBe('R$1.2K');
+  });
+
+  it('has no chart when the tab has no trend', () => {
+    expect(page.activeTab()?.key).toBe('voip');
+    expect(page.chart()).toBeNull();
   });
 
   it('falls back to the first tab when the URL names a module that is not shown', async () => {

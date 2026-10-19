@@ -15,6 +15,7 @@ import {
   type DashboardRecord,
 } from '../../shared/dashboard/dashboard-record-list';
 import { dashboardResource } from '../../shared/dashboard/dashboard-resource';
+import { TrendChartComponent } from '../../shared/charts/trend-chart';
 
 type OverviewScope = 'tenant' | 'platform';
 type OverviewParams = Record<string, string | number | null>;
@@ -45,6 +46,15 @@ type OverviewRow = {
   currency?: string;
 };
 
+type OverviewChart = {
+  code: string;
+  kind: 'bars' | 'stacked' | 'line';
+  unit: 'count' | 'money';
+  currency?: string;
+  series: Array<{ key: string; code: string }>;
+  points: Array<{ day: string; values: Record<string, number> }>;
+};
+
 type OverviewTab = {
   key: string;
   state: 'ready' | 'empty' | 'unavailable';
@@ -55,6 +65,7 @@ type OverviewTab = {
   kpis: OverviewKpi[];
   attention: OverviewAttention[];
   rows: OverviewRow[];
+  chart?: OverviewChart | null;
   unavailableSections: string[];
 };
 
@@ -99,6 +110,7 @@ function routeTarget(link: string): RouteTarget {
     MatTabsModule,
     RouterLink,
     TranslocoPipe,
+    TrendChartComponent,
   ],
   templateUrl: './dashboard.html',
 })
@@ -170,6 +182,25 @@ export class Dashboard {
     })),
   );
 
+  /** The tab's 30-day trend, with labels as translation keys and values formatted by unit. */
+  readonly chart = computed(() => {
+    const chart = this.activeTab()?.chart;
+    if (!chart || !chart.points.length) return null;
+    this.i18n.language();
+    return {
+      title: `home.chart.${chart.code}`,
+      kind: chart.kind,
+      series: chart.series.map((item) => ({ key: item.key, label: `home.chart.${item.code}` })),
+      points: chart.points,
+      format:
+        chart.unit === 'money'
+          ? (value: number) => this.compactMoney(value, chart.currency)
+          : (value: number) => this.compact(value),
+    };
+  });
+
+  readonly language = computed(() => this.i18n.language());
+
   readonly emptyTarget = computed(() => routeTarget(this.activeTab()?.emptyLink ?? '/dashboard'));
 
   refresh() {
@@ -200,6 +231,22 @@ export class Dashboard {
   private number(value: number, digits = 0): string {
     return new Intl.NumberFormat(this.i18n.language(), {
       maximumFractionDigits: digits,
+    }).format(value);
+  }
+
+  private compact(value: number): string {
+    return new Intl.NumberFormat(this.i18n.language(), {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
+
+  private compactMoney(value: number, currency = 'BRL'): string {
+    return new Intl.NumberFormat(this.i18n.language(), {
+      style: 'currency',
+      currency: currency || 'BRL',
+      notation: 'compact',
+      maximumFractionDigits: 1,
     }).format(value);
   }
 
