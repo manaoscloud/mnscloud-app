@@ -73,7 +73,7 @@ const TENANT_ACCESS_CONFIG: ConfigurableCrudConfig = {
       label: 'E-mail',
       type: 'email',
       required: true,
-      span: 3,
+      span: 1,
       autocomplete: 'email',
       disabledWhen: ({ editing }) => editing,
     },
