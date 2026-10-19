@@ -1,11 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 
-import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
-  accountWebRtcDomainActions,
-  openAccountWebRtcDomain,
-  WEBRTC_DOMAIN_ACTION,
-} from '../../shared/webrtc-domain-action';
+  ACCOUNT_PUBLICATION_STATES,
+  accountRowActions,
+  handleAccountRowAction,
+} from '../../shared/account-row-actions';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudField,
@@ -17,16 +16,6 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { ApiService } from '../../../../services/api.service';
-
-const publicationStates: ConfigurableCrudOption[] = [
-  { value: 'not_requested', label: 'Not requested' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'published', label: 'Published' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'blocked', label: 'Needs review' },
-  { value: 'deleted', label: 'Deleted' },
-];
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -85,7 +74,7 @@ function config(): ConfigurableCrudConfig {
         label: 'DNS publication',
         kind: 'status',
         field: 'DnsPublicationState',
-        options: publicationStates,
+        options: ACCOUNT_PUBLICATION_STATES,
       },
       { id: 'status', label: 'Status', kind: 'status', field: 'VssIsActive' },
     ],
@@ -178,88 +167,23 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    const state = String(row['DnsPublicationState'] ?? 'not_requested');
-    const webrtc = accountWebRtcDomainActions(this.canEdit());
-    return state === 'not_requested'
-      ? webrtc
-      : [
-          ...webrtc,
-          { key: 'dns-status', label: 'DNS publication', icon: 'dns' },
-          ...(this.canEdit() && state === 'failed'
-            ? [{ key: 'dns-retry', label: 'Retry DNS publication', icon: 'refresh' }]
-            : []),
-          ...(this.canEdit() && state === 'blocked'
-            ? [{ key: 'dns-recheck', label: 'Recheck DNS result', icon: 'fact_check' }]
-            : []),
-        ];
+    return accountRowActions(row, this.canEdit());
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    if (action.key === WEBRTC_DOMAIN_ACTION.key) {
-      const notify = (message: string) => this.snack.error(this.t(message));
-      return openAccountWebRtcDomain(
-        this.rawApi,
-        this.dialog,
-        'softswitch',
-        this.recordUUID(row),
-        notify,
-      );
-    }
-    const endpoint = `voip/softswitch/accounts/${this.recordUUID(row)}/dns-publication`;
-    const result = await this.rawApi.get<any>(endpoint),
-      p = result?.data?.item;
-    if (!p) {
-      this.snack.error(this.t('Unavailable'));
-      return;
-    }
-    if ((action.key === 'dns-retry' || action.key === 'dns-recheck') && Number(p.canRetry) === 1) {
-      await this.rawApi.post(endpoint + '/retry', {});
-      this.refreshList();
-      return;
-    }
-    if (action.key === 'dns-recheck') {
-      if (p.operationUUID && Number(p.canRecheck) === 1) {
-        this.trackOperation(
-          await this.rawApi.post(`user/operations/${p.operationUUID}/recheck`, {}),
-        );
-        this.refreshList();
-      }
-      return;
-    }
-    openDataViewerDialog(this.dialog, {
-      title: 'DNS publication',
-      description: 'Publication confirms provider readback, not SIP readiness or DNS cache expiry.',
-      details: [
-        { label: 'Domain', value: p.name },
-        {
-          label: 'Status',
-          value: this.t(
-            publicationStates.find(
-              (option) =>
-                option.value ===
-                (['failed', 'blocked'].includes(p.operationState) ? p.operationState : p.state),
-            )?.label ?? p.state,
-          ),
-        },
-        { label: 'Operation', value: p.operationUUID },
-        { label: 'Error', value: p.operationError ?? p.errorCode },
-        { label: 'Updated at', value: p.updatedAt, kind: 'datetime' },
-      ],
-      sections: [
-        {
-          title: 'DNS records',
-          table: {
-            columns: [
-              { key: 'type', label: 'Type' },
-              { key: 'name', label: 'Name' },
-              { key: 'value', label: 'Value' },
-              { key: 'ttl', label: 'TTL' },
-            ],
-            rows: (p.records ?? []).map((r: any) => ({ ...r, value: r.data.join(', ') })),
-          },
-        },
-      ],
-    });
+    return handleAccountRowAction(
+      {
+        api: this.rawApi,
+        dialog: this.dialog,
+        t: (key) => this.t(key),
+        notifyError: (message) => this.snack.error(this.t(message)),
+        refresh: () => this.refreshList(),
+        trackOperation: (response) => this.trackOperation(response),
+      },
+      'softswitch',
+      action,
+      this.recordUUID(row),
+    );
   }
 
   private realmRequestKey = crypto.randomUUID();
