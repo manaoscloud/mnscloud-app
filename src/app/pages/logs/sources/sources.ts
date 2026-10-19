@@ -5,7 +5,12 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { LOGS_BOOLEAN_OPTIONS, LOGS_TIER_OPTIONS, logsPayload } from '../logs-input';
+import {
+  LOGS_BOOLEAN_OPTIONS,
+  LOGS_TIER_OPTIONS,
+  logsPayload,
+  logsTenantColumns,
+} from '../logs-input';
 
 const config = defineCrud({
   endpoint: 'logs/sources',
@@ -98,25 +103,20 @@ const config = defineCrud({
     },
   ],
   tabLabels: { network: 'logs.ingestTab' },
-  columns: [
-    { id: 'name', field: 'LsrName', label: 'Name', kind: 'identity' },
-    { id: 'address', field: 'LsrAddress', label: 'logs.sourceAddress', kind: 'text' },
-    {
-      id: 'tier',
-      field: 'LsrTier',
-      label: 'logs.tier',
-      kind: 'text',
-      value: (row, translate) => translate('logs.tiers.' + String(row['LsrTier'] ?? '30d')),
-    },
-    {
-      id: 'account',
-      field: 'AccountName',
-      label: 'logs.account',
-      kind: 'related',
-      uuidField: 'LogAccountLgaUUID',
-    },
-    { id: 'status', field: 'LsrStatus', label: 'Status', kind: 'status' },
-  ],
+  columns: logsTenantColumns(
+    'Lsr',
+    { id: 'account', field: 'AccountName', label: 'logs.account', uuidField: 'LogAccountLgaUUID' },
+    [
+      { id: 'address', field: 'LsrAddress', label: 'logs.sourceAddress', kind: 'text' },
+      {
+        id: 'tier',
+        field: 'LsrTier',
+        label: 'logs.tier',
+        kind: 'text',
+        value: (row, translate) => translate('logs.tiers.' + String(row['LsrTier'] ?? '30d')),
+      },
+    ],
+  ),
 });
 
 @Component({

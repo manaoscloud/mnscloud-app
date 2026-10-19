@@ -605,18 +605,18 @@ export const NAV_ITEMS: NavItem[] = [
       {
         id: 'logs/accounts',
         label: 'nav.logs.accounts',
-        icon: 'badge',
+        icon: 'inventory_2',
+        requiresEnvironment: true,
         route: '/logs/accounts',
         entitlementCode: 'module.logs.account',
-        requiresEnvironment: true,
       },
       {
         id: 'logs/sources',
         label: 'nav.logs.sources',
-        icon: 'router',
+        icon: 'settings_input_antenna',
+        requiresEnvironment: true,
         route: '/logs/sources',
         entitlementCode: 'module.logs.source',
-        requiresEnvironment: true,
       },
       {
         id: 'logs/clusters',

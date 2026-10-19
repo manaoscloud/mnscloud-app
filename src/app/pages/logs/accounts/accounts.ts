@@ -5,7 +5,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { logsPayload } from '../logs-input';
+import { logsPayload, logsTenantColumns } from '../logs-input';
 
 const config = defineCrud({
   endpoint: 'logs/accounts',
@@ -44,18 +44,11 @@ const config = defineCrud({
       rows: 4,
     },
   ],
-  columns: [
-    { id: 'name', field: 'LgaName', label: 'Name', kind: 'identity' },
-    {
-      id: 'cluster',
-      field: 'ClusterName',
-      label: 'logs.cluster',
-      kind: 'related',
-      uuidField: 'LogClusterLgcUUID',
-    },
-    { id: 'sources', field: 'SourceCount', label: 'logs.sources', kind: 'text' },
-    { id: 'status', field: 'LgaStatus', label: 'Status', kind: 'status' },
-  ],
+  columns: logsTenantColumns(
+    'Lga',
+    { id: 'cluster', field: 'ClusterName', label: 'logs.cluster', uuidField: 'LogClusterLgcUUID' },
+    [{ id: 'sources', field: 'SourceCount', label: 'logs.sources', kind: 'text' }],
+  ),
 });
 
 @Component({
