@@ -128,7 +128,6 @@ const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
   status: 1,
   type: 'company',
   complexUUID: '',
-  dueDayUUID: '',
   name: '',
   legalName: '',
   legalDate: '',
@@ -318,19 +317,6 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Search complexes',
       tab: 'address',
       addressSection: 'main',
-      span: 1,
-    },
-    {
-      key: 'dueDayUUID',
-      source: 'DueDayUUID',
-      payloadKey: 'dueDayUUID',
-      label: 'Due day',
-      type: 'search-select',
-      quickCreate: false,
-      quickCreateExemptReason:
-        'Due days are a fixed billing calendar catalog without a create form.',
-      placeholder: 'Search due days',
-      tab: 'financial',
       span: 1,
     },
     {
@@ -868,13 +854,6 @@ type ComplexRecord = {
   Country?: string | null;
 };
 
-type DueDayRecord = {
-  ErpFinInvDueDayUUID: string;
-  Name: string;
-  DueDay?: number | null;
-  BillingDay?: number | null;
-};
-
 @Component({
   selector: 'app-erp-customer',
   standalone: true,
@@ -900,16 +879,6 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         []) as ComplexRecord[];
     },
   });
-  private readonly dueDaysResource = resource({
-    defaultValue: [] as DueDayRecord[],
-    loader: async () => {
-      const response = await this.api.get(
-        'erp/financial/invoicing/duedays?status=active&limit=500',
-      );
-      return ((response as { data?: { items?: DueDayRecord[] } })?.data?.items ??
-        []) as DueDayRecord[];
-    },
-  });
 
   private readonly complexOptions = computed<ConfigurableCrudOption[]>(() =>
     this.complexesResource.value().map((item) => ({
@@ -919,19 +888,6 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       searchText: `${item.Name} ${item.City ?? ''} ${item.State ?? ''} ${item.ComplexUUID}`,
     })),
   );
-  private readonly dueDayOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.dueDaysResource.value().map((item) => ({
-      value: item.ErpFinInvDueDayUUID,
-      label: item.Name,
-      description: [
-        item.DueDay ? `Due ${item.DueDay}` : '',
-        item.BillingDay ? `Billing ${item.BillingDay}` : '',
-      ]
-        .filter(Boolean)
-        .join(' / '),
-      searchText: `${item.Name} ${item.DueDay ?? ''} ${item.BillingDay ?? ''} ${item.ErpFinInvDueDayUUID}`,
-    })),
-  );
 
   constructor() {
     super(CUSTOMER_CONFIG);
@@ -939,7 +895,6 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'complexUUID') return this.complexOptions();
-    if (key === 'dueDayUUID') return this.dueDayOptions();
     return [];
   }
 

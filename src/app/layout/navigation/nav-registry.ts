@@ -271,6 +271,12 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/erp/financial/account/receivables',
           },
           {
+            id: 'erp/financial/payment-charge',
+            label: 'nav.erp.financial.payment-charge',
+            icon: 'qr_code_2',
+            route: '/erp/financial/payment-charge',
+          },
+          {
             id: 'erp/financial/payment',
             label: 'nav.erp.financial.payment',
             icon: 'payments',
@@ -288,31 +294,6 @@ export const NAV_ITEMS: NavItem[] = [
                 route: '/erp/financial/payment-method',
               },
             ],
-          },
-        ],
-      },
-      {
-        id: 'erp/financial/invoicing',
-        label: 'nav.erp.financial.invoicing',
-        icon: 'receipt_long',
-        children: [
-          {
-            id: 'erp/financial/invoicing/boletos',
-            label: 'nav.erp.financial.invoicing.boletos',
-            icon: 'receipt',
-            route: '/erp/financial/invoicing/boletos',
-          },
-          {
-            id: 'erp/financial/invoicing/contracts',
-            label: 'nav.erp.financial.invoicing.contracts',
-            icon: 'description',
-            route: '/erp/financial/invoicing/contracts',
-          },
-          {
-            id: 'erp/financial/invoicing/duedays',
-            label: 'nav.erp.financial.invoicing.duedays',
-            icon: 'event_repeat',
-            route: '/erp/financial/invoicing/duedays',
           },
         ],
       },
@@ -2011,6 +1992,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.customer-billing.contracts',
         icon: 'description',
         route: '/customer-billing/contracts',
+      },
+      {
+        id: 'customer-billing/due-days',
+        label: 'nav.customer-billing.due-days',
+        icon: 'event_repeat',
+        route: '/customer-billing/due-days',
       },
       {
         id: 'customer-billing/charges',

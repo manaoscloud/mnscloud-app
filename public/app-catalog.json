@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2d9063b1b3de",
+  "version": "aef95931d9cb",
   "language": "pt-BR",
   "entries": [
     {
@@ -1185,7 +1185,7 @@
     },
     {
       "route": "/customer-billing/charges",
-      "menuPath": "Faturamento de clientes › Cobranças",
+      "menuPath": "Faturamento › Cobranças",
       "scope": "tenant",
       "title": "Cobranças",
       "description": "Uma cobrança por ciclo do contrato, com seu título a receber; o pagamento do título marca a cobrança como paga e reativa o contrato suspenso por atraso.",
@@ -1193,7 +1193,7 @@
     },
     {
       "route": "/customer-billing/contracts",
-      "menuPath": "Faturamento de clientes › Contratos",
+      "menuPath": "Faturamento › Contratos",
       "scope": "tenant",
       "title": "Contratos de cobrança",
       "description": "Faturamento recorrente dos seus clientes para qualquer módulo (provedor, hospedagem, VoIP, vendas ou itens manuais): ciclo, itens, uso e ajustes viram uma cobrança por ciclo com seu título a receber.",
@@ -1219,8 +1219,12 @@
           "help": ""
         },
         {
+          "label": "Regra de vencimento",
+          "help": "Com uma regra, os ciclos acompanham o mês civil, são emitidos no dia de emissão e vencem no dia fixo; o primeiro ciclo é proporcional."
+        },
+        {
           "label": "Prazo de pagamento (dias)",
-          "help": "Dias entre a emissão da cobrança e o vencimento."
+          "help": "Dias entre a emissão da cobrança e o vencimento, para contratos sem regra de vencimento."
         },
         {
           "label": "Carência (dias)",
@@ -1237,8 +1241,37 @@
       ]
     },
     {
+      "route": "/customer-billing/due-days",
+      "menuPath": "Faturamento › Vencimentos",
+      "scope": "tenant",
+      "title": "Regras de vencimento",
+      "description": "Dia fixo de vencimento, dia de emissão e mês fechado que os contratos podem seguir: os ciclos acompanham o mês civil, são emitidos no dia de emissão e vencem no dia fixo.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Dia de vencimento",
+          "help": "Meses mais curtos que este dia vencem no último dia."
+        },
+        {
+          "label": "Dia de emissão",
+          "help": "Dia em que a cobrança é emitida: no mês do vencimento, ou no mês anterior quando vem depois do dia de vencimento."
+        },
+        {
+          "label": "Ciclo cobrado",
+          "help": "Mês fechado cobra o ciclo depois que ele termina, com o uso medido nele."
+        }
+      ]
+    },
+    {
       "route": "/customer-billing/events",
-      "menuPath": "Faturamento de clientes › Eventos",
+      "menuPath": "Faturamento › Eventos",
       "scope": "tenant",
       "title": "Eventos de cobrança",
       "description": "Pedidos de suspensão, reativação e cancelamento enviados ao módulo de cada item do contrato; o módulo confirma cada um depois de aplicá-lo.",
@@ -1246,7 +1279,7 @@
     },
     {
       "route": "/customer-billing/modules",
-      "menuPath": "Faturamento de clientes › Módulos",
+      "menuPath": "Faturamento › Módulos",
       "scope": "tenant",
       "title": "Módulos faturáveis",
       "description": "Módulos cujos recursos podem ser cobrados em contratos. Um novo módulo passa a ser faturável ao se registrar, informar uso e aplicar os eventos de ciclo de vida.",
@@ -1254,7 +1287,7 @@
     },
     {
       "route": "/customer-billing/usage",
-      "menuPath": "Faturamento de clientes › Uso",
+      "menuPath": "Faturamento › Uso",
       "scope": "tenant",
       "title": "Uso faturável",
       "description": "Uso informado pelos módulos (minutos, tráfego, armazenamento...). O uso pendente é cobrado na próxima cobrança acima da quantidade incluída; uso sem item não tem item de uso para seu recurso e métrica.",
@@ -1869,10 +1902,6 @@
           "help": ""
         },
         {
-          "label": "Dia de vencimento",
-          "help": ""
-        },
-        {
           "label": "CEP",
           "help": ""
         },
@@ -1991,6 +2020,10 @@
         {
           "label": "Tipo de documento",
           "help": "Automático identifica CPF ou CNPJ pelo documento de clientes brasileiros."
+        },
+        {
+          "label": "Código do país",
+          "help": "Código ISO 3166-1 alfa-2; vazio usa o país do tenant."
         }
       ]
     },
@@ -2069,11 +2102,11 @@
       ]
     },
     {
-      "route": "/erp/financial/invoicing/boletos",
-      "menuPath": "ERP › Faturamento › Boletos",
+      "route": "/erp/financial/payment-charge",
+      "menuPath": "ERP › Financeiro › Boletos e Pix",
       "scope": "tenant",
-      "title": "Boletos",
-      "description": "Boletos emitidos para as faturas, com situação de registro e pagamento no banco.",
+      "title": "Boletos e Pix",
+      "description": "Boletos e Pix emitidos no seu gateway de pagamento para contas a receber, vendas do PDV e cobranças avulsas, com situação de registro e pagamento no banco.",
       "fields": [
         {
           "label": "Status",
@@ -2105,104 +2138,6 @@
         },
         {
           "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/financial/invoicing/contracts",
-      "menuPath": "ERP › Faturamento › Contratos",
-      "scope": "tenant",
-      "title": "Contratos",
-      "description": "Gerencie o ciclo de vida dos contratos e o contexto de cobrança.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Título",
-          "help": ""
-        },
-        {
-          "label": "Cliente",
-          "help": ""
-        },
-        {
-          "label": "Valor",
-          "help": ""
-        },
-        {
-          "label": "Data de início",
-          "help": ""
-        },
-        {
-          "label": "Data de término",
-          "help": ""
-        },
-        {
-          "label": "Condomínio de cobrança",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/financial/invoicing/duedays",
-      "menuPath": "ERP › Faturamento › Vencimentos",
-      "scope": "tenant",
-      "title": "Dias de Vencimento",
-      "description": "Configure regras de dia de vencimento, dia de cobrança e mês de fechamento.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Dia de vencimento",
-          "help": ""
-        },
-        {
-          "label": "Dia de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Mês fechado",
           "help": ""
         }
       ]
