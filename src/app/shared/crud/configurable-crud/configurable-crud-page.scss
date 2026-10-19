@@ -251,6 +251,28 @@
   text-underline-offset: 3px;
 }
 
+// Status chip that opens the column's row action (e.g. the AI analysis of a ticket).
+.crud-chip-link {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover .status-pill {
+    filter: brightness(1.15);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-color-primary);
+    outline-offset: 2px;
+  }
+}
+
 .crud-copy-cell {
   display: flex;
   align-items: center;
