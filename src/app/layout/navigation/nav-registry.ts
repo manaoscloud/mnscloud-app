@@ -1588,12 +1588,6 @@ export const NAV_ITEMS: NavItem[] = [
             icon: 'confirmation_number',
             route: '/support/tickets',
           },
-          {
-            id: 'support/customers/channels',
-            label: 'nav.support.customers.channels',
-            icon: 'hub',
-            route: '/support/channels',
-          },
         ],
       },
       {
