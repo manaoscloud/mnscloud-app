@@ -2668,6 +2668,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return Boolean(field.required);
   }
 
+  /** Optional single FK selects offer an empty choice so a picked record can be removed. */
+  isFieldClearable(field: ConfigurableCrudField): boolean {
+    return (
+      field.type === 'search-select' &&
+      !field.multiple &&
+      !this.isFieldRequired(field) &&
+      !this.isFieldDisabled(field)
+    );
+  }
+
   isAddressSectionCompact(section: ConfigurableCrudAddressSectionView): boolean {
     return section.copyActions.some((action) => this.isCopyActionEnabled(action));
   }

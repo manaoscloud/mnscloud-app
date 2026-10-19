@@ -8758,5 +8758,7 @@
   "home.rows.conversations.rows.waiting": "Waiting longest",
   "home.rows.customer_billing.rows.largest_overdue": "Largest overdue charges",
   "home.rows.fiscal.rows.needing_action": "Documents that need action",
-  "home.rows.pos.rows.open_sessions": "Open cash sessions"
+  "home.rows.pos.rows.open_sessions": "Open cash sessions",
+  "No selection": "No selection",
+  "Optional. Empty uses the dial plan of the PABX account.": "Optional. Empty uses the dial plan of the PABX account."
 }
