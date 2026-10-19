@@ -14,6 +14,7 @@ import {
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: './configurable-crud-page.html',
   styleUrls: ['./configurable-crud-page.scss'],
+  host: { '[class.collection-dialog-host]': '!config.formOnly' },
 })
 export class ConfigurableCrudCollectionDialog extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly hostDialog = inject(MatDialogRef<ConfigurableCrudCollectionDialog>);
