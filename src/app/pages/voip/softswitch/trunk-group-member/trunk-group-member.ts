@@ -151,26 +151,16 @@ export class VoipSoftswitchTrunkGroupMemberPage extends ConfigurableCrudPageBase
         this.rawApi.get<any>('voip/softswitch/trunk-groups?status=1&limit=5000&offset=0'),
         this.rawApi.get<any>('voip/softswitch/trunks?status=1&limit=5000&offset=0'),
       ]);
-      this.trunkGroupOptions.set(
-        toOptions(groups, (row) => option(row.uuid, row.name, [row.accountName, row.strategy])),
-      );
-      this.trunkOptions.set(
-        toOptions(trunks, (row) => option(row.uuid, row.name, [row.accountName, row.host])),
-      );
+      this.trunkGroupOptions.set(toOptions(groups, (row) => option(row.uuid, row.name, [row.accountName, row.strategy])));
+      this.trunkOptions.set(toOptions(trunks, (row) => option(row.uuid, row.name, [row.accountName, row.host])));
     } finally {
       this.lookupLoading.set(false);
     }
   }
 }
 
-function toOptions(
-  response: any,
-  mapItem: (row: any) => ConfigurableCrudOption | null,
-): ConfigurableCrudOption[] {
-  return extractItems(response)
-    .map(mapItem)
-    .filter(isOption)
-    .sort((left, right) => left.label.localeCompare(right.label));
+function toOptions(response: any, mapItem: (row: any) => ConfigurableCrudOption | null): ConfigurableCrudOption[] {
+  return extractItems(response).map(mapItem).filter(isOption).sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function extractItems(response: any): any[] {
@@ -178,24 +168,12 @@ function extractItems(response: any): any[] {
   return [];
 }
 
-function option(
-  value: unknown,
-  label: unknown,
-  descriptionParts: unknown[] = [],
-): ConfigurableCrudOption | null {
+function option(value: unknown, label: unknown, descriptionParts: unknown[] = []): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
   if (!normalizedValue || !normalizedLabel) return null;
-  const description = descriptionParts
-    .map((item) => String(item ?? '').trim())
-    .filter(Boolean)
-    .join(' - ');
-  return {
-    value: normalizedValue,
-    label: normalizedLabel,
-    description,
-    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
-  };
+  const description = descriptionParts.map((item) => String(item ?? '').trim()).filter(Boolean).join(' - ');
+  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
 }
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {

@@ -101,7 +101,7 @@ export class VoipPabxExtensionService {
       recordCalls?: boolean;
       outboundCid?: string | null;
       codecs?: string | null;
-      enabled?: boolean;
+        enabled?: boolean;
     },
   ) {
     return this.api.put<any>(`${this.basePath}/${uuid}`, payload);
