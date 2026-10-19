@@ -135,12 +135,14 @@ const config = defineCrud({
       field: 'PromptCache',
       label: 'Prompt cache',
       value: (row, translate) =>
-        row['PromptCache'] === 'off'
-          ? translate('Off')
-          : `${translate('Automatic')} · ${translate(
-              PROMPT_CACHE_TTL_OPTIONS.find((o) => o.value === row['PromptCacheTtl'])?.label ??
-                '5 minutes',
-            )}`,
+        isSpeechFeature(row['Feature'])
+          ? '-'
+          : row['PromptCache'] === 'off'
+            ? translate('Off')
+            : `${translate('Automatic')} · ${translate(
+                PROMPT_CACHE_TTL_OPTIONS.find((o) => o.value === row['PromptCacheTtl'])?.label ??
+                  '5 minutes',
+              )}`,
     },
     { id: 'ready', field: 'Ready', label: 'Ready', kind: 'boolean' },
     { id: 'status', field: 'Status', label: 'Status', kind: 'status', className: 'status-col' },
