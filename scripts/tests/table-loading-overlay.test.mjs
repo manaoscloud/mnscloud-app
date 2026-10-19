@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const template = readFileSync(
@@ -34,4 +34,16 @@ test('only .table-scroll scrolls horizontally; the frame anchors the overlay', (
   assert.doesNotMatch(wrapper, /\n  overflow-x: auto;/);
   assert.match(wrapper, /\.table-scroll \{[^}]*overflow-x: auto;/);
   assert.match(cssBlock('.table-loading'), /position: absolute;\s+inset: 0;/);
+});
+
+test('no stylesheet makes .table-wrapper itself scroll horizontally', () => {
+  const root = new URL('../../src/', import.meta.url);
+  const offenders = readdirSync(root, { recursive: true })
+    .filter((file) => file.endsWith('.scss') || file.endsWith('.css'))
+    .filter((file) =>
+      /\.table-wrapper\s*\{[^{}]*overflow(-x)?:\s*(auto|scroll)/.test(
+        readFileSync(new URL(file, root), 'utf8'),
+      ),
+    );
+  assert.deepEqual(offenders, []);
 });
