@@ -6,6 +6,13 @@ import {
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 
+// The page instance opens the POS on a terminal with a single-use sign-in code: the POS starts its
+// own session (independent of the App session) on the same tenant and register.
+let openInPos: ((row: ConfigurableCrudRecord) => Promise<void>) | null = null;
+
+/** Web POS path published by the edge (mnscloud-webapps). */
+const POS_PATH = '/pos/';
+
 export const POS_PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash' },
   { value: 'pix', label: 'Pix' },
@@ -163,6 +170,14 @@ const config = defineCrud({
   ],
   rowActions: [
     {
+      key: 'open-pos',
+      label: 'Open in POS',
+      icon: 'point_of_sale',
+      tooltip: 'Opens the web POS on this register with its own session; the App stays signed in.',
+      visible: (row) => Number(row['PtmStatus']) === 1,
+      run: (row) => openInPos?.(row),
+    },
+    {
       key: 'fiscal-offline-on',
       label: 'Enable offline NFC-e',
       icon: 'receipt_long',
@@ -222,5 +237,29 @@ const config = defineCrud({
 export class PosTerminalsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
+    openInPos = async (row) => {
+      // Opened before the request so the browser keeps the click (no pop-up block).
+      const target = window.open('', '_blank');
+      try {
+        const response = await this.api.post<{ data?: { code?: string } }>(
+          'pos/auth/handoffs',
+          { terminalUUID: row['PtmUUID'] },
+          // Every code is single use; it travels only in the URL fragment, never to a server log.
+          { idempotencyKey: crypto.randomUUID(), silent: true },
+        );
+        const code = response?.data?.code;
+        if (!code) throw new Error('POS sign-in code missing');
+        const url = `${POS_PATH}#handoff=${encodeURIComponent(code)}`;
+        if (target) {
+          target.opener = null;
+          target.location.href = url;
+        } else {
+          window.location.assign(url);
+        }
+      } catch {
+        target?.close();
+        this.snack.error(this.t('Could not open the POS. Try again.'));
+      }
+    };
   }
 }

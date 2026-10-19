@@ -518,6 +518,46 @@
             />
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'POS Session Idle Hours' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="168"
+              [value]="item().posSessionIdleHours"
+              (input)="updateItem({ posSessionIdleHours: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'POS Session Idle Hours' | transloco"
+              [text]="
+                'Hours without use before a POS session ends. Each POS session is independent of the App session: signing out of one never signs out the other.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-1">
+            <mat-label>{{ 'POS Session Max Hours' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="720"
+              [value]="item().posSessionMaxHours"
+              (input)="updateItem({ posSessionMaxHours: $any($event.target).value })"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'POS Session Max Hours' | transloco"
+              [text]="
+                'Maximum duration of a POS session, even in use; after it the operator signs in again.'
+                  | transloco
+              "
+            />
+          </mat-form-field>
+
           <div class="span-1 toggle-field-align">
             <mat-slide-toggle
               [checked]="item().authRememberMeEnabled"
