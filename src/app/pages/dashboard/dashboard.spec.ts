@@ -53,6 +53,28 @@ describe('Home dashboard', () => {
           { code: 'voip.unknown', value: null, unit: 'count' },
         ],
       }),
+      tab('customer-billing', {
+        kpis: [
+          {
+            code: 'customer_billing.received_month',
+            value: 1500,
+            unit: 'money',
+            currency: 'BRL',
+            previous: 1000,
+          },
+        ],
+        rows: [
+          {
+            name: 'ACME',
+            detail: 'customer_billing.charge_detail',
+            detailParams: { charge: 'BCH-1', at: '2026-10-01' },
+            status: 'customer_billing.state.overdue',
+            tone: 'warning',
+            amount: 200,
+            currency: 'BRL',
+          },
+        ],
+      }),
       tab('support', {
         tone: 'critical',
         kpis: [
@@ -152,6 +174,15 @@ describe('Home dashboard', () => {
         tone: 'danger',
       }),
     );
+  });
+
+  it('formats money, compares with the previous month and shows row amounts', async () => {
+    query.next(convertToParamMap({ module: 'customer-billing' }));
+    await settle();
+    const [received] = page.kpis();
+    expect(received.value).toBe('R$1,500.00');
+    expect(received.hint).toBe('home.compare.previous_month{"delta":"+R$500.00"}');
+    expect(page.rows()[0].details).toEqual([{ label: 'home.row.amount', value: 'R$200.00' }]);
   });
 
   it('falls back to the first tab when the URL names a module that is not shown', async () => {
