@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d6b91ed33242",
+  "version": "3de0d2c3e517",
   "language": "pt-BR",
   "entries": [
     {
@@ -4622,6 +4622,14 @@
           "help": "Extended lifetime of persistent sessions when Remember Me is selected at login."
         },
         {
+          "label": "Horas de inatividade da sessão do PDV",
+          "help": "Horas sem uso até a sessão do PDV expirar. Cada sessão do PDV é independente da sessão do App: sair de um nunca desconecta o outro."
+        },
+        {
+          "label": "Duração máxima da sessão do PDV (horas)",
+          "help": "Duração máxima da sessão do PDV, mesmo em uso; depois dela o operador entra novamente."
+        },
+        {
           "label": "Provedor de CAPTCHA",
           "help": "Bot protection provider integrated into authentication and registration flows."
         },
@@ -7252,6 +7260,14 @@
         {
           "label": "Horas de lembrar acesso",
           "help": "Extended lifetime of persistent sessions when Remember Me is selected at login."
+        },
+        {
+          "label": "Horas de inatividade da sessão do PDV",
+          "help": "Horas sem uso até a sessão do PDV expirar. Cada sessão do PDV é independente da sessão do App: sair de um nunca desconecta o outro."
+        },
+        {
+          "label": "Duração máxima da sessão do PDV (horas)",
+          "help": "Duração máxima da sessão do PDV, mesmo em uso; depois dela o operador entra novamente."
         },
         {
           "label": "Provedor de CAPTCHA",

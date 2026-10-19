@@ -49,6 +49,8 @@ type SystemParametersItem = {
   authRememberMeEnabled: boolean;
   authSessionHours: number;
   authRememberMeHours: number;
+  posSessionIdleHours: number;
+  posSessionMaxHours: number;
 };
 
 type BradescoSiadItem = {
@@ -110,6 +112,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
   authRememberMeEnabled: true,
   authSessionHours: 12,
   authRememberMeHours: 720,
+  posSessionIdleHours: 12,
+  posSessionMaxHours: 168,
 };
 
 @Component({
@@ -378,6 +382,8 @@ export class SettingsParametersPage {
       authRememberMeEnabled: raw?.authRememberMeEnabled !== false,
       authSessionHours: this.normalizeInteger(raw?.authSessionHours, 12),
       authRememberMeHours: this.normalizeInteger(raw?.authRememberMeHours, 720),
+      posSessionIdleHours: this.normalizeInteger(raw?.posSessionIdleHours, 12),
+      posSessionMaxHours: this.normalizeInteger(raw?.posSessionMaxHours, 168),
     };
   }
 
@@ -396,6 +402,8 @@ export class SettingsParametersPage {
       signupMaxAccountsPerIpDay: this.clampInteger(value.signupMaxAccountsPerIpDay, 1, 100),
       authSessionHours: this.clampInteger(value.authSessionHours, 1, 168),
       authRememberMeHours: this.clampInteger(value.authRememberMeHours, 1, 2160),
+      posSessionIdleHours: this.clampInteger(value.posSessionIdleHours, 1, 168),
+      posSessionMaxHours: this.clampInteger(value.posSessionMaxHours, 1, 720),
     };
   }
 
@@ -422,6 +430,8 @@ export class SettingsParametersPage {
       authRememberMeEnabled: value.authRememberMeEnabled,
       authSessionHours: value.authSessionHours,
       authRememberMeHours: value.authRememberMeHours,
+      posSessionIdleHours: value.posSessionIdleHours,
+      posSessionMaxHours: value.posSessionMaxHours,
     });
   }
 
