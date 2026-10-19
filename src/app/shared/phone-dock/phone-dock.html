@@ -45,6 +45,20 @@
       </button>
     </header>
 
+    @if (dock.currentCall(); as call) {
+      <div class="phone-dock-caller" role="status" aria-live="polite">
+        <mat-icon aria-hidden="true">{{
+          call.direction === 'incoming' ? 'call_received' : 'call_made'
+        }}</mat-icon>
+        <div class="phone-dock-caller-text">
+          <strong>{{
+            call.matches.length ? call.matches.join(' · ') : ('phoneDock.unknownCaller' | transloco)
+          }}</strong>
+          <span>{{ call.remote }}</span>
+        </div>
+      </div>
+    }
+
     <div class="phone-dock-body">
       @if (dock.mounted() && dock.frameUrl(); as url) {
         <iframe

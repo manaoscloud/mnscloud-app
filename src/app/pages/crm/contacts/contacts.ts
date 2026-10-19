@@ -137,6 +137,12 @@ const config = defineCrud({
       kind: 'text',
     },
     {
+      id: 'CcoPhone',
+      field: 'CcoPhone',
+      label: 'crm.field.Phone',
+      kind: 'phone',
+    },
+    {
       id: 'CcoStatus',
       field: 'CcoStatus',
       label: 'crm.field.Status',

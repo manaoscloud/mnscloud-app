@@ -2006,6 +2006,12 @@ export const routes: Routes = [
                 title: 'VoIP • PhoneWeb • Free lines | mnscloud',
               },
               {
+                path: 'voip/phone/calls',
+                loadComponent: () =>
+                  import('./pages/voip/phone/calls/calls').then((m) => m.VoipPhoneCallsPage),
+                title: 'VoIP • PhoneWeb • Calls | mnscloud',
+              },
+              {
                 path: 'voip/phone/sessions',
                 loadComponent: () =>
                   import('./pages/voip/phone/sessions/sessions').then(

@@ -1,4 +1,5 @@
 import { crudReportMask } from './crud-report-mask';
+import { PhoneDialer } from '../../phone-dock/phone-dialer';
 import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
@@ -379,7 +380,9 @@ export type ConfigurableCrudColumn = {
     | 'number'
     | 'image'
     /** Credential shown masked, with per-row show (auto-hides) and copy actions. */
-    | 'secret';
+    | 'secret'
+    /** Phone number with click-to-call through the App phone dock (when the tenant has PhoneWeb). */
+    | 'phone';
   lookupKey?: string;
   className?: string;
   options?: readonly ConfigurableCrudOption[];
@@ -698,6 +701,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected readonly dialog = inject(MatDialog);
   protected readonly transloco = inject(TranslocoService);
   protected readonly destroyRef = inject(DestroyRef);
+  protected readonly phoneDialer = inject(PhoneDialer);
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly appI18n = inject(AppI18nService);
   protected readonly listLimit = 500;
@@ -1736,7 +1740,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     const body = new FormData();
     if (upload.includeFields) {
       for (const [key, value] of Object.entries(formPayload)) {
-        if (key === upload.fileField || value === null || value === undefined || value === '') continue;
+        if (key === upload.fileField || value === null || value === undefined || value === '')
+          continue;
         if (typeof value === 'object') continue;
         body.append(key, String(value));
       }
@@ -2982,6 +2987,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   columnWidthClass(column: ConfigurableCrudColumn): string {
     return `crud-cell-w-${column.width ?? 'lg'}`;
+  }
+
+  canDialColumn(row: T, column: ConfigurableCrudColumn): boolean {
+    return this.phoneDialer.canDial(row[(column.field ?? column.id) as keyof T]);
+  }
+
+  dialColumn(row: T, column: ConfigurableCrudColumn): void {
+    this.phoneDialer.dial(row[(column.field ?? column.id) as keyof T]);
   }
 
   canCopyColumn(row: T, column: ConfigurableCrudColumn): boolean {
