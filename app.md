@@ -783,9 +783,12 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     keep a short watchdog so a missed lazy-load event never leaves the page blocked.
   - Layout menus may read `NavigationLoadingService.isNavigating` to prevent repeated clicks while
     the router is already processing a navigation.
-  - Use list loading state + overlay (`.table-loading`) on table wrapper.
+  - Use list loading state + overlay (`.table-loading`) on table wrapper. `.table-wrapper` is the
+    non-scrolling frame; the list content scrolls horizontally inside its child `.table-scroll`, and
+    `.table-loading` stays a direct child of `.table-wrapper` (outside `.table-scroll`) so the
+    overlay and spinner cover the visible area at any horizontal scroll position.
   - The desktop table `Actions` column is `stickyEnd`: it stays pinned to the right edge while the
-    other columns scroll horizontally inside `.table-wrapper`, with an opaque background that follows
+    other columns scroll horizontally inside `.table-scroll`, with an opaque background that follows
     row hover and a left separator shadow. Mobile cards are unaffected.
   - Keep minimum visible loading duration around `600ms`.
   - Header-level refresh actions must show local progress inside the refresh button. Do not rely

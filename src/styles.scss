@@ -592,15 +592,25 @@ mat-card.erp-card,
   font-weight: 600;
 }
 
+/*
+ * `.table-wrapper` is the fixed frame (border, radius, loading overlay anchor) and never scrolls;
+ * the rows scroll horizontally inside `.table-scroll`, so the `.table-loading` overlay always
+ * covers the visible area whatever the horizontal scroll position.
+ */
 .table-wrapper {
   position: relative;
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   background: var(--mat-sys-color-surface-container) !important;
   background-color: var(--mat-sys-color-surface-container) !important;
   border: 1px solid var(--mat-sys-color-outline-variant);
   border-radius: 0.75rem;
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
 
   table {
     width: 100%;
