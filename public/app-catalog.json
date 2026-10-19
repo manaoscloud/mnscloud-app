@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "49165ecd8976",
+  "version": "d45f7abc090a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3891,6 +3891,80 @@
         {
           "label": "Tipo",
           "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/logs/accounts",
+      "menuPath": "Logs › Contas",
+      "scope": "tenant",
+      "title": "Contas",
+      "description": "Contas de Logs do tenant. Cada conta fica em um cluster publicado e agrupa as fontes (equipamentos) que enviam logs.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Cluster onde os logs desta conta são armazenados. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/logs/sources",
+      "menuPath": "Logs › Fontes",
+      "scope": "tenant",
+      "title": "Fontes",
+      "description": "Equipamentos autorizados a enviar syslog. O nó aceita apenas linhas vindas do endereço cadastrado; o restante é descartado. Alterações chegam ao nó em cerca de 1 minuto.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endereço de origem",
+          "help": "IPv4 ou IPv6 exato de onde o equipamento envia os logs, como o nó de Logs o enxerga. É único no cluster, inclusive entre tenants."
+        },
+        {
+          "label": "Retenção",
+          "help": "Por quanto tempo as linhas desta fonte ficam armazenadas."
+        },
+        {
+          "label": "Syslog UDP",
+          "help": "Transportes aceitos para esta fonte. Pelo menos um deve estar habilitado."
+        },
+        {
+          "label": "Syslog TCP",
+          "help": "Transportes aceitos para esta fonte. Pelo menos um deve estar habilitado."
         },
         {
           "label": "Anotações",
