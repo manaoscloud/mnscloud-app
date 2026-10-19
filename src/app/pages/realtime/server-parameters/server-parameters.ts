@@ -10,19 +10,20 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-import { ApiService } from '../../../../services/api.service';
-import { apiErrorFields } from '../../../../services/api-error-fields';
-import { SettingsPageComponent } from '../../../../shared/pages/settings-page';
-import { FieldHelpComponent } from '../../../../shared/forms/field-help';
-import { FieldInvalidDirective } from '../../../../shared/forms/field-invalid.directive';
-import { FieldRules } from '../../../../shared/forms/field-validation';
-import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
-import { MnsSearchSelectFieldComponent } from '../../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import { dnsPolicySelector } from '../../../voip/service-domain/dns-policy-selector';
+import { ApiService } from '../../../services/api.service';
+import { apiErrorFields } from '../../../services/api-error-fields';
+import { SettingsPageComponent } from '../../../shared/pages/settings-page';
+import { FieldHelpComponent } from '../../../shared/forms/field-help';
+import { FieldInvalidDirective } from '../../../shared/forms/field-invalid.directive';
+import { FieldRules } from '../../../shared/forms/field-validation';
+import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { dnsPolicySelector } from '../../voip/service-domain/dns-policy-selector';
 
-type RtpMediaParameterForm = {
+type ServerParameterForm = {
   autoDomainEnabled: boolean;
   dnsPolicyUUID: string;
   autoDomainUuidLength: number | null;
@@ -30,19 +31,67 @@ type RtpMediaParameterForm = {
 
 type FieldKey = 'dnsPolicyUUID' | 'autoDomainUuidLength';
 
-const ENDPOINT = 'system/realtime/media/parameters';
-const EMPTY_FORM: RtpMediaParameterForm = {
+/** Realtime server kind of the page, from the route `data.serverKind`. */
+export type RealtimeServerKind = 'media' | 'turn' | 'webrtc';
+
+type ServerParameterConfig = {
+  endpoint: string;
+  title: string;
+  description: string;
+  toggle: string;
+  policyLabel: string;
+  policyHelp: string;
+  labelHelp: string;
+};
+
+const CONFIGS: Record<RealtimeServerKind, ServerParameterConfig> = {
+  media: {
+    endpoint: 'system/realtime/media/parameters',
+    title: 'RTP media parameters',
+    description:
+      'Automatic managed domain of new media servers, published under an enabled platform RTP DNS policy.',
+    toggle: 'Generate media server domain automatically',
+    policyLabel: 'RTP DNS policy',
+    policyHelp:
+      'Enabled platform policy of the RTP DNS tab of a DNS zone. Each new media server gets its own managed domain under its base, published with the server IPv4 (A) and IPv6 (AAAA).',
+    labelHelp: 'Prefix of the media server UUID; it never changes when the server is renamed.',
+  },
+  turn: {
+    endpoint: 'system/realtime/turn/parameters',
+    title: 'TURN/STUN parameters',
+    description:
+      'Automatic managed domain of new TURN/STUN servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.',
+    toggle: 'Generate TURN/STUN server domain automatically',
+    policyLabel: 'Realtime DNS policy',
+    policyHelp:
+      'Enabled platform policy of the Realtime DNS tab of a DNS zone. Each new TURN/STUN server gets its own managed domain under its base: it is the coturn realm and the platform TURN domain, published with the advertised IPv4 (A) and issued a Let’s Encrypt certificate by the server.',
+    labelHelp: 'Prefix of the TURN/STUN server UUID; it never changes when the server is renamed.',
+  },
+  webrtc: {
+    endpoint: 'system/realtime/webrtc/domain-parameters',
+    title: 'WebRTC domain parameters',
+    description:
+      'Automatic managed primary domain of new WebRTC servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.',
+    toggle: 'Generate WebRTC server domain automatically',
+    policyLabel: 'Realtime DNS policy',
+    policyHelp:
+      'Enabled platform policy of the Realtime DNS tab of a DNS zone. Each new WebRTC server gets its own managed primary domain under its base, published with the server IPv4 (A) and IPv6 (AAAA) and issued a Let’s Encrypt certificate by the edge.',
+    labelHelp: 'Prefix of the WebRTC server UUID; it never changes when the server is renamed.',
+  },
+};
+const EMPTY_FORM: ServerParameterForm = {
   autoDomainEnabled: false,
   dnsPolicyUUID: '',
   autoDomainUuidLength: 12,
 };
 
 /**
- * Realtime › Media › Parameters (platform only): automatic managed domain of new media servers
- * under an enabled platform RTP DNS policy.
+ * Realtime › Media › Parameters, Realtime › TURN/STUN › Parameters and Realtime › WebRTC ›
+ * Automatic DNS (platform only): automatic managed domain of new servers of that kind under an
+ * enabled platform Realtime DNS policy.
  */
 @Component({
-  selector: 'app-realtime-media-parameters',
+  selector: 'app-realtime-server-parameters',
   standalone: true,
   imports: [
     SettingsPageComponent,
@@ -54,15 +103,20 @@ const EMPTY_FORM: RtpMediaParameterForm = {
     MatSlideToggleModule,
     TranslocoPipe,
   ],
-  templateUrl: './parameters.html',
+  templateUrl: './server-parameters.html',
   encapsulation: ViewEncapsulation.None,
   host: { class: 'app-fade-in-host' },
 })
-export class RealtimeMediaParametersPage {
+export class RealtimeServerParametersPage {
   private readonly api = inject(ApiService);
+  readonly config =
+    CONFIGS[
+      (inject(ActivatedRoute).snapshot.data['serverKind'] as RealtimeServerKind | undefined) ??
+        'media'
+    ];
   private readonly revealInvalid = injectRevealInvalidFields();
 
-  readonly form = signal<RtpMediaParameterForm>({ ...EMPTY_FORM });
+  readonly form = signal<ServerParameterForm>({ ...EMPTY_FORM });
   readonly baseline = signal('');
   readonly policy = signal<{
     base: string | null;
@@ -77,7 +131,7 @@ export class RealtimeMediaParametersPage {
   readonly hasChanges = computed(() => JSON.stringify(this.form()) !== this.baseline());
 
   readonly dns = dnsPolicySelector(
-    () => ENDPOINT,
+    () => this.config.endpoint,
     () => ({
       uuid: this.form().dnsPolicyUUID || null,
       zoneName: this.policy().zoneName,
@@ -88,7 +142,7 @@ export class RealtimeMediaParametersPage {
   );
 
   private readonly parameters = resource({
-    loader: async () => (await this.api.get<any>(ENDPOINT))?.data?.item ?? {},
+    loader: async () => (await this.api.get<any>(this.config.endpoint))?.data?.item ?? {},
   });
   readonly loading = computed(() => this.parameters.isLoading());
   readonly policyError = computed(() => {
@@ -118,7 +172,7 @@ export class RealtimeMediaParametersPage {
     });
   }
 
-  update(patch: Partial<RtpMediaParameterForm>) {
+  update(patch: Partial<ServerParameterForm>) {
     this.form.update((value) => ({ ...value, ...patch }));
     const keys = Object.keys(patch);
     if (keys.some((key) => this.serverInvalid().has(key))) {
@@ -170,7 +224,7 @@ export class RealtimeMediaParametersPage {
     this.saving.set(true);
     try {
       const form = this.form();
-      const result = await this.api.put<any>(ENDPOINT, {
+      const result = await this.api.put<any>(this.config.endpoint, {
         autoDomainEnabled: form.autoDomainEnabled,
         dnsPolicyUUID: form.dnsPolicyUUID || null,
         autoDomainUuidLength: form.autoDomainUuidLength,
@@ -191,7 +245,7 @@ export class RealtimeMediaParametersPage {
   }
 
   private apply(item: Record<string, any>) {
-    const form: RtpMediaParameterForm = {
+    const form: ServerParameterForm = {
       autoDomainEnabled: item['autoDomainEnabled'] === true,
       dnsPolicyUUID: String(item['dnsPolicyUUID'] ?? ''),
       autoDomainUuidLength: Number(item['autoDomainUuidLength'] ?? 12),

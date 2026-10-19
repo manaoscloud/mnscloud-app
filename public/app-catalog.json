@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "044d364224d4",
+  "version": "49165ecd8976",
   "language": "pt-BR",
   "entries": [
     {
@@ -7494,17 +7494,8 @@
       "menuPath": "Tempo real › Media/RTP › Parâmetros",
       "scope": "platform",
       "title": "Parâmetros",
-      "description": "Domínio gerenciado automático dos novos servidores de mídia, publicado em uma policy DNS RTP habilitada da plataforma.",
-      "fields": [
-        {
-          "label": "Rótulo do domínio",
-          "help": "Prefixo do UUID do servidor de mídia; não muda quando o servidor é renomeado."
-        },
-        {
-          "label": "Tamanho do UUID",
-          "help": "Quantidade de caracteres do prefixo curto de UUID (entre 8 e 32 caracteres)."
-        }
-      ]
+      "description": "",
+      "fields": []
     },
     {
       "route": "/system/realtime/media/server",
@@ -7600,7 +7591,7 @@
         },
         {
           "label": "Domínio realm principal",
-          "help": ""
+          "help": "Gerar automaticamente cria <uuid>.<base> dos parâmetros TURN/STUN com DNS gerenciado e certificado gratuito; ou escolha um domínio TURN/STUN existente."
         },
         {
           "label": "Nome",
@@ -7677,6 +7668,14 @@
       ]
     },
     {
+      "route": "/system/realtime/turn/parameters",
+      "menuPath": "Tempo real › TURN/STUN › Parâmetros",
+      "scope": "platform",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": []
+    },
+    {
       "route": "/system/realtime/turn/server",
       "menuPath": "Tempo real › TURN/STUN › Servidores",
       "scope": "platform",
@@ -7689,7 +7688,7 @@
         },
         {
           "label": "Domínio realm principal",
-          "help": ""
+          "help": "Gerar automaticamente cria <uuid>.<base> dos parâmetros TURN/STUN com DNS gerenciado e certificado gratuito; ou escolha um domínio TURN/STUN existente."
         },
         {
           "label": "Nome",
@@ -7770,6 +7769,14 @@
       "menuPath": "Tempo real › WebRTC › Painel",
       "scope": "platform",
       "title": "Painel",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/realtime/webrtc/automatic-dns",
+      "menuPath": "Tempo real › WebRTC › DNS automático",
+      "scope": "platform",
+      "title": "DNS automático",
       "description": "",
       "fields": []
     },

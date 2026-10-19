@@ -2509,15 +2509,21 @@ export const routes: Routes = [
                 title: 'System Realtime • Media Domains | mnscloud',
                 data: { scope: 'master', resource: 'domains' },
               },
-              {
-                path: 'realtime/media/parameters',
+              ...(
+                [
+                  ['media/parameters', 'media', 'Media Parameters'],
+                  ['turn/parameters', 'turn', 'TURN/STUN Parameters'],
+                  ['webrtc/automatic-dns', 'webrtc', 'WebRTC Automatic DNS'],
+                ] as const
+              ).map(([path, serverKind, title]) => ({
+                path: `realtime/${path}`,
                 loadComponent: () =>
-                  import('./pages/realtime/media/parameters/parameters').then(
-                    (m) => m.RealtimeMediaParametersPage,
+                  import('./pages/realtime/server-parameters/server-parameters').then(
+                    (m) => m.RealtimeServerParametersPage,
                   ),
-                title: 'System Realtime • Media Parameters | mnscloud',
-                data: { scope: 'master' },
-              },
+                title: `System Realtime • ${title} | mnscloud`,
+                data: { scope: 'master', serverKind },
+              })),
               {
                 path: 'pabx',
                 loadComponent: () =>

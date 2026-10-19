@@ -13,9 +13,18 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { InstallCommandDialogData } from '../../../shared/install-command-dialog/install-command-dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
+import { ApiService } from '../../../services/api.service';
 import { RealtimeTurnService } from './turn.service';
+
+/** Option value of the server realm select that asks the platform to generate the domain. */
+const AUTO_TURN_DOMAIN = '__auto__';
+/** Realtime domains created from a TURN/STUN form are TURN/STUN domains. */
+const TURN_DOMAIN_QUICK_CREATE = quickCreateFor('RealtimeDomainRtdUUID', {
+  initialValues: { purpose: 'turn' },
+});
 
 const STATUS_OPTIONS = [
   { value: 1, label: 'Active' },
@@ -106,6 +115,8 @@ const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'realtimeDomainUUID',
       label: 'Primary Realm Domain',
       type: 'search-select',
+      quickCreate: TURN_DOMAIN_QUICK_CREATE,
+      help: 'Generate automatically creates <uuid>.<base> of the TURN/STUN parameters with managed DNS and a free certificate; or choose an existing TURN/STUN domain.',
       span: 1,
     },
     { key: 'name', source: 'RtsName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
@@ -339,6 +350,7 @@ const TURN_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       label: 'Realtime Domain',
       type: 'search-select',
       required: true,
+      quickCreate: TURN_DOMAIN_QUICK_CREATE,
       span: 1,
     },
     {
@@ -390,18 +402,50 @@ const TURN_DOMAIN_CONFIG: ConfigurableCrudConfig = {
 
 abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly turnApi = inject(RealtimeTurnService);
+  private readonly parametersApi = inject(ApiService);
   protected serverOptions: ConfigurableCrudOption[] = [];
   protected realtimeDomainOptions: ConfigurableCrudOption[] = [];
+  /** Base of the TURN/STUN DNS policy when automatic server domains are enabled; null otherwise. */
+  private autoDomainBase: string | null = null;
 
   protected constructor(config: ConfigurableCrudConfig) {
     super(config);
     void this.fetchLookupOptions();
   }
 
+  private get isServerPage(): boolean {
+    return this.config.uuidField === 'RtsUUID';
+  }
+
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions;
-    if (key === 'realtimeDomainUUID') return this.realtimeDomainOptions;
+    if (key === 'realtimeDomainUUID') {
+      if (!this.isServerPage || this.editingRecord() || this.autoDomainBase === null) {
+        return this.realtimeDomainOptions;
+      }
+      return [
+        {
+          value: AUTO_TURN_DOMAIN,
+          label: this.t('Generate automatically'),
+          description: `<uuid>.${this.autoDomainBase}`,
+          searchText: `${this.t('Generate automatically')} ${this.autoDomainBase}`,
+        },
+        ...this.realtimeDomainOptions,
+      ];
+    }
     return [];
+  }
+
+  override startCreate(): void {
+    super.startCreate();
+    if (this.isServerPage && this.autoDomainBase !== null) {
+      this.patchFormValues({ realtimeDomainUUID: AUTO_TURN_DOMAIN });
+    }
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    if (payload['realtimeDomainUUID'] !== AUTO_TURN_DOMAIN) return super.augmentPayload(payload);
+    return super.augmentPayload({ ...payload, realtimeDomainUUID: null, autoDomain: true });
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
@@ -425,10 +469,18 @@ abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   private async fetchLookupOptions() {
-    const [servers, domains] = await Promise.all([
+    const [servers, domains, parameters] = await Promise.all([
       this.turnApi.list('servers', { status: 1, limit: 5000 }, 'master'),
       this.turnApi.listRealtimeDomains({ purpose: 'turn', status: 1, limit: 5000 }, 'master'),
+      this.isServerPage
+        ? this.parametersApi.get<any>('system/realtime/turn/parameters').catch(() => null)
+        : Promise.resolve(null),
     ]);
+    const turnParameters = parameters?.data?.item;
+    this.autoDomainBase =
+      turnParameters?.autoDomainEnabled === true && turnParameters?.dnsPolicyBase
+        ? String(turnParameters.dnsPolicyBase)
+        : null;
     this.serverOptions = this.toOptions(
       servers?.data?.items ?? [],
       'RtsUUID',
