@@ -28,9 +28,12 @@ export class CyberSecurityDashboardPage {
   readonly snapshot = dashboardResource({
     defaultValue: {} as CyberSummary,
     loader: async () => {
-      const result = await this.api.get<{ data: CyberSummary }>('cyber-security/dashboard', {
-        timeout: 30000,
-      });
+      // The tenant route answers the selected tenant (masters included); the System area asks the
+      // platform-wide route.
+      const endpoint = this.router.url.startsWith('/system/cyber-security')
+        ? 'system/cyber-security/dashboard'
+        : 'cyber-security/dashboard';
+      const result = await this.api.get<{ data: CyberSummary }>(endpoint, { timeout: 30000 });
       if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data))
         throw new Error('Invalid dashboard response');
       return result.data;
