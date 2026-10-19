@@ -4,6 +4,11 @@ import { ApiService } from '../../../services/api.service';
 import type { ConfigurableCrudRowAction } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 
+/** Row actions of PABX/Softswitch accounts: generate (or show) the account WSS domain. */
+export function accountWebRtcDomainActions(canEdit: boolean): ConfigurableCrudRowAction[] {
+  return canEdit ? [WEBRTC_DOMAIN_ACTION] : [];
+}
+
 /** Row action of PABX/Softswitch accounts: generate (or show) the account WSS domain. */
 export const WEBRTC_DOMAIN_ACTION: ConfigurableCrudRowAction = {
   key: 'webrtc-domain',
@@ -21,9 +26,19 @@ export async function openAccountWebRtcDomain(
   dialog: MatDialog,
   type: 'pabx' | 'softswitch',
   accountUUID: string,
+  notifyError: (message: string) => void,
 ): Promise<void> {
-  const result = await api.post<any>(`voip/${type}/accounts/${accountUUID}/webrtc-domain`, {});
-  const item = result?.data?.item ?? {};
+  let item: Record<string, unknown>;
+  try {
+    const result = await api.post<any>(`voip/${type}/accounts/${accountUUID}/webrtc-domain`, {});
+    item = result?.data?.item ?? {};
+  } catch (error) {
+    const body = (error as any)?.error?.error;
+    notifyError(
+      typeof body === 'string' && body.trim() ? body : 'WebRTC domain could not be generated.',
+    );
+    return;
+  }
   openDataViewerDialog(dialog, {
     title: 'WebRTC domain',
     description:

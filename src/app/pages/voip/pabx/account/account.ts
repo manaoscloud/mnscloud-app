@@ -1,5 +1,9 @@
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { openAccountWebRtcDomain, WEBRTC_DOMAIN_ACTION } from '../../shared/webrtc-domain-action';
+import {
+  accountWebRtcDomainActions,
+  openAccountWebRtcDomain,
+  WEBRTC_DOMAIN_ACTION,
+} from '../../shared/webrtc-domain-action';
 import { Component, inject, signal } from '@angular/core';
 
 import { ApiService } from '../../../../services/api.service';
@@ -330,7 +334,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const state = String(row['DnsPublicationState'] ?? 'not_requested');
-    const webrtc = this.canEdit() ? [WEBRTC_DOMAIN_ACTION] : [];
+    const webrtc = accountWebRtcDomainActions(this.canEdit());
     return state === 'not_requested'
       ? webrtc
       : [
@@ -346,14 +350,14 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key === WEBRTC_DOMAIN_ACTION.key) {
-      try {
-        await openAccountWebRtcDomain(this.rawApi, this.dialog, 'pabx', this.recordUUID(row));
-      } catch (error) {
-        this.snack.error(
-          this.errorMessage(error) || this.t('WebRTC domain could not be generated.'),
-        );
-      }
-      return;
+      const notify = (message: string) => this.snack.error(this.t(message));
+      return openAccountWebRtcDomain(
+        this.rawApi,
+        this.dialog,
+        'pabx',
+        this.recordUUID(row),
+        notify,
+      );
     }
     const endpoint = `voip/pabx/accounts/${this.recordUUID(row)}/dns-publication`;
     const result = await this.rawApi.get<any>(endpoint),
