@@ -187,6 +187,7 @@ const fields: readonly ConfigurableCrudField[] = [
     span: 1,
     placeholder: 'Search dial plan',
     autocomplete: 'off',
+    help: 'Optional. Empty uses the dial plan of the PABX account.',
   },
   {
     key: 'vmEnabled',

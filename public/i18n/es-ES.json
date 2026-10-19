@@ -8758,5 +8758,7 @@
   "home.rows.conversations.rows.waiting": "Esperando hace más tiempo",
   "home.rows.customer_billing.rows.largest_overdue": "Mayores cobros vencidos",
   "home.rows.fiscal.rows.needing_action": "Documentos que requieren acción",
-  "home.rows.pos.rows.open_sessions": "Cajas abiertas"
+  "home.rows.pos.rows.open_sessions": "Cajas abiertas",
+  "No selection": "Sin selección",
+  "Optional. Empty uses the dial plan of the PABX account.": "Opcional. Vacío usa el plan de marcado de la cuenta PABX."
 }

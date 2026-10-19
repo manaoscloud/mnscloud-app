@@ -136,6 +136,11 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-option>
           }
 
+          @if (showClearOption()) {
+            <mat-option [value]="''" class="select-clear-option">
+              <span class="select-option-main">{{ clearLabel() | transloco }}</span>
+            </mat-option>
+          }
           @for (option of filteredOptions(); track optionTrack(option)) {
             <mat-option
               [value]="option.value"
@@ -259,6 +264,11 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             </mat-option>
           }
 
+          @if (showClearOption()) {
+            <mat-option [value]="''" class="select-clear-option">
+              <span class="select-option-main">{{ clearLabel() | transloco }}</span>
+            </mat-option>
+          }
           @for (option of filteredOptions(); track optionTrack(option)) {
             <mat-option
               [value]="option.value"
@@ -330,6 +340,11 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
         margin-right: -0.35rem;
       }
 
+      .select-clear-option {
+        font-style: italic;
+        opacity: 0.8;
+      }
+
       .select-create-option {
         color: var(--mns-color-accent, #00d5d5);
       }
@@ -362,6 +377,9 @@ export class MnsSearchSelectFieldComponent {
   readonly canCreate = input(false);
   readonly createLabel = input('Create new');
   readonly createRecord = output<void>();
+  /** Optional single selects: offer an empty choice so a picked value can be removed. */
+  readonly clearable = input(false);
+  readonly clearLabel = input('No selection');
 
   readonly remoteSearch = input(false);
   readonly hasPrevious = input(false);
@@ -424,6 +442,16 @@ export class MnsSearchSelectFieldComponent {
     }
     return options.filter((_, index) => visible.has(index));
   });
+
+  /** Empty choice on top of an unfiltered list, unless the page already supplies one. */
+  readonly showClearOption = computed(
+    () =>
+      this.clearable() &&
+      !this.multiple() &&
+      !this.normalize(this.search()) &&
+      this.filteredOptions().length > 0 &&
+      !this.options().some((option) => this.areOptionValuesEqual(option.value, '')),
+  );
 
   /** Visible, enabled options (respecting the current search) for "Select all". */
   readonly selectableOptions = computed(() =>
