@@ -8799,5 +8799,14 @@
   "home.chart.tenants.series.signups": "Cadastros",
   "home.chart.ai.chart.requests": "Requisições de IA por dia (30 dias)",
   "home.chart.ai.series.success": "Com sucesso",
-  "home.chart.ai.series.error": "Com erro"
+  "home.chart.ai.series.error": "Com erro",
+  "home.chart.voip.chart.calls": "Chamadas por dia (30 dias)",
+  "home.chart.voip.series.answered": "Atendidas",
+  "home.chart.voip.series.not_answered": "Não atendidas",
+  "home.chart.hosting.chart.smtp_messages": "E-mails por dia (30 dias)",
+  "home.chart.hosting.series.sent": "Enviados",
+  "home.chart.hosting.series.failed": "Com falha",
+  "home.chart.security.chart.events": "Decisões de segurança por dia (30 dias)",
+  "home.chart.security.series.other": "Permitidas ou monitoradas",
+  "home.chart.security.series.blocked": "Negadas ou limitadas"
 }
