@@ -8676,7 +8676,7 @@
   "logs.resumeCommand": "Comando de retomada",
   "logs.resumeWarning": "Retoma a instalação já vinculada a este servidor com a versão aprovada mais recente. Não usa nova autorização e mantém o Agent.",
   "logs.retryInstallation": "Retomar instalação",
-  "logs.retryConfirmation": "Retomar a instalação com o mesmo Agent na versão aprovada mais recente?",
+  "logs.retryConfirmation": "Retomar a instalação com o mesmo Agent na versão aprovada mais recente? Use após uma falha ou um comando interrompido.",
   "logs.retryAccepted": "Recuperação aceita. Execute o comando de retomada exibido no mesmo host.",
   "logs.serverUuid": "UUID do servidor",
   "logs.installationState": "Instalação",

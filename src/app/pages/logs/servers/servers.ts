@@ -54,10 +54,12 @@ const config = defineCrud({
         row['LgsProvisioningState'] === 'installing' && Boolean(row['InstallationReleaseTag']),
     },
     {
+      // Also for an installation stuck in installing (a host step was interrupted): it is re-pinned
+      // to the latest approved release and the same host runs the resume command.
       key: 'retry',
       label: 'logs.retryInstallation',
       icon: 'refresh',
-      visible: (row) => row['LgsProvisioningState'] === 'failed',
+      visible: (row) => ['failed', 'installing'].includes(String(row['LgsProvisioningState'])),
     },
   ],
   fields: [

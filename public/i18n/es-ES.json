@@ -8675,7 +8675,7 @@
   "logs.resumeCommand": "Comando de reanudación",
   "logs.resumeWarning": "Reanuda la instalación ya vinculada a este servidor con la versión aprobada más reciente. No usa nueva autorización y conserva el Agent.",
   "logs.retryInstallation": "Reanudar instalación",
-  "logs.retryConfirmation": "¿Reanudar la instalación con el mismo Agent en la versión aprobada más reciente?",
+  "logs.retryConfirmation": "¿Reanudar la instalación con el mismo Agent en la versión aprobada más reciente? Úselo tras un error o un comando interrumpido.",
   "logs.retryAccepted": "Recuperación aceptada. Ejecute el comando de reanudación mostrado en el mismo host.",
   "logs.serverUuid": "UUID del servidor",
   "logs.installationState": "Instalación",
