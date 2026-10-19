@@ -2,6 +2,12 @@
   display: block;
 }
 
+// A collection dialog fills the dialog surface, so its form-actions footer stays at the bottom.
+:host(.collection-dialog-host) {
+  height: 100%;
+  min-height: 0;
+}
+
 .form-grid {
   display: grid;
   align-items: start;
