@@ -129,9 +129,15 @@
                     <article class="dashboard-metric">
                       <div>
                         <span class="dashboard-metric-label">{{ kpi.label | transloco }}</span>
-                        <strong class="dashboard-metric-value">{{ kpi.value }}</strong>
-                        @if (kpi.hint) {
-                          <small class="dashboard-metric-hint">{{ kpi.hint }}</small>
+                        <strong class="dashboard-metric-value">{{
+                          'key' in kpi.value
+                            ? (kpi.value.key | transloco: kpi.value.params)
+                            : kpi.value.text
+                        }}</strong>
+                        @if (kpi.hint; as hint) {
+                          <small class="dashboard-metric-hint">{{
+                            'key' in hint ? (hint.key | transloco: hint.params) : hint.text
+                          }}</small>
                         }
                       </div>
                     </article>

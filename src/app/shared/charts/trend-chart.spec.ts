@@ -62,6 +62,15 @@ describe('TrendChartComponent', () => {
     expect(element.querySelector('.mns-trend-legend')).toBeNull();
     fixture.componentInstance.hovered.set(2);
     fixture.detectChanges();
-    expect(element.querySelector('.mns-trend-tooltip')?.textContent).toContain('7');
+    const tooltip = element.querySelector('.mns-trend-tooltip') as HTMLElement;
+    expect(tooltip.textContent).toContain('7');
+    // Right half: anchored from the right edge so it stays inside the plot.
+    expect(tooltip.style.right).not.toBe('');
+    expect(tooltip.style.left).toBe('');
+    fixture.componentInstance.hovered.set(0);
+    fixture.detectChanges();
+    const first = element.querySelector('.mns-trend-tooltip') as HTMLElement;
+    expect(first.style.left).not.toBe('');
+    expect(first.style.right).toBe('');
   });
 });

@@ -167,7 +167,12 @@ describe('Home dashboard', () => {
     expect(requests).toEqual(['dashboard/overview']);
     expect(page.hasData()).toBeTrue();
     expect(page.activeTab()?.key).toBe('voip');
-    expect(page.kpis().map((kpi) => kpi.value)).toEqual(['1,284', '91.4%', '3 / 4', '—']);
+    expect(page.kpis().map((kpi) => kpi.value)).toEqual([
+      { text: '1,284' },
+      { text: '91.4%' },
+      { text: '3 / 4' },
+      { text: '—' },
+    ]);
   });
 
   it('follows the module in the URL and formats comparisons, durations and rows', async () => {
@@ -175,8 +180,12 @@ describe('Home dashboard', () => {
     await settle();
     expect(page.activeTab()?.key).toBe('support');
     const [opened, firstResponse] = page.kpis();
-    expect(opened.hint).toBe('home.compare.yesterday{"delta":"+3"}');
-    expect(firstResponse.value).toBe('home.unit.hours_minutes{"hours":1,"minutes":15}');
+    // Keys are translated by the pipe, so they follow the translation load.
+    expect(opened.hint).toEqual({ key: 'home.compare.yesterday', params: { delta: '+3' } });
+    expect(firstResponse.value).toEqual({
+      key: 'home.unit.hours_minutes',
+      params: { hours: 1, minutes: 15 },
+    });
     expect(page.rows()[0]).toEqual(
       jasmine.objectContaining({
         meta: 'home.row.support.deadline.response',
@@ -191,8 +200,11 @@ describe('Home dashboard', () => {
     query.next(convertToParamMap({ module: 'customer-billing' }));
     await settle();
     const [received] = page.kpis();
-    expect(received.value).toBe('R$1,500.00');
-    expect(received.hint).toBe('home.compare.previous_month{"delta":"+R$500.00"}');
+    expect(received.value).toEqual({ text: 'R$1,500.00' });
+    expect(received.hint).toEqual({
+      key: 'home.compare.previous_month',
+      params: { delta: '+R$500.00' },
+    });
     expect(page.rows()[0].details).toEqual([{ label: 'home.row.amount', value: 'R$200.00' }]);
     const trend = page.chart();
     expect(trend?.title).toBe('home.chart.customer_billing.chart.received');
@@ -228,7 +240,7 @@ describe('Home dashboard', () => {
     await settle();
     expect(requests).toContain('system/dashboard/overview');
     expect(page.activeTab()?.key).toBe('fleet');
-    expect(page.kpis()[0].value).toBe('$38.20');
+    expect(page.kpis()[0].value).toEqual({ text: '$38.20' });
   });
 
   it('asks the API to bypass its cache on Refresh only', async () => {
