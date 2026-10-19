@@ -5,7 +5,9 @@
   [loading]="overview.isLoading()"
   [error]="overview.error()"
   [hasData]="hasData()"
+  [customizable]="true"
   (refresh)="refresh()"
+  (customize)="customize()"
 >
   <div class="dashboard-content">
     <section class="dashboard-panel" aria-labelledby="home-attention-title">
@@ -170,6 +172,11 @@
                 }
               }
             }
+          </div>
+        } @else if (allHidden()) {
+          <div class="empty-state dashboard-onboarding">
+            <mat-icon aria-hidden="true">visibility_off</mat-icon>
+            <p>{{ 'home.layout.all_hidden' | transloco }}</p>
           </div>
         } @else {
           <div class="empty-state dashboard-onboarding">

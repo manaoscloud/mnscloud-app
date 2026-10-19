@@ -8817,5 +8817,14 @@
   "self_signed": "Autoassinado",
   "WebRTC domain could not be generated.": "Não foi possível gerar o domínio WebRTC.",
   "Generate the WSS domain of each PABX and Softswitch account": "Gerar o domínio WSS de cada conta PABX e Softswitch",
-  "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.": "Cada nova conta PABX ou Softswitch recebe <uuid-da-conta>.<base> no servidor WebRTC menos carregado, com DNS gerenciado, destino SIP para a conta e o certificado wildcard gratuito do edge. Contas existentes usam a ação Domínio WebRTC da conta."
+  "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.": "Cada nova conta PABX ou Softswitch recebe <uuid-da-conta>.<base> no servidor WebRTC menos carregado, com DNS gerenciado, destino SIP para a conta e o certificado wildcard gratuito do edge. Contas existentes usam a ação Domínio WebRTC da conta.",
+  "Customize": "Personalizar",
+  "home.layout.title": "Personalizar painel",
+  "home.layout.description": "Escolha quais módulos aparecem como abas e em que ordem.",
+  "home.layout.note": "Módulos ocultos continuam mostrando seus alertas em Precisa de atenção.",
+  "home.layout.reset": "Restaurar padrão",
+  "home.layout.move_up": "Mover {{name}} para cima",
+  "home.layout.move_down": "Mover {{name}} para baixo",
+  "home.layout.save_failed": "Não foi possível salvar a personalização.",
+  "home.layout.all_hidden": "Todos os módulos estão ocultos. Use Personalizar para mostrá-los novamente."
 }
