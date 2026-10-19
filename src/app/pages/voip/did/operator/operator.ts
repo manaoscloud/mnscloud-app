@@ -49,7 +49,13 @@ function operatorConfig(system: boolean): ConfigurableCrudConfig {
       { id: 'name', label: 'Name', kind: 'identity', field: 'VdoName', uuidField: 'VdoUUID' },
       { id: 'nick', label: 'Nick', field: 'VdoNick' },
       { id: 'supplier', label: 'Supplier', field: 'SupplierName' },
-      { id: 'status', label: 'Status', kind: 'status', field: 'VdoStatus', className: 'status-col' },
+      {
+        id: 'status',
+        label: 'Status',
+        kind: 'status',
+        field: 'VdoStatus',
+        className: 'status-col',
+      },
     ],
     fields: [
       {

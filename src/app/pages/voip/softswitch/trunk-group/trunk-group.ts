@@ -169,16 +169,28 @@ export class VoipSoftswitchTrunkGroupPage extends ConfigurableCrudPageBase<Confi
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      const response = await this.rawApi.get<any>('voip/softswitch/accounts?status=1&limit=5000&offset=0');
-      this.accountOptions.set(toOptions(response, (row) => option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName])));
+      const response = await this.rawApi.get<any>(
+        'voip/softswitch/accounts?status=1&limit=5000&offset=0',
+      );
+      this.accountOptions.set(
+        toOptions(response, (row) =>
+          option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
+        ),
+      );
     } finally {
       this.lookupLoading.set(false);
     }
   }
 }
 
-function toOptions(response: any, mapItem: (row: any) => ConfigurableCrudOption | null): ConfigurableCrudOption[] {
-  return extractItems(response).map(mapItem).filter(isOption).sort((left, right) => left.label.localeCompare(right.label));
+function toOptions(
+  response: any,
+  mapItem: (row: any) => ConfigurableCrudOption | null,
+): ConfigurableCrudOption[] {
+  return extractItems(response)
+    .map(mapItem)
+    .filter(isOption)
+    .sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function extractItems(response: any): any[] {
@@ -186,12 +198,24 @@ function extractItems(response: any): any[] {
   return [];
 }
 
-function option(value: unknown, label: unknown, descriptionParts: unknown[] = []): ConfigurableCrudOption | null {
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
   if (!normalizedValue || !normalizedLabel) return null;
-  const description = descriptionParts.map((item) => String(item ?? '').trim()).filter(Boolean).join(' - ');
-  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {

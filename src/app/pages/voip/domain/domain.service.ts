@@ -35,7 +35,10 @@ export class VoipDomainService {
     return this.api.get<any>(`${this.path(scope)}${suffix ? `?${suffix}` : ''}`);
   }
 
-  create(payload: { name: string; purpose: string; status: number }, scope: VoipDomainScope = 'tenant') {
+  create(
+    payload: { name: string; purpose: string; status: number },
+    scope: VoipDomainScope = 'tenant',
+  ) {
     return this.api.post<any>(this.path(scope), payload);
   }
 

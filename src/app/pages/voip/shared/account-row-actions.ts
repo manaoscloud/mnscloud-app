@@ -1,10 +1,8 @@
-import { MatDialog } from '@angular/material/dialog';
-
-import { ApiService } from '../../../services/api.service';
 import type {
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
+  CrudRowActionContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
@@ -25,14 +23,7 @@ export const ACCOUNT_PUBLICATION_STATES: ConfigurableCrudOption[] = [
 ];
 
 /** What the shared account row actions need from the PABX/Softswitch account page. */
-export type AccountRowActionContext = {
-  api: ApiService;
-  dialog: MatDialog;
-  t: (key: string) => string;
-  notifyError: (message: string) => void;
-  refresh: () => void;
-  trackOperation: (response: unknown) => unknown;
-};
+export type AccountRowActionContext = CrudRowActionContext;
 
 /** Row actions shared by PABX and Softswitch accounts: WebRTC domain and SIP realm DNS. */
 export function accountRowActions(

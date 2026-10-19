@@ -364,9 +364,14 @@ export class VoipSoftswitchCdrBillingPage extends ConfigurableCrudPageBase<Confi
       }),
     );
     const firstText = downloads.find((item) =>
-      ['sip_capture', 'sip_summary', 'diagnostic_json', 'rtp_summary', 'engine_log', 'runtime_snapshot'].includes(
-        String(item['diagnosticType'] ?? ''),
-      ),
+      [
+        'sip_capture',
+        'sip_summary',
+        'diagnostic_json',
+        'rtp_summary',
+        'engine_log',
+        'runtime_snapshot',
+      ].includes(String(item['diagnosticType'] ?? '')),
     );
     const previewUrl = String(firstText?.['downloadUrl'] ?? '');
     const preview = previewUrl ? await this.tryFetchText(previewUrl) : '';

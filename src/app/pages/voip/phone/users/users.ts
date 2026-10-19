@@ -157,7 +157,8 @@ const config = defineCrud({
     {
       key: 'lines',
       label: 'Lines',
-      emptyLabel: 'No lines assigned. Without lines, the person can only use pool lines or manual accounts.',
+      emptyLabel:
+        'No lines assigned. Without lines, the person can only use pool lines or manual accounts.',
       addLabel: 'Assign line',
       createTitle: 'Assign line',
       editTitle: 'Edit line',
@@ -184,8 +185,24 @@ const config = defineCrud({
           help: 'PABX extension or Softswitch subscriber. Customer logins only accept lines of their customer.',
           span: 2,
         },
-        { key: 'mode', source: 'VhlMode', label: 'Use', type: 'select', options: PHONE_LINE_MODES, required: true, span: 2 },
-        { key: 'primary', source: 'VhlIsPrimary', label: 'Primary line', type: 'select', options: YES_NO, required: true, span: 1 },
+        {
+          key: 'mode',
+          source: 'VhlMode',
+          label: 'Use',
+          type: 'select',
+          options: PHONE_LINE_MODES,
+          required: true,
+          span: 2,
+        },
+        {
+          key: 'primary',
+          source: 'VhlIsPrimary',
+          label: 'Primary line',
+          type: 'select',
+          options: YES_NO,
+          required: true,
+          span: 1,
+        },
         { key: 'revision', source: 'VhlRevision', label: 'Revision', hidden: true },
       ],
       columns: [
@@ -194,18 +211,28 @@ const config = defineCrud({
           id: 'mode',
           label: 'Use',
           value: (row, translate) =>
-            translate(PHONE_LINE_MODES.find((o) => o.value === row['VhlMode'])?.label ?? String(row['VhlMode'])),
+            translate(
+              PHONE_LINE_MODES.find((o) => o.value === row['VhlMode'])?.label ??
+                String(row['VhlMode']),
+            ),
         },
-        { id: 'primary', label: 'Primary line', value: (row, translate) => translate(Number(row['VhlIsPrimary']) === 1 ? 'Yes' : 'No') },
+        {
+          id: 'primary',
+          label: 'Primary line',
+          value: (row, translate) => translate(Number(row['VhlIsPrimary']) === 1 ? 'Yes' : 'No'),
+        },
         {
           id: 'webrtc',
           label: 'WebRTC',
-          value: (row, translate) => translate(row['WebRtcReady'] === true ? 'Ready' : 'No WebRTC domain'),
+          value: (row, translate) =>
+            translate(row['WebRtcReady'] === true ? 'Ready' : 'No WebRTC domain'),
         },
         { id: 'status', label: 'Status', field: 'VhlStatus', kind: 'status' },
       ],
       payload: (values) => ({
-        ...(values['revision'] ? { VhlRevision: Number(values['revision']) } : { TargetUUID: values['target'] }),
+        ...(values['revision']
+          ? { VhlRevision: Number(values['revision']) }
+          : { TargetUUID: values['target'] }),
         VhlMode: values['mode'],
         VhlIsPrimary: Number(values['primary']),
         VhlStatus: Number(values['status']),
