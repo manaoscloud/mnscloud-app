@@ -2743,6 +2743,20 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'authentication.servers' },
               },
               {
+                path: 'logs/clusters',
+                loadComponent: () =>
+                  import('./pages/logs/clusters/clusters').then((m) => m.LogsClusterPage),
+                title: 'Logs',
+                data: { scope: 'master', breadcrumb: 'logs.clusters' },
+              },
+              {
+                path: 'logs/servers',
+                loadComponent: () =>
+                  import('./pages/logs/servers/servers').then((m) => m.LogsServerPage),
+                title: 'Logs',
+                data: { scope: 'master', breadcrumb: 'logs.servers' },
+              },
+              {
                 path: 'hosting/webhost',
                 title: 'System Webhost | mnscloud',
                 data: { scope: 'master', context: 'system' },
