@@ -11,6 +11,13 @@ import { defineCrud } from '../../../../shared/crud/configurable-crud/define-cru
 const PROFILE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'api', label: 'API node' },
   { value: 'workers', label: 'Workers' },
+  { value: 'asterisk-realtime', label: 'Asterisk (PABX)' },
+];
+
+/** List labels also cover retirements of accounts that predate per-host accounts. */
+const PROFILE_LABELS: readonly ConfigurableCrudOption[] = [
+  ...PROFILE_OPTIONS,
+  { value: 'legacy', label: 'Old shared account' },
 ];
 
 const STATE_OPTIONS = [
@@ -49,7 +56,7 @@ const config = defineCrud({
   },
   columns: [
     { id: 'moduleAgent', label: 'Module host', field: 'moduleAgentName', translateValue: false },
-    { id: 'profile', label: 'Module', field: 'profile', options: PROFILE_OPTIONS },
+    { id: 'profile', label: 'Module', field: 'profile', options: PROFILE_LABELS },
     { id: 'username', label: 'Account', field: 'username', translateValue: false },
     { id: 'host', label: 'Allowed address', field: 'host', translateValue: false },
     {
