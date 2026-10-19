@@ -80,6 +80,12 @@ type ApiResponse<T> = { status: string; message: string; data: T; duration?: str
 
 type RouteTarget = { path: string; query: Record<string, string> };
 
+/**
+ * A display string: either final text or a translation key with params. Keys are translated by
+ * the transloco pipe in the template, so they follow the translation load and language changes.
+ */
+export type HomeText = { text: string } | { key: string; params: Record<string, unknown> };
+
 const EMPTY_OVERVIEW: OverviewSnapshot = {
   scope: 'tenant',
   generatedAt: new Date(0).toISOString(),
@@ -257,36 +263,41 @@ export class Dashboard {
     }).format(value);
   }
 
-  private formatValue(kpi: OverviewKpi): string {
-    if (kpi.value === null || kpi.value === undefined || kpi.value === '') return '—';
-    if (kpi.unit === 'text') return String(kpi.value);
+  private formatValue(kpi: OverviewKpi): HomeText {
+    if (kpi.value === null || kpi.value === undefined || kpi.value === '') return { text: '—' };
+    if (kpi.unit === 'text') return { text: String(kpi.value) };
     const value = Number(kpi.value);
-    if (!Number.isFinite(value)) return '—';
+    if (!Number.isFinite(value)) return { text: '—' };
     switch (kpi.unit) {
       case 'percent':
-        return `${this.number(value, 1)}%`;
+        return { text: `${this.number(value, 1)}%` };
       case 'minutes':
         return value >= 60
-          ? this.i18n.t('home.unit.hours_minutes', {
-              hours: Math.floor(value / 60),
-              minutes: value % 60,
-            })
-          : this.i18n.t('home.unit.minutes', { minutes: value });
+          ? {
+              key: 'home.unit.hours_minutes',
+              params: { hours: Math.floor(value / 60), minutes: value % 60 },
+            }
+          : { key: 'home.unit.minutes', params: { minutes: value } };
       case 'usd':
-        return this.money(value, 'USD');
+        return { text: this.money(value, 'USD') };
       case 'money':
-        return this.money(value, kpi.currency);
+        return { text: this.money(value, kpi.currency) };
       case 'ms':
-        return value >= 1000 ? `${this.number(value / 1000, 1)} s` : `${this.number(value)} ms`;
+        return {
+          text: value >= 1000 ? `${this.number(value / 1000, 1)} s` : `${this.number(value)} ms`,
+        };
       default:
-        return kpi.total !== null && kpi.total !== undefined
-          ? `${this.number(value)} / ${this.number(kpi.total)}`
-          : this.number(value);
+        return {
+          text:
+            kpi.total !== null && kpi.total !== undefined
+              ? `${this.number(value)} / ${this.number(kpi.total)}`
+              : this.number(value),
+        };
     }
   }
 
-  private hint(kpi: OverviewKpi): string {
-    if (kpi.previous === null || kpi.previous === undefined || kpi.value === null) return '';
+  private hint(kpi: OverviewKpi): HomeText | null {
+    if (kpi.previous === null || kpi.previous === undefined || kpi.value === null) return null;
     const delta = Number(kpi.value) - kpi.previous;
     const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
     const window = kpi.code.endsWith('_30d')
@@ -298,7 +309,7 @@ export class Dashboard {
       kpi.unit === 'money'
         ? this.money(Math.abs(delta), kpi.currency)
         : this.number(Math.abs(delta));
-    return this.i18n.t(`home.compare.${window}`, { delta: `${sign}${magnitude}` });
+    return { key: `home.compare.${window}`, params: { delta: `${sign}${magnitude}` } };
   }
 
   private rowParams(params: OverviewParams): Record<string, unknown> {

@@ -89,7 +89,7 @@ export function niceMax(value: number): number {
             }
           </div>
           @if (tooltip(); as tip) {
-            <div class="mns-trend-tooltip" [style.left.%]="tip.left">
+            <div class="mns-trend-tooltip" [style.left.%]="tip.left" [style.right.%]="tip.right">
               <strong>{{ tip.day }}</strong>
               @for (row of tip.rows; track row.key) {
                 <span
@@ -211,7 +211,10 @@ export class TrendChartComponent {
     const columns = this.columns();
     if (index === null || !columns[index]) return null;
     const column = columns[index];
-    const left = columns.length > 1 ? (index / (columns.length - 1)) * 100 : 50;
-    return { day: column.label, left: Math.min(Math.max(left, 12), 88), rows: column.values };
+    const center = columns.length > 1 ? ((index + 0.5) / columns.length) * 100 : 50;
+    // Anchored on the hovered column and opening towards the chart center, so it never leaves the plot.
+    return center <= 50
+      ? { day: column.label, left: center, right: null, rows: column.values }
+      : { day: column.label, left: null, right: 100 - center, rows: column.values };
   });
 }
