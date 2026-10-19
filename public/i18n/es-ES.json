@@ -8454,5 +8454,21 @@
   "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.": "Los contactos nuevos se vinculan automáticamente cuando el teléfono coincide con un cliente, contacto o lead. Vacíe un campo para desvincularlo.",
   "Who this contact is in the ERP and the CRM, so the team sees the history.": "Quién es este contacto en el ERP y en el CRM, para que el equipo vea el historial.",
   "Asterisk (PABX)": "Asterisk (PABX)",
-  "Old shared account": "Cuenta compartida antigua"
+  "Old shared account": "Cuenta compartida antigua",
+  "Tutorial video script": "Guion de los videos tutoriales",
+  "Tutorial video narration": "Narración de los videos tutoriales",
+  "Test voice": "Probar voz",
+  "Speaks a short sample with this voice; the call counts in the AI usage.": "Dice una muestra corta con esta voz; la llamada cuenta en el uso de IA.",
+  "Voice": "Voz",
+  "Speech models of the provider (OpenAI), e.g. gpt-4o-mini-tts, which follows the tone instructions.": "Modelos de voz del proveedor (OpenAI), por ejemplo gpt-4o-mini-tts, que sigue las instrucciones de tono.",
+  "Every voice speaks Portuguese, English and Spanish. Use Test voice in the list to hear it.": "Toda voz habla portugués, inglés y español. Use Probar voz en la lista para escucharla.",
+  "Tone and style": "Tono y estilo",
+  "How the voice should sound, e.g. warm, energetic and clear, like a friendly teacher. Ignored by tts-1 models.": "Cómo debe sonar la voz, por ejemplo cálida, animada y clara, como un profesor amable. Los modelos tts-1 lo ignoran.",
+  "Voice sample played ({{ ms }} ms).": "Muestra de voz reproducida ({{ ms }} ms).",
+  "Could not play the voice sample.": "No se pudo reproducir la muestra de voz.",
+  "Speech features need an OpenAI provider": "Los recursos de voz necesitan un proveedor OpenAI",
+  "Speech features need a speech model": "Los recursos de voz necesitan un modelo de voz",
+  "Speech features need a valid voice": "Los recursos de voz necesitan una voz válida",
+  "This AI provider is used by a speech feature": "Este proveedor de IA lo usa un recurso de voz",
+  "Only speech features can be tested with a voice": "Solo los recursos de voz pueden probarse con una voz"
 }

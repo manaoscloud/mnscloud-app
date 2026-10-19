@@ -82,6 +82,10 @@
   unpriced model).
 - A new AI feature adds its option to `AI_FEATURE_OPTIONS` (`pages/settings/ai-features`) and its
   own behaviour settings in its module; it never asks for a provider or key.
+- Speech features (`SPEECH_AI_FEATURES`, today `help.tutorial.narration`) list the provider's
+  speech models (`models?capability=speech`), require a model and a voice (`OPENAI_VOICE_OPTIONS`)
+  plus optional tone/style, hide max tokens and the prompt cache, and have a *Test voice* row action
+  that plays the sample returned by `test-voice` in the App.
 
 ## Navigation Label Contract
 

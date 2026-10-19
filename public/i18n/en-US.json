@@ -8454,5 +8454,21 @@
   "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.": "New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.",
   "Who this contact is in the ERP and the CRM, so the team sees the history.": "Who this contact is in the ERP and the CRM, so the team sees the history.",
   "Asterisk (PABX)": "Asterisk (PABX)",
-  "Old shared account": "Old shared account"
+  "Old shared account": "Old shared account",
+  "Tutorial video script": "Tutorial video script",
+  "Tutorial video narration": "Tutorial video narration",
+  "Test voice": "Test voice",
+  "Speaks a short sample with this voice; the call counts in the AI usage.": "Speaks a short sample with this voice; the call counts in the AI usage.",
+  "Voice": "Voice",
+  "Speech models of the provider (OpenAI), e.g. gpt-4o-mini-tts, which follows the tone instructions.": "Speech models of the provider (OpenAI), e.g. gpt-4o-mini-tts, which follows the tone instructions.",
+  "Every voice speaks Portuguese, English and Spanish. Use Test voice in the list to hear it.": "Every voice speaks Portuguese, English and Spanish. Use Test voice in the list to hear it.",
+  "Tone and style": "Tone and style",
+  "How the voice should sound, e.g. warm, energetic and clear, like a friendly teacher. Ignored by tts-1 models.": "How the voice should sound, e.g. warm, energetic and clear, like a friendly teacher. Ignored by tts-1 models.",
+  "Voice sample played ({{ ms }} ms).": "Voice sample played ({{ ms }} ms).",
+  "Could not play the voice sample.": "Could not play the voice sample.",
+  "Speech features need an OpenAI provider": "Speech features need an OpenAI provider",
+  "Speech features need a speech model": "Speech features need a speech model",
+  "Speech features need a valid voice": "Speech features need a valid voice",
+  "This AI provider is used by a speech feature": "This AI provider is used by a speech feature",
+  "Only speech features can be tested with a voice": "Only speech features can be tested with a voice"
 }
