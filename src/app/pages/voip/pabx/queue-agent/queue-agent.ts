@@ -77,7 +77,13 @@ function config(): ConfigurableCrudConfig {
       pauseReason: '',
     },
     columns: [
-      { id: 'loginCode', label: 'Login code', kind: 'identity', field: 'VqaLoginCode', uuidField: 'VqaUUID' },
+      {
+        id: 'loginCode',
+        label: 'Login code',
+        kind: 'identity',
+        field: 'VqaLoginCode',
+        uuidField: 'VqaUUID',
+      },
       {
         id: 'employee',
         label: 'Employee',
@@ -118,7 +124,8 @@ function config(): ConfigurableCrudConfig {
         label: 'Employee',
         type: 'search-select',
         quickCreate: false,
-        quickCreateExemptReason: 'HR employees use a dedicated form that is not a configurable CRUD page yet.',
+        quickCreateExemptReason:
+          'HR employees use a dedicated form that is not a configurable CRUD page yet.',
         required: true,
         span: 1,
       },

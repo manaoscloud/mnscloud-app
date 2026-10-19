@@ -49,7 +49,13 @@ const config = defineCrud({
       disabledWhen: ({ editing }) => editing,
       span: 2,
     },
-    { key: 'notes', source: 'VhpNotes', label: 'Notes', placeholder: 'Example: reception position 3', span: 4 },
+    {
+      key: 'notes',
+      source: 'VhpNotes',
+      label: 'Notes',
+      placeholder: 'Example: reception position 3',
+      span: 4,
+    },
   ],
   payload: (values, editing) => ({
     ...(editing ? {} : { TargetUUID: values['target'] }),

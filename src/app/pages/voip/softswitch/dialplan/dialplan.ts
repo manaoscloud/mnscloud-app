@@ -61,13 +61,65 @@ const CONFIG: ConfigurableCrudConfig = {
     status: 1,
   },
   fields: [
-    { key: 'accountUUID', source: 'accountUUID', payloadKey: 'accountUUID', label: 'Softswitch', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'), required: true, span: 1 },
-    { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'accountUUID',
+      source: 'accountUUID',
+      payloadKey: 'accountUUID',
+      label: 'Softswitch',
+      type: 'search-select',
+      quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'),
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'status',
+      source: 'status',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
-    { key: 'scope', source: 'scope', payloadKey: 'scope', label: 'Scope', type: 'select', options: scopes, required: true, span: 1, tab: 'routing' },
-    { key: 'defaultAction', source: 'defaultAction', payloadKey: 'defaultAction', label: 'Default action', type: 'select', options: actions, required: true, span: 1, tab: 'routing' },
-    { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'routing' },
-    { key: 'targetUUID', source: 'targetUUID', payloadKey: 'targetUUID', label: 'Scoped target UUID', span: 1, tab: 'routing', hiddenWhen: ({ values }) => String(values['scope']) === 'account' },
+    {
+      key: 'scope',
+      source: 'scope',
+      payloadKey: 'scope',
+      label: 'Scope',
+      type: 'select',
+      options: scopes,
+      required: true,
+      span: 1,
+      tab: 'routing',
+    },
+    {
+      key: 'defaultAction',
+      source: 'defaultAction',
+      payloadKey: 'defaultAction',
+      label: 'Default action',
+      type: 'select',
+      options: actions,
+      required: true,
+      span: 1,
+      tab: 'routing',
+    },
+    {
+      key: 'priority',
+      source: 'priority',
+      payloadKey: 'priority',
+      label: 'Priority',
+      type: 'number',
+      span: 1,
+      tab: 'routing',
+    },
+    {
+      key: 'targetUUID',
+      source: 'targetUUID',
+      payloadKey: 'targetUUID',
+      label: 'Scoped target UUID',
+      span: 1,
+      tab: 'routing',
+      hiddenWhen: ({ values }) => String(values['scope']) === 'account',
+    },
   ],
 };
 
@@ -97,22 +149,38 @@ export class VoipSoftswitchDialplanPage extends ConfigurableCrudPageBase<Configu
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, targetUUID: payload['targetUUID'] || null, status: Number(payload['status']) === 1 };
+    return {
+      ...payload,
+      targetUUID: payload['targetUUID'] || null,
+      status: Number(payload['status']) === 1,
+    };
   }
 
   private async loadLookups(): Promise<void> {
     this.lookupLoading.set(true);
     try {
-      const response = await this.rawApi.get<any>('voip/softswitch/accounts?status=1&limit=5000&offset=0');
-      this.accountOptions.set(toOptions(response, (row) => option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName])));
+      const response = await this.rawApi.get<any>(
+        'voip/softswitch/accounts?status=1&limit=5000&offset=0',
+      );
+      this.accountOptions.set(
+        toOptions(response, (row) =>
+          option(row.VssUUID, row.VssName, [row.CustomerName, row.DomainName]),
+        ),
+      );
     } finally {
       this.lookupLoading.set(false);
     }
   }
 }
 
-function toOptions(response: any, mapItem: (row: any) => ConfigurableCrudOption | null): ConfigurableCrudOption[] {
-  return extractItems(response).map(mapItem).filter(isOption).sort((left, right) => left.label.localeCompare(right.label));
+function toOptions(
+  response: any,
+  mapItem: (row: any) => ConfigurableCrudOption | null,
+): ConfigurableCrudOption[] {
+  return extractItems(response)
+    .map(mapItem)
+    .filter(isOption)
+    .sort((left, right) => left.label.localeCompare(right.label));
 }
 
 function extractItems(response: any): any[] {
@@ -120,12 +188,24 @@ function extractItems(response: any): any[] {
   return [];
 }
 
-function option(value: unknown, label: unknown, descriptionParts: unknown[] = []): ConfigurableCrudOption | null {
+function option(
+  value: unknown,
+  label: unknown,
+  descriptionParts: unknown[] = [],
+): ConfigurableCrudOption | null {
   const normalizedValue = String(value ?? '').trim();
   const normalizedLabel = String(label ?? '').trim();
   if (!normalizedValue || !normalizedLabel) return null;
-  const description = descriptionParts.map((item) => String(item ?? '').trim()).filter(Boolean).join(' - ');
-  return { value: normalizedValue, label: normalizedLabel, description, searchText: `${normalizedLabel} ${description} ${normalizedValue}` };
+  const description = descriptionParts
+    .map((item) => String(item ?? '').trim())
+    .filter(Boolean)
+    .join(' - ');
+  return {
+    value: normalizedValue,
+    label: normalizedLabel,
+    description,
+    searchText: `${normalizedLabel} ${description} ${normalizedValue}`,
+  };
 }
 
 function isOption(value: ConfigurableCrudOption | null): value is ConfigurableCrudOption {

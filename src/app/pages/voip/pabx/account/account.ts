@@ -326,19 +326,8 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    return handleAccountRowAction(
-      {
-        api: this.rawApi,
-        dialog: this.dialog,
-        t: (key) => this.t(key),
-        notifyError: (message) => this.snack.error(this.t(message)),
-        refresh: () => this.refreshList(),
-        trackOperation: (response) => this.trackOperation(response),
-      },
-      'pabx',
-      action,
-      this.recordUUID(row),
-    );
+    const track = (response: unknown) => this.trackOperation(response);
+    return handleAccountRowAction(this, this.dialog, track, 'pabx', action, this.recordUUID(row));
   }
   private realmRequestKey = crypto.randomUUID();
   override startCreate(): void {

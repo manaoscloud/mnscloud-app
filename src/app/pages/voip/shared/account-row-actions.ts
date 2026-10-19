@@ -1,6 +1,7 @@
 import { MatDialog } from '@angular/material/dialog';
 
 import { ApiService } from '../../../services/api.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 import type {
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
@@ -24,14 +25,11 @@ export const ACCOUNT_PUBLICATION_STATES: ConfigurableCrudOption[] = [
   { value: 'deleted', label: 'Deleted' },
 ];
 
-/** What the shared account row actions need from the PABX/Softswitch account page. */
-export type AccountRowActionContext = {
-  api: ApiService;
-  dialog: MatDialog;
-  t: (key: string) => string;
-  notifyError: (message: string) => void;
-  refresh: () => void;
-  trackOperation: (response: unknown) => unknown;
+/** Public members of the account CRUD page used by the shared row actions. */
+export type AccountRowActionPage = {
+  readonly api: ApiService;
+  readonly snack: SnackbarService;
+  refreshList(): void;
 };
 
 /** Row actions shared by PABX and Softswitch accounts: WebRTC domain and SIP realm DNS. */
@@ -54,56 +52,52 @@ export function accountRowActions(
   ];
 }
 
+/** `dialog` and `trackOperation` are protected page members, so the page hands them over. */
 export async function handleAccountRowAction(
-  context: AccountRowActionContext,
+  page: AccountRowActionPage,
+  dialog: MatDialog,
+  trackOperation: (response: unknown) => unknown,
   type: 'pabx' | 'softswitch',
   action: ConfigurableCrudRowAction,
   accountUUID: string,
 ): Promise<void> {
+  const notifyError = (message: string) => page.snack.error(message);
   if (action.key === WEBRTC_DOMAIN_ACTION.key) {
-    return openAccountWebRtcDomain(
-      context.api,
-      context.dialog,
-      type,
-      accountUUID,
-      context.notifyError,
-    );
+    return openAccountWebRtcDomain(page.api, dialog, type, accountUUID, notifyError);
   }
   const endpoint = `voip/${type}/accounts/${accountUUID}/dns-publication`;
-  const result = await context.api.get<any>(endpoint),
+  const result = await page.api.get<any>(endpoint),
     p = result?.data?.item;
   if (!p) {
-    context.notifyError('Unavailable');
+    notifyError('Unavailable');
     return;
   }
   if ((action.key === 'dns-retry' || action.key === 'dns-recheck') && Number(p.canRetry) === 1) {
-    await context.api.post(endpoint + '/retry', {});
-    context.refresh();
+    await page.api.post(endpoint + '/retry', {});
+    page.refreshList();
     return;
   }
   if (action.key === 'dns-recheck') {
     if (p.operationUUID && Number(p.canRecheck) === 1) {
-      context.trackOperation(
-        await context.api.post(`user/operations/${p.operationUUID}/recheck`, {}),
-      );
-      context.refresh();
+      trackOperation(await page.api.post(`user/operations/${p.operationUUID}/recheck`, {}));
+      page.refreshList();
     }
     return;
   }
-  openDataViewerDialog(context.dialog, {
+  openDataViewerDialog(dialog, {
     title: 'DNS publication',
     description: 'Publication confirms provider readback, not SIP readiness or DNS cache expiry.',
     details: [
       { label: 'Domain', value: p.name },
       {
         label: 'Status',
-        value: context.t(
+        value:
           ACCOUNT_PUBLICATION_STATES.find(
             (option) =>
               option.value ===
               (['failed', 'blocked'].includes(p.operationState) ? p.operationState : p.state),
           )?.label ?? p.state,
-        ),
+        translate: true,
       },
       { label: 'Operation', value: p.operationUUID },
       { label: 'Error', value: p.operationError ?? p.errorCode },

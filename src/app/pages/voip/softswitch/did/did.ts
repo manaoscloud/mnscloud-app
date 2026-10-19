@@ -194,7 +194,9 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const routeType = String(payload['routeType'] ?? '').trim().toLowerCase();
+    const routeType = String(payload['routeType'] ?? '')
+      .trim()
+      .toLowerCase();
     return {
       ...payload,
       subscriberUUID: routeType === 'subscriber' ? payload['subscriberUUID'] : null,
@@ -205,7 +207,8 @@ export class VoipSoftswitchDidPage extends ConfigurableCrudPageBase<VoipSoftswit
   }
 
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
-    if (field.key !== 'subscriberUUID' && field.key !== 'trunkUUID') return super.fieldOptions(field);
+    if (field.key !== 'subscriberUUID' && field.key !== 'trunkUUID')
+      return super.fieldOptions(field);
     const accountUUID = String(this.fieldValue('accountUUID') ?? '').trim();
     const options = field.key === 'subscriberUUID' ? this.subscriberOptions() : this.trunkOptions();
     if (!accountUUID) return options;

@@ -171,15 +171,11 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    const track = (response: unknown) => this.trackOperation(response);
     return handleAccountRowAction(
-      {
-        api: this.rawApi,
-        dialog: this.dialog,
-        t: (key) => this.t(key),
-        notifyError: (message) => this.snack.error(this.t(message)),
-        refresh: () => this.refreshList(),
-        trackOperation: (response) => this.trackOperation(response),
-      },
+      this,
+      this.dialog,
+      track,
       'softswitch',
       action,
       this.recordUUID(row),
