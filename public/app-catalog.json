@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "08482148df2b",
+  "version": "586ab144f906",
   "language": "pt-BR",
   "entries": [
     {
@@ -4444,7 +4444,15 @@
         },
         {
           "label": "Modelo",
-          "help": "Modelos listados pelo provedor selecionado. Deixe vazio para usar o modelo padrão dele."
+          "help": ""
+        },
+        {
+          "label": "Voz",
+          "help": "Toda voz fala português, inglês e espanhol. Use Testar voz na lista para ouvi-la."
+        },
+        {
+          "label": "Tom e estilo",
+          "help": "Como a voz deve soar, por exemplo calorosa, animada e clara, como um professor amigável. Ignorado pelos modelos tts-1."
         },
         {
           "label": "Máximo de tokens de saída",
