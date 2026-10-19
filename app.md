@@ -871,6 +871,13 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     shared `.dashboard-tabs`, `.dashboard-tab-*`, `.dashboard-onboarding` and
     `.dashboard-alert-link` primitives. Plan and phases:
     `docs/handoffs/2026-10-18-main-dashboard-contracted-modules.md` (workspace).
+  - **Charts.** Every dashboard chart is `mns-trend-chart` (`src/app/shared/charts`): daily
+    columns, stacked columns or lines with the shared styles (`src/styles/_charts.scss`) and the
+    validated series tokens `--mns-chart-1/2` (light and dark). Two or more series always show a
+    legend, values are in the hover tooltip and a screen-reader list, text never takes the series
+    color. Data comes from the API already filled day by day (home: `tab.chart` from the
+    `DashboardMetricDaily` rollup); render it under `@defer (on viewport)` with a placeholder of the
+    chart height. Never add a chart library or page-local chart markup.
   - Read-only record inventories use `DashboardRecordListComponent` from `shared/dashboard`.
     Pass a title, items and empty label; each item provides identity, status/tone and typed details.
     Dates declare `format: 'datetime'`; only enum values declare `translate: true`. Never infer

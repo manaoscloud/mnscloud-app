@@ -137,6 +137,20 @@
                     </article>
                   }
                 </div>
+                @if (chart(); as trend) {
+                  @defer (on viewport) {
+                    <mns-trend-chart
+                      [title]="trend.title"
+                      [kind]="trend.kind"
+                      [series]="trend.series"
+                      [points]="trend.points"
+                      [format]="trend.format"
+                      [language]="language()"
+                    />
+                  } @placeholder {
+                    <div class="dashboard-chart-placeholder"></div>
+                  }
+                }
                 @if (tab.unavailableSections.length) {
                   <p class="dashboard-message" role="status">
                     {{ 'home.partial' | transloco }}
