@@ -38,22 +38,34 @@ type SbcInventoryRow = {
   coverage: number;
 };
 
+type SbcCount = { total: number; active: number };
+
+/** Totals counted by the database over every row in scope (GET {voip|system/voip}/sbc/dashboard). */
 type SbcSnapshot = {
-  accounts: any[];
-  servers: any[];
-  interfaces: any[];
-  peers: any[];
-  pipes: any[];
-  manipulations: any[];
+  accounts: SbcCount;
+  servers: SbcCount;
+  interfaces: SbcCount;
+  peers: SbcCount;
+  pipes: SbcCount;
+  manipulations: SbcCount;
 };
 
+const SBC_RESOURCES = [
+  'accounts',
+  'servers',
+  'interfaces',
+  'peers',
+  'pipes',
+  'manipulations',
+] as const;
+const EMPTY_COUNT: SbcCount = { total: 0, active: 0 };
 const EMPTY_SNAPSHOT: SbcSnapshot = {
-  accounts: [],
-  servers: [],
-  interfaces: [],
-  peers: [],
-  pipes: [],
-  manipulations: [],
+  accounts: EMPTY_COUNT,
+  servers: EMPTY_COUNT,
+  interfaces: EMPTY_COUNT,
+  peers: EMPTY_COUNT,
+  pipes: EMPTY_COUNT,
+  manipulations: EMPTY_COUNT,
 };
 
 @Component({
@@ -85,7 +97,6 @@ export class VoipSbcDashboardPage {
           'Runtime nodes',
           'dns',
           snapshot.servers,
-          'VbsStatus',
           'Authorized SBC runtime servers available to tenants.',
         ),
         this.metric(
@@ -93,15 +104,13 @@ export class VoipSbcDashboardPage {
           'SIP interfaces',
           'settings_input_component',
           snapshot.interfaces,
-          'VsiStatus',
           'Listening interfaces prepared for inbound and outbound SIP traffic.',
         ),
         this.metric(
           'readiness',
           'Operational readiness',
           'verified',
-          this.readinessRows(),
-          'ready',
+          this.readinessCount(),
           'Required SBC master-side building blocks currently ready.',
         ),
       ];
@@ -112,7 +121,6 @@ export class VoipSbcDashboardPage {
         'Tenant SBC accounts',
         'settings_input_component',
         snapshot.accounts,
-        'VsaStatus',
         'Tenant SBC assignments linked to authorized runtime servers.',
       ),
       this.metric(
@@ -120,7 +128,6 @@ export class VoipSbcDashboardPage {
         'SIP peers',
         'settings_ethernet',
         snapshot.peers,
-        'VspStatus',
         'Inbound and outbound SIP interconnections configured for the tenant.',
       ),
       this.metric(
@@ -128,7 +135,6 @@ export class VoipSbcDashboardPage {
         'Traffic pipes',
         'schema',
         snapshot.pipes,
-        'VbpStatus',
         'Routing pipes that bind matched traffic to output destinations.',
       ),
       this.metric(
@@ -136,7 +142,6 @@ export class VoipSbcDashboardPage {
         'Manipulation rules',
         'transform',
         snapshot.manipulations,
-        'VsmStatus',
         'Number and SIP header manipulation rules available to routing pipes.',
       ),
     ];
@@ -146,20 +151,15 @@ export class VoipSbcDashboardPage {
     const snapshot = this.snapshot();
     const rows = this.masterScope()
       ? [
-          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers, 'VbsStatus'),
-          this.inventoryRow('interfaces', 'SIP interfaces', snapshot.interfaces, 'VsiStatus'),
+          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers),
+          this.inventoryRow('interfaces', 'SIP interfaces', snapshot.interfaces),
         ]
       : [
-          this.inventoryRow('accounts', 'Tenant SBC accounts', snapshot.accounts, 'VsaStatus'),
-          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers, 'VbsStatus'),
-          this.inventoryRow('peers', 'SIP peers', snapshot.peers, 'VspStatus'),
-          this.inventoryRow('pipes', 'Traffic pipes', snapshot.pipes, 'VbpStatus'),
-          this.inventoryRow(
-            'manipulations',
-            'Manipulation rules',
-            snapshot.manipulations,
-            'VsmStatus',
-          ),
+          this.inventoryRow('accounts', 'Tenant SBC accounts', snapshot.accounts),
+          this.inventoryRow('servers', 'Runtime nodes', snapshot.servers),
+          this.inventoryRow('peers', 'SIP peers', snapshot.peers),
+          this.inventoryRow('pipes', 'Traffic pipes', snapshot.pipes),
+          this.inventoryRow('manipulations', 'Manipulation rules', snapshot.manipulations),
         ];
     return rows;
   });
@@ -177,65 +177,45 @@ export class VoipSbcDashboardPage {
 
   private async loadSnapshot(): Promise<SbcSnapshot> {
     try {
-      const master = this.masterScope();
-      const [accounts, servers, interfaces, peers, pipes, manipulations] = await Promise.all([
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/accounts?limit=500&offset=0`),
-        this.fetchItems(`${this.endpointPrefix}/servers?limit=500&offset=0`),
-        master
-          ? this.fetchItems(`${this.endpointPrefix}/interfaces?limit=500&offset=0`)
-          : Promise.resolve([]),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/peers?limit=500&offset=0`),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/pipes?limit=500&offset=0`),
-        master
-          ? Promise.resolve([])
-          : this.fetchItems(`${this.endpointPrefix}/manipulations?limit=500&offset=0`),
-      ]);
-      return { accounts, servers, interfaces, peers, pipes, manipulations };
+      const response = await this.api.get<{ data?: Partial<Record<string, Partial<SbcCount>>> }>(
+        `${this.endpointPrefix}/dashboard`,
+        { timeout: 30000 },
+      );
+      const data = response?.data ?? {};
+      const snapshot = { ...EMPTY_SNAPSHOT };
+      for (const key of SBC_RESOURCES) {
+        snapshot[key] = {
+          total: Number(data[key]?.total ?? 0),
+          active: Number(data[key]?.active ?? 0),
+        };
+      }
+      return snapshot;
     } catch (error) {
       this.snack.error('Failed to load SBC dashboard.');
       throw error;
     }
   }
 
-  private async fetchItems(endpoint: string): Promise<any[]> {
-    const response = await this.api.get<any>(endpoint, { timeout: 30000 });
-    return extractItems(response);
-  }
-
   private metric(
     key: string,
     label: string,
     icon: string,
-    rows: any[],
-    statusField: string,
+    count: SbcCount,
     description: string,
   ): SbcMetric {
-    const active = rows.filter((row) => this.isActive(row?.[statusField])).length;
     return {
       key,
       label,
       icon,
-      total: rows.length,
-      active,
-      inactive: Math.max(rows.length - active, 0),
+      total: count.total,
+      active: count.active,
+      inactive: Math.max(count.total - count.active, 0),
       description,
     };
   }
 
-  private inventoryRow(
-    key: string,
-    label: string,
-    rows: any[],
-    statusField: string,
-  ): SbcInventoryRow {
-    const active = rows.filter((row) => this.isActive(row?.[statusField])).length;
-    const total = rows.length;
+  private inventoryRow(key: string, label: string, count: SbcCount): SbcInventoryRow {
+    const { total, active } = count;
     return {
       key,
       label,
@@ -249,8 +229,8 @@ export class VoipSbcDashboardPage {
   private readinessRows(): SbcReadinessItem[] {
     const snapshot = this.snapshot();
     if (this.masterScope()) {
-      const activeServers = this.activeCount(snapshot.servers, 'VbsStatus');
-      const activeInterfaces = this.activeCount(snapshot.interfaces, 'VsiStatus');
+      const activeServers = snapshot.servers.active;
+      const activeInterfaces = snapshot.interfaces.active;
       return [
         {
           key: 'runtime-node',
@@ -271,10 +251,10 @@ export class VoipSbcDashboardPage {
       ];
     }
 
-    const activeAccounts = this.activeCount(snapshot.accounts, 'VsaStatus');
-    const activeServers = this.activeCount(snapshot.servers, 'VbsStatus');
-    const activePeers = this.activeCount(snapshot.peers, 'VspStatus');
-    const activePipes = this.activeCount(snapshot.pipes, 'VbpStatus');
+    const activeAccounts = snapshot.accounts.active;
+    const activeServers = snapshot.servers.active;
+    const activePeers = snapshot.peers.active;
+    const activePipes = snapshot.pipes.active;
     return [
       {
         key: 'tenant-account',
@@ -311,16 +291,8 @@ export class VoipSbcDashboardPage {
     ];
   }
 
-  private activeCount(rows: any[], statusField: string): number {
-    return rows.filter((row) => this.isActive(row?.[statusField])).length;
+  private readinessCount(): SbcCount {
+    const rows = this.readinessRows();
+    return { total: rows.length, active: rows.filter((row) => row.ready).length };
   }
-
-  private isActive(value: unknown): boolean {
-    return value === true || Number(value) === 1 || String(value).toLowerCase() === 'active';
-  }
-}
-
-function extractItems(response: any): any[] {
-  if (Array.isArray(response?.data?.items)) return response.data.items;
-  return [];
 }

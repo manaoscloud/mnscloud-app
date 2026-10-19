@@ -12,16 +12,23 @@ import {
   defineGlobalTable,
 } from '../../../shared/crud/configurable-crud/global-table';
 
-type MonitoringAgent = {
-  uuid: string;
-  name?: string | null;
-  type?: string | null;
-  hostname?: string | null;
-  connectionStatus?: 'online' | 'degraded' | 'offline' | string | null;
-  updateStatus?: 'current' | 'outdated' | 'unsupported' | 'unknown' | string | null;
-  remoteUpdateSupported?: boolean | null;
-  lastHeartbeatAt?: string | null;
-  uptimeSeconds?: number | null;
+/** Fleet counts computed by the API over every Agent in scope (GET monitoring/agents/summary). */
+type AgentSummary = {
+  total: number;
+  online: number;
+  degraded: number;
+  offline: number;
+  outdated: number;
+  unsupported: number;
+};
+
+const EMPTY_AGENT_SUMMARY: AgentSummary = {
+  total: 0,
+  online: 0,
+  degraded: 0,
+  offline: 0,
+  outdated: 0,
+  unsupported: 0,
 };
 
 type RuntimeProductFleet = {
@@ -68,7 +75,7 @@ type KpiTile = {
 };
 
 type MonitoringDashboardSnapshot = {
-  agents: MonitoringAgent[];
+  agentSummary: AgentSummary;
   runtimeProducts: RuntimeProductFleet[];
   latestLogs: ActivityLog[];
   failedTotal: number | null;
@@ -77,7 +84,7 @@ type MonitoringDashboardSnapshot = {
 };
 
 const EMPTY_DASHBOARD: MonitoringDashboardSnapshot = {
-  agents: [],
+  agentSummary: EMPTY_AGENT_SUMMARY,
   runtimeProducts: [],
   latestLogs: [],
   failedTotal: null,
@@ -102,7 +109,6 @@ export class MonitoringDashboardPage {
 
   readonly loading = this.dashboardResource.isLoading;
   readonly dashboard = computed(() => this.dashboardResource.value());
-  readonly agents = computed(() => this.dashboard().agents);
   readonly runtimeProducts = computed(() => this.dashboard().runtimeProducts);
   readonly latestLogs = computed(() => this.dashboard().latestLogs);
   readonly failedTotal = computed(() => this.dashboard().failedTotal);
@@ -155,16 +161,7 @@ export class MonitoringDashboardPage {
     ],
   });
 
-  readonly agentSummary = computed(() => {
-    const rows = this.agents();
-    const total = rows.length;
-    const online = rows.filter((row) => row.connectionStatus === 'online').length;
-    const degraded = rows.filter((row) => row.connectionStatus === 'degraded').length;
-    const offline = rows.filter((row) => row.connectionStatus === 'offline').length;
-    const outdated = rows.filter((row) => row.updateStatus === 'outdated').length;
-    const unsupported = rows.filter((row) => row.updateStatus === 'unsupported').length;
-    return { total, online, degraded, offline, outdated, unsupported };
-  });
+  readonly agentSummary = computed(() => this.dashboard().agentSummary);
 
   readonly runtimeSummary = computed(() => {
     const products = this.runtimeProducts();
@@ -295,7 +292,7 @@ export class MonitoringDashboardPage {
   private async loadDashboardSnapshot(): Promise<MonitoringDashboardSnapshot> {
     const [agentsResult, runtimeResult, logsResult, failedResult, errorsResult] =
       await Promise.allSettled([
-        this.api.get<any>('monitoring/agents?limit=1000', { timeout: 30000 }),
+        this.api.get<any>('monitoring/agents/summary', { timeout: 30000 }),
         this.api.get<any>('monitoring/agents/runtime-products', { timeout: 30000 }),
         this.api.get<any>('monitoring/activity-logs?limit=12&offset=0', { timeout: 30000 }),
         this.api.get<any>('monitoring/activity-logs?status=failed&limit=1&offset=0', {
@@ -311,7 +308,7 @@ export class MonitoringDashboardPage {
     if (logsResult.status === 'rejected') throw logsResult.reason;
 
     return {
-      agents: agentsResult.value?.data?.items ?? [],
+      agentSummary: { ...EMPTY_AGENT_SUMMARY, ...(agentsResult.value?.data ?? {}) },
       runtimeProducts: runtimeResult.value?.data ?? [],
       latestLogs: logsResult.value?.data?.items ?? [],
       failedTotal:

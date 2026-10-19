@@ -13,8 +13,6 @@ import {
 } from '../../../../shared/dashboard/dashboard-record-list';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import {
-  HostingVpsContainerInstance,
-  HostingVpsContainerInstanceConfig,
   HostingVpsContainerPlan,
   HostingVpsContainerPlanConfig,
   HostingVpsContainerProvider,
@@ -30,17 +28,36 @@ type KpiTile = {
   state: 'good' | 'warn' | 'bad' | 'neutral';
 };
 
+/** Instance totals counted by the database over every row in scope ({system/}...dashboard). */
+type InstanceDashboard = {
+  total: number;
+  active: number;
+  issues: number;
+  byStatus: Array<{ status: string | null; total: number; active: number; issues: number }>;
+  byPlan: Array<{ planUUID: string | null; total: number }>;
+  byProvider: Array<{ providerUUID: string | null; total: number; issues: number }>;
+};
+
+const EMPTY_INSTANCE_DASHBOARD: InstanceDashboard = {
+  total: 0,
+  active: 0,
+  issues: 0,
+  byStatus: [],
+  byPlan: [],
+  byProvider: [],
+};
+
 type VpsContainerDashboardSnapshot = {
   providers: HostingVpsContainerProvider[];
   plans: HostingVpsContainerPlan[];
-  instances: HostingVpsContainerInstance[];
+  instances: InstanceDashboard;
   failedSections: number;
 };
 
 const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
   providers: [],
   plans: [],
-  instances: [],
+  instances: EMPTY_INSTANCE_DASHBOARD,
   failedSections: 0,
 };
 
@@ -90,10 +107,7 @@ export class HostingVpsContainerDashboardPage {
   });
 
   readonly instanceSummary = computed(() => {
-    const rows = this.instances();
-    const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HciIsActive, row.HciStatus)).length;
-    const issues = rows.filter((row) => this.hasIssue(row)).length;
+    const { total, active, issues } = this.instances();
     return { total, active, issues };
   });
 
@@ -109,9 +123,7 @@ export class HostingVpsContainerDashboardPage {
     const rows = this.plans();
     const total = rows.length;
     const active = rows.filter((row) => this.isActive(row.HcnIsActive)).length;
-    const linked = rows.filter((row) =>
-      this.instances().some((item) => item.HostingVpsContainerPlanHcnUUID === row.HcnUUID),
-    ).length;
+    const linked = rows.filter((row) => this.planInstances(row.HcnUUID) > 0).length;
     return { total, active, linked };
   });
 
@@ -166,16 +178,10 @@ export class HostingVpsContainerDashboardPage {
   ]);
 
   readonly statusRows = computed<DashboardRecord[]>(() => {
-    const map = new Map<string, HostingVpsContainerInstance[]>();
-    this.instances().forEach((item) => {
-      const status = String(item.HciStatus || 'unknown');
-      map.set(status, [...(map.get(status) ?? []), item]);
-    });
-    return [...map.entries()]
-      .map(([status, rows]) => {
-        const total = rows.length;
-        const active = rows.filter((row) => this.isActive(row.HciIsActive, row.HciStatus)).length;
-        const issues = rows.filter((row) => this.hasIssue(row)).length;
+    return this.instances()
+      .byStatus.map((row) => {
+        const status = String(row.status || 'unknown');
+        const { total, active, issues } = row;
         return {
           name: status,
           meta: String(total),
@@ -196,11 +202,11 @@ export class HostingVpsContainerDashboardPage {
       const plans = this.plans().filter(
         (plan) => plan.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
       );
-      const instances = this.instances().filter(
-        (instance) => instance.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
+      const instances = this.instances().byProvider.find(
+        (row) => row.providerUUID === provider.HcpUUID,
       );
       const active = this.isActive(provider.HcpIsActive);
-      const issues = instances.filter((instance) => this.hasIssue(instance)).length;
+      const issues = instances?.issues ?? 0;
       return {
         name: provider.HcpName,
         meta: provider.HcpProvider,
@@ -208,7 +214,7 @@ export class HostingVpsContainerDashboardPage {
         tone: issues > 0 ? 'danger' : active ? 'success' : 'skipped',
         details: [
           { label: 'Plans', value: String(plans.length) },
-          { label: 'Instances', value: String(instances.length) },
+          { label: 'Instances', value: String(instances?.total ?? 0) },
           { label: 'Issues', value: String(issues) },
           {
             label: 'Default',
@@ -237,10 +243,7 @@ export class HostingVpsContainerDashboardPage {
           { label: 'Price', value: this.formatPrice(plan.HcnPrice, plan.HcnCurrency) },
           {
             label: 'Instances',
-            value: String(
-              this.instances().filter((item) => item.HostingVpsContainerPlanHcnUUID === plan.HcnUUID)
-                .length,
-            ),
+            value: String(this.planInstances(plan.HcnUUID)),
           },
         ],
       } satisfies DashboardRecord;
@@ -261,10 +264,9 @@ export class HostingVpsContainerDashboardPage {
         `${this.planEndpoint()}?limit=500&offset=0`,
         { timeout: 30000 },
       ),
-      this.api.get<{ data?: { items?: HostingVpsContainerInstance[] } }>(
-        `${this.instanceEndpoint()}?limit=500&offset=0`,
-        { timeout: 30000 },
-      ),
+      this.api.get<{ data?: Partial<InstanceDashboard> }>(this.instanceDashboardEndpoint(), {
+        timeout: 30000,
+      }),
     ]);
 
     const results = [providersResult, plansResult, instancesResult];
@@ -291,11 +293,8 @@ export class HostingVpsContainerDashboardPage {
           : [],
       instances:
         instancesResult.status === 'fulfilled'
-          ? this.items(instancesResult.value).map((item) => ({
-              ...item,
-              HciConfig: this.parseJson<HostingVpsContainerInstanceConfig>(item.HciConfig),
-            }))
-          : [],
+          ? { ...EMPTY_INSTANCE_DASHBOARD, ...(instancesResult.value?.data ?? {}) }
+          : EMPTY_INSTANCE_DASHBOARD,
       failedSections,
     };
   }
@@ -317,10 +316,14 @@ export class HostingVpsContainerDashboardPage {
     return this.isMaster() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans';
   }
 
-  private instanceEndpoint() {
+  private instanceDashboardEndpoint() {
     return this.isMaster()
-      ? 'system/hosting/vps-container/instances'
-      : 'hosting/vps-container/instances';
+      ? 'system/hosting/vps-container/dashboard'
+      : 'hosting/vps-container/dashboard';
+  }
+
+  private planInstances(planUUID: string) {
+    return this.instances().byPlan.find((row) => row.planUUID === planUUID)?.total ?? 0;
   }
 
   private statusTone(status: string, issues: number): DashboardRecord['tone'] {
@@ -340,11 +343,6 @@ export class HostingVpsContainerDashboardPage {
 
   private normalizePlanConfig(value: HostingVpsContainerPlanConfig | string | null | undefined) {
     return this.parseJson<HostingVpsContainerPlanConfig>(value) ?? {};
-  }
-
-  private hasIssue(row: HostingVpsContainerInstance) {
-    const config = this.parseJson<HostingVpsContainerInstanceConfig>(row.HciConfig) ?? {};
-    return this.isIssueStatus(row.HciStatus) || Boolean(config.provisionError);
   }
 
   private isActive(value: unknown, status?: unknown) {
