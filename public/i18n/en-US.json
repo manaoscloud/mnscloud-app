@@ -8807,5 +8807,14 @@
   "home.chart.hosting.series.failed": "Failed",
   "home.chart.security.chart.events": "Security decisions per day (30 days)",
   "home.chart.security.series.other": "Allowed or monitored",
-  "home.chart.security.series.blocked": "Denied or rate limited"
+  "home.chart.security.series.blocked": "Denied or rate limited",
+  "WebRTC domain": "WebRTC domain",
+  "Generate or show the WebRTC (WSS) domain of the account": "Generate or show the WebRTC (WSS) domain of the account",
+  "WSS address of the account for PhoneWeb and WebRTC clients, with managed DNS and the free certificate of the WebRTC edge.": "WSS address of the account for PhoneWeb and WebRTC clients, with managed DNS and the free certificate of the WebRTC edge.",
+  "WSS URL": "WSS URL",
+  "WebRTC server": "WebRTC server",
+  "self_signed": "Self-signed",
+  "WebRTC domain could not be generated.": "WebRTC domain could not be generated.",
+  "Generate the WSS domain of each PABX and Softswitch account": "Generate the WSS domain of each PABX and Softswitch account",
+  "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.": "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account."
 }

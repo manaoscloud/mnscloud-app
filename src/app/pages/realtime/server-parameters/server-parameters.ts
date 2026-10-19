@@ -25,6 +25,7 @@ import { dnsPolicySelector } from '../../voip/service-domain/dns-policy-selector
 
 type ServerParameterForm = {
   autoDomainEnabled: boolean;
+  accountDomainEnabled: boolean;
   dnsPolicyUUID: string;
   autoDomainUuidLength: number | null;
 };
@@ -42,6 +43,9 @@ type ServerParameterConfig = {
   policyLabel: string;
   policyHelp: string;
   labelHelp: string;
+  /** WebRTC: WSS domain of each PABX/Softswitch account under the same policy. */
+  accountToggle?: string;
+  accountHelp?: string;
 };
 
 const CONFIGS: Record<RealtimeServerKind, ServerParameterConfig> = {
@@ -77,10 +81,14 @@ const CONFIGS: Record<RealtimeServerKind, ServerParameterConfig> = {
     policyHelp:
       'Enabled platform policy of the Realtime DNS tab of a DNS zone. Each new WebRTC server gets its own managed primary domain under its base, published with the server IPv4 (A) and IPv6 (AAAA) and issued a Let’s Encrypt certificate by the edge.',
     labelHelp: 'Prefix of the WebRTC server UUID; it never changes when the server is renamed.',
+    accountToggle: 'Generate the WSS domain of each PABX and Softswitch account',
+    accountHelp:
+      'Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.',
   },
 };
 const EMPTY_FORM: ServerParameterForm = {
   autoDomainEnabled: false,
+  accountDomainEnabled: false,
   dnsPolicyUUID: '',
   autoDomainUuidLength: 12,
 };
@@ -154,7 +162,9 @@ export class RealtimeServerParametersPage {
   });
 
   readonly rules = new FieldRules<FieldKey>({
-    dnsPolicyUUID: () => !this.form().autoDomainEnabled || !!this.form().dnsPolicyUUID,
+    dnsPolicyUUID: () =>
+      !(this.form().autoDomainEnabled || this.form().accountDomainEnabled) ||
+      !!this.form().dnsPolicyUUID,
     autoDomainUuidLength: () => {
       const length = this.form().autoDomainUuidLength;
       return length !== null && Number.isInteger(length) && length >= 8 && length <= 32;
@@ -226,6 +236,7 @@ export class RealtimeServerParametersPage {
       const form = this.form();
       const result = await this.api.put<any>(this.config.endpoint, {
         autoDomainEnabled: form.autoDomainEnabled,
+        ...(this.config.accountToggle ? { accountDomainEnabled: form.accountDomainEnabled } : {}),
         dnsPolicyUUID: form.dnsPolicyUUID || null,
         autoDomainUuidLength: form.autoDomainUuidLength,
       });
@@ -247,6 +258,7 @@ export class RealtimeServerParametersPage {
   private apply(item: Record<string, any>) {
     const form: ServerParameterForm = {
       autoDomainEnabled: item['autoDomainEnabled'] === true,
+      accountDomainEnabled: item['accountDomainEnabled'] === true,
       dnsPolicyUUID: String(item['dnsPolicyUUID'] ?? ''),
       autoDomainUuidLength: Number(item['autoDomainUuidLength'] ?? 12),
     };
