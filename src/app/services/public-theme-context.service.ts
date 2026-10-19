@@ -79,16 +79,16 @@ export class PublicThemeContextService {
   private setFavicon(value: string | null) {
     if (!value) return;
 
-    const selector = 'link[rel="icon"]';
-    let element = this.document.querySelector<HTMLLinkElement>(selector);
-
-    if (!element) {
-      element = this.document.createElement('link');
-      element.setAttribute('rel', 'icon');
+    // The tenant favicon replaces every default icon (browsers prefer the SVG one otherwise).
+    this.document
+      .querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="apple-touch-icon"]')
+      .forEach((link) => link.remove());
+    for (const rel of ['icon', 'apple-touch-icon']) {
+      const element = this.document.createElement('link');
+      element.setAttribute('rel', rel);
+      element.setAttribute('href', value);
       this.document.head.appendChild(element);
     }
-
-    element.setAttribute('href', value);
   }
 
   private setPrimaryColor(value: string | null) {

@@ -789,6 +789,35 @@
               }
             </mat-form-field>
           }
+          @case ('file') {
+            <div
+              [class]="'crud-file-field ' + fieldClass(field)"
+              [class.crud-file-field-invalid]="hasFieldError(field)"
+            >
+              <label class="crud-file-field-label"
+                >{{ translatedFieldLabel(field) }}{{ isFieldRequired(field) ? '*' : '' }}</label
+              >
+              <div class="crud-file-field-control">
+                <input
+                  class="crud-file-field-input"
+                  type="file"
+                  [accept]="field.accept ?? ''"
+                  [attr.data-field-key]="field.key"
+                  [attr.data-report-mask]="reportMask(field)"
+                  (change)="onFileInput(field.key, $event)"
+                />
+                @if (fieldHelp(field); as help) {
+                  <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
+                }
+              </div>
+              <div class="crud-file-field-status">
+                {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
+              </div>
+              @if (hasFieldError(field)) {
+                <div class="crud-field-error" role="alert">{{ fieldErrorText(field) }}</div>
+              }
+            </div>
+          }
           @default {
             <mat-form-field appearance="outline" [class]="fieldClass(field)">
               <mat-label
@@ -1213,6 +1242,20 @@
               [ngTemplateOutletContext]="{ $implicit: publicFields() }"
             />
           </mat-tab>
+        }
+
+        @for (brandTab of brandTabs(); track brandTab.key) {
+          @if (brandTab.fields.length) {
+            <mat-tab
+              [label]="tabLabel(brandTab.key, brandTab.label) | transloco"
+              [labelClass]="tabLabelClass(brandTab.key)"
+            >
+              <ng-container
+                [ngTemplateOutlet]="simpleFieldTab"
+                [ngTemplateOutletContext]="{ $implicit: brandTab.fields }"
+              />
+            </mat-tab>
+          }
         }
 
         @if (config.authenticationTabAfterRecord && authenticationFields().length) {

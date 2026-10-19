@@ -4,6 +4,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
+  ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
@@ -35,8 +36,86 @@ const jobChipClass = (value: unknown) => {
 };
 
 const DOMAIN = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
-const HTTP_URL = /^https?:\/\/\S+$/i;
+// External image (http/https) or an image uploaded to the theme (same origin).
+const IMAGE_URL = /^(https?:\/\/\S+|\/api\/v1\/public\/theme\/assets\/[0-9a-f]{32})$/i;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+const LOGO_ACCEPT = 'image/png,image/jpeg,image/webp';
+const FAVICON_ACCEPT = 'image/png,image/x-icon,.ico';
+
+type BrandModule = 'app' | 'pos' | 'pulse';
+type BrandTab = 'brandApp' | 'brandPos' | 'brandPulse';
+
+/** Web modules with their own brand; every empty field inherits the App brand. */
+const BRAND_MODULES = [
+  { module: 'pos', tab: 'brandPos' },
+  { module: 'pulse', tab: 'brandPulse' },
+] as const;
+
+/** Form key of a brand field: App fields keep their names, module fields get the module prefix. */
+const brandKey = (module: BrandModule, name: string) =>
+  module === 'app' ? name : `${module}${name[0].toUpperCase()}${name.slice(1)}`;
+
+const moduleValue =
+  (module: BrandModule, name: string) => (_: unknown, row: ConfigurableCrudRecord) => {
+    const modules = (row['Modules'] ?? {}) as Record<string, Record<string, unknown> | undefined>;
+    return modules[module]?.[name] ?? '';
+  };
+
+/** Image fields of one brand tab: URL in use (uploaded or external) and the file to upload. */
+function imageFields(module: BrandModule, tab: BrandTab, kind: 'logo' | 'favicon') {
+  const label = kind === 'logo' ? 'Logo' : 'Favicon';
+  const inherit = module === 'app' ? '' : ' Empty uses the App image.';
+  return [
+    {
+      key: brandKey(module, `${kind}Url`),
+      ...(module === 'app'
+        ? { source: kind === 'logo' ? 'LogoUrl' : 'FaviconUrl' }
+        : { source: 'Modules', fromRecord: moduleValue(module, `${kind}Url`) }),
+      label: `${label} URL`,
+      tab,
+      span: 2 as const,
+      help: `Image in use: uploaded here or an https address. Clear it to remove.${inherit}`,
+    },
+    {
+      key: brandKey(module, `${kind}File`),
+      label: `Upload ${label.toLowerCase()}`,
+      type: 'file' as const,
+      accept: kind === 'logo' ? LOGO_ACCEPT : FAVICON_ACCEPT,
+      tab,
+      span: 2 as const,
+      help:
+        kind === 'logo'
+          ? 'PNG, JPEG or WebP up to 512 KB. Sent when you save.'
+          : 'Square PNG or ICO up to 128 KB (32x32 or larger). Sent when you save.',
+    },
+  ];
+}
+
+function moduleBrandFields(module: 'pos' | 'pulse', tab: BrandTab) {
+  return [
+    {
+      key: brandKey(module, 'pageTitle'),
+      source: 'Modules',
+      fromRecord: moduleValue(module, 'pageTitle'),
+      label: 'Page Title',
+      tab,
+      span: 2 as const,
+      help: 'Browser tab title of this module. Empty uses the App title.',
+    },
+    {
+      key: brandKey(module, 'primaryColor'),
+      source: 'Modules',
+      fromRecord: moduleValue(module, 'primaryColor'),
+      label: 'Primary Color',
+      tab,
+      span: 2 as const,
+      help: 'Main color of this module (#RRGGBB). Empty uses the App color.',
+    },
+    ...imageFields(module, tab, 'logo'),
+    ...imageFields(module, tab, 'favicon'),
+  ];
+}
 
 // Public domains published through the Nginx edge and Certbot Agents. Web and certificate
 // columns show the latest Agent job per domain; row actions queue new jobs through the API.
@@ -118,24 +197,18 @@ const config = defineCrud({
       span: 4,
     },
     {
-      key: 'logoUrl',
-      source: 'LogoUrl',
-      label: 'Logo URL',
-      span: 2,
-    },
-    {
-      key: 'faviconUrl',
-      source: 'FaviconUrl',
-      label: 'Favicon URL',
-      span: 2,
-    },
-    {
       key: 'primaryColor',
       source: 'PrimaryColor',
       label: 'Primary Color',
-      span: 1,
+      tab: 'brandApp',
+      span: 2,
+      help: 'Main color of the App and of every module without its own color (#RRGGBB).',
     },
+    ...imageFields('app', 'brandApp', 'logo'),
+    ...imageFields('app', 'brandApp', 'favicon'),
+    ...BRAND_MODULES.flatMap(({ module, tab }) => moduleBrandFields(module, tab)),
   ],
+  tabLabels: { record: 'Domain', brandApp: 'App', brandPos: 'POS', brandPulse: 'Pulse' },
   rowActions: [
     { key: 'web', label: 'Queue web action', icon: 'public', tooltip: 'Queue web action' },
     {
@@ -155,6 +228,9 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  /** Images chosen in the form; uploaded right after the record is saved. */
+  private pendingImages: { module: BrandModule; kind: 'logo' | 'favicon'; file: File }[] = [];
+
   constructor() {
     super(config);
   }
@@ -165,18 +241,35 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
     if (!DOMAIN.test(text('domain').toLowerCase())) {
       return this.rejectField('domain', 'Use only the hostname, without scheme, port, or path.');
     }
-    const invalidUrl = ['logoUrl', 'faviconUrl'].find(
-      (key) => text(key) && !HTTP_URL.test(text(key)),
-    );
-    if (invalidUrl) return this.rejectField(invalidUrl, 'Please use valid http(s) URLs.');
-    if (text('primaryColor') && !HEX_COLOR.test(text('primaryColor'))) {
-      return this.rejectField('primaryColor', 'Please use #RRGGBB format for the primary color.');
+    for (const module of ['app', ...BRAND_MODULES.map((item) => item.module)] as BrandModule[]) {
+      const invalidUrl = [brandKey(module, 'logoUrl'), brandKey(module, 'faviconUrl')].find(
+        (key) => text(key) && !IMAGE_URL.test(text(key)),
+      );
+      if (invalidUrl) {
+        return this.rejectField(invalidUrl, 'Use an image uploaded here or an http(s) URL.');
+      }
+      const color = brandKey(module, 'primaryColor');
+      if (text(color) && !HEX_COLOR.test(text(color))) {
+        return this.rejectField(color, 'Please use #RRGGBB format for the primary color.');
+      }
     }
     return true;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const optional = (key: string) => String(payload[key] ?? '').trim() || null;
+    this.pendingImages = (['app', ...BRAND_MODULES.map((item) => item.module)] as BrandModule[])
+      .flatMap((module) =>
+        (['logo', 'favicon'] as const).map((kind) => ({
+          module,
+          kind,
+          file: payload[brandKey(module, `${kind}File`)],
+        })),
+      )
+      .filter(
+        (item): item is { module: BrandModule; kind: 'logo' | 'favicon'; file: File } =>
+          item.file instanceof File,
+      );
     return {
       domain: String(payload['domain'] ?? '')
         .trim()
@@ -186,7 +279,54 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
       logoUrl: optional('logoUrl'),
       faviconUrl: optional('faviconUrl'),
       primaryColor: optional('primaryColor')?.toLowerCase() ?? null,
+      modules: Object.fromEntries(
+        BRAND_MODULES.map(({ module }) => [
+          module,
+          {
+            pageTitle: optional(brandKey(module, 'pageTitle')),
+            logoUrl: optional(brandKey(module, 'logoUrl')),
+            faviconUrl: optional(brandKey(module, 'faviconUrl')),
+            primaryColor: optional(brandKey(module, 'primaryColor'))?.toLowerCase() ?? null,
+          },
+        ]),
+      ),
     };
+  }
+
+  protected override async afterSave(
+    context: ConfigurableCrudSaveContext<ConfigurableCrudRecord>,
+  ): Promise<void> {
+    const images = this.pendingImages;
+    this.pendingImages = [];
+    if (!images.length) return;
+    const created = (context.response as { data?: { ThemeUUID?: string }[] } | null)?.data?.[0];
+    const themeUUID = String(context.record?.['ThemeUUID'] ?? created?.ThemeUUID ?? '');
+    if (!themeUUID) return;
+    const failed: string[] = [];
+    for (const image of images) {
+      const body = new FormData();
+      body.append('module', image.module);
+      body.append('kind', image.kind);
+      body.append('file', image.file);
+      try {
+        await this.runManagedFileUpload(
+          this.api.postFormWithProgress(`${ENDPOINT}/${themeUUID}/assets`, body),
+          image.file.size,
+        );
+      } catch (error) {
+        failed.push(`${image.file.name}: ${this.t(this.errorMessage(error))}`);
+      }
+    }
+    this.refreshList();
+    if (failed.length) {
+      this.snack.error(
+        this.t('Theme saved, but some images were not uploaded: {list}', {
+          list: failed.join('; '),
+        }),
+      );
+    } else {
+      this.snack.success(this.t('Theme images uploaded.'));
+    }
   }
 
   override async handleRowAction(

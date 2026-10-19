@@ -276,7 +276,11 @@ export type ConfigurableCrudField = {
     | 'diagnostics'
     | 'codecs'
     | 'retention'
-    | 'notes';
+    | 'notes'
+    /** Brand per client (Settings › Themes): App, POS and Pulse. */
+    | 'brandApp'
+    | 'brandPos'
+    | 'brandPulse';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   lineFillAfter?: 1 | 2 | 3;
@@ -989,6 +993,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly retentionFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'retention'),
+  );
+  /** Brand tabs rendered with the generic field template, in this order. */
+  readonly brandTabs = computed(() =>
+    (
+      [
+        { key: 'brandApp', label: 'App' },
+        { key: 'brandPos', label: 'POS' },
+        { key: 'brandPulse', label: 'Pulse' },
+      ] as const
+    ).map((tab) => ({
+      ...tab,
+      fields: this.config.fields.filter(
+        (field) => this.isFieldVisible(field) && field.tab === tab.key,
+      ),
+    })),
   );
   readonly notesFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'notes'),
