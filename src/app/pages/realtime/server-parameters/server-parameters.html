@@ -20,6 +20,21 @@
       </mat-slide-toggle>
     </div>
 
+    @if (config.accountToggle; as accountToggle) {
+      <div class="span-4 settings-page-toggle">
+        <mat-slide-toggle
+          [checked]="form().accountDomainEnabled"
+          (change)="update({ accountDomainEnabled: $event.checked })"
+        >
+          {{ accountToggle | transloco }}
+        </mat-slide-toggle>
+        <mns-field-help
+          [label]="accountToggle | transloco"
+          [text]="config.accountHelp ?? '' | transloco"
+        />
+      </div>
+    }
+
     <mns-search-select-field
       data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
       fieldClass="span-2"
