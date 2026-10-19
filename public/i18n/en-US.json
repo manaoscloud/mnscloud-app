@@ -8675,7 +8675,7 @@
   "logs.resumeCommand": "Resume command",
   "logs.resumeWarning": "Resumes the installation already bound to this server with the latest approved release. It uses no new authorization and keeps the Agent.",
   "logs.retryInstallation": "Resume installation",
-  "logs.retryConfirmation": "Resume the installation with the same Agent on the latest approved release?",
+  "logs.retryConfirmation": "Resume the installation with the same Agent on the latest approved release? Use it after a failure or an interrupted command.",
   "logs.retryAccepted": "Recovery accepted. Run the resume command shown on the same host.",
   "logs.serverUuid": "Server UUID",
   "logs.installationState": "Installation",
