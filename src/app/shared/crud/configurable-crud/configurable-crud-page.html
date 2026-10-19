@@ -600,18 +600,25 @@
       }
     </div>
   } @else if (column.kind === 'status') {
-    <span
-      class="status-pill status-chip state-chip"
-      [ngClass]="statusChipClass(row, column)"
-      [class.is-active]="
-        !hasCustomStatusChipClass(column) && isActiveStatus(row[column.field ?? column.id])
-      "
-      [class.is-inactive]="
-        !hasCustomStatusChipClass(column) && !isActiveStatus(row[column.field ?? column.id])
-      "
-    >
-      {{ statusLabelForColumn(row, column) | transloco }}
-    </span>
+    @if (columnRowAction(row, column); as chipAction) {
+      <button
+        type="button"
+        class="crud-chip-link"
+        [matTooltip]="chipAction.tooltip ?? chipAction.label | transloco"
+        [attr.aria-label]="chipAction.label | transloco"
+        (click)="$event.stopPropagation(); runRowAction(chipAction, row)"
+      >
+        <ng-container
+          [ngTemplateOutlet]="crudStatusChip"
+          [ngTemplateOutletContext]="{ $implicit: row, column: column }"
+        />
+      </button>
+    } @else {
+      <ng-container
+        [ngTemplateOutlet]="crudStatusChip"
+        [ngTemplateOutletContext]="{ $implicit: row, column: column }"
+      />
+    }
   } @else if (column.kind === 'secret') {
     @if (hasSecretValue(row, column)) {
       <div class="crud-copy-cell">
@@ -720,6 +727,21 @@
       }}</span>
     }
   }
+</ng-template>
+
+<ng-template #crudStatusChip let-row let-column="column">
+  <span
+    class="status-pill status-chip state-chip"
+    [ngClass]="statusChipClass(row, column)"
+    [class.is-active]="
+      !hasCustomStatusChipClass(column) && isActiveStatus(row[column.field ?? column.id])
+    "
+    [class.is-inactive]="
+      !hasCustomStatusChipClass(column) && !isActiveStatus(row[column.field ?? column.id])
+    "
+  >
+    {{ statusLabelForColumn(row, column) | transloco }}
+  </span>
 </ng-template>
 
 <ng-template #simpleFieldTab let-tabFields>
