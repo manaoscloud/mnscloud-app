@@ -22,9 +22,10 @@ type OverviewParams = Record<string, string | number | null>;
 type OverviewKpi = {
   code: string;
   value: number | string | null;
-  unit: 'count' | 'percent' | 'minutes' | 'usd' | 'ms' | 'text';
+  unit: 'count' | 'percent' | 'minutes' | 'usd' | 'money' | 'ms' | 'text';
   total?: number | null;
   previous?: number | null;
+  currency?: string;
 };
 
 type OverviewAttention = {
@@ -40,6 +41,8 @@ type OverviewRow = {
   detailParams: OverviewParams;
   status: string;
   tone: 'critical' | 'warning' | 'ok' | 'neutral';
+  amount?: number;
+  currency?: string;
 };
 
 type OverviewTab = {
@@ -160,7 +163,10 @@ export class Dashboard {
       metaParams: this.rowParams(row.detailParams),
       status: `home.row.${row.status}`,
       tone: ROW_TONE[row.tone],
-      details: [],
+      details:
+        row.amount === undefined
+          ? []
+          : [{ label: 'home.row.amount', value: this.money(row.amount, row.currency) }],
     })),
   );
 
@@ -197,6 +203,13 @@ export class Dashboard {
     }).format(value);
   }
 
+  private money(value: number, currency = 'BRL'): string {
+    return new Intl.NumberFormat(this.i18n.language(), {
+      style: 'currency',
+      currency: currency || 'BRL',
+    }).format(value);
+  }
+
   private formatValue(kpi: OverviewKpi): string {
     if (kpi.value === null || kpi.value === undefined || kpi.value === '') return '—';
     if (kpi.unit === 'text') return String(kpi.value);
@@ -213,10 +226,9 @@ export class Dashboard {
             })
           : this.i18n.t('home.unit.minutes', { minutes: value });
       case 'usd':
-        return new Intl.NumberFormat(this.i18n.language(), {
-          style: 'currency',
-          currency: 'USD',
-        }).format(value);
+        return this.money(value, 'USD');
+      case 'money':
+        return this.money(value, kpi.currency);
       case 'ms':
         return value >= 1000 ? `${this.number(value / 1000, 1)} s` : `${this.number(value)} ms`;
       default:
@@ -230,10 +242,16 @@ export class Dashboard {
     if (kpi.previous === null || kpi.previous === undefined || kpi.value === null) return '';
     const delta = Number(kpi.value) - kpi.previous;
     const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
-    const window = kpi.code.endsWith('_30d') ? 'previous_30d' : 'yesterday';
-    return this.i18n.t(`home.compare.${window}`, {
-      delta: `${sign}${this.number(Math.abs(delta))}`,
-    });
+    const window = kpi.code.endsWith('_30d')
+      ? 'previous_30d'
+      : kpi.code.endsWith('_month')
+        ? 'previous_month'
+        : 'yesterday';
+    const magnitude =
+      kpi.unit === 'money'
+        ? this.money(Math.abs(delta), kpi.currency)
+        : this.number(Math.abs(delta));
+    return this.i18n.t(`home.compare.${window}`, { delta: `${sign}${magnitude}` });
   }
 
   private rowParams(params: OverviewParams): Record<string, unknown> {
