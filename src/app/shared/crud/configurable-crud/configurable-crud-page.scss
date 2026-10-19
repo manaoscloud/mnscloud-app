@@ -196,7 +196,7 @@
 
 /*
  * The Actions column is `stickyEnd`: it stays pinned to the right while the other columns scroll
- * inside `.table-wrapper`. Pinned cells need an opaque background (following row hover) so the
+ * inside `.table-scroll`. Pinned cells need an opaque background (following row hover) so the
  * scrolled content does not show through, and `isolation` keeps Material's inline sticky z-index
  * below the `.table-loading` overlay.
  */
