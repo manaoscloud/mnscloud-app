@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3de0d2c3e517",
+  "version": "2d9063b1b3de",
   "language": "pt-BR",
   "entries": [
     {
@@ -4680,16 +4680,8 @@
           "help": ""
         },
         {
-          "label": "URL do logo",
-          "help": ""
-        },
-        {
-          "label": "URL do favicon",
-          "help": ""
-        },
-        {
           "label": "Cor primária",
-          "help": ""
+          "help": "Cor principal do App e de todo módulo sem cor própria (#RRGGBB)."
         }
       ]
     },

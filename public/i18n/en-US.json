@@ -8494,5 +8494,17 @@
   "Wrong number": "Wrong number",
   "Call": "Call",
   "phoneDock.unknownCaller": "Unknown caller",
-  "nav.voip.phone.calls": "Calls"
+  "nav.voip.phone.calls": "Calls",
+  "Upload logo": "Upload logo",
+  "Upload favicon": "Upload favicon",
+  "Image in use: uploaded here or an https address. Clear it to remove.": "Image in use: uploaded here or an https address. Clear it to remove.",
+  "Image in use: uploaded here or an https address. Clear it to remove. Empty uses the App image.": "Image in use: uploaded here or an https address. Clear it to remove. Empty uses the App image.",
+  "PNG, JPEG or WebP up to 512 KB. Sent when you save.": "PNG, JPEG or WebP up to 512 KB. Sent when you save.",
+  "Square PNG or ICO up to 128 KB (32x32 or larger). Sent when you save.": "Square PNG or ICO up to 128 KB (32x32 or larger). Sent when you save.",
+  "Browser tab title of this module. Empty uses the App title.": "Browser tab title of this module. Empty uses the App title.",
+  "Main color of this module (#RRGGBB). Empty uses the App color.": "Main color of this module (#RRGGBB). Empty uses the App color.",
+  "Main color of the App and of every module without its own color (#RRGGBB).": "Main color of the App and of every module without its own color (#RRGGBB).",
+  "Use an image uploaded here or an http(s) URL.": "Use an image uploaded here or an http(s) URL.",
+  "Theme saved, but some images were not uploaded: {list}": "Theme saved, but some images were not uploaded: {list}",
+  "Theme images uploaded.": "Theme images uploaded."
 }

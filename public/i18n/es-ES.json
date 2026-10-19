@@ -8494,5 +8494,17 @@
   "Wrong number": "Número equivocado",
   "Call": "Llamar",
   "phoneDock.unknownCaller": "Contacto no identificado",
-  "nav.voip.phone.calls": "Llamadas"
+  "nav.voip.phone.calls": "Llamadas",
+  "Upload logo": "Enviar logo",
+  "Upload favicon": "Enviar favicon",
+  "Image in use: uploaded here or an https address. Clear it to remove.": "Imagen en uso: enviada aquí o una dirección https. Bórrela para quitarla.",
+  "Image in use: uploaded here or an https address. Clear it to remove. Empty uses the App image.": "Imagen en uso: enviada aquí o una dirección https. Bórrela para quitarla. Vacío usa la imagen de la App.",
+  "PNG, JPEG or WebP up to 512 KB. Sent when you save.": "PNG, JPEG o WebP de hasta 512 KB. Se envía al guardar.",
+  "Square PNG or ICO up to 128 KB (32x32 or larger). Sent when you save.": "PNG o ICO cuadrado de hasta 128 KB (32x32 o mayor). Se envía al guardar.",
+  "Browser tab title of this module. Empty uses the App title.": "Título de la pestaña del navegador en este módulo. Vacío usa el título de la App.",
+  "Main color of this module (#RRGGBB). Empty uses the App color.": "Color principal de este módulo (#RRGGBB). Vacío usa el color de la App.",
+  "Main color of the App and of every module without its own color (#RRGGBB).": "Color principal de la App y de todo módulo sin color propio (#RRGGBB).",
+  "Use an image uploaded here or an http(s) URL.": "Use una imagen enviada aquí o una URL http(s).",
+  "Theme saved, but some images were not uploaded: {list}": "Tema guardado, pero algunas imágenes no se enviaron: {list}",
+  "Theme images uploaded.": "Imágenes del tema enviadas."
 }
