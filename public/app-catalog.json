@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ade1082a7dd3",
+  "version": "08482148df2b",
   "language": "pt-BR",
   "entries": [
     {
@@ -5317,7 +5317,7 @@
     },
     {
       "route": "/support/tickets",
-      "menuPath": "Suporte › Clientes › Chamados",
+      "menuPath": "Suporte › Chamados de clientes",
       "scope": "tenant",
       "title": "Tickets de suporte",
       "description": "Chamados dos seus clientes e o ciclo de atendimento.",

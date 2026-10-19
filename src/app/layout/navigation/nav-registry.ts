@@ -1575,20 +1575,13 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
-        id: 'support/customers',
-        label: 'nav.support.customers',
-        icon: 'groups',
+        id: 'support/customers/tickets',
+        label: 'nav.support.customers.tickets',
+        icon: 'confirmation_number',
         scope: 'tenant',
         entitlementCode: 'module.support.*',
         requiresEnvironment: true,
-        children: [
-          {
-            id: 'support/customers/tickets',
-            label: 'nav.support.customers.tickets',
-            icon: 'confirmation_number',
-            route: '/support/tickets',
-          },
-        ],
+        route: '/support/tickets',
       },
       {
         id: 'support/platform',
