@@ -68,6 +68,7 @@ import { HelpVideoService } from '../../services/help-video.service';
 import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import { MNS_MENU } from '../../shared/menu/mns-menu';
+import { ContextModeService, type ContextMode } from '../../services/context-mode.service';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   extractEnvironmentAccess,
@@ -96,8 +97,6 @@ function normalizeSearchText(value: string): string {
     .toLowerCase()
     .trim();
 }
-
-type ContextMode = 'master' | 'tenant';
 
 export interface UserEnvironment {
   EnvironmentUUID: string;
@@ -153,6 +152,7 @@ export class MainLayout {
   // =======================================================
   private readonly themeService = inject(ThemeService);
   private readonly auth = inject(AuthService);
+  private readonly contextModes = inject(ContextModeService);
   private readonly tenantAccess = inject(TenantService);
   private readonly router = inject(Router);
   private readonly network = inject(NetworkService);
@@ -222,14 +222,9 @@ export class MainLayout {
   readonly activeEnvironmentId = signal<string | null>(null);
   readonly commercialEntitlements = signal<string[]>([]);
   readonly loadingEnvironments = signal<boolean>(false);
-  readonly contextMode = signal<ContextMode>(this.readInitialContextMode());
-  readonly isMasterUser = computed(() => {
-    const user = this.user();
-    return (user?.permissions ?? []).includes('platform.master.access');
-  });
-  readonly effectiveContextMode = computed<ContextMode>(() =>
-    this.isMasterUser() ? this.contextMode() : 'tenant',
-  );
+  readonly contextMode = this.contextModes.mode;
+  readonly isMasterUser = this.contextModes.isMasterUser;
+  readonly effectiveContextMode = this.contextModes.effectiveMode;
 
   readonly currentEnvironment = computed(() => {
     const list = this.environments();
@@ -265,7 +260,6 @@ export class MainLayout {
     });
   });
 
-  private static readonly CONTEXT_MODE_STORAGE_KEY = 'mc_context_mode';
   private static readonly LAYOUT_COMPACT_STORAGE_KEY = 'mc_layout_compact';
   private compactCloseTimer: ReturnType<typeof setTimeout> | null = null;
   private autoExpandScheduled = false;
@@ -711,13 +705,6 @@ export class MainLayout {
     return !!this.currentKnownEnvironmentUUID();
   }
 
-  private readInitialContextMode(): ContextMode {
-    if (typeof localStorage === 'undefined') return 'master';
-    return localStorage.getItem(MainLayout.CONTEXT_MODE_STORAGE_KEY) === 'tenant'
-      ? 'tenant'
-      : 'master';
-  }
-
   /** Keeps the content-sized scope panel from shrinking while the tenant search filters it. */
   lockScopeMenuWidth(): void {
     const panelId = this.scopeMenu()?.panelId;
@@ -729,10 +716,7 @@ export class MainLayout {
 
   setContextMode(mode: ContextMode) {
     if (!this.isMasterUser()) return;
-    this.contextMode.set(mode);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(MainLayout.CONTEXT_MODE_STORAGE_KEY, mode);
-    }
+    this.contextModes.set(mode);
     this.closeCompactFlyouts();
     void this.refreshCommercialEntitlements();
     this.scheduleAutoExpandSections();

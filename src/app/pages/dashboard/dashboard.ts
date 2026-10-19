@@ -1,190 +1,251 @@
-import { dashboardResource } from '../../shared/dashboard/dashboard-resource';
-import { NgClass } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { map } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
 import { AppI18nService } from '../../services/app-i18n.service';
+import { ContextModeService } from '../../services/context-mode.service';
+import { DateTimeFormatService } from '../../services/date-time-format.service';
 import { DashboardPageComponent } from '../../shared/dashboard/dashboard-page';
-import { MnsDateTimePipe } from '../../shared/date-time/date-time.pipe';
+import {
+  DashboardRecordListComponent,
+  type DashboardRecord,
+} from '../../shared/dashboard/dashboard-record-list';
+import { dashboardResource } from '../../shared/dashboard/dashboard-resource';
 
-type ApiResponse<T> = {
-  status: string;
-  message: string;
-  data: T;
-  duration?: string;
-};
+type OverviewScope = 'tenant' | 'platform';
+type OverviewParams = Record<string, string | number | null>;
 
-type DashboardWallet = {
-  currency: string;
-  balance: number;
-  reserved: number;
-  available: number;
-};
-
-type DashboardBilling = {
-  catalogItems: number;
-  activeSubscriptions: number;
-  pendingTopups: number;
-  ledgerEntries: number;
-  activeEntitlements: number;
-};
-
-type DashboardModule = {
+type OverviewKpi = {
   code: string;
-  label: string;
-  module: string;
-  route: string | null;
-  status: string;
+  value: number | string | null;
+  unit: 'count' | 'percent' | 'minutes' | 'usd' | 'ms' | 'text';
+  total?: number | null;
+  previous?: number | null;
 };
 
-type DashboardAlert = {
-  severity: 'info' | 'warning' | 'critical';
+type OverviewAttention = {
   code: string;
-  message: string;
+  severity: 'critical' | 'warning';
+  params: OverviewParams;
+  link: string;
 };
 
-type DashboardActivity = {
-  uuid: string | null;
-  type: string;
-  direction: string;
-  amount: number;
-  currency: string;
-  reason: string;
-  createdAt: string | null;
+type OverviewRow = {
+  name: string;
+  detail: string;
+  detailParams: OverviewParams;
+  status: string;
+  tone: 'critical' | 'warning' | 'ok' | 'neutral';
 };
 
-type TenantDashboardSnapshot = {
+type OverviewTab = {
+  key: string;
+  state: 'ready' | 'empty' | 'unavailable';
+  tone: 'critical' | 'warning' | 'ok' | 'idle';
+  link: string;
+  emptyLink: string;
+  rowsTitle: string | null;
+  kpis: OverviewKpi[];
+  attention: OverviewAttention[];
+  rows: OverviewRow[];
+  unavailableSections: string[];
+};
+
+type OverviewSnapshot = {
+  scope: OverviewScope;
   generatedAt: string;
-  account: {
-    email: string | null;
-    role: string;
-    environmentUUID: string | null;
-  };
-  wallet: DashboardWallet;
-  billing: DashboardBilling;
-  modules: DashboardModule[];
-  alerts: DashboardAlert[];
-  activity: DashboardActivity[];
+  attention: Array<OverviewAttention & { tab: string }>;
+  tabs: OverviewTab[];
 };
 
-const EMPTY_DASHBOARD: TenantDashboardSnapshot = {
+type ApiResponse<T> = { status: string; message: string; data: T; duration?: string };
+
+type RouteTarget = { path: string; query: Record<string, string> };
+
+const EMPTY_OVERVIEW: OverviewSnapshot = {
+  scope: 'tenant',
   generatedAt: new Date(0).toISOString(),
-  account: {
-    email: null,
-    role: 'TENANT',
-    environmentUUID: null,
-  },
-  wallet: {
-    currency: 'BRL',
-    balance: 0,
-    reserved: 0,
-    available: 0,
-  },
-  billing: {
-    catalogItems: 0,
-    activeSubscriptions: 0,
-    pendingTopups: 0,
-    ledgerEntries: 0,
-    activeEntitlements: 0,
-  },
-  modules: [],
-  alerts: [],
-  activity: [],
+  attention: [],
+  tabs: [],
 };
+
+const ROW_TONE: Record<OverviewRow['tone'], DashboardRecord['tone']> = {
+  critical: 'danger',
+  warning: 'running',
+  ok: 'success',
+  neutral: 'skipped',
+};
+
+/** API links are App routes that may carry a query string (`/support/tickets?queue=due`). */
+function routeTarget(link: string): RouteTarget {
+  const [path, search = ''] = link.split('?');
+  return { path: path || '/dashboard', query: Object.fromEntries(new URLSearchParams(search)) };
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    MnsDateTimePipe,
     DashboardPageComponent,
-    NgClass,
+    DashboardRecordListComponent,
+    MatIconModule,
+    MatTabsModule,
     RouterLink,
     TranslocoPipe,
-    MatIconModule,
   ],
   templateUrl: './dashboard.html',
 })
 export class Dashboard {
   private readonly api = inject(ApiService);
-  private readonly auth = inject(AuthService);
   private readonly i18n = inject(AppI18nService);
+  private readonly dates = inject(DateTimeFormatService);
+  private readonly contextModes = inject(ContextModeService);
+  private freshNext = false;
 
-  readonly dashboardResource = dashboardResource({
-    defaultValue: EMPTY_DASHBOARD,
-    loader: () => this.loadDashboard(),
+  /** Platform masters in System context see the platform view; everyone else the tenant view. */
+  readonly scope = computed<OverviewScope>(() =>
+    this.contextModes.effectiveMode() === 'master' ? 'platform' : 'tenant',
+  );
+
+  readonly overview = dashboardResource({
+    defaultValue: EMPTY_OVERVIEW,
+    params: () => this.scope(),
+    loader: ({ params }) => this.load(params),
   });
 
-  readonly loading = this.dashboardResource.isLoading;
-  readonly dashboard = computed(() => this.dashboardResource.value());
-  readonly user = this.auth.user;
-  readonly fullName = computed(() => {
-    const user = this.user();
-    const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim();
-    return name || this.dashboard().account.email || '-';
+  /** A snapshot of the other context is never shown while the current one loads. */
+  readonly snapshot = computed(() => {
+    const value = this.overview.value();
+    return value.scope === this.scope() ? value : { ...EMPTY_OVERVIEW, scope: this.scope() };
   });
+  readonly hasData = computed(
+    () => this.overview.hasData() && this.overview.value().scope === this.scope(),
+  );
+
+  private readonly moduleParam = toSignal(
+    inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get('module'))),
+    { initialValue: null },
+  );
+
+  readonly tabs = computed(() => this.snapshot().tabs);
+  readonly activeTab = computed(() => {
+    const tabs = this.tabs();
+    return tabs.find((tab) => tab.key === this.moduleParam()) ?? tabs[0] ?? null;
+  });
+
+  readonly attention = computed(() =>
+    this.snapshot().attention.map((item) => ({ ...item, target: routeTarget(item.link) })),
+  );
 
   readonly kpis = computed(() => {
-    const snapshot = this.dashboard();
-    return [
-      {
-        icon: 'account_balance_wallet',
-        label: 'Available balance',
-        value: this.formatMoney(snapshot.wallet.available, snapshot.wallet.currency),
-        detail: 'Ready for eligible services',
-        state: snapshot.wallet.available > 0 ? 'good' : 'warn',
-      },
-      {
-        icon: 'subscriptions',
-        label: 'Active subscriptions',
-        value: String(snapshot.billing.activeSubscriptions),
-        detail: 'Current contracted services',
-        state: snapshot.billing.activeSubscriptions > 0 ? 'good' : 'neutral',
-      },
-      {
-        icon: 'verified_user',
-        label: 'Active entitlements',
-        value: String(snapshot.billing.activeEntitlements),
-        detail: 'Granted module permissions',
-        state: snapshot.billing.activeEntitlements > 0 ? 'good' : 'neutral',
-      },
-      {
-        icon: 'payments',
-        label: 'Pending top-ups',
-        value: String(snapshot.billing.pendingTopups),
-        detail: 'Awaiting payment confirmation',
-        state: snapshot.billing.pendingTopups > 0 ? 'warn' : 'good',
-      },
-    ];
+    this.i18n.language();
+    return (this.activeTab()?.kpis ?? []).map((kpi) => ({
+      code: kpi.code,
+      label: `home.kpi.${kpi.code}`,
+      value: this.formatValue(kpi),
+      hint: this.hint(kpi),
+    }));
   });
 
+  readonly rows = computed<DashboardRecord[]>(() =>
+    (this.activeTab()?.rows ?? []).map((row, index) => ({
+      id: `${index}:${row.name}`,
+      name: row.name,
+      meta: `home.row.${row.detail}`,
+      translateMeta: true,
+      metaParams: this.rowParams(row.detailParams),
+      status: `home.row.${row.status}`,
+      tone: ROW_TONE[row.tone],
+      details: [],
+    })),
+  );
+
+  readonly emptyTarget = computed(() => routeTarget(this.activeTab()?.emptyLink ?? '/dashboard'));
+
   refresh() {
-    this.dashboardResource.reload();
+    this.freshNext = true;
+    this.overview.reload();
   }
 
-  formatMoney(value: number, currency = 'BRL'): string {
+  tabBadge(tab: OverviewTab): string {
+    return tab.attention.length ? String(tab.attention.length) : '';
+  }
+
+  statusKey(tab: OverviewTab): string {
+    if (tab.state !== 'ready') return `home.status.${tab.state}`;
+    return `home.status.${tab.tone}`;
+  }
+
+  private async load(scope: OverviewScope): Promise<OverviewSnapshot> {
+    const fresh = this.freshNext;
+    this.freshNext = false;
+    const endpoint = scope === 'platform' ? 'system/dashboard/overview' : 'dashboard/overview';
+    const response = await this.api.get<ApiResponse<OverviewSnapshot>>(
+      fresh ? `${endpoint}?fresh=1` : endpoint,
+      { timeout: 30000 },
+    );
+    return response.data ?? { ...EMPTY_OVERVIEW, scope };
+  }
+
+  private number(value: number, digits = 0): string {
     return new Intl.NumberFormat(this.i18n.language(), {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 2,
-    }).format(Number(value ?? 0));
+      maximumFractionDigits: digits,
+    }).format(value);
   }
 
-  trackModule(_: number, item: DashboardModule) {
-    return item.code;
+  private formatValue(kpi: OverviewKpi): string {
+    if (kpi.value === null || kpi.value === undefined || kpi.value === '') return '—';
+    if (kpi.unit === 'text') return String(kpi.value);
+    const value = Number(kpi.value);
+    if (!Number.isFinite(value)) return '—';
+    switch (kpi.unit) {
+      case 'percent':
+        return `${this.number(value, 1)}%`;
+      case 'minutes':
+        return value >= 60
+          ? this.i18n.t('home.unit.hours_minutes', {
+              hours: Math.floor(value / 60),
+              minutes: value % 60,
+            })
+          : this.i18n.t('home.unit.minutes', { minutes: value });
+      case 'usd':
+        return new Intl.NumberFormat(this.i18n.language(), {
+          style: 'currency',
+          currency: 'USD',
+        }).format(value);
+      case 'ms':
+        return value >= 1000 ? `${this.number(value / 1000, 1)} s` : `${this.number(value)} ms`;
+      default:
+        return kpi.total !== null && kpi.total !== undefined
+          ? `${this.number(value)} / ${this.number(kpi.total)}`
+          : this.number(value);
+    }
   }
 
-  trackActivity(_: number, item: DashboardActivity) {
-    return item.uuid ?? `${item.type}-${item.reason}-${item.createdAt}`;
-  }
-
-  private async loadDashboard(): Promise<TenantDashboardSnapshot> {
-    const response = await this.api.get<ApiResponse<TenantDashboardSnapshot>>('dashboard/tenant', {
-      timeout: 30000,
+  private hint(kpi: OverviewKpi): string {
+    if (kpi.previous === null || kpi.previous === undefined || kpi.value === null) return '';
+    const delta = Number(kpi.value) - kpi.previous;
+    const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
+    const window = kpi.code.endsWith('_30d') ? 'previous_30d' : 'yesterday';
+    return this.i18n.t(`home.compare.${window}`, {
+      delta: `${sign}${this.number(Math.abs(delta))}`,
     });
-    return response.data ?? EMPTY_DASHBOARD;
+  }
+
+  private rowParams(params: OverviewParams): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(params)) {
+      result[key] =
+        value === null || value === ''
+          ? '—'
+          : key === 'at' || key.endsWith('At')
+            ? this.dates.formatDateTime(String(value), 'short', 'short')
+            : value;
+    }
+    return result;
   }
 }
