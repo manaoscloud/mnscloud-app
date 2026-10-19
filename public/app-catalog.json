@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "586ab144f906",
+  "version": "d6b91ed33242",
   "language": "pt-BR",
   "entries": [
     {
@@ -9518,6 +9518,39 @@
         },
         {
           "label": "Duração da captura (segundos)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/phone/calls",
+      "menuPath": "VoIP › PhoneWeb › Chamadas",
+      "scope": "tenant",
+      "title": "Chamadas",
+      "description": "Chamadas atendidas ou feitas pelo telefone do App, identificadas com clientes, contatos e leads do CRM pelo número. Registre o resultado e as notas; chamadas com lead também aparecem como atividades do CRM.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Resultado",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        },
+        {
+          "label": "Contato do CRM",
+          "help": ""
+        },
+        {
+          "label": "Lead do CRM",
           "help": ""
         }
       ]

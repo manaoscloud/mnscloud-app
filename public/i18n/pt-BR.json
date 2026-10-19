@@ -8471,5 +8471,22 @@
   "Speech features need a speech model": "Recursos de voz precisam de um modelo de voz",
   "Speech features need a valid voice": "Recursos de voz precisam de uma voz válida",
   "This AI provider is used by a speech feature": "Este provedor de IA é usado por um recurso de voz",
-  "Only speech features can be tested with a voice": "Somente recursos de voz podem ser testados com uma voz"
+  "Only speech features can be tested with a voice": "Somente recursos de voz podem ser testados com uma voz",
+  "Call outcome": "Resultado da chamada",
+  "Call saved.": "Chamada salva.",
+  "Calls answered or made with the App phone, matched to customers, CRM contacts and leads by number. Record the outcome and notes; calls with a lead also appear as CRM activities.": "Chamadas atendidas ou feitas pelo telefone do App, identificadas com clientes, contatos e leads do CRM pelo número. Registre o resultado e as notas; chamadas com lead também aparecem como atividades do CRM.",
+  "Duration (s)": "Duração (s)",
+  "Follow up": "Retornar",
+  "My calls": "Minhas chamadas",
+  "No calls yet. Calls made or answered with the App phone appear here.": "Nenhuma chamada ainda. As chamadas feitas ou atendidas pelo telefone do App aparecem aqui.",
+  "No interest": "Sem interesse",
+  "Not answered": "Não atendida",
+  "Notes also go to the CRM activity of the call when it has a lead.": "As notas também vão para a atividade do CRM quando a chamada tem lead.",
+  "Outcome": "Resultado",
+  "Ringing": "Tocando",
+  "Started": "Início",
+  "Wrong number": "Número errado",
+  "Call": "Ligar",
+  "phoneDock.unknownCaller": "Contato não identificado",
+  "nav.voip.phone.calls": "Chamadas"
 }

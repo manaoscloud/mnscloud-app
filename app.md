@@ -2098,3 +2098,7 @@ server-side validation. Existing fields retain their configured/default length.
   update notice never reloads it on its own (`AppUpdateService.registerBusySource`).
 - The edge must allow it: App `Permissions-Policy: microphone=(self)`, `/phoneweb/` CSP
   `frame-ancestors 'self'` with `microphone=(self)` (mnscloud-agent vhosts, mnscloud-nginx).
+- Phone numbers in any table use `kind: 'phone'`: the shared base renders a Call button that
+  dials through the dock (`PhoneDialer`, no other dependency) when the tenant has PhoneWeb. Never
+  add page-local tel: links or call buttons. The dock records every call at `/voip/phone/calls`
+  (VoIP › PhoneWeb › Chamadas, wrap-up there) and shows who is calling from the E.164 index.

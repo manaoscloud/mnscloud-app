@@ -211,6 +211,12 @@ const config = defineCrud({
       kind: 'text',
     },
     {
+      id: 'ClePhone',
+      field: 'ClePhone',
+      label: 'crm.field.Phone',
+      kind: 'phone',
+    },
+    {
       id: 'CleDocument',
       field: 'CleDocument',
       label: 'crm.field.Document',

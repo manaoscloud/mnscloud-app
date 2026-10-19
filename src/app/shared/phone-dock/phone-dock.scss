@@ -93,3 +93,29 @@
   padding: 24px;
   text-align: center;
 }
+
+.phone-dock-caller {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--mat-sys-color-primary-container);
+  color: var(--mat-sys-color-on-primary-container);
+}
+
+.phone-dock-caller-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    font-size: 12px;
+  }
+}

@@ -124,6 +124,7 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         detail: (row) => String(row['ContactPhone'] ?? row['ContactEmail'] ?? ''),
       },
       { id: 'channel', label: 'Channel', field: 'ChannelName' },
+      { id: 'phone', label: 'Contact phone', field: 'ContactPhone', kind: 'phone', optional: true },
       { id: 'linked', label: 'Linked to', value: (row) => linkedLabel(row) },
       { id: 'last', label: 'Last message', field: 'LastMessage' },
       {

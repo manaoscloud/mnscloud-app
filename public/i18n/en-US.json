@@ -8470,5 +8470,22 @@
   "Speech features need a speech model": "Speech features need a speech model",
   "Speech features need a valid voice": "Speech features need a valid voice",
   "This AI provider is used by a speech feature": "This AI provider is used by a speech feature",
-  "Only speech features can be tested with a voice": "Only speech features can be tested with a voice"
+  "Only speech features can be tested with a voice": "Only speech features can be tested with a voice",
+  "Call outcome": "Call outcome",
+  "Call saved.": "Call saved.",
+  "Calls answered or made with the App phone, matched to customers, CRM contacts and leads by number. Record the outcome and notes; calls with a lead also appear as CRM activities.": "Calls answered or made with the App phone, matched to customers, CRM contacts and leads by number. Record the outcome and notes; calls with a lead also appear as CRM activities.",
+  "Duration (s)": "Duration (s)",
+  "Follow up": "Follow up",
+  "My calls": "My calls",
+  "No calls yet. Calls made or answered with the App phone appear here.": "No calls yet. Calls made or answered with the App phone appear here.",
+  "No interest": "No interest",
+  "Not answered": "Not answered",
+  "Notes also go to the CRM activity of the call when it has a lead.": "Notes also go to the CRM activity of the call when it has a lead.",
+  "Outcome": "Outcome",
+  "Ringing": "Ringing",
+  "Started": "Started",
+  "Wrong number": "Wrong number",
+  "Call": "Call",
+  "phoneDock.unknownCaller": "Unknown caller",
+  "nav.voip.phone.calls": "Calls"
 }

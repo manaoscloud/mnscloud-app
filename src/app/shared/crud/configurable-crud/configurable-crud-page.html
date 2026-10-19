@@ -653,6 +653,24 @@
     >
       {{ booleanLabel(row[column.field ?? column.id]) | transloco }}
     </span>
+  } @else if (column.kind === 'phone') {
+    <div class="crud-copy-cell">
+      <span class="crud-cell-text" [class]="columnWidthClass(column)" mnsOverflowTooltip>{{
+        columnText(row, column)
+      }}</span>
+      @if (canDialColumn(row, column)) {
+        <button
+          mat-icon-button
+          type="button"
+          class="crud-copy-button"
+          [matTooltip]="'Call' | transloco"
+          [attr.aria-label]="'Call' | transloco"
+          (click)="$event.stopPropagation(); dialColumn(row, column)"
+        >
+          <mat-icon>call</mat-icon>
+        </button>
+      }
+    </div>
   } @else if (columnRowAction(row, column); as linkAction) {
     <button
       mat-button

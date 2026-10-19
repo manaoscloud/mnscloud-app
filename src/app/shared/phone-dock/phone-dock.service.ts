@@ -1,8 +1,9 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 import { ApiService } from '../../services/api.service';
 import { AppUpdateService } from '../../services/app-update.service';
+import { PhoneDialer } from './phone-dialer';
 import { SnackbarService } from '../../services/snackbar.service';
 import {
   dialableNumber,
@@ -18,6 +19,16 @@ import {
 const LOCK_NAME = 'mnscloud-phone-dock';
 const CHANNEL_NAME = 'mnscloud-phone-dock';
 const POPOUT_NAME = 'mnscloud-phoneweb';
+
+/** Call being handled in this tab (recorded at /voip/phone/calls; who it is from the E.164 index). */
+export interface DockCall {
+  uuid: string;
+  direction: 'incoming' | 'outgoing';
+  remote: string;
+  answered: boolean;
+  recorded: boolean;
+  matches: string[];
+}
 
 type DockChannelMessage =
   | { type: 'takeover' }
@@ -60,6 +71,8 @@ export class PhoneDockService {
   readonly frameReady = signal(false);
   readonly state = signal<PhoneState | null>(null);
   readonly opening = signal(false);
+  /** Current call with who it is (customer, CRM contact, lead), for the dock caller bar. */
+  readonly currentCall = signal<DockCall | null>(null);
 
   readonly callActive = computed(() => Boolean(this.state()?.call));
   readonly ringing = computed(() => Boolean(this.state()?.call?.answerable));
@@ -77,6 +90,10 @@ export class PhoneDockService {
     typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(CHANNEL_NAME);
 
   constructor() {
+    // Click-to-call from any global table `phone` column goes through this dock.
+    const dialer = inject(PhoneDialer);
+    dialer.register((number) => void this.dial(number));
+    effect(() => dialer.available.set(this.available()));
     // A pending App update never reloads this tab on its own while it holds the phone.
     inject(AppUpdateService).registerBusySource('phoneDock.updateOpenWork', () =>
       this.holdsPhone(),
@@ -234,6 +251,16 @@ export class PhoneDockService {
         break;
       case 'call.ringing':
         this.visible.set(true);
+        void this.callStarted('incoming', message.payload);
+        break;
+      case 'call.started':
+        void this.callStarted('outgoing', message.payload);
+        break;
+      case 'call.answered':
+        this.currentCall.update((call) => (call ? { ...call, answered: true } : call));
+        break;
+      case 'call.ended':
+        void this.callEnded(message.payload);
         break;
       case 'reply':
         if (message.id && this.replies.has(message.id)) {
@@ -272,6 +299,55 @@ export class PhoneDockService {
       case 'status':
         if (!this.mounted()) this.elsewhereCallActive.set(message.callActive);
         break;
+    }
+  }
+
+  /** Records the call (CRM telephony) and fills the caller bar; silent without the module. */
+  private async callStarted(direction: 'incoming' | 'outgoing', payload?: Record<string, unknown>) {
+    const remote = String(payload?.['remote'] ?? '').trim();
+    if (!remote) return;
+    const call: DockCall = {
+      uuid: crypto.randomUUID(),
+      direction,
+      remote,
+      answered: false,
+      recorded: false,
+      matches: [],
+    };
+    this.currentCall.set(call);
+    try {
+      const response = await this.api.post<{ data?: Record<string, unknown> }>(
+        'voip/phone/calls',
+        { VhkUUID: call.uuid, direction, remote, line: this.state()?.account ?? null },
+        { idempotencyKey: call.uuid, silent: true },
+      );
+      const item = response?.data ?? {};
+      const matches = [item['CustomerName'], item['CrmContactName'], item['CrmLeadName']].filter(
+        (value): value is string => typeof value === 'string' && value.length > 0,
+      );
+      this.currentCall.update((current) =>
+        current?.uuid === call.uuid ? { ...current, recorded: true, matches } : current,
+      );
+    } catch {
+      // Not entitled or offline: the phone keeps working without the CRM record.
+    }
+  }
+
+  private async callEnded(payload?: Record<string, unknown>) {
+    const call = this.currentCall();
+    if (!call) return;
+    const answered = payload?.['established'] === true || call.answered;
+    const durationSeconds = Math.round(Number(payload?.['durationMs'] ?? 0) / 1000);
+    this.currentCall.set(null);
+    if (!call.recorded) return;
+    try {
+      await this.api.post(
+        `voip/phone/calls/${call.uuid}/end`,
+        { answered, durationSeconds },
+        { idempotencyKey: `${call.uuid}-end`, silent: true },
+      );
+    } catch {
+      // The call stays open in the list; the agent can still wrap it up.
     }
   }
 
