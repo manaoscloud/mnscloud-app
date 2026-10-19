@@ -13,7 +13,6 @@
   <form class="form-grid">
     @if (!isMaster()) {
       <mns-search-select-field
-        fieldClass="span-2"
         data-field-key="realmSource"
         [label]="'Configuration source' | transloco"
         [options]="realmSourceOptions"
@@ -28,7 +27,6 @@
     }
     @if (ownRealm()) {
       <mns-search-select-field
-        fieldClass="span-2"
         data-field-key="autoDomainDnsMode"
         [label]="'SIP realm DNS mode' | transloco"
         [options]="dnsModeOptions"
@@ -40,6 +38,42 @@
         "
         (valueChange)="update({ autoDomainDnsMode: $any($event) })"
       />
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'Domain label' | transloco }}</mat-label>
+        <input matInput [value]="'Short UUID' | transloco" readonly />
+        <mns-field-help
+          matIconSuffix
+          [label]="'Domain label' | transloco"
+          [text]="
+            'Prefix of the Softswitch account UUID; it never changes when the account is renamed.'
+              | transloco
+          "
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'UUID length' | transloco }}</mat-label>
+        <input
+          matInput
+          type="number"
+          min="8"
+          max="32"
+          data-field-key="autoDomainUuidLength"
+          [value]="form().autoDomainUuidLength"
+          [mnsInvalid]="invalid('autoDomainUuidLength')"
+          (input)="update({ autoDomainUuidLength: numberValue($event) })"
+        />
+        <mns-field-help
+          matIconSuffix
+          [label]="'UUID length' | transloco"
+          [text]="
+            'Character length of the random short UUID prefix (between 8 and 32 characters).'
+              | transloco
+          "
+        />
+        <mat-error>{{ 'Enter a number between 8 and 32.' | transloco }}</mat-error>
+      </mat-form-field>
+
       @if (managedDns()) {
         <mns-search-select-field
           data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
@@ -88,42 +122,6 @@
           <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
         </mat-form-field>
       }
-
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>{{ 'Domain label' | transloco }}</mat-label>
-        <input matInput [value]="'Short UUID' | transloco" readonly />
-        <mns-field-help
-          matIconSuffix
-          [label]="'Domain label' | transloco"
-          [text]="
-            'Prefix of the Softswitch account UUID; it never changes when the account is renamed.'
-              | transloco
-          "
-        />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="span-2">
-        <mat-label>{{ 'UUID length' | transloco }}</mat-label>
-        <input
-          matInput
-          type="number"
-          min="8"
-          max="32"
-          data-field-key="autoDomainUuidLength"
-          [value]="form().autoDomainUuidLength"
-          [mnsInvalid]="invalid('autoDomainUuidLength')"
-          (input)="update({ autoDomainUuidLength: numberValue($event) })"
-        />
-        <mns-field-help
-          matIconSuffix
-          [label]="'UUID length' | transloco"
-          [text]="
-            'Character length of the random short UUID prefix (between 8 and 32 characters).'
-              | transloco
-          "
-        />
-        <mat-error>{{ 'Enter a number between 8 and 32.' | transloco }}</mat-error>
-      </mat-form-field>
 
       <div class="span-2 settings-page-toggle">
         <mat-slide-toggle
