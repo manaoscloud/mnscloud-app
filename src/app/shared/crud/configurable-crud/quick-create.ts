@@ -60,6 +60,13 @@ export const QUICK_CREATE_REGISTRY = {
     permission: 'platform.authentication.manage',
     routeData: { scope: 'master' },
   },
+  LogClusterLgcUUID: {
+    label: 'logs.clusters',
+    loadComponent: () =>
+      import('../../../pages/logs/clusters/clusters').then((m) => m.LogsClusterPage),
+    permission: MASTER_PERMISSION,
+    routeData: { scope: 'master' },
+  },
   AuthenticationAccountAacUUID: {
     label: 'authentication.accounts',
     loadComponent: () =>
