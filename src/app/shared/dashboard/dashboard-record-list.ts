@@ -18,6 +18,8 @@ export interface DashboardRecord {
   name: string;
   meta: string;
   translateMeta?: boolean;
+  /** Interpolation params of a translated meta line. */
+  metaParams?: Record<string, unknown>;
   status: string;
   tone: 'success' | 'danger' | 'running' | 'skipped';
   details: DashboardRecordDetail[];
@@ -65,7 +67,9 @@ export interface DashboardRecord {
               <div class="inventory-title">
                 <div>
                   <strong>{{ row.name }}</strong
-                  ><span>{{ row.translateMeta ? (row.meta | transloco) : row.meta }}</span>
+                  ><span>{{
+                    row.translateMeta ? (row.meta | transloco: row.metaParams ?? {}) : row.meta
+                  }}</span>
                 </div>
                 <mat-chip
                   class="status-pill state-chip"

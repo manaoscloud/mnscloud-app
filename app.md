@@ -857,6 +857,20 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Current adoption: all 18 `pages/**/dashboard/dashboard.ts` summary pages use this shell,
     including tenant/master Cyber Security. Operational Cyber Security sections retain their own
     routes and controls; their forms are not projected into the dashboard.
+  - **App home (`/dashboard`).** The home is exclusively for the modules the tenant contracted
+    (platform areas in System context): header → "Needs attention" (all modules, most severe
+    first, each item an `<a>` to the resource) → one panel with one tab per module
+    (`mat-tab-nav-bar` links, selected module in `?module=`, badge = icon + count) → per tab:
+    status line, KPI tiles, at most five highlight rows (`DashboardRecordListComponent`) and the
+    module dashboard link. A contracted module without resources shows the onboarding state with
+    its create link; an unavailable section says so, never zero. Nothing about the subscription
+    (wallet, top-ups, renewals, ledger, entitlements) appears on the home: `/billing/dashboard` owns
+    it. Data comes only from `GET /dashboard/overview` or `GET /system/dashboard/overview`
+    (`ContextModeService.effectiveMode()`), which decides module visibility server-side; codes are
+    translated under `home.*` in PT/EN/ES. Tab, badge, onboarding and alert-link styles are the
+    shared `.dashboard-tabs`, `.dashboard-tab-*`, `.dashboard-onboarding` and
+    `.dashboard-alert-link` primitives. Plan and phases:
+    `docs/handoffs/2026-10-18-main-dashboard-contracted-modules.md` (workspace).
   - Read-only record inventories use `DashboardRecordListComponent` from `shared/dashboard`.
     Pass a title, items and empty label; each item provides identity, status/tone and typed details.
     Dates declare `format: 'datetime'`; only enum values declare `translate: true`. Never infer

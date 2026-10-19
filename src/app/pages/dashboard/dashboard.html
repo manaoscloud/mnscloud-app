@@ -1,158 +1,166 @@
 <mns-dashboard-page
   class="main-dashboard"
-  [title]="'Dashboard'"
-  [description]="'Operational overview for your tenant environment.'"
-  [loading]="dashboardResource.isLoading()"
-  [error]="dashboardResource.error()"
-  [hasData]="dashboardResource.hasData()"
+  [title]="scope() === 'platform' ? 'home.title.platform' : 'home.title.tenant'"
+  [description]="scope() === 'platform' ? 'home.description.platform' : 'home.description.tenant'"
+  [loading]="overview.isLoading()"
+  [error]="overview.error()"
+  [hasData]="hasData()"
   (refresh)="refresh()"
 >
   <div class="dashboard-content">
-    <div class="hero-panel">
-      <div>
-        <span class="eyebrow">{{ 'Welcome back' | transloco }}</span>
-        <h2>{{ fullName() }}</h2>
-        <p>
-          {{
-            'Your account overview is synchronized with billing, entitlement and wallet status.'
-              | transloco
-          }}
-        </p>
+    <section class="dashboard-panel" aria-labelledby="home-attention-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="home-attention-title">{{ 'home.attention.title' | transloco }}</h2>
+          <p>{{ 'home.attention.description.' + scope() | transloco }}</p>
+        </div>
+        @if (attention().length) {
+          <span class="panel-count">{{ attention().length }}</span>
+        }
       </div>
-    </div>
+      <div class="alert-list" aria-live="polite">
+        @for (item of attention(); track item.tab + item.code + $index) {
+          <a
+            class="dashboard-alert dashboard-alert-link"
+            [class.alert-error]="item.severity === 'critical'"
+            [class.alert-warning]="item.severity === 'warning'"
+            [routerLink]="item.target.path"
+            [queryParams]="item.target.query"
+          >
+            <mat-icon [attr.aria-label]="'home.severity.' + item.severity | transloco">{{
+              item.severity === 'critical' ? 'error' : 'warning'
+            }}</mat-icon>
+            <span class="dashboard-alert-text">
+              <strong>{{ 'home.attention.' + item.code | transloco: item.params }}</strong>
+              <small
+                >{{ 'home.severity.' + item.severity | transloco }} ·
+                {{ 'home.tab.' + item.tab | transloco }}</small
+              >
+            </span>
+            <mat-icon aria-hidden="true">chevron_right</mat-icon>
+          </a>
+        } @empty {
+          <p class="empty-state compact">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            {{ 'home.attention.none' | transloco }}
+          </p>
+        }
+      </div>
+    </section>
 
-    <div class="dashboard-grid">
-      @for (item of kpis(); track item.label) {
-        <article class="dashboard-metric" [ngClass]="'state-' + item.state">
-          <mat-icon>{{ item.icon }}</mat-icon>
-          <div>
-            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
-            <strong class="dashboard-metric-value">{{ item.value }}</strong>
-            <small class="dashboard-metric-hint">{{ item.detail | transloco }}</small>
-          </div>
-        </article>
+    <section class="dashboard-panel" aria-labelledby="home-modules-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="home-modules-title">{{ 'home.modules.title.' + scope() | transloco }}</h2>
+          <p>{{ 'home.modules.description' | transloco }}</p>
+        </div>
+      </div>
+
+      @if (tabs().length) {
+        <nav
+          mat-tab-nav-bar
+          class="dashboard-tabs"
+          [tabPanel]="modulePanel"
+          [attr.aria-label]="'home.modules.title.' + scope() | transloco"
+        >
+          @for (tab of tabs(); track tab.key) {
+            <a
+              mat-tab-link
+              [active]="tab.key === activeTab()?.key"
+              [routerLink]="[]"
+              [queryParams]="{ module: tab.key }"
+              queryParamsHandling="merge"
+              replaceUrl
+            >
+              {{ 'home.tab.' + tab.key | transloco }}
+              @if (tabBadge(tab)) {
+                <span
+                  class="dashboard-tab-badge"
+                  [class.tone-critical]="tab.tone === 'critical'"
+                  [class.tone-warning]="tab.tone === 'warning'"
+                  [attr.aria-label]="
+                    'home.tab_badge.' + tab.tone | transloco: { count: tabBadge(tab) }
+                  "
+                >
+                  <mat-icon aria-hidden="true">{{
+                    tab.tone === 'critical' ? 'error' : 'warning'
+                  }}</mat-icon>
+                  {{ tabBadge(tab) }}
+                </span>
+              }
+            </a>
+          }
+        </nav>
       }
-    </div>
 
-    <div class="dashboard-sections">
-      <section class="dashboard-panel account-panel">
-        <div class="panel-header">
-          <div>
-            <h2>{{ 'Account status' | transloco }}</h2>
-            <p>
-              {{ 'Tenant session and wallet state for the selected environment.' | transloco }}
-            </p>
-          </div>
-        </div>
+      <mat-tab-nav-panel #modulePanel>
+        @if (activeTab(); as tab) {
+          <div class="dashboard-tab-panel">
+            <div class="dashboard-tab-header">
+              <span
+                class="dashboard-tab-status"
+                [class.tone-critical]="tab.tone === 'critical'"
+                [class.tone-warning]="tab.tone === 'warning'"
+                [class.tone-ok]="tab.tone === 'ok'"
+              >
+                {{ statusKey(tab) | transloco: { count: tab.attention.length } }}
+              </span>
+              <a [routerLink]="tab.link">{{ 'home.open_module' | transloco }}</a>
+            </div>
 
-        <dl class="definition-grid">
-          <div>
-            <dt>{{ 'Email' | transloco }}</dt>
-            <dd>{{ dashboard().account.email || user()?.email || '-' }}</dd>
-          </div>
-          <div>
-            <dt>{{ 'Role' | transloco }}</dt>
-            <dd>{{ dashboard().account.role }}</dd>
-          </div>
-          <div>
-            <dt>{{ 'Reserved balance' | transloco }}</dt>
-            <dd>{{ formatMoney(dashboard().wallet.reserved, dashboard().wallet.currency) }}</dd>
-          </div>
-          <div>
-            <dt>{{ 'Ledger entries' | transloco }}</dt>
-            <dd>{{ dashboard().billing.ledgerEntries }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="dashboard-panel">
-        <div class="panel-header">
-          <div>
-            <h2>{{ 'Attention points' | transloco }}</h2>
-            <p>{{ 'Commercial signals returned by the API for this tenant.' | transloco }}</p>
-          </div>
-        </div>
-
-        <div class="alert-list">
-          @for (alert of dashboard().alerts; track alert.code) {
-            <article class="dashboard-alert" [ngClass]="'severity-' + alert.severity">
-              <mat-icon>{{ alert.severity === 'warning' ? 'warning' : 'info' }}</mat-icon>
-              <span>{{ alert.message | transloco }}</span>
-            </article>
-          } @empty {
-            <article class="empty-state compact">
-              <mat-icon>check_circle</mat-icon>
-              <span>{{ 'No attention points right now.' | transloco }}</span>
-            </article>
-          }
-        </div>
-      </section>
-    </div>
-
-    <div class="dashboard-sections">
-      <section class="dashboard-panel">
-        <div class="panel-header">
-          <div>
-            <h2>{{ 'Enabled modules' | transloco }}</h2>
-            <p>{{ 'Commercial modules granted by active subscriptions.' | transloco }}</p>
-          </div>
-        </div>
-
-        <div class="module-grid">
-          @for (module of dashboard().modules; track trackModule($index, module)) {
-            @if (module.route) {
-              <a class="module-item" [routerLink]="module.route">
-                <span>{{ module.module }}</span>
-                <strong>{{ module.label }}</strong>
-                <small>{{ module.code }}</small>
-              </a>
-            } @else {
-              <article class="module-item">
-                <span>{{ module.module }}</span>
-                <strong>{{ module.label }}</strong>
-                <small>{{ module.code }}</small>
-              </article>
-            }
-          } @empty {
-            <article class="empty-state compact">
-              <mat-icon>lock</mat-icon>
-              <span>{{ 'No enabled modules yet.' | transloco }}</span>
-            </article>
-          }
-        </div>
-      </section>
-
-      <section class="dashboard-panel">
-        <div class="panel-header">
-          <div>
-            <h2>{{ 'Recent billing activity' | transloco }}</h2>
-            <p>{{ 'Latest wallet and subscription ledger movements.' | transloco }}</p>
-          </div>
-        </div>
-
-        <div class="activity-list">
-          @for (entry of dashboard().activity; track trackActivity($index, entry)) {
-            <article class="activity-item">
-              <mat-icon>{{ entry.direction === 'CREDIT' ? 'south_west' : 'north_east' }}</mat-icon>
-              <div>
-                <strong>{{ entry.reason | transloco }}</strong>
-                <small>
-                  {{ entry.type }}
-                  @if (entry.createdAt) {
-                    - {{ entry.createdAt | mnsDateTime }}
+            @switch (tab.state) {
+              @case ('empty') {
+                <div class="empty-state dashboard-onboarding">
+                  <mat-icon aria-hidden="true">rocket_launch</mat-icon>
+                  <p>{{ 'home.empty.' + tab.key | transloco }}</p>
+                  <a [routerLink]="emptyTarget().path" [queryParams]="emptyTarget().query">{{
+                    'home.empty_action.' + tab.key | transloco
+                  }}</a>
+                </div>
+              }
+              @case ('unavailable') {
+                <p class="dashboard-message" role="status">
+                  {{ 'home.unavailable' | transloco }}
+                </p>
+              }
+              @default {
+                <div class="dashboard-grid">
+                  @for (kpi of kpis(); track kpi.code) {
+                    <article class="dashboard-metric">
+                      <div>
+                        <span class="dashboard-metric-label">{{ kpi.label | transloco }}</span>
+                        <strong class="dashboard-metric-value">{{ kpi.value }}</strong>
+                        @if (kpi.hint) {
+                          <small class="dashboard-metric-hint">{{ kpi.hint }}</small>
+                        }
+                      </div>
+                    </article>
                   }
-                </small>
-              </div>
-              <span>{{ formatMoney(entry.amount, entry.currency) }}</span>
-            </article>
-          } @empty {
-            <article class="empty-state compact">
-              <mat-icon>receipt_long</mat-icon>
-              <span>{{ 'No recent billing activity.' | transloco }}</span>
-            </article>
-          }
-        </div>
-      </section>
-    </div>
+                </div>
+                @if (tab.unavailableSections.length) {
+                  <p class="dashboard-message" role="status">
+                    {{ 'home.partial' | transloco }}
+                  </p>
+                }
+                @if (tab.rowsTitle && rows().length) {
+                  <mns-dashboard-record-list
+                    [title]="'home.rows.' + tab.rowsTitle"
+                    [items]="rows()"
+                  />
+                }
+              }
+            }
+          </div>
+        } @else {
+          <div class="empty-state dashboard-onboarding">
+            <mat-icon aria-hidden="true">inventory_2</mat-icon>
+            <p>{{ 'home.modules.none.' + scope() | transloco }}</p>
+            @if (scope() === 'tenant') {
+              <a routerLink="/billing">{{ 'home.modules.none_action' | transloco }}</a>
+            }
+          </div>
+        }
+      </mat-tab-nav-panel>
+    </section>
   </div>
 </mns-dashboard-page>

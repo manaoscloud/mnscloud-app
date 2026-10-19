@@ -105,7 +105,7 @@ mns-dashboard-page {
   --dashboard-gap: 1rem;
   --dashboard-radius: 0.75rem;
   --dashboard-good: var(--mat-sys-color-primary);
-  --dashboard-warning: var(--mat-sys-color-tertiary);
+  --dashboard-warning: var(--mns-status-warning);
   --dashboard-danger: var(--mat-sys-color-error);
 
   .dashboard-body,
@@ -585,5 +585,99 @@ mns-dashboard-record-list {
   .inventory-title > div {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+}
+
+// Tabbed module panel (App home; reusable by module dashboards with sub-areas). Tabs are links
+// (`mat-tab-nav-bar`) so the selected module lives in the URL; the badge pairs icon + count.
+mns-dashboard-page {
+  .dashboard-tabs {
+    margin: 0.5rem 0 0;
+  }
+  .dashboard-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    margin-inline-start: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .dashboard-tab-badge mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    line-height: 16px;
+  }
+  .dashboard-tab-badge.tone-critical,
+  .dashboard-tab-status.tone-critical {
+    color: var(--dashboard-danger);
+  }
+  .dashboard-tab-badge.tone-warning,
+  .dashboard-tab-status.tone-warning {
+    color: var(--dashboard-warning);
+  }
+  .dashboard-tab-status.tone-ok {
+    color: var(--dashboard-good);
+  }
+  .dashboard-tab-panel {
+    display: grid;
+    gap: var(--dashboard-gap);
+    padding-top: var(--dashboard-gap);
+    min-width: 0;
+  }
+  .dashboard-tab-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .dashboard-tab-status {
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+  .dashboard-tab-header a,
+  .dashboard-onboarding a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--mat-sys-color-primary);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .dashboard-onboarding {
+    display: grid;
+    justify-items: start;
+    gap: 0.5rem;
+    padding: var(--dashboard-gap);
+    border: 1px dashed var(--mat-sys-color-outline-variant);
+    border-radius: var(--dashboard-radius);
+    font-size: 0.9rem;
+  }
+  .dashboard-onboarding p {
+    margin: 0;
+  }
+  .dashboard-alert-link {
+    justify-content: flex-start;
+    color: inherit;
+    text-decoration: none;
+  }
+  .dashboard-alert-link > mat-icon:last-child {
+    margin-inline-start: auto;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .dashboard-alert-text {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .dashboard-alert-text small {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .empty-state.compact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
   }
 }
