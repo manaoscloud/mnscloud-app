@@ -10,7 +10,11 @@ const POLL_MS = 60_000;
 export const INBOX_PANEL_LIMIT = 8;
 
 export type NotificationType =
-  'support.ticket.reply' | 'billing.subscription' | 'feature_request.status';
+  | 'support.ticket.reply'
+  | 'billing.subscription'
+  | 'feature_request.status'
+  | 'logs.account.cap_warning'
+  | 'logs.account.capped';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {

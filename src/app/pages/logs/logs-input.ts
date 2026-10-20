@@ -23,11 +23,16 @@ export function logsPayload(
     'syslogTcpPort',
     'syslogUdp',
     'syslogTcp',
+    'dailyCapMb',
+    'warnPercent',
   ]) {
     if (field in payload && payload[field] != null && payload[field] !== '')
       payload[field] = Number(payload[field]);
   }
   if (payload['notes'] === '') payload['notes'] = null;
+  // An empty daily cap means no cap.
+  if ('dailyCapMb' in payload && (payload['dailyCapMb'] === '' || payload['dailyCapMb'] == null))
+    payload['dailyCapMb'] = null;
   return payload;
 }
 

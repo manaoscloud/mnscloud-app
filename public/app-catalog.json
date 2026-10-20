@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d45f7abc090a",
+  "version": "f5fb7fd14d3b",
   "language": "pt-BR",
   "entries": [
     {
@@ -3920,6 +3920,14 @@
         {
           "label": "Revisão",
           "help": ""
+        },
+        {
+          "label": "Limite diário (MB)",
+          "help": "Volume máximo armazenado por dia nesta conta, em MB. Zera às 00:00 (horário de Brasília). Ao atingir, a conta para de receber logs até o dia seguinte ou até você aumentar o limite. Em branco = sem limite."
+        },
+        {
+          "label": "Aviso em (%)",
+          "help": "Percentual do limite diário em que você recebe uma notificação de aviso (uma vez por dia), entre 50 e 99."
         },
         {
           "label": "Anotações",
