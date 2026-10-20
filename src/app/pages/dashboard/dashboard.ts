@@ -1,4 +1,4 @@
-import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -182,6 +182,31 @@ export class Dashboard {
   readonly attention = computed(() =>
     this.snapshot().attention.map((item) => ({ ...item, target: routeTarget(item.link) })),
   );
+
+  readonly attentionCollapsed = signal(
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('mnscloud_home_attention_collapsed') !== 'false'
+      : true,
+  );
+
+  readonly criticalCount = computed(
+    () => this.attention().filter((item) => item.severity === 'critical').length,
+  );
+
+  readonly warningCount = computed(
+    () => this.attention().filter((item) => item.severity === 'warning').length,
+  );
+
+  toggleAttention() {
+    if (!this.attention().length) return;
+    const next = !this.attentionCollapsed();
+    this.attentionCollapsed.set(next);
+    try {
+      localStorage.setItem('mnscloud_home_attention_collapsed', String(next));
+    } catch {
+      // Ignore storage limitations
+    }
+  }
 
   readonly kpis = computed(() => {
     this.i18n.language();
