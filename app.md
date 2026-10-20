@@ -862,7 +862,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     routes and controls; their forms are not projected into the dashboard.
   - **App home (`/dashboard`).** The home is exclusively for the modules the tenant contracted
     (platform areas in System context): header → "Needs attention" (all modules, most severe
-    first, each item an `<a>` to the resource) → one panel with one tab per module
+    first, collapsible with severity count badges, each item an `<a>` to the resource) → one panel with one tab per module
     (`mat-tab-nav-bar` links, selected module in `?module=`, badge = icon + count) → per tab:
     status line, KPI tiles, at most five highlight rows (`DashboardRecordListComponent`) and the
     module dashboard link. A contracted module without resources shows the onboarding state with
