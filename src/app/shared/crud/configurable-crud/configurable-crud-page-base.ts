@@ -876,10 +876,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       (column) => column !== this.cardTitleColumn() && column !== this.cardStatusColumn(),
     ),
   );
+  /**
+   * The trailing `actions` column is always shown on desktop: it holds the table view (`tune`)
+   * button in its header, so tables without row actions keep the same header as editable ones.
+   */
   readonly displayedColumns = computed(() => [
     ...(this.bulkDeleteEnabled() ? ['select'] : []),
     ...this.tableColumns().map((column) => column.id),
-    ...(this.hasRowActions() ? ['actions'] : []),
+    'actions',
   ]);
   readonly listFailed = computed(() => !!this.itemsResource.error());
   readonly rows = computed(() => {
