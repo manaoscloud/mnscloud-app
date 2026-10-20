@@ -70,7 +70,7 @@ export function storageGrantCollection(prefix: string, master: boolean, bucket: 
         key: 'module',
         source: 'HsgModule',
         label: 'Module',
-        type: 'search-select',
+        type: 'select',
         options: STORAGE_MODULE_OPTIONS,
         required: true,
         span: 1,
@@ -79,7 +79,7 @@ export function storageGrantCollection(prefix: string, master: boolean, bucket: 
         key: 'consumerScope',
         source: 'HsgConsumerScope',
         label: 'Consumer scope',
-        type: 'search-select',
+        type: 'select',
         options: master
           ? CONSUMER_SCOPES
           : CONSUMER_SCOPES.filter((option) => option.value === 'tenant'),

@@ -805,6 +805,9 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     `ConfigurableCrudPageBase.errorMessage`, with every message in `en-US`, `pt-BR` and `es-ES`.
     Billing requirement codes name the module through `commercial.module.<module>`.
 - Dashboard visual baseline:
+  - **Catalog and recipe:** `docs/dashboards.md` lists every shared dashboard component, where the
+    numbers come from (database aggregate → API route with the list's permissions → page) and the
+    steps for a new module dashboard. Use it before writing any dashboard.
   - Summary dashboards MUST instantiate `DashboardPageComponent` (`mns-dashboard-page`) and
     `dashboardResource` from `src/app/shared/dashboard`. Start new pages from `templates/dashboard`.
   - The shell owns the title, subtitle and exactly one action: the shared Refresh button.
@@ -854,7 +857,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Validate `npm run check:dashboard`, dashboard state tests and `npm run build`; verify desktop and
     mobile, light/dark themes, PT/EN/ES, empty/populated/error/reload and master/tenant behavior.
     The dashboard validator is separate from the CRUD filter contract and runs in changed-app CI.
-  - Current adoption: all 18 `pages/**/dashboard/dashboard.ts` summary pages use this shell,
+  - Current adoption: all 23 `pages/**/dashboard/dashboard.ts` summary pages use this shell,
     including tenant/master Cyber Security. Operational Cyber Security sections retain their own
     routes and controls; their forms are not projected into the dashboard.
   - **App home (`/dashboard`).** The home is exclusively for the modules the tenant contracted
@@ -869,7 +872,12 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     (`ContextModeService.effectiveMode()`), which decides module visibility server-side; codes are
     translated under `home.*` in PT/EN/ES. Tab, badge, onboarding and alert-link styles are the
     shared `.dashboard-tabs`, `.dashboard-tab-*`, `.dashboard-onboarding` and
-    `.dashboard-alert-link` primitives. Plan and phases:
+    `.dashboard-alert-link` primitives. The home is the only dashboard with a second header
+    action, **Customize** (`[customizable]`/`(customize)` on `mns-dashboard-page`, enforced by
+    `check:dashboard`): `DashboardLayoutDialogComponent` reorders (up/down buttons, keyboard and
+    touch friendly) and hides tabs, saved per user through `PUT /user/dashboard-layouts/home.<scope>`
+    and read with the overview. It is display only: hidden tabs keep their items in "Needs
+    attention", and a home with every tab hidden says how to show them again. Plan and phases:
     `docs/handoffs/2026-10-18-main-dashboard-contracted-modules.md` (workspace).
   - **Charts.** Every dashboard chart is `mns-trend-chart` (`src/app/shared/charts`): daily
     columns, stacked columns or lines with the shared styles (`src/styles/_charts.scss`) and the

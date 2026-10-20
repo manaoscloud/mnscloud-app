@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, type ParamMap } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { AppI18nService } from '../../services/app-i18n.service';
 import { AuthService } from '../../services/auth.service';
 import { ContextModeService, type ContextMode } from '../../services/context-mode.service';
 import { DateTimeFormatService } from '../../services/date-time-format.service';
+import { SnackbarService } from '../../services/snackbar.service';
 import { TenantService } from '../../services/tenant.service';
 import { Dashboard } from './dashboard';
 
@@ -30,6 +32,7 @@ describe('Home dashboard', () => {
   const mode = signal<ContextMode>('tenant');
   const query = new BehaviorSubject<ParamMap>(convertToParamMap({}));
   let requests: string[];
+  let layouts: Record<string, { order: string[]; hidden: string[] } | 'error'>;
   let page: Dashboard;
 
   const tenantSnapshot = {
@@ -121,6 +124,12 @@ describe('Home dashboard', () => {
     mode.set('tenant');
     query.next(convertToParamMap({}));
     requests = [];
+    layouts = {};
+    await createPage();
+  });
+
+  async function createPage() {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: { user: signal({ uuid: 'user-a' }) } },
@@ -147,6 +156,15 @@ describe('Home dashboard', () => {
           useValue: {
             get: (endpoint: string) => {
               requests.push(endpoint);
+              if (endpoint.startsWith('user/dashboard-layouts/')) {
+                const layout = layouts[endpoint.split('/').pop() ?? ''];
+                if (layout === 'error') return Promise.reject(new Error('down'));
+                return Promise.resolve({
+                  status: 'success',
+                  message: 'ok',
+                  data: layout ?? { order: [], hidden: [] },
+                });
+              }
               return Promise.resolve({
                 status: 'success',
                 message: 'ok',
@@ -155,16 +173,18 @@ describe('Home dashboard', () => {
             },
           },
         },
+        { provide: MatDialog, useValue: {} },
+        { provide: SnackbarService, useValue: { error: () => undefined } },
       ],
     });
     page = TestBed.runInInjectionContext(() => new Dashboard());
     await settle();
-  });
+  }
 
   afterEach(() => TestBed.resetTestingModule());
 
   it('loads the tenant overview and opens the first tab by default', () => {
-    expect(requests).toEqual(['dashboard/overview']);
+    expect(requests).toEqual(['dashboard/overview', 'user/dashboard-layouts/home.tenant']);
     expect(page.hasData()).toBeTrue();
     expect(page.activeTab()?.key).toBe('voip');
     expect(page.kpis().map((kpi) => kpi.value)).toEqual([
@@ -246,6 +266,33 @@ describe('Home dashboard', () => {
   it('asks the API to bypass its cache on Refresh only', async () => {
     page.refresh();
     await settle();
-    expect(requests).toEqual(['dashboard/overview', 'dashboard/overview?fresh=1']);
+    expect(requests.filter((item) => item.startsWith('dashboard/'))).toEqual([
+      'dashboard/overview',
+      'dashboard/overview?fresh=1',
+    ]);
+  });
+
+  it('orders and hides tabs by the saved layout but keeps their attention items', async () => {
+    layouts['home.tenant'] = { order: ['support', 'voip'], hidden: ['customer-billing'] };
+    await createPage();
+    expect(page.tabs().map((item) => item.key)).toEqual(['support', 'voip']);
+    expect(page.activeTab()?.key).toBe('support');
+    expect(page.attention().map((item) => item.tab)).toEqual(['support']);
+    expect(page.allHidden()).toBeFalse();
+  });
+
+  it('says so when every tab is hidden', async () => {
+    layouts['home.tenant'] = { order: [], hidden: ['voip', 'customer-billing', 'support'] };
+    await createPage();
+    expect(page.tabs()).toEqual([]);
+    expect(page.activeTab()).toBeNull();
+    expect(page.allHidden()).toBeTrue();
+  });
+
+  it('keeps the default order when the layout cannot be read', async () => {
+    layouts['home.tenant'] = 'error';
+    await createPage();
+    expect(page.hasData()).toBeTrue();
+    expect(page.tabs().map((item) => item.key)).toEqual(['voip', 'customer-billing', 'support']);
   });
 });

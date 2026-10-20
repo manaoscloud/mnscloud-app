@@ -681,3 +681,34 @@ mns-dashboard-page {
     margin: 0;
   }
 }
+
+// Home layout dialog (opened from the App home "Customize" action; renders in the overlay).
+.dashboard-layout-dialog {
+  .dashboard-layout-list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dashboard-layout-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    border-radius: 12px;
+  }
+  .dashboard-layout-item.is-hidden {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .dashboard-layout-moves {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .dashboard-layout-note {
+    margin: 1rem 0 0;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}

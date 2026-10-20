@@ -603,6 +603,22 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'receipt_long',
     children: [
       {
+        id: 'logs/accounts',
+        label: 'nav.logs.accounts',
+        icon: 'inventory_2',
+        requiresEnvironment: true,
+        route: '/logs/accounts',
+        entitlementCode: 'module.logs.account',
+      },
+      {
+        id: 'logs/sources',
+        label: 'nav.logs.sources',
+        icon: 'settings_input_antenna',
+        requiresEnvironment: true,
+        route: '/logs/sources',
+        entitlementCode: 'module.logs.source',
+      },
+      {
         id: 'logs/clusters',
         label: 'nav.logs.clusters',
         icon: 'hub',

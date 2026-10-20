@@ -67,6 +67,13 @@ export const QUICK_CREATE_REGISTRY = {
     permission: MASTER_PERMISSION,
     routeData: { scope: 'master' },
   },
+  LogAccountLgaUUID: {
+    label: 'logs.accounts',
+    loadComponent: () =>
+      import('../../../pages/logs/accounts/accounts').then((m) => m.LogsAccountPage),
+    permission: 'tenant.logs.write',
+    routeData: { scope: 'tenant' },
+  },
   AuthenticationAccountAacUUID: {
     label: 'authentication.accounts',
     loadComponent: () =>

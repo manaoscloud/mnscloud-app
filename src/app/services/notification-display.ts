@@ -12,6 +12,9 @@ export function notificationIcon(item: InboxNotification): string {
       return 'payments';
     case 'feature_request.status':
       return 'lightbulb';
+    case 'logs.account.cap_warning':
+    case 'logs.account.capped':
+      return 'receipt_long';
     default:
       return 'notifications';
   }
@@ -29,6 +32,13 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
         code: param('code'),
         status: featureRequestStatusLabel(param('status'), (key) => t(key)),
       });
+    case 'logs.account.cap_warning':
+      return t('notifications.logsCapWarning', {
+        account: param('account'),
+        percent: param('percent'),
+      });
+    case 'logs.account.capped':
+      return t('notifications.logsCapped', { account: param('account') });
     default:
       return t('notifications.generic');
   }
@@ -41,7 +51,9 @@ export function notificationDescription(item: InboxNotification, language: strin
       ? item.params['offer']
       : item.type === 'feature_request.status'
         ? item.params['title']
-        : item.params['subject'];
+        : item.type.startsWith('logs.account.')
+          ? item.params['account']
+          : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

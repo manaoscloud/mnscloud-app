@@ -32,6 +32,11 @@ const BUCKET_STATES: Record<string, string> = {
   released: 'Released',
 };
 
+const BUCKET_OPERATIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'import', label: 'Import existing bucket' },
+  { value: 'create', label: 'Create bucket at provider' },
+];
+
 const VALIDATE_ACTION: ConfigurableCrudRowAction = {
   key: 'validate',
   label: 'Validate',
@@ -120,11 +125,8 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       key: 'provisionMode',
       hiddenWhen: ({ editing }) => editing,
       label: 'Bucket operation',
-      type: 'search-select',
-      options: [
-        { value: 'import', label: 'Import existing bucket' },
-        { value: 'create', label: 'Create bucket at provider' },
-      ],
+      type: 'select',
+      options: BUCKET_OPERATIONS,
       span: 1,
     },
     {
@@ -159,7 +161,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'initialModule',
       label: 'Initial module permission',
-      type: 'search-select',
+      type: 'select',
       options: STORAGE_MODULE_OPTIONS,
       span: 1,
       hiddenWhen: ({ editing }) => editing,

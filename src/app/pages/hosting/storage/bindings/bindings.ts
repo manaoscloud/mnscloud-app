@@ -51,7 +51,7 @@ function bindingConfig(master: boolean) {
         key: 'module',
         source: 'HbiModule',
         label: 'Module',
-        type: 'search-select',
+        type: 'select',
         options: STORAGE_MODULE_OPTIONS,
         required: true,
         span: 1,

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "72eee5d25e9d",
+  "version": "3978bcd4926d",
   "language": "pt-BR",
   "entries": [
     {
@@ -3941,6 +3941,88 @@
         {
           "label": "Tipo",
           "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/logs/accounts",
+      "menuPath": "Logs › Contas",
+      "scope": "tenant",
+      "title": "Contas",
+      "description": "Contas de Logs do tenant. Cada conta fica em um cluster publicado e agrupa as fontes (equipamentos) que enviam logs.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Cluster onde os logs desta conta são armazenados. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Limite diário (MB)",
+          "help": "Volume máximo armazenado por dia nesta conta, em MB. Zera às 00:00 (horário de Brasília). Ao atingir, a conta para de receber logs até o dia seguinte ou até você aumentar o limite. Em branco = sem limite."
+        },
+        {
+          "label": "Aviso em (%)",
+          "help": "Percentual do limite diário em que você recebe uma notificação de aviso (uma vez por dia), entre 50 e 99."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/logs/sources",
+      "menuPath": "Logs › Fontes",
+      "scope": "tenant",
+      "title": "Fontes",
+      "description": "Equipamentos autorizados a enviar syslog. O nó aceita apenas linhas vindas do endereço cadastrado; o restante é descartado. Alterações chegam ao nó em cerca de 1 minuto.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endereço de origem",
+          "help": "IPv4 ou IPv6 exato de onde o equipamento envia os logs, como o nó de Logs o enxerga. É único no cluster, inclusive entre tenants."
+        },
+        {
+          "label": "Retenção",
+          "help": "Por quanto tempo as linhas desta fonte ficam armazenadas."
+        },
+        {
+          "label": "Syslog UDP",
+          "help": "Transportes aceitos para esta fonte. Pelo menos um deve estar habilitado."
+        },
+        {
+          "label": "Syslog TCP",
+          "help": "Transportes aceitos para esta fonte. Pelo menos um deve estar habilitado."
         },
         {
           "label": "Anotações",
