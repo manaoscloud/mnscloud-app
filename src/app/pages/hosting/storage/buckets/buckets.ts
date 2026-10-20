@@ -406,9 +406,11 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const provider = String(row['HspProvider'] ?? '');
-    return ['s3', 'spaces', 'sangfor_scp', 'azure', 'gcs'].includes(provider)
-      ? [VALIDATE_ACTION]
-      : [];
+    return super.rowActions(row).filter(
+      (action) =>
+        action.key !== 'validate' ||
+        ['s3', 'spaces', 'sangfor_scp', 'azure', 'gcs'].includes(provider),
+    );
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
