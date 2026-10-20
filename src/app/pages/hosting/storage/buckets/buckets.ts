@@ -50,11 +50,14 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
   searchPlaceholder: 'Name, provider or bucket',
   emptyLabel: 'No storage buckets found.',
   deleteTitle: 'Delete storage bucket',
-  deleteMessage: 'Are you sure you want to delete this storage bucket?',
+  deleteMessage:
+    'Delete this bucket and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.',
   deleteSelectedTitle: 'Delete selected storage buckets',
-  deleteSelectedMessage: 'Delete {count} selected storage buckets?',
+  deleteSelectedMessage:
+    'Delete {count} selected buckets and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.',
   savedMessage: 'Storage bucket saved successfully.',
-  deletedMessage: 'Storage bucket deleted successfully.',
+  deletedMessage:
+    'Storage bucket deletion requested. Billing continues until provider removal is confirmed.',
   deleteFailedMessage: 'Failed to delete storage bucket.',
   statusMode: 'number',
   activeValue: 1,
