@@ -1,3 +1,4 @@
+import { storageBillingActions } from '../storage-billing-actions';
 import { storagePriceFields } from '../storage-price-fields';
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -60,6 +61,7 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
         const master = inject(ActivatedRoute).snapshot.data['scope'] === 'master';
         return {
           ...config,
+          rowActions: storageBillingActions('accounts', master),
           endpoint: master ? 'system/hosting/storage/accounts' : config.endpoint,
           fields: config.fields.filter(
             (field) => !master || (field.key !== 'customerUuid' && !field.key.startsWith('price')),

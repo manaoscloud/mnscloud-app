@@ -8860,5 +8860,19 @@
   "Choose a bucket explicitly offered to this module and environment.": "Elija un bucket ofrecido explícitamente para este módulo y entorno.",
   "Remove this destination? Existing files keep their recorded bucket.": "¿Eliminar este destino? Los archivos existentes conservan su bucket registrado.",
   "Remove {count} destinations? Existing files keep their recorded buckets.": "¿Eliminar {count} destinos? Los archivos existentes conservan sus buckets registrados.",
-  "Initial module permission": "Permiso inicial de módulo"
+  "Initial module permission": "Permiso inicial de módulo",
+  "Platform infrastructure": "Infraestructura de la plataforma",
+  "Not contracted": "Sin contratar",
+  "Billing and usage": "Cobro y consumo",
+  "Billing status": "Estado del cobro",
+  "Review prepaid billing, measured usage and preserved storage debt.": "Consulte el cobro prepago, el consumo medido y la deuda del almacenamiento conservado.",
+  "Preserved files continue to incur storage charges. Buckets have no fixed capacity limit.": "Los archivos conservados siguen generando cargos. Los buckets no tienen un límite fijo de capacidad.",
+  "Preserved usage debt": "Deuda del consumo conservado",
+  "Measured bytes": "Bytes medidos",
+  "Last measurement": "Última medición",
+  "Subscription preservation until": "Conservación del contrato hasta",
+  "Activate prepaid billing": "Activar cobro prepago",
+  "Choose and confirm a prepaid price for an existing storage resource.": "Elija y confirme un precio prepago para un recurso de almacenamiento existente.",
+  "Use this action for migrated resources without a contract. Confirming charges the selected price. Existing contracts are managed in Billing.": "Use esta acción para recursos migrados sin contrato. La confirmación cobra el precio seleccionado. Gestione los contratos existentes en Facturación.",
+  "Storage billing activated successfully.": "Cobro del almacenamiento activado correctamente."
 }

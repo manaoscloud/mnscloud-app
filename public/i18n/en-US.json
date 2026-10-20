@@ -8860,5 +8860,19 @@
   "Choose a bucket explicitly offered to this module and environment.": "Choose a bucket explicitly offered to this module and environment.",
   "Remove this destination? Existing files keep their recorded bucket.": "Remove this destination? Existing files keep their recorded bucket.",
   "Remove {count} destinations? Existing files keep their recorded buckets.": "Remove {count} destinations? Existing files keep their recorded buckets.",
-  "Initial module permission": "Initial module permission"
+  "Initial module permission": "Initial module permission",
+  "Platform infrastructure": "Platform infrastructure",
+  "Not contracted": "Not contracted",
+  "Billing and usage": "Billing and usage",
+  "Billing status": "Billing status",
+  "Review prepaid billing, measured usage and preserved storage debt.": "Review prepaid billing, measured usage and preserved storage debt.",
+  "Preserved files continue to incur storage charges. Buckets have no fixed capacity limit.": "Preserved files continue to incur storage charges. Buckets have no fixed capacity limit.",
+  "Preserved usage debt": "Preserved usage debt",
+  "Measured bytes": "Measured bytes",
+  "Last measurement": "Last measurement",
+  "Subscription preservation until": "Subscription preservation until",
+  "Activate prepaid billing": "Activate prepaid billing",
+  "Choose and confirm a prepaid price for an existing storage resource.": "Choose and confirm a prepaid price for an existing storage resource.",
+  "Use this action for migrated resources without a contract. Confirming charges the selected price. Existing contracts are managed in Billing.": "Use this action for migrated resources without a contract. Confirming charges the selected price. Existing contracts are managed in Billing.",
+  "Storage billing activated successfully.": "Storage billing activated successfully."
 }

@@ -1,3 +1,4 @@
+import { storageBillingActions } from '../storage-billing-actions';
 import { storagePriceFields } from '../storage-price-fields';
 import { STORAGE_MODULE_OPTIONS, storageGrantCollection } from '../storage-module-config';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -246,6 +247,7 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
           ...BUCKET_CONFIG,
           rowActions: [
             VALIDATE_ACTION,
+            ...storageBillingActions('buckets', master),
             {
               key: 'permissions',
               label: 'Bucket permissions',
