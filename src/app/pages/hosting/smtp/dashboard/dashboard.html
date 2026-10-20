@@ -32,7 +32,9 @@
       [pageSize]="providerTable.pageSize()"
       (page)="providerTable.setPage($event)"
     >
-      <a class="dashboard-nav-link" [routerLink]="routeTo('providers')">{{ 'Providers' | transloco }}</a>
+      <a class="dashboard-nav-link" [routerLink]="routeTo('providers')">{{
+        'Providers' | transloco
+      }}</a>
     </mns-dashboard-record-list>
     <mns-dashboard-record-list
       title="Account Inventory"
@@ -47,7 +49,9 @@
       [pageSize]="accountTable.pageSize()"
       (page)="accountTable.setPage($event)"
     >
-      <a class="dashboard-nav-link" [routerLink]="routeTo('accounts')">{{ 'Accounts' | transloco }}</a>
+      <a class="dashboard-nav-link" [routerLink]="routeTo('accounts')">{{
+        'Accounts' | transloco
+      }}</a>
     </mns-dashboard-record-list>
     <mns-dashboard-record-list
       title="Route Map"

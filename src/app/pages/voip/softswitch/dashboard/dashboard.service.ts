@@ -61,7 +61,7 @@ export class VoipSoftswitchDashboardService {
     const items = Array.isArray(servers?.data?.items) ? servers.data.items : [];
     return {
       ...EMPTY_SNAPSHOT,
-      ...(counts?.data ?? {}),
+      ...counts?.data,
       servers: items.map((server: any) => this.serverRow(server)),
     };
   }

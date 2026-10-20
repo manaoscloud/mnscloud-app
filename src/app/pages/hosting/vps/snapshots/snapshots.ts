@@ -158,7 +158,9 @@ const HOSTING_VPS_SNAPSHOT_CONFIG_BASE: Omit<ConfigurableCrudConfig, 'fields'> =
 export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly instances = signal<HostingVpsInstance[]>([]);
-  private readonly capabilitiesByProvider = signal<Record<string, SnapshotProviderCapabilities>>({});
+  private readonly capabilitiesByProvider = signal<Record<string, SnapshotProviderCapabilities>>(
+    {},
+  );
   private readonly mutatingActionUUIDs = signal<Set<string>>(new Set());
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
@@ -280,7 +282,9 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
     return [];
   }
 
-  override listFilterOptions(filter: ConfigurableCrudListFilter): readonly ConfigurableCrudOption[] {
+  override listFilterOptions(
+    filter: ConfigurableCrudListFilter,
+  ): readonly ConfigurableCrudOption[] {
     if (filter.key === 'instanceUUID') return this.instanceOptions();
     return super.listFilterOptions(filter);
   }
@@ -367,16 +371,11 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
-  private supportsOption(
-    instanceUUID: unknown,
-    option: 'includeMemory' | 'quiesce',
-  ): boolean {
+  private supportsOption(instanceUUID: unknown, option: 'includeMemory' | 'quiesce'): boolean {
     return Boolean(this.capabilitiesForInstance(instanceUUID)?.[option]);
   }
 
-  private capabilitiesForInstance(
-    instanceUUID: unknown,
-  ): SnapshotProviderCapabilities | null {
+  private capabilitiesForInstance(instanceUUID: unknown): SnapshotProviderCapabilities | null {
     const uuid = String(instanceUUID ?? '').trim();
     if (!uuid) return null;
     const instance = this.instances().find((row) => row.HviUUID === uuid);

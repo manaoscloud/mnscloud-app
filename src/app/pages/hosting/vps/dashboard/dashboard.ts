@@ -13,6 +13,14 @@ import {
 } from '../../../../shared/dashboard/dashboard-record-list';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import {
+  EMPTY_INSTANCE_DASHBOARD,
+  type InstanceDashboard,
+  instanceDashboard,
+  planInstanceCount,
+  instanceStatusRecords,
+  providerInstances,
+} from '../../shared/instance-dashboard';
+import {
   HostingVpsPlan,
   HostingVpsPlanConfig,
   HostingVpsProvider,
@@ -26,25 +34,6 @@ type KpiTile = {
   detailLabel: string;
   icon: string;
   state: 'good' | 'warn' | 'bad' | 'neutral';
-};
-
-/** Instance totals counted by the database over every row in scope ({system/}...dashboard). */
-type InstanceDashboard = {
-  total: number;
-  active: number;
-  issues: number;
-  byStatus: Array<{ status: string | null; total: number; active: number; issues: number }>;
-  byPlan: Array<{ planUUID: string | null; total: number }>;
-  byProvider: Array<{ providerUUID: string | null; total: number; issues: number }>;
-};
-
-const EMPTY_INSTANCE_DASHBOARD: InstanceDashboard = {
-  total: 0,
-  active: 0,
-  issues: 0,
-  byStatus: [],
-  byPlan: [],
-  byProvider: [],
 };
 
 type VpsDashboardSnapshot = {
@@ -123,7 +112,9 @@ export class HostingVpsDashboardPage {
     const rows = this.plans();
     const total = rows.length;
     const active = rows.filter((row) => this.isActive(row.HvpIsActive)).length;
-    const linked = rows.filter((row) => this.planInstances(row.HvpUUID) > 0).length;
+    const linked = rows.filter(
+      (row) => planInstanceCount(this.instances(), row.HvpUUID) > 0,
+    ).length;
     return { total, active, linked };
   });
 
@@ -177,36 +168,18 @@ export class HostingVpsDashboardPage {
     },
   ]);
 
-  readonly statusRows = computed<DashboardRecord[]>(() => {
-    return this.instances()
-      .byStatus.map((row) => {
-        const status = String(row.status || 'unknown');
-        const { total, active, issues } = row;
-        return {
-          name: status,
-          meta: String(total),
-          status,
-          tone: this.statusTone(status, issues),
-          details: [
-            { label: 'Total', value: String(total) },
-            { label: 'Active', value: String(active) },
-            { label: 'Issues', value: String(issues) },
-          ],
-        } satisfies DashboardRecord;
-      })
-      .sort((a, b) => Number(b.meta) - Number(a.meta) || a.name.localeCompare(b.name));
-  });
+  readonly statusRows = computed<DashboardRecord[]>(() =>
+    instanceStatusRecords(this.instances(), (status, issues) => this.statusTone(status, issues)),
+  );
 
   readonly providerRows = computed<DashboardRecord[]>(() =>
     this.providers().map((provider) => {
       const plans = this.plans().filter(
         (plan) => plan.HostingVpsProviderHvrUUID === provider.HvrUUID,
       );
-      const instances = this.instances().byProvider.find(
-        (row) => row.providerUUID === provider.HvrUUID,
-      );
+      const instances = providerInstances(this.instances(), provider.HvrUUID);
       const active = this.isActive(provider.HvrIsActive);
-      const issues = instances?.issues ?? 0;
+      const issues = instances.issues;
       return {
         name: provider.HvrName,
         meta: provider.HvrProvider,
@@ -214,7 +187,7 @@ export class HostingVpsDashboardPage {
         tone: issues > 0 ? 'danger' : active ? 'success' : 'skipped',
         details: [
           { label: 'Plans', value: String(plans.length) },
-          { label: 'Instances', value: String(instances?.total ?? 0) },
+          { label: 'Instances', value: String(instances.total) },
           { label: 'Issues', value: String(issues) },
           {
             label: 'Default',
@@ -242,7 +215,7 @@ export class HostingVpsDashboardPage {
           { label: 'Price', value: this.formatPrice(plan.HvpPrice, plan.HvpCurrency) },
           {
             label: 'Instances',
-            value: String(this.planInstances(plan.HvpUUID)),
+            value: String(planInstanceCount(this.instances(), plan.HvpUUID)),
           },
         ],
       } satisfies DashboardRecord;
@@ -292,7 +265,7 @@ export class HostingVpsDashboardPage {
           : [],
       instances:
         instancesResult.status === 'fulfilled'
-          ? { ...EMPTY_INSTANCE_DASHBOARD, ...(instancesResult.value?.data ?? {}) }
+          ? instanceDashboard(instancesResult.value)
           : EMPTY_INSTANCE_DASHBOARD,
       failedSections,
     };
@@ -315,10 +288,6 @@ export class HostingVpsDashboardPage {
 
   private instanceDashboardEndpoint() {
     return this.isMaster() ? 'system/hosting/vps/dashboard' : 'hosting/vps/dashboard';
-  }
-
-  private planInstances(planUUID: string) {
-    return this.instances().byPlan.find((row) => row.planUUID === planUUID)?.total ?? 0;
   }
 
   private statusTone(status: string, issues: number): DashboardRecord['tone'] {

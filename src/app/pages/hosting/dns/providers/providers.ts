@@ -52,7 +52,6 @@ const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'MASTER', label: 'Master' },
 ];
 
-
 const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
   key: 'test',
   label: 'Test',
@@ -325,15 +324,15 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
         `${this.endpoint()}/catalog`,
       );
-      const items = (response?.data?.items ?? []).filter((item) =>
-        item.value === 'route53' || item.value === 'cpanel_dnsonly');
+      const items = (response?.data?.items ?? []).filter(
+        (item) => item.value === 'route53' || item.value === 'cpanel_dnsonly',
+      );
       this.catalog.set(items.length ? items : fallbackCatalog());
     } catch (error) {
       this.catalog.set(fallbackCatalog());
       this.snack.error(this.errorMessage(error) || 'Failed to load provider catalog.');
     }
   }
-
 
   private async testProvider(provider: ConfigurableCrudRecord) {
     const providerUUID = String(provider['HdpUUID'] ?? '');
@@ -470,17 +469,23 @@ function genericProviderFieldLabel(field: HostingDnsProviderCredentialField): st
 
 function fallbackCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret'];
-    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
-    default: return [];
+    case 'route53':
+      return ['accessKey', 'secret'];
+    case 'cpanel_dnsonly':
+      return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
+    default:
+      return [];
   }
 }
 
 function fallbackRequiredCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret'];
-    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret'];
-    default: return [];
+    case 'route53':
+      return ['accessKey', 'secret'];
+    case 'cpanel_dnsonly':
+      return ['apiEndpoint', 'accessKey', 'secret'];
+    default:
+      return [];
   }
 }
 

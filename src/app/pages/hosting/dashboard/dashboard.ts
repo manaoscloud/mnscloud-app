@@ -15,6 +15,12 @@ import {
 } from '../../../shared/crud/configurable-crud/global-table';
 import { ConfigurableCrudRowAction } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
+import {
+  EMPTY_INSTANCE_DASHBOARD,
+  type InstanceDashboard,
+  instanceDashboard,
+} from '../shared/instance-dashboard';
+
 type HostingDatasetKey =
   | 'dnsDomains'
   | 'dnsProviders'
@@ -95,28 +101,18 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
   webhostZoneRecords: [],
 };
 
-/** Instance totals counted by the database ({system/}hosting/vps{-container}/dashboard). */
-type InstanceTotals = {
-  total: number;
-  active: number;
-  issues: number;
-  issueRows: Array<{ uuid: string; name: string | null; status: string | null }>;
-};
-
-const EMPTY_INSTANCE_TOTALS: InstanceTotals = { total: 0, active: 0, issues: 0, issueRows: [] };
-
 type HostingDashboardSnapshot = {
   data: Record<HostingDatasetKey, GenericRow[]>;
-  vps: InstanceTotals;
-  containers: InstanceTotals;
+  vps: InstanceDashboard;
+  containers: InstanceDashboard;
   generatedAt: string | null;
   failedSections: number;
 };
 
 const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   data: { ...EMPTY_HOSTING_DATA },
-  vps: EMPTY_INSTANCE_TOTALS,
-  containers: EMPTY_INSTANCE_TOTALS,
+  vps: EMPTY_INSTANCE_DASHBOARD,
+  containers: EMPTY_INSTANCE_DASHBOARD,
   generatedAt: null,
   failedSections: 0,
 };
@@ -320,8 +316,8 @@ export class HostingDashboardPage {
         entries.map(([, endpoint]) => (endpoint ? this.fetchItems(endpoint) : Promise.resolve([]))),
       ),
       Promise.allSettled([
-        this.fetchInstanceTotals(`${this.vpsRoot()}/dashboard`),
-        this.fetchInstanceTotals(`${this.containerRoot()}/dashboard`),
+        this.fetchInstanceDashboard(`${this.vpsRoot()}/dashboard`),
+        this.fetchInstanceDashboard(`${this.containerRoot()}/dashboard`),
       ]),
     ]);
     const nextData: Record<HostingDatasetKey, GenericRow[]> = { ...EMPTY_HOSTING_DATA };
@@ -329,7 +325,7 @@ export class HostingDashboardPage {
       (result) => result.status === 'rejected',
     ).length;
     const [vps, containers] = instanceResults.map((result) =>
-      result.status === 'fulfilled' ? result.value : EMPTY_INSTANCE_TOTALS,
+      result.status === 'fulfilled' ? result.value : EMPTY_INSTANCE_DASHBOARD,
     );
 
     entries.forEach(([key], index) => {
@@ -440,11 +436,10 @@ export class HostingDashboardPage {
     return this.responseItems(response);
   }
 
-  private async fetchInstanceTotals(endpoint: string): Promise<InstanceTotals> {
-    const response = await this.api.get<{ data?: Partial<InstanceTotals> }>(endpoint, {
-      timeout: 30000,
-    });
-    return { ...EMPTY_INSTANCE_TOTALS, ...(response?.data ?? {}) };
+  private async fetchInstanceDashboard(endpoint: string): Promise<InstanceDashboard> {
+    return instanceDashboard(
+      await this.api.get<{ data?: Partial<InstanceDashboard> }>(endpoint, { timeout: 30000 }),
+    );
   }
 
   private withLimit(endpoint: string) {
@@ -645,7 +640,7 @@ export class HostingDashboardPage {
     key: string,
     label: string,
     icon: string,
-    totals: InstanceTotals,
+    totals: InstanceDashboard,
     route: string[],
   ): WorkloadRow {
     const { total, active, issues } = totals;
@@ -653,7 +648,7 @@ export class HostingDashboardPage {
   }
 
   /** The ten most recent problem instances, already selected by the database. */
-  private instanceIssueRows(type: string, totals: InstanceTotals, route: string[]): IssueRow[] {
+  private instanceIssueRows(type: string, totals: InstanceDashboard, route: string[]): IssueRow[] {
     return totals.issueRows.map((row) => ({
       key: row.uuid,
       type,

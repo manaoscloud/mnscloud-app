@@ -70,7 +70,10 @@ export function hostingDnsRegistrarLabel(code: string | null | undefined): strin
     .join(' ');
 }
 
-export function hostingDnsRegistrarCatalogOptions(): { code: HostingDnsRegistrarCode; label: string }[] {
+export function hostingDnsRegistrarCatalogOptions(): {
+  code: HostingDnsRegistrarCode;
+  label: string;
+}[] {
   return HOSTING_DNS_REGISTRAR_CODES.map((code) => ({
     code,
     label: REGISTRAR_LABELS[code],

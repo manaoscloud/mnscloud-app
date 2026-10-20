@@ -308,7 +308,7 @@ export class MonitoringDashboardPage {
     if (logsResult.status === 'rejected') throw logsResult.reason;
 
     return {
-      agentSummary: { ...EMPTY_AGENT_SUMMARY, ...(agentsResult.value?.data ?? {}) },
+      agentSummary: { ...EMPTY_AGENT_SUMMARY, ...agentsResult.value?.data },
       runtimeProducts: runtimeResult.value?.data ?? [],
       latestLogs: logsResult.value?.data?.items ?? [],
       failedTotal:

@@ -50,11 +50,7 @@ export type HostingWebhostPlan = {
 export type WebhostHostStatus = 'pending' | 'active' | 'suspended' | 'error' | 'cancelled';
 
 export type WebhostHostProvisionStatus =
-  | 'manual'
-  | 'pending'
-  | 'provisioning'
-  | 'provisioned'
-  | 'failed';
+  'manual' | 'pending' | 'provisioning' | 'provisioned' | 'failed';
 
 export type WebhostHostConfig = {
   notes?: string | null;
@@ -101,11 +97,7 @@ export type HostingDnsRegisterOption = {
 export type WebhostEmailStatus = 'pending' | 'active' | 'suspended' | 'error' | 'cancelled';
 
 export type WebhostEmailProvisionStatus =
-  | 'manual'
-  | 'pending'
-  | 'provisioning'
-  | 'provisioned'
-  | 'failed';
+  'manual' | 'pending' | 'provisioning' | 'provisioned' | 'failed';
 
 export type WebhostEmailConfig = {
   notes?: string | null;
@@ -139,11 +131,7 @@ export type HostingWebhostEmailAccount = {
 
 export type WebhostToolStatus = 'pending' | 'active' | 'error' | 'cancelled';
 export type WebhostToolProvisionStatus =
-  | 'manual'
-  | 'pending'
-  | 'provisioning'
-  | 'provisioned'
-  | 'failed';
+  'manual' | 'pending' | 'provisioning' | 'provisioned' | 'failed';
 export type WebhostZoneRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'SRV' | 'CAA';
 export type WebhostZoneRecordStatus = 'pending' | 'active' | 'error' | 'deleted';
 
