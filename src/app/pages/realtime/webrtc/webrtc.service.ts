@@ -128,6 +128,11 @@ export class RealtimeWebRtcService {
     return this.api.post<any>(`${basePath}/domains/${uuid}/provision`, {});
   }
 
+  /** Managed domain for a server created without one (automatic domain parameter turned on later). */
+  generateAutoDomain(uuid: string) {
+    return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/auto-domain`, {});
+  }
+
   generateInstallCommand(uuid: string, body: RuntimeInstallCommandBody = {}) {
     return this.api.post<any>(`${this.systemBasePath}/servers/${uuid}/install-command`, body);
   }

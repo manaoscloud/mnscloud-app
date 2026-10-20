@@ -3,6 +3,10 @@ import {
   requestRuntimeInstallCommand,
   runtimeInstallTokenWarning,
 } from '../../../shared/install-command-dialog/runtime-install-token';
+import {
+  runServerAutoDomainAction,
+  SERVER_AUTO_DOMAIN_ACTION,
+} from '../shared/server-auto-domain-action';
 import { Component, inject } from '@angular/core';
 
 import {
@@ -79,7 +83,10 @@ const WEBRTC_SERVER_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'RwsStatus', className: 'status-col' },
     { id: 'lastSeen', label: 'Last Seen', field: 'RwsLastSeenAt', kind: 'datetime' },
   ],
-  rowActions: [{ key: 'generate-install', label: 'Generate install command', icon: 'terminal' }],
+  rowActions: [
+    { key: 'generate-install', label: 'Generate install command', icon: 'terminal' },
+    SERVER_AUTO_DOMAIN_ACTION,
+  ],
   fields: [
     {
       key: 'status',
@@ -630,6 +637,15 @@ abstract class RealtimeWebRtcCrudPage extends ConfigurableCrudPageBase<Configura
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key === 'generate-install') {
       await this.confirmAndOpenInstallCommand(row);
+      return;
+    }
+    if (action.key === SERVER_AUTO_DOMAIN_ACTION.key) {
+      const uuid = String(row['RwsUUID'] ?? '');
+      await runServerAutoDomainAction(
+        () => this.webRtcApi.generateAutoDomain(uuid),
+        this,
+        (error) => this.errorMessage(error),
+      );
       return;
     }
     if (action.key === 'provision-domain') {
