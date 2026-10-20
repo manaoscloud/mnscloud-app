@@ -45,7 +45,7 @@ function bindingConfig(master: boolean) {
         source: 'HbiRevision',
         label: 'Revision',
         hidden: true,
-        fromRecord: (value) => String(value),
+        fromRecord: String,
       },
       {
         key: 'module',

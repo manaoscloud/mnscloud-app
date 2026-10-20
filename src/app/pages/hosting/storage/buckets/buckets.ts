@@ -1,7 +1,7 @@
 import { storageBillingActions } from '../storage-billing-actions';
 import { storagePriceFields } from '../storage-price-fields';
 import { STORAGE_MODULE_OPTIONS, storageGrantCollection } from '../storage-module-config';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
@@ -250,6 +250,7 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
         const prefix = master ? 'system/hosting/storage' : 'hosting/storage';
         return {
           ...BUCKET_CONFIG,
+          endpoint: `${prefix}/buckets`,
           rowActions: [
             VALIDATE_ACTION,
             ...storageBillingActions('buckets', master),
@@ -289,7 +290,9 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
         };
       })(),
     );
-    void this.fetchProviders();
+    afterNextRender(() => {
+      void this.fetchProviders();
+    });
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
@@ -301,26 +304,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
     }));
   }
 
-  protected override listEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override createEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override updateEndpoint(): string {
-    return this.endpoint();
-  }
-
-  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
-    return this.endpoint();
-  }
-
-  protected override bulkDeleteEndpoint(): string {
-    return `${this.endpoint()}/bulk`;
-  }
-
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'providerUuid') return this.providerOptions();
     return [];
@@ -328,18 +311,18 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key !== 'providerUuid') return;
-    const provider = this.providers().find((item) => item.HspUUID === String(value ?? ''));
+    const provider = this.providers().find((item) => item.HspUUID === stringValue(value));
     this.patchFormValues({
       linkedProviderType:
-        provider?.HspProvider ?? String(this.formValues()['linkedProviderType'] ?? ''),
+        provider?.HspProvider ?? stringValue(this.formValues()['linkedProviderType']),
     });
   }
 
   protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const config = asRecord(row['HsbConfig']);
-    const providerUuid = String(row['HostingStorageProviderHspUUID'] ?? '');
+    const providerUuid = stringValue(row['HostingStorageProviderHspUUID']);
     const linkedProviderType =
-      String(row['HspProvider'] ?? '') ||
+      stringValue(row['HspProvider']) ||
       this.providers().find((item) => item.HspUUID === providerUuid)?.HspProvider ||
       '';
     return {
@@ -358,14 +341,14 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
     if (
       payload['provisionMode'] !== 'create' &&
       requiresBucketField(provider) &&
-      !String(payload['bucket'] ?? '').trim()
+      !stringValue(payload['bucket']).trim()
     ) {
       return this.rejectField('bucket', 'Bucket is required for the selected provider.');
     }
     if (
       payload['provisionMode'] !== 'create' &&
       provider === 'azure' &&
-      !String(payload['container'] ?? '').trim()
+      !stringValue(payload['container']).trim()
     ) {
       return this.rejectField('container', 'Container is required for Azure Blob Storage.');
     }
@@ -398,7 +381,7 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    const provider = String(row['HspProvider'] ?? '');
+    const provider = stringValue(row['HspProvider']);
     return super
       .rowActions(row)
       .filter(
@@ -410,14 +393,14 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key !== 'validate') return;
-    const uuid = String(row['HsbUUID'] ?? '');
+    const uuid = stringValue(row['HsbUUID']);
     if (!uuid) return;
     this.mutating.set(true);
     try {
       const response = await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
       this.trackOperation(response);
       this.snack.success(this.t('Storage bucket verification queued.'));
-      await this.refreshList();
+      this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to validate storage bucket.'));
     } finally {
@@ -444,11 +427,11 @@ export function storageBucketOptionFromResponse(
 ): ConfigurableCrudOption | null {
   const record = extractStorageBucketRecord(response) ?? payload;
   const uuid =
-    stringValue(record['HsbUUID']) ??
-    stringValue(record['uuid']) ??
+    stringValue(record['HsbUUID']) ||
+    stringValue(record['uuid']) ||
     stringValue(payload['HsbUUID']);
   if (!uuid) return null;
-  const label = stringValue(record['HsbName']) ?? stringValue(payload['name']) ?? uuid;
+  const label = stringValue(record['HsbName']) || stringValue(payload['name']) || uuid;
   const description = [record['HspName'], record['HspProvider']]
     .map((value) => stringValue(value))
     .filter((value): value is string => Boolean(value))
@@ -462,32 +445,25 @@ export function storageBucketOptionFromResponse(
 }
 
 function extractStorageBucketRecord(response: unknown): ConfigurableCrudRecord | null {
-  const value = response as
-    | {
-        data?: unknown;
-        item?: unknown;
-        record?: unknown;
-      }
-    | null
-    | undefined;
+  const envelope = asRecord(response);
+  const data = asRecord(envelope['data']);
   const candidates = [
-    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).item,
-    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).record,
-    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).data,
-    value?.data,
-    value?.item,
-    value?.record,
+    data['item'],
+    data['record'],
+    data['data'],
+    envelope['data'],
+    envelope['item'],
+    envelope['record'],
   ];
   for (const candidate of candidates) {
-    if (candidate && typeof candidate === 'object') {
-      return candidate as ConfigurableCrudRecord;
-    }
+    const record = asRecord(Array.isArray(candidate) ? candidate[0] : candidate);
+    if (stringValue(record['HsbUUID']) || stringValue(record['uuid'])) return record;
   }
   return null;
 }
 
 function bucketProviderType(values: ConfigurableCrudRecord): StorageProvider | '' {
-  const normalized = String(values['linkedProviderType'] ?? '') as StorageProvider | '';
+  const normalized = stringValue(values['linkedProviderType']) as StorageProvider | '';
   return ['s3', 'gcs', 'azure', 'spaces', 'sangfor_scp'].includes(normalized) ? normalized : '';
 }
 
@@ -503,7 +479,7 @@ function requiresBucketField(provider: StorageProvider | ''): boolean {
 
 function bucketLabelFromRow(row: ConfigurableCrudRecord): string {
   const config = asRecord(row['HsbConfig']);
-  return String(config['bucket'] || config['container'] || '-');
+  return stringValue(config['bucket']) || stringValue(config['container']) || '-';
 }
 
 function truthyNumber(value: unknown): number {
@@ -517,11 +493,9 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 function stringValue(value: unknown): string {
-  return typeof value === 'string'
-    ? value
-    : value === null || value === undefined
-      ? ''
-      : String(value);
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
 }
 
 function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {

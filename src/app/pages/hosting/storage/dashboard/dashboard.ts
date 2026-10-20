@@ -203,14 +203,7 @@ export class HostingStorageDashboardPage {
       name: bucket.HsbName,
       meta: bucket.AccountName,
       status: bucket.HsbIsActive !== 1 ? 'Inactive' : BUCKET_STATES[bucket.HsbState] || 'Unknown',
-      tone:
-        bucket.HsbIsActive !== 1
-          ? 'skipped'
-          : bucket.HsbState === 'ready'
-            ? 'success'
-            : bucket.HsbState === 'failed'
-              ? 'danger'
-              : 'running',
+      tone: bucketTone(bucket.HsbIsActive, bucket.HsbState),
       details: [
         { label: 'Provider', value: bucket.ProviderName },
         {
@@ -266,4 +259,10 @@ export class HostingStorageDashboardPage {
     const maybe = error as { error?: { error?: string; message?: string }; message?: string };
     return maybe?.error?.message || maybe?.error?.error || maybe?.message || fallback;
   }
+}
+
+function bucketTone(active: number, state: string): 'skipped' | 'success' | 'danger' | 'running' {
+  if (active !== 1) return 'skipped';
+  if (state === 'ready') return 'success';
+  return state === 'failed' ? 'danger' : 'running';
 }

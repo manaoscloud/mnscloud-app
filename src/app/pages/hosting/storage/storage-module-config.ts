@@ -64,7 +64,7 @@ export function storageGrantCollection(prefix: string, master: boolean, bucket: 
         source: 'HsgRevision',
         label: 'Revision',
         hidden: true,
-        fromRecord: (value) => String(value),
+        fromRecord: String,
       },
       {
         key: 'module',

@@ -8,6 +8,28 @@ import { permissionGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 import { publicBoardGuard } from './core/guards/public-board.guard';
 
+// These children inherit scope/context from their componentless tenant or system parent.
+const STORAGE_RESOURCE_ROUTES: Routes = [
+  {
+    path: 'accounts',
+    loadComponent: () =>
+      import('./pages/hosting/storage/accounts/accounts').then((m) => m.HostingStorageAccountsPage),
+    title: 'Storage Accounts | mnscloud',
+  },
+  {
+    path: 'buckets',
+    loadComponent: () =>
+      import('./pages/hosting/storage/buckets/buckets').then((m) => m.HostingStorageBucketsPage),
+    title: 'Storage Buckets | mnscloud',
+  },
+  {
+    path: 'bindings',
+    loadComponent: () =>
+      import('./pages/hosting/storage/bindings/bindings').then((m) => m.HostingStorageBindingsPage),
+    title: 'Module Destinations | mnscloud',
+  },
+];
+
 export const routes: Routes = [
   // Raiz → dashboard
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -1415,33 +1437,7 @@ export const routes: Routes = [
                     title: 'Hosting • Storage Dashboard | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
-                  {
-                    path: 'accounts',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/accounts/accounts').then(
-                        (m) => m.HostingStorageAccountsPage,
-                      ),
-                    title: 'Hosting • Storage Accounts | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
-                    path: 'buckets',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/buckets/buckets').then(
-                        (m) => m.HostingStorageBucketsPage,
-                      ),
-                    title: 'Hosting • Storage Buckets | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
-                  {
-                    path: 'bindings',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/bindings/bindings').then(
-                        (m) => m.HostingStorageBindingsPage,
-                      ),
-                    title: 'Hosting • Module Destinations | mnscloud',
-                    data: { scope: 'tenant', context: 'hosting' },
-                  },
+                  ...STORAGE_RESOURCE_ROUTES,
                 ],
               },
               {
@@ -2742,33 +2738,7 @@ export const routes: Routes = [
                     title: 'System Storage Providers | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
-                  {
-                    path: 'accounts',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/accounts/accounts').then(
-                        (m) => m.HostingStorageAccountsPage,
-                      ),
-                    title: 'System Storage Accounts | mnscloud',
-                    data: { scope: 'master', context: 'system' },
-                  },
-                  {
-                    path: 'buckets',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/buckets/buckets').then(
-                        (m) => m.HostingStorageBucketsPage,
-                      ),
-                    title: 'System Storage Buckets | mnscloud',
-                    data: { scope: 'master', context: 'system' },
-                  },
-                  {
-                    path: 'bindings',
-                    loadComponent: () =>
-                      import('./pages/hosting/storage/bindings/bindings').then(
-                        (m) => m.HostingStorageBindingsPage,
-                      ),
-                    title: 'Hosting • Module Destinations | mnscloud',
-                    data: { scope: 'master', context: 'system' },
-                  },
+                  ...STORAGE_RESOURCE_ROUTES,
                 ],
               },
               {

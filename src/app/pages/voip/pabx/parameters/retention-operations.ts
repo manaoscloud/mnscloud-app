@@ -260,10 +260,13 @@ export class VoipPabxRetentionOperationsComponent {
       },
       {
         id: 'storage',
-        label: 'Storage account',
+        label: 'Storage bucket',
         field: 'storageBucketName',
         kind: 'related',
-        value: (row, tr) => String(row['storageBucketName'] ?? '') || tr('Tenant default storage'),
+        value: (row, tr) =>
+          typeof row['storageBucketName'] === 'string' && row['storageBucketName']
+            ? row['storageBucketName']
+            : tr('Tenant default storage'),
         detail: (row) => String(row['error'] ?? ''),
       },
       {

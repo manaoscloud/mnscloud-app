@@ -53,8 +53,26 @@ function property(objectNode, name) {
 export function readRoutes(source) {
   const sf = ts.createSourceFile(ROUTES_PATH, source, ts.ScriptTarget.Latest, true);
   const routes = new Map();
-  function walkArray(array, prefix) {
+  const arrays = new Map();
+  ts.forEachChild(sf, function collect(node) {
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer &&
+      ts.isArrayLiteralExpression(node.initializer)
+    ) {
+      arrays.set(node.name.getText(), node.initializer);
+    }
+    ts.forEachChild(node, collect);
+  });
+  function walkArray(array, prefix, visiting = new Set()) {
+    if (visiting.has(array)) throw new Error('Cyclic route array');
+    const next = new Set([...visiting, array]);
     for (const element of array.elements) {
+      if (ts.isSpreadElement(element) && ts.isIdentifier(element.expression)) {
+        const shared = arrays.get(element.expression.text);
+        if (shared) walkArray(shared, prefix, next);
+        continue;
+      }
       if (!ts.isObjectLiteralExpression(element)) continue;
       const path = literals(property(element, 'path'))[0] ?? '';
       const full = [prefix, path].filter(Boolean).join('/');
@@ -72,7 +90,7 @@ export function readRoutes(source) {
         routes.set(`/${full}`, { file: `src/app/${importMatch[1].slice(2)}.ts`, data });
       }
       const children = property(element, 'children');
-      if (children && ts.isArrayLiteralExpression(children)) walkArray(children, full);
+      if (children && ts.isArrayLiteralExpression(children)) walkArray(children, full, next);
     }
   }
   ts.forEachChild(sf, function visit(node) {
