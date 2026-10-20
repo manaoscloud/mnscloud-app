@@ -488,6 +488,11 @@ mat-card.erp-card,
     white-space: nowrap;
   }
 
+  button.dashboard-customize-button {
+    width: auto;
+    padding: 0 1rem;
+  }
+
   button mat-icon {
     margin-right: 0.25rem;
   }

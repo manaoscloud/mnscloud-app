@@ -680,6 +680,50 @@ mns-dashboard-page {
     gap: 0.5rem;
     margin: 0;
   }
+  .dashboard-attention-header {
+    cursor: pointer;
+    user-select: none;
+    border-radius: var(--dashboard-radius);
+    padding: 0.25rem 0.5rem;
+    margin: -0.25rem -0.5rem;
+    transition: background 0.15s ease-in-out;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--mat-sys-color-surface-container-high);
+      outline: none;
+    }
+  }
+  .dashboard-attention-heading {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+  .dashboard-attention-title-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .dashboard-attention-summary-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .dashboard-attention-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .dashboard-attention-chevron {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+  .dashboard-customize-button {
+    width: auto !important;
+    min-width: var(--crud-action-button-width);
+    padding: 0 1rem !important;
+  }
 }
 
 // Home layout dialog (opened from the App home "Customize" action; renders in the overlay).

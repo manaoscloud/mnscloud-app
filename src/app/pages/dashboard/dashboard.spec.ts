@@ -252,6 +252,16 @@ describe('Home dashboard', () => {
     });
   });
 
+  it('toggles attention collapse state and counts severities', () => {
+    expect(page.criticalCount()).toBe(1);
+    expect(page.warningCount()).toBe(0);
+    const initial = page.attentionCollapsed();
+    page.toggleAttention();
+    expect(page.attentionCollapsed()).toBe(!initial);
+    page.toggleAttention();
+    expect(page.attentionCollapsed()).toBe(initial);
+  });
+
   it('switches to the platform overview in System context without showing tenant data', async () => {
     mode.set('master');
     TestBed.tick();
