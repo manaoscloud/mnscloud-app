@@ -869,7 +869,12 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     (`ContextModeService.effectiveMode()`), which decides module visibility server-side; codes are
     translated under `home.*` in PT/EN/ES. Tab, badge, onboarding and alert-link styles are the
     shared `.dashboard-tabs`, `.dashboard-tab-*`, `.dashboard-onboarding` and
-    `.dashboard-alert-link` primitives. Plan and phases:
+    `.dashboard-alert-link` primitives. The home is the only dashboard with a second header
+    action, **Customize** (`[customizable]`/`(customize)` on `mns-dashboard-page`, enforced by
+    `check:dashboard`): `DashboardLayoutDialogComponent` reorders (up/down buttons, keyboard and
+    touch friendly) and hides tabs, saved per user through `PUT /user/dashboard-layouts/home.<scope>`
+    and read with the overview. It is display only: hidden tabs keep their items in "Needs
+    attention", and a home with every tab hidden says how to show them again. Plan and phases:
     `docs/handoffs/2026-10-18-main-dashboard-contracted-modules.md` (workspace).
   - **Charts.** Every dashboard chart is `mns-trend-chart` (`src/app/shared/charts`): daily
     columns, stacked columns or lines with the shared styles (`src/styles/_charts.scss`) and the

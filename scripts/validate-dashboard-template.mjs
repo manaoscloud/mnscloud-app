@@ -37,6 +37,12 @@ for (const file of files) {
       `${name}: summary dashboards are refresh-only; management/analysis belongs on a separate route`,
     );
   }
+  // A second header action (Customize: tab order and hidden tabs) is the App home's alone.
+  if (
+    /\(customize\)|\[customizable\]/.test(html) &&
+    name !== 'src/app/pages/dashboard/dashboard.ts'
+  )
+    errors.push(`${name}: only the App home offers Customize; module dashboards are refresh-only`);
   if (!source.includes('dashboardResource('))
     errors.push(`${name}: use the scoped dashboard read model`);
   if (

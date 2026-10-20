@@ -8816,5 +8816,14 @@
   "self_signed": "Self-signed",
   "WebRTC domain could not be generated.": "WebRTC domain could not be generated.",
   "Generate the WSS domain of each PABX and Softswitch account": "Generate the WSS domain of each PABX and Softswitch account",
-  "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.": "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account."
+  "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.": "Each new PABX or Softswitch account gets <account-uuid>.<base> on the least loaded WebRTC server, with managed DNS, a SIP target to the account and the free wildcard certificate of the edge. Existing accounts use the WebRTC domain action of the account.",
+  "Customize": "Customize",
+  "home.layout.title": "Customize home",
+  "home.layout.description": "Choose which modules appear as tabs and in which order.",
+  "home.layout.note": "Hidden modules still raise their alerts in Needs attention.",
+  "home.layout.reset": "Restore default",
+  "home.layout.move_up": "Move {{name}} up",
+  "home.layout.move_down": "Move {{name}} down",
+  "home.layout.save_failed": "Could not save the layout.",
+  "home.layout.all_hidden": "All modules are hidden. Use Customize to show them again."
 }

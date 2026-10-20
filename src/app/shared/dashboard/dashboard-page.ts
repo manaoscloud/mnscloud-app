@@ -1,12 +1,14 @@
 import { Component, input, output } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RefreshButtonComponent } from '../refresh-button/refresh-button';
 
 @Component({
   selector: 'mns-dashboard-page',
   standalone: true,
-  imports: [MatCardModule, TranslocoPipe, RefreshButtonComponent],
+  imports: [MatButtonModule, MatCardModule, MatIconModule, TranslocoPipe, RefreshButtonComponent],
   template: `
     <section class="erp-page dashboard-page" animate.enter="app-fade-in">
       <mat-card class="erp-card dashboard-shell">
@@ -16,6 +18,18 @@ import { RefreshButtonComponent } from '../refresh-button/refresh-button';
             <p>{{ description() | transloco }}</p>
           </div>
           <div class="header-actions">
+            @if (customizable()) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="dashboard-customize-button"
+                [disabled]="!hasData()"
+                (click)="customize.emit()"
+              >
+                <mat-icon aria-hidden="true">tune</mat-icon>
+                {{ 'Customize' | transloco }}
+              </button>
+            }
             <app-refresh-button [loading]="loading()" (refresh)="refresh.emit()" />
           </div>
         </header>
@@ -48,4 +62,7 @@ export class DashboardPageComponent {
   readonly error = input<unknown>(undefined);
   readonly hasData = input(false);
   readonly refresh = output<void>();
+  /** App home only (check:dashboard): a second header action that opens the layout dialog. */
+  readonly customizable = input(false);
+  readonly customize = output<void>();
 }

@@ -1,6 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -9,6 +10,12 @@ import { ApiService } from '../../services/api.service';
 import { AppI18nService } from '../../services/app-i18n.service';
 import { ContextModeService } from '../../services/context-mode.service';
 import { DateTimeFormatService } from '../../services/date-time-format.service';
+import { SnackbarService } from '../../services/snackbar.service';
+import {
+  applyDashboardLayout,
+  type DashboardLayout,
+  openDashboardLayoutDialog,
+} from '../../shared/dashboard/dashboard-layout-dialog';
 import { DashboardPageComponent } from '../../shared/dashboard/dashboard-page';
 import {
   DashboardRecordListComponent,
@@ -74,6 +81,8 @@ type OverviewSnapshot = {
   generatedAt: string;
   attention: Array<OverviewAttention & { tab: string }>;
   tabs: OverviewTab[];
+  /** The user's tab order and hidden tabs (GET user/dashboard-layouts/home.<scope>). */
+  layout: DashboardLayout;
 };
 
 type ApiResponse<T> = { status: string; message: string; data: T; duration?: string };
@@ -86,11 +95,14 @@ type RouteTarget = { path: string; query: Record<string, string> };
  */
 export type HomeText = { text: string } | { key: string; params: Record<string, unknown> };
 
+const DEFAULT_LAYOUT: DashboardLayout = { order: [], hidden: [] };
+
 const EMPTY_OVERVIEW: OverviewSnapshot = {
   scope: 'tenant',
   generatedAt: new Date(0).toISOString(),
   attention: [],
   tabs: [],
+  layout: DEFAULT_LAYOUT,
 };
 
 const ROW_TONE: Record<OverviewRow['tone'], DashboardRecord['tone']> = {
@@ -125,6 +137,8 @@ export class Dashboard {
   private readonly i18n = inject(AppI18nService);
   private readonly dates = inject(DateTimeFormatService);
   private readonly contextModes = inject(ContextModeService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(SnackbarService);
   private freshNext = false;
 
   /** Platform masters in System context see the platform view; everyone else the tenant view. */
@@ -152,7 +166,14 @@ export class Dashboard {
     { initialValue: null },
   );
 
-  readonly tabs = computed(() => this.snapshot().tabs);
+  /** Saved layout; a save updates it at once, the next load reads it back from the API. */
+  readonly layout = linkedSignal(() => this.snapshot().layout);
+  private readonly arranged = computed(() =>
+    applyDashboardLayout(this.snapshot().tabs, this.layout()),
+  );
+  /** Visible tabs in the user's order. Hidden tabs keep their attention items on the home. */
+  readonly tabs = computed(() => this.arranged().visible);
+  readonly allHidden = computed(() => !this.tabs().length && this.snapshot().tabs.length > 0);
   readonly activeTab = computed(() => {
     const tabs = this.tabs();
     return tabs.find((tab) => tab.key === this.moduleParam()) ?? tabs[0] ?? null;
@@ -214,6 +235,27 @@ export class Dashboard {
     this.overview.reload();
   }
 
+  async customize() {
+    const scope = this.scope();
+    const result = await openDashboardLayoutDialog(this.dialog, {
+      tabs: this.arranged().ordered.map((tab) => ({ key: tab.key, label: `home.tab.${tab.key}` })),
+      hidden: this.layout().hidden,
+    });
+    if (!result) return;
+    const previous = this.layout();
+    this.layout.set(result);
+    try {
+      const response = await this.api.put<ApiResponse<DashboardLayout>>(
+        `user/dashboard-layouts/home.${scope}`,
+        result,
+      );
+      if (this.scope() === scope && response?.data) this.layout.set(response.data);
+    } catch {
+      if (this.scope() === scope) this.layout.set(previous);
+      this.snack.error('home.layout.save_failed');
+    }
+  }
+
   tabBadge(tab: OverviewTab): string {
     return tab.attention.length ? String(tab.attention.length) : '';
   }
@@ -227,11 +269,20 @@ export class Dashboard {
     const fresh = this.freshNext;
     this.freshNext = false;
     const endpoint = scope === 'platform' ? 'system/dashboard/overview' : 'dashboard/overview';
-    const response = await this.api.get<ApiResponse<OverviewSnapshot>>(
-      fresh ? `${endpoint}?fresh=1` : endpoint,
-      { timeout: 30000 },
-    );
-    return response.data ?? { ...EMPTY_OVERVIEW, scope };
+    const [response, layout] = await Promise.all([
+      this.api.get<ApiResponse<Omit<OverviewSnapshot, 'layout'>>>(
+        fresh ? `${endpoint}?fresh=1` : endpoint,
+        { timeout: 30000 },
+      ),
+      // A missing layout never blocks the home: the default order applies.
+      this.api
+        .get<ApiResponse<DashboardLayout>>(`user/dashboard-layouts/home.${scope}`, {
+          timeout: 10000,
+        })
+        .then((result) => result?.data ?? DEFAULT_LAYOUT)
+        .catch(() => DEFAULT_LAYOUT),
+    ]);
+    return response.data ? { ...response.data, layout } : { ...EMPTY_OVERVIEW, scope };
   }
 
   private number(value: number, digits = 0): string {
