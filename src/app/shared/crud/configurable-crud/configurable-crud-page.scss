@@ -200,6 +200,13 @@
   text-align: left;
 }
 
+/* Without row actions the trailing column only carries the table view (`tune`) button. */
+.actions-col-header.view-only-col,
+.actions-col-cell.view-only-col {
+  width: 56px;
+  min-width: 56px;
+}
+
 /*
  * The Actions column is `stickyEnd`: it stays pinned to the right while the other columns scroll
  * inside `.table-scroll`. Pinned cells need an opaque background (following row hover) so the

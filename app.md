@@ -922,6 +922,9 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu (compact
     `mns-menu` titled `Actions` with the record name as hint; an action `tooltip` is shown as the
     second line, and `disabledReason(row)` keeps an action listed but disabled with its reason).
+  - Every desktop table ends with the sticky actions column, also when there are no row actions
+    (then it is a narrow column without the `Actions` label and with empty cells). Never render the
+    `tune` button in a separate bar above the table header; on phones it sits in the card toolbar.
   - The `tune` button in the actions header opens the table view menu: row density (comfortable or
     compact) and visible columns, saved per resource in the browser (`crud-view-preferences.ts`,
     key `mns.crud.view.<endpoint>` with record ids normalized). The first (identity) column cannot
