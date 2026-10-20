@@ -8921,5 +8921,7 @@
   "Storage billing activated successfully.": "Storage billing activated successfully.",
   "Delete this bucket and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.": "Delete this bucket and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.",
   "Delete {count} selected buckets and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.": "Delete {count} selected buckets and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.",
-  "Storage bucket deletion requested. Billing continues until provider removal is confirmed.": "Storage bucket deletion requested. Billing continues until provider removal is confirmed."
+  "Storage bucket deletion requested. Billing continues until provider removal is confirmed.": "Storage bucket deletion requested. Billing continues until provider removal is confirmed.",
+  "logs.ingestAddress6": "IPv6 ingest address",
+  "logs.ingestAddress6Help": "Optional. One of the stable global IPv6 addresses this server's Agent reports. When set, devices can send syslog over the internet on IPv6 (only registered sources are accepted). Use it only with the server's IPv6 firewall active. Empty = private IPv4 only."
 }

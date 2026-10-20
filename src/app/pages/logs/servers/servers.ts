@@ -33,6 +33,7 @@ const config = defineCrud({
     status: 0,
     syslogUdpPort: 514,
     syslogTcpPort: 514,
+    ingestAddress6: '',
     revision: 1,
     LogClusterLgcUUID: '',
   },
@@ -108,6 +109,17 @@ const config = defineCrud({
       required: true,
       tab: 'network',
       help: 'logs.syslogPortHelp',
+    },
+    {
+      // An installed server only: the address must be one the host Agent reports.
+      hiddenWhen: ({ editing }) => !editing,
+      key: 'ingestAddress6',
+      source: 'LgsIngestAddress6',
+      label: 'logs.ingestAddress6',
+      type: 'text',
+      span: 2,
+      tab: 'network',
+      help: 'logs.ingestAddress6Help',
     },
     {
       hiddenWhen: ({ editing }) => !editing,

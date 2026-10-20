@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3978bcd4926d",
+  "version": "1ec172966cdf",
   "language": "pt-BR",
   "entries": [
     {
@@ -7052,6 +7052,10 @@
         {
           "label": "Porta syslog TCP",
           "help": "Porta em que os equipamentos enviam syslog para este nó (padrão 514). O nó escuta só no endereço privado e aceita apenas fontes cadastradas."
+        },
+        {
+          "label": "Endereço IPv6 de recebimento",
+          "help": "Opcional. Um dos endereços IPv6 globais fixos que o Agent deste servidor informa. Preenchido, os equipamentos podem enviar syslog pela internet por IPv6 (apenas fontes cadastradas são aceitas). Use somente com o firewall IPv6 do servidor ativo. Em branco = apenas IPv4 privado."
         },
         {
           "label": "Anotações",
