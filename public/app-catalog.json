@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a88208ac4c38",
+  "version": "72eee5d25e9d",
   "language": "pt-BR",
   "entries": [
     {
@@ -3015,6 +3015,31 @@
       ]
     },
     {
+      "route": "/hosting/storage/bindings",
+      "menuPath": "Hospedagem › Armazenamento › Destinos",
+      "scope": "tenant",
+      "title": "Destinos dos módulos",
+      "description": "Selecione o bucket que cada módulo usa para novos arquivos neste ambiente.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": ""
+        },
+        {
+          "label": "Bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hosting/storage/buckets",
       "menuPath": "Hospedagem › Armazenamento › Buckets",
       "scope": "tenant",
@@ -3038,7 +3063,7 @@
           "help": ""
         },
         {
-          "label": "Bucket padrão",
+          "label": "Permissão inicial de módulo",
           "help": ""
         },
         {
@@ -6574,6 +6599,31 @@
       ]
     },
     {
+      "route": "/system/hosting/storage/bindings",
+      "menuPath": "Hospedagem › Armazenamento › Destinos",
+      "scope": "platform",
+      "title": "Destinos dos módulos",
+      "description": "Selecione o bucket que cada módulo usa para novos arquivos neste ambiente.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": ""
+        },
+        {
+          "label": "Bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/system/hosting/storage/buckets",
       "menuPath": "Hospedagem › Armazenamento › Buckets",
       "scope": "platform",
@@ -6597,7 +6647,7 @@
           "help": ""
         },
         {
-          "label": "Bucket padrão",
+          "label": "Permissão inicial de módulo",
           "help": ""
         },
         {
