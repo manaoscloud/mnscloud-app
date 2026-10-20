@@ -16,6 +16,10 @@ import {
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { InstallCommandDialogData } from '../../../shared/install-command-dialog/install-command-dialog';
 import { openInstallCommandDialog } from '../../../shared/install-command-dialog/open-install-command-dialog';
+import {
+  runServerAutoDomainAction,
+  SERVER_AUTO_DOMAIN_ACTION,
+} from '../shared/server-auto-domain-action';
 import { ApiService } from '../../../services/api.service';
 import { RealtimeTurnService } from './turn.service';
 
@@ -99,6 +103,7 @@ const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
       icon: 'terminal',
       tooltip: 'Generate install command',
     },
+    SERVER_AUTO_DOMAIN_ACTION,
   ],
   fields: [
     {
@@ -451,6 +456,15 @@ abstract class RealtimeTurnCrudPage extends ConfigurableCrudPageBase<Configurabl
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key === 'generate-install') {
       await this.confirmAndOpenInstallCommand(row);
+      return;
+    }
+    if (action.key === SERVER_AUTO_DOMAIN_ACTION.key) {
+      const uuid = String(row['RtsUUID'] ?? '');
+      await runServerAutoDomainAction(
+        () => this.turnApi.generateAutoDomain(uuid),
+        this,
+        (error) => this.errorMessage(error),
+      );
       return;
     }
     if (action.key === 'provision-domain') {
