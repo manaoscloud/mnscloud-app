@@ -30,6 +30,12 @@ export function logsPayload(
       payload[field] = Number(payload[field]);
   }
   if (payload['notes'] === '') payload['notes'] = null;
+  // An empty IPv6 ingest address publishes the node on its private IPv4 only; never sent on create.
+  if ('ingestAddress6' in payload) {
+    if (!editing) delete payload['ingestAddress6'];
+    else if (payload['ingestAddress6'] === '' || payload['ingestAddress6'] == null)
+      payload['ingestAddress6'] = null;
+  }
   // An empty daily cap means no cap.
   if ('dailyCapMb' in payload && (payload['dailyCapMb'] === '' || payload['dailyCapMb'] == null))
     payload['dailyCapMb'] = null;
