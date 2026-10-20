@@ -13,11 +13,17 @@ import {
 } from '../../../../shared/dashboard/dashboard-record-list';
 import { DashboardPageComponent } from '../../../../shared/dashboard/dashboard-page';
 import {
+  dashboardErrorMessage,
   EMPTY_INSTANCE_DASHBOARD,
+  formatMemoryMb,
+  formatPlanPrice,
   type InstanceDashboard,
-  instanceDashboard,
-  planInstanceCount,
   instanceStatusRecords,
+  instanceStatusTone,
+  isActiveValue,
+  loadInstanceDashboard,
+  parseJsonValue,
+  planInstanceCount,
   providerInstances,
 } from '../../shared/instance-dashboard';
 import {
@@ -49,6 +55,8 @@ const EMPTY_VPS_CONTAINER_DASHBOARD: VpsContainerDashboardSnapshot = {
   instances: EMPTY_INSTANCE_DASHBOARD,
   failedSections: 0,
 };
+
+const FAILURE = 'Failed to load VPS Container dashboard.';
 
 @Component({
   selector: 'app-hosting-vps-container-dashboard',
@@ -85,7 +93,7 @@ export class HostingVpsContainerDashboardPage {
   private readonly reportDashboardState = effect(() => {
     const error = this.dashboardResource.error();
     if (error) {
-      this.snack.error(this.errorMessage(error, 'Failed to load VPS Container dashboard.'));
+      this.snack.error(dashboardErrorMessage(error, FAILURE));
       return;
     }
 
@@ -103,7 +111,7 @@ export class HostingVpsContainerDashboardPage {
   readonly providerSummary = computed(() => {
     const rows = this.providers();
     const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HcpIsActive)).length;
+    const active = rows.filter((row) => isActiveValue(row.HcpIsActive)).length;
     const defaults = rows.filter((row) => Number(row.HcpIsDefault ?? 0) === 1).length;
     return { total, active, defaults };
   });
@@ -111,7 +119,7 @@ export class HostingVpsContainerDashboardPage {
   readonly planSummary = computed(() => {
     const rows = this.plans();
     const total = rows.length;
-    const active = rows.filter((row) => this.isActive(row.HcnIsActive)).length;
+    const active = rows.filter((row) => isActiveValue(row.HcnIsActive)).length;
     const linked = rows.filter(
       (row) => planInstanceCount(this.instances(), row.HcnUUID) > 0,
     ).length;
@@ -122,7 +130,7 @@ export class HostingVpsContainerDashboardPage {
     return this.plans().reduce(
       (acc, plan) => {
         const config = this.normalizePlanConfig(plan.HcnConfig);
-        if (this.isActive(plan.HcnIsActive)) {
+        if (isActiveValue(plan.HcnIsActive)) {
           acc.cpu += Number(config.cpu ?? 0);
           acc.memoryMb += Number(config.memoryMb ?? 0);
           acc.diskGb += Number(config.diskGb ?? 0);
@@ -161,7 +169,7 @@ export class HostingVpsContainerDashboardPage {
     {
       label: 'Container Capacity',
       value: `${this.capacitySummary().cpu} vCPU`,
-      detailValue: this.formatMemory(this.capacitySummary().memoryMb),
+      detailValue: formatMemoryMb(this.capacitySummary().memoryMb),
       detailLabel: 'RAM catalog',
       icon: 'memory',
       state: 'neutral',
@@ -169,7 +177,7 @@ export class HostingVpsContainerDashboardPage {
   ]);
 
   readonly statusRows = computed<DashboardRecord[]>(() =>
-    instanceStatusRecords(this.instances(), (status, issues) => this.statusTone(status, issues)),
+    instanceStatusRecords(this.instances(), instanceStatusTone),
   );
 
   readonly providerRows = computed<DashboardRecord[]>(() =>
@@ -178,7 +186,7 @@ export class HostingVpsContainerDashboardPage {
         (plan) => plan.HostingVpsContainerProviderHcpUUID === provider.HcpUUID,
       );
       const instances = providerInstances(this.instances(), provider.HcpUUID);
-      const active = this.isActive(provider.HcpIsActive);
+      const active = isActiveValue(provider.HcpIsActive);
       const issues = instances.issues;
       return {
         name: provider.HcpName,
@@ -202,7 +210,7 @@ export class HostingVpsContainerDashboardPage {
   readonly planRows = computed<DashboardRecord[]>(() =>
     this.plans().map((plan) => {
       const config = this.normalizePlanConfig(plan.HcnConfig);
-      const active = this.isActive(plan.HcnIsActive);
+      const active = isActiveValue(plan.HcnIsActive);
       return {
         name: plan.HcnName,
         meta: this.providerLabel(plan.HostingVpsContainerProviderHcpUUID),
@@ -210,10 +218,10 @@ export class HostingVpsContainerDashboardPage {
         tone: active ? 'success' : 'skipped',
         details: [
           { label: 'CPU', value: config.cpu ? `${config.cpu} vCPU` : '-' },
-          { label: 'Memory', value: this.formatMemory(config.memoryMb) },
+          { label: 'Memory', value: formatMemoryMb(config.memoryMb) },
           { label: 'Disk', value: config.diskGb ? `${config.diskGb} GB` : '-' },
           { label: 'Profile', value: config.profile || '-' },
-          { label: 'Price', value: this.formatPrice(plan.HcnPrice, plan.HcnCurrency) },
+          { label: 'Price', value: formatPlanPrice(plan.HcnPrice, plan.HcnCurrency) },
           {
             label: 'Instances',
             value: String(planInstanceCount(this.instances(), plan.HcnUUID)),
@@ -228,81 +236,12 @@ export class HostingVpsContainerDashboardPage {
   }
 
   async loadDashboardSnapshot(): Promise<VpsContainerDashboardSnapshot> {
-    const [providersResult, plansResult, instancesResult] = await Promise.allSettled([
-      this.api.get<{ data?: { items?: HostingVpsContainerProvider[] } }>(
-        `${this.providerEndpoint()}?limit=500&offset=0`,
-        { timeout: 30000 },
-      ),
-      this.api.get<{ data?: { items?: HostingVpsContainerPlan[] } }>(
-        `${this.planEndpoint()}?limit=500&offset=0`,
-        { timeout: 30000 },
-      ),
-      this.api.get<{ data?: Partial<InstanceDashboard> }>(this.instanceDashboardEndpoint(), {
-        timeout: 30000,
-      }),
-    ]);
-
-    const results = [providersResult, plansResult, instancesResult];
-    const failedSections = results.filter((result) => result.status === 'rejected').length;
-
-    if (failedSections === results.length) {
-      throw new Error('Failed to load VPS Container dashboard.');
-    }
-
-    return {
-      providers:
-        providersResult.status === 'fulfilled'
-          ? this.items(providersResult.value).map((item) => ({
-              ...item,
-              HcpConfig: this.parseJson<VpsContainerProviderConfig>(item.HcpConfig),
-            }))
-          : [],
-      plans:
-        plansResult.status === 'fulfilled'
-          ? this.items(plansResult.value).map((item) => ({
-              ...item,
-              HcnConfig: this.parseJson<HostingVpsContainerPlanConfig>(item.HcnConfig),
-            }))
-          : [],
-      instances:
-        instancesResult.status === 'fulfilled'
-          ? instanceDashboard(instancesResult.value)
-          : EMPTY_INSTANCE_DASHBOARD,
-      failedSections,
-    };
-  }
-
-  formatMemory(value: number | null | undefined) {
-    const mb = Number(value ?? 0);
-    if (!Number.isFinite(mb) || mb <= 0) return '-';
-    if (mb >= 1024) return `${Math.round((mb / 1024) * 10) / 10} GB`;
-    return `${mb} MB`;
-  }
-
-  private providerEndpoint() {
-    return this.isMaster()
-      ? 'system/hosting/vps-container/providers'
-      : 'hosting/vps-container/providers';
-  }
-
-  private planEndpoint() {
-    return this.isMaster() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans';
-  }
-
-  private instanceDashboardEndpoint() {
-    return this.isMaster()
-      ? 'system/hosting/vps-container/dashboard'
-      : 'hosting/vps-container/dashboard';
-  }
-
-  private statusTone(status: string, issues: number): DashboardRecord['tone'] {
-    if (issues > 0 || this.isIssueStatus(status)) return 'danger';
-    const normalized = status.toLowerCase();
-    if (['pending', 'queued', 'provisioning', 'creating', 'running'].includes(normalized)) {
-      return 'running';
-    }
-    if (['inactive', 'disabled', 'stopped', 'unknown'].includes(normalized)) return 'skipped';
-    return 'success';
+    return loadInstanceDashboard<HostingVpsContainerProvider, HostingVpsContainerPlan>(
+      this.api,
+      this.isMaster() ? 'system/hosting/vps-container' : 'hosting/vps-container',
+      { provider: 'HcpConfig', plan: 'HcnConfig' },
+      FAILURE,
+    );
   }
 
   private providerLabel(uuid: string) {
@@ -311,50 +250,6 @@ export class HostingVpsContainerDashboardPage {
   }
 
   private normalizePlanConfig(value: HostingVpsContainerPlanConfig | string | null | undefined) {
-    return this.parseJson<HostingVpsContainerPlanConfig>(value) ?? {};
-  }
-
-  private isActive(value: unknown, status?: unknown) {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value === 1;
-    if (typeof value === 'string' && value.trim()) {
-      return ['1', 'true', 'active', 'running', 'ready'].includes(value.toLowerCase());
-    }
-    const normalized = String(status ?? '').toLowerCase();
-    return ['active', 'running', 'ready'].includes(normalized);
-  }
-
-  private isIssueStatus(value: unknown) {
-    const normalized = String(value ?? '').toLowerCase();
-    return ['failed', 'error', 'suspended', 'cancelled', 'canceled'].includes(normalized);
-  }
-
-  private items<T>(response: { data?: { items?: T[] } }) {
-    return Array.isArray(response?.data?.items) ? response.data.items : [];
-  }
-
-  private parseJson<T>(value: T | string | null | undefined): T | null {
-    if (!value) return null;
-    if (typeof value !== 'string') return value;
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return null;
-    }
-  }
-
-  private formatPrice(
-    value: number | string | null | undefined,
-    currency: string | null | undefined,
-  ) {
-    const amount = Number(value ?? 0);
-    const code = currency || 'BRL';
-    if (!Number.isFinite(amount)) return '-';
-    return `${code} ${amount.toFixed(2)}`;
-  }
-
-  private errorMessage(error: unknown, fallback: string) {
-    const maybe = error as { error?: { error?: string; message?: string }; message?: string };
-    return maybe?.error?.message || maybe?.error?.error || maybe?.message || fallback;
+    return parseJsonValue<HostingVpsContainerPlanConfig>(value) ?? {};
   }
 }
