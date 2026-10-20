@@ -1,5 +1,8 @@
 # Dashboard template
 
+Read `docs/dashboards.md` first: component catalog, data sources and the recipe for a new
+module dashboard.
+
 Start from page.ts/page.html and the dashboard contract in app.md. Adjust imports,
 route scope, translations and authorized API summary endpoint. There is no page.scss:
 reusable presentation belongs in src/styles/_dashboard.scss or an existing shared

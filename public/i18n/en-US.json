@@ -8844,5 +8844,8 @@
   "logs.tiers.365d": "365 days",
   "logs.syslogUdp": "Syslog UDP",
   "logs.syslogTcp": "Syslog TCP",
-  "logs.transportHelp": "Transports accepted for this source. At least one must be enabled."
+  "logs.transportHelp": "Transports accepted for this source. At least one must be enabled.",
+  "home.chart.realtime.chart.jobs": "WebRTC Agent jobs per day (30 days)",
+  "home.chart.realtime.series.jobs_other": "Completed or in progress",
+  "home.chart.realtime.series.jobs_failed": "Failed"
 }
