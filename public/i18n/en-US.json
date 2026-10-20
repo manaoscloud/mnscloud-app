@@ -8847,5 +8847,17 @@
   "logs.transportHelp": "Transports accepted for this source. At least one must be enabled.",
   "home.chart.realtime.chart.jobs": "WebRTC Agent jobs per day (30 days)",
   "home.chart.realtime.series.jobs_other": "Completed or in progress",
-  "home.chart.realtime.series.jobs_failed": "Failed"
+  "home.chart.realtime.series.jobs_failed": "Failed",
+  "logs.limitsTab": "Limits",
+  "logs.dailyCapMb": "Daily cap (MB)",
+  "logs.dailyCapHelp": "Maximum volume stored per day for this account, in MB. Resets at 00:00 (Brasília time). When reached, the account stops receiving logs until the next day or until you raise the cap. Empty = no cap.",
+  "logs.warnPercent": "Warn at (%)",
+  "logs.warnPercentHelp": "Percentage of the daily cap at which you get a warning notification (once a day), between 50 and 99.",
+  "logs.usageToday": "Usage today",
+  "logs.capState": "Cap status",
+  "logs.capStates.ok": "Normal",
+  "logs.capStates.warning": "Near the cap",
+  "logs.capStates.paused": "Paused until tomorrow",
+  "notifications.logsCapWarning": "Logs: account {{account}} reached {{percent}}% of its daily cap",
+  "notifications.logsCapped": "Logs: account {{account}} reached its daily cap and was paused"
 }
