@@ -83,30 +83,11 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingSmtpProviderHspUUID',
     },
     { id: 'from', label: 'From', field: 'HsaDefaultFromEmail' },
-    {
-      id: 'default',
-      label: 'Default',
-      kind: 'boolean',
-      field: 'HsaIsDefault',
-      className: 'status-col',
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      kind: 'status',
-      field: 'HsaIsActive',
-      className: 'status-col',
-    },
+    { id: 'default', label: 'Default', kind: 'boolean', field: 'HsaIsDefault', className: 'status-col' },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HsaIsActive', className: 'status-col' },
   ],
   fields: [
-    {
-      key: 'status',
-      source: 'HsaIsActive',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
+    { key: 'status', source: 'HsaIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     {
       key: 'providerUuid',
       source: 'HostingSmtpProviderHspUUID',

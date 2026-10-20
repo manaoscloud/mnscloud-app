@@ -89,13 +89,7 @@ const PLAN_CONFIG: ConfigurableCrudConfig = {
       field: 'HwlPrice',
       currencyField: 'HwlCurrency',
     },
-    {
-      id: 'status',
-      label: 'Status',
-      kind: 'status',
-      field: 'HwlIsActive',
-      className: 'status-col',
-    },
+    { id: 'status', label: 'Status', kind: 'status', field: 'HwlIsActive', className: 'status-col' },
   ],
   fields: [
     {

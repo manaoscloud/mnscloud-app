@@ -113,13 +113,15 @@ export class VpsInstanceMonitorPage {
         message:
           metrics?.supported === false
             ? metrics?.message || 'Metrics unavailable for this provider'
-            : (metrics?.message ?? null),
+            : metrics?.message ?? null,
         name: null,
       };
     },
   });
 
-  readonly points = computed(() => (this.snapshot.hasValue() ? this.snapshot.value().points : []));
+  readonly points = computed(() =>
+    this.snapshot.hasValue() ? this.snapshot.value().points : [],
+  );
   readonly provider = computed(() =>
     this.snapshot.hasValue() ? this.snapshot.value().provider : null,
   );
@@ -156,7 +158,10 @@ export class VpsInstanceMonitorPage {
   }
 }
 
-export async function openVpsInstanceMonitor(dialog: MatDialog, data: VpsInstanceMonitorData) {
+export async function openVpsInstanceMonitor(
+  dialog: MatDialog,
+  data: VpsInstanceMonitorData,
+) {
   const binding = openCrudComponentDialog(dialog, VpsInstanceMonitorPage, 'crud-form-dialog', {
     data,
   });
