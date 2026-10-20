@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -77,7 +78,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     isDefault: 0,
     bucket: '',
     container: '',
-    publicBaseUrl: '',
     pathPrefix: '',
   },
   columns: [
@@ -106,7 +106,16 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
-    { key: 'provisionMode', label: 'Bucket operation', type: 'search-select', options: [{ value: 'import', label: 'Import existing bucket' }, { value: 'create', label: 'Create bucket at provider' }], span: 1 },
+    {
+      key: 'provisionMode',
+      label: 'Bucket operation',
+      type: 'search-select',
+      options: [
+        { value: 'import', label: 'Import existing bucket' },
+        { value: 'create', label: 'Create bucket at provider' },
+      ],
+      span: 1,
+    },
     {
       key: 'status',
       source: 'HsbIsActive',
@@ -115,7 +124,15 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       type: 'status',
       span: 1,
     },
-    { key: 'accountUuid', source: 'HostingStorageAccountHsaUUID', payloadKey: 'accountUuid', label: 'Account', type: 'search-select', required: true, span: 1 },
+    {
+      key: 'accountUuid',
+      source: 'HostingStorageAccountHsaUUID',
+      payloadKey: 'accountUuid',
+      label: 'Account',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
     {
       key: 'providerUuid',
       source: 'HostingStorageProviderHspUUID',
@@ -149,7 +166,8 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       tab: 'storage',
       span: 2,
       hiddenWhen: ({ values }) => !usesBucketField(bucketProviderType(values)),
-      requiredWhen: ({ values }) => values['provisionMode'] !== 'create' && requiresBucketField(bucketProviderType(values)),
+      requiredWhen: ({ values }) =>
+        values['provisionMode'] !== 'create' && requiresBucketField(bucketProviderType(values)),
     },
     {
       key: 'container',
@@ -159,14 +177,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       span: 2,
       hiddenWhen: ({ values }) => bucketProviderType(values) !== 'azure',
       requiredWhen: ({ values }) => bucketProviderType(values) === 'azure',
-    },
-    {
-      key: 'publicBaseUrl',
-      payloadKey: 'publicBaseUrl',
-      label: 'Public base URL',
-      tab: 'storage',
-      span: 2,
-      hiddenWhen: ({ values }) => !bucketProviderType(values),
     },
     {
       key: 'pathPrefix',
@@ -198,7 +208,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   }
 
   private readonly route = inject(ActivatedRoute);
-  private readonly accounts = signal<ConfigurableCrudOption[]>([]);
   private readonly providers = signal<HostingStorageProvider[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
@@ -216,9 +225,39 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   );
 
   constructor() {
-    super(BUCKET_CONFIG);
+    super(
+      (() => {
+        const master = inject(ActivatedRoute).snapshot.data['scope'] === 'master';
+        const prefix = master ? 'system/hosting/storage' : 'hosting/storage';
+        return {
+          ...BUCKET_CONFIG,
+          fields: BUCKET_CONFIG.fields.map((field) => ({
+            ...field,
+            ...(field.key === 'accountUuid'
+              ? {
+                  remoteLookup: {
+                    endpoint: `${prefix}/accounts?status=1`,
+                    uuidField: 'HsaUUID',
+                    labelField: 'HsaName',
+                    selectedLabelField: 'AccountName',
+                  },
+                  quickCreate: quickCreateFor('HostingStorageAccountHsaUUID', {
+                    routeData: { scope: master ? 'master' : 'tenant' },
+                  }),
+                }
+              : {}),
+            ...(field.key === 'providerUuid'
+              ? {
+                  quickCreate: quickCreateFor('HostingStorageProviderHspUUID', {
+                    routeData: { scope: 'master' },
+                  }),
+                }
+              : {}),
+          })),
+        };
+      })(),
+    );
     void this.fetchProviders();
-    void this.fetchAccounts();
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
@@ -251,7 +290,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'accountUuid') return this.accounts();
     if (key === 'providerUuid') return this.providerOptions();
     return [];
   }
@@ -276,7 +314,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
       ...super.formValuesFromRecord(row),
       bucket: stringValue(config['bucket']),
       container: stringValue(config['container']),
-      publicBaseUrl: stringValue(config['publicBaseUrl']),
       pathPrefix: stringValue(config['pathPrefix']),
       linkedProviderType,
       isDefault: truthyNumber(row['HsbIsDefault']),
@@ -287,7 +324,11 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
     const provider = bucketProviderType(payload);
-    if (payload['provisionMode'] !== 'create' && requiresBucketField(provider) && !String(payload['bucket'] ?? '').trim()) {
+    if (
+      payload['provisionMode'] !== 'create' &&
+      requiresBucketField(provider) &&
+      !String(payload['bucket'] ?? '').trim()
+    ) {
       return this.rejectField('bucket', 'Bucket is required for the selected provider.');
     }
     if (provider === 'azure' && !String(payload['container'] ?? '').trim()) {
@@ -302,12 +343,10 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
       provider === 'azure'
         ? cleanRecord({
             container: payload['container'],
-            publicBaseUrl: payload['publicBaseUrl'],
             pathPrefix: payload['pathPrefix'],
           })
         : cleanRecord({
             bucket: payload['bucket'],
-            publicBaseUrl: payload['publicBaseUrl'],
             pathPrefix: payload['pathPrefix'],
           });
 
@@ -342,15 +381,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
     } finally {
       this.mutating.set(false);
     }
-  }
-
-  private async fetchAccounts(): Promise<void> {
-    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-      `${this.rootEndpoint()}/accounts?limit=500&offset=0`,
-    );
-    this.accounts.set((response.data?.items ?? []).map((row) => ({
-      value: String(row['HsaUUID']), label: String(row['HsaName']),
-    })));
   }
 
   protected async fetchProviders(): Promise<void> {
