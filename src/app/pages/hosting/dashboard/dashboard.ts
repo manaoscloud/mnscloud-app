@@ -256,7 +256,7 @@ export class HostingDashboardPage {
     const total = data.smtpAccounts.length + data.storageAccounts.length;
     const active =
       this.activeCount(data.smtpAccounts, ['HsaIsActive'], ['HsaStatus']) +
-      this.activeCount(data.storageAccounts, ['HsbIsActive'], ['HsbStatus']);
+      this.activeCount(data.storageAccounts, ['HsaIsActive'], []);
     const issues = this.issueCount(data.smtpAccounts) + this.issueCount(data.storageAccounts);
     return { total, active, issues };
   });
@@ -497,8 +497,8 @@ export class HostingDashboardPage {
         'Storage Accounts',
         'inventory_2',
         data.storageAccounts,
-        ['HsbIsActive'],
-        ['HsbStatus'],
+        ['HsaIsActive'],
+        [],
         ['hosting', 'storage', 'accounts'],
       ),
     ];
