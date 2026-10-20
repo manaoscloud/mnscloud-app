@@ -2994,7 +2994,7 @@
       "fields": []
     },
     {
-      "route": "/hosting/storage/accounts",
+      "route": "/hosting/storage/buckets",
       "menuPath": "Hospedagem › Armazenamento › Contas",
       "scope": "tenant",
       "title": "Contas de Storage",
@@ -6528,7 +6528,7 @@
       "fields": []
     },
     {
-      "route": "/system/hosting/storage/accounts",
+      "route": "/system/hosting/storage/buckets",
       "menuPath": "Hospedagem › Armazenamento › Contas",
       "scope": "platform",
       "title": "Contas de Storage",

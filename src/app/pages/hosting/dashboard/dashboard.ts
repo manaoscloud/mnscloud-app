@@ -256,7 +256,7 @@ export class HostingDashboardPage {
     const total = data.smtpAccounts.length + data.storageAccounts.length;
     const active =
       this.activeCount(data.smtpAccounts, ['HsaIsActive'], ['HsaStatus']) +
-      this.activeCount(data.storageAccounts, ['HsaIsActive'], ['HsaStatus']);
+      this.activeCount(data.storageAccounts, ['HsbIsActive'], ['HsbStatus']);
     const issues = this.issueCount(data.smtpAccounts) + this.issueCount(data.storageAccounts);
     return { total, active, issues };
   });
@@ -345,7 +345,7 @@ export class HostingDashboardPage {
       return ['/', ...route];
     }
     if (routePath === 'hosting/smtp/accounts') return ['/system/hosting/smtp/accounts'];
-    if (routePath === 'hosting/storage/accounts') return ['/system/hosting/storage/accounts'];
+    if (routePath === 'hosting/storage/buckets') return ['/system/hosting/storage/buckets'];
     if (routePath === 'hosting/vps/instances') return ['/system/vps/instances'];
     if (routePath === 'hosting/vps/provider') return ['/system/vps/provider'];
     if (routePath === 'hosting/vps/plans') return ['/system/vps/plans'];
@@ -497,8 +497,8 @@ export class HostingDashboardPage {
         'Storage Accounts',
         'inventory_2',
         data.storageAccounts,
-        ['HsaIsActive'],
-        ['HsaStatus'],
+        ['HsbIsActive'],
+        ['HsbStatus'],
         ['hosting', 'storage', 'accounts'],
       ),
     ];

@@ -9,8 +9,8 @@ export type VoipPabxMediaFileItem = {
   name: string;
   description?: string | null;
   storageMode: 'default' | 'filesystem' | 'storage';
-  storageAccountUUID?: string | null;
-  storageAccountName?: string | null;
+  storageBucketUUID?: string | null;
+  storageBucketName?: string | null;
   storageProvider?: string | null;
   deliveryMode: 'default' | 'online' | 'offline';
   originalFilename?: string | null;

@@ -34,9 +34,9 @@ type DnsMode = 'identity_only' | 'managed_dns';
 /** Editable values; '' / null mean "inherit" (tenant) or "built-in default" (platform). */
 type PabxParameterForm = {
   recordingStorageMode: StorageMode;
-  recordingStorageAccountUUID: string;
+  recordingStorageBucketUUID: string;
   mediaStorageMode: StorageMode;
-  mediaStorageAccountUUID: string;
+  mediaStorageBucketUUID: string;
   mediaDeliveryMode: DeliveryMode;
   realmSource: 'own' | 'inherit';
   autoDomainEnabled: boolean;
@@ -76,9 +76,9 @@ const FQDN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 const TABS: Record<number, readonly FieldKey[]> = {
   0: [
     'recordingStorageMode',
-    'recordingStorageAccountUUID',
+    'recordingStorageBucketUUID',
     'mediaStorageMode',
-    'mediaStorageAccountUUID',
+    'mediaStorageBucketUUID',
   ],
   1: ['mediaDeliveryMode'],
   2: [
@@ -93,9 +93,9 @@ const TABS: Record<number, readonly FieldKey[]> = {
 
 const EMPTY_FORM: PabxParameterForm = {
   recordingStorageMode: '',
-  recordingStorageAccountUUID: '',
+  recordingStorageBucketUUID: '',
   mediaStorageMode: '',
-  mediaStorageAccountUUID: '',
+  mediaStorageBucketUUID: '',
   mediaDeliveryMode: '',
   realmSource: 'inherit',
   autoDomainEnabled: true,
@@ -198,7 +198,7 @@ export class VoipPabxParametersPage {
   });
   private readonly storageAccounts = resource({
     params: () =>
-      this.isMaster() ? 'system/hosting/storage/accounts' : 'hosting/storage/accounts',
+      this.isMaster() ? 'system/hosting/storage/buckets' : 'hosting/storage/buckets',
     defaultValue: [] as Array<Record<string, any>>,
     loader: async ({ params }) => {
       const result = await this.api.get<any>(`${params}?status=1&limit=500`);
@@ -225,10 +225,10 @@ export class VoipPabxParametersPage {
     { value: 'identity_only', label: 'SIP identity without DNS publication' },
     { value: 'managed_dns', label: 'Managed DNS publication' },
   ];
-  readonly storageAccountOptions = computed(() =>
+  readonly storageBucketOptions = computed(() =>
     this.storageAccounts.value().map((account) => ({
-      value: String(account['HsaUUID']),
-      label: [account['HsaName'], account['HspProvider'] || account['HspName']]
+      value: String(account['HsbUUID']),
+      label: [account['HsbName'], account['HspProvider'] || account['HspName']]
         .filter(Boolean)
         .join(' · '),
     })),
@@ -254,10 +254,10 @@ export class VoipPabxParametersPage {
 
   readonly rules = new FieldRules<FieldKey>({
     recordingStorageMode: () => true,
-    recordingStorageAccountUUID: () =>
-      this.form().recordingStorageMode !== 'storage' || !!this.form().recordingStorageAccountUUID,
+    recordingStorageBucketUUID: () =>
+      this.form().recordingStorageMode !== 'storage' || !!this.form().recordingStorageBucketUUID,
     mediaStorageMode: () => true,
-    mediaStorageAccountUUID: () => true,
+    mediaStorageBucketUUID: () => true,
     mediaDeliveryMode: () => true,
     realmSource: () => true,
     autoDomainDnsMode: () => true,
@@ -323,10 +323,10 @@ export class VoipPabxParametersPage {
     }));
   }
 
-  async createStorageAccount(key: 'recordingStorageAccountUUID' | 'mediaStorageAccountUUID') {
+  async createStorageBucket(key: 'recordingStorageBucketUUID' | 'mediaStorageBucketUUID') {
     const { openQuickCreate } =
       await import('../../../../shared/crud/configurable-crud/configurable-crud-quick-create-host');
-    const { loadComponent, routeData } = quickCreateFor('HostingStorageAccountHsaUUID');
+    const { loadComponent, routeData } = quickCreateFor('HostingStorageBucketHsbUUID');
     const result = await openQuickCreate(this.dialog, { loadComponent, routeData });
     if (!result?.option) return;
     this.storageAccounts.reload();
@@ -359,11 +359,11 @@ export class VoipPabxParametersPage {
       const form = this.form();
       const result = await this.api.put<any>(this.endpoint(), {
         recordingStorageMode: form.recordingStorageMode || null,
-        recordingStorageAccountUUID:
-          form.recordingStorageMode === 'storage' ? form.recordingStorageAccountUUID || null : null,
+        recordingStorageBucketUUID:
+          form.recordingStorageMode === 'storage' ? form.recordingStorageBucketUUID || null : null,
         mediaStorageMode: form.mediaStorageMode || null,
-        mediaStorageAccountUUID:
-          form.mediaStorageMode === 'storage' ? form.mediaStorageAccountUUID || null : null,
+        mediaStorageBucketUUID:
+          form.mediaStorageMode === 'storage' ? form.mediaStorageBucketUUID || null : null,
         mediaDeliveryMode: form.mediaDeliveryMode || null,
         realmSource: this.isMaster() ? 'own' : form.realmSource,
         autoDomainEnabled: form.autoDomainEnabled,
@@ -404,9 +404,9 @@ export class VoipPabxParametersPage {
   private apply(item: Record<string, any>) {
     const form: PabxParameterForm = {
       recordingStorageMode: (item['recordingStorageMode'] ?? '') as StorageMode,
-      recordingStorageAccountUUID: String(item['recordingStorageAccountUUID'] ?? ''),
+      recordingStorageBucketUUID: String(item['recordingStorageBucketUUID'] ?? ''),
       mediaStorageMode: (item['mediaStorageMode'] ?? '') as StorageMode,
-      mediaStorageAccountUUID: String(item['mediaStorageAccountUUID'] ?? ''),
+      mediaStorageBucketUUID: String(item['mediaStorageBucketUUID'] ?? ''),
       mediaDeliveryMode: (item['mediaDeliveryMode'] ?? '') as DeliveryMode,
       realmSource: item['realmSource'] === 'own' || this.isMaster() ? 'own' : 'inherit',
       autoDomainEnabled: item['autoDomainEnabled'] !== false,

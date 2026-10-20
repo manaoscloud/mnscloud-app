@@ -381,9 +381,13 @@ export const QUICK_CREATE_REGISTRY = {
   },
   HostingStorageAccountHsaUUID: {
     label: 'Create storage account',
+    loadComponent: () => import('../../../pages/hosting/storage/accounts/accounts').then((m) => m.HostingStorageAccountsPage),
+  },
+  HostingStorageBucketHsbUUID: {
+    label: 'Create storage bucket',
     loadComponent: () =>
-      import('../../../pages/hosting/storage/accounts/accounts').then(
-        (m) => m.HostingStorageAccountsPage,
+      import('../../../pages/hosting/storage/buckets/buckets').then(
+        (m) => m.HostingStorageBucketsPage,
       ),
   },
   HostingStorageProviderHspUUID: {

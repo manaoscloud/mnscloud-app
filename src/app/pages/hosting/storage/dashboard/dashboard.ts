@@ -39,15 +39,15 @@ type StorageDashboardProvider = {
 };
 
 type StorageDashboardAccount = {
-  HsaUUID: string;
-  HsaName: string;
+  HsbUUID: string;
+  HsbName: string;
   HostingStorageProviderHspUUID: string;
   ProviderName: string | null;
   ProviderType: string | null;
   bucket: string;
   region: string | null;
-  HsaIsActive: number;
-  HsaIsDefault: number;
+  HsbIsActive: number;
+  HsbIsDefault: number;
   issues: number;
 };
 
@@ -199,17 +199,17 @@ export class HostingStorageDashboardPage {
 
   readonly accountRows = computed<DashboardRecord[]>(() =>
     this.dashboard().accounts.map((account) => ({
-      name: account.HsaName,
+      name: account.HsbName,
       meta: account.ProviderName || account.ProviderType || '-',
-      status: account.HsaIsActive === 1 ? 'Active' : 'Inactive',
-      tone: account.issues > 0 ? 'danger' : account.HsaIsActive === 1 ? 'success' : 'skipped',
+      status: account.HsbIsActive === 1 ? 'Active' : 'Inactive',
+      tone: account.issues > 0 ? 'danger' : account.HsbIsActive === 1 ? 'success' : 'skipped',
       details: [
         { label: 'Bucket', value: account.bucket },
         { label: 'Region', value: account.region || '-' },
         { label: 'Issues', value: String(account.issues) },
         {
           label: 'Default',
-          value: account.HsaIsDefault === 1 ? 'Yes' : 'No',
+          value: account.HsbIsDefault === 1 ? 'Yes' : 'No',
           translate: true,
         },
       ],

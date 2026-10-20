@@ -1,0 +1,459 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudConfig,
+  ConfigurableCrudFilters,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
+} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+
+type StorageProvider = 's3' | 'gcs' | 'azure' | 'spaces' | 'sangfor_scp';
+
+type HostingStorageProvider = {
+  HspUUID: string;
+  HspName: string;
+  HspProvider: StorageProvider;
+};
+
+const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+];
+
+const VALIDATE_ACTION: ConfigurableCrudRowAction = {
+  key: 'validate',
+  label: 'Validate',
+  icon: 'fact_check',
+  tooltip: 'Validate',
+};
+
+const BUCKET_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'hosting/storage/buckets',
+  uuidField: 'HsbUUID',
+  pageTitle: 'Storage Buckets',
+  pageDescription: 'Manage buckets and containers linked to storage providers.',
+  createTitle: 'New storage bucket',
+  editTitle: 'Edit storage bucket',
+  dialogDescription: 'Configure storage bucket identity, provider and bucket settings.',
+  searchPlaceholder: 'Name, provider or bucket',
+  emptyLabel: 'No storage buckets found.',
+  deleteTitle: 'Delete storage bucket',
+  deleteMessage: 'Are you sure you want to delete this storage bucket?',
+  deleteSelectedTitle: 'Delete selected storage buckets',
+  deleteSelectedMessage: 'Delete {count} selected storage buckets?',
+  savedMessage: 'Storage account saved successfully.',
+  deletedMessage: 'Storage account deleted successfully.',
+  deleteFailedMessage: 'Failed to delete storage bucket.',
+  statusMode: 'number',
+  activeValue: 1,
+  inactiveValue: 0,
+  bulkDelete: true,
+  statusFilter: true,
+  tabLabels: {
+    storage: 'Storage',
+  },
+  rowActions: [VALIDATE_ACTION],
+  listFilters: [
+    {
+      key: 'providerUuid',
+      label: 'Provider',
+      paramKey: 'providerUuid',
+      type: 'search-select',
+      placeholder: 'Search',
+      emptyLabel: 'No records found.',
+    },
+  ],
+  initialValues: {
+    name: '',
+    provisionMode: 'import',
+    accountUuid: '',
+    providerUuid: '',
+    linkedProviderType: '',
+    status: 1,
+    isDefault: 0,
+    bucket: '',
+    container: '',
+    publicBaseUrl: '',
+    pathPrefix: '',
+  },
+  columns: [
+    { id: 'name', label: 'Name', kind: 'identity', field: 'HsbName', uuidField: 'HsbUUID' },
+    {
+      id: 'provider',
+      label: 'Provider',
+      kind: 'related',
+      field: 'HspName',
+      uuidField: 'HostingStorageProviderHspUUID',
+    },
+    { id: 'bucket', label: 'Bucket', field: 'HsbBucketLabel' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HsbIsDefault',
+      className: 'status-col',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HsbIsActive',
+      className: 'status-col',
+    },
+  ],
+  fields: [
+    { key: 'provisionMode', label: 'Bucket operation', type: 'search-select', options: [{ value: 'import', label: 'Import existing bucket' }, { value: 'create', label: 'Create bucket at provider' }], span: 1 },
+    {
+      key: 'status',
+      source: 'HsbIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
+    { key: 'accountUuid', source: 'HostingStorageAccountHsaUUID', payloadKey: 'accountUuid', label: 'Account', type: 'search-select', required: true, span: 1 },
+    {
+      key: 'providerUuid',
+      source: 'HostingStorageProviderHspUUID',
+      payloadKey: 'providerUuid',
+      label: 'Provider',
+      type: 'search-select',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'isDefault',
+      source: 'HsbIsDefault',
+      payloadKey: 'isDefault',
+      label: 'Default bucket',
+      type: 'search-select',
+      options: YES_NO_OPTIONS,
+      span: 1,
+    },
+    { key: 'name', source: 'HsbName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    {
+      key: 'linkedProviderType',
+      payloadKey: 'linkedProviderType',
+      label: 'Provider type',
+      hidden: true,
+      span: 1,
+    },
+    {
+      key: 'bucket',
+      payloadKey: 'bucket',
+      label: 'Bucket',
+      tab: 'storage',
+      span: 2,
+      hiddenWhen: ({ values }) => !usesBucketField(bucketProviderType(values)),
+      requiredWhen: ({ values }) => values['provisionMode'] !== 'create' && requiresBucketField(bucketProviderType(values)),
+    },
+    {
+      key: 'container',
+      payloadKey: 'container',
+      label: 'Container',
+      tab: 'storage',
+      span: 2,
+      hiddenWhen: ({ values }) => bucketProviderType(values) !== 'azure',
+      requiredWhen: ({ values }) => bucketProviderType(values) === 'azure',
+    },
+    {
+      key: 'publicBaseUrl',
+      payloadKey: 'publicBaseUrl',
+      label: 'Public base URL',
+      tab: 'storage',
+      span: 2,
+      hiddenWhen: ({ values }) => !bucketProviderType(values),
+    },
+    {
+      key: 'pathPrefix',
+      payloadKey: 'pathPrefix',
+      label: 'Path prefix',
+      tab: 'storage',
+      span: 2,
+      hiddenWhen: ({ values }) => !bucketProviderType(values),
+    },
+  ],
+};
+
+@Component({
+  selector: 'app-hosting-storage-buckets',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected override async quickCreateOption(
+    response: unknown,
+    payload: ConfigurableCrudRecord,
+  ): Promise<ConfigurableCrudOption | null> {
+    return (
+      storageBucketOptionFromResponse(response, payload) ??
+      super.quickCreateOption(response, payload)
+    );
+  }
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly accounts = signal<ConfigurableCrudOption[]>([]);
+  private readonly providers = signal<HostingStorageProvider[]>([]);
+  private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
+  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly rootEndpoint = computed(() =>
+    this.isMaster() ? 'system/hosting/storage' : 'hosting/storage',
+  );
+  private readonly endpoint = computed(() => `${this.rootEndpoint()}/buckets`);
+  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.providers().map((provider) => ({
+      value: provider.HspUUID,
+      label: provider.HspName,
+      description: provider.HspProvider,
+      searchText: `${provider.HspName} ${provider.HspProvider} ${provider.HspUUID}`,
+    })),
+  );
+
+  constructor() {
+    super(BUCKET_CONFIG);
+    void this.fetchProviders();
+    void this.fetchAccounts();
+  }
+
+  protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.providers().length) await this.fetchProviders();
+    const items = await super.fetchItems(filters);
+    return items.map((item) => ({
+      ...item,
+      HsbBucketLabel: bucketLabelFromRow(item),
+    }));
+  }
+
+  protected override listEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override createEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override updateEndpoint(): string {
+    return this.endpoint();
+  }
+
+  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
+    return this.endpoint();
+  }
+
+  protected override bulkDeleteEndpoint(): string {
+    return `${this.endpoint()}/bulk`;
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'accountUuid') return this.accounts();
+    if (key === 'providerUuid') return this.providerOptions();
+    return [];
+  }
+
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'providerUuid') return;
+    const provider = this.providers().find((item) => item.HspUUID === String(value ?? ''));
+    this.patchFormValues({
+      linkedProviderType:
+        provider?.HspProvider ?? String(this.formValues()['linkedProviderType'] ?? ''),
+    });
+  }
+
+  protected override formValuesFromRecord(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const config = asRecord(row['HsbConfig']);
+    const providerUuid = String(row['HostingStorageProviderHspUUID'] ?? '');
+    const linkedProviderType =
+      String(row['HspProvider'] ?? '') ||
+      this.providers().find((item) => item.HspUUID === providerUuid)?.HspProvider ||
+      '';
+    return {
+      ...super.formValuesFromRecord(row),
+      bucket: stringValue(config['bucket']),
+      container: stringValue(config['container']),
+      publicBaseUrl: stringValue(config['publicBaseUrl']),
+      pathPrefix: stringValue(config['pathPrefix']),
+      linkedProviderType,
+      isDefault: truthyNumber(row['HsbIsDefault']),
+      status: truthyNumber(row['HsbIsActive']),
+    };
+  }
+
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const provider = bucketProviderType(payload);
+    if (payload['provisionMode'] !== 'create' && requiresBucketField(provider) && !String(payload['bucket'] ?? '').trim()) {
+      return this.rejectField('bucket', 'Bucket is required for the selected provider.');
+    }
+    if (provider === 'azure' && !String(payload['container'] ?? '').trim()) {
+      return this.rejectField('container', 'Container is required for Azure Blob Storage.');
+    }
+    return true;
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const provider = bucketProviderType(payload);
+    const config =
+      provider === 'azure'
+        ? cleanRecord({
+            container: payload['container'],
+            publicBaseUrl: payload['publicBaseUrl'],
+            pathPrefix: payload['pathPrefix'],
+          })
+        : cleanRecord({
+            bucket: payload['bucket'],
+            publicBaseUrl: payload['publicBaseUrl'],
+            pathPrefix: payload['pathPrefix'],
+          });
+
+    return {
+      name: payload['name'],
+      provisionMode: payload['provisionMode'],
+      accountUuid: payload['accountUuid'],
+      providerUuid: payload['providerUuid'],
+      config,
+      isActive: truthyNumber(payload['status']) === 1,
+      isDefault: truthyNumber(payload['isDefault']) === 1,
+    };
+  }
+
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const provider = String(row['HspProvider'] ?? '');
+    return provider === 's3' || provider === 'spaces' || provider === 'sangfor_scp'
+      ? [VALIDATE_ACTION]
+      : [];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'validate') return;
+    const uuid = String(row['HsbUUID'] ?? '');
+    if (!uuid) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.snack.success(this.t('Storage account validated.'));
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to validate storage bucket.'));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  private async fetchAccounts(): Promise<void> {
+    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+      `${this.rootEndpoint()}/accounts?limit=500&offset=0`,
+    );
+    this.accounts.set((response.data?.items ?? []).map((row) => ({
+      value: String(row['HsaUUID']), label: String(row['HsaName']),
+    })));
+  }
+
+  protected async fetchProviders(): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: { items?: HostingStorageProvider[] } }>(
+        `${this.rootEndpoint()}/providers?limit=500&offset=0`,
+      );
+      this.providers.set(response?.data?.items ?? []);
+    } catch (error) {
+      this.providers.set([]);
+      this.snack.error(this.errorMessage(error) || this.t('Failed to load storage providers.'));
+    }
+  }
+}
+
+export function storageBucketOptionFromResponse(
+  response: unknown,
+  payload: ConfigurableCrudRecord,
+): ConfigurableCrudOption | null {
+  const record = extractStorageBucketRecord(response) ?? payload;
+  const uuid =
+    stringValue(record['HsbUUID']) ??
+    stringValue(record['uuid']) ??
+    stringValue(payload['HsbUUID']);
+  if (!uuid) return null;
+  const label = stringValue(record['HsbName']) ?? stringValue(payload['name']) ?? uuid;
+  const description = [record['HspName'], record['HspProvider']]
+    .map((value) => stringValue(value))
+    .filter((value): value is string => Boolean(value))
+    .join(' - ');
+  return {
+    value: uuid,
+    label,
+    description,
+    searchText: `${label} ${description} ${uuid}`,
+  };
+}
+
+function extractStorageBucketRecord(response: unknown): ConfigurableCrudRecord | null {
+  const value = response as
+    | {
+        data?: unknown;
+        item?: unknown;
+        record?: unknown;
+      }
+    | null
+    | undefined;
+  const candidates = [
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).item,
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).record,
+    value?.data && (value.data as { item?: unknown; record?: unknown; data?: unknown }).data,
+    value?.data,
+    value?.item,
+    value?.record,
+  ];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object') {
+      return candidate as ConfigurableCrudRecord;
+    }
+  }
+  return null;
+}
+
+function bucketProviderType(values: ConfigurableCrudRecord): StorageProvider | '' {
+  const normalized = String(values['linkedProviderType'] ?? '') as StorageProvider | '';
+  return ['s3', 'gcs', 'azure', 'spaces', 'sangfor_scp'].includes(normalized) ? normalized : '';
+}
+
+function usesBucketField(provider: StorageProvider | ''): boolean {
+  return (
+    provider === 's3' || provider === 'spaces' || provider === 'gcs' || provider === 'sangfor_scp'
+  );
+}
+
+function requiresBucketField(provider: StorageProvider | ''): boolean {
+  return usesBucketField(provider);
+}
+
+function bucketLabelFromRow(row: ConfigurableCrudRecord): string {
+  const config = asRecord(row['HsbConfig']);
+  return String(config['bucket'] || config['container'] || '-');
+}
+
+function truthyNumber(value: unknown): number {
+  return value === true || value === 1 || value === '1' ? 1 : 0;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string'
+    ? value
+    : value === null || value === undefined
+      ? ''
+      : String(value);
+}
+
+function cleanRecord(value: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined && item !== ''),
+  );
+}

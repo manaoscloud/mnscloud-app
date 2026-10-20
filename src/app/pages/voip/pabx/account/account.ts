@@ -103,9 +103,9 @@ function config(): ConfigurableCrudConfig {
       techPrefix: '',
       timezone: '',
       recordingStorageMode: 'default',
-      storageAccountUUID: '',
+      storageBucketUUID: '',
       mediaStorageMode: 'default',
-      mediaStorageAccountUUID: '',
+      mediaStorageBucketUUID: '',
       mediaDeliveryMode: 'default',
       cdrRetentionDays: null,
       recordingRetentionDays: null,
@@ -234,9 +234,9 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'storageAccountUUID',
-        source: 'HostingStorageAccountHsaUUID',
-        payloadKey: 'storageAccountUUID',
+        key: 'storageBucketUUID',
+        source: 'HostingStorageBucketHsbUUID',
+        payloadKey: 'storageBucketUUID',
         label: 'Recording storage account',
         type: 'search-select',
         tab: 'storage',
@@ -255,16 +255,16 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'mediaStorageAccountUUID',
-        source: 'MediaHostingStorageAccountHsaUUID',
-        payloadKey: 'mediaStorageAccountUUID',
+        key: 'mediaStorageBucketUUID',
+        source: 'MediaHostingStorageBucketHsbUUID',
+        payloadKey: 'mediaStorageBucketUUID',
         label: 'Media file storage account',
         type: 'search-select',
         tab: 'storage',
         span: 1,
         hiddenWhen: ({ values }) => values['mediaStorageMode'] !== 'storage',
         requiredWhen: ({ values }) => values['mediaStorageMode'] === 'storage',
-        quickCreate: quickCreateFor('HostingStorageAccountHsaUUID'),
+        quickCreate: quickCreateFor('HostingStorageBucketHsbUUID'),
       },
       {
         key: 'mediaDeliveryMode',
@@ -339,7 +339,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
   readonly dialPlanOptions = signal<ConfigurableCrudOption[]>([]);
   readonly blacklistOptions = signal<ConfigurableCrudOption[]>([]);
-  readonly storageAccountOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly storageBucketOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
@@ -355,8 +355,8 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
         'customerUUID',
         'dialPlanUUID',
         'blacklistUUID',
-        'storageAccountUUID',
-        'mediaStorageAccountUUID',
+        'storageBucketUUID',
+        'mediaStorageBucketUUID',
       ].includes(field.key) && this.lookupsLoading()
     );
   }
@@ -366,8 +366,8 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (key === 'customerUUID') return this.customerOptions();
     if (key === 'dialPlanUUID') return this.dialPlanOptions();
     if (key === 'blacklistUUID') return this.blacklistOptions();
-    if (key === 'storageAccountUUID' || key === 'mediaStorageAccountUUID')
-      return this.storageAccountOptions();
+    if (key === 'storageBucketUUID' || key === 'mediaStorageBucketUUID')
+      return this.storageBucketOptions();
     return [];
   }
 
@@ -386,9 +386,9 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
       case 'blacklistUUID':
         this.blacklistOptions.update((items) => mergeOption(items, option));
         break;
-      case 'storageAccountUUID':
-      case 'mediaStorageAccountUUID':
-        this.storageAccountOptions.update((items) => mergeOption(items, option));
+      case 'storageBucketUUID':
+      case 'mediaStorageBucketUUID':
+        this.storageBucketOptions.update((items) => mergeOption(items, option));
         break;
     }
   }
@@ -399,13 +399,13 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
       ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
       isActive: Number(payload['isActive']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,
-      storageAccountUUID:
+      storageBucketUUID:
         payload['recordingStorageMode'] === 'storage'
-          ? payload['storageAccountUUID'] || null
+          ? payload['storageBucketUUID'] || null
           : null,
-      mediaStorageAccountUUID:
+      mediaStorageBucketUUID:
         payload['mediaStorageMode'] === 'storage'
-          ? payload['mediaStorageAccountUUID'] || null
+          ? payload['mediaStorageBucketUUID'] || null
           : null,
     };
   }
@@ -423,14 +423,14 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
         this.fetchPaged('voip/pabx/blacklists?status=1', (row) =>
           option(row.VbkUUID ?? row.uuid, row.VbkName ?? row.name),
         ),
-        this.fetchPaged('hosting/storage/accounts?status=1', (row) =>
-          option(row.HsaUUID ?? row.uuid, row.HsaName ?? row.name, [row.HspName, row.HspProvider]),
+        this.fetchPaged('hosting/storage/buckets?status=1', (row) =>
+          option(row.HsbUUID ?? row.uuid, row.HsbName ?? row.name, [row.HspName, row.HspProvider]),
         ),
       ]);
       this.serverOptions.set(servers);
       this.dialPlanOptions.set(dialPlans);
       this.blacklistOptions.set(blacklists);
-      this.storageAccountOptions.set(storageAccounts);
+      this.storageBucketOptions.set(storageAccounts);
     } finally {
       this.lookupsLoading.set(false);
     }

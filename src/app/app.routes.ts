@@ -1410,6 +1410,15 @@ export const routes: Routes = [
                     title: 'Hosting • Storage Accounts | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
+                  {
+                    path: 'buckets',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/buckets/buckets').then(
+                        (m) => m.HostingStorageBucketsPage,
+                      ),
+                    title: 'Hosting • Storage Buckets | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                 ],
               },
               {
@@ -2717,6 +2726,15 @@ export const routes: Routes = [
                         (m) => m.HostingStorageAccountsPage,
                       ),
                     title: 'System Storage Accounts | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'buckets',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/buckets/buckets').then(
+                        (m) => m.HostingStorageBucketsPage,
+                      ),
+                    title: 'System Storage Buckets | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                 ],
