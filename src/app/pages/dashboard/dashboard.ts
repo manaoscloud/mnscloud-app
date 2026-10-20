@@ -198,7 +198,6 @@ export class Dashboard {
   );
 
   toggleAttention() {
-    if (!this.attention().length) return;
     const next = !this.attentionCollapsed();
     this.attentionCollapsed.set(next);
     try {

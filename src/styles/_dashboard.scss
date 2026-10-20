@@ -270,6 +270,9 @@ mns-dashboard-page {
     color: var(--mat-sys-color-primary);
     font-weight: 700;
   }
+  .panel-count.panel-count-ok {
+    color: var(--dashboard-good);
+  }
   .alert-warning mat-icon,
   .activity-item .debit {
     color: var(--dashboard-warning);
@@ -728,6 +731,11 @@ mns-dashboard-page {
 
 // Home layout dialog (opened from the App home "Customize" action; renders in the overlay).
 .dashboard-layout-dialog {
+  .secondary-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .dashboard-layout-list {
     display: grid;
     gap: 0.5rem;
