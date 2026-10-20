@@ -1,17 +1,13 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslocoTestingModule } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
-import { SnackbarService } from '../../../services/snackbar.service';
-import { SystemParameterService } from '../../../services/system-parameter.service';
-import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from './configurable-crud-page-base';
+import { configurableCrudTestingModule } from './configurable-crud-testing';
 import { defineCrud } from './define-crud';
 
 const config = defineCrud({
@@ -79,42 +75,13 @@ describe('Configurable CRUD optional relationship select', () => {
     api.get.and.resolveTo({ data: { items: [], total: 0 } });
     api.post.and.resolveTo({ data: {} });
     api.put.and.resolveTo({ data: {} });
-    await TestBed.configureTestingModule({
-      imports: [
-        ClearableSelectTestPage,
-        TranslocoTestingModule.forRoot({
-          langs: { 'en-US': {} },
-          translocoConfig: {
-            availableLangs: ['en-US'],
-            defaultLang: 'en-US',
-            missingHandler: { logMissingKey: false },
-          },
-          preloadLangs: true,
-        }),
-      ],
-      providers: [
-        provideRouter([]),
-        { provide: ApiService, useValue: api },
-        {
-          provide: SnackbarService,
-          useValue: jasmine.createSpyObj('SnackbarService', [
-            'success',
-            'error',
-            'warning',
-            'info',
-          ]),
-        },
-        {
-          provide: SystemParameterService,
-          useValue: {
-            resolveDefaultCurrency: () => Promise.resolve('BRL'),
-            resolveDefaultTimezone: () => Promise.resolve('UTC'),
-            resolveDefaultLanguage: () => Promise.resolve('en-US'),
-          },
-        },
-        { provide: AsyncOperationsService, useValue: { observe: () => false } },
-      ],
-    }).compileComponents();
+    await TestBed.configureTestingModule(
+      configurableCrudTestingModule({
+        page: ClearableSelectTestPage,
+        api,
+        snackbar: jasmine.createSpyObj('SnackbarService', ['success', 'error', 'warning', 'info']),
+      }),
+    ).compileComponents();
   });
 
   afterEach(() => document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove()));

@@ -1,16 +1,13 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslocoTestingModule } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { SystemParameterService } from '../../../services/system-parameter.service';
-import { AsyncOperationsService } from '../../operations/async-operations.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from './configurable-crud-page-base';
+import { configurableCrudTestingModule } from './configurable-crud-testing';
 import { defineCrud } from './define-crud';
 
 const config = defineCrud({
@@ -60,34 +57,14 @@ describe('Configurable CRUD required field feedback', () => {
       'warning',
       'info',
     ]);
-    await TestBed.configureTestingModule({
-      imports: [
-        RequiredFeedbackTestPage,
-        TranslocoTestingModule.forRoot({
-          langs: { 'en-US': {}, 'pt-BR': {}, 'es-ES': {} },
-          translocoConfig: {
-            availableLangs: ['en-US', 'pt-BR', 'es-ES'],
-            defaultLang: 'en-US',
-            missingHandler: { logMissingKey: false },
-          },
-          preloadLangs: true,
-        }),
-      ],
-      providers: [
-        provideRouter([]),
-        { provide: ApiService, useValue: api },
-        { provide: SnackbarService, useValue: snack },
-        {
-          provide: SystemParameterService,
-          useValue: {
-            resolveDefaultCurrency: () => Promise.resolve('BRL'),
-            resolveDefaultTimezone: () => Promise.resolve('UTC'),
-            resolveDefaultLanguage: () => Promise.resolve('en-US'),
-          },
-        },
-        { provide: AsyncOperationsService, useValue: { observe: () => false } },
-      ],
-    }).compileComponents();
+    await TestBed.configureTestingModule(
+      configurableCrudTestingModule({
+        page: RequiredFeedbackTestPage,
+        api,
+        snackbar: snack,
+        langs: ['en-US', 'pt-BR', 'es-ES'],
+      }),
+    ).compileComponents();
   });
 
   afterEach(() => document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove()));
