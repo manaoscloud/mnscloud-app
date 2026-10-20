@@ -1,3 +1,4 @@
+import { storagePriceFields } from '../storage-price-fields';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
@@ -72,6 +73,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     name: '',
     provisionMode: 'import',
     accountUuid: '',
+    priceUuid: '',
     providerUuid: '',
     linkedProviderType: '',
     status: 1,
@@ -106,8 +108,10 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
   ],
   fields: [
+    ...storagePriceFields('buckets'),
     {
       key: 'provisionMode',
+      hiddenWhen: ({ editing }) => editing,
       label: 'Bucket operation',
       type: 'search-select',
       options: [
@@ -119,6 +123,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     {
       key: 'status',
       source: 'HsbIsActive',
+      hiddenWhen: ({ editing }) => !editing,
       payloadKey: 'status',
       label: 'Status',
       type: 'status',
@@ -231,29 +236,31 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
         const prefix = master ? 'system/hosting/storage' : 'hosting/storage';
         return {
           ...BUCKET_CONFIG,
-          fields: BUCKET_CONFIG.fields.map((field) => ({
-            ...field,
-            ...(field.key === 'accountUuid'
-              ? {
-                  remoteLookup: {
-                    endpoint: `${prefix}/accounts?status=1`,
-                    uuidField: 'HsaUUID',
-                    labelField: 'HsaName',
-                    selectedLabelField: 'AccountName',
-                  },
-                  quickCreate: quickCreateFor('HostingStorageAccountHsaUUID', {
-                    routeData: { scope: master ? 'master' : 'tenant' },
-                  }),
-                }
-              : {}),
-            ...(field.key === 'providerUuid'
-              ? {
-                  quickCreate: quickCreateFor('HostingStorageProviderHspUUID', {
-                    routeData: { scope: 'master' },
-                  }),
-                }
-              : {}),
-          })),
+          fields: BUCKET_CONFIG.fields
+            .filter((field) => !master || !field.key.startsWith('price'))
+            .map((field) => ({
+              ...field,
+              ...(field.key === 'accountUuid'
+                ? {
+                    remoteLookup: {
+                      endpoint: `${prefix}/accounts?status=1`,
+                      uuidField: 'HsaUUID',
+                      labelField: 'HsaName',
+                      selectedLabelField: 'AccountName',
+                    },
+                    quickCreate: quickCreateFor('HostingStorageAccountHsaUUID', {
+                      routeData: { scope: master ? 'master' : 'tenant' },
+                    }),
+                  }
+                : {}),
+              ...(field.key === 'providerUuid'
+                ? {
+                    quickCreate: quickCreateFor('HostingStorageProviderHspUUID', {
+                      routeData: { scope: 'master' },
+                    }),
+                  }
+                : {}),
+            })),
         };
       })(),
     );
@@ -331,7 +338,11 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
     ) {
       return this.rejectField('bucket', 'Bucket is required for the selected provider.');
     }
-    if (provider === 'azure' && !String(payload['container'] ?? '').trim()) {
+    if (
+      payload['provisionMode'] !== 'create' &&
+      provider === 'azure' &&
+      !String(payload['container'] ?? '').trim()
+    ) {
       return this.rejectField('container', 'Container is required for Azure Blob Storage.');
     }
     return true;
@@ -354,6 +365,7 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
       name: payload['name'],
       provisionMode: payload['provisionMode'],
       accountUuid: payload['accountUuid'],
+      priceUuid: payload['priceUuid'] || undefined,
       providerUuid: payload['providerUuid'],
       config,
       isActive: truthyNumber(payload['status']) === 1,

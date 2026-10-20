@@ -8836,5 +8836,6 @@
   "Create storage bucket": "Create storage bucket",
   "nav.hosting.storage.buckets": "Buckets",
   "Measured storage": "Measured storage",
-  "Buckets awaiting measurement": "Buckets awaiting measurement"
+  "Buckets awaiting measurement": "Buckets awaiting measurement",
+  "GB-hour": "GB-hour"
 }

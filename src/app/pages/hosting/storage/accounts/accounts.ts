@@ -1,3 +1,4 @@
+import { storagePriceFields } from '../storage-price-fields';
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -20,8 +21,9 @@ const config = defineCrud({
   inactiveValue: 0,
   statusFilter: true,
   bulkDelete: true,
-  initialValues: { name: '', customerUuid: '', status: 1 },
+  initialValues: { name: '', customerUuid: '', priceUuid: '', status: 1 },
   fields: [
+    ...storagePriceFields('accounts'),
     { key: 'status', source: 'HsaIsActive', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'HsaName', label: 'Name', required: true, span: 1 },
     {
@@ -59,7 +61,9 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
         return {
           ...config,
           endpoint: master ? 'system/hosting/storage/accounts' : config.endpoint,
-          fields: config.fields.filter((field) => !master || field.key !== 'customerUuid'),
+          fields: config.fields.filter(
+            (field) => !master || (field.key !== 'customerUuid' && !field.key.startsWith('price')),
+          ),
         };
       })(),
     );
@@ -67,6 +71,7 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
       name: payload['name'],
+      priceUuid: payload['priceUuid'] || undefined,
       customerUuid: payload['customerUuid'] || null,
       isActive: Number(payload['status']) === 1,
     };
