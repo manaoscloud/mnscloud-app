@@ -602,6 +602,20 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'authentication.sessions' },
               },
               {
+                path: 'logs/accounts',
+                loadComponent: () =>
+                  import('./pages/logs/accounts/accounts').then((m) => m.LogsAccountPage),
+                title: 'Logs',
+                data: { scope: 'tenant', breadcrumb: 'logs.accounts' },
+              },
+              {
+                path: 'logs/sources',
+                loadComponent: () =>
+                  import('./pages/logs/sources/sources').then((m) => m.LogsSourcePage),
+                title: 'Logs',
+                data: { scope: 'tenant', breadcrumb: 'logs.sources' },
+              },
+              {
                 path: 'authentication/accounts',
                 loadComponent: () =>
                   import('./pages/authentication/accounts/accounts').then(
