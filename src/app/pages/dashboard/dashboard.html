@@ -12,18 +12,17 @@
   <div class="dashboard-content">
     <section class="dashboard-panel" aria-labelledby="home-attention-title">
       <div
-        class="panel-header"
-        [class.dashboard-attention-header]="attention().length"
-        [attr.role]="attention().length ? 'button' : null"
-        [attr.tabindex]="attention().length ? 0 : null"
-        [attr.aria-expanded]="attention().length ? !attentionCollapsed() : null"
+        class="panel-header dashboard-attention-header"
+        role="button"
+        tabindex="0"
+        [attr.aria-expanded]="!attentionCollapsed()"
         (click)="toggleAttention()"
         (keydown.enter)="toggleAttention()"
       >
         <div class="dashboard-attention-heading">
           <div class="dashboard-attention-title-line">
             <h2 id="home-attention-title">{{ 'home.attention.title' | transloco }}</h2>
-            @if (attentionCollapsed() && attention().length) {
+            @if (attentionCollapsed()) {
               <div class="dashboard-attention-summary-badges">
                 @if (criticalCount()) {
                   <span
@@ -47,21 +46,30 @@
                     {{ warningCount() }}
                   </span>
                 }
+                @if (!attention().length) {
+                  <span
+                    class="dashboard-tab-badge tone-ok"
+                    [attr.aria-label]="'home.tab_badge.ok' | transloco: { count: 0 }"
+                  >
+                    <mat-icon aria-hidden="true">check_circle</mat-icon>
+                    0
+                  </span>
+                }
               </div>
             }
           </div>
           <p>{{ 'home.attention.description.' + scope() | transloco }}</p>
         </div>
         <div class="dashboard-attention-actions">
-          @if (attention().length) {
-            <span class="panel-count">{{ attention().length }}</span>
-            <mat-icon class="dashboard-attention-chevron" aria-hidden="true">
-              {{ attentionCollapsed() ? 'expand_more' : 'expand_less' }}
-            </mat-icon>
-          }
+          <span class="panel-count" [class.panel-count-ok]="!attention().length">{{
+            attention().length
+          }}</span>
+          <mat-icon class="dashboard-attention-chevron" aria-hidden="true">
+            {{ attentionCollapsed() ? 'expand_more' : 'expand_less' }}
+          </mat-icon>
         </div>
       </div>
-      @if (!attentionCollapsed() || !attention().length) {
+      @if (!attentionCollapsed()) {
         <div class="alert-list" aria-live="polite">
           @for (item of attention(); track item.tab + item.code + $index) {
             <a
