@@ -74,7 +74,7 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
       name: '',
       deliveryMode: 'default',
       storageMode: 'default',
-      storageAccountUUID: '',
+      storageBucketUUID: '',
       uploadFile: null,
       description: '',
     },
@@ -125,11 +125,11 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
         span: 1,
       },
       {
-        key: 'storageAccountUUID',
-        source: 'storageAccountUUID',
+        key: 'storageBucketUUID',
+        source: 'storageBucketUUID',
         label: 'Storage account',
         type: 'search-select',
-        quickCreate: quickCreateFor('HostingStorageAccountHsaUUID'),
+        quickCreate: quickCreateFor('HostingStorageBucketHsbUUID'),
         tab: 'storage',
         span: 1,
         hiddenWhen: ({ values }) => values['storageMode'] !== 'storage',
@@ -161,7 +161,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
   private readonly playbackDialog = inject(MatDialog);
   private readonly notifications = inject(SnackbarService);
   private readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
-  private readonly storageAccountOptions = signal<ConfigurableCrudOption[]>([]);
+  private readonly storageBucketOptions = signal<ConfigurableCrudOption[]>([]);
   private pendingUploadFile: File | null = null;
 
   constructor() {
@@ -181,7 +181,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
 
   override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'pabxUUID') return this.pabxOptions();
-    if (key === 'storageAccountUUID') return this.storageAccountOptions();
+    if (key === 'storageBucketUUID') return this.storageBucketOptions();
     return super.lookupOptions(key);
   }
 
@@ -196,7 +196,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key !== 'storageMode' || value === 'storage') return;
-    this.setFieldValue('storageAccountUUID', '');
+    this.setFieldValue('storageBucketUUID', '');
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -206,8 +206,8 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
       pabxUUID: text(payload['pabxUUID']) ?? '',
       name: text(payload['name']) ?? '',
       storageMode,
-      storageAccountUUID:
-        storageMode === 'storage' ? (text(payload['storageAccountUUID']) ?? '') : '',
+      storageBucketUUID:
+        storageMode === 'storage' ? (text(payload['storageBucketUUID']) ?? '') : '',
       deliveryMode: text(payload['deliveryMode']) ?? 'default',
       description: text(payload['description']),
       enabled: Number(payload['enabled']) === 1,
@@ -295,7 +295,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
   private async loadLookups(): Promise<void> {
     const [pabxResponse, storageResponse] = await Promise.all([
       this.genericApi.get<any>('voip/pabx/accounts?limit=500'),
-      this.genericApi.get<any>('hosting/storage/accounts?limit=500'),
+      this.genericApi.get<any>('hosting/storage/buckets?limit=500'),
     ]);
     this.pabxOptions.set(
       ((pabxResponse?.data?.items ?? []) as ConfigurableCrudRecord[]).map((row) => {
@@ -305,12 +305,12 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
       }),
     );
     const storageRows = storageResponse?.data?.items ?? [];
-    this.storageAccountOptions.set([
+    this.storageBucketOptions.set([
       { value: '', label: 'Default storage account' },
       ...((storageRows as ConfigurableCrudRecord[]).map((row) => {
-        const uuid = text(row['HsaUUID']) ?? '';
+        const uuid = text(row['HsbUUID']) ?? '';
         const provider = text(row['HspProvider']) ?? text(row['HspName']) ?? 'storage';
-        const label = `${text(row['HsaName']) ?? uuid} · ${provider}`;
+        const label = `${text(row['HsbName']) ?? uuid} · ${provider}`;
         return { value: uuid, label, searchText: `${label} ${uuid}` };
       }) as ConfigurableCrudOption[]),
     ]);

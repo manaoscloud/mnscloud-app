@@ -47,3 +47,25 @@ test('page reader takes the main configuration and the desk branch', () => {
   const tenant = readPage(process.cwd(), 'src/app/pages/support/tickets/tickets.ts', false);
   assert.equal(tenant.title, 'Support tickets');
 });
+
+test('shared route arrays preserve both tenant and platform catalog destinations', () => {
+  const source = `
+    const shared = [{ path: 'buckets', loadComponent: () => import('./pages/hosting/storage/buckets/buckets') }];
+    export const routes = [
+      { path: 'hosting/storage', children: [...shared] },
+      { path: 'system/hosting/storage', children: [...shared] },
+    ];`;
+  const resolved = readRoutes(source);
+  assert.equal(
+    resolved.get('/hosting/storage/buckets').file,
+    'src/app/pages/hosting/storage/buckets/buckets.ts',
+  );
+  assert.equal(
+    resolved.get('/system/hosting/storage/buckets').file,
+    'src/app/pages/hosting/storage/buckets/buckets.ts',
+  );
+  assert.throws(
+    () => readRoutes('const shared = [...shared]; export const routes = [...shared];'),
+    /Cyclic route array/,
+  );
+});

@@ -33,17 +33,17 @@
         @if (form().recordingStorageMode === 'storage') {
           <mns-search-select-field
             fieldClass="span-2"
-            data-field-key="recordingStorageAccountUUID"
+            data-field-key="recordingStorageBucketUUID"
             [label]="'Recording storage account' | transloco"
-            [options]="storageAccountOptions()"
-            [value]="form().recordingStorageAccountUUID"
-            [invalid]="invalid('recordingStorageAccountUUID')"
+            [options]="storageBucketOptions()"
+            [value]="form().recordingStorageBucketUUID"
+            [invalid]="invalid('recordingStorageBucketUUID')"
             [errorMessage]="'form.validation.required' | transloco"
             [canCreate]="true"
             [createLabel]="'Create storage account' | transloco"
-            (createRecord)="createStorageAccount('recordingStorageAccountUUID')"
+            (createRecord)="createStorageBucket('recordingStorageBucketUUID')"
             [help]="'Storage account that receives the PABX call recordings.' | transloco"
-            (valueChange)="update({ recordingStorageAccountUUID: $any($event) })"
+            (valueChange)="update({ recordingStorageBucketUUID: $any($event) })"
           />
         }
         <mns-search-select-field
@@ -62,18 +62,18 @@
         @if (form().mediaStorageMode === 'storage') {
           <mns-search-select-field
             fieldClass="span-2"
-            data-field-key="mediaStorageAccountUUID"
+            data-field-key="mediaStorageBucketUUID"
             [label]="'Media file storage account' | transloco"
-            [options]="storageAccountOptions()"
-            [value]="form().mediaStorageAccountUUID"
+            [options]="storageBucketOptions()"
+            [value]="form().mediaStorageBucketUUID"
             [canCreate]="true"
             [createLabel]="'Create storage account' | transloco"
-            (createRecord)="createStorageAccount('mediaStorageAccountUUID')"
+            (createRecord)="createStorageBucket('mediaStorageBucketUUID')"
             [help]="
               'Storage account of the media files. Empty uses the recording storage account.'
                 | transloco
             "
-            (valueChange)="update({ mediaStorageAccountUUID: $any($event) })"
+            (valueChange)="update({ mediaStorageBucketUUID: $any($event) })"
           />
         }
         @if (!isMaster()) {

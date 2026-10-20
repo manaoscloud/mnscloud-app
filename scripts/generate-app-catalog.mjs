@@ -53,28 +53,54 @@ function property(objectNode, name) {
 export function readRoutes(source) {
   const sf = ts.createSourceFile(ROUTES_PATH, source, ts.ScriptTarget.Latest, true);
   const routes = new Map();
-  function walkArray(array, prefix) {
-    for (const element of array.elements) {
-      if (!ts.isObjectLiteralExpression(element)) continue;
-      const path = literals(property(element, 'path'))[0] ?? '';
-      const full = [prefix, path].filter(Boolean).join('/');
-      const load = property(element, 'loadComponent');
-      const importMatch = load ? /import\('(\.\/pages\/[^']+)'\)/.exec(load.getText()) : null;
-      if (importMatch) {
-        const dataNode = property(element, 'data');
-        const data = {};
-        if (dataNode && ts.isObjectLiteralExpression(dataNode)) {
-          for (const key of ['scope', 'supportDesk', 'permission']) {
-            const value = literals(property(dataNode, key))[0];
-            if (value) data[key] = value;
-          }
-        }
-        routes.set(`/${full}`, { file: `src/app/${importMatch[1].slice(2)}.ts`, data });
-      }
-      const children = property(element, 'children');
-      if (children && ts.isArrayLiteralExpression(children)) walkArray(children, full);
+  const arrays = new Map();
+  ts.forEachChild(sf, function collect(node) {
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer &&
+      ts.isArrayLiteralExpression(node.initializer)
+    ) {
+      arrays.set(node.name.getText(), node.initializer);
     }
+    ts.forEachChild(node, collect);
+  });
+  function walkArray(array, prefix, visiting = new Set()) {
+    if (visiting.has(array)) throw new Error('Cyclic route array');
+    const next = new Set([...visiting, array]);
+    for (const element of array.elements) walkElement(element, prefix, next);
   }
+  function routeData(element) {
+    const dataNode = property(element, 'data');
+    const data = {};
+    if (dataNode && ts.isObjectLiteralExpression(dataNode)) {
+      for (const key of ['scope', 'supportDesk', 'permission']) {
+        const value = literals(property(dataNode, key))[0];
+        if (value) data[key] = value;
+      }
+    }
+    return data;
+  }
+  function walkElement(element, prefix, visiting) {
+    if (ts.isSpreadElement(element) && ts.isIdentifier(element.expression)) {
+      const shared = arrays.get(element.expression.text);
+      if (shared) walkArray(shared, prefix, visiting);
+      return;
+    }
+    if (!ts.isObjectLiteralExpression(element)) return;
+    const path = literals(property(element, 'path'))[0] ?? '';
+    const full = [prefix, path].filter(Boolean).join('/');
+    const load = property(element, 'loadComponent');
+    const importMatch = load ? /import\('(\.\/pages\/[^']+)'\)/.exec(load.getText()) : null;
+    if (importMatch) {
+      routes.set(`/${full}`, {
+        file: `src/app/${importMatch[1].slice(2)}.ts`,
+        data: routeData(element),
+      });
+    }
+    const children = property(element, 'children');
+    if (children && ts.isArrayLiteralExpression(children)) walkArray(children, full, visiting);
+  }
+
   ts.forEachChild(sf, function visit(node) {
     if (
       ts.isVariableDeclaration(node) &&

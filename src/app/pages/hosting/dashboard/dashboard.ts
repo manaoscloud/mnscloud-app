@@ -291,7 +291,7 @@ export class HostingDashboardPage {
       return ['/', ...route];
     }
     if (routePath === 'hosting/smtp/accounts') return ['/system/hosting/smtp/accounts'];
-    if (routePath === 'hosting/storage/accounts') return ['/system/hosting/storage/accounts'];
+    if (routePath === 'hosting/storage/buckets') return ['/system/hosting/storage/buckets'];
     if (routePath === 'hosting/vps/instances') return ['/system/vps/instances'];
     if (routePath === 'hosting/vps/provider') return ['/system/vps/provider'];
     if (routePath === 'hosting/vps/plans') return ['/system/vps/plans'];

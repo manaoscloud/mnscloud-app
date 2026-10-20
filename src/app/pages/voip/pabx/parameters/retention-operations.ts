@@ -66,7 +66,7 @@ type PurgeTotals = {
 type StorageScanTarget = {
   tenantName: string | null;
   tenantUUID: string;
-  storageAccountName: string | null;
+  storageBucketName: string | null;
   scannedObjects: number;
   scannedBytes: number;
   unreferencedObjects: number;
@@ -178,7 +178,7 @@ export class VoipPabxRetentionOperationsComponent {
   readonly scanRows = computed(() =>
     (this.scan()?.targets ?? []).map((target) => ({
       ...target,
-      key: `${target.tenantUUID}:${target.storageAccountName ?? ''}`,
+      key: `${target.tenantUUID}:${target.storageBucketName ?? ''}`,
     })),
   );
   readonly maintenanceTableRows = computed(() => this.latestJob()?.result?.tables ?? []);
@@ -260,10 +260,13 @@ export class VoipPabxRetentionOperationsComponent {
       },
       {
         id: 'storage',
-        label: 'Storage account',
-        field: 'storageAccountName',
+        label: 'Storage bucket',
+        field: 'storageBucketName',
         kind: 'related',
-        value: (row, tr) => String(row['storageAccountName'] ?? '') || tr('Tenant default storage'),
+        value: (row, tr) =>
+          typeof row['storageBucketName'] === 'string' && row['storageBucketName']
+            ? row['storageBucketName']
+            : tr('Tenant default storage'),
         detail: (row) => String(row['error'] ?? ''),
       },
       {
@@ -575,9 +578,7 @@ export class VoipPabxRetentionOperationsComponent {
           (target: any): StorageScanTarget => ({
             tenantName: target?.tenantName ? String(target.tenantName) : null,
             tenantUUID: String(target?.tenantUUID ?? ''),
-            storageAccountName: target?.storageAccountName
-              ? String(target.storageAccountName)
-              : null,
+            storageBucketName: target?.storageBucketName ? String(target.storageBucketName) : null,
             scannedObjects: Number(target?.scannedObjects ?? 0),
             scannedBytes: Number(target?.scannedBytes ?? 0),
             unreferencedObjects: Number(target?.unreferencedObjects ?? 0),

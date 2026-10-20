@@ -119,10 +119,10 @@ describe('VoIP PABX parameters', () => {
   });
 
   it('reveals a missing storage account instead of saving', async () => {
-    page.update({ recordingStorageMode: 'storage', recordingStorageAccountUUID: '' });
+    page.update({ recordingStorageMode: 'storage', recordingStorageBucketUUID: '' });
     await page.save();
     expect(put).not.toHaveBeenCalled();
-    expect(page.invalid('recordingStorageAccountUUID')).toBeTrue();
+    expect(page.invalid('recordingStorageBucketUUID')).toBeTrue();
     expect(page.selectedTab()).toBe(0);
   });
 });

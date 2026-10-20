@@ -1368,7 +1368,7 @@ export const NAV_ITEMS: NavItem[] = [
         id: 'hosting/storage',
         label: 'nav.hosting.storage',
         icon: 'storage',
-        entitlementCode: 'module.hosting.storage.account',
+        entitlementCode: 'module.hosting.storage.bucket',
         children: [
           {
             id: 'hosting/storage/dashboard',
@@ -1388,9 +1388,23 @@ export const NAV_ITEMS: NavItem[] = [
           {
             id: 'hosting/storage/accounts',
             label: 'nav.hosting.storage.accounts',
-            icon: 'inventory_2',
+            icon: 'account_box',
             route: '/hosting/storage/accounts',
             masterRoute: '/system/hosting/storage/accounts',
+          },
+          {
+            id: 'hosting/storage/buckets',
+            label: 'nav.hosting.storage.buckets',
+            icon: 'inventory_2',
+            route: '/hosting/storage/buckets',
+            masterRoute: '/system/hosting/storage/buckets',
+          },
+          {
+            id: 'hosting/storage/bindings',
+            label: 'nav.hosting.storage.bindings',
+            icon: 'link',
+            route: '/hosting/storage/bindings',
+            masterRoute: '/system/hosting/storage/bindings',
           },
         ],
       },

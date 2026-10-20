@@ -393,6 +393,13 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.HostingStorageAccountsPage,
       ),
   },
+  HostingStorageBucketHsbUUID: {
+    label: 'Create storage bucket',
+    loadComponent: () =>
+      import('../../../pages/hosting/storage/buckets/buckets').then(
+        (m) => m.HostingStorageBucketsPage,
+      ),
+  },
   HostingStorageProviderHspUUID: {
     label: 'Create storage provider',
     loadComponent: () =>

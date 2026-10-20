@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f5fb7fd14d3b",
+  "version": "3978bcd4926d",
   "language": "pt-BR",
   "entries": [
     {
@@ -2998,10 +2998,64 @@
       "menuPath": "Hospedagem › Armazenamento › Contas",
       "scope": "tenant",
       "title": "Contas de Storage",
-      "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
+      "description": "Agrupe os buckets dos clientes em contas comerciais de armazenamento.",
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hosting/storage/bindings",
+      "menuPath": "Hospedagem › Armazenamento › Destinos",
+      "scope": "tenant",
+      "title": "Destinos dos módulos",
+      "description": "Selecione o bucket que cada módulo usa para novos arquivos neste ambiente.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": ""
+        },
+        {
+          "label": "Bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hosting/storage/buckets",
+      "menuPath": "Hospedagem › Armazenamento › Buckets",
+      "scope": "tenant",
+      "title": "Buckets de Storage",
+      "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
+      "fields": [
+        {
+          "label": "Operação do bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
           "help": ""
         },
         {
@@ -3009,7 +3063,7 @@
           "help": ""
         },
         {
-          "label": "Conta padrão",
+          "label": "Permissão inicial de módulo",
           "help": ""
         },
         {
@@ -3026,10 +3080,6 @@
         },
         {
           "label": "Recipiente",
-          "help": ""
-        },
-        {
-          "label": "URL base pública",
           "help": ""
         },
         {
@@ -6614,10 +6664,64 @@
       "menuPath": "Hospedagem › Armazenamento › Contas",
       "scope": "platform",
       "title": "Contas de Storage",
-      "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
+      "description": "Agrupe os buckets dos clientes em contas comerciais de armazenamento.",
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/hosting/storage/bindings",
+      "menuPath": "Hospedagem › Armazenamento › Destinos",
+      "scope": "platform",
+      "title": "Destinos dos módulos",
+      "description": "Selecione o bucket que cada módulo usa para novos arquivos neste ambiente.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": ""
+        },
+        {
+          "label": "Bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/hosting/storage/buckets",
+      "menuPath": "Hospedagem › Armazenamento › Buckets",
+      "scope": "platform",
+      "title": "Buckets de Storage",
+      "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
+      "fields": [
+        {
+          "label": "Operação do bucket",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
           "help": ""
         },
         {
@@ -6625,7 +6729,7 @@
           "help": ""
         },
         {
-          "label": "Conta padrão",
+          "label": "Permissão inicial de módulo",
           "help": ""
         },
         {
@@ -6642,10 +6746,6 @@
         },
         {
           "label": "Recipiente",
-          "help": ""
-        },
-        {
-          "label": "URL base pública",
           "help": ""
         },
         {

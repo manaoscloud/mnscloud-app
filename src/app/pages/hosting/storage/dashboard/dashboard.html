@@ -32,14 +32,14 @@
       <mns-dashboard-record-list
         [title]="'Storage Accounts'"
         [items]="accountRows()"
-        [emptyLabel]="'No storage accounts found. Create an account and set the Bucket on the Storage tab.'"
+        [emptyLabel]="'No storage accounts found.'"
       />
     </div>
 
     <mns-dashboard-record-list
-      [title]="'Provider Types'"
-      [items]="typeRows()"
-      [emptyLabel]="'No storage provider types found.'"
+      [title]="'Storage Buckets'"
+      [items]="bucketRows()"
+      [emptyLabel]="'No storage buckets found.'"
     />
   </div>
 </mns-dashboard-page>

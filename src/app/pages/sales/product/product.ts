@@ -144,7 +144,7 @@ function images(product: ConfigurableCrudRecord) {
     createUpload: { fileField: 'image', formField: 'image' },
     initialValues: { image: null },
     columns: [
-      { id: 'image', label: 'Image', field: 'SpiUrl', kind: 'image' },
+      { id: 'image', label: 'Image', field: 'DownloadUrl', kind: 'image' },
       { id: 'cover', label: 'Cover', field: 'SpiIsCover', kind: 'boolean' },
     ],
     fields: [
@@ -163,7 +163,9 @@ function images(product: ConfigurableCrudRecord) {
         label: 'Set cover',
         icon: 'star',
         tooltip: 'Set cover',
-        visible: (row) => Number(row['SpiIsCover']) !== 1,
+        visible: (row) =>
+          Boolean(row['HostingStorageBucketHsbUUID'] && row['SpiObjectKey']) &&
+          Number(row['SpiIsCover']) !== 1,
         request: {
           method: 'put',
           endpoint: (row) => `sale/products/images/${row['SpiUUID']}/cover`,
@@ -204,7 +206,7 @@ const config = defineCrud({
     fiscalTaxClassCode: '',
   },
   columns: [
-    { id: 'image', label: 'Image', field: 'CoverUrl', kind: 'image' },
+    { id: 'image', label: 'Image', field: 'CoverDownloadUrl', kind: 'image' },
     { id: 'name', label: 'Name', field: 'SprName', uuidField: 'SprUUID', kind: 'identity' },
     { id: 'type', label: 'Type', field: 'SprType', options: productTypes },
     { id: 'category', label: 'Category', field: 'SaleCategoryName' },
