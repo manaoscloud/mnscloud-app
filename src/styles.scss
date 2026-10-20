@@ -948,8 +948,10 @@ mat-chip.status-pill.is-inactive,
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  max-height: min(92vh, 1100px);
-  padding: 1.5rem 1.75rem 1.25rem;
+  /* The pane owns the viewport size; a fixed cap here left a blank band under the footer. */
+  max-height: 100%;
+  /* Same inset above the header and below the footer, so every dialog frames alike. */
+  padding: 1.5rem 1.75rem;
 }
 
 .crud-dialog .dialog-header {
@@ -979,7 +981,6 @@ mat-chip.status-pill.is-inactive,
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: min(82vh, 980px);
   overflow: hidden;
   margin: 0 !important;
   padding: 0 !important;
@@ -1277,11 +1278,7 @@ mat-chip.status-pill.is-inactive,
     width: 100%;
     height: 100%;
     min-height: 0;
-    padding: 1rem 1rem 0.25rem;
-  }
-
-  .crud-dialog .dialog-content {
-    max-height: none;
+    padding: 1rem;
   }
 
   .crud-dialog .form-tabs {
@@ -1304,7 +1301,6 @@ mat-chip.status-pill.is-inactive,
   .crud-dialog .form-actions {
     grid-template-columns: 1fr;
     gap: 0.6rem;
-    margin: auto 0 0.5rem !important;
     padding: 0.75rem 0.5rem 0.65rem !important;
   }
 
@@ -1939,11 +1935,6 @@ app-isp-geomap-assets .geomap-asset-popup-error {
   }
 }
 
-.cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
-  margin: auto 0 0 !important;
-  padding: 0.85rem 0.75rem 0.75rem !important;
-}
-
 .cdk-overlay-pane:is(.crud-form-dialog) .mat-mdc-dialog-surface {
   border-radius: 1.2rem;
   border: 1px solid var(--mat-sys-color-outline-variant);
@@ -1958,7 +1949,7 @@ app-isp-geomap-assets .geomap-asset-popup-error {
 }
 
 .cdk-overlay-pane:is(.crud-form-dialog) .mat-mdc-dialog-actions {
-  margin: auto 0.75rem 0 !important;
+  margin: auto 0 0 !important;
   padding: 0.85rem 0.75rem 0.75rem !important;
   min-height: 0;
   width: auto;
@@ -1997,13 +1988,8 @@ app-isp-geomap-assets .geomap-asset-popup-error {
 
 @media (max-width: 900px) {
   .cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
-    margin: auto 0.75rem 0 !important;
     padding: 0.75rem 0.5rem 0.65rem !important;
     width: auto;
-  }
-
-  .cdk-overlay-pane.crud-form-dialog .mat-mdc-dialog-actions {
-    margin: auto 0 0.5rem !important;
   }
 
   .cdk-overlay-pane:is(.crud-form-dialog) .form-actions {
