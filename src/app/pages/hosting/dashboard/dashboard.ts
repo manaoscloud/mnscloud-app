@@ -236,38 +236,10 @@ export class HostingDashboardPage {
   );
 
   readonly kpis = computed<KpiTile[]>(() => [
-    {
-      label: 'Compute Instances',
-      value: String(this.computeSummary().total),
-      detailValue: String(this.computeSummary().issues),
-      detailLabel: 'issues',
-      icon: 'dns',
-      state: this.computeSummary().issues > 0 ? 'warn' : 'good',
-    },
-    {
-      label: 'Webhost Accounts',
-      value: String(this.webhostSummary().total),
-      detailValue: String(this.webhostSummary().active),
-      detailLabel: 'active resources',
-      icon: 'web',
-      state: this.webhostSummary().issues > 0 ? 'warn' : 'good',
-    },
-    {
-      label: 'Domains',
-      value: String(this.domainSummary().total),
-      detailValue: String(this.domainSummary().active),
-      detailLabel: 'active resources',
-      icon: 'language',
-      state: this.domainSummary().issues > 0 ? 'warn' : 'good',
-    },
-    {
-      label: 'Delivery Accounts',
-      value: String(this.deliverySummary().total),
-      detailValue: String(this.deliverySummary().active),
-      detailLabel: 'active resources',
-      icon: 'mark_email_read',
-      state: this.deliverySummary().issues > 0 ? 'warn' : 'neutral',
-    },
+    this.tile('Compute Instances', 'dns', this.computeSummary(), 'issues', 'good'),
+    this.tile('Webhost Accounts', 'web', this.webhostSummary(), 'active', 'good'),
+    this.tile('Domains', 'language', this.domainSummary(), 'active', 'good'),
+    this.tile('Delivery Accounts', 'mark_email_read', this.deliverySummary(), 'active', 'neutral'),
   ]);
 
   refreshList() {
@@ -356,14 +328,43 @@ export class HostingDashboardPage {
 
   /** Totals of several sections; an unreadable or unavailable section adds nothing. */
   private sum(sections: Array<SectionCounts | InstanceDashboard | null>) {
-    return sections.reduce<{ total: number; active: number; issues: number }>(
+    return sections.reduce<{ total: number; active: number; issues: number; available: boolean }>(
       (acc, section) => ({
         total: acc.total + Number(section?.total ?? 0),
         active: acc.active + Number(section?.active ?? 0),
         issues: acc.issues + Number(section?.issues ?? 0),
+        available: acc.available || section !== null,
       }),
-      { total: 0, active: 0, issues: 0 },
+      { total: 0, active: 0, issues: 0, available: false },
     );
+  }
+
+  /** A KPI whose sections are all unreadable or unavailable shows "—", never a fake zero. */
+  private tile(
+    label: string,
+    icon: string,
+    summary: { total: number; active: number; issues: number; available: boolean },
+    detail: 'issues' | 'active',
+    healthy: KpiTile['state'],
+  ): KpiTile {
+    if (!summary.available) {
+      return {
+        label,
+        value: '—',
+        detailValue: '',
+        detailLabel: 'Unavailable',
+        icon,
+        state: 'neutral',
+      };
+    }
+    return {
+      label,
+      value: String(summary.total),
+      detailValue: String(detail === 'issues' ? summary.issues : summary.active),
+      detailLabel: detail === 'issues' ? 'issues' : 'active resources',
+      icon,
+      state: summary.issues > 0 ? 'warn' : healthy,
+    };
   }
 
   /** Rows only for sections the caller may read (the API returns null for the others). */
