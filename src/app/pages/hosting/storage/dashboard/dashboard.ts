@@ -16,15 +16,13 @@ import {
 type StorageDashboardKpis = {
   providersTotal: number;
   providersActive: number;
-  providersDefault: number;
   accountsTotal: number;
   accountsActive: number;
-  accountsDefault: number;
-  bucketsMapped: number;
-  bucketsUnmapped: number;
-  readinessPassed: number;
-  readinessTotal: number;
-  issues: number;
+  bucketsTotal: number;
+  bucketsActive: number;
+  bucketsReady: number;
+  unmeasuredBuckets: number;
+  usedBytes: string;
 };
 
 type StorageDashboardProvider = {
@@ -32,31 +30,28 @@ type StorageDashboardProvider = {
   HspName: string;
   HspProvider: string;
   HspIsActive: number;
-  HspIsDefault: number;
   accountCount: number;
   bucketCount: number;
-  issues: number;
 };
 
 type StorageDashboardAccount = {
-  HsbUUID: string;
-  HsbName: string;
-  HostingStorageProviderHspUUID: string;
-  ProviderName: string | null;
-  ProviderType: string | null;
-  bucket: string;
-  region: string | null;
-  HsbIsActive: number;
-  HsbIsDefault: number;
-  issues: number;
+  HsaUUID: string;
+  HsaName: string;
+  HsaIsActive: number;
+  CustomerName: string | null;
+  bucketCount: number;
 };
 
-type StorageDashboardType = {
-  provider: string;
-  providers: number;
-  accounts: number;
-  activeAccounts: number;
-  issues: number;
+type StorageDashboardBucket = {
+  HsbUUID: string;
+  HsbName: string;
+  HsbState: string;
+  HsbIsActive: number;
+  HsbUsedBytes: string;
+  HsbLimitBytes: string | null;
+  HsbMeasuredAt: string | null;
+  AccountName: string;
+  ProviderName: string;
 };
 
 type StorageDashboardSnapshot = {
@@ -64,7 +59,16 @@ type StorageDashboardSnapshot = {
   kpis: StorageDashboardKpis;
   providers: StorageDashboardProvider[];
   accounts: StorageDashboardAccount[];
-  types: StorageDashboardType[];
+  buckets: StorageDashboardBucket[];
+};
+
+const BUCKET_STATES: Record<string, string> = {
+  pending: 'Pending',
+  provisioning: 'Provisioning',
+  ready: 'Ready',
+  failed: 'Failed',
+  deleting: 'Deleting',
+  released: 'Released',
 };
 
 type KpiTile = {
@@ -79,15 +83,13 @@ type KpiTile = {
 const EMPTY_KPIS: StorageDashboardKpis = {
   providersTotal: 0,
   providersActive: 0,
-  providersDefault: 0,
   accountsTotal: 0,
   accountsActive: 0,
-  accountsDefault: 0,
-  bucketsMapped: 0,
-  bucketsUnmapped: 0,
-  readinessPassed: 0,
-  readinessTotal: 3,
-  issues: 0,
+  bucketsTotal: 0,
+  bucketsActive: 0,
+  bucketsReady: 0,
+  unmeasuredBuckets: 0,
+  usedBytes: '0',
 };
 
 const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
@@ -95,7 +97,7 @@ const EMPTY_STORAGE_DASHBOARD: StorageDashboardSnapshot = {
   kpis: EMPTY_KPIS,
   providers: [],
   accounts: [],
-  types: [],
+  buckets: [],
 };
 
 @Component({
@@ -140,40 +142,35 @@ export class HostingStorageDashboardPage {
     return [
       {
         label: 'Storage Providers',
-        value: `${kpis.providersActive} / ${kpis.providersTotal}`,
-        detailValue: String(kpis.providersDefault),
-        detailLabel: 'defaults',
+        value: String(kpis.providersTotal),
+        detailValue: String(kpis.providersActive),
+        detailLabel: 'Active',
         icon: 'cloud_sync',
         state: kpis.providersActive > 0 ? 'good' : 'warn',
       },
       {
         label: 'Storage Accounts',
-        value: `${kpis.accountsActive} / ${kpis.accountsTotal}`,
-        detailValue: String(kpis.accountsDefault),
-        detailLabel: 'defaults',
+        value: String(kpis.accountsTotal),
+        detailValue: String(kpis.accountsActive),
+        detailLabel: 'Active',
         icon: 'inventory_2',
         state: kpis.accountsActive > 0 ? 'good' : 'warn',
       },
       {
         label: 'Storage Buckets',
-        value: String(kpis.bucketsMapped),
-        detailValue: String(kpis.bucketsUnmapped),
-        detailLabel: 'unmapped',
+        value: String(kpis.bucketsTotal),
+        detailValue: String(kpis.bucketsReady),
+        detailLabel: 'Ready',
         icon: 'folder',
-        state: kpis.bucketsMapped > 0 ? 'good' : 'neutral',
+        state: kpis.bucketsReady > 0 ? 'good' : 'neutral',
       },
       {
-        label: 'Storage Readiness',
-        value: `${kpis.readinessPassed} / ${kpis.readinessTotal}`,
-        detailValue: String(kpis.issues),
-        detailLabel: 'issues',
-        icon: 'verified',
-        state:
-          kpis.readinessPassed === kpis.readinessTotal
-            ? 'good'
-            : kpis.readinessPassed > 0
-              ? 'warn'
-              : 'bad',
+        label: 'Measured storage',
+        value: this.formatBytes(kpis.usedBytes),
+        detailValue: String(kpis.unmeasuredBuckets),
+        detailLabel: 'Buckets awaiting measurement',
+        icon: 'data_usage',
+        state: kpis.unmeasuredBuckets > 0 ? 'warn' : 'neutral',
       },
     ];
   });
@@ -183,53 +180,66 @@ export class HostingStorageDashboardPage {
       name: provider.HspName,
       meta: provider.HspProvider,
       status: provider.HspIsActive === 1 ? 'Active' : 'Inactive',
-      tone: provider.issues > 0 ? 'danger' : provider.HspIsActive === 1 ? 'success' : 'skipped',
+      tone: provider.HspIsActive === 1 ? 'success' : 'skipped',
       details: [
         { label: 'Accounts', value: String(provider.accountCount) },
         { label: 'Buckets', value: String(provider.bucketCount) },
-        { label: 'Issues', value: String(provider.issues) },
-        {
-          label: 'Default',
-          value: provider.HspIsDefault === 1 ? 'Yes' : 'No',
-          translate: true,
-        },
       ],
     })),
   );
 
   readonly accountRows = computed<DashboardRecord[]>(() =>
     this.dashboard().accounts.map((account) => ({
-      name: account.HsbName,
-      meta: account.ProviderName || account.ProviderType || '-',
-      status: account.HsbIsActive === 1 ? 'Active' : 'Inactive',
-      tone: account.issues > 0 ? 'danger' : account.HsbIsActive === 1 ? 'success' : 'skipped',
+      name: account.HsaName,
+      meta: account.CustomerName || '-',
+      status: account.HsaIsActive === 1 ? 'Active' : 'Inactive',
+      tone: account.HsaIsActive === 1 ? 'success' : 'skipped',
+      details: [{ label: 'Buckets', value: String(account.bucketCount) }],
+    })),
+  );
+
+  readonly bucketRows = computed<DashboardRecord[]>(() =>
+    this.dashboard().buckets.map((bucket) => ({
+      name: bucket.HsbName,
+      meta: bucket.AccountName,
+      status: bucket.HsbIsActive !== 1 ? 'Inactive' : BUCKET_STATES[bucket.HsbState] || 'Unknown',
+      tone:
+        bucket.HsbIsActive !== 1
+          ? 'skipped'
+          : bucket.HsbState === 'ready'
+            ? 'success'
+            : bucket.HsbState === 'failed'
+              ? 'danger'
+              : 'running',
       details: [
-        { label: 'Bucket', value: account.bucket },
-        { label: 'Region', value: account.region || '-' },
-        { label: 'Issues', value: String(account.issues) },
+        { label: 'Provider', value: bucket.ProviderName },
         {
-          label: 'Default',
-          value: account.HsbIsDefault === 1 ? 'Yes' : 'No',
-          translate: true,
+          label: 'Measured storage',
+          value: bucket.HsbMeasuredAt ? this.formatBytes(bucket.HsbUsedBytes) : 'Pending',
+          translate: !bucket.HsbMeasuredAt,
+        },
+        {
+          label: 'Limit',
+          value:
+            bucket.HsbLimitBytes === null ? 'Unlimited' : this.formatBytes(bucket.HsbLimitBytes),
+          translate: bucket.HsbLimitBytes === null,
         },
       ],
     })),
   );
 
-  readonly typeRows = computed<DashboardRecord[]>(() =>
-    this.dashboard().types.map((row) => ({
-      name: row.provider,
-      meta: String(row.providers),
-      status: row.issues > 0 ? 'Issues' : 'Ready',
-      tone: row.issues > 0 ? 'danger' : 'success',
-      details: [
-        { label: 'Providers', value: String(row.providers) },
-        { label: 'Accounts', value: String(row.accounts) },
-        { label: 'Active accounts', value: String(row.activeAccounts) },
-        { label: 'Issues', value: String(row.issues) },
-      ],
-    })),
-  );
+  private formatBytes(value: string): string {
+    // The API preserves BIGINT as decimal text; scale before converting for display.
+    const bytes = BigInt(value);
+    const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB'];
+    let divisor = 1n;
+    let index = 0;
+    while (bytes >= divisor * 1024n && index < units.length - 1) {
+      divisor *= 1024n;
+      index++;
+    }
+    return `${Number((bytes * 100n) / divisor) / 100} ${units[index]}`;
+  }
 
   refreshList() {
     this.dashboardResource.reload();
@@ -248,7 +258,7 @@ export class HostingStorageDashboardPage {
       kpis: { ...EMPTY_KPIS, ...(data?.kpis ?? {}) },
       providers: Array.isArray(data?.providers) ? data.providers : [],
       accounts: Array.isArray(data?.accounts) ? data.accounts : [],
-      types: Array.isArray(data?.types) ? data.types : [],
+      buckets: Array.isArray(data?.buckets) ? data.buckets : [],
     };
   }
 

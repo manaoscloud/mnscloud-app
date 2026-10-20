@@ -8834,5 +8834,7 @@
   "Create bucket at provider": "Create bucket at provider",
   "Default bucket": "Default bucket",
   "Create storage bucket": "Create storage bucket",
-  "nav.hosting.storage.buckets": "Buckets"
+  "nav.hosting.storage.buckets": "Buckets",
+  "Measured storage": "Measured storage",
+  "Buckets awaiting measurement": "Buckets awaiting measurement"
 }
