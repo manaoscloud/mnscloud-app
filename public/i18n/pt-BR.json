@@ -8924,5 +8924,9 @@
   "Delete {count} selected buckets and all provider objects? Removal is irreversible. Unverified destinations keep provider objects for manual recovery.": "Excluir {count} buckets selecionados e todos os objetos no provedor? A remoção é irreversível. Destinos não verificados preservam os objetos para recuperação manual.",
   "Storage bucket deletion requested. Billing continues until provider removal is confirmed.": "Exclusão do bucket solicitada. A cobrança continua até a confirmação da remoção no provedor.",
   "logs.ingestAddress6": "Endereço IPv6 de recebimento",
-  "logs.ingestAddress6Help": "Opcional. Um dos endereços IPv6 globais fixos que o Agent deste servidor informa. Preenchido, os equipamentos podem enviar syslog pela internet por IPv6 (apenas fontes cadastradas são aceitas). Use somente com o firewall IPv6 do servidor ativo. Em branco = apenas IPv4 privado."
+  "logs.ingestAddress6Help": "Opcional. Um dos endereços IPv6 globais fixos que o Agent deste servidor informa. Preenchido, os equipamentos podem enviar syslog pela internet por IPv6 (apenas fontes cadastradas são aceitas). Use somente com o firewall IPv6 do servidor ativo. Em branco = apenas IPv4 privado.",
+  "Generate automatic domain": "Gerar domínio automático",
+  "Generate the managed domain of this server from the automatic domain parameter": "Gera o domínio gerenciado deste servidor a partir do parâmetro de domínio automático",
+  "Automatic domain ready.": "Domínio automático pronto.",
+  "Automatic domain could not be generated.": "Não foi possível gerar o domínio automático."
 }
