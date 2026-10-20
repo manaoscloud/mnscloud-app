@@ -8837,5 +8837,8 @@
   "nav.hosting.storage.buckets": "Buckets",
   "Measured storage": "Measured storage",
   "Buckets awaiting measurement": "Buckets awaiting measurement",
-  "GB-hour": "GB-hour"
+  "GB-hour": "GB-hour",
+  "Storage bucket saved successfully.": "Storage bucket saved successfully.",
+  "Storage bucket deleted successfully.": "Storage bucket deleted successfully.",
+  "Storage bucket verification queued.": "Storage bucket verification queued."
 }

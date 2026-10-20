@@ -21,6 +21,15 @@ type HostingStorageProvider = {
   HspProvider: StorageProvider;
 };
 
+const BUCKET_STATES: Record<string, string> = {
+  pending: 'Pending',
+  provisioning: 'Provisioning',
+  ready: 'Ready',
+  failed: 'Failed',
+  deleting: 'Deleting',
+  released: 'Released',
+};
+
 const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Yes' },
   { value: 0, label: 'No' },
@@ -47,8 +56,8 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
   deleteMessage: 'Are you sure you want to delete this storage bucket?',
   deleteSelectedTitle: 'Delete selected storage buckets',
   deleteSelectedMessage: 'Delete {count} selected storage buckets?',
-  savedMessage: 'Storage account saved successfully.',
-  deletedMessage: 'Storage account deleted successfully.',
+  savedMessage: 'Storage bucket saved successfully.',
+  deletedMessage: 'Storage bucket deleted successfully.',
   deleteFailedMessage: 'Failed to delete storage bucket.',
   statusMode: 'number',
   activeValue: 1,
@@ -93,6 +102,11 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'bucket', label: 'Bucket', field: 'HsbBucketLabel' },
     {
+      id: 'state',
+      label: 'Provisioning',
+      value: (row, translate) => translate(BUCKET_STATES[String(row['HsbState'])] || 'Unknown'),
+    },
+    {
       id: 'default',
       label: 'Default',
       kind: 'boolean',
@@ -131,6 +145,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'accountUuid',
+      disabledWhen: ({ editing }) => editing,
       source: 'HostingStorageAccountHsaUUID',
       payloadKey: 'accountUuid',
       label: 'Account',
@@ -140,6 +155,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'providerUuid',
+      disabledWhen: ({ editing }) => editing,
       source: 'HostingStorageProviderHspUUID',
       payloadKey: 'providerUuid',
       label: 'Provider',
@@ -166,6 +182,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'bucket',
+      disabledWhen: ({ editing }) => editing,
       payloadKey: 'bucket',
       label: 'Bucket',
       tab: 'storage',
@@ -176,15 +193,18 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'container',
+      disabledWhen: ({ editing }) => editing,
       payloadKey: 'container',
       label: 'Container',
       tab: 'storage',
       span: 2,
       hiddenWhen: ({ values }) => bucketProviderType(values) !== 'azure',
-      requiredWhen: ({ values }) => bucketProviderType(values) === 'azure',
+      requiredWhen: ({ values }) =>
+        values['provisionMode'] !== 'create' && bucketProviderType(values) === 'azure',
     },
     {
       key: 'pathPrefix',
+      disabledWhen: ({ editing }) => editing,
       payloadKey: 'pathPrefix',
       label: 'Path prefix',
       tab: 'storage',
@@ -375,7 +395,7 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const provider = String(row['HspProvider'] ?? '');
-    return provider === 's3' || provider === 'spaces' || provider === 'sangfor_scp'
+    return ['s3', 'spaces', 'sangfor_scp', 'azure', 'gcs'].includes(provider)
       ? [VALIDATE_ACTION]
       : [];
   }
@@ -386,8 +406,10 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
     if (!uuid) return;
     this.mutating.set(true);
     try {
-      await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
-      this.snack.success(this.t('Storage account validated.'));
+      const response = await this.api.post(`${this.endpoint()}/${uuid}/validate`, {});
+      this.trackOperation(response);
+      this.snack.success(this.t('Storage bucket verification queued.'));
+      await this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to validate storage bucket.'));
     } finally {
