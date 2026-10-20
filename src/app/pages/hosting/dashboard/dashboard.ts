@@ -15,6 +15,12 @@ import {
 } from '../../../shared/crud/configurable-crud/global-table';
 import { ConfigurableCrudRowAction } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
+import {
+  EMPTY_INSTANCE_DASHBOARD,
+  type InstanceDashboard,
+  instanceDashboard,
+} from '../shared/instance-dashboard';
+
 type HostingDatasetKey =
   | 'dnsDomains'
   | 'dnsProviders'
@@ -25,10 +31,8 @@ type HostingDatasetKey =
   | 'storageAccounts'
   | 'vpsProviders'
   | 'vpsPlans'
-  | 'vpsInstances'
   | 'containerProviders'
   | 'containerPlans'
-  | 'containerInstances'
   | 'webhostProviders'
   | 'webhostPlans'
   | 'webhostHosts'
@@ -86,10 +90,8 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
   storageAccounts: [],
   vpsProviders: [],
   vpsPlans: [],
-  vpsInstances: [],
   containerProviders: [],
   containerPlans: [],
-  containerInstances: [],
   webhostProviders: [],
   webhostPlans: [],
   webhostHosts: [],
@@ -101,12 +103,16 @@ const EMPTY_HOSTING_DATA: Record<HostingDatasetKey, GenericRow[]> = {
 
 type HostingDashboardSnapshot = {
   data: Record<HostingDatasetKey, GenericRow[]>;
+  vps: InstanceDashboard;
+  containers: InstanceDashboard;
   generatedAt: string | null;
   failedSections: number;
 };
 
 const EMPTY_HOSTING_DASHBOARD: HostingDashboardSnapshot = {
   data: { ...EMPTY_HOSTING_DATA },
+  vps: EMPTY_INSTANCE_DASHBOARD,
+  containers: EMPTY_INSTANCE_DASHBOARD,
   generatedAt: null,
   failedSections: 0,
 };
@@ -225,13 +231,12 @@ export class HostingDashboardPage {
   });
 
   readonly computeSummary = computed(() => {
-    const data = this.data();
-    const total = data.vpsInstances.length + data.containerInstances.length;
-    const active =
-      this.activeCount(data.vpsInstances, ['HviIsActive'], ['HviStatus']) +
-      this.activeCount(data.containerInstances, ['HciIsActive'], ['HciStatus']);
-    const issues = this.issueCount(data.vpsInstances) + this.issueCount(data.containerInstances);
-    return { total, active, issues };
+    const { vps, containers } = this.dashboard();
+    return {
+      total: vps.total + containers.total,
+      active: vps.active + containers.active,
+      issues: vps.issues + containers.issues,
+    };
   });
 
   readonly webhostSummary = computed(() => {
@@ -306,11 +311,22 @@ export class HostingDashboardPage {
 
     // A null endpoint is a section this user has no API for (for example the master-only
     // Webhost provider catalog); it stays empty instead of failing the dashboard.
-    const results = await Promise.allSettled(
-      entries.map(([, endpoint]) => (endpoint ? this.fetchItems(endpoint) : Promise.resolve([]))),
-    );
+    const [results, instanceResults] = await Promise.all([
+      Promise.allSettled(
+        entries.map(([, endpoint]) => (endpoint ? this.fetchItems(endpoint) : Promise.resolve([]))),
+      ),
+      Promise.allSettled([
+        this.fetchInstanceDashboard(`${this.vpsRoot()}/dashboard`),
+        this.fetchInstanceDashboard(`${this.containerRoot()}/dashboard`),
+      ]),
+    ]);
     const nextData: Record<HostingDatasetKey, GenericRow[]> = { ...EMPTY_HOSTING_DATA };
-    const failedSections = results.filter((result) => result.status === 'rejected').length;
+    const failedSections = [...results, ...instanceResults].filter(
+      (result) => result.status === 'rejected',
+    ).length;
+    const [vps, containers] = instanceResults.map((result) =>
+      result.status === 'fulfilled' ? result.value : EMPTY_INSTANCE_DASHBOARD,
+    );
 
     entries.forEach(([key], index) => {
       const result = results[index];
@@ -318,12 +334,14 @@ export class HostingDashboardPage {
     });
 
     // One unavailable section must not hide the others: only a total failure is an error.
-    if (entries.length > 0 && failedSections === entries.length) {
+    if (failedSections === entries.length + instanceResults.length) {
       throw new Error('Failed to load hosting dashboard.');
     }
 
     return {
       data: nextData,
+      vps,
+      containers,
       generatedAt: new Date().toISOString(),
       failedSections,
     };
@@ -381,10 +399,8 @@ export class HostingDashboardPage {
       storageAccounts: `${this.storageRoot()}/accounts`,
       vpsProviders: `${this.vpsRoot()}/providers`,
       vpsPlans: `${this.vpsRoot()}/plans`,
-      vpsInstances: `${this.vpsRoot()}/instances`,
       containerProviders: `${this.containerRoot()}/providers`,
       containerPlans: `${this.containerRoot()}/plans`,
-      containerInstances: `${this.containerRoot()}/instances`,
       webhostProviders: this.hasPlatformMasterAccess() ? 'system/hosting/webhost/providers' : null,
       webhostPlans: this.hasPlatformMasterAccess()
         ? 'system/hosting/webhost/plans'
@@ -420,6 +436,12 @@ export class HostingDashboardPage {
     return this.responseItems(response);
   }
 
+  private async fetchInstanceDashboard(endpoint: string): Promise<InstanceDashboard> {
+    return instanceDashboard(
+      await this.api.get<{ data?: Partial<InstanceDashboard> }>(endpoint, { timeout: 30000 }),
+    );
+  }
+
   private withLimit(endpoint: string) {
     return endpoint.includes('?')
       ? `${endpoint}&limit=500&offset=0`
@@ -447,22 +469,16 @@ export class HostingDashboardPage {
         ['HddStatus'],
         ['hosting', 'dns', 'domains'],
       ),
-      this.workload(
-        'vps-instances',
-        'VPS Instances',
-        'dns',
-        data.vpsInstances,
-        ['HviIsActive'],
-        ['HviStatus'],
-        ['hosting', 'vps', 'instances'],
-      ),
-      this.workload(
+      this.instanceWorkload('vps-instances', 'VPS Instances', 'dns', this.dashboard().vps, [
+        'hosting',
+        'vps',
+        'instances',
+      ]),
+      this.instanceWorkload(
         'container-instances',
         'Container Instances',
         'apps',
-        data.containerInstances,
-        ['HciIsActive'],
-        ['HciStatus'],
+        this.dashboard().containers,
         ['hosting', 'vps-container', 'instances'],
       ),
       this.workload(
@@ -567,26 +583,16 @@ export class HostingDashboardPage {
   private issues(): IssueRow[] {
     const data = this.data();
     return [
-      ...this.issueRows(
-        'VPS Instance',
-        data.vpsInstances,
-        'HviUUID',
-        'HviName',
-        ['HviStatus'],
-        ['HviProvisionStatus'],
-        ['HviProvisionError'],
-        ['hosting', 'vps', 'instances'],
-      ),
-      ...this.issueRows(
-        'Container Instance',
-        data.containerInstances,
-        'HciUUID',
-        'HciName',
-        ['HciStatus'],
-        ['HciProvisionStatus'],
-        ['HciProvisionError'],
-        ['hosting', 'vps-container', 'instances'],
-      ),
+      ...this.instanceIssueRows('VPS Instance', this.dashboard().vps, [
+        'hosting',
+        'vps',
+        'instances',
+      ]),
+      ...this.instanceIssueRows('Container Instance', this.dashboard().containers, [
+        'hosting',
+        'vps-container',
+        'instances',
+      ]),
       ...this.issueRows(
         'Webhost Host',
         data.webhostHosts,
@@ -628,6 +634,29 @@ export class HostingDashboardPage {
       issues: this.issueCount(rows),
       route,
     };
+  }
+
+  private instanceWorkload(
+    key: string,
+    label: string,
+    icon: string,
+    totals: InstanceDashboard,
+    route: string[],
+  ): WorkloadRow {
+    const { total, active, issues } = totals;
+    return { key, label, icon, total, active, issues, route };
+  }
+
+  /** The ten most recent problem instances, already selected by the database. */
+  private instanceIssueRows(type: string, totals: InstanceDashboard, route: string[]): IssueRow[] {
+    return totals.issueRows.map((row) => ({
+      key: row.uuid,
+      type,
+      name: row.name || '-',
+      status: row.status || 'Check',
+      message: 'Review provisioning state.',
+      route,
+    }));
   }
 
   private provider(

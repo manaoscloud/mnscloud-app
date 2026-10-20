@@ -25,7 +25,6 @@ export type SoftswitchDashboardSnapshot = {
   activeTrunks: number;
   routes: number;
   activeRoutes: number;
-  cdrs: number;
 };
 
 const EMPTY_SNAPSHOT: SoftswitchDashboardSnapshot = {
@@ -40,7 +39,6 @@ const EMPTY_SNAPSHOT: SoftswitchDashboardSnapshot = {
   activeTrunks: 0,
   routes: 0,
   activeRoutes: 0,
-  cdrs: 0,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -49,56 +47,23 @@ export class VoipSoftswitchDashboardService {
   private readonly servers = inject(VoipSoftswitchServerService);
   private readonly listLimit = 5000;
 
+  /** Counts come from the database over every tenant row; the master view only lists servers. */
   async get(isMaster = false): Promise<SoftswitchDashboardSnapshot> {
-    const [accounts, servers] = await Promise.all([
-      isMaster ? [] : this.safeEndpointItems('voip/softswitch/accounts'),
-      this.safeItems(this.servers.list(isMaster, { limit: this.listLimit })),
+    const [counts, servers] = await Promise.all([
+      isMaster
+        ? null
+        : this.api.get<{ data?: Partial<SoftswitchDashboardSnapshot> }>(
+            'voip/softswitch/dashboard',
+            { timeout: 30000 },
+          ),
+      this.servers.list(isMaster, { limit: this.listLimit }),
     ]);
-
-    const tenantOnly = isMaster
-      ? {
-          subscribers: [],
-          dids: [],
-          trunks: [],
-          routes: [],
-          cdrs: [],
-        }
-      : {
-          subscribers: await this.safeEndpointItems('voip/softswitch/subscribers'),
-          dids: await this.safeEndpointItems('voip/softswitch/dids'),
-          trunks: await this.safeEndpointItems('voip/softswitch/trunks'),
-          routes: await this.safeEndpointItems('voip/softswitch/routes'),
-          cdrs: await this.safeEndpointItems('voip/softswitch/cdrs'),
-        };
-
+    const items = Array.isArray(servers?.data?.items) ? servers.data.items : [];
     return {
       ...EMPTY_SNAPSHOT,
-      servers: servers.map((server: any) => this.serverRow(server)),
-      accounts: accounts.length,
-      activeAccounts: accounts.filter((item: any) => Number(item.VssIsActive ?? 0) === 1).length,
-      subscribers: tenantOnly.subscribers.length,
-      activeSubscribers: tenantOnly.subscribers.filter(
-        (item: any) => Number(item.VsuEnabled ?? 0) === 1,
-      ).length,
-      dids: tenantOnly.dids.length,
-      activeDids: tenantOnly.dids.filter((item: any) => Number(item.VsdEnabled ?? 0) === 1).length,
-      trunks: tenantOnly.trunks.length,
-      activeTrunks: tenantOnly.trunks.filter((item: any) => this.status(item) === 1).length,
-      routes: tenantOnly.routes.length,
-      activeRoutes: tenantOnly.routes.filter((item: any) => this.status(item) === 1).length,
-      cdrs: tenantOnly.cdrs.length,
+      ...counts?.data,
+      servers: items.map((server: any) => this.serverRow(server)),
     };
-  }
-
-  private async safeItems(request: Promise<any>) {
-    const response = await request;
-    return Array.isArray(response?.data?.items) ? response.data.items : [];
-  }
-
-  private safeEndpointItems(endpoint: string) {
-    return this.safeItems(
-      this.api.get<any>(`${endpoint}?limit=${this.listLimit}&offset=0`, { timeout: 30000 }),
-    );
   }
 
   private serverRow(server: any): SoftswitchDashboardServer {
@@ -112,11 +77,5 @@ export class VoipSoftswitchDashboardService {
       health: status !== 1 ? 'inactive' : server.VsrLastSeenAt ? 'online' : 'offline',
       lastSeenAt: server.VsrLastSeenAt ?? null,
     };
-  }
-
-  private status(item: any) {
-    return Number(
-      item.VstStatus ?? item.VsrStatus ?? item.VspStatus ?? item.VrtStatus ?? item.status ?? 0,
-    );
   }
 }
