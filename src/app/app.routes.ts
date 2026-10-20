@@ -1419,6 +1419,15 @@ export const routes: Routes = [
                     title: 'Hosting • Storage Buckets | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
+                  {
+                    path: 'bindings',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/bindings/bindings').then(
+                        (m) => m.HostingStorageBindingsPage,
+                      ),
+                    title: 'Hosting • Module Destinations | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                 ],
               },
               {
@@ -2735,6 +2744,15 @@ export const routes: Routes = [
                         (m) => m.HostingStorageBucketsPage,
                       ),
                     title: 'System Storage Buckets | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'bindings',
+                    loadComponent: () =>
+                      import('./pages/hosting/storage/bindings/bindings').then(
+                        (m) => m.HostingStorageBindingsPage,
+                      ),
+                    title: 'Hosting • Module Destinations | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                 ],

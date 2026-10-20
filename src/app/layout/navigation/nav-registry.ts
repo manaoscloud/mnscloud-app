@@ -1383,6 +1383,13 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/hosting/storage/buckets',
             masterRoute: '/system/hosting/storage/buckets',
           },
+          {
+            id: 'hosting/storage/bindings',
+            label: 'nav.hosting.storage.bindings',
+            icon: 'link',
+            route: '/hosting/storage/bindings',
+            masterRoute: '/system/hosting/storage/bindings',
+          },
         ],
       },
       {

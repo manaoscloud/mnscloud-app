@@ -8852,5 +8852,14 @@
   "Consumer scope": "Escopo de consumo",
   "Selected environment": "Ambiente selecionado",
   "All environments": "Todos os ambientes",
-  "Clinic": "Clínica"
+  "Clinic": "Clínica",
+  "nav.hosting.storage.bindings": "Destinos",
+  "Module destinations": "Destinos dos módulos",
+  "Select the bucket each module uses for new files in this environment.": "Selecione o bucket que cada módulo usa para novos arquivos neste ambiente.",
+  "New module destination": "Novo destino de módulo",
+  "Edit module destination": "Editar destino de módulo",
+  "Choose a bucket explicitly offered to this module and environment.": "Escolha um bucket disponibilizado explicitamente para este módulo e ambiente.",
+  "Remove this destination? Existing files keep their recorded bucket.": "Remover este destino? Os arquivos existentes mantêm o bucket registrado.",
+  "Remove {count} destinations? Existing files keep their recorded buckets.": "Remover {count} destinos? Os arquivos existentes mantêm seus buckets registrados.",
+  "Initial module permission": "Permissão inicial de módulo"
 }

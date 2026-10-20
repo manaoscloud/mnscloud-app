@@ -1,5 +1,5 @@
 import { storagePriceFields } from '../storage-price-fields';
-import { storageGrantCollection } from '../storage-module-config';
+import { STORAGE_MODULE_OPTIONS, storageGrantCollection } from '../storage-module-config';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
@@ -30,11 +30,6 @@ const BUCKET_STATES: Record<string, string> = {
   deleting: 'Deleting',
   released: 'Released',
 };
-
-const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
 
 const VALIDATE_ACTION: ConfigurableCrudRowAction = {
   key: 'validate',
@@ -87,7 +82,7 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
     providerUuid: '',
     linkedProviderType: '',
     status: 1,
-    isDefault: 0,
+    initialModule: '',
     bucket: '',
     container: '',
     pathPrefix: '',
@@ -106,13 +101,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       id: 'state',
       label: 'Provisioning',
       value: (row, translate) => translate(BUCKET_STATES[String(row['HsbState'])] || 'Unknown'),
-    },
-    {
-      id: 'default',
-      label: 'Default',
-      kind: 'boolean',
-      field: 'HsbIsDefault',
-      className: 'status-col',
     },
     {
       id: 'status',
@@ -165,13 +153,12 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'isDefault',
-      source: 'HsbIsDefault',
-      payloadKey: 'isDefault',
-      label: 'Default bucket',
+      key: 'initialModule',
+      label: 'Initial module permission',
       type: 'search-select',
-      options: YES_NO_OPTIONS,
+      options: STORAGE_MODULE_OPTIONS,
       span: 1,
+      hiddenWhen: ({ editing }) => editing,
     },
     { key: 'name', source: 'HsbName', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     {
@@ -354,7 +341,6 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
       container: stringValue(config['container']),
       pathPrefix: stringValue(config['pathPrefix']),
       linkedProviderType,
-      isDefault: truthyNumber(row['HsbIsDefault']),
       status: truthyNumber(row['HsbIsActive']),
     };
   }
@@ -400,17 +386,19 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
       providerUuid: payload['providerUuid'],
       config,
       isActive: truthyNumber(payload['status']) === 1,
-      isDefault: truthyNumber(payload['isDefault']) === 1,
+      initialModule: payload['initialModule'] || undefined,
     };
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const provider = String(row['HspProvider'] ?? '');
-    return super.rowActions(row).filter(
-      (action) =>
-        action.key !== 'validate' ||
-        ['s3', 'spaces', 'sangfor_scp', 'azure', 'gcs'].includes(provider),
-    );
+    return super
+      .rowActions(row)
+      .filter(
+        (action) =>
+          action.key !== 'validate' ||
+          ['s3', 'spaces', 'sangfor_scp', 'azure', 'gcs'].includes(provider),
+      );
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
