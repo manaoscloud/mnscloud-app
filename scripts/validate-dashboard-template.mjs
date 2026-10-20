@@ -43,6 +43,16 @@ for (const file of files) {
     name !== 'src/app/pages/dashboard/dashboard.ts'
   )
     errors.push(`${name}: only the App home offers Customize; module dashboards are refresh-only`);
+  // Charts come only from the shared mns-trend-chart (docs/dashboards.md).
+  if (
+    /<svg\b|<canvas\b/.test(html) ||
+    /from ['"](?:chart\.js|echarts|ngx-echarts|@swimlane\/ngx-charts|apexcharts|ng-apexcharts|highcharts)/.test(
+      source,
+    )
+  )
+    errors.push(
+      `${name}: draw charts with the shared mns-trend-chart, not page-local SVG/canvas or a chart library`,
+    );
   if (!source.includes('dashboardResource('))
     errors.push(`${name}: use the scoped dashboard read model`);
   if (

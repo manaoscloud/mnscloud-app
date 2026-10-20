@@ -8844,5 +8844,8 @@
   "logs.tiers.365d": "365 días",
   "logs.syslogUdp": "Syslog UDP",
   "logs.syslogTcp": "Syslog TCP",
-  "logs.transportHelp": "Transportes aceptados para esta fuente. Al menos uno debe estar habilitado."
+  "logs.transportHelp": "Transportes aceptados para esta fuente. Al menos uno debe estar habilitado.",
+  "home.chart.realtime.chart.jobs": "Tareas del Agent WebRTC por día (30 días)",
+  "home.chart.realtime.series.jobs_other": "Completadas o en curso",
+  "home.chart.realtime.series.jobs_failed": "Fallidas"
 }
