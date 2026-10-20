@@ -1,4 +1,5 @@
 import { storagePriceFields } from '../storage-price-fields';
+import { storageGrantCollection } from '../storage-module-config';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
@@ -256,6 +257,16 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
         const prefix = master ? 'system/hosting/storage' : 'hosting/storage';
         return {
           ...BUCKET_CONFIG,
+          rowActions: [
+            VALIDATE_ACTION,
+            {
+              key: 'permissions',
+              label: 'Bucket permissions',
+              icon: 'policy',
+              collection: (row: ConfigurableCrudRecord) =>
+                storageGrantCollection(prefix, master, String(row['HsbUUID'])),
+            },
+          ],
           fields: BUCKET_CONFIG.fields
             .filter((field) => !master || !field.key.startsWith('price'))
             .map((field) => ({

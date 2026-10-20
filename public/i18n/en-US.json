@@ -8840,5 +8840,16 @@
   "GB-hour": "GB-hour",
   "Storage bucket saved successfully.": "Storage bucket saved successfully.",
   "Storage bucket deleted successfully.": "Storage bucket deleted successfully.",
-  "Storage bucket verification queued.": "Storage bucket verification queued."
+  "Storage bucket verification queued.": "Storage bucket verification queued.",
+  "Bucket permissions": "Bucket permissions",
+  "Choose which modules and environments may use this bucket.": "Choose which modules and environments may use this bucket.",
+  "New bucket permission": "New bucket permission",
+  "Edit bucket permission": "Edit bucket permission",
+  "Authorize one module for the selected consumer scope.": "Authorize one module for the selected consumer scope.",
+  "Remove this permission? Existing files remain in the bucket.": "Remove this permission? Existing files remain in the bucket.",
+  "Remove {count} permissions? Existing files remain in the bucket.": "Remove {count} permissions? Existing files remain in the bucket.",
+  "Consumer scope": "Consumer scope",
+  "Selected environment": "Selected environment",
+  "All environments": "All environments",
+  "Clinic": "Clinic"
 }

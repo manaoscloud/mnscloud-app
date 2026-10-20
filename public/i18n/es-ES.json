@@ -8840,5 +8840,16 @@
   "GB-hour": "GB-hora",
   "Storage bucket saved successfully.": "Bucket guardado correctamente.",
   "Storage bucket deleted successfully.": "Bucket eliminado correctamente.",
-  "Storage bucket verification queued.": "Verificación del bucket añadida a la cola."
+  "Storage bucket verification queued.": "Verificación del bucket añadida a la cola.",
+  "Bucket permissions": "Permisos del bucket",
+  "Choose which modules and environments may use this bucket.": "Elija qué módulos y entornos pueden utilizar este bucket.",
+  "New bucket permission": "Nuevo permiso del bucket",
+  "Edit bucket permission": "Editar permiso del bucket",
+  "Authorize one module for the selected consumer scope.": "Autorice un módulo para el ámbito de consumo seleccionado.",
+  "Remove this permission? Existing files remain in the bucket.": "¿Eliminar este permiso? Los archivos existentes permanecen en el bucket.",
+  "Remove {count} permissions? Existing files remain in the bucket.": "¿Eliminar {count} permisos? Los archivos existentes permanecen en el bucket.",
+  "Consumer scope": "Ámbito de consumo",
+  "Selected environment": "Entorno seleccionado",
+  "All environments": "Todos los entornos",
+  "Clinic": "Clínica"
 }
