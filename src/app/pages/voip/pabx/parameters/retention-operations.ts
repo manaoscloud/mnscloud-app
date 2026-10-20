@@ -575,9 +575,7 @@ export class VoipPabxRetentionOperationsComponent {
           (target: any): StorageScanTarget => ({
             tenantName: target?.tenantName ? String(target.tenantName) : null,
             tenantUUID: String(target?.tenantUUID ?? ''),
-            storageBucketName: target?.storageBucketName
-              ? String(target.storageBucketName)
-              : null,
+            storageBucketName: target?.storageBucketName ? String(target.storageBucketName) : null,
             scannedObjects: Number(target?.scannedObjects ?? 0),
             scannedBytes: Number(target?.scannedBytes ?? 0),
             unreferencedObjects: Number(target?.unreferencedObjects ?? 0),

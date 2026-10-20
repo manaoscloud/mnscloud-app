@@ -400,9 +400,7 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
       isActive: Number(payload['isActive']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,
       storageBucketUUID:
-        payload['recordingStorageMode'] === 'storage'
-          ? payload['storageBucketUUID'] || null
-          : null,
+        payload['recordingStorageMode'] === 'storage' ? payload['storageBucketUUID'] || null : null,
       mediaStorageBucketUUID:
         payload['mediaStorageMode'] === 'storage'
           ? payload['mediaStorageBucketUUID'] || null

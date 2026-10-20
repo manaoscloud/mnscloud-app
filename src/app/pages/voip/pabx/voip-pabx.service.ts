@@ -22,7 +22,6 @@ export type VoipPabxAccount = {
   RecordingStorageProviderName?: string | null;
   RecordingStorageProvider?: string | null;
   RecordingStorageEffectivePath?: string | null;
-  RecordingStoragePublicUrl?: string | null;
   ServerAllowedCodecs?: string | null;
   ServerName?: string | null;
   ServerEngine?: string | null;
