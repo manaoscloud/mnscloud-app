@@ -37,7 +37,8 @@ export function dashboardResource<T, R>(
   const { defaultValue, ...config } = options;
   const source = resource({
     ...config,
-    params: (ctx) => ({ request: options.params?.(ctx), scope: scope() }),
+    // Signed out (logout clears the user before leaving the page): stay idle instead of a 401.
+    params: (ctx) => (auth.user() ? { request: options.params?.(ctx), scope: scope() } : undefined),
     loader: async (ctx) => ({
       data: await options.loader({ ...ctx, params: ctx.params.request as Exclude<R, undefined> }),
       scope: ctx.params.scope,
