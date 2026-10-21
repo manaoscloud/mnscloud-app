@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1ec172966cdf",
+  "version": "029ff30e1850",
   "language": "pt-BR",
   "entries": [
     {
@@ -7959,14 +7959,6 @@
       "fields": []
     },
     {
-      "route": "/system/realtime/webrtc/automatic-dns",
-      "menuPath": "Tempo real › WebRTC › DNS automático",
-      "scope": "platform",
-      "title": "DNS automático",
-      "description": "",
-      "fields": []
-    },
-    {
       "route": "/system/realtime/webrtc/domain",
       "menuPath": "Tempo real › WebRTC › Domínios",
       "scope": "platform",
@@ -7975,7 +7967,7 @@
       "fields": []
     },
     {
-      "route": "/system/realtime/webrtc/parameter",
+      "route": "/system/realtime/webrtc/parameters",
       "menuPath": "Tempo real › WebRTC › Parâmetros",
       "scope": "platform",
       "title": "Parâmetros",
