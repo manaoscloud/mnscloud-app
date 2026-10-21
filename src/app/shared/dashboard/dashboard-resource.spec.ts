@@ -5,7 +5,8 @@ import { TenantService } from '../../services/tenant.service';
 import { dashboardResource, type DashboardResource } from './dashboard-resource';
 
 describe('dashboardResource', () => {
-  const user = signal({ uuid: 'user-a' });
+  const user = signal<{ uuid: string } | null>({ uuid: 'user-a' });
+  let loads = 0;
   const tenant = signal({ EnvironmentUUID: 'tenant-a' });
   let resolve: (value: { total: number }) => void;
   let reject: (reason: Error) => void;
@@ -29,6 +30,7 @@ describe('dashboardResource', () => {
         defaultValue: { total: 0 },
         loader: () =>
           new Promise<{ total: number }>((yes, no) => {
+            loads++;
             resolve = yes;
             reject = no;
           }),
@@ -95,5 +97,16 @@ describe('dashboardResource', () => {
     user.set({ uuid: 'user-b' });
     expect(view.hasData()).toBeFalse();
     expect(view.value().total).toBe(0);
+  });
+  it('does not load while signed out (logout keeps the page mounted briefly)', async () => {
+    resolve({ total: 12 });
+    await settle();
+    const before = loads;
+    user.set(null);
+    await settle();
+    expect(loads).toBe(before);
+    expect(view.hasData()).toBeFalse();
+    expect(view.value().total).toBe(0);
+    expect(view.isLoading()).toBeFalse();
   });
 });

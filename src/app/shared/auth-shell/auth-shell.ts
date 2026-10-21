@@ -37,7 +37,7 @@ export class AuthShell {
   readonly previewLocale = input<LoginLocale | null>(null);
   readonly previewMobile = input(false);
   readonly preview = input(false);
-  readonly module = input<'app' | 'pulse' | 'pos'>('app');
+  readonly module = input<'app' | 'pulse' | 'pos' | 'phoneweb'>('app');
   readonly failedLogo = signal<string | null>(null);
   readonly context = computed(() => this.previewContext() ?? this.publicTheme.context());
   readonly appearance = computed<LoginAppearance>(() => this.context()?.LoginAppearance ?? {});
@@ -45,7 +45,12 @@ export class AuthShell {
   readonly title = computed(
     () =>
       this.context()?.PageTitle ||
-      { app: 'MNSCloud', pulse: 'MNSCloud Pulse', pos: 'MNSCloud POS' }[this.module()],
+      {
+        app: 'MNSCloud',
+        pulse: 'MNSCloud Pulse',
+        pos: 'MNSCloud POS',
+        phoneweb: 'MNSCloud PhoneWeb',
+      }[this.module()],
   );
   readonly color = computed(() => brandColor(this.context()?.PrimaryColor));
   readonly foreground = computed(() => onBrandColor(this.color()));

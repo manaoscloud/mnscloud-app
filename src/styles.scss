@@ -62,6 +62,16 @@ $dark-theme: mat.define-theme(
   )
 );
 
+$midnight-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+  )
+);
+
 /* =========================================================
    2) MIXIN PARA GERAR AS VARIÁVEIS --mat-sys-*
 ========================================================= */
@@ -139,6 +149,31 @@ html[data-theme='light'] {
 html[data-theme='dark'] {
   @include mnscloud-component-themes($dark-theme);
   @include mnscloud-sys-colors($dark-theme);
+  color-scheme: dark;
+}
+
+html[data-theme='midnight'] {
+  @include mnscloud-component-themes($midnight-theme);
+  @include mnscloud-sys-colors($midnight-theme);
+
+  /* Deep Navy surface & container tones (alinhados com a tela de login) */
+  --mat-sys-color-surface: #111c2d;
+  --mat-sys-color-surface-container-lowest: #0a121e;
+  --mat-sys-color-surface-container-low: #0f1827;
+  --mat-sys-color-surface-container: #152238;
+  --mat-sys-color-surface-container-high: #1c2d49;
+  --mat-sys-color-surface-container-highest: #24385a;
+
+  --mat-sys-color-on-surface: #edf2fa;
+  --mat-sys-color-on-surface-variant: #b8c5d9;
+  --mat-sys-color-outline: #46556c;
+  --mat-sys-color-outline-variant: #243650;
+
+  --mat-sys-color-primary: #1264ed;
+  --mat-sys-color-on-primary: #ffffff;
+  --mat-sys-color-primary-container: #1c3563;
+  --mat-sys-color-on-primary-container: #d9e6ff;
+
   color-scheme: dark;
 }
 
@@ -1520,6 +1555,12 @@ app-isp-geomap-assets .geomap-measure-control .geomap-rectangle-toggle[data-acti
 }
 
 .dark-theme
+  app-isp-geomap-assets
+  .mapboxgl-ctrl-group
+  button:not(.geomap-style-toggle):not(.geomap-measure-toggle):not(.geomap-rectangle-toggle):not(
+    .geomap-measure-clear
+  ):not(.geomap-fullscreen-toggle):not(.geomap-expand-toggle),
+.midnight-theme
   app-isp-geomap-assets
   .mapboxgl-ctrl-group
   button:not(.geomap-style-toggle):not(.geomap-measure-toggle):not(.geomap-rectangle-toggle):not(

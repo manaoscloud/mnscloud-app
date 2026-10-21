@@ -69,7 +69,7 @@ import { ReportProblemButtonComponent } from '../support-report-dialog/report-pr
             <h1 class="title">{{ copy('title') }}</h1>
             <p class="subtitle">{{ copy('subtitle') }}</p>
             <div class="preview-label">
-              {{ t(module() === 'pulse' ? 'access.employeeCode' : 'signin.email') }}
+              {{ t(identityLabel[module()]) }}
             </div>
             <div class="preview-input">
               {{ module() === 'pulse' ? 'ABC12345' : 'nome@example.com' }}
@@ -167,12 +167,21 @@ export class AuthPreviewDialog {
     app: PublicThemeRuntimeContext;
     pulse: PublicThemeRuntimeContext;
     pos: PublicThemeRuntimeContext;
-    module: 'app' | 'pulse' | 'pos';
+    phoneweb: PublicThemeRuntimeContext;
+    module: 'app' | 'pulse' | 'pos' | 'phoneweb';
   }>(MAT_DIALOG_DATA);
+  /** First field of each login: App/POS e-mail, Pulse code, PhoneWeb any MNSCloud login. */
+  readonly identityLabel = {
+    app: 'signin.email',
+    pos: 'signin.email',
+    pulse: 'access.employeeCode',
+    phoneweb: 'access.phonewebUser',
+  } as const;
   readonly modules = [
     { key: 'app', label: 'App' },
     { key: 'pulse', label: 'Pulse' },
     { key: 'pos', label: 'POS' },
+    { key: 'phoneweb', label: 'PhoneWeb' },
   ] as const;
   private readonly transloco = inject(TranslocoService);
   private readonly translationEvents = toSignal(this.transloco.events$);

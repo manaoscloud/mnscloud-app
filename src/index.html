@@ -17,7 +17,7 @@
       const key = 'mnscloud-theme';
       const saved = localStorage.getItem(key);
       const mode =
-        saved === 'light' || saved === 'dark' || saved === 'system'
+        saved === 'light' || saved === 'dark' || saved === 'midnight' || saved === 'system'
           ? saved
           : 'system';
       document.documentElement.dataset.theme = mode;

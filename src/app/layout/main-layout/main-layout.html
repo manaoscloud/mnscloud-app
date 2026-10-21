@@ -667,7 +667,9 @@
                 ? 'light_mode'
                 : theme() === 'dark'
                   ? 'dark_mode'
-                  : 'settings_suggest'
+                  : theme() === 'midnight'
+                    ? 'nights_stay'
+                    : 'settings_suggest'
             }}
           </mat-icon>
         </button>

@@ -52,13 +52,14 @@ const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const LOGO_ACCEPT = 'image/png,image/jpeg,image/webp';
 const FAVICON_ACCEPT = 'image/png,image/x-icon,.ico';
 
-type BrandModule = 'app' | 'pos' | 'pulse';
-type BrandTab = 'brandApp' | 'brandPos' | 'brandPulse';
+type BrandModule = 'app' | 'pos' | 'pulse' | 'phoneweb';
+type BrandTab = 'brandApp' | 'brandPos' | 'brandPulse' | 'brandPhoneweb';
 
 /** Web modules with their own brand; every empty field inherits the App brand. */
 const BRAND_MODULES = [
   { module: 'pos', tab: 'brandPos' },
   { module: 'pulse', tab: 'brandPulse' },
+  { module: 'phoneweb', tab: 'brandPhoneweb' },
 ] as const;
 
 /** Form key of a brand field: App fields keep their names, module fields get the module prefix. */
@@ -101,7 +102,7 @@ function imageFields(module: BrandModule, tab: BrandTab, kind: 'logo' | 'favicon
   ];
 }
 
-function moduleBrandFields(module: 'pos' | 'pulse', tab: BrandTab) {
+function moduleBrandFields(module: Exclude<BrandModule, 'app'>, tab: BrandTab) {
   return [
     {
       key: brandKey(module, 'pageTitle'),
@@ -136,10 +137,20 @@ function configOf(value: unknown): Record<string, any> {
     return {};
   }
 }
-type LoginModule = 'app' | 'pulse' | 'pos';
-const LOGIN_MODULES: LoginModule[] = ['app', 'pulse', 'pos'];
-const LOGIN_TABS = { app: 'loginApp', pulse: 'loginPulse', pos: 'loginPos' } as const;
-const DEFAULT_TITLES = { app: 'MNSCloud', pulse: 'MNSCloud Pulse', pos: 'MNSCloud POS' } as const;
+type LoginModule = 'app' | 'pulse' | 'pos' | 'phoneweb';
+const LOGIN_MODULES: LoginModule[] = ['app', 'pulse', 'pos', 'phoneweb'];
+const LOGIN_TABS = {
+  app: 'loginApp',
+  pulse: 'loginPulse',
+  pos: 'loginPos',
+  phoneweb: 'loginPhoneweb',
+} as const;
+const DEFAULT_TITLES = {
+  app: 'MNSCloud',
+  pulse: 'MNSCloud Pulse',
+  pos: 'MNSCloud POS',
+  phoneweb: 'MNSCloud PhoneWeb',
+} as const;
 
 function loginFields(module: LoginModule): ConfigurableCrudField[] {
   const tab = LOGIN_TABS[module];
@@ -273,6 +284,7 @@ const config = defineCrud({
     appLoginLocale: 'pt-BR',
     pulseLoginLocale: 'pt-BR',
     posLoginLocale: 'pt-BR',
+    phonewebLoginLocale: 'pt-BR',
     domain: '',
     pageTitle: '',
     metaDescription: '',
@@ -347,15 +359,18 @@ const config = defineCrud({
     ...loginFields('app'),
     ...loginFields('pulse'),
     ...loginFields('pos'),
+    ...loginFields('phoneweb'),
   ],
   tabLabels: {
     record: 'Domain',
     brandApp: 'App',
     brandPos: 'access.tabPos',
     brandPulse: 'Pulse',
+    brandPhoneweb: 'PhoneWeb',
     loginApp: 'access.loginApp',
     loginPulse: 'access.loginPulse',
     loginPos: 'access.loginPos',
+    loginPhoneweb: 'access.loginPhoneweb',
   },
   rowActions: [
     { key: 'preview', label: 'access.preview', icon: 'visibility', tooltip: 'access.preview' },
@@ -409,7 +424,13 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
       };
     };
     const dialog = this.previewDialog.open(AuthPreviewDialog, {
-      data: { app: context('app'), pulse: context('pulse'), pos: context('pos'), module },
+      data: {
+        app: context('app'),
+        pulse: context('pulse'),
+        pos: context('pos'),
+        phoneweb: context('phoneweb'),
+        module,
+      },
       width: '1200px',
       maxWidth: '96vw',
       height: '90dvh',
