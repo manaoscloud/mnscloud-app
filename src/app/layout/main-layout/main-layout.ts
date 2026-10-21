@@ -179,6 +179,7 @@ export class MainLayout {
   readonly themeOptions: { value: ThemeMode; label: string; icon: string }[] = [
     { value: 'light', label: 'topbar.themeLight', icon: 'light_mode' },
     { value: 'dark', label: 'topbar.themeDark', icon: 'dark_mode' },
+    { value: 'midnight', label: 'topbar.themeMidnight', icon: 'nights_stay' },
     { value: 'system', label: 'topbar.themeSystem', icon: 'settings_suggest' },
   ];
   readonly user = this.auth.user;

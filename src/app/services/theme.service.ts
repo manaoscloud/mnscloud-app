@@ -8,7 +8,7 @@ import {
   inject,
 } from '@angular/core';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'midnight' | 'system';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -69,7 +69,7 @@ export class ThemeService {
     if (!this.hasWindow()) return 'system';
 
     const saved = localStorage.getItem(this.STORAGE_KEY) as ThemeMode | null;
-    if (saved === 'light' || saved === 'dark' || saved === 'system') {
+    if (saved === 'light' || saved === 'dark' || saved === 'midnight' || saved === 'system') {
       return saved;
     }
 
@@ -81,7 +81,7 @@ export class ThemeService {
   }
 
   toggleTheme() {
-    const sequence: ThemeMode[] = ['light', 'dark', 'system'];
+    const sequence: ThemeMode[] = ['light', 'dark', 'midnight', 'system'];
     const current = this.theme();
     const next = sequence[(sequence.indexOf(current) + 1) % sequence.length];
     this.theme.set(next);

@@ -22,7 +22,7 @@ import { ThemeService, ThemeMode } from '../../services/theme.service';
 export class SettingsComponent {
   private readonly themeService = inject(ThemeService);
 
-  /** Tema atual (light | dark | system) */
+  /** Tema atual (light | dark | midnight | system) */
   readonly theme = this.themeService.theme;
 
   /** Opções visíveis no UI */
@@ -43,6 +43,12 @@ export class SettingsComponent {
       label: 'Dark',
       icon: 'dark_mode',
       description: 'Always use the dark theme.',
+    },
+    {
+      value: 'midnight',
+      label: 'Midnight',
+      icon: 'nights_stay',
+      description: 'Always use the midnight blue theme.',
     },
     {
       value: 'system',
