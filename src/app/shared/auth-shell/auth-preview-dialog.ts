@@ -30,13 +30,13 @@ import { ReportProblemButtonComponent } from '../support-report-dialog/report-pr
     </div>
     <mat-dialog-content>
       <div class="preview-tools">
-        @for (app of ['app', 'pulse']; track app) {
+        @for (app of modules; track app.key) {
           <button
             mat-stroked-button
-            (click)="module.set($any(app))"
-            [attr.aria-pressed]="module() === app"
+            (click)="module.set(app.key)"
+            [attr.aria-pressed]="module() === app.key"
           >
-            {{ app === 'app' ? 'App' : 'Pulse' }}
+            {{ app.label }}
           </button>
         }
         @for (lang of languages; track lang) {
@@ -69,10 +69,10 @@ import { ReportProblemButtonComponent } from '../support-report-dialog/report-pr
             <h1 class="title">{{ copy('title') }}</h1>
             <p class="subtitle">{{ copy('subtitle') }}</p>
             <div class="preview-label">
-              {{ t(module() === 'app' ? 'signin.email' : 'access.employeeCode') }}
+              {{ t(module() === 'pulse' ? 'access.employeeCode' : 'signin.email') }}
             </div>
             <div class="preview-input">
-              {{ module() === 'app' ? 'nome@example.com' : 'ABC12345' }}
+              {{ module() === 'pulse' ? 'ABC12345' : 'nome@example.com' }}
             </div>
             <div class="preview-label">{{ t('signin.password') }}</div>
             <div class="preview-input">••••••••<mat-icon>visibility</mat-icon></div>
@@ -166,8 +166,14 @@ export class AuthPreviewDialog {
   readonly data = inject<{
     app: PublicThemeRuntimeContext;
     pulse: PublicThemeRuntimeContext;
-    module: 'app' | 'pulse';
+    pos: PublicThemeRuntimeContext;
+    module: 'app' | 'pulse' | 'pos';
   }>(MAT_DIALOG_DATA);
+  readonly modules = [
+    { key: 'app', label: 'App' },
+    { key: 'pulse', label: 'Pulse' },
+    { key: 'pos', label: 'POS' },
+  ] as const;
   private readonly transloco = inject(TranslocoService);
   private readonly translationEvents = toSignal(this.transloco.events$);
   readonly module = signal(this.data.module);
