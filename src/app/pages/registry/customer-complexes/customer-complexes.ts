@@ -2,41 +2,43 @@ import { Component } from '@angular/core';
 
 import {
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
-const TYPE_OPTIONS = [
+const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
 ];
 
-const CARRIER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/carriers',
-  uuidField: 'CarrierUUID',
-  pageTitle: 'ERP Carriers',
-  pageDescription: 'Manage carriers and logistics contact data.',
-  createTitle: 'New carrier',
-  editTitle: 'Edit carrier',
-  dialogDescription: 'Maintain carrier registration, contact and address data.',
+const COMPLEX_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'registry/customer-complexes',
+  uuidField: 'ComplexUUID',
+  pageTitle: 'Complexes',
+  pageDescription: 'Manage buildings, condominiums and service complexes.',
+  createTitle: 'New complex',
+  editTitle: 'Edit complex',
+  dialogDescription: 'Maintain complex identity, address and contact data.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No carriers found.',
-  deleteTitle: 'Delete carrier',
-  deleteMessage: 'Are you sure you want to delete this carrier?',
-  deleteSelectedTitle: 'Delete selected carriers',
-  deleteSelectedMessage: 'Delete {count} selected carriers?',
-  savedMessage: 'Carrier saved successfully.',
-  deletedMessage: 'Carrier deleted successfully.',
-  deleteFailedMessage: 'Failed to delete carrier.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
+  emptyLabel: 'No complexes found.',
+  deleteTitle: 'Delete complex',
+  deleteMessage: 'Are you sure you want to delete this complex?',
+  deleteSelectedTitle: 'Delete selected complexes',
+  deleteSelectedMessage: 'Delete {count} selected complexes?',
+  savedMessage: 'Complex saved successfully.',
+  deletedMessage: 'Complex deleted successfully.',
+  deleteFailedMessage: 'Failed to delete complex.',
+  statusMode: 'string',
+  activeValue: 'active',
+  inactiveValue: 'inactive',
   initialValues: {
-    status: 1,
+    status: 'active',
     type: 'company',
     name: '',
     legalDate: '',
+    alias: '',
     document: '',
     email: '',
     phone: '',
@@ -51,10 +53,11 @@ const CARRIER_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'CarrierUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'ComplexUUID' },
     { id: 'type', label: 'Type', field: 'Type' },
+    { id: 'alias', label: 'Alias', field: 'Alias' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
-    { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
+    { id: 'city', label: 'City', field: 'City' },
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
   fields: [
@@ -87,13 +90,20 @@ const CARRIER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'alias',
+      source: 'Alias',
+      payloadKey: 'alias',
+      label: 'Alias',
+      span: 2,
+      breakBefore: true,
+    },
+    {
       key: 'name',
       source: 'Name',
       payloadKey: 'name',
       label: 'Name',
       required: true,
       span: 2,
-      breakBefore: true,
     },
     { key: 'email', source: 'Email', payloadKey: 'email', label: 'E-mail', type: 'email', span: 1 },
     { key: 'phone', source: 'Phone', payloadKey: 'phone', label: 'Phone', type: 'phone', span: 1 },
@@ -170,14 +180,25 @@ const CARRIER_CONFIG: ConfigurableCrudConfig = {
 };
 
 @Component({
-  selector: 'app-erp-carrier',
+  selector: 'app-registry-customer-complexes',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCarrierPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegCustomerComplexPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(CARRIER_CONFIG);
+    super(COMPLEX_CONFIG);
+  }
+
+  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const street = String(payload['street'] ?? '').trim();
+    const number = String(payload['number'] ?? '').trim();
+    const district = String(payload['district'] ?? '').trim();
+    const complement = String(payload['complement'] ?? '').trim();
+    return {
+      ...payload,
+      address: [street, number, district, complement].filter(Boolean).join(', ') || null,
+    };
   }
 }

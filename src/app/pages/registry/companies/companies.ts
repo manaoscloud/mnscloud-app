@@ -8,7 +8,7 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 const COMPANY_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/companies',
+  endpoint: 'registry/companies',
   uuidField: 'CompanyUUID',
   pageTitle: 'Companies',
   pageDescription: 'Manage official companies and fiscal registration data.',
@@ -183,13 +183,13 @@ const COMPANY_CONFIG: ConfigurableCrudConfig = {
 };
 
 @Component({
-  selector: 'app-erp-companies',
+  selector: 'app-registry-companies',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCompaniesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegCompanyPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(COMPANY_CONFIG);
   }

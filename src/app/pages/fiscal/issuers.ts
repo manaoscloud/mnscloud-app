@@ -3,8 +3,8 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 
 const taxRegimes = [
   { value: 'simples_nacional', label: 'Simples Nacional' },
@@ -154,14 +154,14 @@ const config = defineCrud({
     { key: 'status', source: 'FipStatus', label: 'Status', type: 'status', span: 1 },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       required: true,
       disabledWhen: ({ editing }) => editing,
       help: 'The company must have a valid CNPJ; each company has one fiscal profile.',
       remoteLookup: {
-        endpoint: 'erp/companies',
+        endpoint: 'registry/companies',
         uuidField: 'CompanyUUID',
         labelField: 'Name',
         descriptionField: 'Document',
@@ -238,13 +238,13 @@ const config = defineCrud({
 });
 
 @Component({
-  selector: 'app-erp-fiscal-issuers',
+  selector: 'app-fiscal-issuers',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpFiscalIssuersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class FiscalIssuersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
   }

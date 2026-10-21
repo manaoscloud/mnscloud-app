@@ -200,6 +200,58 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  // Registry: records shared by every module (no commercial entitlement).
+  {
+    id: 'registry',
+    label: 'nav.registry',
+    icon: 'assignment',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'registry/customers',
+        label: 'nav.registry.customers',
+        icon: 'person',
+        route: '/registry/customers',
+      },
+      {
+        id: 'registry/customer-complexes',
+        label: 'nav.registry.customer-complexes',
+        icon: 'location_city',
+        route: '/registry/customer-complexes',
+      },
+      {
+        id: 'registry/companies',
+        label: 'nav.registry.companies',
+        icon: 'apartment',
+        route: '/registry/companies',
+      },
+      {
+        id: 'registry/suppliers',
+        label: 'nav.registry.suppliers',
+        icon: 'inventory_2',
+        route: '/registry/suppliers',
+      },
+      {
+        id: 'registry/carriers',
+        label: 'nav.registry.carriers',
+        icon: 'local_shipping',
+        route: '/registry/carriers',
+      },
+      {
+        id: 'registry/resellers',
+        label: 'nav.registry.resellers',
+        icon: 'storefront',
+        route: '/registry/resellers',
+      },
+      {
+        id: 'registry/employees',
+        label: 'nav.registry.employees',
+        icon: 'badge',
+        route: '/registry/employees',
+      },
+    ],
+  },
+
   // ✅ ERP (tenant; plataforma usa rotas globais quando disponível)
   {
     id: 'erp',
@@ -208,51 +260,6 @@ export const NAV_ITEMS: NavItem[] = [
     entitlementCode: 'module.erp.*',
     requiresEnvironment: true,
     children: [
-      {
-        id: 'erp/registration',
-        label: 'nav.erp.registration',
-        icon: 'assignment',
-        children: [
-          {
-            id: 'erp/companies',
-            label: 'nav.erp.companies',
-            icon: 'apartment',
-            route: '/erp/companies',
-          },
-          { id: 'erp/customer', label: 'nav.erp.customer', icon: 'person', route: '/erp/customer' },
-          {
-            id: 'erp/fiscal-issuers',
-            label: 'nav.erp.fiscal-issuers',
-            icon: 'receipt_long',
-            route: '/erp/fiscal-issuers',
-            entitlementCode: 'module.fiscal.*',
-          },
-          {
-            id: 'erp/supplier',
-            label: 'nav.erp.supplier',
-            icon: 'inventory_2',
-            route: '/erp/supplier',
-          },
-          {
-            id: 'erp/carrier',
-            label: 'nav.erp.carrier',
-            icon: 'local_shipping',
-            route: '/erp/carrier',
-          },
-          {
-            id: 'erp/reseller',
-            label: 'nav.erp.reseller',
-            icon: 'storefront',
-            route: '/erp/reseller',
-          },
-          {
-            id: 'erp/complex',
-            label: 'nav.erp.complex',
-            icon: 'location_city',
-            route: '/erp/complex',
-          },
-        ],
-      },
       {
         id: 'erp/financial',
         label: 'nav.erp.financial',
@@ -302,12 +309,6 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.erp.human-resources',
         icon: 'groups',
         children: [
-          {
-            id: 'erp/human-resources/employees',
-            label: 'nav.erp.human-resources.employees',
-            icon: 'badge',
-            route: '/erp/human-resources/employees',
-          },
           {
             id: 'erp/human-resources/time-clock-accounts',
             label: 'nav.erp.human-resources.time-clock-accounts',
@@ -2102,6 +2103,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.fiscal.contingency',
         icon: 'cloud_off',
         route: '/fiscal/contingency',
+      },
+      {
+        id: 'fiscal/issuers',
+        label: 'nav.fiscal.issuers',
+        icon: 'receipt_long',
+        route: '/fiscal/issuers',
       },
       {
         id: 'fiscal/certificates',

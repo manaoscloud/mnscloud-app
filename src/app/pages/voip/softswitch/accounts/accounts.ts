@@ -59,7 +59,7 @@ function config(): ConfigurableCrudConfig {
         id: 'customer',
         label: 'Customer',
         kind: 'related',
-        uuidField: 'CustomerCusUUID',
+        uuidField: 'RegCustomerRcuUUID',
         lookupKey: 'customerUUID',
       },
       {
@@ -98,7 +98,7 @@ function config(): ConfigurableCrudConfig {
       },
       {
         key: 'customerUUID',
-        source: 'CustomerCusUUID',
+        source: 'RegCustomerRcuUUID',
         payloadKey: 'customerUUID',
         label: 'Customer',
         type: 'search-select',
@@ -221,11 +221,11 @@ export class VoipSoftswitchAccountsPage extends ConfigurableCrudPageBase<Configu
             row['VsrPublicIP'],
           ]),
         ),
-        this.fetchPaged('erp/customers?status=1', (row) =>
+        this.fetchPaged('registry/customers?status=1', (row) =>
           option(
-            row['CusUUID'] ?? row['CustomerCusUUID'] ?? row['CustomerUUID'],
-            row['CusName'] ?? row['Name'] ?? row['CustomerName'],
-            [row['CusDocument'] ?? row['Document'], row['CusEmail'] ?? row['Email']],
+            row['RcuUUID'] ?? row['RegCustomerRcuUUID'] ?? row['CustomerUUID'],
+            row['RcuName'] ?? row['Name'] ?? row['CustomerName'],
+            [row['RcuDocument'] ?? row['Document'], row['RcuEmail'] ?? row['Email']],
           ),
         ),
       ]);

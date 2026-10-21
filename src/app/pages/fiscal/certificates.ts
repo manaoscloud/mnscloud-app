@@ -48,7 +48,7 @@ const config = defineCrud({
     { key: 'label', source: 'FcrLabel', label: 'Name', required: true, span: 3 },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       required: true,

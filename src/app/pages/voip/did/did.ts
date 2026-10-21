@@ -194,7 +194,7 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     if (Number(row.IsAvailable ?? 0) === 1) {
       return [{ key: 'claim', label: 'Contract DID', icon: 'add_shopping_cart' }];
     }
-    return row.VoipDidAssignmentVdaUUID || row.CustomerCusUUID || row.UserUsrUUID
+    return row.VoipDidAssignmentVdaUUID || row.RegCustomerRcuUUID || row.UserUsrUUID
       ? [{ key: 'release', label: 'Release DID', icon: 'link_off' }]
       : [];
   }

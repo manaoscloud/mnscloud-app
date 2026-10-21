@@ -7,7 +7,7 @@ export type VoipDidOperatorItem = {
   VdoID: string;
   VdoName: string;
   VdoNick: string;
-  ErpSupplierSupUUID?: string | null;
+  RegSupplierRsuUUID?: string | null;
   SupplierName?: string | null;
   VdoStatus: number;
   VdoDateCreated?: string | null;

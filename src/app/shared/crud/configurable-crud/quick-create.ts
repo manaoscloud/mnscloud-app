@@ -275,10 +275,10 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/customer-billing/due-days').then((m) => m.CustomerBillingDueDaysPage),
   },
-  CustomerCusUUID: {
+  RegCustomerRcuUUID: {
     label: 'Create customer',
     loadComponent: () =>
-      import('../../../pages/erp/customer/customer').then((m) => m.ErpCustomerPage),
+      import('../../../pages/registry/customers/customers').then((m) => m.RegCustomerPage),
   },
   CyberSecuritySecretAccountCxaUUID: {
     label: 'Create secret account',
@@ -302,21 +302,21 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.CyberSecurityTrustedNodesPage,
       ),
   },
-  ErpCompanyComUUID: {
+  RegCompanyRcoUUID: {
     label: 'Create company',
     loadComponent: () =>
-      import('../../../pages/erp/companies/companies').then((m) => m.ErpCompaniesPage),
+      import('../../../pages/registry/companies/companies').then((m) => m.RegCompanyPage),
   },
   FiscalIssuerProfileFipUUID: {
     label: 'Create fiscal issuer',
-    loadComponent: () =>
-      import('../../../pages/erp/fiscal-issuers/fiscal-issuers').then(
-        (m) => m.ErpFiscalIssuersPage,
-      ),
+    loadComponent: () => import('../../../pages/fiscal/issuers').then((m) => m.FiscalIssuersPage),
   },
-  ErpComplexEcxUUID: {
+  RegCustomerComplexRcxUUID: {
     label: 'Create complex',
-    loadComponent: () => import('../../../pages/erp/complex/complex').then((m) => m.ErpComplexPage),
+    loadComponent: () =>
+      import('../../../pages/registry/customer-complexes/customer-complexes').then(
+        (m) => m.RegCustomerComplexPage,
+      ),
   },
   ErpFinPayGatewayAccountEfgUUID: {
     label: 'Create gateway account',
@@ -339,12 +339,10 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.ErpHumanResourcesDepartmentsPage,
       ),
   },
-  ErpHrEmployeeEmpUUID: {
+  RegEmployeeRemUUID: {
     label: 'Create employee',
     loadComponent: () =>
-      import('../../../pages/erp/human-resources/employees/employees').then(
-        (m) => m.ErpHumanResourcesEmployeesPage,
-      ),
+      import('../../../pages/registry/employees/employees').then((m) => m.RegEmployeesPage),
   },
   ErpHrPositionEhpUUID: {
     label: 'Create position',
@@ -353,10 +351,10 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.ErpHumanResourcesPositionsPage,
       ),
   },
-  ErpSupplierSupUUID: {
+  RegSupplierRsuUUID: {
     label: 'Create supplier',
     loadComponent: () =>
-      import('../../../pages/erp/supplier/supplier').then((m) => m.ErpSupplierPage),
+      import('../../../pages/registry/suppliers/suppliers').then((m) => m.RegSupplierPage),
   },
   HostingDnsProviderHdpUUID: {
     label: 'Create DNS provider',

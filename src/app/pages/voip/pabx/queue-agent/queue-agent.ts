@@ -82,7 +82,7 @@ function config(): ConfigurableCrudConfig {
         id: 'employee',
         label: 'Employee',
         kind: 'related',
-        uuidField: 'ErpHrEmployeeEmpUUID',
+        uuidField: 'RegEmployeeRemUUID',
         lookupKey: 'employeeUUID',
       },
       {
@@ -113,7 +113,7 @@ function config(): ConfigurableCrudConfig {
       },
       {
         key: 'employeeUUID',
-        source: 'ErpHrEmployeeEmpUUID',
+        source: 'RegEmployeeRemUUID',
         payloadKey: 'employeeUUID',
         label: 'Employee',
         type: 'search-select',
@@ -251,9 +251,9 @@ export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<Configurabl
     this.lookupsLoading.set(true);
     try {
       const [employees, extensions] = await Promise.all([
-        this.fetchPaged('erp/human-resources/employees', (row) =>
-          option(row.EmployeeUUID ?? row.EmpUUID, row.Name ?? row.EmployeeName ?? row.EmpName, [
-            row.Email ?? row.EmployeeEmail ?? row.EmpEmail,
+        this.fetchPaged('registry/employees', (row) =>
+          option(row.EmployeeUUID ?? row.RemUUID, row.Name ?? row.EmployeeName ?? row.RemName, [
+            row.Email ?? row.EmployeeEmail ?? row.RemEmail,
           ]),
         ),
         this.fetchPaged('voip/pabx/extensions?status=1', (row) =>

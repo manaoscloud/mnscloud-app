@@ -26,7 +26,7 @@ export const FISCAL_DOCUMENT_STATES = [
 ];
 
 export const COMPANY_LOOKUP = {
-  endpoint: 'erp/companies',
+  endpoint: 'registry/companies',
   uuidField: 'CompanyUUID',
   labelField: 'Name',
   descriptionField: 'Document',

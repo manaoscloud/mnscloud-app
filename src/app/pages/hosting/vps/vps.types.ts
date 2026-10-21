@@ -195,7 +195,7 @@ export type HostingVpsInstance = {
   HviUUID: string;
   HviName: string;
   HviConfig?: HostingVpsInstanceConfig | null;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   HviExternalId?: string | null;
   HviStatus?: string | null;
@@ -226,7 +226,7 @@ export type HostingVpsSnapshot = {
   HviName?: string | null;
   InstanceExternalId?: string | null;
   InstanceStatus?: string | null;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   HostingVpsProviderHvrUUID?: string | null;
   ProviderName?: string | null;

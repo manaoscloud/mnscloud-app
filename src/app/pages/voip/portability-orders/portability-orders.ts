@@ -79,7 +79,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Customer',
         kind: 'related',
         field: 'CustomerName',
-        uuidField: 'CustomerCusUUID',
+        uuidField: 'RegCustomerRcuUUID',
       },
       { id: 'direction', label: 'Direction', field: 'Direction' },
       { id: 'reason', label: 'Reason', field: 'RequestReasonName' },
@@ -322,7 +322,7 @@ export class VoipPortabilityOrdersPage extends ConfigurableCrudPageBase<Configur
     this.lookupsLoading.set(true);
     try {
       const [customers, operators, reasons] = await Promise.all([
-        fetchOptions(this.rawApi, 'erp/customers?status=1', 'CustomerUUID', 'Name'),
+        fetchOptions(this.rawApi, 'registry/customers?status=1', 'CustomerUUID', 'Name'),
         fetchOptions(this.rawApi, 'voip/did/operators?status=1', 'VdoUUID', 'VdoName'),
         fetchOptions(
           this.rawApi,

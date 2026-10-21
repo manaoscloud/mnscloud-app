@@ -74,13 +74,13 @@ const config = defineCrud({
     },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       required: true,
       help: 'Establishment that sells through this terminal and issues its fiscal documents.',
       remoteLookup: {
-        endpoint: 'erp/companies',
+        endpoint: 'registry/companies',
         uuidField: 'CompanyUUID',
         labelField: 'Name',
         descriptionField: 'Document',
@@ -118,12 +118,12 @@ const config = defineCrud({
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       label: 'Default customer',
       type: 'search-select',
       help: 'Empty uses the walk-in customer (CONSUMIDOR FINAL), created once.',
       remoteLookup: {
-        endpoint: 'erp/customers',
+        endpoint: 'registry/customers',
         searchParam: 'q',
         uuidField: 'CustomerUUID',
         labelField: 'Name',

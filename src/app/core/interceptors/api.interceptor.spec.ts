@@ -143,8 +143,8 @@ describe('apiInterceptor', () => {
   });
 
   it('records failed calls with their correlation id for problem reports', async () => {
-    const promise = httpClient.get('/api/v1/erp/customers?token=abc&page=2').toPromise();
-    const req = http.expectOne('/api/v1/erp/customers?token=abc&page=2');
+    const promise = httpClient.get('/api/v1/registry/customers?token=abc&page=2').toPromise();
+    const req = http.expectOne('/api/v1/registry/customers?token=abc&page=2');
     req.flush(
       { error: 'Invalid filter.' },
       { status: 400, statusText: 'Bad Request', headers: { 'X-Correlation-ID': 'corr-12345678' } },
@@ -154,7 +154,7 @@ describe('apiInterceptor', () => {
     const failure = TestBed.inject(ClientDiagnosticsService).lastFailedRequest();
     expect(failure?.status).toBe(400);
     expect(failure?.requestId).toBe('corr-12345678');
-    expect(failure?.url).toBe('/api/v1/erp/customers?token=[redacted]&page=2');
+    expect(failure?.url).toBe('/api/v1/registry/customers?token=[redacted]&page=2');
     expect(snack.error).toHaveBeenCalled();
     expect(snack.errorWithAction).not.toHaveBeenCalled();
   });

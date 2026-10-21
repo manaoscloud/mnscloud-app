@@ -2,7 +2,7 @@ export type VoipSoftswitchDidItem = {
   VsdUUID: string;
   VsdID: string;
   VoipSoftswitchAccountVssUUID: string;
-  CustomerCusUUID: string;
+  RegCustomerRcuUUID: string;
   VoipDomainVdmUUID: string;
   VoipDidVddUUID: string;
   VoipSoftswitchSubscriberVsuUUID?: string | null;

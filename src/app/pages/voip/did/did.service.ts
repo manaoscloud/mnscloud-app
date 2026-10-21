@@ -10,7 +10,7 @@ export type VoipDidItem = {
   VoipDidOperatorVdoUUID: string | null;
   OperatorName?: string | null;
   VoipDidAssignmentVdaUUID?: string | null;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   IsAvailable?: number;
   UserUsrUUID?: string | null;

@@ -223,18 +223,18 @@ export function linkContactForm(conversation: ConfigurableCrudRecord): Configura
     bulkDelete: false,
     columns: [],
     initialValues: {
-      customer: conversation['CustomerCusUUID'] ?? '',
+      customer: conversation['RegCustomerRcuUUID'] ?? '',
       contact: conversation['CrmContactCcoUUID'] ?? '',
       lead: conversation['CrmLeadCleUUID'] ?? '',
     },
     fields: [
       {
         key: 'customer',
-        source: 'CustomerCusUUID',
+        source: 'RegCustomerRcuUUID',
         label: 'Customer',
         type: 'search-select',
         remoteLookup: {
-          endpoint: 'erp/customers',
+          endpoint: 'registry/customers',
           searchParam: 'q',
           uuidField: 'CustomerUUID',
           labelField: 'Name',
@@ -270,7 +270,7 @@ export function linkContactForm(conversation: ConfigurableCrudRecord): Configura
       },
     ],
     payload: (values) => ({
-      CustomerCusUUID: values['customer'] || null,
+      RegCustomerRcuUUID: values['customer'] || null,
       CrmContactCcoUUID: values['contact'] || null,
       CrmLeadCleUUID: values['lead'] || null,
     }),

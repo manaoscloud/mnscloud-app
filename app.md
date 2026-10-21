@@ -1129,7 +1129,7 @@ or cancelling the form they are filling.
   quick-create mode. Never build a lightweight dialog, a duplicated field list, or a
   resource-specific host subclass.
 - Registry: `src/app/shared/crud/configurable-crud/quick-create.ts` (`QUICK_CREATE_REGISTRY`) maps
-  the canonical FK column (`ReferencedTableName` + `ReferencedTableField`, e.g. `CustomerCusUUID`)
+  the canonical FK column (`ReferencedTableName` + `ReferencedTableField`, e.g. `RegCustomerRcuUUID`)
   to the page class (lazy `loadComponent`), the translated `Create <resource>` label, an optional
   `permission` (master-only `system/*` resources use `platform.master.access`), and optional
   `routeData` for pages that pick a variant from route data (catalog kind, database resource).
@@ -1690,7 +1690,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 ## API Access
 
 - Use `ApiService` from `src/app/services/api.service.ts`.
-- Use relative endpoints (example: `erp/customers`).
+- Use relative endpoints (example: `registry/customers`).
 
 ## Maps (Mapbox)
 

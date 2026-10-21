@@ -52,13 +52,13 @@ export function customerOptionFromResponse(
   const record = extractCustomerRecord(response) ?? payload;
   const uuid =
     stringValue(record['CustomerUUID']) ??
-    stringValue(record['CusUUID']) ??
-    stringValue(record['CustomerCusUUID']) ??
+    stringValue(record['RcuUUID']) ??
+    stringValue(record['RegCustomerRcuUUID']) ??
     stringValue(record['uuid']);
   if (!uuid) return null;
   const label =
     stringValue(record['Name']) ??
-    stringValue(record['CusName']) ??
+    stringValue(record['RcuName']) ??
     stringValue(record['CustomerName']) ??
     stringValue(payload['name']) ??
     stringValue(payload['legalName']) ??
@@ -178,7 +178,7 @@ const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
 };
 
 const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/customers',
+  endpoint: 'registry/customers',
   uuidField: 'CustomerUUID',
   pageTitle: 'Customers',
   pageDescription: 'Manage customer records, billing data and service addresses.',
@@ -218,7 +218,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       request: {
         method: 'post',
         endpoint: (row) =>
-          `erp/customers/${row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
+          `registry/customers/${row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
         successMessage: 'Welcome email with credentials resent successfully.',
         confirm: {
           title: 'Resend portal credentials',
@@ -313,7 +313,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'complexUUID',
       label: 'Complex',
       type: 'search-select',
-      quickCreate: quickCreateFor('ErpComplexEcxUUID'),
+      quickCreate: quickCreateFor('RegCustomerComplexRcxUUID'),
       placeholder: 'Search complexes',
       tab: 'address',
       addressSection: 'main',
@@ -742,7 +742,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
           onClick: async ({ values }, host) => {
             const row = host.editingRecord();
             const customerUUID = row
-              ? String(row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid'] ?? '')
+              ? String(row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid'] ?? '')
               : '';
             if (!customerUUID) {
               host.snack.warning('Customer must be saved before resending credentials.');
@@ -754,7 +754,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
                 body.password = String(values['portalPassword']);
               }
               await host.api.post(
-                `erp/customers/${customerUUID}/portal/resend-welcome-email`,
+                `registry/customers/${customerUUID}/portal/resend-welcome-email`,
                 body,
               );
               host.snack.success('Welcome email with credentials resent successfully.');
@@ -855,13 +855,13 @@ type ComplexRecord = {
 };
 
 @Component({
-  selector: 'app-erp-customer',
+  selector: 'app-registry-customers',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   protected override async quickCreateOption(
     response: unknown,
     payload: ConfigurableCrudRecord,
@@ -874,7 +874,7 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   private readonly complexesResource = resource({
     defaultValue: [] as ComplexRecord[],
     loader: async () => {
-      const response = await this.api.get('erp/complexes?status=active&limit=500');
+      const response = await this.api.get('registry/customer-complexes?status=active&limit=500');
       return ((response as { data?: { items?: ComplexRecord[] } })?.data?.items ??
         []) as ComplexRecord[];
     },

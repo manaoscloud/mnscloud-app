@@ -794,32 +794,53 @@ export const routes: Routes = [
                 title: 'CRM',
               },
 
-              // ERP Entities
+              // Registry (shared by every module)
               {
-                path: 'erp/customer',
+                path: 'registry/customers',
                 loadComponent: () =>
-                  import('./pages/erp/customer/customer').then((m) => m.ErpCustomerPage),
-                title: 'ERP • Customer | mnscloud',
+                  import('./pages/registry/customers/customers').then((m) => m.RegCustomerPage),
+                title: 'Registry • Customers | mnscloud',
               },
               {
-                path: 'erp/carrier',
+                path: 'registry/customer-complexes',
                 loadComponent: () =>
-                  import('./pages/erp/carrier/carrier').then((m) => m.ErpCarrierPage),
-                title: 'ERP • Carriers | mnscloud',
-                data: { breadcrumb: 'ERP Carriers' },
+                  import('./pages/registry/customer-complexes/customer-complexes').then(
+                    (m) => m.RegCustomerComplexPage,
+                  ),
+                title: 'Registry • Customer complexes | mnscloud',
               },
               {
-                path: 'erp/supplier',
+                path: 'registry/companies',
                 loadComponent: () =>
-                  import('./pages/erp/supplier/supplier').then((m) => m.ErpSupplierPage),
-                title: 'ERP • Supplier | mnscloud',
+                  import('./pages/registry/companies/companies').then((m) => m.RegCompanyPage),
+                title: 'Registry • Companies | mnscloud',
               },
               {
-                path: 'erp/reseller',
+                path: 'registry/suppliers',
                 loadComponent: () =>
-                  import('./pages/erp/reseller/reseller').then((m) => m.ErpResellerPage),
-                title: 'ERP • Reseller | mnscloud',
+                  import('./pages/registry/suppliers/suppliers').then((m) => m.RegSupplierPage),
+                title: 'Registry • Suppliers | mnscloud',
               },
+              {
+                path: 'registry/carriers',
+                loadComponent: () =>
+                  import('./pages/registry/carriers/carriers').then((m) => m.RegCarrierPage),
+                title: 'Registry • Carriers | mnscloud',
+              },
+              {
+                path: 'registry/resellers',
+                loadComponent: () =>
+                  import('./pages/registry/resellers/resellers').then((m) => m.RegResellerPage),
+                title: 'Registry • Resellers | mnscloud',
+              },
+              {
+                path: 'registry/employees',
+                loadComponent: () =>
+                  import('./pages/registry/employees/employees').then((m) => m.RegEmployeesPage),
+                title: 'Registry • Employees | mnscloud',
+              },
+
+              // ERP • Human resources
               {
                 path: 'erp/human-resources/departments',
                 loadComponent: () =>
@@ -835,14 +856,6 @@ export const routes: Routes = [
                     (m) => m.ErpHumanResourcesPositionsPage,
                   ),
                 title: 'ERP • Human Resources • Positions | mnscloud',
-              },
-              {
-                path: 'erp/human-resources/employees',
-                loadComponent: () =>
-                  import('./pages/erp/human-resources/employees/employees').then(
-                    (m) => m.ErpHumanResourcesEmployeesPage,
-                  ),
-                title: 'ERP • Human Resources • Employees | mnscloud',
               },
               {
                 path: 'erp/human-resources/time-clock-accounts',
@@ -894,27 +907,6 @@ export const routes: Routes = [
                   ),
                 title: 'ERP • Financial • Payment Gateways | mnscloud',
                 data: { scope: 'tenant', context: 'financial' },
-              },
-
-              {
-                path: 'erp/companies',
-                loadComponent: () =>
-                  import('./pages/erp/companies/companies').then((m) => m.ErpCompaniesPage),
-                title: 'ERP • Companies | mnscloud',
-              },
-              {
-                path: 'erp/fiscal-issuers',
-                loadComponent: () =>
-                  import('./pages/erp/fiscal-issuers/fiscal-issuers').then(
-                    (m) => m.ErpFiscalIssuersPage,
-                  ),
-                title: 'ERP • Fiscal Issuers | mnscloud',
-              },
-              {
-                path: 'erp/complex',
-                loadComponent: () =>
-                  import('./pages/erp/complex/complex').then((m) => m.ErpComplexPage),
-                title: 'ERP • Residential Complex | mnscloud',
               },
 
               // Estoque
@@ -1020,6 +1012,12 @@ export const routes: Routes = [
                 title: 'Invoicing • Modules | mnscloud',
               },
               // Fiscal
+              {
+                path: 'fiscal/issuers',
+                loadComponent: () =>
+                  import('./pages/fiscal/issuers').then((m) => m.FiscalIssuersPage),
+                title: 'Fiscal • Issuers | mnscloud',
+              },
               {
                 path: 'fiscal/documents',
                 loadComponent: () =>

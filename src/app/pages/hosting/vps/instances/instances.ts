@@ -141,7 +141,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       kind: 'related',
       field: 'CustomerName',
-      uuidField: 'CustomerCusUUID',
+      uuidField: 'RegCustomerRcuUUID',
     },
     {
       id: 'plan',
@@ -188,7 +188,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -650,7 +650,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       const current = parseConfig<HostingVpsInstanceConfig>(editing['HviConfig']) ?? {};
       return {
         name: String(payload['name'] ?? '').trim(),
-        customerUUID: editing['CustomerCusUUID'] ?? null,
+        customerUUID: editing['RegCustomerRcuUUID'] ?? null,
         planUUID: editing['HostingVpsPlanHvpUUID'],
         config: {
           ...current,
@@ -1054,7 +1054,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private async fetchCustomers() {
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        'erp/customers?status=1&limit=500&offset=0',
+        'registry/customers?status=1&limit=500&offset=0',
       );
       this.customers.set(result?.data?.items ?? []);
     } catch (error) {
@@ -1235,7 +1235,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       HviUUID: String(row['HviUUID'] ?? ''),
       HviName: String(row['HviName'] ?? ''),
       HviConfig: parseConfig<HostingVpsInstanceConfig>(row['HviConfig']),
-      CustomerCusUUID: (row['CustomerCusUUID'] as string | null | undefined) ?? null,
+      RegCustomerRcuUUID: (row['RegCustomerRcuUUID'] as string | null | undefined) ?? null,
       CustomerName: (row['CustomerName'] as string | null | undefined) ?? null,
       HviExternalId: (row['HviExternalId'] as string | null | undefined) ?? null,
       HviStatus: (row['HviStatus'] as string | null | undefined) ?? null,

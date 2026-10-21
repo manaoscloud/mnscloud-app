@@ -29,12 +29,12 @@ const config = defineCrud({
     { key: 'name', source: 'HsaName', label: 'Name', required: true, span: 1 },
     {
       key: 'customerUuid',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
       span: 1,
       remoteLookup: {
-        endpoint: 'erp/customers?status=1',
+        endpoint: 'registry/customers?status=1',
         uuidField: 'CustomerUUID',
         labelField: 'Name',
         selectedLabelField: 'CustomerName',

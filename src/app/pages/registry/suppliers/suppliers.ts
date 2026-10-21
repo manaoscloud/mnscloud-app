@@ -12,23 +12,23 @@ const TYPE_OPTIONS = [
   { value: 'person', label: 'Person' },
 ];
 
-const RESELLER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/resellers',
-  uuidField: 'ResellerUUID',
-  pageTitle: 'Resellers',
-  pageDescription: 'Manage reseller records and contact data.',
-  createTitle: 'New reseller',
-  editTitle: 'Edit reseller',
-  dialogDescription: 'Maintain reseller registration, contact and address data.',
+const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'registry/suppliers',
+  uuidField: 'SupplierUUID',
+  pageTitle: 'Suppliers',
+  pageDescription: 'Manage suppliers, documents, contacts and addresses.',
+  createTitle: 'New supplier',
+  editTitle: 'Edit supplier',
+  dialogDescription: 'Maintain supplier registration and commercial contact data.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No resellers found.',
-  deleteTitle: 'Delete reseller',
-  deleteMessage: 'Are you sure you want to delete this reseller?',
-  deleteSelectedTitle: 'Delete selected resellers',
-  deleteSelectedMessage: 'Delete {count} selected resellers?',
-  savedMessage: 'Reseller saved successfully.',
-  deletedMessage: 'Reseller deleted successfully.',
-  deleteFailedMessage: 'Failed to delete reseller.',
+  emptyLabel: 'No suppliers found.',
+  deleteTitle: 'Delete supplier',
+  deleteMessage: 'Are you sure you want to delete this supplier?',
+  deleteSelectedTitle: 'Delete selected suppliers',
+  deleteSelectedMessage: 'Delete {count} selected suppliers?',
+  savedMessage: 'Supplier saved successfully.',
+  deletedMessage: 'Supplier deleted successfully.',
+  deleteFailedMessage: 'Failed to delete supplier.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -51,7 +51,7 @@ const RESELLER_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'ResellerUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'SupplierUUID' },
     { id: 'type', label: 'Type', field: 'Type' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
@@ -170,14 +170,14 @@ const RESELLER_CONFIG: ConfigurableCrudConfig = {
 };
 
 @Component({
-  selector: 'app-erp-reseller',
+  selector: 'app-registry-suppliers',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpResellerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegSupplierPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(RESELLER_CONFIG);
+    super(SUPPLIER_CONFIG);
   }
 }

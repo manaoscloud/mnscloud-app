@@ -78,7 +78,7 @@ function operatorConfig(system: boolean): ConfigurableCrudConfig {
       },
       {
         key: 'supplierUUID',
-        source: 'ErpSupplierSupUUID',
+        source: 'RegSupplierRsuUUID',
         payloadKey: 'supplierUUID',
         label: 'Supplier',
         type: 'search-select',
@@ -122,10 +122,10 @@ export class VoipDidOperatorPage extends ConfigurableCrudPageBase<VoipDidOperato
     this.lookupLoading.set(true);
     try {
       this.supplierOptions.set(
-        await fetchPaged(this.rawApi, 'erp/suppliers?status=1', (row) =>
-          option(row.SupUUID ?? row.uuid, row.SupName ?? row.Name ?? row.name, [
-            row.SupDocument ?? row.document,
-            row.SupEmail ?? row.email,
+        await fetchPaged(this.rawApi, 'registry/suppliers?status=1', (row) =>
+          option(row.RsuUUID ?? row.uuid, row.RsuName ?? row.Name ?? row.name, [
+            row.RsuDocument ?? row.document,
+            row.RsuEmail ?? row.email,
           ]),
         ),
       );

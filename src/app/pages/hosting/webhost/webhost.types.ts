@@ -66,7 +66,7 @@ export type WebhostHostConfig = {
 export type HostingWebhostHost = {
   HwhUUID: string;
   HwhName: string;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   CustomerEmail?: string | null;
   HostingWebhostPlanHwlUUID: string;
@@ -93,7 +93,7 @@ export type HostingWebhostHost = {
 export type HostingDnsRegisterOption = {
   HrgUUID: string;
   HrgName: string;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   HrgStatus?: number | null;
 };

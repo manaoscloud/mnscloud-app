@@ -1,16 +1,16 @@
 import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../../services/api.service';
+import { ApiService } from '../../../services/api.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const lookups = [
-  { key: 'companyUUID', endpoint: 'erp/companies', uuidField: 'CompanyUUID' },
+  { key: 'companyUUID', endpoint: 'registry/companies', uuidField: 'CompanyUUID' },
   {
     key: 'departmentUUID',
     endpoint: 'erp/human-resources/departments',
@@ -20,7 +20,7 @@ const lookups = [
 ] as const;
 
 const config = defineCrud({
-  endpoint: 'erp/human-resources/employees',
+  endpoint: 'registry/employees',
   uuidField: 'EmployeeUUID',
   pageTitle: 'Employees',
   pageDescription: 'Manage employee records, company links, departments and positions.',
@@ -62,8 +62,12 @@ const config = defineCrud({
       source: 'CompanyUUID',
       label: 'Company',
       type: 'search-select',
-      remoteLookup: { endpoint: 'erp/companies', uuidField: 'CompanyUUID', labelField: 'Name' },
-      quickCreate: quickCreateFor('ErpCompanyComUUID'),
+      remoteLookup: {
+        endpoint: 'registry/companies',
+        uuidField: 'CompanyUUID',
+        labelField: 'Name',
+      },
+      quickCreate: quickCreateFor('RegCompanyRcoUUID'),
       span: 1,
     },
     {
@@ -113,13 +117,13 @@ const config = defineCrud({
 });
 
 @Component({
-  selector: 'app-erp-hr-employees',
+  selector: 'app-registry-employees',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpHumanResourcesEmployeesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegEmployeesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly lookupApi = inject(ApiService);
 
   // List filter options for company, department and position (active records only).

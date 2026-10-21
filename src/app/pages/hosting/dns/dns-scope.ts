@@ -12,7 +12,7 @@ export function dnsCrudConfig(
   const prefix = master ? 'system/hosting/dns' : 'hosting/dns';
   const lookups: Record<string, ConfigurableCrudField['remoteLookup']> = {
     customerUUID: {
-      endpoint: 'erp/customers?status=1',
+      endpoint: 'registry/customers?status=1',
       uuidField: 'CustomerUUID',
       labelField: 'Name',
       selectedLabelField: 'CustomerName',

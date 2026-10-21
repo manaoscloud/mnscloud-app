@@ -40,7 +40,7 @@ type DnsDashboardProvider = {
 type DnsDashboardDomain = {
   HddUUID: string;
   HddName: string;
-  CustomerCusUUID: string | null;
+  RegCustomerRcuUUID: string | null;
   CustomerName: string | null;
   HostingDnsProviderHdpUUID: string | null;
   ProviderName: string | null;

@@ -68,7 +68,7 @@ const config = defineCrud({
     },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       remoteLookup: COMPANY_LOOKUP,

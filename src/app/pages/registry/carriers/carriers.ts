@@ -12,23 +12,23 @@ const TYPE_OPTIONS = [
   { value: 'person', label: 'Person' },
 ];
 
-const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/suppliers',
-  uuidField: 'SupplierUUID',
-  pageTitle: 'Suppliers',
-  pageDescription: 'Manage suppliers, documents, contacts and addresses.',
-  createTitle: 'New supplier',
-  editTitle: 'Edit supplier',
-  dialogDescription: 'Maintain supplier registration and commercial contact data.',
+const CARRIER_CONFIG: ConfigurableCrudConfig = {
+  endpoint: 'registry/carriers',
+  uuidField: 'CarrierUUID',
+  pageTitle: 'ERP Carriers',
+  pageDescription: 'Manage carriers and logistics contact data.',
+  createTitle: 'New carrier',
+  editTitle: 'Edit carrier',
+  dialogDescription: 'Maintain carrier registration, contact and address data.',
   searchPlaceholder: 'Search',
-  emptyLabel: 'No suppliers found.',
-  deleteTitle: 'Delete supplier',
-  deleteMessage: 'Are you sure you want to delete this supplier?',
-  deleteSelectedTitle: 'Delete selected suppliers',
-  deleteSelectedMessage: 'Delete {count} selected suppliers?',
-  savedMessage: 'Supplier saved successfully.',
-  deletedMessage: 'Supplier deleted successfully.',
-  deleteFailedMessage: 'Failed to delete supplier.',
+  emptyLabel: 'No carriers found.',
+  deleteTitle: 'Delete carrier',
+  deleteMessage: 'Are you sure you want to delete this carrier?',
+  deleteSelectedTitle: 'Delete selected carriers',
+  deleteSelectedMessage: 'Delete {count} selected carriers?',
+  savedMessage: 'Carrier saved successfully.',
+  deletedMessage: 'Carrier deleted successfully.',
+  deleteFailedMessage: 'Failed to delete carrier.',
   statusMode: 'number',
   activeValue: 1,
   inactiveValue: 0,
@@ -51,7 +51,7 @@ const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
     notes: '',
   },
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'SupplierUUID' },
+    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'CarrierUUID' },
     { id: 'type', label: 'Type', field: 'Type' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
@@ -170,14 +170,14 @@ const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
 };
 
 @Component({
-  selector: 'app-erp-supplier',
+  selector: 'app-registry-carriers',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpSupplierPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegCarrierPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(SUPPLIER_CONFIG);
+    super(CARRIER_CONFIG);
   }
 }
