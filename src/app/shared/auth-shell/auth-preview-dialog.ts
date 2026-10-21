@@ -76,7 +76,13 @@ import { ReportProblemButtonComponent } from '../support-report-dialog/report-pr
             </div>
             <div class="preview-label">{{ t('signin.password') }}</div>
             <div class="preview-input">••••••••<mat-icon>visibility</mat-icon></div>
-            <button mat-flat-button class="submit-btn" type="button" disabled>
+            <button
+              mat-flat-button
+              class="submit-btn"
+              type="button"
+              tabindex="-1"
+              aria-disabled="true"
+            >
               {{ t('signin.submit') }}
             </button>
           </div>
