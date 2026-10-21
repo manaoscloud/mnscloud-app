@@ -2,8 +2,8 @@ import {
   ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 /**
  * Tenant payment gateways (ERP): the tenant's own accounts used to charge its customers.
@@ -70,7 +70,7 @@ const keepSecretHelp = ({ editing }: { editing: boolean }) =>
 const fields: ConfigurableCrudField[] = [
   {
     key: 'status',
-    source: 'EfgIsActive',
+    source: 'FgaIsActive',
     label: 'Status',
     type: 'status',
     span: 1,
@@ -78,7 +78,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'provider',
-    source: 'EfgProvider',
+    source: 'FgaProvider',
     label: 'Gateway',
     type: 'select',
     span: 1,
@@ -86,10 +86,10 @@ const fields: ConfigurableCrudField[] = [
     disabledWhen: ({ editing }) => editing,
     translateOptions: false,
   },
-  { key: 'name', source: 'EfgName', label: 'Name', required: true, span: 1 },
+  { key: 'name', source: 'FgaName', label: 'Name', required: true, span: 1 },
   {
     key: 'environment',
-    source: 'EfgEnvironment',
+    source: 'FgaEnvironment',
     label: 'Environment',
     type: 'select',
     span: 1,
@@ -99,7 +99,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'isDefault',
-    source: 'EfgIsDefault',
+    source: 'FgaIsDefault',
     label: 'Default for boletos',
     type: 'select',
     span: 1,
@@ -107,7 +107,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'accountNumber',
-    source: 'EfgAccountNumber',
+    source: 'FgaAccountNumber',
     label: 'Checking account',
     tab: 'financial',
     span: 1,
@@ -118,7 +118,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'receiveMethods',
-    source: 'EfgReceiveMethods',
+    source: 'FgaReceiveMethods',
     label: 'Receive methods',
     type: 'select',
     tab: 'financial',
@@ -129,7 +129,7 @@ const fields: ConfigurableCrudField[] = [
   },
   {
     key: 'autoCancelDays',
-    source: 'EfgAutoCancelDays',
+    source: 'FgaAutoCancelDays',
     label: 'Days to cancel after due date',
     type: 'number',
     tab: 'financial',
@@ -205,8 +205,8 @@ function text(value: unknown): string {
 
 export const paymentGatewayConfig = defineCrud({
   serverSidePagination: true,
-  endpoint: 'erp/financial/payment/gateways',
-  uuidField: 'EfgUUID',
+  endpoint: 'financial/gateway-accounts',
+  uuidField: 'FgaUUID',
   pageTitle: 'Payment Gateways',
   pageDescription: 'Your own gateway accounts used to issue boletos and Pix to your customers.',
   createTitle: 'New payment gateway',
@@ -239,30 +239,30 @@ export const paymentGatewayConfig = defineCrud({
   },
   fields,
   columns: [
-    { id: 'id', label: 'ID', field: 'EfgID', kind: 'text' },
-    { id: 'name', label: 'Name', field: 'EfgName', kind: 'identity' },
+    { id: 'id', label: 'ID', field: 'FgaID', kind: 'text' },
+    { id: 'name', label: 'Name', field: 'FgaName', kind: 'identity' },
     {
       id: 'provider',
       label: 'Gateway',
-      field: 'EfgProvider',
+      field: 'FgaProvider',
       options: defaultGatewayOptions,
       translateValue: false,
     },
     {
       id: 'environment',
       label: 'Environment',
-      field: 'EfgEnvironment',
+      field: 'FgaEnvironment',
       options: environmentOptions,
     },
-    { id: 'account', label: 'Checking account', field: 'EfgAccountNumber', kind: 'text' },
+    { id: 'account', label: 'Checking account', field: 'FgaAccountNumber', kind: 'text' },
     {
       id: 'certificate',
       label: 'Certificate expires',
-      field: 'EfgCertificateExpiresAt',
+      field: 'FgaCertificateExpiresAt',
       kind: 'date',
     },
-    { id: 'default', label: 'Default for boletos', field: 'EfgIsDefault', kind: 'boolean' },
-    { id: 'status', label: 'Status', field: 'EfgIsActive', kind: 'status' },
+    { id: 'default', label: 'Default for boletos', field: 'FgaIsDefault', kind: 'boolean' },
+    { id: 'status', label: 'Status', field: 'FgaIsActive', kind: 'status' },
   ],
   rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
   payload: (values, editing) => {

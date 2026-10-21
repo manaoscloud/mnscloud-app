@@ -326,17 +326,17 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.RegCustomerComplexPage,
       ),
   },
-  ErpFinPayGatewayAccountEfgUUID: {
+  FinGatewayAccountFgaUUID: {
     label: 'Create gateway account',
     loadComponent: () =>
-      import('../../../pages/erp/financial/payment/gateway/payment-gateway').then(
+      import('../../../pages/financial/gateway-accounts/gateway-accounts').then(
         (m) => m.FinancialPaymentGatewayPage,
       ),
   },
-  ErpFinPayMethodEfmUUID: {
+  FinPayMethodFpmUUID: {
     label: 'Create payment method',
     loadComponent: () =>
-      import('../../../pages/erp/financial/payment/method/payment-method').then(
+      import('../../../pages/financial/payment-methods/payment-methods').then(
         (m) => m.FinancialPaymentMethodPage,
       ),
   },

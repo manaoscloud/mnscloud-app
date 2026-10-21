@@ -5,24 +5,23 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import {
   defaultGatewayOptions,
   GATEWAY_PEM_FIELDS,
   paymentGatewayConfig,
-} from './payment-gateway-crud';
+} from './gateway-accounts-crud';
 
 @Component({
   selector: 'app-payment-gateway',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly gatewayOptions = signal<readonly ConfigurableCrudOption[]>(
-    defaultGatewayOptions,
-  );
+  private readonly gatewayOptions =
+    signal<readonly ConfigurableCrudOption[]>(defaultGatewayOptions);
   private readonly pemFileNames = new Map<string, string>();
 
   constructor() {
@@ -33,7 +32,7 @@ export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<Config
   private async loadCatalog(): Promise<void> {
     try {
       const response = await this.api.get<{ data?: { items?: { code: string; name: string }[] } }>(
-        'erp/financial/payment/gateway-providers',
+        'financial/gateway-providers',
       );
       const items = response?.data?.items ?? [];
       if (items.length) {

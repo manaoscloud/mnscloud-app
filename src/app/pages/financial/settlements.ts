@@ -1,5 +1,5 @@
-import { ConfigurableCrudRecord } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
+import { ConfigurableCrudRecord } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 
 const ORIGINS = [
   { value: 'manual', label: 'Manual' },
@@ -18,9 +18,9 @@ export function settlementsCollection(direction: 'receivable' | 'payable', uuidF
     const titleUUID = String(title[uuidField]);
     const open = Number(title['OpenAmount'] ?? title['Amount'] ?? 0);
     return defineCrud({
-      endpoint: 'erp/financial/settlements',
+      endpoint: 'financial/settlements',
       listQuery: { direction, titleUUID },
-      uuidField: 'EfsUUID',
+      uuidField: 'FstUUID',
       pageTitle: direction === 'receivable' ? 'Receipts' : 'Payments',
       pageDescription:
         direction === 'receivable'
@@ -40,12 +40,12 @@ export function settlementsCollection(direction: 'receivable' | 'payable', uuidF
         notes: '',
       },
       columns: [
-        { id: 'id', label: 'ID', field: 'EfsID', uuidField: 'EfsUUID', kind: 'identity' },
-        { id: 'paidAt', label: 'Paid at', field: 'EfsPaidAt', kind: 'datetime' },
-        { id: 'amount', label: 'Amount', field: 'EfsAmount', kind: 'currency' },
+        { id: 'id', label: 'ID', field: 'FstID', uuidField: 'FstUUID', kind: 'identity' },
+        { id: 'paidAt', label: 'Paid at', field: 'FstPaidAt', kind: 'datetime' },
+        { id: 'amount', label: 'Amount', field: 'FstAmount', kind: 'currency' },
         { id: 'method', label: 'Payment method', field: 'PayMethodName' },
-        { id: 'origin', label: 'Origin', field: 'EfsOrigin', options: ORIGINS },
-        { id: 'reference', label: 'Reference', field: 'EfsExternalReference' },
+        { id: 'origin', label: 'Origin', field: 'FstOrigin', options: ORIGINS },
+        { id: 'reference', label: 'Reference', field: 'FstExternalReference' },
       ],
       fields: [
         {
@@ -59,12 +59,12 @@ export function settlementsCollection(direction: 'receivable' | 'payable', uuidF
         { key: 'paidAt', label: 'Paid at', type: 'datetime', span: 1 },
         {
           key: 'payMethodUUID',
-          source: 'ErpFinPayMethodEfmUUID',
+          source: 'FinPayMethodFpmUUID',
           label: 'Payment method',
           type: 'search-select',
           remoteLookup: {
-            endpoint: 'erp/financial/payment/methods?status=1',
-            uuidField: 'ErpFinPayMethodUUID',
+            endpoint: 'financial/payment-methods?status=1',
+            uuidField: 'FinPayMethodUUID',
             labelField: 'Name',
           },
           span: 2,
@@ -83,12 +83,12 @@ export function settlementsCollection(direction: 'receivable' | 'payable', uuidF
           label: 'Reverse',
           icon: 'undo',
           visible: (row) =>
-            Number(row['EfsAmount']) > 0 &&
-            !row['ReversedByEfsUUID'] &&
-            row['EfsOrigin'] !== 'reversal',
+            Number(row['FstAmount']) > 0 &&
+            !row['ReversedByFstUUID'] &&
+            row['FstOrigin'] !== 'reversal',
           request: {
             method: 'post',
-            endpoint: (row) => `erp/financial/settlements/${row['EfsUUID']}/reversal`,
+            endpoint: (row) => `financial/settlements/${row['FstUUID']}/reversal`,
             successMessage: 'Settlement reversed.',
             confirm: {
               title: 'Reverse settlement',

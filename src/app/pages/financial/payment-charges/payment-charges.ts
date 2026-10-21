@@ -4,9 +4,9 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const statuses = [
   { value: 'open', label: 'Open' },
@@ -20,8 +20,8 @@ const config = defineCrud({
   serverSidePagination: true,
   canEditRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
   canDeleteRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
-  endpoint: 'erp/financial/payment/charges',
-  uuidField: 'ErpFinPayChargeUUID',
+  endpoint: 'financial/payment-charges',
+  uuidField: 'FinPayChargeUUID',
   pageTitle: 'Boletos and Pix',
   pageDescription: 'erp.description.payment-charges',
   bulkDelete: false,
@@ -85,14 +85,14 @@ const config = defineCrud({
     {
       key: 'gatewayAccountUUID',
       remoteLookup: {
-        endpoint: 'erp/financial/payment/gateways?status=1',
-        uuidField: 'EfgUUID',
-        labelField: 'EfgName',
+        endpoint: 'financial/gateway-accounts?status=1',
+        uuidField: 'FgaUUID',
+        labelField: 'FgaName',
       },
       source: 'GatewayAccountUUID',
       label: 'Payment gateway',
       type: 'search-select',
-      quickCreate: quickCreateFor('ErpFinPayGatewayAccountEfgUUID'),
+      quickCreate: quickCreateFor('FinGatewayAccountFgaUUID'),
       span: 1,
       hiddenWhen: ({ editing, values }) => editing || !values['issueAtGateway'],
     },
@@ -127,8 +127,8 @@ const config = defineCrud({
   selector: 'app-financial-payment-charge',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class FinancialPaymentChargePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {

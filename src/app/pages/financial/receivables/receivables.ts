@@ -3,10 +3,10 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { settlementsCollection } from '../settlements';
-import { quickCreateFor } from '../../../../../shared/crud/configurable-crud/quick-create';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const statuses = [
   { value: 'open', label: 'Open' },
@@ -17,8 +17,8 @@ const statuses = [
 ];
 
 const config = defineCrud({
-  endpoint: 'erp/financial/accounts/receivables',
-  uuidField: 'ErpFinAccReceivableUUID',
+  endpoint: 'financial/receivables',
+  uuidField: 'FinReceivableUUID',
   pageTitle: 'Accounts Receivable',
   pageDescription: 'Track incoming payments and outstanding customer invoices.',
   bulkDelete: true,
@@ -41,7 +41,7 @@ const config = defineCrud({
       id: 'description',
       label: 'Description',
       field: 'Description',
-      uuidField: 'ErpFinAccReceivableUUID',
+      uuidField: 'FinReceivableUUID',
       kind: 'identity',
     },
     { id: 'customer', label: 'Customer', field: 'CustomerName' },
@@ -95,7 +95,7 @@ const config = defineCrud({
       key: 'settlements',
       label: 'Receipts',
       icon: 'payments',
-      collection: settlementsCollection('receivable', 'ErpFinAccReceivableUUID'),
+      collection: settlementsCollection('receivable', 'FinReceivableUUID'),
     },
   ],
 });
@@ -104,8 +104,8 @@ const config = defineCrud({
   selector: 'app-financial-receivables',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class FinancialReceivablesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {

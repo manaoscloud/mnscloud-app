@@ -83,7 +83,7 @@ if (
 // Pay bank partners and tenant gateways own their CRUD configs (independent domains).
 for (const page of [
   'src/app/pages/system/pay/bank-partners',
-  'src/app/pages/erp/financial/payment/gateway',
+  'src/app/pages/financial/gateway-accounts',
 ]) {
   if (changedFiles.some((path) => path.startsWith(page + '/'))) {
     run('node', ['scripts/validate-crud-i18n.mjs', page]);

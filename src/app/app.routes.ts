@@ -882,46 +882,46 @@ export const routes: Routes = [
                 title: 'ERP • Human Resources • Time Clock Accounts | mnscloud',
               },
 
-              // Financeiro
+              // Financial
               {
-                path: 'erp/financial/account/payables',
+                path: 'financial/payables',
                 loadComponent: () =>
-                  import('./pages/erp/financial/account/payables/payables').then(
+                  import('./pages/financial/payables/payables').then(
                     (m) => m.FinancialPayablesPage,
                   ),
-                title: 'ERP • Financial • Accounts Payable | mnscloud',
+                title: 'Financial • Accounts Payable | mnscloud',
               },
               {
-                path: 'erp/financial/account/receivables',
+                path: 'financial/receivables',
                 loadComponent: () =>
-                  import('./pages/erp/financial/account/receivables/receivables').then(
+                  import('./pages/financial/receivables/receivables').then(
                     (m) => m.FinancialReceivablesPage,
                   ),
-                title: 'ERP • Financial • Accounts Receivable | mnscloud',
+                title: 'Financial • Accounts Receivable | mnscloud',
               },
               {
-                path: 'erp/financial/payment-method',
+                path: 'financial/payment-methods',
                 loadComponent: () =>
-                  import('./pages/erp/financial/payment/method/payment-method').then(
+                  import('./pages/financial/payment-methods/payment-methods').then(
                     (m) => m.FinancialPaymentMethodPage,
                   ),
-                title: 'ERP • Financial • Payment Methods | mnscloud',
+                title: 'Financial • Payment Methods | mnscloud',
               },
               {
-                path: 'erp/financial/payment-charge',
+                path: 'financial/payment-charges',
                 loadComponent: () =>
-                  import('./pages/erp/financial/payment/charge/payment-charge').then(
+                  import('./pages/financial/payment-charges/payment-charges').then(
                     (m) => m.FinancialPaymentChargePage,
                   ),
-                title: 'ERP • Financial • Boletos and Pix | mnscloud',
+                title: 'Financial • Boletos and Pix | mnscloud',
               },
               {
-                path: 'erp/financial/payment-gateway',
+                path: 'financial/gateway-accounts',
                 loadComponent: () =>
-                  import('./pages/erp/financial/payment/gateway/payment-gateway').then(
+                  import('./pages/financial/gateway-accounts/gateway-accounts').then(
                     (m) => m.FinancialPaymentGatewayPage,
                   ),
-                title: 'ERP • Financial • Payment Gateways | mnscloud',
+                title: 'Financial • Payment Gateways | mnscloud',
                 data: { scope: 'tenant', context: 'financial' },
               },
 

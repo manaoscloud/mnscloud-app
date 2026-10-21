@@ -4,8 +4,8 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-} from '../../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../../shared/crud/configurable-crud/define-crud';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 /** Canonical payment method types (validated by the API and the database). */
 export const PAYMENT_METHOD_TYPES: readonly ConfigurableCrudOption[] = [
@@ -26,8 +26,8 @@ function text(value: unknown): string {
 
 export const paymentMethodConfig = defineCrud({
   serverSidePagination: true,
-  endpoint: 'erp/financial/payment/methods',
-  uuidField: 'ErpFinPayMethodUUID',
+  endpoint: 'financial/payment-methods',
+  uuidField: 'FinPayMethodUUID',
   pageTitle: 'Payment Methods',
   pageDescription: 'Ways your customers can pay, used by receivables and invoices.',
   createTitle: 'New payment method',
@@ -62,7 +62,7 @@ export const paymentMethodConfig = defineCrud({
     { key: 'notes', source: 'Notes', label: 'Notes', type: 'textarea', span: 4, rows: 3 },
   ],
   columns: [
-    { id: 'id', label: 'ID', field: 'ErpFinPayMethodID', kind: 'text' },
+    { id: 'id', label: 'ID', field: 'FinPayMethodID', kind: 'text' },
     { id: 'name', label: 'Name', field: 'Name', kind: 'identity' },
     { id: 'type', label: 'Type', field: 'Type', options: PAYMENT_METHOD_TYPES },
     { id: 'code', label: 'Code', field: 'Code', kind: 'text' },
@@ -81,8 +81,8 @@ export const paymentMethodConfig = defineCrud({
   selector: 'app-finance-payment-method',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class FinancialPaymentMethodPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
