@@ -92,23 +92,23 @@ const config = defineCrud({
   fields: [
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
       required: true,
       remoteLookup: {
-        endpoint: 'erp/customers',
+        endpoint: 'registry/customers',
         searchParam: 'q',
         uuidField: 'CustomerUUID',
         labelField: 'Name',
         selectedLabelField: 'CustomerName',
       },
-      quickCreate: quickCreateFor('CustomerCusUUID'),
+      quickCreate: quickCreateFor('RegCustomerRcuUUID'),
       span: 2,
     },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       required: true,

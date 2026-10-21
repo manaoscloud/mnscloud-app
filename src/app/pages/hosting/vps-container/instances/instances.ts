@@ -103,7 +103,7 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       kind: 'related',
       field: 'CustomerName',
-      uuidField: 'CustomerCusUUID',
+      uuidField: 'RegCustomerRcuUUID',
     },
     {
       id: 'plan',
@@ -148,7 +148,7 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -419,7 +419,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
       const current = parseConfig<HostingVpsContainerInstanceConfig>(editing['HciConfig']) ?? {};
       return {
         name: String(payload['name'] ?? '').trim(),
-        customerUUID: editing['CustomerCusUUID'] ?? null,
+        customerUUID: editing['RegCustomerRcuUUID'] ?? null,
         planUUID: editing['HostingVpsContainerPlanHcnUUID'],
         config: {
           ...current,
@@ -719,7 +719,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   private async fetchCustomers() {
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        'erp/customers?status=1&limit=500&offset=0',
+        'registry/customers?status=1&limit=500&offset=0',
       );
       this.customers.set(result?.data?.items ?? []);
     } catch (error) {
@@ -766,7 +766,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
       HciUUID: String(row['HciUUID'] ?? ''),
       HciName: String(row['HciName'] ?? ''),
       HciConfig: parseConfig<HostingVpsContainerInstanceConfig>(row['HciConfig']),
-      CustomerCusUUID: (row['CustomerCusUUID'] as string | null | undefined) ?? null,
+      RegCustomerRcuUUID: (row['RegCustomerRcuUUID'] as string | null | undefined) ?? null,
       CustomerName: (row['CustomerName'] as string | null | undefined) ?? null,
       HciExternalId: (row['HciExternalId'] as string | null | undefined) ?? null,
       HciStatus: (row['HciStatus'] as string | null | undefined) ?? null,

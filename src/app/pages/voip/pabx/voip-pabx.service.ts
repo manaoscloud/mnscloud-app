@@ -7,7 +7,7 @@ export type VoipPabxAccount = {
   VpaName: string;
   VoipPabxServerVpsUUID?: string | null;
   VoipDomainVdmUUID?: string | null;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   VoipPabxDialPlanVdpUUID?: string | null;
   VoipBlacklistVbkUUID?: string | null;
   VpaRecordingStorageMode: 'default' | 'filesystem' | 'storage';

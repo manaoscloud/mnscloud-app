@@ -18,12 +18,12 @@ import {
 /** API field that carries the identity of each sign-in realm. */
 const IDENTITY_FIELD: Record<string, string> = {
   user: 'MemberUserUsrUUID',
-  employee: 'ErpHrEmployeeEmpUUID',
+  employee: 'RegEmployeeRemUUID',
   customer_user: 'ErpCustomerUserEcuUUID',
 };
 
 const identityOf = (row: ConfigurableCrudRecord) =>
-  row['MemberUserUsrUUID'] ?? row['ErpHrEmployeeEmpUUID'] ?? row['ErpCustomerUserEcuUUID'] ?? '';
+  row['MemberUserUsrUUID'] ?? row['RegEmployeeRemUUID'] ?? row['ErpCustomerUserEcuUUID'] ?? '';
 
 const config = defineCrud({
   endpoint: 'voip/phone/users',

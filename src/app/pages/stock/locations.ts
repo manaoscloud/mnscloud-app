@@ -64,12 +64,12 @@ const config = defineCrud({
     },
     {
       key: 'companyUUID',
-      source: 'ErpCompanyComUUID',
+      source: 'RegCompanyRcoUUID',
       label: 'Company',
       type: 'search-select',
       help: 'Establishment that owns the stock of this location.',
       remoteLookup: {
-        endpoint: 'erp/companies',
+        endpoint: 'registry/companies',
         uuidField: 'CompanyUUID',
         labelField: 'Name',
         descriptionField: 'Document',

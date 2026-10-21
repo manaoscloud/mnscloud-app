@@ -99,7 +99,7 @@ export type HostingVpsContainerInstance = {
   HciUUID: string;
   HciName: string;
   HciConfig?: HostingVpsContainerInstanceConfig | null;
-  CustomerCusUUID?: string | null;
+  RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   HciExternalId?: string | null;
   HciStatus?: string | null;

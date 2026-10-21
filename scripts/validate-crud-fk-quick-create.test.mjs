@@ -6,11 +6,11 @@ import {
   templateViolations,
 } from './validate-crud-fk-quick-create.mjs';
 
-const registry = new Set(['CustomerCusUUID']);
+const registry = new Set(['RegCustomerRcuUUID']);
 
 test('registered FK source passes and unregistered FK source fails', () => {
   const source = `const fields = [
-    { key: 'customerUUID', source: 'CustomerCusUUID', label: 'Customer', type: 'search-select' },
+    { key: 'customerUUID', source: 'RegCustomerRcuUUID', label: 'Customer', type: 'search-select' },
     { key: 'serverUUID', source: 'VoipPabxServerVpsUUID', label: 'Server', type: 'search-select' },
   ];`;
   const violations = fieldViolations(source, registry);
@@ -57,18 +57,18 @@ test('hand-written FK search select needs canCreate or an exemption', () => {
 
 test('registry entries expose key, lazy import path and page class', () => {
   const source = `export const QUICK_CREATE_REGISTRY = {
-  CustomerCusUUID: {
+  RegCustomerRcuUUID: {
     label: 'Create customer',
     loadComponent: () =>
-      import('../../../pages/erp/customer/customer').then((m) => m.ErpCustomerPage),
+      import('../../../pages/registry/customers/customers').then((m) => m.RegCustomerPage),
     permission: MASTER_PERMISSION,
   },
 };`;
   assert.deepEqual(registryEntries(source), [
     {
-      key: 'CustomerCusUUID',
-      importPath: '../../../pages/erp/customer/customer',
-      exportName: 'ErpCustomerPage',
+      key: 'RegCustomerRcuUUID',
+      importPath: '../../../pages/registry/customers/customers',
+      exportName: 'RegCustomerPage',
     },
   ]);
 });

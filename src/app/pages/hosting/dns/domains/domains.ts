@@ -188,7 +188,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       kind: 'related',
       field: 'CustomerName',
-      uuidField: 'CustomerCusUUID',
+      uuidField: 'RegCustomerRcuUUID',
     },
     {
       id: 'provider',
@@ -231,7 +231,7 @@ const HOSTING_DNS_DOMAIN_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',

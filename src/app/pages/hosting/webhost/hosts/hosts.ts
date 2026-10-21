@@ -147,7 +147,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       kind: 'related',
       field: 'CustomerName',
-      uuidField: 'CustomerCusUUID',
+      uuidField: 'RegCustomerRcuUUID',
     },
     { id: 'domain', label: 'Domain', field: 'DomainLabel' },
     {
@@ -188,7 +188,7 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -263,7 +263,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     );
     return this.registers()
       .filter((register) => register.HrgStatus === undefined || register.HrgStatus === 1)
-      .filter((register) => !customerUUID || register.CustomerCusUUID === customerUUID)
+      .filter((register) => !customerUUID || register.RegCustomerRcuUUID === customerUUID)
       .map((register) => ({
         value: register.HrgUUID,
         label: register.HrgName,
@@ -356,7 +356,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     if (key !== 'customerUUID') return;
     const registerUUID = String(this.formValues()['hostingDnsRegisterUUID'] ?? '');
     const register = this.registers().find((item) => item.HrgUUID === registerUUID);
-    if (register && register.CustomerCusUUID !== String(value ?? '')) {
+    if (register && register.RegCustomerRcuUUID !== String(value ?? '')) {
       this.patchFormValues({ hostingDnsRegisterUUID: '' });
     }
   }
@@ -376,7 +376,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
     const registerUUID = String(payload['hostingDnsRegisterUUID'] ?? '');
     const customerUUID = String(payload['customerUUID'] ?? '');
     const register = this.registers().find((item) => item.HrgUUID === registerUUID);
-    if (!register || register.CustomerCusUUID !== customerUUID) {
+    if (!register || register.RegCustomerRcuUUID !== customerUUID) {
       return this.rejectField(
         'hostingDnsRegisterUUID',
         'Select a register linked to the selected customer.',
@@ -449,7 +449,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
   private async fetchCustomers(): Promise<void> {
     try {
       const response = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
-        'erp/customers?status=1&limit=500&offset=0',
+        'registry/customers?status=1&limit=500&offset=0',
       );
       this.customers.set(response?.data?.items ?? []);
     } catch (error) {
@@ -481,7 +481,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       {
         HrgUUID: registerUUID,
         HrgName: name,
-        CustomerCusUUID: row['CustomerCusUUID'] as string | null | undefined,
+        RegCustomerRcuUUID: row['RegCustomerRcuUUID'] as string | null | undefined,
         CustomerName: row['CustomerName'] as string | null | undefined,
         HrgStatus: 1,
       },

@@ -70,7 +70,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       id: 'customer',
       label: 'Customer',
       kind: 'related',
-      uuidField: 'CustomerCusUUID',
+      uuidField: 'RegCustomerRcuUUID',
       lookupKey: 'customerUUID',
     },
     {
@@ -104,7 +104,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -223,8 +223,8 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   }
 
   private async loadCustomers(): Promise<void> {
-    const options = await this.fetchPaged('erp/customers?status=1', (row) =>
-      option(row.CustomerUUID ?? row.CusUUID, row.Name ?? row.CustomerName ?? row.CusName, [
+    const options = await this.fetchPaged('registry/customers?status=1', (row) =>
+      option(row.CustomerUUID ?? row.RcuUUID, row.Name ?? row.CustomerName ?? row.RcuName, [
         row.Document,
         row.Email,
       ]),

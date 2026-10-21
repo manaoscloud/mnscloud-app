@@ -148,7 +148,7 @@ const SUBSCRIBER_CONFIG: ConfigurableCrudConfig = {
     },
     {
       key: 'customerUUID',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
@@ -387,11 +387,11 @@ export class VoipSoftswitchSubscriberPage extends ConfigurableCrudPageBase<VoipS
         ),
       );
       this.customerOptions.set(
-        await this.fetchPaged('erp/customers?status=1', (row) =>
+        await this.fetchPaged('registry/customers?status=1', (row) =>
           option(
-            row.CustomerUUID ?? row.CusUUID ?? row.CustomerCusUUID,
-            row.CusName ?? row.Name ?? row.CustomerName,
-            [row.CusDocument ?? row.Document, row.CusEmail ?? row.Email],
+            row.CustomerUUID ?? row.RcuUUID ?? row.RegCustomerRcuUUID,
+            row.RcuName ?? row.Name ?? row.CustomerName,
+            [row.RcuDocument ?? row.Document, row.RcuEmail ?? row.Email],
           ),
         ),
       );

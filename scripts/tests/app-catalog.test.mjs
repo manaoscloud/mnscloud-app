@@ -48,6 +48,28 @@ test('page reader takes the main configuration and the desk branch', () => {
   assert.equal(tenant.title, 'Support tickets');
 });
 
+test('page reader expands fields built by imported helpers (Registry pages)', () => {
+  const suppliers = readPage(process.cwd(), 'src/app/pages/registry/suppliers/suppliers.ts', false);
+  const labels = suppliers.fields.map((field) => field.label);
+  for (const label of [
+    'Status',
+    'Type',
+    'Document',
+    'Name',
+    'E-mail',
+    'Zip',
+    'Street',
+    'Country',
+    'Notes',
+  ]) {
+    assert.ok(labels.includes(label), label);
+  }
+  const customers = readPage(process.cwd(), 'src/app/pages/registry/customers/customers.ts', false);
+  const customerLabels = customers.fields.map((field) => field.label);
+  assert.ok(customerLabels.includes('Billing Zip') && customerLabels.includes('Legal name'));
+  assert.ok(customers.fields.some((field) => field.help.includes('postal code search')));
+});
+
 test('shared route arrays preserve both tenant and platform catalog destinations', () => {
   const source = `
     const shared = [{ path: 'buckets', loadComponent: () => import('./pages/hosting/storage/buckets/buckets') }];

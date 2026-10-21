@@ -8,11 +8,17 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-
-const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'company', label: 'Company' },
-  { value: 'person', label: 'Person' },
-];
+import { generateCrudPassword } from '../../../shared/crud/configurable-crud/password-generation';
+import {
+  REGISTRY_DOCUMENT_FIELD,
+  REGISTRY_EMAIL_FIELD,
+  REGISTRY_LEGAL_DATE_FIELD,
+  REGISTRY_PHONE_FIELD,
+  REGISTRY_STATUS_FIELD,
+  REGISTRY_TYPE_FIELD,
+  registryAddressFields,
+  registryNameField,
+} from '../registry-fields';
 
 const PORTAL_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -52,13 +58,13 @@ export function customerOptionFromResponse(
   const record = extractCustomerRecord(response) ?? payload;
   const uuid =
     stringValue(record['CustomerUUID']) ??
-    stringValue(record['CusUUID']) ??
-    stringValue(record['CustomerCusUUID']) ??
+    stringValue(record['RcuUUID']) ??
+    stringValue(record['RegCustomerRcuUUID']) ??
     stringValue(record['uuid']);
   if (!uuid) return null;
   const label =
     stringValue(record['Name']) ??
-    stringValue(record['CusName']) ??
+    stringValue(record['RcuName']) ??
     stringValue(record['CustomerName']) ??
     stringValue(payload['name']) ??
     stringValue(payload['legalName']) ??
@@ -106,22 +112,9 @@ function stringValue(value: unknown): string | null {
   return text || null;
 }
 
+/** Portal login: `cli` + 8 lowercase letters or digits (the database enforces the format). */
 function generateAlphanumericUsername(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let random = '';
-  for (let i = 0; i < 8; i++) {
-    random += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `cli${random}`;
-}
-
-function generateRandomPassword(length = 10): string {
-  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+  return `cli${generateCrudPassword(8, 'abcdefghijklmnopqrstuvwxyz0123456789')}`;
 }
 
 const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
@@ -178,7 +171,7 @@ const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
 };
 
 const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'erp/customers',
+  endpoint: 'registry/customers',
   uuidField: 'CustomerUUID',
   pageTitle: 'Customers',
   pageDescription: 'Manage customer records, billing data and service addresses.',
@@ -204,7 +197,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   initialValuesFactory: () => ({
     ...DEFAULT_CUSTOMER_INITIAL_VALUES,
     portalUsername: generateAlphanumericUsername(),
-    portalPassword: generateRandomPassword(),
+    portalPassword: generateCrudPassword(10),
     portalMustChangePassword: false,
     sendWelcomeEmail: true,
   }),
@@ -218,7 +211,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       request: {
         method: 'post',
         endpoint: (row) =>
-          `erp/customers/${row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
+          `registry/customers/${row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
         successMessage: 'Welcome email with credentials resent successfully.',
         confirm: {
           title: 'Resend portal credentials',
@@ -243,44 +236,11 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ],
   fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    {
-      key: 'type',
-      source: 'Type',
-      payloadKey: 'type',
-      label: 'Type',
-      type: 'select',
-      options: TYPE_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'document',
-      source: 'Document',
-      payloadKey: 'document',
-      label: 'Document',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'legalDate',
-      source: 'LegalDate',
-      payloadKey: 'legalDate',
-      label: 'Opening date',
-      labelWhen: ({ values }) =>
-        String(values['type'] ?? '').toLowerCase() === 'person' ? 'Date of birth' : 'Opening date',
-      type: 'date',
-      required: true,
-      span: 1,
-    },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    REGISTRY_STATUS_FIELD,
+    { ...REGISTRY_TYPE_FIELD, required: true },
+    { ...REGISTRY_DOCUMENT_FIELD, required: true },
+    { ...REGISTRY_LEGAL_DATE_FIELD, required: true },
+    registryNameField(),
     {
       key: 'legalName',
       source: 'LegalName',
@@ -289,318 +249,38 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 2,
     },
-    {
-      key: 'email',
-      source: 'Email',
-      payloadKey: 'email',
-      label: 'E-mail',
-      type: 'email',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'phone',
-      source: 'Phone',
-      payloadKey: 'phone',
-      label: 'Phone',
-      type: 'phone',
-      required: true,
-      span: 1,
-    },
+    { ...REGISTRY_EMAIL_FIELD, required: true },
+    { ...REGISTRY_PHONE_FIELD, required: true },
     {
       key: 'complexUUID',
       source: 'ComplexUUID',
       payloadKey: 'complexUUID',
       label: 'Complex',
       type: 'search-select',
-      quickCreate: quickCreateFor('ErpComplexEcxUUID'),
+      quickCreate: quickCreateFor('RegCustomerComplexRcxUUID'),
       placeholder: 'Search complexes',
       tab: 'address',
       addressSection: 'main',
       span: 1,
     },
-    {
-      key: 'addressMainZip',
-      source: 'AddressMainZip',
-      payloadKey: 'addressMainZip',
-      label: 'Zip',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-      postalLookup: {
-        streetKey: 'addressMainStreet',
-        districtKey: 'addressMainDistrict',
-        complementKey: 'addressMainComplement',
-        cityKey: 'addressMainCity',
-        stateKey: 'addressMainState',
-        countryKey: 'addressMainCountry',
-        municipalityCodeKey: 'addressMainMunicipalityCode',
-        numberKey: 'addressMainNumber',
-      },
-    },
-    {
-      key: 'addressMainStreet',
-      source: 'AddressMainStreet',
-      payloadKey: 'addressMainStreet',
-      label: 'Street',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'addressMainNumber',
-      source: 'AddressMainNumber',
-      payloadKey: 'addressMainNumber',
-      label: 'Number',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'addressMainDistrict',
-      source: 'AddressMainDistrict',
-      payloadKey: 'addressMainDistrict',
-      label: 'District',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'addressMainComplement',
-      source: 'AddressMainComplement',
-      payloadKey: 'addressMainComplement',
-      label: 'Complement',
-      tab: 'address',
-      addressSection: 'main',
-      span: 1,
-    },
-    {
-      key: 'addressMainCity',
-      source: 'AddressMainCity',
-      payloadKey: 'addressMainCity',
-      label: 'City',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'addressMainState',
-      source: 'AddressMainState',
-      payloadKey: 'addressMainState',
-      label: 'State',
-      tab: 'address',
-      addressSection: 'main',
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'addressMainCountry',
-      source: 'AddressMainCountry',
-      payloadKey: 'addressMainCountry',
-      label: 'Country',
-      tab: 'address',
-      addressSection: 'main',
-      span: 1,
-    },
-    {
-      key: 'addressMainMunicipalityCode',
-      source: 'AddressMainMunicipalityCode',
-      payloadKey: 'addressMainMunicipalityCode',
-      label: 'IBGE municipality code',
-      help: 'Filled by the postal code search; required on fiscal documents.',
-      tab: 'address',
-      addressSection: 'main',
-      span: 1,
-    },
-    {
-      key: 'addressBillingZip',
-      source: 'AddressBillingZip',
-      payloadKey: 'addressBillingZip',
-      label: 'Billing Zip',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-      postalLookup: {
-        streetKey: 'addressBillingStreet',
-        districtKey: 'addressBillingDistrict',
-        complementKey: 'addressBillingComplement',
-        cityKey: 'addressBillingCity',
-        stateKey: 'addressBillingState',
-        countryKey: 'addressBillingCountry',
-        municipalityCodeKey: 'addressBillingMunicipalityCode',
-        numberKey: 'addressBillingNumber',
-      },
-    },
-    {
-      key: 'addressBillingStreet',
-      source: 'AddressBillingStreet',
-      payloadKey: 'addressBillingStreet',
-      label: 'Billing Street',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingNumber',
-      source: 'AddressBillingNumber',
-      payloadKey: 'addressBillingNumber',
-      label: 'Billing Number',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingDistrict',
-      source: 'AddressBillingDistrict',
-      payloadKey: 'addressBillingDistrict',
-      label: 'Billing District',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingComplement',
-      source: 'AddressBillingComplement',
-      payloadKey: 'addressBillingComplement',
-      label: 'Billing Complement',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingCity',
-      source: 'AddressBillingCity',
-      payloadKey: 'addressBillingCity',
-      label: 'Billing City',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingState',
-      source: 'AddressBillingState',
-      payloadKey: 'addressBillingState',
-      label: 'Billing State',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingCountry',
-      source: 'AddressBillingCountry',
-      payloadKey: 'addressBillingCountry',
-      label: 'Billing Country',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressBillingMunicipalityCode',
-      source: 'AddressBillingMunicipalityCode',
-      payloadKey: 'addressBillingMunicipalityCode',
-      label: 'Billing IBGE municipality code',
-      help: 'Filled by the postal code search; required on fiscal documents.',
-      tab: 'address',
-      addressSection: 'billing',
-      span: 1,
-    },
-    {
-      key: 'addressInstallZip',
-      source: 'AddressInstallZip',
-      payloadKey: 'addressInstallZip',
-      label: 'Installation Zip',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-      postalLookup: {
-        streetKey: 'addressInstallStreet',
-        districtKey: 'addressInstallDistrict',
-        complementKey: 'addressInstallComplement',
-        cityKey: 'addressInstallCity',
-        stateKey: 'addressInstallState',
-        countryKey: 'addressInstallCountry',
-        municipalityCodeKey: 'addressInstallMunicipalityCode',
-        numberKey: 'addressInstallNumber',
-      },
-    },
-    {
-      key: 'addressInstallStreet',
-      source: 'AddressInstallStreet',
-      payloadKey: 'addressInstallStreet',
-      label: 'Installation Street',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallNumber',
-      source: 'AddressInstallNumber',
-      payloadKey: 'addressInstallNumber',
-      label: 'Installation Number',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallDistrict',
-      source: 'AddressInstallDistrict',
-      payloadKey: 'addressInstallDistrict',
-      label: 'Installation District',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallComplement',
-      source: 'AddressInstallComplement',
-      payloadKey: 'addressInstallComplement',
-      label: 'Installation Complement',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallCity',
-      source: 'AddressInstallCity',
-      payloadKey: 'addressInstallCity',
-      label: 'Installation City',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallState',
-      source: 'AddressInstallState',
-      payloadKey: 'addressInstallState',
-      label: 'Installation State',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallCountry',
-      source: 'AddressInstallCountry',
-      payloadKey: 'addressInstallCountry',
-      label: 'Installation Country',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
-    {
-      key: 'addressInstallMunicipalityCode',
-      source: 'AddressInstallMunicipalityCode',
-      payloadKey: 'addressInstallMunicipalityCode',
-      label: 'Installation IBGE municipality code',
-      help: 'Filled by the postal code search; required on fiscal documents.',
-      tab: 'address',
-      addressSection: 'installation',
-      span: 1,
-    },
+    ...registryAddressFields({
+      prefix: 'addressMain',
+      section: 'main',
+      required: ['Zip', 'Street', 'Number', 'District', 'City', 'State'],
+      municipality: true,
+    }),
+    ...registryAddressFields({
+      prefix: 'addressBilling',
+      labelPrefix: 'Billing ',
+      section: 'billing',
+      municipality: true,
+    }),
+    ...registryAddressFields({
+      prefix: 'addressInstall',
+      labelPrefix: 'Installation ',
+      section: 'installation',
+      municipality: true,
+    }),
     {
       key: 'lat',
       source: 'Lat',
@@ -742,7 +422,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
           onClick: async ({ values }, host) => {
             const row = host.editingRecord();
             const customerUUID = row
-              ? String(row['CustomerUUID'] ?? row['CusUUID'] ?? row['uuid'] ?? '')
+              ? String(row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid'] ?? '')
               : '';
             if (!customerUUID) {
               host.snack.warning('Customer must be saved before resending credentials.');
@@ -754,7 +434,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
                 body.password = String(values['portalPassword']);
               }
               await host.api.post(
-                `erp/customers/${customerUUID}/portal/resend-welcome-email`,
+                `registry/customers/${customerUUID}/portal/resend-welcome-email`,
                 body,
               );
               host.snack.success('Welcome email with credentials resent successfully.');
@@ -855,13 +535,13 @@ type ComplexRecord = {
 };
 
 @Component({
-  selector: 'app-erp-customer',
+  selector: 'app-registry-customers',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   protected override async quickCreateOption(
     response: unknown,
     payload: ConfigurableCrudRecord,
@@ -874,7 +554,7 @@ export class ErpCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   private readonly complexesResource = resource({
     defaultValue: [] as ComplexRecord[],
     loader: async () => {
-      const response = await this.api.get('erp/complexes?status=active&limit=500');
+      const response = await this.api.get('registry/customer-complexes?status=active&limit=500');
       return ((response as { data?: { items?: ComplexRecord[] } })?.data?.items ??
         []) as ComplexRecord[];
     },

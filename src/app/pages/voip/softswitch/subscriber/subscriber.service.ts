@@ -2,7 +2,7 @@ export type VoipSoftswitchSubscriberItem = {
   VsuUUID: string;
   VsuID: string;
   VoipSoftswitchAccountVssUUID: string;
-  CustomerCusUUID: string;
+  RegCustomerRcuUUID: string;
   VoipDomainVdmUUID: string;
   VsuUsername: string;
   VsuUsernameType?: 'PUBLIC_E164' | 'INTERNAL' | null;

@@ -112,11 +112,11 @@ const config = defineCrud({
     { key: 'notes', source: 'VhkNotes', label: 'Notes', type: 'textarea', rows: 4, span: 4 },
     {
       key: 'customer',
-      source: 'CustomerCusUUID',
+      source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
       remoteLookup: {
-        endpoint: 'erp/customers',
+        endpoint: 'registry/customers',
         searchParam: 'q',
         uuidField: 'CustomerUUID',
         labelField: 'Name',
@@ -155,7 +155,7 @@ const config = defineCrud({
     VhkRevision: Number(values['revision']),
     VhkDisposition: values['disposition'] || null,
     VhkNotes: values['notes'] || null,
-    CustomerCusUUID: values['customer'] || null,
+    RegCustomerRcuUUID: values['customer'] || null,
     CrmContactCcoUUID: values['contact'] || null,
     CrmLeadCleUUID: values['lead'] || null,
   }),

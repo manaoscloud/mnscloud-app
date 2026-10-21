@@ -124,7 +124,7 @@ function config(): ConfigurableCrudConfig {
         label: 'Customer',
         kind: 'related',
         field: 'CustomerName',
-        uuidField: 'CustomerCusUUID',
+        uuidField: 'RegCustomerRcuUUID',
       },
       {
         id: 'server',
@@ -163,9 +163,9 @@ function config(): ConfigurableCrudConfig {
       },
       {
         key: 'customerUUID',
-        source: 'CustomerCusUUID',
+        source: 'RegCustomerRcuUUID',
         remoteLookup: {
-          endpoint: 'erp/customers?status=1',
+          endpoint: 'registry/customers?status=1',
           uuidField: 'CustomerUUID',
           labelField: 'Name',
           selectedLabelField: 'CustomerName',

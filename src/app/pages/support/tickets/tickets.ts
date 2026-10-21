@@ -339,11 +339,11 @@ function config(
               label: 'Customer',
               type: 'search-select' as const,
               remoteLookup: {
-                endpoint: 'erp/customers',
+                endpoint: 'registry/customers',
                 uuidField: 'CustomerUUID',
                 labelField: 'Name',
               },
-              quickCreate: quickCreateFor('CustomerCusUUID'),
+              quickCreate: quickCreateFor('RegCustomerRcuUUID'),
               required: true,
               span: 1 as const,
             },

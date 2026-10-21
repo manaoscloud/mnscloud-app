@@ -402,7 +402,7 @@ export class VoipDidDashboardPage {
   }
 
   private isAssigned(did: VoipDidItem) {
-    return Boolean(did.VoipDidAssignmentVdaUUID || did.CustomerCusUUID || did.UserUsrUUID);
+    return Boolean(did.VoipDidAssignmentVdaUUID || did.RegCustomerRcuUUID || did.UserUsrUUID);
   }
 
   private isActive(value: unknown) {
