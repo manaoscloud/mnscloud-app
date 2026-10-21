@@ -22,20 +22,30 @@ import { HelpVideoButtonComponent } from '../help-video/help-video-button';
     MatTooltipModule,
     TranslocoPipe,
   ],
+  host: {
+    '[class.report-footer]': "variant() === 'footer'",
+  },
   template: `
     @if (helpVideo()) {
       <mns-help-video-button />
     }
-    <button
-      mat-icon-button
-      type="button"
-      class="report-problem-button"
-      [matTooltip]="'topbar.reportBug' | transloco"
-      [attr.aria-label]="'topbar.reportBug' | transloco"
-      (click)="open()"
-    >
-      <mat-icon>bug_report</mat-icon>
-    </button>
+    @if (variant() === 'footer') {
+      <button mat-button type="button" class="report-problem-button" (click)="open()">
+        <mat-icon>bug_report</mat-icon>
+        {{ 'topbar.reportBug' | transloco }}
+      </button>
+    } @else {
+      <button
+        mat-icon-button
+        type="button"
+        class="report-problem-button"
+        [matTooltip]="'topbar.reportBug' | transloco"
+        [attr.aria-label]="'topbar.reportBug' | transloco"
+        (click)="open()"
+      >
+        <mat-icon>bug_report</mat-icon>
+      </button>
+    }
   `,
   styles: `
     :host {
@@ -44,6 +54,13 @@ import { HelpVideoButtonComponent } from '../help-video/help-video-button';
       flex: 0 0 auto;
       align-self: flex-start;
       margin: -0.5rem -0.5rem 0 auto;
+    }
+    :host(.report-footer) {
+      align-self: center;
+      margin: 0;
+    }
+    :host(.report-footer) .report-problem-button {
+      min-height: 44px;
     }
     .report-problem-button {
       color: var(--mat-sys-color-on-surface-variant);
@@ -56,11 +73,14 @@ export class ReportProblemButtonComponent {
   readonly context = input<Omit<SupportReportContext, 'surface' | 'dialogTitle'> | null>(null);
   /** False inside the tutorial video dialog itself. */
   readonly helpVideo = input(true);
+  readonly variant = input<'icon' | 'footer'>('icon');
+  /** Explicit translated title for support controls outside the page header. */
+  readonly title = input<string | null>(null);
 
   open() {
     const element = this.host.nativeElement;
     const header = element.closest('.dialog-header, .erp-header');
-    const title = header?.querySelector('h1, h2, h3')?.textContent?.trim() ?? '';
+    const title = this.title() ?? header?.querySelector('h1, h2, h3')?.textContent?.trim() ?? '';
     void this.reports.openReportDialog(undefined, {
       context: { ...(this.context() ?? {}), dialogTitle: title },
       element: (element.closest('.cdk-overlay-pane') as HTMLElement | null) ?? null,
