@@ -1,9 +1,14 @@
 /** Cryptographic generation with rejection sampling, without modulo bias or weak fallbacks. */
-export function generateCrudPassword(length: number): string {
+export function generateCrudPassword(
+  length: number,
+  alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789',
+): string {
   if (!Number.isInteger(length) || length < 1 || length > 128) {
     throw new RangeError('Invalid generated password length.');
   }
-  const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  if (alphabet.length < 2 || alphabet.length > 256) {
+    throw new RangeError('Invalid generated password alphabet.');
+  }
   const ceiling = 256 - (256 % alphabet.length);
   const bytes = new Uint8Array(64);
   let password = '';

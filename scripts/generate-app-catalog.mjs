@@ -8,7 +8,8 @@
 //   node scripts/generate-app-catalog.mjs --check  fails when the committed file is stale
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import vm from 'node:vm';
 import ts from 'typescript';
 import { navLabelKey, readRegistry, REGISTRY_PATH } from './validate-nav-labels.mjs';
 
@@ -115,6 +116,82 @@ export function readRoutes(source) {
   return routes;
 }
 
+/**
+ * Values a page imports from a relative helper module that has only type imports (shared field
+ * builders such as pages/registry/registry-fields.ts), so fields built there keep their labels.
+ */
+function helperScope(path, sf) {
+  const scope = {};
+  for (const statement of sf.statements) {
+    if (!ts.isImportDeclaration(statement) || !statement.importClause?.namedBindings) continue;
+    const specifier = statement.moduleSpecifier.text;
+    const bindings = statement.importClause.namedBindings;
+    if (
+      !specifier.startsWith('.') ||
+      statement.importClause.isTypeOnly ||
+      !ts.isNamedImports(bindings)
+    ) {
+      continue;
+    }
+    const file = resolve(dirname(path), `${specifier}.ts`);
+    if (!existsSync(file)) continue;
+    const source = readFileSync(file, 'utf8');
+    const helper = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+    const runtimeImports = helper.statements.some(
+      (node) => ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly,
+    );
+    if (runtimeImports) continue;
+    const js = ts.transpileModule(source, {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const module = { exports: {} };
+    vm.runInNewContext(js, { module, exports: module.exports });
+    for (const element of bindings.elements) {
+      const name = (element.propertyName ?? element.name).text;
+      if (name in module.exports) scope[element.name.text] = module.exports[name];
+    }
+  }
+  return scope;
+}
+
+/** Field entries ({ label, help }) of a fields array, evaluating helper-built elements. */
+function fieldEntries(fields, scope, platform) {
+  const entries = [];
+  const evaluate = (node) => {
+    const js = ts.transpile(`(${node.getText()})`, { target: ts.ScriptTarget.ES2022 });
+    try {
+      return vm.runInNewContext(js, { ...scope });
+    } catch {
+      return undefined; // references something the page computes at runtime
+    }
+  };
+  if (!ts.isArrayLiteralExpression(fields)) {
+    const value = evaluate(fields);
+    return (Array.isArray(value) ? value : [])
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => ({ label: text(item.label), help: text(item.help) }));
+  }
+  for (const field of fields.elements) {
+    const literal = ts.isObjectLiteralExpression(field)
+      ? {
+          label: pick(property(field, 'label'), platform),
+          help: pick(property(field, 'help'), platform),
+        }
+      : null;
+    if (literal && (literal.label || !field.properties.some(ts.isSpreadAssignment))) {
+      entries.push(literal);
+      continue;
+    }
+    const value = evaluate(ts.isSpreadElement(field) ? field.expression : field);
+    for (const item of ts.isSpreadElement(field) ? (Array.isArray(value) ? value : []) : [value]) {
+      if (item && typeof item === 'object') {
+        entries.push({ label: text(item.label), help: text(item.help) });
+      }
+    }
+  }
+  return entries;
+}
+
 /** Title, description and field help declared by a page (defineCrud or a hand-written template). */
 export function readPage(root, file, platform) {
   const path = resolve(root, file);
@@ -139,12 +216,8 @@ export function readPage(root, file, platform) {
   if (main.node) {
     page.title = pick(property(main.node, 'pageTitle'), platform);
     page.description = pick(property(main.node, 'pageDescription'), platform);
-    for (const field of main.fields && ts.isArrayLiteralExpression(main.fields)
-      ? main.fields.elements
-      : []) {
-      if (!ts.isObjectLiteralExpression(field)) continue;
-      const label = pick(property(field, 'label'), platform);
-      const help = pick(property(field, 'help'), platform);
+    const entries = main.fields ? fieldEntries(main.fields, helperScope(path, sf), platform) : [];
+    for (const { label, help } of entries) {
       if (label && !seen.has(label) && page.fields.length < MAX_FIELDS) {
         seen.add(label);
         page.fields.push({ label, help });
