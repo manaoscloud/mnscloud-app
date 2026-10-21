@@ -309,98 +309,6 @@ function webRtcDomainConfig(endpoint: string, titlePrefix = 'WebRTC'): Configura
   };
 }
 
-const WEBRTC_PARAMETER_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'system/realtime/webrtc/parameters',
-  uuidField: 'RwpUUID',
-  pageTitle: 'WebRTC Parameters',
-  pageDescription: 'Manage tenant and edge-specific WebRTC runtime parameters.',
-  createTitle: 'New WebRTC parameter',
-  editTitle: 'Edit WebRTC parameter',
-  dialogDescription: 'Runtime parameter consumed by WebRTC edges.',
-  searchPlaceholder: 'Search WebRTC parameters',
-  emptyLabel: 'No WebRTC parameters found.',
-  deleteTitle: 'Delete WebRTC parameter',
-  deleteMessage: 'Delete this WebRTC parameter?',
-  deleteSelectedTitle: 'Delete selected WebRTC parameters',
-  deleteSelectedMessage: 'Delete {count} selected WebRTC parameters?',
-  savedMessage: 'WebRTC parameter saved.',
-  deletedMessage: 'WebRTC parameter deleted.',
-  deleteFailedMessage: 'Failed to delete WebRTC parameter.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
-  statusOptions: STATUS_OPTIONS,
-  initialValues: {
-    status: 1,
-    serverUUID: '',
-    key: '',
-    type: 'string',
-    valueJson: '',
-    description: '',
-  },
-  columns: [
-    { id: 'key', label: 'Key', kind: 'identity', field: 'RwpKey', uuidField: 'RwpUUID' },
-    { id: 'server', label: 'Server', field: 'RwsName' },
-    { id: 'type', label: 'Type', field: 'RwpType' },
-    { id: 'value', label: 'Value', field: 'RwpValue' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'RwpStatus', className: 'status-col' },
-  ],
-  fields: [
-    {
-      key: 'serverUUID',
-      source: 'RealtimeWebRtcServerRwsUUID',
-      payloadKey: 'serverUUID',
-      label: 'Server',
-      type: 'search-select',
-      span: 1,
-    },
-    { key: 'key', source: 'RwpKey', payloadKey: 'key', label: 'Key', required: true, span: 1 },
-    {
-      key: 'type',
-      source: 'RwpType',
-      payloadKey: 'type',
-      label: 'Type',
-      type: 'select',
-      options: [
-        { value: 'string', label: 'String' },
-        { value: 'number', label: 'Number' },
-        { value: 'boolean', label: 'Boolean' },
-        { value: 'json', label: 'JSON' },
-      ],
-      span: 1,
-    },
-    {
-      key: 'status',
-      source: 'RwpStatus',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    {
-      key: 'valueJson',
-      source: 'RwpValue',
-      payloadKey: 'value',
-      label: 'Value',
-      type: 'textarea',
-      format: 'json',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-    {
-      key: 'description',
-      source: 'RwpDescription',
-      payloadKey: 'description',
-      label: 'Description',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-  ],
-};
-
 const WEBRTC_SIP_TARGET_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'realtime/webrtc/sip-targets',
   uuidField: 'RwtUUID',
@@ -839,19 +747,6 @@ export class RealtimeWebRtcDomainsMasterPage extends RealtimeWebRtcCrudPage {
 export class RealtimeWebRtcDomainsTenantPage extends RealtimeWebRtcCrudPage {
   constructor() {
     super(webRtcDomainConfig('realtime/webrtc/domains'), 'domains', 'tenant');
-  }
-}
-
-@Component({
-  selector: 'app-realtime-webrtc-parameters',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
-})
-export class RealtimeWebRtcParametersPage extends RealtimeWebRtcCrudPage {
-  constructor() {
-    super(WEBRTC_PARAMETER_CONFIG, 'parameters', 'master');
   }
 }
 

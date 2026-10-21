@@ -72,8 +72,8 @@ const CONFIGS: Record<RealtimeServerKind, ServerParameterConfig> = {
     labelHelp: 'Prefix of the TURN/STUN server UUID; it never changes when the server is renamed.',
   },
   webrtc: {
-    endpoint: 'system/realtime/webrtc/domain-parameters',
-    title: 'WebRTC domain parameters',
+    endpoint: 'system/realtime/webrtc/parameters',
+    title: 'WebRTC parameters',
     description:
       'Automatic managed primary domain of new WebRTC servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.',
     toggle: 'Generate WebRTC server domain automatically',
