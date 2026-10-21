@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { AuthPreviewDialog } from '../../../shared/auth-shell/auth-preview-dialog';
 import {
@@ -406,7 +407,9 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
       height: '90dvh',
       maxHeight: '94dvh',
     });
-    dialog.afterClosed().subscribe(() => objectUrls.forEach((url) => URL.revokeObjectURL(url)));
+    void firstValueFrom(dialog.afterClosed()).then(() =>
+      objectUrls.forEach((url) => URL.revokeObjectURL(url)),
+    );
   }
 
   /** Images chosen in the form; uploaded right after the record is saved. */
