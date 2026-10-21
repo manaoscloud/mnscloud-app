@@ -282,7 +282,8 @@ export type ConfigurableCrudField = {
     | 'brandPos'
     | 'brandPulse'
     | 'loginApp'
-    | 'loginPulse';
+    | 'loginPulse'
+    | 'loginPos';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   lineFillAfter?: 1 | 2 | 3;
@@ -1005,10 +1006,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     (
       [
         { key: 'brandApp', label: 'App' },
-        { key: 'brandPos', label: 'POS' },
+        { key: 'brandPos', label: 'access.tabPos' },
         { key: 'brandPulse', label: 'Pulse' },
         { key: 'loginApp', label: 'access.loginApp' },
         { key: 'loginPulse', label: 'access.loginPulse' },
+        { key: 'loginPos', label: 'access.loginPos' },
       ] as const
     ).map((tab) => ({
       ...tab,
