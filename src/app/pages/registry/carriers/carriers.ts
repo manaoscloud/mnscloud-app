@@ -6,9 +6,9 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { registryPartyColumns, registryPartyFields, registryPartyValues } from '../registry-fields';
+import { registryPartyConfig } from '../registry-fields';
 
-const CARRIER_CONFIG: ConfigurableCrudConfig = {
+const CARRIER_CONFIG: ConfigurableCrudConfig = registryPartyConfig({
   endpoint: 'registry/carriers',
   uuidField: 'CarrierUUID',
   pageTitle: 'Carriers',
@@ -25,13 +25,7 @@ const CARRIER_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Carrier saved successfully.',
   deletedMessage: 'Carrier deleted successfully.',
   deleteFailedMessage: 'Failed to delete carrier.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
-  initialValues: registryPartyValues(),
-  columns: registryPartyColumns('CarrierUUID'),
-  fields: registryPartyFields(),
-};
+});
 
 @Component({
   selector: 'app-registry-carriers',

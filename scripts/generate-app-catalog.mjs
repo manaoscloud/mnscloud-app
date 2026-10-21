@@ -9,7 +9,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import vm from 'node:vm';
 import ts from 'typescript';
 import { navLabelKey, readRegistry, REGISTRY_PATH } from './validate-nav-labels.mjs';
 
@@ -117,79 +116,170 @@ export function readRoutes(source) {
 }
 
 /**
- * Values a page imports from a relative helper module that has only type imports (shared field
- * builders such as pages/registry/registry-fields.ts), so fields built there keep their labels.
+ * Static reader of helper-built fields: follows identifiers, object spreads and calls of functions
+ * declared in the page or in the relative modules it imports (parameters bound to the call
+ * arguments), so pages that share field builders keep their labels. Nothing is executed.
  */
-function helperScope(path, sf) {
-  const scope = {};
-  for (const statement of sf.statements) {
-    if (!ts.isImportDeclaration(statement) || !statement.importClause?.namedBindings) continue;
-    const specifier = statement.moduleSpecifier.text;
-    const bindings = statement.importClause.namedBindings;
-    if (
-      !specifier.startsWith('.') ||
-      statement.importClause.isTypeOnly ||
-      !ts.isNamedImports(bindings)
-    ) {
-      continue;
-    }
-    const file = resolve(dirname(path), `${specifier}.ts`);
-    if (!existsSync(file)) continue;
-    const source = readFileSync(file, 'utf8');
-    const helper = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
-    const runtimeImports = helper.statements.some(
-      (node) => ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly,
-    );
-    if (runtimeImports) continue;
-    const js = ts.transpileModule(source, {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-    }).outputText;
-    const module = { exports: {} };
-    vm.runInNewContext(js, { module, exports: module.exports });
-    for (const element of bindings.elements) {
-      const name = (element.propertyName ?? element.name).text;
-      if (name in module.exports) scope[element.name.text] = module.exports[name];
-    }
-  }
+const scopes = new Map();
+
+function scopeOf(path, sf) {
+  if (scopes.has(path)) return scopes.get(path);
+  const tree =
+    sf ?? ts.createSourceFile(path, readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true);
+  const scope = { path, names: new Map(), imports: new Map() };
+  scopes.set(path, scope);
+  for (const statement of tree.statements) collectDeclaration(scope, statement);
   return scope;
 }
 
-/** Field entries ({ label, help }) of a fields array, evaluating helper-built elements. */
-function fieldEntries(fields, scope, platform) {
-  const entries = [];
-  const evaluate = (node) => {
-    const js = ts.transpile(`(${node.getText()})`, { target: ts.ScriptTarget.ES2022 });
-    try {
-      return vm.runInNewContext(js, { ...scope });
-    } catch {
-      return undefined; // references something the page computes at runtime
-    }
-  };
-  if (!ts.isArrayLiteralExpression(fields)) {
-    const value = evaluate(fields);
-    return (Array.isArray(value) ? value : [])
-      .filter((item) => item && typeof item === 'object')
-      .map((item) => ({ label: text(item.label), help: text(item.help) }));
-  }
-  for (const field of fields.elements) {
-    const literal = ts.isObjectLiteralExpression(field)
-      ? {
-          label: pick(property(field, 'label'), platform),
-          help: pick(property(field, 'help'), platform),
-        }
-      : null;
-    if (literal && (literal.label || !field.properties.some(ts.isSpreadAssignment))) {
-      entries.push(literal);
-      continue;
-    }
-    const value = evaluate(ts.isSpreadElement(field) ? field.expression : field);
-    for (const item of ts.isSpreadElement(field) ? (Array.isArray(value) ? value : []) : [value]) {
-      if (item && typeof item === 'object') {
-        entries.push({ label: text(item.label), help: text(item.help) });
+function collectDeclaration(scope, statement) {
+  if (ts.isVariableStatement(statement)) {
+    for (const declaration of statement.declarationList.declarations) {
+      if (declaration.initializer && ts.isIdentifier(declaration.name)) {
+        scope.names.set(declaration.name.text, declaration.initializer);
       }
     }
+  } else if (ts.isFunctionDeclaration(statement) && statement.name) {
+    scope.names.set(statement.name.text, statement);
+  } else if (ts.isImportDeclaration(statement) && statement.moduleSpecifier.text.startsWith('.')) {
+    const bindings = statement.importClause?.namedBindings;
+    if (!bindings || !ts.isNamedImports(bindings)) return;
+    const file = resolve(dirname(scope.path), `${statement.moduleSpecifier.text}.ts`);
+    for (const element of bindings.elements) {
+      scope.imports.set(element.name.text, {
+        file,
+        name: (element.propertyName ?? element.name).text,
+      });
+    }
   }
-  return entries;
+}
+
+function lookup(name, ctx) {
+  if (ctx.bindings.has(name)) return ctx.bindings.get(name);
+  if (ctx.scope.names.has(name)) {
+    return { node: ctx.scope.names.get(name), ctx: { ...ctx, bindings: new Map() } };
+  }
+  const imported = ctx.scope.imports.get(name);
+  if (!imported || !existsSync(imported.file)) return null;
+  return lookup(imported.name, { ...ctx, scope: scopeOf(imported.file), bindings: new Map() });
+}
+
+function unwrap(node) {
+  let current = node;
+  while (
+    current &&
+    (ts.isParenthesizedExpression(current) ||
+      ts.isAsExpression(current) ||
+      ts.isSatisfiesExpression(current) ||
+      ts.isNonNullExpression(current))
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
+/** Result of a call of a declared function, with its parameters bound to the call arguments. */
+function callResult(call, ctx, depth) {
+  const callee = ts.isIdentifier(call.expression) ? lookup(call.expression.text, ctx) : null;
+  const fn = callee && ts.isFunctionDeclaration(callee.node) ? callee.node : null;
+  const result = fn?.body?.statements.find(ts.isReturnStatement)?.expression;
+  if (!result) return null;
+  const bindings = new Map();
+  fn.parameters.forEach((parameter, index) => {
+    const argument = call.arguments[index];
+    if (!ts.isIdentifier(parameter.name)) return;
+    if (argument) bindings.set(parameter.name.text, { node: argument, ctx });
+    else if (parameter.initializer)
+      bindings.set(parameter.name.text, { node: parameter.initializer, ctx: callee.ctx });
+  });
+  return resolveValue(result, { ...callee.ctx, bindings }, depth + 1);
+}
+
+/** The literal node an expression stands for (identifiers, calls and property reads followed). */
+function resolveValue(node, ctx, depth = 0) {
+  const current = unwrap(node);
+  if (!current || depth > 20) return null;
+  if (ts.isIdentifier(current)) {
+    const found = lookup(current.text, ctx);
+    return found ? resolveValue(found.node, found.ctx, depth + 1) : null;
+  }
+  if (ts.isCallExpression(current)) return callResult(current, ctx, depth);
+  if (ts.isPropertyAccessExpression(current)) {
+    const owner = resolveValue(current.expression, ctx, depth + 1);
+    const value =
+      owner && ts.isObjectLiteralExpression(owner.node)
+        ? property(owner.node, current.name.text)
+        : null;
+    return value ? resolveValue(value, owner.ctx, depth + 1) : null;
+  }
+  return { node: current, ctx };
+}
+
+function stringOf(node, ctx) {
+  const value = resolveValue(node, ctx);
+  const current = value?.node;
+  if (!current) return null;
+  if (ts.isStringLiteral(current) || ts.isNoSubstitutionTemplateLiteral(current))
+    return current.text;
+  if (ts.isTemplateExpression(current)) {
+    return current.templateSpans.reduce(
+      (out, span) => out + (stringOf(span.expression, value.ctx) ?? '') + span.literal.text,
+      current.head.text,
+    );
+  }
+  if (ts.isBinaryExpression(current)) {
+    const operator = current.operatorToken.kind;
+    if (operator !== ts.SyntaxKind.QuestionQuestionToken && operator !== ts.SyntaxKind.BarBarToken)
+      return null;
+    return stringOf(current.left, value.ctx) ?? stringOf(current.right, value.ctx);
+  }
+  if (ts.isConditionalExpression(current)) return pick(current, value.ctx.platform);
+  return null;
+}
+
+/** Object literals of a fields expression (array, spread, conditional or helper call). */
+function fieldObjects(node, ctx) {
+  const value = resolveValue(node, ctx);
+  const current = value?.node;
+  if (!current) return [];
+  if (ts.isConditionalExpression(current)) {
+    return [
+      ...fieldObjects(current.whenTrue, value.ctx),
+      ...fieldObjects(current.whenFalse, value.ctx),
+    ];
+  }
+  if (ts.isObjectLiteralExpression(current)) return [value];
+  if (!ts.isArrayLiteralExpression(current)) return [];
+  return current.elements.flatMap((element) =>
+    ts.isSpreadElement(element)
+      ? fieldObjects(element.expression, value.ctx)
+      : fieldObjects(element, value.ctx),
+  );
+}
+
+/** A property of an object literal, falling back to the objects it spreads. */
+function objectString(object, name) {
+  const own = property(object.node, name);
+  if (own) return stringOf(own, object.ctx) ?? '';
+  for (const spread of object.node.properties.filter(ts.isSpreadAssignment).reverse()) {
+    const base = resolveValue(spread.expression, object.ctx);
+    if (base && ts.isObjectLiteralExpression(base.node)) {
+      const text = objectString(base, name);
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+/** The fields expression of a page configuration, including one built by a helper factory. */
+function configFields(node, ctx) {
+  const own = property(node, 'fields');
+  if (own) return { node: own, ctx };
+  const call = node.parent && ts.isCallExpression(node.parent) ? node.parent : null;
+  const built = call ? callResult(call, ctx, 0) : null;
+  const fields =
+    built && ts.isObjectLiteralExpression(built.node) ? property(built.node, 'fields') : null;
+  return fields ? { node: fields, ctx: built.ctx } : null;
 }
 
 /** Title, description and field help declared by a page (defineCrud or a hand-written template). */
@@ -202,11 +292,12 @@ export function readPage(root, file, platform) {
   const seen = new Set();
   // A page may declare helper dialogs too: its own configuration is the one with the most fields.
   const candidates = [];
+  const ctx = { scope: scopeOf(path, sf), bindings: new Map(), platform };
   ts.forEachChild(sf, function visit(node) {
     if (ts.isObjectLiteralExpression(node) && property(node, 'pageTitle')) {
-      const fields = property(node, 'fields');
-      const size = fields && ts.isArrayLiteralExpression(fields) ? fields.elements.length : 0;
-      candidates.push({ node, fields, size });
+      const fields = configFields(node, ctx);
+      const objects = fields ? fieldObjects(fields.node, fields.ctx) : [];
+      candidates.push({ node, objects, size: objects.length });
     }
     ts.forEachChild(node, visit);
   });
@@ -216,8 +307,9 @@ export function readPage(root, file, platform) {
   if (main.node) {
     page.title = pick(property(main.node, 'pageTitle'), platform);
     page.description = pick(property(main.node, 'pageDescription'), platform);
-    const entries = main.fields ? fieldEntries(main.fields, helperScope(path, sf), platform) : [];
-    for (const { label, help } of entries) {
+    for (const object of main.objects) {
+      const label = text(objectString(object, 'label'));
+      const help = text(objectString(object, 'help'));
       if (label && !seen.has(label) && page.fields.length < MAX_FIELDS) {
         seen.add(label);
         page.fields.push({ label, help });

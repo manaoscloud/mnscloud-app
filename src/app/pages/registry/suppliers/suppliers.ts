@@ -6,9 +6,9 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { registryPartyColumns, registryPartyFields, registryPartyValues } from '../registry-fields';
+import { registryPartyConfig } from '../registry-fields';
 
-const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
+const SUPPLIER_CONFIG: ConfigurableCrudConfig = registryPartyConfig({
   endpoint: 'registry/suppliers',
   uuidField: 'SupplierUUID',
   pageTitle: 'Suppliers',
@@ -25,13 +25,7 @@ const SUPPLIER_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Supplier saved successfully.',
   deletedMessage: 'Supplier deleted successfully.',
   deleteFailedMessage: 'Failed to delete supplier.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
-  initialValues: registryPartyValues(),
-  columns: registryPartyColumns('SupplierUUID'),
-  fields: registryPartyFields(),
-};
+});
 
 @Component({
   selector: 'app-registry-suppliers',

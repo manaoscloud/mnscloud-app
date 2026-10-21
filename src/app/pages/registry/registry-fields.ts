@@ -1,5 +1,6 @@
 import type {
   ConfigurableCrudColumn,
+  ConfigurableCrudConfig,
   ConfigurableCrudField,
   ConfigurableCrudRecord,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -35,18 +36,6 @@ export type RegistryAddressSpec = {
   municipality?: boolean;
 };
 
-const ADDRESS_LABELS: Record<RegistryAddressPart, string> = {
-  Zip: 'Zip',
-  Street: 'Street',
-  Number: 'Number',
-  District: 'District',
-  Complement: 'Complement',
-  City: 'City',
-  State: 'State',
-  Country: 'Country',
-  MunicipalityCode: 'IBGE municipality code',
-};
-
 function fieldKey(prefix: string, part: string): string {
   return prefix ? `${prefix}${part}` : part.charAt(0).toLowerCase() + part.slice(1);
 }
@@ -55,29 +44,31 @@ function sourceOf(key: string): string {
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
+function addressField(
+  spec: RegistryAddressSpec,
+  part: RegistryAddressPart,
+  label: string,
+): ConfigurableCrudField {
+  const key = fieldKey(spec.prefix, part);
+  return {
+    key,
+    source: sourceOf(key),
+    payloadKey: key,
+    label: `${spec.labelPrefix ?? ''}${label}`,
+    tab: 'address',
+    ...(spec.section ? { addressSection: spec.section } : {}),
+    ...(spec.required?.includes(part) ? { required: true } : {}),
+    span: 1,
+  };
+}
+
 /** Address fields of the address tab, with the postal code search filling the others. */
 export function registryAddressFields(spec: RegistryAddressSpec): ConfigurableCrudField[] {
   const key = (part: RegistryAddressPart) => fieldKey(spec.prefix, part);
-  const parts: RegistryAddressPart[] = [
-    ...REGISTRY_ADDRESS_PARTS,
-    ...(spec.municipality ? ['MunicipalityCode' as const] : []),
-  ];
-  return parts.map((part) => {
-    const field: ConfigurableCrudField = {
-      key: key(part),
-      source: sourceOf(key(part)),
-      payloadKey: key(part),
-      label: `${spec.labelPrefix ?? ''}${ADDRESS_LABELS[part]}`,
-      tab: 'address',
-      span: 1,
-    };
-    if (spec.section) field.addressSection = spec.section;
-    if (spec.required?.includes(part)) field.required = true;
-    if (part === 'MunicipalityCode') {
-      field.help = 'Filled by the postal code search; required on fiscal documents.';
-    }
-    if (part === 'Zip') {
-      field.postalLookup = {
+  return [
+    {
+      ...addressField(spec, 'Zip', 'Zip'),
+      postalLookup: {
         streetKey: key('Street'),
         districtKey: key('District'),
         complementKey: key('Complement'),
@@ -86,10 +77,24 @@ export function registryAddressFields(spec: RegistryAddressSpec): ConfigurableCr
         countryKey: key('Country'),
         ...(spec.municipality ? { municipalityCodeKey: key('MunicipalityCode') } : {}),
         numberKey: key('Number'),
-      };
-    }
-    return field;
-  });
+      },
+    },
+    addressField(spec, 'Street', 'Street'),
+    addressField(spec, 'Number', 'Number'),
+    addressField(spec, 'District', 'District'),
+    addressField(spec, 'Complement', 'Complement'),
+    addressField(spec, 'City', 'City'),
+    addressField(spec, 'State', 'State'),
+    addressField(spec, 'Country', 'Country'),
+    ...(spec.municipality
+      ? [
+          {
+            ...addressField(spec, 'MunicipalityCode', 'IBGE municipality code'),
+            help: 'Filled by the postal code search; required on fiscal documents.',
+          },
+        ]
+      : []),
+  ];
 }
 
 /** Empty initial values of the address fields. */
@@ -220,4 +225,37 @@ export function registryPartyColumns(uuidField: string): ConfigurableCrudColumn[
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
     { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
   ];
+}
+
+/** Texts and identity of a supplier, carrier or reseller page; the form is shared. */
+export type RegistryPartyTexts = Pick<
+  ConfigurableCrudConfig,
+  | 'endpoint'
+  | 'uuidField'
+  | 'pageTitle'
+  | 'pageDescription'
+  | 'createTitle'
+  | 'editTitle'
+  | 'dialogDescription'
+  | 'searchPlaceholder'
+  | 'emptyLabel'
+  | 'deleteTitle'
+  | 'deleteMessage'
+  | 'deleteSelectedTitle'
+  | 'deleteSelectedMessage'
+  | 'savedMessage'
+  | 'deletedMessage'
+  | 'deleteFailedMessage'
+>;
+
+export function registryPartyConfig(texts: RegistryPartyTexts): ConfigurableCrudConfig {
+  return {
+    ...texts,
+    statusMode: 'number',
+    activeValue: 1,
+    inactiveValue: 0,
+    initialValues: registryPartyValues(),
+    columns: registryPartyColumns(texts.uuidField),
+    fields: registryPartyFields(),
+  };
 }

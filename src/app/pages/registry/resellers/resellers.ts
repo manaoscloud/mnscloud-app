@@ -6,9 +6,9 @@ import {
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { registryPartyColumns, registryPartyFields, registryPartyValues } from '../registry-fields';
+import { registryPartyConfig } from '../registry-fields';
 
-const RESELLER_CONFIG: ConfigurableCrudConfig = {
+const RESELLER_CONFIG: ConfigurableCrudConfig = registryPartyConfig({
   endpoint: 'registry/resellers',
   uuidField: 'ResellerUUID',
   pageTitle: 'Resellers',
@@ -25,13 +25,7 @@ const RESELLER_CONFIG: ConfigurableCrudConfig = {
   savedMessage: 'Reseller saved successfully.',
   deletedMessage: 'Reseller deleted successfully.',
   deleteFailedMessage: 'Failed to delete reseller.',
-  statusMode: 'number',
-  activeValue: 1,
-  inactiveValue: 0,
-  initialValues: registryPartyValues(),
-  columns: registryPartyColumns('ResellerUUID'),
-  fields: registryPartyFields(),
-};
+});
 
 @Component({
   selector: 'app-registry-resellers',
