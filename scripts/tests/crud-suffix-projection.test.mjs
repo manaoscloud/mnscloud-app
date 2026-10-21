@@ -26,5 +26,5 @@ test('every dynamic field action loop has a projectable icon suffix ancestor', (
     }
   }
   walk(parsed.nodes);
-  assert.equal(loops, 5, 'Record, Network, Match, Codecs and Authentication');
+  assert.equal(loops, 6, 'Simple/brand tabs, Record, Network, Match, Codecs and Authentication');
 });
