@@ -19,11 +19,11 @@ import {
 const IDENTITY_FIELD: Record<string, string> = {
   user: 'MemberUserUsrUUID',
   employee: 'RegEmployeeRemUUID',
-  customer_user: 'ErpCustomerUserEcuUUID',
+  customer_user: 'RegCustomerUserRcsUUID',
 };
 
 const identityOf = (row: ConfigurableCrudRecord) =>
-  row['MemberUserUsrUUID'] ?? row['RegEmployeeRemUUID'] ?? row['ErpCustomerUserEcuUUID'] ?? '';
+  row['MemberUserUsrUUID'] ?? row['RegEmployeeRemUUID'] ?? row['RegCustomerUserRcsUUID'] ?? '';
 
 const config = defineCrud({
   endpoint: 'voip/phone/users',
