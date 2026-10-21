@@ -720,3 +720,31 @@
     margin-bottom: 0.5rem;
   }
 }
+
+// Support is secondary to list actions; keep it beside pagination only when space permits.
+.crud-list-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.75rem;
+
+  .mobile-paginator {
+    margin-top: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .crud-list-footer {
+    .mobile-paginator {
+      flex-basis: 100%;
+      width: 100%;
+    }
+
+    mns-report-problem-button {
+      order: 1;
+    }
+  }
+}

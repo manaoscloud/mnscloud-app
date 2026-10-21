@@ -70,7 +70,6 @@
               {{ 'New' | transloco }}
             </button>
           }
-          <mns-report-problem-button [context]="reportContext()" />
         </div>
       </div>
 
@@ -493,17 +492,26 @@
     </ng-template>
   </mat-menu>
 
-  @if (config.pagination !== false) {
-    <mat-paginator
-      class="mobile-paginator"
-      [length]="paginatorLength()"
-      [pageIndex]="pageIndex()"
-      [pageSize]="pageSize()"
-      [pageSizeOptions]="pageSizeOptions()"
-      showFirstLastButtons
-      (page)="setPage($event)"
-    />
-  }
+  <div class="crud-list-footer">
+    @if (!config.embedded && !config.collectionDialog && !config.readOnly && !config.formOnly) {
+      <mns-report-problem-button
+        variant="footer"
+        [context]="reportContext()"
+        [title]="config.pageTitle | transloco"
+      />
+    }
+    @if (config.pagination !== false) {
+      <mat-paginator
+        class="mobile-paginator"
+        [length]="paginatorLength()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        showFirstLastButtons
+        (page)="setPage($event)"
+      />
+    }
+  </div>
 </ng-template>
 
 <ng-template #crudRowActions let-row>

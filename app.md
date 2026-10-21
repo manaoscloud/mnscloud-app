@@ -84,7 +84,7 @@
   own behaviour settings in its module; it never asks for a provider or key.
 - Speech features (`SPEECH_AI_FEATURES`, today `help.tutorial.narration`) list the provider's
   speech models (`models?capability=speech`), require a model and a voice (`OPENAI_VOICE_OPTIONS`)
-  plus optional tone/style, hide max tokens and the prompt cache, and have a *Test voice* row action
+  plus optional tone/style, hide max tokens and the prompt cache, and have a _Test voice_ row action
   that plays the sample returned by `test-voice` in the App.
 
 ## Navigation Label Contract
@@ -316,7 +316,7 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   teams and requires an assigned agent to belong to the selected team.
 - Help center: `/support/requests` ("My tickets", Support and profile menus) lets every tenant user open and follow
   tickets to the platform team without the Support module: conversation, attachments, close.
-- "Report problem" (top bar, profile menu, My tickets action, and the action of API 5xx toasts)
+- "Report problem" (top bar, CRUD list footer, My tickets action, and the action of API 5xx toasts)
   opens a help center ticket with origin `app_report`. `SupportReportService.openReportDialog()` opens
   `SupportReportDialogComponent` at once through `openCrudComponentDialog(..., 'crud-form-dialog')`;
   type and priority come from `help/ticket-types` and `help/ticket-priorities` (defaults
@@ -368,6 +368,20 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   `--check`: a change to the menu, routes, page titles/descriptions or field help must commit the
   regenerated file. Never put record data or secrets in labels/help (they are public anyway).
 
+### List Report Problem Baseline
+
+- Standalone editable CRUD pages place `ReportProblemButtonComponent` in the shared
+  `.crud-list-footer`, below the rows: a neutral text button with the bug icon on the left,
+  pagination on the right. Header actions remain Refresh/New and any configured Back link.
+- At `<=900px`, pagination takes a full row and support follows below it, with a minimum
+  44px touch target. The support action remains available with empty/failed lists and when
+  pagination is disabled. Read-only global tables do not gain a support action.
+- Use `variant="footer"`, pass `reportContext()` and the translated `pageTitle` explicitly;
+  moving outside the header must not lose the report's title/resource context. Tutorial video
+  access, when available, accompanies the report button in the footer.
+- Embedded collections and dialog headers retain the existing icon variant. The topbar keeps
+  its global report action; the profile menu does not duplicate it and retains My tickets.
+
 ### Dialog Report Problem Baseline
 
 - Every dialog header (`.dialog-header`) ends with `<mns-report-problem-button />`, so a problem
@@ -399,7 +413,7 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   environment needed) and exposes `current()`: the video of the open route pattern in the user
   language, else English, Portuguese, Spanish.
 - `<mns-help-video-button />` shows only when `current()` exists. `ReportProblemButtonComponent`
-  renders it right before "Report problem", so every page header, CRUD dialog and component
+  renders it right before "Report problem", so every CRUD list footer, CRUD dialog and component
   dialog gets it without extra markup; the topbar has it beside its bug button and the profile menu
   has a "Tutorial video" item. The video dialog passes `[helpVideo]="false"`.
 - The video plays in `HelpVideoDialogComponent` (`openHelpVideo`) over the current window,
@@ -569,12 +583,12 @@ There is exactly one table in the App: `ConfigurableCrudPageBase` with its share
 `configurable-crud-page.html/.scss`. Every list of rows, in a page, tab, dialog, dashboard panel or
 result panel, is rendered by it. Pick the surface by where the rows live:
 
-| Rows | Surface | How |
-| --- | --- | --- |
-| A resource list page | `ConfigurableCrudPageBase` page | `defineCrud`/config + shared template (`templates/crud`) |
-| Child records of a resource, in a dialog | `ConfigurableCrudCollectionDialog` | `rowActions[].collection`, or `openCrudTemplateDialog(this.dialog, ConfigurableCrudCollectionDialog, ...)` |
-| Child records inside a parent form tab | `ConfigurableCrudEmbeddedCollection` | `relatedCollections` (rendered automatically) |
-| Rows the page already holds (dashboard inventory, operation result, measurements, the current page of an analysis surface) | `mns-global-table` (read-only) | `<mns-global-table [config]="defineGlobalTable({...})" [rows]="rows()" [loading]="loading()" />` |
+| Rows                                                                                                                       | Surface                              | How                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| A resource list page                                                                                                       | `ConfigurableCrudPageBase` page      | `defineCrud`/config + shared template (`templates/crud`)                                                   |
+| Child records of a resource, in a dialog                                                                                   | `ConfigurableCrudCollectionDialog`   | `rowActions[].collection`, or `openCrudTemplateDialog(this.dialog, ConfigurableCrudCollectionDialog, ...)` |
+| Child records inside a parent form tab                                                                                     | `ConfigurableCrudEmbeddedCollection` | `relatedCollections` (rendered automatically)                                                              |
+| Rows the page already holds (dashboard inventory, operation result, measurements, the current page of an analysis surface) | `mns-global-table` (read-only)       | `<mns-global-table [config]="defineGlobalTable({...})" [rows]="rows()" [loading]="loading()" />`           |
 
 - Creating `<table>`, `<table mat-table>`, `MatTableDataSource`, `createSignalCrudTable`, a
   page-local `mat-paginator` for rows, or any page-local list table is prohibited for any AI/LLM or
@@ -716,7 +730,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
 ## ERP CRUD Baseline (Current)
 
 - Baseline page structure:
-  - `.erp-page` -> `.erp-card` -> `.erp-header` -> `.filter-grid` -> `.table-wrapper` -> `.mobile-paginator`
+  - `.erp-page` -> `.erp-card` -> `.erp-header` -> `.filter-grid` -> `.table-wrapper` -> `.crud-list-footer` (support + `.mobile-paginator`)
 - End-to-end frontend refactor completeness:
   - A full page/module refactor is not complete with layout and build only.
   - Update the app translation layer for every new or changed visible literal in the same change:
