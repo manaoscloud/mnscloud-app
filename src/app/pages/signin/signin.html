@@ -1,8 +1,10 @@
 <mns-auth-shell>
   <div class="auth-card">
-    <p class="access-kicker">{{ eyebrow() }}</p>
-    <h1 class="mat-headline-small title">{{ heading() }}</h1>
-    <p class="subtitle mat-body-medium">{{ description() }}</p>
+    <p class="access-kicker">{{ eyebrow() || ('access.app.eyebrow' | transloco) }}</p>
+    <h1 class="mat-headline-small title">{{ heading() || ('access.app.title' | transloco) }}</h1>
+    <p class="subtitle mat-body-medium">
+      {{ description() || ('access.app.subtitle' | transloco) }}
+    </p>
 
     <form (submit)="onSubmit($event)" autocomplete="on" novalidate>
       <!-- Email -->

@@ -1,3 +1,4 @@
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,6 +31,7 @@ export class AuthShell {
   readonly publicTheme = inject(PublicThemeContextService);
   readonly i18n = inject(AppI18nService);
   private readonly translations = inject(TranslocoService);
+  private readonly translationEvents = toSignal(this.translations.events$);
   private readonly theme = inject(ThemeService);
   readonly previewContext = input<PublicThemeRuntimeContext | null>(null);
   readonly previewLocale = input<LoginLocale | null>(null);
@@ -59,12 +61,14 @@ export class AuthShell {
   readonly privacy = computed(() => safeAppearanceUrl(this.appearance().privacyUrl));
   readonly terms = computed(() => safeAppearanceUrl(this.appearance().termsUrl));
   text(key: 'eyebrow' | 'heroTitle' | 'heroText' | 'supportLabel'): string {
+    this.translationEvents();
     return (
       loginText(this.appearance(), this.language(), key) ||
       this.translations.translate(`access.${this.module()}.${key}`, {}, this.language())
     );
   }
   label(key: string): string {
+    this.translationEvents();
     return this.translations.translate(key, {}, this.language());
   }
   changeLanguage(language: LanguageOptionCode) {

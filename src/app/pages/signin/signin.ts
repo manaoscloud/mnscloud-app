@@ -73,26 +73,14 @@ export class Signin {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly publicTheme = inject(PublicThemeContextService);
-  readonly eyebrow = computed(
-    () =>
-      loginText(
-        this.publicTheme.context()?.LoginAppearance ?? {},
-        this.i18n.language(),
-        'eyebrow',
-      ) || this.i18n.t('access.app.eyebrow'),
+  readonly eyebrow = computed(() =>
+    loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'eyebrow'),
   );
-  readonly heading = computed(
-    () =>
-      loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'title') ||
-      this.i18n.t('access.app.title'),
+  readonly heading = computed(() =>
+    loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'title'),
   );
-  readonly description = computed(
-    () =>
-      loginText(
-        this.publicTheme.context()?.LoginAppearance ?? {},
-        this.i18n.language(),
-        'subtitle',
-      ) || this.i18n.t('access.app.subtitle'),
+  readonly description = computed(() =>
+    loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'subtitle'),
   );
 
   readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');

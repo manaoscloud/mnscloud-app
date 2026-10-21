@@ -1,3 +1,4 @@
+import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -162,6 +163,7 @@ export class AuthPreviewDialog {
     module: 'app' | 'pulse';
   }>(MAT_DIALOG_DATA);
   private readonly transloco = inject(TranslocoService);
+  private readonly translationEvents = toSignal(this.transloco.events$);
   readonly module = signal(this.data.module);
   readonly language = signal<LoginLocale>('pt-BR');
   readonly languages: LoginLocale[] = ['pt-BR', 'en-US', 'es-ES'];
@@ -175,6 +177,7 @@ export class AuthPreviewDialog {
     },
   }));
   t(key: string) {
+    this.translationEvents();
     return this.transloco.translate(key, {}, this.language());
   }
   copy(key: 'title' | 'subtitle' | 'eyebrow') {
