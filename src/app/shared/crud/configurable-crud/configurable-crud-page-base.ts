@@ -277,13 +277,15 @@ export type ConfigurableCrudField = {
     | 'codecs'
     | 'retention'
     | 'notes'
-    /** Brand per client (Settings › Themes): App, POS and Pulse. */
+    /** Brand per client (Settings › Themes): App, POS, Pulse and PhoneWeb. */
     | 'brandApp'
     | 'brandPos'
     | 'brandPulse'
+    | 'brandPhoneweb'
     | 'loginApp'
     | 'loginPulse'
-    | 'loginPos';
+    | 'loginPos'
+    | 'loginPhoneweb';
   addressSection?: string;
   span?: 1 | 2 | 3 | 4;
   lineFillAfter?: 1 | 2 | 3;
@@ -1008,9 +1010,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         { key: 'brandApp', label: 'App' },
         { key: 'brandPos', label: 'access.tabPos' },
         { key: 'brandPulse', label: 'Pulse' },
+        { key: 'brandPhoneweb', label: 'PhoneWeb' },
         { key: 'loginApp', label: 'access.loginApp' },
         { key: 'loginPulse', label: 'access.loginPulse' },
         { key: 'loginPos', label: 'access.loginPos' },
+        { key: 'loginPhoneweb', label: 'access.loginPhoneweb' },
       ] as const
     ).map((tab) => ({
       ...tab,
