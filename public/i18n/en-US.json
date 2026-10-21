@@ -8765,6 +8765,7 @@
   "nav.realtime.turn.parameters": "Parameters",
   "nav.realtime.webrtc.automatic-dns": "Automatic DNS",
   "TURN/STUN parameters": "TURN/STUN parameters",
+  "WebRTC parameters": "WebRTC parameters",
   "WebRTC domain parameters": "WebRTC domain parameters",
   "Automatic managed domain of new TURN/STUN servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.": "Automatic managed domain of new TURN/STUN servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.",
   "Automatic managed primary domain of new WebRTC servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.": "Automatic managed primary domain of new WebRTC servers, published under an enabled platform Realtime DNS policy and secured with a free certificate.",

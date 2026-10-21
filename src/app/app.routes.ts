@@ -2470,25 +2470,17 @@ export const routes: Routes = [
                 title: 'System Realtime • Domains | mnscloud',
                 data: { scope: 'master' },
               },
-              ...(['domain', 'server', 'parameter'].map((section) => ({
+              ...(['domain', 'server'].map((section) => ({
                 path: `realtime/webrtc/${section}`,
                 loadComponent: () => {
                   const page = import('./pages/realtime/webrtc/webrtc');
                   if (section === 'server') return page.then((m) => m.RealtimeWebRtcServersPage);
-                  if (section === 'domain') {
-                    return page.then((m) => m.RealtimeWebRtcDomainsMasterPage);
-                  }
-                  return page.then((m) => m.RealtimeWebRtcParametersPage);
+                  return page.then((m) => m.RealtimeWebRtcDomainsMasterPage);
                 },
                 title: `System Realtime • WebRTC • ${section} | mnscloud`,
                 data: {
                   scope: 'master',
-                  resource:
-                    section === 'server'
-                      ? 'servers'
-                      : section === 'domain'
-                        ? 'domains'
-                        : 'parameters',
+                  resource: section === 'server' ? 'servers' : 'domains',
                 },
               })) as any),
               {
@@ -2541,7 +2533,9 @@ export const routes: Routes = [
                 [
                   ['media/parameters', 'media', 'Media Parameters'],
                   ['turn/parameters', 'turn', 'TURN/STUN Parameters'],
-                  ['webrtc/automatic-dns', 'webrtc', 'WebRTC Automatic DNS'],
+                  ['webrtc/parameters', 'webrtc', 'WebRTC Parameters'],
+                  ['webrtc/automatic-dns', 'webrtc', 'WebRTC Parameters'],
+                  ['webrtc/parameter', 'webrtc', 'WebRTC Parameters'],
                 ] as const
               ).map(([path, serverKind, title]) => ({
                 path: `realtime/${path}`,
