@@ -136,8 +136,13 @@ function configOf(value: unknown): Record<string, any> {
     return {};
   }
 }
-function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
-  const tab = module === 'app' ? 'loginApp' : 'loginPulse';
+type LoginModule = 'app' | 'pulse' | 'pos';
+const LOGIN_MODULES: LoginModule[] = ['app', 'pulse', 'pos'];
+const LOGIN_TABS = { app: 'loginApp', pulse: 'loginPulse', pos: 'loginPos' } as const;
+const DEFAULT_TITLES = { app: 'MNSCloud', pulse: 'MNSCloud Pulse', pos: 'MNSCloud POS' } as const;
+
+function loginFields(module: LoginModule): ConfigurableCrudField[] {
+  const tab = LOGIN_TABS[module];
   const field = (
     name: string,
     extra: Partial<ConfigurableCrudField> = {},
@@ -156,7 +161,7 @@ function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
           : ''),
     ...extra,
   });
-  const inherit = module === 'pulse' ? [{ value: '', label: 'access.inherit' }] : [];
+  const inherit = module === 'app' ? [] : [{ value: '', label: 'access.inherit' }];
   return [
     field('layout', {
       type: 'select',
@@ -217,7 +222,7 @@ function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
 function loginConfig(values: ConfigurableCrudRecord, original: unknown): Record<string, any> {
   const config = configOf(original);
   const login = { ...config['login'] };
-  for (const module of ['app', 'pulse']) {
+  for (const module of LOGIN_MODULES) {
     const entry: Record<string, any> = {};
     for (const name of [
       'layout',
@@ -267,6 +272,7 @@ const config = defineCrud({
     appLogin_appearance: 'system',
     appLoginLocale: 'pt-BR',
     pulseLoginLocale: 'pt-BR',
+    posLoginLocale: 'pt-BR',
     domain: '',
     pageTitle: '',
     metaDescription: '',
@@ -340,14 +346,16 @@ const config = defineCrud({
     ...BRAND_MODULES.flatMap(({ module, tab }) => moduleBrandFields(module, tab)),
     ...loginFields('app'),
     ...loginFields('pulse'),
+    ...loginFields('pos'),
   ],
   tabLabels: {
     record: 'Domain',
     brandApp: 'App',
-    brandPos: 'POS',
+    brandPos: 'access.tabPos',
     brandPulse: 'Pulse',
     loginApp: 'access.loginApp',
     loginPulse: 'access.loginPulse',
+    loginPos: 'access.loginPos',
   },
   rowActions: [
     { key: 'preview', label: 'access.preview', icon: 'visibility', tooltip: 'access.preview' },
@@ -371,13 +379,13 @@ const config = defineCrud({
 export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly previewDialog = inject(MatDialog);
 
-  previewLogin(module: 'app' | 'pulse', row?: ConfigurableCrudRecord): void {
+  previewLogin(module: LoginModule, row?: ConfigurableCrudRecord): void {
     const values = row ? this.formValuesFromRecord(row) : this.formValues();
     const original = row ?? this.editingRecord();
     const config = loginConfig(values, original?.['BrandingConfig']);
     const base = config['login'].app;
     const objectUrls: string[] = [];
-    const context = (name: 'app' | 'pulse') => {
+    const context = (name: LoginModule) => {
       const own = config['login'][name];
       const appearance: LoginAppearance = {
         ...base,
@@ -391,7 +399,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
       return {
         ThemeUUID: '',
         Domain: String(values['domain'] || ''),
-        PageTitle: val('pageTitle') || (name === 'pulse' ? 'MNSCloud Pulse' : 'MNSCloud'),
+        PageTitle: val('pageTitle') || DEFAULT_TITLES[name],
         LogoUrl: logo,
         FaviconUrl: val('faviconUrl'),
         PrimaryColor: val('primaryColor'),
@@ -401,7 +409,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
       };
     };
     const dialog = this.previewDialog.open(AuthPreviewDialog, {
-      data: { app: context('app'), pulse: context('pulse'), module },
+      data: { app: context('app'), pulse: context('pulse'), pos: context('pos'), module },
       width: '1200px',
       maxWidth: '96vw',
       height: '90dvh',
@@ -437,7 +445,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
         return this.rejectField(color, 'Please use #RRGGBB format for the primary color.');
       }
     }
-    for (const module of ['app', 'pulse']) {
+    for (const module of LOGIN_MODULES) {
       for (const name of ['heroImageUrl', 'supportUrl', 'privacyUrl', 'termsUrl']) {
         const key = `${module}Login_${name}`;
         if (text(key) && !safeAppearanceUrl(text(key)))
