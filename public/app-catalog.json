@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "029ff30e1850",
+  "version": "d13f1bc33aa0",
   "language": "pt-BR",
   "entries": [
     {
@@ -1636,398 +1636,6 @@
       "fields": []
     },
     {
-      "route": "/erp/carrier",
-      "menuPath": "ERP › Cadastros › Transportadoras",
-      "scope": "tenant",
-      "title": "Transportadoras",
-      "description": "Gerencie transportadoras e dados de contato logístico.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Tipo",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/companies",
-      "menuPath": "ERP › Cadastros › Empresas",
-      "scope": "tenant",
-      "title": "Empresas",
-      "description": "Gerencie empresas oficiais e dados cadastrais fiscais.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Nome legal",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Anotação",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/complex",
-      "menuPath": "ERP › Cadastros › Complexos",
-      "scope": "tenant",
-      "title": "Complexos",
-      "description": "Gerencie edifícios, condomínios e complexos de serviços.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Tipo",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Apelido",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/customer",
-      "menuPath": "ERP › Cadastros › Clientes",
-      "scope": "tenant",
-      "title": "Clientes",
-      "description": "Gerencie clientes, dados de cobrança e endereços de serviço.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Tipo",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Nome legal",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "Complexo",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Código IBGE do município",
-          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
-        },
-        {
-          "label": "CEP de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Rua de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Número de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Bairro de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Complemento de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Cidade de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Estado de cobrança",
-          "help": ""
-        },
-        {
-          "label": "País de cobrança",
-          "help": ""
-        },
-        {
-          "label": "Código IBGE do município de cobrança",
-          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
-        },
-        {
-          "label": "CEP de instalação",
-          "help": ""
-        },
-        {
-          "label": "Rua de instalação",
-          "help": ""
-        },
-        {
-          "label": "Número de instalação",
-          "help": ""
-        },
-        {
-          "label": "Bairro de instalação",
-          "help": ""
-        },
-        {
-          "label": "Complemento de instalação",
-          "help": ""
-        },
-        {
-          "label": "Cidade de instalação",
-          "help": ""
-        },
-        {
-          "label": "Estado de instalação",
-          "help": ""
-        },
-        {
-          "label": "País de instalação",
-          "help": ""
-        },
-        {
-          "label": "Código IBGE do município de instalação",
-          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
-        },
-        {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "Tipo de documento",
-          "help": "Automático identifica CPF ou CNPJ pelo documento de clientes brasileiros."
-        },
-        {
-          "label": "Código do país",
-          "help": "Código ISO 3166-1 alfa-2; vazio usa o país do tenant."
-        }
-      ]
-    },
-    {
       "route": "/erp/financial/account/payables",
       "menuPath": "ERP › Financeiro › Contas a pagar",
       "scope": "tenant",
@@ -2180,51 +1788,6 @@
       ]
     },
     {
-      "route": "/erp/fiscal-issuers",
-      "menuPath": "ERP › Cadastros › Emitentes fiscais",
-      "scope": "tenant",
-      "title": "Emitentes fiscais",
-      "description": "Perfil fiscal de cada estabelecimento que emite documentos fiscais para Vendas, PDV, ISP, Hosting e VoIP.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Empresa",
-          "help": "A empresa precisa ter CNPJ válido; cada empresa tem um perfil fiscal."
-        },
-        {
-          "label": "Ambiente",
-          "help": "Documentos de homologação não têm valor fiscal; mude para produção somente após os testes de homologação."
-        },
-        {
-          "label": "Regime tributário",
-          "help": ""
-        },
-        {
-          "label": "CNAE",
-          "help": ""
-        },
-        {
-          "label": "Código IBGE do município",
-          "help": "Sete dígitos do município do estabelecimento."
-        },
-        {
-          "label": "Inscrição municipal",
-          "help": ""
-        },
-        {
-          "label": "Revisão",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
       "route": "/erp/human-resources/departments",
       "menuPath": "ERP › Recursos humanos › Departamentos",
       "scope": "tenant",
@@ -2241,59 +1804,6 @@
         },
         {
           "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/human-resources/employees",
-      "menuPath": "ERP › Recursos humanos › Funcionários",
-      "scope": "tenant",
-      "title": "Funcionários",
-      "description": "Gerencie os cadastros de funcionários, vínculos com empresas, departamentos e cargos.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "Empresa",
-          "help": ""
-        },
-        {
-          "label": "Departamento",
-          "help": ""
-        },
-        {
-          "label": "Cargo",
-          "help": ""
-        },
-        {
-          "label": "Data de admissão",
-          "help": ""
-        },
-        {
-          "label": "Data de desligamento",
           "help": ""
         },
         {
@@ -2340,152 +1850,6 @@
         },
         {
           "label": "Colaborador",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/reseller",
-      "menuPath": "ERP › Cadastros › Revendas",
-      "scope": "tenant",
-      "title": "Revendas",
-      "description": "Gerencie revendas e dados de contato.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Tipo",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/supplier",
-      "menuPath": "ERP › Cadastros › Fornecedores",
-      "scope": "tenant",
-      "title": "Fornecedores",
-      "description": "Gerencie fornecedores, documentos, contatos e endereços.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Tipo",
-          "help": ""
-        },
-        {
-          "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Data de abertura",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "E-mail",
-          "help": ""
-        },
-        {
-          "label": "Telefone",
-          "help": ""
-        },
-        {
-          "label": "CEP",
-          "help": ""
-        },
-        {
-          "label": "Rua",
-          "help": ""
-        },
-        {
-          "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Bairro",
-          "help": ""
-        },
-        {
-          "label": "Complemento",
-          "help": ""
-        },
-        {
-          "label": "Cidade",
-          "help": ""
-        },
-        {
-          "label": "Estado",
-          "help": ""
-        },
-        {
-          "label": "País",
           "help": ""
         },
         {
@@ -2590,6 +1954,51 @@
         {
           "label": "Motivo",
           "help": "Pelo menos 15 caracteres."
+        }
+      ]
+    },
+    {
+      "route": "/fiscal/issuers",
+      "menuPath": "Fiscal › Emitentes",
+      "scope": "tenant",
+      "title": "Emitentes fiscais",
+      "description": "Perfil fiscal de cada estabelecimento que emite documentos fiscais para Vendas, PDV, ISP, Hosting e VoIP.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": "A empresa precisa ter CNPJ válido; cada empresa tem um perfil fiscal."
+        },
+        {
+          "label": "Ambiente",
+          "help": "Documentos de homologação não têm valor fiscal; mude para produção somente após os testes de homologação."
+        },
+        {
+          "label": "Regime tributário",
+          "help": ""
+        },
+        {
+          "label": "CNAE",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Sete dígitos do município do estabelecimento."
+        },
+        {
+          "label": "Inscrição municipal",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
         }
       ]
     },
@@ -2750,6 +2159,22 @@
       "title": "Domínios",
       "description": "Gerencie zonas DNS, vínculo com provedores e sincronização do provisionamento.",
       "fields": [
+        {
+          "label": "Publicação automática",
+          "help": ""
+        },
+        {
+          "label": "Base do domínio",
+          "help": ""
+        },
+        {
+          "label": "TTL DNS (segundos)",
+          "help": "Tempo em segundos que os resolvedores DNS podem manter os registros publicados em cache."
+        },
+        {
+          "label": "Limite de publicações",
+          "help": ""
+        },
         {
           "label": "Status",
           "help": ""
@@ -3001,6 +2426,14 @@
       "description": "Agrupe os buckets dos clientes em contas comerciais de armazenamento.",
       "fields": [
         {
+          "label": "Preço",
+          "help": ""
+        },
+        {
+          "label": "Modo de cobrança",
+          "help": ""
+        },
+        {
           "label": "Status",
           "help": ""
         },
@@ -3046,6 +2479,14 @@
       "title": "Buckets de Storage",
       "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
       "fields": [
+        {
+          "label": "Preço",
+          "help": ""
+        },
+        {
+          "label": "Modo de cobrança",
+          "help": ""
+        },
         {
           "label": "Operação do bucket",
           "help": ""
@@ -3218,7 +2659,7 @@
       "route": "/hosting/vps/snapshots",
       "menuPath": "Hospedagem › VPS › Snapshots",
       "scope": "tenant",
-      "title": "VPS Snapshots",
+      "title": "Snapshots de VPS",
       "description": "Snapshots duráveis das instâncias VPS, para restauração e cópia.",
       "fields": []
     },
@@ -3246,6 +2687,26 @@
           "help": ""
         },
         {
+          "label": "Banco de dados",
+          "help": ""
+        },
+        {
+          "label": "Usuário de banco",
+          "help": ""
+        },
+        {
+          "label": "Privilégios",
+          "help": ""
+        },
+        {
+          "label": "Usuário",
+          "help": ""
+        },
+        {
+          "label": "Senha",
+          "help": ""
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -3267,6 +2728,26 @@
           "help": ""
         },
         {
+          "label": "Banco de dados",
+          "help": ""
+        },
+        {
+          "label": "Usuário de banco",
+          "help": ""
+        },
+        {
+          "label": "Privilégios",
+          "help": ""
+        },
+        {
+          "label": "Usuário",
+          "help": ""
+        },
+        {
+          "label": "Senha",
+          "help": ""
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -3285,6 +2766,26 @@
         },
         {
           "label": "Host",
+          "help": ""
+        },
+        {
+          "label": "Banco de dados",
+          "help": ""
+        },
+        {
+          "label": "Usuário de banco",
+          "help": ""
+        },
+        {
+          "label": "Privilégios",
+          "help": ""
+        },
+        {
+          "label": "Usuário",
+          "help": ""
+        },
+        {
+          "label": "Senha",
           "help": ""
         },
         {
@@ -4231,6 +3732,14 @@
           "help": ""
         },
         {
+          "label": "Modo DNS",
+          "help": "Externo: você mantém os registros DNS. Gerenciado: a plataforma publica os registros A/AAAA do nó vinculado a este domínio."
+        },
+        {
+          "label": "Policy DNS",
+          "help": "Policy da zona DNS da plataforma com o serviço Realtime habilitado. O domínio deve estar dentro da base dela."
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -4259,6 +3768,617 @@
       "title": "Destinos SIP",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/registry/carriers",
+      "menuPath": "Cadastros › Transportadoras",
+      "scope": "tenant",
+      "title": "Transportadoras",
+      "description": "Gerencie transportadoras e dados de contato logístico.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/companies",
+      "menuPath": "Cadastros › Empresas",
+      "scope": "tenant",
+      "title": "Empresas",
+      "description": "Gerencie empresas oficiais e dados cadastrais fiscais.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Nome legal",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/customer-complexes",
+      "menuPath": "Cadastros › Complexos",
+      "scope": "tenant",
+      "title": "Complexos",
+      "description": "Gerencie edifícios, condomínios e complexos de serviços.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Apelido",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/customers",
+      "menuPath": "Cadastros › Clientes",
+      "scope": "tenant",
+      "title": "Clientes",
+      "description": "Gerencie clientes, dados de cobrança e endereços de serviço.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Nome legal",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "Complexo",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "CEP de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Rua de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Número de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Bairro de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Complemento de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Cidade de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Estado de cobrança",
+          "help": ""
+        },
+        {
+          "label": "País de cobrança",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município de cobrança",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "CEP de instalação",
+          "help": ""
+        },
+        {
+          "label": "Rua de instalação",
+          "help": ""
+        },
+        {
+          "label": "Número de instalação",
+          "help": ""
+        },
+        {
+          "label": "Bairro de instalação",
+          "help": ""
+        },
+        {
+          "label": "Complemento de instalação",
+          "help": ""
+        },
+        {
+          "label": "Cidade de instalação",
+          "help": ""
+        },
+        {
+          "label": "Estado de instalação",
+          "help": ""
+        },
+        {
+          "label": "País de instalação",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município de instalação",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Latitude",
+          "help": ""
+        },
+        {
+          "label": "Longitude",
+          "help": ""
+        },
+        {
+          "label": "Tipo de documento",
+          "help": "Automático identifica CPF ou CNPJ pelo documento de clientes brasileiros."
+        },
+        {
+          "label": "Código do país",
+          "help": "Código ISO 3166-1 alfa-2; vazio usa o país do tenant."
+        }
+      ]
+    },
+    {
+      "route": "/registry/employees",
+      "menuPath": "Cadastros › Funcionários",
+      "scope": "tenant",
+      "title": "Funcionários",
+      "description": "Gerencie os cadastros de funcionários, vínculos com empresas, departamentos e cargos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Departamento",
+          "help": ""
+        },
+        {
+          "label": "Cargo",
+          "help": ""
+        },
+        {
+          "label": "Data de admissão",
+          "help": ""
+        },
+        {
+          "label": "Data de desligamento",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/resellers",
+      "menuPath": "Cadastros › Revendas",
+      "scope": "tenant",
+      "title": "Revendas",
+      "description": "Gerencie revendas e dados de contato.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/suppliers",
+      "menuPath": "Cadastros › Fornecedores",
+      "scope": "tenant",
+      "title": "Fornecedores",
+      "description": "Gerencie fornecedores, documentos, contatos e endereços.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        },
+        {
+          "label": "Data de abertura",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/sale/brand",
@@ -4749,6 +4869,18 @@
         {
           "label": "Cor primária",
           "help": "Cor principal do App e de todo módulo sem cor própria (#RRGGBB)."
+        },
+        {
+          "label": "URL",
+          "help": "Imagem em uso: enviada aqui ou um endereço https. Apague para remover."
+        },
+        {
+          "label": "Enviar",
+          "help": "PNG, JPEG ou WebP de até 512 KB. Enviado ao salvar."
+        },
+        {
+          "label": "Idioma dos textos",
+          "help": "Vazio usa a tradução do produto neste idioma. Apenas texto simples."
         }
       ]
     },
@@ -5196,6 +5328,10 @@
           "help": ""
         },
         {
+          "label": "Cliente",
+          "help": ""
+        },
+        {
           "label": "Status",
           "help": ""
         },
@@ -5399,6 +5535,10 @@
       "fields": [
         {
           "label": "Atribuído a",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
           "help": ""
         },
         {
@@ -6417,6 +6557,22 @@
       "description": "Gerencie zonas DNS, vínculo com provedores e sincronização do provisionamento.",
       "fields": [
         {
+          "label": "Publicação automática",
+          "help": ""
+        },
+        {
+          "label": "Base do domínio",
+          "help": ""
+        },
+        {
+          "label": "TTL DNS (segundos)",
+          "help": "Tempo em segundos que os resolvedores DNS podem manter os registros publicados em cache."
+        },
+        {
+          "label": "Limite de publicações",
+          "help": ""
+        },
+        {
           "label": "Status",
           "help": ""
         },
@@ -6667,6 +6823,14 @@
       "description": "Agrupe os buckets dos clientes em contas comerciais de armazenamento.",
       "fields": [
         {
+          "label": "Preço",
+          "help": ""
+        },
+        {
+          "label": "Modo de cobrança",
+          "help": ""
+        },
+        {
           "label": "Status",
           "help": ""
         },
@@ -6712,6 +6876,14 @@
       "title": "Buckets de Storage",
       "description": "Gerencie buckets e contêineres vinculados aos provedores de armazenamento.",
       "fields": [
+        {
+          "label": "Preço",
+          "help": ""
+        },
+        {
+          "label": "Modo de cobrança",
+          "help": ""
+        },
         {
           "label": "Operação do bucket",
           "help": ""
@@ -7366,6 +7538,18 @@
         {
           "label": "Anotações",
           "help": ""
+        },
+        {
+          "label": "Ativar logs",
+          "help": ""
+        },
+        {
+          "label": "Nível do debug",
+          "help": ""
+        },
+        {
+          "label": "Período de retenção (dias)",
+          "help": ""
         }
       ]
     },
@@ -7589,6 +7773,14 @@
           "help": ""
         },
         {
+          "label": "Modo DNS",
+          "help": "Externo: você mantém os registros DNS. Gerenciado: a plataforma publica os registros A/AAAA do nó vinculado a este domínio."
+        },
+        {
+          "label": "Policy DNS",
+          "help": "Policy da zona DNS da plataforma com o serviço Realtime habilitado. O domínio deve estar dentro da base dela."
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -7672,6 +7864,18 @@
         {
           "label": "Anotações",
           "help": ""
+        },
+        {
+          "label": "Ativar logs",
+          "help": ""
+        },
+        {
+          "label": "Nível do debug",
+          "help": ""
+        },
+        {
+          "label": "Período de retenção (dias)",
+          "help": ""
         }
       ]
     },
@@ -7752,6 +7956,18 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Ativar logs",
+          "help": ""
+        },
+        {
+          "label": "Nível do debug",
+          "help": ""
+        },
+        {
+          "label": "Período de retenção (dias)",
           "help": ""
         }
       ]
@@ -8089,6 +8305,18 @@
         {
           "label": "Anotações",
           "help": ""
+        },
+        {
+          "label": "Ativar logs",
+          "help": ""
+        },
+        {
+          "label": "Nível do debug",
+          "help": ""
+        },
+        {
+          "label": "Período de retenção (dias)",
+          "help": ""
         }
       ]
     },
@@ -8186,6 +8414,18 @@
         },
         {
           "label": "Observações",
+          "help": ""
+        },
+        {
+          "label": "Ativar logs",
+          "help": ""
+        },
+        {
+          "label": "Nível do debug",
+          "help": ""
+        },
+        {
+          "label": "Período de retenção (dias)",
           "help": ""
         }
       ]
@@ -8801,7 +9041,7 @@
       "route": "/system/vps/snapshots",
       "menuPath": "Hospedagem › VPS › Snapshots",
       "scope": "platform",
-      "title": "VPS Snapshots",
+      "title": "Snapshots de VPS",
       "description": "Snapshots duráveis das instâncias VPS, para restauração e cópia.",
       "fields": []
     },
@@ -10470,7 +10710,7 @@
       "route": "/voip/softswitch/did",
       "menuPath": "VoIP › Softswitch › DID",
       "scope": "tenant",
-      "title": "Softswitch DID",
+      "title": "DID do Softswitch",
       "description": "Roteamento de DIDs das contas Softswitch do tenant.",
       "fields": [
         {
