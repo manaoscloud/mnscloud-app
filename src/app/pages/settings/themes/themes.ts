@@ -146,25 +146,23 @@ function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
     tab,
     span: 2,
     label: `access.${name}`,
-    fromRecord: (value) => configOf(value)['login']?.[module]?.[name] ?? '',
+    fromRecord: (value) =>
+      configOf(value)['login']?.[module]?.[name] ??
+      (module === 'app' && name === 'layout'
+        ? 'split'
+        : module === 'app' && name === 'appearance'
+          ? 'system'
+          : ''),
     ...extra,
   });
   const inherit = module === 'pulse' ? [{ value: '', label: 'access.inherit' }] : [];
   return [
     field('layout', {
       type: 'select',
-      help: 'access.layoutHelp',
       options: [
         ...inherit,
         { value: 'split', label: 'access.split' },
         { value: 'compact', label: 'access.compact' },
-      ],
-      suffixButtons: [
-        {
-          icon: 'visibility',
-          tooltip: 'access.preview',
-          onClick: (_, host) => (host as SettingsThemesPage).previewLogin(module),
-        },
       ],
     }),
     field('appearance', {
@@ -177,7 +175,19 @@ function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
       ],
     }),
     ...['heroImageUrl', 'supportUrl', 'privacyUrl', 'termsUrl'].map((name) =>
-      field(name, { help: 'access.urlHelp' }),
+      field(name, {
+        help: name === 'heroImageUrl' ? 'access.layoutHelp' : 'access.urlHelp',
+        suffixButtons:
+          name === 'heroImageUrl'
+            ? [
+                {
+                  icon: 'visibility',
+                  tooltip: 'access.preview',
+                  onClick: (_, host) => (host as SettingsThemesPage).previewLogin(module),
+                },
+              ]
+            : [],
+      }),
     ),
     {
       key: `${module}LoginLocale`,
@@ -365,6 +375,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
     const original = row ?? this.editingRecord();
     const config = loginConfig(values, original?.['BrandingConfig']);
     const base = config['login'].app;
+    const objectUrls: string[] = [];
     const context = (name: 'app' | 'pulse') => {
       const own = config['login'][name];
       const appearance: LoginAppearance = {
@@ -373,11 +384,14 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
         texts: own.texts,
       };
       const val = (key: string) => String(values[brandKey(name, key)] || values[key] || '') || null;
+      const file = values[brandKey(name, 'logoFile')] || values['logoFile'];
+      const logo = file instanceof File ? URL.createObjectURL(file) : val('logoUrl');
+      if (file instanceof File && logo) objectUrls.push(logo);
       return {
         ThemeUUID: '',
         Domain: String(values['domain'] || ''),
         PageTitle: val('pageTitle') || (name === 'pulse' ? 'MNSCloud Pulse' : 'MNSCloud'),
-        LogoUrl: val('logoUrl'),
+        LogoUrl: logo,
         FaviconUrl: val('faviconUrl'),
         PrimaryColor: val('primaryColor'),
         MetaDescription: null,
@@ -385,13 +399,14 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
         LoginAppearance: appearance,
       };
     };
-    this.previewDialog.open(AuthPreviewDialog, {
+    const dialog = this.previewDialog.open(AuthPreviewDialog, {
       data: { app: context('app'), pulse: context('pulse'), module },
       width: '1200px',
       maxWidth: '96vw',
       height: '90dvh',
       maxHeight: '94dvh',
     });
+    dialog.afterClosed().subscribe(() => objectUrls.forEach((url) => URL.revokeObjectURL(url)));
   }
 
   /** Images chosen in the form; uploaded right after the record is saved. */

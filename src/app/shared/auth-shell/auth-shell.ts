@@ -64,6 +64,9 @@ export class AuthShell {
       this.translations.translate(`access.${this.module()}.${key}`, {}, this.language())
     );
   }
+  label(key: string): string {
+    return this.translations.translate(key, {}, this.language());
+  }
   changeLanguage(language: LanguageOptionCode) {
     if (language === 'auto') this.i18n.useSystemLanguage();
     else this.i18n.setLanguage(language);

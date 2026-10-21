@@ -2150,7 +2150,7 @@ server-side validation. Existing fields retain their configured/default length.
 - Settings › Themes retains its `ConfigurableCrudPageBase` surface. Its App login/Pulse login tabs
   edit structured presentation and PT/EN/ES copy inside `BrandingConfig.login`. Empty Pulse layout,
   appearance, HTTPS image and links inherit App; instructional copy stays product-specific.
-- The eye action beside the layout previews unsaved values. The read-only preview has App/Pulse,
+- The eye action beside the panel image URL previews unsaved values. The read-only preview has App/Pulse,
   desktop/mobile, language and light/dark controls; it never submits credentials or saves a theme.
 - Images in the panel use optional HTTPS URLs; logo/favicon continue using the existing upload
   contract. Public presentation never changes session policy, authentication methods or permissions.

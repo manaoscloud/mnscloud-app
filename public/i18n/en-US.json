@@ -8970,7 +8970,7 @@
   "access.supportLabel": "Support link text",
   "access.textHelp": "Empty uses the product translation in this language. Plain text only.",
   "access.urlHelp": "Optional HTTPS address. Pulse inherits the App value when empty.",
-  "access.layoutHelp": "Preview the current form using the eye button. Nothing is saved by the preview.",
+  "access.layoutHelp": "Use the preview button beside this field to see changes before saving. Optional image with an HTTPS address.",
   "access.invalidUrl": "Use an HTTPS URL without credentials.",
   "access.invalidText": "Use plain text within the allowed length.",
   "access.desktop": "Desktop",

@@ -8971,7 +8971,7 @@
   "access.supportLabel": "Texto do link de suporte",
   "access.textHelp": "Vazio usa a tradução do produto neste idioma. Apenas texto simples.",
   "access.urlHelp": "Endereço HTTPS opcional. O Pulse herda o valor do App quando vazio.",
-  "access.layoutHelp": "Confira o formulário atual pelo botão de olho. A prévia não salva alterações.",
+  "access.layoutHelp": "Use o botão de prévia ao lado para visualizar as alterações antes de salvar. Imagem opcional com endereço HTTPS.",
   "access.invalidUrl": "Use uma URL HTTPS sem credenciais.",
   "access.invalidText": "Use texto simples dentro do limite permitido.",
   "access.desktop": "Computador",

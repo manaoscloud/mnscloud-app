@@ -7,7 +7,7 @@ import {
   safeAppearanceUrl,
 } from '../../src/app/shared/auth-shell/login-appearance.ts';
 test('custom brand colors retain readable button foregrounds', () => {
-  assert.equal(onBrandColor('#ffffff'), '#101828');
+  assert.equal(onBrandColor('#ffffff'), '#000000');
   assert.equal(onBrandColor('#000000'), '#ffffff');
   assert.equal(brandColor('var(--injected)'), '#1264ed');
 });

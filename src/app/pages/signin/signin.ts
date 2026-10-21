@@ -73,6 +73,14 @@ export class Signin {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly publicTheme = inject(PublicThemeContextService);
+  readonly eyebrow = computed(
+    () =>
+      loginText(
+        this.publicTheme.context()?.LoginAppearance ?? {},
+        this.i18n.language(),
+        'eyebrow',
+      ) || this.i18n.t('access.app.eyebrow'),
+  );
   readonly heading = computed(
     () =>
       loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'title') ||

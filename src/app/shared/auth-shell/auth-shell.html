@@ -83,12 +83,12 @@
       <div>
         @if (privacy()) {
           <a [href]="privacy()" target="_blank" rel="noopener noreferrer">{{
-            'access.privacy' | transloco
+            label('access.privacy')
           }}</a>
         }
         @if (terms()) {
           <a [href]="terms()" target="_blank" rel="noopener noreferrer">{{
-            'access.terms' | transloco
+            label('access.terms')
           }}</a>
         }
       </div>

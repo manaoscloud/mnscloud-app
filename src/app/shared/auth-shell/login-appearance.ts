@@ -34,7 +34,7 @@ export function onBrandColor(hex: string): string {
     const n = parseInt(hex.slice(offset, offset + 2), 16) / 255;
     return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4;
   });
-  return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] > 0.179 ? '#101828' : '#ffffff';
+  return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] > 0.179 ? '#000000' : '#ffffff';
 }
 export function loginText(
   config: LoginAppearance,

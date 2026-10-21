@@ -8970,7 +8970,7 @@
   "access.supportLabel": "Texto del enlace de soporte",
   "access.textHelp": "Vacío usa la traducción del producto en este idioma. Solo texto simple.",
   "access.urlHelp": "Dirección HTTPS opcional. Pulse hereda el valor del App si está vacío.",
-  "access.layoutHelp": "Revisa el formulario actual con el botón del ojo. La vista previa no guarda cambios.",
+  "access.layoutHelp": "Use el botón de vista previa al lado para ver los cambios antes de guardar. Imagen opcional con dirección HTTPS.",
   "access.invalidUrl": "Usa una URL HTTPS sin credenciales.",
   "access.invalidText": "Usa texto simple dentro del límite permitido.",
   "access.desktop": "Escritorio",
