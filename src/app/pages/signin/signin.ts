@@ -1,3 +1,6 @@
+import { AuthShell } from '../../shared/auth-shell/auth-shell';
+import { PublicThemeContextService } from '../../services/public-theme-context.service';
+import { loginText } from '../../shared/auth-shell/login-appearance';
 import {
   Component,
   DestroyRef,
@@ -43,6 +46,7 @@ type SigninPolicy = {
   selector: 'app-signin',
   standalone: true,
   imports: [
+    AuthShell,
     FieldErrorKeyPipe,
     FormField,
     RouterModule,
@@ -67,6 +71,21 @@ export class Signin {
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private readonly publicTheme = inject(PublicThemeContextService);
+  readonly heading = computed(
+    () =>
+      loginText(this.publicTheme.context()?.LoginAppearance ?? {}, this.i18n.language(), 'title') ||
+      this.i18n.t('access.app.title'),
+  );
+  readonly description = computed(
+    () =>
+      loginText(
+        this.publicTheme.context()?.LoginAppearance ?? {},
+        this.i18n.language(),
+        'subtitle',
+      ) || this.i18n.t('access.app.subtitle'),
+  );
 
   readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
@@ -300,7 +319,7 @@ export class Signin {
       callback: (token: string) => this.captchaToken.set(token),
       'expired-callback': () => this.captchaToken.set(null),
       'error-callback': () => this.captchaToken.set(null),
-      theme: 'dark',
+      theme: 'auto',
     });
   }
 

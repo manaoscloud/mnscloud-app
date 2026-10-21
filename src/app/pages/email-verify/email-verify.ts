@@ -1,3 +1,5 @@
+import { TranslocoPipe } from '@jsverse/transloco';
+import { AuthShell } from '../../shared/auth-shell/auth-shell';
 import { afterNextRender, Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -15,7 +17,15 @@ type VerifyState = 'loading' | 'success' | 'error';
   selector: 'app-email-verify',
   templateUrl: './email-verify.html',
   styleUrls: ['./email-verify.scss'],
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    TranslocoPipe,
+    AuthShell,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+  ],
 })
 export class EmailVerifyPage {
   private readonly api = inject(ApiService);

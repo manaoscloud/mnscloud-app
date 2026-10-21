@@ -1,3 +1,5 @@
+import { TranslocoPipe } from '@jsverse/transloco';
+import { AuthShell } from '../../shared/auth-shell/auth-shell';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, email, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
@@ -18,6 +20,8 @@ import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fie
   templateUrl: './forgot-password.html',
   styleUrls: ['./forgot-password.scss'],
   imports: [
+    TranslocoPipe,
+    AuthShell,
     FormField,
     RouterLink,
     MatCardModule,
