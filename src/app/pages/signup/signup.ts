@@ -1,3 +1,4 @@
+import { AuthShell } from '../../shared/auth-shell/auth-shell';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   Component,
@@ -42,6 +43,7 @@ type SignupPolicy = {
   selector: 'app-signup',
   standalone: true,
   imports: [
+    AuthShell,
     FieldErrorKeyPipe,
     TranslocoPipe,
     FormField,

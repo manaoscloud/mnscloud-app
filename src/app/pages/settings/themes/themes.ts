@@ -1,8 +1,17 @@
-import { Component } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { AuthPreviewDialog } from '../../../shared/auth-shell/auth-preview-dialog';
+import {
+  LOGIN_TEXT_FIELDS,
+  LoginAppearance,
+  safeAppearanceUrl,
+} from '../../../shared/auth-shell/login-appearance';
+import { Component, inject } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudField,
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -117,6 +126,124 @@ function moduleBrandFields(module: 'pos' | 'pulse', tab: BrandTab) {
   ];
 }
 
+const LOGIN_LANGUAGES = ['pt-BR', 'en-US', 'es-ES'] as const;
+function configOf(value: unknown): Record<string, any> {
+  try {
+    return typeof value === 'string'
+      ? JSON.parse(value) || {}
+      : (value as Record<string, any>) || {};
+  } catch {
+    return {};
+  }
+}
+function loginFields(module: 'app' | 'pulse'): ConfigurableCrudField[] {
+  const tab = module === 'app' ? 'loginApp' : 'loginPulse';
+  const field = (
+    name: string,
+    extra: Partial<ConfigurableCrudField> = {},
+  ): ConfigurableCrudField => ({
+    key: `${module}Login_${name}`,
+    source: 'BrandingConfig',
+    tab,
+    span: 2,
+    label: `access.${name}`,
+    fromRecord: (value) =>
+      configOf(value)['login']?.[module]?.[name] ??
+      (module === 'app' && name === 'layout'
+        ? 'split'
+        : module === 'app' && name === 'appearance'
+          ? 'system'
+          : ''),
+    ...extra,
+  });
+  const inherit = module === 'pulse' ? [{ value: '', label: 'access.inherit' }] : [];
+  return [
+    field('layout', {
+      type: 'select',
+      options: [
+        ...inherit,
+        { value: 'split', label: 'access.split' },
+        { value: 'compact', label: 'access.compact' },
+      ],
+    }),
+    field('appearance', {
+      type: 'select',
+      options: [
+        ...inherit,
+        { value: 'system', label: 'access.system' },
+        { value: 'light', label: 'access.light' },
+        { value: 'dark', label: 'access.dark' },
+      ],
+    }),
+    ...['heroImageUrl', 'supportUrl', 'privacyUrl', 'termsUrl'].map((name) =>
+      field(name, {
+        help: name === 'heroImageUrl' ? 'access.layoutHelp' : 'access.urlHelp',
+        suffixButtons:
+          name === 'heroImageUrl'
+            ? [
+                {
+                  icon: 'visibility',
+                  tooltip: 'access.preview',
+                  onClick: (_, host) => (host as SettingsThemesPage).previewLogin(module),
+                },
+              ]
+            : [],
+      }),
+    ),
+    {
+      key: `${module}LoginLocale`,
+      label: 'access.textLanguage',
+      tab,
+      span: 2,
+      type: 'select',
+      options: LOGIN_LANGUAGES.map((value) => ({ value, label: value })),
+      translateOptions: false,
+      help: 'access.textHelp',
+    },
+    ...LOGIN_LANGUAGES.flatMap((locale) =>
+      LOGIN_TEXT_FIELDS.map((name) =>
+        field(`${locale}_${name}`, {
+          label: `access.${name}`,
+          type: name === 'heroText' || name === 'subtitle' ? 'textarea' : 'text',
+          rows: 2,
+          help: 'access.textHelp',
+          fromRecord: (value) => configOf(value)['login']?.[module]?.texts?.[locale]?.[name] ?? '',
+          hiddenWhen: ({ values }) => (values[`${module}LoginLocale`] || 'pt-BR') !== locale,
+        }),
+      ),
+    ),
+  ];
+}
+function loginConfig(values: ConfigurableCrudRecord, original: unknown): Record<string, any> {
+  const config = configOf(original);
+  const login = { ...config['login'] };
+  for (const module of ['app', 'pulse']) {
+    const entry: Record<string, any> = {};
+    for (const name of [
+      'layout',
+      'appearance',
+      'heroImageUrl',
+      'supportUrl',
+      'privacyUrl',
+      'termsUrl',
+    ])
+      entry[name] = String(values[`${module}Login_${name}`] ?? '').trim() || null;
+    entry['texts'] = Object.fromEntries(
+      LOGIN_LANGUAGES.map((locale) => [
+        locale,
+        Object.fromEntries(
+          LOGIN_TEXT_FIELDS.map((name) => [
+            name,
+            String(values[`${module}Login_${locale}_${name}`] ?? '').trim(),
+          ]),
+        ),
+      ]),
+    );
+    login[module] = entry;
+  }
+  return { ...config, login };
+}
+
 // Public domains published through the Nginx edge and Certbot Agents. Web and certificate
 // columns show the latest Agent job per domain; row actions queue new jobs through the API.
 const config = defineCrud({
@@ -136,6 +263,10 @@ const config = defineCrud({
   bulkDelete: true,
   statusFilter: false,
   initialValues: {
+    appLogin_layout: 'split',
+    appLogin_appearance: 'system',
+    appLoginLocale: 'pt-BR',
+    pulseLoginLocale: 'pt-BR',
     domain: '',
     pageTitle: '',
     metaDescription: '',
@@ -207,9 +338,19 @@ const config = defineCrud({
     ...imageFields('app', 'brandApp', 'logo'),
     ...imageFields('app', 'brandApp', 'favicon'),
     ...BRAND_MODULES.flatMap(({ module, tab }) => moduleBrandFields(module, tab)),
+    ...loginFields('app'),
+    ...loginFields('pulse'),
   ],
-  tabLabels: { record: 'Domain', brandApp: 'App', brandPos: 'POS', brandPulse: 'Pulse' },
+  tabLabels: {
+    record: 'Domain',
+    brandApp: 'App',
+    brandPos: 'POS',
+    brandPulse: 'Pulse',
+    loginApp: 'access.loginApp',
+    loginPulse: 'access.loginPulse',
+  },
   rowActions: [
+    { key: 'preview', label: 'access.preview', icon: 'visibility', tooltip: 'access.preview' },
     { key: 'web', label: 'Queue web action', icon: 'public', tooltip: 'Queue web action' },
     {
       key: 'cert',
@@ -228,6 +369,49 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly previewDialog = inject(MatDialog);
+
+  previewLogin(module: 'app' | 'pulse', row?: ConfigurableCrudRecord): void {
+    const values = row ? this.formValuesFromRecord(row) : this.formValues();
+    const original = row ?? this.editingRecord();
+    const config = loginConfig(values, original?.['BrandingConfig']);
+    const base = config['login'].app;
+    const objectUrls: string[] = [];
+    const context = (name: 'app' | 'pulse') => {
+      const own = config['login'][name];
+      const appearance: LoginAppearance = {
+        ...base,
+        ...Object.fromEntries(Object.entries(own).filter(([, value]) => value)),
+        texts: own.texts,
+      };
+      const val = (key: string) => String(values[brandKey(name, key)] || values[key] || '') || null;
+      const file = values[brandKey(name, 'logoFile')] || values['logoFile'];
+      const logo = file instanceof File ? URL.createObjectURL(file) : val('logoUrl');
+      if (file instanceof File && logo) objectUrls.push(logo);
+      return {
+        ThemeUUID: '',
+        Domain: String(values['domain'] || ''),
+        PageTitle: val('pageTitle') || (name === 'pulse' ? 'MNSCloud Pulse' : 'MNSCloud'),
+        LogoUrl: logo,
+        FaviconUrl: val('faviconUrl'),
+        PrimaryColor: val('primaryColor'),
+        MetaDescription: null,
+        BrandingConfig: config,
+        LoginAppearance: appearance,
+      };
+    };
+    const dialog = this.previewDialog.open(AuthPreviewDialog, {
+      data: { app: context('app'), pulse: context('pulse'), module },
+      width: '1200px',
+      maxWidth: '96vw',
+      height: '90dvh',
+      maxHeight: '94dvh',
+    });
+    void firstValueFrom(dialog.afterClosed()).then(() =>
+      objectUrls.forEach((url) => URL.revokeObjectURL(url)),
+    );
+  }
+
   /** Images chosen in the form; uploaded right after the record is saved. */
   private pendingImages: { module: BrandModule; kind: 'logo' | 'favicon'; file: File }[] = [];
 
@@ -253,6 +437,22 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
         return this.rejectField(color, 'Please use #RRGGBB format for the primary color.');
       }
     }
+    for (const module of ['app', 'pulse']) {
+      for (const name of ['heroImageUrl', 'supportUrl', 'privacyUrl', 'termsUrl']) {
+        const key = `${module}Login_${name}`;
+        if (text(key) && !safeAppearanceUrl(text(key)))
+          return this.rejectField(key, 'access.invalidUrl');
+      }
+      for (const locale of LOGIN_LANGUAGES)
+        for (const name of LOGIN_TEXT_FIELDS) {
+          const key = `${module}Login_${locale}_${name}`;
+          if (
+            text(key).length > (name === 'heroText' || name === 'subtitle' ? 400 : 120) ||
+            /[<>]/.test(text(key))
+          )
+            return this.rejectField(key, 'access.invalidText');
+        }
+    }
     return true;
   }
 
@@ -271,6 +471,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
           item.file instanceof File,
       );
     return {
+      brandingConfig: loginConfig(this.formValues(), this.editingRecord()?.['BrandingConfig']),
       domain: String(payload['domain'] ?? '')
         .trim()
         .toLowerCase(),
@@ -333,6 +534,10 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'preview') {
+      this.previewLogin('app', row);
+      return;
+    }
     if (action.key !== 'web' && action.key !== 'cert') return;
     const path = action.key === 'web' ? 'web' : 'certificate';
     try {

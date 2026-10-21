@@ -873,6 +873,25 @@
                 [value]="fieldValueString(field.key)"
                 (input)="setFieldValue(field.key, $any($event.target).value)"
               />
+              @if (field.suffixButtons?.length) {
+                <span matIconSuffix class="crud-field-suffix-actions">
+                  @for (sBtn of field.suffixButtons; track sBtn.icon) {
+                    @if (!sBtn.visibleWhen || sBtn.visibleWhen(fieldContext())) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [color]="sBtn.color ?? 'primary'"
+                        [disabled]="isSuffixButtonDisabled(sBtn)"
+                        [matTooltip]="sBtn.tooltip | transloco"
+                        [attr.aria-label]="sBtn.tooltip | transloco"
+                        (click)="runSuffixButton(sBtn)"
+                      >
+                        <mat-icon>{{ sBtn.icon }}</mat-icon>
+                      </button>
+                    }
+                  }
+                </span>
+              }
               @if (fieldHelp(field); as help) {
                 <mns-field-help matIconSuffix [label]="translatedFieldLabel(field)" [text]="help" />
               }

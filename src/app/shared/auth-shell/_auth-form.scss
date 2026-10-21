@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+.auth-card {
+  width: 100%;
+  color: var(--access-ink);
+}
+.title {
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  margin: 0 0 12px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.subtitle {
+  color: var(--access-muted);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+.access-kicker {
+  color: var(--access-link);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+mat-form-field {
+  width: 100%;
+  margin-bottom: 14px;
+}
+form {
+  width: 100%;
+}
+.submit-btn {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 12px;
+  border-radius: 9px;
+  font-weight: 650;
+  --mdc-filled-button-container-color: var(--access-brand);
+  --mdc-filled-button-label-text-color: var(--access-on-brand);
+}
+.submit-btn:not(:disabled) {
+  background: var(--access-brand) !important;
+  color: var(--access-on-brand) !important;
+}
+a {
+  color: var(--access-link);
+  text-decoration: none;
+  font-weight: 550;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--access-link);
+  outline-offset: 4px;
+}
+.signin-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  margin: -8px 0 14px;
+}
+.link-row {
+  text-align: center;
+  margin: 28px 0 0;
+  color: var(--access-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.api-error {
+  color: var(--mat-sys-color-error);
+  line-height: 1.5;
+}
+.api-success,
+.verify-notice,
+.info-message {
+  color: var(--access-link);
+  line-height: 1.6;
+}
+.resend-btn {
+  width: 100%;
+  margin: 12px 0;
+}
+.captcha-row {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+  min-height: 66px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.span-2 {
+  grid-column: 1 / -1;
+}
+.status-mark {
+  margin-bottom: 20px;
+}
+@media (max-width: 520px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

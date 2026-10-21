@@ -1,0 +1,97 @@
+<section
+  class="access-shell"
+  [class.compact]="appearance().layout === 'compact'"
+  [class.mobile-preview]="previewMobile()"
+  [class.is-preview]="preview()"
+  [attr.data-appearance]="mode()"
+  [style.--access-brand]="color()"
+  [style.--access-on-brand]="foreground()"
+>
+  <aside class="access-story">
+    <div class="access-brand" data-no-translate>
+      @if (logo()) {
+        <img [src]="logo()" [alt]="title()" (error)="failedLogo.set(logo())" />
+      } @else {
+        <span class="access-mark" aria-hidden="true">M</span>
+      }
+      <span>{{ title() }}</span>
+    </div>
+    <div class="access-story-copy">
+      <p class="access-eyebrow">{{ text('eyebrow') }}</p>
+      <h2>{{ text('heroTitle') }}</h2>
+      <p>{{ text('heroText') }}</p>
+    </div>
+    @if (heroImage()) {
+      <img
+        class="access-illustration"
+        [src]="heroImage()"
+        alt=""
+        (error)="$any($event.target).hidden = true"
+      />
+    }
+    <div class="access-orbits" aria-hidden="true"><span></span><span></span><span></span></div>
+  </aside>
+  <div class="access-main">
+    <header class="access-toolbar">
+      <div class="access-brand access-mobile-brand" data-no-translate>
+        @if (logo()) {
+          <img [src]="logo()" [alt]="title()" (error)="failedLogo.set(logo())" />
+        } @else {
+          <span class="access-mark" aria-hidden="true">M</span>
+        }
+        <span>{{ title() }}</span>
+      </div>
+      @if (!preview()) {
+        <button
+          mat-button
+          type="button"
+          [matMenuTriggerFor]="languageMenu"
+          [attr.aria-label]="'signin.language' | transloco"
+        >
+          <mat-icon>language</mat-icon
+          >{{
+            'lang.' +
+              (i18n.language() === 'pt-BR'
+                ? 'portuguese'
+                : i18n.language() === 'es-ES'
+                  ? 'spanish'
+                  : 'english') | transloco
+          }}<mat-icon iconPositionEnd>expand_more</mat-icon>
+        </button>
+        <mat-menu #languageMenu="matMenu" class="mns-menu mns-menu-compact">
+          @for (language of i18n.languageOptions; track language.code) {
+            <button
+              mat-menu-item
+              mnsMenuItem
+              selection="radio"
+              [checked]="i18n.selectedLanguageOption() === language.code"
+              (click)="changeLanguage(language.code)"
+            >
+              <mns-menu-label>{{ language.labelKey | transloco }}</mns-menu-label>
+            </button>
+          }
+        </mat-menu>
+      }
+    </header>
+    <div class="access-content"><ng-content /></div>
+    <footer class="access-footer">
+      @if (support()) {
+        <a [href]="support()" target="_blank" rel="noopener noreferrer"
+          >{{ text('supportLabel') }}<mat-icon>north_east</mat-icon></a
+        >
+      }
+      <div>
+        @if (privacy()) {
+          <a [href]="privacy()" target="_blank" rel="noopener noreferrer">{{
+            label('access.privacy')
+          }}</a>
+        }
+        @if (terms()) {
+          <a [href]="terms()" target="_blank" rel="noopener noreferrer">{{
+            label('access.terms')
+          }}</a>
+        }
+      </div>
+    </footer>
+  </div>
+</section>

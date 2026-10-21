@@ -1,3 +1,4 @@
+import { LoginAppearance } from '../shared/auth-shell/login-appearance';
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable, signal } from '@angular/core';
 import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
@@ -10,6 +11,7 @@ export type PublicThemeRuntimeContext = {
   LogoUrl: string | null;
   FaviconUrl: string | null;
   PrimaryColor: string | null;
+  LoginAppearance?: LoginAppearance;
   BrandingConfig: Record<string, unknown> | null;
 };
 
@@ -24,6 +26,8 @@ export class PublicThemeContextService {
   private readonly document = inject(DOCUMENT);
   private readonly fallbackTitle = 'mnscloud';
   private readonly loadTimeoutMs = 2500;
+
+  readonly loaded = signal(false);
 
   readonly context = signal<PublicThemeRuntimeContext | null>(null);
 
@@ -51,6 +55,7 @@ export class PublicThemeContextService {
       this.apply(null);
     } finally {
       window.clearTimeout(timeout);
+      this.loaded.set(true);
     }
   }
 

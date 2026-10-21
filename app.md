@@ -2151,3 +2151,20 @@ server-side validation. Existing fields retain their configured/default length.
   dials through the dock (`PhoneDialer`, no other dependency) when the tenant has PhoneWeb. Never
   add page-local tel: links or call buttons. The dock records every call at `/voip/phone/calls`
   (VoIP › PhoneWeb › Chamadas, wrap-up there) and shows who is calling from the E.164 index.
+
+## Themed access experience
+
+- `shared/auth-shell` owns the responsive split/compact layout, brand panel, accessible links,
+  language menu and form styles for sign-in, sign-up, password recovery/reset and email verification.
+  Do not copy this shell or its SCSS into pages. Language changes preserve typed credentials.
+- `PublicThemeContextService` supplies the host brand and API-resolved `LoginAppearance`. Missing
+  configuration uses translated product defaults; a broken image never blocks access. The brand
+  color drives the primary button, with a computed contrasting foreground; links have independent
+  readable tones. Light/dark/system appearance is scoped to the access shell.
+- Settings › Themes retains its `ConfigurableCrudPageBase` surface. Its App login/Pulse login tabs
+  edit structured presentation and PT/EN/ES copy inside `BrandingConfig.login`. Empty Pulse layout,
+  appearance, HTTPS image and links inherit App; instructional copy stays product-specific.
+- The eye action beside the panel image URL previews unsaved values. The read-only preview has App/Pulse,
+  desktop/mobile, language and light/dark controls; it never submits credentials or saves a theme.
+- Images in the panel use optional HTTPS URLs; logo/favicon continue using the existing upload
+  contract. Public presentation never changes session policy, authentication methods or permissions.

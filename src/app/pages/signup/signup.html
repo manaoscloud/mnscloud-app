@@ -1,53 +1,53 @@
-<main class="page-wrapper" animate.enter="app-fade-in">
-  <mat-card class="auth-card">
-    <h1 class="mat-headline-small title">Create Account ✨</h1>
-    <p class="subtitle mat-body-medium">Join mnscloud in seconds</p>
+<mns-auth-shell>
+  <div class="auth-card">
+    <h1 class="mat-headline-small title">{{ 'Create Account' | transloco }}</h1>
+    <p class="subtitle mat-body-medium">{{ 'Create your account to get started.' | transloco }}</p>
 
-    <form (submit)="onSubmit($event)" autocomplete="off" novalidate>
+    <form (submit)="onSubmit($event)" autocomplete="on" novalidate>
       <div class="form-grid">
         <mat-form-field appearance="outline">
-          <mat-label>First Name</mat-label>
+          <mat-label>{{ 'First Name' | transloco }}</mat-label>
           <input matInput type="text" [formField]="form.firstName" />
           <mat-error>{{ form.firstName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Last Name</mat-label>
+          <mat-label>{{ 'Last Name' | transloco }}</mat-label>
           <input matInput type="text" [formField]="form.lastName" />
           <mat-error>{{ form.lastName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Phone</mat-label>
+          <mat-label>{{ 'Phone' | transloco }}</mat-label>
           <app-phone-input [formField]="form.phone" />
-          <mat-icon matSuffix>phone</mat-icon>
+          <mat-icon matSuffix>{{ 'phone' | transloco }}</mat-icon>
           <mat-error>{{ form.phone().errors() | mnsFieldErrorKey | transloco }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ 'Email' | transloco }}</mat-label>
           <input matInput type="email" [formField]="form.email" placeholder="name@example.com" />
-          <mat-icon matSuffix>mail</mat-icon>
+          <mat-icon matSuffix>{{ 'mail' | transloco }}</mat-icon>
           @if (emailError()) {
-            <mat-error>{{ emailError() }}</mat-error>
+            <mat-error>{{ emailError() || '' | transloco }}</mat-error>
           }
         </mat-form-field>
       </div>
 
       <!-- Sucesso -->
       @if (successMessage()) {
-        <p class="api-success">{{ successMessage() }}</p>
+        <p class="api-success">{{ successMessage() || '' | transloco }}</p>
       }
 
       <!-- API ERROR -->
       @if (apiError()) {
-        <p class="api-error">{{ apiError() }}</p>
+        <p class="api-error">{{ apiError() || '' | transloco }}</p>
       }
 
       <!-- Date of birth com MatDatepicker -->
       <div class="form-grid">
         <mat-form-field appearance="outline">
-          <mat-label>Date of birth</mat-label>
+          <mat-label>{{ 'Date of birth' | transloco }}</mat-label>
           <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" appDateMask />
           <mat-datepicker-toggle matSuffix [for]="picker" />
           <mat-datepicker #picker touchUi />
@@ -56,12 +56,14 @@
 
         <!-- Password -->
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ 'Password' | transloco }}</mat-label>
 
           <input
             matInput
             [type]="showPassword() ? 'text' : 'password'"
             [formField]="form.password"
+            autocomplete="new-password"
+            data-report-mask
           />
 
           <button
@@ -70,7 +72,9 @@
             matSuffix
             class="field-icon-btn"
             (click)="togglePassword($event)"
-            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-label]="
+              (showPassword() ? 'signin.hidePassword' : 'signin.showPassword') | transloco
+            "
             [attr.aria-pressed]="showPassword()"
           >
             <mat-icon class="field-icon">
@@ -96,7 +100,7 @@
         [disabled]="!canSubmit"
       >
         @if (!isLoading()) {
-          Sign Up
+          {{ 'Sign Up' | transloco }}
         } @else {
           <mat-spinner diameter="22" />
         }
@@ -104,8 +108,8 @@
     </form>
 
     <p class="link-row">
-      Already have an account?
-      <a routerLink="/signin">Sign in</a>
+      {{ 'Already have an account?' | transloco }}
+      <a routerLink="/signin">{{ 'Sign in' | transloco }}</a>
     </p>
-  </mat-card>
-</main>
+  </div>
+</mns-auth-shell>

@@ -1,6 +1,7 @@
+import { AuthShell } from '../../shared/auth-shell/auth-shell';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { FormField, form, minLength, required } from '@angular/forms/signals';
+import { FormField, form, minLength, required, validate } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { MatCardModule } from '@angular/material/card';
@@ -20,6 +21,7 @@ import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.scss'],
   imports: [
+    AuthShell,
     FieldErrorKeyPipe,
     TranslocoPipe,
     FormField,
@@ -56,6 +58,11 @@ export class ResetPasswordComponent {
     required(schema.newPassword);
     minLength(schema.newPassword, 8);
     required(schema.confirmPassword);
+    validate(schema.confirmPassword, ({ value, valueOf }) =>
+      value() && value() !== valueOf(schema.newPassword)
+        ? { kind: 'passwordMismatch', message: 'Passwords do not match.' }
+        : null,
+    );
   });
 
   readonly passwordMismatch = computed(() => {
@@ -72,7 +79,7 @@ export class ResetPasswordComponent {
   private readonly revealInvalid = injectRevealInvalidFields();
 
   /** Invalid fields do not disable the button: submitting reveals them (app.md baseline). */
-  readonly canSubmit = computed(() => !this.passwordMismatch() && !this.isLoading());
+  readonly canSubmit = computed(() => !this.isLoading());
 
   togglePassword() {
     this.showPassword.update((v) => !v);

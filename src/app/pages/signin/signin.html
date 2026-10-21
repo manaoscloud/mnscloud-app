@@ -1,26 +1,12 @@
-<main class="page-wrapper" animate.enter="app-fade-in">
-  <mat-card class="auth-card">
-    <div class="language-row" data-no-translate>
-      <mat-form-field appearance="outline" class="language-select" subscriptSizing="dynamic">
-        <mat-label>{{ 'signin.language' | transloco }}</mat-label>
-        <mat-icon matPrefix>translate</mat-icon>
-        <mat-select
-          [value]="currentLanguageOption()"
-          (selectionChange)="changeLanguage($event.value)"
-        >
-          @for (language of languageOptions; track language.code) {
-            <mat-option [value]="language.code">
-              {{ language.labelKey | transloco }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
+<mns-auth-shell>
+  <div class="auth-card">
+    <p class="access-kicker">{{ eyebrow() || ('access.app.eyebrow' | transloco) }}</p>
+    <h1 class="mat-headline-small title">{{ heading() || ('access.app.title' | transloco) }}</h1>
+    <p class="subtitle mat-body-medium">
+      {{ description() || ('access.app.subtitle' | transloco) }}
+    </p>
 
-    <h1 class="mat-headline-small title">{{ 'signin.title' | transloco }} 👋</h1>
-    <p class="subtitle mat-body-medium">{{ 'signin.subtitle' | transloco }}</p>
-
-    <form (submit)="onSubmit($event)" autocomplete="off" novalidate>
+    <form (submit)="onSubmit($event)" autocomplete="on" novalidate>
       <!-- Email -->
       <mat-form-field appearance="outline">
         <mat-label>{{ 'signin.email' | transloco }}</mat-label>
@@ -88,12 +74,12 @@
       @if (verificationResult() === 'verified') {
         <p class="verify-notice">{{ 'signin.verification.verified' | transloco }}</p>
       } @else if (verificationResult() === 'failed') {
-        <p class="api-error">{{ 'signin.verification.linkInvalid' | transloco }}</p>
+        <p class="api-error" role="alert">{{ 'signin.verification.linkInvalid' | transloco }}</p>
       }
 
       <!-- API ERROR -->
       @if (apiError()) {
-        <p class="api-error">{{ apiError() }}</p>
+        <p class="api-error" role="alert">{{ apiError() }}</p>
       }
 
       @if (emailNotVerified() || verificationResult() === 'failed') {
@@ -129,5 +115,5 @@
       {{ 'signin.noAccount' | transloco }}
       <a routerLink="/signup">{{ 'signin.createAccount' | transloco }}</a>
     </p>
-  </mat-card>
-</main>
+  </div>
+</mns-auth-shell>
