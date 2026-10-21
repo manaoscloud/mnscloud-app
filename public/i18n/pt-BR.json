@@ -8764,7 +8764,6 @@
   "No selection": "Sem seleção",
   "Optional. Empty uses the dial plan of the PABX account.": "Opcional. Vazio usa o plano de discagem da conta PABX.",
   "nav.realtime.turn.parameters": "Parâmetros",
-  "nav.realtime.webrtc.automatic-dns": "DNS automático",
   "TURN/STUN parameters": "Parâmetros TURN/STUN",
   "WebRTC parameters": "Parâmetros do WebRTC",
   "WebRTC domain parameters": "DNS automático do WebRTC",

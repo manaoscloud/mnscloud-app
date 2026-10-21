@@ -8763,7 +8763,6 @@
   "No selection": "No selection",
   "Optional. Empty uses the dial plan of the PABX account.": "Optional. Empty uses the dial plan of the PABX account.",
   "nav.realtime.turn.parameters": "Parameters",
-  "nav.realtime.webrtc.automatic-dns": "Automatic DNS",
   "TURN/STUN parameters": "TURN/STUN parameters",
   "WebRTC parameters": "WebRTC parameters",
   "WebRTC domain parameters": "WebRTC domain parameters",
