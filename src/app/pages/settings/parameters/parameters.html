@@ -55,23 +55,19 @@
           />
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Default Timezone' | transloco }}</mat-label>
-          <input
-            matInput
-            [placeholder]="defaultTimezonePlaceholder()"
-            [value]="item().defaultTimezone"
-            (input)="updateItem({ defaultTimezone: $any($event.target).value })"
-          />
-          <mns-field-help
-            matIconSuffix
-            [label]="'Default Timezone' | transloco"
-            [text]="
-              'Global IANA timezone reference (e.g. America/Sao_Paulo). Used for schedule timers, report windows and CDR timestamps.'
-                | transloco
-            "
-          />
-        </mat-form-field>
+        <mns-search-select-field
+          data-field-key="defaultTimezone"
+          class="span-2"
+          [label]="'Default Timezone' | transloco"
+          [placeholder]="defaultTimezonePlaceholder()"
+          [options]="timezoneOptions()"
+          [value]="item().defaultTimezone"
+          [help]="
+            'Global IANA timezone reference (e.g. America/Sao_Paulo). Used for schedule timers, report windows and CDR timestamps.'
+              | transloco
+          "
+          (valueChange)="updateTimezone($event)"
+        />
 
         <div class="span-1 parameter-toggle-cell">
           <mat-slide-toggle

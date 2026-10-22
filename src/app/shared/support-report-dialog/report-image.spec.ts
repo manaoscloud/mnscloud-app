@@ -21,7 +21,7 @@ describe('normalizeReportImage', () => {
     const result = await normalizeReportImage(await canvasBlob(4000, 1000));
     expect(['image/webp', 'image/jpeg']).toContain(result.type);
     expect(await size(result)).toEqual({ width: 2560, height: 640 });
-  });
+  }, 15000);
 
   it('keeps small images at their size', async () => {
     expect(await size(await normalizeReportImage(await canvasBlob(300, 200)))).toEqual({

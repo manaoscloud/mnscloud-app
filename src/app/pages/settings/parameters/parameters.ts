@@ -25,6 +25,8 @@ import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.servic
 import { TranslocoPipe } from '@jsverse/transloco';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { buildTimezoneOptions } from '../../../shared/i18n/timezones';
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -131,6 +133,7 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatSelectModule,
     MatDialogModule,
     FieldHelpComponent,
+    MnsSearchSelectFieldComponent,
   ],
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
@@ -152,6 +155,12 @@ export class SettingsParametersPage {
   );
   readonly defaultTimezonePlaceholder = computed(() =>
     this.isMaster() ? 'UTC' : 'Master timezone',
+  );
+  readonly timezoneOptions = computed(() =>
+    buildTimezoneOptions({
+      fallbackLabel: this.isMaster() ? 'System default (UTC)' : 'Master default timezone',
+      currentValue: this.item().defaultTimezone,
+    }),
   );
   readonly baseEndpoint = computed(() =>
     this.isMaster() ? 'system/parameters' : 'settings/parameters',
@@ -250,6 +259,10 @@ export class SettingsParametersPage {
 
   updateItem(patch: Partial<SystemParametersItem>) {
     this.item.set({ ...this.item(), ...patch });
+  }
+
+  updateTimezone(value: unknown) {
+    this.updateItem({ defaultTimezone: typeof value === 'string' ? value.trim() : '' });
   }
 
   updateSiad(patch: Partial<BradescoSiadItem>) {

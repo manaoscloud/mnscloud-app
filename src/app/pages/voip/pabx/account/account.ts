@@ -17,6 +17,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+import { buildTimezoneOptions } from '../../../../shared/i18n/timezones';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -35,34 +36,9 @@ const deliveryModes: ConfigurableCrudOption[] = [
   { value: 'offline', label: 'Offline' },
 ];
 
-const timezones: ConfigurableCrudOption[] = [
-  { value: '', label: 'Tenant/System default' },
-  { value: 'UTC', label: 'UTC - Coordinated Universal Time' },
-  { value: 'America/Sao_Paulo', label: 'São Paulo, Brazil' },
-  { value: 'America/Manaus', label: 'Manaus, Brazil' },
-  { value: 'America/Boa_Vista', label: 'Boa Vista, Brazil' },
-  { value: 'America/Campo_Grande', label: 'Campo Grande, Brazil' },
-  { value: 'America/Cuiaba', label: 'Cuiabá, Brazil' },
-  { value: 'America/Rio_Branco', label: 'Rio Branco, Brazil' },
-  { value: 'America/Fortaleza', label: 'Fortaleza, Brazil' },
-  { value: 'America/Recife', label: 'Recife, Brazil' },
-  { value: 'America/Bahia', label: 'Bahia, Brazil' },
-  { value: 'America/Belem', label: 'Belém, Brazil' },
-  { value: 'America/New_York', label: 'New York, United States' },
-  { value: 'America/Chicago', label: 'Chicago, United States' },
-  { value: 'America/Denver', label: 'Denver, United States' },
-  { value: 'America/Los_Angeles', label: 'Los Angeles, United States' },
-  { value: 'America/Mexico_City', label: 'Mexico City, Mexico' },
-  { value: 'America/Bogota', label: 'Bogotá, Colombia' },
-  { value: 'America/Lima', label: 'Lima, Peru' },
-  { value: 'America/Santiago', label: 'Santiago, Chile' },
-  { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires, Argentina' },
-  { value: 'Europe/Lisbon', label: 'Lisbon, Portugal' },
-  { value: 'Europe/London', label: 'London, United Kingdom' },
-  { value: 'Europe/Madrid', label: 'Madrid, Spain' },
-  { value: 'Europe/Paris', label: 'Paris, France' },
-  { value: 'Europe/Berlin', label: 'Berlin, Germany' },
-];
+const timezones: ConfigurableCrudOption[] = buildTimezoneOptions({
+  fallbackLabel: 'Tenant/System default',
+});
 
 function config(): ConfigurableCrudConfig {
   return {
