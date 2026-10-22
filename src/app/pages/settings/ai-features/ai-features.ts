@@ -298,9 +298,29 @@ export class AiFeatureBindingsPage extends ConfigurableCrudPageBase<Configurable
   private readonly models = signal<AiModelOption[]>([]);
   private readonly modelsLoading = signal(false);
   private modelsRequest = 0;
+  private readonly dynamicFeatures = signal<{ value: string; label: string }[]>([]);
 
   constructor() {
     super(config);
+    void this.loadDynamicFeatures();
+  }
+
+  private async loadDynamicFeatures(): Promise<void> {
+    try {
+      const response = await this.api.get<{
+        data?: { items?: Array<{ code: string; label: string }> };
+      }>('system/ai/features', { silent: true });
+      if (response?.data?.items?.length) {
+        this.dynamicFeatures.set(
+          response.data.items.map((item) => ({
+            value: item.code,
+            label: item.label,
+          })),
+        );
+      }
+    } catch {
+      // Fall back to static catalog
+    }
   }
 
   override startCreate(): void {
@@ -317,6 +337,9 @@ export class AiFeatureBindingsPage extends ConfigurableCrudPageBase<Configurable
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
     if (field.key === 'model') {
       return aiModelOptions(this.models(), this.formValues()['model']);
+    }
+    if (field.key === 'feature' && this.dynamicFeatures().length > 0) {
+      return this.dynamicFeatures();
     }
     return super.fieldOptions(field);
   }

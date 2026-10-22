@@ -259,6 +259,14 @@ export const routes: Routes = [
             data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI dashboard' },
           },
           {
+            path: 'settings/ai/budgets',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/ai-budgets/ai-budgets').then((m) => m.AiBudgetsPage),
+            title: 'Settings • AI • Budgets | mnscloud',
+            data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI budgets' },
+          },
+          {
             path: 'settings/ai/providers',
             canActivate: [permissionGuard],
             loadComponent: () =>
