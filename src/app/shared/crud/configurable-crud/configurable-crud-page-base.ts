@@ -464,6 +464,8 @@ export type ConfigurableCrudRowAction = {
   label: string;
   icon: string;
   tooltip?: string;
+  /** When true, renders directly as an icon button in the row actions column instead of inside the 3-dots menu. */
+  inline?: boolean;
   visible?: (row: ConfigurableCrudRecord) => boolean;
   /**
    * Keeps the action listed but disabled for this row; the returned translation key tells the
@@ -1589,6 +1591,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   rowActions(_row: T): readonly ConfigurableCrudRowAction[] {
     return (this.config.rowActions ?? []).filter((action) => action.visible?.(_row) !== false);
+  }
+
+  inlineRowActions(row: T): readonly ConfigurableCrudRowAction[] {
+    return this.rowActions(row).filter((action) => Boolean(action.inline));
+  }
+
+  menuRowActions(row: T): readonly ConfigurableCrudRowAction[] {
+    return this.rowActions(row).filter((action) => !action.inline);
   }
 
   filterActions(): readonly ConfigurableCrudFilterAction[] {
