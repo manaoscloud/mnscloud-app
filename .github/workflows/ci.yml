@@ -55,7 +55,7 @@ jobs:
           fi
           npm run verify:changed -- "$BASE" HEAD
       - name: Test dependent remote lookup parameters
-        run: node --test scripts/tests/login-appearance.test.mjs scripts/tests/remote-lookup-parameters.test.mjs scripts/tests/password-generation.test.mjs scripts/tests/record-uuid-label.test.mjs scripts/tests/crud-view-preferences.test.mjs scripts/tests/guarded-build.test.mjs scripts/tests/crud-report-mask.test.mjs scripts/tests/crud-suffix-projection.test.mjs scripts/tests/release-candidate-version.test.mjs scripts/tests/app-catalog.test.mjs scripts/tests/table-loading-overlay.test.mjs
+        run: node --test scripts/tests/login-appearance.test.mjs scripts/tests/remote-lookup-parameters.test.mjs scripts/tests/password-generation.test.mjs scripts/tests/record-uuid-label.test.mjs scripts/tests/crud-view-preferences.test.mjs scripts/tests/guarded-build.test.mjs scripts/tests/crud-report-mask.test.mjs scripts/tests/crud-suffix-projection.test.mjs scripts/tests/release-candidate-version.test.mjs scripts/tests/app-catalog.test.mjs scripts/tests/table-loading-overlay.test.mjs scripts/tests/package-item-payload.test.mjs
       - name: Test dashboard state and tenant isolation
         run: npm run test:dashboard
       - name: Test queued operations, cookie session isolation and problem reports

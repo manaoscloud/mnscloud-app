@@ -3756,12 +3756,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 const RELATED_FIELD_SEPARATOR = '::';
 
 /** Default child payload: every related field under its payload key. */
-function relatedPayload(
+export function relatedPayload(
   values: ConfigurableCrudRecord,
   fields: readonly ConfigurableCrudField[],
 ): ConfigurableCrudRecord {
   const payload: ConfigurableCrudRecord = {};
-  for (const field of fields) payload[field.payloadKey ?? field.key] = values[field.key] ?? null;
+  for (const field of fields) {
+    const key = field.payloadKey ?? field.key;
+    payload[key] = values[key] ?? values[field.key] ?? null;
+  }
   return payload;
 }
 
