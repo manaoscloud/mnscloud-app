@@ -43,7 +43,7 @@ describe('timezones', () => {
     const options = buildTimezoneOptions({ fallbackLabel: 'Master timezone' });
     expect(options[0].value).toBe('');
     expect(options[0].label).toBe('Master timezone');
-    expect(options.length).toBe(CANONICAL_TIMEZONES.length + 1);
+    expect(options).toHaveSize(CANONICAL_TIMEZONES.length + 1);
   });
 
   it('preserves an existing custom timezone without replacing it', () => {
@@ -62,10 +62,10 @@ describe('timezones', () => {
       fallbackLabel: 'Default',
       currentValue: 'America/Sao_Paulo',
     });
-    const count = options.filter(
+    const matches = options.filter(
       (opt: MnsSearchSelectFieldOption) => opt.value === 'America/Sao_Paulo',
-    ).length;
-    expect(count).toBe(1);
+    );
+    expect(matches).toHaveSize(1);
   });
 
   it('does not inject fallback value when currentValue is empty', () => {
@@ -74,9 +74,9 @@ describe('timezones', () => {
       currentValue: '',
     });
     expect(options[0].value).toBe('');
-    const emptyCount = options.filter(
+    const emptyMatches = options.filter(
       (opt: MnsSearchSelectFieldOption) => opt.value === '',
-    ).length;
-    expect(emptyCount).toBe(1);
+    );
+    expect(emptyMatches).toHaveSize(1);
   });
 });
