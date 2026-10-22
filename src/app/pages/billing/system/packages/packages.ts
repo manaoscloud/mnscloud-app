@@ -32,7 +32,7 @@ const PACKAGE_PAYLOAD_KEYS = [
   'status',
 ] as const;
 
-const PACKAGE_CONFIG: ConfigurableCrudConfig = {
+export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/packages',
   uuidField: 'BpaUUID',
   pageTitle: 'Billing packages',
@@ -333,10 +333,11 @@ const PACKAGE_CONFIG: ConfigurableCrudConfig = {
         },
       ],
       payload: (values) => ({
-        productUUID: values['itemProductUUID'],
-        entitlementCode: values['itemEntitlementCode'] || null,
-        includedQuantity: numberOrNull(values['itemIncludedQuantity']) ?? -1,
-        required: Number(values['itemRequired'] ?? 1),
+        productUUID: values['productUUID'] ?? values['itemProductUUID'],
+        entitlementCode: (values['entitlementCode'] ?? values['itemEntitlementCode']) || null,
+        includedQuantity:
+          numberOrNull(values['includedQuantity'] ?? values['itemIncludedQuantity']) ?? -1,
+        required: Number(values['required'] ?? values['itemRequired'] ?? 1),
         status: 1,
       }),
     },
@@ -502,12 +503,12 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'itemProductUUID') return this.lookups.productOptions();
+    if (key === 'itemProductUUID' || key === 'productUUID') return this.lookups.productOptions();
     return [];
   }
 
   protected override lookupLabel(key: string, value: unknown): string {
-    if (key === 'itemProductUUID') return this.lookups.productLabel(value);
+    if (key === 'itemProductUUID' || key === 'productUUID') return this.lookups.productLabel(value);
     return super.lookupLabel(key, value);
   }
 
