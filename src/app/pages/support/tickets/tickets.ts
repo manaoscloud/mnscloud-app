@@ -258,7 +258,15 @@ function config(
         id: 'requester',
         field: 'CustomerName',
         label: platform ? 'Tenant' : 'Customer',
-        detail: (row) => String(row['CreatedByName'] ?? row['ContactName'] ?? ''),
+        detail: (row) => {
+          if (!platform) return String(row['CreatedByName'] ?? row['ContactName'] ?? '');
+          const doc = [row['RequesterTaxIdLabel'], row['RequesterTaxIdDisplay']]
+            .filter(Boolean)
+            .join(' ');
+          const parts = [doc, row['RequesterTenantCode']].filter(Boolean).join(' · ');
+          const author = row['CreatedByName'] ? ` · ${String(row['CreatedByName'])}` : '';
+          return parts ? `${parts}${author}` : String(row['CreatedByName'] ?? '');
+        },
       },
       {
         id: 'priority',
