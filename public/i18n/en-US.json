@@ -9129,11 +9129,11 @@
   "Review contact-center availability, pauses and state transitions.": "Review contact-center availability, pauses and state transitions.",
   "Previous status": "Previous status",
   "Next status": "Next status",
-  "LOGGED_OUT": "LOGGED_OUT",
-  "AVAILABLE": "AVAILABLE",
-  "PAUSED": "PAUSED",
-  "ON_CALL": "ON_CALL",
-  "WRAP_UP": "WRAP_UP",
+  "LOGGED_OUT": "Logged out",
+  "AVAILABLE": "Available",
+  "PAUSED": "Paused",
+  "ON_CALL": "On call",
+  "WRAP_UP": "After-call work",
   "client": "client",
   "admin": "admin",
   "nav.voip.pabx.pauses": "Pauses",
@@ -9149,5 +9149,6 @@
   "Edit agent profile": "Edit agent profile",
   "Group queues and routing priorities for contact-center agents.": "Group queues and routing priorities for contact-center agents.",
   "Set the shared queue selection, penalty and wrap-up time.": "Set the shared queue selection, penalty and wrap-up time.",
-  "nav.voip.pabx.profiles": "Profiles"
+  "nav.voip.pabx.profiles": "Profiles",
+  "Configure phone identity or employee, station, profile and login settings.": "Configure phone identity or employee, station, profile and login settings."
 }

@@ -9149,5 +9149,6 @@
   "Edit agent profile": "Editar perfil de agente",
   "Group queues and routing priorities for contact-center agents.": "Agrupe colas y prioridades de enrutamiento para agentes de contacto.",
   "Set the shared queue selection, penalty and wrap-up time.": "Defina las colas compartidas, penalizaciones y tiempo de posllamada.",
-  "nav.voip.pabx.profiles": "Perfiles"
+  "nav.voip.pabx.profiles": "Perfiles",
+  "Configure phone identity or employee, station, profile and login settings.": "Configure identidad telefónica o empleado, estación, perfil y datos de acceso."
 }
