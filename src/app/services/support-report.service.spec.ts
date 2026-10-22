@@ -203,6 +203,18 @@ describe('prepareCloneForCapture', () => {
       document.head.lastElementChild?.remove();
     }
   });
+
+  it('injects style overrides to neutralize isolation, sticky columns, and scroll bounds', () => {
+    prepareCloneForCapture(document);
+    try {
+      const style = document.head.querySelector('style:last-child');
+      expect(style?.textContent).toContain('.erp-table { isolation: auto !important; }');
+      expect(style?.textContent).toContain('position: static !important;');
+      expect(style?.textContent).toContain('.table-wrapper, .table-scroll { overflow: visible !important;');
+    } finally {
+      document.head.lastElementChild?.remove();
+    }
+  });
 });
 
 describe('maskSensitiveContent', () => {

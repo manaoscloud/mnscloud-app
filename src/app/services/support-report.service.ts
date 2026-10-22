@@ -454,7 +454,11 @@ export function prepareCloneForCapture(clone: Document): void {
     ' .mat-mdc-select-arrow svg { display: none !important; }' +
     ' .mat-mdc-select-arrow { width: 0 !important; height: 0 !important;' +
     ' border-left: 5px solid transparent !important; border-right: 5px solid transparent !important;' +
-    ' border-top: 5px solid currentColor !important; }';
+    ' border-top: 5px solid currentColor !important; }' +
+    // Neutralize table stacking context, sticky columns, and scroll constraints so html2canvas renders all table rows
+    ' .erp-table { isolation: auto !important; }' +
+    ' .erp-table th, .erp-table td, .mat-mdc-table-sticky-border-elem-right { position: static !important; }' +
+    ' .table-wrapper, .table-scroll { overflow: visible !important; max-height: none !important; }';
   clone.head.appendChild(style);
   const view = clone.defaultView;
   if (!view) return;
