@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d13f1bc33aa0",
+  "version": "ef2018c001fc",
   "language": "pt-BR",
   "entries": [
     {
@@ -4601,6 +4601,43 @@
       "title": "Geral",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/settings/ai/budgets",
+      "menuPath": "Configurações › IA › Orçamentos",
+      "scope": "platform",
+      "title": "Orçamentos de IA",
+      "description": "Limites de orçamento de IA da plataforma, recurso e assinante com limites de alerta e parada obrigatória.",
+      "fields": [
+        {
+          "label": "Escopo",
+          "help": "Plataforma se aplica a todas as operações de IA da plataforma; Recurso limita uma funcionalidade específica; Assinante limita um assinante individual."
+        },
+        {
+          "label": "Alvo",
+          "help": "Deixe em branco para escopo de plataforma. Para recurso, informe o código do recurso (ex: support.triage). Para assinante, informe o UUID do assinante."
+        },
+        {
+          "label": "Período",
+          "help": "A janela do orçamento é reiniciada no início de cada dia ou mês UTC."
+        },
+        {
+          "label": "Orçamento (USD)",
+          "help": "Valor máximo em USD permitido durante o período."
+        },
+        {
+          "label": "Parada obrigatória",
+          "help": "Quando aplicado, chamadas que excedem o orçamento são bloqueadas com erro."
+        },
+        {
+          "label": "Alert at %",
+          "help": "Send notification when spending reaches % of the budget."
+        },
+        {
+          "label": "Status",
+          "help": "Orçamentos inativos são ignorados durante verificações de reserva."
+        }
+      ]
     },
     {
       "route": "/settings/ai/dashboard",

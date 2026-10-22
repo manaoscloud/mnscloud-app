@@ -2315,6 +2315,14 @@ export const NAV_ITEMS: NavItem[] = [
             permissions: ['platform.ai.manage'],
           },
           {
+            id: 'settings/ai/budgets',
+            label: 'nav.settings.ai.budgets',
+            icon: 'account_balance_wallet',
+            route: '/settings/ai/budgets',
+            scope: 'public',
+            permissions: ['platform.ai.manage'],
+          },
+          {
             id: 'settings/ai/providers',
             label: 'nav.settings.ai.providers',
             icon: 'hub',
