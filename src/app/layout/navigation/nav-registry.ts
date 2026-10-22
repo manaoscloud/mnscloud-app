@@ -1067,6 +1067,27 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/voip/pabx/queue-agents',
           },
           {
+            id: 'voip/pabx/profiles',
+            label: 'nav.voip.pabx.profiles',
+            icon: 'groups',
+            route: '/voip/pabx/agent-profiles',
+            entitlementCode: 'module.voip.contact_center.agent',
+          },
+          {
+            id: 'voip/pabx/pauses',
+            label: 'nav.voip.pabx.pauses',
+            icon: 'pause_circle',
+            route: '/voip/pabx/agent-pause-reasons',
+            entitlementCode: 'module.voip.contact_center.agent',
+          },
+          {
+            id: 'voip/pabx/presence',
+            label: 'nav.voip.pabx.presence',
+            icon: 'history',
+            route: '/voip/pabx/agent-state-events',
+            entitlementCode: 'module.voip.contact_center.agent',
+          },
+          {
             id: 'voip/pabx/cdr',
             label: 'nav.voip.pabx.cdr',
             icon: 'receipt_long',

@@ -70,6 +70,9 @@ function config(): ConfigurableCrudConfig {
     initialValues: {
       enabled: 1,
       employeeUUID: '',
+      phoneUserUUID: '',
+      profileUUID: '',
+      hotDesk: 0,
       extensionUUID: '',
       loginCode: '',
       displayName: '',
@@ -77,7 +80,13 @@ function config(): ConfigurableCrudConfig {
       pauseReason: '',
     },
     columns: [
-      { id: 'loginCode', label: 'Login code', kind: 'identity', field: 'VqaLoginCode', uuidField: 'VqaUUID' },
+      {
+        id: 'loginCode',
+        label: 'Login code',
+        kind: 'identity',
+        field: 'VqaLoginCode',
+        uuidField: 'VqaUUID',
+      },
       {
         id: 'employee',
         label: 'Employee',
@@ -112,15 +121,46 @@ function config(): ConfigurableCrudConfig {
         span: 1,
       },
       {
+        key: 'phoneUserUUID',
+        source: 'VoipPhoneUserVhuUUID',
+        payloadKey: 'phoneUserUUID',
+        label: 'Phone user',
+        type: 'search-select',
+        span: 1,
+      },
+      {
+        key: 'profileUUID',
+        source: 'VoipPabxAgentProfileVqfUUID',
+        payloadKey: 'profileUUID',
+        label: 'Agent profile',
+        type: 'search-select',
+        span: 1,
+        hiddenWhen: ({ values }) => !values['phoneUserUUID'],
+      },
+      {
+        key: 'hotDesk',
+        source: 'VqaHotDesk',
+        payloadKey: 'hotDesk',
+        label: 'Hot desking',
+        type: 'select',
+        span: 1,
+        options: [
+          { value: 0, label: 'No' },
+          { value: 1, label: 'Yes' },
+        ],
+        translateOptions: true,
+      },
+      {
         key: 'employeeUUID',
         source: 'RegEmployeeRemUUID',
         payloadKey: 'employeeUUID',
         label: 'Employee',
         type: 'search-select',
         quickCreate: false,
-        quickCreateExemptReason: 'HR employees use a dedicated form that is not a configurable CRUD page yet.',
-        required: true,
+        quickCreateExemptReason:
+          'HR employees use a dedicated form that is not a configurable CRUD page yet.',
         span: 1,
+        hiddenWhen: ({ values }) => !!values['phoneUserUUID'],
       },
       {
         key: 'extensionUUID',
@@ -128,7 +168,6 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'extensionUUID',
         label: 'Extension',
         type: 'search-select',
-        required: true,
         span: 1,
       },
       {
@@ -157,6 +196,7 @@ function config(): ConfigurableCrudConfig {
         translateOptions: true,
         tab: 'monitoring',
         span: 1,
+        hiddenWhen: ({ values }) => !!values['phoneUserUUID'],
       },
       {
         key: 'pauseReason',
@@ -182,6 +222,8 @@ function config(): ConfigurableCrudConfig {
 })
 export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly rawApi = inject(ApiService);
+  readonly profileOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly phoneOptions = signal<ConfigurableCrudOption[]>([]);
   readonly employeeOptions = signal<ConfigurableCrudOption[]>([]);
   readonly extensionOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
@@ -196,12 +238,15 @@ export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'profileUUID') return this.profileOptions();
+    if (key === 'phoneUserUUID') return this.phoneOptions();
     if (key === 'employeeUUID') return this.employeeOptions();
     if (key === 'extensionUUID') return this.extensionOptions();
     return [];
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    if (row['VoipPhoneUserVhuUUID']) return [];
     const runtime = String(row['VqaRuntimeStatus'] ?? 'LOGGED_OUT');
     if (runtime === 'AVAILABLE') {
       return [
@@ -242,6 +287,7 @@ export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<Configurabl
     return {
       ...payload,
       enabled: Number(payload['enabled']) === 1,
+      hotDesk: Number(payload['hotDesk']) === 1,
       displayName: text(payload['displayName']),
       pauseReason: payload['runtimeStatus'] === 'PAUSED' ? text(payload['pauseReason']) : null,
     };
@@ -250,7 +296,13 @@ export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<Configurabl
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      const [employees, extensions] = await Promise.all([
+      const [profiles, phones, employees, extensions] = await Promise.all([
+        this.fetchPaged('voip/pabx/agent-profiles?status=1', (row) =>
+          option(row.VqfUUID, row.VqfName),
+        ),
+        this.fetchPaged('voip/phone/users?status=1', (row) =>
+          option(row.VhuUUID, row.VhuDisplayName ?? row.IdentityName),
+        ),
         this.fetchPaged('registry/employees', (row) =>
           option(row.EmployeeUUID ?? row.RemUUID, row.Name ?? row.EmployeeName ?? row.RemName, [
             row.Email ?? row.EmployeeEmail ?? row.RemEmail,
@@ -260,6 +312,8 @@ export class VoipPabxQueueAgentPage extends ConfigurableCrudPageBase<Configurabl
           option(row.VpeUUID, row.VpeUsername, [row.PabxName, row.DomainName]),
         ),
       ]);
+      this.profileOptions.set(profiles);
+      this.phoneOptions.set(phones);
       this.employeeOptions.set(employees);
       this.extensionOptions.set(extensions);
     } finally {

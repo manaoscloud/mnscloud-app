@@ -696,6 +696,20 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/voip/pabx/trunk/trunk').then((m) => m.VoipPabxTrunkPage),
   },
+  VoipPabxAgentProfileVqfUUID: {
+    label: 'New agent profile',
+    loadComponent: () =>
+      import('../../../pages/voip/pabx/agent-profile/agent-profile').then(
+        (m) => m.VoipPabxAgentProfilePage,
+      ),
+  },
+  VoipPabxAgentPauseReasonVpzUUID: {
+    loadComponent: () =>
+      import('../../../pages/voip/pabx/agent-pause-reason/agent-pause-reason').then(
+        (m) => m.VoipPabxAgentPauseReasonPage,
+      ),
+    label: 'New pause reason',
+  },
   VoipPhoneUserVhuUUID: {
     label: 'Create phone user',
     loadComponent: () =>

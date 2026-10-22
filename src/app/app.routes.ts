@@ -2052,6 +2052,30 @@ export const routes: Routes = [
                 title: 'VoIP • PhoneWeb • Sessions | mnscloud',
               },
               {
+                path: 'voip/pabx/agent-profiles',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/agent-profile/agent-profile').then(
+                    (m) => m.VoipPabxAgentProfilePage,
+                  ),
+                title: 'VoIP • PABX • Agent profiles | mnscloud',
+              },
+              {
+                path: 'voip/pabx/agent-pause-reasons',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/agent-pause-reason/agent-pause-reason').then(
+                    (m) => m.VoipPabxAgentPauseReasonPage,
+                  ),
+                title: 'VoIP • PABX • Pause reasons | mnscloud',
+              },
+              {
+                path: 'voip/pabx/agent-state-events',
+                loadComponent: () =>
+                  import('./pages/voip/pabx/agent-state-event/agent-state-event').then(
+                    (m) => m.VoipPabxAgentStateEventPage,
+                  ),
+                title: 'VoIP • PABX • State history | mnscloud',
+              },
+              {
                 path: 'voip/pabx/queue-agents',
                 loadComponent: () =>
                   import('./pages/voip/pabx/queue-agent/queue-agent').then(
