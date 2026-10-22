@@ -262,7 +262,7 @@ export class SettingsParametersPage {
   }
 
   updateTimezone(value: unknown) {
-    this.updateItem({ defaultTimezone: String(value ?? '').trim() });
+    this.updateItem({ defaultTimezone: typeof value === 'string' ? value.trim() : '' });
   }
 
   updateSiad(patch: Partial<BradescoSiadItem>) {
