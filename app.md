@@ -2177,3 +2177,27 @@ Routing profiles (`VoipPabxAgentProfile` / `VoipPabxAgentProfileQueue`) group qu
 Runtime queue snapshots carry only aggregate waiting count/longest wait, never caller identity. Counters become unavailable after 30 seconds without observation. SSE sends authoritative snapshots as well as durable transition IDs; PhoneWeb does not poll queue state. `VoipPabxAgentContact` records a runtime-authenticated agent participation, with optional disposition and spelling-preserving notes. Notes are limited to 4000 characters and revision-checked against the originating phone session.
 
 Agent creation/enabling checks the active entitlement and passes its quota to the tenant-serialized configure routine, which counts enabled phone-linked agents. Standalone resource contracts without a package limit retain the billing system's unlimited quantity semantics. No prices or paid subscriptions are created by the schema seed. Revoked/expired sessions, disabled identities, lost line assignments and released/expired claims leave the routing set; hot-desk stations are cleared.
+## Unified Registry forms
+
+Customers, complexes, companies, suppliers, carriers and resellers use
+`registryUnifiedConfig` on top of the shared configurable CRUD. Their identity layout is
+Status / Country / Person type / Document type; Document / Legal or full name (two columns) /
+Trade name; Display name (two columns) / opening or birth date. Display name is never silently
+converted into a legal or trade name. Companies are business entities. Identity country and
+address country are separate fields; foreign regions accept text, and CEP lookup is Brazil-only.
+The address grid uses Zip / Street (two columns) / Number, then Complement / District / City / State.
+
+`contacts` is a shared form tab: general email/phone fields plus the `relatedCollections` global
+table. Related collections can opt into server pagination, list filters and bulk deletion.
+Sector selection uses a remote lookup and the canonical contact-sector quick-create page.
+Each contact is saved independently; cancelling its parent form does not roll back saved contacts.
+For a new parent, explicit **Save and continue** persists the record and loads its canonical detail
+before enabling contacts. It retains the returned UUID even if detail refresh fails, preventing a
+retry from creating another parent. There is no implicit parent autosave.
+
+Dynamic field options/types use `optionsWhen` and `typeWhen` in the shared field renderer.
+`formTabActions` exposes canonical related workflows in Fiscal/Limits tabs without fake fields.
+Company Fiscal opens the existing issuer profile and per-state registrations with the company
+preselected. Fiscal API permissions/entitlements remain authoritative; Registry editing is independent.
+Annotations retain `Notes` translated as **Anotações**, `notes` in payloads, a full-width textarea
+and four rows. No observation field or new annotation-history model is introduced.

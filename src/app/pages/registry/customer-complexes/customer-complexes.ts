@@ -1,3 +1,4 @@
+import { registryUnifiedConfig } from '../registry-unified';
 import { Component } from '@angular/core';
 
 import {
@@ -78,7 +79,7 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
 })
 export class RegCustomerComplexPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(COMPLEX_CONFIG);
+    super(registryUnifiedConfig(COMPLEX_CONFIG));
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -87,7 +88,7 @@ export class RegCustomerComplexPage extends ConfigurableCrudPageBase<Configurabl
     const district = String(payload['district'] ?? '').trim();
     const complement = String(payload['complement'] ?? '').trim();
     return {
-      ...payload,
+      ...super.augmentPayload(payload),
       address: [street, number, district, complement].filter(Boolean).join(', ') || null,
     };
   }

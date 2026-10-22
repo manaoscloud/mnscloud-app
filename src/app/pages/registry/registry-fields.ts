@@ -68,7 +68,12 @@ export function registryAddressFields(spec: RegistryAddressSpec): ConfigurableCr
   return [
     {
       ...addressField(spec, 'Zip', 'Zip'),
+      breakBefore: true,
       postalLookup: {
+        enabledWhen: (values) =>
+          ['', 'BR', 'BRASIL', 'BRAZIL'].includes(
+            String(values[key('Country')] ?? '').toUpperCase(),
+          ),
         streetKey: key('Street'),
         districtKey: key('District'),
         complementKey: key('Complement'),
@@ -79,10 +84,10 @@ export function registryAddressFields(spec: RegistryAddressSpec): ConfigurableCr
         numberKey: key('Number'),
       },
     },
-    addressField(spec, 'Street', 'Street'),
+    { ...addressField(spec, 'Street', 'Street'), span: 2 },
     addressField(spec, 'Number', 'Number'),
-    addressField(spec, 'District', 'District'),
     addressField(spec, 'Complement', 'Complement'),
+    addressField(spec, 'District', 'District'),
     addressField(spec, 'City', 'City'),
     addressField(spec, 'State', 'State'),
     addressField(spec, 'Country', 'Country'),

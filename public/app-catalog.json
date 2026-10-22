@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b3b1ea18c878",
+  "version": "a0e8ad0d14ef",
   "language": "pt-BR",
   "entries": [
     {
@@ -3825,11 +3825,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
@@ -3902,11 +3902,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
@@ -3983,11 +3983,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
@@ -4068,11 +4068,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
@@ -4104,11 +4104,11 @@
           "help": ""
         },
         {
-          "label": "Bairro de cobrança",
+          "label": "Complemento de cobrança",
           "help": ""
         },
         {
-          "label": "Complemento de cobrança",
+          "label": "Bairro de cobrança",
           "help": ""
         },
         {
@@ -4140,11 +4140,11 @@
           "help": ""
         },
         {
-          "label": "Bairro de instalação",
+          "label": "Complemento de instalação",
           "help": ""
         },
         {
-          "label": "Complemento de instalação",
+          "label": "Bairro de instalação",
           "help": ""
         },
         {
@@ -4282,11 +4282,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
@@ -4359,11 +4359,11 @@
           "help": ""
         },
         {
-          "label": "Bairro",
+          "label": "Complemento",
           "help": ""
         },
         {
-          "label": "Complemento",
+          "label": "Bairro",
           "help": ""
         },
         {
