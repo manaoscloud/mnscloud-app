@@ -2,6 +2,7 @@ import { MatPaginatorIntl } from '@angular/material/paginator';
 import { PaginatorIntlService } from './services/paginator-intl.service';
 import {
   ApplicationConfig,
+  ErrorHandler,
   importProvidersFrom,
   inject,
   LOCALE_ID,
@@ -28,6 +29,7 @@ import { TranslocoHttpLoader } from './services/transloco-loader';
 import { PublicThemeContextService } from './services/public-theme-context.service';
 import { PublicThemeTitleStrategy } from './services/public-theme-title.strategy';
 import { MnsDateAdapterModule } from './shared/date-mask/mns-date-adapter.module';
+import { GlobalErrorHandler } from './core/global-error-handler';
 
 registerLocaleData(localeEn);
 registerLocaleData(localeEs);
@@ -35,6 +37,7 @@ registerLocaleData(localePt);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: MatPaginatorIntl, useClass: PaginatorIntlService },
     provideZonelessChangeDetection(),
     provideRouter(routes),

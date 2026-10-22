@@ -1767,6 +1767,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'monitoring/incidents',
+        label: 'nav.monitoring.incidents',
+        icon: 'warning',
+        route: '/monitoring/incidents',
+        masterRoute: '/system/monitoring/incidents',
+        permissions: ['platform.monitoring.incidents.read'],
+        requiresEnvironment: false,
+      },
+      {
         id: 'monitoring/notification-rules',
         label: 'nav.monitoring.notification-rules',
         icon: 'notifications_active',
