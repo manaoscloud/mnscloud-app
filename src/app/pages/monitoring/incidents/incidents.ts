@@ -7,6 +7,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
   DataViewerTone,
   openDataViewerDialog,
@@ -20,21 +21,24 @@ const SEVERITY_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'low', label: 'Low' },
 ];
 
+function severityChipClass(value: unknown): string {
+  switch (String(value || '').toLowerCase()) {
+    case 'critical':
+    case 'high':
+      return 'badge-critical';
+    case 'medium':
+      return 'badge-warning';
+    case 'low':
+      return 'badge-info';
+    default:
+      return 'badge-neutral';
+  }
+}
+
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'open', label: 'Open' },
   { value: 'acknowledged', label: 'Acknowledged' },
   { value: 'resolved', label: 'Resolved' },
-];
-
-const CATEGORY_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'api', label: 'API' },
-  { value: 'queue', label: 'Queue' },
-  { value: 'messaging', label: 'Messaging' },
-  { value: 'agent', label: 'Agent' },
-  { value: 'worker', label: 'Worker' },
-  { value: 'database', label: 'Database' },
-  { value: 'application', label: 'Application' },
-  { value: 'platform', label: 'Platform' },
 ];
 
 function statusChipClass(value: unknown): string {
@@ -50,19 +54,16 @@ function statusChipClass(value: unknown): string {
   }
 }
 
-function severityChipClass(value: unknown): string {
-  switch (String(value || '').toLowerCase()) {
-    case 'critical':
-    case 'high':
-      return 'badge-critical';
-    case 'medium':
-      return 'badge-warning';
-    case 'low':
-      return 'badge-info';
-    default:
-      return 'badge-neutral';
-  }
-}
+const CATEGORY_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'api', label: 'API' },
+  { value: 'queue', label: 'Queue' },
+  { value: 'messaging', label: 'Messaging' },
+  { value: 'agent', label: 'Agent' },
+  { value: 'worker', label: 'Worker' },
+  { value: 'database', label: 'Database' },
+  { value: 'application', label: 'Application' },
+  { value: 'platform', label: 'Platform' },
+];
 
 const VIEW_ACTION: ConfigurableCrudRowAction = {
   key: 'view-details',
@@ -85,23 +86,13 @@ const RESOLVE_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Resolve incident',
 };
 
-const INCIDENTS_CONFIG: ConfigurableCrudConfig = {
+const INCIDENTS_CONFIG: ConfigurableCrudConfig = defineCrud({
   endpoint: 'monitoring/incidents',
   uuidField: 'IncidentUUID',
   pageTitle: 'Incidents',
   pageDescription: 'Operational incidents, service alerts, and incident response workflow.',
-  createTitle: 'New incident',
-  editTitle: 'Incident details',
-  dialogDescription: 'Operational incident details and timeline.',
   searchPlaceholder: 'Search incidents',
   emptyLabel: 'No incidents found.',
-  deleteTitle: 'Delete incident',
-  deleteMessage: 'Delete this incident?',
-  deleteSelectedTitle: 'Delete incidents',
-  deleteSelectedMessage: 'Delete {count} incidents?',
-  savedMessage: 'Incident saved successfully.',
-  deletedMessage: 'Incident deleted successfully.',
-  deleteFailedMessage: 'Unable to delete incident.',
   fields: [],
   columns: [
     { id: 'opened', label: 'Opened', field: 'openedAt', kind: 'datetime' },
@@ -162,7 +153,7 @@ const INCIDENTS_CONFIG: ConfigurableCrudConfig = {
       translateOptions: true,
     },
   ],
-};
+});
 
 @Component({
   selector: 'mns-monitoring-incidents',
