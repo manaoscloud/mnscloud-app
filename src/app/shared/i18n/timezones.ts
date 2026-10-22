@@ -1,462 +1,112 @@
 import { MnsSearchSelectFieldOption } from '../forms/mns-search-select-field/mns-search-select-field';
 
-export interface TimezoneOptionDefinition {
-  value: string;
-  label: string;
-  country?: string;
-}
+type TimezoneTuple = readonly [
+  value: string,
+  label: string,
+  detail?: string,
+  searchKeywords?: string,
+];
+
+const TIMEZONE_ENTRIES: readonly TimezoneTuple[] = [
+  // UTC
+  ['UTC', 'UTC - Coordinated Universal Time', 'UTC', 'GMT Universal 00:00'],
+
+  // Brazil
+  ['America/Sao_Paulo', 'São Paulo, Brazil', 'Brasília / Sul / Sudeste / GO / DF', 'Brasilia Rio de Janeiro Belo Horizonte Curitiba Porto Alegre -03:00'],
+  ['America/Manaus', 'Manaus, Brazil', 'Amazonas leste', 'Amazonas AM -04:00'],
+  ['America/Belem', 'Belém, Brazil', 'Pará / Amapá', 'Belem Para PA Macapa Amapa AP -03:00'],
+  ['America/Fortaleza', 'Fortaleza, Brazil', 'Ceará / Nordeste', 'Ceara CE Teresina Piaui PI Sao Luis Maranhao MA Natal RN Joao Pessoa PB -03:00'],
+  ['America/Recife', 'Recife, Brazil', 'Pernambuco / Paraíba', 'Pernambuco PE -03:00'],
+  ['America/Bahia', 'Salvador, Brazil', 'Bahia', 'Salvador Bahia BA -03:00'],
+  ['America/Cuiaba', 'Cuiabá, Brazil', 'Mato Grosso', 'Cuiaba Mato Grosso MT -04:00'],
+  ['America/Campo_Grande', 'Campo Grande, Brazil', 'Mato Grosso do Sul', 'Campo Grande Mato Grosso do Sul MS -04:00'],
+  ['America/Porto_Velho', 'Porto Velho, Brazil', 'Rondônia', 'Porto Velho Rondonia RO -04:00'],
+  ['America/Boa_Vista', 'Boa Vista, Brazil', 'Roraima', 'Boa Vista Roraima RR -04:00'],
+  ['America/Rio_Branco', 'Rio Branco, Brazil', 'Acre', 'Rio Branco Acre AC -05:00'],
+  ['America/Maceio', 'Maceió, Brazil', 'Alagoas / Sergipe', 'Maceio Alagoas AL Aracaju Sergipe SE -03:00'],
+  ['America/Santarem', 'Santarém, Brazil', 'Pará oeste', 'Santarem Para PA -03:00'],
+  ['America/Araguaina', 'Araguaína, Brazil', 'Tocantins', 'Araguaina Palmas Tocantins TO -03:00'],
+  ['America/Noronha', 'Fernando de Noronha, Brazil', 'Fernando de Noronha', 'Fernando de Noronha -02:00'],
+
+  // South America & Caribbean
+  ['America/Argentina/Buenos_Aires', 'Buenos Aires, Argentina', 'Argentina', 'Buenos Aires Argentina -03:00'],
+  ['America/Santiago', 'Santiago, Chile', 'Chile', 'Santiago Chile -04:00 -03:00'],
+  ['America/Montevideo', 'Montevideo, Uruguay', 'Uruguay', 'Montevideo Uruguay -03:00'],
+  ['America/Asuncion', 'Asunción, Paraguay', 'Paraguay', 'Asuncion Paraguay -04:00 -03:00'],
+  ['America/La_Paz', 'La Paz, Bolivia', 'Bolivia', 'La Paz Bolivia -04:00'],
+  ['America/Lima', 'Lima, Peru', 'Peru', 'Lima Peru -05:00'],
+  ['America/Bogota', 'Bogotá, Colombia', 'Colombia', 'Bogota Colombia -05:00'],
+  ['America/Caracas', 'Caracas, Venezuela', 'Venezuela', 'Caracas Venezuela -04:00'],
+  ['America/Guayaquil', 'Guayaquil, Ecuador', 'Ecuador', 'Guayaquil Quito Ecuador -05:00'],
+  ['America/Panama', 'Panama City, Panama', 'Panama', 'Panama -05:00'],
+  ['America/Costa_Rica', 'San José, Costa Rica', 'Costa Rica', 'San Jose Costa Rica -06:00'],
+
+  // North America
+  ['America/Mexico_City', 'Mexico City, Mexico', 'Mexico Central', 'Mexico City Ciudad de Mexico -06:00'],
+  ['America/Cancun', 'Cancún, Mexico', 'Quintana Roo', 'Cancun Mexico Quintana Roo -05:00'],
+  ['America/New_York', 'New York, United States', 'Eastern Time', 'New York Eastern US USA EST EDT -05:00 -04:00'],
+  ['America/Chicago', 'Chicago, United States', 'Central Time', 'Chicago Central US USA CST CDT -06:00 -05:00'],
+  ['America/Denver', 'Denver, United States', 'Mountain Time', 'Denver Mountain US USA MST MDT -07:00 -06:00'],
+  ['America/Phoenix', 'Phoenix, United States', 'Arizona', 'Phoenix Arizona US USA MST -07:00'],
+  ['America/Los_Angeles', 'Los Angeles, United States', 'Pacific Time', 'Los Angeles Pacific US USA California PST PDT -08:00 -07:00'],
+  ['America/Anchorage', 'Anchorage, United States', 'Alaska', 'Anchorage Alaska US USA AKST AKDT -09:00 -08:00'],
+  ['Pacific/Honolulu', 'Honolulu, United States', 'Hawaii', 'Pacific/Honolulu Honolulu Hawaii US USA HST -10:00'],
+  ['America/Toronto', 'Toronto, Canada', 'Eastern Canada', 'Toronto Canada Eastern Ontario -05:00 -04:00'],
+  ['America/Vancouver', 'Vancouver, Canada', 'Pacific Canada', 'Vancouver Canada Pacific British Columbia -08:00 -07:00'],
+
+  // Europe
+  ['Europe/Lisbon', 'Lisbon, Portugal', 'Portugal Continental', 'Lisboa Portugal Lisbon WET WEST 00:00 +01:00'],
+  ['Atlantic/Madeira', 'Funchal, Madeira', 'Portugal', 'Funchal Madeira Portugal 00:00 +01:00'],
+  ['Atlantic/Azores', 'Ponta Delgada, Azores', 'Portugal', 'Acores Azores Ponta Delgada Portugal -01:00 00:00'],
+  ['Europe/Madrid', 'Madrid, Spain', 'Spain', 'Madrid Spain Espana CET CEST +01:00 +02:00'],
+  ['Europe/London', 'London, United Kingdom', 'GMT/BST', 'London United Kingdom UK England GMT BST 00:00 +01:00'],
+  ['Europe/Paris', 'Paris, France', 'France', 'Paris France CET CEST +01:00 +02:00'],
+  ['Europe/Berlin', 'Berlin, Germany', 'Germany', 'Berlin Germany Deutschland CET CEST +01:00 +02:00'],
+  ['Europe/Rome', 'Rome, Italy', 'Italy', 'Rome Roma Italy Italia CET CEST +01:00 +02:00'],
+  ['Europe/Amsterdam', 'Amsterdam, Netherlands', 'Netherlands', 'Amsterdam Netherlands Holanda CET CEST +01:00 +02:00'],
+  ['Europe/Brussels', 'Brussels, Belgium', 'Belgium', 'Brussels Belgium Belgica CET CEST +01:00 +02:00'],
+  ['Europe/Zurich', 'Zurich, Switzerland', 'Switzerland', 'Zurich Switzerland Suica CET CEST +01:00 +02:00'],
+  ['Europe/Vienna', 'Vienna, Austria', 'Austria', 'Vienna Austria CET CEST +01:00 +02:00'],
+  ['Europe/Dublin', 'Dublin, Ireland', 'Ireland', 'Dublin Ireland Irlanda GMT IST 00:00 +01:00'],
+  ['Europe/Athens', 'Athens, Greece', 'Greece', 'Athens Greece Grecia EET EEST +02:00 +03:00'],
+  ['Europe/Warsaw', 'Warsaw, Poland', 'Poland', 'Warsaw Poland Polonia CET CEST +01:00 +02:00'],
+  ['Europe/Stockholm', 'Stockholm, Sweden', 'Sweden', 'Stockholm Sweden Suecia CET CEST +01:00 +02:00'],
+
+  // Africa
+  ['Africa/Luanda', 'Luanda, Angola', 'Angola', 'Luanda Angola WAT +01:00'],
+  ['Africa/Maputo', 'Maputo, Mozambique', 'Mozambique', 'Maputo Mozambique Mocambique CAT +02:00'],
+  ['Atlantic/Cape_Verde', 'Praia, Cape Verde', 'Cape Verde', 'Praia Cabo Verde Cape Verde CVT -01:00'],
+  ['Africa/Johannesburg', 'Johannesburg, South Africa', 'South Africa', 'Johannesburg South Africa SAST +02:00'],
+  ['Africa/Cairo', 'Cairo, Egypt', 'Egypt', 'Cairo Egypt Egito EET +02:00'],
+  ['Africa/Casablanca', 'Casablanca, Morocco', 'Morocco', 'Casablanca Morocco Marrocos +01:00'],
+  ['Africa/Nairobi', 'Nairobi, Kenya', 'Kenya', 'Nairobi Kenya EAT +03:00'],
+
+  // Asia / Middle East / Oceania
+  ['Asia/Dubai', 'Dubai, United Arab Emirates', 'UAE', 'Dubai UAE United Arab Emirates GST +04:00'],
+  ['Asia/Tokyo', 'Tokyo, Japan', 'Japan', 'Tokyo Japan Japao JST +09:00'],
+  ['Asia/Shanghai', 'Shanghai, China', 'China', 'Shanghai Beijing China CST +08:00'],
+  ['Asia/Hong_Kong', 'Hong Kong', 'Hong Kong', 'Hong Kong HKT +08:00'],
+  ['Asia/Singapore', 'Singapore', 'Singapore', 'Singapore SGT +08:00'],
+  ['Asia/Seoul', 'Seoul, South Korea', 'South Korea', 'Seoul South Korea Coreia KST +09:00'],
+  ['Asia/Kolkata', 'Kolkata, India', 'India', 'Kolkata India IST +05:30'],
+  ['Australia/Sydney', 'Sydney, Australia', 'Australia', 'Sydney Australia AEST AEDT +10:00 +11:00'],
+  ['Australia/Melbourne', 'Melbourne, Australia', 'Australia', 'Melbourne Australia AEST AEDT +10:00 +11:00'],
+  ['Australia/Perth', 'Perth, Australia', 'Australia', 'Perth Australia AWST +08:00'],
+  ['Pacific/Auckland', 'Auckland, New Zealand', 'New Zealand', 'Auckland New Zealand Nova Zelandia NZST NZDT +12:00 +13:00'],
+];
 
 /**
  * Fixed list of canonical IANA timezones with human-readable labels,
  * prioritized for Brazil, the Americas, Europe, Africa, Asia, and Oceania.
  */
-export const CANONICAL_TIMEZONES: readonly MnsSearchSelectFieldOption[] = [
-  // UTC
-  {
-    value: 'UTC',
-    label: 'UTC - Coordinated Universal Time',
-    description: 'UTC',
-    searchText: 'UTC GMT Universal 00:00',
-  },
-
-  // Brazil
-  {
-    value: 'America/Sao_Paulo',
-    label: 'São Paulo, Brazil',
-    description: 'America/Sao_Paulo (Brasília / Sul / Sudeste / GO / DF)',
-    searchText: 'America/Sao_Paulo Sao Paulo Brasilia Rio de Janeiro Belo Horizonte Curitiba Porto Alegre -03:00',
-  },
-  {
-    value: 'America/Manaus',
-    label: 'Manaus, Brazil',
-    description: 'America/Manaus (Amazonas leste)',
-    searchText: 'America/Manaus Amazonas AM -04:00',
-  },
-  {
-    value: 'America/Belem',
-    label: 'Belém, Brazil',
-    description: 'America/Belem (Pará / Amapá)',
-    searchText: 'America/Belem Belem Para PA Macapa Amapa AP -03:00',
-  },
-  {
-    value: 'America/Fortaleza',
-    label: 'Fortaleza, Brazil',
-    description: 'America/Fortaleza (Ceará / Nordeste)',
-    searchText: 'America/Fortaleza Ceara CE Teresina Piaui PI Sao Luis Maranhao MA Natal RN Joao Pessoa PB -03:00',
-  },
-  {
-    value: 'America/Recife',
-    label: 'Recife, Brazil',
-    description: 'America/Recife (Pernambuco / Paraíba)',
-    searchText: 'America/Recife Pernambuco PE -03:00',
-  },
-  {
-    value: 'America/Bahia',
-    label: 'Salvador, Brazil',
-    description: 'America/Bahia (Bahia)',
-    searchText: 'America/Bahia Salvador Bahia BA -03:00',
-  },
-  {
-    value: 'America/Cuiaba',
-    label: 'Cuiabá, Brazil',
-    description: 'America/Cuiaba (Mato Grosso)',
-    searchText: 'America/Cuiaba Cuiaba Mato Grosso MT -04:00',
-  },
-  {
-    value: 'America/Campo_Grande',
-    label: 'Campo Grande, Brazil',
-    description: 'America/Campo_Grande (Mato Grosso do Sul)',
-    searchText: 'America/Campo_Grande Campo Grande Mato Grosso do Sul MS -04:00',
-  },
-  {
-    value: 'America/Porto_Velho',
-    label: 'Porto Velho, Brazil',
-    description: 'America/Porto_Velho (Rondônia)',
-    searchText: 'America/Porto_Velho Porto Velho Rondonia RO -04:00',
-  },
-  {
-    value: 'America/Boa_Vista',
-    label: 'Boa Vista, Brazil',
-    description: 'America/Boa_Vista (Roraima)',
-    searchText: 'America/Boa_Vista Boa Vista Roraima RR -04:00',
-  },
-  {
-    value: 'America/Rio_Branco',
-    label: 'Rio Branco, Brazil',
-    description: 'America/Rio_Branco (Acre)',
-    searchText: 'America/Rio_Branco Rio Branco Acre AC -05:00',
-  },
-  {
-    value: 'America/Maceio',
-    label: 'Maceió, Brazil',
-    description: 'America/Maceio (Alagoas / Sergipe)',
-    searchText: 'America/Maceio Maceio Alagoas AL Aracaju Sergipe SE -03:00',
-  },
-  {
-    value: 'America/Santarem',
-    label: 'Santarém, Brazil',
-    description: 'America/Santarem (Pará oeste)',
-    searchText: 'America/Santarem Santarem Para PA -03:00',
-  },
-  {
-    value: 'America/Araguaina',
-    label: 'Araguaína, Brazil',
-    description: 'America/Araguaina (Tocantins)',
-    searchText: 'America/Araguaina Araguaina Palmas Tocantins TO -03:00',
-  },
-  {
-    value: 'America/Noronha',
-    label: 'Fernando de Noronha, Brazil',
-    description: 'America/Noronha',
-    searchText: 'America/Noronha Fernando de Noronha -02:00',
-  },
-
-  // South America & Caribbean
-  {
-    value: 'America/Argentina/Buenos_Aires',
-    label: 'Buenos Aires, Argentina',
-    description: 'America/Argentina/Buenos_Aires',
-    searchText: 'America/Argentina/Buenos_Aires Buenos Aires Argentina -03:00',
-  },
-  {
-    value: 'America/Santiago',
-    label: 'Santiago, Chile',
-    description: 'America/Santiago',
-    searchText: 'America/Santiago Santiago Chile -04:00 -03:00',
-  },
-  {
-    value: 'America/Montevideo',
-    label: 'Montevideo, Uruguay',
-    description: 'America/Montevideo',
-    searchText: 'America/Montevideo Montevideo Uruguay -03:00',
-  },
-  {
-    value: 'America/Asuncion',
-    label: 'Asunción, Paraguay',
-    description: 'America/Asuncion',
-    searchText: 'America/Asuncion Asuncion Paraguay -04:00 -03:00',
-  },
-  {
-    value: 'America/La_Paz',
-    label: 'La Paz, Bolivia',
-    description: 'America/La_Paz',
-    searchText: 'America/La_Paz La Paz Bolivia -04:00',
-  },
-  {
-    value: 'America/Lima',
-    label: 'Lima, Peru',
-    description: 'America/Lima',
-    searchText: 'America/Lima Lima Peru -05:00',
-  },
-  {
-    value: 'America/Bogota',
-    label: 'Bogotá, Colombia',
-    description: 'America/Bogota',
-    searchText: 'America/Bogota Bogota Colombia -05:00',
-  },
-  {
-    value: 'America/Caracas',
-    label: 'Caracas, Venezuela',
-    description: 'America/Caracas',
-    searchText: 'America/Caracas Caracas Venezuela -04:00',
-  },
-  {
-    value: 'America/Guayaquil',
-    label: 'Guayaquil, Ecuador',
-    description: 'America/Guayaquil',
-    searchText: 'America/Guayaquil Guayaquil Quito Ecuador -05:00',
-  },
-  {
-    value: 'America/Panama',
-    label: 'Panama City, Panama',
-    description: 'America/Panama',
-    searchText: 'America/Panama Panama -05:00',
-  },
-  {
-    value: 'America/Costa_Rica',
-    label: 'San José, Costa Rica',
-    description: 'America/Costa_Rica',
-    searchText: 'America/Costa_Rica San Jose Costa Rica -06:00',
-  },
-
-  // North America
-  {
-    value: 'America/Mexico_City',
-    label: 'Mexico City, Mexico',
-    description: 'America/Mexico_City',
-    searchText: 'America/Mexico_City Mexico City Ciudad de Mexico -06:00',
-  },
-  {
-    value: 'America/Cancun',
-    label: 'Cancún, Mexico',
-    description: 'America/Cancun',
-    searchText: 'America/Cancun Cancun Mexico Quintana Roo -05:00',
-  },
-  {
-    value: 'America/New_York',
-    label: 'New York, United States',
-    description: 'America/New_York (Eastern Time)',
-    searchText: 'America/New_York New York Eastern US USA EST EDT -05:00 -04:00',
-  },
-  {
-    value: 'America/Chicago',
-    label: 'Chicago, United States',
-    description: 'America/Chicago (Central Time)',
-    searchText: 'America/Chicago Chicago Central US USA CST CDT -06:00 -05:00',
-  },
-  {
-    value: 'America/Denver',
-    label: 'Denver, United States',
-    description: 'America/Denver (Mountain Time)',
-    searchText: 'America/Denver Denver Mountain US USA MST MDT -07:00 -06:00',
-  },
-  {
-    value: 'America/Phoenix',
-    label: 'Phoenix, United States',
-    description: 'America/Phoenix (Arizona)',
-    searchText: 'America/Phoenix Phoenix Arizona US USA MST -07:00',
-  },
-  {
-    value: 'America/Los_Angeles',
-    label: 'Los Angeles, United States',
-    description: 'America/Los_Angeles (Pacific Time)',
-    searchText: 'America/Los_Angeles Los Angeles Pacific US USA California PST PDT -08:00 -07:00',
-  },
-  {
-    value: 'America/Anchorage',
-    label: 'Anchorage, United States',
-    description: 'America/Anchorage (Alaska)',
-    searchText: 'America/Anchorage Anchorage Alaska US USA AKST AKDT -09:00 -08:00',
-  },
-  {
-    value: 'Pacific/Honolulu',
-    label: 'Honolulu, United States',
-    description: 'Pacific/Honolulu (Hawaii)',
-    searchText: 'Pacific/Honolulu Honolulu Hawaii US USA HST -10:00',
-  },
-  {
-    value: 'America/Toronto',
-    label: 'Toronto, Canada',
-    description: 'America/Toronto (Eastern Canada)',
-    searchText: 'America/Toronto Toronto Canada Eastern Ontario -05:00 -04:00',
-  },
-  {
-    value: 'America/Vancouver',
-    label: 'Vancouver, Canada',
-    description: 'America/Vancouver (Pacific Canada)',
-    searchText: 'America/Vancouver Vancouver Canada Pacific British Columbia -08:00 -07:00',
-  },
-
-  // Europe
-  {
-    value: 'Europe/Lisbon',
-    label: 'Lisbon, Portugal',
-    description: 'Europe/Lisbon (Portugal Continental)',
-    searchText: 'Europe/Lisbon Lisboa Portugal Lisbon WET WEST 00:00 +01:00',
-  },
-  {
-    value: 'Atlantic/Madeira',
-    label: 'Funchal, Madeira',
-    description: 'Atlantic/Madeira (Portugal)',
-    searchText: 'Atlantic/Madeira Funchal Madeira Portugal 00:00 +01:00',
-  },
-  {
-    value: 'Atlantic/Azores',
-    label: 'Ponta Delgada, Azores',
-    description: 'Atlantic/Azores (Portugal)',
-    searchText: 'Atlantic/Azores Acores Azores Ponta Delgada Portugal -01:00 00:00',
-  },
-  {
-    value: 'Europe/Madrid',
-    label: 'Madrid, Spain',
-    description: 'Europe/Madrid',
-    searchText: 'Europe/Madrid Madrid Spain Espana CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/London',
-    label: 'London, United Kingdom',
-    description: 'Europe/London (GMT/BST)',
-    searchText: 'Europe/London London United Kingdom UK England GMT BST 00:00 +01:00',
-  },
-  {
-    value: 'Europe/Paris',
-    label: 'Paris, France',
-    description: 'Europe/Paris',
-    searchText: 'Europe/Paris Paris France CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Berlin',
-    label: 'Berlin, Germany',
-    description: 'Europe/Berlin',
-    searchText: 'Europe/Berlin Berlin Germany Deutschland CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Rome',
-    label: 'Rome, Italy',
-    description: 'Europe/Rome',
-    searchText: 'Europe/Rome Rome Roma Italy Italia CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Amsterdam',
-    label: 'Amsterdam, Netherlands',
-    description: 'Europe/Amsterdam',
-    searchText: 'Europe/Amsterdam Amsterdam Netherlands Holanda CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Brussels',
-    label: 'Brussels, Belgium',
-    description: 'Europe/Brussels',
-    searchText: 'Europe/Brussels Brussels Belgium Belgica CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Zurich',
-    label: 'Zurich, Switzerland',
-    description: 'Europe/Zurich',
-    searchText: 'Europe/Zurich Zurich Switzerland Suica CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Vienna',
-    label: 'Vienna, Austria',
-    description: 'Europe/Vienna',
-    searchText: 'Europe/Vienna Vienna Austria CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Dublin',
-    label: 'Dublin, Ireland',
-    description: 'Europe/Dublin',
-    searchText: 'Europe/Dublin Dublin Ireland Irlanda GMT IST 00:00 +01:00',
-  },
-  {
-    value: 'Europe/Athens',
-    label: 'Athens, Greece',
-    description: 'Europe/Athens',
-    searchText: 'Europe/Athens Athens Greece Grecia EET EEST +02:00 +03:00',
-  },
-  {
-    value: 'Europe/Warsaw',
-    label: 'Warsaw, Poland',
-    description: 'Europe/Warsaw',
-    searchText: 'Europe/Warsaw Warsaw Poland Polonia CET CEST +01:00 +02:00',
-  },
-  {
-    value: 'Europe/Stockholm',
-    label: 'Stockholm, Sweden',
-    description: 'Europe/Stockholm',
-    searchText: 'Europe/Stockholm Stockholm Sweden Suecia CET CEST +01:00 +02:00',
-  },
-
-  // Africa
-  {
-    value: 'Africa/Luanda',
-    label: 'Luanda, Angola',
-    description: 'Africa/Luanda',
-    searchText: 'Africa/Luanda Luanda Angola WAT +01:00',
-  },
-  {
-    value: 'Africa/Maputo',
-    label: 'Maputo, Mozambique',
-    description: 'Africa/Maputo',
-    searchText: 'Africa/Maputo Maputo Mozambique Mocambique CAT +02:00',
-  },
-  {
-    value: 'Atlantic/Cape_Verde',
-    label: 'Praia, Cape Verde',
-    description: 'Atlantic/Cape_Verde',
-    searchText: 'Atlantic/Cape_Verde Praia Cabo Verde Cape Verde CVT -01:00',
-  },
-  {
-    value: 'Africa/Johannesburg',
-    label: 'Johannesburg, South Africa',
-    description: 'Africa/Johannesburg',
-    searchText: 'Africa/Johannesburg Johannesburg South Africa SAST +02:00',
-  },
-  {
-    value: 'Africa/Cairo',
-    label: 'Cairo, Egypt',
-    description: 'Africa/Cairo',
-    searchText: 'Africa/Cairo Cairo Egypt Egito EET +02:00',
-  },
-  {
-    value: 'Africa/Casablanca',
-    label: 'Casablanca, Morocco',
-    description: 'Africa/Casablanca',
-    searchText: 'Africa/Casablanca Casablanca Morocco Marrocos +01:00',
-  },
-  {
-    value: 'Africa/Nairobi',
-    label: 'Nairobi, Kenya',
-    description: 'Africa/Nairobi',
-    searchText: 'Africa/Nairobi Nairobi Kenya EAT +03:00',
-  },
-
-  // Asia / Middle East / Oceania
-  {
-    value: 'Asia/Dubai',
-    label: 'Dubai, United Arab Emirates',
-    description: 'Asia/Dubai',
-    searchText: 'Asia/Dubai Dubai UAE United Arab Emirates GST +04:00',
-  },
-  {
-    value: 'Asia/Tokyo',
-    label: 'Tokyo, Japan',
-    description: 'Asia/Tokyo',
-    searchText: 'Asia/Tokyo Tokyo Japan Japao JST +09:00',
-  },
-  {
-    value: 'Asia/Shanghai',
-    label: 'Shanghai, China',
-    description: 'Asia/Shanghai',
-    searchText: 'Asia/Shanghai Shanghai Beijing China CST +08:00',
-  },
-  {
-    value: 'Asia/Hong_Kong',
-    label: 'Hong Kong',
-    description: 'Asia/Hong_Kong',
-    searchText: 'Asia/Hong_Kong Hong Kong HKT +08:00',
-  },
-  {
-    value: 'Asia/Singapore',
-    label: 'Singapore',
-    description: 'Asia/Singapore',
-    searchText: 'Asia/Singapore Singapore SGT +08:00',
-  },
-  {
-    value: 'Asia/Seoul',
-    label: 'Seoul, South Korea',
-    description: 'Asia/Seoul',
-    searchText: 'Asia/Seoul Seoul South Korea Coreia KST +09:00',
-  },
-  {
-    value: 'Asia/Kolkata',
-    label: 'Kolkata, India',
-    description: 'Asia/Kolkata',
-    searchText: 'Asia/Kolkata Kolkata India IST +05:30',
-  },
-  {
-    value: 'Australia/Sydney',
-    label: 'Sydney, Australia',
-    description: 'Australia/Sydney',
-    searchText: 'Australia/Sydney Sydney Australia AEST AEDT +10:00 +11:00',
-  },
-  {
-    value: 'Australia/Melbourne',
-    label: 'Melbourne, Australia',
-    description: 'Australia/Melbourne',
-    searchText: 'Australia/Melbourne Melbourne Australia AEST AEDT +10:00 +11:00',
-  },
-  {
-    value: 'Australia/Perth',
-    label: 'Perth, Australia',
-    description: 'Australia/Perth',
-    searchText: 'Australia/Perth Perth Australia AWST +08:00',
-  },
-  {
-    value: 'Pacific/Auckland',
-    label: 'Auckland, New Zealand',
-    description: 'Pacific/Auckland',
-    searchText: 'Pacific/Auckland Auckland New Zealand Nova Zelandia NZST NZDT +12:00 +13:00',
-  },
-];
+export const CANONICAL_TIMEZONES: readonly MnsSearchSelectFieldOption[] = TIMEZONE_ENTRIES.map(
+  ([value, label, detail, searchKeywords]) => ({
+    value,
+    label,
+    description: detail && detail !== value ? `${value} (${detail})` : value,
+    searchText: `${value} ${label} ${detail ?? ''} ${searchKeywords ?? ''}`,
+  }),
+);
 
 /**
  * Builds a search-select options array with an optional fallback option (empty value),
