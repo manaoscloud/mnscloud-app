@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "8a5d4f7e4426",
+  "version": "ef2018c001fc",
   "language": "pt-BR",
   "entries": [
     {
@@ -4622,24 +4622,16 @@
           "help": "A janela do orçamento é reiniciada no início de cada dia ou mês UTC."
         },
         {
-          "label": "Amount (USD)",
+          "label": "Orçamento (USD)",
           "help": "Valor máximo em USD permitido durante o período."
         },
         {
           "label": "Parada obrigatória",
-          "help": "When enforced, calls exceeding the budget are blocked with an error."
+          "help": "Quando aplicado, chamadas que excedem o orçamento são bloqueadas com erro."
         },
         {
-          "label": "Alerta em 50%",
-          "help": "Enviar notificação quando o consumo atingir 50% do orçamento."
-        },
-        {
-          "label": "Alerta em 80%",
-          "help": "Enviar notificação quando o consumo atingir 80% do orçamento."
-        },
-        {
-          "label": "Alerta em 100%",
-          "help": "Enviar notificação quando o consumo atingir 100% do orçamento."
+          "label": "Alert at %",
+          "help": "Send notification when spending reaches % of the budget."
         },
         {
           "label": "Status",

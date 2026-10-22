@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudField,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -16,6 +17,24 @@ export const AI_BUDGET_PERIOD_OPTIONS = [
   { value: 'month', label: 'Monthly' },
   { value: 'day', label: 'Daily' },
 ] as const;
+
+const YES_NO_OPTIONS = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
+] as const;
+
+function makeAlertField(pct: 50 | 80 | 100): ConfigurableCrudField {
+  return {
+    key: `alert${pct}`,
+    label: `Alert at ${pct}%`,
+    type: 'search-select',
+    required: true,
+    options: YES_NO_OPTIONS,
+    translateOptions: true,
+    span: 1,
+    help: `Send notification when spending reaches ${pct}% of the budget.`,
+  };
+}
 
 export function aiBudgetScopeLabel(scope: unknown): string {
   return (
@@ -126,7 +145,6 @@ const config = defineCrud({
       label: 'Target',
       type: 'text',
       span: 1,
-      placeholder: 'Feature code or Tenant UUID',
       help: 'Leave empty for platform scope. For feature, specify the feature code (e.g. support.triage). For tenant, specify the Tenant UUID.',
     },
     {
@@ -141,11 +159,10 @@ const config = defineCrud({
     },
     {
       key: 'amountUsd',
-      label: 'Amount (USD)',
+      label: 'Budget (USD)',
       type: 'number',
       required: true,
       span: 1,
-      placeholder: '100.00',
       help: 'Maximum USD amount allowed during the period.',
     },
     {
@@ -161,45 +178,9 @@ const config = defineCrud({
       span: 1,
       help: 'When enforced, calls exceeding the budget are blocked with an error.',
     },
-    {
-      key: 'alert50',
-      label: 'Alert at 50%',
-      type: 'search-select',
-      required: true,
-      options: [
-        { value: 1, label: 'Yes' },
-        { value: 0, label: 'No' },
-      ],
-      translateOptions: true,
-      span: 1,
-      help: 'Send notification when spending reaches 50% of the budget.',
-    },
-    {
-      key: 'alert80',
-      label: 'Alert at 80%',
-      type: 'search-select',
-      required: true,
-      options: [
-        { value: 1, label: 'Yes' },
-        { value: 0, label: 'No' },
-      ],
-      translateOptions: true,
-      span: 1,
-      help: 'Send notification when spending reaches 80% of the budget.',
-    },
-    {
-      key: 'alert100',
-      label: 'Alert at 100%',
-      type: 'search-select',
-      required: true,
-      options: [
-        { value: 1, label: 'Yes' },
-        { value: 0, label: 'No' },
-      ],
-      translateOptions: true,
-      span: 1,
-      help: 'Send notification when spending reaches 100% of the budget.',
-    },
+    makeAlertField(50),
+    makeAlertField(80),
+    makeAlertField(100),
     {
       key: 'status',
       label: 'Status',
