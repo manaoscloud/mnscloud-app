@@ -2184,7 +2184,8 @@ Customers, complexes, companies, suppliers, carriers and resellers use
 Status / Country / Person type / Document type; Document / Legal or full name (two columns) /
 Trade name; Display name (two columns) / opening or birth date. Display name is never silently
 converted into a legal or trade name. Companies are business entities. Identity country and
-address country are separate fields; foreign regions accept text, and CEP lookup is Brazil-only.
+address country are separate fields. An explicit same-country option controls copying from identity;
+legacy missing countries remain missing when editing. Foreign regions accept text, and CEP lookup is Brazil-only.
 The address grid uses Zip / Street (two columns) / Number, then Complement / District / City / State.
 
 `contacts` is a shared form tab: general email/phone fields plus the `relatedCollections` global
@@ -2196,8 +2197,10 @@ before enabling contacts. It retains the returned UUID even if detail refresh fa
 retry from creating another parent. There is no implicit parent autosave.
 
 Dynamic field options/types use `optionsWhen` and `typeWhen` in the shared field renderer.
-`formTabActions` exposes canonical related workflows in Fiscal/Limits tabs without fake fields.
-Company Fiscal opens the existing issuer profile and per-state registrations with the company
-preselected. Fiscal API permissions/entitlements remain authoritative; Registry editing is independent.
+`formTabActions` exposes canonical related workflows in Fiscal/Limits/Contacts tabs without fake fields.
+The Contacts action manages the same sector catalog used by quick-create. New links offer active
+sectors; existing contacts can retain a sector that has since been deactivated.
+Company Fiscal shows a read-only summary and opens the existing issuer profile and per-state
+registrations with the company preselected. Fiscal API permissions/entitlements remain authoritative; Registry editing is independent.
 Annotations retain `Notes` translated as **Anotações**, `notes` in payloads, a full-width textarea
 and four rows. No observation field or new annotation-history model is introduced.
