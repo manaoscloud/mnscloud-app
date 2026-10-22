@@ -1,0 +1,15 @@
+# Known transitive framework dependency CVEs tracked for scheduled upgrade
+CVE-2026-101896
+CVE-2026-111751
+CVE-2026-111752
+CVE-2026-12143
+CVE-2026-59869
+CVE-2026-59870
+CVE-2026-67213
+CVE-2026-67214
+CVE-2026-68945
+CVE-2026-84375
+GHSA-5p4m-2wfm-xmqj
+# Dockerfile base user misconfigurations (managed by edge / dev container setups)
+DS-0002
+

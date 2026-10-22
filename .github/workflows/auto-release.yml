@@ -81,6 +81,29 @@ jobs:
       - name: Promote emergency artifact
         if: github.event_name == 'workflow_dispatch'
         run: bash scripts/release-app.sh --promote-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
+      - name: Generate CycloneDX SBOM
+        run: |
+          mkdir -p var/security/sbom
+          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/var/security/sbom:/out" aquasec/trivy:latest fs --format cyclonedx --output "/out/mnscloud-app.cdx.json" /repo
+      - name: Upload SBOM to Dependency-Track
+        env:
+          DTRACK_API_URL: ${{ vars.DTRACK_API_URL || 'http://127.0.0.1:8089' }}
+          DTRACK_API_KEY: ${{ secrets.DTRACK_API_KEY || '' }}
+        run: |
+          set -euo pipefail
+          sbom_file="var/security/sbom/mnscloud-app.cdx.json"
+          if [ -z "$DTRACK_API_KEY" ]; then
+            echo 'Dependency-Track upload skipped: DTRACK_API_KEY is not configured.'
+            exit 0
+          fi
+          version="$(python3 -c "import json; print(json.load(open('releases/manifest.json'))['channels']['stable']['version'])")"
+          curl --fail --silent --show-error \
+            -X POST "${DTRACK_API_URL%/}/api/v1/bom" \
+            -H "X-Api-Key: ${DTRACK_API_KEY}" \
+            -F "autoCreate=true" \
+            -F "projectName=mnscloud-app" \
+            -F "projectVersion=${version}" \
+            -F "bom=@${sbom_file}"
       - name: Notify MNSCloud release cache
         id: release_cache
         env:
