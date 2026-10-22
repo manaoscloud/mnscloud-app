@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d13f1bc33aa0",
+  "version": "8a5d4f7e4426",
   "language": "pt-BR",
   "entries": [
     {
@@ -4601,6 +4601,51 @@
       "title": "Geral",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/settings/ai/budgets",
+      "menuPath": "Configurações › IA › Orçamentos",
+      "scope": "platform",
+      "title": "Orçamentos de IA",
+      "description": "Limites de orçamento de IA da plataforma, recurso e assinante com limites de alerta e parada obrigatória.",
+      "fields": [
+        {
+          "label": "Escopo",
+          "help": "Plataforma se aplica a todas as operações de IA da plataforma; Recurso limita uma funcionalidade específica; Assinante limita um assinante individual."
+        },
+        {
+          "label": "Alvo",
+          "help": "Deixe em branco para escopo de plataforma. Para recurso, informe o código do recurso (ex: support.triage). Para assinante, informe o UUID do assinante."
+        },
+        {
+          "label": "Período",
+          "help": "A janela do orçamento é reiniciada no início de cada dia ou mês UTC."
+        },
+        {
+          "label": "Amount (USD)",
+          "help": "Valor máximo em USD permitido durante o período."
+        },
+        {
+          "label": "Parada obrigatória",
+          "help": "When enforced, calls exceeding the budget are blocked with an error."
+        },
+        {
+          "label": "Alerta em 50%",
+          "help": "Enviar notificação quando o consumo atingir 50% do orçamento."
+        },
+        {
+          "label": "Alerta em 80%",
+          "help": "Enviar notificação quando o consumo atingir 80% do orçamento."
+        },
+        {
+          "label": "Alerta em 100%",
+          "help": "Enviar notificação quando o consumo atingir 100% do orçamento."
+        },
+        {
+          "label": "Status",
+          "help": "Orçamentos inativos são ignorados durante verificações de reserva."
+        }
+      ]
     },
     {
       "route": "/settings/ai/dashboard",
