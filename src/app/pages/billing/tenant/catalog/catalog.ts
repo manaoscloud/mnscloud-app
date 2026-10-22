@@ -52,6 +52,7 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
       key: 'subscribe',
       label: 'Subscribe',
       icon: 'add_shopping_cart',
+      inline: true,
       // A module already released by an active package is never offered again (no double billing).
       visible: (row) =>
         row['OfferBillingScope'] === 'MODULE' &&

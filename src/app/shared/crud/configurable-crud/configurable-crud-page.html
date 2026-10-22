@@ -526,7 +526,21 @@
       <mat-icon>edit</mat-icon>
     </button>
   }
-  @if (rowActions(row).length || canDeleteRow(row)) {
+  @for (action of inlineRowActions(row); track action.key) {
+    <button
+      mat-icon-button
+      type="button"
+      [disabled]="!!rowActionDisabledReason(action, row)"
+      [matTooltip]="
+        rowActionDisabledReason(action, row) || action.tooltip || action.label | transloco
+      "
+      [attr.aria-label]="action.label | transloco"
+      (click)="runRowAction(action, row)"
+    >
+      <mat-icon>{{ action.icon }}</mat-icon>
+    </button>
+  }
+  @if (menuRowActions(row).length || canDeleteRow(row)) {
     <button
       mat-icon-button
       type="button"
@@ -543,7 +557,7 @@
 <mat-menu #rowActionsMenu="matMenu" xPosition="before" class="mns-menu mns-menu-compact">
   <ng-template matMenuContent let-row="row">
     <mns-menu-title [hint]="rowMenuHint(row)">{{ 'Actions' | transloco }}</mns-menu-title>
-    @for (action of rowActions(row); track action.key) {
+    @for (action of menuRowActions(row); track action.key) {
       <button
         mat-menu-item
         mnsMenuItem
