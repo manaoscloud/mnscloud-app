@@ -1,4 +1,9 @@
-import { readStoredEnvironmentUUID } from '../../core/environment/environment-context';
+import {
+  NormalizedEnvironmentAccess,
+  extractEnvironmentAccess,
+  readStoredEnvironmentUUID,
+  tenantIdentityLine,
+} from '../../core/environment/environment-context';
 import { Component, computed, effect, inject, resource, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -86,6 +91,25 @@ export class SupportReportDialogComponent {
   private readonly environmentUUID = readStoredEnvironmentUUID();
   readonly titleMax = 160;
   readonly descriptionMax = 10000;
+
+  /** Active tenant identity for the report origin banner. */
+  readonly tenantResource = resource({
+    loader: async () => {
+      if (!this.environmentUUID) return null;
+      try {
+        const resp = await this.api.get<{ data?: { access?: unknown[] } }>('user/access');
+        const list = extractEnvironmentAccess(resp);
+        return (
+          list.find((item: NormalizedEnvironmentAccess) => item.EnvironmentUUID === this.environmentUUID) ??
+          null
+        );
+      } catch {
+        return null;
+      }
+    },
+  });
+  readonly currentTenant = computed(() => this.tenantResource.value());
+  readonly currentTenantIdentity = computed(() => tenantIdentityLine(this.currentTenant()));
 
   /** Ticket types and priorities come from the platform support desk catalogs. */
   readonly catalogs = resource({

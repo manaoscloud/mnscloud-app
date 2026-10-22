@@ -53,6 +53,17 @@
             {{ 'Select an environment to open a ticket to the support team.' | transloco }}
           </p>
         }
+        @if (currentTenant(); as tenant) {
+          <div class="support-report-tenant-banner">
+            <mat-icon class="support-report-tenant-icon">business</mat-icon>
+            <div class="support-report-tenant-content">
+              <strong class="support-report-tenant-name">{{ tenant['EnvironmentName'] }}</strong>
+              @if (currentTenantIdentity(); as identity) {
+                <span class="support-report-tenant-identity">{{ identity }}</span>
+              }
+            </div>
+          </div>
+        }
         <div class="form-grid">
           <mns-search-select-field
             fieldClass="span-2"
