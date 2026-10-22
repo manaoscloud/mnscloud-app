@@ -167,10 +167,9 @@ const INCIDENTS_CONFIG: ConfigurableCrudConfig = {
 @Component({
   selector: 'mns-monitoring-incidents',
   standalone: true,
-  imports: [...CONFIGURABLE_CRUD_IMPORTS],
-  template: `
-    <mns-configurable-crud-page [page]="this" />
-  `,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class MonitoringIncidentsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly apiService = inject(ApiService);

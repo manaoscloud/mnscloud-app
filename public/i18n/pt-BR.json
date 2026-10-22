@@ -9113,5 +9113,12 @@
   "Resolve incident": "Resolver incidente",
   "Incident resolved successfully.": "Incidente resolvido com sucesso.",
   "Occurrences": "Ocorrências",
-  "Last seen": "Visto por último"
+  "Last seen": "Visto por último",
+  "Messaging": "Mensageria",
+  "Application": "Aplicação",
+  "Resource ref": "Ref. do recurso",
+  "Acknowledged by": "Reconhecido por",
+  "Resolved by": "Resolvido por",
+  "Resolution notes": "Notas de resolução",
+  "Fingerprint": "Fingerprint"
 }

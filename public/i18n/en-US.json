@@ -9112,5 +9112,12 @@
   "Resolve incident": "Resolve incident",
   "Incident resolved successfully.": "Incident resolved successfully.",
   "Occurrences": "Occurrences",
-  "Last seen": "Last seen"
+  "Last seen": "Last seen",
+  "Messaging": "Messaging",
+  "Application": "Application",
+  "Resource ref": "Resource ref",
+  "Acknowledged by": "Acknowledged by",
+  "Resolved by": "Resolved by",
+  "Resolution notes": "Resolution notes",
+  "Fingerprint": "Fingerprint"
 }
