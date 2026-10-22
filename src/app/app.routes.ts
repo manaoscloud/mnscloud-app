@@ -449,6 +449,14 @@ export const routes: Routes = [
                 title: 'Monitoring • Activity Logs | mnscloud',
               },
               {
+                path: 'monitoring/incidents',
+                loadComponent: () =>
+                  import('./pages/monitoring/incidents/incidents').then(
+                    (m) => m.MonitoringIncidentsPage,
+                  ),
+                title: 'Monitoring • Incidents | mnscloud',
+              },
+              {
                 path: 'monitoring/overview',
                 loadComponent: () =>
                   import('./pages/monitoring/telemetry/overview').then(
@@ -2121,6 +2129,15 @@ export const routes: Routes = [
                     (m) => m.MonitoringActivityLogsPage,
                   ),
                 title: 'System Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                path: 'monitoring/incidents',
+                loadComponent: () =>
+                  import('./pages/monitoring/incidents/incidents').then(
+                    (m) => m.MonitoringIncidentsPage,
+                  ),
+                title: 'System Monitoring • Incidents | mnscloud',
+                data: { scope: 'master' },
               },
               {
                 path: 'monitoring/notification-rules',

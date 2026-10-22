@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ef2018c001fc",
+  "version": "216461bd55ac",
   "language": "pt-BR",
   "entries": [
     {
@@ -3583,6 +3583,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/monitoring/incidents",
+      "menuPath": "Monitoramento › Incidentes",
+      "scope": "platform",
+      "title": "Incidentes",
+      "description": "Incidentes operacionais, alertas de serviço e fluxo de resposta a incidentes.",
+      "fields": []
     },
     {
       "route": "/monitoring/overview",
@@ -7353,6 +7361,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/monitoring/incidents",
+      "menuPath": "Monitoramento › Incidentes",
+      "scope": "platform",
+      "title": "Incidentes",
+      "description": "Incidentes operacionais, alertas de serviço e fluxo de resposta a incidentes.",
+      "fields": []
     },
     {
       "route": "/system/monitoring/notification-rules",
