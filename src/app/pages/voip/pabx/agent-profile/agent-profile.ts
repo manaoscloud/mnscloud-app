@@ -77,7 +77,8 @@ export class VoipPabxAgentProfilePage extends ConfigurableCrudPageBase<Configura
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     return key === 'VoipPabxQueueVpqUUID' ? this.queueOptions() : [];
   }
-  private async loadQueues() {
+  // FK options only; the shared CRUD surface owns record loading and pagination.
+  private async loadQueues(): Promise<void> {
     try {
       const options: ConfigurableCrudOption[] = [];
       for (let offset = 0; ; offset += 500) {
