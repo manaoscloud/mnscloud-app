@@ -242,6 +242,7 @@ export function agentTimelineCollection(
         id: 'message',
         field: 'Message',
         label: 'Message',
+        width: 'lg',
         rowAction: 'view-message',
         value: (row, translate) =>
           String(row['Message'] ?? '') || statusLabel(row['StatusTo'], translate),
@@ -298,6 +299,7 @@ export function helpConversationCollection(
         id: 'message',
         field: 'Message',
         label: 'Message',
+        width: 'lg',
         rowAction: 'view-message',
         value: (row, translate) =>
           String(row['Message'] ?? '') || statusLabel(row['StatusTo'], translate),

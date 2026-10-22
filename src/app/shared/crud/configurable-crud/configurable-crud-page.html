@@ -493,7 +493,7 @@
   </mat-menu>
 
   <div class="crud-list-footer">
-    @if (!config.embedded && !config.collectionDialog && !config.readOnly && !config.formOnly) {
+    @if (!config.embedded && !config.readOnly && !config.formOnly) {
       <mns-report-problem-button
         variant="footer"
         [context]="reportContext()"
@@ -698,10 +698,13 @@
       mat-button
       type="button"
       class="crud-cell-link"
-      [matTooltip]="linkAction.tooltip ?? linkAction.label | transloco"
+      [class]="columnWidthClass(column)"
+      [matTooltip]="linkAction.tooltip ? (linkAction.tooltip | transloco) : columnText(row, column)"
       (click)="$event.stopPropagation(); runRowAction(linkAction, row)"
     >
-      {{ columnText(row, column) }}
+      <span class="crud-cell-text" [class]="columnWidthClass(column)">{{
+        columnText(row, column)
+      }}</span>
     </button>
   } @else {
     @if (canCopyColumn(row, column)) {
