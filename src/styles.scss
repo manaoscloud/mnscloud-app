@@ -746,6 +746,14 @@ mat-card.erp-card,
   margin-top: 0.75rem;
 }
 
+.crud-cell-link .mdc-button__label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sidenav-version {
   display: flex;
   flex: 0 0 auto;

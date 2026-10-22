@@ -251,11 +251,20 @@
 
 .crud-cell-link {
   min-width: 0;
+  max-width: 100%;
   height: auto;
   padding: 0 4px;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+
+  .crud-cell-text {
+    max-width: inherit;
+    text-align: left;
+  }
 }
 
 // Status chip that opens the column's row action (e.g. the AI analysis of a ticket).
@@ -717,7 +726,16 @@
   }
 
   .table-wrapper {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .crud-list-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--mat-sys-color-surface);
+    padding: 0.5rem 0 0;
+    border-top: 1px solid var(--mat-sys-color-outline-variant);
   }
 }
 
