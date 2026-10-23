@@ -14,6 +14,7 @@ import {
   PEM_FIELDS,
   purposeOptions,
 } from './bank-partners-crud';
+import { readPemFileInput } from '../../../../shared/crud/configurable-crud/pem-file-input';
 
 @Component({
   selector: 'app-pay-bank-partners',
@@ -73,22 +74,14 @@ export class SystemPayBankPartnersPage extends ConfigurableCrudPageBase<Configur
     super.startEdit(row);
   }
 
-  /** Certificate and key uploads are read as PEM text; the API validates and seals them. */
   override onFileInput(key: string, event: Event): void {
     if (!(PEM_FIELDS as readonly string[]).includes(key)) {
       super.onFileInput(key, event);
       return;
     }
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) {
-      this.pemFileNames.delete(key);
-      this.setFieldValue(key, '');
-      return;
-    }
-    void file.text().then((content) => {
-      this.pemFileNames.set(key, file.name);
-      this.setFieldValue(key, content);
-    });
+    readPemFileInput(event, key, this.pemFileNames, (field, value) =>
+      this.setFieldValue(field, value),
+    );
   }
 
   override fieldFileName(key: string): string {

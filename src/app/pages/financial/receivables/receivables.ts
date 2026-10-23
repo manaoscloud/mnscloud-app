@@ -5,99 +5,38 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { settlementsCollection } from '../settlements';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
+import {
+  financialTitleBase,
+  financialTitleColumns,
+  financialTitleFields,
+  financialTitleRowActions,
+  type FinancialTitleSpec,
+} from '../financial-titles';
 
-const statuses = [
-  { value: 'open', label: 'Open' },
-  { value: 'partial', label: 'Partially paid' },
-  { value: 'paid', label: 'Paid' },
-  { value: 'overdue', label: 'Overdue' },
-  { value: 'canceled', label: 'Canceled' },
-];
+const title: FinancialTitleSpec = {
+  direction: 'receivable',
+  uuidField: 'FinReceivableUUID',
+  party: {
+    key: 'customerUUID',
+    source: 'CustomerUUID',
+    label: 'Customer',
+    nameField: 'CustomerName',
+    endpoint: 'registry/customers',
+    quickCreate: quickCreateFor('RegCustomerRcuUUID'),
+  },
+  settlementsLabel: 'Receipts',
+};
 
 const config = defineCrud({
   endpoint: 'financial/receivables',
   uuidField: 'FinReceivableUUID',
   pageTitle: 'Accounts Receivable',
   pageDescription: 'Track incoming payments and outstanding customer invoices.',
-  bulkDelete: true,
-  statusMode: 'string',
-  activeValue: 'open',
-  inactiveValue: 'canceled',
-  statusOptions: statuses,
-  activeStatusValues: ['open', 'partial', 'paid'],
-  initialValues: {
-    status: 'open',
-    customerUUID: '',
-    description: '',
-    docNumber: '',
-    dueDate: null,
-    amount: 0,
-    notes: '',
-  },
-  columns: [
-    {
-      id: 'description',
-      label: 'Description',
-      field: 'Description',
-      uuidField: 'FinReceivableUUID',
-      kind: 'identity',
-    },
-    { id: 'customer', label: 'Customer', field: 'CustomerName' },
-    { id: 'docNumber', label: 'Document number', field: 'DocNumber' },
-    { id: 'dueDate', label: 'Due date', field: 'DueDate', kind: 'date' },
-    { id: 'amount', label: 'Amount', field: 'Amount', kind: 'currency' },
-    { id: 'open', label: 'Open balance', field: 'OpenAmount', kind: 'currency' },
-    { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
-  ],
-  fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      label: 'Status',
-      type: 'status',
-      options: statuses,
-      span: 1,
-    },
-    {
-      key: 'customerUUID',
-      source: 'CustomerUUID',
-      label: 'Customer',
-      type: 'search-select',
-      required: true,
-      remoteLookup: {
-        endpoint: 'registry/customers',
-        searchParam: 'q',
-        uuidField: 'CustomerUUID',
-        labelField: 'Name',
-        selectedLabelField: 'CustomerName',
-      },
-      quickCreate: quickCreateFor('RegCustomerRcuUUID'),
-      span: 1,
-    },
-    { key: 'description', source: 'Description', label: 'Description', required: true, span: 2 },
-    { key: 'docNumber', source: 'DocNumber', label: 'Document number', span: 1 },
-    { key: 'dueDate', source: 'DueDate', label: 'Due date', type: 'date', required: true, span: 1 },
-    { key: 'amount', source: 'Amount', label: 'Amount', type: 'currency', required: true, span: 1 },
-    {
-      key: 'notes',
-      source: 'Notes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-  ],
-  rowActions: [
-    {
-      key: 'settlements',
-      label: 'Receipts',
-      icon: 'payments',
-      collection: settlementsCollection('receivable', 'FinReceivableUUID'),
-    },
-  ],
+  ...financialTitleBase(title),
+  columns: financialTitleColumns(title),
+  fields: financialTitleFields(title),
+  rowActions: financialTitleRowActions(title),
 });
 
 @Component({
@@ -116,14 +55,5 @@ export class FinancialReceivablesPage extends ConfigurableCrudPageBase<Configura
     if (!super.validatePayload(payload)) return false;
     if (Number(payload['amount']) > 0) return true;
     return this.rejectField('amount', 'Amount must be greater than zero.');
-  }
-
-  protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return {
-      ...payload,
-      docNumber: payload['docNumber'] || null,
-      notes: payload['notes'] || null,
-      amount: Number(payload['amount']),
-    };
   }
 }
