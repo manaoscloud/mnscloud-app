@@ -54,7 +54,8 @@ const messages: Record<string, string> = {
 
 /** Modules with a `commercial.module.<module>` label; others show the raw entitlement. */
 const LABELED_MODULES = new Set([
-  'erp',
+  'financial',
+  'hr',
   'isp',
   'voip',
   'hosting',

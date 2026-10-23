@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
-/** Special permission grants CRUD — uses shared ConfigurableCrudPageBase (app.md ERP generic CRUD). */
+/** Special permission grants CRUD — uses shared ConfigurableCrudPageBase (app.md generic CRUD). */
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -80,7 +80,8 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'User',
       type: 'search-select',
       quickCreate: false,
-      quickCreateExemptReason: 'Users join tenants through invitations; there is no in-place create form.',
+      quickCreateExemptReason:
+        'Users join tenants through invitations; there is no in-place create form.',
       required: true,
       span: 4,
       tab: 'record',
@@ -115,7 +116,8 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'Tenant',
       type: 'search-select',
       quickCreate: false,
-      quickCreateExemptReason: 'Tenants are provisioned through onboarding; there is no in-place create form.',
+      quickCreateExemptReason:
+        'Tenants are provisioned through onboarding; there is no in-place create form.',
       span: 2,
       tab: 'record',
       placeholder: 'Search tenant',

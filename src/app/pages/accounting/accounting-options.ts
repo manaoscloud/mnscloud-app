@@ -22,9 +22,9 @@ export const ACCOUNTING_EVENT_STATUSES = [
 ];
 
 export const COST_CENTER_LOOKUP = {
-  endpoint: 'accounting/cost-centers?status=1',
-  uuidField: 'AccUUID',
-  labelField: 'AccName',
-  descriptionField: 'AccCode',
+  endpoint: 'registry/cost-centers?status=1',
+  uuidField: 'RccUUID',
+  labelField: 'RccName',
+  descriptionField: 'RccCode',
   selectedLabelField: 'CostCenterName',
 };

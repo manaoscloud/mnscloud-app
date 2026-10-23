@@ -894,31 +894,37 @@ export const routes: Routes = [
                   import('./pages/registry/employees/employees').then((m) => m.RegEmployeesPage),
                 title: 'Registry • Employees | mnscloud',
               },
+              {
+                path: 'registry/departments',
+                loadComponent: () =>
+                  import('./pages/registry/departments/departments').then(
+                    (m) => m.RegDepartmentPage,
+                  ),
+                title: 'Registry • Departments | mnscloud',
+              },
+              {
+                path: 'registry/positions',
+                loadComponent: () =>
+                  import('./pages/registry/positions/positions').then((m) => m.RegPositionPage),
+                title: 'Registry • Positions | mnscloud',
+              },
+              {
+                path: 'registry/cost-centers',
+                loadComponent: () =>
+                  import('./pages/registry/cost-centers/cost-centers').then(
+                    (m) => m.RegCostCenterPage,
+                  ),
+                title: 'Registry • Cost centers | mnscloud',
+              },
 
-              // ERP • Human resources
+              // Human resources
               {
-                path: 'erp/human-resources/departments',
+                path: 'hr/time-clock-accounts',
                 loadComponent: () =>
-                  import('./pages/erp/human-resources/departments/departments').then(
-                    (m) => m.ErpHumanResourcesDepartmentsPage,
+                  import('./pages/hr/time-clock-accounts/time-clock-accounts').then(
+                    (m) => m.HrTimeClockAccountsPage,
                   ),
-                title: 'ERP • Human Resources • Departments | mnscloud',
-              },
-              {
-                path: 'erp/human-resources/positions',
-                loadComponent: () =>
-                  import('./pages/erp/human-resources/positions/positions').then(
-                    (m) => m.ErpHumanResourcesPositionsPage,
-                  ),
-                title: 'ERP • Human Resources • Positions | mnscloud',
-              },
-              {
-                path: 'erp/human-resources/time-clock-accounts',
-                loadComponent: () =>
-                  import('./pages/erp/human-resources/time-clock-accounts/time-clock-accounts').then(
-                    (m) => m.ErpHumanResourcesTimeClockAccountsPage,
-                  ),
-                title: 'ERP • Human Resources • Time Clock Accounts | mnscloud',
+                title: 'Human resources • Time clock accounts | mnscloud',
               },
 
               // Financial
@@ -1004,14 +1010,6 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/accounting/mappings').then((m) => m.AccountingMappingsPage),
                 title: 'Accounting • Mappings | mnscloud',
-              },
-              {
-                path: 'accounting/cost-centers',
-                loadComponent: () =>
-                  import('./pages/accounting/cost-centers').then(
-                    (m) => m.AccountingCostCentersPage,
-                  ),
-                title: 'Accounting • Cost centers | mnscloud',
               },
               {
                 path: 'accounting/exports',

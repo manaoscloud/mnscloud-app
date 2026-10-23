@@ -3,18 +3,19 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
-} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 const config = defineCrud({
-  endpoint: 'erp/human-resources/positions',
-  uuidField: 'PositionUUID',
-  pageTitle: 'Positions',
-  pageDescription: 'Manage human resources job positions.',
+  endpoint: 'registry/departments',
+  uuidField: 'DepartmentUUID',
+  pageTitle: 'Departments',
+  pageDescription:
+    'Manage the departments of your organization, shared by employees and the other modules.',
   bulkDelete: true,
   initialValues: { status: 1, name: '', description: '', notes: '' },
   columns: [
-    { id: 'name', label: 'Name', field: 'Name', uuidField: 'PositionUUID', kind: 'identity' },
+    { id: 'name', label: 'Name', field: 'Name', uuidField: 'DepartmentUUID', kind: 'identity' },
     { id: 'description', label: 'Description', field: 'Description' },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
   ],
@@ -35,13 +36,13 @@ const config = defineCrud({
 });
 
 @Component({
-  selector: 'app-erp-hr-positions',
+  selector: 'app-registry-departments',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpHumanResourcesPositionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class RegDepartmentPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
   }

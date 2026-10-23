@@ -404,10 +404,10 @@ button[type='submit'] {
   border-radius: 12px !important;
 }
 
-/* ERP/dialog actions: keep buttons aligned with field density */
-.erp-page button[mat-stroked-button],
-.erp-page button[mat-flat-button],
-.erp-page button[mat-raised-button],
+/* Page/dialog actions: keep buttons aligned with field density */
+.app-page button[mat-stroked-button],
+.app-page button[mat-flat-button],
+.app-page button[mat-raised-button],
 .cdk-overlay-pane .mat-mdc-dialog-actions button[mat-stroked-button],
 .cdk-overlay-pane .mat-mdc-dialog-actions button[mat-flat-button],
 .cdk-overlay-pane .mat-mdc-dialog-actions button[mat-raised-button] {
@@ -415,19 +415,19 @@ button[type='submit'] {
   min-height: var(--form-control-height) !important;
 }
 
-/* ERP pages: enforce compact field density globally (tables + inline dialogs/forms) */
-.erp-page mat-form-field,
-.erp-page .mat-mdc-form-field {
+/* App pages: enforce compact field density globally (tables + inline dialogs/forms) */
+.app-page mat-form-field,
+.app-page .mat-mdc-form-field {
   margin-bottom: 0 !important;
   --mat-form-field-container-height: var(--form-control-height);
   --mat-form-field-container-vertical-padding: 8px;
 }
 
-.erp-page .mdc-text-field--outlined {
+.app-page .mdc-text-field--outlined {
   --mdc-outlined-text-field-container-height: var(--form-control-height);
 }
 
-.erp-page .mat-mdc-form-field-infix {
+.app-page .mat-mdc-form-field-infix {
   min-height: var(--form-control-height) !important;
   padding-top: 8px !important;
   padding-bottom: 8px !important;
@@ -455,11 +455,11 @@ button[type='submit'] {
    CRUD BASELINE GLOBAL (PAGE + TABLE + DIALOG)
 ========================================================= */
 
-.erp-page {
+.app-page {
   padding: 1.75rem;
 }
 
-.erp-card {
+.app-card {
   padding: 1.5rem 1.75rem;
   background: var(--mat-sys-color-surface-container-high) !important;
   background-color: var(--mat-sys-color-surface-container-high) !important;
@@ -468,8 +468,8 @@ button[type='submit'] {
   box-shadow: none !important;
 }
 
-mat-card.erp-card,
-.mat-mdc-card.erp-card {
+mat-card.app-card,
+.mat-mdc-card.app-card {
   background: var(--mat-sys-color-surface-container-high) !important;
   background-color: var(--mat-sys-color-surface-container-high) !important;
   border: 1px solid var(--mat-sys-color-outline-variant) !important;
@@ -477,7 +477,7 @@ mat-card.erp-card,
   box-shadow: none !important;
 }
 
-.erp-header {
+.app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1266,15 +1266,15 @@ mat-chip.status-pill.is-inactive,
 }
 
 @media (max-width: 900px) {
-  .erp-page {
+  .app-page {
     padding: 1rem;
   }
 
-  .erp-card {
+  .app-card {
     padding: 1rem;
   }
 
-  .erp-header {
+  .app-header {
     flex-direction: column;
     align-items: stretch;
   }

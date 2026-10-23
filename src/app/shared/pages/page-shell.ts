@@ -8,9 +8,9 @@ import { RefreshButtonComponent } from '../refresh-button/refresh-button';
   standalone: true,
   imports: [MatCardModule, TranslocoPipe, RefreshButtonComponent],
   template: `
-    <section class="erp-page content-page" animate.enter="app-fade-in">
-      <mat-card class="erp-card content-shell">
-        <header class="erp-header">
+    <section class="app-page content-page" animate.enter="app-fade-in">
+      <mat-card class="app-card content-shell">
+        <header class="app-header">
           <div>
             <h1>{{ title() | transloco }}</h1>
             @if (description()) {

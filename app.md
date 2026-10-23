@@ -3,7 +3,7 @@
 ## Routing
 
 - Routes are defined in `src/app/app.routes.ts`.
-- ERP routes use `/erp/*` paths.
+- Each tenant module routes under its own prefix (`/registry/*`, `/financial/*`, `/hr/*`, ...).
 
 ## Public API Client Boundary
 
@@ -124,7 +124,7 @@ Atribuições, Acúmulos`.
    lists the actions the check rejects per locale. The dashboard entry is always `Painel` /
    `Dashboard` / `Panel` and comes first (checked).
 9. **Glossary.** One term per concept, translated in each locale: `Painel` (never
-   `Visão geral`), `Lista` (never `Cadastro`/`Registro` as a leaf), `Fornecedores` = ERP
+   `Visão geral`), `Lista` (never `Cadastro`/`Registro` as a leaf), `Fornecedores` = Registry
    suppliers vs `Fabricantes` = ISP equipment vendors, `Assinatura` = the platform billing
    module (its subscriptions are `Adesões`), `Cibersegurança` (never `Cyber Security` in PT).
    English words stay only for product names and established terms listed in
@@ -160,7 +160,7 @@ and metrics monitor; `defineCrud` has no default, so a missing `pageDescription`
   string, never the page title again, never a template with interpolated words (one key per
   variant; only record data such as `#123 · Subject` may be interpolated).
 - `mns-dashboard-page`, `mns-settings-page`, `mns-detail-page`, `mns-page-shell` and
-  `mns-metrics-monitor` require `description`; hand-written `erp-header` blocks need the `<p>`.
+  `mns-metrics-monitor` require `description`; hand-written `app-header` blocks need the `<p>`.
 - `npm run check:page-descriptions` enforces this app-wide in CI (`verify:changed`), without an
   allowlist; the CRUD/dashboard/detail/settings templates and `scripts/create-crud.mjs` start
   with a placeholder that fails the check until it is replaced and translated.
@@ -302,7 +302,7 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   Notification settings reuse the canonical notification rule form with ticket-only scope.
 
 - One Support model, two desks. Tenant desk pages live under `/support/*` (module.support._,
-  a tenant answers its ERP customers). The platform desk reuses the same pages under
+  a tenant answers its own customers). The platform desk reuses the same pages under
   `/support/platform/*` with `data.supportDesk = 'platform'` (platform.support._ permissions, so support
   agents do not need platform master); they call `/system/support/*`. Pages read the desk with
   `supportDesk(route)` from `pages/support/shared/support-desk.ts`; quick-create inherits it.
@@ -539,13 +539,13 @@ Revision-aware bulk APIs can use `bulkDeletePayload(rows)` to include the select
 displayed preconditions alongside `ids`; never fetch newer revisions to silently retry a conflict.
 
 "Template" in this document always means one of the shared page bases below. Copying the global
-CSS hook classes (`.erp-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
+CSS hook classes (`.app-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
 the page must use the shared base named here.
 
 | Scenario                                                                                                                                       | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module, not only ERP) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss`              | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
+| Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss`              | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
 | Read-only summary with indicators and record inventories; Refresh is the only action                                                           | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
 | Singleton configuration with dirty/cancel/save                                                                                                 | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
 | Read-only page for one resource                                                                                                                | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
@@ -727,10 +727,10 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   (`safeReturnUrl`: one leading slash, no scheme/host/backslash/control characters, never `/signin`);
   an explicit logout carries no return path. E-mail links (tickets `?ticket=<uuid>`) rely on this.
 
-## ERP CRUD Baseline (Current)
+## CRUD Baseline (Current)
 
 - Baseline page structure:
-  - `.erp-page` -> `.erp-card` -> `.erp-header` -> `.filter-grid` -> `.table-wrapper` -> `.crud-list-footer` (support + `.mobile-paginator`)
+  - `.app-page` -> `.app-card` -> `.app-header` -> `.filter-grid` -> `.table-wrapper` -> `.crud-list-footer` (support + `.mobile-paginator`)
 - End-to-end frontend refactor completeness:
   - A full page/module refactor is not complete with layout and build only.
   - Update the app translation layer for every new or changed visible literal in the same change:
@@ -845,7 +845,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Dashboard page-local SCSS and inline `styles` are prohibited. Shared dashboard primitives live
     in `src/styles/_dashboard.scss`, loaded once by `src/styles.scss`; existing shared helpers retain
     ownership of their own presentation. No per-module shell/grid/card CSS or raw fixed theme colors.
-  - The shared shell uses `erp-page dashboard-page`, `erp-card dashboard-shell`, `erp-header`, and
+  - The shared shell uses `app-page dashboard-page`, `app-card dashboard-shell`, `app-header`, and
     `header-actions`. KPI content uses `dashboard-grid`, `dashboard-metric`, `dashboard-metric-label`,
     `dashboard-metric-value`, `dashboard-metric-hint`. Use `dashboard-sections` for two-column panels
     and `dashboard-panel` for their surface. Do not nest decorative cards or force empty grid slots.
@@ -969,7 +969,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Sort/filter changes must reset `pageIndex` to `0`.
   - The table header checkbox selects only `visibleRows()` from the current page/filter/sort state.
 - Generic CRUDs (all modules):
-  - CRUD/list resources in every module (including System and ERP) must use the standard shared CRUD component contract in
+  - CRUD/list resources in every module (including System and Registry) must use the standard shared CRUD component contract in
     `src/app/shared/crud/configurable-crud/`.
   - Create/edit must open through the generic `crud-form-dialog` panel class and the shared
     `.crud-dialog` template surface. Do not add resource-specific overlay panel classes or
@@ -992,7 +992,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
 
 ## Bulk Delete Baseline (Current)
 
-- Use bulk delete by default on every ERP-style CRUD list page.
+- Use bulk delete by default on every CRUD list page.
 - Exception: remove bulk delete only when the resource has a documented explicit reason, and record that exception in the page notes/refactor briefing.
 - Table selection:
   - Add a leading `select` column with `mat-checkbox`.
@@ -1442,7 +1442,7 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
 
 - A task requested as `refatoração completa` is only accepted when ALL items below are met.
 - Layout and list:
-  - use `.erp-page`, `.erp-card`, `.erp-header`, `.filter-grid`, `.table-wrapper`, `.mobile-paginator`
+  - use `.app-page`, `.app-card`, `.app-header`, `.filter-grid`, `.table-wrapper`, `.mobile-paginator`
   - list actions must include `Refresh` and `New`
   - filters must explicitly declare `span-1` controls only; `Search` is first, and `Status` is
     present when the resource has status
@@ -1465,7 +1465,7 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
 - Styling and responsiveness:
   - use `span.status-pill.status-chip.state-chip` with Activity Log palette classes (`chip-success`, `chip-running`, `chip-queued`, `chip-failed`, `chip-skipped`) plus `is-active`/`is-inactive`
   - do not use `::ng-deep` for table column alignment; use local classes on `th/td` (for example: `.status-col`, `.actions-col-cell`)
-  - table list styling must follow the ERP baseline: `.erp-card` radius `1rem`, 4-column desktop `.filter-grid`, right-aligned `.filter-actions`, equal-width short action buttons, table header background, cell borders, row hover, and fixed status/actions widths
+  - table list styling must follow the CRUD baseline: `.app-card` radius `1rem`, 4-column desktop `.filter-grid`, right-aligned `.filter-actions`, equal-width short action buttons, table header background, cell borders, row hover, and fixed status/actions widths
   - form grids must follow `4/3/2/1` (`desktop`, `<=1400`, `<=1200`, `<=900`)
   - on `<=900`, span classes collapse to 1 column
 - Validation:
@@ -1496,11 +1496,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `openCrudTemplateDialog`, `SlowConfirmDialogComponent`, visible-row bulk selection, and partial-failure handling
 - A component must not be considered "100% template" until this validator passes and `npm run build` passes.
 - The layout validator is the lightweight enforcement layer for every changed CRUD page. It checks
-  that the root page uses the global hooks (`.erp-page`, `.erp-card`, `.erp-header`,
+  that the root page uses the global hooks (`.app-page`, `.app-card`, `.app-header`,
   `.header-actions`, `.filter-grid`, `.filter-actions`), that `filter-actions` is inside
   `filter-grid`, and that filter buttons use `filter_alt`/`backspace`.
 - The layout validator also blocks component-local SCSS definitions for shared CRUD layout hooks:
-  `.erp-page`, `.erp-card`, `.erp-header`, `.header-actions`, `.filter-grid`, and
+  `.app-page`, `.app-card`, `.app-header`, `.header-actions`, `.filter-grid`, and
   `.filter-actions`. If one of those needs a reusable adjustment, change `src/styles.scss`, not a
   page component.
 - `npm run check:crud:fk -- <path>` (or `-- --all`) enforces `FK Quick-Create Baseline (Current)`
@@ -1596,9 +1596,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Component SCSS should be limited to resource-specific details such as unusual column widths, custom visual widgets, or domain-specific helper classes.
 - Normal CRUD dialogs must rely on `crud-form-dialog` + `.crud-dialog`; do not create `.cdk-overlay-pane.<resource>-form-dialog` or `.<resource>-dialog` selectors for shared dialog behavior.
 - Layout classes styled globally across CRUD pages:
-  - `.erp-page`, `.erp-card`, `.filter-grid`, `.form-grid`, `.table-wrapper`, `.mobile-paginator`
+  - `.app-page`, `.app-card`, `.filter-grid`, `.form-grid`, `.table-wrapper`, `.mobile-paginator`
 - Shared global CRUD classes also include:
-  - `.erp-header`, `.header-actions`, `.filter-actions`, `.table-loading`, `.selection-count`, `.actions-col`, `.actions-col-cell`, `.status-col`, `.status-pill`, `.status-chip`, `.state-chip`, `.crud-dialog`, `.dialog-header`, `.dialog-content`, `.form-tabs`, `.tab-content`, `.form-actions`, `.primary-actions`, `.secondary-actions`, `.save-split-action`, `.span-2`, `.span-3`, `.span-4`
+  - `.app-header`, `.header-actions`, `.filter-actions`, `.table-loading`, `.selection-count`, `.actions-col`, `.actions-col-cell`, `.status-col`, `.status-pill`, `.status-chip`, `.state-chip`, `.crud-dialog`, `.dialog-header`, `.dialog-content`, `.form-tabs`, `.tab-content`, `.form-actions`, `.primary-actions`, `.secondary-actions`, `.save-split-action`, `.span-2`, `.span-3`, `.span-4`
 - Shared global dashboard classes include:
   - `.dashboard-page`, `.dashboard-shell`, `.dashboard-grid`, `.dashboard-metric`,
     `.dashboard-metric-label`, `.dashboard-metric-value`, and `.dashboard-metric-hint`
@@ -1607,7 +1607,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `.header-actions button` and regular `.filter-actions-end button` use this width by default on desktop and mobile. Contextual buttons in `.filter-actions-start` may use their intrinsic width.
   - Longer contextual filter actions, such as `Delete selected`, must override to `width: auto` while keeping the same minimum width.
 - Input density is mandatory and must follow compact baseline in `styles.scss`:
-  - page forms (`.erp-page mat-form-field`) and dialog forms (`.cdk-overlay-pane.<panelClass> .crud-dialog mat-form-field`)
+  - page forms (`.app-page mat-form-field`) and dialog forms (`.cdk-overlay-pane.<panelClass> .crud-dialog mat-form-field`)
   - keep `--mat-form-field-container-height`, `--mdc-outlined-text-field-container-height`, and `.mat-mdc-form-field-infix` aligned with `var(--form-control-height)`
   - avoid per-component overrides that increase field height/padding outside this baseline
 - Status badge visual pattern (tables):
@@ -1676,7 +1676,7 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
     the address tab:
     - row 1: `<Group> Zip`, `<Group> Street`, `<Group> Number`, `<Group> District`
     - row 2: `<Group> Complement`, `<Group> City`, `<Group> State`, `<Group> Country`
-  - ERP address forms must keep the same declared field order at every responsive breakpoint. The
+  - Address forms must keep the same declared field order at every responsive breakpoint. The
     responsive grid may collapse columns, but it must not reorder address fields differently on
     desktop, tablet, or mobile.
 - CEP/Postal code UX baseline (mandatory when address has `Zip`):
@@ -1740,8 +1740,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 
 ## Read-only metrics dashboards
 
-- Read-only monitoring uses the dashboard baseline (`erp-page dashboard-page`,
-  `erp-card dashboard-shell`, `erp-header`, `header-actions`), not a create/edit CRUD.
+- Read-only monitoring uses the dashboard baseline (`app-page dashboard-page`,
+  `app-card dashboard-shell`, `app-header`, `header-actions`), not a create/edit CRUD.
   Do not add New/Save/Delete/bulk actions or artificial Search/Status filters to a
   read-only summary whose API does not support those mutations or filters.
 - Header display modes may offer Cards, List and Compact as icon buttons with
@@ -1802,7 +1802,7 @@ structure propagate to both consumers. Scaffolds in `templates/detail-page` and
   Cancel restores the confirmed baseline. Domain validation and API permissions stay in the page/API.
 - Headings accept translated title/description; raw entity identity is rendered as text.
   Use authorized names in breadcrumbs, preserving UUID routes.
-- Shared styles live in `src/styles/_content-page.scss` and reuse the existing ERP shell,
+- Shared styles live in `src/styles/_content-page.scss` and reuse the existing app shell,
   form controls, theme tokens and grids. Do not use `crud-dialog` to style an inline page.
   Do not redefine shared grids, tabs or action footers in page-local SCSS.
 - The normal page owns vertical scrolling. Wide tables may scroll horizontally inside their
@@ -2052,7 +2052,7 @@ enum filters declare `translateOptions: true`. Form drafts and filter search sta
 
 CRM lives under `crm/*` with its own `module.crm.*` navigation grant. Its accounts,
 contacts, catalogs, leads, opportunities, activities, proposals and handoffs use
-`ConfigurableCrudPageBase`; no ERP record is required. Industry and assignee
+`ConfigurableCrudPageBase`; no other module is required. Industry and assignee
 filters query the backend before pagination. All FK forms use canonical registry
 quick-create; assignees intentionally use existing tenant memberships only.
 
@@ -2068,7 +2068,7 @@ Master-aware resources use the guarded route's explicit `scope: 'master'` data t
 select system endpoints and form configuration. Missing tenant selection does not imply
 master scope. The API remains authoritative for effective permissions and FK ownership.
 Reuse the canonical configurable CRUD and propagate route scope to FK quick-create;
-never mount an unrelated tenant module or create a fake ERP customer to satisfy a field.
+never mount an unrelated tenant module or create a fake Registry customer to satisfy a field.
 
 DNS master registers/zones omit the customer form, filter and column. Tenant forms retain
 the required customer. `pages/hosting/dns/dns-scope.ts` composes the shared configuration

@@ -49,9 +49,9 @@
     <ng-container [ngTemplateOutlet]="crudTableBody" />
   </div>
 } @else {
-  <section class="erp-page" [hidden]="config.formOnly || quickCreateMode">
-    <mat-card class="erp-card">
-      <div class="erp-header">
+  <section class="app-page" [hidden]="config.formOnly || quickCreateMode">
+    <mat-card class="app-card">
+      <div class="app-header">
         <div>
           <h1>{{ config.pageTitle | transloco }}</h1>
           <p>{{ config.pageDescription | transloco }}</p>
@@ -338,7 +338,7 @@
           matSort
           [dataSource]="visibleRows()"
           (matSortChange)="setSort($event)"
-          class="erp-table"
+          class="app-table"
           [class.crud-density-compact]="compactDensity()"
         >
           @if (bulkDeleteEnabled()) {

@@ -13,7 +13,7 @@ test('legacy Pay-style CRUD is detected without inheriting the generic base', ()
   assert.equal(
     classifyCrud(
       '@Component({}) export class FeePlans {}',
-      '<section class="erp-page"><table mat-table>',
+      '<section class="app-page"><table mat-table>',
     ),
     'legacy',
   );
@@ -47,7 +47,7 @@ test('explicit validation rejects empty, legacy and copied templates', () => {
 });
 
 test('documented crud-template-exempt marker opts a non-CRUD table page out', () => {
-  const html = '<section class="erp-page"><table mat-table>';
+  const html = '<section class="app-page"><table mat-table>';
   assert.equal(
     classifyCrud(
       '// crud-template-exempt: metrics fleet explorer keeps its display modes\n@Component({}) class A {}',

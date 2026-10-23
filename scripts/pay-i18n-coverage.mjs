@@ -34,7 +34,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   for (const key of [
     'System',
     'Pay',
-    'Erp',
     'Financial',
     'Boletos and Pix',
     'Payment Gateway',

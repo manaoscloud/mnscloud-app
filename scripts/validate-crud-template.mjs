@@ -29,9 +29,9 @@ function has(content, pattern) {
 }
 
 const htmlRules = [
-  ['page root', '<section class="erp-page'],
-  ['card root', '<mat-card class="erp-card'],
-  ['header', 'erp-header'],
+  ['page root', '<section class="app-page'],
+  ['card root', '<mat-card class="app-card'],
+  ['header', 'app-header'],
   ['header actions', 'header-actions'],
   ['refresh action', /<app-refresh-button\b|<mat-icon>\s*refresh\s*<\/mat-icon>/],
   ['new action', /<mat-icon>\s*add\s*<\/mat-icon>/],
@@ -167,8 +167,8 @@ function isCrudComponentDirectory(directory) {
 for (const file of htmlFiles) {
   const content = readFileSync(file, 'utf8');
   // Public pages can share a feature folder with a CRUD page without being CRUDs themselves.
-  if (!content.includes('class="erp-page')) continue;
-  // Feature folders may also contain dashboards or other erp-page components beside CRUD pages.
+  if (!content.includes('class="app-page')) continue;
+  // Feature folders may also contain dashboards or other app-page components beside CRUD pages.
   if (!isCrudComponentDirectory(dirname(file))) continue;
   const requiredHtmlRules = requiresFkSearchSelect ? [...htmlRules, ...fkHtmlRules] : htmlRules;
   const missing = requiredHtmlRules

@@ -347,24 +347,25 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.FinancialPaymentMethodPage,
       ),
   },
-  ErpHrDepartmentEhdUUID: {
+  RegCostCenterRccUUID: {
+    label: 'Create cost center',
+    loadComponent: () =>
+      import('../../../pages/registry/cost-centers/cost-centers').then((m) => m.RegCostCenterPage),
+  },
+  RegDepartmentRdeUUID: {
     label: 'Create department',
     loadComponent: () =>
-      import('../../../pages/erp/human-resources/departments/departments').then(
-        (m) => m.ErpHumanResourcesDepartmentsPage,
-      ),
+      import('../../../pages/registry/departments/departments').then((m) => m.RegDepartmentPage),
   },
   RegEmployeeRemUUID: {
     label: 'Create employee',
     loadComponent: () =>
       import('../../../pages/registry/employees/employees').then((m) => m.RegEmployeesPage),
   },
-  ErpHrPositionEhpUUID: {
+  RegPositionRpsUUID: {
     label: 'Create position',
     loadComponent: () =>
-      import('../../../pages/erp/human-resources/positions/positions').then(
-        (m) => m.ErpHumanResourcesPositionsPage,
-      ),
+      import('../../../pages/registry/positions/positions').then((m) => m.RegPositionPage),
   },
   RegSupplierRsuUUID: {
     label: 'Create supplier',

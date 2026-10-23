@@ -390,7 +390,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'code',
       label: 'Code',
       required: true,
-      help: 'Permanent unique identifier of the package, for example package.erp.starter. The API, audit logs and integrations use it; avoid changing it after the package is in use.',
+      help: 'Permanent unique identifier of the package, for example package.financial.starter. The API, audit logs and integrations use it; avoid changing it after the package is in use.',
       span: 1,
     },
     {

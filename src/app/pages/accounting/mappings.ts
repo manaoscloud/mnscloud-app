@@ -98,12 +98,10 @@ const config = defineCrud({
     },
     {
       key: 'costCenterUUID',
-      source: 'AccCostCenterAccUUID',
+      source: 'RegCostCenterRccUUID',
       label: 'Cost center',
       type: 'search-select',
       remoteLookup: COST_CENTER_LOOKUP,
-      quickCreate: false,
-      quickCreateExemptReason: 'Cost centers are kept in Accounting › Cost centers.',
       span: 2,
     },
     { key: 'revision', source: 'AamRevision', label: 'Revision', hidden: true },

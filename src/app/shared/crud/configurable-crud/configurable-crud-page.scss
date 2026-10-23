@@ -213,7 +213,7 @@
  * scrolled content does not show through, and `isolation` keeps Material's inline sticky z-index
  * below the `.table-loading` overlay.
  */
-.erp-table {
+.app-table {
   isolation: isolate;
 
   .mat-mdc-header-cell.actions-col-header {
@@ -475,7 +475,7 @@
  * text in a tooltip (`mnsOverflowTooltip`); identity UUIDs show a short prefix that copies the full
  * value. Copy buttons appear on row hover/focus and stay visible on touch screens.
  */
-.erp-table {
+.app-table {
   .mat-mdc-header-cell,
   .mat-mdc-cell {
     padding-block: 0.4rem;
@@ -517,13 +517,13 @@
 }
 
 @media (hover: none) {
-  .erp-table .crud-copy-button {
+  .app-table .crud-copy-button {
     opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .erp-table .crud-copy-button {
+  .app-table .crud-copy-button {
     transition: none;
   }
 }
@@ -598,7 +598,7 @@
   letter-spacing: 0.04em;
 }
 
-.erp-table.crud-density-compact {
+.app-table.crud-density-compact {
   --mat-table-row-item-container-height: 40px;
   --mat-table-header-container-height: 44px;
 

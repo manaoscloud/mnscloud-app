@@ -14,7 +14,7 @@ export function classifyCrud(ts, html = '') {
   if (CRUD_EXEMPT_MARKER.test(ts)) return null;
   if (
     /MatTableDataSource/.test(ts) ||
-    (/mat-table/.test(html + ts) && /erp-page|startEdit|openEdit|FormDialog/.test(html + ts))
+    (/mat-table/.test(html + ts) && /app-page|startEdit|openEdit|FormDialog/.test(html + ts))
   )
     return 'legacy';
   return null;

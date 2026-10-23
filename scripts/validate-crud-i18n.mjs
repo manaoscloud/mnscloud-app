@@ -122,7 +122,7 @@ function validateHtml(file, tsFiles) {
 
   // Public invitation/account screens may live next to a CRUD page. This validator is scoped to
   // CRUD templates and their configured visible labels, not to standalone public flows.
-  if (!content.includes('class="erp-page')) return errors;
+  if (!content.includes('class="app-page')) return errors;
   if (!isCrudComponentDirectory(dirname(file), tsFiles)) return errors;
 
   for (const match of content.matchAll(/<([a-zA-Z][\w:-]*)\b[^>]*>([^<>{}][^<>]*?)<\/\1>/g)) {
