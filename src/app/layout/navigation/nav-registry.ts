@@ -2377,6 +2377,39 @@ export const NAV_ITEMS: NavItem[] = [
           },
         ],
       },
+      // Data lookups (CEP, CNPJ, IE, CPF) of every form (platform.lookup.manage, no tenant needed).
+      {
+        id: 'settings/lookups',
+        label: 'nav.settings.lookups',
+        icon: 'manage_search',
+        scope: 'public',
+        children: [
+          {
+            id: 'settings/lookups/types',
+            label: 'nav.settings.lookups.types',
+            icon: 'rule',
+            route: '/settings/lookups/types',
+            scope: 'public',
+            permissions: ['platform.lookup.manage'],
+          },
+          {
+            id: 'settings/lookups/providers',
+            label: 'nav.settings.lookups.providers',
+            icon: 'hub',
+            route: '/settings/lookups/providers',
+            scope: 'public',
+            permissions: ['platform.lookup.manage'],
+          },
+          {
+            id: 'settings/lookups/usage',
+            label: 'nav.settings.lookups.usage',
+            icon: 'query_stats',
+            route: '/settings/lookups/usage',
+            scope: 'public',
+            permissions: ['platform.lookup.manage'],
+          },
+        ],
+      },
       // Tutorial videos shown beside Report problem (platform.help.videos.manage, no tenant needed).
       {
         id: 'settings/help-videos',

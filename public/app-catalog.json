@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "07ceeb35729e",
+  "version": "ac95b952f8d0",
   "language": "pt-BR",
   "entries": [
     {
@@ -4777,6 +4777,80 @@
           "help": "Cole o link do vídeo (watch, youtu.be, shorts ou embed). Vídeos não listados funcionam."
         }
       ]
+    },
+    {
+      "route": "/settings/lookups/providers",
+      "menuPath": "Configurações › Consultas › Provedores",
+      "scope": "platform",
+      "title": "Provedores de consulta",
+      "description": "Serviços que respondem às buscas de CEP, CNPJ, inscrição estadual e CPF de todos os formulários. Só um provedor fica ativo por tipo de consulta.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Provedor",
+          "help": "Serviço chamado pela plataforma. Não pode ser alterado depois: crie outro provedor."
+        },
+        {
+          "label": "Tempo limite (ms)",
+          "help": "Uma resposta mais lenta conta como falha e o provedor reserva é usado (500 a 30000 ms)."
+        }
+      ]
+    },
+    {
+      "route": "/settings/lookups/types",
+      "menuPath": "Configurações › Consultas › Tipos",
+      "scope": "platform",
+      "title": "Tipos de consulta",
+      "description": "O provedor ativo de cada consulta (CEP, CNPJ, inscrição estadual, CPF), seu reserva, disponibilidade, cache e limites.",
+      "fields": [
+        {
+          "label": "Tipo de consulta",
+          "help": "As consultas da plataforma são fixas; cada uma tem seu formato de resposta."
+        },
+        {
+          "label": "Disponibilidade",
+          "help": "Habilitado exige um provedor ativo. Bloqueado mostra o botão como disponível só em produção (use no DEV para consultas pagas)."
+        },
+        {
+          "label": "Provedor ativo",
+          "help": "Provedores que respondem a esta consulta. Cadastre-os em Provedores de consulta."
+        },
+        {
+          "label": "Provedor reserva",
+          "help": "Opcional. Usado apenas quando o provedor ativo falha ou não responde a tempo."
+        },
+        {
+          "label": "Cache das respostas encontradas (minutos)",
+          "help": "Consultas repetidas dentro desse tempo são respondidas sem chamar o provedor. 0 desativa o cache."
+        },
+        {
+          "label": "Cache de não encontrado (minutos)",
+          "help": "Por quanto tempo uma resposta de não encontrado é reaproveitada. 0 desativa."
+        },
+        {
+          "label": "Limite por tenant (por minuto)",
+          "help": "Consultas por minuto de um tenant (1 a 10000). As fontes gratuitas limitam por IP para todos os tenants juntos."
+        },
+        {
+          "label": "Limite por usuário (por minuto)",
+          "help": "Consultas por minuto de um usuário (1 a 10000). Bloqueia varredura automatizada."
+        }
+      ]
+    },
+    {
+      "route": "/settings/lookups/usage",
+      "menuPath": "Configurações › Consultas › Uso",
+      "scope": "platform",
+      "title": "Uso das consultas",
+      "description": "Todas as consultas de CEP, CNPJ, inscrição estadual e CPF: tenant, usuário, provedor, origem e resultado. O valor consultado nunca é armazenado.",
+      "fields": []
     },
     {
       "route": "/settings/parameters",
