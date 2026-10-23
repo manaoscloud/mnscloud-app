@@ -6,7 +6,7 @@ field-hint renderers in the generic CRUD template, fed by the following consumer
 | Consumer | Static help | Conditional help |
 | --- | ---: | ---: |
 | `src/app/pages/system/pay/bank-partners/bank-partners-crud.ts` | 5 | 2 |
-| `src/app/pages/erp/financial/payment/gateway/payment-gateway-crud.ts` | 2 | 1 |
+| `src/app/pages/financial/gateway-accounts/gateway-accounts-crud.ts` | 2 | 1 |
 | `src/app/pages/hosting/vps/instances/instances.ts` | 2 | 0 |
 | `src/app/pages/hosting/vps/networks/networks.ts` | 1 | 2 |
 | `src/app/pages/hosting/vps/firewalls/firewalls.ts` | 2 | 0 |

@@ -16,11 +16,12 @@ const config = defineCrud({
   pageTitle: 'Items',
   pageDescription: 'Items used to test required field feedback.',
   statusFilter: false,
-  initialValues: { name: '', code: '', host: '' },
+  initialValues: { name: '', code: '', host: '', amount: null },
   columns: [{ id: 'name', label: 'Name', field: 'name', kind: 'identity' }],
   fields: [
     { key: 'name', label: 'Name', required: true, span: 1 },
     { key: 'code', label: 'Code', span: 1 },
+    { key: 'amount', label: 'Amount', type: 'number', positive: true, span: 1 },
     { key: 'host', label: 'Host', required: true, tab: 'network', span: 1 },
   ],
 });
@@ -119,6 +120,19 @@ describe('Configurable CRUD required field feedback', () => {
     expect(snack.warning).toHaveBeenCalledWith('form.validation.missingOne', 5000, {
       field: 'Host',
     });
+  });
+
+  it('rejects a filled positive field that is not greater than zero', async () => {
+    const { page } = await openCreate();
+    page.setFieldValue('name', 'Alpha');
+    page.setFieldValue('host', 'alpha.example.com');
+    page.setFieldValue('amount', 0);
+
+    await page.saveItem();
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect([...page.fieldErrors().keys()]).toEqual(['amount']);
+    expect(page.fieldErrorText({ key: 'amount' })).toBe('form.validation.positive');
   });
 
   it('clears a field error as soon as the field is filled', async () => {

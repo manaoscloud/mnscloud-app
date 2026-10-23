@@ -299,6 +299,8 @@ export type ConfigurableCrudField = {
   postalLookup?: ConfigurableCrudPostalCodeLookup;
   rows?: number;
   required?: boolean;
+  /** Numeric value that must be greater than zero when filled (amounts, quantities). */
+  positive?: boolean;
   hidden?: boolean;
   placeholder?: string;
   autocomplete?: string;
@@ -3851,6 +3853,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       }
       if (this.isFieldRequired(field) && isBlankFieldValue(value)) {
         errors.set(field.key, fieldError('required'));
+        continue;
+      }
+      if (field.positive && !isBlankFieldValue(value) && !(Number(value) > 0)) {
+        errors.set(field.key, fieldError('positive'));
       }
     }
     if (!errors.size) return true;

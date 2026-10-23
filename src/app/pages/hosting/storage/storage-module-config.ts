@@ -7,7 +7,7 @@ export const STORAGE_MODULE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'voip', label: 'VoIP' },
   { value: 'voip-pabx', label: 'PABX' },
   { value: 'sales', label: 'Sales' },
-  { value: 'erp-financial', label: 'Financial' },
+  { value: 'financial', label: 'Financial' },
   { value: 'crm', label: 'CRM' },
   { value: 'clinic', label: 'Clinic' },
   { value: 'payment-gateways', label: 'Payment gateways' },

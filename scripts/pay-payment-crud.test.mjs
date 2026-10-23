@@ -23,7 +23,7 @@ const { bankPartnersConfig } = await load(
   'src/app/pages/system/pay/bank-partners/bank-partners-crud.ts',
 );
 const { paymentGatewayConfig } = await load(
-  'src/app/pages/erp/financial/payment/gateway/payment-gateway-crud.ts',
+  'src/app/pages/financial/gateway-accounts/gateway-accounts-crud.ts',
 );
 
 test('Pay bank partner (Inter) payload is typed and never carries free-form config', () => {
@@ -118,7 +118,7 @@ test('Pay bank partner edit keeps stored credentials unless all are replaced', (
 
 test('Tenant gateway (own Inter account) is typed, independent from Pay and has no JSON', () => {
   const config = paymentGatewayConfig;
-  assert.equal(config.endpoint, 'erp/financial/payment/gateways');
+  assert.equal(config.endpoint, 'financial/gateway-accounts');
   const values = {
     ...config.initialValues,
     name: ' Inter proprio ',
@@ -145,9 +145,19 @@ test('Tenant gateway (own Inter account) is typed, independent from Pay and has 
   assert.equal(created.accountNumber, '123456');
   assert.equal(created.environment, 'sandbox');
   const fieldKeys = config.fields.map((field) => field.key);
-  for (const removed of ['advanced', 'configJson', 'credentialsJson', 'scope', 'apiBaseUrl', 'webhookCaPem'])
+  for (const removed of [
+    'advanced',
+    'configJson',
+    'credentialsJson',
+    'scope',
+    'apiBaseUrl',
+    'webhookCaPem',
+  ])
     assert.ok(!fieldKeys.includes(removed), removed);
-  const edited = config.payload({ ...values, clientId: '', clientSecret: '', certPem: '', keyPem: '' }, true);
+  const edited = config.payload(
+    { ...values, clientId: '', clientSecret: '', certPem: '', keyPem: '' },
+    true,
+  );
   assert.equal(edited.credentials, undefined);
   assert.equal(edited.provider, undefined);
   assert.throws(() => config.payload({ ...values, keyPem: '' }, true), /together/);

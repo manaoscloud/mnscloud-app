@@ -252,87 +252,86 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  // ✅ ERP (tenant; plataforma usa rotas globais quando disponível)
+  // Financial: titles, settlements, payment charges, gateways and methods of the tenant. Its
+  // entitlement is the ERP module until the HR split retires ERP.
   {
-    id: 'erp',
-    label: 'nav.erp',
-    icon: 'apps',
+    id: 'financial',
+    label: 'nav.financial',
+    icon: 'account_balance',
     entitlementCode: 'module.erp.*',
     requiresEnvironment: true,
     children: [
       {
-        id: 'erp/financial',
-        label: 'nav.erp.financial',
-        icon: 'account_balance',
-        children: [
-          {
-            id: 'erp/financial/account/payables',
-            label: 'nav.erp.financial.account.payables',
-            icon: 'payments',
-            route: '/erp/financial/account/payables',
-          },
-          {
-            id: 'erp/financial/account/receivables',
-            label: 'nav.erp.financial.account.receivables',
-            icon: 'receipt_long',
-            route: '/erp/financial/account/receivables',
-          },
-          {
-            id: 'erp/financial/payment-charge',
-            label: 'nav.erp.financial.payment-charge',
-            icon: 'qr_code_2',
-            route: '/erp/financial/payment-charge',
-          },
-          {
-            id: 'erp/financial/payment',
-            label: 'nav.erp.financial.payment',
-            icon: 'payments',
-            children: [
-              {
-                id: 'erp/financial/payment-gateway',
-                label: 'nav.erp.financial.payment-gateway',
-                icon: 'credit_card',
-                route: '/erp/financial/payment-gateway',
-              },
-              {
-                id: 'erp/financial/payment-method',
-                label: 'nav.erp.financial.payment-method',
-                icon: 'tune',
-                route: '/erp/financial/payment-method',
-              },
-            ],
-          },
-        ],
+        id: 'financial/payables',
+        label: 'nav.financial.payables',
+        icon: 'payments',
+        route: '/financial/payables',
       },
       {
-        id: 'erp/human-resources',
-        label: 'nav.erp.human-resources',
-        icon: 'groups',
+        id: 'financial/receivables',
+        label: 'nav.financial.receivables',
+        icon: 'receipt_long',
+        route: '/financial/receivables',
+      },
+      {
+        id: 'financial/payment-charges',
+        label: 'nav.financial.payment-charges',
+        icon: 'qr_code_2',
+        route: '/financial/payment-charges',
+      },
+      {
+        id: 'financial/payment',
+        label: 'nav.financial.payment',
+        icon: 'payments',
         children: [
           {
-            id: 'erp/human-resources/time-clock-accounts',
-            label: 'nav.erp.human-resources.time-clock-accounts',
-            icon: 'schedule',
-            route: '/erp/human-resources/time-clock-accounts',
+            id: 'financial/gateway-accounts',
+            label: 'nav.financial.gateway-accounts',
+            icon: 'credit_card',
+            route: '/financial/gateway-accounts',
           },
           {
-            id: 'erp/human-resources/departments',
-            label: 'nav.erp.human-resources.departments',
-            icon: 'account_tree',
-            route: '/erp/human-resources/departments',
-          },
-          {
-            id: 'erp/human-resources/positions',
-            label: 'nav.erp.human-resources.positions',
-            icon: 'work',
-            route: '/erp/human-resources/positions',
+            id: 'financial/payment-methods',
+            label: 'nav.financial.payment-methods',
+            icon: 'tune',
+            route: '/financial/payment-methods',
           },
         ],
       },
     ],
   },
 
-  // CRM is an independent tenant module, immediately after ERP.
+  // Human resources (time clock, departments, positions); employees live in Registry. Its
+  // entitlement is the ERP module until the HR split retires ERP.
+  {
+    id: 'erp/human-resources',
+    label: 'nav.erp.human-resources',
+    icon: 'groups',
+    entitlementCode: 'module.erp.*',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'erp/human-resources/time-clock-accounts',
+        label: 'nav.erp.human-resources.time-clock-accounts',
+        icon: 'schedule',
+        route: '/erp/human-resources/time-clock-accounts',
+      },
+      {
+        id: 'erp/human-resources/departments',
+        label: 'nav.erp.human-resources.departments',
+        icon: 'account_tree',
+        route: '/erp/human-resources/departments',
+      },
+      {
+        id: 'erp/human-resources/positions',
+        label: 'nav.erp.human-resources.positions',
+        icon: 'work',
+        route: '/erp/human-resources/positions',
+      },
+    ],
+  },
+
+  // CRM is an independent tenant module, immediately after human resources.
   {
     id: 'conversations',
     label: 'nav.conversations',
