@@ -114,6 +114,22 @@ const config = defineCrud({
       optional: true,
     },
     {
+      // Price per query of the master product module.lookup.<type>; empty = free lookup.
+      id: 'price',
+      field: 'UnitPrice',
+      label: 'Price per query',
+      kind: 'currency',
+      currencyField: 'Currency',
+      maximumFractionDigits: 4,
+    },
+    {
+      id: 'included',
+      field: 'IncludedQuantity',
+      label: 'Monthly allowance',
+      kind: 'number',
+      optional: true,
+    },
+    {
       id: 'limit',
       field: 'TenantLimitPerMinute',
       label: 'Limit per tenant (min)',

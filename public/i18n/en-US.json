@@ -9355,5 +9355,13 @@
   "Polygon": "Polygon",
   "Assets in operation": "Assets in operation",
   "Create a project, its layers and asset types to start mapping assets.": "Create a project, its layers and asset types to start mapping assets.",
-  "Mapbox public access token used by InfraGIS map rendering.": "Mapbox public access token used by InfraGIS map rendering."
+  "Mapbox public access token used by InfraGIS map rendering.": "Mapbox public access token used by InfraGIS map rendering.",
+  "Price per query": "Price per query",
+  "Monthly allowance": "Monthly allowance",
+  "Platform (not billed)": "Platform (not billed)",
+  "Repeated (not billed)": "Repeated (not billed)",
+  "Charged": "Charged",
+  "Not paid": "Not paid",
+  "Insufficient prepaid credit for this lookup. Add credit to your wallet.": "Insufficient prepaid credit for this lookup. Add credit to your wallet.",
+  "This lookup has no price yet.": "This lookup has no price yet."
 }

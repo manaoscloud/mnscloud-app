@@ -22,6 +22,16 @@ const SOURCE_OPTIONS = [
   { value: 'none', label: 'Not called' },
 ];
 
+/** Billing of a found lookup (master product module.lookup.<type>). */
+const BILLING_OPTIONS = [
+  { value: 'free', label: 'Free' },
+  { value: 'master', label: 'Platform (not billed)' },
+  { value: 'repeat', label: 'Repeated (not billed)' },
+  { value: 'included', label: 'Monthly allowance' },
+  { value: 'charged', label: 'Charged' },
+  { value: 'failed', label: 'Not paid' },
+];
+
 /** Read-only lookup log (the CEP/CNPJ/CPF itself is never stored). */
 const config = defineCrud({
   endpoint: 'system/lookups/usage',
@@ -71,6 +81,23 @@ const config = defineCrud({
         ),
     },
     { id: 'latency', field: 'LatencyMs', label: 'Latency (ms)', kind: 'number', optional: true },
+    {
+      id: 'billing',
+      field: 'BillingStatus',
+      label: 'Billing',
+      value: (row, translate) =>
+        translate(
+          BILLING_OPTIONS.find((option) => option.value === row['BillingStatus'])?.label ?? '-',
+        ),
+    },
+    {
+      id: 'amount',
+      field: 'BilledAmount',
+      label: 'Amount',
+      kind: 'currency',
+      currencyField: 'Currency',
+      maximumFractionDigits: 4,
+    },
     {
       id: 'outcome',
       field: 'Outcome',

@@ -9356,5 +9356,13 @@
   "Polygon": "Polígono",
   "Assets in operation": "Ativos em operação",
   "Create a project, its layers and asset types to start mapping assets.": "Crie um projeto, suas camadas e tipos de ativo para começar a mapear os ativos.",
-  "Mapbox public access token used by InfraGIS map rendering.": "Token público de acesso do Mapbox usado na renderização dos mapas do InfraGIS."
+  "Mapbox public access token used by InfraGIS map rendering.": "Token público de acesso do Mapbox usado na renderização dos mapas do InfraGIS.",
+  "Price per query": "Preço por consulta",
+  "Monthly allowance": "Franquia mensal",
+  "Platform (not billed)": "Plataforma (não cobrado)",
+  "Repeated (not billed)": "Repetida (não cobrada)",
+  "Charged": "Cobrada",
+  "Not paid": "Não paga",
+  "Insufficient prepaid credit for this lookup. Add credit to your wallet.": "Crédito pré-pago insuficiente para esta consulta. Adicione crédito à carteira.",
+  "This lookup has no price yet.": "Esta consulta ainda não tem preço."
 }
