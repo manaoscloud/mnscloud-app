@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "216461bd55ac",
+  "version": "b3b1ea18c878",
   "language": "pt-BR",
   "entries": [
     {
@@ -9408,6 +9408,56 @@
       ]
     },
     {
+      "route": "/voip/pabx/agent-pause-reasons",
+      "menuPath": "VoIP › PABX › Pausas",
+      "scope": "tenant",
+      "title": "Motivos de pausa",
+      "description": "Defina os motivos e a classificação produtiva das pausas do contact center.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Máximo de minutos",
+          "help": ""
+        },
+        {
+          "label": "Pausa produtiva",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/pabx/agent-profiles",
+      "menuPath": "VoIP › PABX › Perfis",
+      "scope": "tenant",
+      "title": "Perfis de agente",
+      "description": "Agrupe filas e prioridades de roteamento para agentes de atendimento.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/voip/pabx/agent-state-events",
+      "menuPath": "VoIP › PABX › Estados",
+      "scope": "tenant",
+      "title": "Histórico de estados dos agentes",
+      "description": "Consulte a disponibilidade, as pausas e as mudanças de estado dos agentes.",
+      "fields": []
+    },
+    {
       "route": "/voip/pabx/blacklist/list",
       "menuPath": "VoIP › PABX › Bloqueio › Listas",
       "scope": "tenant",
@@ -9896,6 +9946,18 @@
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Usuário de telefone",
+          "help": ""
+        },
+        {
+          "label": "Perfil de agente",
+          "help": ""
+        },
+        {
+          "label": "Ramal flexível",
           "help": ""
         },
         {

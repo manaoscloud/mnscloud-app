@@ -2169,3 +2169,11 @@ server-side validation. Existing fields retain their configured/default length.
   desktop/mobile, language and light/dark controls; it never submits credentials or saves a theme.
 - Images in the panel use optional HTTPS URLs; logo/favicon continue using the existing upload
   contract. Public presentation never changes session policy, authentication methods or permissions.
+
+### Contact-center routing profiles and contact notes
+
+Routing profiles (`VoipPabxAgentProfile` / `VoipPabxAgentProfileQueue`) group queues, penalties and ACW seconds. A linked agent uses the profile's effective memberships; direct memberships are ignored while a profile is selected. The App provides the canonical profile CRUD and queue collection with FK quick-create. Queue selection is filtered by tenant and customer ownership in the database. Profile edits affect all linked agents on reconciliation.
+
+Runtime queue snapshots carry only aggregate waiting count/longest wait, never caller identity. Counters become unavailable after 30 seconds without observation. SSE sends authoritative snapshots as well as durable transition IDs; PhoneWeb does not poll queue state. `VoipPabxAgentContact` records a runtime-authenticated agent participation, with optional disposition and spelling-preserving notes. Notes are limited to 4000 characters and revision-checked against the originating phone session.
+
+Agent creation/enabling checks the active entitlement and passes its quota to the tenant-serialized configure routine, which counts enabled phone-linked agents. Standalone resource contracts without a package limit retain the billing system's unlimited quantity semantics. No prices or paid subscriptions are created by the schema seed. Revoked/expired sessions, disabled identities, lost line assignments and released/expired claims leave the routing set; hot-desk stations are cleared.
