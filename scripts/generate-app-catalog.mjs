@@ -282,6 +282,28 @@ function configFields(node, ctx) {
   return fields ? { node: fields, ctx: built.ctx } : null;
 }
 
+/** Title, description and field help of a hand-written page template (not the shared CRUD one). */
+function readTemplateHelp(path, source, page, seen) {
+  const template = /templateUrl:\s*'([^']+)'/.exec(source)?.[1];
+  if (template && !template.endsWith(SHARED_CRUD_TEMPLATE)) {
+    const html = readFileSync(resolve(path, '..', template), 'utf8').replace(/\s+/g, ' ');
+    const quoted = (attr) =>
+      new RegExp(`\\[${attr}\\]="\\s*'((?:[^'\\\\]|\\\\.)*)'\\s*\\|\\s*transloco\\s*"`).exec(
+        html,
+      )?.[1];
+    page.title ||= quoted('title') ?? '';
+    page.description ||= quoted('description') ?? /\sdescription="([^"]+)"/.exec(html)?.[1] ?? '';
+    const helpRe =
+      /\[label\]="\s*'((?:[^'\\]|\\.)*)'\s*\|\s*transloco\s*"[^>]*?\[(?:text|help)\]="\s*\(?\s*'((?:[^'\\]|\\.)*)'/g;
+    for (const match of html.matchAll(helpRe)) {
+      if (!seen.has(match[1]) && page.fields.length < MAX_FIELDS) {
+        seen.add(match[1]);
+        page.fields.push({ label: match[1], help: match[2] });
+      }
+    }
+  }
+}
+
 /** Key of the record entry that holds a page configuration (`projects: defineCrud({...})`). */
 function configKey(node) {
   for (let current = node.parent; current; current = current.parent) {
@@ -334,24 +356,7 @@ export function readPage(root, file, platform, resource = '') {
       }
     }
   }
-  const template = /templateUrl:\s*'([^']+)'/.exec(source)?.[1];
-  if (template && !template.endsWith(SHARED_CRUD_TEMPLATE)) {
-    const html = readFileSync(resolve(path, '..', template), 'utf8').replace(/\s+/g, ' ');
-    const quoted = (attr) =>
-      new RegExp(`\\[${attr}\\]="\\s*'((?:[^'\\\\]|\\\\.)*)'\\s*\\|\\s*transloco\\s*"`).exec(
-        html,
-      )?.[1];
-    page.title ||= quoted('title') ?? '';
-    page.description ||= quoted('description') ?? /\sdescription="([^"]+)"/.exec(html)?.[1] ?? '';
-    const helpRe =
-      /\[label\]="\s*'((?:[^'\\]|\\.)*)'\s*\|\s*transloco\s*"[^>]*?\[(?:text|help)\]="\s*\(?\s*'((?:[^'\\]|\\.)*)'/g;
-    for (const match of html.matchAll(helpRe)) {
-      if (!seen.has(match[1]) && page.fields.length < MAX_FIELDS) {
-        seen.add(match[1]);
-        page.fields.push({ label: match[1], help: match[2] });
-      }
-    }
-  }
+  readTemplateHelp(path, source, page, seen);
   return page;
 }
 
