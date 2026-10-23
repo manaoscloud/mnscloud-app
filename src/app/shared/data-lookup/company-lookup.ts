@@ -19,6 +19,8 @@ export type CompanyLookupSpec = {
   /** Receives the trade name (or the legal name when there is none). */
   nameKey?: string;
   legalNameKey?: string;
+  /** Receives the trade name (nome fantasia) when the form has its own field. */
+  tradeNameKey?: string;
   openingDateKey?: string;
   emailKey?: string;
   phoneKey?: string;
@@ -98,6 +100,7 @@ export function companyLookupValues(
   put(spec.documentKey, item.document);
   put(spec.nameKey, item.tradeName || item.legalName);
   put(spec.legalNameKey, item.legalName);
+  put(spec.tradeNameKey, item.tradeName);
   put(spec.openingDateKey, item.openingDate);
   put(spec.emailKey, item.email);
   put(spec.phoneKey, item.phones?.[0]);
