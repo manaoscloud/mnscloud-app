@@ -52,6 +52,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   bulkDelete: false,
   serverSidePagination: true,
   ...BILLING_STATUS_OPTIONS,
+  tabLabels: { financial: 'Items' },
   initialValues: {
     code: 'package.',
     name: '',
