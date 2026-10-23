@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a0e8ad0d14ef",
+  "version": "96c103de8826",
   "language": "pt-BR",
   "entries": [
     {
@@ -5734,6 +5734,10 @@
           "help": "Nome comercial do pacote exibido para operadores e tenants."
         },
         {
+          "label": "Produto principal",
+          "help": "Identidade do pacote (por exemplo VoIP, Hosting ou ISP): um item de módulo ativo deste pacote. Pacotes com o mesmo produto principal são planos de uma mesma linha e se substituem quando o tenant troca de plano; pacotes com produtos principais diferentes são contratos separados e todos são cobrados. Na criação, o item inicial de módulo vira o produto principal."
+        },
+        {
           "label": "Público",
           "help": "Publica este pacote no site público/catálogo na internet. Pacotes desmarcados continuam disponíveis para contratação por tenants autenticados no catálogo da plataforma."
         },
@@ -5759,7 +5763,7 @@
         },
         {
           "label": "Produto do primeiro item",
-          "help": "Primeiro produto incluído no pacote, criado junto com ele. Adicione mais itens depois na lista de Itens do pacote. Um produto que exige outro módulo não pode ser o primeiro item; adicione o módulo antes."
+          "help": "Primeiro produto incluído no pacote, criado junto com ele. Um módulo escolhido aqui vira o produto principal (identidade) do pacote. Adicione mais itens depois na lista de Itens do pacote. Um produto que exige outro módulo não pode ser o primeiro item; adicione o módulo antes."
         },
         {
           "label": "Liberação do primeiro item",

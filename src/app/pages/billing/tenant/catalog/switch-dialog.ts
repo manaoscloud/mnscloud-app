@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { AppI18nService } from '../../../../services/app-i18n.service';
+import { DateTimeFormatService } from '../../../../services/date-time-format.service';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 import { BillingSwitchPreview } from '../../shared/billing.service';
 
@@ -14,8 +15,10 @@ export interface BillingSwitchDialogData {
 }
 
 /**
- * Plan switch review. The API decides coverage and credit; this dialog only shows the quote the
- * tenant confirms (replaced contracts end now with a prorated credit, partial ones stay billed).
+ * Checkout review. The API decides coverage, credit and mode; this dialog only shows the quote the
+ * tenant confirms: replaced contracts (same package line, or covered standalone products) end now with
+ * a prorated credit or, on a downgrade, at the end of the paid period; partly covered products and
+ * packages of other lines stay active and billed.
  */
 @Component({
   selector: 'app-billing-switch-dialog',
@@ -31,7 +34,7 @@ export interface BillingSwitchDialogData {
     <div class="crud-dialog switch-dialog">
       <div class="dialog-header">
         <div>
-          <h2>{{ 'Switch to this offer' | transloco }}</h2>
+          <h2>{{ title() | transloco }}</h2>
           <p>{{ data.offerName }}</p>
         </div>
         <mns-report-problem-button />
@@ -39,32 +42,55 @@ export interface BillingSwitchDialogData {
 
       <div class="dialog-content">
         <p class="switch-intro">
-          {{
-            'This offer includes what you already pay for in other contracts. Review the change before confirming, so nothing is billed twice.'
-              | transloco
-          }}
+          @if (scheduled()) {
+            {{
+              'This is a lower plan of the same product line. It starts when the period you already paid ends; nothing is charged now.'
+                | transloco
+            }}
+          } @else if (switching()) {
+            {{
+              'This offer includes what you already pay for in other contracts. Review the change before confirming, so nothing is billed twice.'
+                | transloco
+            }}
+          } @else {
+            {{
+              'You subscribe to packages, not to separate products. This package repeats modules of packages you already have; all of them stay active and billed.'
+                | transloco
+            }}
+          }
         </p>
 
         @if (replaced().length) {
-          <h3>{{ 'Replaced now' | transloco }}</h3>
+          <h3>
+            {{ (scheduled() ? 'Replaced at the end of the period' : 'Replaced now') | transloco }}
+          </h3>
           <ul class="switch-list">
             @for (contract of replaced(); track contract.subscriptionUUID) {
               <li>
                 <mat-icon>swap_horiz</mat-icon>
                 <div class="switch-line">
                   <strong>{{ contract.offerName }}</strong>
-                  <span>{{ 'Everything in it is included in the new offer.' | transloco }}</span>
+                  <span>{{
+                    (contract.offerType === 'PACKAGE'
+                      ? 'Same product line: the new package takes its place.'
+                      : 'Everything in it is included in the new offer.'
+                    ) | transloco
+                  }}</span>
                 </div>
-                <span class="switch-amount">{{ money(contract.creditAmount) }}</span>
+                @if (!scheduled()) {
+                  <span class="switch-amount">{{ money(contract.creditAmount) }}</span>
+                }
               </li>
             }
           </ul>
-          <p class="switch-note">
-            {{
-              'Replaced contracts end now. The unused paid time returns to your prepaid balance.'
-                | transloco
-            }}
-          </p>
+          @if (!scheduled()) {
+            <p class="switch-note">
+              {{
+                'Replaced contracts end now. The unused paid time returns to your prepaid balance.'
+                  | transloco
+              }}
+            </p>
+          }
         }
 
         @if (partial().length) {
@@ -88,15 +114,64 @@ export interface BillingSwitchDialogData {
           </p>
         }
 
+        @if (kept().length) {
+          <h3>{{ 'Other packages you keep' | transloco }}</h3>
+          <ul class="switch-list">
+            @for (contract of kept(); track contract.subscriptionUUID) {
+              <li>
+                <mat-icon>inventory_2</mat-icon>
+                <div class="switch-line">
+                  <strong>{{ contract.offerName }}</strong>
+                  @if (contract.sharedModules) {
+                    <span
+                      >{{ 'Modules also in the new package' | transloco }}:
+                      {{ contract.sharedModules }}</span
+                    >
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+          <p class="switch-note">
+            {{ 'Each package is a separate contract and both are billed.' | transloco }}
+          </p>
+        }
+
+        @if (scheduledChanges().length) {
+          <h3>{{ 'Scheduled changes canceled' | transloco }}</h3>
+          <ul class="switch-list">
+            @for (change of scheduledChanges(); track change.subscriptionUUID) {
+              <li>
+                <mat-icon>event_busy</mat-icon>
+                <div class="switch-line">
+                  <strong>{{ change.offerName }}</strong>
+                  <span
+                    >{{ 'Would start on' | transloco }} {{ date(change.scheduledStartAt) }}</span
+                  >
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
         <dl class="switch-summary">
           @if (data.preview.setupAmount > 0) {
             <dt>{{ 'Setup' | transloco }}</dt>
             <dd>{{ money(data.preview.setupAmount) }}</dd>
           }
-          <dt>{{ 'New offer charge' | transloco }}</dt>
-          <dd>{{ money(data.preview.chargeAmount) }}</dd>
-          <dt>{{ 'Credit for unused time' | transloco }}</dt>
-          <dd>- {{ money(data.preview.creditAmount) }}</dd>
+          @if (scheduled()) {
+            <dt>{{ 'Starts on' | transloco }}</dt>
+            <dd>{{ date(data.preview.effectiveAt) }}</dd>
+            <dt>{{ 'Monthly charge from then' | transloco }}</dt>
+            <dd>{{ money(data.preview.chargeAmount) }}</dd>
+          } @else {
+            <dt>{{ 'New offer charge' | transloco }}</dt>
+            <dd>{{ money(data.preview.chargeAmount) }}</dd>
+            @if (data.preview.creditAmount > 0 || replaced().length) {
+              <dt>{{ 'Credit for unused time' | transloco }}</dt>
+              <dd>- {{ money(data.preview.creditAmount) }}</dd>
+            }
+          }
           <dt class="switch-total">
             {{ (data.preview.netAmount >= 0 ? 'To pay now' : 'Added to your balance') | transloco }}
           </dt>
@@ -124,7 +199,8 @@ export interface BillingSwitchDialogData {
               class="save-main-button"
               (click)="dialogRef.close(true)"
             >
-              <mat-icon>swap_horiz</mat-icon>{{ 'Confirm switch' | transloco }}
+              <mat-icon>{{ switching() ? 'swap_horiz' : 'add_shopping_cart' }}</mat-icon>
+              {{ confirmLabel() | transloco }}
             </button>
           </div>
         </div>
@@ -189,6 +265,7 @@ export class BillingSwitchDialogComponent {
   readonly data = inject<BillingSwitchDialogData>(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<BillingSwitchDialogComponent>);
   private readonly appI18n = inject(AppI18nService);
+  private readonly dateTime = inject(DateTimeFormatService);
 
   readonly replaced = computed(() =>
     this.data.preview.contracts.filter((c) => c.coverage === 'FULL'),
@@ -196,10 +273,29 @@ export class BillingSwitchDialogComponent {
   readonly partial = computed(() =>
     this.data.preview.contracts.filter((c) => c.coverage === 'PARTIAL'),
   );
+  readonly kept = computed(() => this.data.preview.contracts.filter((c) => c.coverage === 'INFO'));
+  readonly scheduledChanges = computed(() => this.data.preview.scheduledChanges ?? []);
+  readonly scheduled = computed(() => this.data.preview.mode === 'SCHEDULED');
+  /** Replaces or partly repeats something; otherwise the offer is only added next to other packages. */
+  readonly switching = computed(() => this.replaced().length + this.partial().length > 0);
+  readonly title = computed(() =>
+    this.scheduled()
+      ? 'Schedule plan change'
+      : this.switching()
+        ? 'Switch to this offer'
+        : 'Subscribe to this package too',
+  );
+  readonly confirmLabel = computed(() =>
+    this.scheduled() ? 'Schedule change' : this.switching() ? 'Confirm switch' : 'Subscribe',
+  );
   readonly absNet = computed(() => Math.abs(this.data.preview.netAmount));
   readonly insufficient = computed(
     () => this.data.preview.netAmount > this.data.preview.availableBalance,
   );
+
+  date(value: string | null | undefined): string {
+    return this.dateTime.formatDate(value, 'short') || '-';
+  }
 
   money(value: number): string {
     const currency = /^[A-Z]{3}$/.test(this.data.preview.currency)

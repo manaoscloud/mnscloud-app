@@ -291,9 +291,22 @@ export interface BillingSwitchContract {
   offerName: string;
   status: string;
   currentPeriodEnd: string | null;
-  /** FULL ends now with a prorated credit; PARTIAL stays billed. */
-  coverage: 'FULL' | 'PARTIAL';
+  /**
+   * FULL is replaced (same package family, or a standalone product the offer covers); PARTIAL is a
+   * standalone product only partly covered and INFO a package of another family: both stay billed.
+   */
+  coverage: 'FULL' | 'PARTIAL' | 'INFO';
   creditAmount: number;
+  /** Modules of the contract that the offer also includes. */
+  sharedModules?: string | null;
+}
+
+/** Scheduled change (migration or earlier downgrade) of a replaced contract that the switch cancels. */
+export interface BillingSwitchScheduledChange {
+  subscriptionUUID: string;
+  subscriptionID: string;
+  offerName: string;
+  scheduledStartAt: string | null;
 }
 
 /** Server quote of a checkout against the current contracts (no double billing). */
@@ -307,7 +320,12 @@ export interface BillingSwitchPreview {
   availableBalance: number;
   replaceCount: number;
   partialCount: number;
+  infoCount?: number;
+  /** SCHEDULED = downgrade in the package family: starts at effectiveAt, nothing is charged now. */
+  mode?: 'IMMEDIATE' | 'SCHEDULED';
+  effectiveAt?: string | null;
   contracts: BillingSwitchContract[];
+  scheduledChanges?: BillingSwitchScheduledChange[];
 }
 
 export interface BillingTenantDashboardWallet {

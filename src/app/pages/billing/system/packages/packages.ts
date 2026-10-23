@@ -30,6 +30,7 @@ const PACKAGE_PAYLOAD_KEYS = [
   'isPublic',
   'sortOrder',
   'status',
+  'primaryProductUUID',
 ] as const;
 
 /** "Name (CODE)" of a package row, shown read-only as the migration source. */
@@ -79,6 +80,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'BpaName', uuidField: 'BpaUUID' },
     { id: 'code', label: 'Code', field: 'BpaCode' },
+    { id: 'primary', label: 'Primary product', field: 'PrimaryProductName' },
     { id: 'items', label: 'Items', field: 'ItemCount' },
     {
       id: 'requirements',
@@ -400,6 +402,19 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       help: 'Commercial name of the package shown to operators and tenants.',
       span: 2,
     },
+    {
+      key: 'primaryProductUUID',
+      source: 'PrimaryBillingProductBprUUID',
+      payloadKey: 'primaryProductUUID',
+      label: 'Primary product',
+      type: 'search-select',
+      hiddenWhen: ({ editing }) => !editing,
+      quickCreate: false,
+      quickCreateExemptReason:
+        'The primary product must already be an active module item of this package.',
+      help: 'Identity of the package (for example VoIP, Hosting or ISP): an active module item of this package. Packages with the same primary product are plans of one product line and replace each other when a tenant changes plan; packages with different primary products are separate contracts and are all billed. On creation, the initial module item becomes the primary product.',
+      span: 2,
+    },
     // Public: catalog visibility, name, slug, sort order; summary; description.
     {
       key: 'isPublic',
@@ -465,7 +480,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       quickCreate: quickCreateFor('BillingProductBprUUID'),
       requiredWhen: ({ editing }) => !editing,
       hiddenWhen: ({ editing }) => editing,
-      help: 'First product included in the package, created together with it. Add more items later in the package Items list. A product that requires another module cannot be the first item; add the module first.',
+      help: 'First product included in the package, created together with it. A module chosen here becomes the primary product (identity) of the package. Add more items later in the package Items list. A product that requires another module cannot be the first item; add the module first.',
       tab: 'financial',
       span: 1,
     },
@@ -532,12 +547,16 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'itemProductUUID' || key === 'productUUID') return this.lookups.productOptions();
+    if (key === 'itemProductUUID' || key === 'productUUID' || key === 'primaryProductUUID') {
+      return this.lookups.productOptions();
+    }
     return [];
   }
 
   protected override lookupLabel(key: string, value: unknown): string {
-    if (key === 'itemProductUUID' || key === 'productUUID') return this.lookups.productLabel(value);
+    if (key === 'itemProductUUID' || key === 'productUUID' || key === 'primaryProductUUID') {
+      return this.lookups.productLabel(value);
+    }
     return super.lookupLabel(key, value);
   }
 
@@ -574,6 +593,9 @@ export class BillingSystemPackagesPage extends ConfigurableCrudPageBase<
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PACKAGE_PAYLOAD_KEYS);
     next['sortOrder'] = numberOrNull(next['sortOrder']) ?? 1000;
+    // On creation the initial module item is the primary product; afterwards it is edited here.
+    if (!this.editingRecord()) delete next['primaryProductUUID'];
+    else next['primaryProductUUID'] = next['primaryProductUUID'] || null;
     if (!this.editingRecord() && payload['itemProductUUID']) {
       next['initialItem'] = {
         productUUID: payload['itemProductUUID'],
