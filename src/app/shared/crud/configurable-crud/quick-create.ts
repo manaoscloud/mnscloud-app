@@ -506,30 +506,35 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
     routeData: { resource: 'categories' },
+    permission: 'tenant.infragis.categories.write',
   },
   InfraGisAssetStatusIgsUUID: {
     label: 'Create asset status',
     loadComponent: () =>
       import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
     routeData: { resource: 'statuses' },
+    permission: 'tenant.infragis.statuses.write',
   },
   InfraGisAssetTypeIgtUUID: {
     label: 'Create asset type',
     loadComponent: () =>
       import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
     routeData: { resource: 'asset-types' },
+    permission: 'tenant.infragis.asset-types.write',
   },
   InfraGisLayerIglUUID: {
     label: 'Create layer',
     loadComponent: () =>
       import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
     routeData: { resource: 'layers' },
+    permission: 'tenant.infragis.layers.write',
   },
   InfraGisProjectIprUUID: {
     label: 'Create project',
     loadComponent: () =>
       import('../../../pages/infragis/management/management').then((m) => m.InfraGisManagementPage),
     routeData: { resource: 'projects' },
+    permission: 'tenant.infragis.projects.write',
   },
   IspPopIppUUID: {
     label: 'Create POP',

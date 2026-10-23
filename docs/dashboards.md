@@ -78,4 +78,5 @@ New/Edit/Delete, `<app-refresh-button>` outside the shell, `mat-table`/`MatTable
 | VPS / VPS Container | `GET {,system/}hosting/vps{,-container}/dashboard` + provider/plan catalogs |
 | Hosting overview | `GET {,system/}hosting/dashboard` + VPS/container dashboards |
 | Monitoring | `GET monitoring/agents/summary`, runtime products, activity logs |
+| InfraGIS | `GET infragis/dashboard` + `GET infragis/map/assets` (preview framed to the loaded assets) |
 | PABX, VoIP, DNS, Webhost, SMTP, Storage, Cyber Security, AI, Billing, Realtime, Secrets | their module `.../dashboard` or summary endpoints |

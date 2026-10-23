@@ -16,7 +16,15 @@ import {
 export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
 
-const geometries = ['POINT', 'LINE', 'POLYGON', 'MIXED'].map((value) => ({ value, label: value }));
+// Canonical geometry types of a layer; MIXED accepts assets of any type.
+const geometries = [
+  { value: 'POINT', label: 'Point' },
+  { value: 'LINE', label: 'Line' },
+  { value: 'POLYGON', label: 'Polygon' },
+  { value: 'MIXED', label: 'Mixed' },
+];
+const geometryLabel = (value: unknown) =>
+  geometries.find((option) => option.value === value)?.label ?? String(value ?? '');
 
 const statusField = (source: string): ConfigurableCrudField => ({
   key: 'status',
@@ -42,28 +50,29 @@ const lookup = (
   selectedLabelField: string,
   tab: ConfigurableCrudField['tab'],
   required = false,
+  parameters?: Readonly<Record<string, string>>,
 ): ConfigurableCrudField => ({
   key,
   source,
   label,
   type: 'search-select',
   required,
-  remoteLookup: { endpoint, uuidField, labelField, selectedLabelField },
+  remoteLookup: { endpoint, uuidField, labelField, selectedLabelField, parameters },
   quickCreate: quickCreateFor(source as QuickCreateRegistryKey),
   tab,
   span: 2,
 });
 
-const common = {
-  bulkDelete: true,
-  initialValues: { status: 1, sortOrder: 1000, geometryType: 'POINT', color: '#22C55E' },
-} as const;
+const common = { bulkDelete: true } as const;
+const initial = { status: 1, sortOrder: 1000 } as const;
+const visualInitial = { ...initial, color: '#22C55E' } as const;
 
 // One routed page per InfraGIS catalog (route data `resource`), replacing the former tabbed
 // management screen. All catalogs share the generic CRUD surface.
 const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   projects: defineCrud({
     ...common,
+    initialValues: initial,
     endpoint: 'infragis/projects',
     uuidField: 'IprUUID',
     pageTitle: 'Projects',
@@ -93,6 +102,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   layers: defineCrud({
     ...common,
+    initialValues: { ...initial, geometryType: 'POINT' },
     endpoint: 'infragis/layers',
     uuidField: 'IglUUID',
     pageTitle: 'Layers',
@@ -101,13 +111,18 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     columns: [
       { id: 'name', label: 'Name', field: 'IglName', uuidField: 'IglUUID', kind: 'identity' },
       { id: 'project', label: 'Project', field: 'ProjectName' },
-      { id: 'geometry', label: 'Geometry', field: 'IglGeometryType', translateValue: false },
+      {
+        id: 'geometry',
+        label: 'Geometry',
+        field: 'IglGeometryType',
+        value: (row, t) => t(geometryLabel(row['IglGeometryType'])),
+      },
       { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
       { id: 'status', label: 'Status', field: 'IglStatus', kind: 'status' },
     ],
     fields: [
       statusField('IglStatus'),
-      { key: 'code', source: 'IglCode', label: 'Code', span: 1 },
+      { key: 'code', source: 'IglCode', label: 'Code', required: true, span: 1 },
       { key: 'name', source: 'IglName', label: 'Name', required: true, span: 1 },
       sortOrderField('IglSortOrder'),
       lookup(
@@ -127,7 +142,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Geometry',
         type: 'select',
         options: geometries,
-        translateOptions: false,
+        required: true,
         tab: 'match',
         span: 1,
       },
@@ -145,6 +160,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   categories: defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/categories',
     uuidField: 'IacUUID',
     pageTitle: 'Categories',
@@ -158,7 +174,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     ],
     fields: [
       statusField('IacStatus'),
-      { key: 'code', source: 'IacCode', label: 'Category Code', span: 1 },
+      { key: 'code', source: 'IacCode', label: 'Category Code', required: true, span: 1 },
       { key: 'name', source: 'IacName', label: 'Name', required: true, span: 1 },
       sortOrderField('IacSortOrder'),
       { key: 'color', source: 'IacColor', label: 'Color', tab: 'transform', span: 1 },
@@ -167,6 +183,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   'asset-types': defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/asset-types',
     uuidField: 'IgtUUID',
     pageTitle: 'Asset Types',
@@ -181,7 +198,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     ],
     fields: [
       statusField('IgtStatus'),
-      { key: 'code', source: 'IgtCode', label: 'Asset Type Code', span: 1 },
+      { key: 'code', source: 'IgtCode', label: 'Asset Type Code', required: true, span: 1 },
       { key: 'name', source: 'IgtName', label: 'Name', required: true, span: 1 },
       sortOrderField('IgtSortOrder'),
       lookup(
@@ -200,6 +217,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   statuses: defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/statuses',
     uuidField: 'IgsUUID',
     pageTitle: 'Statuses',
@@ -213,7 +231,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     ],
     fields: [
       statusField('IgsStatus'),
-      { key: 'code', source: 'IgsCode', label: 'Status Code', span: 1 },
+      { key: 'code', source: 'IgsCode', label: 'Status Code', required: true, span: 1 },
       { key: 'name', source: 'IgsName', label: 'Name', required: true, span: 1 },
       sortOrderField('IgsSortOrder'),
       { key: 'color', source: 'IgsColor', label: 'Color', tab: 'transform', span: 1 },
@@ -221,6 +239,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   assets: defineCrud({
     ...common,
+    initialValues: initial,
     endpoint: 'infragis/assets',
     uuidField: 'IgaUUID',
     pageTitle: 'Assets',
@@ -259,6 +278,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         'LayerName',
         'match',
         true,
+        { projectUUID: 'projectUUID' },
       ),
       lookup(
         'assetTypeUUID',

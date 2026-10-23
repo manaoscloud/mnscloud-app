@@ -73,7 +73,7 @@ export function readRoutes(source) {
     const dataNode = property(element, 'data');
     const data = {};
     if (dataNode && ts.isObjectLiteralExpression(dataNode)) {
-      for (const key of ['scope', 'supportDesk', 'permission']) {
+      for (const key of ['scope', 'supportDesk', 'permission', 'resource']) {
         const value = literals(property(dataNode, key))[0];
         if (value) data[key] = value;
       }
@@ -282,8 +282,23 @@ function configFields(node, ctx) {
   return fields ? { node: fields, ctx: built.ctx } : null;
 }
 
-/** Title, description and field help declared by a page (defineCrud or a hand-written template). */
-export function readPage(root, file, platform) {
+/** Key of the record entry that holds a page configuration (`projects: defineCrud({...})`). */
+function configKey(node) {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isPropertyAssignment(current)) {
+      const name = current.name;
+      return ts.isStringLiteral(name) || ts.isIdentifier(name) ? name.text : '';
+    }
+    if (!ts.isCallExpression(current) && !ts.isAsExpression(current)) return '';
+  }
+  return '';
+}
+
+/**
+ * Title, description and field help declared by a page (defineCrud or a hand-written template).
+ * A page that serves several routes (route data `resource`) uses the configuration of that key.
+ */
+export function readPage(root, file, platform, resource = '') {
   const path = resolve(root, file);
   if (!existsSync(path)) return null;
   const source = readFileSync(path, 'utf8');
@@ -297,13 +312,16 @@ export function readPage(root, file, platform) {
     if (ts.isObjectLiteralExpression(node) && property(node, 'pageTitle')) {
       const fields = configFields(node, ctx);
       const objects = fields ? fieldObjects(fields.node, fields.ctx) : [];
-      candidates.push({ node, objects, size: objects.length });
+      candidates.push({ node, objects, size: objects.length, key: configKey(node) });
     }
     ts.forEachChild(node, visit);
   });
-  const main = candidates.reduce((best, item) => (item.size > best.size ? item : best), {
-    size: -1,
-  });
+  const keyed = resource ? candidates.find((item) => item.key === resource) : undefined;
+  const main =
+    keyed ??
+    candidates.reduce((best, item) => (item.size > best.size ? item : best), {
+      size: -1,
+    });
   if (main.node) {
     page.title = pick(property(main.node, 'pageTitle'), platform);
     page.description = pick(property(main.node, 'pageDescription'), platform);
@@ -364,7 +382,9 @@ export function buildCatalog(root = process.cwd()) {
           target.route.startsWith('/system/') ||
           resolved?.data.scope === 'master' ||
           resolved?.data.supportDesk === 'platform';
-        const page = resolved ? readPage(root, resolved.file, platform) : null;
+        const page = resolved
+          ? readPage(root, resolved.file, platform, resolved.data.resource)
+          : null;
         entries.push({
           route: target.route,
           menuPath: labels.join(' › '),

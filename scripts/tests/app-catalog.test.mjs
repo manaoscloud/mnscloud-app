@@ -48,6 +48,19 @@ test('page reader takes the main configuration and the desk branch', () => {
   assert.equal(tenant.title, 'Support tickets');
 });
 
+test('page reader picks the configuration of the route resource (InfraGIS catalogs)', () => {
+  const file = 'src/app/pages/infragis/management/management.ts';
+  const layers = readPage(process.cwd(), file, false, 'layers');
+  assert.equal(layers.title, 'Layers');
+  assert.ok(layers.fields.some((field) => field.label === 'Geometry'));
+  assert.equal(readPage(process.cwd(), file, false, 'asset-types').title, 'Asset Types');
+  assert.equal(readPage(process.cwd(), file, false).title, 'Assets');
+  const routes = readRoutes(
+    `export const routes = [{ path: 'infragis/layers', loadComponent: () => import('./pages/infragis/management/management'), data: { scope: 'tenant', resource: 'layers' } }];`,
+  );
+  assert.equal(routes.get('/infragis/layers').data.resource, 'layers');
+});
+
 test('page reader expands fields built by imported helpers (Registry pages)', () => {
   const suppliers = readPage(process.cwd(), 'src/app/pages/registry/suppliers/suppliers.ts', false);
   const labels = suppliers.fields.map((field) => field.label);

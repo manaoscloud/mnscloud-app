@@ -1298,12 +1298,7 @@ export const routes: Routes = [
               },
               // InfraGIS
               {
-                path: 'infragis/management',
-                redirectTo: 'infragis/management/projects',
-                pathMatch: 'full',
-              },
-              {
-                path: 'infragis/management/projects',
+                path: 'infragis/projects',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
@@ -1312,7 +1307,7 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'projects' },
               },
               {
-                path: 'infragis/management/layers',
+                path: 'infragis/layers',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
@@ -1321,7 +1316,7 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'layers' },
               },
               {
-                path: 'infragis/management/categories',
+                path: 'infragis/categories',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
@@ -1330,7 +1325,7 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'categories' },
               },
               {
-                path: 'infragis/management/asset-types',
+                path: 'infragis/asset-types',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
@@ -1339,7 +1334,7 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'asset-types' },
               },
               {
-                path: 'infragis/management/statuses',
+                path: 'infragis/statuses',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
@@ -1348,7 +1343,7 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'statuses' },
               },
               {
-                path: 'infragis/management/assets',
+                path: 'infragis/assets',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
                     (m) => m.InfraGisManagementPage,
