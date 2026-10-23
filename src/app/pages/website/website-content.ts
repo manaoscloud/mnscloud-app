@@ -160,7 +160,7 @@ function localeContent(value: unknown): WebsiteLocaleContent {
       primaryCta: link(hero['primaryCta']),
       secondaryCta: link(hero['secondaryCta']),
     },
-    sections: sections.map(section),
+    sections: sections.map((item, index) => section(item, index)),
     footer: { text: text(footer['text']) },
     legal: { privacy: text(legal['privacy']), terms: text(legal['terms']) },
   };
