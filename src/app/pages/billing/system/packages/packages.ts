@@ -182,6 +182,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               quickCreateExemptReason:
                 'Only existing live subscriptions of this package can be migrated.',
               help: 'Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.',
+              tab: 'record',
               span: 2,
             },
             {
@@ -197,7 +198,9 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               },
               quickCreate: quickCreateFor('BillingPackageBpaUUID'),
               help: 'Active package that receives the selected subscriptions. Choose its target price for the next billing cycle.',
+              tab: 'record',
               span: 2,
+              breakBefore: true,
             },
             {
               key: 'targetPriceUUID',
@@ -205,7 +208,8 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               label: 'Target price',
               type: 'search-select',
               required: true,
-              span: 1,
+              tab: 'record',
+              span: 2,
               remoteLookup: {
                 endpoint: 'system/billing/prices?status=1',
                 uuidField: 'BpcUUID',
