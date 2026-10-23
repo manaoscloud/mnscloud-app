@@ -9211,5 +9211,22 @@
   "A promotion cannot be used on a plan change scheduled for the end of the period.": "A promotion cannot be used on a plan change scheduled for the end of the period.",
   "The primary product must be an active module item of this package. Add it to the package items first.": "The primary product must be an active module item of this package. Add it to the package items first.",
   "This item is the primary product of the package. Choose another primary product first.": "This item is the primary product of the package. Choose another primary product first.",
-  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use a package code like package.voip.start (lowercase segments separated by dots)."
+  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use a package code like package.voip.start (lowercase segments separated by dots).",
+  "Online since {date}": "Online since {date}",
+  "{count} devices registered": "{count} devices registered",
+  "Offline since {date}": "Offline since {date}",
+  "Last registration: {date}": "Last registration: {date}",
+  "This extension has never registered.": "This extension has never registered.",
+  "The PABX server has not reported recently, so the status is unknown.": "The PABX server has not reported recently, so the status is unknown.",
+  "The extension is disabled.": "The extension is disabled.",
+  "Never used": "Never used",
+  "No telemetry": "No telemetry",
+  "Live diagnostic": "Live diagnostic",
+  "Query the PABX now for every extension of the selected PABX": "Query the PABX now for every extension of the selected PABX",
+  "Query the PABX now for this extension registration": "Query the PABX now for this extension registration",
+  "Extensions registered now": "Extensions registered now",
+  "Extensions that registered before and are not registered now": "Extensions that registered before and are not registered now",
+  "Extensions that never registered": "Extensions that never registered",
+  "Extensions whose PABX server has not reported recently": "Extensions whose PABX server has not reported recently",
+  "Disabled extensions": "Disabled extensions"
 }

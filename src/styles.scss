@@ -629,6 +629,22 @@ mat-card.erp-card,
   width: auto;
 }
 
+// Read-only list counters (config.listSummary) reuse the status chip palette.
+.crud-list-summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--form-control-height);
+}
+
+.status-pill.status-chip.crud-list-summary-chip {
+  min-width: 0;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
 .selection-count {
   display: inline-flex;
   align-items: center;

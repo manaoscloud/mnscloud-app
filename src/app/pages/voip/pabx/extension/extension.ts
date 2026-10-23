@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, effect, signal, untracked } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudColumn,
   ConfigurableCrudFilterAction,
+  ConfigurableCrudListSummaryItem,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudQuickCreateResult,
@@ -24,18 +26,52 @@ type PabxLookup = ConfigurableCrudOption & {
   defaultCodecs: string[];
 };
 
-type ExtensionRecord = ConfigurableCrudRecord & {
-  VpeUUID: string;
-  VpeUsername?: string | null;
-  VpeCodecs?: string | null;
-  PabxName?: string | null;
-  DialPlanName?: string | null;
+type PresenceState = 'online' | 'offline' | 'never' | 'unknown' | 'disabled';
+
+type ExtensionPresence = {
+  PresenceState?: PresenceState | null;
+  PresenceSince?: string | null;
+  PresenceLastRegisteredAt?: string | null;
+  PresenceContactCount?: number | null;
+  PresenceUserAgent?: string | null;
+  PresenceNetworkIP?: string | null;
 };
+
+type ExtensionRecord = ConfigurableCrudRecord &
+  ExtensionPresence & {
+    VpeUUID: string;
+    VpeUsername?: string | null;
+    VpeCodecs?: string | null;
+    PabxName?: string | null;
+    DialPlanName?: string | null;
+  };
 
 const statusOptions: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
   { value: 0, label: 'Inactive' },
 ];
+
+// Registration presence: green connected, red dropped after registering, orange never used,
+// grey when the extension is off or its PABX server has not reported recently.
+const presenceOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'online', label: 'Connected' },
+  { value: 'offline', label: 'Offline' },
+  { value: 'never', label: 'Never used' },
+  { value: 'unknown', label: 'No telemetry' },
+  { value: 'disabled', label: 'Disabled' },
+];
+
+const presenceChipClasses: Record<PresenceState, string> = {
+  online: 'chip-success',
+  offline: 'chip-failed',
+  never: 'chip-warning',
+  unknown: 'chip-skipped',
+  disabled: 'chip-skipped',
+};
+
+/** Presence refresh while the page is visible; it reads stored state, never the PABX engine. */
+const PRESENCE_REFRESH_MS = 30_000;
+const PRESENCE_MAX_IDS = 200;
 
 const yesNoOptions: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Yes' },
@@ -253,6 +289,15 @@ const config: ConfigurableCrudConfig = {
   deleteFailedMessage: 'Failed to delete PABX extension.',
   fields,
   columns: [
+    { id: 'status', label: 'Status', field: 'VpeEnabled', kind: 'status' },
+    {
+      id: 'presence',
+      label: 'Online',
+      field: 'PresenceState',
+      kind: 'status',
+      options: presenceOptions,
+      chipClass: (value) => presenceChipClasses[presenceState(value)],
+    },
     {
       id: 'username',
       label: 'Extension',
@@ -267,7 +312,6 @@ const config: ConfigurableCrudConfig = {
     { id: 'engine', label: 'Engine', field: 'VpeEngine', kind: 'text' },
     { id: 'dialPlan', label: 'Dial plan', field: 'DialPlanName', kind: 'text' },
     { id: 'recordCalls', label: 'Call recording', field: 'VpeRecordCalls', kind: 'boolean' },
-    { id: 'status', label: 'Status', field: 'VpeEnabled', kind: 'status' },
   ],
   initialValues: {
     enabled: 1,
@@ -301,15 +345,24 @@ const config: ConfigurableCrudConfig = {
       placeholder: 'Search PABX',
       emptyLabel: 'No PABX accounts found.',
     },
+    {
+      key: 'PresenceState',
+      label: 'Online',
+      paramKey: 'presence',
+      type: 'select',
+      span: 1,
+      options: presenceOptions,
+      translateOptions: true,
+    },
   ],
   filterActionMenu: {
-    label: 'Status',
+    label: 'Live diagnostic',
     icon: 'monitor_heart',
     actions: [
       {
         key: 'runtime-status-all',
         label: 'Extensions',
-        tooltip: 'Inspect all PABX extension statuses',
+        tooltip: 'Query the PABX now for every extension of the selected PABX',
         icon: 'dialpad',
       },
     ],
@@ -317,8 +370,8 @@ const config: ConfigurableCrudConfig = {
   rowActions: [
     {
       key: 'runtime-status',
-      label: 'Runtime status',
-      tooltip: 'Inspect extension runtime status',
+      label: 'Live diagnostic',
+      tooltip: 'Query the PABX now for this extension registration',
       icon: 'terminal',
     },
   ],
@@ -343,10 +396,131 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
   private readonly pabxOptionsState = signal<readonly PabxLookup[]>([]);
   private readonly dialPlanOptionsState = signal<readonly ConfigurableCrudOption[]>([]);
   private readonly lookupsLoading = signal(false);
+  private readonly presenceSummary = signal<Record<PresenceState, number> | null>(null);
+  private presenceTimer: ReturnType<typeof setTimeout> | null = null;
+  private presenceInFlight = false;
+  private schedulePresence: ((delay: number) => void) | null = null;
 
   constructor() {
     super(config);
     void this.loadLookups();
+    this.startPresenceRefresh();
+    // A new PABX filter changes the counters: refresh them right away.
+    effect(() => {
+      this.appliedFilters();
+      untracked(() => this.schedulePresence?.(0));
+    });
+  }
+
+  override listSummary(): readonly ConfigurableCrudListSummaryItem[] {
+    const summary = this.presenceSummary();
+    if (!summary) return [];
+    return (['online', 'offline', 'never', 'unknown'] as const)
+      .filter((state) => state !== 'unknown' || summary.unknown > 0)
+      .map((state) => ({
+        key: state,
+        label: presenceOptions.find((option) => option.value === state)?.label ?? state,
+        value: summary[state],
+        chipClass: presenceChipClasses[state],
+        tooltip: presenceSummaryTooltips[state],
+      }));
+  }
+
+  override statusChipTooltip(row: ExtensionRecord, column: ConfigurableCrudColumn): string {
+    if (column.id !== 'presence') return super.statusChipTooltip(row, column);
+    const state = presenceState(row.PresenceState);
+    const when = (value: unknown) =>
+      this.dateTime.formatDateTime(value as string | null | undefined, 'short', 'short') || '-';
+    const lines: string[] = [];
+    if (state === 'online') {
+      lines.push(this.t('Online since {date}', { date: when(row.PresenceSince) }));
+      const devices = Number(row.PresenceContactCount ?? 0);
+      if (devices > 1) lines.push(this.t('{count} devices registered', { count: devices }));
+    } else if (state === 'offline') {
+      lines.push(this.t('Offline since {date}', { date: when(row.PresenceSince) }));
+      lines.push(this.t('Last registration: {date}', { date: when(row.PresenceLastRegisteredAt) }));
+    } else if (state === 'never') {
+      lines.push(this.t('This extension has never registered.'));
+    } else if (state === 'unknown') {
+      lines.push(this.t('The PABX server has not reported recently, so the status is unknown.'));
+    } else {
+      lines.push(this.t('The extension is disabled.'));
+    }
+    if (state === 'online' || state === 'offline') {
+      if (row.PresenceUserAgent) lines.push(String(row.PresenceUserAgent));
+      if (row.PresenceNetworkIP) lines.push(String(row.PresenceNetworkIP));
+    }
+    return lines.join(' · ');
+  }
+
+  /**
+   * Refreshes the presence of the rows on screen and the counters every 30 s, only while the
+   * browser tab is visible. One light database read; the PABX engine is never queried here.
+   */
+  private startPresenceRefresh(): void {
+    if (typeof document === 'undefined') return;
+    const schedule = (delay: number) => {
+      if (this.destroyRef.destroyed) return;
+      if (this.presenceTimer) clearTimeout(this.presenceTimer);
+      // Jitter keeps many open tabs from refreshing in lockstep.
+      this.presenceTimer = setTimeout(tick, delay + Math.floor(Math.random() * 3_000));
+    };
+    this.schedulePresence = schedule;
+    const tick = async () => {
+      if (this.destroyRef.destroyed) return;
+      if (document.visibilityState === 'visible') await this.refreshPresence();
+      schedule(PRESENCE_REFRESH_MS);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') schedule(0);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    this.destroyRef.onDestroy(() => {
+      document.removeEventListener('visibilitychange', onVisible);
+      if (this.presenceTimer) clearTimeout(this.presenceTimer);
+    });
+    schedule(0);
+  }
+
+  private async refreshPresence(): Promise<void> {
+    if (this.presenceInFlight) return;
+    this.presenceInFlight = true;
+    try {
+      const ids = this.visibleRows()
+        .map((row) => String(row.VpeUUID ?? '').trim())
+        .filter(Boolean)
+        .slice(0, PRESENCE_MAX_IDS);
+      const params = new URLSearchParams();
+      if (ids.length) params.set('ids', ids.join(','));
+      const pabxUUID = this.selectedPabxUUID();
+      if (pabxUUID) params.set('pabxUUID', pabxUUID);
+      const response = await this.api.get<{
+        data?: {
+          items?: Array<ExtensionPresence & { VpeUUID: string }>;
+          summary?: Record<PresenceState, number>;
+        };
+      }>(`voip/pabx/extensions/presence?${params.toString()}`);
+      const data = response?.data;
+      if (data?.summary) this.presenceSummary.set(data.summary);
+      const items = new Map((data?.items ?? []).map((item) => [String(item.VpeUUID), item]));
+      if (!items.size || !this.itemsResource.hasValue()) return;
+      this.itemsResource.update((rows) =>
+        rows.map((row) => {
+          const next = items.get(String(row.VpeUUID));
+          return next && presenceChanged(row, next) ? { ...row, ...next } : row;
+        }),
+      );
+    } catch {
+      // Best effort: the next tick retries; the list keeps the last known values.
+    } finally {
+      this.presenceInFlight = false;
+    }
+  }
+
+  private selectedPabxUUID(): string {
+    return String(
+      this.listFilterValue({ key: 'pabxUUID', label: 'PABX', type: 'search-select' }) ?? '',
+    ).trim();
   }
 
   override startEdit(row: ExtensionRecord): void {
@@ -616,6 +790,29 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       closeLabel: 'Close',
     });
   }
+}
+
+const presenceSummaryTooltips: Record<PresenceState, string> = {
+  online: 'Extensions registered now',
+  offline: 'Extensions that registered before and are not registered now',
+  never: 'Extensions that never registered',
+  unknown: 'Extensions whose PABX server has not reported recently',
+  disabled: 'Disabled extensions',
+};
+
+function presenceState(value: unknown): PresenceState {
+  const state = String(value ?? '').toLowerCase();
+  return state in presenceChipClasses ? (state as PresenceState) : 'unknown';
+}
+
+function presenceChanged(row: ExtensionRecord, next: ExtensionPresence): boolean {
+  return (
+    row.PresenceState !== next.PresenceState ||
+    row.PresenceSince !== next.PresenceSince ||
+    row.PresenceContactCount !== next.PresenceContactCount ||
+    row.PresenceUserAgent !== next.PresenceUserAgent ||
+    row.PresenceNetworkIP !== next.PresenceNetworkIP
+  );
 }
 
 function extensionStatusSections(result: RuntimeDiagnosticResult) {
