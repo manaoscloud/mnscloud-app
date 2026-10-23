@@ -246,6 +246,8 @@ export type ConfigurableCrudField = {
      */
     fill?: Readonly<Record<string, string>>;
     searchParam?: string;
+    /** Option values never offered (for example the record the action starts from). */
+    exclude?: readonly string[];
   };
   key: string;
   /** Explicit capture classification for non-secret controls with credential-like names. */
@@ -326,6 +328,11 @@ export type ConfigurableCrudField = {
    * option, select it. The operator still sees and can change it; nothing is selected on edit.
    */
   autoSelectSingle?: boolean;
+  /**
+   * Multiple remote relation only: when creating, select every option of the first unfiltered
+   * window (up to 200) so the operator unticks exceptions instead of picking each one.
+   */
+  autoSelectAll?: boolean;
   loading?: () => boolean;
   hiddenWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   requiredWhen?: (context: ConfigurableCrudFieldContext) => boolean;
@@ -836,13 +843,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
             ];
             if (!bound.ready) return [field.key, { items: [], error: false }];
             const query = params.queries[field.key] ?? { search: '', offset: 0 };
-            const endpoint = field.remoteLookup!.endpoint;
-            const url = `${endpoint}${endpoint.includes('?') ? '&' : '?'}limit=50&offset=${query.offset}&${field.remoteLookup!.searchParam ?? 'search'}=${encodeURIComponent(query.search)}${bound.query ? `&${bound.query}` : ''}`;
+            const url = this.remoteLookupUrl(field, 50, query.offset, query.search, bound.query);
             try {
               const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
                 url,
               );
-              return [field.key, { items: response.data.items, error: false }];
+              return [field.key, { items: this.remoteLookupItems(field, response), error: false }];
             } catch {
               return [field.key, { items: [], error: true }];
             }
@@ -1272,6 +1278,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     for (const action of this.addressCopyActions()) {
       if (this.isCopyActionEnabled(action)) this.copyAddressValues(action);
     }
+    void this.autoSelectAllRemoteOptions();
     this.openDialog();
   }
 
@@ -2477,6 +2484,57 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   /** Labels seen on remote pages, so multi-selections keep readable chips across pages. */
   private readonly remoteOptionLabels = new Map<string, string>();
+
+  private remoteLookupUrl(
+    field: ConfigurableCrudField,
+    limit: number,
+    offset: number,
+    search: string,
+    boundQuery: string,
+  ): string {
+    const lookup = field.remoteLookup!;
+    const separator = lookup.endpoint.includes('?') ? '&' : '?';
+    return `${lookup.endpoint}${separator}limit=${limit}&offset=${offset}&${lookup.searchParam ?? 'search'}=${encodeURIComponent(search)}${boundQuery ? `&${boundQuery}` : ''}`;
+  }
+
+  private remoteLookupItems(
+    field: ConfigurableCrudField,
+    response: { data: { items: ConfigurableCrudRecord[] } },
+  ): ConfigurableCrudRecord[] {
+    const exclude = new Set(field.remoteLookup?.exclude ?? []);
+    const uuidField = field.remoteLookup!.uuidField;
+    return exclude.size
+      ? response.data.items.filter((item) => !exclude.has(String(item[uuidField] ?? '')))
+      : response.data.items;
+  }
+
+  /** Create only: fills `autoSelectAll` relations unless the operator already chose values. */
+  private async autoSelectAllRemoteOptions(): Promise<void> {
+    for (const field of this.config.fields) {
+      if (!field.autoSelectAll || !field.multiple || !field.remoteLookup) continue;
+      const bound = remoteLookupParameters(field.remoteLookup.parameters, this.formValues());
+      if (!bound.ready) continue;
+      let items: ConfigurableCrudRecord[];
+      try {
+        const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
+          this.remoteLookupUrl(field, 200, 0, '', bound.query),
+        );
+        items = this.remoteLookupItems(field, response);
+      } catch {
+        continue;
+      }
+      if (this.destroyRef.destroyed) return;
+      if (this.editingRecord() || this.fieldValueArray(field.key).length) continue;
+      const { uuidField, labelField } = field.remoteLookup;
+      const values = items.map((item) => String(item[uuidField] ?? '')).filter(Boolean);
+      for (const item of items) {
+        const value = String(item[uuidField] ?? '');
+        if (value)
+          this.remoteOptionLabels.set(`${field.key}:${value}`, String(item[labelField] ?? value));
+      }
+      if (values.length) this.setFieldValue(field.key, values);
+    }
+  }
 
   resolvedFieldType(field: ConfigurableCrudField): ConfigurableCrudFieldType | undefined {
     return (

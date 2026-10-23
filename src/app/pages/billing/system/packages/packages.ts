@@ -32,6 +32,13 @@ const PACKAGE_PAYLOAD_KEYS = [
   'status',
 ] as const;
 
+/** "Name (CODE)" of a package row, shown read-only as the migration source. */
+export function packageDisplayName(row: ConfigurableCrudRecord): string {
+  const name = String(row['BpaName'] ?? '').trim();
+  const code = String(row['BpaCode'] ?? '').trim();
+  return name && code ? `${name} (${code})` : name || code;
+}
+
 export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/billing/packages',
   uuidField: 'BpaUUID',
@@ -164,7 +171,13 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
           canDelete: false,
           bulkDelete: false,
           columns: [],
-          initialValues: { subscriptionUUIDs: [], targetPackageUUID: '', targetPriceUUID: '' },
+          initialValues: {
+            subscriptionUUIDs: [],
+            sourcePackage: packageDisplayName(row),
+            targetPackageUUID: '',
+            targetPriceUUID: '',
+          },
+          payload: ({ sourcePackage: _sourcePackage, ...values }) => values,
           fields: [
             {
               key: 'subscriptionUUIDs',
@@ -179,10 +192,20 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
                 labelField: 'TenantLabel',
                 descriptionField: 'TenantEmail',
               },
+              autoSelectAll: true,
               quickCreate: false,
               quickCreateExemptReason:
                 'Only existing live subscriptions of this package can be migrated.',
-              help: 'Subscribers that accepted the change. Only the selected subscriptions move; the others stay on this package.',
+              help: 'Every live subscription of this package starts selected (up to 200 per migration). Untick the subscribers that stay; reopen the action to migrate the rest.',
+              tab: 'record',
+              span: 2,
+            },
+            {
+              key: 'sourcePackage',
+              label: 'Source package',
+              type: 'text',
+              disabledWhen: () => true,
+              help: 'Current package of the selected subscriptions. Read-only reference for choosing the target package.',
               tab: 'record',
               span: 2,
             },
@@ -196,6 +219,7 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
                 endpoint: 'system/billing/packages?status=1',
                 uuidField: 'BpaUUID',
                 labelField: 'BpaName',
+                exclude: [String(row['BpaUUID'] ?? '')],
               },
               quickCreate: quickCreateFor('BillingPackageBpaUUID'),
               help: 'Active package that receives the selected subscriptions. Choose its target price for the next billing cycle.',
