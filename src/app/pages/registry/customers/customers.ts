@@ -11,7 +11,7 @@ import {
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { generateCrudPassword } from '../../../shared/crud/configurable-crud/password-generation';
 import {
-  REGISTRY_DOCUMENT_FIELD,
+  registryDocumentField,
   REGISTRY_EMAIL_FIELD,
   REGISTRY_LEGAL_DATE_FIELD,
   REGISTRY_PHONE_FIELD,
@@ -239,7 +239,16 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   fields: [
     REGISTRY_STATUS_FIELD,
     { ...REGISTRY_TYPE_FIELD, required: true },
-    { ...REGISTRY_DOCUMENT_FIELD, required: true },
+    {
+      ...registryDocumentField({
+        feature: 'registry.customer',
+        addressPrefix: 'addressMain',
+        typeKey: 'type',
+        legalNameKey: 'legalName',
+        municipality: true,
+      }),
+      required: true,
+    },
     { ...REGISTRY_LEGAL_DATE_FIELD, required: true },
     registryNameField(),
     {

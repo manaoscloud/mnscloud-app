@@ -2205,6 +2205,27 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
+  /**
+   * Fills form fields from a data lookup (CNPJ, CEP) the way the postal code search does: one
+   * update, copy actions (e.g. billing = main address) kept in sync. Used by field suffix buttons.
+   */
+  applyLookupValues(values: ConfigurableCrudRecord): void {
+    this.formValues.update((current) => ({ ...current, ...values }));
+    for (const key of Object.keys(values)) {
+      this.syncCopyActionsForSource(key);
+    }
+  }
+
+  /** Confirmation dialog for field suffix buttons (translated title, message and button). */
+  askConfirmation(title: string, message: string, confirmLabel = 'Confirm'): Promise<boolean> {
+    return this.confirmAction(title, message, confirmLabel);
+  }
+
+  /** Translation for field suffix buttons (the page translator). */
+  translate(key: string, params?: Record<string, string | number>): string {
+    return this.t(key, params);
+  }
+
   isPostalLookupLoading(field: ConfigurableCrudField): boolean {
     return this.postalLookupLoadingKey() === field.key;
   }

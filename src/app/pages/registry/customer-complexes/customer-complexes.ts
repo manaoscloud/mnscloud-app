@@ -8,7 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import {
-  REGISTRY_DOCUMENT_FIELD,
+  registryDocumentField,
   REGISTRY_EMAIL_FIELD,
   REGISTRY_LEGAL_DATE_FIELD,
   REGISTRY_NOTES_FIELD,
@@ -52,7 +52,11 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
   fields: [
     REGISTRY_STATUS_FIELD,
     REGISTRY_TYPE_FIELD,
-    REGISTRY_DOCUMENT_FIELD,
+    registryDocumentField({
+      feature: 'registry.customer-complex',
+      addressPrefix: '',
+      typeKey: 'type',
+    }),
     REGISTRY_LEGAL_DATE_FIELD,
     {
       key: 'alias',

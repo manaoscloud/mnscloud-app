@@ -26,6 +26,7 @@ import { MnsSearchSelectFieldComponent } from '../../../../shared/forms/mns-sear
 import { SettingsPageComponent } from '../../../../shared/pages/settings-page';
 import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
 import { FieldErrorKeyPipe } from '../../../../shared/forms/field-error-key.pipe';
+import { isValidCnpj, normalizeCnpj } from '../../../../shared/data-lookup/company-lookup';
 
 /** One entry of GET /billing/identity/tax-id-types. */
 export interface TaxIdType {
@@ -110,6 +111,23 @@ export function firstInvalidTab(
   if (invalid('billingEmail')) return 1;
   return ADDRESS_KEYS.some(invalid) ? 2 : -1;
 }
+
+/** Answer of `GET lookups/company/:cnpj` used by the identity form. */
+type CnpjLookupItem = {
+  legalName?: string;
+  tradeName?: string | null;
+  email?: string | null;
+  registrationStatus?: string | null;
+  address?: {
+    postalCode?: string | null;
+    street?: string | null;
+    number?: string | null;
+    complement?: string | null;
+    district?: string | null;
+    city?: string | null;
+    state?: string | null;
+  };
+};
 
 /** Brazilian states (UF codes are not translated). */
 const BR_STATE_OPTIONS =
@@ -241,6 +259,7 @@ export class BillingTenantIdentityPage {
   readonly stateOptions = BR_STATE_OPTIONS;
   readonly isBrazil = computed(() => this.model().countryCode === 'BR');
   readonly searchingZip = signal(false);
+  readonly searchingCnpj = signal(false);
   readonly partyOptions = [
     { value: 'business', label: 'Business (company)' },
     { value: 'individual', label: 'Individual (person)' },
@@ -367,6 +386,50 @@ export class BillingTenantIdentityPage {
       this.snack.success(this.i18n.t('Data copied.'));
     } catch {
       this.snack.error(this.i18n.t('Failed to copy data.'));
+    }
+  }
+
+  /** Fills empty fields from the CNPJ (platform data lookup); a non-active CNPJ is flagged. */
+  async searchCnpj(): Promise<void> {
+    const cnpj = normalizeCnpj(this.model().taxId);
+    if (!isValidCnpj(cnpj)) {
+      this.snack.warning(this.i18n.t('Inform a valid CNPJ to search.'));
+      return;
+    }
+    this.searchingCnpj.set(true);
+    try {
+      const response = await this.api.get<{ data?: { item?: CnpjLookupItem } }>(
+        `lookups/company/${cnpj}?feature=billing.identity`,
+      );
+      const item = response?.data?.item ?? {};
+      const a = item.address ?? {};
+      const keep = (current: string, value: unknown) => current || String(value ?? '');
+      this.model.update((current) => ({
+        ...current,
+        taxId: cnpj,
+        legalName: keep(current.legalName, item.legalName),
+        tradeName: keep(current.tradeName, item.tradeName),
+        billingEmail: keep(current.billingEmail, item.email),
+        addressZip: keep(current.addressZip, a.postalCode),
+        addressStreet: keep(current.addressStreet, a.street),
+        addressNumber: keep(current.addressNumber, a.number),
+        addressComplement: keep(current.addressComplement, a.complement),
+        addressDistrict: keep(current.addressDistrict, a.district),
+        addressCity: keep(current.addressCity, a.city),
+        addressState: keep(current.addressState, a.state),
+      }));
+      if (item.registrationStatus && item.registrationStatus !== 'active') {
+        this.snack.warning(
+          this.i18n.t('This CNPJ is not active at the Receita Federal. Check it before saving.'),
+          10000,
+        );
+      } else {
+        this.snack.success(this.i18n.t('CNPJ data filled.'));
+      }
+    } catch (error) {
+      this.snack.error(this.errorMessage(error));
+    } finally {
+      this.searchingCnpj.set(false);
     }
   }
 
