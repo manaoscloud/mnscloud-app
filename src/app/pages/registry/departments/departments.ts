@@ -5,6 +5,12 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  NAMED_RECORD_INITIAL_VALUES,
+  namedRecordColumns,
+  namedRecordFields,
+  namedRecordPayload,
+} from '../named-record-crud';
 
 const config = defineCrud({
   endpoint: 'registry/departments',
@@ -13,26 +19,9 @@ const config = defineCrud({
   pageDescription:
     'Manage the departments of your organization, shared by employees and the other modules.',
   bulkDelete: true,
-  initialValues: { status: 1, name: '', description: '', notes: '' },
-  columns: [
-    { id: 'name', label: 'Name', field: 'Name', uuidField: 'DepartmentUUID', kind: 'identity' },
-    { id: 'description', label: 'Description', field: 'Description' },
-    { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
-  ],
-  fields: [
-    { key: 'status', source: 'Status', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
-    { key: 'description', source: 'Description', label: 'Description', span: 2 },
-    {
-      key: 'notes',
-      source: 'Notes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-  ],
+  initialValues: NAMED_RECORD_INITIAL_VALUES,
+  columns: namedRecordColumns('DepartmentUUID'),
+  fields: namedRecordFields(),
 });
 
 @Component({
@@ -48,6 +37,6 @@ export class RegDepartmentPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) };
+    return namedRecordPayload(payload);
   }
 }
