@@ -6575,6 +6575,7 @@
   "form.validation.required": "This field is required.",
   "form.validation.invalidDate": "Invalid date. Use the system date format.",
   "form.validation.invalidJson": "Invalid JSON.",
+  "form.validation.positive": "Enter a value greater than zero.",
   "form.validation.missingOne": "Fill in the required field: {{field}}.",
   "form.validation.missingMany": "Fill in {{field}} and {{count}} more required field(s).",
   "form.validation.invalidField": "{{field}}: {{reason}}",

@@ -5,38 +5,15 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-import {
-  financialTitleBase,
-  financialTitleColumns,
-  financialTitleFields,
-  financialTitleRowActions,
-  type FinancialTitleSpec,
-} from '../financial-titles';
-
-const title: FinancialTitleSpec = {
-  direction: 'receivable',
-  uuidField: 'FinReceivableUUID',
-  party: {
-    key: 'customerUUID',
-    source: 'CustomerUUID',
-    label: 'Customer',
-    nameField: 'CustomerName',
-    endpoint: 'registry/customers',
-    quickCreate: quickCreateFor('RegCustomerRcuUUID'),
-  },
-  settlementsLabel: 'Receipts',
-};
+import { financialTitleCrud, financialTitleFields, RECEIVABLE_TITLE } from '../financial-titles';
 
 const config = defineCrud({
   endpoint: 'financial/receivables',
   uuidField: 'FinReceivableUUID',
   pageTitle: 'Accounts Receivable',
   pageDescription: 'Track incoming payments and outstanding customer invoices.',
-  ...financialTitleBase(title),
-  columns: financialTitleColumns(title),
-  fields: financialTitleFields(title),
-  rowActions: financialTitleRowActions(title),
+  ...financialTitleCrud(RECEIVABLE_TITLE),
+  fields: financialTitleFields(RECEIVABLE_TITLE),
 });
 
 @Component({
@@ -49,11 +26,5 @@ const config = defineCrud({
 export class FinancialReceivablesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
-  }
-
-  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
-    if (!super.validatePayload(payload)) return false;
-    if (Number(payload['amount']) > 0) return true;
-    return this.rejectField('amount', 'Amount must be greater than zero.');
   }
 }

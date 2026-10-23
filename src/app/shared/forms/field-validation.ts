@@ -11,7 +11,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
  */
 
 /** Why a field was rejected. `custom` carries a page-specific message. */
-export type FieldErrorKind = 'required' | 'invalidDate' | 'invalidJson' | 'custom';
+export type FieldErrorKind = 'required' | 'invalidDate' | 'invalidJson' | 'positive' | 'custom';
 
 export interface FieldError {
   readonly kind: FieldErrorKind;
@@ -25,6 +25,7 @@ export const FIELD_ERROR_MESSAGES: Record<Exclude<FieldErrorKind, 'custom'>, str
   required: 'form.validation.required',
   invalidDate: 'form.validation.invalidDate',
   invalidJson: 'form.validation.invalidJson',
+  positive: 'form.validation.positive',
 };
 
 export function fieldError(

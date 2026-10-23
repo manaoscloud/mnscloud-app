@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "96c103de8826",
+  "version": "07ceeb35729e",
   "language": "pt-BR",
   "entries": [
     {
@@ -1636,8 +1636,87 @@
       "fields": []
     },
     {
-      "route": "/erp/financial/account/payables",
-      "menuPath": "ERP › Financeiro › Contas a pagar",
+      "route": "/erp/human-resources/departments",
+      "menuPath": "Recursos humanos › Departamentos",
+      "scope": "tenant",
+      "title": "Departamentos",
+      "description": "Gerencie os departamentos de recursos humanos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/erp/human-resources/positions",
+      "menuPath": "Recursos humanos › Cargos",
+      "scope": "tenant",
+      "title": "Cargos",
+      "description": "Gerencie os cargos de recursos humanos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/erp/human-resources/time-clock-accounts",
+      "menuPath": "Recursos humanos › Ponto",
+      "scope": "tenant",
+      "title": "Contas de ponto",
+      "description": "Gere acessos seguros do Pulse para funcionários do RH.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/financial/gateway-accounts",
+      "menuPath": "Financeiro › Pagamentos › Gateways",
+      "scope": "tenant",
+      "title": "Gateways",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/financial/payables",
+      "menuPath": "Financeiro › Contas a pagar",
       "scope": "tenant",
       "title": "Contas a pagar",
       "description": "Acompanhe contas de fornecedores e programe pagamentos de saída.",
@@ -1673,45 +1752,8 @@
       ]
     },
     {
-      "route": "/erp/financial/account/receivables",
-      "menuPath": "ERP › Financeiro › Contas a receber",
-      "scope": "tenant",
-      "title": "Contas a receber",
-      "description": "Acompanhe pagamentos recebidos e faturas de clientes em aberto.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Cliente",
-          "help": ""
-        },
-        {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Número do documento",
-          "help": ""
-        },
-        {
-          "label": "Data de vencimento",
-          "help": ""
-        },
-        {
-          "label": "Valor",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/financial/payment-charge",
-      "menuPath": "ERP › Financeiro › Boletos e Pix",
+      "route": "/financial/payment-charges",
+      "menuPath": "Financeiro › Boletos e Pix",
       "scope": "tenant",
       "title": "Boletos e Pix",
       "description": "Boletos e Pix emitidos no seu gateway de pagamento para contas a receber, vendas do PDV e cobranças avulsas, com situação de registro e pagamento no banco.",
@@ -1751,16 +1793,8 @@
       ]
     },
     {
-      "route": "/erp/financial/payment-gateway",
-      "menuPath": "ERP › Financeiro › Pagamentos › Gateways",
-      "scope": "tenant",
-      "title": "Gateways",
-      "description": "",
-      "fields": []
-    },
-    {
-      "route": "/erp/financial/payment-method",
-      "menuPath": "ERP › Financeiro › Pagamentos › Métodos",
+      "route": "/financial/payment-methods",
+      "menuPath": "Financeiro › Pagamentos › Métodos",
       "scope": "tenant",
       "title": "Métodos de pagamento",
       "description": "Formas como seus clientes podem pagar, usadas em contas a receber e faturas.",
@@ -1788,18 +1822,18 @@
       ]
     },
     {
-      "route": "/erp/human-resources/departments",
-      "menuPath": "ERP › Recursos humanos › Departamentos",
+      "route": "/financial/receivables",
+      "menuPath": "Financeiro › Contas a receber",
       "scope": "tenant",
-      "title": "Departamentos",
-      "description": "Gerencie os departamentos de recursos humanos.",
+      "title": "Contas a receber",
+      "description": "Acompanhe pagamentos recebidos e faturas de clientes em aberto.",
       "fields": [
         {
           "label": "Status",
           "help": ""
         },
         {
-          "label": "Nome",
+          "label": "Cliente",
           "help": ""
         },
         {
@@ -1807,49 +1841,15 @@
           "help": ""
         },
         {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/human-resources/positions",
-      "menuPath": "ERP › Recursos humanos › Cargos",
-      "scope": "tenant",
-      "title": "Cargos",
-      "description": "Gerencie os cargos de recursos humanos.",
-      "fields": [
-        {
-          "label": "Status",
+          "label": "Número do documento",
           "help": ""
         },
         {
-          "label": "Nome",
+          "label": "Data de vencimento",
           "help": ""
         },
         {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/human-resources/time-clock-accounts",
-      "menuPath": "ERP › Recursos humanos › Ponto",
-      "scope": "tenant",
-      "title": "Contas de ponto",
-      "description": "Gere acessos seguros do Pulse para funcionários do RH.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Colaborador",
+          "label": "Valor",
           "help": ""
         },
         {

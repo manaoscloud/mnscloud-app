@@ -6575,6 +6575,7 @@
   "form.validation.required": "Campo obligatorio.",
   "form.validation.invalidDate": "Fecha no válida. Use el formato de fecha del sistema.",
   "form.validation.invalidJson": "JSON no válido.",
+  "form.validation.positive": "Introduzca un valor mayor que cero.",
   "form.validation.missingOne": "Complete el campo obligatorio: {{field}}.",
   "form.validation.missingMany": "Complete {{field}} y {{count}} campo(s) obligatorio(s) más.",
   "form.validation.invalidField": "{{field}}: {{reason}}",

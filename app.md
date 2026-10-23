@@ -1080,7 +1080,8 @@ its reason appears under it, a toast names it and the first one receives focus.
 - Save/Confirm/Submit buttons are never disabled by form validity (only while saving, loading or
   for a non-field gate such as a captcha). The click reveals the invalid fields instead.
 - Generic CRUD (`ConfigurableCrudPageBase`): `validatePayload` collects every invalid visible
-  field (required, invalid date, invalid JSON) into `fieldErrors()`; the toast names the first
+  field (required, invalid date, invalid JSON, `positive: true` numbers not greater than zero —
+  `form.validation.positive`) into `fieldErrors()`; the toast names the first
   (`form.validation.missingOne` / `missingMany`); the form switches to the tab of the first
   invalid field in visual order (tab order, then declaration order), expands a compact address
   section and focuses it. Tabs holding errors get `crud-tab-invalid` (red label + dot). Errors

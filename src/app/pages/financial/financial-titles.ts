@@ -5,6 +5,7 @@ import type {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
 import { settlementsCollection } from './settlements';
 
 /** Building blocks of the Financial title pages: receivables and payables differ only by party. */
@@ -106,7 +107,15 @@ export function financialTitleFields(spec: FinancialTitleSpec): ConfigurableCrud
     { key: 'description', source: 'Description', label: 'Description', required: true, span: 2 },
     { key: 'docNumber', source: 'DocNumber', label: 'Document number', span: 1 },
     { key: 'dueDate', source: 'DueDate', label: 'Due date', type: 'date', required: true, span: 1 },
-    { key: 'amount', source: 'Amount', label: 'Amount', type: 'currency', required: true, span: 1 },
+    {
+      key: 'amount',
+      source: 'Amount',
+      label: 'Amount',
+      type: 'currency',
+      required: true,
+      positive: true,
+      span: 1,
+    },
     {
       key: 'notes',
       source: 'Notes',
@@ -137,5 +146,42 @@ export function financialTitlePayload(payload: ConfigurableCrudRecord): Configur
     docNumber: payload['docNumber'] || null,
     notes: payload['notes'] || null,
     amount: Number(payload['amount']),
+  };
+}
+
+export const RECEIVABLE_TITLE: FinancialTitleSpec = {
+  direction: 'receivable',
+  uuidField: 'FinReceivableUUID',
+  party: {
+    key: 'customerUUID',
+    source: 'CustomerUUID',
+    label: 'Customer',
+    nameField: 'CustomerName',
+    endpoint: 'registry/customers',
+    quickCreate: quickCreateFor('RegCustomerRcuUUID'),
+  },
+  settlementsLabel: 'Receipts',
+};
+
+export const PAYABLE_TITLE: FinancialTitleSpec = {
+  direction: 'payable',
+  uuidField: 'FinPayableUUID',
+  party: {
+    key: 'supplierUUID',
+    source: 'SupplierUUID',
+    label: 'Supplier',
+    nameField: 'SupplierName',
+    endpoint: 'registry/suppliers',
+    quickCreate: quickCreateFor('RegSupplierRsuUUID'),
+  },
+  settlementsLabel: 'Payments',
+};
+
+/** A title page configuration except its endpoint, identity, texts and fields. */
+export function financialTitleCrud(spec: FinancialTitleSpec) {
+  return {
+    ...financialTitleBase(spec),
+    columns: financialTitleColumns(spec),
+    rowActions: financialTitleRowActions(spec),
   };
 }
