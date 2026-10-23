@@ -292,6 +292,45 @@ export const routes: Routes = [
             title: 'Settings • AI • Usage | mnscloud',
             data: { scope: 'master', permission: 'platform.ai.manage', breadcrumb: 'AI usage' },
           },
+          // Data lookups (Settings › Lookups): CEP, CNPJ, IE and CPF providers, master only.
+          {
+            path: 'settings/lookups/types',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/lookup-types/lookup-types').then((m) => m.LookupTypesPage),
+            title: 'Settings • Lookups • Lookup types | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.lookup.manage',
+              breadcrumb: 'Lookup types',
+            },
+          },
+          {
+            path: 'settings/lookups/providers',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/lookup-providers/lookup-providers').then(
+                (m) => m.LookupProvidersPage,
+              ),
+            title: 'Settings • Lookups • Providers | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.lookup.manage',
+              breadcrumb: 'Lookup providers',
+            },
+          },
+          {
+            path: 'settings/lookups/usage',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/lookup-usage/lookup-usage').then((m) => m.LookupUsagePage),
+            title: 'Settings • Lookups • Usage | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.lookup.manage',
+              breadcrumb: 'Lookup usage',
+            },
+          },
           {
             path: 'support/platform/knowledge-articles',
             canActivate: [permissionGuard],
