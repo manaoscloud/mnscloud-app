@@ -41,6 +41,14 @@ const messages: Record<string, string> = {
     'Your contracts changed since the quote. Open the offer again to review the switch.',
   BILLING_SWITCH_CURRENCY_MISMATCH: 'Contracts in another currency cannot be switched.',
   BILLING_SWITCH_SCOPE_INVALID: 'Only modules and packages can be switched.',
+  BILLING_SWITCH_PROMOTION_UNSUPPORTED:
+    'A promotion cannot be used on a plan change scheduled for the end of the period.',
+  BILLING_PACKAGE_PRIMARY_NOT_ITEM:
+    'The primary product must be an active module item of this package. Add it to the package items first.',
+  BILLING_PACKAGE_PRIMARY_ITEM_REQUIRED:
+    'This item is the primary product of the package. Choose another primary product first.',
+  BILLING_PACKAGE_CODE_INVALID:
+    'Use a package code like package.voip.start (lowercase segments separated by dots).',
   BILLING_FAILED: 'Unable to complete the billing operation.',
 };
 

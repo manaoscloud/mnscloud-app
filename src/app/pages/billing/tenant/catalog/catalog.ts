@@ -165,7 +165,13 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
           : {}),
       });
       this.checkoutKeys.delete(requestKey);
-      this.snack.success(isSwitch ? 'Plan switched.' : 'Subscription created.');
+      this.snack.success(
+        preview?.mode === 'SCHEDULED'
+          ? 'Plan change scheduled.'
+          : preview?.contracts.some((c) => c.coverage !== 'INFO')
+            ? 'Plan switched.'
+            : 'Subscription created.',
+      );
       this.refreshList();
     } catch {
       // The API interceptor already presents the server-side billing rejection.
