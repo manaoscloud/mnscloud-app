@@ -237,6 +237,21 @@ const config = defineCrud({
   }),
 });
 
+/** Company editor opens this same canonical profile and its per-state registrations. */
+export function companyFiscalConfig(company: ConfigurableCrudRecord, canWrite: boolean) {
+  const companyUUID = String(company['CompanyUUID']);
+  return {
+    ...config,
+    listQuery: { companyUUID },
+    canCreate: canWrite,
+    canEdit: canWrite,
+    initialValues: { ...config.initialValues, companyUUID },
+    fields: config.fields.map((field) =>
+      field.key === 'companyUUID' ? { ...field, disabledWhen: () => true } : field,
+    ),
+  };
+}
+
 @Component({
   selector: 'app-fiscal-issuers',
   standalone: true,

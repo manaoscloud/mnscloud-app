@@ -770,7 +770,7 @@
   <div class="tab-content form-grid">
     @for (field of tabFields; track field.key) {
       <div class="crud-field-contents">
-        @switch (field.type) {
+        @switch (resolvedFieldType(field)) {
           @case ('search-select') {
             <mns-search-select-field
               [attr.data-field-key]="field.key"
@@ -942,7 +942,7 @@
           <div class="tab-content form-grid">
             @for (field of recordFields(); track field.key) {
               <div class="crud-field-contents">
-                @switch (field.type) {
+                @switch (resolvedFieldType(field)) {
                   @case ('date') {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
                       <mat-label
@@ -1333,6 +1333,60 @@
           }
         }
 
+        @if (contactFields().length) {
+          <mat-tab
+            [label]="'registry.contacts' | transloco"
+            [labelClass]="tabLabelClass('contacts')"
+          >
+            <div class="tab-content">
+              <h3>{{ 'registry.generalChannels' | transloco }}</h3>
+            </div>
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: contactFields() }"
+            />
+            <div class="tab-content related-collection-tab">
+              <h3>{{ 'registry.contactsBySector' | transloco }}</h3>
+              @for (action of contactTabActions(); track action.label) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="action.disabled?.()"
+                  (click)="action.run(this)"
+                >
+                  <mat-icon>{{ action.icon }}</mat-icon
+                  >{{ action.label | transloco }}
+                </button>
+              }
+              <p>{{ 'registry.contactSaveHelp' | transloco }}</p>
+              @if (editingRecord()) {
+                @for (collection of relatedCollections(); track collection.key) {
+                  @if (collection.key === 'contacts') {
+                    @if (embeddedCollectionComponent(); as embeddedTable) {
+                      <ng-container
+                        *ngComponentOutlet="
+                          embeddedTable;
+                          injector: relatedCollectionInjector(collection)
+                        "
+                      />
+                    }
+                  }
+                }
+              } @else {
+                <p>{{ 'registry.saveBeforeContacts' | transloco }}</p>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="saveAndContinue()"
+                >
+                  {{ 'registry.saveAndContinue' | transloco }}
+                </button>
+              }
+            </div>
+          </mat-tab>
+        }
+
         @if (config.authenticationTabAfterRecord && authenticationFields().length) {
           <ng-container [ngTemplateOutlet]="authenticationTab" />
         }
@@ -1372,7 +1426,7 @@
                   } @else {
                     <div class="address-section-grid">
                       @for (field of section.fields; track field.key) {
-                        @switch (field.type) {
+                        @switch (resolvedFieldType(field)) {
                           @case ('date') {
                             <mat-form-field appearance="outline" [class]="fieldClass(field)">
                               <mat-label
@@ -1568,7 +1622,7 @@
             <div class="tab-content form-grid">
               @for (field of networkFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -1748,7 +1802,7 @@
             <div class="tab-content form-grid">
               @for (field of routingFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -1925,7 +1979,7 @@
             <div class="tab-content form-grid">
               @for (field of storageFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -2106,7 +2160,7 @@
             <div class="tab-content form-grid">
               @for (field of financialFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('date') {
                       <mat-form-field appearance="outline" [class]="fieldClass(field)">
                         <mat-label
@@ -2343,7 +2397,7 @@
             <div class="tab-content form-grid">
               @for (field of monitoringFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -2476,7 +2530,7 @@
             <div class="tab-content form-grid">
               @for (field of matchFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -2609,7 +2663,7 @@
             <div class="tab-content form-grid">
               @for (field of transformFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('search-select') {
                       <mns-search-select-field
                         [attr.data-field-key]="field.key"
@@ -2795,7 +2849,11 @@
           </mat-tab>
         }
 
-        @if (authenticationFields().length && !config.authenticationTabAfterRecord) {
+        @if (
+          authenticationFields().length &&
+          !config.authenticationTabAfterRecord &&
+          !config.authenticationAfterFiscal
+        ) {
           <ng-container [ngTemplateOutlet]="authenticationTab" />
         }
 
@@ -2807,7 +2865,7 @@
             <div class="tab-content form-grid">
               @for (field of authenticationFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('secret-content') {
                       <mns-secret-content-field
                         [attr.data-field-key]="field.key"
@@ -3040,15 +3098,46 @@
         </ng-template>
 
         @for (simpleTab of simpleTabs(); track simpleTab.key) {
-          @if (simpleTab.fields.length) {
+          @if (simpleTab.fields.length || simpleTab.actions.length) {
             <mat-tab
               [label]="tabLabel(simpleTab.key, simpleTab.label) | transloco"
               [labelClass]="tabLabelClass(simpleTab.key)"
             >
+              @for (action of simpleTab.actions; track action.label) {
+                <div class="tab-content">
+                  <p>{{ action.help | transloco }}</p>
+                  @if (!editingRecord()) {
+                    <p>{{ 'registry.saveBeforeFiscal' | transloco }}</p>
+                  }
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="!editingRecord() || action.disabled?.()"
+                    (click)="action.run(this)"
+                  >
+                    <mat-icon>{{ action.icon }}</mat-icon
+                    >{{ action.label | transloco }}
+                  </button>
+                </div>
+              }
+              @if (editingRecord()) {
+                @for (collection of tabCollections(simpleTab.key); track collection.key) {
+                  <div class="tab-content related-collection-tab">
+                    @if (embeddedCollectionComponent(); as embeddedTable) {
+                      <ng-container
+                        *ngComponentOutlet="
+                          embeddedTable;
+                          injector: relatedCollectionInjector(collection)
+                        "
+                      />
+                    }
+                  </div>
+                }
+              }
               <div class="tab-content form-grid">
                 @for (field of simpleTab.fields; track field.key) {
                   <div class="crud-field-contents">
-                    @switch (field.type) {
+                    @switch (resolvedFieldType(field)) {
                       @case ('search-select') {
                         <mns-search-select-field
                           [attr.data-field-key]="field.key"
@@ -3176,6 +3265,10 @@
           }
         }
 
+        @if (authenticationFields().length && config.authenticationAfterFiscal) {
+          <ng-container [ngTemplateOutlet]="authenticationTab" />
+        }
+
         @if (codecFields().length) {
           <mat-tab
             [label]="tabLabel('codecs', 'Codecs') | transloco"
@@ -3184,7 +3277,7 @@
             <div class="tab-content form-grid">
               @for (field of codecFields(); track field.key) {
                 <div class="crud-field-contents">
-                  @switch (field.type) {
+                  @switch (resolvedFieldType(field)) {
                     @case ('select') {
                       <mns-search-select-field
                         [invalid]="hasFieldError(field)"
@@ -3320,21 +3413,23 @@
         }
         @if (showRelatedCollections()) {
           @for (collection of relatedCollections(); track collection.key) {
-            <mat-tab
-              [label]="collection.label | transloco"
-              [labelClass]="relatedTabLabelClass(collection)"
-            >
-              <div class="tab-content related-collection-tab">
-                @if (embeddedCollectionComponent(); as embeddedTable) {
-                  <ng-container
-                    *ngComponentOutlet="
-                      embeddedTable;
-                      injector: relatedCollectionInjector(collection)
-                    "
-                  />
-                }
-              </div>
-            </mat-tab>
+            @if (collection.key !== 'contacts' && !collection.tab) {
+              <mat-tab
+                [label]="collection.label | transloco"
+                [labelClass]="relatedTabLabelClass(collection)"
+              >
+                <div class="tab-content related-collection-tab">
+                  @if (embeddedCollectionComponent(); as embeddedTable) {
+                    <ng-container
+                      *ngComponentOutlet="
+                        embeddedTable;
+                        injector: relatedCollectionInjector(collection)
+                      "
+                    />
+                  }
+                </div>
+              </mat-tab>
+            }
           }
         }
 
@@ -3439,6 +3534,11 @@
               yPosition="below"
               class="mns-menu mns-menu-compact save-more-menu"
             >
+              @if (config.saveAndContinue) {
+                <button mat-menu-item mnsMenuItem type="button" (click)="saveAndContinue()">
+                  <mat-icon>save</mat-icon>{{ 'registry.saveAndContinue' | transloco }}
+                </button>
+              }
               <button mat-menu-item mnsMenuItem type="button" (click)="saveItem(true)">
                 <mat-icon>add</mat-icon>
                 <mns-menu-label>{{ 'Save/New' | transloco }}</mns-menu-label>

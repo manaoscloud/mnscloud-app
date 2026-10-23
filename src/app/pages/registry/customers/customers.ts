@@ -1,3 +1,4 @@
+import { registryUnifiedConfig } from '../registry-unified';
 import { Component, computed, resource } from '@angular/core';
 
 import {
@@ -570,7 +571,7 @@ export class RegCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   );
 
   constructor() {
-    super(CUSTOMER_CONFIG);
+    super(registryUnifiedConfig(CUSTOMER_CONFIG));
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -595,6 +596,8 @@ export class RegCustomerPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       addressMainCity: complex.City ?? '',
       addressMainState: complex.State ?? '',
       addressMainCountry: complex.Country ?? '',
+      sameCountry_addressMainCountry:
+        Boolean(complex.Country) && complex.Country === this.formValues()['countryCode'],
     });
   }
 }

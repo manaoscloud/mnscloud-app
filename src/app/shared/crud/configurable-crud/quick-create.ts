@@ -302,6 +302,14 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.CyberSecurityTrustedNodesPage,
       ),
   },
+  RegContactSectorRseUUID: {
+    label: 'registry.newSector',
+    permission: 'tenant.registry.contact-sectors.write',
+    loadComponent: () =>
+      import('../../../pages/registry/contact-sectors/contact-sectors').then(
+        (m) => m.RegContactSectorPage,
+      ),
+  },
   RegCompanyRcoUUID: {
     label: 'Create company',
     loadComponent: () =>

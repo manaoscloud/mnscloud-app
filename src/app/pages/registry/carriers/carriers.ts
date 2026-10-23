@@ -1,3 +1,4 @@
+import { registryUnifiedConfig } from '../registry-unified';
 import { Component } from '@angular/core';
 
 import {
@@ -36,6 +37,6 @@ const CARRIER_CONFIG: ConfigurableCrudConfig = registryPartyConfig({
 })
 export class RegCarrierPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(CARRIER_CONFIG);
+    super(registryUnifiedConfig(CARRIER_CONFIG));
   }
 }
