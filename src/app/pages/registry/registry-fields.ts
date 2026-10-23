@@ -4,6 +4,7 @@ import type {
   ConfigurableCrudField,
   ConfigurableCrudRecord,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { companyLookupButton } from '../../shared/data-lookup/company-lookup';
 
 /** Building blocks of the Registry forms: every record shares the same contact and address shape. */
 
@@ -152,6 +153,46 @@ export const REGISTRY_DOCUMENT_FIELD: ConfigurableCrudField = {
   span: 1,
 };
 
+/**
+ * Document field with the "Search CNPJ" button (platform data lookup), which fills the name, legal
+ * name, opening date, contact and the address of `addressPrefix` (the keys of registryAddressFields).
+ */
+export function registryDocumentField(spec: {
+  feature: string;
+  addressPrefix: string;
+  typeKey?: string;
+  legalNameKey?: string;
+  municipality?: boolean;
+}): ConfigurableCrudField {
+  const key = (part: RegistryAddressPart) => fieldKey(spec.addressPrefix, part);
+  return {
+    ...REGISTRY_DOCUMENT_FIELD,
+    suffixButtons: [
+      companyLookupButton({
+        feature: spec.feature,
+        documentKey: 'document',
+        typeKey: spec.typeKey,
+        nameKey: 'name',
+        legalNameKey: spec.legalNameKey,
+        openingDateKey: 'legalDate',
+        emailKey: 'email',
+        phoneKey: 'phone',
+        address: {
+          zip: key('Zip'),
+          street: key('Street'),
+          number: key('Number'),
+          complement: key('Complement'),
+          district: key('District'),
+          city: key('City'),
+          state: key('State'),
+          country: key('Country'),
+          ...(spec.municipality ? { municipalityCode: key('MunicipalityCode') } : {}),
+        },
+      }),
+    ],
+  };
+}
+
 export const REGISTRY_OPENING_DATE_FIELD: ConfigurableCrudField = {
   key: 'legalDate',
   source: 'LegalDate',
@@ -212,11 +253,11 @@ export function registryNameField(
 }
 
 /** Name, type, document, contact, address and notes of a supplier, carrier or reseller. */
-export function registryPartyFields(): ConfigurableCrudField[] {
+export function registryPartyFields(feature = 'registry.party'): ConfigurableCrudField[] {
   return [
     REGISTRY_STATUS_FIELD,
     REGISTRY_TYPE_FIELD,
-    REGISTRY_DOCUMENT_FIELD,
+    registryDocumentField({ feature, addressPrefix: '', typeKey: 'type' }),
     REGISTRY_LEGAL_DATE_FIELD,
     registryNameField({ breakBefore: true }),
     REGISTRY_EMAIL_FIELD,
@@ -279,6 +320,6 @@ export function registryPartyConfig(texts: RegistryPartyTexts): ConfigurableCrud
     inactiveValue: 0,
     initialValues: registryPartyValues(),
     columns: registryPartyColumns(texts.uuidField),
-    fields: registryPartyFields(),
+    fields: registryPartyFields(`registry.${String(texts.endpoint).split('/').pop()}`),
   };
 }

@@ -98,6 +98,19 @@
               [placeholder]="taxIdPlaceholder()"
               autocomplete="off"
             />
+            @if (model().taxIdType === 'br_cnpj') {
+              <button
+                mat-icon-button
+                matIconSuffix
+                type="button"
+                [attr.aria-label]="'Search CNPJ' | transloco"
+                [matTooltip]="'Search CNPJ' | transloco"
+                [disabled]="searchingCnpj() || !canManage()"
+                (click)="searchCnpj()"
+              >
+                <mat-icon>travel_explore</mat-icon>
+              </button>
+            }
             <mns-field-help
               matIconSuffix
               [label]="'Tax ID' | transloco"
