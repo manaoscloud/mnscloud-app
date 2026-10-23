@@ -693,6 +693,20 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'logs.sources' },
               },
               {
+                path: 'website/sites',
+                loadComponent: () =>
+                  import('./pages/website/sites/sites').then((m) => m.WebsiteSitesPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.sites' },
+              },
+              {
+                path: 'website/sites/:uuid/editor',
+                loadComponent: () =>
+                  import('./pages/website/editor/editor').then((m) => m.WebsiteEditorPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.editor' },
+              },
+              {
                 path: 'authentication/accounts',
                 loadComponent: () =>
                   import('./pages/authentication/accounts/accounts').then(
@@ -2891,6 +2905,15 @@ export const routes: Routes = [
                   import('./pages/dns/diagnostics/diagnostics').then((m) => m.DnsDiagnosticsPage),
                 title: 'DNS',
                 data: { scope: 'master', breadcrumb: 'dns.diagnostics' },
+              },
+              {
+                path: 'website/parameters',
+                loadComponent: () =>
+                  import('./pages/website/parameters/parameters').then(
+                    (m) => m.WebsiteParametersPage,
+                  ),
+                title: 'Website',
+                data: { scope: 'master', breadcrumb: 'website.parameters' },
               },
               {
                 path: 'hosting/webhost',

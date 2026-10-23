@@ -661,6 +661,29 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  {
+    id: 'website',
+    label: 'nav.website',
+    icon: 'language',
+    children: [
+      {
+        id: 'website/sites',
+        label: 'nav.website.sites',
+        icon: 'web',
+        requiresEnvironment: true,
+        route: '/website/sites',
+        entitlementCode: 'module.website.site',
+      },
+      {
+        id: 'website/parameters',
+        label: 'nav.website.parameters',
+        icon: 'tune',
+        masterRoute: '/system/website/parameters',
+        permissions: ['platform.master.access'],
+      },
+    ],
+  },
+
   // ✅ InfraGIS (tenant)
   {
     id: 'infragis',

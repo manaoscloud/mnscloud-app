@@ -655,6 +655,11 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.SupportTicketChannelsPage,
       ),
   },
+  ThemeDomainTdoUUID: {
+    label: 'Create domain',
+    loadComponent: () =>
+      import('../../../pages/settings/themes/themes').then((m) => m.SettingsThemesPage),
+  },
   VoipBlacklistVbkUUID: {
     label: 'Create blacklist',
     loadComponent: () =>

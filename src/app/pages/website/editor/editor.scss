@@ -1,0 +1,111 @@
+// Website editor widgets only (summary chips, section cards, entry actions); the page shell,
+// form grids, tabs and footer come from the shared content-page styles.
+.website-editor-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-bottom: 0.25rem;
+}
+.website-editor-meta {
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+.website-editor-link {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.website-editor-dns-error {
+  flex-basis: 100%;
+}
+.website-editor-heading {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.website-editor-row-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0 0.5rem;
+  .website-editor-heading {
+    margin: 0;
+  }
+}
+.website-editor-add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  mns-search-select-field {
+    min-width: 14rem;
+  }
+}
+.website-editor-section {
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.website-editor-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.website-editor-section-title {
+  font-weight: 500;
+}
+.website-editor-entry-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+.website-editor-add-item {
+  margin-top: 0.25rem;
+}
+.website-editor-default {
+  margin-left: 0.25rem;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.8125rem;
+}
+.website-color-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  vertical-align: middle;
+}
+.website-editor-actions .website-editor-primary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+@media (max-width: 900px) {
+  .website-editor-add {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    mns-search-select-field {
+      min-width: 0;
+    }
+  }
+  .website-editor-entry-actions {
+    justify-content: flex-start;
+  }
+  .website-editor-actions .website-editor-primary {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .website-editor-actions a,
+  .website-editor-actions button {
+    width: 100%;
+  }
+}
