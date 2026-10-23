@@ -10,6 +10,7 @@ const spec = {
   documentKey: 'document',
   nameKey: 'name',
   legalNameKey: 'legalName',
+  tradeNameKey: 'tradeName',
   openingDateKey: 'legalDate',
   emailKey: 'email',
   phoneKey: 'phone',
@@ -39,7 +40,7 @@ describe('company (CNPJ) lookup helpers', () => {
     const values = companyLookupValues(spec, {
       document: '33683111000280',
       legalName: 'ACME LTDA',
-      tradeName: null,
+      tradeName: 'ACME',
       openingDate: '1967-06-30',
       email: null,
       phones: ['6134939002'],
@@ -51,7 +52,8 @@ describe('company (CNPJ) lookup helpers', () => {
         ibgeCode: null,
       },
     });
-    expect(values['name']).toBe('ACME LTDA');
+    expect(values['name']).toBe('ACME');
+    expect(values['tradeName']).toBe('ACME');
     expect(values['legalName']).toBe('ACME LTDA');
     expect(values['phone']).toBe('6134939002');
     expect(values['addressMainCountry']).toBe('BR');

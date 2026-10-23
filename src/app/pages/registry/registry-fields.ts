@@ -173,7 +173,9 @@ export function registryDocumentField(spec: {
         documentKey: 'document',
         typeKey: spec.typeKey,
         nameKey: 'name',
-        legalNameKey: spec.legalNameKey,
+        // The unified Registry form has legal name and trade name on every record.
+        legalNameKey: spec.legalNameKey ?? 'legalName',
+        tradeNameKey: 'tradeName',
         openingDateKey: 'legalDate',
         emailKey: 'email',
         phoneKey: 'phone',
