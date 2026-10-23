@@ -1355,7 +1355,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (continueEditing && !current) {
         const created = quickCreateResponseRecord(response);
         const uuid = created?.[this.config.uuidField];
-        if (!uuid) throw new Error('The created record identifier was not returned.');
+        if (typeof uuid !== 'string' || !uuid) {
+          throw new Error('The created record identifier was not returned.');
+        }
         // Retain the persisted identity before the GET, so a failed refresh cannot create a duplicate.
         const record = { ...created } as T;
         for (const field of this.config.fields) {
@@ -1634,25 +1636,26 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       activeStatusValues: [1, 'true'],
       initialValues: collection.initialValues,
       fields: collection.fields,
-      columns: collection.columns.map((column) =>
-        column.kind === 'status'
-          ? { id: column.id, label: column.label, field: column.field, kind: 'status' as const }
-          : {
-              id: column.id,
-              label: column.label,
-              field: column.field,
-              kind:
-                column.kind === 'identity'
-                  ? ('identity' as const)
-                  : column.kind === 'number'
-                    ? ('number' as const)
-                    : ('text' as const),
-              uuidField:
-                column.uuidField ?? (column.kind === 'identity' ? collection.uuidField : undefined),
-              value: (row: ConfigurableCrudRecord) =>
-                this.relatedCollectionColumnValue(row, column),
-            },
-      ),
+      columns: collection.columns.map((column) => {
+        if (column.kind === 'status') {
+          return {
+            id: column.id,
+            label: column.label,
+            field: column.field,
+            kind: 'status' as const,
+          };
+        }
+        const kind = column.kind === 'identity' || column.kind === 'number' ? column.kind : 'text';
+        return {
+          id: column.id,
+          label: column.label,
+          field: column.field,
+          kind,
+          uuidField:
+            column.uuidField ?? (column.kind === 'identity' ? collection.uuidField : undefined),
+          value: (row: ConfigurableCrudRecord) => this.relatedCollectionColumnValue(row, column),
+        };
+      }),
       rowActions: (collection.rowActions ?? []).map((action) => ({
         key: action.key,
         label: action.label,

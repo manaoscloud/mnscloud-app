@@ -1,3 +1,4 @@
+import { registryText } from './registry-fields';
 import { TranslocoService } from '@jsverse/transloco';
 import { CONTACT_SECTORS_CONFIG } from './contact-sectors/contact-sectors';
 import { AuthService } from '../../services/auth.service';
@@ -102,14 +103,14 @@ export function registryContacts(endpoint: string): ConfigurableCrudRelatedColle
       },
       field('phone', 'Phone', {
         type: 'phone',
-        requiredWhen: ({ values }) => !String(values['email'] ?? '').trim(),
+        requiredWhen: ({ values }) => !registryText(values['email']).trim(),
         help: 'registry.phoneOrEmail',
       }),
       field('extension', 'registry.extension'),
       field('email', 'E-mail', {
         type: 'email',
         span: 2,
-        requiredWhen: ({ values }) => !String(values['phone'] ?? '').trim(),
+        requiredWhen: ({ values }) => !registryText(values['phone']).trim(),
       }),
     ],
     columns: [
@@ -140,7 +141,7 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
     defaultValue: [],
   });
   const types = (values: ConfigurableCrudRecord) => {
-    const country = String(values['countryCode'] || '');
+    const country = registryText(values['countryCode']);
     if (!country) return [];
     const party = values['type'] === 'person' ? 'individual' : 'business';
     const local = catalog.value().filter((item) => item.CountryCode === country);
@@ -225,7 +226,7 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
           translateOptions: false,
           optionsWhen: ({ values }: { values: ConfigurableCrudRecord }) => {
             const options = countryOptions(i18n.language());
-            const value = String(values[item.key] ?? '');
+            const value = registryText(values[item.key]);
             return value && !options.some((option) => option.value === value)
               ? [{ value, label: value }, ...options]
               : options;
@@ -245,7 +246,7 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
           type: 'search-select' as const,
           translateOptions: false,
           typeWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
-            ['BR', 'BRASIL', 'BRAZIL'].includes(String(values[countryKey] || '').toUpperCase())
+            ['BR', 'BRASIL', 'BRAZIL'].includes(registryText(values[countryKey]).toUpperCase())
               ? ('search-select' as const)
               : ('text' as const),
           options: states,

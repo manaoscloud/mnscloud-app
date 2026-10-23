@@ -7,6 +7,24 @@ import type {
 
 /** Building blocks of the Registry forms: every record shares the same contact and address shape. */
 
+/** Form text accepts scalar values, never object stringification. */
+export function registryText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  return typeof value === 'number' ? String(value) : '';
+}
+
+export function registryNameColumn(uuidField: string): ConfigurableCrudColumn {
+  return { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField };
+}
+
+export const REGISTRY_STATUS_COLUMN: ConfigurableCrudColumn = {
+  id: 'status',
+  label: 'Status',
+  kind: 'status',
+  field: 'Status',
+  className: 'status-col',
+};
+
 export const REGISTRY_TYPE_OPTIONS = [
   { value: 'company', label: 'Company' },
   { value: 'person', label: 'Person' },
@@ -72,7 +90,7 @@ export function registryAddressFields(spec: RegistryAddressSpec): ConfigurableCr
       postalLookup: {
         enabledWhen: (values) =>
           ['', 'BR', 'BRASIL', 'BRAZIL'].includes(
-            String(values[key('Country')] ?? '').toUpperCase(),
+            registryText(values[key('Country')]).toUpperCase(),
           ),
         streetKey: key('Street'),
         districtKey: key('District'),
@@ -224,11 +242,11 @@ export function registryPartyValues(): ConfigurableCrudRecord {
 
 export function registryPartyColumns(uuidField: string): ConfigurableCrudColumn[] {
   return [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField },
+    registryNameColumn(uuidField),
     { id: 'type', label: 'Type', field: 'Type' },
     { id: 'document', label: 'Document', field: 'Document', className: 'document-col' },
     { id: 'email', label: 'E-mail', field: 'Email', className: 'email-col' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'Status', className: 'status-col' },
+    REGISTRY_STATUS_COLUMN,
   ];
 }
 

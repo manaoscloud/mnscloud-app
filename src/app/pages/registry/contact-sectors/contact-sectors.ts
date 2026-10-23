@@ -4,6 +4,12 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  REGISTRY_STATUS_FIELD,
+  REGISTRY_STATUS_COLUMN,
+  registryNameField,
+  registryNameColumn,
+} from '../registry-fields';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 export const CONTACT_SECTORS_CONFIG = defineCrud({
@@ -16,14 +22,8 @@ export const CONTACT_SECTORS_CONFIG = defineCrud({
   // Page Description Contract: say what the resource is for, then add the key in PT/EN/ES.
   pageDescription: 'registry.sectorDescription',
   initialValues: { name: '', status: 1 },
-  fields: [
-    { key: 'status', source: 'Status', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
-  ],
-  columns: [
-    { id: 'name', field: 'Name', label: 'Name', kind: 'identity' },
-    { id: 'status', field: 'Status', label: 'Status', kind: 'status' },
-  ],
+  fields: [REGISTRY_STATUS_FIELD, registryNameField({ span: 1 })],
+  columns: [registryNameColumn('ContactSectorUUID'), REGISTRY_STATUS_COLUMN],
 });
 
 @Component({
