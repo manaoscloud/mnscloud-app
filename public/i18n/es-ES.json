@@ -9211,5 +9211,22 @@
   "A promotion cannot be used on a plan change scheduled for the end of the period.": "No se puede usar una promoción en un cambio de plan programado para el final del período.",
   "The primary product must be an active module item of this package. Add it to the package items first.": "El producto principal debe ser un ítem de módulo activo de este paquete. Agréguelo antes a los ítems del paquete.",
   "This item is the primary product of the package. Choose another primary product first.": "Este ítem es el producto principal del paquete. Elija otro producto principal antes.",
-  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use un código de paquete como package.voip.start (segmentos en minúsculas separados por puntos)."
+  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use un código de paquete como package.voip.start (segmentos en minúsculas separados por puntos).",
+  "Online since {date}": "En línea desde {date}",
+  "{count} devices registered": "{count} dispositivos registrados",
+  "Offline since {date}": "Desconectado desde {date}",
+  "Last registration: {date}": "Último registro: {date}",
+  "This extension has never registered.": "Esta extensión nunca se registró.",
+  "The PABX server has not reported recently, so the status is unknown.": "El servidor PABX no ha informado recientemente; el estado es desconocido.",
+  "The extension is disabled.": "La extensión está desactivada.",
+  "Never used": "Nunca usada",
+  "No telemetry": "Sin telemetría",
+  "Live diagnostic": "Diagnóstico en vivo",
+  "Query the PABX now for every extension of the selected PABX": "Consultar ahora en el PABX todas las extensiones del PABX seleccionado",
+  "Query the PABX now for this extension registration": "Consultar ahora en el PABX el registro de esta extensión",
+  "Extensions registered now": "Extensiones registradas ahora",
+  "Extensions that registered before and are not registered now": "Extensiones que se registraron antes y ahora no están registradas",
+  "Extensions that never registered": "Extensiones que nunca se registraron",
+  "Extensions whose PABX server has not reported recently": "Extensiones cuyo servidor PABX no ha informado recientemente",
+  "Disabled extensions": "Extensiones desactivadas"
 }

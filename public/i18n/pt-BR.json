@@ -9212,5 +9212,22 @@
   "A promotion cannot be used on a plan change scheduled for the end of the period.": "Não é possível usar promoção numa mudança de plano agendada para o fim do período.",
   "The primary product must be an active module item of this package. Add it to the package items first.": "O produto principal precisa ser um item de módulo ativo deste pacote. Adicione-o aos itens do pacote antes.",
   "This item is the primary product of the package. Choose another primary product first.": "Este item é o produto principal do pacote. Escolha outro produto principal antes.",
-  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use um código de pacote como package.voip.start (segmentos em minúsculas separados por pontos)."
+  "Use a package code like package.voip.start (lowercase segments separated by dots).": "Use um código de pacote como package.voip.start (segmentos em minúsculas separados por pontos).",
+  "Online since {date}": "Online desde {date}",
+  "{count} devices registered": "{count} dispositivos registrados",
+  "Offline since {date}": "Offline desde {date}",
+  "Last registration: {date}": "Último registro: {date}",
+  "This extension has never registered.": "Este ramal nunca registrou.",
+  "The PABX server has not reported recently, so the status is unknown.": "O servidor PABX não enviou dados recentemente; o status é desconhecido.",
+  "The extension is disabled.": "O ramal está desativado.",
+  "Never used": "Nunca usado",
+  "No telemetry": "Sem telemetria",
+  "Live diagnostic": "Diagnóstico ao vivo",
+  "Query the PABX now for every extension of the selected PABX": "Consultar agora no PABX todos os ramais do PABX selecionado",
+  "Query the PABX now for this extension registration": "Consultar agora no PABX o registro deste ramal",
+  "Extensions registered now": "Ramais registrados agora",
+  "Extensions that registered before and are not registered now": "Ramais que já registraram e agora não estão registrados",
+  "Extensions that never registered": "Ramais que nunca registraram",
+  "Extensions whose PABX server has not reported recently": "Ramais cujo servidor PABX não enviou dados recentemente",
+  "Disabled extensions": "Ramais desativados"
 }

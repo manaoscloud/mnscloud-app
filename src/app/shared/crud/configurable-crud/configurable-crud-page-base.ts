@@ -470,6 +470,17 @@ export type ConfigurableCrudListFilter = {
   hiddenWhen?: () => boolean;
 };
 
+export type ConfigurableCrudListSummaryItem = {
+  key: string;
+  /** Translation key. */
+  label: string;
+  value: number;
+  /** Status chip class (`chip-success`, `chip-failed`, `chip-warning`, `chip-skipped`, ...). */
+  chipClass: string;
+  /** Translation key. */
+  tooltip?: string;
+};
+
 export type ConfigurableCrudRowAction = {
   key: string;
   label: string;
@@ -1707,6 +1718,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   filterActionMenu(): ConfigurableCrudFilterActionMenu | null {
     return this.config.filterActionMenu ?? null;
+  }
+
+  /**
+   * Read-only counters beside the filter actions (for example extensions online/offline), in the
+   * status chip palette. Pages that keep live counters override it.
+   */
+  listSummary(): readonly ConfigurableCrudListSummaryItem[] {
+    return [];
+  }
+
+  /** Translated tooltip of a `status` chip (for example since when); empty shows none. */
+  statusChipTooltip(_row: T, _column: ConfigurableCrudColumn): string {
+    return '';
   }
 
   isFilterActionMenuDisabled(menu: ConfigurableCrudFilterActionMenu): boolean {

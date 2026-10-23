@@ -153,7 +153,10 @@
 
       <div class="filter-actions">
         @if (
-          filterActionMenu() || filterActions().length || (bulkDeleteEnabled() && selectedCount())
+          filterActionMenu() ||
+          filterActions().length ||
+          listSummary().length ||
+          (bulkDeleteEnabled() && selectedCount())
         ) {
           <div class="filter-actions-start">
             @if (filterActionMenu(); as actionMenu) {
@@ -204,6 +207,20 @@
                 <mat-icon>{{ action.icon }}</mat-icon>
                 {{ action.label | transloco }}
               </button>
+            }
+            @if (listSummary().length) {
+              <div class="crud-list-summary" role="status" aria-live="polite">
+                @for (item of listSummary(); track item.key) {
+                  <span
+                    class="status-pill status-chip state-chip crud-list-summary-chip"
+                    [ngClass]="item.chipClass"
+                    [matTooltip]="item.tooltip ? (item.tooltip | transloco) : ''"
+                    [matTooltipDisabled]="!item.tooltip"
+                  >
+                    <strong>{{ item.value }}</strong> {{ item.label | transloco }}
+                  </span>
+                }
+              </div>
             }
             @if (bulkDeleteEnabled() && selectedCount()) {
               <span class="selection-count"
@@ -754,6 +771,8 @@
 <ng-template #crudStatusChip let-row let-column="column">
   <span
     class="status-pill status-chip state-chip"
+    [matTooltip]="statusChipTooltip(row, column)"
+    [matTooltipDisabled]="!statusChipTooltip(row, column)"
     [ngClass]="statusChipClass(row, column)"
     [class.is-active]="
       !hasCustomStatusChipClass(column) && isActiveStatus(row[column.field ?? column.id])
