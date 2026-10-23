@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ac95b952f8d0",
+  "version": "97fe8eae3281",
   "language": "pt-BR",
   "entries": [
     {
@@ -6644,6 +6644,76 @@
         },
         {
           "label": "Fornecedor",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/clusters",
+      "menuPath": "DNS › Clusters",
+      "scope": "platform",
+      "title": "Clusters",
+      "description": "Clusters da plataforma que agrupam os servidores DNS de uma região.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": "Habilita o cluster. Comandos de instalação só são gerados para servidores de um cluster ativo."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Região",
+          "help": "Identifica a localização do cluster com letras minúsculas, números e hífens, por exemplo br-norte-1. É organizacional: não roteia tráfego."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/servers",
+      "menuPath": "DNS › Servidores",
+      "scope": "platform",
+      "title": "Servidores",
+      "description": "Informe o nome, o cluster e as funções. Após salvar, execute o comando gerado como root no host Debian 12 ou 13 com o MNSCloud Agent instalado e registrado. O nó é configurado e verificado automaticamente; nesta fase ele responde apenas localmente, sem portas abertas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": "Servidores ativos recebem a configuração. O servidor fica ativo quando a instalação é verificada; desative-o para interromper a entrega de configuração."
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Recursivo",
+          "help": "Instala o PowerDNS Recursor, que resolve nomes da internet com validação DNSSEC. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Autoritativo",
+          "help": "Instala o PowerDNS Authoritative, que publica zonas próprias. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Borda (dnsdist)",
+          "help": "Instala o dnsdist na frente do recursivo (ou do autoritativo): balanceamento, limites e, nas próximas fases, DoT/DoH. Exige o recursivo ou o autoritativo. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]

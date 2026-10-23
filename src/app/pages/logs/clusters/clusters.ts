@@ -5,6 +5,10 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  runtimeClusterColumns,
+  runtimeClusterFields,
+} from '../../../shared/runtime-server/runtime-server-crud';
 import { LOGS_BOOLEAN_OPTIONS, logsPayload } from '../logs-input';
 
 const config = defineCrud({
@@ -19,26 +23,7 @@ const config = defineCrud({
   deletePayload: (row) => ({ revision: Number(row['LgcRevision']) }),
   initialValues: { name: '', notes: '', status: 1, revision: 1, region: '', published: 0 },
   payload: (values, editing) => logsPayload(values, editing),
-  fields: [
-    {
-      key: 'status',
-      source: 'LgcStatus',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-      help: 'logs.clusterStatusHelp',
-    },
-    { key: 'name', source: 'LgcName', label: 'Name', required: true, span: 1 },
-    { key: 'revision', source: 'LgcRevision', label: 'Revision', type: 'number', hidden: true },
-    {
-      key: 'region',
-      source: 'LgcRegion',
-      label: 'logs.region',
-      help: 'logs.clusterRegionHelp',
-      span: 1,
-      required: true,
-      type: 'text',
-    },
+  fields: runtimeClusterFields('Lgc', 'logs', [
     {
       key: 'published',
       source: 'LgcPublished',
@@ -50,22 +35,8 @@ const config = defineCrud({
       translateOptions: true,
       options: LOGS_BOOLEAN_OPTIONS,
     },
-    {
-      key: 'notes',
-      source: 'LgcNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-  ],
-  columns: [
-    { id: 'name', field: 'LgcName', label: 'Name', kind: 'identity' },
-    { id: 'region', field: 'LgcRegion', label: 'logs.region', kind: 'text' },
-    { id: 'servers', field: 'ServerCount', label: 'logs.servers', kind: 'text' },
-    { id: 'status', field: 'LgcStatus', label: 'Status', kind: 'status' },
-  ],
+  ]),
+  columns: runtimeClusterColumns('Lgc', 'logs'),
 });
 
 @Component({

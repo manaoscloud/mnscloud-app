@@ -8,7 +8,9 @@ export const CRUD_EXEMPT_MARKER = /\/\/\s*crud-template-exempt:[ \t]*(\S[^\n]{9,
 
 export function classifyCrud(ts, html = '') {
   if (!ts.includes('@Component')) return null;
-  if (/extends\s+ConfigurableCrudPageBase\b/.test(ts)) return 'generic';
+  // RuntimeServerCrudPage (shared/runtime-server) is the generic base plus the Agent installation
+  // actions of the runtime modules; it renders the same shared template.
+  if (/extends\s+(?:ConfigurableCrudPageBase|RuntimeServerCrudPage)\b/.test(ts)) return 'generic';
   if (CRUD_EXEMPT_MARKER.test(ts)) return null;
   if (
     /MatTableDataSource/.test(ts) ||
