@@ -8,6 +8,11 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  providerHealthColumns,
+  providerStatusNameFields,
+  runProviderConnectionTest,
+} from '../platform-provider-crud';
 
 /** Platform AI providers. Official endpoints only; the API seals the key and never returns it. */
 export const AI_PROVIDER_KIND_OPTIONS = [
@@ -22,23 +27,10 @@ export function aiProviderKindLabel(kind: unknown): string {
   );
 }
 
-const HEALTH_OPTIONS = [
-  { value: 'unknown', label: 'Not tested' },
-  { value: 'healthy', label: 'Connected' },
-  { value: 'failed', label: 'Connection failed' },
-];
-
 /** A typed key long enough to be a real provider key (the API validates the rest). */
 const MIN_KEY_LENGTH = 8;
 
 type AiModelOption = { id: string; label: string };
-
-type ConnectionTestResult = {
-  Healthy?: number;
-  LatencyMs?: number | null;
-  Error?: string | null;
-  Suggestion?: string | null;
-};
 
 /** Options of a model select: the provider catalog plus the current value when it left the list. */
 export function aiModelOptions(
@@ -111,37 +103,10 @@ const config = defineCrud({
     },
     { id: 'key', field: 'ApiKeyConfigured', label: 'API key', kind: 'boolean' },
     { id: 'features', field: 'FeatureCount', label: 'AI features', kind: 'number' },
-    {
-      id: 'health',
-      field: 'LastHealthStatus',
-      label: 'Connection',
-      kind: 'status',
-      options: HEALTH_OPTIONS,
-      translateValue: true,
-      chipClass: (value) =>
-        value === 'healthy' ? 'chip-success' : value === 'failed' ? 'chip-failed' : 'chip-skipped',
-    },
-    {
-      // Status chips show no detail line: the provider reason of the last failed test lives here.
-      id: 'reason',
-      field: 'LastHealthError',
-      label: 'Failure reason',
-      width: 'xl',
-      value: (row) => String(row['LastHealthError'] ?? '') || '-',
-    },
-    { id: 'tested', field: 'LastHealthAt', label: 'Last test', kind: 'datetime', optional: true },
-    { id: 'status', field: 'Status', label: 'Status', kind: 'status', className: 'status-col' },
+    ...providerHealthColumns(),
   ],
   fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    ...providerStatusNameFields(),
     {
       key: 'kind',
       source: 'Kind',
@@ -267,20 +232,10 @@ export class AiProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
   ): Promise<void> {
     if (action.key !== 'test') return;
     try {
-      const response = await this.api.post<{ data?: ConnectionTestResult }>(
+      await runProviderConnectionTest(
+        { api: this.api, snack: this.snack, t: (key, params) => this.t(key, params) },
         `system/ai/providers/${String(row['AiProviderUUID'])}/test`,
-        {},
       );
-      const result = response.data;
-      if (Number(result?.Healthy) === 1) {
-        this.snack.success(this.t('Connection OK ({{ ms }} ms).', { ms: result?.LatencyMs ?? 0 }));
-      } else {
-        const suggestion = result?.Suggestion ? ` ${this.t(result.Suggestion)}` : '';
-        this.snack.error(
-          `${this.t('Connection failed')}: ${result?.Error ?? ''}.${suggestion}`,
-          15000,
-        );
-      }
     } finally {
       this.refreshList();
     }

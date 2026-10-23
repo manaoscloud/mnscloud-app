@@ -5,6 +5,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { logSelectFilter, READ_ONLY_LOG_CRUD } from '../platform-provider-crud';
 import { AI_FEATURE_OPTIONS, aiFeatureLabel } from '../ai-features/ai-features';
 import { aiProviderKindLabel } from '../ai-providers/ai-providers';
 
@@ -22,32 +23,10 @@ const config = defineCrud({
     'Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.',
   searchPlaceholder: 'Model, feature, reference or error',
   emptyLabel: 'No AI calls recorded.',
-  bulkDelete: false,
-  serverSidePagination: true,
-  canCreate: false,
-  canEdit: false,
-  canDelete: false,
-  statusFilter: false,
-  initialValues: {},
+  ...READ_ONLY_LOG_CRUD,
   listFilters: [
-    {
-      key: 'feature',
-      paramKey: 'feature',
-      label: 'Feature',
-      type: 'search-select',
-      span: 1,
-      options: [{ value: '', label: 'All' }, ...AI_FEATURE_OPTIONS],
-      translateOptions: true,
-    },
-    {
-      key: 'outcome',
-      paramKey: 'outcome',
-      label: 'Result',
-      type: 'search-select',
-      span: 1,
-      options: [{ value: '', label: 'All' }, ...OUTCOME_OPTIONS],
-      translateOptions: true,
-    },
+    logSelectFilter('feature', 'Feature', AI_FEATURE_OPTIONS),
+    logSelectFilter('outcome', 'Result', OUTCOME_OPTIONS),
   ],
   columns: [
     { id: 'date', field: 'DateCreated', label: 'Date', kind: 'datetime' },

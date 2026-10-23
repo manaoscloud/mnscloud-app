@@ -5,6 +5,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { logSelectFilter, READ_ONLY_LOG_CRUD } from '../platform-provider-crud';
 import { LOOKUP_TYPE_OPTIONS, lookupTypeLabel } from '../lookup-providers/lookup-providers';
 
 const OUTCOME_OPTIONS = [
@@ -30,32 +31,10 @@ const config = defineCrud({
     'Every CEP, CNPJ, state registration and CPF lookup: tenant, user, provider, source and result. The looked-up value is never stored.',
   searchPlaceholder: 'Tenant, screen, provider or error',
   emptyLabel: 'No lookups recorded.',
-  bulkDelete: false,
-  serverSidePagination: true,
-  canCreate: false,
-  canEdit: false,
-  canDelete: false,
-  statusFilter: false,
-  initialValues: {},
+  ...READ_ONLY_LOG_CRUD,
   listFilters: [
-    {
-      key: 'type',
-      paramKey: 'type',
-      label: 'Lookup type',
-      type: 'search-select',
-      span: 1,
-      options: [{ value: '', label: 'All' }, ...LOOKUP_TYPE_OPTIONS],
-      translateOptions: true,
-    },
-    {
-      key: 'outcome',
-      paramKey: 'outcome',
-      label: 'Result',
-      type: 'search-select',
-      span: 1,
-      options: [{ value: '', label: 'All' }, ...OUTCOME_OPTIONS],
-      translateOptions: true,
-    },
+    logSelectFilter('type', 'Lookup type', LOOKUP_TYPE_OPTIONS),
+    logSelectFilter('outcome', 'Result', OUTCOME_OPTIONS),
   ],
   columns: [
     { id: 'date', field: 'DateCreated', label: 'Date', kind: 'datetime' },

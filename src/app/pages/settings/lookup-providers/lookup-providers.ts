@@ -9,6 +9,11 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  providerHealthColumns,
+  providerStatusNameFields,
+  runProviderConnectionTest,
+} from '../platform-provider-crud';
 
 /** Lookup types of the platform (`services/dataLookup/types.ts` in the API). */
 export const LOOKUP_TYPE_OPTIONS = [
@@ -96,14 +101,6 @@ function integrationSlot(index: number): ConfigurableCrudField {
   };
 }
 
-const HEALTH_OPTIONS = [
-  { value: 'unknown', label: 'Not tested' },
-  { value: 'healthy', label: 'Connected' },
-  { value: 'failed', label: 'Connection failed' },
-];
-
-type ConnectionTestResult = { Healthy?: number; LatencyMs?: number | null; Error?: string | null };
-
 /** Integration slots back to the `config` and `secrets` of the kind (secrets only when typed). */
 export function lookupProviderPayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
   const kind = lookupKind(values['kind']);
@@ -184,36 +181,10 @@ const config = defineCrud({
       },
     },
     { id: 'credentials', field: 'SecretConfigured', label: 'Credentials', kind: 'boolean' },
-    {
-      id: 'health',
-      field: 'LastHealthStatus',
-      label: 'Connection',
-      kind: 'status',
-      options: HEALTH_OPTIONS,
-      translateValue: true,
-      chipClass: (value) =>
-        value === 'healthy' ? 'chip-success' : value === 'failed' ? 'chip-failed' : 'chip-skipped',
-    },
-    {
-      id: 'reason',
-      field: 'LastHealthError',
-      label: 'Failure reason',
-      width: 'xl',
-      value: (row) => String(row['LastHealthError'] ?? '') || '-',
-    },
-    { id: 'tested', field: 'LastHealthAt', label: 'Last test', kind: 'datetime', optional: true },
-    { id: 'status', field: 'Status', label: 'Status', kind: 'status', className: 'status-col' },
+    ...providerHealthColumns(),
   ],
   fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      payloadKey: 'status',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-    },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
+    ...providerStatusNameFields(),
     {
       key: 'kind',
       source: 'Kind',
@@ -298,16 +269,10 @@ export class LookupProvidersPage extends ConfigurableCrudPageBase<ConfigurableCr
   ): Promise<void> {
     if (action.key !== 'test') return;
     try {
-      const response = await this.api.post<{ data?: ConnectionTestResult }>(
+      await runProviderConnectionTest(
+        { api: this.api, snack: this.snack, t: (key, params) => this.t(key, params) },
         `system/lookups/providers/${String(row['DataLookupProviderUUID'])}/test`,
-        {},
       );
-      const result = response.data;
-      if (Number(result?.Healthy) === 1) {
-        this.snack.success(this.t('Connection OK ({{ ms }} ms).', { ms: result?.LatencyMs ?? 0 }));
-      } else {
-        this.snack.error(`${this.t('Connection failed')}: ${result?.Error ?? ''}`, 15000);
-      }
     } finally {
       this.refreshList();
     }
