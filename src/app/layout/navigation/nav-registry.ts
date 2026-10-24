@@ -811,6 +811,15 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.infragis.assets.read'],
       },
       {
+        id: 'infragis/network',
+        label: 'nav.infragis.network',
+        icon: 'hub',
+        route: '/infragis/network',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
+        permissions: ['tenant.infragis.network.read'],
+      },
+      {
         id: 'infragis/transfer',
         label: 'nav.infragis.transfer',
         icon: 'swap_vert',

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "7cdb6c29923e",
+  "version": "d753d29820ac",
   "language": "pt-BR",
   "entries": [
     {
@@ -3010,6 +3010,35 @@
       "title": "Mapa",
       "description": "Ativos georreferenciados do InfraGIS na área visível, sobre o mapa de fundo da plataforma.",
       "fields": []
+    },
+    {
+      "route": "/infragis/network",
+      "menuPath": "InfraGIS › Rede óptica",
+      "scope": "tenant",
+      "title": "Rede óptica",
+      "description": "Portas, fusões, conexões, diagrama de fusão e rastreamento com orçamento de potência de um ativo do InfraGIS.",
+      "fields": [
+        {
+          "label": "Ativo",
+          "help": "Busque por nome ou ID externo: caixas, cabos, splitters, OLTs e clientes."
+        },
+        {
+          "label": "Razão do splitter",
+          "help": "Preenche as saídas e a perda de inserção típica."
+        },
+        {
+          "label": "Adicionar portas",
+          "help": "As fibras são numeradas em tubos com as cores da ABNT NBR 14721 (verde, amarelo, branco, azul...). Portas de cliente são os adaptadores da CTO; as saídas de splitter recebem a perda."
+        },
+        {
+          "label": "Conectar",
+          "help": "Uma fibra ou porta de cliente aceita duas conexões (uma de cada lado) e uma porta de splitter, uma. O drop sai de uma porta de cliente até o cliente. Perda padrão: fusão 0,1 dB; conector, cordão e drop 0,5 dB."
+        },
+        {
+          "label": "Atenuação da fibra (dB/km)",
+          "help": "Típico: 0,35 dB/km em 1310 nm e 0,25 dB/km em 1490 nm; o comprimento do cabo vem da propriedade comprimento ou do traçado no mapa."
+        }
+      ]
     },
     {
       "route": "/infragis/projects",

@@ -17,7 +17,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
@@ -55,6 +57,22 @@ type FeatureCollection = {
 type DrawMode = 'point' | 'linestring' | 'polygon';
 
 const SOURCE = 'infragis-assets';
+const FEASIBILITY_SOURCE = 'infragis-feasibility';
+/** Customer port occupancy of boxes: free, 70% or more, full (others keep their type color). */
+const OCCUPANCY_COLORS = { ok: '#16A34A', high: '#F59E0B', full: '#DC2626' };
+export type FeasibilityRow = Record<string, any>;
+
+/** Circle of radiusM meters around a point as a GeoJSON polygon (64 vertices). */
+export function radiusPolygon(lng: number, lat: number, radiusM: number) {
+  const ring: number[][] = [];
+  const dLat = radiusM / 111320;
+  const dLng = radiusM / (111320 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
+  for (let i = 0; i <= 64; i++) {
+    const angle = (i / 64) * 2 * Math.PI;
+    ring.push([lng + dLng * Math.cos(angle), lat + dLat * Math.sin(angle)]);
+  }
+  return { type: 'Polygon', coordinates: [ring] };
+}
 const MAPLIBRE_STYLES_ID = 'mns-maplibre-styles';
 
 /**
@@ -92,7 +110,9 @@ const EMPTY: FeatureCollection = {
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatTooltipModule,
     RouterLink,
     TranslocoPipe,
@@ -152,6 +172,10 @@ export class InfraGisMapPage {
   readonly editing = signal(false);
   readonly saving = signal(false);
   readonly visibleCount = computed(() => this.collection().features.length);
+  readonly feasibilityMode = signal(false);
+  readonly feasibilityRadius = signal(300);
+  readonly feasibility = signal<FeasibilityRow[] | null>(null);
+  readonly feasibilityLoading = signal(false);
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -240,6 +264,9 @@ export class InfraGisMapPage {
       this.loading.set(false);
       this.trackViewport();
     });
+    map.on('click', (event) => {
+      if (this.feasibilityMode()) void this.checkFeasibility(event.lngLat.lng, event.lngLat.lat);
+    });
     map.on('moveend', () => {
       if (this.moveTimer) clearTimeout(this.moveTimer);
       this.moveTimer = setTimeout(() => this.trackViewport(), 250);
@@ -253,7 +280,29 @@ export class InfraGisMapPage {
 
   private addOverlay(map: MapLibreMap) {
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY, promoteId: 'IgaUUID' });
+    map.addSource(FEASIBILITY_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer({
+      id: 'infragis-feasibility',
+      type: 'fill',
+      source: FEASIBILITY_SOURCE,
+      paint: { 'fill-color': '#2563EB', 'fill-opacity': 0.12, 'fill-outline-color': '#2563EB' },
+    });
     const color = ['coalesce', ['get', 'Color'], '#22C55E'] as any;
+    const ports = ['coalesce', ['get', 'PortCount'], 0];
+    const occupancy = [
+      'case',
+      ['>', ports, 0],
+      [
+        'step',
+        ['/', ['coalesce', ['get', 'OccupiedPortCount'], 0], ports],
+        OCCUPANCY_COLORS.ok,
+        0.7,
+        OCCUPANCY_COLORS.high,
+        1,
+        OCCUPANCY_COLORS.full,
+      ],
+      color,
+    ] as any;
     map.addLayer({
       id: 'infragis-fill',
       type: 'fill',
@@ -281,7 +330,7 @@ export class InfraGisMapPage {
       source: SOURCE,
       filter: ['==', ['geometry-type'], 'Point'],
       paint: {
-        'circle-color': color,
+        'circle-color': occupancy,
         'circle-radius': 6,
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 2,
@@ -372,7 +421,7 @@ export class InfraGisMapPage {
   }
 
   private select(feature: MapGeoJSONFeature | undefined) {
-    if (this.drawMode() || this.editing()) return;
+    if (this.drawMode() || this.editing() || this.feasibilityMode()) return;
     this.selected.set(feature ? { ...feature.properties } : null);
   }
 
@@ -472,6 +521,58 @@ export class InfraGisMapPage {
   reload() {
     this.clearSelection();
     this.features.reload();
+  }
+
+  /** Feasibility mode: the next clicks on the map list boxes with free customer ports nearby. */
+  toggleFeasibility() {
+    const next = !this.feasibilityMode();
+    if (next) this.setDrawMode(null);
+    this.feasibilityMode.set(next);
+    if (!next) this.clearFeasibility();
+  }
+
+  clearFeasibility() {
+    this.feasibility.set(null);
+    (this.map?.getSource(FEASIBILITY_SOURCE) as GeoJSONSource | undefined)?.setData(EMPTY as any);
+  }
+
+  setFeasibilityRadius(event: Event) {
+    const value = Number((event.target as HTMLInputElement).value);
+    if (Number.isFinite(value)) this.feasibilityRadius.set(Math.min(Math.max(value, 1), 5000));
+  }
+
+  private async checkFeasibility(lng: number, lat: number) {
+    const radius = this.feasibilityRadius();
+    (this.map?.getSource(FEASIBILITY_SOURCE) as GeoJSONSource | undefined)?.setData({
+      type: 'Feature',
+      geometry: radiusPolygon(lng, lat, radius),
+      properties: {},
+    } as any);
+    this.feasibilityLoading.set(true);
+    try {
+      const query = new URLSearchParams({
+        latitude: lat.toFixed(7),
+        longitude: lng.toFixed(7),
+        radiusM: String(radius),
+      });
+      if (this.projectUUID()) query.set('projectUUID', this.projectUUID());
+      const result = await this.api.get<{ data: { items: FeasibilityRow[] } }>(
+        `infragis/feasibility?${query}`,
+      );
+      this.feasibility.set(result.data.items ?? []);
+    } catch (error) {
+      this.snack.error(this.message(error, 'Feasibility could not be checked.'));
+    } finally {
+      this.feasibilityLoading.set(false);
+    }
+  }
+
+  flyTo(row: FeasibilityRow) {
+    const lat = Number(row['IgmLatitude']);
+    const lng = Number(row['IgmLongitude']);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      this.map?.flyTo({ center: [lng, lat], zoom: Math.max(this.map.getZoom(), 17) });
+    }
   }
 
   private message(error: unknown, fallback: string): string {

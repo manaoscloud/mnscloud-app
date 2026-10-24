@@ -1407,6 +1407,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis' },
               },
               {
+                path: 'infragis/network',
+                loadComponent: () =>
+                  import('./pages/infragis/network/network').then((m) => m.InfraGisNetworkPage),
+                title: 'InfraGIS • Network | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
+              {
                 path: 'infragis/transfer',
                 loadComponent: () =>
                   import('./pages/infragis/transfer/transfer').then((m) => m.InfraGisTransferPage),

@@ -1737,6 +1737,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Asset types carry a properties schema (JSON Schema subset); the asset form shows its fields in the
   Properties help and can fill the required ones (`src/app/pages/infragis/infragis-properties.ts`).
   System › InfraGIS › Vertical packages edits the platform packages a project applies by copy.
+- InfraGIS › Network (`src/app/pages/infragis/network`, opened from the map with `?asset=`): ports
+  (fibers with tube and ABNT colors, customer ports, splitter presets with typical loss), connections
+  (fusion/connector/patch/drop), relations, a printable SVG splice diagram (`network-model.ts`, print
+  CSS keeps only the diagram, the browser saves it as PDF) and the trace with power budget from the API.
+  The map colors boxes by customer port occupancy and has a feasibility tool (radius around a click).
 
 ## Auth/Guards
 
