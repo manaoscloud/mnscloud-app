@@ -61,11 +61,11 @@ export type PersonLookupDialogResult = {
 
       <div class="dialog-content">
         <div class="tab-content form-grid">
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-4">
             <mat-label>{{ 'CPF' | transloco }}</mat-label>
             <input matInput [value]="cpfLabel" readonly />
           </mat-form-field>
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-4">
             <mat-label>{{ 'Date of birth' | transloco }}</mat-label>
             <input
               matInput
