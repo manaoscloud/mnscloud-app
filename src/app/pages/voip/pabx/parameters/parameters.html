@@ -363,5 +363,47 @@
         }
       </form>
     </mat-tab>
+
+    <mat-tab [label]="'Alerts' | transloco">
+      <form class="tab-content form-grid">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'Extension offline alert (minutes)' | transloco }}</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            max="1440"
+            data-field-key="extensionOfflineAlertMinutes"
+            [placeholder]="
+              isMaster()
+                ? ('Off' | transloco)
+                : info().platform.extensionOfflineAlertMinutes
+                  ? info().platform.extensionOfflineAlertMinutes + ''
+                  : ('Off' | transloco)
+            "
+            [value]="form().extensionOfflineAlertMinutes"
+            [mnsInvalid]="invalid('extensionOfflineAlertMinutes')"
+            (input)="update({ extensionOfflineAlertMinutes: numberValue($event) })"
+          />
+          <mns-field-help
+            matIconSuffix
+            [label]="'Extension offline alert (minutes)' | transloco"
+            [text]="
+              (isMaster()
+                ? 'Platform default for tenants without their own value. Empty or 0 turns the alert off. An enabled extension that registered before and stays offline this long raises one notification per PABX account, once per drop.'
+                : 'Empty inherits the platform value; 0 turns the alert off. An enabled extension that registered before and stays offline this long raises one notification per PABX account, once per drop.'
+              ) | transloco
+            "
+          />
+          <mat-error>{{ 'Enter a number between 0 and 1440.' | transloco }}</mat-error>
+        </mat-form-field>
+        <p class="span-4 settings-page-note">
+          {{
+            'Each extension keeps 30 days of online/offline history (Extensions › Presence history).'
+              | transloco
+          }}
+        </p>
+      </form>
+    </mat-tab>
   </mat-tab-group>
 </mns-settings-page>

@@ -15,6 +15,8 @@ export function notificationIcon(item: InboxNotification): string {
     case 'logs.account.cap_warning':
     case 'logs.account.capped':
       return 'receipt_long';
+    case 'voip.pabx.extension.offline':
+      return 'phone_disabled';
     default:
       return 'notifications';
   }
@@ -39,6 +41,12 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       });
     case 'logs.account.capped':
       return t('notifications.logsCapped', { account: param('account') });
+    case 'voip.pabx.extension.offline':
+      return t('notifications.pabxExtensionsOffline', {
+        account: param('account'),
+        count: param('count'),
+        minutes: param('minutes'),
+      });
     default:
       return t('notifications.generic');
   }
@@ -53,7 +61,9 @@ export function notificationDescription(item: InboxNotification, language: strin
         ? item.params['title']
         : item.type.startsWith('logs.account.')
           ? item.params['account']
-          : item.params['subject'];
+          : item.type === 'voip.pabx.extension.offline'
+            ? item.params['extensions']
+            : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

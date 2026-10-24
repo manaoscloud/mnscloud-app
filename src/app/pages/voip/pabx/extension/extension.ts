@@ -369,6 +369,12 @@ const config: ConfigurableCrudConfig = {
   },
   rowActions: [
     {
+      key: 'presence-history',
+      label: 'Presence history',
+      tooltip: 'Online and offline changes of this extension in the last 30 days',
+      icon: 'history',
+    },
+    {
       key: 'runtime-status',
       label: 'Live diagnostic',
       tooltip: 'Query the PABX now for this extension registration',
@@ -514,6 +520,48 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       // Best effort: the next tick retries; the list keeps the last known values.
     } finally {
       this.presenceInFlight = false;
+    }
+  }
+
+  /** Stored transitions only (30 days); never reaches the PABX engine. */
+  private async openPresenceHistory(extensionUUID: string, row: ExtensionRecord): Promise<void> {
+    try {
+      const response = await this.api.get<{
+        data?: { items?: PresenceHistoryItem[]; total?: number };
+      }>(`voip/pabx/extensions/${extensionUUID}/presence/history?limit=${PRESENCE_HISTORY_LIMIT}`);
+      const items = response?.data?.items ?? [];
+      const total = Number(response?.data?.total ?? items.length);
+      openDataViewerDialog(this.dialog, {
+        title: 'Presence history',
+        description: 'Online and offline changes reported by the PABX in the last 30 days.',
+        details: [
+          { label: 'Extension', value: String(row['VpeUsername'] ?? '-') },
+          { label: 'Changes', value: String(total) },
+        ],
+        sections: [
+          {
+            title: 'Changes',
+            table: {
+              columns: [
+                { key: 'occurredAt', label: 'Date', kind: 'datetime' },
+                { key: 'change', label: 'Change', translate: true },
+                { key: 'networkIP', label: 'Network', monospace: true },
+                { key: 'userAgent', label: 'Device' },
+              ],
+              rows: items.map((item) => ({
+                occurredAt: item.occurredAt,
+                change: presenceChangeLabel(item),
+                networkIP: item.networkIP ?? '-',
+                userAgent: item.userAgent ?? '-',
+              })),
+              emptyLabel: 'No changes in the last 30 days.',
+            },
+          },
+        ],
+        closeLabel: 'Close',
+      });
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
     }
   }
 
@@ -675,9 +723,13 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ExtensionRecord): void {
-    if (action.key !== 'runtime-status') return;
     const extensionUUID = String(row['VpeUUID'] ?? '').trim();
     if (!extensionUUID) return;
+    if (action.key === 'presence-history') {
+      void this.openPresenceHistory(extensionUUID, row);
+      return;
+    }
+    if (action.key !== 'runtime-status') return;
 
     void runRuntimeDiagnostic(this.dialog, this.api, this.snack, {
       title: 'PABX extension runtime status',
@@ -790,6 +842,21 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       closeLabel: 'Close',
     });
   }
+}
+
+const PRESENCE_HISTORY_LIMIT = 200;
+
+type PresenceHistoryItem = {
+  fromState: 'online' | 'offline' | null;
+  toState: 'online' | 'offline';
+  networkIP: string | null;
+  userAgent: string | null;
+  occurredAt: string;
+};
+
+function presenceChangeLabel(item: PresenceHistoryItem): string {
+  if (item.toState === 'offline') return 'Went offline';
+  return item.fromState === null ? 'First registration' : 'Came online';
 }
 
 const presenceSummaryTooltips: Record<PresenceState, string> = {

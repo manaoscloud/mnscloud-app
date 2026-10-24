@@ -118,6 +118,16 @@ describe('VoIP PABX parameters', () => {
     expect(body.recordingRetentionDays).toBe(0);
   });
 
+  it('saves the extension offline alert and rejects more than a day', async () => {
+    page.update({ extensionOfflineAlertMinutes: 1441 });
+    await page.save();
+    expect(put).not.toHaveBeenCalled();
+    expect(page.invalid('extensionOfflineAlertMinutes')).toBeTrue();
+    page.update({ extensionOfflineAlertMinutes: 15 });
+    await page.save();
+    expect(put.calls.mostRecent().args[1].extensionOfflineAlertMinutes).toBe(15);
+  });
+
   it('reveals a missing storage account instead of saving', async () => {
     page.update({ recordingStorageMode: 'storage', recordingStorageBucketUUID: '' });
     await page.save();
