@@ -672,6 +672,13 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['platform.master.access'],
       },
       {
+        id: 'dns/client-tests',
+        label: 'nav.dns.client-tests',
+        icon: 'network_check',
+        masterRoute: '/system/dns/client-tests',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'dns/monitoring',
         label: 'nav.dns.monitoring',
         icon: 'monitor_heart',
@@ -1783,6 +1790,15 @@ export const NAV_ITEMS: NavItem[] = [
         entitlementCode: 'module.support.*',
         requiresEnvironment: true,
         route: '/support/tickets',
+      },
+      {
+        id: 'support/customers/client-tests',
+        label: 'nav.support.customers.client-tests',
+        icon: 'network_check',
+        scope: 'tenant',
+        entitlementCode: 'module.support.*',
+        requiresEnvironment: true,
+        route: '/support/client-tests',
       },
       {
         id: 'support/platform',

@@ -1202,6 +1202,13 @@ export const routes: Routes = [
                 data: { supportDesk: 'tenant' },
               },
               {
+                path: 'support/client-tests',
+                loadComponent: () =>
+                  import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),
+                title: 'Support • Connection tests | mnscloud',
+                data: { endpoint: 'support/client-tests', breadcrumb: 'dns.clientTests' },
+              },
+              {
                 path: 'support/ticket-channels',
                 loadComponent: () =>
                   import('./pages/support/ticket-channels/ticket-channels').then(
@@ -2927,6 +2934,13 @@ export const routes: Routes = [
                   import('./pages/dns/diagnostics/diagnostics').then((m) => m.DnsDiagnosticsPage),
                 title: 'DNS',
                 data: { scope: 'master', breadcrumb: 'dns.diagnostics' },
+              },
+              {
+                path: 'dns/client-tests',
+                loadComponent: () =>
+                  import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.clientTests' },
               },
               {
                 path: 'dns/monitoring',
