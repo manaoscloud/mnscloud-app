@@ -1,0 +1,155 @@
+<mns-settings-page
+  title="Base map"
+  description="Base map of every InfraGIS map: provider, attribution and the initial view."
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [error]="feedback()"
+  [success]="success()"
+  (refresh)="refresh()"
+  (cancel)="cancel()"
+  (save)="save()"
+>
+  <form class="form-grid">
+    <mns-search-select-field
+      fieldClass="span-2"
+      data-field-key="provider"
+      [label]="'Provider' | transloco"
+      [options]="providers"
+      [translateOptions]="true"
+      [value]="form().provider"
+      [invalid]="invalid('provider')"
+      [errorMessage]="'form.validation.required' | transloco"
+      [help]="
+        'MapLibre style: any style URL (default OpenFreeMap over OpenStreetMap). Own PMTiles file: one file served by an https host with HTTP range requests (no per-request cost; also used offline). Mapbox: an https Mapbox style with the public token of Settings › Parameters (billed by Mapbox per map load). No base map: assets only.'
+          | transloco
+      "
+      (valueChange)="update({ provider: $any($event) })"
+    />
+
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>{{ 'Attribution' | transloco }}</mat-label>
+      <input
+        matInput
+        maxlength="300"
+        data-field-key="attribution"
+        [value]="form().attribution"
+        (input)="update({ attribution: text($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Attribution' | transloco"
+        [text]="
+          'Extra credit shown on the map. Map data credits (© OpenStreetMap) stay visible.'
+            | transloco
+        "
+      />
+    </mat-form-field>
+
+    @if (needsStyle()) {
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>{{ 'Style URL' | transloco }}</mat-label>
+        <input
+          matInput
+          type="url"
+          data-field-key="styleUrl"
+          [value]="form().styleUrl"
+          [mnsInvalid]="invalid('styleUrl')"
+          (input)="update({ styleUrl: text($event) })"
+        />
+        <mns-field-help
+          matIconSuffix
+          [label]="'Style URL' | transloco"
+          [text]="'https URL of a MapLibre style JSON.' | transloco"
+        />
+        <mat-error>{{ 'Enter an https URL.' | transloco }}</mat-error>
+      </mat-form-field>
+    }
+
+    @if (needsPmtiles()) {
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>{{ 'PMTiles URL' | transloco }}</mat-label>
+        <input
+          matInput
+          type="url"
+          data-field-key="pmtilesUrl"
+          [value]="form().pmtilesUrl"
+          [mnsInvalid]="invalid('pmtilesUrl')"
+          (input)="update({ pmtilesUrl: text($event) })"
+        />
+        <mns-field-help
+          matIconSuffix
+          [label]="'PMTiles URL' | transloco"
+          [text]="
+            'https URL of a Protomaps basemap PMTiles file (for example a Brazil extract), rendered with the light style.'
+              | transloco
+          "
+        />
+        <mat-error>{{ 'Enter an https URL.' | transloco }}</mat-error>
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Latitude' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="-90"
+        max="90"
+        step="0.0000001"
+        data-field-key="centerLatitude"
+        [value]="form().centerLatitude"
+        [mnsInvalid]="invalid('centerLatitude')"
+        (input)="update({ centerLatitude: numberValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Latitude' | transloco"
+        [text]="'Initial map center, between -90 and 90.' | transloco"
+      />
+      <mat-error>{{ 'Enter a number between -90 and 90.' | transloco }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Longitude' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="-180"
+        max="180"
+        step="0.0000001"
+        data-field-key="centerLongitude"
+        [value]="form().centerLongitude"
+        [mnsInvalid]="invalid('centerLongitude')"
+        (input)="update({ centerLongitude: numberValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Longitude' | transloco"
+        [text]="'Initial map center, between -180 and 180.' | transloco"
+      />
+      <mat-error>{{ 'Enter a number between -180 and 180.' | transloco }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Zoom' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="0"
+        max="22"
+        step="0.5"
+        data-field-key="zoom"
+        [value]="form().zoom"
+        [mnsInvalid]="invalid('zoom')"
+        (input)="update({ zoom: numberValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Zoom' | transloco"
+        [text]="'Initial zoom, between 0 (world) and 22.' | transloco"
+      />
+      <mat-error>{{ 'Enter a number between 0 and 22.' | transloco }}</mat-error>
+    </mat-form-field>
+  </form>
+</mns-settings-page>

@@ -1352,6 +1352,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis', resource: 'assets' },
               },
               {
+                path: 'infragis/map',
+                loadComponent: () =>
+                  import('./pages/infragis/map/map').then((m) => m.InfraGisMapPage),
+                title: 'InfraGIS • Map | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
+              {
                 path: 'infragis',
                 loadComponent: () =>
                   import('./pages/infragis/dashboard/dashboard').then(
@@ -2602,6 +2609,15 @@ export const routes: Routes = [
                   import('./pages/realtime/media/media').then((m) => m.RealtimeMediaServersPage),
                 title: 'System Realtime • Media Servers | mnscloud',
                 data: { scope: 'master', resource: 'servers' },
+              },
+              {
+                path: 'infragis/provider-settings',
+                loadComponent: () =>
+                  import('./pages/infragis/provider-settings/provider-settings').then(
+                    (m) => m.InfraGisProviderSettingsPage,
+                  ),
+                title: 'System InfraGIS • Base map | mnscloud',
+                data: { scope: 'master' },
               },
               {
                 path: 'realtime/media/domains',

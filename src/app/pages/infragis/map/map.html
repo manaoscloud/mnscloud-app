@@ -1,0 +1,133 @@
+<mns-detail-page
+  title="Map"
+  description="Georeferenced InfraGIS assets of the visible area over the platform base map."
+  [loading]="loading()"
+  (refresh)="reload()"
+>
+  <div class="infragis-map-toolbar">
+    <mns-search-select-field
+      data-quick-create-exempt="Map filter; projects are created in InfraGIS › Projects."
+      fieldClass="infragis-map-project"
+      data-field-key="projectUUID"
+      [label]="'Project' | transloco"
+      [options]="projects()"
+      [value]="projectUUID()"
+      [clearable]="true"
+      clearLabel="All projects"
+      (valueChange)="selectProject($event)"
+    />
+    <mat-button-toggle-group
+      [value]="drawMode()"
+      [disabled]="loading() || editing()"
+      [attr.aria-label]="'Draw' | transloco"
+      (change)="setDrawMode($event.value)"
+    >
+      <mat-button-toggle value="point" [matTooltip]="'Draw point' | transloco">
+        <mat-icon>place</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle value="linestring" [matTooltip]="'Draw line' | transloco">
+        <mat-icon>timeline</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle value="polygon" [matTooltip]="'Draw polygon' | transloco">
+        <mat-icon>pentagon</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (drawMode()) {
+      <button mat-stroked-button type="button" (click)="setDrawMode(null)">
+        {{ 'Cancel drawing' | transloco }}
+      </button>
+    }
+    <button mat-stroked-button type="button" [disabled]="!visibleCount()" (click)="fitToAssets()">
+      <mat-icon>fit_screen</mat-icon>{{ 'Fit assets' | transloco }}
+    </button>
+  </div>
+
+  @if (error(); as message) {
+    <p class="dashboard-message" role="alert">{{ message | transloco }}</p>
+  }
+  @if (collection().truncated) {
+    <output class="dashboard-message">{{
+      'Only part of the assets of this area is shown. Zoom in or choose a project.' | transloco
+    }}</output>
+  }
+  @if (drawMode()) {
+    <output class="dashboard-message">{{
+      'Click on the map to draw; finish a line or polygon on its last point.' | transloco
+    }}</output>
+  }
+
+  <div class="infragis-map-layout">
+    <div
+      #mapCanvas
+      class="infragis-map-canvas"
+      role="region"
+      [attr.aria-label]="'Map' | transloco"
+    ></div>
+
+    <aside class="infragis-map-side">
+      @if (selected(); as asset) {
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ asset['IgaName'] }}</h2>
+            <p>{{ asset['LayerName'] }}</p>
+          </div>
+          <dl class="infragis-map-details">
+            <dt>{{ 'Project' | transloco }}</dt>
+            <dd>{{ asset['ProjectName'] }}</dd>
+            <dt>{{ 'Asset Type' | transloco }}</dt>
+            <dd>{{ asset['AssetTypeName'] || '—' }}</dd>
+            <dt>{{ 'Asset Status' | transloco }}</dt>
+            <dd>{{ asset['AssetStatusName'] || '—' }}</dd>
+            <dt>{{ 'External ID' | transloco }}</dt>
+            <dd>{{ asset['IgaExternalID'] || '—' }}</dd>
+          </dl>
+          <div class="infragis-map-actions">
+            @if (editing()) {
+              <button mat-flat-button type="button" [disabled]="saving()" (click)="saveGeometry()">
+                <mat-icon>save</mat-icon>{{ 'Save geometry' | transloco }}
+              </button>
+              <button mat-stroked-button type="button" [disabled]="saving()" (click)="cancelEdit()">
+                {{ 'Cancel' | transloco }}
+              </button>
+            } @else {
+              <button mat-stroked-button type="button" (click)="startEdit()">
+                <mat-icon>edit_location_alt</mat-icon>{{ 'Edit geometry' | transloco }}
+              </button>
+              <a
+                mat-stroked-button
+                routerLink="/infragis/assets"
+                [queryParams]="{ search: asset['IgaName'] }"
+              >
+                {{ 'Open record' | transloco }}
+              </a>
+              <button mat-button type="button" (click)="clearSelection()">
+                {{ 'Close' | transloco }}
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (layers().length) {
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'Layers' | transloco }}</h2>
+            <p>{{ 'Show or hide the layers of the project.' | transloco }}</p>
+          </div>
+          @for (layer of layers(); track layer.value) {
+            <mat-checkbox
+              [checked]="!hiddenLayers().has(layer.value)"
+              (change)="toggleLayer(layer.value, $event.checked)"
+            >
+              {{ layer.label }}
+            </mat-checkbox>
+          }
+        </section>
+      }
+
+      <p class="infragis-map-count">
+        {{ 'Assets in view' | transloco }}: <strong>{{ visibleCount() }}</strong>
+      </p>
+    </aside>
+  </div>
+</mns-detail-page>
