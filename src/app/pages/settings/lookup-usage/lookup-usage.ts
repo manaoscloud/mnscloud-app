@@ -32,6 +32,28 @@ const BILLING_OPTIONS = [
   { value: 'failed', label: 'Not paid' },
 ];
 
+/** Declared by every CPF lookup (LGPD). */
+const PURPOSE_OPTIONS = [
+  { value: 'registration', label: 'Customer or supplier registration' },
+  { value: 'credit_analysis', label: 'Credit analysis' },
+  { value: 'fraud_prevention', label: 'Fraud prevention' },
+  { value: 'contract', label: 'Contract signing or execution' },
+  { value: 'collection', label: 'Debt collection' },
+  { value: 'legal_obligation', label: 'Legal or regulatory obligation' },
+];
+
+const LEGAL_BASIS_OPTIONS = [
+  { value: 'consent', label: 'Consent of the data subject' },
+  { value: 'legal_obligation', label: 'Legal or regulatory obligation' },
+  { value: 'contract', label: 'Contract with the data subject' },
+  { value: 'legal_claims', label: 'Exercise of rights in legal proceedings' },
+  { value: 'legitimate_interest', label: 'Legitimate interest' },
+  { value: 'credit_protection', label: 'Credit protection' },
+];
+
+const optionLabel = (options: { value: string; label: string }[], value: unknown) =>
+  options.find((option) => option.value === value)?.label ?? '';
+
 /** Read-only lookup log (the CEP/CNPJ/CPF itself is never stored). */
 const config = defineCrud({
   endpoint: 'system/lookups/usage',
@@ -81,6 +103,20 @@ const config = defineCrud({
         ),
     },
     { id: 'latency', field: 'LatencyMs', label: 'Latency (ms)', kind: 'number', optional: true },
+    {
+      id: 'purpose',
+      field: 'Purpose',
+      label: 'Purpose',
+      optional: true,
+      value: (row, translate) => {
+        const label = optionLabel(PURPOSE_OPTIONS, row['Purpose']);
+        return label ? translate(label) : '-';
+      },
+      detail: (row, translate) => {
+        const label = optionLabel(LEGAL_BASIS_OPTIONS, row['LegalBasis']);
+        return label ? translate(label) : '';
+      },
+    },
     {
       id: 'billing',
       field: 'BillingStatus',
