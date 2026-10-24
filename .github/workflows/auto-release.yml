@@ -57,7 +57,7 @@ jobs:
         run: npm ci
       - name: Download validated release candidate
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: mnscloud-app-release-candidate
           path: ${{ runner.temp }}/mnscloud-app-release-candidate
