@@ -975,6 +975,54 @@ export const routes: Routes = [
 
               // Human resources
               {
+                path: 'hr/dashboard',
+                loadComponent: () =>
+                  import('./pages/hr/dashboard/dashboard').then((m) => m.HrDashboardPage),
+                title: 'Human resources • Dashboard | mnscloud',
+              },
+              {
+                path: 'hr/timesheets',
+                loadComponent: () =>
+                  import('./pages/hr/timesheets/timesheets').then((m) => m.HrTimesheetsPage),
+                title: 'Human resources • Timesheets | mnscloud',
+              },
+              {
+                path: 'hr/time-issues',
+                loadComponent: () =>
+                  import('./pages/hr/time-issues/time-issues').then((m) => m.HrTimeIssuesPage),
+                title: 'Human resources • Timesheet issues | mnscloud',
+              },
+              {
+                path: 'hr/work-schedules',
+                loadComponent: () =>
+                  import('./pages/hr/work-schedules/work-schedules').then(
+                    (m) => m.HrWorkSchedulesPage,
+                  ),
+                title: 'Human resources • Work schedules | mnscloud',
+              },
+              {
+                path: 'hr/work-schedule-assignments',
+                loadComponent: () =>
+                  import('./pages/hr/work-schedule-assignments/work-schedule-assignments').then(
+                    (m) => m.HrWorkScheduleAssignmentsPage,
+                  ),
+                title: 'Human resources • Schedule assignments | mnscloud',
+              },
+              {
+                path: 'hr/holidays',
+                loadComponent: () =>
+                  import('./pages/hr/holidays/holidays').then((m) => m.HrHolidaysPage),
+                title: 'Human resources • Holidays | mnscloud',
+              },
+              {
+                path: 'hr/time-policies',
+                loadComponent: () =>
+                  import('./pages/hr/time-policies/time-policies').then(
+                    (m) => m.HrTimePoliciesPage,
+                  ),
+                title: 'Human resources • Time policies | mnscloud',
+              },
+              {
                 path: 'hr/time-clock-accounts',
                 loadComponent: () =>
                   import('./pages/hr/time-clock-accounts/time-clock-accounts').then(

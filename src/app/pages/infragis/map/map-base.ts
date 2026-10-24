@@ -1,4 +1,9 @@
-import { addProtocol, type RequestTransformFunction, type StyleSpecification } from 'maplibre-gl';
+import {
+  addProtocol,
+  setWorkerUrl,
+  type RequestTransformFunction,
+  type StyleSpecification,
+} from 'maplibre-gl';
 import { Protocol } from 'pmtiles';
 import { layers, namedFlavor } from '@protomaps/basemaps';
 
@@ -87,4 +92,20 @@ export function infraGisMapBase(config: InfraGisMapConfig, lang = 'pt'): InfraGi
   }
   if (config.provider === 'style' && config.styleUrl) return { ...base, style: config.styleUrl };
   return { ...base, style: blankStyle() };
+}
+
+const MAPLIBRE_STYLES_ID = 'mns-maplibre-styles';
+
+/**
+ * MapLibre CSS ships as the lazy `maplibre.css` bundle (angular.json, inject: false) and its module
+ * worker as same-origin assets under `maplibre/`, as the edge CSP allows no `blob:` workers.
+ */
+export function ensureMapLibreAssets() {
+  setWorkerUrl(new URL('maplibre/maplibre-gl-worker.mjs', document.baseURI).href);
+  if (document.getElementById(MAPLIBRE_STYLES_ID)) return;
+  const link = document.createElement('link');
+  link.id = MAPLIBRE_STYLES_ID;
+  link.rel = 'stylesheet';
+  link.href = 'maplibre.css';
+  document.head.appendChild(link);
 }

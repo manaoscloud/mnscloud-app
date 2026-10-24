@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "62fdf2e8e75f",
+  "version": "eb58fa6bba70",
   "language": "pt-BR",
   "entries": [
     {
@@ -2847,6 +2847,47 @@
       ]
     },
     {
+      "route": "/hr/dashboard",
+      "menuPath": "Recursos humanos › Painel",
+      "scope": "tenant",
+      "title": "Painel",
+      "description": "Quem está trabalhando agora, atrasos, faltas, inconsistências em aberto e as horas extras do mês, calculados a partir das batidas do Pulse, das jornadas e das políticas de ponto.",
+      "fields": []
+    },
+    {
+      "route": "/hr/holidays",
+      "menuPath": "Recursos humanos › Feriados",
+      "scope": "tenant",
+      "title": "Feriados",
+      "description": "Feriados estaduais, municipais e da empresa que o espelho de ponto trata como dias não úteis, além dos feriados nacionais calculados pela plataforma.",
+      "fields": [
+        {
+          "label": "Data",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Escopo",
+          "help": ""
+        },
+        {
+          "label": "Todo ano",
+          "help": "Sim: o feriado se repete todo ano no mesmo dia e mês. Não: somente nesta data (feriados móveis como Corpus Christi são cadastrados a cada ano)."
+        },
+        {
+          "label": "Empresa",
+          "help": "Vazia aplica o feriado a todas as empresas do tenant."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/time-clock-accounts",
       "menuPath": "Recursos humanos › Contas de ponto",
       "scope": "tenant",
@@ -2868,12 +2909,168 @@
       ]
     },
     {
+      "route": "/hr/time-issues",
+      "menuPath": "Recursos humanos › Inconsistências",
+      "scope": "tenant",
+      "title": "Inconsistências do ponto",
+      "description": "Dias dos seus colaboradores com inconsistências encontradas pelo espelho de ponto: faltas, marcações faltando, atrasos, intervalos curtos, descanso abaixo de 11 horas e horas extras acima do limite. Abra o espelho de uma linha para conferir as batidas.",
+      "fields": []
+    },
+    {
+      "route": "/hr/time-policies",
+      "menuPath": "Recursos humanos › Políticas de ponto",
+      "scope": "tenant",
+      "title": "Políticas de ponto",
+      "description": "Regras do ponto do tenant ou de uma empresa: fuso horário, tolerâncias, limite de horas extras, período noturno, descanso mínimo e os percentuais dos totais do mês. Sem política valem os padrões da CLT.",
+      "fields": [
+        {
+          "label": "Empresa",
+          "help": "Vazia cria a política padrão do tenant, usada por toda empresa sem política própria. A empresa não pode ser alterada depois de salvar."
+        },
+        {
+          "label": "Fuso horário",
+          "help": "Hora local do local de trabalho: dias, horários previstos e período noturno são calculados neste fuso."
+        },
+        {
+          "label": "Tolerância por marcação (min)",
+          "help": "CLT art. 58 §1: variações de até 5 minutos por marcação não contam como atraso nem hora extra (0 a 30)."
+        },
+        {
+          "label": "Tolerância diária (min)",
+          "help": "CLT art. 58 §1: até 10 minutos por dia no total são desconsiderados (0 a 60)."
+        },
+        {
+          "label": "Limite diário de horas extras (min)",
+          "help": "CLT art. 59: no máximo 2 horas (120 minutos) extras por dia; dias acima disso são sinalizados (0 a 720)."
+        },
+        {
+          "label": "Descanso mínimo entre jornadas (min)",
+          "help": "CLT art. 66: no mínimo 11 horas (660 minutos) entre o fim de uma jornada e o início da seguinte (0 a 1440)."
+        },
+        {
+          "label": "Início do período noturno",
+          "help": "CLT art. 73: o trabalho noturno urbano vai das 22:00 às 05:00."
+        },
+        {
+          "label": "Fim do período noturno",
+          "help": ""
+        },
+        {
+          "label": "Hora noturna reduzida",
+          "help": "CLT art. 73 §1: cada hora noturna é computada como 52 minutos e 30 segundos."
+        },
+        {
+          "label": "Adicional noturno (%)",
+          "help": "CLT art. 73: no mínimo 20% sobre a hora diurna."
+        },
+        {
+          "label": "Adicional de hora extra (%)",
+          "help": "Constituição art. 7º XVI e CLT art. 59 §1: no mínimo 50% sobre a hora normal."
+        },
+        {
+          "label": "Adicional de descanso e feriado (%)",
+          "help": "O trabalho em descansos e feriados sem compensação é pago em dobro (100%, Lei 605/1949 art. 9º)."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/time-punches",
       "menuPath": "Recursos humanos › Batidas",
       "scope": "tenant",
       "title": "Batidas",
       "description": "Todas as batidas do Pulse dos seus colaboradores, como foram registradas: horário oficial do servidor, número sequencial (NSR) e hash de integridade. Batidas nunca são editadas nem excluídas; as sinalizações apontam as que merecem conferência.",
       "fields": []
+    },
+    {
+      "route": "/hr/timesheets",
+      "menuPath": "Recursos humanos › Espelho de ponto",
+      "scope": "tenant",
+      "title": "Espelho de ponto",
+      "description": "Espelho de ponto mensal de um colaborador: horas previstas e trabalhadas por dia, as batidas originais, saldo, horas extras, faltas e inconsistências, calculados a partir da jornada, dos feriados e da política de ponto.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": "Colaboradores do Cadastro; o espelho precisa de uma escala atribuída."
+        }
+      ]
+    },
+    {
+      "route": "/hr/work-schedule-assignments",
+      "menuPath": "Recursos humanos › Escalas",
+      "scope": "tenant",
+      "title": "Escalas dos colaboradores",
+      "description": "Qual jornada cada colaborador segue e a partir de quando; o espelho de ponto compara as batidas de cada dia com a jornada vigente naquele dia.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Jornada",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Data de início",
+          "help": ""
+        },
+        {
+          "label": "Data de término",
+          "help": "Deixe vazia enquanto o colaborador mantiver esta jornada. Uma nova escala deve começar depois do término da anterior."
+        },
+        {
+          "label": "Data-base do ciclo",
+          "help": "Data do Dia 1 do ciclo (no 12x36: um dia em que o colaborador trabalha). Vazia usa a data de início."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/work-schedules",
+      "menuPath": "Recursos humanos › Jornadas",
+      "scope": "tenant",
+      "title": "Jornadas",
+      "description": "Horários de trabalho previstos dos seus colaboradores, semanais ou em ciclos como 12x36, usados pelo espelho de ponto para calcular atrasos, horas extras e faltas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Modelo",
+          "help": "Preenche o tipo e a grade de dias com uma jornada comum no Brasil; revise os horários antes de salvar."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": "Semanal: os mesmos horários toda semana (segunda a domingo). Ciclo: uma sequência de 2 a 7 dias que se repete, como 12x36 (trabalha um dia, descansa no seguinte)."
+        },
+        {
+          "label": "Duração do ciclo (dias)",
+          "help": ""
+        },
+        {
+          "label": "Intervalo pré-assinalado",
+          "help": "CLT art. 74 §2: com apenas duas marcações no dia (entrada e saída), o intervalo previsto é descontado como se tivesse sido batido."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/infragis",
