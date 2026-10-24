@@ -5,6 +5,7 @@ import type {
   ConfigurableCrudRecord,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { companyLookupButton } from '../../shared/data-lookup/company-lookup';
+import { personLookupButton } from '../../shared/data-lookup/person-lookup';
 
 /** Building blocks of the Registry forms: every record shares the same contact and address shape. */
 
@@ -156,6 +157,7 @@ export const REGISTRY_DOCUMENT_FIELD: ConfigurableCrudField = {
 /**
  * Document field with the "Search CNPJ" button (platform data lookup), which fills the name, legal
  * name, opening date, contact and the address of `addressPrefix` (the keys of registryAddressFields).
+ * Forms with a company/person type also get "Search CPF" for people (name and date of birth).
  */
 export function registryDocumentField(spec: {
   feature: string;
@@ -191,6 +193,18 @@ export function registryDocumentField(spec: {
           ...(spec.municipality ? { municipalityCode: key('MunicipalityCode') } : {}),
         },
       }),
+      ...(spec.typeKey
+        ? [
+            personLookupButton({
+              feature: spec.feature,
+              documentKey: 'document',
+              typeKey: spec.typeKey,
+              nameKey: 'name',
+              legalNameKey: spec.legalNameKey ?? 'legalName',
+              birthDateKey: 'legalDate',
+            }),
+          ]
+        : []),
     ],
   };
 }

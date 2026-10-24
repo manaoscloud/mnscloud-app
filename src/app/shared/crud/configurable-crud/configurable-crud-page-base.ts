@@ -5,6 +5,7 @@ import { PhoneInputComponent } from '../../phone-input/phone-input.component';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { isRecordUUID, shortRecordUUID } from './record-uuid-label';
 import { MNS_MENU } from '../../menu/mns-menu';
+import type { ComponentType } from '@angular/cdk/portal';
 import {
   CrudDensity,
   CrudViewPreferences,
@@ -54,7 +55,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule, MatDialogState } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogConfig,
+  MatDialogModule,
+  MatDialogRef,
+  MatDialogState,
+} from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -2229,6 +2236,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   /** Confirmation dialog for field suffix buttons (translated title, message and button). */
   askConfirmation(title: string, message: string, confirmLabel = 'Confirm'): Promise<boolean> {
     return this.confirmAction(title, message, confirmLabel);
+  }
+
+  /** Dialog for field suffix buttons (e.g. the purpose of a CPF lookup). */
+  openLookupDialog<T, R = unknown>(
+    component: ComponentType<T>,
+    config: MatDialogConfig,
+  ): MatDialogRef<T, R> {
+    return this.dialog.open<T, unknown, R>(component, config);
   }
 
   /** Translation for field suffix buttons (the page translator). */

@@ -9697,5 +9697,18 @@
   "Credit protection": "Credit protection",
   "Serpro Consulta CPF": "Serpro Consulta CPF",
   "Direct Data (Receita Federal PF)": "Direct Data (Receita Federal PF)",
-  "Token of the Direct Data account (sent as the TOKEN parameter).": "Token of the Direct Data account (sent as the TOKEN parameter)."
+  "Token of the Direct Data account (sent as the TOKEN parameter).": "Token of the Direct Data account (sent as the TOKEN parameter).",
+  "Search CPF": "Search CPF",
+  "CPF data filled.": "CPF data filled.",
+  "CPF is not regular": "CPF is not regular",
+  "CPF lookups are personal data processing (LGPD): declare why and on which legal basis. Both are recorded with the query.": "CPF lookups are personal data processing (LGPD): declare why and on which legal basis. Both are recorded with the query.",
+  "Failed to search CPF.": "Failed to search CPF.",
+  "Inform a valid CPF to search.": "Inform a valid CPF to search.",
+  "Invalid date.": "Invalid date.",
+  "Some fields already have other values. Replace them with the CPF data? Otherwise only empty fields are filled.": "Some fields already have other values. Replace them with the CPF data? Otherwise only empty fields are filled.",
+  "Some providers confirm the CPF with the date of birth.": "Some providers confirm the CPF with the date of birth.",
+  "This CPF is {{ status }} at the Receita Federal. Fill the form with its data anyway?": "This CPF is {{ status }} at the Receita Federal. Fill the form with its data anyway?",
+  "pending regularization": "pending regularization",
+  "deceased": "deceased",
+  "cancelled": "cancelled"
 }
