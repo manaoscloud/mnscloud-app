@@ -1041,6 +1041,13 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   `select-search-option`, `select-search-field`, real-time filtering, option spacing, empty state,
   selected trigger labels, optional option descriptions, loading state, and clearing the search text
   when the panel closes.
+- Search focus and keyboard (adapter-owned, every select at once): opening the panel focuses the
+  search input (except on coarse/touch pointers, where the on-screen keyboard would hide the list);
+  a printable key on the focused closed select opens the panel with that key as the search text
+  (no silent typeahead pick); inside the search, arrows/Page keys/Enter/Escape/Tab reach
+  `mat-select`, Enter picks the first visible match, and text keys (including space) stay in the
+  input. Remote searches (`remoteSearch`) emit `searchChange` after a 250 ms typing pause, and the
+  CRUD base reuses each remote field's last page when only another field's query changed.
   Searchable-select labels and placeholders must be passed through Transloco by the consuming
   template/config. Do not pass untranslated placeholder literals into shared select adapters.
 - FK quick-create is mandatory for every searchable FK form field. See

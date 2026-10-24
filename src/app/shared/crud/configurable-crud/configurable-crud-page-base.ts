@@ -847,6 +847,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       ),
     ),
   );
+  /**
+   * Last successful page per field. The resource reloads every remote field when one query
+   * changes; fields whose URL did not change reuse their page instead of calling the API again.
+   */
+  private readonly remoteLookupCache = new Map<
+    string,
+    { url: string; result: { items: ConfigurableCrudRecord[]; error: boolean } }
+  >();
   readonly remoteLookups = resource({
     params: () => ({
       queries: this.remoteQueries(),
@@ -864,11 +872,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
             if (!bound.ready) return [field.key, { items: [], error: false }];
             const query = params.queries[field.key] ?? { search: '', offset: 0 };
             const url = this.remoteLookupUrl(field, 50, query.offset, query.search, bound.query);
+            const cached = this.remoteLookupCache.get(field.key);
+            if (cached?.url === url) return [field.key, cached.result];
             try {
               const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
                 url,
               );
-              return [field.key, { items: this.remoteLookupItems(field, response), error: false }];
+              const result = { items: this.remoteLookupItems(field, response), error: false };
+              this.remoteLookupCache.set(field.key, { url, result });
+              return [field.key, result];
             } catch {
               return [field.key, { items: [], error: true }];
             }
@@ -2680,6 +2692,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   readonly filterRemoteQueries = signal<Record<string, { search: string; offset: number }>>({});
+  /** Same per-filter reuse as `remoteLookupCache` for list filters. */
+  private readonly filterRemoteLookupCache = new Map<
+    string,
+    { url: string; result: { items: ConfigurableCrudRecord[]; total: number; error: boolean } }
+  >();
   readonly filterRemoteLookups = resource({
     params: () => ({
       queries: this.filterRemoteQueries(),
@@ -2700,11 +2717,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
               offset: String(q.offset),
               [lookup.searchParam ?? 'search']: q.search,
             });
+            const url = `${lookup.endpoint}${lookup.endpoint.includes('?') ? '&' : '?'}${query}`;
+            const cached = this.filterRemoteLookupCache.get(f.key);
+            if (cached?.url === url) return [f.key, cached.result];
             try {
               const response = await this.api.get<{
                 data: { items: ConfigurableCrudRecord[]; total: number };
-              }>(`${lookup.endpoint}${lookup.endpoint.includes('?') ? '&' : '?'}${query}`);
-              return [f.key, { ...response.data, error: false }];
+              }>(url);
+              const result = { ...response.data, error: false };
+              this.filterRemoteLookupCache.set(f.key, { url, result });
+              return [f.key, result];
             } catch {
               return [f.key, { items: [], total: 0, error: true }];
             }
