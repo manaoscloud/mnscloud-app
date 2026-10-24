@@ -9382,5 +9382,9 @@
   "Serpro dataset": "Serpro dataset",
   "Company with partners": "Company with partners",
   "Basic registration": "Basic registration",
-  "Each dataset has its own Serpro price.": "Each dataset has its own Serpro price."
+  "Each dataset has its own Serpro price.": "Each dataset has its own Serpro price.",
+  "SEFAZ (registration lookup)": "SEFAZ (registration lookup)",
+  "A1 certificate (PFX in base64)": "A1 certificate (PFX in base64)",
+  "ICP-Brasil e-CNPJ A1 of the platform, used in mutual TLS with every SEFAZ.": "ICP-Brasil e-CNPJ A1 of the platform, used in mutual TLS with every SEFAZ.",
+  "SEFAZ environment": "SEFAZ environment"
 }
