@@ -310,9 +310,18 @@ export function parseCsvFile(text: string): ParsedFile {
 // ---------------- KML / KMZ / Shapefile ----------------
 
 async function kmlText(text: string, format: ImportFormat): Promise<ParsedFile> {
-  const { kml } = await import('@tmcw/togeojson');
-  const document = new DOMParser().parseFromString(text, 'text/xml');
-  if (document.getElementsByTagName('parsererror').length) {
+  const [{ kml }, xmldom] = await Promise.all([
+    import('@tmcw/togeojson'),
+    import('@xmldom/xmldom'),
+  ]);
+  // xmldom is CommonJS: the bundler may expose it as the default export.
+  const XmlParser =
+    xmldom.DOMParser ?? (xmldom as unknown as { default: typeof xmldom }).default.DOMParser;
+  // A detached XML document parsed in JavaScript: never part of the page DOM, nothing executes.
+  let document: Document;
+  try {
+    document = new XmlParser().parseFromString(text, 'text/xml') as unknown as Document;
+  } catch {
     throw new Error('The KML file could not be read.');
   }
   const collection = kml(document);

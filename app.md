@@ -1707,7 +1707,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   MapLibre module worker is refused under `nosniff` when served as `application/octet-stream`.
 - A CRUD list opened with `?search=<text>` starts already searched (links from maps and other pages).
 - InfraGIS › Import/export (`src/app/pages/infragis/transfer`) reads files in the browser
-  (`import-parsers.ts`: GeoJSON, KML and KMZ through `@tmcw/togeojson` + `fflate`, CSV with
+  (`import-parsers.ts`: GeoJSON, KML and KMZ through `@tmcw/togeojson` + `fflate` (KML parsed by
+  `@xmldom/xmldom` into a detached document, never the page `DOMParser`), CSV with
   latitude/longitude, WKT or GeoJSON columns, zipped Shapefile through `shpjs`, reprojected from the
   `.prj`; geometries leave two-dimensional), maps the columns (name, external ID, layer/type/status
   codes, the rest as properties coerced by the asset type schema) and sends batches of at most 500 rows
