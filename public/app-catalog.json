@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b3ae60e81419",
+  "version": "ea6238862b35",
   "language": "pt-BR",
   "entries": [
     {
@@ -5120,6 +5120,14 @@
       ]
     },
     {
+      "route": "/support/client-tests",
+      "menuPath": "Suporte › Testes de conexão",
+      "scope": "tenant",
+      "title": "Testes de conexão dos clientes",
+      "description": "Testes que os assinantes rodam na página pública /teste do portal do cliente. Busque pelo código que o assinante informar. Os testes ficam 30 dias.",
+      "fields": []
+    },
+    {
       "route": "/support/ideas",
       "menuPath": "Suporte › Ideias",
       "scope": "public",
@@ -6664,6 +6672,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/dns/client-tests",
+      "menuPath": "DNS › Testes de clientes",
+      "scope": "platform",
+      "title": "Testes de conexão dos clientes",
+      "description": "Testes que os assinantes rodam na página pública /teste do portal do cliente. Busque pelo código que o assinante informar. Os testes ficam 30 dias.",
+      "fields": []
     },
     {
       "route": "/system/dns/clusters",
