@@ -658,6 +658,27 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/dns/diagnostics',
         permissions: ['platform.master.access'],
       },
+      {
+        id: 'dns/monitoring',
+        label: 'nav.dns.monitoring',
+        icon: 'monitor_heart',
+        masterRoute: '/system/dns/monitoring',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'dns/monitor-targets',
+        label: 'nav.dns.monitor-targets',
+        icon: 'checklist',
+        masterRoute: '/system/dns/monitor-targets',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'dns/monitor-agents',
+        label: 'nav.dns.monitor-agents',
+        icon: 'sensors',
+        masterRoute: '/system/dns/monitor-agents',
+        permissions: ['platform.master.access'],
+      },
     ],
   },
 
