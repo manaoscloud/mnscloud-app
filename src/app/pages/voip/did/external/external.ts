@@ -3,13 +3,15 @@ import { Component, inject, signal } from '@angular/core';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudColumn,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { DID_NUMBER_INPUT_ERRORS, parseDidNumberInput } from '../did-number-input';
 import { VoipDidOperatorService } from '../operator/operator.service';
-import { VoipDidExternalItem } from './external.service';
+import { VoipDidExternalItem, VoipDidExternalService } from './external.service';
 
 function isSystemScope() {
   return globalThis.location?.pathname.startsWith('/system/') ?? false;
@@ -97,6 +99,8 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
         source: 'VddNumber',
         payloadKey: 'number',
         label: 'Number',
+        labelWhen: ({ editing }) => (editing ? 'Number' : 'Number or range'),
+        help: 'One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.',
         required: true,
         tab: 'record',
         span: 1,
@@ -124,6 +128,7 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
 })
 export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExternalItem> {
   private readonly operatorApi = inject(VoipDidOperatorService);
+  private readonly externalApi = inject(VoipDidExternalService);
   readonly operatorOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupLoading = signal(false);
 
@@ -147,6 +152,119 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
       return name || '-';
     }
     return super.columnMain(row, column);
+  }
+
+  /** While creating, the label shows the size of a detected range as the user types. */
+  override translatedFieldLabel(field: ConfigurableCrudField): string {
+    if (field.key === 'number' && !this.editingRecord()) {
+      const input = parseDidNumberInput(this.formValues()['number']);
+      if (input.kind === 'range')
+        return this.t('Number range ({total} DIDs)', { total: input.total });
+    }
+    return super.translatedFieldLabel(field);
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    if (this.saving()) return;
+    const input = parseDidNumberInput(this.formValues()['number']);
+    if (input.kind === 'invalid') {
+      this.clearFieldErrors(null);
+      this.rejectField('number', DID_NUMBER_INPUT_ERRORS[input.reason]);
+      return;
+    }
+    if (input.kind === 'range' && this.editingRecord()) {
+      this.clearFieldErrors(null);
+      this.rejectField('number', 'A DID range can only be used when creating DIDs.');
+      return;
+    }
+    if (input.kind !== 'range') {
+      await super.saveItem(saveAndNew);
+      return;
+    }
+    await this.saveRange(input.start, input.end, saveAndNew);
+  }
+
+  /** Preview (conflicts and prepaid cost), confirmation, then one all-or-nothing create. */
+  private async saveRange(start: string, end: string, saveAndNew: boolean): Promise<void> {
+    const values = this.formValues();
+    const operatorUUID = String(values['operatorUUID'] ?? '').trim();
+    this.clearFieldErrors(null);
+    if (!operatorUUID) {
+      this.rejectField('operatorUUID', 'Provider is required.');
+      return;
+    }
+    const request = {
+      rangeStart: start,
+      rangeEnd: end,
+      operatorUUID,
+      status: Number(values['status'] ?? 1) === 1 ? 1 : 0,
+      notes: String(values['notes'] ?? '').trim() || null,
+    };
+
+    this.saving.set(true);
+    try {
+      const preview = (await this.externalApi.createRange({ ...request, dryRun: true }))?.data
+        ?.preview;
+      if (!preview) throw new Error('Failed to preview the DID range.');
+      if (preview.conflicts.length) {
+        const shown = preview.conflicts.slice(0, 5).join(', ');
+        const more = preview.conflicts.length > 5 ? ` (+${preview.conflicts.length - 5})` : '';
+        this.rejectField('number', 'These DID numbers already exist: {numbers}', {
+          numbers: `${shown}${more}`,
+        });
+        return;
+      }
+      const money = (amount: number) => formatMoney(amount, preview.currency);
+      if (!preview.creditSufficient) {
+        this.snack.error(
+          this.t(
+            'Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.',
+            {
+              total: preview.total,
+              required: money(preview.requiredAmount),
+              available: money(preview.availableBalance),
+            },
+          ),
+        );
+        return;
+      }
+      this.saving.set(false);
+      const provider = this.lookupLabel('operatorUUID', operatorUUID);
+      const confirmed = await this.confirmAction(
+        'Create DID range',
+        this.t(
+          'Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).',
+          {
+            total: preview.total,
+            start,
+            end,
+            provider,
+            required: money(preview.requiredAmount),
+            unit: money(preview.unitAmount),
+          },
+        ),
+        'Create',
+      );
+      if (!confirmed) return;
+      this.saving.set(true);
+      const created = (await this.externalApi.createRange({ ...request, dryRun: false }))?.data
+        ?.items;
+      this.snack.success(
+        this.t('{total} external DIDs created successfully.', {
+          total: created?.length ?? preview.total,
+        }),
+      );
+      this.refreshList();
+      if (saveAndNew) {
+        this.formValues.set({ ...this.config.initialValues, operatorUUID });
+      } else {
+        this.closeDialog();
+      }
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -217,4 +335,12 @@ function firstText(payload: ConfigurableCrudRecord, keys: string[]): string {
     if (normalized) return normalized;
   }
   return '';
+}
+
+function formatMoney(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
 }

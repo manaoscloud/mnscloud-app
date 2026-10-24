@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "feab528c53f0",
+  "version": "7cdb6c29923e",
   "language": "pt-BR",
   "entries": [
     {
@@ -6672,7 +6672,7 @@
         },
         {
           "label": "Número",
-          "help": ""
+          "help": "Um número DID ou uma faixa de até 100 números no formato início-fim (mesma quantidade de dígitos). Exemplo: 559230423000-559230423049."
         },
         {
           "label": "Anotações",
@@ -6692,20 +6692,12 @@
           "help": ""
         },
         {
-          "label": "Modo de criação",
-          "help": ""
-        },
-        {
           "label": "Operadora DID",
           "help": ""
         },
         {
           "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Faixa de números",
-          "help": ""
+          "help": "Um número DID ou uma faixa de até 100 números no formato início-fim (mesma quantidade de dígitos). Exemplo: 559230423000-559230423049."
         }
       ]
     },
@@ -9691,7 +9683,7 @@
         },
         {
           "label": "Número",
-          "help": ""
+          "help": "Um número DID ou uma faixa de até 100 números no formato início-fim (mesma quantidade de dígitos). Exemplo: 559230423000-559230423049."
         },
         {
           "label": "Anotações",
@@ -9711,19 +9703,11 @@
           "help": ""
         },
         {
-          "label": "Modo de criação",
-          "help": ""
-        },
-        {
           "label": "Operadora DID",
           "help": ""
         },
         {
           "label": "Número",
-          "help": ""
-        },
-        {
-          "label": "Faixa de números",
           "help": ""
         }
       ]
