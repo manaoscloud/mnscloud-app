@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ea6238862b35",
+  "version": "feab528c53f0",
   "language": "pt-BR",
   "entries": [
     {
@@ -4967,6 +4967,67 @@
       ]
     },
     {
+      "route": "/settings/release-notes",
+      "menuPath": "Configurações › Novidades",
+      "scope": "platform",
+      "title": "Novidades",
+      "description": "Texto e visibilidade das novidades que os PRs publicaram, com as versões de cada parte e se já estão implantadas neste ambiente.",
+      "fields": [
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Público",
+          "help": ""
+        },
+        {
+          "label": "Oculta",
+          "help": ""
+        },
+        {
+          "label": "Módulos",
+          "help": "Códigos separados por vírgula: module.dns, module.voip ou platform."
+        },
+        {
+          "label": "Título (português)",
+          "help": ""
+        },
+        {
+          "label": "Título (inglês)",
+          "help": ""
+        },
+        {
+          "label": "Título (espanhol)",
+          "help": ""
+        },
+        {
+          "label": "Descrição (português)",
+          "help": ""
+        },
+        {
+          "label": "Descrição (inglês)",
+          "help": ""
+        },
+        {
+          "label": "Descrição (espanhol)",
+          "help": ""
+        },
+        {
+          "label": "Ação necessária (português)",
+          "help": ""
+        },
+        {
+          "label": "Ação necessária (inglês)",
+          "help": ""
+        },
+        {
+          "label": "Ação necessária (espanhol)",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/settings/tenants",
       "menuPath": "Configurações › Tenants",
       "scope": "tenant",
@@ -9588,6 +9649,14 @@
           "help": "Deixe em branco para manter a senha atual."
         }
       ]
+    },
+    {
+      "route": "/user/release-notes",
+      "menuPath": "Usuário › Novidades",
+      "scope": "tenant",
+      "title": "Novidades",
+      "description": "O que foi lançado, melhorado e corrigido na plataforma, por módulo. Cada novidade aparece quando todas as partes dela já estão implantadas neste ambiente.",
+      "fields": []
     },
     {
       "route": "/voip",

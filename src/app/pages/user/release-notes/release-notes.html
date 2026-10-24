@@ -1,0 +1,111 @@
+<mns-page-shell
+  title="releaseNotes.pageTitle"
+  description="releaseNotes.pageDescription"
+  [loading]="loading()"
+  (refresh)="reload()"
+>
+  @if (isMaster()) {
+    <mat-tab-group
+      class="release-notes-tabs"
+      mat-stretch-tabs="false"
+      [selectedIndex]="status() === 'pending' ? 1 : 0"
+      (selectedIndexChange)="setStatus($event)"
+    >
+      <mat-tab [label]="'releaseNotes.tabLive' | transloco" />
+      <mat-tab [label]="'releaseNotes.tabPending' | transloco" />
+    </mat-tab-group>
+    @if (status() === 'pending') {
+      <p class="release-notes-hint" role="note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        {{ 'releaseNotes.pendingHint' | transloco }}
+      </p>
+    }
+  }
+
+  <div class="release-notes-toolbar">
+    @if (!isMaster()) {
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        [value]="scope()"
+        (change)="setScope($event.value)"
+        [attr.aria-label]="'releaseNotes.scope' | transloco"
+      >
+        <mat-button-toggle value="mine">{{
+          'releaseNotes.scopeMine' | transloco
+        }}</mat-button-toggle>
+        <mat-button-toggle value="all">{{ 'releaseNotes.scopeAll' | transloco }}</mat-button-toggle>
+      </mat-button-toggle-group>
+    }
+    <mat-chip-listbox
+      [attr.aria-label]="'releaseNotes.typeFilter' | transloco"
+      [value]="type()"
+      (change)="type.set($event.value ?? '')"
+    >
+      <mat-chip-option value="">{{ 'releaseNotes.allTypes' | transloco }}</mat-chip-option>
+      @for (option of types; track option) {
+        <mat-chip-option [value]="option">{{
+          'releaseNotes.type.' + option | transloco
+        }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+  </div>
+
+  @if (modules().length > 1) {
+    <mat-chip-listbox
+      class="release-notes-modules"
+      [attr.aria-label]="'releaseNotes.moduleFilter' | transloco"
+      [value]="module()"
+      (change)="module.set($event.value ?? '')"
+    >
+      <mat-chip-option value="">{{ 'releaseNotes.allModules' | transloco }}</mat-chip-option>
+      @for (code of modules(); track code) {
+        <mat-chip-option [value]="code">{{ moduleLabel(code) }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+  }
+
+  @if (failed()) {
+    <p class="release-notes-empty" role="alert">{{ 'releaseNotes.error' | transloco }}</p>
+  } @else if (!loading() && !items().length) {
+    <p class="release-notes-empty">{{ 'releaseNotes.empty' | transloco }}</p>
+  }
+
+  <ol class="release-notes-list">
+    @for (entry of items(); track entry.uuid) {
+      <li class="release-note" [attr.data-type]="entry.type">
+        <div class="release-note-meta">
+          <span class="release-note-type">
+            <mat-icon aria-hidden="true">{{ icon(entry) }}</mat-icon>
+            {{ 'releaseNotes.type.' + entry.type | transloco }}
+          </span>
+          @for (code of entry.modules; track code) {
+            <span class="release-note-module">{{ moduleLabel(code) }}</span>
+          }
+          <span class="release-note-date">{{ date(entry) }}</span>
+        </div>
+        <h2 class="release-note-title">{{ title(entry) }}</h2>
+        @if (text(entry)) {
+          <p class="release-note-text">{{ text(entry) }}</p>
+        }
+        @if (action(entry)) {
+          <p class="release-note-action">
+            <strong>{{ 'releaseNotes.actionRequired' | transloco }}</strong> {{ action(entry) }}
+          </p>
+        }
+        <div class="release-note-components">
+          <span>{{ 'releaseNotes.components' | transloco }}</span>
+          @for (component of entry.components; track component.product + component.version) {
+            <span
+              class="release-note-component"
+              [class.is-missing]="component.deployed === false"
+              [attr.title]="
+                component.deployed === false ? ('releaseNotes.componentMissing' | transloco) : null
+              "
+              >{{ product(component.product) }} {{ component.version }}</span
+            >
+          }
+        </div>
+      </li>
+    }
+  </ol>
+</mns-page-shell>

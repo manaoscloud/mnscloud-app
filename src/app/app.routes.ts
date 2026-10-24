@@ -127,6 +127,14 @@ export const routes: Routes = [
               import('./pages/user/profile/user-profile').then((m) => m.UserProfileComponent),
             title: 'My Profile | mnscloud',
           },
+          // Release notes deployed in this environment (workspace docs/release-notes.md).
+          {
+            path: 'user/release-notes',
+            loadComponent: () =>
+              import('./pages/user/release-notes/release-notes').then((m) => m.ReleaseNotesPage),
+            title: 'Release notes | mnscloud',
+            data: { breadcrumb: 'releaseNotes.pageTitle' },
+          },
           {
             path: 'user/notifications',
             loadComponent: () =>
@@ -234,6 +242,21 @@ export const routes: Routes = [
               supportDesk: 'platform',
               permission: 'platform.support.settings.manage',
               breadcrumb: 'AI assistant',
+            },
+          },
+          // Release notes management (text, visibility), platform master, no tenant needed.
+          {
+            path: 'settings/release-notes',
+            canActivate: [permissionGuard],
+            loadComponent: () =>
+              import('./pages/settings/release-notes/release-notes-admin').then(
+                (m) => m.ReleaseNotesAdminPage,
+              ),
+            title: 'Settings • Release notes | mnscloud',
+            data: {
+              scope: 'master',
+              permission: 'platform.master.access',
+              breadcrumb: 'releaseNotes.adminTitle',
             },
           },
           // Tutorial videos of the App pages (YouTube, per language), no tenant needed.

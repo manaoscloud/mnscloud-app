@@ -420,6 +420,19 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   embedded from `https://www.youtube-nocookie.com/embed/<id>` built from a validated id, never a
   stored URL. The edge CSP of the App allows only that frame origin (`frame-src`).
 
+### Release notes (Novidades)
+
+- Contract: workspace `docs/release-notes.md` (every PR carries a `## Release note` block; the
+  pipeline ingests it after each rollout). API: `GET /release-notes`, `GET/PUT /system/release-notes`.
+- `/user/release-notes` (`ReleaseNotesPage`, user menu › Novidades) is a feed on `PageShellComponent`,
+  one card per feature (type, modules, date, text, "action required", component versions), not a
+  table. Filters: My modules / All modules (tenant entitlements, API side), type and module chips.
+  The platform master gets the tabs "In this environment" and "Being deployed" (`status=pending`) and
+  sees each component marked deployed or not.
+- `/settings/release-notes` (`ReleaseNotesAdminPage`, platform master) is a generic CRUD without
+  create/delete: edit type, audience, modules, texts in three languages or hide. Texts come from the
+  API per language; `localizedText` falls back to English, Portuguese, Spanish.
+
 ## Angular Runtime Baseline
 
 - The app targets Angular 22+ and must use the modern Angular template/runtime model for all new

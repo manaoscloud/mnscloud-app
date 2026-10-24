@@ -122,6 +122,13 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/user/notifications',
         requiresEnvironment: true,
       },
+      // What changed in the platform, deployed in this environment (docs/release-notes.md).
+      {
+        id: 'user/release-notes',
+        label: 'nav.user.release-notes',
+        icon: 'campaign',
+        route: '/user/release-notes',
+      },
       {
         id: 'user/permission-management',
         label: 'nav.user.permission-management',
@@ -2553,6 +2560,15 @@ export const NAV_ITEMS: NavItem[] = [
             permissions: ['platform.lookup.manage'],
           },
         ],
+      },
+      // Release notes management: text and visibility of each feature (platform master).
+      {
+        id: 'settings/release-notes',
+        label: 'nav.settings.release-notes',
+        icon: 'campaign',
+        route: '/settings/release-notes',
+        scope: 'public',
+        permissions: ['platform.master.access'],
       },
       // Tutorial videos shown beside Report problem (platform.help.videos.manage, no tenant needed).
       {
