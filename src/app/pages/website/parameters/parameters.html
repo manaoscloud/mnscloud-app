@@ -155,5 +155,49 @@
       />
       <mat-error>{{ 'website.validation.ipv6' | transloco }}</mat-error>
     </mat-form-field>
+
+    @if (managedDns()) {
+      <section class="span-4 website-edge-certificates" aria-labelledby="website-edge-title">
+        <div class="website-edge-header">
+          <h3 id="website-edge-title">{{ 'website.edgeCertificates' | transloco }}</h3>
+          <mns-field-help
+            [label]="'website.edgeCertificates' | transloco"
+            [text]="'website.edgeCertificatesHelp' | transloco"
+          />
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="syncingEdge() || saving() || hasChanges()"
+            (click)="syncEdge()"
+          >
+            {{ 'website.edgeSync' | transloco }}
+          </button>
+        </div>
+        @for (edge of edgeCertificates(); track edge.agentName + edge.base) {
+          <div class="website-edge-row">
+            <span class="website-edge-name">{{ edge.agentName }} · *.{{ edge.base }}</span>
+            <span
+              class="status-pill status-chip state-chip"
+              [class.chip-success]="edge.status === 'issued'"
+              [class.chip-queued]="edge.status === 'pending'"
+              [class.chip-danger]="edge.status === 'failed'"
+            >
+              {{ 'website.edgeStatus.' + edge.status | transloco }}
+            </span>
+            @if (edge.expiresAt) {
+              <span class="website-edge-expiry">
+                {{ 'website.edgeValidUntil' | transloco }}
+                {{ edge.expiresAt | mnsDateTime: 'short' : 'short' }}
+              </span>
+            }
+            @if (edge.error) {
+              <span class="website-edge-error" role="alert">{{ edge.error }}</span>
+            }
+          </div>
+        } @empty {
+          <p class="website-edge-empty">{{ 'website.edgeNone' | transloco }}</p>
+        }
+      </section>
+    }
   </form>
 </mns-settings-page>

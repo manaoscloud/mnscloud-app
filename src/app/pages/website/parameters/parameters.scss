@@ -1,0 +1,37 @@
+// Website parameters: wildcard certificate state per platform edge (status chips come from the
+// shared status-pill styles; the page shell and form grid from the shared settings page).
+.website-edge-certificates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+.website-edge-header,
+.website-edge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.website-edge-header button {
+  margin-inline-start: auto;
+}
+.website-edge-name {
+  overflow-wrap: anywhere;
+}
+.website-edge-expiry,
+.website-edge-empty {
+  margin: 0;
+  color: var(--mat-sys-color-on-surface-variant);
+  font-size: 0.875rem;
+}
+.website-edge-error {
+  flex-basis: 100%;
+  color: var(--mat-sys-color-error);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
