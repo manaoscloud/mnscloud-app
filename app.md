@@ -429,6 +429,11 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   table. Filters: My modules / All modules (tenant entitlements, API side), type and module chips.
   The platform master gets the tabs "In this environment" and "Being deployed" (`status=pending`) and
   sees each component marked deployed or not.
+- Public changelog `/release-notes` (same `ReleaseNotesPage`, `data.publicFeed`, `publicReleaseNotesGuard`
+  sends signed-in users to `/user/release-notes`): every module, no sign-in, with the RSS link
+  (`/api/v1/public/release-notes/rss?lang=`). Signed-in users get the "weekly e-mail digest" toggle
+  (`/release-notes/subscription`); `/release-notes/unsubscribe?s=&t=` is the one-click unsubscribe page
+  of the e-mail link. A delivered idea shows in the bell as `release_note.published`.
 - `/settings/release-notes` (`ReleaseNotesAdminPage`, platform master) is a generic CRUD without
   create/delete: edit type, audience, modules, texts in three languages or hide. Texts come from the
   API per language; `localizedText` falls back to English, Portuguese, Spanish.

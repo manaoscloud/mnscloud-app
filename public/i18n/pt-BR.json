@@ -10128,5 +10128,14 @@
   "An asset cannot relate to itself": "Um ativo não pode se relacionar com ele mesmo",
   "Asset has network connections": "O ativo tem conexões de rede",
   "An asset has at most 1000 ports": "Um ativo tem no máximo 1000 portas",
-  "Port count must be between 1 and 288": "A quantidade de portas deve estar entre 1 e 288"
+  "Port count must be between 1 and 288": "A quantidade de portas deve estar entre 1 e 288",
+  "releaseNotes.digest": "Receber resumo semanal por e-mail",
+  "releaseNotes.rss": "Assinar via RSS",
+  "releaseNotes.signInHint": "Entre para ver só os seus módulos e receber o resumo semanal",
+  "releaseNotes.unsubscribeTitle": "Resumo semanal de novidades",
+  "releaseNotes.unsubscribeDescription": "Cancelamento do e-mail semanal com as novidades da plataforma.",
+  "releaseNotes.unsubscribeWorking": "Cancelando a inscrição...",
+  "releaseNotes.unsubscribeDone": "Pronto: você não vai mais receber o resumo semanal. Para voltar a receber, ligue a opção em Novidades.",
+  "releaseNotes.unsubscribeInvalid": "Link inválido ou expirado. Para cancelar, desligue a opção em Novidades depois de entrar.",
+  "notifications.releaseNotePublished": "Ideia {{code}} entregue"
 }

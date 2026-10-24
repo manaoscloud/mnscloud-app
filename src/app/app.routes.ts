@@ -7,6 +7,7 @@ import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 import { publicBoardGuard } from './core/guards/public-board.guard';
+import { publicReleaseNotesGuard } from './core/guards/public-release-notes.guard';
 
 // These children inherit scope/context from their componentless tenant or system parent.
 const STORAGE_RESOURCE_ROUTES: Routes = [
@@ -84,6 +85,24 @@ export const routes: Routes = [
     title: 'Accept Invitation | mnscloud',
   },
 
+  // Public changelog of this environment (every module, RSS); signed-in users go to /user/release-notes.
+  {
+    path: 'release-notes',
+    canActivate: [publicReleaseNotesGuard],
+    loadComponent: () =>
+      import('./pages/user/release-notes/release-notes').then((m) => m.ReleaseNotesPage),
+    title: 'Release notes | mnscloud',
+    data: { publicFeed: true },
+  },
+  // One-click unsubscribe from the weekly digest (signed link of the e-mail, no sign-in).
+  {
+    path: 'release-notes/unsubscribe',
+    loadComponent: () =>
+      import('./pages/public/release-notes-unsubscribe/release-notes-unsubscribe').then(
+        (m) => m.ReleaseNotesUnsubscribePage,
+      ),
+    title: 'Release notes | mnscloud',
+  },
   // Public idea board: published ideas, status and votes, readable without signing in.
   {
     path: 'ideas',

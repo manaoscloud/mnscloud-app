@@ -12,6 +12,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'payments';
     case 'feature_request.status':
       return 'lightbulb';
+    case 'release_note.published':
+      return 'campaign';
     case 'logs.account.cap_warning':
     case 'logs.account.capped':
       return 'receipt_long';
@@ -36,6 +38,8 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
         code: param('code'),
         status: featureRequestStatusLabel(param('status'), (key) => t(key)),
       });
+    case 'release_note.published':
+      return t('notifications.releaseNotePublished', { code: param('code') });
     case 'logs.account.cap_warning':
       return t('notifications.logsCapWarning', {
         account: param('account'),
@@ -61,6 +65,14 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
   }
 }
 
+/** Title of the delivered release note in the user language (then English, Portuguese, Spanish). */
+function releaseNoteTitle(item: InboxNotification, language: string): string {
+  const byLanguage: Record<string, string> = { 'en-US': 'titleEn', 'es-ES': 'titleEs' };
+  const keys = [byLanguage[language] ?? 'titlePt', 'titleEn', 'titlePt', 'titleEs'];
+  const found = keys.map((key) => item.params[key]).find((value) => !!value);
+  return String(found ?? item.params['subject'] ?? '');
+}
+
 /** Subject/offer/title plus the local date of the last event. */
 export function notificationDescription(item: InboxNotification, language: string): string {
   const subject =
@@ -74,7 +86,9 @@ export function notificationDescription(item: InboxNotification, language: strin
             ? item.params['extensions']
             : item.type === 'dns.monitor.target'
               ? item.params['failing'] || item.params['target']
-              : item.params['subject'];
+              : item.type === 'release_note.published'
+                ? releaseNoteTitle(item, language)
+                : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

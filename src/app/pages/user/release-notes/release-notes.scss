@@ -11,6 +11,27 @@
   color: var(--mat-sys-color-on-surface-variant);
 }
 
+.release-notes-channels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.release-notes-rss {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mat-sys-color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .release-notes-toolbar {
   display: flex;
   flex-wrap: wrap;

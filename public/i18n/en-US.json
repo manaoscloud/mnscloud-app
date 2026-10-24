@@ -10127,5 +10127,14 @@
   "An asset cannot relate to itself": "An asset cannot relate to itself",
   "Asset has network connections": "Asset has network connections",
   "An asset has at most 1000 ports": "An asset has at most 1000 ports",
-  "Port count must be between 1 and 288": "Port count must be between 1 and 288"
+  "Port count must be between 1 and 288": "Port count must be between 1 and 288",
+  "releaseNotes.digest": "Get a weekly e-mail digest",
+  "releaseNotes.rss": "Subscribe via RSS",
+  "releaseNotes.signInHint": "Sign in to see only your modules and get the weekly digest",
+  "releaseNotes.unsubscribeTitle": "Weekly release notes digest",
+  "releaseNotes.unsubscribeDescription": "Unsubscribe from the weekly e-mail with the platform release notes.",
+  "releaseNotes.unsubscribeWorking": "Unsubscribing...",
+  "releaseNotes.unsubscribeDone": "Done: you will no longer get the weekly digest. To get it again, turn the option on in Release notes.",
+  "releaseNotes.unsubscribeInvalid": "Invalid or expired link. To unsubscribe, turn the option off in Release notes after signing in.",
+  "notifications.releaseNotePublished": "Idea {{code}} delivered"
 }
