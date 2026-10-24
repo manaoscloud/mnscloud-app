@@ -662,14 +662,23 @@ export const NAV_ITEMS: NavItem[] = [
     id: 'infragis',
     label: 'nav.infragis',
     icon: 'map',
-    entitlementCode: 'module.infragis.*',
-    requiresEnvironment: true,
     children: [
       {
         id: 'infragis/dashboard',
         label: 'nav.infragis.dashboard',
         icon: 'dashboard',
         route: '/infragis',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
+        permissions: ['tenant.infragis.assets.read'],
+      },
+      {
+        id: 'infragis/map',
+        label: 'nav.infragis.map',
+        icon: 'travel_explore',
+        route: '/infragis/map',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.assets.read'],
       },
       {
@@ -677,6 +686,8 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.projects',
         icon: 'folder',
         route: '/infragis/projects',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.projects.read'],
       },
       {
@@ -684,6 +695,8 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.layers',
         icon: 'layers',
         route: '/infragis/layers',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.layers.read'],
       },
       {
@@ -691,6 +704,8 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.categories',
         icon: 'category',
         route: '/infragis/categories',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.categories.read'],
       },
       {
@@ -698,6 +713,8 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.asset-types',
         icon: 'widgets',
         route: '/infragis/asset-types',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.asset-types.read'],
       },
       {
@@ -705,6 +722,8 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.statuses',
         icon: 'flag',
         route: '/infragis/statuses',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.statuses.read'],
       },
       {
@@ -712,7 +731,16 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.infragis.assets',
         icon: 'place',
         route: '/infragis/assets',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
         permissions: ['tenant.infragis.assets.read'],
+      },
+      {
+        id: 'infragis/provider-settings',
+        label: 'nav.infragis.provider-settings',
+        icon: 'public',
+        masterRoute: '/system/infragis/provider-settings',
+        permissions: ['platform.master.access'],
       },
     ],
   },

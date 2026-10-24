@@ -1,0 +1,77 @@
+// InfraGIS › Map: map canvas and side panel. The page shell, panels and messages come from the
+// shared detail page and dashboard styles; MapLibre's own CSS is the lazy `maplibre` bundle.
+.infragis-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+
+  .infragis-map-project {
+    min-width: min(20rem, 100%);
+  }
+}
+
+.infragis-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.infragis-map-canvas {
+  height: calc(100vh - 18rem);
+  min-height: 24rem;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.infragis-map-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+
+  mat-checkbox {
+    display: block;
+  }
+}
+
+.infragis-map-details {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 1rem;
+
+  dt {
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.infragis-map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.infragis-map-count {
+  margin: 0;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+@media (max-width: 900px) {
+  .infragis-map-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .infragis-map-canvas {
+    height: 60vh;
+    min-height: 18rem;
+  }
+}

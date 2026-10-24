@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "037533dc1314",
+  "version": "183f2319d044",
   "language": "pt-BR",
   "entries": [
     {
@@ -3057,6 +3057,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/infragis/map",
+      "menuPath": "InfraGIS › Mapa",
+      "scope": "tenant",
+      "title": "Mapa",
+      "description": "Ativos georreferenciados do InfraGIS na área visível, sobre o mapa de fundo da plataforma.",
+      "fields": []
     },
     {
       "route": "/infragis/projects",
@@ -7299,6 +7307,43 @@
         {
           "label": "Anotações",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/infragis/provider-settings",
+      "menuPath": "InfraGIS › Mapa de fundo",
+      "scope": "platform",
+      "title": "Mapa de fundo",
+      "description": "Mapa de fundo de todos os mapas do InfraGIS: provedor, atribuição e visão inicial.",
+      "fields": [
+        {
+          "label": "Provedor",
+          "help": "Estilo MapLibre: qualquer URL de estilo (padrão OpenFreeMap sobre OpenStreetMap). Arquivo PMTiles próprio: um arquivo servido por um host https com requisições HTTP range (sem custo por requisição; também usado offline). Mapbox: um estilo Mapbox https com o token público de Configurações › Parâmetros (cobrado pela Mapbox por carregamento de mapa). Sem mapa base: só os ativos."
+        },
+        {
+          "label": "Atribuição",
+          "help": "Crédito adicional exibido no mapa. Os créditos dos dados do mapa (© OpenStreetMap) continuam visíveis."
+        },
+        {
+          "label": "URL do estilo",
+          "help": "URL https de um estilo MapLibre (JSON)."
+        },
+        {
+          "label": "URL do PMTiles",
+          "help": "URL https de um arquivo PMTiles do mapa base Protomaps (por exemplo um recorte do Brasil), exibido com o estilo claro."
+        },
+        {
+          "label": "Latitude",
+          "help": "Centro inicial do mapa, entre -90 e 90."
+        },
+        {
+          "label": "Longitude",
+          "help": "Centro inicial do mapa, entre -180 e 180."
+        },
+        {
+          "label": "Zoom",
+          "help": "Zoom inicial, entre 0 (mundo) e 22."
         }
       ]
     },

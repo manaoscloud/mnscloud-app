@@ -45,7 +45,7 @@ import {
 } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgClass, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom, map, Observable } from 'rxjs';
@@ -1152,6 +1152,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       });
     }
     this.formValues.set(this.emptyFormValues());
+    // `?search=` opens the list already searched (links from maps and other pages).
+    const initialSearch = this.quickCreateMode
+      ? ''
+      : (
+          inject(ActivatedRoute, { optional: true })?.snapshot.queryParamMap.get('search') ?? ''
+        ).trim();
+    if (initialSearch) {
+      this.search.set(initialSearch);
+      this.appliedFilters.set({ search: initialSearch, status: '', extra: {} });
+    }
     this.itemsResource = resource({
       params: () =>
         this.quickCreateMode || this.config.rows ? undefined : this.listResourceParams(),

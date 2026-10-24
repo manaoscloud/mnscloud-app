@@ -1693,9 +1693,17 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Use `ApiService` from `src/app/services/api.service.ts`.
 - Use relative endpoints (example: `registry/customers`).
 
-## Maps (Mapbox)
+## Maps (MapLibre)
 
-- Token is resolved from system parameters (`MAPBOX_TOKEN`) via API.
+- Maps render with MapLibre GL (`maplibre-gl`); `mapbox-gl` is not used. The base map comes from
+  the API (`GET infragis/map/config`, master edits it in System › InfraGIS › Base map) and goes through
+  the MapProvider boundary `src/app/pages/infragis/map/map-base.ts`: `style` (MapLibre style URL),
+  `pmtiles` (own PMTiles file, Protomaps light flavor, `pmtiles://` protocol), `mapbox` (https style;
+  the public token resolved by the API is appended only to `api.mapbox.com` requests) or `none`.
+- Asset overlays are GeoJSON sources fed by the API per viewport; drawing and vertex editing use
+  Terra Draw (`terra-draw` + `terra-draw-maplibre-gl-adapter`). New records open the canonical CRUD
+  form through `openQuickCreate` with the drawn geometry; never a page-local create dialog.
+- A CRUD list opened with `?search=<text>` starts already searched (links from maps and other pages).
 
 ## Auth/Guards
 
