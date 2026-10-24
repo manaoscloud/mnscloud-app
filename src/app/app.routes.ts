@@ -1377,6 +1377,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis' },
               },
               {
+                path: 'infragis/transfer',
+                loadComponent: () =>
+                  import('./pages/infragis/transfer/transfer').then((m) => m.InfraGisTransferPage),
+                title: 'InfraGIS • Import and export | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
+              {
                 path: 'infragis',
                 loadComponent: () =>
                   import('./pages/infragis/dashboard/dashboard').then(
@@ -2635,6 +2642,15 @@ export const routes: Routes = [
                     (m) => m.InfraGisProviderSettingsPage,
                   ),
                 title: 'System InfraGIS • Base map | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'infragis/verticals',
+                loadComponent: () =>
+                  import('./pages/infragis/verticals/verticals').then(
+                    (m) => m.InfraGisVerticalsPage,
+                  ),
+                title: 'System InfraGIS • Vertical packages | mnscloud',
                 data: { scope: 'master' },
               },
               {
