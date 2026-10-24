@@ -22,8 +22,27 @@
     }
   }
 
+  <div class="release-notes-channels">
+    @if (!publicFeed) {
+      <mat-slide-toggle
+        [checked]="digest.value()?.enabled ?? false"
+        [disabled]="digestSaving() || digest.isLoading()"
+        (change)="toggleDigest($event.checked)"
+        >{{ 'releaseNotes.digest' | transloco }}</mat-slide-toggle
+      >
+    } @else {
+      <a routerLink="/signin" class="release-notes-signin">{{
+        'releaseNotes.signInHint' | transloco
+      }}</a>
+    }
+    <a class="release-notes-rss" [href]="rssUrl()" target="_blank" rel="noopener">
+      <mat-icon aria-hidden="true">rss_feed</mat-icon>
+      {{ 'releaseNotes.rss' | transloco }}
+    </a>
+  </div>
+
   <div class="release-notes-toolbar">
-    @if (!isMaster()) {
+    @if (!isMaster() && !publicFeed) {
       <mat-button-toggle-group
         hideSingleSelectionIndicator
         [value]="scope()"
@@ -72,7 +91,7 @@
 
   <ol class="release-notes-list">
     @for (entry of items(); track entry.uuid) {
-      <li class="release-note" [attr.data-type]="entry.type">
+      <li class="release-note" [attr.id]="entry.uuid" [attr.data-type]="entry.type">
         <div class="release-note-meta">
           <span class="release-note-type">
             <mat-icon aria-hidden="true">{{ icon(entry) }}</mat-icon>

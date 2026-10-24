@@ -86,6 +86,22 @@ export function productLabel(product: string): string {
   return known[name] ?? name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/** Weekly e-mail digest of the signed-in user (`/release-notes/subscription`). */
+export interface ReleaseNoteDigest {
+  enabled: boolean;
+  locale: ReleaseNoteLocale;
+  scope: 'mine' | 'all';
+  lastSentAt: string | null;
+  nextDueAt: string | null;
+}
+
+/** RSS 2.0 feed of the public changelog of this environment (same origin as the App). */
+export function releaseNotesRssUrl(language: string, module = ''): string {
+  const params = new URLSearchParams({ lang: language });
+  if (module) params.set('module', module);
+  return `${window.location.origin}/api/v1/public/release-notes/rss?${params.toString()}`;
+}
+
 /** Release notes of this environment (`GET /release-notes`). UX only: the API filters access. */
 @Injectable({ providedIn: 'root' })
 export class ReleaseNoteService {
@@ -97,5 +113,35 @@ export class ReleaseNoteService {
       `release-notes?${params.toString()}`,
     );
     return response?.data?.items ?? [];
+  }
+
+  /** Public changelog (every module), readable without signing in. */
+  async publicList(): Promise<ReleaseNote[]> {
+    const response = await this.api.get<{ data?: { items?: ReleaseNote[] } }>(
+      'public/release-notes',
+    );
+    return response?.data?.items ?? [];
+  }
+
+  async digest(): Promise<ReleaseNoteDigest> {
+    const response = await this.api.get<{ data: ReleaseNoteDigest }>('release-notes/subscription');
+    return response.data;
+  }
+
+  async saveDigest(digest: Pick<ReleaseNoteDigest, 'enabled' | 'locale' | 'scope'>) {
+    const response = await this.api.put<{ data: ReleaseNoteDigest }>(
+      'release-notes/subscription',
+      digest,
+    );
+    return response.data;
+  }
+
+  /** One-click unsubscribe from the signed link of a digest e-mail. */
+  async unsubscribe(subscription: string, token: string): Promise<boolean> {
+    const response = await this.api.post<{ data?: { unsubscribed?: boolean } }>(
+      'public/release-notes/unsubscribe',
+      { subscription, token },
+    );
+    return response?.data?.unsubscribed === true;
   }
 }
