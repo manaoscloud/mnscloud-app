@@ -40,6 +40,16 @@
     <button mat-stroked-button type="button" [disabled]="!visibleCount()" (click)="fitToAssets()">
       <mat-icon>fit_screen</mat-icon>{{ 'Fit assets' | transloco }}
     </button>
+    <button
+      mat-stroked-button
+      type="button"
+      [attr.aria-pressed]="feasibilityMode()"
+      [disabled]="loading() || editing()"
+      (click)="toggleFeasibility()"
+    >
+      <mat-icon>{{ feasibilityMode() ? 'close' : 'radar' }}</mat-icon
+      >{{ (feasibilityMode() ? 'Stop feasibility' : 'Feasibility') | transloco }}
+    </button>
   </div>
 
   @if (error(); as message) {
@@ -48,6 +58,11 @@
   @if (collection().truncated) {
     <output class="dashboard-message">{{
       'Only part of the assets of this area is shown. Zoom in or choose a project.' | transloco
+    }}</output>
+  }
+  @if (feasibilityMode()) {
+    <output class="dashboard-message">{{
+      'Click on the map at the customer address to list boxes with free ports nearby.' | transloco
     }}</output>
   }
   @if (drawMode()) {
@@ -80,6 +95,10 @@
             <dd>{{ asset['AssetStatusName'] || '—' }}</dd>
             <dt>{{ 'External ID' | transloco }}</dt>
             <dd>{{ asset['IgaExternalID'] || '—' }}</dd>
+            @if (asset['PortCount']) {
+              <dt>{{ 'Customer ports' | transloco }}</dt>
+              <dd>{{ asset['OccupiedPortCount'] }} / {{ asset['PortCount'] }}</dd>
+            }
           </dl>
           <div class="infragis-map-actions">
             @if (editing()) {
@@ -100,11 +119,58 @@
               >
                 {{ 'Open record' | transloco }}
               </a>
+              <a
+                mat-stroked-button
+                routerLink="/infragis/network"
+                [queryParams]="{ asset: asset['IgaUUID'] }"
+              >
+                <mat-icon>hub</mat-icon>{{ 'Network' | transloco }}
+              </a>
               <button mat-button type="button" (click)="clearSelection()">
                 {{ 'Close' | transloco }}
               </button>
             }
           </div>
+        </section>
+      }
+
+      @if (feasibilityMode()) {
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'Feasibility' | transloco }}</h2>
+            <p>{{ 'Boxes with customer ports within the radius, free ones first.' | transloco }}</p>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Radius (m)' | transloco }}</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              max="5000"
+              data-field-key="feasibilityRadius"
+              [value]="feasibilityRadius()"
+              (change)="setFeasibilityRadius($event)"
+            />
+          </mat-form-field>
+          @if (feasibilityLoading()) {
+            <p>{{ 'Loading...' | transloco }}</p>
+          } @else if (feasibility(); as rows) {
+            @if (rows.length) {
+              <ul class="infragis-map-feasibility">
+                @for (row of rows; track row['IgaUUID']) {
+                  <li>
+                    <button mat-button type="button" (click)="flyTo(row)">
+                      <strong>{{ row['IgaName'] }}</strong> · {{ row['DistanceM'] }} m ·
+                      {{ 'Free ports' | transloco }}: {{ row['FreePortCount'] }} /
+                      {{ row['PortCount'] }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p>{{ 'No box with customer ports within the radius.' | transloco }}</p>
+            }
+          }
         </section>
       }
 

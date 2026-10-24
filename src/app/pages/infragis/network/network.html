@@ -1,0 +1,393 @@
+<mns-detail-page
+  title="Network"
+  description="Ports, splices, connections, splice diagram and trace with power budget of an InfraGIS asset."
+  [loading]="loading()"
+  (refresh)="refresh()"
+>
+  <div class="infragis-network-toolbar">
+    <mns-search-select-field
+      fieldClass="infragis-network-asset"
+      data-field-key="assetUUID"
+      data-quick-create-exempt="Asset picker; assets are created on the map or in InfraGIS › Assets."
+      [label]="'Asset' | transloco"
+      [options]="pickerOptions()"
+      [value]="assetUUID()"
+      [remoteSearch]="true"
+      [help]="
+        'Search by name or external ID; boxes, cables, splitters, OLTs and customers.' | transloco
+      "
+      (searchChange)="searchAssets($event, 'asset')"
+      (valueChange)="selectAsset($event)"
+    />
+    @if (current(); as asset) {
+      <output class="infragis-network-summary">
+        {{ asset['AssetTypeName'] || ('Asset' | transloco) }} · {{ asset['LayerName'] }}
+        @if (occupancy().total) {
+          · {{ 'Customer ports' | transloco }}: {{ occupancy().occupied }} /
+          {{ occupancy().total }}
+        }
+      </output>
+      <a mat-stroked-button routerLink="/infragis/map">
+        <mat-icon>map</mat-icon>{{ 'Map' | transloco }}
+      </a>
+    }
+  </div>
+
+  @if (!assetUUID()) {
+    <p class="dashboard-message">{{ 'Choose an asset to see its network.' | transloco }}</p>
+  } @else {
+    <mat-tab-group class="infragis-network-tabs" animationDuration="0ms">
+      <mat-tab [label]="'Ports' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          @if (canWrite()) {
+            <form class="form-grid">
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="generateKind"
+                [label]="'Kind' | transloco"
+                [options]="portKinds"
+                [translateOptions]="true"
+                [value]="generateKind()"
+                (valueChange)="generateKind.set($any($event) || 'PORT')"
+              />
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="splitterRatio"
+                [label]="'Splitter ratio' | transloco"
+                [options]="splitterPresets"
+                [value]="splitterRatio()"
+                [clearable]="true"
+                [help]="'Fills the outputs and their typical insertion loss.' | transloco"
+                (valueChange)="setSplitter($event)"
+              />
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Count' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  max="288"
+                  data-field-key="generateCount"
+                  [value]="generateCount()"
+                  (input)="generateCount.set(numberValue($event))"
+                />
+              </mat-form-field>
+              @if (generateKind() === 'FIBER') {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'Fibers per tube' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    min="1"
+                    max="24"
+                    data-field-key="generateTube"
+                    [value]="generateTube()"
+                    (input)="generateTube.set(numberValue($event))"
+                  />
+                </mat-form-field>
+              }
+              @if (generateKind() === 'SPLITTER_OUT') {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'Loss (dB)' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    step="0.1"
+                    data-field-key="generateLoss"
+                    [value]="generateLoss()"
+                    (input)="generateLoss.set(numberValue($event))"
+                  />
+                </mat-form-field>
+              }
+            </form>
+            <div class="infragis-network-actions">
+              <button
+                mat-flat-button
+                type="button"
+                [disabled]="busy() || !generateCount()"
+                (click)="generatePorts()"
+              >
+                <mat-icon>add</mat-icon>{{ 'Add ports' | transloco }}
+              </button>
+              <mns-field-help
+                [label]="'Add ports' | transloco"
+                [text]="
+                  'Fibers are numbered in tubes with the ABNT NBR 14721 colors (green, yellow, white, blue...). Customer ports are the CTO adapters; splitter outputs get their loss.'
+                    | transloco
+                "
+              />
+            </div>
+          }
+          <mns-global-table [config]="portTable" [rows]="ports()" [loading]="loading()" />
+        </section>
+      </mat-tab>
+
+      <mat-tab [label]="'Connections' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          @if (canWrite()) {
+            <form class="form-grid">
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="fromPort"
+                [label]="'Port of this asset' | transloco"
+                [options]="portOptions()"
+                [value]="fromPort()"
+                (valueChange)="fromPort.set($any($event) ?? '')"
+              />
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="targetAsset"
+                data-quick-create-exempt="Connection target; assets are created on the map."
+                [label]="'Other asset' | transloco"
+                [options]="targetOptions()"
+                [value]="targetAsset()"
+                [remoteSearch]="true"
+                (searchChange)="searchAssets($event, 'target')"
+                (valueChange)="targetAsset.set($any($event) ?? ''); targetPort.set('')"
+              />
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="targetPort"
+                [label]="'Port of the other asset' | transloco"
+                [options]="targetPortOptions()"
+                [value]="targetPort()"
+                [disabled]="!targetAsset()"
+                (valueChange)="targetPort.set($any($event) ?? '')"
+              />
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="connectionKind"
+                [label]="'Kind' | transloco"
+                [options]="connectionKinds"
+                [translateOptions]="true"
+                [value]="connectionKind()"
+                (valueChange)="connectionKind.set($any($event) || 'FUSION')"
+              />
+              <mat-checkbox
+                class="span-1"
+                [checked]="atThisAsset()"
+                (change)="atThisAsset.set($event.checked)"
+              >
+                {{ 'Made at this asset' | transloco }}
+              </mat-checkbox>
+            </form>
+            <div class="infragis-network-actions">
+              <button
+                mat-flat-button
+                type="button"
+                [disabled]="busy() || !fromPort() || !targetPort()"
+                (click)="connect()"
+              >
+                <mat-icon>link</mat-icon>{{ 'Connect' | transloco }}
+              </button>
+              <mns-field-help
+                [label]="'Connect' | transloco"
+                [text]="
+                  'A fiber or customer port takes two connections (one per side) and a splitter port one. A drop leaves from a customer port to the customer. Default loss: fusion 0.1 dB, connector, patch cord and drop 0.5 dB.'
+                    | transloco
+                "
+              />
+            </div>
+          }
+          <mns-global-table
+            [config]="connectionTable"
+            [rows]="connections()"
+            [loading]="loading()"
+          />
+        </section>
+      </mat-tab>
+
+      <mat-tab [label]="'Splice diagram' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          <div class="infragis-network-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="!diagram().lines.length"
+              (click)="printDiagram()"
+            >
+              <mat-icon>print</mat-icon>{{ 'Print or save as PDF' | transloco }}
+            </button>
+          </div>
+          @if (diagram().lines.length) {
+            <div class="infragis-splice-print">
+              <h2>{{ current()?.['IgaName'] }} · {{ 'Splice diagram' | transloco }}</h2>
+              <svg
+                class="infragis-splice-svg"
+                role="img"
+                [attr.aria-label]="'Splice diagram' | transloco"
+                [attr.viewBox]="'0 0 ' + diagram().width + ' ' + diagram().height"
+              >
+                @for (group of diagram().groups; track group.side + group.asset + group.y) {
+                  <text
+                    class="infragis-splice-asset"
+                    [attr.x]="group.side === 'left' ? 8 : diagram().width - 8"
+                    [attr.y]="group.y - 4"
+                    [attr.text-anchor]="group.side === 'left' ? 'start' : 'end'"
+                  >
+                    {{ group.asset }}
+                  </text>
+                }
+                @for (line of diagram().lines; track $index) {
+                  <circle
+                    [attr.cx]="250"
+                    [attr.cy]="line.from.y + 8"
+                    r="6"
+                    [attr.fill]="line.from.color"
+                    stroke="#334155"
+                  />
+                  <text [attr.x]="240" [attr.y]="line.from.y + 12" text-anchor="end">
+                    {{ line.from.label }}
+                  </text>
+                  <line
+                    [attr.x1]="256"
+                    [attr.y1]="line.from.y + 8"
+                    [attr.x2]="diagram().width - 256"
+                    [attr.y2]="line.to.y + 8"
+                    stroke="#334155"
+                    stroke-width="1.5"
+                    [attr.stroke-dasharray]="line.kind === 'FUSION' ? null : '4 3'"
+                  />
+                  <text
+                    class="infragis-splice-loss"
+                    [attr.x]="diagram().width / 2"
+                    [attr.y]="line.from.y + 5"
+                    text-anchor="middle"
+                  >
+                    {{ line.kind | transloco }} · {{ line.loss }} dB
+                  </text>
+                  <circle
+                    [attr.cx]="diagram().width - 250"
+                    [attr.cy]="line.to.y + 8"
+                    r="6"
+                    [attr.fill]="line.to.color"
+                    stroke="#334155"
+                  />
+                  <text [attr.x]="diagram().width - 240" [attr.y]="line.to.y + 12">
+                    {{ line.to.label }}
+                  </text>
+                }
+              </svg>
+            </div>
+          } @else {
+            <p class="dashboard-message">
+              {{ 'No splices were made at this asset yet.' | transloco }}
+            </p>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab [label]="'Relations' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          @if (canWrite()) {
+            <form class="form-grid">
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="relationKind"
+                [label]="'This asset' | transloco"
+                [options]="relationKinds"
+                [translateOptions]="true"
+                [value]="relationKind()"
+                (valueChange)="relationKind.set($any($event) || 'CONTAINS')"
+              />
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="relationAsset"
+                data-quick-create-exempt="Relation target; assets are created on the map."
+                [label]="'Other asset' | transloco"
+                [options]="targetOptions()"
+                [value]="relationAsset()"
+                [remoteSearch]="true"
+                (searchChange)="searchAssets($event, 'target')"
+                (valueChange)="relationAsset.set($any($event) ?? '')"
+              />
+            </form>
+            <div class="infragis-network-actions">
+              <button
+                mat-flat-button
+                type="button"
+                [disabled]="busy() || !relationAsset()"
+                (click)="relate()"
+              >
+                <mat-icon>add_link</mat-icon>{{ 'Add relation' | transloco }}
+              </button>
+            </div>
+          }
+          <mns-global-table [config]="relationTable" [rows]="relations()" [loading]="loading()" />
+        </section>
+      </mat-tab>
+
+      <mat-tab [label]="'Trace' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          <form class="form-grid">
+            <mns-search-select-field
+              fieldClass="span-2"
+              data-field-key="tracePort"
+              [label]="'Start port' | transloco"
+              [options]="portOptions()"
+              [value]="tracePort()"
+              (valueChange)="tracePort.set($any($event) ?? '')"
+            />
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Launch power (dBm)' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                step="0.5"
+                data-field-key="txPower"
+                [value]="txPower()"
+                (change)="txPower.set(numberValue($event))"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Receiver sensitivity (dBm)' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                step="0.5"
+                data-field-key="sensitivity"
+                [value]="sensitivity()"
+                (change)="sensitivity.set(numberValue($event))"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="span-1">
+              <mat-label>{{ 'Fiber attenuation (dB/km)' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                step="0.01"
+                data-field-key="attenuation"
+                [value]="attenuation()"
+                (change)="attenuation.set(numberValue($event))"
+              />
+              <mns-field-help
+                matIconSuffix
+                [label]="'Fiber attenuation (dB/km)' | transloco"
+                [text]="
+                  'Typical 0.35 dB/km at 1310 nm and 0.25 dB/km at 1490 nm; the cable length is its comprimento property or the length of its line on the map.'
+                    | transloco
+                "
+              />
+            </mat-form-field>
+          </form>
+          @if (budget(); as value) {
+            <output class="infragis-network-summary">
+              {{ 'Customer ports reached' | transloco }}: <strong>{{ value.terminals }}</strong>
+              @if (value.bestLossDb !== null) {
+                · {{ 'Loss' | transloco }}: {{ value.bestLossDb | number: '1.2-2' }} –
+                {{ value.worstLossDb | number: '1.2-2' }} dB
+              }
+              @if (value.belowSensitivity) {
+                ·
+                <strong class="infragis-network-alert"
+                  >{{ 'Below sensitivity' | transloco }}: {{ value.belowSensitivity }}</strong
+                >
+              }
+            </output>
+          }
+          <mns-global-table [config]="traceTable" [rows]="traceRows()" [loading]="traceLoading()" />
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</mns-detail-page>

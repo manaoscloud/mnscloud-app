@@ -1,0 +1,72 @@
+// InfraGIS › Network: toolbar, tab panels and the printable splice diagram. Panels, headers and
+// messages come from the shared detail page and dashboard styles.
+.infragis-network-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+
+  .infragis-network-asset {
+    min-width: min(24rem, 100%);
+  }
+}
+
+.infragis-network-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.infragis-network-actions,
+.infragis-network-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infragis-network-alert {
+  color: var(--mat-sys-color-error);
+}
+
+.infragis-splice-svg {
+  width: 100%;
+  max-width: 60rem;
+  height: auto;
+  font-size: 12px;
+  fill: var(--mat-sys-on-surface);
+
+  .infragis-splice-asset {
+    font-weight: 600;
+  }
+
+  .infragis-splice-loss {
+    font-size: 10px;
+    fill: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// Printing (or saving as PDF) shows only the splice diagram.
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .infragis-splice-print,
+  .infragis-splice-print * {
+    visibility: visible;
+  }
+
+  .infragis-splice-print {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    color: #000000;
+
+    .infragis-splice-svg {
+      fill: #000000;
+    }
+  }
+}
