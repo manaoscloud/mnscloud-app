@@ -9676,5 +9676,19 @@
   "YouTube": "YouTube",
   "X": "X",
   "TikTok": "TikTok",
-  "WhatsApp": "WhatsApp"
+  "WhatsApp": "WhatsApp",
+  "Customer or supplier registration": "Cadastro de cliente ou fornecedor",
+  "Credit analysis": "Análise de crédito",
+  "Fraud prevention": "Prevenção à fraude",
+  "Contract signing or execution": "Celebração ou execução de contrato",
+  "Debt collection": "Cobrança",
+  "Legal or regulatory obligation": "Obrigação legal ou regulatória",
+  "Consent of the data subject": "Consentimento do titular",
+  "Contract with the data subject": "Contrato com o titular",
+  "Exercise of rights in legal proceedings": "Exercício regular de direitos em processo",
+  "Legitimate interest": "Legítimo interesse",
+  "Credit protection": "Proteção do crédito",
+  "Serpro Consulta CPF": "Serpro Consulta CPF",
+  "Direct Data (Receita Federal PF)": "Direct Data (Receita Federal PF)",
+  "Token of the Direct Data account (sent as the TOKEN parameter).": "Token da conta Direct Data (enviado no parâmetro TOKEN)."
 }
