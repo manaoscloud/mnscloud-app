@@ -108,7 +108,12 @@ export function probeSections(
         },
         {
           label: 'dns.diagnosisEgress',
-          value: step(result['egress'])['address'] ?? '—',
+          value: step(result['egress'])['ipv4'] ?? step(result['egress'])['address'] ?? '—',
+          monospace: true,
+        },
+        {
+          label: 'dns.diagnosisEgress6',
+          value: step(result['egress'])['ipv6'] ?? '—',
           monospace: true,
         },
         {
