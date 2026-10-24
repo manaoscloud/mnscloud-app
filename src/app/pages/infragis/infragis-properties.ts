@@ -57,12 +57,10 @@ export function propertiesTemplate(schemaValue: unknown, currentValue: unknown):
   for (const key of schema?.required ?? []) {
     if (key in current) continue;
     const property = schema?.properties?.[key] ?? {};
-    current[key] =
-      property.type === 'boolean'
-        ? false
-        : property.type === 'number'
-          ? (property.minimum ?? 0)
-          : (property.enum?.[0] ?? '');
+    let initial: unknown = property.enum?.[0] ?? '';
+    if (property.type === 'boolean') initial = false;
+    if (property.type === 'number') initial = property.minimum ?? 0;
+    current[key] = initial;
   }
   return JSON.stringify(current, null, 2);
 }

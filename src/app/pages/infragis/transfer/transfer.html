@@ -18,7 +18,17 @@
         </div>
       </div>
 
-      <input #importFile type="file" hidden [accept]="accept" (change)="chooseFile($event)" />
+      <label class="cdk-visually-hidden" for="infragis-import-file">{{
+        'Choose file' | transloco
+      }}</label>
+      <input
+        #importFile
+        id="infragis-import-file"
+        type="file"
+        hidden
+        [accept]="accept"
+        (change)="chooseFile($event)"
+      />
       <div class="infragis-transfer-actions">
         <button
           mat-flat-button
@@ -176,9 +186,10 @@
       @if (progress(); as value) {
         <mat-progress-bar mode="determinate" [value]="percent()" />
         <output class="infragis-transfer-summary">
-          {{ value.sent | number }} / {{ value.total | number }} · {{ 'Created assets' | transloco }}:
-          <strong>{{ value.created | number }}</strong> · {{ 'Updated assets' | transloco }}:
-          <strong>{{ value.updated | number }}</strong> · {{ 'Refused rows' | transloco }}:
+          {{ value.sent | number }} / {{ value.total | number }} ·
+          {{ 'Created assets' | transloco }}: <strong>{{ value.created | number }}</strong> ·
+          {{ 'Updated assets' | transloco }}: <strong>{{ value.updated | number }}</strong> ·
+          {{ 'Refused rows' | transloco }}:
           <strong>{{ value.failed | number }}</strong>
         </output>
       }

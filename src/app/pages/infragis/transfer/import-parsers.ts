@@ -77,8 +77,9 @@ function flatten(value: unknown, dropped: { count: number }): unknown {
 
 export function normalizeGeometry(
   geometry: unknown,
-  dropped = { count: 0 },
+  counter?: { count: number },
 ): ImportGeometry | null {
+  const dropped = counter ?? { count: 0 };
   if (!geometry || typeof geometry !== 'object') return null;
   const source = geometry as ImportGeometry;
   if (source.type === 'GeometryCollection') {
@@ -131,28 +132,35 @@ function finish(
 
 // ---------------- CSV ----------------
 
-/** RFC 4180 rows; the delimiter is the most frequent of comma, semicolon and tab in the header. */
-export function parseCsv(text: string): string[][] {
-  const clean = text.replace(/^﻿/, '');
-  const header = clean.split(/\r?\n/, 1)[0] ?? '';
-  const delimiter = [',', ';', '\t']
+/** Most frequent of comma, semicolon and tab in the header line. */
+function csvDelimiter(text: string): string {
+  const header = text.split(/\r?\n/, 1)[0] ?? '';
+  return [',', ';', '\t']
     .map((candidate) => ({ candidate, count: header.split(candidate).length }))
     .sort((a, b) => b.count - a.count)[0].candidate;
+}
+
+/** RFC 4180 rows; the delimiter is the most frequent of comma, semicolon and tab in the header. */
+export function parseCsv(text: string): string[][] {
+  const clean = text.replace(/^\ufeff/, '');
+  const delimiter = csvDelimiter(clean);
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = '';
   let quoted = false;
+  const endRow = () => {
+    row.push(cell);
+    if (row.some((value) => value !== '')) rows.push(row);
+    row = [];
+    cell = '';
+  };
   for (let i = 0; i < clean.length; i++) {
     const char = clean[i];
     if (quoted) {
-      if (char === '"' && clean[i + 1] === '"') {
-        cell += '"';
-        i++;
-      } else if (char === '"') {
-        quoted = false;
-      } else {
-        cell += char;
-      }
+      const escaped = char === '"' && clean[i + 1] === '"';
+      if (escaped) i++;
+      if (char === '"' && !escaped) quoted = false;
+      else cell += char;
     } else if (char === '"') {
       quoted = true;
     } else if (char === delimiter) {
@@ -160,56 +168,90 @@ export function parseCsv(text: string): string[][] {
       cell = '';
     } else if (char === '\n' || char === '\r') {
       if (char === '\r' && clean[i + 1] === '\n') i++;
-      row.push(cell);
-      if (row.some((value) => value !== '')) rows.push(row);
-      row = [];
-      cell = '';
+      endRow();
     } else {
       cell += char;
     }
   }
-  row.push(cell);
-  if (row.some((value) => value !== '')) rows.push(row);
+  endRow();
   return rows;
 }
 
 const number = (value: string) => Number(value.trim().replace(',', '.'));
 
+type WktNode = number[] | WktNode[];
+
+const WKT_TYPES: Record<string, string> = {
+  POINT: 'Point',
+  LINESTRING: 'LineString',
+  POLYGON: 'Polygon',
+  MULTIPOINT: 'MultiPoint',
+  MULTILINESTRING: 'MultiLineString',
+  MULTIPOLYGON: 'MultiPolygon',
+};
+
+/**
+ * Nested lists of a WKT body: `(1 2, 3 4)` is [[1, 2], [3, 4]] and `((…), (…))` a list of those.
+ * Returns the node and the index after its closing parenthesis; throws on malformed input.
+ */
+function wktList(text: string, start: number): [WktNode, number] {
+  const items: WktNode[] = [];
+  let tuple: number[] = [];
+  let token = '';
+  const flushToken = () => {
+    if (!token) return;
+    const value = Number(token);
+    if (!Number.isFinite(value)) throw new Error('Invalid WKT number');
+    tuple.push(value);
+    token = '';
+  };
+  const flushTuple = () => {
+    flushToken();
+    if (tuple.length) items.push(tuple);
+    tuple = [];
+  };
+  for (let i = start + 1; i < text.length; i++) {
+    const char = text[i];
+    if (char === '(') {
+      const [child, next] = wktList(text, i);
+      items.push(child);
+      i = next - 1;
+    } else if (char === ')') {
+      flushTuple();
+      return [items, i + 1];
+    } else if (char === ',') {
+      flushTuple();
+    } else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+      flushToken();
+    } else {
+      token += char;
+    }
+  }
+  throw new Error('Unbalanced WKT');
+}
+
 /** WKT (2D, optional Z/M ignored) of POINT, LINESTRING, POLYGON and their MULTI forms. */
-export function parseWkt(text: string): ImportGeometry | null {
-  const match =
-    /^\s*(MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|POINT|LINESTRING|POLYGON)\s*(?:Z|M|ZM)?\s*(\(.*\))\s*$/i.exec(
-      text.replace(/^SRID=\d+;/i, ''),
-    );
-  if (!match) return null;
-  const type = match[1].toUpperCase();
-  let tokens: string;
+export function parseWkt(source: string): ImportGeometry | null {
+  const text = source.trim().replace(/^SRID=\d+;/i, '');
+  const open = text.indexOf('(');
+  if (open < 0) return null;
+  const header = text.slice(0, open).trim().toUpperCase().split(/\s+/);
+  const type = WKT_TYPES[header[0] ?? ''];
+  if (!type || header.length > 2 || (header[1] && !['Z', 'M', 'ZM'].includes(header[1]))) {
+    return null;
+  }
   try {
-    tokens = match[2]
-      .replace(/\(\s*/g, '[')
-      .replace(/\s*\)/g, ']')
-      .replace(
-        /(-?[\d.eE+-]+)(?:\s+(-?[\d.eE+-]+))+/g,
-        (group) => `[${group.trim().split(/\s+/).join(',')}]`,
-      );
-    const parsed = JSON.parse(tokens);
-    const names: Record<string, string> = {
-      POINT: 'Point',
-      LINESTRING: 'LineString',
-      POLYGON: 'Polygon',
-      MULTIPOINT: 'MultiPoint',
-      MULTILINESTRING: 'MultiLineString',
-      MULTIPOLYGON: 'MultiPolygon',
-    };
-    // POINT(x y) parses as [[x, y]]; MULTIPOINT((x y), (x y)) as [[[x, y]], ...].
-    let coordinates = parsed;
-    if (type === 'POINT') coordinates = parsed[0];
-    if (type === 'MULTIPOINT') {
-      coordinates = parsed.map((item: unknown) =>
-        Array.isArray(item) && Array.isArray(item[0]) ? item[0] : item,
+    const [body, end] = wktList(text, open);
+    if (text.slice(end).trim()) return null;
+    // POINT(x y) reads as [[x, y]]; MULTIPOINT((x y), (x y)) as [[[x, y]], ...].
+    let coordinates: unknown = body;
+    if (type === 'Point') coordinates = (body as WktNode[])[0];
+    if (type === 'MultiPoint') {
+      coordinates = (body as WktNode[]).map((item) =>
+        Array.isArray(item[0]) ? (item as WktNode[])[0] : item,
       );
     }
-    return { type: names[type], coordinates };
+    return { type, coordinates };
   } catch {
     return null;
   }
@@ -294,11 +336,11 @@ async function kmzBuffer(buffer: ArrayBuffer): Promise<ParsedFile> {
   const files = unzipSync(new Uint8Array(buffer), {
     filter: (file) => file.name.toLowerCase().endsWith('.kml'),
   });
-  const names = Object.keys(files).sort((a, b) =>
-    a.toLowerCase() === 'doc.kml' ? -1 : b.toLowerCase() === 'doc.kml' ? 1 : a.localeCompare(b),
-  );
-  if (!names.length) throw new Error('The KMZ file has no KML document.');
-  return kmlText(strFromU8(files[names[0]]), 'kmz');
+  const names = Object.keys(files).sort((a, b) => a.localeCompare(b));
+  // The main document of a KMZ is doc.kml; other KML files are linked overlays.
+  const main = names.find((name) => name.toLowerCase().endsWith('doc.kml')) ?? names[0];
+  if (!main) throw new Error('The KMZ file has no KML document.');
+  return kmlText(strFromU8(files[main]), 'kmz');
 }
 
 async function shapefileBuffer(buffer: ArrayBuffer): Promise<ParsedFile> {
@@ -397,11 +439,28 @@ export function guessMapping(columns: readonly string[]): ImportMapping {
 
 function text(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  const result = String(typeof value === 'object' ? JSON.stringify(value) : value).trim();
+  const result = (typeof value === 'object' ? JSON.stringify(value) : String(value)).trim();
   return result || null;
 }
 
 const code = (value: unknown) => text(value)?.toLowerCase() ?? null;
+const TRUE_WORDS = ['true', '1', 'sim', 'yes', 's', 'y'];
+const FALSE_WORDS = ['false', '0', 'nao', 'não', 'no', 'n'];
+
+function coerce(kind: string | undefined, value: unknown): unknown {
+  if (kind === 'number' && typeof value === 'string' && value.trim()) {
+    const parsed = number(value);
+    return Number.isFinite(parsed) ? parsed : value;
+  }
+  if (kind === 'boolean' && typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (TRUE_WORDS.includes(normalized)) return true;
+    if (FALSE_WORDS.includes(normalized)) return false;
+    return value;
+  }
+  if (kind === 'string' && typeof value === 'number') return String(value);
+  return value;
+}
 
 /**
  * Values typed by the asset type schema: numeric text becomes a number and yes/no text a boolean
@@ -412,26 +471,21 @@ export function coerceProperties(
   schema: PropertiesSchema | null | undefined,
 ): Record<string, unknown> {
   const declared = schema?.properties ?? {};
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(properties)) {
-    const kind = declared[key]?.type;
-    if (kind === 'number' && typeof value === 'string' && value.trim()) {
-      const parsed = number(value);
-      result[key] = Number.isFinite(parsed) ? parsed : value;
-    } else if (kind === 'boolean' && typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      result[key] = ['true', '1', 'sim', 'yes', 's', 'y'].includes(normalized)
-        ? true
-        : ['false', '0', 'nao', 'não', 'no', 'n'].includes(normalized)
-          ? false
-          : value;
-    } else if (kind === 'string' && typeof value === 'number') {
-      result[key] = String(value);
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
+  return Object.fromEntries(
+    Object.entries(properties).map(([key, value]) => [key, coerce(declared[key]?.type, value)]),
+  );
+}
+
+/** Columns kept as properties: not mapped, not export metadata and not empty. */
+function extraProperties(
+  properties: Record<string, unknown>,
+  mapped: ReadonlySet<string>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(properties).filter(
+      ([key, item]) => !mapped.has(key) && !EXPORT_META.has(key) && item !== null && item !== '',
+    ),
+  );
 }
 
 /** Rows in the API shape. `fallbackName` names rows without a name or external ID. */
@@ -454,14 +508,8 @@ export function buildRows(
     const value = (column: string | null) => (column ? feature.properties[column] : undefined);
     const externalId = text(value(mapping.externalId))?.slice(0, 120) ?? null;
     const typeCode = code(value(mapping.typeCode)) ?? mapping.fixedTypeCode;
-    const properties = mapping.keepProperties
-      ? Object.fromEntries(
-          Object.entries(feature.properties).filter(
-            ([key, item]) =>
-              !mapped.has(key) && !EXPORT_META.has(key) && item !== null && item !== '',
-          ),
-        )
-      : {};
+    const properties = mapping.keepProperties ? extraProperties(feature.properties, mapped) : {};
+    const schema = typeCode ? schemas.get(typeCode) : null;
     return {
       row: feature.row,
       name: (text(value(mapping.name)) ?? externalId ?? fallbackName(feature.row)).slice(0, 160),
@@ -469,9 +517,7 @@ export function buildRows(
       layerCode: code(value(mapping.layerCode)),
       typeCode,
       statusCode: code(value(mapping.statusCode)) ?? mapping.fixedStatusCode,
-      properties: Object.keys(properties).length
-        ? coerceProperties(properties, typeCode ? schemas.get(typeCode) : null)
-        : null,
+      properties: Object.keys(properties).length ? coerceProperties(properties, schema) : null,
       geometry: feature.geometry,
     };
   });
