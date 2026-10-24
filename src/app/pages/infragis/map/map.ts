@@ -58,6 +58,7 @@ type DrawMode = 'point' | 'linestring' | 'polygon';
 
 const SOURCE = 'infragis-assets';
 const FEASIBILITY_SOURCE = 'infragis-feasibility';
+const OUTAGE_SOURCE = 'infragis-outages';
 /** Customer port occupancy of boxes: free, 70% or more, full (others keep their type color). */
 const OCCUPANCY_COLORS = { ok: '#16A34A', high: '#F59E0B', full: '#DC2626' };
 export type FeasibilityRow = Record<string, any>;
@@ -176,10 +177,14 @@ export class InfraGisMapPage {
   readonly feasibilityRadius = signal(300);
   readonly feasibility = signal<FeasibilityRow[] | null>(null);
   readonly feasibilityLoading = signal(false);
+  readonly outagesOn = signal(false);
+  readonly outages = signal<FeasibilityRow[]>([]);
+  private outageTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       if (this.moveTimer) clearTimeout(this.moveTimer);
+      if (this.outageTimer) clearInterval(this.outageTimer);
       this.draw?.stop();
       this.map?.remove();
     });
@@ -281,6 +286,19 @@ export class InfraGisMapPage {
   private addOverlay(map: MapLibreMap) {
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY, promoteId: 'IgaUUID' });
     map.addSource(FEASIBILITY_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addSource(OUTAGE_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer({
+      id: 'infragis-outage',
+      type: 'circle',
+      source: OUTAGE_SOURCE,
+      paint: {
+        'circle-color': '#DC2626',
+        'circle-opacity': 0.25,
+        'circle-radius': 18,
+        'circle-stroke-color': '#DC2626',
+        'circle-stroke-width': 2,
+      },
+    });
     map.addLayer({
       id: 'infragis-feasibility',
       type: 'fill',
@@ -564,6 +582,47 @@ export class InfraGisMapPage {
       this.snack.error(this.message(error, 'Feasibility could not be checked.'));
     } finally {
       this.feasibilityLoading.set(false);
+    }
+  }
+
+  /** Outage alerts: boxes whose accesses dropped together, refreshed every minute while shown. */
+  toggleOutages() {
+    const next = !this.outagesOn();
+    this.outagesOn.set(next);
+    if (this.outageTimer) clearInterval(this.outageTimer);
+    this.outageTimer = null;
+    if (next) {
+      void this.refreshOutages();
+      this.outageTimer = setInterval(() => void this.refreshOutages(), 60_000);
+    } else {
+      this.outages.set([]);
+      (this.map?.getSource(OUTAGE_SOURCE) as GeoJSONSource | undefined)?.setData(EMPTY as any);
+    }
+  }
+
+  private async refreshOutages() {
+    try {
+      const result = await this.api.get<{ data: { items: FeasibilityRow[] } }>(
+        'infragis/outage-signals',
+        { silent: true },
+      );
+      const rows = result.data.items ?? [];
+      this.outages.set(rows);
+      (this.map?.getSource(OUTAGE_SOURCE) as GeoJSONSource | undefined)?.setData({
+        type: 'FeatureCollection',
+        features: rows
+          .filter((row) => row['IgmLongitude'] !== null && row['IgmLatitude'] !== null)
+          .map((row) => ({
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [Number(row['IgmLongitude']), Number(row['IgmLatitude'])],
+            },
+            properties: { IgaUUID: row['IgaUUID'] },
+          })),
+      } as any);
+    } catch (error) {
+      this.snack.error(this.message(error, 'Outage alerts could not be loaded.'));
     }
   }
 

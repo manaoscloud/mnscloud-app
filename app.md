@@ -1742,6 +1742,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   (fusion/connector/patch/drop), relations, a printable SVG splice diagram (`network-model.ts`, print
   CSS keeps only the diagram, the browser saves it as PDF) and the trace with power budget from the API.
   The map colors boxes by customer port occupancy and has a feasibility tool (radius around a click).
+- Network › Platform links the asset to the ISP POP/OLT and a customer port to the customer and the
+  authentication access; Network › Outage impact simulates a failure (asset or port) and opens the
+  canonical support ticket form prefilled (`openQuickCreate` of `SupportTicketsPage`). The map shows
+  outage alerts (boxes whose accesses dropped together), refreshed every minute while on.
 
 ## Auth/Guards
 

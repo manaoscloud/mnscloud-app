@@ -1,6 +1,7 @@
 import { Component, ViewEncapsulation, computed, inject, resource, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -33,6 +34,7 @@ import {
 } from './network-model';
 
 type Option = { value: string; label: string };
+type ImpactSummary = { ports: number; customers: number; online: number; rootsKnown: boolean };
 type ListResponse = { data?: { items?: Row[] } };
 type TraceResponse = {
   data?: {
@@ -84,6 +86,7 @@ export class InfraGisNetworkPage {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dialog = inject(MatDialog);
 
   readonly portKinds = PORT_KINDS;
   readonly connectionKinds = CONNECTION_KINDS;
@@ -137,6 +140,12 @@ export class InfraGisNetworkPage {
       ...port,
       Name: portLabel(port['IptKind'], port['IptNumber'], port['IptTube']),
       OccupiedLabel: Number(port['Occupied']) ? 'Occupied' : 'Free',
+      OnlineLabel:
+        port['Online'] === null || port['Online'] === undefined || port['Online'] === 'NULL'
+          ? ''
+          : Number(port['Online'])
+            ? 'Online'
+            : 'Offline',
     })),
   );
   readonly portOptions = computed<Option[]>(() =>
@@ -193,6 +202,60 @@ export class InfraGisNetworkPage {
   readonly relationKind = signal('CONTAINS');
   readonly relationAsset = signal('');
 
+  // ---------------- platform links ----------------
+  readonly popOptions = signal<Option[]>([]);
+  readonly oltOptions = signal<Option[]>([]);
+  readonly customerOptions = signal<Option[]>([]);
+  readonly accessOptions = signal<Option[]>([]);
+  readonly popUUID = signal('');
+  readonly oltUUID = signal('');
+  readonly linkPort = signal('');
+  readonly linkCustomer = signal('');
+  readonly linkAccess = signal('');
+  private readonly platform = resource({
+    params: () => this.assetUUID() || undefined,
+    loader: async ({ params }) =>
+      (await this.api.get<{ data?: { item?: Row } }>(`infragis/assets/${params}/platform`))?.data
+        ?.item ?? null,
+  });
+  readonly platformLinks = computed(() => this.platform.value() ?? null);
+  readonly customerPortOptions = computed(() =>
+    this.portOptions().filter((option) =>
+      this.ports().some((port) => port['IptUUID'] === option.value && port['IptKind'] === 'PORT'),
+    ),
+  );
+  readonly currentPop = computed<Option[]>(() => {
+    const links = this.platformLinks();
+    return links?.['IspPopIppUUID']
+      ? [{ value: str(links['IspPopIppUUID']), label: str(links['PopName']) }]
+      : [];
+  });
+  readonly currentOlt = computed<Option[]>(() => {
+    const links = this.platformLinks();
+    return links?.['IspOltIolUUID']
+      ? [{ value: str(links['IspOltIolUUID']), label: str(links['OltName']) }]
+      : [];
+  });
+
+  // ---------------- impact ----------------
+  readonly impactRows = signal<Row[]>([]);
+  readonly impactSummary = signal<ImpactSummary | null>(null);
+  readonly impactLabel = signal('');
+  readonly impactLoading = signal(false);
+  readonly impactTable = defineGlobalTable({
+    key: 'infragis/network/impact',
+    uuidField: 'IptUUID',
+    emptyLabel: 'No customer port is cut off.',
+    columns: [
+      { id: 'box', label: 'Box', field: 'IgaName', translateValue: false },
+      { id: 'port', label: 'Port', field: 'IptNumber', kind: 'number' },
+      { id: 'customer', label: 'Customer', field: 'CustomerName', translateValue: false },
+      { id: 'phone', label: 'Phone', field: 'CustomerPhone', translateValue: false },
+      { id: 'login', label: 'Login', field: 'AccessLogin', translateValue: false },
+      { id: 'online', label: 'Online', field: 'OnlineLabel' },
+    ],
+  });
+
   // ---------------- trace ----------------
   readonly tracePort = signal('');
   readonly txPower = signal<number | null>(5);
@@ -239,9 +302,18 @@ export class InfraGisNetworkPage {
       { id: 'occupied', label: 'Occupancy', field: 'OccupiedLabel' },
       { id: 'state', label: 'State', field: 'IptState' },
       { id: 'to', label: 'Connected to', field: 'ConnectedTo', translateValue: false },
+      { id: 'customer', label: 'Customer', field: 'CustomerName', translateValue: false },
+      { id: 'login', label: 'Login', field: 'AccessLogin', translateValue: false },
+      { id: 'online', label: 'Online', field: 'OnlineLabel' },
     ],
     rowActions: [
       { key: 'trace', label: 'Trace', icon: 'route', run: (row) => this.startTrace(row) },
+      {
+        key: 'impact',
+        label: 'Outage impact',
+        icon: 'crisis_alert',
+        run: (row) => this.runImpact(row),
+      },
       {
         key: 'reserve',
         label: 'Reserve',
@@ -323,6 +395,7 @@ export class InfraGisNetworkPage {
   // ---------------- actions ----------------
   refresh() {
     this.asset.reload();
+    this.platform.reload();
     this.network.reload();
     this.trace.reload();
   }
@@ -402,6 +475,141 @@ export class InfraGisNetworkPage {
       });
       this.relationAsset.set('');
       this.snack.success('Relation added.');
+    });
+  }
+
+  /** Remote options of a lookup list (name search) into one of the option signals. */
+  async searchOptions(
+    endpoint: string,
+    uuidField: string,
+    labelField: string,
+    term: string,
+    target: 'pop' | 'olt' | 'customer' | 'access',
+  ) {
+    const rows = await items(
+      this.api.get<ListResponse>(`${endpoint}?limit=50&search=${encodeURIComponent(term.trim())}`),
+    );
+    const options = rows.map((row) => ({
+      value: str(row[uuidField]),
+      label: str(row[labelField]),
+    }));
+    ({
+      pop: this.popOptions,
+      olt: this.oltOptions,
+      customer: this.customerOptions,
+      access: this.accessOptions,
+    })[target].set(options);
+  }
+
+  async savePlatform() {
+    await this.run(async () => {
+      await this.api.put(`infragis/assets/${this.assetUUID()}/platform`, {
+        popUUID: this.popUUID() || str(this.platformLinks()?.['IspPopIppUUID'] ?? '') || '',
+        oltUUID: this.oltUUID() || str(this.platformLinks()?.['IspOltIolUUID'] ?? '') || '',
+      });
+      this.platform.reload();
+      this.snack.success('Platform links saved.');
+    });
+  }
+
+  async clearPlatform() {
+    await this.run(async () => {
+      await this.api.put(`infragis/assets/${this.assetUUID()}/platform`, {
+        popUUID: '',
+        oltUUID: '',
+      });
+      this.popUUID.set('');
+      this.oltUUID.set('');
+      this.platform.reload();
+      this.snack.success('Platform links saved.');
+    });
+  }
+
+  async saveCustomer(clear = false) {
+    await this.run(async () => {
+      await this.api.put(
+        `infragis/ports/${this.linkPort()}/customer`,
+        clear
+          ? { customerUUID: '', accessUUID: '' }
+          : {
+              ...(this.linkCustomer() ? { customerUUID: this.linkCustomer() } : {}),
+              ...(this.linkAccess() ? { accessUUID: this.linkAccess() } : {}),
+            },
+      );
+      this.linkCustomer.set('');
+      this.linkAccess.set('');
+      this.snack.success('Customer port saved.');
+    });
+  }
+
+  async runImpact(row?: ConfigurableCrudRecord) {
+    const endpoint = row
+      ? `infragis/ports/${row['IptUUID']}/impact`
+      : `infragis/assets/${this.assetUUID()}/impact`;
+    this.impactLabel.set(
+      row
+        ? `${this.current()?.['IgaName'] ?? ''} · ${portLabel(row['IptKind'], row['IptNumber'], row['IptTube'])}`
+        : str(this.current()?.['IgaName']),
+    );
+    this.impactLoading.set(true);
+    try {
+      const response = await this.api.get<{
+        data?: { items?: Row[]; summary?: ImpactSummary };
+      }>(endpoint);
+      this.impactRows.set(
+        (response?.data?.items ?? []).map((item): Row => ({
+          ...item,
+          OnlineLabel:
+            item['Online'] === null || item['Online'] === undefined
+              ? ''
+              : Number(item['Online'])
+                ? 'Online'
+                : 'Offline',
+        })),
+      );
+      this.impactSummary.set(response?.data?.summary ?? null);
+    } catch (error) {
+      const body = (error as { error?: { error?: string } })?.error?.error;
+      this.snack.error(this.transloco.translate(body || 'The impact could not be computed.'));
+    } finally {
+      this.impactLoading.set(false);
+    }
+  }
+
+  /** Opens the canonical support ticket form with the outage summary and the affected customers. */
+  async openIncident() {
+    const rows = this.impactRows();
+    const t = (key: string, params?: Record<string, unknown>) =>
+      this.transloco.translate(key, params);
+    const lines = rows
+      .slice(0, 200)
+      .map(
+        (row) =>
+          `- ${row['IgaName']} #${row['IptNumber']}: ${row['CustomerName'] ?? '—'}${
+            row['AccessLogin'] ? ` (${row['AccessLogin']})` : ''
+          }`,
+      );
+    const { openQuickCreate } =
+      await import('../../../shared/crud/configurable-crud/configurable-crud-quick-create-host');
+    await openQuickCreate(this.dialog, {
+      loadComponent: () =>
+        import('../../support/tickets/tickets').then((m) => m.SupportTicketsPage),
+      routeData: { supportDesk: 'tenant' },
+      initialValues: {
+        subject: t('Network outage: {{ asset }}', { asset: this.impactLabel() }).slice(0, 160),
+        description: [
+          t(
+            '{{ count }} customer ports cut off ({{ customers }} customers, {{ online }} online now).',
+            {
+              count: rows.length,
+              customers: this.impactSummary()?.customers ?? 0,
+              online: this.impactSummary()?.online ?? 0,
+            },
+          ),
+          '',
+          ...lines,
+        ].join('\n'),
+      },
     });
   }
 
