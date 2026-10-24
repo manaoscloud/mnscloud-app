@@ -45,7 +45,7 @@ test('page shells declare a translated description', () => {
   assert.match(checkSource(html, '<mns-dashboard-page title="T" description="">')[0], /is empty/);
   assert.match(checkSource(html, '<mns-detail-page title="T">')[0], /has no description/);
   assert.match(
-    checkSource(html, '<div class="erp-header"><div><h1>T</h1></div></div>')[0],
+    checkSource(html, '<div class="app-header"><div><h1>T</h1></div></div>')[0],
     /no description paragraph/,
   );
 });

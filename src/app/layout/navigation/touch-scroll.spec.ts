@@ -11,13 +11,13 @@ import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material
   template: `
     <div class="sidenav-scroll" style="height: 80px; overflow-y: auto">
       <button type="button" class="menu-item root-item">Module</button>
-      <button type="button" class="menu-item child-item" matTooltip="/erp/resource">
+      <button type="button" class="menu-item child-item" matTooltip="/registry/resource">
         Resource
       </button>
       <button
         type="button"
         class="menu-item child-item"
-        matTooltip="/erp/other"
+        matTooltip="/registry/other"
         matTooltipTouchGestures="off"
       >
         Other

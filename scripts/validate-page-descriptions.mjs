@@ -7,7 +7,7 @@
  *    untranslated words) and other expressions are left to the TypeScript type;
  *  - every <mns-dashboard-page>, <mns-settings-page>, <mns-detail-page> and <mns-page-shell>
  *    declares a description (literal ones must be translated);
- *  - hand-written `erp-header` blocks contain a description paragraph.
+ *  - hand-written `app-header` blocks contain a description paragraph.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -139,11 +139,11 @@ export function checkSource(path, source) {
         }
       }
     }
-    for (const match of source.matchAll(/<div class="erp-header">/g)) {
+    for (const match of source.matchAll(/<div class="app-header">/g)) {
       const header = source.slice(match.index, source.indexOf('</h1>', match.index) + 400);
       const line = source.slice(0, match.index).split('\n').length;
       if (!/<p[\s>]/.test(header)) {
-        problems.push(`${file}:${line} erp-header has no description paragraph.`);
+        problems.push(`${file}:${line} app-header has no description paragraph.`);
       }
     }
   }

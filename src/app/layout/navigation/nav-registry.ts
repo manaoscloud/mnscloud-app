@@ -249,16 +249,33 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'badge',
         route: '/registry/employees',
       },
+      {
+        id: 'registry/departments',
+        label: 'nav.registry.departments',
+        icon: 'account_tree',
+        route: '/registry/departments',
+      },
+      {
+        id: 'registry/positions',
+        label: 'nav.registry.positions',
+        icon: 'work',
+        route: '/registry/positions',
+      },
+      {
+        id: 'registry/cost-centers',
+        label: 'nav.registry.cost-centers',
+        icon: 'hub',
+        route: '/registry/cost-centers',
+      },
     ],
   },
 
-  // Financial: titles, settlements, payment charges, gateways and methods of the tenant. Its
-  // entitlement is the ERP module until the HR split retires ERP.
+  // Financial: titles, settlements, payment charges, gateways and methods of the tenant.
   {
     id: 'financial',
     label: 'nav.financial',
     icon: 'account_balance',
-    entitlementCode: 'module.erp.*',
+    entitlementCode: 'module.financial.*',
     requiresEnvironment: true,
     children: [
       {
@@ -301,34 +318,14 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  // Human resources (time clock, departments, positions); employees live in Registry. Its
-  // entitlement is the ERP module until the HR split retires ERP.
+  // Human resources: time clock accounts of the employees kept in Registry.
   {
-    id: 'erp/human-resources',
-    label: 'nav.erp.human-resources',
+    id: 'hr',
+    label: 'nav.hr',
     icon: 'groups',
-    entitlementCode: 'module.erp.*',
+    route: '/hr/time-clock-accounts',
+    entitlementCode: 'module.hr.*',
     requiresEnvironment: true,
-    children: [
-      {
-        id: 'erp/human-resources/time-clock-accounts',
-        label: 'nav.erp.human-resources.time-clock-accounts',
-        icon: 'schedule',
-        route: '/erp/human-resources/time-clock-accounts',
-      },
-      {
-        id: 'erp/human-resources/departments',
-        label: 'nav.erp.human-resources.departments',
-        icon: 'account_tree',
-        route: '/erp/human-resources/departments',
-      },
-      {
-        id: 'erp/human-resources/positions',
-        label: 'nav.erp.human-resources.positions',
-        icon: 'work',
-        route: '/erp/human-resources/positions',
-      },
-    ],
   },
 
   // CRM is an independent tenant module, immediately after human resources.
@@ -2118,12 +2115,6 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.accounting.mappings',
         icon: 'account_tree',
         route: '/accounting/mappings',
-      },
-      {
-        id: 'accounting/cost-centers',
-        label: 'nav.accounting.cost-centers',
-        icon: 'hub',
-        route: '/accounting/cost-centers',
       },
       {
         id: 'accounting/exports',

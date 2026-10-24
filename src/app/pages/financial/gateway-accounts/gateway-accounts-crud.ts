@@ -6,7 +6,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 /**
- * Tenant payment gateways (ERP): the tenant's own accounts used to charge its customers.
+ * Tenant payment gateways (Financial): the tenant's own accounts used to charge its customers.
  * Independent from MNSCloud Pay bank partners (System > Pay). The gateway list comes from the
  * tenant catalog API; each gateway shows only the fields its integration needs.
  */

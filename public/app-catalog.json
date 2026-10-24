@@ -1,33 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "65a377d0e835",
+  "version": "2b99554a3f45",
   "language": "pt-BR",
   "entries": [
-    {
-      "route": "/accounting/cost-centers",
-      "menuPath": "Contabilidade › Centros de custo",
-      "scope": "tenant",
-      "title": "Centros de custo",
-      "description": "Centros de custo do plano usado pelo seu contador, aplicados pelos mapeamentos de contas dos eventos contábeis.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Código",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Revisão",
-          "help": ""
-        }
-      ]
-    },
     {
       "route": "/accounting/events",
       "menuPath": "Contabilidade › Eventos",
@@ -1636,77 +1611,6 @@
       "fields": []
     },
     {
-      "route": "/erp/human-resources/departments",
-      "menuPath": "Recursos humanos › Departamentos",
-      "scope": "tenant",
-      "title": "Departamentos",
-      "description": "Gerencie os departamentos de recursos humanos.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/human-resources/positions",
-      "menuPath": "Recursos humanos › Cargos",
-      "scope": "tenant",
-      "title": "Cargos",
-      "description": "Gerencie os cargos de recursos humanos.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/erp/human-resources/time-clock-accounts",
-      "menuPath": "Recursos humanos › Ponto",
-      "scope": "tenant",
-      "title": "Contas de ponto",
-      "description": "Gere acessos seguros do Pulse para funcionários do RH.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Colaborador",
-          "help": ""
-        },
-        {
-          "label": "Anotações",
-          "help": ""
-        }
-      ]
-    },
-    {
       "route": "/financial/gateway-accounts",
       "menuPath": "Financeiro › Pagamentos › Gateways",
       "scope": "tenant",
@@ -2943,6 +2847,27 @@
       ]
     },
     {
+      "route": "/hr/time-clock-accounts",
+      "menuPath": "Recursos humanos",
+      "scope": "tenant",
+      "title": "Contas de ponto",
+      "description": "Gere acessos seguros do Pulse para funcionários do RH.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/infragis",
       "menuPath": "InfraGIS › Painel",
       "scope": "tenant",
@@ -3888,6 +3813,39 @@
       ]
     },
     {
+      "route": "/registry/cost-centers",
+      "menuPath": "Cadastros › Centros de custo",
+      "scope": "tenant",
+      "title": "Centros de custo",
+      "description": "Centros de custo da sua organização, opcionalmente agrupados sob um centro pai e vinculados a uma empresa, compartilhados pelos títulos financeiros e pelos mapeamentos contábeis.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Centro de custo pai",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/registry/customer-complexes",
       "menuPath": "Cadastros › Complexos",
       "scope": "tenant",
@@ -4138,6 +4096,31 @@
       ]
     },
     {
+      "route": "/registry/departments",
+      "menuPath": "Cadastros › Departamentos",
+      "scope": "tenant",
+      "title": "Departamentos",
+      "description": "Gerencie os departamentos da sua organização, compartilhados pelos funcionários e pelos demais módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/registry/employees",
       "menuPath": "Cadastros › Funcionários",
       "scope": "tenant",
@@ -4182,6 +4165,31 @@
         },
         {
           "label": "Data de desligamento",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/positions",
+      "menuPath": "Cadastros › Cargos",
+      "scope": "tenant",
+      "title": "Cargos",
+      "description": "Gerencie os cargos da sua organização, compartilhados pelos funcionários e pelos demais módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
           "help": ""
         },
         {
@@ -5757,7 +5765,7 @@
         },
         {
           "label": "Código",
-          "help": "Identificador único e permanente do pacote, por exemplo package.erp.starter. A API, os logs de auditoria e as integrações usam este código; evite alterá-lo depois que o pacote estiver em uso."
+          "help": "Identificador único e permanente do pacote, por exemplo package.financial.starter. A API, os logs de auditoria e as integrações usam este código; evite alterá-lo depois que o pacote estiver em uso."
         },
         {
           "label": "Nome",

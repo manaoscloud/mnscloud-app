@@ -52,7 +52,7 @@ function nearestCrudRoot(file) {
     const htmlFiles = readdirSync(current, { withFileTypes: true })
       .filter((entry) => entry.isFile() && entry.name.endsWith('.html'))
       .map((entry) => join(current, entry.name));
-    if (htmlFiles.some((html) => read(html).includes('class="erp-page'))) {
+    if (htmlFiles.some((html) => read(html).includes('class="app-page'))) {
       return current;
     }
     const parent = dirname(current);
@@ -84,9 +84,9 @@ function classRule(name) {
 }
 
 const requiredHtmlRules = [
-  ['page root', classRule('erp-page')],
+  ['page root', classRule('app-page')],
   ['card root', /<mat-card[^>]*class="[^"]*\berp-card\b[^"]*"/],
-  ['header', classRule('erp-header')],
+  ['header', classRule('app-header')],
   ['header actions', classRule('header-actions')],
 ];
 
@@ -96,9 +96,9 @@ const requiredFilterRules = [
 ];
 
 const forbiddenLocalScssRules = [
-  ['erp-page local layout override', /^\s*\.erp-page\s*[{,]/m],
-  ['erp-card local layout override', /^\s*\.erp-card\s*[{,]/m],
-  ['erp-header local layout override', /^\s*\.erp-header\s*[{,]/m],
+  ['app-page local layout override', /^\s*\.app-page\s*[{,]/m],
+  ['app-card local layout override', /^\s*\.app-card\s*[{,]/m],
+  ['app-header local layout override', /^\s*\.app-header\s*[{,]/m],
   ['header-actions local layout override', /^\s*\.header-actions\s*[{,]/m],
   ['filter-grid local layout override', /^\s*\.filter-grid\s*[{,]/m],
   ['filter-actions local layout override', /^\s*\.filter-actions\s*[{,]/m],
@@ -203,8 +203,11 @@ function orderedSubsequence(values, expected) {
   return false;
 }
 
+// Field order rules of the Registry departments and positions pages.
+const FIELD_ORDER_ENDPOINT = /\bendpoint:\s*'registry\/(?:departments|positions)'/;
+
 function validateConfigurableCrudFieldOrder(tsFile, content) {
-  if (!content.includes('ConfigurableCrudPageBase') || !/\bendpoint:\s*'erp\//.test(content)) {
+  if (!content.includes('ConfigurableCrudPageBase') || !FIELD_ORDER_ENDPOINT.test(content)) {
     return [];
   }
 
@@ -435,7 +438,7 @@ function validateTarget(target) {
   const tsFiles = files.filter((file) => extname(file) === '.ts');
   const rootHtmlFiles = htmlFiles.filter(
     (file) =>
-      read(file).includes('class="erp-page') && isCrudComponentDirectory(dirname(file), tsFiles),
+      read(file).includes('class="app-page') && isCrudComponentDirectory(dirname(file), tsFiles),
   );
   const errors = [];
 

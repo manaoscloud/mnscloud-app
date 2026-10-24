@@ -23,7 +23,7 @@ const config = defineCrud({
   endpoint: 'financial/payment-charges',
   uuidField: 'FinPayChargeUUID',
   pageTitle: 'Boletos and Pix',
-  pageDescription: 'erp.description.payment-charges',
+  pageDescription: 'financial.description.payment-charges',
   bulkDelete: false,
   statusMode: 'string',
   activeValue: 'open',

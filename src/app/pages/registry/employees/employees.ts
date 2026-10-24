@@ -13,10 +13,10 @@ const lookups = [
   { key: 'companyUUID', endpoint: 'registry/companies', uuidField: 'CompanyUUID' },
   {
     key: 'departmentUUID',
-    endpoint: 'erp/human-resources/departments',
+    endpoint: 'registry/departments',
     uuidField: 'DepartmentUUID',
   },
-  { key: 'positionUUID', endpoint: 'erp/human-resources/positions', uuidField: 'PositionUUID' },
+  { key: 'positionUUID', endpoint: 'registry/positions', uuidField: 'PositionUUID' },
 ] as const;
 
 const config = defineCrud({
@@ -76,11 +76,11 @@ const config = defineCrud({
       label: 'Department',
       type: 'search-select',
       remoteLookup: {
-        endpoint: 'erp/human-resources/departments',
+        endpoint: 'registry/departments',
         uuidField: 'DepartmentUUID',
         labelField: 'Name',
       },
-      quickCreate: quickCreateFor('ErpHrDepartmentEhdUUID'),
+      quickCreate: quickCreateFor('RegDepartmentRdeUUID'),
       span: 1,
     },
     {
@@ -89,11 +89,11 @@ const config = defineCrud({
       label: 'Position',
       type: 'search-select',
       remoteLookup: {
-        endpoint: 'erp/human-resources/positions',
+        endpoint: 'registry/positions',
         uuidField: 'PositionUUID',
         labelField: 'Name',
       },
-      quickCreate: quickCreateFor('ErpHrPositionEhpUUID'),
+      quickCreate: quickCreateFor('RegPositionRpsUUID'),
       span: 1,
     },
     { key: 'hireDate', source: 'HireDate', label: 'Hire date', type: 'date', span: 1 },

@@ -208,9 +208,11 @@ describe('prepareCloneForCapture', () => {
     prepareCloneForCapture(document);
     try {
       const style = document.head.querySelector('style:last-child');
-      expect(style?.textContent).toContain('.erp-table { isolation: auto !important; }');
+      expect(style?.textContent).toContain('.app-table { isolation: auto !important; }');
       expect(style?.textContent).toContain('position: static !important;');
-      expect(style?.textContent).toContain('.table-wrapper, .table-scroll { overflow: visible !important;');
+      expect(style?.textContent).toContain(
+        '.table-wrapper, .table-scroll { overflow: visible !important;',
+      );
     } finally {
       document.head.lastElementChild?.remove();
     }

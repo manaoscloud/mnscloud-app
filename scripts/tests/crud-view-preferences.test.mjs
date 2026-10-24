@@ -84,5 +84,5 @@ test('child collection endpoints share one key per resource', () => {
     crudViewStorageKey('voip/pabx/5f54a4bf-c6fc-11f1-9300-bc2411f7dd2d/rules?limit=5'),
     'mns.crud.view.voip/pabx/:id/rules',
   );
-  assert.equal(crudViewStorageKey('/erp/orders/42/items'), 'mns.crud.view.erp/orders/:id/items');
+  assert.equal(crudViewStorageKey('/sale/orders/42/items'), 'mns.crud.view.sale/orders/:id/items');
 });

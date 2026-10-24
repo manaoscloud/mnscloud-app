@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
-/** Access profiles CRUD — uses shared ConfigurableCrudPageBase (app.md ERP generic CRUD). */
+/** Access profiles CRUD — uses shared ConfigurableCrudPageBase (app.md generic CRUD). */
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,

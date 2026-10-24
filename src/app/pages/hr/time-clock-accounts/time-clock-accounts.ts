@@ -5,12 +5,12 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
-} from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
-import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 
-const ENDPOINT = 'erp/human-resources/time-clock/accounts';
+const ENDPOINT = 'hr/time-clock-accounts';
 
 const statuses = [
   { value: 'active', label: 'Active' },
@@ -100,13 +100,13 @@ const config = defineCrud({
 });
 
 @Component({
-  selector: 'app-erp-hr-time-clock-accounts',
+  selector: 'app-hr-time-clock-accounts',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  templateUrl: '../../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class ErpHumanResourcesTimeClockAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
   }

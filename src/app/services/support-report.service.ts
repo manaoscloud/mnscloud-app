@@ -456,8 +456,8 @@ export function prepareCloneForCapture(clone: Document): void {
     ' border-left: 5px solid transparent !important; border-right: 5px solid transparent !important;' +
     ' border-top: 5px solid currentColor !important; }' +
     // Neutralize table stacking context, sticky columns, and scroll constraints so html2canvas renders all table rows
-    ' .erp-table { isolation: auto !important; }' +
-    ' .erp-table th, .erp-table td, .mat-mdc-table-sticky-border-elem-right { position: static !important; }' +
+    ' .app-table { isolation: auto !important; }' +
+    ' .app-table th, .app-table td, .mat-mdc-table-sticky-border-elem-right { position: static !important; }' +
     ' .table-wrapper, .table-scroll { overflow: visible !important; max-height: none !important; }';
   clone.head.appendChild(style);
   const view = clone.defaultView;

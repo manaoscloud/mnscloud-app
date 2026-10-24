@@ -207,13 +207,14 @@ export function messagesCollection(
   });
 }
 
-/** Links the conversation contact to the tenant's ERP customer and CRM contact/lead. */
+/** Links the conversation contact to the tenant's Registry customer and CRM contact/lead. */
 export function linkContactForm(conversation: ConfigurableCrudRecord): ConfigurableCrudConfig {
   return defineCrud({
     endpoint: `conversations/${conversation['CnvUUID']}/contact`,
     uuidField: 'CnvUUID',
     pageTitle: 'Link contact',
-    pageDescription: 'Who this contact is in the ERP and the CRM, so the team sees the history.',
+    pageDescription:
+      'Who this contact is in the registry and the CRM, so the team sees the history.',
     createTitle: 'Link contact',
     dialogDescription:
       'New contacts are linked automatically when the phone matches a customer, contact or lead. Clear a field to unlink it.',
