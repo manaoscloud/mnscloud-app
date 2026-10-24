@@ -654,6 +654,13 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/dns/servers',
         permissions: ['platform.master.access'],
       },
+      {
+        id: 'dns/diagnostics',
+        label: 'nav.dns.diagnostics',
+        icon: 'troubleshoot',
+        masterRoute: '/system/dns/diagnostics',
+        permissions: ['platform.master.access'],
+      },
     ],
   },
 

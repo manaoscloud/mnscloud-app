@@ -2888,6 +2888,13 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.servers' },
               },
               {
+                path: 'dns/diagnostics',
+                loadComponent: () =>
+                  import('./pages/dns/diagnostics/diagnostics').then((m) => m.DnsDiagnosticsPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.diagnostics' },
+              },
+              {
                 path: 'hosting/webhost',
                 title: 'System Webhost | mnscloud',
                 data: { scope: 'master', context: 'system' },

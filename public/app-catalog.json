@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "183f2319d044",
+  "version": "65a377d0e835",
   "language": "pt-BR",
   "entries": [
     {
@@ -6630,6 +6630,23 @@
         {
           "label": "Anotações",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/diagnostics",
+      "menuPath": "DNS › Diagnóstico",
+      "scope": "platform",
+      "title": "Diagnóstico",
+      "description": "Teste um site, endereço ou IP a partir de vários Agents ao mesmo tempo para descobrir se o problema está na rede de um cliente, na operadora ou no próprio destino. Cada Agent verifica o IP de saída, a resolução DNS (resolvedor do sistema e DNS públicos), a conexão IPv4/IPv6, o TLS e o HTTP.",
+      "fields": [
+        {
+          "label": "Alvo",
+          "help": "Nome (ex.: www.exemplo.com.br), URL http(s) ou endereço IP. Endereços de redes privadas nunca são contatados."
+        },
+        {
+          "label": "Agents que testam",
+          "help": "Escolha de 1 a 20 Agents, de preferência em redes, operadoras ou cidades diferentes, para comparar os resultados."
         }
       ]
     },
