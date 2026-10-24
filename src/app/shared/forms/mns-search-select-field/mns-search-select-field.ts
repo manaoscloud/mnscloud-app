@@ -473,10 +473,23 @@ export class MnsSearchSelectFieldComponent {
     }, MNS_REMOTE_SEARCH_DEBOUNCE_MS);
   }
 
-  /** Navigation keys reach mat-select; text editing keys stay in the search input. */
+  /**
+   * Text keys stay in the search input; navigation keys go to mat-select exactly once. Letting
+   * them bubble is not enough: when the panel renders inside the dialog (popover), the event also
+   * reaches the mat-select host after the panel closed, so Enter reopened the list and arrows
+   * moved twice (seen on DEV).
+   */
   handleSearchKeydown(event: KeyboardEvent): void {
-    if (SELECT_NAVIGATION_KEYS.has(event.key)) return;
     event.stopPropagation();
+    const select = this.select();
+    if (!select || !SELECT_NAVIGATION_KEYS.has(event.key)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      select.close();
+      select.focus();
+      return;
+    }
+    select._handleKeydown(event);
   }
 
   private handleClosedKeydown(event: KeyboardEvent): void {

@@ -672,6 +672,20 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['platform.master.access'],
       },
       {
+        id: 'dns/client-networks',
+        label: 'nav.dns.client-networks',
+        icon: 'lan',
+        masterRoute: '/system/dns/client-networks',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'dns/forward-zones',
+        label: 'nav.dns.forward-zones',
+        icon: 'alt_route',
+        masterRoute: '/system/dns/forward-zones',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'dns/diagnostics',
         label: 'nav.dns.diagnostics',
         icon: 'troubleshoot',

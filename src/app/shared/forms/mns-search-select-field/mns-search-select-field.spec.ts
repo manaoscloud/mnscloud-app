@@ -202,6 +202,49 @@ describe('Remote relationship dropdown accessibility', () => {
       fixture.destroy();
     });
 
+    it('hands navigation keys to the select once and never past the search input', async () => {
+      const fixture = await create();
+      const selections = spyOn(fixture.componentInstance.valueChange, 'emit');
+      const host = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+      const leaked: string[] = [];
+      const listener = (event: Event) => leaked.push((event as KeyboardEvent).key);
+      document.addEventListener('keydown', listener);
+      host.click();
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      const key = (name: string, keyCode: number) =>
+        search.dispatchEvent(new KeyboardEvent('keydown', { key: name, keyCode, bubbles: true }));
+      key('ArrowDown', 40);
+      await render(fixture);
+      const active = () => document.querySelector('mat-option.mat-mdc-option-active')?.textContent;
+      const first = active();
+      key('ArrowDown', 40);
+      await render(fixture);
+      expect(active()).not.toBe(first);
+      key('Enter', 13);
+      await render(fixture);
+      await settle(200);
+      expect(selections).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.mat-mdc-select-panel')).toBeNull();
+      expect(leaked).toEqual([]);
+      document.removeEventListener('keydown', listener);
+      fixture.destroy();
+    });
+
+    it('closes with Escape from the search input', async () => {
+      const fixture = await create();
+      fixture.nativeElement.querySelector('mat-select').click();
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      search.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }),
+      );
+      await render(fixture);
+      await settle(200);
+      expect(document.querySelector('.mat-mdc-select-panel')).toBeNull();
+      fixture.destroy();
+    });
+
     it('keeps text keys such as space inside the search input', async () => {
       const fixture = await create();
       const selections = spyOn(fixture.componentInstance.valueChange, 'emit');
