@@ -17,6 +17,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'receipt_long';
     case 'voip.pabx.extension.offline':
       return 'phone_disabled';
+    case 'dns.monitor.target':
+      return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     default:
       return 'notifications';
   }
@@ -47,6 +49,13 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
         count: param('count'),
         minutes: param('minutes'),
       });
+    case 'dns.monitor.target':
+      return t(
+        param('state') === 'down'
+          ? 'notifications.dnsTargetDown'
+          : 'notifications.dnsTargetRecovered',
+        { name: param('name') },
+      );
     default:
       return t('notifications.generic');
   }
@@ -63,7 +72,9 @@ export function notificationDescription(item: InboxNotification, language: strin
           ? item.params['account']
           : item.type === 'voip.pabx.extension.offline'
             ? item.params['extensions']
-            : item.params['subject'];
+            : item.type === 'dns.monitor.target'
+              ? item.params['failing'] || item.params['target']
+              : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())
