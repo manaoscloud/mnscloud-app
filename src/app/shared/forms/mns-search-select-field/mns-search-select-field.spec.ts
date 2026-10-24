@@ -156,7 +156,12 @@ describe('Remote relationship dropdown accessibility', () => {
 
     it('focuses the search input as soon as the dropdown opens', async () => {
       const fixture = await create();
-      fixture.nativeElement.querySelector('mat-select').click();
+      const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+      select.click();
+      // A real click runs the opened microtask before the event reaches mat-form-field, whose
+      // container click focuses the select again; the search focus must still win.
+      await Promise.resolve();
+      select.focus();
       await render(fixture);
       const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
       expect(document.activeElement).toBe(search);
