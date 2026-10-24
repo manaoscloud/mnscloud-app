@@ -61,7 +61,7 @@ const MAPLIBRE_STYLES_ID = 'mns-maplibre-styles';
  * MapLibre CSS ships as the lazy `maplibre.css` bundle (angular.json, inject: false) and its module
  * worker as same-origin assets under `maplibre/`, as the edge CSP allows no `blob:` workers.
  */
-function loadMapLibreStyles() {
+function ensureMapLibreAssets() {
   setWorkerUrl(new URL('maplibre/maplibre-gl-worker.mjs', document.baseURI).href);
   if (document.getElementById(MAPLIBRE_STYLES_ID)) return;
   const link = document.createElement('link');
@@ -175,7 +175,7 @@ export class InfraGisMapPage {
   }
 
   private async initialize() {
-    loadMapLibreStyles();
+    ensureMapLibreAssets();
     try {
       const [config, projects] = await Promise.all([
         this.api.get<{ data: { config: InfraGisMapConfig } }>('infragis/map/config'),
