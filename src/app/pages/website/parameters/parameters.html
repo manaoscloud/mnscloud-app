@@ -1,0 +1,159 @@
+<mns-settings-page
+  title="website.parameters"
+  description="website.parametersDescription"
+  [loading]="loading()"
+  [saving]="saving()"
+  [dirty]="hasChanges()"
+  [error]="feedback()"
+  [success]="success()"
+  (refresh)="refresh()"
+  (cancel)="cancel()"
+  (save)="save()"
+>
+  <form class="form-grid">
+    <div class="span-4 settings-page-toggle">
+      <mat-slide-toggle
+        [checked]="form().autoDomainEnabled"
+        (change)="update({ autoDomainEnabled: $event.checked })"
+      >
+        {{ 'website.autoDomainEnabled' | transloco }}
+      </mat-slide-toggle>
+      <mns-field-help
+        [label]="'website.autoDomainEnabled' | transloco"
+        [text]="'website.autoDomainEnabledHelp' | transloco"
+      />
+    </div>
+
+    <mns-search-select-field
+      fieldClass="span-1"
+      data-field-key="autoDomainDnsMode"
+      [label]="'website.dnsModeLabel' | transloco"
+      [options]="dnsModeOptions"
+      [translateOptions]="true"
+      [value]="form().autoDomainDnsMode"
+      [help]="'website.dnsModeHelp' | transloco"
+      (valueChange)="update({ autoDomainDnsMode: $any($event) })"
+    />
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'Domain label' | transloco }}</mat-label>
+      <input matInput [value]="'Short UUID' | transloco" readonly />
+      <mns-field-help
+        matIconSuffix
+        [label]="'Domain label' | transloco"
+        [text]="'website.labelHelp' | transloco"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'UUID length' | transloco }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="8"
+        max="32"
+        data-field-key="autoDomainUuidLength"
+        [value]="form().autoDomainUuidLength"
+        [mnsInvalid]="invalid('autoDomainUuidLength')"
+        (input)="update({ autoDomainUuidLength: numberValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'UUID length' | transloco"
+        [text]="'website.uuidLengthHelp' | transloco"
+      />
+      <mat-error>{{ 'Enter a number between 8 and 32.' | transloco }}</mat-error>
+    </mat-form-field>
+
+    <mns-search-select-field
+      fieldClass="span-1"
+      data-field-key="defaultLocale"
+      [label]="'website.defaultLocale' | transloco"
+      [options]="localeOptions"
+      [translateOptions]="true"
+      [value]="form().defaultLocale"
+      [invalid]="invalid('defaultLocale')"
+      [errorMessage]="'form.validation.required' | transloco"
+      [help]="'website.parametersDefaultLocaleHelp' | transloco"
+      (valueChange)="update({ defaultLocale: $any($event) })"
+    />
+
+    @if (managedDns()) {
+      <mns-search-select-field
+        data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
+        fieldClass="span-4"
+        data-field-key="dnsPolicyUUID"
+        [label]="'website.dnsPolicy' | transloco"
+        [options]="dns.options()"
+        [remoteSearch]="true"
+        [loading]="dns.loading()"
+        [loadError]="dns.loadError()"
+        [hasPrevious]="dns.offset() > 0"
+        [hasNext]="dns.hasNext()"
+        (searchChange)="dns.search($event)"
+        (pageChange)="dns.page($event)"
+        (openedChange)="$event && dns.refresh()"
+        [value]="form().dnsPolicyUUID"
+        [invalid]="invalid('dnsPolicyUUID')"
+        [errorMessage]="'form.validation.required' | transloco"
+        [help]="'website.dnsPolicyHelp' | transloco"
+        (valueChange)="selectDnsPolicy($event)"
+      />
+      @if (policyError(); as error) {
+        <p class="span-4 settings-page-feedback" role="alert">{{ error | transloco }}</p>
+      }
+    } @else {
+      <mat-form-field appearance="outline" class="span-4">
+        <mat-label>{{ 'website.autoDomainBase' | transloco }}</mat-label>
+        <input
+          matInput
+          data-field-key="autoDomainBase"
+          [value]="form().autoDomainBase"
+          [mnsInvalid]="invalid('autoDomainBase')"
+          (input)="update({ autoDomainBase: textValue($event) })"
+        />
+        <mns-field-help
+          matIconSuffix
+          [label]="'website.autoDomainBase' | transloco"
+          [text]="'website.autoDomainBaseHelp' | transloco"
+        />
+        <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>{{ 'website.edgeIPv4' | transloco }}</mat-label>
+      <input
+        matInput
+        data-field-key="edgeIPv4"
+        inputmode="decimal"
+        [value]="form().edgeIPv4"
+        [mnsInvalid]="invalid('edgeIPv4')"
+        (input)="update({ edgeIPv4: textValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'website.edgeIPv4' | transloco"
+        [text]="'website.edgeIPv4Help' | transloco"
+      />
+      <mat-error>{{ 'website.validation.ipv4' | transloco }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="span-2">
+      <mat-label>{{ 'website.edgeIPv6' | transloco }}</mat-label>
+      <input
+        matInput
+        data-field-key="edgeIPv6"
+        [value]="form().edgeIPv6"
+        [mnsInvalid]="invalid('edgeIPv6')"
+        (input)="update({ edgeIPv6: textValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'website.edgeIPv6' | transloco"
+        [text]="'website.edgeIPv6Help' | transloco"
+      />
+      <mat-error>{{ 'website.validation.ipv6' | transloco }}</mat-error>
+    </mat-form-field>
+  </form>
+</mns-settings-page>

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2b99554a3f45",
+  "version": "c8d2505f2855",
   "language": "pt-BR",
   "entries": [
     {
@@ -9265,6 +9265,47 @@
       "fields": []
     },
     {
+      "route": "/system/website/parameters",
+      "menuPath": "Website › Parâmetros",
+      "scope": "platform",
+      "title": "Parâmetros",
+      "description": "Regras da plataforma para o endereço automático gratuito dos novos sites: base do domínio ou política DNS gerenciada, endereços da borda nos registros DNS e idioma padrão.",
+      "fields": [
+        {
+          "label": "Gerar o endereço automático dos novos sites",
+          "help": "Cada novo site recebe <uuid-curto>.<base> gratuitamente. Endereços existentes não são alterados."
+        },
+        {
+          "label": "Modo DNS",
+          "help": "A publicação DNS gerenciada cria os registros A/AAAA de cada endereço em uma zona autorizada da plataforma; o endereço sem publicação DNS usa uma base cujo DNS curinga você mantém."
+        },
+        {
+          "label": "Rótulo do domínio",
+          "help": "Prefixo do UUID do site; nunca muda quando o site é renomeado."
+        },
+        {
+          "label": "Tamanho do UUID",
+          "help": "Caracteres do prefixo do UUID (8 a 32); uma colisão acrescenta mais 4."
+        },
+        {
+          "label": "Idioma padrão",
+          "help": "Idioma pré-selecionado para novos sites."
+        },
+        {
+          "label": "Base do endereço",
+          "help": "Sufixo de domínio dos endereços automáticos (por exemplo site.exemplo.com); aponte o DNS curinga dele para a borda."
+        },
+        {
+          "label": "IPv4 público da borda",
+          "help": "Destino dos registros A dos endereços automáticos: o IPv4 público da borda que atende os sites. O DNS gerenciado exige este endereço ou o IPv6."
+        },
+        {
+          "label": "IPv6 público da borda",
+          "help": "Destino opcional dos registros AAAA; deixe vazio para publicar só IPv4."
+        }
+      ]
+    },
+    {
       "route": "/user/access-profiles",
       "menuPath": "Usuário › Permissões › Perfis",
       "scope": "tenant",
@@ -11405,6 +11446,35 @@
         {
           "label": "Codecs",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/sites",
+      "menuPath": "Website › Lista",
+      "scope": "tenant",
+      "title": "Sites",
+      "description": "Sites de vitrine deste ambiente: cada um recebe um endereço automático gratuito, pode usar um dos seus domínios de tema e é publicado a partir do editor de conteúdo.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": "Nome interno do site, único neste ambiente. Os visitantes veem o título SEO."
+        },
+        {
+          "label": "Idioma padrão",
+          "help": "Idioma exibido quando o idioma do visitante não está ativado. Sempre faz parte dos idiomas ativados."
+        },
+        {
+          "label": "Idiomas",
+          "help": "Idiomas em que o site é publicado; cada um tem sua própria aba de conteúdo no editor."
+        },
+        {
+          "label": "Domínio próprio",
+          "help": "Domínio de tema opcional deste ambiente (Configurações › Temas) que também atende o site. Deixe vazio para usar só o endereço automático."
         }
       ]
     }

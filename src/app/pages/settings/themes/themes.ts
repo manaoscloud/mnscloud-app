@@ -278,6 +278,7 @@ const config = defineCrud({
   deleteSelectedMessage: 'Delete {count} selected theme domains and queue provider cleanup?',
   bulkDelete: true,
   statusFilter: false,
+  quickCreateLabelField: 'domain',
   initialValues: {
     appLogin_layout: 'split',
     appLogin_appearance: 'system',

@@ -1,0 +1,732 @@
+<mns-page-shell
+  title="website.editor"
+  description="website.editorDescription"
+  [identity]="site()?.name ?? ''"
+  [recordId]="uuid"
+  [loading]="loading()"
+  [refreshDisabled]="working()"
+  (refresh)="refresh()"
+>
+  @if (loadError()) {
+    <p class="settings-page-feedback" role="alert">{{ 'website.loadFailed' | transloco }}</p>
+  }
+  @if (site(); as current) {
+    <div class="website-editor-summary">
+      <span
+        class="status-pill status-chip state-chip"
+        [class.chip-success]="published()"
+        [class.chip-failed]="suspended()"
+        [class.chip-skipped]="!published() && !suspended()"
+        [class.is-active]="published()"
+        [class.is-inactive]="!published()"
+        >{{ statusLabel() | transloco }}</span
+      >
+      @if (hasUnpublishedChanges() || dirty()) {
+        <span
+          class="status-pill status-chip state-chip chip-queued"
+          [matTooltip]="'website.unpublishedChangesHelp' | transloco"
+          >{{
+            (dirty() ? 'website.unsavedChanges' : 'website.unpublishedChanges') | transloco
+          }}</span
+        >
+      }
+      <span class="website-editor-meta">
+        {{ 'website.publishedVersion' | transloco }}: {{ current.publishedVersion || '—' }}
+      </span>
+      <span class="website-editor-meta">DNS: {{ dnsLabel() | transloco }}</span>
+      @if (siteUrl(); as url) {
+        <a
+          mat-button
+          class="website-editor-link"
+          [href]="url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [matTooltip]="'website.openSiteTooltip' | transloco"
+          ><mat-icon>open_in_new</mat-icon>{{ current.autoDomain }}</a
+        >
+      }
+      @if (customUrl(); as url) {
+        <a
+          mat-button
+          class="website-editor-link"
+          [href]="url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [matTooltip]="'website.openSiteTooltip' | transloco"
+          ><mat-icon>open_in_new</mat-icon>{{ current.themeDomain }}</a
+        >
+      }
+      @if (dnsError(); as error) {
+        <p class="settings-page-feedback website-editor-dns-error" role="alert">
+          {{ error }}
+        </p>
+      }
+    </div>
+
+    <fieldset
+      class="settings-page-fields"
+      [disabled]="working()"
+      [attr.inert]="working() ? '' : null"
+    >
+      <mat-tab-group
+        class="website-editor-tabs"
+        mat-stretch-tabs="false"
+        [selectedIndex]="selectedTab()"
+        (selectedIndexChange)="selectedTab.set($event)"
+      >
+        <mat-tab
+          [label]="'website.identityTab' | transloco"
+          [labelClass]="tabInvalid(0) ? 'crud-tab-invalid' : ''"
+        >
+          <div class="tab-content">
+            <h2 class="website-editor-heading">{{ 'website.themeHeading' | transloco }}</h2>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'website.primaryColor' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="theme.primaryColor"
+                  [value]="content().theme.primaryColor"
+                  [mnsInvalid]="invalid('theme.primaryColor')"
+                  (input)="setText('theme.primaryColor', $event)"
+                />
+                <span
+                  matTextPrefix
+                  class="website-color-swatch"
+                  [style.background]="content().theme.primaryColor"
+                ></span>
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.primaryColor' | transloco"
+                  [text]="'website.colorHelp' | transloco"
+                />
+                <mat-error>{{ errorText('theme.primaryColor') | transloco }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'website.accentColor' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="theme.accentColor"
+                  [value]="content().theme.accentColor"
+                  [mnsInvalid]="invalid('theme.accentColor')"
+                  (input)="setText('theme.accentColor', $event)"
+                />
+                <span
+                  matTextPrefix
+                  class="website-color-swatch"
+                  [style.background]="content().theme.accentColor"
+                ></span>
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.accentColor' | transloco"
+                  [text]="'website.colorHelp' | transloco"
+                />
+                <mat-error>{{ errorText('theme.accentColor') | transloco }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>{{ 'website.logoUrl' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="url"
+                  data-field-key="theme.logoUrl"
+                  [value]="content().theme.logoUrl"
+                  [mnsInvalid]="invalid('theme.logoUrl')"
+                  (input)="setText('theme.logoUrl', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.logoUrl' | transloco"
+                  [text]="'website.logoUrlHelp' | transloco"
+                />
+                <mat-error>{{ errorText('theme.logoUrl') | transloco }}</mat-error>
+              </mat-form-field>
+            </div>
+
+            <h2 class="website-editor-heading">{{ 'website.contactHeading' | transloco }}</h2>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Email' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="email"
+                  data-field-key="contact.email"
+                  [value]="content().contact.email"
+                  [mnsInvalid]="invalid('contact.email')"
+                  (input)="setText('contact.email', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Email' | transloco"
+                  [text]="'website.contactEmailHelp' | transloco"
+                />
+                <mat-error>{{ errorText('contact.email') | transloco }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Phone' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="tel"
+                  data-field-key="contact.phone"
+                  [value]="content().contact.phone"
+                  [mnsInvalid]="invalid('contact.phone')"
+                  (input)="setText('contact.phone', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Phone' | transloco"
+                  [text]="'website.contactPhoneHelp' | transloco"
+                />
+                <mat-error>{{ errorText('contact.phone') | transloco }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>WhatsApp</mat-label>
+                <input
+                  matInput
+                  type="tel"
+                  data-field-key="contact.whatsapp"
+                  [value]="content().contact.whatsapp"
+                  [mnsInvalid]="invalid('contact.whatsapp')"
+                  (input)="setText('contact.whatsapp', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  label="WhatsApp"
+                  [text]="'website.contactWhatsappHelp' | transloco"
+                />
+                <mat-error>{{ errorText('contact.whatsapp') | transloco }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>{{ 'website.address' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="contact.address"
+                  [value]="content().contact.address"
+                  [mnsInvalid]="invalid('contact.address')"
+                  (input)="setText('contact.address', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.address' | transloco"
+                  [text]="'website.addressHelp' | transloco"
+                />
+                <mat-error>{{ errorText('contact.address') | transloco }}</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="website-editor-row-heading">
+              <h2 class="website-editor-heading">{{ 'website.socialHeading' | transloco }}</h2>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="!canAddSocial()"
+                (click)="addSocial()"
+              >
+                <mat-icon>add</mat-icon>{{ 'website.addSocial' | transloco }}
+              </button>
+            </div>
+            @for (entry of content().social; track $index; let i = $index) {
+              <div class="form-grid website-editor-entry">
+                <mns-search-select-field
+                  fieldClass="span-1"
+                  [attr.data-field-key]="'social.' + i + '.network'"
+                  [label]="'website.socialNetwork' | transloco"
+                  [options]="socialOptions"
+                  [translateOptions]="false"
+                  [value]="entry.network"
+                  [invalid]="invalid('social.' + i + '.network')"
+                  [errorMessage]="errorText('social.' + i + '.network') | transloco"
+                  [help]="'website.socialNetworkHelp' | transloco"
+                  (valueChange)="set('social.' + i + '.network', $event)"
+                />
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ 'website.socialUrl' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="url"
+                    [attr.data-field-key]="'social.' + i + '.url'"
+                    [value]="entry.url"
+                    [mnsInvalid]="invalid('social.' + i + '.url')"
+                    (input)="setText('social.' + i + '.url', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.socialUrl' | transloco"
+                    [text]="'website.socialUrlHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText('social.' + i + '.url') | transloco }}</mat-error>
+                </mat-form-field>
+                <div class="span-1 website-editor-entry-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [matTooltip]="'website.removeSocial' | transloco"
+                    [attr.aria-label]="'website.removeSocial' | transloco"
+                    (click)="removeSocial(i)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <p class="settings-page-note">{{ 'website.noSocial' | transloco }}</p>
+            }
+          </div>
+        </mat-tab>
+
+        @for (locale of locales(); track locale; let tabIndex = $index) {
+          <mat-tab [labelClass]="tabInvalid(tabIndex + 1) ? 'crud-tab-invalid' : ''">
+            <ng-template mat-tab-label>
+              {{ localeLabel(locale) | transloco }}
+              @if (isDefaultLocale(locale)) {
+                <span class="website-editor-default">· {{ 'website.defaultTag' | transloco }}</span>
+              }
+            </ng-template>
+            <div class="tab-content">
+              <h2 class="website-editor-heading">{{ 'website.seoHeading' | transloco }}</h2>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ 'website.seoTitle' | transloco }}*</mat-label>
+                  <input
+                    matInput
+                    maxlength="70"
+                    [attr.data-field-key]="locale + '.seo.title'"
+                    [value]="block(locale).seo.title"
+                    [mnsInvalid]="invalid(locale + '.seo.title')"
+                    (input)="setText(locale + '.seo.title', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.seoTitle' | transloco"
+                    [text]="'website.seoTitleHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.seo.title') | transloco }}</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-2">
+                  <mat-label>{{ 'website.seoDescription' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    maxlength="160"
+                    [attr.data-field-key]="locale + '.seo.description'"
+                    [value]="block(locale).seo.description"
+                    [mnsInvalid]="invalid(locale + '.seo.description')"
+                    (input)="setText(locale + '.seo.description', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.seoDescription' | transloco"
+                    [text]="'website.seoDescriptionHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.seo.description') | transloco }}</mat-error>
+                </mat-form-field>
+              </div>
+
+              <h2 class="website-editor-heading">{{ 'website.heroHeading' | transloco }}</h2>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'website.heroEyebrow' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    [attr.data-field-key]="locale + '.hero.eyebrow'"
+                    [value]="block(locale).hero.eyebrow"
+                    [mnsInvalid]="invalid(locale + '.hero.eyebrow')"
+                    (input)="setText(locale + '.hero.eyebrow', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.heroEyebrow' | transloco"
+                    [text]="'website.heroEyebrowHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.hero.eyebrow') | transloco }}</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-3">
+                  <mat-label>{{ 'website.heroTitle' | transloco }}*</mat-label>
+                  <input
+                    matInput
+                    [attr.data-field-key]="locale + '.hero.title'"
+                    [value]="block(locale).hero.title"
+                    [mnsInvalid]="invalid(locale + '.hero.title')"
+                    (input)="setText(locale + '.hero.title', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.heroTitle' | transloco"
+                    [text]="'website.heroTitleHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.hero.title') | transloco }}</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>{{ 'website.heroText' | transloco }}</mat-label>
+                  <textarea
+                    matInput
+                    rows="3"
+                    [attr.data-field-key]="locale + '.hero.text'"
+                    [value]="block(locale).hero.text"
+                    [mnsInvalid]="invalid(locale + '.hero.text')"
+                    (input)="setText(locale + '.hero.text', $event)"
+                  ></textarea>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.heroText' | transloco"
+                    [text]="'website.heroTextHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.hero.text') | transloco }}</mat-error>
+                </mat-form-field>
+                @for (cta of ['primaryCta', 'secondaryCta']; track cta) {
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'website.' + cta + 'Label' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      [attr.data-field-key]="locale + '.hero.' + cta + '.label'"
+                      [value]="$any(block(locale).hero)[cta].label"
+                      [mnsInvalid]="invalid(locale + '.hero.' + cta + '.label')"
+                      (input)="setText(locale + '.hero.' + cta + '.label', $event)"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'website.' + cta + 'Label' | transloco"
+                      [text]="'website.ctaLabelHelp' | transloco"
+                    />
+                    <mat-error>{{
+                      errorText(locale + '.hero.' + cta + '.label') | transloco
+                    }}</mat-error>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="span-1">
+                    <mat-label>{{ 'website.' + cta + 'Href' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      [attr.data-field-key]="locale + '.hero.' + cta + '.href'"
+                      [value]="$any(block(locale).hero)[cta].href"
+                      [mnsInvalid]="invalid(locale + '.hero.' + cta + '.href')"
+                      (input)="setText(locale + '.hero.' + cta + '.href', $event)"
+                    />
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'website.' + cta + 'Href' | transloco"
+                      [text]="'website.linkHelp' | transloco"
+                    />
+                    <mat-error>{{
+                      errorText(locale + '.hero.' + cta + '.href') | transloco
+                    }}</mat-error>
+                  </mat-form-field>
+                }
+              </div>
+
+              <div class="website-editor-row-heading">
+                <h2 class="website-editor-heading">{{ 'website.sectionsHeading' | transloco }}</h2>
+                <div class="website-editor-add">
+                  <mns-search-select-field
+                    data-field-key="newSectionType"
+                    [label]="'website.sectionType' | transloco"
+                    [options]="sectionTypeOptions"
+                    [translateOptions]="true"
+                    [value]="newSectionType()"
+                    [help]="'website.sectionTypeHelp' | transloco"
+                    (valueChange)="newSectionType.set($any($event))"
+                  />
+                  <button mat-stroked-button type="button" (click)="addSection(locale)">
+                    <mat-icon>add</mat-icon>{{ 'website.addSection' | transloco }}
+                  </button>
+                </div>
+              </div>
+              @for (
+                section of block(locale).sections;
+                track section.id;
+                let s = $index, first = $first, last = $last
+              ) {
+                <section class="website-editor-section">
+                  <header class="website-editor-section-header">
+                    <span class="website-editor-section-title">
+                      {{ s + 1 }}. {{ 'website.sectionType.' + section.type | transloco }}
+                    </span>
+                    <span class="website-editor-entry-actions">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="first"
+                        [matTooltip]="'website.moveUp' | transloco"
+                        [attr.aria-label]="'website.moveUp' | transloco"
+                        (click)="moveSection(locale, s, -1)"
+                      >
+                        <mat-icon>arrow_upward</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="last"
+                        [matTooltip]="'website.moveDown' | transloco"
+                        [attr.aria-label]="'website.moveDown' | transloco"
+                        (click)="moveSection(locale, s, 1)"
+                      >
+                        <mat-icon>arrow_downward</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [matTooltip]="'website.removeSection' | transloco"
+                        [attr.aria-label]="'website.removeSection' | transloco"
+                        (click)="removeSection(locale, s)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </span>
+                  </header>
+                  <div class="form-grid">
+                    <mns-search-select-field
+                      fieldClass="span-1"
+                      [attr.data-field-key]="locale + '.sections.' + s + '.type'"
+                      [label]="'website.sectionType' | transloco"
+                      [options]="sectionTypeOptions"
+                      [translateOptions]="true"
+                      [value]="section.type"
+                      [invalid]="invalid(locale + '.sections.' + s + '.type')"
+                      [errorMessage]="errorText(locale + '.sections.' + s + '.type') | transloco"
+                      [help]="'website.sectionTypeHelp' | transloco"
+                      (valueChange)="setSectionType(locale, s, $event)"
+                    />
+                    <mat-form-field appearance="outline" class="span-3">
+                      <mat-label>{{ 'website.sectionTitle' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [attr.data-field-key]="locale + '.sections.' + s + '.title'"
+                        [value]="section.title"
+                        [mnsInvalid]="invalid(locale + '.sections.' + s + '.title')"
+                        (input)="setText(locale + '.sections.' + s + '.title', $event)"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.sectionTitle' | transloco"
+                        [text]="'website.sectionTitleHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.sections.' + s + '.title') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'website.sectionText' | transloco }}</mat-label>
+                      <textarea
+                        matInput
+                        rows="3"
+                        [attr.data-field-key]="locale + '.sections.' + s + '.text'"
+                        [value]="section.text"
+                        [mnsInvalid]="invalid(locale + '.sections.' + s + '.text')"
+                        (input)="setText(locale + '.sections.' + s + '.text', $event)"
+                      ></textarea>
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.sectionText' | transloco"
+                        [text]="'website.sectionTextHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.sections.' + s + '.text') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                  </div>
+                  @if (section.type === 'offers') {
+                    <p class="settings-page-note">{{ 'website.offersNote' | transloco }}</p>
+                  }
+                  @if (hasItems(section.type)) {
+                    @for (
+                      item of section.items;
+                      track $index;
+                      let i = $index, firstItem = $first, lastItem = $last
+                    ) {
+                      <div class="form-grid website-editor-entry">
+                        <mat-form-field appearance="outline" class="span-1">
+                          <mat-label>{{
+                            (section.type === 'faq' ? 'website.question' : 'website.itemTitle')
+                              | transloco
+                          }}</mat-label>
+                          <input
+                            matInput
+                            [attr.data-field-key]="
+                              locale + '.sections.' + s + '.items.' + i + '.title'
+                            "
+                            [value]="item.title"
+                            [mnsInvalid]="
+                              invalid(locale + '.sections.' + s + '.items.' + i + '.title')
+                            "
+                            (input)="
+                              setText(locale + '.sections.' + s + '.items.' + i + '.title', $event)
+                            "
+                          />
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="
+                              (section.type === 'faq' ? 'website.question' : 'website.itemTitle')
+                                | transloco
+                            "
+                            [text]="'website.itemTitleHelp' | transloco"
+                          />
+                          <mat-error>{{
+                            errorText(locale + '.sections.' + s + '.items.' + i + '.title')
+                              | transloco
+                          }}</mat-error>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="span-2">
+                          <mat-label>{{
+                            (section.type === 'faq' ? 'website.answer' : 'website.itemText')
+                              | transloco
+                          }}</mat-label>
+                          <textarea
+                            matInput
+                            rows="2"
+                            [attr.data-field-key]="
+                              locale + '.sections.' + s + '.items.' + i + '.text'
+                            "
+                            [value]="item.text"
+                            [mnsInvalid]="
+                              invalid(locale + '.sections.' + s + '.items.' + i + '.text')
+                            "
+                            (input)="
+                              setText(locale + '.sections.' + s + '.items.' + i + '.text', $event)
+                            "
+                          ></textarea>
+                          <mns-field-help
+                            matIconSuffix
+                            [label]="
+                              (section.type === 'faq' ? 'website.answer' : 'website.itemText')
+                                | transloco
+                            "
+                            [text]="'website.itemTextHelp' | transloco"
+                          />
+                          <mat-error>{{
+                            errorText(locale + '.sections.' + s + '.items.' + i + '.text')
+                              | transloco
+                          }}</mat-error>
+                        </mat-form-field>
+                        <div class="span-1 website-editor-entry-actions">
+                          <button
+                            mat-icon-button
+                            type="button"
+                            [disabled]="firstItem"
+                            [matTooltip]="'website.moveUp' | transloco"
+                            [attr.aria-label]="'website.moveUp' | transloco"
+                            (click)="moveItem(locale, s, i, -1)"
+                          >
+                            <mat-icon>arrow_upward</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            type="button"
+                            [disabled]="lastItem"
+                            [matTooltip]="'website.moveDown' | transloco"
+                            [attr.aria-label]="'website.moveDown' | transloco"
+                            (click)="moveItem(locale, s, i, 1)"
+                          >
+                            <mat-icon>arrow_downward</mat-icon>
+                          </button>
+                          <button
+                            mat-icon-button
+                            type="button"
+                            [matTooltip]="'website.removeItem' | transloco"
+                            [attr.aria-label]="'website.removeItem' | transloco"
+                            (click)="removeItem(locale, s, i)"
+                          >
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="website-editor-add-item"
+                      (click)="addItem(locale, s)"
+                    >
+                      <mat-icon>add</mat-icon>{{ 'website.addItem' | transloco }}
+                    </button>
+                  }
+                </section>
+              } @empty {
+                <p class="settings-page-note">{{ 'website.noSections' | transloco }}</p>
+              }
+
+              <h2 class="website-editor-heading">{{ 'website.footerHeading' | transloco }}</h2>
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>{{ 'website.footerText' | transloco }}</mat-label>
+                  <textarea
+                    matInput
+                    rows="2"
+                    [attr.data-field-key]="locale + '.footer.text'"
+                    [value]="block(locale).footer.text"
+                    [mnsInvalid]="invalid(locale + '.footer.text')"
+                    (input)="setText(locale + '.footer.text', $event)"
+                  ></textarea>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.footerText' | transloco"
+                    [text]="'website.footerTextHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.footer.text') | transloco }}</mat-error>
+                </mat-form-field>
+              </div>
+
+              <h2 class="website-editor-heading">{{ 'website.legalHeading' | transloco }}</h2>
+              <div class="form-grid">
+                @for (legal of ['privacy', 'terms']; track legal) {
+                  <mat-form-field appearance="outline" class="span-2">
+                    <mat-label>{{ 'website.legal.' + legal | transloco }}</mat-label>
+                    <textarea
+                      matInput
+                      rows="6"
+                      [attr.data-field-key]="locale + '.legal.' + legal"
+                      [value]="$any(block(locale).legal)[legal]"
+                      [mnsInvalid]="invalid(locale + '.legal.' + legal)"
+                      (input)="setText(locale + '.legal.' + legal, $event)"
+                    ></textarea>
+                    <mns-field-help
+                      matIconSuffix
+                      [label]="'website.legal.' + legal | transloco"
+                      [text]="'website.legalHelp' | transloco"
+                    />
+                    <mat-error>{{ errorText(locale + '.legal.' + legal) | transloco }}</mat-error>
+                  </mat-form-field>
+                }
+              </div>
+            </div>
+          </mat-tab>
+        }
+      </mat-tab-group>
+    </fieldset>
+  }
+
+  <footer pageFooter class="settings-page-actions website-editor-actions">
+    <a mat-stroked-button routerLink="/website/sites">
+      <mat-icon>arrow_back</mat-icon>{{ 'Back' | transloco }}
+    </a>
+    <div class="website-editor-primary">
+      @if (dirty()) {
+        <button mat-stroked-button type="button" [disabled]="working()" (click)="discard()">
+          {{ 'website.discard' | transloco }}
+        </button>
+      }
+      @if (published()) {
+        <button mat-stroked-button type="button" [disabled]="working()" (click)="unpublish()">
+          <mat-icon>unpublished</mat-icon
+          >{{
+            (busy() === 'unpublishing' ? 'website.unpublishing' : 'website.unpublish') | transloco
+          }}
+        </button>
+      }
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="working() || !site() || suspended()"
+        (click)="publish()"
+      >
+        <mat-icon>publish</mat-icon
+        >{{ (busy() === 'publishing' ? 'website.publishing' : 'website.publish') | transloco }}
+      </button>
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="working() || !site() || !dirty()"
+        (click)="saveDraft()"
+      >
+        <mat-icon>save</mat-icon
+        >{{ (busy() === 'saving' ? 'Saving...' : 'website.saveDraft') | transloco }}
+      </button>
+    </div>
+  </footer>
+</mns-page-shell>
