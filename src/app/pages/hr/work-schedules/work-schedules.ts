@@ -297,11 +297,15 @@ export class HrWorkSchedulesPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   /** The list carries the day grid; a row without it (older cache) loads the full record first. */
-  override async startEdit(row: ConfigurableCrudRecord): Promise<void> {
+  override startEdit(row: ConfigurableCrudRecord): void {
     if (Array.isArray(row['Days']) && row['Days'].length) {
       super.startEdit(row);
       return;
     }
+    void this.loadAndEdit(row);
+  }
+
+  private async loadAndEdit(row: ConfigurableCrudRecord): Promise<void> {
     try {
       const response = await this.api.get<{ data?: { item?: ConfigurableCrudRecord } }>(
         `${ENDPOINT}/${row['WorkScheduleUUID']}`,
