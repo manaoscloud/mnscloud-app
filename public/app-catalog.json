@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "408702425e5e",
+  "version": "a19e233287ee",
   "language": "pt-BR",
   "entries": [
     {
@@ -2848,7 +2848,7 @@
     },
     {
       "route": "/hr/time-clock-accounts",
-      "menuPath": "Recursos humanos",
+      "menuPath": "Recursos humanos › Contas de ponto",
       "scope": "tenant",
       "title": "Contas de ponto",
       "description": "Gere acessos seguros do Pulse para funcionários do RH.",
@@ -2866,6 +2866,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/hr/time-punches",
+      "menuPath": "Recursos humanos › Batidas",
+      "scope": "tenant",
+      "title": "Batidas",
+      "description": "Todas as batidas do Pulse dos seus colaboradores, como foram registradas: horário oficial do servidor, número sequencial (NSR) e hash de integridade. Batidas nunca são editadas nem excluídas; as sinalizações apontam as que merecem conferência.",
+      "fields": []
     },
     {
       "route": "/infragis",

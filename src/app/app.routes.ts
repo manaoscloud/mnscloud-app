@@ -940,6 +940,12 @@ export const routes: Routes = [
                   ),
                 title: 'Human resources • Time clock accounts | mnscloud',
               },
+              {
+                path: 'hr/time-punches',
+                loadComponent: () =>
+                  import('./pages/hr/time-punches/time-punches').then((m) => m.HrTimePunchesPage),
+                title: 'Human resources • Time punches | mnscloud',
+              },
 
               // Financial
               {

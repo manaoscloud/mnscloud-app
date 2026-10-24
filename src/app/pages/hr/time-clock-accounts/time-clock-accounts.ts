@@ -58,6 +58,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
     { id: 'temporary', label: 'Temporary', field: 'MustChangePassword', kind: 'boolean' },
     { id: 'lastLogin', label: 'Last login', field: 'LastLoginAt', kind: 'datetime' },
+    { id: 'sessions', label: 'Signed-in devices', field: 'ActiveSessions', kind: 'number' },
   ],
   fields: [
     {
@@ -96,6 +97,13 @@ const config = defineCrud({
   ],
   rowActions: [
     { key: 'resetPassword', label: 'Reset password', icon: 'key', tooltip: 'Reset password' },
+    {
+      key: 'endSessions',
+      label: 'End sessions',
+      icon: 'logout',
+      tooltip: 'End sessions',
+      visible: (row) => Number(row['ActiveSessions'] ?? 0) > 0,
+    },
   ],
 });
 
@@ -121,6 +129,10 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'endSessions') {
+      await this.endSessions(row);
+      return;
+    }
     if (action.key !== 'resetPassword') return;
     const confirmed = await this.confirmAction(
       'Reset password',
@@ -138,6 +150,22 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
       this.showCredential({ ...response?.data, LoginCode: String(row['LoginCode'] ?? '') });
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || 'Failed to reset password.'));
+    }
+  }
+
+  private async endSessions(row: ConfigurableCrudRecord): Promise<void> {
+    const confirmed = await this.confirmAction(
+      'End sessions',
+      'Sign the employee out of Pulse on every device? They must sign in again to punch.',
+      'End sessions',
+    );
+    if (!confirmed) return;
+    try {
+      await this.api.post(`${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`, {});
+      this.snack.success(this.t('Pulse sessions ended.'));
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'Failed to end the sessions.'));
     }
   }
 
