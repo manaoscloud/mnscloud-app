@@ -2907,6 +2907,31 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.diagnostics' },
               },
               {
+                path: 'dns/monitoring',
+                loadComponent: () =>
+                  import('./pages/dns/monitoring/monitoring').then((m) => m.DnsMonitoringPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.monitoring' },
+              },
+              {
+                path: 'dns/monitor-targets',
+                loadComponent: () =>
+                  import('./pages/dns/monitor-targets/monitor-targets').then(
+                    (m) => m.DnsMonitorTargetsPage,
+                  ),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.monitorTargets' },
+              },
+              {
+                path: 'dns/monitor-agents',
+                loadComponent: () =>
+                  import('./pages/dns/monitor-agents/monitor-agents').then(
+                    (m) => m.DnsMonitorAgentsPage,
+                  ),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.monitorAgents' },
+              },
+              {
                 path: 'website/parameters',
                 loadComponent: () =>
                   import('./pages/website/parameters/parameters').then(
