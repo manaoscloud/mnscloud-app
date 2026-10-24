@@ -83,6 +83,13 @@ const rows = (value: unknown): Row[] => (Array.isArray(value) ? (value as Row[])
 const texts = (value: unknown): string[] => (Array.isArray(value) ? value.map(String) : []);
 const step = (value: unknown): Row => (value && typeof value === 'object' ? (value as Row) : {});
 
+/** Network operator as `AS28573 · CLARO S.A. · BR` (D4b); `—` when unknown. */
+export function operatorLabel(value: unknown): string {
+  const info = step(value);
+  if (!info['asn']) return '—';
+  return [`AS${info['asn']}`, info['name'], info['country']].filter(Boolean).join(' · ');
+}
+
 /** Per-Agent sections: identity and resolution, then connections and HTTP. */
 export function probeSections(
   job: Row,
@@ -92,6 +99,8 @@ export function probeSections(
   const result = step(job['result']);
   const name = String(job['agentName'] ?? job['agentUUID'] ?? '');
   const http = step(result['http']);
+  const network = step(result['network']);
+  const targets = step(network['targets']);
   return [
     {
       title: name,
@@ -115,6 +124,14 @@ export function probeSections(
           label: 'dns.diagnosisEgress6',
           value: step(result['egress'])['ipv6'] ?? '—',
           monospace: true,
+        },
+        {
+          label: 'dns.diagnosisOperator',
+          value: operatorLabel(step(network['egress'])['ipv4']),
+        },
+        {
+          label: 'dns.diagnosisOperator6',
+          value: operatorLabel(step(network['egress'])['ipv6']),
         },
         {
           label: 'dns.diagnosisDuration',
@@ -155,9 +172,11 @@ export function probeSections(
           { key: 'address', label: 'dns.diagnosisAddress', monospace: true, translate: false },
           { key: 'tcp', label: 'TCP', translate: true },
           { key: 'tls', label: 'TLS', translate: true },
+          { key: 'operator', label: 'dns.diagnosisOperator', translate: false },
         ],
         rows: rows(result['connect']).map((item) => ({
           address: `IPv${item['family']} ${item['address']}:${item['port']}`,
+          operator: operatorLabel(targets[String(item['address'])]),
           tcp: `dns.steps.${String(step(item['tcp'])['status'] ?? '')}`,
           tls: item['tls'] ? `dns.steps.${String(step(item['tls'])['status'] ?? '')}` : '—',
         })),
@@ -233,6 +252,23 @@ export class DnsDiagnosticsPage extends ConfigurableCrudPageBase<ConfigurableCru
     const outcomes = step(verdict['outcomes']) as Record<string, string>;
     const notes = texts(verdict['notes']).map((note) => this.t(`dns.verdictNotes.${note}`));
     const failing = texts(verdict['failingAgents']).join(', ');
+    const scope = verdict['scope'] ? String(verdict['scope']) : null;
+    const operators: DataViewerSection = {
+      title: 'dns.diagnosisOperators',
+      table: {
+        columns: [
+          { key: 'operator', label: 'dns.diagnosisOperator', translate: false },
+          { key: 'agents', label: 'dns.diagnosisAgents', translate: false },
+          { key: 'failing', label: 'dns.diagnosisFailing', translate: false },
+        ],
+        rows: rows(verdict['operators']).map((group) => ({
+          operator: operatorLabel(group),
+          agents: texts(group['agents']).join(', '),
+          failing: texts(group['failingAgents']).join(', ') || '—',
+        })),
+        emptyLabel: 'dns.diagnosisNoOperator',
+      },
+    };
     openDataViewerDialog(this.dialog, {
       title: 'dns.diagnosisResult',
       description: String(data['DprTarget'] ?? ''),
@@ -245,13 +281,19 @@ export class DnsDiagnosticsPage extends ConfigurableCrudPageBase<ConfigurableCru
         { label: 'dns.diagnosisTarget', value: data['DprTarget'], monospace: true },
         { label: 'Created at', value: data['DprDateCreated'], kind: 'datetime' },
         { label: 'dns.diagnosisFailing', value: failing || '—' },
+        ...(scope
+          ? [{ label: 'dns.diagnosisScope', value: `dns.verdictScopes.${scope}`, translate: true }]
+          : []),
         { label: 'dns.diagnosisNotes', value: notes.join(' · ') || '—', wide: true },
       ],
-      sections: rows(data['jobs']).flatMap((job) =>
-        probeSections(job, outcomes[String(job['agentName'] ?? job['agentUUID'])], (key) =>
-          this.t(key),
+      sections: [
+        operators,
+        ...rows(data['jobs']).flatMap((job) =>
+          probeSections(job, outcomes[String(job['agentName'] ?? job['agentUUID'])], (key) =>
+            this.t(key),
+          ),
         ),
-      ),
+      ],
     });
   }
 }
