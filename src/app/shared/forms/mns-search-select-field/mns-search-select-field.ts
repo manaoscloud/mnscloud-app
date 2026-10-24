@@ -1,11 +1,25 @@
 import { FieldHelpComponent } from '../field-help';
-import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  output,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { FormField, type Field } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelect, MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { FieldInvalidDirective } from '../field-invalid.directive';
@@ -23,6 +37,20 @@ export type MnsSearchSelectFieldOption = {
 };
 
 type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[];
+
+/** Remote searches wait for a typing pause so each keystroke does not hit the API. */
+export const MNS_REMOTE_SEARCH_DEBOUNCE_MS = 250;
+
+/** Keys the search input hands to mat-select so the option list stays keyboard-driven. */
+const SELECT_NAVIGATION_KEYS = new Set([
+  'ArrowDown',
+  'ArrowUp',
+  'PageDown',
+  'PageUp',
+  'Enter',
+  'Escape',
+  'Tab',
+]);
 
 @Component({
   selector: 'mns-search-select-field',
@@ -47,6 +75,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
       <mat-label>{{ label() }}</mat-label>
       @if (field(); as formField) {
         <mat-select
+          #select
           [formField]="formField"
           [multiple]="multiple()"
           [compareWith]="compareOptionValues"
@@ -75,12 +104,16 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             >
               <mat-icon matPrefix>search</mat-icon>
               <input
+                #searchInput
                 matInput
                 [placeholder]="placeholder() | transloco"
+                [attr.aria-label]="placeholder() | transloco"
+                [attr.aria-controls]="select.id + '-panel'"
+                [attr.aria-activedescendant]="select._getAriaActiveDescendant()"
                 [value]="search()"
                 (input)="setSearch($any($event.target).value)"
                 (click)="$event.stopPropagation()"
-                (keydown)="$event.stopPropagation()"
+                (keydown)="handleSearchKeydown($event)"
                 autocomplete="off"
               />
             </mat-form-field>
@@ -174,6 +207,7 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
         </mat-select>
       } @else {
         <mat-select
+          #select
           [value]="value()"
           [multiple]="multiple()"
           [disabled]="disabled()"
@@ -203,12 +237,16 @@ type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[
             >
               <mat-icon matPrefix>search</mat-icon>
               <input
+                #searchInput
                 matInput
                 [placeholder]="placeholder() | transloco"
+                [attr.aria-label]="placeholder() | transloco"
+                [attr.aria-controls]="select.id + '-panel'"
+                [attr.aria-activedescendant]="select._getAriaActiveDescendant()"
                 [value]="search()"
                 (input)="setSearch($any($event.target).value)"
                 (click)="$event.stopPropagation()"
-                (keydown)="$event.stopPropagation()"
+                (keydown)="handleSearchKeydown($event)"
                 autocomplete="off"
               />
             </mat-form-field>
@@ -391,9 +429,90 @@ export class MnsSearchSelectFieldComponent {
   readonly searchChange = output<string>();
   readonly pageChange = output<number>();
   readonly search = signal('');
+
+  private readonly select = viewChild(MatSelect);
+  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    // Capture phase: a printable key on the closed select must open the search before
+    // mat-select's typeahead silently picks a matching option.
+    const host = this.host.nativeElement;
+    const typeToSearch = (event: KeyboardEvent) => this.handleClosedKeydown(event);
+    host.addEventListener('keydown', typeToSearch, true);
+    inject(DestroyRef).onDestroy(() => {
+      host.removeEventListener('keydown', typeToSearch, true);
+      this.clearSearchTimer();
+    });
+
+    // While searching, keep the first visible option active so Enter picks it.
+    effect(() => {
+      const term = this.search();
+      this.filteredOptions();
+      untracked(() => {
+        if (!term.trim() || !this.select()?.panelOpen) return;
+        afterNextRender(() => this.activateFirstSelectableOption(), {
+          injector: this.injector,
+        });
+      });
+    });
+  }
+
   setSearch(value: string): void {
     this.search.set(value);
-    this.searchChange.emit(value);
+    this.clearSearchTimer();
+    if (!this.remoteSearch() || !value) {
+      this.searchChange.emit(value);
+      return;
+    }
+    this.searchTimer = setTimeout(() => {
+      this.searchTimer = null;
+      this.searchChange.emit(value);
+    }, MNS_REMOTE_SEARCH_DEBOUNCE_MS);
+  }
+
+  /** Navigation keys reach mat-select; text editing keys stay in the search input. */
+  handleSearchKeydown(event: KeyboardEvent): void {
+    if (SELECT_NAVIGATION_KEYS.has(event.key)) return;
+    event.stopPropagation();
+  }
+
+  private handleClosedKeydown(event: KeyboardEvent): void {
+    const select = this.select();
+    if (!select || select.panelOpen || select.disabled) return;
+    if (!(event.target as HTMLElement | null)?.classList?.contains('mat-mdc-select')) return;
+    if (event.key.length !== 1 || event.key === ' ') return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.setSearch(event.key);
+    select.open();
+  }
+
+  /** An open mat-select also navigates disabled rows (search box, states); skip them here. */
+  private activateFirstSelectableOption(): void {
+    const select = this.select();
+    if (!select?.panelOpen) return;
+    const index = select.options.toArray().findIndex((option) => !option.disabled);
+    if (index >= 0) select._keyManager.setActiveItem(index);
+  }
+
+  private focusSearchInput(): void {
+    // Touch devices keep the list visible instead of raising the on-screen keyboard.
+    if (globalThis.matchMedia?.('(pointer: coarse)').matches) return;
+    const input = this.searchInput()?.nativeElement;
+    if (!input) return;
+    input.focus({ preventScroll: true });
+    const end = input.value.length;
+    input.setSelectionRange(end, end);
+  }
+
+  private clearSearchTimer(): void {
+    if (this.searchTimer === null) return;
+    clearTimeout(this.searchTimer);
+    this.searchTimer = null;
   }
 
   readonly selectedOption = computed(() => {
@@ -493,7 +612,8 @@ export class MnsSearchSelectFieldComponent {
 
   handleOpenedChange(opened: boolean): void {
     this.openedChange.emit(opened);
-    if (!opened) this.setSearch('');
+    if (opened) this.focusSearchInput();
+    else if (this.search()) this.setSearch('');
   }
 
   readonly compareOptionValues = (left: unknown, right: unknown): boolean =>

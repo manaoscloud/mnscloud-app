@@ -1,6 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { MnsSearchSelectFieldComponent } from './mns-search-select-field';
+import {
+  MNS_REMOTE_SEARCH_DEBOUNCE_MS,
+  MnsSearchSelectFieldComponent,
+} from './mns-search-select-field';
+
+const settle = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('Remote relationship dropdown accessibility', () => {
   it('keeps search enabled and page navigation separate from value selection', async () => {
@@ -40,6 +45,7 @@ describe('Remote relationship dropdown accessibility', () => {
     search.value = 'remote tenant';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
+    await settle(MNS_REMOTE_SEARCH_DEBOUNCE_MS + 50);
     expect(searches).toHaveBeenCalledWith('remote tenant');
     const next = panel.querySelector<HTMLButtonElement>('button[aria-label="Next page"]')!;
     expect(next.disabled).toBeFalse();
@@ -112,5 +118,111 @@ describe('Remote relationship dropdown accessibility', () => {
     expect(document.querySelector('.mat-mdc-select-panel')).not.toBeNull();
     expect(fixture.componentInstance.value()).toBe('saved');
     fixture.destroy();
+  });
+
+  describe('search focus and keyboard', () => {
+    async function create(options: { remote?: boolean } = {}) {
+      await TestBed.configureTestingModule({
+        imports: [
+          MnsSearchSelectFieldComponent,
+          TranslocoTestingModule.forRoot({
+            langs: { en: { Search: 'Search' } },
+            translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+            preloadLangs: true,
+          }),
+        ],
+      }).compileComponents();
+      const fixture = TestBed.createComponent(MnsSearchSelectFieldComponent);
+      fixture.componentRef.setInput('label', 'Provider');
+      fixture.componentRef.setInput('remoteSearch', !!options.remote);
+      fixture.componentRef.setInput('options', [
+        { value: 'a', label: 'Alpha telecom' },
+        { value: 'b', label: 'Beta voice' },
+        { value: 'c', label: 'Gamma carrier' },
+      ]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return fixture;
+    }
+
+    async function render(fixture: { detectChanges(): void; whenStable(): Promise<unknown> }) {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      await settle();
+      fixture.detectChanges();
+    }
+
+    afterEach(() => document.querySelector('.cdk-overlay-container')?.replaceChildren());
+
+    it('focuses the search input as soon as the dropdown opens', async () => {
+      const fixture = await create();
+      fixture.nativeElement.querySelector('mat-select').click();
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      expect(document.activeElement).toBe(search);
+      expect(search.getAttribute('aria-label')).toBe('Search');
+      fixture.destroy();
+    });
+
+    it('opens the search with the typed character instead of a silent typeahead pick', async () => {
+      const fixture = await create();
+      const selections = spyOn(fixture.componentInstance.valueChange, 'emit');
+      const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+      select.focus();
+      select.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      expect(search.value).toBe('g');
+      expect(document.activeElement).toBe(search);
+      expect(fixture.componentInstance.filteredOptions().map((o) => o.value)).toEqual(['c']);
+      await settle(150);
+      expect(selections).not.toHaveBeenCalled();
+      fixture.destroy();
+    });
+
+    it('selects the first match with Enter typed in the search input', async () => {
+      const fixture = await create();
+      const selections = spyOn(fixture.componentInstance.valueChange, 'emit');
+      fixture.nativeElement.querySelector('mat-select').click();
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      search.value = 'beta';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      await render(fixture);
+      search.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }),
+      );
+      await render(fixture);
+      expect(selections).toHaveBeenCalledWith('b');
+      fixture.destroy();
+    });
+
+    it('keeps text keys such as space inside the search input', async () => {
+      const fixture = await create();
+      const selections = spyOn(fixture.componentInstance.valueChange, 'emit');
+      fixture.nativeElement.querySelector('mat-select').click();
+      await render(fixture);
+      const search = document.querySelector<HTMLInputElement>('.select-search-field input')!;
+      const space = new KeyboardEvent('keydown', { key: ' ', keyCode: 32, bubbles: true });
+      search.dispatchEvent(space);
+      await render(fixture);
+      expect(selections).not.toHaveBeenCalled();
+      expect(document.querySelector('.mat-mdc-select-panel')).not.toBeNull();
+      fixture.destroy();
+    });
+
+    it('sends one remote search after the typing pause', async () => {
+      const fixture = await create({ remote: true });
+      const searches = spyOn(fixture.componentInstance.searchChange, 'emit');
+      fixture.componentInstance.setSearch('a');
+      fixture.componentInstance.setSearch('al');
+      fixture.componentInstance.setSearch('alp');
+      expect(searches).not.toHaveBeenCalled();
+      await settle(MNS_REMOTE_SEARCH_DEBOUNCE_MS + 50);
+      expect(searches).toHaveBeenCalledOnceWith('alp');
+      fixture.componentInstance.setSearch('');
+      expect(searches).toHaveBeenCalledWith('');
+      fixture.destroy();
+    });
   });
 });
