@@ -1,0 +1,81 @@
+<mns-dashboard-page
+  [title]="'dns.monitoring'"
+  [description]="'dns.monitoringDescription'"
+  [loading]="panel.isLoading()"
+  [error]="panel.error()"
+  [hasData]="panel.hasData()"
+  (refresh)="panel.reload()"
+>
+  <div class="dashboard-content">
+    @if (!targets().length) {
+      <div class="empty-state dashboard-onboarding">
+        <p>{{ 'dns.monitoringEmpty' | transloco }}</p>
+        <a routerLink="/system/dns/monitor-targets">{{ 'dns.monitorTargets' | transloco }}</a>
+      </div>
+    } @else {
+      <div class="dashboard-grid">
+        @for (item of kpis(); track item.state) {
+          <article class="dashboard-metric" [ngClass]="item.className">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <div>
+              <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+              <strong class="dashboard-metric-value">{{ item.value ?? '—' }}</strong>
+              <small class="dashboard-metric-hint">{{ 'dns.monitorKpiHint' | transloco }}</small>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-sections">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.monitorAvailabilityChart' | transloco }}</h2>
+            <p>{{ 'dns.monitorAvailabilityChartHint' | transloco }}</p>
+          </div>
+          @defer (on viewport) {
+            <mns-trend-chart
+              [title]="'dns.monitorAvailabilityChart'"
+              [kind]="'stacked'"
+              [series]="availabilitySeries"
+              [points]="availabilityPoints()"
+              [language]="language()"
+            />
+          } @placeholder {
+            <div class="dashboard-chart-placeholder"></div>
+          }
+        </section>
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.monitorResolverLatency' | transloco }}</h2>
+            <p>{{ 'dns.monitorResolverLatencyHint' | transloco }}</p>
+          </div>
+          @defer (on viewport) {
+            <mns-trend-chart
+              [title]="'dns.monitorResolverLatency'"
+              [kind]="'line'"
+              [series]="latencySeries"
+              [points]="resolverLatencyPoints()"
+              [format]="formatMs"
+              [language]="language()"
+            />
+          } @placeholder {
+            <div class="dashboard-chart-placeholder"></div>
+          }
+        </section>
+      </div>
+
+      <div class="dashboard-sections">
+        <mns-dashboard-record-list
+          [title]="'dns.monitorServices'"
+          [items]="services()"
+          [emptyLabel]="'dns.monitorNoServices'"
+        />
+        <mns-dashboard-record-list
+          [title]="'dns.monitorResolvers'"
+          [items]="resolvers()"
+          [emptyLabel]="'dns.monitorNoResolvers'"
+        />
+      </div>
+    }
+  </div>
+</mns-dashboard-page>

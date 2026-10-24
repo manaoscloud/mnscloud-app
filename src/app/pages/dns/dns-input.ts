@@ -37,3 +37,30 @@ export function dnsRoles(row: ConfigurableCrudRecord, translate: (key: string) =
     .map(([, label]) => translate(label))
     .join(' + ');
 }
+
+/**
+ * Monitor target (D4c): the kind is chosen once; a service has no query, a resolver always has one.
+ */
+export function dnsMonitorTargetPayload(
+  values: ConfigurableCrudRecord,
+  editing: boolean,
+): ConfigurableCrudRecord {
+  const payload = dnsPayload(values, editing);
+  const resolver = payload['kind'] === 'resolver';
+  if (editing) delete payload['kind'];
+  if (!resolver) {
+    delete payload['queryName'];
+    delete payload['queryType'];
+  }
+  return payload;
+}
+
+/** Monitor Agent (D4c): the Agent is chosen once; afterwards only the status changes. */
+export function dnsMonitorAgentPayload(
+  values: ConfigurableCrudRecord,
+  editing: boolean,
+): ConfigurableCrudRecord {
+  const payload = dnsPayload(values, editing);
+  if (editing) delete payload['MonitoringAgentMagUUID'];
+  return payload;
+}
