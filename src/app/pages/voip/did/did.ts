@@ -243,7 +243,7 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     if (field.key === 'number' && this.system && !this.editingRecord()) {
       const input = parseDidNumberInput(this.formValues()['number']);
       if (input.kind === 'range')
-        return this.t('Number range ({total} DIDs)', { total: input.total });
+        return this.t('Number range ({{total}} DIDs)', { total: input.total });
     }
     return super.translatedFieldLabel(field);
   }

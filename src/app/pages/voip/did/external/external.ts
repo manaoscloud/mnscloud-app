@@ -103,7 +103,7 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
         help: 'One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.',
         required: true,
         tab: 'record',
-        span: 1,
+        span: 2,
       },
       {
         key: 'notes',
@@ -159,7 +159,7 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
     if (field.key === 'number' && !this.editingRecord()) {
       const input = parseDidNumberInput(this.formValues()['number']);
       if (input.kind === 'range')
-        return this.t('Number range ({total} DIDs)', { total: input.total });
+        return this.t('Number range ({{total}} DIDs)', { total: input.total });
     }
     return super.translatedFieldLabel(field);
   }
@@ -209,7 +209,7 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
       if (preview.conflicts.length) {
         const shown = preview.conflicts.slice(0, 5).join(', ');
         const more = preview.conflicts.length > 5 ? ` (+${preview.conflicts.length - 5})` : '';
-        this.rejectField('number', 'These DID numbers already exist: {numbers}', {
+        this.rejectField('number', 'These DID numbers already exist: {{numbers}}', {
           numbers: `${shown}${more}`,
         });
         return;
@@ -218,7 +218,7 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
       if (!preview.creditSufficient) {
         this.snack.error(
           this.t(
-            'Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.',
+            'Insufficient prepaid credit for {{total}} DIDs: {{required}} needed, {{available}} available.',
             {
               total: preview.total,
               required: money(preview.requiredAmount),
@@ -233,7 +233,7 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
       const confirmed = await this.confirmAction(
         'Create DID range',
         this.t(
-          'Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).',
+          'Create {{total}} DIDs from {{start}} to {{end}} with provider {{provider}}? Prepaid charge now: {{required}} ({{unit}} per DID).',
           {
             total: preview.total,
             start,
@@ -250,7 +250,7 @@ export class VoipDidExternalPage extends ConfigurableCrudPageBase<VoipDidExterna
       const created = (await this.externalApi.createRange({ ...request, dryRun: false }))?.data
         ?.items;
       this.snack.success(
-        this.t('{total} external DIDs created successfully.', {
+        this.t('{{total}} external DIDs created successfully.', {
           total: created?.length ?? preview.total,
         }),
       );
