@@ -502,11 +502,15 @@ export class MnsSearchSelectFieldComponent {
   private focusSearchInput(): void {
     // Touch devices keep the list visible instead of raising the on-screen keyboard.
     if (globalThis.matchMedia?.('(pointer: coarse)').matches) return;
-    const input = this.searchInput()?.nativeElement;
-    if (!input) return;
-    input.focus({ preventScroll: true });
-    const end = input.value.length;
-    input.setSelectionRange(end, end);
+    // After the opening event finishes: the same click still bubbles to mat-form-field, whose
+    // onContainerClick focuses the select again (seen in CRUD dialogs on DEV).
+    setTimeout(() => {
+      const input = this.searchInput()?.nativeElement;
+      if (!input || !this.select()?.panelOpen) return;
+      input.focus({ preventScroll: true });
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
   }
 
   private clearSearchTimer(): void {
