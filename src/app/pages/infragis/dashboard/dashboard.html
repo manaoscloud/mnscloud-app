@@ -6,34 +6,46 @@
   [hasData]="dashboardResource.hasData()"
   (refresh)="dashboardResource.reload()"
 >
-  <div class="dashboard-grid">
-    @for (metric of metrics(); track metric.label) {
-      <article class="dashboard-metric">
-        <div>
-          <span class="dashboard-metric-label">{{ metric.label | transloco }}</span
-          ><strong class="dashboard-metric-value">{{ metric.value ?? '—' }}</strong>
-        </div>
-      </article>
-    }
-  </div>
-  <section class="dashboard-panel">
-    <h2>{{ 'Map' | transloco }}</h2>
-    <p>{{ 'Map preview: up to 1,000 authorized assets.' | transloco }}</p>
-    <div
-      class="dashboard-map-canvas"
-      role="img"
-      [attr.aria-label]="'InfraGIS asset map' | transloco"
-    >
-      @for (asset of mapAssets(); track asset.IgaUUID) {
-        <span
-          class="dashboard-map-point"
-          [ngStyle]="mapPointStyle(asset)"
-          [matTooltip]="asset.IgaName"
-        ></span>
+  @if (empty()) {
+    <div class="empty-state dashboard-onboarding">
+      <mat-icon aria-hidden="true">rocket_launch</mat-icon>
+      <p>
+        {{ 'Create a project, its layers and asset types to start mapping assets.' | transloco }}
+      </p>
+      <a routerLink="/infragis/projects">{{ 'Create project' | transloco }}</a>
+    </div>
+  } @else {
+    <div class="dashboard-grid">
+      @for (metric of metrics(); track metric.label) {
+        <article class="dashboard-metric">
+          <div>
+            <span class="dashboard-metric-label">{{ metric.label | transloco }}</span
+            ><strong class="dashboard-metric-value">{{ metric.value ?? '—' }}</strong>
+          </div>
+        </article>
       }
     </div>
-    @if (!mapAssets().length) {
-      <p>{{ 'No records found.' | transloco }}</p>
-    }
-  </section>
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <h2>{{ 'Map' | transloco }}</h2>
+        <p>{{ 'Map preview: up to 1,000 authorized assets.' | transloco }}</p>
+      </div>
+      <div
+        class="dashboard-map-canvas"
+        role="img"
+        [attr.aria-label]="'InfraGIS asset map' | transloco"
+      >
+        @for (asset of mapAssets(); track asset.IgaUUID) {
+          <span
+            class="dashboard-map-point"
+            [ngStyle]="mapPointStyle(asset)"
+            [matTooltip]="asset.IgaName"
+          ></span>
+        }
+      </div>
+      @if (!mapAssets().length) {
+        <output class="dashboard-message">{{ 'No records found.' | transloco }}</output>
+      }
+    </section>
+  }
 </mns-dashboard-page>

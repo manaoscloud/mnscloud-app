@@ -16,7 +16,16 @@ import {
 export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
 
-const geometries = ['POINT', 'LINE', 'POLYGON', 'MIXED'].map((value) => ({ value, label: value }));
+// Canonical geometry types of a layer; MIXED accepts assets of any type.
+const geometries = [
+  { value: 'POINT', label: 'Point' },
+  { value: 'LINE', label: 'Line' },
+  { value: 'POLYGON', label: 'Polygon' },
+  { value: 'MIXED', label: 'Mixed' },
+];
+const geometryLabel = (value: unknown) =>
+  geometries.find((option) => option.value === value)?.label ??
+  (typeof value === 'string' ? value : '');
 
 const statusField = (source: string): ConfigurableCrudField => ({
   key: 'status',
@@ -32,6 +41,41 @@ const sortOrderField = (source: string): ConfigurableCrudField => ({
   type: 'number',
   span: 1,
 });
+/** Columns and fields shared by the coded catalogs (column prefix `Iac`, `Igt`, `Igs`, `Igl`). */
+const nameColumn = (prefix: string) => ({
+  id: 'name',
+  label: 'Name',
+  field: `${prefix}Name`,
+  uuidField: `${prefix}UUID`,
+  kind: 'identity' as const,
+});
+const codeColumn = (prefix: string) => ({
+  id: 'code',
+  label: 'Code',
+  field: `${prefix}Code`,
+  translateValue: false,
+});
+const colorColumn = (field: string) => ({
+  id: 'color',
+  label: 'Color',
+  field,
+  translateValue: false,
+});
+const statusColumn = (prefix: string) => ({
+  id: 'status',
+  label: 'Status',
+  field: `${prefix}Status`,
+  kind: 'status' as const,
+});
+function codedFields(prefix: string, codeLabel: string): ConfigurableCrudField[] {
+  return [
+    statusField(`${prefix}Status`),
+    { key: 'code', source: `${prefix}Code`, label: codeLabel, required: true, span: 1 },
+    { key: 'name', source: `${prefix}Name`, label: 'Name', required: true, span: 1 },
+    sortOrderField(`${prefix}SortOrder`),
+  ];
+}
+
 const lookup = (
   key: string,
   source: string,
@@ -42,28 +86,29 @@ const lookup = (
   selectedLabelField: string,
   tab: ConfigurableCrudField['tab'],
   required = false,
+  parameters?: Readonly<Record<string, string>>,
 ): ConfigurableCrudField => ({
   key,
   source,
   label,
   type: 'search-select',
   required,
-  remoteLookup: { endpoint, uuidField, labelField, selectedLabelField },
+  remoteLookup: { endpoint, uuidField, labelField, selectedLabelField, parameters },
   quickCreate: quickCreateFor(source as QuickCreateRegistryKey),
   tab,
   span: 2,
 });
 
-const common = {
-  bulkDelete: true,
-  initialValues: { status: 1, sortOrder: 1000, geometryType: 'POINT', color: '#22C55E' },
-} as const;
+const common = { bulkDelete: true } as const;
+const initial = { status: 1, sortOrder: 1000 } as const;
+const visualInitial = { ...initial, color: '#22C55E' } as const;
 
 // One routed page per InfraGIS catalog (route data `resource`), replacing the former tabbed
 // management screen. All catalogs share the generic CRUD surface.
 const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   projects: defineCrud({
     ...common,
+    initialValues: initial,
     endpoint: 'infragis/projects',
     uuidField: 'IprUUID',
     pageTitle: 'Projects',
@@ -93,23 +138,26 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   layers: defineCrud({
     ...common,
+    initialValues: { ...initial, geometryType: 'POINT' },
     endpoint: 'infragis/layers',
     uuidField: 'IglUUID',
     pageTitle: 'Layers',
     pageDescription: 'Map layers of each InfraGIS project.',
     tabLabels: { match: 'Assignment', transform: 'Style' },
     columns: [
-      { id: 'name', label: 'Name', field: 'IglName', uuidField: 'IglUUID', kind: 'identity' },
+      nameColumn('Igl'),
       { id: 'project', label: 'Project', field: 'ProjectName' },
-      { id: 'geometry', label: 'Geometry', field: 'IglGeometryType', translateValue: false },
+      {
+        id: 'geometry',
+        label: 'Geometry',
+        field: 'IglGeometryType',
+        value: (row, t) => t(geometryLabel(row['IglGeometryType'])),
+      },
       { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
-      { id: 'status', label: 'Status', field: 'IglStatus', kind: 'status' },
+      statusColumn('Igl'),
     ],
     fields: [
-      statusField('IglStatus'),
-      { key: 'code', source: 'IglCode', label: 'Code', span: 1 },
-      { key: 'name', source: 'IglName', label: 'Name', required: true, span: 1 },
-      sortOrderField('IglSortOrder'),
+      ...codedFields('Igl', 'Code'),
       lookup(
         'projectUUID',
         'InfraGisProjectIprUUID',
@@ -127,7 +175,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Geometry',
         type: 'select',
         options: geometries,
-        translateOptions: false,
+        required: true,
         tab: 'match',
         span: 1,
       },
@@ -145,45 +193,36 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   categories: defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/categories',
     uuidField: 'IacUUID',
     pageTitle: 'Categories',
     pageDescription: 'Asset categories used to classify InfraGIS asset types.',
     tabLabels: { transform: 'Visual' },
-    columns: [
-      { id: 'name', label: 'Name', field: 'IacName', uuidField: 'IacUUID', kind: 'identity' },
-      { id: 'code', label: 'Code', field: 'IacCode', translateValue: false },
-      { id: 'color', label: 'Color', field: 'IacColor', translateValue: false },
-      { id: 'status', label: 'Status', field: 'IacStatus', kind: 'status' },
-    ],
+    columns: [nameColumn('Iac'), codeColumn('Iac'), colorColumn('IacColor'), statusColumn('Iac')],
     fields: [
-      statusField('IacStatus'),
-      { key: 'code', source: 'IacCode', label: 'Category Code', span: 1 },
-      { key: 'name', source: 'IacName', label: 'Name', required: true, span: 1 },
-      sortOrderField('IacSortOrder'),
+      ...codedFields('Iac', 'Category Code'),
       { key: 'color', source: 'IacColor', label: 'Color', tab: 'transform', span: 1 },
       { key: 'icon', source: 'IacIcon', label: 'Icon', tab: 'transform', span: 2 },
     ],
   }),
   'asset-types': defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/asset-types',
     uuidField: 'IgtUUID',
     pageTitle: 'Asset Types',
     pageDescription: 'Asset types with their category, color and icon.',
     tabLabels: { match: 'Classification' },
     columns: [
-      { id: 'name', label: 'Name', field: 'IgtName', uuidField: 'IgtUUID', kind: 'identity' },
-      { id: 'code', label: 'Code', field: 'IgtCode', translateValue: false },
+      nameColumn('Igt'),
+      codeColumn('Igt'),
       { id: 'category', label: 'Category', field: 'CategoryName' },
-      { id: 'color', label: 'Color', field: 'IgtDefaultColor', translateValue: false },
-      { id: 'status', label: 'Status', field: 'IgtStatus', kind: 'status' },
+      colorColumn('IgtDefaultColor'),
+      statusColumn('Igt'),
     ],
     fields: [
-      statusField('IgtStatus'),
-      { key: 'code', source: 'IgtCode', label: 'Asset Type Code', span: 1 },
-      { key: 'name', source: 'IgtName', label: 'Name', required: true, span: 1 },
-      sortOrderField('IgtSortOrder'),
+      ...codedFields('Igt', 'Asset Type Code'),
       lookup(
         'categoryUUID',
         'InfraGisAssetCategoryIacUUID',
@@ -200,27 +239,21 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
   statuses: defineCrud({
     ...common,
+    initialValues: visualInitial,
     endpoint: 'infragis/statuses',
     uuidField: 'IgsUUID',
     pageTitle: 'Statuses',
     pageDescription: 'Operational statuses available for InfraGIS assets.',
     tabLabels: { transform: 'Visual' },
-    columns: [
-      { id: 'name', label: 'Name', field: 'IgsName', uuidField: 'IgsUUID', kind: 'identity' },
-      { id: 'code', label: 'Code', field: 'IgsCode', translateValue: false },
-      { id: 'color', label: 'Color', field: 'IgsColor', translateValue: false },
-      { id: 'status', label: 'Status', field: 'IgsStatus', kind: 'status' },
-    ],
+    columns: [nameColumn('Igs'), codeColumn('Igs'), colorColumn('IgsColor'), statusColumn('Igs')],
     fields: [
-      statusField('IgsStatus'),
-      { key: 'code', source: 'IgsCode', label: 'Status Code', span: 1 },
-      { key: 'name', source: 'IgsName', label: 'Name', required: true, span: 1 },
-      sortOrderField('IgsSortOrder'),
+      ...codedFields('Igs', 'Status Code'),
       { key: 'color', source: 'IgsColor', label: 'Color', tab: 'transform', span: 1 },
     ],
   }),
   assets: defineCrud({
     ...common,
+    initialValues: initial,
     endpoint: 'infragis/assets',
     uuidField: 'IgaUUID',
     pageTitle: 'Assets',
@@ -259,6 +292,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         'LayerName',
         'match',
         true,
+        { projectUUID: 'projectUUID' },
       ),
       lookup(
         'assetTypeUUID',

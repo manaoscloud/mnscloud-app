@@ -73,7 +73,7 @@ export function readRoutes(source) {
     const dataNode = property(element, 'data');
     const data = {};
     if (dataNode && ts.isObjectLiteralExpression(dataNode)) {
-      for (const key of ['scope', 'supportDesk', 'permission']) {
+      for (const key of ['scope', 'supportDesk', 'permission', 'resource']) {
         const value = literals(property(dataNode, key))[0];
         if (value) data[key] = value;
       }
@@ -282,40 +282,8 @@ function configFields(node, ctx) {
   return fields ? { node: fields, ctx: built.ctx } : null;
 }
 
-/** Title, description and field help declared by a page (defineCrud or a hand-written template). */
-export function readPage(root, file, platform) {
-  const path = resolve(root, file);
-  if (!existsSync(path)) return null;
-  const source = readFileSync(path, 'utf8');
-  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
-  const page = { title: '', description: '', fields: [] };
-  const seen = new Set();
-  // A page may declare helper dialogs too: its own configuration is the one with the most fields.
-  const candidates = [];
-  const ctx = { scope: scopeOf(path, sf), bindings: new Map(), platform };
-  ts.forEachChild(sf, function visit(node) {
-    if (ts.isObjectLiteralExpression(node) && property(node, 'pageTitle')) {
-      const fields = configFields(node, ctx);
-      const objects = fields ? fieldObjects(fields.node, fields.ctx) : [];
-      candidates.push({ node, objects, size: objects.length });
-    }
-    ts.forEachChild(node, visit);
-  });
-  const main = candidates.reduce((best, item) => (item.size > best.size ? item : best), {
-    size: -1,
-  });
-  if (main.node) {
-    page.title = pick(property(main.node, 'pageTitle'), platform);
-    page.description = pick(property(main.node, 'pageDescription'), platform);
-    for (const object of main.objects) {
-      const label = text(objectString(object, 'label'));
-      const help = text(objectString(object, 'help'));
-      if (label && !seen.has(label) && page.fields.length < MAX_FIELDS) {
-        seen.add(label);
-        page.fields.push({ label, help });
-      }
-    }
-  }
+/** Title, description and field help of a hand-written page template (not the shared CRUD one). */
+function readTemplateHelp(path, source, page, seen) {
   const template = /templateUrl:\s*'([^']+)'/.exec(source)?.[1];
   if (template && !template.endsWith(SHARED_CRUD_TEMPLATE)) {
     const html = readFileSync(resolve(path, '..', template), 'utf8').replace(/\s+/g, ' ');
@@ -334,6 +302,61 @@ export function readPage(root, file, platform) {
       }
     }
   }
+}
+
+/** Key of the record entry that holds a page configuration (`projects: defineCrud({...})`). */
+function configKey(node) {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isPropertyAssignment(current)) {
+      const name = current.name;
+      return ts.isStringLiteral(name) || ts.isIdentifier(name) ? name.text : '';
+    }
+    if (!ts.isCallExpression(current) && !ts.isAsExpression(current)) return '';
+  }
+  return '';
+}
+
+/**
+ * Title, description and field help declared by a page (defineCrud or a hand-written template).
+ * A page that serves several routes (route data `resource`) uses the configuration of that key.
+ */
+export function readPage(root, file, platform, resource = '') {
+  const path = resolve(root, file);
+  if (!existsSync(path)) return null;
+  const source = readFileSync(path, 'utf8');
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const page = { title: '', description: '', fields: [] };
+  const seen = new Set();
+  // A page may declare helper dialogs too: its own configuration is the one with the most fields.
+  const candidates = [];
+  const ctx = { scope: scopeOf(path, sf), bindings: new Map(), platform };
+  ts.forEachChild(sf, function visit(node) {
+    if (ts.isObjectLiteralExpression(node) && property(node, 'pageTitle')) {
+      const fields = configFields(node, ctx);
+      const objects = fields ? fieldObjects(fields.node, fields.ctx) : [];
+      candidates.push({ node, objects, size: objects.length, key: configKey(node) });
+    }
+    ts.forEachChild(node, visit);
+  });
+  const keyed = resource ? candidates.find((item) => item.key === resource) : undefined;
+  const main =
+    keyed ??
+    candidates.reduce((best, item) => (item.size > best.size ? item : best), {
+      size: -1,
+    });
+  if (main.node) {
+    page.title = pick(property(main.node, 'pageTitle'), platform);
+    page.description = pick(property(main.node, 'pageDescription'), platform);
+    for (const object of main.objects) {
+      const label = text(objectString(object, 'label'));
+      const help = text(objectString(object, 'help'));
+      if (label && !seen.has(label) && page.fields.length < MAX_FIELDS) {
+        seen.add(label);
+        page.fields.push({ label, help });
+      }
+    }
+  }
+  readTemplateHelp(path, source, page, seen);
   return page;
 }
 
@@ -364,7 +387,9 @@ export function buildCatalog(root = process.cwd()) {
           target.route.startsWith('/system/') ||
           resolved?.data.scope === 'master' ||
           resolved?.data.supportDesk === 'platform';
-        const page = resolved ? readPage(root, resolved.file, platform) : null;
+        const page = resolved
+          ? readPage(root, resolved.file, platform, resolved.data.resource)
+          : null;
         entries.push({
           route: target.route,
           menuPath: labels.join(' › '),

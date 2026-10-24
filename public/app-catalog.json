@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "97fe8eae3281",
+  "version": "037533dc1314",
   "language": "pt-BR",
   "entries": [
     {
@@ -2951,40 +2951,32 @@
       "fields": []
     },
     {
-      "route": "/infragis/management/asset-types",
+      "route": "/infragis/asset-types",
       "menuPath": "InfraGIS › Tipos de ativo",
       "scope": "tenant",
-      "title": "Ativos",
-      "description": "Ativos georreferenciados do InfraGIS.",
+      "title": "Tipos de ativo",
+      "description": "Tipos de ativo com categoria, cor e ícone.",
       "fields": [
+        {
+          "label": "Código do tipo de ativo",
+          "help": ""
+        },
         {
           "label": "Nome",
           "help": ""
         },
         {
-          "label": "ID externo",
+          "label": "Cor",
           "help": ""
         },
         {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "GeoJSON",
-          "help": ""
-        },
-        {
-          "label": "JSON de propriedades",
+          "label": "Ícone",
           "help": ""
         }
       ]
     },
     {
-      "route": "/infragis/management/assets",
+      "route": "/infragis/assets",
       "menuPath": "InfraGIS › Ativos",
       "scope": "tenant",
       "title": "Ativos",
@@ -3017,133 +3009,89 @@
       ]
     },
     {
-      "route": "/infragis/management/categories",
+      "route": "/infragis/categories",
       "menuPath": "InfraGIS › Categorias",
       "scope": "tenant",
-      "title": "Ativos",
-      "description": "Ativos georreferenciados do InfraGIS.",
+      "title": "Categorias",
+      "description": "Categorias usadas para classificar os tipos de ativo do InfraGIS.",
       "fields": [
+        {
+          "label": "Código da categoria",
+          "help": ""
+        },
         {
           "label": "Nome",
           "help": ""
         },
         {
-          "label": "ID externo",
+          "label": "Cor",
           "help": ""
         },
         {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "GeoJSON",
-          "help": ""
-        },
-        {
-          "label": "JSON de propriedades",
+          "label": "Ícone",
           "help": ""
         }
       ]
     },
     {
-      "route": "/infragis/management/layers",
+      "route": "/infragis/layers",
       "menuPath": "InfraGIS › Camadas",
       "scope": "tenant",
-      "title": "Ativos",
-      "description": "Ativos georreferenciados do InfraGIS.",
+      "title": "Camadas",
+      "description": "Camadas de mapa de cada projeto InfraGIS.",
       "fields": [
+        {
+          "label": "Código",
+          "help": ""
+        },
         {
           "label": "Nome",
           "help": ""
         },
         {
-          "label": "ID externo",
+          "label": "Geometria",
           "help": ""
         },
         {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "GeoJSON",
-          "help": ""
-        },
-        {
-          "label": "JSON de propriedades",
+          "label": "JSON de estilo",
           "help": ""
         }
       ]
     },
     {
-      "route": "/infragis/management/projects",
+      "route": "/infragis/projects",
       "menuPath": "InfraGIS › Projetos",
       "scope": "tenant",
-      "title": "Ativos",
-      "description": "Ativos georreferenciados do InfraGIS.",
+      "title": "Projetos",
+      "description": "Projetos do InfraGIS que agrupam camadas e ativos.",
       "fields": [
         {
           "label": "Nome",
           "help": ""
         },
         {
-          "label": "ID externo",
-          "help": ""
-        },
-        {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "GeoJSON",
-          "help": ""
-        },
-        {
-          "label": "JSON de propriedades",
+          "label": "Descrição",
           "help": ""
         }
       ]
     },
     {
-      "route": "/infragis/management/statuses",
-      "menuPath": "InfraGIS › Situações",
+      "route": "/infragis/statuses",
+      "menuPath": "InfraGIS › Status",
       "scope": "tenant",
-      "title": "Ativos",
-      "description": "Ativos georreferenciados do InfraGIS.",
+      "title": "Status",
+      "description": "Status operacionais disponíveis para os ativos do InfraGIS.",
       "fields": [
+        {
+          "label": "Código do status",
+          "help": ""
+        },
         {
           "label": "Nome",
           "help": ""
         },
         {
-          "label": "ID externo",
-          "help": ""
-        },
-        {
-          "label": "Latitude",
-          "help": ""
-        },
-        {
-          "label": "Longitude",
-          "help": ""
-        },
-        {
-          "label": "GeoJSON",
-          "help": ""
-        },
-        {
-          "label": "JSON de propriedades",
+          "label": "Cor",
           "help": ""
         }
       ]
@@ -4877,7 +4825,7 @@
         },
         {
           "label": "Token do Mapbox",
-          "help": "Mapbox public access token for vector map rendering in ISP and asset geomaps."
+          "help": "Token público de acesso do Mapbox usado na renderização dos mapas do InfraGIS."
         },
         {
           "label": "Ambiente SIAD",
@@ -7779,7 +7727,7 @@
         },
         {
           "label": "Token do Mapbox",
-          "help": "Mapbox public access token for vector map rendering in ISP and asset geomaps."
+          "help": "Token público de acesso do Mapbox usado na renderização dos mapas do InfraGIS."
         },
         {
           "label": "Ambiente SIAD",
