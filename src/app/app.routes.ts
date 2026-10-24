@@ -2968,20 +2968,20 @@ export const routes: Routes = [
               {
                 path: 'dns/client-networks',
                 loadComponent: () =>
-                  import('./pages/dns/client-networks/client-networks').then(
-                    (m) => m.DnsClientNetworksPage,
-                  ),
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
                 title: 'DNS',
-                data: { scope: 'master', breadcrumb: 'dns.clientNetworks' },
+                data: {
+                  scope: 'master',
+                  breadcrumb: 'dns.clientNetworks',
+                  list: 'client-networks',
+                },
               },
               {
                 path: 'dns/forward-zones',
                 loadComponent: () =>
-                  import('./pages/dns/forward-zones/forward-zones').then(
-                    (m) => m.DnsForwardZonesPage,
-                  ),
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
                 title: 'DNS',
-                data: { scope: 'master', breadcrumb: 'dns.forwardZones' },
+                data: { scope: 'master', breadcrumb: 'dns.forwardZones', list: 'forward-zones' },
               },
               {
                 path: 'dns/client-tests',

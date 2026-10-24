@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -8,9 +9,49 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { runtimeServerClusterField } from '../../../shared/runtime-server/runtime-server-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
+// Resolver lists of a cluster (D2a): client networks and conditional forwarding share one page, the
+// route data chooses the list.
+const clientNetworks = defineCrud({
+  endpoint: 'system/dns/client-networks',
+  uuidField: 'DcnUUID',
+  pageTitle: 'dns.clientNetworks',
+  pageDescription: 'dns.clientNetworksDescription',
+  dialogDescription: 'dns.clientNetworksDescription',
+  serverSidePagination: true,
+  initialPageSize: 50,
+  bulkDelete: false,
+  deletePayload: (row) => ({ revision: Number(row['DcnRevision']) }),
+  initialValues: { name: '', cidr: '', status: 1, revision: 1, DnsClusterDncUUID: '' },
+  payload: (values, editing) => {
+    const payload = dnsPayload(values, editing);
+    if (editing) delete payload['DnsClusterDncUUID'];
+    return payload;
+  },
+  fields: [
+    { key: 'status', source: 'DcnStatus', label: 'Status', type: 'status', span: 1 },
+    runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
+    { key: 'name', source: 'DcnName', label: 'Name', required: true, span: 1 },
+    {
+      key: 'cidr',
+      source: 'DcnCidr',
+      label: 'dns.clientNetworkCidr',
+      required: true,
+      span: 1,
+      help: 'dns.clientNetworkCidrHelp',
+    },
+    { key: 'revision', source: 'DcnRevision', label: 'Revision', type: 'number', hidden: true },
+  ],
+  columns: [
+    { id: 'name', field: 'DcnName', label: 'Name', kind: 'identity' },
+    { id: 'cidr', field: 'DcnCidr', label: 'dns.clientNetworkCidr', kind: 'text' },
+    { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
+    { id: 'status', field: 'DcnStatus', label: 'Status', kind: 'status' },
+  ],
+});
+
 const servers = (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value ?? ''));
 
-const config = defineCrud({
+const forwardZones = defineCrud({
   endpoint: 'system/dns/forward-zones',
   uuidField: 'DfzUUID',
   pageTitle: 'dns.forwardZones',
@@ -81,15 +122,18 @@ const config = defineCrud({
   ],
 });
 
+const CONFIGS = { 'client-networks': clientNetworks, 'forward-zones': forwardZones };
+
 @Component({
-  selector: 'app-dns-forward-zones',
+  selector: 'app-dns-resolver-lists',
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class DnsForwardZonesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class DnsResolverListsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(config);
+    const list = inject(ActivatedRoute).snapshot.data['list'] as keyof typeof CONFIGS;
+    super(CONFIGS[list] ?? clientNetworks);
   }
 }
