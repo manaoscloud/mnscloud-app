@@ -362,6 +362,11 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/registry/employees/employees').then((m) => m.RegEmployeesPage),
   },
+  HrWorkScheduleHwsUUID: {
+    label: 'Create work schedule',
+    loadComponent: () =>
+      import('../../../pages/hr/work-schedules/work-schedules').then((m) => m.HrWorkSchedulesPage),
+  },
   RegPositionRpsUUID: {
     label: 'Create position',
     loadComponent: () =>

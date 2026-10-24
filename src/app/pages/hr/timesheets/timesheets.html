@@ -1,0 +1,124 @@
+<mns-detail-page
+  title="Timesheet"
+  description="Monthly timesheet of an employee: expected and worked hours per day, the original punches, balance, overtime, absences and issues, computed from the work schedule, holidays and time policy."
+  [loading]="sheet.isLoading()"
+  (refresh)="refresh()"
+>
+  <section class="hr-timesheet-toolbar" [attr.aria-label]="'Timesheet selection' | transloco">
+    <mns-search-select-field
+      class="hr-timesheet-employee"
+      data-field-key="employeeUUID"
+      data-quick-create-exempt="Selector of an existing employee for a read-only timesheet; employees are created in Registry."
+      [label]="'Employee' | transloco"
+      [options]="employeeOptions()"
+      [value]="employeeUUID()"
+      [remoteSearch]="true"
+      [loading]="employeesLoading()"
+      [loadError]="employeesError()"
+      [hasPrevious]="employeeHasPrevious()"
+      [hasNext]="employeeHasNext()"
+      [help]="'Employees of Registry; the timesheet needs a schedule assignment.' | transloco"
+      (searchChange)="searchEmployees($event)"
+      (pageChange)="pageEmployees($event)"
+      (valueChange)="setEmployee($event)"
+    />
+    <div class="hr-timesheet-month">
+      <button
+        mat-icon-button
+        type="button"
+        [matTooltip]="'Previous month' | transloco"
+        [attr.aria-label]="'Previous month' | transloco"
+        (click)="moveMonth(-1)"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <mns-search-select-field
+        data-field-key="month"
+        [label]="'Month' | transloco"
+        [options]="months()"
+        [value]="month()"
+        (valueChange)="setMonth($event)"
+      />
+      <button
+        mat-icon-button
+        type="button"
+        [matTooltip]="'Next month' | transloco"
+        [attr.aria-label]="'Next month' | transloco"
+        (click)="moveMonth(1)"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      class="hr-timesheet-recalculate"
+      [disabled]="!employeeUUID() || recalculating()"
+      [matTooltip]="
+        'Compute the month again from the punches, schedules, holidays and policy' | transloco
+      "
+      (click)="recalculate()"
+    >
+      <mat-icon>calculate</mat-icon>{{ 'Recalculate' | transloco }}
+    </button>
+  </section>
+
+  @if (!employeeUUID()) {
+    <div class="empty-state">
+      <mat-icon aria-hidden="true">event_note</mat-icon>
+      <p>{{ 'Choose an employee to see the timesheet of the month.' | transloco }}</p>
+    </div>
+  } @else if (sheet.error() && !timesheet()) {
+    <p class="hr-timesheet-message" role="alert">
+      {{ 'The timesheet could not be loaded.' | transloco }}
+    </p>
+  } @else if (timesheet(); as data) {
+    <header class="hr-timesheet-heading">
+      <h2>{{ data.employee.Name }}</h2>
+      <p>
+        @if (employeeMeta()) {
+          {{ employeeMeta() }} ·
+        }
+        {{ 'Time zone' | transloco }}: {{ data.timezone }}
+      </p>
+    </header>
+
+    <div class="dashboard-grid">
+      @for (metric of totals(); track metric.label) {
+        <article class="dashboard-metric" [class]="metric.state">
+          <div>
+            <span class="dashboard-metric-label">{{ metric.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ metric.value }}</strong>
+            @if (metric.note) {
+              <span class="dashboard-metric-hint"
+                >{{ metric.note | transloco }}
+                @if (metric.noteValue) {
+                  : {{ metric.noteValue }}
+                }
+              </span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    <section class="hr-timesheet-section">
+      <h3>{{ 'Days' | transloco }}</h3>
+      <mns-global-table [config]="dayTable" [rows]="days()" [loading]="sheet.isLoading()" />
+    </section>
+
+    @if (unassigned().length) {
+      <section class="hr-timesheet-section">
+        <h3>{{ 'Punches not assigned to a day' | transloco }}</h3>
+        <p class="hr-timesheet-message">
+          {{
+            'Punches still being computed or outside any expected shift; recalculate the month if they persist.'
+              | transloco
+          }}
+        </p>
+        <mns-global-table [config]="unassignedTable" [rows]="unassigned()" />
+      </section>
+    }
+  }
+</mns-detail-page>

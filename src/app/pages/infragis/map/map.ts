@@ -28,7 +28,6 @@ import {
   Map as MapLibreMap,
   NavigationControl,
   ScaleControl,
-  setWorkerUrl,
   type MapGeoJSONFeature,
 } from 'maplibre-gl';
 import {
@@ -44,7 +43,7 @@ import { ApiService } from '../../../services/api.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DetailPageComponent } from '../../../shared/pages/detail-page';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
-import { infraGisMapBase, type InfraGisMapConfig } from './map-base';
+import { ensureMapLibreAssets, infraGisMapBase, type InfraGisMapConfig } from './map-base';
 
 type Option = { value: string; label: string };
 type Geometry = GeoJSONStoreFeatures['geometry'];
@@ -72,21 +71,6 @@ export function radiusPolygon(lng: number, lat: number, radiusM: number) {
     ring.push([lng + dLng * Math.cos(angle), lat + dLat * Math.sin(angle)]);
   }
   return { type: 'Polygon', coordinates: [ring] };
-}
-const MAPLIBRE_STYLES_ID = 'mns-maplibre-styles';
-
-/**
- * MapLibre CSS ships as the lazy `maplibre.css` bundle (angular.json, inject: false) and its module
- * worker as same-origin assets under `maplibre/`, as the edge CSP allows no `blob:` workers.
- */
-function ensureMapLibreAssets() {
-  setWorkerUrl(new URL('maplibre/maplibre-gl-worker.mjs', document.baseURI).href);
-  if (document.getElementById(MAPLIBRE_STYLES_ID)) return;
-  const link = document.createElement('link');
-  link.id = MAPLIBRE_STYLES_ID;
-  link.rel = 'stylesheet';
-  link.href = 'maplibre.css';
-  document.head.appendChild(link);
 }
 const OVERLAY_LAYERS = ['infragis-fill', 'infragis-outline', 'infragis-line', 'infragis-point'];
 const EMPTY: FeatureCollection = {
