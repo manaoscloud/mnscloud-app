@@ -323,9 +323,22 @@ export const NAV_ITEMS: NavItem[] = [
     id: 'hr',
     label: 'nav.hr',
     icon: 'groups',
-    route: '/hr/time-clock-accounts',
     entitlementCode: 'module.hr.*',
     requiresEnvironment: true,
+    children: [
+      {
+        id: 'hr/time-clock-accounts',
+        label: 'nav.hr.time-clock-accounts',
+        icon: 'badge',
+        route: '/hr/time-clock-accounts',
+      },
+      {
+        id: 'hr/time-punches',
+        label: 'nav.hr.time-punches',
+        icon: 'schedule',
+        route: '/hr/time-punches',
+      },
+    ],
   },
 
   // CRM is an independent tenant module, immediately after human resources.
