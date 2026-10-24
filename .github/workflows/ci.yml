@@ -28,7 +28,7 @@ jobs:
       MNSCLOUD_API_BASE_URL: ${{ github.event.inputs.api_base_url || vars.MNSCLOUD_API_BASE_URL || '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Setup Node.js
