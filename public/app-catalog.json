@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a19e233287ee",
+  "version": "e609daa32850",
   "language": "pt-BR",
   "entries": [
     {
@@ -2888,7 +2888,7 @@
       "menuPath": "InfraGIS › Tipos de ativo",
       "scope": "tenant",
       "title": "Tipos de ativo",
-      "description": "Tipos de ativo com categoria, cor e ícone.",
+      "description": "Tipos de ativo com categoria, cor, ícone e esquema de propriedades.",
       "fields": [
         {
           "label": "Código do tipo de ativo",
@@ -2905,6 +2905,14 @@
         {
           "label": "Ícone",
           "help": ""
+        },
+        {
+          "label": "Código da camada sugerida",
+          "help": "Código da camada do projeto onde as importações colocam os ativos deste tipo."
+        },
+        {
+          "label": "Esquema de propriedades",
+          "help": "JSON Schema das propriedades do ativo: um objeto com properties (cada uma com type string, number ou boolean e, opcionalmente, title, enum, minimum, maximum, maxLength e x-unit) e required (lista de chaves)."
         }
       ]
     },
@@ -2921,6 +2929,10 @@
         },
         {
           "label": "ID externo",
+          "help": ""
+        },
+        {
+          "label": "Esquema de propriedades",
           "help": ""
         },
         {
@@ -3011,6 +3023,10 @@
           "help": ""
         },
         {
+          "label": "Pacote setorial",
+          "help": "Ao escolher um pacote, as camadas dele são copiadas para o projeto, junto com as categorias, os tipos de ativo e as situações que o tenant ainda não tem. As cópias podem ser editadas livremente."
+        },
+        {
           "label": "Descrição",
           "help": ""
         }
@@ -3034,6 +3050,35 @@
         {
           "label": "Cor",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/infragis/transfer",
+      "menuPath": "InfraGIS › Importação/exportação",
+      "scope": "tenant",
+      "title": "Importação/exportação",
+      "description": "Importe ativos de GeoJSON, KML/KMZ, CSV ou Shapefile e exporte nos mesmos formatos.",
+      "fields": [
+        {
+          "label": "Escolher arquivo",
+          "help": "GeoJSON (.geojson/.json), KML, KMZ (Google Earth e exportações do OZmap e do GeoGrid), CSV com colunas de latitude/longitude, WKT ou GeoJSON (.csv/.txt) ou um Shapefile compactado (.zip com .shp, .dbf e .prj; reprojetado para WGS 84)."
+        },
+        {
+          "label": "Projeto",
+          "help": "Projeto que recebe os ativos."
+        },
+        {
+          "label": "Camada padrão",
+          "help": "Usada quando a linha não tem código de camada e o tipo de ativo não sugere uma camada do projeto."
+        },
+        {
+          "label": "Modo",
+          "help": "Atualizar pelo ID externo: o ativo do projeto com o mesmo ID externo é atualizado (propriedades mescladas, geometria substituída). Sempre criar: cada linha vira um ativo novo."
+        },
+        {
+          "label": "Sistema de origem",
+          "help": "Rótulo opcional guardado no histórico de importações (OZmap, GeoGrid, IXC...)."
         }
       ]
     },
@@ -7443,6 +7488,35 @@
         {
           "label": "Zoom",
           "help": "Zoom inicial, entre 0 (mundo) e 22."
+        }
+      ]
+    },
+    {
+      "route": "/system/infragis/verticals",
+      "menuPath": "InfraGIS › Pacotes setoriais",
+      "scope": "platform",
+      "title": "Pacotes setoriais",
+      "description": "Pacotes de camadas, categorias, tipos de ativo e situações que os tenants aplicam aos projetos do InfraGIS.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Ordem de classificação",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
         }
       ]
     },

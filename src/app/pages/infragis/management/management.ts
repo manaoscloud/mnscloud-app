@@ -12,6 +12,7 @@ import {
   QuickCreateRegistryKey,
   quickCreateFor,
 } from '../../../shared/crud/configurable-crud/quick-create';
+import { emptyToNull, propertiesTemplate, schemaSummary } from '../infragis-properties';
 
 export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
@@ -121,10 +122,41 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
       { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
       { id: 'status', label: 'Status', field: 'IprStatus', kind: 'status' },
     ],
+    rowActions: [
+      {
+        key: 'apply-vertical',
+        label: 'Apply package again',
+        icon: 'library_add',
+        visible: (row) => !!row['InfraGisVerticalProfileIgvUUID'],
+        request: {
+          method: 'post',
+          endpoint: (row) => `infragis/projects/${row['IprUUID']}/apply-vertical`,
+          body: (row) => ({ verticalProfileUUID: row['InfraGisVerticalProfileIgvUUID'] }),
+          successMessage: 'Package applied: only the missing layers and catalog codes were added.',
+        },
+      },
+    ],
     fields: [
       statusField('IprStatus'),
       { key: 'name', source: 'IprName', label: 'Name', required: true, span: 2 },
       sortOrderField('IprSortOrder'),
+      {
+        key: 'verticalProfileUUID',
+        source: 'InfraGisVerticalProfileIgvUUID',
+        label: 'Vertical package',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'infragis/verticals',
+          uuidField: 'IgvUUID',
+          labelField: 'IgvName',
+          descriptionField: 'IgvDescription',
+          selectedLabelField: 'VerticalProfileName',
+        },
+        quickCreate: false,
+        quickCreateExemptReason: 'Vertical packages are platform resources (System › InfraGIS).',
+        help: 'Choosing a package copies its layers into the project and the categories, asset types and statuses the tenant does not have yet. Your copies can be edited freely.',
+        span: 4,
+      },
       {
         key: 'description',
         source: 'IprDescription',
@@ -212,8 +244,8 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     endpoint: 'infragis/asset-types',
     uuidField: 'IgtUUID',
     pageTitle: 'Asset Types',
-    pageDescription: 'Asset types with their category, color and icon.',
-    tabLabels: { match: 'Classification' },
+    pageDescription: 'Asset types with their category, color, icon and properties schema.',
+    tabLabels: { match: 'Classification', transform: 'Properties' },
     columns: [
       nameColumn('Igt'),
       codeColumn('Igt'),
@@ -235,6 +267,25 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
       ),
       { key: 'color', source: 'IgtDefaultColor', label: 'Color', tab: 'match', span: 1 },
       { key: 'icon', source: 'IgtDefaultIcon', label: 'Icon', tab: 'match', span: 1 },
+      {
+        key: 'layerCode',
+        source: 'IgtLayerCode',
+        label: 'Suggested layer code',
+        help: 'Code of the project layer where imports place assets of this type.',
+        tab: 'match',
+        span: 2,
+      },
+      {
+        key: 'propertiesSchemaJson',
+        source: 'IgtPropertiesSchemaJson',
+        label: 'Properties schema',
+        type: 'textarea',
+        format: 'json',
+        rows: 8,
+        help: 'JSON Schema of the asset properties: an object with properties (each with type string, number or boolean and optional title, enum, minimum, maximum, maxLength and x-unit) and required (list of keys).',
+        tab: 'transform',
+        span: 4,
+      },
     ],
   }),
   statuses: defineCrud({
@@ -294,16 +345,32 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         true,
         { projectUUID: 'projectUUID' },
       ),
-      lookup(
-        'assetTypeUUID',
-        'InfraGisAssetTypeIgtUUID',
-        'Asset Type',
-        'infragis/asset-types',
-        'IgtUUID',
-        'IgtName',
-        'AssetTypeName',
-        'match',
-      ),
+      {
+        ...lookup(
+          'assetTypeUUID',
+          'InfraGisAssetTypeIgtUUID',
+          'Asset Type',
+          'infragis/asset-types',
+          'IgtUUID',
+          'IgtName',
+          'AssetTypeName',
+          'match',
+        ),
+        remoteLookup: {
+          endpoint: 'infragis/asset-types',
+          uuidField: 'IgtUUID',
+          labelField: 'IgtName',
+          selectedLabelField: 'AssetTypeName',
+          fill: { typeSchema: 'IgtPropertiesSchemaJson' },
+        },
+      },
+      {
+        key: 'typeSchema',
+        source: 'AssetTypePropertiesSchemaJson',
+        label: 'Properties schema',
+        hidden: true,
+        span: 4,
+      },
       lookup(
         'assetStatusUUID',
         'InfraGisAssetStatusIgsUUID',
@@ -349,6 +416,23 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         rows: 6,
         tab: 'transform',
         span: 4,
+        helpWhen: ({ values }) =>
+          values['typeSchema']
+            ? 'Fields of the asset type: {{ fields }}. Required fields must be filled.'
+            : 'Free attributes of the asset as a JSON object.',
+        helpParams: ({ values }) => ({ fields: schemaSummary(values['typeSchema']) }),
+        suffixButtons: [
+          {
+            icon: 'data_object',
+            tooltip: 'Fill with the fields of the asset type',
+            visibleWhen: ({ values }) => !!values['typeSchema'],
+            onClick: ({ values }, host) =>
+              host.setFieldValue(
+                'propertiesJson',
+                propertiesTemplate(values['typeSchema'], values['propertiesJson']),
+              ),
+          },
+        ],
       },
     ],
   }),
@@ -368,8 +452,7 @@ export class InfraGisManagementPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const next: ConfigurableCrudRecord = { ...payload, status: Number(payload['status'] ?? 1) };
-    for (const [key, value] of Object.entries(next)) if (value === '') next[key] = null;
-    return next;
+    const { typeSchema: _schema, ...values } = payload;
+    return emptyToNull(values);
   }
 }
