@@ -7,6 +7,10 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { logSelectFilter, READ_ONLY_LOG_CRUD } from '../platform-provider-crud';
 import { LOOKUP_TYPE_OPTIONS, lookupTypeLabel } from '../lookup-providers/lookup-providers';
+import {
+  PERSON_LOOKUP_LEGAL_BASES,
+  PERSON_LOOKUP_PURPOSES,
+} from '../../../shared/data-lookup/person-lookup-options';
 
 const OUTCOME_OPTIONS = [
   { value: 'success', label: 'Found' },
@@ -30,25 +34,6 @@ const BILLING_OPTIONS = [
   { value: 'included', label: 'Monthly allowance' },
   { value: 'charged', label: 'Charged' },
   { value: 'failed', label: 'Not paid' },
-];
-
-/** Declared by every CPF lookup (LGPD). */
-const PURPOSE_OPTIONS = [
-  { value: 'registration', label: 'Customer or supplier registration' },
-  { value: 'credit_analysis', label: 'Credit analysis' },
-  { value: 'fraud_prevention', label: 'Fraud prevention' },
-  { value: 'contract', label: 'Contract signing or execution' },
-  { value: 'collection', label: 'Debt collection' },
-  { value: 'legal_obligation', label: 'Legal or regulatory obligation' },
-];
-
-const LEGAL_BASIS_OPTIONS = [
-  { value: 'consent', label: 'Consent of the data subject' },
-  { value: 'legal_obligation', label: 'Legal or regulatory obligation' },
-  { value: 'contract', label: 'Contract with the data subject' },
-  { value: 'legal_claims', label: 'Exercise of rights in legal proceedings' },
-  { value: 'legitimate_interest', label: 'Legitimate interest' },
-  { value: 'credit_protection', label: 'Credit protection' },
 ];
 
 const optionLabel = (options: { value: string; label: string }[], value: unknown) =>
@@ -109,11 +94,11 @@ const config = defineCrud({
       label: 'Purpose',
       optional: true,
       value: (row, translate) => {
-        const label = optionLabel(PURPOSE_OPTIONS, row['Purpose']);
+        const label = optionLabel(PERSON_LOOKUP_PURPOSES, row['Purpose']);
         return label ? translate(label) : '-';
       },
       detail: (row, translate) => {
-        const label = optionLabel(LEGAL_BASIS_OPTIONS, row['LegalBasis']);
+        const label = optionLabel(PERSON_LOOKUP_LEGAL_BASES, row['LegalBasis']);
         return label ? translate(label) : '';
       },
     },
