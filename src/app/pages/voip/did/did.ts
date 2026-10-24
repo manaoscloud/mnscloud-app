@@ -4,6 +4,7 @@ import { ApiService } from '../../../services/api.service';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudColumn,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -11,6 +12,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { FieldError, fieldError } from '../../../shared/forms/field-validation';
+import { DID_NUMBER_INPUT_ERRORS, parseDidNumberInput } from './did-number-input';
 import { VoipDidItem, VoipDidService } from './did.service';
 
 function isSystemScope() {
@@ -18,9 +20,6 @@ function isSystemScope() {
 }
 
 function didConfig(system: boolean): ConfigurableCrudConfig {
-  const isRangeCreate = (values: ConfigurableCrudRecord) => values['createMode'] === 'range';
-  const isSingleCreate = (values: ConfigurableCrudRecord) => values['createMode'] !== 'range';
-
   return {
     endpoint: system ? 'system/voip/did/numbers' : 'voip/did/numbers',
     uuidField: 'VddUUID',
@@ -70,9 +69,7 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         ],
     initialValues: {
       status: 1,
-      createMode: 'single',
       number: '',
-      didRange: '',
       operatorUUID: '',
     },
     columns: [
@@ -108,19 +105,6 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'createMode',
-        payloadKey: 'createMode',
-        label: 'Create mode',
-        type: 'select',
-        options: [
-          { value: 'single', label: 'Unit' },
-          { value: 'range', label: 'Range' },
-        ],
-        hiddenWhen: ({ editing }) => editing || !system,
-        requiredWhen: ({ editing }) => !editing && system,
-        span: 1,
-      },
-      {
         key: 'operatorUUID',
         source: 'VoipDidOperatorVdoUUID',
         payloadKey: 'operatorUUID',
@@ -134,19 +118,13 @@ function didConfig(system: boolean): ConfigurableCrudConfig {
         source: 'VddNumber',
         payloadKey: 'number',
         label: 'Number',
-        hiddenWhen: ({ editing, values }) => !editing && system && isRangeCreate(values),
-        requiredWhen: ({ editing, values }) => editing || !system || isSingleCreate(values),
+        labelWhen: ({ editing }) => (editing || !system ? 'Number' : 'Number or range'),
+        help: system
+          ? 'One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.'
+          : undefined,
+        required: true,
         placeholder: '5511999999999',
         span: 1,
-      },
-      {
-        key: 'didRange',
-        payloadKey: 'didRange',
-        label: 'Number range',
-        hiddenWhen: ({ editing, values }) => editing || !system || isSingleCreate(values),
-        requiredWhen: ({ editing, values }) => !editing && system && isRangeCreate(values),
-        placeholder: '551140000000-551140000099',
-        span: 2,
       },
     ],
   };
@@ -260,8 +238,30 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     }
   }
 
+  /** While creating global stock, the label shows the size of a detected range. */
+  override translatedFieldLabel(field: ConfigurableCrudField): string {
+    if (field.key === 'number' && this.system && !this.editingRecord()) {
+      const input = parseDidNumberInput(this.formValues()['number']);
+      if (input.kind === 'range')
+        return this.t('Number range ({total} DIDs)', { total: input.total });
+    }
+    return super.translatedFieldLabel(field);
+  }
+
   override async saveItem(saveAndNew = false): Promise<void> {
-    if (!this.system || this.editingRecord() || this.formValues()['createMode'] !== 'range') {
+    if (this.saving()) return;
+    const input = parseDidNumberInput(this.formValues()['number']);
+    if (input.kind === 'invalid') {
+      this.clearFieldErrors(null);
+      this.rejectField('number', DID_NUMBER_INPUT_ERRORS[input.reason]);
+      return;
+    }
+    if (input.kind === 'range' && (this.editingRecord() || !this.system)) {
+      this.clearFieldErrors(null);
+      this.rejectField('number', 'A DID range can only be used when creating DIDs.');
+      return;
+    }
+    if (input.kind !== 'range') {
       await super.saveItem(saveAndNew);
       return;
     }
@@ -269,19 +269,11 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     const values = this.formValues();
     const operatorUUID = String(values['operatorUUID'] ?? '').trim();
     const status = Number(values['status'] ?? 1);
-    const parsedRange = this.parseRange(String(values['didRange'] ?? ''));
-
     this.clearFieldErrors(null);
-    if (!operatorUUID || !parsedRange) {
+    if (!operatorUUID) {
       const missing = new Map<string, FieldError>();
-      if (!operatorUUID) missing.set('operatorUUID', fieldError('required'));
-      if (!parsedRange) missing.set('didRange', fieldError('required'));
+      missing.set('operatorUUID', fieldError('required'));
       this.reportFieldErrors(missing);
-      return;
-    }
-
-    if (parsedRange.total > 100) {
-      this.rejectField('didRange', 'Number range exceeds max size of 100 DIDs per operation.');
       return;
     }
 
@@ -289,8 +281,8 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     try {
       const response = await this.didApi.bulkCreate(
         {
-          rangeStart: parsedRange.start,
-          rangeEnd: parsedRange.end,
+          rangeStart: input.start,
+          rangeEnd: input.end,
           operatorUUID,
           status,
         },
@@ -310,12 +302,7 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
 
       this.snack.success('DID number range created successfully.');
       if (saveAndNew) {
-        this.formValues.set({
-          ...this.config.initialValues,
-          createMode: 'range',
-          operatorUUID,
-          status,
-        });
+        this.formValues.set({ ...this.config.initialValues, operatorUUID, status });
       } else {
         this.closeDialog();
       }
@@ -332,15 +319,6 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
       status: Number(payload['status']),
       number: String(payload['number'] ?? '').replace(/\D+/g, ''),
     };
-  }
-
-  protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'createMode' || this.editingRecord()) return;
-    if (value === 'range') {
-      this.patchFormValues({ number: '' });
-    } else {
-      this.patchFormValues({ didRange: '' });
-    }
   }
 
   override columnText(row: VoipDidItem, column: ConfigurableCrudColumn): string {
@@ -361,23 +339,6 @@ export class VoipDidPage extends ConfigurableCrudPageBase<VoipDidItem> {
     } finally {
       this.lookupLoading.set(false);
     }
-  }
-
-  private parseRange(value: string): { start: string; end: string; total: number } | null {
-    const match = value.match(/^\s*(\d{8,15})\s*-\s*(\d{8,15})\s*$/);
-    if (!match) return null;
-
-    const start = match[1];
-    const end = match[2];
-    if (start.length !== end.length) return null;
-
-    const startNumber = BigInt(start);
-    const endNumber = BigInt(end);
-    if (endNumber < startNumber) return null;
-
-    const total = Number(endNumber - startNumber + 1n);
-    if (!Number.isSafeInteger(total)) return null;
-    return { start, end, total };
   }
 
   private didErrorMessage(error: unknown): string {

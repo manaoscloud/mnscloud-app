@@ -9993,5 +9993,21 @@
   "releaseNotes.actionPt": "Acción necesaria (portugués)",
   "releaseNotes.actionEn": "Acción necesaria (inglés)",
   "releaseNotes.actionEs": "Acción necesaria (español)",
-  "Release notes": "Novedades"
+  "Release notes": "Novedades",
+  "Number or range": "Número o rango",
+  "Number range ({total} DIDs)": "Rango de números ({total} DIDs)",
+  "One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.": "Un número DID o un rango de hasta 100 números como inicio-fin (misma cantidad de dígitos). Ejemplo: 559230423000-559230423049.",
+  "Enter a DID number in E.164 format or a range start-end.": "Ingrese un número DID en formato E.164 o un rango inicio-fin.",
+  "DID range start and end must have the same number of digits.": "El inicio y el fin del rango de DIDs deben tener la misma cantidad de dígitos.",
+  "DID range start must not be greater than its end.": "El inicio del rango de DIDs no puede ser mayor que el fin.",
+  "DID range exceeds the maximum of 100 numbers.": "El rango de DIDs supera el máximo de 100 números.",
+  "Enter the DID range as two full numbers separated by a hyphen.": "Ingrese el rango de DIDs como dos números completos separados por un guion.",
+  "A DID range can only be used when creating DIDs.": "Un rango de DIDs solo se puede usar al crear DIDs.",
+  "Provider is required.": "El proveedor es obligatorio.",
+  "These DID numbers already exist: {numbers}": "Estos números DID ya existen: {numbers}",
+  "Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.": "Crédito prepago insuficiente para {total} DIDs: se necesitan {required}, disponible {available}.",
+  "Create DID range": "Crear rango de DIDs",
+  "Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).": "¿Crear {total} DIDs de {start} a {end} con el proveedor {provider}? Cargo prepago ahora: {required} ({unit} por DID).",
+  "{total} external DIDs created successfully.": "{total} DIDs externos creados correctamente.",
+  "Create": "Crear"
 }

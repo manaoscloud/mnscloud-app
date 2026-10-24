@@ -9993,5 +9993,21 @@
   "releaseNotes.actionPt": "Action required (Portuguese)",
   "releaseNotes.actionEn": "Action required (English)",
   "releaseNotes.actionEs": "Action required (Spanish)",
-  "Release notes": "Release notes"
+  "Release notes": "Release notes",
+  "Number or range": "Number or range",
+  "Number range ({total} DIDs)": "Number range ({total} DIDs)",
+  "One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.": "One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.",
+  "Enter a DID number in E.164 format or a range start-end.": "Enter a DID number in E.164 format or a range start-end.",
+  "DID range start and end must have the same number of digits.": "DID range start and end must have the same number of digits.",
+  "DID range start must not be greater than its end.": "DID range start must not be greater than its end.",
+  "DID range exceeds the maximum of 100 numbers.": "DID range exceeds the maximum of 100 numbers.",
+  "Enter the DID range as two full numbers separated by a hyphen.": "Enter the DID range as two full numbers separated by a hyphen.",
+  "A DID range can only be used when creating DIDs.": "A DID range can only be used when creating DIDs.",
+  "Provider is required.": "Provider is required.",
+  "These DID numbers already exist: {numbers}": "These DID numbers already exist: {numbers}",
+  "Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.": "Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.",
+  "Create DID range": "Create DID range",
+  "Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).": "Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).",
+  "{total} external DIDs created successfully.": "{total} external DIDs created successfully.",
+  "Create": "Create"
 }

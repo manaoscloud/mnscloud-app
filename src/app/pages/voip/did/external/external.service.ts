@@ -27,6 +27,31 @@ export type VoipDidExternalPayload = {
   notes?: string | null;
 };
 
+export type VoipDidExternalRangePayload = {
+  rangeStart: string;
+  rangeEnd: string;
+  operatorUUID: string;
+  status?: number | null;
+  notes?: string | null;
+  dryRun?: boolean;
+};
+
+export type VoipDidExternalRangePreview = {
+  rangeStart: string;
+  rangeEnd: string;
+  total: number;
+  conflicts: string[];
+  currency: string;
+  unitAmount: number;
+  requiredAmount: number;
+  availableBalance: number;
+  creditSufficient: boolean;
+};
+
+export type VoipDidExternalRangeResponse = {
+  data?: { preview: VoipDidExternalRangePreview | null; items: VoipDidExternalItem[] };
+};
+
 @Injectable({ providedIn: 'root' })
 export class VoipDidExternalService {
   private readonly api = inject(ApiService);
@@ -61,6 +86,11 @@ export class VoipDidExternalService {
 
   create(payload: VoipDidExternalPayload) {
     return this.api.post<any>(this.basePath(false), payload);
+  }
+
+  /** Range create (all or nothing); `dryRun` only previews conflicts and the prepaid cost. */
+  createRange(payload: VoipDidExternalRangePayload) {
+    return this.api.post<VoipDidExternalRangeResponse>(`${this.basePath(false)}/bulk`, payload);
   }
 
   update(uuid: string, payload: VoipDidExternalPayload) {
