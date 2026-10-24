@@ -9996,7 +9996,7 @@
   "releaseNotes.actionEs": "Ação necessária (espanhol)",
   "Release notes": "Novidades",
   "Number or range": "Número ou faixa",
-  "Number range ({total} DIDs)": "Faixa de números ({total} DIDs)",
+  "Number range ({{total}} DIDs)": "Faixa de números ({{total}} DIDs)",
   "One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.": "Um número DID ou uma faixa de até 100 números no formato início-fim (mesma quantidade de dígitos). Exemplo: 559230423000-559230423049.",
   "Enter a DID number in E.164 format or a range start-end.": "Informe um número DID no formato E.164 ou uma faixa início-fim.",
   "DID range start and end must have the same number of digits.": "O início e o fim da faixa de DIDs devem ter a mesma quantidade de dígitos.",
@@ -10005,10 +10005,10 @@
   "Enter the DID range as two full numbers separated by a hyphen.": "Informe a faixa de DIDs como dois números completos separados por hífen.",
   "A DID range can only be used when creating DIDs.": "Uma faixa de DIDs só pode ser usada ao cadastrar DIDs.",
   "Provider is required.": "O provedor é obrigatório.",
-  "These DID numbers already exist: {numbers}": "Estes números DID já existem: {numbers}",
-  "Insufficient prepaid credit for {total} DIDs: {required} needed, {available} available.": "Crédito pré-pago insuficiente para {total} DIDs: necessário {required}, disponível {available}.",
+  "These DID numbers already exist: {{numbers}}": "Estes números DID já existem: {{numbers}}",
+  "Insufficient prepaid credit for {{total}} DIDs: {{required}} needed, {{available}} available.": "Crédito pré-pago insuficiente para {{total}} DIDs: necessário {{required}}, disponível {{available}}.",
   "Create DID range": "Cadastrar faixa de DIDs",
-  "Create {total} DIDs from {start} to {end} with provider {provider}? Prepaid charge now: {required} ({unit} per DID).": "Cadastrar {total} DIDs de {start} a {end} com o provedor {provider}? Cobrança pré-paga agora: {required} ({unit} por DID).",
-  "{total} external DIDs created successfully.": "{total} DIDs externos cadastrados com sucesso.",
+  "Create {{total}} DIDs from {{start}} to {{end}} with provider {{provider}}? Prepaid charge now: {{required}} ({{unit}} per DID).": "Cadastrar {{total}} DIDs de {{start}} a {{end}} com o provedor {{provider}}? Cobrança pré-paga agora: {{required}} ({{unit}} por DID).",
+  "{{total}} external DIDs created successfully.": "{{total}} DIDs externos cadastrados com sucesso.",
   "Create": "Cadastrar"
 }
