@@ -1,0 +1,52 @@
+// HR › Timesheet: selection toolbar and section headings. Page shell, KPI tiles, tables and
+// messages come from the shared detail page, dashboard and global table styles.
+.hr-timesheet-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hr-timesheet-month {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.hr-timesheet-heading {
+  margin: 0 0 0.75rem;
+
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-color-on-surface-variant);
+  }
+}
+
+.hr-timesheet-section {
+  margin-top: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.hr-timesheet-message {
+  margin: 0 0 0.5rem;
+  color: var(--mat-sys-color-on-surface-variant);
+}
+
+@media (max-width: 900px) {
+  .hr-timesheet-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hr-timesheet-recalculate {
+    justify-self: end;
+  }
+}

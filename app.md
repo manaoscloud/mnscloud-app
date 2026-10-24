@@ -1730,6 +1730,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   form through `openQuickCreate` with the drawn geometry; never a page-local create dialog.
 - The App host nginx (`scripts/install-nginx-runtime.sh`) serves `.mjs` as `application/javascript`: the
   MapLibre module worker is refused under `nosniff` when served as `application/octet-stream`.
+- Other modules that show points on a map reuse the same boundary (`infraGisMapBase` +
+  `ensureMapLibreAssets` from `map-base.ts`), never a new map library or tile provider. HR ›
+  Punches (`pages/hr/time-punches/punch-map-dialog.ts`) reads `infragis/map/config` silently and
+  draws the punch locations over a plain background when the user cannot read it; it shows only
+  rows the list already returned.
 - A CRUD list opened with `?search=<text>` starts already searched (links from maps and other pages).
 - InfraGIS › Import/export (`src/app/pages/infragis/transfer`) reads files in the browser
   (`import-parsers.ts`: GeoJSON, KML and KMZ through `@tmcw/togeojson` + `fflate` (KML parsed by

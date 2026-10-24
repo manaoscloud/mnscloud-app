@@ -325,7 +325,8 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
-  // Human resources: time clock accounts of the employees kept in Registry.
+  // Human resources: the Pulse time clock (timesheets, schedules, holidays, policies, accounts)
+  // of the employees kept in Registry.
   {
     id: 'hr',
     label: 'nav.hr',
@@ -334,16 +335,58 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
-        id: 'hr/time-clock-accounts',
-        label: 'nav.hr.time-clock-accounts',
-        icon: 'badge',
-        route: '/hr/time-clock-accounts',
+        id: 'hr/dashboard',
+        label: 'nav.hr.dashboard',
+        icon: 'dashboard',
+        route: '/hr/dashboard',
       },
       {
         id: 'hr/time-punches',
         label: 'nav.hr.time-punches',
         icon: 'schedule',
         route: '/hr/time-punches',
+      },
+      {
+        id: 'hr/timesheets',
+        label: 'nav.hr.timesheets',
+        icon: 'event_note',
+        route: '/hr/timesheets',
+      },
+      {
+        id: 'hr/time-issues',
+        label: 'nav.hr.time-issues',
+        icon: 'report',
+        route: '/hr/time-issues',
+      },
+      {
+        id: 'hr/work-schedules',
+        label: 'nav.hr.work-schedules',
+        icon: 'calendar_view_week',
+        route: '/hr/work-schedules',
+      },
+      {
+        id: 'hr/work-schedule-assignments',
+        label: 'nav.hr.work-schedule-assignments',
+        icon: 'assignment_ind',
+        route: '/hr/work-schedule-assignments',
+      },
+      {
+        id: 'hr/holidays',
+        label: 'nav.hr.holidays',
+        icon: 'celebration',
+        route: '/hr/holidays',
+      },
+      {
+        id: 'hr/time-policies',
+        label: 'nav.hr.time-policies',
+        icon: 'rule',
+        route: '/hr/time-policies',
+      },
+      {
+        id: 'hr/time-clock-accounts',
+        label: 'nav.hr.time-clock-accounts',
+        icon: 'badge',
+        route: '/hr/time-clock-accounts',
       },
     ],
   },

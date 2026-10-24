@@ -1,0 +1,83 @@
+<mns-dashboard-page
+  title="Time clock dashboard"
+  description="Who is working now, lateness, absences, open issues and the overtime of the month, computed from the Pulse punches, work schedules and time policies."
+  [loading]="dashboard.isLoading()"
+  [error]="dashboard.error()"
+  [hasData]="dashboard.hasData()"
+  (refresh)="dashboard.reload()"
+>
+  @if (empty()) {
+    <div class="empty-state dashboard-onboarding">
+      <mat-icon aria-hidden="true">rocket_launch</mat-icon>
+      <p>
+        {{
+          'Create the work schedules and assign one to each employee to start computing the timesheet.'
+            | transloco
+        }}
+      </p>
+      <a routerLink="/hr/work-schedules">{{ 'Create work schedule' | transloco }}</a>
+      <a routerLink="/hr/work-schedule-assignments">{{ 'Assign schedules' | transloco }}</a>
+    </div>
+  } @else {
+    <div class="dashboard-grid">
+      @for (metric of metrics(); track metric.label) {
+        <article class="dashboard-metric" [class]="metric.state">
+          <div>
+            <span class="dashboard-metric-label">{{ metric.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ metric.value }}</strong>
+            <span class="dashboard-metric-hint">{{ metric.note | transloco }}</span>
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="dashboard-sections">
+      <section class="dashboard-panel">
+        <div class="panel-header">
+          <h2>{{ 'Needs attention' | transloco }}</h2>
+          <p>
+            {{ 'Recent days with issues; open the timesheet to check the punches.' | transloco }}
+          </p>
+        </div>
+        <div class="alert-list" aria-live="polite">
+          @for (item of attention(); track item.key) {
+            <a
+              class="dashboard-alert dashboard-alert-link"
+              [class.alert-error]="item.severe"
+              [class.alert-warning]="!item.severe"
+              routerLink="/hr/timesheets"
+              [queryParams]="item.query"
+            >
+              <mat-icon aria-hidden="true">{{ item.severe ? 'error' : 'warning' }}</mat-icon>
+              <span class="dashboard-alert-text">
+                <strong>{{ item.name }}</strong>
+                <small>{{ item.date }} · {{ item.flags }}</small>
+              </span>
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </a>
+          } @empty {
+            <p class="empty-state compact">
+              <mat-icon aria-hidden="true">check_circle</mat-icon>
+              {{ 'No issues to check.' | transloco }}
+            </p>
+          }
+        </div>
+      </section>
+
+      <mns-dashboard-record-list
+        title="Working now"
+        [items]="working()"
+        emptyLabel="Nobody is working at this moment."
+      />
+    </div>
+
+    <section class="dashboard-panel">
+      <div class="panel-header">
+        <h2>{{ 'Issues by type' | transloco }}</h2>
+        <p>{{ 'Days with each issue in the last 30 days.' | transloco }}</p>
+        <a routerLink="/hr/time-issues">{{ 'Open issues' | transloco }}</a>
+      </div>
+      <mns-global-table [config]="issueTable" [rows]="issueRows()" />
+    </section>
+  }
+</mns-dashboard-page>
