@@ -48,6 +48,7 @@ type PabxParameterForm = {
   cdrRetentionDays: number | null;
   recordingRetentionDays: number | null;
   orphanRetentionDays: number | null;
+  extensionOfflineAlertMinutes: number | null;
 };
 
 type PabxParameterInfo = {
@@ -61,6 +62,7 @@ type PabxParameterInfo = {
     mediaDeliveryMode: 'online' | 'offline';
     cdrRetentionDays: number;
     recordingRetentionDays: number;
+    extensionOfflineAlertMinutes: number;
     dnsMode: DnsMode;
     base: string | null;
     zoneName: string | null;
@@ -89,6 +91,7 @@ const TABS: Record<number, readonly FieldKey[]> = {
     'autoDomainUuidLength',
   ],
   3: ['cdrRetentionDays', 'recordingRetentionDays', 'orphanRetentionDays'],
+  4: ['extensionOfflineAlertMinutes'],
 };
 
 const EMPTY_FORM: PabxParameterForm = {
@@ -107,6 +110,7 @@ const EMPTY_FORM: PabxParameterForm = {
   cdrRetentionDays: null,
   recordingRetentionDays: null,
   orphanRetentionDays: null,
+  extensionOfflineAlertMinutes: null,
 };
 
 const EMPTY_INFO: PabxParameterInfo = {
@@ -120,6 +124,7 @@ const EMPTY_INFO: PabxParameterInfo = {
     mediaDeliveryMode: 'offline',
     cdrRetentionDays: 0,
     recordingRetentionDays: 0,
+    extensionOfflineAlertMinutes: 0,
     dnsMode: 'identity_only',
     base: DEFAULT_BASE,
     zoneName: null,
@@ -275,6 +280,8 @@ export class VoipPabxParametersPage {
     cdrRetentionDays: () => this.validDays(this.form().cdrRetentionDays, 36500),
     recordingRetentionDays: () => this.validDays(this.form().recordingRetentionDays, 36500),
     orphanRetentionDays: () => this.validDays(this.form().orphanRetentionDays, 3650),
+    extensionOfflineAlertMinutes: () =>
+      this.validDays(this.form().extensionOfflineAlertMinutes, 1440),
   });
 
   constructor() {
@@ -374,6 +381,7 @@ export class VoipPabxParametersPage {
         cdrRetentionDays: form.cdrRetentionDays,
         recordingRetentionDays: form.recordingRetentionDays,
         orphanRetentionDays: this.isMaster() ? form.orphanRetentionDays : null,
+        extensionOfflineAlertMinutes: form.extensionOfflineAlertMinutes,
       });
       this.apply(result?.data?.item ?? {});
       this.rules.reset();
@@ -418,6 +426,7 @@ export class VoipPabxParametersPage {
       cdrRetentionDays: days(item['cdrRetentionDays']),
       recordingRetentionDays: days(item['recordingRetentionDays']),
       orphanRetentionDays: this.isMaster() ? days(item['orphanRetentionDays']) : null,
+      extensionOfflineAlertMinutes: days(item['extensionOfflineAlertMinutes']),
     };
     this.form.set(form);
     this.baseline.set(JSON.stringify(form));
