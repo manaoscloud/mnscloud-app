@@ -385,6 +385,16 @@ server {
     try_files \$uri \$uri/ /index.html;
   }
 
+  # Module scripts (MapLibre worker) need a JavaScript MIME type: browsers refuse module
+  # workers served as application/octet-stream (the edge sends nosniff).
+  location ~* \\.mjs\$ {
+    types {}
+    default_type application/javascript;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files \$uri =404;
+  }
+
   location ~* \\.(?:css|js|mjs|ico|gif|jpe?g|png|svg|webp|woff2?)\$ {
     expires 1y;
     add_header Cache-Control "public, immutable";

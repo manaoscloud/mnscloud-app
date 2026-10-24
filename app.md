@@ -1703,6 +1703,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - Asset overlays are GeoJSON sources fed by the API per viewport; drawing and vertex editing use
   Terra Draw (`terra-draw` + `terra-draw-maplibre-gl-adapter`). New records open the canonical CRUD
   form through `openQuickCreate` with the drawn geometry; never a page-local create dialog.
+- The App host nginx (`scripts/install-nginx-runtime.sh`) serves `.mjs` as `application/javascript`: the
+  MapLibre module worker is refused under `nosniff` when served as `application/octet-stream`.
 - A CRUD list opened with `?search=<text>` starts already searched (links from maps and other pages).
 
 ## Auth/Guards
