@@ -2863,6 +2863,20 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'logs.servers' },
               },
               {
+                path: 'dns/clusters',
+                loadComponent: () =>
+                  import('./pages/dns/clusters/clusters').then((m) => m.DnsClusterPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.clusters' },
+              },
+              {
+                path: 'dns/servers',
+                loadComponent: () =>
+                  import('./pages/dns/servers/servers').then((m) => m.DnsServerPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.servers' },
+              },
+              {
                 path: 'hosting/webhost',
                 title: 'System Webhost | mnscloud',
                 data: { scope: 'master', context: 'system' },

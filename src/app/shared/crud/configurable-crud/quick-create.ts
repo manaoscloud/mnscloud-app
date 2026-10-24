@@ -67,6 +67,13 @@ export const QUICK_CREATE_REGISTRY = {
     permission: MASTER_PERMISSION,
     routeData: { scope: 'master' },
   },
+  DnsClusterDncUUID: {
+    label: 'dns.clusters',
+    loadComponent: () =>
+      import('../../../pages/dns/clusters/clusters').then((m) => m.DnsClusterPage),
+    permission: MASTER_PERMISSION,
+    routeData: { scope: 'master' },
+  },
   LogAccountLgaUUID: {
     label: 'logs.accounts',
     loadComponent: () =>
