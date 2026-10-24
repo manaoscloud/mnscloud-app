@@ -54,10 +54,13 @@
     "@angular/router": "^22.0.1",
     "@jsverse/transloco": "^8.4.0",
     "@protomaps/basemaps": "5.7.2",
+    "@tmcw/togeojson": "7.1.3",
+    "fflate": "0.8.3",
     "html2canvas-pro": "^2.5.0",
     "maplibre-gl": "6.13.0",
     "pmtiles": "4.5.0",
     "rxjs": "~7.8.0",
+    "shpjs": "6.2.0",
     "terra-draw": "1.36.0",
     "terra-draw-maplibre-gl-adapter": "1.5.0",
     "tslib": "^2.3.0"

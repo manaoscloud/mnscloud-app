@@ -1706,6 +1706,16 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - The App host nginx (`scripts/install-nginx-runtime.sh`) serves `.mjs` as `application/javascript`: the
   MapLibre module worker is refused under `nosniff` when served as `application/octet-stream`.
 - A CRUD list opened with `?search=<text>` starts already searched (links from maps and other pages).
+- InfraGIS › Import/export (`src/app/pages/infragis/transfer`) reads files in the browser
+  (`import-parsers.ts`: GeoJSON, KML and KMZ through `@tmcw/togeojson` + `fflate`, CSV with
+  latitude/longitude, WKT or GeoJSON columns, zipped Shapefile through `shpjs`, reprojected from the
+  `.prj`; geometries leave two-dimensional), maps the columns (name, external ID, layer/type/status
+  codes, the rest as properties coerced by the asset type schema) and sends batches of at most 500 rows
+  / ~3 MB to `infragis/imports/:uuid/rows`. Parsers are lazy imports, so the libraries load only on
+  that page. Exports download `infragis/export?format=…` (built by the API).
+- Asset types carry a properties schema (JSON Schema subset); the asset form shows its fields in the
+  Properties help and can fill the required ones (`src/app/pages/infragis/infragis-properties.ts`).
+  System › InfraGIS › Vertical packages edits the platform packages a project applies by copy.
 
 ## Auth/Guards
 

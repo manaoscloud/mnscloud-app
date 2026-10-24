@@ -1,0 +1,274 @@
+<mns-detail-page
+  title="Import and export"
+  description="Import assets from GeoJSON, KML/KMZ, CSV or Shapefile and export them in the same formats."
+  [loading]="loading()"
+  (refresh)="refresh()"
+>
+  @if (canImport()) {
+    <section class="dashboard-panel infragis-transfer-panel">
+      <div class="panel-header">
+        <div>
+          <h2>{{ 'Import assets' | transloco }}</h2>
+          <p>
+            {{
+              'The file is read in your browser; every row is validated like a single asset save and refused rows are listed with their reason.'
+                | transloco
+            }}
+          </p>
+        </div>
+      </div>
+
+      <input #importFile type="file" hidden [accept]="accept" (change)="chooseFile($event)" />
+      <div class="infragis-transfer-actions">
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="parsing() || running()"
+          (click)="importFile.click()"
+        >
+          <mat-icon>upload_file</mat-icon>{{ 'Choose file' | transloco }}
+        </button>
+        @if (fileName()) {
+          <span class="infragis-transfer-file">{{ fileName() }}</span>
+        }
+        <mns-field-help
+          [label]="'Choose file' | transloco"
+          [text]="
+            'GeoJSON (.geojson/.json), KML, KMZ (Google Earth, OZmap, GeoGrid exports), CSV with latitude/longitude, WKT or GeoJSON column (.csv/.txt) or a zipped Shapefile (.zip with .shp, .dbf and .prj; reprojected to WGS 84).'
+              | transloco
+          "
+        />
+      </div>
+
+      @if (parsing()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      @if (parseError(); as message) {
+        <p class="dashboard-message" role="alert">{{ message | transloco }}</p>
+      }
+
+      @if (parsed(); as file) {
+        <output class="infragis-transfer-summary">
+          {{ 'Features read' | transloco }}: <strong>{{ file.features.length | number }}</strong>
+          @for (item of summary(); track item.type) {
+            <span class="infragis-transfer-chip">{{ item.type }} · {{ item.count | number }}</span>
+          }
+        </output>
+        @for (warning of file.warnings; track warning) {
+          <p class="dashboard-message">{{ warning | transloco }}</p>
+        }
+
+        <form class="form-grid">
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="projectUUID"
+            data-quick-create-exempt="Import target; projects are created in InfraGIS › Projects."
+            [label]="'Project' | transloco"
+            [options]="projects()"
+            [value]="projectUUID()"
+            [invalid]="!projectUUID()"
+            [errorMessage]="'form.validation.required' | transloco"
+            [help]="'Project that receives the assets.' | transloco"
+            (valueChange)="setProject($event)"
+          />
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="layerUUID"
+            data-quick-create-exempt="Import target; layers are created in InfraGIS › Layers."
+            [label]="'Default layer' | transloco"
+            [options]="layers()"
+            [value]="layerUUID()"
+            [clearable]="true"
+            [disabled]="!projectUUID()"
+            [help]="
+              'Used when the row has no layer code and its asset type suggests no layer of the project.'
+                | transloco
+            "
+            (valueChange)="layerUUID.set($any($event) ?? '')"
+          />
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="mode"
+            [label]="'Mode' | transloco"
+            [options]="modes"
+            [translateOptions]="true"
+            [value]="mode()"
+            [help]="
+              'Update by external ID: an asset of the project with the same external ID is updated (properties merged, geometry replaced). Always create: every row is a new asset.'
+                | transloco
+            "
+            (valueChange)="mode.set($any($event) || 'upsert')"
+          />
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Source system' | transloco }}</mat-label>
+            <input
+              matInput
+              maxlength="40"
+              data-field-key="source"
+              [value]="source()"
+              (input)="source.set(text($event))"
+            />
+            <mns-field-help
+              matIconSuffix
+              [label]="'Source system' | transloco"
+              [text]="
+                'Optional label kept in the import history (OZmap, GeoGrid, IXC...).' | transloco
+              "
+            />
+          </mat-form-field>
+
+          @for (key of mappingKeys; track key) {
+            <mns-search-select-field
+              fieldClass="span-2"
+              [attr.data-field-key]="key"
+              [label]="mappingLabels[key] | transloco"
+              [options]="columns()"
+              [value]="mappingValue(key)"
+              [clearable]="true"
+              clearLabel="Not in the file"
+              (valueChange)="setMapping(key, $event)"
+            />
+          }
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="fixedTypeCode"
+            data-quick-create-exempt="Import default; asset types are created in InfraGIS › Asset Types."
+            [label]="'Asset type for rows without one' | transloco"
+            [options]="types()"
+            [value]="mappingValue('fixedTypeCode')"
+            [clearable]="true"
+            (valueChange)="setMapping('fixedTypeCode', $event)"
+          />
+          <mns-search-select-field
+            fieldClass="span-2"
+            data-field-key="fixedStatusCode"
+            data-quick-create-exempt="Import default; statuses are created in InfraGIS › Statuses."
+            [label]="'Status for rows without one' | transloco"
+            [options]="statuses()"
+            [value]="mappingValue('fixedStatusCode')"
+            [clearable]="true"
+            (valueChange)="setMapping('fixedStatusCode', $event)"
+          />
+          <mat-checkbox
+            class="span-4"
+            [checked]="mapping().keepProperties"
+            (change)="setMapping('keepProperties', $event.checked)"
+          >
+            {{ 'Keep the other columns as asset properties' | transloco }}
+          </mat-checkbox>
+        </form>
+
+        <h3>{{ 'Preview' | transloco }}</h3>
+        <mns-global-table [config]="previewTable" [rows]="preview()" />
+
+        <div class="infragis-transfer-actions">
+          <button mat-flat-button type="button" [disabled]="!ready()" (click)="runImport()">
+            <mat-icon>publish</mat-icon>{{ 'Start import' | transloco }}
+          </button>
+          @if (running()) {
+            <button mat-stroked-button type="button" (click)="cancel()">
+              {{ 'Stop after the current batch' | transloco }}
+            </button>
+          }
+        </div>
+      }
+
+      @if (progress(); as value) {
+        <mat-progress-bar mode="determinate" [value]="percent()" />
+        <output class="infragis-transfer-summary">
+          {{ value.sent | number }} / {{ value.total | number }} · {{ 'Created assets' | transloco }}:
+          <strong>{{ value.created | number }}</strong> · {{ 'Updated assets' | transloco }}:
+          <strong>{{ value.updated | number }}</strong> · {{ 'Refused rows' | transloco }}:
+          <strong>{{ value.failed | number }}</strong>
+        </output>
+      }
+      @if (importFailed(); as message) {
+        <p class="dashboard-message" role="alert">{{ message | transloco }}</p>
+      }
+      @if (errors().length) {
+        <div class="panel-header">
+          <h3>{{ 'Refused rows' | transloco }}</h3>
+          <button mat-stroked-button type="button" (click)="downloadErrors()">
+            <mat-icon>download</mat-icon>{{ 'Download CSV' | transloco }}
+          </button>
+        </div>
+        <mns-global-table [config]="errorTable" [rows]="errors()" />
+      }
+    </section>
+  }
+
+  @if (canExport()) {
+    <section class="dashboard-panel infragis-transfer-panel">
+      <div class="panel-header">
+        <div>
+          <h2>{{ 'Export assets' | transloco }}</h2>
+          <p>
+            {{
+              'Every active asset of the filter with codes, properties and geometry (WGS 84); the file imports back unchanged.'
+                | transloco
+            }}
+          </p>
+        </div>
+      </div>
+      <form class="form-grid">
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="exportFormat"
+          [label]="'Format' | transloco"
+          [options]="exportFormats"
+          [value]="exportFormat()"
+          (valueChange)="exportFormat.set($any($event) || 'geojson')"
+        />
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="exportProjectUUID"
+          data-quick-create-exempt="Export filter; projects are created in InfraGIS › Projects."
+          [label]="'Project' | transloco"
+          [options]="projects()"
+          [value]="exportProjectUUID()"
+          [clearable]="true"
+          clearLabel="All projects"
+          (valueChange)="setExportProject($event)"
+        />
+        <mns-search-select-field
+          fieldClass="span-2"
+          data-field-key="exportLayerUUID"
+          data-quick-create-exempt="Export filter; layers are created in InfraGIS › Layers."
+          [label]="'Layer' | transloco"
+          [options]="exportLayers()"
+          [value]="exportLayerUUID()"
+          [clearable]="true"
+          clearLabel="All layers"
+          [disabled]="!exportProjectUUID()"
+          (valueChange)="exportLayerUUID.set($any($event) ?? '')"
+        />
+      </form>
+      <div class="infragis-transfer-actions">
+        <button mat-flat-button type="button" [disabled]="exporting()" (click)="runExport()">
+          <mat-icon>download</mat-icon>{{ 'Export' | transloco }}
+        </button>
+        @if (exporting()) {
+          <mat-progress-bar mode="indeterminate" />
+        }
+      </div>
+    </section>
+  }
+
+  @if (canImport()) {
+    <section class="dashboard-panel infragis-transfer-panel">
+      <div class="panel-header">
+        <div>
+          <h2>{{ 'Import history' | transloco }}</h2>
+          <p>{{ 'Last imports of this tenant.' | transloco }}</p>
+        </div>
+      </div>
+      <mns-global-table [config]="historyTable" [rows]="historyRows()" />
+    </section>
+  }
+
+  @if (!canImport() && !canExport()) {
+    <p class="dashboard-message">
+      {{ 'You do not have permission to import or export InfraGIS assets.' | transloco }}
+    </p>
+  }
+</mns-detail-page>
