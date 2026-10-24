@@ -15,7 +15,8 @@ export type NotificationType =
   | 'feature_request.status'
   | 'logs.account.cap_warning'
   | 'logs.account.capped'
-  | 'voip.pabx.extension.offline';
+  | 'voip.pabx.extension.offline'
+  | 'dns.monitor.target';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {

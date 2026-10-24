@@ -13,6 +13,7 @@
         <a routerLink="/system/dns/monitor-targets">{{ 'dns.monitorTargets' | transloco }}</a>
       </div>
     } @else {
+      <p class="dashboard-message" role="status">{{ 'dns.monitorAlertsHint' | transloco }}</p>
       <div class="dashboard-grid">
         @for (item of kpis(); track item.state) {
           <article class="dashboard-metric" [ngClass]="item.className">
