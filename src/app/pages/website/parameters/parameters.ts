@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
@@ -17,6 +18,7 @@ import { apiErrorFields } from '../../../services/api-error-fields';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { FieldInvalidDirective } from '../../../shared/forms/field-invalid.directive';
+import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import { FieldRules } from '../../../shared/forms/field-validation';
 import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
@@ -25,6 +27,26 @@ import { WEBSITE_LOCALE_OPTIONS, isWebsiteLocale } from '../website-content';
 import { WEBSITE_PARAMETERS_ENDPOINT } from '../website.service';
 
 type DnsMode = 'identity_only' | 'managed_dns';
+
+/** Wildcard *.<base> certificate of one platform edge (DNS-01, renewed by the platform). */
+export type WebsiteEdgeCertificate = {
+  agentName: string;
+  base: string;
+  status: 'pending' | 'issued' | 'failed';
+  expiresAt: string | null;
+  error: string | null;
+};
+
+export function websiteEdgeCertificates(item: Record<string, unknown>): WebsiteEdgeCertificate[] {
+  const rows = Array.isArray(item['edgeCertificates']) ? item['edgeCertificates'] : [];
+  return rows.map((row: Record<string, unknown>) => ({
+    agentName: String(row['agentName'] ?? row['agentUUID'] ?? ''),
+    base: String(row['base'] ?? ''),
+    status: row['status'] === 'issued' || row['status'] === 'failed' ? row['status'] : 'pending',
+    expiresAt: typeof row['expiresAt'] === 'string' ? row['expiresAt'] : null,
+    error: typeof row['error'] === 'string' && row['error'] ? row['error'] : null,
+  }));
+}
 
 export type WebsiteParameterForm = {
   autoDomainEnabled: boolean;
@@ -109,12 +131,15 @@ export function websiteParameterPayload(form: WebsiteParameterForm): Record<stri
     MnsSearchSelectFieldComponent,
     FieldHelpComponent,
     FieldInvalidDirective,
+    MnsDateTimePipe,
+    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
     TranslocoPipe,
   ],
   templateUrl: './parameters.html',
+  styleUrl: './parameters.scss',
   encapsulation: ViewEncapsulation.None,
   host: { class: 'app-fade-in-host' },
 })
@@ -138,6 +163,8 @@ export class WebsiteParametersPage {
     error: string | null;
   }>({ base: null, zoneName: null, eligible: null, error: null });
   readonly saving = signal(false);
+  readonly edgeCertificates = signal<WebsiteEdgeCertificate[]>([]);
+  readonly syncingEdge = signal(false);
   readonly feedback = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly serverInvalid = signal<ReadonlySet<string>>(new Set());
@@ -284,8 +311,26 @@ export class WebsiteParametersPage {
     }
   }
 
+  /** Re-queues the wildcard certificate and edge server on every platform edge. */
+  async syncEdge() {
+    if (this.syncingEdge() || this.saving()) return;
+    this.feedback.set(null);
+    this.success.set(null);
+    this.syncingEdge.set(true);
+    try {
+      await this.api.post<any>(`${WEBSITE_PARAMETERS_ENDPOINT}/edge-sync`, {});
+      this.success.set('website.edgeSyncQueued');
+      this.parameters.reload();
+    } catch (error) {
+      this.feedback.set(this.message(error, 'website.edgeSyncFailed'));
+    } finally {
+      this.syncingEdge.set(false);
+    }
+  }
+
   private apply(item: Record<string, unknown>) {
     const form = websiteParameterForm(item);
+    this.edgeCertificates.set(websiteEdgeCertificates(item));
     this.form.set(form);
     this.baseline.set(JSON.stringify(form));
     this.serverInvalid.set(new Set());

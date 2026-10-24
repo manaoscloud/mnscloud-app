@@ -4,13 +4,19 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService } from '../../../services/app-i18n.service';
-import { WebsiteParametersPage, websiteParameterForm, websiteParameterPayload } from './parameters';
+import {
+  WebsiteParametersPage,
+  websiteEdgeCertificates,
+  websiteParameterForm,
+  websiteParameterPayload,
+} from './parameters';
 
 describe('WebsiteParametersPage', () => {
   let fixture: ComponentFixture<WebsiteParametersPage>;
   let page: WebsiteParametersPage;
   let get: jasmine.Spy;
   let put: jasmine.Spy;
+  let post: jasmine.Spy;
 
   beforeEach(async () => {
     get = jasmine.createSpy('get').and.callFake(async (endpoint: string) =>
@@ -32,6 +38,7 @@ describe('WebsiteParametersPage', () => {
     put = jasmine.createSpy('put').and.callFake(async (_endpoint: string, body: unknown) => ({
       data: { item: body },
     }));
+    post = jasmine.createSpy('post').and.callFake(async () => ({ data: { queued: [] } }));
     TestBed.configureTestingModule({
       imports: [
         WebsiteParametersPage,
@@ -42,7 +49,7 @@ describe('WebsiteParametersPage', () => {
         }),
       ],
       providers: [
-        { provide: ApiService, useValue: { get, put } },
+        { provide: ApiService, useValue: { get, put, post } },
         { provide: AppI18nService, useValue: { availableLanguages: [], language: signal('en') } },
       ],
     }).overrideComponent(WebsiteParametersPage, { set: { template: '' } });
@@ -98,5 +105,62 @@ describe('WebsiteParametersPage', () => {
     const payload = websiteParameterPayload({ ...form, autoDomainBase: 'ignored.example.com' });
     expect(payload['autoDomainBase']).toBeNull();
     expect(payload['dnsPolicyUUID']).toBe('p1');
+  });
+
+  it('maps the edge wildcard certificates and keeps unknown statuses pending', () => {
+    expect(
+      websiteEdgeCertificates({
+        edgeCertificates: [
+          {
+            agentName: 'agent-nginx-dev1',
+            base: 'dev.mnscloud.website',
+            status: 'issued',
+            expiresAt: '2027-01-18 12:00:00',
+            error: null,
+          },
+          { agentUUID: 'A1', base: 'dev.mnscloud.website', status: 'weird', error: '' },
+          {
+            agentName: 'edge2',
+            base: 'dev.mnscloud.website',
+            status: 'failed',
+            error: 'rate limited',
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        agentName: 'agent-nginx-dev1',
+        base: 'dev.mnscloud.website',
+        status: 'issued',
+        expiresAt: '2027-01-18 12:00:00',
+        error: null,
+      },
+      {
+        agentName: 'A1',
+        base: 'dev.mnscloud.website',
+        status: 'pending',
+        expiresAt: null,
+        error: null,
+      },
+      {
+        agentName: 'edge2',
+        base: 'dev.mnscloud.website',
+        status: 'failed',
+        expiresAt: null,
+        error: 'rate limited',
+      },
+    ]);
+    expect(websiteEdgeCertificates({})).toEqual([]);
+  });
+
+  it('queues the edge sync and reloads the parameters', async () => {
+    const before = get.calls.count();
+    await page.syncEdge();
+    expect(post).toHaveBeenCalledWith('system/website/parameters/edge-sync', {});
+    expect(page.success()).toBe('website.edgeSyncQueued');
+    expect(page.syncingEdge()).toBeFalse();
+    TestBed.tick();
+    await fixture.whenStable();
+    expect(get.calls.count()).toBeGreaterThan(before);
   });
 });

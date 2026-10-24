@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e609daa32850",
+  "version": "b3ae60e81419",
   "language": "pt-BR",
   "entries": [
     {
@@ -9450,6 +9450,10 @@
         {
           "label": "IPv6 público da borda",
           "help": "Destino opcional dos registros AAAA; deixe vazio para publicar só IPv4."
+        },
+        {
+          "label": "Certificado curinga da borda",
+          "help": "Certificado *.<base> emitido pela Let's Encrypt (validação DNS) em cada borda da plataforma, para os endereços automáticos dos sites em HTTPS. A plataforma o renova 30 dias antes de vencer."
         }
       ]
     },
