@@ -36,6 +36,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Extend swap for the Angular build
+        # The production build peaks close to the hosted runner RAM (16 GB, ~190 CRUD pages compile
+        # the shared CRUD template); past it the runner VM is shut down mid-build ("The runner has
+        # received a shutdown signal"). A larger swap makes the peak slower instead of fatal.
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile
+          sudo fallocate -l 12G /mnt/mnscloud-build.swap
+          sudo chmod 600 /mnt/mnscloud-build.swap
+          sudo mkswap /mnt/mnscloud-build.swap >/dev/null
+          sudo swapon /mnt/mnscloud-build.swap
+          free -h
       - name: Install dependencies
         run: npm ci
       - name: Validate changed application contract
