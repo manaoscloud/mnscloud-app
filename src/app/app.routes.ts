@@ -2966,6 +2966,24 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.diagnostics' },
               },
               {
+                path: 'dns/client-networks',
+                loadComponent: () =>
+                  import('./pages/dns/client-networks/client-networks').then(
+                    (m) => m.DnsClientNetworksPage,
+                  ),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.clientNetworks' },
+              },
+              {
+                path: 'dns/forward-zones',
+                loadComponent: () =>
+                  import('./pages/dns/forward-zones/forward-zones').then(
+                    (m) => m.DnsForwardZonesPage,
+                  ),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.forwardZones' },
+              },
+              {
                 path: 'dns/client-tests',
                 loadComponent: () =>
                   import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d753d29820ac",
+  "version": "295fc0b877e1",
   "language": "pt-BR",
   "entries": [
     {
@@ -6756,6 +6756,35 @@
       ]
     },
     {
+      "route": "/system/dns/client-networks",
+      "menuPath": "DNS › Redes de clientes",
+      "scope": "platform",
+      "title": "Redes de clientes",
+      "description": "Redes que podem usar o DNS recursivo do cluster. Os servidores respondem só a elas, e só com o serviço do resolvedor ligado no cluster; 0.0.0.0/0 e ::/0 nunca são aceitos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Rede (CIDR)",
+          "help": "IPv4 de /8 a /32 ou IPv6 de /16 a /128, por exemplo 10.20.0.0/16 ou 2804:8094:1000::/48."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/system/dns/client-tests",
       "menuPath": "DNS › Testes de clientes",
       "scope": "platform",
@@ -6806,6 +6835,39 @@
         {
           "label": "Agents que testam",
           "help": "Escolha de 1 a 20 Agents, de preferência em redes, operadoras ou cidades diferentes, para comparar os resultados."
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/forward-zones",
+      "menuPath": "DNS › Encaminhamento",
+      "scope": "platform",
+      "title": "Encaminhamento condicional",
+      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Domínio",
+          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
+        },
+        {
+          "label": "Servidores",
+          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
+        },
+        {
+          "label": "Servidores são resolvedores",
+          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
         }
       ]
     },
