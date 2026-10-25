@@ -696,6 +696,30 @@ export const NAV_ITEMS: NavItem[] = [
   },
 
   {
+    // Cloud DNS for companies (E1): visible only with the module.dns.cloud entitlement.
+    id: 'dns-cloud',
+    label: 'nav.dns-cloud',
+    icon: 'shield',
+    entitlementCode: 'module.dns.cloud',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'dns-cloud/sites',
+        label: 'nav.dns-cloud.sites',
+        icon: 'apartment',
+        route: '/dns/cloud/sites',
+        requiresEnvironment: true,
+      },
+      {
+        id: 'dns-cloud/site-rules',
+        label: 'nav.dns-cloud.site-rules',
+        icon: 'rule',
+        route: '/dns/cloud/site-rules',
+        requiresEnvironment: true,
+      },
+    ],
+  },
+  {
     id: 'dns',
     label: 'nav.dns',
     icon: 'travel_explore',
