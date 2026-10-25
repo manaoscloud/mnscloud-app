@@ -736,6 +736,13 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['platform.master.access'],
       },
       {
+        id: 'dns/filter-rules',
+        label: 'nav.dns.filter-rules',
+        icon: 'block',
+        masterRoute: '/system/dns/filter-rules',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'dns/diagnostics',
         label: 'nav.dns.diagnostics',
         icon: 'troubleshoot',
