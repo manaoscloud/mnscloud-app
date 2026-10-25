@@ -1771,6 +1771,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   Public lighting (read-only summary), Pole attachments, Pole prices and Pole invoices (row actions Add
   invoice lines, parsed from pasted text by `parseInvoiceLines`, and Reconciliation). Import/export
   offers the sanitation network cadastre CSV (`infragis/sanitation/export`).
+- Outage actions: Network › Outage impact opens "Notify customers" and "Credit contracts" (the
+  `outage-notices`/`outage-credits` utility pages through `openQuickCreate`, prefilled with the failed
+  asset or port); the pages list the notices (recipients per customer) and the credits. Work orders
+  have Materials (Stock product, location, quantity; return to stock) and "Issue materials from stock".
 
 ## Auth/Guards
 

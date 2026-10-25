@@ -241,6 +241,8 @@ export class InfraGisNetworkPage {
   readonly impactRows = signal<Row[]>([]);
   readonly impactSummary = signal<ImpactSummary | null>(null);
   readonly impactLabel = signal('');
+  /** Failed element of the last impact: the asset or one of its ports. */
+  readonly impactTarget = signal<{ assetUUID: string } | { portUUID: string } | null>(null);
   readonly impactLoading = signal(false);
   readonly impactTable = defineGlobalTable({
     key: 'infragis/network/impact',
@@ -543,6 +545,9 @@ export class InfraGisNetworkPage {
   }
 
   async runImpact(row?: ConfigurableCrudRecord) {
+    this.impactTarget.set(
+      row ? { portUUID: str(row['IptUUID']) } : { assetUUID: this.assetUUID() },
+    );
     const endpoint = row
       ? `infragis/ports/${row['IptUUID']}/impact`
       : `infragis/assets/${this.assetUUID()}/impact`;
@@ -609,6 +614,39 @@ export class InfraGisNetworkPage {
           '',
           ...lines,
         ].join('\n'),
+      },
+    });
+  }
+
+  /** Notice or credit form of the affected customers, prefilled with the failed element. */
+  async openOutageAction(resource: 'outage-notices' | 'outage-credits') {
+    const target = this.impactTarget();
+    if (!target) return;
+    const t = (key: string, params?: Record<string, unknown>) =>
+      this.transloco.translate(key, params);
+    const day = new Date().toISOString().slice(0, 10);
+    const { openQuickCreate } =
+      await import('../../../shared/crud/configurable-crud/configurable-crud-quick-create-host');
+    await openQuickCreate(this.dialog, {
+      loadComponent: () => import('../utilities/utilities').then((m) => m.InfraGisUtilitiesPage),
+      routeData: { resource },
+      initialValues: {
+        ...target,
+        ...(resource === 'outage-notices'
+          ? {
+              subject: t('Network outage in your area').slice(0, 200),
+              message: t(
+                'We identified a failure in the network that serves your address. Our team is already working on it.',
+              ),
+            }
+          : {
+              outageKey: `${this.impactLabel()} ${day}`.slice(0, 120),
+              mode: 'PRORATA',
+              description: t('Credit for service unavailability on {{ day }}', { day }).slice(
+                0,
+                160,
+              ),
+            }),
       },
     });
   }

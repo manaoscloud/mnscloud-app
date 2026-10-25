@@ -40,6 +40,8 @@ const INFRAGIS_UTILITY_ROUTES: Routes = (
     ['pole-attachments', 'Pole attachments'],
     ['pole-price-rules', 'Pole prices'],
     ['pole-invoices', 'Pole invoices'],
+    ['outage-notices', 'Outage notices'],
+    ['outage-credits', 'Outage credits'],
   ] as const
 ).map(([resource, title]) => ({
   path: `infragis/${resource}`,
