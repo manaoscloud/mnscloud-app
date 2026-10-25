@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c4c54585296f",
+  "version": "982343ab2c31",
   "language": "pt-BR",
   "entries": [
     {
@@ -1612,9 +1612,9 @@
     },
     {
       "route": "/dns/cloud/site-rules",
-      "menuPath": "DNS seguro › Regras dos sites",
+      "menuPath": "DNS seguro › Regras",
       "scope": "tenant",
-      "title": "Sites protegidos",
+      "title": "Escritórios protegidos",
       "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
       "fields": [
         {
@@ -1649,9 +1649,9 @@
     },
     {
       "route": "/dns/cloud/sites",
-      "menuPath": "DNS seguro › Sites",
+      "menuPath": "DNS seguro › Escritórios",
       "scope": "tenant",
-      "title": "Sites protegidos",
+      "title": "Escritórios protegidos",
       "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
       "fields": [
         {
