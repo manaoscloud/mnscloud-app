@@ -9624,7 +9624,7 @@
   "dns.cloudReportAllowed": "Allowed",
   "dns.cloudReportOwn": "Own rules",
   "dns.cloudReportDaily": "Queries per day",
-  "dns.cloudReportDailyHint": "Allowed and blocked on each day (UTC).",
+  "dns.cloudReportDailyHint": "Allowed and blocked on each day (server time).",
   "dns.cloudReportCategories": "Blocks by reason",
   "dns.cloudReportCategoriesHint": "30-day total per chosen category and the office own rules.",
   "dns.cloudReportEmpty": "No queries from this office yet. Check that the office router or DHCP uses the DNS addresses of the cluster.",

@@ -9624,7 +9624,7 @@
   "dns.cloudReportAllowed": "Permitidas",
   "dns.cloudReportOwn": "Reglas propias",
   "dns.cloudReportDaily": "Consultas por día",
-  "dns.cloudReportDailyHint": "Permitidas y bloqueadas cada día (UTC).",
+  "dns.cloudReportDailyHint": "Permitidas y bloqueadas cada día (hora del servidor).",
   "dns.cloudReportCategories": "Bloqueos por motivo",
   "dns.cloudReportCategoriesHint": "Total de 30 días por categoría elegida y por las reglas propias de la oficina.",
   "dns.cloudReportEmpty": "Aún no hay consultas de esta oficina. Verifique que el router o el DHCP de la oficina use las direcciones DNS del clúster.",

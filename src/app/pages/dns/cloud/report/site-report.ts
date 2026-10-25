@@ -25,7 +25,7 @@ type Site = { DcsName?: string; DcsAddresses?: string };
 const blockedOf = (point: Counts) =>
   CATEGORY_KEYS.reduce((sum, [key]) => sum + (Number(point[key]) || 0), 0);
 
-/** Hourly points summed per UTC day: allowed (queries minus blocks) and blocked, chronological. */
+/** Hourly points (server clock) summed per day: allowed (queries minus blocks) and blocked, chronological. */
 export function siteReportDays(series: ReportPoint[]): TrendPoint[] {
   const days = new Map<string, { allowed: number; blocked: number }>();
   for (const point of series) {
