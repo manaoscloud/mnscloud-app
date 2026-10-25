@@ -1524,6 +1524,20 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis' },
               },
               {
+                path: 'workorders/checklists',
+                loadComponent: () =>
+                  import('./pages/workorders/settings').then((m) => m.WorkOrderSettingsPage),
+                title: 'Work orders • Checklists | mnscloud',
+                data: { scope: 'tenant', context: 'workorders', settings: 'checklists' },
+              },
+              {
+                path: 'workorders/due-rules',
+                loadComponent: () =>
+                  import('./pages/workorders/settings').then((m) => m.WorkOrderSettingsPage),
+                title: 'Work orders • Due times | mnscloud',
+                data: { scope: 'tenant', context: 'workorders', settings: 'due-rules' },
+              },
+              {
                 path: 'workorders/mine',
                 loadComponent: () =>
                   import('./pages/workorders/orders').then((m) => m.WorkOrdersPage),
