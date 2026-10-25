@@ -49,6 +49,75 @@ function property(objectNode, name) {
   return undefined;
 }
 
+/** Static string of a literal, a bound name or a template of both (route groups built by `.map`). */
+function staticString(node, env) {
+  if (!node) return undefined;
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isIdentifier(node)) return env.get(node.text);
+  if (ts.isTemplateExpression(node)) {
+    let value = node.head.text;
+    for (const span of node.templateSpans) {
+      const part = staticString(span.expression, env);
+      if (part === undefined) return undefined;
+      value += part + span.literal.text;
+    }
+    return value;
+  }
+  return undefined;
+}
+
+const unwrapExpression = (node) =>
+  ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isSatisfiesExpression(node)
+    ? unwrapExpression(node.expression)
+    : node;
+
+/**
+ * Routes of `[['k', 'T'], ...].map(([key, title]) => ({ path, loadComponent: loader, data }))`:
+ * one entry per tuple with the path, the shared loader name and the string route data.
+ */
+function mappedRoutes(initializer) {
+  const call = unwrapExpression(initializer);
+  if (!ts.isCallExpression(call) || !ts.isPropertyAccessExpression(call.expression)) return null;
+  if (call.expression.name.text !== 'map') return null;
+  const tuples = unwrapExpression(call.expression.expression);
+  const callback = call.arguments[0];
+  if (!ts.isArrayLiteralExpression(tuples) || !callback || !ts.isArrowFunction(callback))
+    return null;
+  const binding = callback.parameters[0]?.name;
+  if (!binding || !ts.isArrayBindingPattern(binding)) return null;
+  const names = binding.elements.map((element) =>
+    ts.isBindingElement(element) && ts.isIdentifier(element.name) ? element.name.text : null,
+  );
+  const body = unwrapExpression(callback.body);
+  if (!ts.isObjectLiteralExpression(body)) return null;
+  const result = [];
+  for (const tuple of tuples.elements) {
+    const values = ts.isArrayLiteralExpression(unwrapExpression(tuple))
+      ? unwrapExpression(tuple).elements
+      : [];
+    const env = new Map(names.map((name, index) => [name, staticString(values[index], new Map())]));
+    const path = staticString(property(body, 'path'), env);
+    const loader = property(body, 'loadComponent');
+    if (path === undefined || !loader || !ts.isIdentifier(loader)) return null;
+    const data = {};
+    const dataNode = property(body, 'data');
+    if (dataNode && ts.isObjectLiteralExpression(dataNode)) {
+      for (const prop of dataNode.properties) {
+        const key = prop.name?.getText().replace(/['"]/g, '');
+        if (!['scope', 'supportDesk', 'permission', 'resource'].includes(key)) continue;
+        const value = ts.isShorthandPropertyAssignment(prop)
+          ? env.get(prop.name.text)
+          : ts.isPropertyAssignment(prop)
+            ? staticString(prop.initializer, env)
+            : undefined;
+        if (value !== undefined) data[key] = value;
+      }
+    }
+    result.push({ path, loader: loader.text, data });
+  }
+  return result;
+}
+
 /** Full route path -> { file, data } for every lazily loaded page. */
 export function readRoutes(source) {
   const sf = ts.createSourceFile(ROUTES_PATH, source, ts.ScriptTarget.Latest, true);
@@ -56,6 +125,8 @@ export function readRoutes(source) {
   const arrays = new Map();
   // Shared lazy loaders (`const loadX = () => import('./pages/...')`) used by several routes.
   const loaders = new Map();
+  // Data-driven route groups: `[['a', 'A'], ...].map(([key, title]) => ({ ...route }))`.
+  const mapped = new Map();
   ts.forEachChild(sf, function collect(node) {
     if (
       ts.isVariableDeclaration(node) &&
@@ -71,6 +142,9 @@ export function readRoutes(source) {
     ) {
       loaders.set(node.name.getText(), node.initializer);
     }
+    const group =
+      ts.isVariableDeclaration(node) && node.initializer ? mappedRoutes(node.initializer) : null;
+    if (group) mapped.set(node.name.getText(), group);
     ts.forEachChild(node, collect);
   });
   function walkArray(array, prefix, visiting = new Set()) {
@@ -93,6 +167,15 @@ export function readRoutes(source) {
     if (ts.isSpreadElement(element) && ts.isIdentifier(element.expression)) {
       const shared = arrays.get(element.expression.text);
       if (shared) walkArray(shared, prefix, visiting);
+      for (const route of mapped.get(element.expression.text) ?? []) {
+        const load = loaders.get(route.loader) ?? null;
+        const importMatch = load ? /import\('(\.\/pages\/[^']+)'\)/.exec(load.getText()) : null;
+        if (!importMatch) continue;
+        routes.set(`/${[prefix, route.path].filter(Boolean).join('/')}`, {
+          file: `src/app/${importMatch[1].slice(2)}.ts`,
+          data: route.data,
+        });
+      }
       return;
     }
     if (!ts.isObjectLiteralExpression(element)) return;

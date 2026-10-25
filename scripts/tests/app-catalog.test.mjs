@@ -54,6 +54,23 @@ test('route walker follows a shared lazy loader declared once', () => {
   assert.equal(routes.get('/infragis/pole-invoices').data.resource, 'pole-invoices');
 });
 
+test('route walker expands a data-driven route group built by map', () => {
+  const routes =
+    readRoutes(`const load = () => import('./pages/infragis/utilities/utilities').then((m) => m.P);
+  const GROUP: Routes = ([['lighting', 'Lighting'], ['pole-invoices', 'Invoices']] as const).map(([resource, title]) => ({
+    path: \`infragis/\${resource}\`,
+    loadComponent: load,
+    title: \`InfraGIS • \${title}\`,
+    data: { scope: 'tenant', context: 'infragis', resource },
+  }));
+  export const routes = [{ path: '', children: [...GROUP] }];`);
+  assert.deepEqual(routes.get('/infragis/pole-invoices'), {
+    file: 'src/app/pages/infragis/utilities/utilities.ts',
+    data: { scope: 'tenant', resource: 'pole-invoices' },
+  });
+  assert.equal(routes.get('/infragis/lighting').data.resource, 'lighting');
+});
+
 test('page reader takes the main configuration and the desk branch', () => {
   const page = readPage(process.cwd(), 'src/app/pages/support/tickets/tickets.ts', true);
   assert.equal(page.title, 'Platform tickets');

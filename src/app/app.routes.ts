@@ -34,6 +34,19 @@ const STORAGE_RESOURCE_ROUTES: Routes = [
 /** InfraGIS utility pages (lighting, pole sharing) share one component chosen by `data.resource`. */
 const loadInfraGisUtilities = () =>
   import('./pages/infragis/utilities/utilities').then((m) => m.InfraGisUtilitiesPage);
+const INFRAGIS_UTILITY_ROUTES: Routes = (
+  [
+    ['lighting', 'Public lighting'],
+    ['pole-attachments', 'Pole attachments'],
+    ['pole-price-rules', 'Pole prices'],
+    ['pole-invoices', 'Pole invoices'],
+  ] as const
+).map(([resource, title]) => ({
+  path: `infragis/${resource}`,
+  loadComponent: loadInfraGisUtilities,
+  title: `InfraGIS • ${title} | mnscloud`,
+  data: { scope: 'tenant', context: 'infragis', resource },
+}));
 
 export const routes: Routes = [
   // Raiz → dashboard
@@ -1498,30 +1511,7 @@ export const routes: Routes = [
                 title: 'InfraGIS • Import and export | mnscloud',
                 data: { scope: 'tenant', context: 'infragis' },
               },
-              {
-                path: 'infragis/lighting',
-                loadComponent: loadInfraGisUtilities,
-                title: 'InfraGIS • Public lighting | mnscloud',
-                data: { scope: 'tenant', context: 'infragis', resource: 'lighting' },
-              },
-              {
-                path: 'infragis/pole-attachments',
-                loadComponent: loadInfraGisUtilities,
-                title: 'InfraGIS • Pole attachments | mnscloud',
-                data: { scope: 'tenant', context: 'infragis', resource: 'pole-attachments' },
-              },
-              {
-                path: 'infragis/pole-price-rules',
-                loadComponent: loadInfraGisUtilities,
-                title: 'InfraGIS • Pole prices | mnscloud',
-                data: { scope: 'tenant', context: 'infragis', resource: 'pole-price-rules' },
-              },
-              {
-                path: 'infragis/pole-invoices',
-                loadComponent: loadInfraGisUtilities,
-                title: 'InfraGIS • Pole invoices | mnscloud',
-                data: { scope: 'tenant', context: 'infragis', resource: 'pole-invoices' },
-              },
+              ...INFRAGIS_UTILITY_ROUTES,
               {
                 path: 'infragis',
                 loadComponent: () =>
