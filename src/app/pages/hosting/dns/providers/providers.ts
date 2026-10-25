@@ -52,7 +52,6 @@ const SCOPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'MASTER', label: 'Master' },
 ];
 
-
 const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
   key: 'test',
   label: 'Test',
@@ -94,6 +93,9 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       emptyLabel: 'No records found.',
     },
   ],
+  // MNSCloud DNS providers belong to a DNS cluster authority (DNS › Clusters › Authoritative).
+  canEditRow: (row) => row['HdpProvider'] !== 'mnscloud_dns',
+  canDeleteRow: (row) => row['HdpProvider'] !== 'mnscloud_dns',
   tabLabels: {
     authentication: 'Credentials',
     notes: 'Notes',
@@ -119,7 +121,7 @@ const HOSTING_DNS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Platform',
       kind: 'related',
       field: 'HdpProvider',
-      lookupKey: 'provider',
+      lookupKey: 'platform',
     },
     {
       id: 'default',
@@ -274,6 +276,8 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return this.providerOptions();
+    // The list also shows the own authoritative clusters' providers, which are never created here.
+    if (key === 'platform') return [...this.providerOptions(), MANAGED_PROVIDER_OPTION];
     if (key === 'scope') return SCOPE_OPTIONS;
     return [];
   }
@@ -325,15 +329,15 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
       const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
         `${this.endpoint()}/catalog`,
       );
-      const items = (response?.data?.items ?? []).filter((item) =>
-        item.value === 'route53' || item.value === 'cpanel_dnsonly');
+      const items = (response?.data?.items ?? []).filter(
+        (item) => item.value === 'route53' || item.value === 'cpanel_dnsonly',
+      );
       this.catalog.set(items.length ? items : fallbackCatalog());
     } catch (error) {
       this.catalog.set(fallbackCatalog());
       this.snack.error(this.errorMessage(error) || 'Failed to load provider catalog.');
     }
   }
-
 
   private async testProvider(provider: ConfigurableCrudRecord) {
     const providerUUID = String(provider['HdpUUID'] ?? '');
@@ -368,7 +372,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
         details: [
           {
             label: 'Provider',
-            value: this.lookupLabel('provider', test.provider) || test.provider,
+            value: this.lookupLabel('platform', test.provider) || test.provider,
           },
           { label: 'Name', value: test.providerName },
           { label: 'Supported', value: test.supported ? 'Yes' : 'No', translate: true },
@@ -470,19 +474,31 @@ function genericProviderFieldLabel(field: HostingDnsProviderCredentialField): st
 
 function fallbackCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret'];
-    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
-    default: return [];
+    case 'route53':
+      return ['accessKey', 'secret'];
+    case 'cpanel_dnsonly':
+      return ['apiEndpoint', 'accessKey', 'secret', 'defaultTtl', 'verifyTls'];
+    default:
+      return [];
   }
 }
 
 function fallbackRequiredCredentialFields(provider: string): HostingDnsProviderCredentialField[] {
   switch (provider) {
-    case 'route53': return ['accessKey', 'secret'];
-    case 'cpanel_dnsonly': return ['apiEndpoint', 'accessKey', 'secret'];
-    default: return [];
+    case 'route53':
+      return ['accessKey', 'secret'];
+    case 'cpanel_dnsonly':
+      return ['apiEndpoint', 'accessKey', 'secret'];
+    default:
+      return [];
   }
 }
+
+const MANAGED_PROVIDER_OPTION: ConfigurableCrudOption = {
+  value: 'mnscloud_dns',
+  label: 'MNSCloud DNS',
+  searchText: 'mnscloud_dns MNSCloud DNS',
+};
 
 function fallbackCatalog(): HostingDnsProviderCatalogItem[] {
   return [
