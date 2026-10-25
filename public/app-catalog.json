@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "afb666e8087e",
+  "version": "c2b9acca5bd2",
   "language": "pt-BR",
   "entries": [
     {
@@ -12008,6 +12008,59 @@
         {
           "label": "Codecs",
           "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/offers",
+      "menuPath": "Website › Ofertas",
+      "scope": "tenant",
+      "title": "Ofertas",
+      "description": "O que você vende nos seus sites: cada oferta usa um plano de VPS ou hospedagem, com o seu preço, ciclo e textos por idioma. Ofertas publicadas aparecem nas seções \"Ofertas\" e ganham página própria.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Identificador",
+          "help": "Parte do endereço da página da oferta (/offers/identificador/): letras minúsculas, números e hífens."
+        },
+        {
+          "label": "Tipo",
+          "help": "O que o cliente contrata: uma VPS ou uma hospedagem."
+        },
+        {
+          "label": "Plano",
+          "help": "Plano usado para entregar o serviço; o custo dele continua debitado da sua carteira."
+        },
+        {
+          "label": "Preço",
+          "help": "Valor que o seu cliente paga a cada ciclo."
+        },
+        {
+          "label": "Ciclo",
+          "help": "Período de cada cobrança ao cliente."
+        },
+        {
+          "label": "Adesão",
+          "help": "Cobrança única na contratação (0 = sem adesão)."
+        },
+        {
+          "label": "Dias de teste",
+          "help": "Dias grátis antes da primeira cobrança, um por CPF/CNPJ (0 = sem teste)."
+        },
+        {
+          "label": "Fidelidade (meses)",
+          "help": "Tempo mínimo de contrato (0 = sem fidelidade)."
+        },
+        {
+          "label": "Exige aprovação",
+          "help": "Com \"Sim\", o serviço só é ativado depois que você aprovar o pedido."
+        },
+        {
+          "label": "Ordem",
+          "help": "Posição da oferta no site (menor primeiro)."
         }
       ]
     },

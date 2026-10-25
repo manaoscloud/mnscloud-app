@@ -742,6 +742,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'website.sites' },
               },
               {
+                path: 'website/offers',
+                loadComponent: () =>
+                  import('./pages/website/offers/offers').then((m) => m.WebsiteOffersPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.offers' },
+              },
+              {
                 path: 'website/sites/:uuid/editor',
                 loadComponent: () =>
                   import('./pages/website/editor/editor').then((m) => m.WebsiteEditorPage),
