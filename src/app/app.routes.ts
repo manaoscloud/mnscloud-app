@@ -1553,6 +1553,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
               },
+              {
+                path: 'dns/cloud/sites/:uuid/report',
+                loadComponent: () =>
+                  import('./pages/dns/cloud/report/site-report').then(
+                    (m) => m.DnsCloudSiteReportPage,
+                  ),
+                title: 'DNS • Site report | mnscloud',
+                data: { scope: 'tenant', context: 'dns' },
+              },
 
               // Hosting
               {
