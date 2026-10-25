@@ -1,0 +1,75 @@
+<mns-dashboard-page
+  [title]="'dns.cloudSiteReport'"
+  [description]="'dns.cloudSiteReportDescription'"
+  [loading]="report.isLoading()"
+  [error]="report.error()"
+  [hasData]="report.hasData()"
+  (refresh)="report.reload()"
+>
+  <div class="dashboard-content">
+    <div class="dashboard-grid">
+      <article class="dashboard-metric state-neutral">
+        <mat-icon>apartment</mat-icon>
+        <div>
+          <span class="dashboard-metric-label">{{ 'dns.cloudSite' | transloco }}</span>
+          <strong class="dashboard-metric-value">{{ site().DcsName ?? '—' }}</strong>
+          <span class="dashboard-metric-hint">{{ site().DcsAddresses ?? '' }}</span>
+        </div>
+      </article>
+      @for (item of kpis(); track item.key) {
+        <article class="dashboard-metric state-neutral">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <div>
+            <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+            <strong class="dashboard-metric-value">{{ item.value ?? '—' }}</strong>
+            @if (item.hint) {
+              <span class="dashboard-metric-hint">{{ item.hint }}</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (!hasTraffic()) {
+      <div class="empty-state dashboard-onboarding">
+        <p>{{ 'dns.cloudReportEmpty' | transloco }}</p>
+      </div>
+    } @else {
+      <div class="dashboard-sections">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.cloudReportDaily' | transloco }}</h2>
+            <p>{{ 'dns.cloudReportDailyHint' | transloco }}</p>
+          </div>
+          @defer (on viewport) {
+            <mns-trend-chart
+              [title]="'dns.cloudReportDaily'"
+              [kind]="'stacked'"
+              [series]="daySeries"
+              [points]="days()"
+              [language]="language()"
+            />
+          } @placeholder {
+            <div class="dashboard-chart-placeholder"></div>
+          }
+        </section>
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.cloudReportCategories' | transloco }}</h2>
+            <p>{{ 'dns.cloudReportCategoriesHint' | transloco }}</p>
+          </div>
+          <div class="dashboard-grid">
+            @for (item of categories(); track item.key) {
+              <article class="dashboard-metric state-neutral">
+                <div>
+                  <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+                  <strong class="dashboard-metric-value">{{ item.value ?? '—' }}</strong>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      </div>
+    }
+  </div>
+</mns-dashboard-page>

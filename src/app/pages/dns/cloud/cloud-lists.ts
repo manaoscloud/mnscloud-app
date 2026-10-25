@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
@@ -29,6 +30,7 @@ const sites = defineCrud({
   initialPageSize: 50,
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['DcsRevision']) }),
+  rowActions: [{ key: 'report', label: 'dns.cloudSiteReport', icon: 'insights' }],
   initialValues: {
     name: '',
     addresses: '',
@@ -206,5 +208,13 @@ export class DnsCloudListsPage extends ConfigurableCrudPageBase<ConfigurableCrud
   constructor() {
     const list = inject(ActivatedRoute).snapshot.data['list'] as keyof typeof CONFIGS;
     super(CONFIGS[list] ?? sites);
+  }
+
+  private readonly navigation = inject(Router);
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'report') {
+      await this.navigation.navigateByUrl(`/dns/cloud/sites/${this.recordUUID(row)}/report`);
+    }
   }
 }
