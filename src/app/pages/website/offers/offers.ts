@@ -212,6 +212,9 @@ function websiteOffersConfig(): ConfigurableCrudConfig {
           selectedLabelField: 'planName',
           parameters: { kind: 'kind' },
         },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Platform VPS and hosting plans are created by the platform master.',
         required: true,
         span: 2,
         help: 'website.offerPlanHelp',
