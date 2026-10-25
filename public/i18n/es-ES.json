@@ -10654,5 +10654,6 @@
   "The failed asset is chosen from the network, not created here.": "El activo con falla se elige en la red, no se crea aquí.",
   "The planned materials leave the stock now. Missing quantities stop the whole issue.": "Los materiales planificados salen del inventario ahora. Si falta cantidad, no se da de baja nada.",
   "We identified a failure in the network that serves your address. Our team is already working on it.": "Identificamos una falla en la red que atiende su dirección. Nuestro equipo ya está trabajando en la solución.",
-  "Work order materials": "Materiales de la orden de servicio"
+  "Work order materials": "Materiales de la orden de servicio",
+  "Media playback URL does not match the selected file.": "La dirección de reproducción no corresponde al archivo seleccionado."
 }

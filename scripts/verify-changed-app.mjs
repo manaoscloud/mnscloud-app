@@ -60,6 +60,7 @@ run('node', [
   'scripts/pay-error.test.mjs',
   'scripts/validate-nav-labels.test.mjs',
   'scripts/tests/crm-form-contract.test.mjs',
+  'scripts/tests/pabx-media-playback.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
   'scripts/validate-global-table.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',
