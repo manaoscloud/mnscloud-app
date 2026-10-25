@@ -1,0 +1,72 @@
+<mns-dashboard-page
+  [title]="'dns.panel'"
+  [description]="'dns.panelDescription'"
+  [loading]="panel.isLoading()"
+  [error]="panel.error()"
+  [hasData]="panel.hasData()"
+  (refresh)="panel.reload()"
+>
+  <div class="dashboard-content">
+    @if (!servers().length) {
+      <div class="empty-state dashboard-onboarding">
+        <p>{{ 'dns.panelEmpty' | transloco }}</p>
+      </div>
+    } @else {
+      <div class="dashboard-grid">
+        @for (item of kpis(); track item.key) {
+          <article class="dashboard-metric" [ngClass]="item.state">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            <div>
+              <span class="dashboard-metric-label">{{ item.label | transloco }}</span>
+              <strong class="dashboard-metric-value">{{ item.value }}</strong>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="dashboard-sections">
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.panelQueries' | transloco }}</h2>
+            <p>{{ 'dns.panelQueriesHint' | transloco }}</p>
+          </div>
+          @defer (on viewport) {
+            <mns-trend-chart
+              [title]="'dns.panelQueries'"
+              [kind]="'bars'"
+              [series]="querySeries"
+              [points]="queryPoints()"
+              [language]="language()"
+            />
+          } @placeholder {
+            <div class="dashboard-chart-placeholder"></div>
+          }
+        </section>
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'dns.panelLatency' | transloco }}</h2>
+            <p>{{ 'dns.panelLatencyHint' | transloco }}</p>
+          </div>
+          @defer (on viewport) {
+            <mns-trend-chart
+              [title]="'dns.panelLatency'"
+              [kind]="'line'"
+              [series]="latencySeries"
+              [points]="latencyPoints()"
+              [format]="formatMs"
+              [language]="language()"
+            />
+          } @placeholder {
+            <div class="dashboard-chart-placeholder"></div>
+          }
+        </section>
+      </div>
+
+      <mns-dashboard-record-list
+        [title]="'dns.servers'"
+        [items]="records()"
+        [emptyLabel]="'dns.panelEmpty'"
+      />
+    }
+  </div>
+</mns-dashboard-page>

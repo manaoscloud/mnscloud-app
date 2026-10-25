@@ -701,6 +701,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'travel_explore',
     children: [
       {
+        id: 'dns/panel',
+        label: 'nav.dns.panel',
+        icon: 'insights',
+        masterRoute: '/system/dns/panel',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'dns/clusters',
         label: 'nav.dns.clusters',
         icon: 'hub',
