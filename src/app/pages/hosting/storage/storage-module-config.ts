@@ -12,6 +12,7 @@ export const STORAGE_MODULE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'clinic', label: 'Clinic' },
   { value: 'payment-gateways', label: 'Payment gateways' },
   { value: 'users', label: 'Users' },
+  { value: 'infragis', label: 'InfraGIS' },
 ];
 
 const CONSUMER_SCOPES: readonly ConfigurableCrudOption[] = [
