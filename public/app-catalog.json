@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3a094e973e7f",
+  "version": "d3f9c6cc1e28",
   "language": "pt-BR",
   "entries": [
     {
@@ -3250,6 +3250,68 @@
         {
           "label": "Atenuação da fibra (dB/km)",
           "help": "Típico: 0,35 dB/km em 1310 nm e 0,25 dB/km em 1490 nm; o comprimento do cabo vem da propriedade comprimento ou do traçado no mapa."
+        }
+      ]
+    },
+    {
+      "route": "/infragis/outage-credits",
+      "menuPath": "InfraGIS › Créditos por falha",
+      "scope": "tenant",
+      "title": "Créditos por falha",
+      "description": "Créditos lançados nos contratos dos clientes afetados por uma falha; entram na próxima cobrança.",
+      "fields": [
+        {
+          "label": "Ativo com falha",
+          "help": ""
+        },
+        {
+          "label": "Porta com falha",
+          "help": ""
+        },
+        {
+          "label": "Identificação da falha",
+          "help": ""
+        },
+        {
+          "label": "Crédito",
+          "help": ""
+        },
+        {
+          "label": "Horas sem serviço",
+          "help": ""
+        },
+        {
+          "label": "Valor por contrato",
+          "help": ""
+        },
+        {
+          "label": "Descrição na fatura",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/infragis/outage-notices",
+      "menuPath": "InfraGIS › Avisos de falha",
+      "scope": "tenant",
+      "title": "Avisos de falha",
+      "description": "E-mails enviados aos clientes afetados por uma falha, uma mensagem por cliente.",
+      "fields": [
+        {
+          "label": "Ativo com falha",
+          "help": ""
+        },
+        {
+          "label": "Porta com falha",
+          "help": ""
+        },
+        {
+          "label": "Assunto",
+          "help": ""
+        },
+        {
+          "label": "Mensagem",
+          "help": ""
         }
       ]
     },

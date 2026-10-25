@@ -9,7 +9,12 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 export type InfraGisUtilityResource =
-  'lighting' | 'pole-attachments' | 'pole-price-rules' | 'pole-invoices';
+  | 'lighting'
+  | 'pole-attachments'
+  | 'pole-price-rules'
+  | 'pole-invoices'
+  | 'outage-notices'
+  | 'outage-credits';
 
 const OCCUPANT_KINDS = [
   { value: 'OWN', label: 'Own network' },
@@ -57,6 +62,57 @@ export function parseInvoiceLines(
     lines.push({ poleCode: code, points: pointCount, amount: parseAmount(amount) });
   }
   return lines;
+}
+
+const RECIPIENT_STATUSES = [
+  { value: 'QUEUED', label: 'Queued' },
+  { value: 'NO_EMAIL', label: 'No e-mail' },
+  { value: 'FAILED', label: 'Failed' },
+];
+const CREDIT_MODES = [
+  { value: 'PRORATA', label: 'Proportional to the hours' },
+  { value: 'FIXED', label: 'Fixed amount per contract' },
+];
+
+const outageAsset = {
+  key: 'assetUUID',
+  label: 'Failed asset',
+  type: 'search-select' as const,
+  remoteLookup: { endpoint: 'infragis/assets', uuidField: 'IgaUUID', labelField: 'IgaName' },
+  quickCreate: false as const,
+  quickCreateExemptReason: 'The failed asset is chosen from the network, not created here.',
+  span: 4 as const,
+};
+
+function recipients(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `infragis/outage-notices/${String(row['IonUUID'])}/recipients`,
+    uuidField: 'InrUUID',
+    pageTitle: 'Notice recipients',
+    pageDescription: String(row['IonSubject'] ?? ''),
+    emptyLabel: 'No affected customers.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: {},
+    fields: [],
+    columns: [
+      { id: 'customer', field: 'CustomerName', label: 'Customer', kind: 'identity' },
+      { id: 'email', field: 'InrEmail', label: 'E-mail' },
+      {
+        id: 'status',
+        field: 'InrStatus',
+        label: 'Status',
+        kind: 'status',
+        options: RECIPIENT_STATUSES,
+        chipClass: (value) =>
+          value === 'QUEUED' ? 'chip-success' : value === 'FAILED' ? 'chip-failed' : 'chip-warning',
+      },
+      { id: 'error', field: 'InrError', label: 'Reason' },
+    ],
+  });
 }
 
 function reconciliation(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
@@ -285,6 +341,103 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
         span: 1,
       },
       { key: 'notes', source: 'IpqNotes', label: 'Basis', type: 'textarea', rows: 2, span: 4 },
+    ],
+  }),
+  'outage-notices': defineCrud({
+    endpoint: 'infragis/outage-notices',
+    uuidField: 'IonUUID',
+    pageTitle: 'Outage notices',
+    pageDescription: 'E-mails sent to the customers an outage cut off, one message per customer.',
+    createTitle: 'Notify affected customers',
+    dialogDescription:
+      'Each affected customer with an e-mail receives one message signed with your company name.',
+    savedMessage: 'Notice queued.',
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: { assetUUID: '', portUUID: '', subject: '', message: '' },
+    payload: (values) => ({
+      ...values,
+      idempotencyKey: String(values['idempotencyKey'] || crypto.randomUUID()),
+    }),
+    columns: [
+      { id: 'date', field: 'IonDateCreated', label: 'Date', kind: 'datetime' },
+      {
+        id: 'subject',
+        field: 'IonSubject',
+        label: 'Subject',
+        uuidField: 'IonUUID',
+        kind: 'identity',
+      },
+      { id: 'asset', field: 'AssetName', label: 'Asset' },
+      { id: 'queued', field: 'IonQueuedCount', label: 'Sent', kind: 'number' },
+      { id: 'skipped', field: 'IonSkippedCount', label: 'Not sent', kind: 'number' },
+      { id: 'by', field: 'CreatedByName', label: 'By' },
+    ],
+    fields: [
+      outageAsset,
+      { key: 'portUUID', label: 'Failed port', hidden: true, span: 4 },
+      { key: 'subject', label: 'Subject', required: true, span: 4 },
+      { key: 'message', label: 'Message', type: 'textarea', rows: 6, required: true, span: 4 },
+    ],
+    rowActions: [{ key: 'recipients', label: 'Recipients', icon: 'group', collection: recipients }],
+  }),
+  'outage-credits': defineCrud({
+    endpoint: 'infragis/outage-credits',
+    uuidField: 'IocUUID',
+    pageTitle: 'Outage credits',
+    pageDescription:
+      'Credits given to the contracts of the customers an outage cut off; they apply on the next charge.',
+    createTitle: 'Credit affected contracts',
+    dialogDescription:
+      'One credit per active contract of each affected customer and outage. Proportional: monthly amount x hours / 720.',
+    savedMessage: 'Credits processed.',
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: {
+      assetUUID: '',
+      portUUID: '',
+      outageKey: '',
+      mode: 'PRORATA',
+      hours: null,
+      amount: null,
+      description: '',
+    },
+    columns: [
+      { id: 'date', field: 'IocDateCreated', label: 'Date', kind: 'datetime' },
+      {
+        id: 'customer',
+        field: 'CustomerName',
+        label: 'Customer',
+        uuidField: 'IocUUID',
+        kind: 'identity',
+      },
+      { id: 'contract', field: 'BctID', label: 'Contract' },
+      { id: 'outage', field: 'IocOutageKey', label: 'Outage' },
+      { id: 'asset', field: 'AssetName', label: 'Asset' },
+      { id: 'hours', field: 'IocHours', label: 'Hours' },
+      { id: 'amount', field: 'IocAmount', label: 'Credit', kind: 'currency' },
+      { id: 'status', field: 'BadStatus', label: 'Billing' },
+    ],
+    fields: [
+      outageAsset,
+      { key: 'portUUID', label: 'Failed port', hidden: true, span: 4 },
+      { key: 'outageKey', label: 'Outage identification', required: true, span: 4 },
+      {
+        key: 'mode',
+        label: 'Credit',
+        type: 'select',
+        options: CREDIT_MODES,
+        translateOptions: true,
+        required: true,
+        span: 2,
+      },
+      { key: 'hours', label: 'Hours without service', type: 'number', span: 1 },
+      { key: 'amount', label: 'Amount per contract', type: 'number', span: 1 },
+      { key: 'description', label: 'Description on the invoice', span: 4 },
     ],
   }),
   'pole-invoices': defineCrud({

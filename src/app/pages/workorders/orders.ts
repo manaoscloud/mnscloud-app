@@ -179,6 +179,87 @@ function noteForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
   });
 }
 
+const MATERIAL_STATUSES = [
+  { value: 'PLANNED', label: 'Planned' },
+  { value: 'ISSUED', label: 'Issued' },
+  { value: 'REVERSED', label: 'Returned' },
+];
+
+/** Products of Stock planned for the order and issued once it started (one stock movement each). */
+function materials(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `workorders/orders/${String(row['WorUUID'])}/materials`,
+    deleteEndpoint: (material) => `workorders/materials/${String(material['WomUUID'])}`,
+    uuidField: 'WomUUID',
+    pageTitle: 'Work order materials',
+    pageDescription: `#${String(row['WorID'] ?? '')} · ${String(row['WorTitle'] ?? '')}`,
+    createTitle: 'Add material',
+    emptyLabel: 'No materials.',
+    savedMessage: 'Material added.',
+    canEdit: false,
+    bulkDelete: false,
+    statusFilter: false,
+    canDeleteRow: (material) => material['WomStatus'] !== 'ISSUED',
+    initialValues: { quantity: 1 },
+    fields: [
+      {
+        key: 'productUUID',
+        label: 'Product',
+        type: 'search-select',
+        required: true,
+        remoteLookup: { endpoint: 'sale/products', uuidField: 'SprUUID', labelField: 'SprName' },
+        quickCreate: false,
+        quickCreateExemptReason: 'Stock products are registered in Sales › Products.',
+        span: 2,
+      },
+      {
+        key: 'locationUUID',
+        label: 'Stock location',
+        type: 'search-select',
+        required: true,
+        remoteLookup: { endpoint: 'stock/locations', uuidField: 'StlUUID', labelField: 'StlName' },
+        quickCreate: false,
+        quickCreateExemptReason: 'Stock locations are registered in Stock › Locations.',
+        span: 2,
+      },
+      { key: 'quantity', label: 'Quantity', type: 'number', required: true, span: 1 },
+      { key: 'notes', label: 'Notes', span: 3 },
+    ],
+    columns: [
+      { id: 'product', field: 'ProductName', label: 'Product', kind: 'identity' },
+      { id: 'location', field: 'LocationName', label: 'Stock location' },
+      { id: 'quantity', field: 'WomQuantity', label: 'Quantity', kind: 'number' },
+      {
+        id: 'status',
+        field: 'WomStatus',
+        label: 'Status',
+        kind: 'status',
+        options: MATERIAL_STATUSES,
+        chipClass: (value) =>
+          value === 'ISSUED'
+            ? 'chip-success'
+            : value === 'REVERSED'
+              ? 'chip-skipped'
+              : 'chip-queued',
+      },
+      { id: 'notes', field: 'WomNotes', label: 'Notes' },
+    ],
+    rowActions: [
+      {
+        key: 'return',
+        label: 'Return to stock',
+        icon: 'undo',
+        visible: (material) => material['WomStatus'] === 'ISSUED',
+        request: {
+          method: 'post',
+          endpoint: (material) => `workorders/materials/${String(material['WomUUID'])}/reversal`,
+          successMessage: 'Material returned to stock.',
+        },
+      },
+    ],
+  });
+}
+
 /** Work orders of the tenant; `mine` lists the ones assigned to the signed-in technician. */
 export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
   return defineCrud({
@@ -357,6 +438,24 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
       { key: 'status', label: 'Change status', icon: 'published_with_changes', form: statusForm },
       { key: 'note', label: 'Add note', icon: 'note_add', form: noteForm },
       { key: 'timeline', label: 'Timeline', icon: 'timeline', collection: timeline },
+      { key: 'materials', label: 'Materials', icon: 'inventory', collection: materials },
+      {
+        key: 'issue-materials',
+        label: 'Issue materials from stock',
+        icon: 'outbox',
+        visible: (row) => ['IN_PROGRESS', 'ON_HOLD', 'DONE'].includes(String(row['WorStatus'])),
+        request: {
+          method: 'post',
+          endpoint: (row) => `workorders/orders/${String(row['WorUUID'])}/materials/issue`,
+          successMessage: 'Materials issued from stock.',
+          confirm: {
+            title: 'Issue materials from stock',
+            message:
+              'The planned materials leave the stock now. Missing quantities stop the whole issue.',
+            confirmLabel: 'Issue',
+          },
+        },
+      },
     ],
   });
 }
