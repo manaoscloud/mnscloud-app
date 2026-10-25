@@ -10337,5 +10337,11 @@
   "Punch locations": "Ubicaciones de los fichajes",
   "Locations captured by Pulse when the punch was recorded; the circle is the accuracy reported by the device.": "Ubicaciones capturadas por Pulse al registrar el fichaje; el círculo es la precisión informada por el dispositivo.",
   "The base map is unavailable; the points are shown without it.": "El mapa base no está disponible; los puntos se muestran sin él.",
-  "Punches with location": "Fichajes con ubicación"
+  "Punches with location": "Fichajes con ubicación",
+  "Hr": "RR. HH.",
+  "Work Schedules": "Jornadas",
+  "Work Schedule Assignments": "Turnos de los empleados",
+  "Timesheets": "Registro horario",
+  "Time Issues": "Inconsistencias",
+  "Time Policies": "Políticas de registro horario"
 }

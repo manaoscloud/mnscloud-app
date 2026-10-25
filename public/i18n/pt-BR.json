@@ -10338,5 +10338,11 @@
   "Punch locations": "Localizações das batidas",
   "Locations captured by Pulse when the punch was recorded; the circle is the accuracy reported by the device.": "Localizações capturadas pelo Pulse no momento da batida; o círculo é a precisão informada pelo aparelho.",
   "The base map is unavailable; the points are shown without it.": "O mapa base não está disponível; os pontos são exibidos sem ele.",
-  "Punches with location": "Batidas com localização"
+  "Punches with location": "Batidas com localização",
+  "Hr": "RH",
+  "Work Schedules": "Jornadas",
+  "Work Schedule Assignments": "Escalas dos colaboradores",
+  "Timesheets": "Espelho de ponto",
+  "Time Issues": "Inconsistências",
+  "Time Policies": "Políticas de ponto"
 }

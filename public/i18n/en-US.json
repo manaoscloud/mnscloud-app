@@ -10337,5 +10337,11 @@
   "Punch locations": "Punch locations",
   "Locations captured by Pulse when the punch was recorded; the circle is the accuracy reported by the device.": "Locations captured by Pulse when the punch was recorded; the circle is the accuracy reported by the device.",
   "The base map is unavailable; the points are shown without it.": "The base map is unavailable; the points are shown without it.",
-  "Punches with location": "Punches with location"
+  "Punches with location": "Punches with location",
+  "Hr": "HR",
+  "Work Schedules": "Work schedules",
+  "Work Schedule Assignments": "Schedule assignments",
+  "Timesheets": "Timesheets",
+  "Time Issues": "Timesheet issues",
+  "Time Policies": "Time policies"
 }
