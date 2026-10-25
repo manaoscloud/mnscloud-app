@@ -12,7 +12,7 @@ import {
 } from '../../../shared/runtime-server/runtime-server-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload, dnsRoles } from '../dns-input';
 
-/** Roles decide which engines are installed; they cannot change after creation. */
+/** Roles decide which engines are installed; after installation they change through the Roles action. */
 function roleField(
   key: string,
   source: string,
@@ -56,7 +56,68 @@ const config = defineCrud({
     DnsClusterDncUUID: '',
   },
   payload: (values, editing) => dnsPayload(values, editing),
-  rowActions: runtimeServerRowActions('Dsv', 'dns'),
+  rowActions: [
+    ...runtimeServerRowActions('Dsv', 'dns'),
+    {
+      // The node installs the engines of new roles before switching (D7a).
+      key: 'roles',
+      label: 'dns.serverRoles',
+      icon: 'tune',
+      form: (row) =>
+        defineCrud({
+          endpoint: `system/dns/servers/${row['DsvUUID']}/roles`,
+          uuidField: 'DsvUUID',
+          pageTitle: 'dns.serverRoles',
+          pageDescription: 'dns.serverRolesDescription',
+          createTitle: 'dns.serverRoles',
+          dialogDescription: 'dns.serverRolesDescription',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: {
+            roleRecursive: Number(row['DsvRoleRecursive'] ?? 0),
+            roleAuthoritative: Number(row['DsvRoleAuthoritative'] ?? 0),
+            roleEdge: Number(row['DsvRoleEdge'] ?? 0),
+            revision: Number(row['DsvRevision'] ?? 1),
+          },
+          payload: (values) => ({
+            roleRecursive: Number(values['roleRecursive']),
+            roleAuthoritative: Number(values['roleAuthoritative']),
+            roleEdge: Number(values['roleEdge']),
+            revision: Number(values['revision']),
+          }),
+          fields: [
+            {
+              ...roleField(
+                'roleRecursive',
+                'DsvRoleRecursive',
+                'dns.roles.recursive',
+                'dns.roleRecursiveHelp',
+              ),
+              tab: undefined,
+              disabledWhen: undefined,
+            },
+            {
+              ...roleField(
+                'roleAuthoritative',
+                'DsvRoleAuthoritative',
+                'dns.roles.authoritative',
+                'dns.roleAuthoritativeHelp',
+              ),
+              tab: undefined,
+              disabledWhen: undefined,
+            },
+            {
+              ...roleField('roleEdge', 'DsvRoleEdge', 'dns.roles.edge', 'dns.roleEdgeHelp'),
+              tab: undefined,
+              disabledWhen: undefined,
+            },
+            { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+          ],
+        }),
+    },
+  ],
   fields: [
     {
       key: 'status',

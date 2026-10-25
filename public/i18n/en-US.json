@@ -9355,6 +9355,8 @@
   "dns.roleRecursiveHelp": "Installs PowerDNS Recursor, which resolves internet names with DNSSEC validation. Cannot be changed after creation.",
   "dns.roleAuthoritativeHelp": "Installs PowerDNS Authoritative, which publishes your own zones. Cannot be changed after creation.",
   "dns.roleEdgeHelp": "Installs dnsdist in front of the recursor (or the authoritative server): load balancing, limits and, in later phases, DoT/DoH. Requires the recursive or the authoritative role. Cannot be changed after creation.",
+  "dns.serverRoles": "Roles",
+  "dns.serverRolesDescription": "Roles define the engines of the server. On save, the server installs the engines of new roles before switching (if the installation fails, nothing changes) and stops removed ones, within a few minutes.",
   "dns.install": "Installation command",
   "dns.installDescription": "Run the command as root on the target host with the MNSCloud Agent installed, active and enrolled.",
   "dns.installWarning": "Private authorization valid for 30 minutes and for one use. The installation preserves the Agent identity.",
