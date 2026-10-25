@@ -3097,6 +3097,13 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.filterRules', list: 'filter-rules' },
               },
               {
+                path: 'dns/secondaries',
+                loadComponent: () =>
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.secondaries', list: 'secondaries' },
+              },
+              {
                 path: 'dns/panel',
                 loadComponent: () => import('./pages/dns/panel/panel').then((m) => m.DnsPanelPage),
                 title: 'DNS',
