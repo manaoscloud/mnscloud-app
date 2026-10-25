@@ -26,6 +26,8 @@
 #   MNSCLOUD_BUILD_TOTAL_SWAP_MAX=<size>    swap the running builds may use together (default 6G)
 #   MNSCLOUD_BUILD_NICE=<n>                 CPU niceness (default 10)
 #   MNSCLOUD_BUILD_COMMAND=<cmd>            replaces the Angular build (used by the guard's own tests)
+#   MNSCLOUD_DISK_CHECK=<path>              workspace free-space check run before queueing (default
+#                                           $MNSCLOUD_WORKSPACE_ROOT/scripts/ops/disk-check.sh; empty = none)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -44,6 +46,14 @@ if [[ -n "${CI:-}" || "${MNSCLOUD_BUILD_GUARD:-1}" == "0" ]]; then
 fi
 
 log() { echo "[build-guard] $*" >&2; }
+
+# A full workspace disk stalls every agent; do not start a build there (workspace
+# docs/workspace-disk-hygiene.md). The check exists only on the workspace host.
+disk_check="${MNSCLOUD_DISK_CHECK-${MNSCLOUD_WORKSPACE_ROOT:-/opt/mnscloud}/scripts/ops/disk-check.sh}"
+if [[ -n "$disk_check" && -x "$disk_check" ]] && ! "$disk_check" --quiet; then
+  log 'not started: the workspace disk is full (see the disk-check message above)'
+  exit 74
+fi
 
 lock="${MNSCLOUD_BUILD_LOCK:-/var/lock/mnscloud-app-build.lock}"
 if ! { : >>"$lock"; } 2>/dev/null; then

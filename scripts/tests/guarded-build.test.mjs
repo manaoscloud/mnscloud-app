@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -15,6 +15,7 @@ function run(env) {
         CI: '',
         MNSCLOUD_BUILD_MEMORY_MAX: '0',
         MNSCLOUD_BUILD_TOTAL_MEMORY_MAX: '0',
+        MNSCLOUD_DISK_CHECK: '',
         ...env,
       },
     });
@@ -23,6 +24,22 @@ function run(env) {
     child.on('close', (code) => resolve({ code, stderr }));
   });
 }
+
+test('a full workspace disk refuses the build before it queues', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'guarded-build-'));
+  const check = join(dir, 'disk-check.sh');
+  writeFileSync(check, '#!/usr/bin/env bash\necho "[disk-check] REFUSED" >&2\nexit 1\n', {
+    mode: 0o755,
+  });
+  const result = await run({
+    MNSCLOUD_BUILD_LOCK: join(dir, 'build.lock'),
+    MNSCLOUD_DISK_CHECK: check,
+    MNSCLOUD_BUILD_COMMAND: `touch ${dir}/ran`,
+  });
+  assert.equal(result.code, 74);
+  assert.match(result.stderr, /workspace disk is full/);
+  assert.equal(existsSync(join(dir, 'ran')), false);
+});
 
 test('with one slot, concurrent builds on one host run one at a time', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'guarded-build-'));
