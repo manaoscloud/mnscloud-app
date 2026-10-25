@@ -212,7 +212,7 @@ export class VoipPabxParametersPage {
   readonly loading = computed(() => this.parameters.isLoading());
 
   readonly storageModeOptions = computed(() => [
-    { value: '', label: this.isMaster() ? 'Filesystem (default)' : 'Inherit platform value' },
+    { value: '', label: this.isMaster() ? 'Default' : 'Inherit platform value' },
     { value: 'filesystem', label: 'Filesystem' },
     { value: 'storage', label: 'Storage' },
   ]);
