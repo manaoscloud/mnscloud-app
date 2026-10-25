@@ -23,4 +23,15 @@ describe('InfraGIS asset history summary', () => {
     );
     expect(historySummary({ changes: null }, t)).toBe('');
   });
+
+  it('prints the values of a created asset', () => {
+    const created = {
+      name: 'POSTE 1',
+      layer: 'POSTES',
+      geometry: { type: 'POINT', latitude: -3.1, longitude: -60 },
+    };
+    expect(historySummary({ changes: created }, t)).toBe(
+      '[Name]: POSTE 1; [Layer]: POSTES; [Geometry]: -3.1, -60',
+    );
+  });
 });

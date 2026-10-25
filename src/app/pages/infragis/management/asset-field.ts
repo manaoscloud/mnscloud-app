@@ -50,9 +50,10 @@ export function historySummary(row: ConfigurableCrudRecord, t: (key: string) => 
   return CHANGE_FIELDS.filter(([key]) => key in changes)
     .map(([key, name]) => {
       const change = changes[key] as { from?: unknown; to?: unknown } | string;
-      if (typeof change !== 'object' || change === null || key === 'properties') return t(name);
+      if (typeof change !== 'object' || change === null) return `${t(name)}: ${plain(change)}`;
+      if (key === 'properties') return t(name);
       if (key === 'geometry') {
-        const to = (change.to ?? {}) as Record<string, unknown>;
+        const to = ('to' in change ? (change.to ?? {}) : change) as Record<string, unknown>;
         return `${t(name)}: ${plain(to['latitude'])}, ${plain(to['longitude'])}`;
       }
       if (!('from' in change)) return `${t(name)}: ${plain(change)}`;
