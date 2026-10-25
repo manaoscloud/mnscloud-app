@@ -16,6 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import { emptyToNull, propertiesTemplate, schemaSummary } from '../infragis-properties';
 import { assetAttachmentsCollection, assetHistoryCollection } from './asset-field';
+import { workOrderQuickForm } from '../../workorders/orders';
 
 export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
@@ -458,6 +459,16 @@ function assetsConfig(api: ApiService, dialog: MatDialog): ConfigurableCrudConfi
         label: 'History',
         icon: 'history',
         collection: (row) => assetHistoryCollection(row),
+      },
+      {
+        key: 'work-order',
+        label: 'Create work order',
+        icon: 'engineering',
+        form: (row) =>
+          workOrderQuickForm(
+            { assetUUID: String(row['IgaUUID'] ?? ''), customerUUID: null, ticketUUID: null },
+            String(row['IgaName'] ?? ''),
+          ),
       },
     ],
   };
