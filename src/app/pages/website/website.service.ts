@@ -48,6 +48,7 @@ type Envelope<T> = { status?: string; message?: string; data?: T };
 
 export const WEBSITE_SITES_ENDPOINT = 'website/sites';
 export const WEBSITE_OFFERS_ENDPOINT = 'website/offers';
+export const WEBSITE_ORDERS_ENDPOINT = 'website/orders';
 export const WEBSITE_PARAMETERS_ENDPOINT = 'system/website/parameters';
 
 /** True for the optimistic-revision failure of the site routes (`WEBSITE_REVISION_CONFLICT`). */
@@ -98,6 +99,13 @@ export class WebsiteService {
     return this.detail(
       await this.api.post<Envelope<WebsiteSite>>(`${this.path(uuid)}/publish`, { revision }),
     );
+  }
+
+  /** Website › Orders: approve (the first charge is issued) or cancel an order still waiting. */
+  async decideOrder(uuid: string, decision: 'approve' | 'cancel'): Promise<void> {
+    await this.api.post(`${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(uuid)}/decision`, {
+      decision,
+    });
   }
 
   /** Website › Offers: publish, back to draft or archive (the API renders the sites again). */

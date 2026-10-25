@@ -761,6 +761,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'website.sites' },
               },
               {
+                path: 'website/orders',
+                loadComponent: () =>
+                  import('./pages/website/orders/orders').then((m) => m.WebsiteOrdersPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.orders' },
+              },
+              {
                 path: 'website/offers',
                 loadComponent: () =>
                   import('./pages/website/offers/offers').then((m) => m.WebsiteOffersPage),

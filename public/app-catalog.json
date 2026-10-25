@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "982343ab2c31",
+  "version": "796445030f1f",
   "language": "pt-BR",
   "entries": [
     {
@@ -12287,6 +12287,14 @@
           "help": "Posição da oferta no site (menor primeiro)."
         }
       ]
+    },
+    {
+      "route": "/website/orders",
+      "menuPath": "Website › Pedidos",
+      "scope": "tenant",
+      "title": "Pedidos",
+      "description": "Contratações feitas pelos clientes no site e na área do cliente: oferta, valores, cobrança emitida no seu gateway e situação. Ofertas com aprovação esperam aqui.",
+      "fields": []
     },
     {
       "route": "/website/sites",
