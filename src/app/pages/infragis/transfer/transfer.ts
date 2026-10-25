@@ -45,6 +45,7 @@ export const EXPORT_FORMATS: Option[] = [
   { value: 'kml', label: 'KML' },
   { value: 'csv', label: 'CSV' },
   { value: 'shapefile', label: 'Shapefile (zip)' },
+  { value: 'sanitation', label: 'Sanitation network cadastre (CSV)' },
 ];
 const EXTENSIONS: Record<string, string> = {
   geojson: 'geojson',
@@ -52,6 +53,7 @@ const EXTENSIONS: Record<string, string> = {
   kml: 'kml',
   csv: 'csv',
   shapefile: 'zip',
+  sanitation: 'csv',
 };
 const MODES: Option[] = [
   { value: 'upsert', label: 'Update by external ID' },
@@ -444,10 +446,14 @@ export class InfraGisTransferPage {
     if (this.exporting()) return;
     this.exporting.set(true);
     try {
-      const query = new URLSearchParams({ format: this.exportFormat() });
+      // The sanitation cadastre has its own layout (network attributes) and ignores the layer.
+      const sanitation = this.exportFormat() === 'sanitation';
+      const query = new URLSearchParams(sanitation ? {} : { format: this.exportFormat() });
       if (this.exportProjectUUID()) query.set('projectUUID', this.exportProjectUUID());
-      if (this.exportLayerUUID()) query.set('layerUUID', this.exportLayerUUID());
-      const blob = await this.api.getBlob(`infragis/export?${query}`);
+      if (this.exportLayerUUID() && !sanitation) query.set('layerUUID', this.exportLayerUUID());
+      const blob = await this.api.getBlob(
+        sanitation ? `infragis/sanitation/export?${query}` : `infragis/export?${query}`,
+      );
       const stamp = new Date().toISOString().slice(0, 10);
       this.save(blob, `infragis-${stamp}.${EXTENSIONS[this.exportFormat()] ?? 'dat'}`);
     } catch (error) {

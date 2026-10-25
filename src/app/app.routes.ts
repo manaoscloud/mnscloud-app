@@ -1495,6 +1495,42 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'infragis' },
               },
               {
+                path: 'infragis/lighting',
+                loadComponent: () =>
+                  import('./pages/infragis/utilities/utilities').then(
+                    (m) => m.InfraGisUtilitiesPage,
+                  ),
+                title: 'InfraGIS • Public lighting | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'lighting' },
+              },
+              {
+                path: 'infragis/pole-attachments',
+                loadComponent: () =>
+                  import('./pages/infragis/utilities/utilities').then(
+                    (m) => m.InfraGisUtilitiesPage,
+                  ),
+                title: 'InfraGIS • Pole attachments | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'pole-attachments' },
+              },
+              {
+                path: 'infragis/pole-price-rules',
+                loadComponent: () =>
+                  import('./pages/infragis/utilities/utilities').then(
+                    (m) => m.InfraGisUtilitiesPage,
+                  ),
+                title: 'InfraGIS • Pole prices | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'pole-price-rules' },
+              },
+              {
+                path: 'infragis/pole-invoices',
+                loadComponent: () =>
+                  import('./pages/infragis/utilities/utilities').then(
+                    (m) => m.InfraGisUtilitiesPage,
+                  ),
+                title: 'InfraGIS • Pole invoices | mnscloud',
+                data: { scope: 'tenant', context: 'infragis', resource: 'pole-invoices' },
+              },
+              {
                 path: 'infragis',
                 loadComponent: () =>
                   import('./pages/infragis/dashboard/dashboard').then(

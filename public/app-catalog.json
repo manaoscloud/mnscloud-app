@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4fbf8bc96559",
+  "version": "3e0515b08d81",
   "language": "pt-BR",
   "entries": [
     {
@@ -3201,6 +3201,14 @@
       ]
     },
     {
+      "route": "/infragis/lighting",
+      "menuPath": "InfraGIS › Iluminação pública",
+      "scope": "tenant",
+      "title": "Iluminação pública",
+      "description": "Pontos de luz por tecnologia, potência instalada e pontos com ordens de serviço abertas.",
+      "fields": []
+    },
+    {
       "route": "/infragis/map",
       "menuPath": "InfraGIS › Mapa",
       "scope": "tenant",
@@ -3242,6 +3250,101 @@
         {
           "label": "Atenuação da fibra (dB/km)",
           "help": "Típico: 0,35 dB/km em 1310 nm e 0,25 dB/km em 1490 nm; o comprimento do cabo vem da propriedade comprimento ou do traçado no mapa."
+        }
+      ]
+    },
+    {
+      "route": "/infragis/pole-attachments",
+      "menuPath": "InfraGIS › Ocupação de postes",
+      "scope": "tenant",
+      "title": "Ocupação de postes",
+      "description": "Pontos de fixação nos postes: sua rede e terceiros, por dono do poste.",
+      "fields": [
+        {
+          "label": "Poste",
+          "help": ""
+        },
+        {
+          "label": "Ocupante",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "CNPJ da empresa",
+          "help": ""
+        },
+        {
+          "label": "Dono do poste",
+          "help": ""
+        },
+        {
+          "label": "Pontos",
+          "help": ""
+        },
+        {
+          "label": "Regularização",
+          "help": ""
+        },
+        {
+          "label": "Contratar",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/infragis/pole-invoices",
+      "menuPath": "InfraGIS › Faturas de postes",
+      "scope": "tenant",
+      "title": "Faturas de postes",
+      "description": "Faturas recebidas dos donos dos postes, conciliadas com os seus pontos cadastrados.",
+      "fields": [
+        {
+          "label": "Dono do poste",
+          "help": ""
+        },
+        {
+          "label": "Mês",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Total da fatura",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/infragis/pole-price-rules",
+      "menuPath": "InfraGIS › Preço de postes",
+      "scope": "tenant",
+      "title": "Preço de postes",
+      "description": "Preço mensal por ponto de fixação, por dono do poste e mês de início, usado na conciliação.",
+      "fields": [
+        {
+          "label": "Dono do poste",
+          "help": ""
+        },
+        {
+          "label": "Preço por ponto",
+          "help": ""
+        },
+        {
+          "label": "Válido a partir de",
+          "help": ""
+        },
+        {
+          "label": "Base",
+          "help": ""
         }
       ]
     },

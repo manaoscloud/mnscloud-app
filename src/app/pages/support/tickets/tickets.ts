@@ -1,3 +1,4 @@
+import { workOrderQuickForm } from '../../workorders/orders';
 import { Component, afterNextRender, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -191,6 +192,25 @@ function config(
         collection: (row) => attachmentsCollection(api, dialog, base, row, true),
       },
       { key: 'assign-me', label: 'Assign to me', icon: 'assignment_ind' },
+      ...(platform
+        ? []
+        : [
+            {
+              key: 'work-order',
+              label: 'Create work order',
+              icon: 'engineering',
+              tooltip: 'Field work order linked to this ticket and its customer.',
+              form: (row: ConfigurableCrudRecord) =>
+                workOrderQuickForm(
+                  {
+                    assetUUID: null,
+                    customerUUID: (row['CustomerUUID'] as string | undefined) ?? null,
+                    ticketUUID: String(row['SupportTicketUUID'] ?? ''),
+                  },
+                  String(row['Subject'] ?? ''),
+                ),
+            },
+          ]),
       ...(platform
         ? [
             {

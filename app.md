@@ -1766,6 +1766,11 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   entitlement `module.workorders.*`): generic CRUD with links (technician from `workorders/assignees`,
   InfraGIS asset, customer, support ticket), place and dates; row actions Change status (only the
   moves `allowedTransitions` offers; the API decides), Add note and Timeline.
+  `workOrderQuickForm` creates an order from an InfraGIS asset or a tenant support ticket (row action).
+- InfraGIS utility pages (`src/app/pages/infragis/utilities/utilities.ts`, route data `resource`):
+  Public lighting (read-only summary), Pole attachments, Pole prices and Pole invoices (row actions Add
+  invoice lines, parsed from pasted text by `parseInvoiceLines`, and Reconciliation). Import/export
+  offers the sanitation network cadastre CSV (`infragis/sanitation/export`).
 
 ## Auth/Guards
 

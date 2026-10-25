@@ -373,3 +373,59 @@ export class WorkOrdersPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     super(workOrdersConfig(inject(ActivatedRoute).snapshot.data['mine'] === true));
   }
 }
+
+/**
+ * Quick "new work order" form for another page (an InfraGIS asset, a support ticket): the link is a
+ * hidden field and the title starts from the source.
+ */
+export function workOrderQuickForm(
+  links: Readonly<Record<'assetUUID' | 'customerUUID' | 'ticketUUID', string | null>>,
+  title: string,
+): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: 'workorders/orders',
+    uuidField: 'WorUUID',
+    pageTitle: 'New work order',
+    pageDescription: title,
+    createTitle: 'New work order',
+    savedMessage: 'Work order saved.',
+    statusFilter: false,
+    initialValues: { ...links, title, kind: 'REPAIR', priority: 'NORMAL' },
+    columns: [],
+    fields: [
+      { key: 'title', label: 'Title', required: true, span: 4 },
+      {
+        key: 'kind',
+        label: 'Kind',
+        type: 'select',
+        options: WORK_ORDER_KINDS,
+        translateOptions: true,
+        span: 2,
+      },
+      {
+        key: 'priority',
+        label: 'Priority',
+        type: 'select',
+        options: WORK_ORDER_PRIORITIES,
+        translateOptions: true,
+        span: 2,
+      },
+      {
+        key: 'assigneeUUID',
+        label: 'Technician',
+        type: 'search-select',
+        remoteLookup: {
+          endpoint: 'workorders/assignees',
+          uuidField: 'UsrUUID',
+          labelField: 'UsrName',
+        },
+        span: 2,
+      },
+      { key: 'dueAt', label: 'Due', type: 'datetime', span: 2 },
+      { key: 'description', label: 'Description', type: 'textarea', rows: 3, span: 4 },
+      { key: 'assetUUID', label: 'Asset', hidden: true, span: 4 },
+      { key: 'customerUUID', label: 'Customer', hidden: true, span: 4 },
+      { key: 'ticketUUID', label: 'Support ticket', hidden: true, span: 4 },
+    ],
+  });
+}
