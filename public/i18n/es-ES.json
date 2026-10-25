@@ -9979,7 +9979,7 @@
   "releaseNotes.pageTitle": "Novedades",
   "releaseNotes.pageDescription": "Lo que se lanzó, mejoró y corrigió en la plataforma, por módulo. Cada novedad aparece cuando todas sus partes ya están implantadas en este entorno.",
   "releaseNotes.tabLive": "En este entorno",
-  "releaseNotes.tabPending": "En implantación",
+  "releaseNotes.tabPending": "Próximamente",
   "releaseNotes.pendingHint": "Novedades recibidas de los PR con alguna parte aún no implantada en este entorno. Solo la plataforma ve esta pestaña.",
   "releaseNotes.scope": "Módulos mostrados",
   "releaseNotes.scopeMine": "Mis módulos",
@@ -10343,5 +10343,7 @@
   "Work Schedule Assignments": "Turnos de los empleados",
   "Timesheets": "Registro horario",
   "Time Issues": "Inconsistencias",
-  "Time Policies": "Políticas de registro horario"
+  "Time Policies": "Políticas de registro horario",
+  "releaseNotes.upcomingHint": "Cambios aprobados que están en camino a este entorno. La fecha aparece cuando lleguen.",
+  "notifications.releaseNoteUpcoming": "Idea {{code}} en implantación"
 }

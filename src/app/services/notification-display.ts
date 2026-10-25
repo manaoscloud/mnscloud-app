@@ -14,6 +14,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'lightbulb';
     case 'release_note.published':
       return 'campaign';
+    case 'release_note.upcoming':
+      return 'schedule';
     case 'logs.account.cap_warning':
     case 'logs.account.capped':
       return 'receipt_long';
@@ -40,6 +42,8 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       });
     case 'release_note.published':
       return t('notifications.releaseNotePublished', { code: param('code') });
+    case 'release_note.upcoming':
+      return t('notifications.releaseNoteUpcoming', { code: param('code') });
     case 'logs.account.cap_warning':
       return t('notifications.logsCapWarning', {
         account: param('account'),
@@ -86,7 +90,7 @@ export function notificationDescription(item: InboxNotification, language: strin
             ? item.params['extensions']
             : item.type === 'dns.monitor.target'
               ? item.params['failing'] || item.params['target']
-              : item.type === 'release_note.published'
+              : item.type.startsWith('release_note.')
                 ? releaseNoteTitle(item, language)
                 : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
