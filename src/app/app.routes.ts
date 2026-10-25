@@ -3051,6 +3051,12 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.forwardZones', list: 'forward-zones' },
               },
               {
+                path: 'dns/panel',
+                loadComponent: () => import('./pages/dns/panel/panel').then((m) => m.DnsPanelPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.panel' },
+              },
+              {
                 path: 'dns/client-tests',
                 loadComponent: () =>
                   import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),

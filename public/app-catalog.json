@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "eb58fa6bba70",
+  "version": "885672191db9",
   "language": "pt-BR",
   "entries": [
     {
@@ -7135,6 +7135,14 @@
       "menuPath": "DNS › Monitoramento",
       "scope": "platform",
       "title": "Monitoramento",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/dns/panel",
+      "menuPath": "DNS › Painel",
+      "scope": "platform",
+      "title": "Painel",
       "description": "",
       "fields": []
     },
