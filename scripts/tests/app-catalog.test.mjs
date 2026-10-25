@@ -40,6 +40,20 @@ test('route walker resolves nested paths and route data', () => {
   assert.ok(ts.version);
 });
 
+test('route walker follows a shared lazy loader declared once', () => {
+  const routes = readRoutes(`const loadUtilities = () =>
+    import('./pages/infragis/utilities/utilities').then((m) => m.InfraGisUtilitiesPage);
+  export const routes = [
+    { path: 'infragis/lighting', loadComponent: loadUtilities, data: { resource: 'lighting' } },
+    { path: 'infragis/pole-invoices', loadComponent: loadUtilities, data: { resource: 'pole-invoices' } },
+  ];`);
+  assert.equal(
+    routes.get('/infragis/lighting').file,
+    'src/app/pages/infragis/utilities/utilities.ts',
+  );
+  assert.equal(routes.get('/infragis/pole-invoices').data.resource, 'pole-invoices');
+});
+
 test('page reader takes the main configuration and the desk branch', () => {
   const page = readPage(process.cwd(), 'src/app/pages/support/tickets/tickets.ts', true);
   assert.equal(page.title, 'Platform tickets');

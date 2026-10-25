@@ -54,6 +54,8 @@ export function readRoutes(source) {
   const sf = ts.createSourceFile(ROUTES_PATH, source, ts.ScriptTarget.Latest, true);
   const routes = new Map();
   const arrays = new Map();
+  // Shared lazy loaders (`const loadX = () => import('./pages/...')`) used by several routes.
+  const loaders = new Map();
   ts.forEachChild(sf, function collect(node) {
     if (
       ts.isVariableDeclaration(node) &&
@@ -61,6 +63,13 @@ export function readRoutes(source) {
       ts.isArrayLiteralExpression(node.initializer)
     ) {
       arrays.set(node.name.getText(), node.initializer);
+    }
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.initializer &&
+      ts.isArrowFunction(node.initializer)
+    ) {
+      loaders.set(node.name.getText(), node.initializer);
     }
     ts.forEachChild(node, collect);
   });
@@ -89,7 +98,8 @@ export function readRoutes(source) {
     if (!ts.isObjectLiteralExpression(element)) return;
     const path = literals(property(element, 'path'))[0] ?? '';
     const full = [prefix, path].filter(Boolean).join('/');
-    const load = property(element, 'loadComponent');
+    const declared = property(element, 'loadComponent');
+    const load = declared && ts.isIdentifier(declared) ? loaders.get(declared.text) : declared;
     const importMatch = load ? /import\('(\.\/pages\/[^']+)'\)/.exec(load.getText()) : null;
     if (importMatch) {
       routes.set(`/${full}`, {
