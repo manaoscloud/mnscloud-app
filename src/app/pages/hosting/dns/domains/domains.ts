@@ -13,6 +13,11 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { readStoredEnvironmentUUID } from '../../../../core/environment/environment-context';
+import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
+import { DNS_BOOLEAN_OPTIONS } from '../../../dns/dns-input';
+
+/** DNSSEC state read right before its form opens (zones on the MNSCloud DNS provider, D7b). */
+let dnssecValues: ConfigurableCrudRecord = {};
 
 const IN_FLIGHT_OPERATION_STATES = new Set(['queued', 'running', 'waiting_retry', 'verifying']);
 
@@ -416,6 +421,10 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       ) && row['HddLastProvisionedAt']
         ? [{ key: 'records', label: 'DNS records', icon: 'dns', tooltip: 'Manage DNS records' }]
         : []),
+      ...(String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase() === 'mnscloud_dns' &&
+      row['HddLastProvisionedAt']
+        ? [this.dnssecAction(row)]
+        : []),
       {
         ...PROVISION_DOMAIN_ACTION,
         icon:
@@ -427,6 +436,72 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
             : 'cloud_sync',
       },
     ];
+  }
+
+  private dnssecEndpoint(row: ConfigurableCrudRecord): string {
+    const prefix = this.isMaster() ? 'system/hosting/dns' : 'hosting/dns';
+    return `${prefix}/domains/${this.recordUUID(row)}/dnssec`;
+  }
+
+  /** On: one signing key shared by the cluster nodes and the DS to publish at the registrar. */
+  private dnssecAction(row: ConfigurableCrudRecord): ConfigurableCrudRowAction {
+    return {
+      key: 'dnssec',
+      label: 'dns.dnssec',
+      icon: 'verified_user',
+      form: () =>
+        defineCrud({
+          endpoint: this.dnssecEndpoint(row),
+          uuidField: 'zone',
+          pageTitle: 'dns.dnssec',
+          pageDescription: 'dns.dnssecDescription',
+          createTitle: 'dns.dnssec',
+          dialogDescription: 'dns.dnssecDescription',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: {
+            enabled: dnssecValues['enabled'] ? 1 : 0,
+            ds: String(dnssecValues['ds'] ?? ''),
+          },
+          payload: (values) => ({ enabled: Number(values['enabled']) === 1 }),
+          fields: [
+            {
+              key: 'enabled',
+              label: 'dns.dnssecEnabled',
+              type: 'select',
+              required: true,
+              span: 2,
+              translateOptions: true,
+              options: DNS_BOOLEAN_OPTIONS,
+              help: 'dns.dnssecEnabledHelp',
+            },
+            {
+              key: 'ds',
+              label: 'dns.dnssecDs',
+              span: 2,
+              disabledWhen: () => true,
+              help: 'dns.dnssecDsHelp',
+            },
+          ],
+        }),
+    };
+  }
+
+  override async runRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'dnssec') {
+      try {
+        const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+          this.dnssecEndpoint(row),
+        );
+        dnssecValues = response?.data ?? {};
+      } catch (error) {
+        this.snack.error(this.t(this.errorMessage(error)));
+        return;
+      }
+    }
+    await super.runRowAction(action, row);
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
