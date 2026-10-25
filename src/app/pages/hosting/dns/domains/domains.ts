@@ -411,7 +411,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const status = String(row['DomainSyncStatus'] ?? row['HddProvisionStatus'] ?? '');
     return [
-      ...(['cpanel_dnsonly', 'route53'].includes(
+      ...(['cpanel_dnsonly', 'route53', 'mnscloud_dns'].includes(
         String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase(),
       ) && row['HddLastProvisionedAt']
         ? [{ key: 'records', label: 'DNS records', icon: 'dns', tooltip: 'Manage DNS records' }]

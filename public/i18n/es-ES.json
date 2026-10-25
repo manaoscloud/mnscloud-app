@@ -9602,6 +9602,14 @@
   "dns.filterCategoryFakenews": "Noticias falsas",
   "dns.filterSafeSearch": "Búsqueda segura",
   "dns.filterSafeSearchHelp": "Fuerza la búsqueda segura en Google, Bing y DuckDuckGo y el modo restringido de YouTube.",
+  "dns.authoritySettings": "Autoritativo",
+  "dns.authoritySettingsDescription": "Con el autoritativo activado, los servidores autoritativos del clúster responden las zonas alojadas para todo internet. El primer guardado crea el proveedor \"MNSCloud DNS\" en Hosting › DNS, que los entornos eligen para sus dominios; cada dominio debe delegarse, en su registrador, a los nameservers de abajo.",
+  "dns.authorityEnabled": "Autoritativo activado",
+  "dns.authorityEnabledHelp": "Desactivado, las zonas se conservan pero ningún servidor las responde y el proveedor queda inactivo.",
+  "dns.authorityNameservers": "Nameservers",
+  "dns.authorityNameserversHelp": "De 2 a 6 nombres separados por coma, por ejemplo ns1.sumarca.com, ns2.sumarca.com. Cada nombre debe resolver a un servidor autoritativo del clúster.",
+  "dns.authorityHostmaster": "Correo de contacto de las zonas",
+  "dns.authorityHostmasterHelp": "Publicado en el SOA de cada zona alojada.",
   "dns.resolverSettings": "Resolutor",
   "dns.resolverSettingsDescription": "Activa el DNS recursivo del clúster en el puerto 53 de la dirección de cada servidor, solo para las redes de clientes activas, y DNS64 para clientes solo IPv6.",
   "dns.resolverService": "Servicio de resolución",
@@ -10403,5 +10411,6 @@
   "Only customer ports serve customers": "Solo los puertos de cliente atienden clientes",
   "Customer not found": "Cliente no encontrado",
   "Authentication access not found": "Acceso no encontrado",
-  "Authentication access is already served by another port": "Este acceso ya es atendido por otro puerto"
+  "Authentication access is already served by another port": "Este acceso ya es atendido por otro puerto",
+  "MNSCloud DNS": "MNSCloud DNS"
 }

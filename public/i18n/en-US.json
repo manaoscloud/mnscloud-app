@@ -9602,6 +9602,14 @@
   "dns.filterCategoryFakenews": "Fake news",
   "dns.filterSafeSearch": "SafeSearch",
   "dns.filterSafeSearchHelp": "Forces SafeSearch on Google, Bing and DuckDuckGo and YouTube restricted mode.",
+  "dns.authoritySettings": "Authoritative",
+  "dns.authoritySettingsDescription": "With the authoritative service on, the cluster authoritative servers answer the hosted zones for the whole internet. The first save creates the \"MNSCloud DNS\" provider in Hosting › DNS, which environments choose for their domains; each domain must be delegated, at its registrar, to the nameservers below.",
+  "dns.authorityEnabled": "Authoritative on",
+  "dns.authorityEnabledHelp": "Off, zones are kept but no server answers them and the provider is inactive.",
+  "dns.authorityNameservers": "Nameservers",
+  "dns.authorityNameserversHelp": "2 to 6 names separated by commas, for example ns1.yourbrand.com, ns2.yourbrand.com. Each name must resolve to an authoritative server of the cluster.",
+  "dns.authorityHostmaster": "Zones contact e-mail",
+  "dns.authorityHostmasterHelp": "Published in the SOA of every hosted zone.",
   "dns.resolverSettings": "Resolver",
   "dns.resolverSettingsDescription": "Turns on the recursive DNS of the cluster on port 53 of each server address, only for the active client networks, and DNS64 for IPv6-only clients.",
   "dns.resolverService": "Resolver service",
@@ -10403,5 +10411,6 @@
   "Only customer ports serve customers": "Only customer ports serve customers",
   "Customer not found": "Customer not found",
   "Authentication access not found": "Authentication access not found",
-  "Authentication access is already served by another port": "Authentication access is already served by another port"
+  "Authentication access is already served by another port": "Authentication access is already served by another port",
+  "MNSCloud DNS": "MNSCloud DNS"
 }

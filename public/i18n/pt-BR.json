@@ -9603,6 +9603,14 @@
   "dns.filterCategoryFakenews": "Notícias falsas",
   "dns.filterSafeSearch": "Busca segura",
   "dns.filterSafeSearchHelp": "Força a busca segura no Google, Bing e DuckDuckGo e o modo restrito do YouTube.",
+  "dns.authoritySettings": "Autoritativo",
+  "dns.authoritySettingsDescription": "Com o autoritativo ligado, os servidores autoritativos do cluster respondem as zonas hospedadas para toda a internet. O primeiro salvamento cria o provedor \"MNSCloud DNS\" em Hospedagem › DNS, que os ambientes escolhem para os seus domínios; o domínio deve apontar, no registro, para os nameservers abaixo.",
+  "dns.authorityEnabled": "Autoritativo ligado",
+  "dns.authorityEnabledHelp": "Desligado, as zonas ficam guardadas mas nenhum servidor responde por elas e o provedor fica inativo.",
+  "dns.authorityNameservers": "Nameservers",
+  "dns.authorityNameserversHelp": "De 2 a 6 nomes separados por vírgula, por exemplo ns1.suamarca.com.br, ns2.suamarca.com.br. Cada nome precisa resolver para um servidor autoritativo do cluster.",
+  "dns.authorityHostmaster": "E-mail de contato das zonas",
+  "dns.authorityHostmasterHelp": "Publicado no SOA de cada zona hospedada.",
   "dns.resolverSettings": "Resolvedor",
   "dns.resolverSettingsDescription": "Liga o DNS recursivo do cluster na porta 53 do endereço de cada servidor, só para as redes de clientes ativas, e o DNS64 para clientes só IPv6.",
   "dns.resolverService": "Serviço do resolvedor",
@@ -10404,5 +10412,6 @@
   "Only customer ports serve customers": "Só portas de cliente atendem clientes",
   "Customer not found": "Cliente não encontrado",
   "Authentication access not found": "Acesso não encontrado",
-  "Authentication access is already served by another port": "Este acesso já é atendido por outra porta"
+  "Authentication access is already served by another port": "Este acesso já é atendido por outra porta",
+  "MNSCloud DNS": "MNSCloud DNS"
 }
