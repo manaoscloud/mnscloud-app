@@ -9356,6 +9356,8 @@
   "dns.roleRecursiveHelp": "Instala o PowerDNS Recursor, que resolve nomes da internet com validação DNSSEC. Não pode ser alterado após a criação.",
   "dns.roleAuthoritativeHelp": "Instala o PowerDNS Authoritative, que publica zonas próprias. Não pode ser alterado após a criação.",
   "dns.roleEdgeHelp": "Instala o dnsdist na frente do recursivo (ou do autoritativo): balanceamento, limites e, nas próximas fases, DoT/DoH. Exige o recursivo ou o autoritativo. Não pode ser alterado após a criação.",
+  "dns.serverRoles": "Papéis",
+  "dns.serverRolesDescription": "Os papéis definem os motores do servidor. Ao salvar, o servidor instala os motores dos papéis novos antes de trocar (se a instalação falhar, nada muda) e desliga os removidos, em alguns minutos.",
   "dns.install": "Comando de instalação",
   "dns.installDescription": "Execute o comando como root no host de destino com o MNSCloud Agent instalado, ativo e registrado.",
   "dns.installWarning": "Autorização privada válida por 30 minutos e para um único uso. A instalação preserva a identidade do Agent.",
