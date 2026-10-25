@@ -378,6 +378,7 @@ export class HostingDnsDashboardPage {
   platformLabel(platform: string) {
     if (platform === 'cpanel_dnsonly') return 'cPanel DNSOnly';
     if (platform === 'route53') return 'Route 53';
+    if (platform === 'mnscloud_dns') return 'MNSCloud DNS';
     return platform || '-';
   }
 

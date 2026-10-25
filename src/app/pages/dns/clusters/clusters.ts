@@ -13,7 +13,7 @@ import {
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
 /** Cluster settings (resolver, filter) read right before their form opens (revision included). */
-const SETTINGS = ['resolver', 'filter'];
+const SETTINGS = ['resolver', 'filter', 'authority'];
 let settingsValues: ConfigurableCrudRecord = {};
 
 const FILTER_CATEGORIES = [
@@ -138,6 +138,53 @@ const config = defineCrud({
           ],
         }),
     },
+    {
+      key: 'authority',
+      label: 'dns.authoritySettings',
+      icon: 'public',
+      form: (row) =>
+        settingsForm(
+          row,
+          'authority',
+          'dns.authoritySettings',
+          'dns.authoritySettingsDescription',
+          {
+            initialValues: {
+              enabled: Number(settingsValues['DcaEnabled'] ?? 0),
+              nameservers: Array.isArray(settingsValues['DcaNameserversJson'])
+                ? settingsValues['DcaNameserversJson'].join(', ')
+                : '',
+              hostmaster: settingsValues['DcaHostmaster'] ?? '',
+              revision: Number(settingsValues['DcaRevision'] ?? 0),
+            },
+            payload: (values) => ({
+              enabled: Number(values['enabled']),
+              nameservers: String(values['nameservers'] ?? ''),
+              hostmaster: String(values['hostmaster'] ?? '').trim(),
+              revision: Number(values['revision']),
+            }),
+            fields: [
+              yesNo('enabled', 'dns.authorityEnabled', 2),
+              {
+                key: 'nameservers',
+                label: 'dns.authorityNameservers',
+                required: true,
+                span: 2,
+                help: 'dns.authorityNameserversHelp',
+              },
+              {
+                key: 'hostmaster',
+                label: 'dns.authorityHostmaster',
+                type: 'email',
+                required: true,
+                span: 2,
+                help: 'dns.authorityHostmasterHelp',
+              },
+              { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+            ],
+          },
+        ),
+    },
   ],
   fields: runtimeClusterFields('Dnc', 'dns'),
   columns: runtimeClusterColumns('Dnc', 'dns'),
@@ -155,7 +202,7 @@ export class DnsClusterPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     super(config);
   }
 
-  /** The resolver and filter forms open with the saved settings and their revision. */
+  /** The resolver, filter and authority forms open with the saved settings and their revision. */
   override async runRowAction(
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
