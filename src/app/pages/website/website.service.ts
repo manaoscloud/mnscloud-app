@@ -47,6 +47,7 @@ export type WebsiteSiteDetail = {
 type Envelope<T> = { status?: string; message?: string; data?: T };
 
 export const WEBSITE_SITES_ENDPOINT = 'website/sites';
+export const WEBSITE_OFFERS_ENDPOINT = 'website/offers';
 export const WEBSITE_PARAMETERS_ENDPOINT = 'system/website/parameters';
 
 /** True for the optimistic-revision failure of the site routes (`WEBSITE_REVISION_CONFLICT`). */
@@ -97,6 +98,18 @@ export class WebsiteService {
     return this.detail(
       await this.api.post<Envelope<WebsiteSite>>(`${this.path(uuid)}/publish`, { revision }),
     );
+  }
+
+  /** Website › Offers: publish, back to draft or archive (the API renders the sites again). */
+  async setOfferStatus(
+    uuid: string,
+    revision: number,
+    status: 'draft' | 'published' | 'archived',
+  ): Promise<void> {
+    await this.api.post(`${WEBSITE_OFFERS_ENDPOINT}/${encodeURIComponent(uuid)}/status`, {
+      revision,
+      status,
+    });
   }
 
   async unpublish(uuid: string, revision: number): Promise<WebsiteSiteDetail | null> {
