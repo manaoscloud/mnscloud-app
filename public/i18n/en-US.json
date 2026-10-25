@@ -9960,7 +9960,7 @@
   "releaseNotes.pageTitle": "Release notes",
   "releaseNotes.pageDescription": "What was released, improved and fixed in the platform, per module. Each entry appears once every part of it is deployed in this environment.",
   "releaseNotes.tabLive": "In this environment",
-  "releaseNotes.tabPending": "Being deployed",
+  "releaseNotes.tabPending": "Coming soon",
   "releaseNotes.pendingHint": "Entries received from the PRs with some part not deployed in this environment yet. Only the platform sees this tab.",
   "releaseNotes.scope": "Modules shown",
   "releaseNotes.scopeMine": "My modules",
@@ -10324,5 +10324,7 @@
   "Work Schedule Assignments": "Schedule assignments",
   "Timesheets": "Timesheets",
   "Time Issues": "Timesheet issues",
-  "Time Policies": "Time policies"
+  "Time Policies": "Time policies",
+  "releaseNotes.upcomingHint": "Approved changes on their way to this environment. The date shows up when they arrive.",
+  "notifications.releaseNoteUpcoming": "Idea {{code}} being deployed"
 }

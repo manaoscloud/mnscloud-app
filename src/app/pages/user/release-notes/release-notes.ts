@@ -28,8 +28,9 @@ type Status = 'live' | 'pending';
 /**
  * What changed in the platform (App › Novidades), one entry per feature, shown only when every
  * component of the feature is deployed in this environment (DEV shows DEV, PROD shows PROD).
- * Tenants see platform notes and the modules they contract ("All modules" shows the rest); the
- * platform master also sees the entries still being deployed here. The same page serves the public
+ * Tenants see platform notes and the modules they contract ("All modules" shows the rest). The
+ * "Coming soon" tab lists entries received but not deployed here yet (never security ones, except
+ * for the platform master, who also sees each component marked deployed or not). The same page serves the public
  * changelog (`/release-notes`, `data.publicFeed`, every module, no sign-in) with its RSS feed;
  * signed-in users can turn on the weekly e-mail digest. Contract: workspace docs/release-notes.md;
  * the API decides what exists and what is visible.
@@ -62,7 +63,10 @@ export class ReleaseNotesPage {
       !this.publicFeed && (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
   readonly scope = signal<Scope>('mine');
-  readonly status = signal<Status>('live');
+  /** `?tab=upcoming` (link of the "idea being deployed" notice) opens the coming soon tab. */
+  readonly status = signal<Status>(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('tab') === 'upcoming' ? 'pending' : 'live',
+  );
   readonly module = signal<string>('');
   readonly type = signal<string>('');
   readonly types = RELEASE_NOTE_TYPES;

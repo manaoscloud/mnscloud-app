@@ -59,3 +59,18 @@ describe('release note channels', () => {
     expect(notificationDescription(item, 'es-ES')).toBe('Panel');
   });
 });
+
+describe('upcoming idea notice', () => {
+  it('shows the idea being deployed with the note title', () => {
+    const item = {
+      type: 'release_note.upcoming',
+      params: { code: 'IDEA-AAAA-BBBB-CCCC', titlePt: 'Painel', titleEn: 'Panel' },
+      lastEventAt: null,
+    } as unknown as InboxNotification;
+    expect(notificationIcon(item)).toBe('schedule');
+    expect(notificationTitle(item, (key, params) => `${key}:${params?.['code']}`)).toBe(
+      'notifications.releaseNoteUpcoming:IDEA-AAAA-BBBB-CCCC',
+    );
+    expect(notificationDescription(item, 'pt-BR')).toBe('Painel');
+  });
+});

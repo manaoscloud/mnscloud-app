@@ -9961,7 +9961,7 @@
   "releaseNotes.pageTitle": "Novidades",
   "releaseNotes.pageDescription": "O que foi lançado, melhorado e corrigido na plataforma, por módulo. Cada novidade aparece quando todas as partes dela já estão implantadas neste ambiente.",
   "releaseNotes.tabLive": "Neste ambiente",
-  "releaseNotes.tabPending": "Em implantação",
+  "releaseNotes.tabPending": "Em breve",
   "releaseNotes.pendingHint": "Novidades já recebidas dos PRs, mas com alguma parte ainda não implantada neste ambiente. Só a plataforma vê esta aba.",
   "releaseNotes.scope": "Módulos exibidos",
   "releaseNotes.scopeMine": "Meus módulos",
@@ -10325,5 +10325,7 @@
   "Work Schedule Assignments": "Escalas dos colaboradores",
   "Timesheets": "Espelho de ponto",
   "Time Issues": "Inconsistências",
-  "Time Policies": "Políticas de ponto"
+  "Time Policies": "Políticas de ponto",
+  "releaseNotes.upcomingHint": "Mudanças já aprovadas que estão a caminho deste ambiente. A data aparece quando chegarem.",
+  "notifications.releaseNoteUpcoming": "Ideia {{code}} em implantação"
 }

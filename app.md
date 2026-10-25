@@ -434,6 +434,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   (`/api/v1/public/release-notes/rss?lang=`). Signed-in users get the "weekly e-mail digest" toggle
   (`/release-notes/subscription`); `/release-notes/unsubscribe?s=&t=` is the one-click unsubscribe page
   of the e-mail link. A delivered idea shows in the bell as `release_note.published`.
+- Every signed-in user has the tabs "In this environment" / "Coming soon" (`status=pending`: received,
+  not deployed here; no security entries for non-masters). `?tab=upcoming` opens "Coming soon", the
+  route of the `release_note.upcoming` notice ("Idea … being deployed").
 - `/settings/release-notes` (`ReleaseNotesAdminPage`, platform master) is a generic CRUD without
   create/delete: edit type, audience, modules, texts in three languages or hide. Texts come from the
   API per language; `localizedText` falls back to English, Portuguese, Spanish.
