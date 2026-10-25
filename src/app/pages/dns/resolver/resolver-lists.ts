@@ -9,192 +9,270 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { runtimeServerClusterField } from '../../../shared/runtime-server/runtime-server-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
+type CrudConfig = Parameters<typeof defineCrud>[0];
+
+/** One list of cluster-scoped DNS resources: paginated, revision-checked deletion, no bulk delete. */
+function clusterList(
+  path: string,
+  prefix: string,
+  title: string,
+  description: string,
+  config: Omit<
+    CrudConfig,
+    'endpoint' | 'uuidField' | 'pageTitle' | 'pageDescription' | 'payload'
+  > & {
+    /** Resource-specific payload changes after the common ones (numbers, revision, immutable cluster). */
+    adjust?: (
+      payload: ConfigurableCrudRecord,
+      values: ConfigurableCrudRecord,
+      editing: boolean,
+    ) => void;
+  },
+) {
+  const { adjust, fields, columns, initialValues, ...rest } = config;
+  return defineCrud({
+    endpoint: `system/dns/${path}`,
+    uuidField: `${prefix}UUID`,
+    pageTitle: title,
+    pageDescription: description,
+    dialogDescription: description,
+    serverSidePagination: true,
+    initialPageSize: 50,
+    bulkDelete: false,
+    deletePayload: (row) => ({ revision: Number(row[`${prefix}Revision`]) }),
+    initialValues: { ...initialValues, status: 1, revision: 1, DnsClusterDncUUID: '' },
+    payload: (values, editing) => {
+      const payload = dnsPayload(values, editing);
+      if (editing) delete payload['DnsClusterDncUUID'];
+      adjust?.(payload, values, editing);
+      return payload;
+    },
+    fields: [
+      { key: 'status', source: `${prefix}Status`, label: 'Status', type: 'status', span: 1 },
+      runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
+      ...fields,
+      {
+        key: 'revision',
+        source: `${prefix}Revision`,
+        label: 'Revision',
+        type: 'number',
+        hidden: true,
+      },
+    ],
+    columns: [
+      ...columns,
+      { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
+      { id: 'status', field: `${prefix}Status`, label: 'Status', kind: 'status' },
+    ],
+    ...rest,
+  });
+}
+
 // Resolver lists of a cluster (D2a) and filter rules (D5a) share one page; the route data chooses
 // the list.
-const clientNetworks = defineCrud({
-  endpoint: 'system/dns/client-networks',
-  uuidField: 'DcnUUID',
-  pageTitle: 'dns.clientNetworks',
-  pageDescription: 'dns.clientNetworksDescription',
-  dialogDescription: 'dns.clientNetworksDescription',
-  serverSidePagination: true,
-  initialPageSize: 50,
-  bulkDelete: false,
-  deletePayload: (row) => ({ revision: Number(row['DcnRevision']) }),
-  initialValues: { name: '', cidr: '', status: 1, revision: 1, DnsClusterDncUUID: '' },
-  payload: (values, editing) => {
-    const payload = dnsPayload(values, editing);
-    if (editing) delete payload['DnsClusterDncUUID'];
-    return payload;
+const clientNetworks = clusterList(
+  'client-networks',
+  'Dcn',
+  'dns.clientNetworks',
+  'dns.clientNetworksDescription',
+  {
+    initialValues: { name: '', cidr: '' },
+    fields: [
+      { key: 'name', source: 'DcnName', label: 'Name', required: true, span: 1 },
+      {
+        key: 'cidr',
+        source: 'DcnCidr',
+        label: 'dns.clientNetworkCidr',
+        required: true,
+        span: 1,
+        help: 'dns.clientNetworkCidrHelp',
+      },
+    ],
+    columns: [
+      { id: 'name', field: 'DcnName', label: 'Name', kind: 'identity' },
+      { id: 'cidr', field: 'DcnCidr', label: 'dns.clientNetworkCidr', kind: 'text' },
+    ],
   },
-  fields: [
-    { key: 'status', source: 'DcnStatus', label: 'Status', type: 'status', span: 1 },
-    runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
-    { key: 'name', source: 'DcnName', label: 'Name', required: true, span: 1 },
-    {
-      key: 'cidr',
-      source: 'DcnCidr',
-      label: 'dns.clientNetworkCidr',
-      required: true,
-      span: 1,
-      help: 'dns.clientNetworkCidrHelp',
-    },
-    { key: 'revision', source: 'DcnRevision', label: 'Revision', type: 'number', hidden: true },
-  ],
-  columns: [
-    { id: 'name', field: 'DcnName', label: 'Name', kind: 'identity' },
-    { id: 'cidr', field: 'DcnCidr', label: 'dns.clientNetworkCidr', kind: 'text' },
-    { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
-    { id: 'status', field: 'DcnStatus', label: 'Status', kind: 'status' },
-  ],
-});
+);
 
 const servers = (value: unknown) => (Array.isArray(value) ? value.join(', ') : String(value ?? ''));
 
-const forwardZones = defineCrud({
-  endpoint: 'system/dns/forward-zones',
-  uuidField: 'DfzUUID',
-  pageTitle: 'dns.forwardZones',
-  pageDescription: 'dns.forwardZonesDescription',
-  dialogDescription: 'dns.forwardZonesDescription',
-  serverSidePagination: true,
-  initialPageSize: 50,
-  bulkDelete: false,
-  deletePayload: (row) => ({ revision: Number(row['DfzRevision']) }),
-  initialValues: {
-    zone: '',
-    servers: '',
-    recurse: 0,
-    status: 1,
-    revision: 1,
-    DnsClusterDncUUID: '',
+const forwardZones = clusterList(
+  'forward-zones',
+  'Dfz',
+  'dns.forwardZones',
+  'dns.forwardZonesDescription',
+  {
+    initialValues: {
+      zone: '',
+      servers: '',
+      recurse: 0,
+    },
+    adjust: (payload, values) => {
+      payload['servers'] = servers(values['servers']);
+      payload['recurse'] = Number(values['recurse'] ?? 0);
+    },
+    fields: [
+      {
+        key: 'zone',
+        source: 'DfzZone',
+        label: 'dns.forwardZone',
+        required: true,
+        span: 1,
+        help: 'dns.forwardZoneHelp',
+      },
+      {
+        key: 'servers',
+        source: 'DfzServersJson',
+        label: 'dns.forwardServers',
+        required: true,
+        span: 2,
+        help: 'dns.forwardServersHelp',
+      },
+      {
+        key: 'recurse',
+        source: 'DfzRecurse',
+        label: 'dns.forwardRecurse',
+        type: 'select',
+        required: true,
+        span: 1,
+        translateOptions: true,
+        options: DNS_BOOLEAN_OPTIONS,
+        help: 'dns.forwardRecurseHelp',
+      },
+    ],
+    columns: [
+      { id: 'zone', field: 'DfzZone', label: 'dns.forwardZone', kind: 'identity' },
+      {
+        id: 'servers',
+        field: 'DfzServersJson',
+        label: 'dns.forwardServers',
+        kind: 'text',
+        value: (row) => servers(row['DfzServersJson']),
+      },
+    ],
   },
-  payload: (values, editing) => {
-    const payload = dnsPayload(values, editing);
-    if (editing) delete payload['DnsClusterDncUUID'];
-    payload['servers'] = servers(values['servers']);
-    payload['recurse'] = Number(values['recurse'] ?? 0);
-    return payload;
-  },
-  fields: [
-    { key: 'status', source: 'DfzStatus', label: 'Status', type: 'status', span: 1 },
-    runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
-    {
-      key: 'zone',
-      source: 'DfzZone',
-      label: 'dns.forwardZone',
-      required: true,
-      span: 1,
-      help: 'dns.forwardZoneHelp',
-    },
-    {
-      key: 'servers',
-      source: 'DfzServersJson',
-      label: 'dns.forwardServers',
-      required: true,
-      span: 2,
-      help: 'dns.forwardServersHelp',
-    },
-    {
-      key: 'recurse',
-      source: 'DfzRecurse',
-      label: 'dns.forwardRecurse',
-      type: 'select',
-      required: true,
-      span: 1,
-      translateOptions: true,
-      options: DNS_BOOLEAN_OPTIONS,
-      help: 'dns.forwardRecurseHelp',
-    },
-    { key: 'revision', source: 'DfzRevision', label: 'Revision', type: 'number', hidden: true },
-  ],
-  columns: [
-    { id: 'zone', field: 'DfzZone', label: 'dns.forwardZone', kind: 'identity' },
-    {
-      id: 'servers',
-      field: 'DfzServersJson',
-      label: 'dns.forwardServers',
-      kind: 'text',
-      value: (row) => servers(row['DfzServersJson']),
-    },
-    { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
-    { id: 'status', field: 'DfzStatus', label: 'Status', kind: 'status' },
-  ],
-});
+);
 
 const FILTER_ACTIONS = [
   { value: 'block', label: 'dns.filterActionBlock' },
   { value: 'allow', label: 'dns.filterActionAllow' },
 ] as const;
 
-const filterRules = defineCrud({
-  endpoint: 'system/dns/filter-rules',
-  uuidField: 'DfrUUID',
-  pageTitle: 'dns.filterRules',
-  pageDescription: 'dns.filterRulesDescription',
-  dialogDescription: 'dns.filterRulesDescription',
-  serverSidePagination: true,
-  initialPageSize: 50,
-  bulkDelete: false,
-  deletePayload: (row) => ({ revision: Number(row['DfrRevision']) }),
-  initialValues: {
-    domain: '',
-    action: 'block',
-    note: '',
-    status: 1,
-    revision: 1,
-    DnsClusterDncUUID: '',
+const filterRules = clusterList(
+  'filter-rules',
+  'Dfr',
+  'dns.filterRules',
+  'dns.filterRulesDescription',
+  {
+    initialValues: {
+      domain: '',
+      action: 'block',
+      note: '',
+    },
+    adjust: (payload, values) => {
+      payload['note'] = String(values['note'] ?? '').trim() || null;
+    },
+    fields: [
+      {
+        key: 'domain',
+        source: 'DfrDomain',
+        label: 'dns.filterDomain',
+        required: true,
+        span: 1,
+        help: 'dns.filterDomainHelp',
+      },
+      {
+        key: 'action',
+        source: 'DfrAction',
+        label: 'dns.filterAction',
+        type: 'select',
+        required: true,
+        span: 1,
+        translateOptions: true,
+        options: FILTER_ACTIONS,
+      },
+      { key: 'note', source: 'DfrNote', label: 'dns.filterNote', span: 2 },
+    ],
+    columns: [
+      { id: 'domain', field: 'DfrDomain', label: 'dns.filterDomain', kind: 'identity' },
+      {
+        id: 'action',
+        field: 'DfrAction',
+        label: 'dns.filterAction',
+        kind: 'text',
+        value: (row) =>
+          row['DfrAction'] === 'allow' ? 'dns.filterActionAllow' : 'dns.filterActionBlock',
+        translateValue: true,
+      },
+    ],
   },
-  payload: (values, editing) => {
-    const payload = dnsPayload(values, editing);
-    if (editing) delete payload['DnsClusterDncUUID'];
-    payload['note'] = String(values['note'] ?? '').trim() || null;
-    return payload;
+);
+
+// Zone transfers (D7c): the TSIG key is generated by the platform and shown to hand it to the
+// secondary's operator; "Rotate key" on edit replaces the secret (the key name stays).
+const secondaries = clusterList(
+  'secondaries',
+  'Dsd',
+  'dns.secondaries',
+  'dns.secondariesDescription',
+  {
+    initialValues: {
+      name: '',
+      address: '',
+      rotateKey: 0,
+    },
+    adjust: (payload, values, editing) => {
+      if (editing) payload['rotateKey'] = Number(values['rotateKey'] ?? 0);
+      else delete payload['rotateKey'];
+    },
+    fields: [
+      { key: 'name', source: 'DsdName', label: 'Name', required: true, span: 1 },
+      {
+        key: 'address',
+        source: 'DsdAddress',
+        label: 'dns.secondaryAddress',
+        required: true,
+        span: 1,
+        help: 'dns.secondaryAddressHelp',
+      },
+      {
+        key: 'rotateKey',
+        label: 'dns.secondaryRotateKey',
+        type: 'select',
+        span: 2,
+        translateOptions: true,
+        options: DNS_BOOLEAN_OPTIONS,
+        help: 'dns.secondaryRotateKeyHelp',
+        hiddenWhen: ({ editing }) => !editing,
+      },
+    ],
+    columns: [
+      { id: 'name', field: 'DsdName', label: 'Name', kind: 'identity' },
+      { id: 'address', field: 'DsdAddress', label: 'dns.secondaryAddress', kind: 'text' },
+      {
+        id: 'keyName',
+        field: 'DsdKeyName',
+        label: 'dns.secondaryKeyName',
+        kind: 'text',
+        copyable: true,
+      },
+      {
+        id: 'secret',
+        field: 'DsdSecret',
+        label: 'dns.secondarySecret',
+        kind: 'secret',
+        copyable: true,
+      },
+    ],
   },
-  fields: [
-    { key: 'status', source: 'DfrStatus', label: 'Status', type: 'status', span: 1 },
-    runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
-    {
-      key: 'domain',
-      source: 'DfrDomain',
-      label: 'dns.filterDomain',
-      required: true,
-      span: 1,
-      help: 'dns.filterDomainHelp',
-    },
-    {
-      key: 'action',
-      source: 'DfrAction',
-      label: 'dns.filterAction',
-      type: 'select',
-      required: true,
-      span: 1,
-      translateOptions: true,
-      options: FILTER_ACTIONS,
-    },
-    { key: 'note', source: 'DfrNote', label: 'dns.filterNote', span: 2 },
-    { key: 'revision', source: 'DfrRevision', label: 'Revision', type: 'number', hidden: true },
-  ],
-  columns: [
-    { id: 'domain', field: 'DfrDomain', label: 'dns.filterDomain', kind: 'identity' },
-    {
-      id: 'action',
-      field: 'DfrAction',
-      label: 'dns.filterAction',
-      kind: 'text',
-      value: (row) =>
-        row['DfrAction'] === 'allow' ? 'dns.filterActionAllow' : 'dns.filterActionBlock',
-      translateValue: true,
-    },
-    { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
-    { id: 'status', field: 'DfrStatus', label: 'Status', kind: 'status' },
-  ],
-});
+);
 
 const CONFIGS = {
   'client-networks': clientNetworks,
   'forward-zones': forwardZones,
   'filter-rules': filterRules,
+  secondaries,
 };
 
 @Component({

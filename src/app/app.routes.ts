@@ -3103,6 +3103,14 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.panel' },
               },
               {
+                // Zone transfers (D7c) share the cluster list page; the route data picks the list.
+                path: 'dns/secondaries',
+                title: 'DNS',
+                data: { list: 'secondaries', breadcrumb: 'dns.secondaries', scope: 'master' },
+                loadComponent: () =>
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
+              },
+              {
                 path: 'dns/client-tests',
                 loadComponent: () =>
                   import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),
