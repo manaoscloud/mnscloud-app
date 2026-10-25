@@ -3097,17 +3097,18 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.filterRules', list: 'filter-rules' },
               },
               {
-                path: 'dns/secondaries',
-                loadComponent: () =>
-                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
-                title: 'DNS',
-                data: { scope: 'master', breadcrumb: 'dns.secondaries', list: 'secondaries' },
-              },
-              {
                 path: 'dns/panel',
                 loadComponent: () => import('./pages/dns/panel/panel').then((m) => m.DnsPanelPage),
                 title: 'DNS',
                 data: { scope: 'master', breadcrumb: 'dns.panel' },
+              },
+              {
+                // Zone transfers (D7c) share the cluster list page; the route data picks the list.
+                path: 'dns/secondaries',
+                title: 'DNS',
+                data: { list: 'secondaries', breadcrumb: 'dns.secondaries', scope: 'master' },
+                loadComponent: () =>
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
               },
               {
                 path: 'dns/client-tests',

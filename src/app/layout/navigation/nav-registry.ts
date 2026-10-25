@@ -743,18 +743,18 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['platform.master.access'],
       },
       {
-        id: 'dns/secondaries',
-        label: 'nav.dns.secondaries',
-        icon: 'sync_alt',
-        masterRoute: '/system/dns/secondaries',
-        permissions: ['platform.master.access'],
-      },
-      {
         id: 'dns/diagnostics',
         label: 'nav.dns.diagnostics',
         icon: 'troubleshoot',
         masterRoute: '/system/dns/diagnostics',
         permissions: ['platform.master.access'],
+      },
+      {
+        id: 'dns/secondaries',
+        masterRoute: '/system/dns/secondaries',
+        label: 'nav.dns.secondaries',
+        permissions: ['platform.master.access'],
+        icon: 'sync_alt',
       },
       {
         id: 'dns/client-tests',
