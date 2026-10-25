@@ -13,7 +13,7 @@ import {
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
 /** Cluster settings (resolver, filter) read right before their form opens (revision included). */
-const SETTINGS = ['resolver', 'filter', 'authority'];
+const SETTINGS = ['resolver', 'filter', 'authority', 'cloud'];
 let settingsValues: ConfigurableCrudRecord = {};
 
 const FILTER_CATEGORIES = [
@@ -184,6 +184,36 @@ const config = defineCrud({
             ],
           },
         ),
+    },
+    {
+      key: 'cloud',
+      label: 'dns.cloudSettings',
+      icon: 'cloud',
+      form: (row) =>
+        settingsForm(row, 'cloud', 'dns.cloudSettings', 'dns.cloudSettingsDescription', {
+          initialValues: {
+            enabled: Number(settingsValues['DccEnabled'] ?? 0),
+            addresses: Array.isArray(settingsValues['DccAddressesJson'])
+              ? settingsValues['DccAddressesJson'].join(', ')
+              : '',
+            revision: Number(settingsValues['DccRevision'] ?? 0),
+          },
+          payload: (values) => ({
+            enabled: Number(values['enabled']),
+            addresses: String(values['addresses'] ?? ''),
+            revision: Number(values['revision']),
+          }),
+          fields: [
+            yesNo('enabled', 'dns.cloudEnabled', 2),
+            {
+              key: 'addresses',
+              label: 'dns.cloudAddresses',
+              span: 2,
+              help: 'dns.cloudAddressesHelp',
+            },
+            { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+          ],
+        }),
     },
   ],
   fields: runtimeClusterFields('Dnc', 'dns'),
