@@ -64,6 +64,7 @@ const LABELED_MODULES = new Set([
   'monitoring',
   'cyber-security',
   'infragis',
+  'workorders',
   'realtime',
 ]);
 

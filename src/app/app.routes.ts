@@ -1503,6 +1503,20 @@ export const routes: Routes = [
                 title: 'InfraGIS | mnscloud',
                 data: { scope: 'tenant', context: 'infragis' },
               },
+              {
+                path: 'workorders/mine',
+                loadComponent: () =>
+                  import('./pages/workorders/orders').then((m) => m.WorkOrdersPage),
+                title: 'Work orders • Mine | mnscloud',
+                data: { scope: 'tenant', context: 'workorders', mine: true },
+              },
+              {
+                path: 'workorders',
+                loadComponent: () =>
+                  import('./pages/workorders/orders').then((m) => m.WorkOrdersPage),
+                title: 'Work orders | mnscloud',
+                data: { scope: 'tenant', context: 'workorders' },
+              },
 
               // Hosting
               {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c2b9acca5bd2",
+  "version": "4fbf8bc96559",
   "language": "pt-BR",
   "entries": [
     {
@@ -12090,6 +12090,96 @@
         {
           "label": "Domínio próprio",
           "help": "Domínio de tema opcional deste ambiente (Configurações › Temas) que também atende o site. Deixe vazio para usar só o endereço automático."
+        }
+      ]
+    },
+    {
+      "route": "/workorders",
+      "menuPath": "Ordens de serviço › Todas",
+      "scope": "tenant",
+      "title": "Minhas ordens de serviço",
+      "description": "Ordens de serviço atribuídas a você, as em andamento primeiro.",
+      "fields": [
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Prioridade",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Agendada para",
+          "help": ""
+        },
+        {
+          "label": "Vencimento",
+          "help": ""
+        },
+        {
+          "label": "Endereço",
+          "help": ""
+        },
+        {
+          "label": "Latitude",
+          "help": ""
+        },
+        {
+          "label": "Longitude",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/workorders/mine",
+      "menuPath": "Ordens de serviço › Atribuídas a mim",
+      "scope": "tenant",
+      "title": "Minhas ordens de serviço",
+      "description": "Ordens de serviço atribuídas a você, as em andamento primeiro.",
+      "fields": [
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Prioridade",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Agendada para",
+          "help": ""
+        },
+        {
+          "label": "Vencimento",
+          "help": ""
+        },
+        {
+          "label": "Endereço",
+          "help": ""
+        },
+        {
+          "label": "Latitude",
+          "help": ""
+        },
+        {
+          "label": "Longitude",
+          "help": ""
         }
       ]
     }

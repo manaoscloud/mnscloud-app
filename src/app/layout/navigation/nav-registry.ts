@@ -924,6 +924,33 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  // Work orders (generic field service orders: InfraGIS, ISP, Support, lighting)
+  {
+    id: 'workorders',
+    label: 'nav.workorders',
+    icon: 'engineering',
+    children: [
+      {
+        id: 'workorders/orders',
+        label: 'nav.workorders.orders',
+        icon: 'assignment',
+        route: '/workorders',
+        entitlementCode: 'module.workorders.*',
+        requiresEnvironment: true,
+        permissions: ['tenant.workorders.orders.read'],
+      },
+      {
+        id: 'workorders/mine',
+        label: 'nav.workorders.mine',
+        icon: 'assignment_ind',
+        route: '/workorders/mine',
+        entitlementCode: 'module.workorders.*',
+        requiresEnvironment: true,
+        permissions: ['tenant.workorders.orders.read'],
+      },
+    ],
+  },
+
   // ✅ VoIP (tenant; plataforma usa rotas globais quando disponível)
   {
     id: 'voip',
