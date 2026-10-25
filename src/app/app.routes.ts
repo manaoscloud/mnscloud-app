@@ -3051,6 +3051,13 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.forwardZones', list: 'forward-zones' },
               },
               {
+                path: 'dns/filter-rules',
+                loadComponent: () =>
+                  import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.filterRules', list: 'filter-rules' },
+              },
+              {
                 path: 'dns/panel',
                 loadComponent: () => import('./pages/dns/panel/panel').then((m) => m.DnsPanelPage),
                 title: 'DNS',

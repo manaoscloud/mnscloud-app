@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "885672191db9",
+  "version": "fc64e97597c3",
   "language": "pt-BR",
   "entries": [
     {
@@ -7036,6 +7036,39 @@
         {
           "label": "Agents que testam",
           "help": "Escolha de 1 a 20 Agents, de preferência em redes, operadoras ou cidades diferentes, para comparar os resultados."
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/filter-rules",
+      "menuPath": "DNS › Regras de filtro",
+      "scope": "platform",
+      "title": "Encaminhamento condicional",
+      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Domínio",
+          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
+        },
+        {
+          "label": "Servidores",
+          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
+        },
+        {
+          "label": "Servidores são resolvedores",
+          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
         }
       ]
     },

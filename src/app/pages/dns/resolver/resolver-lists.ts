@@ -9,8 +9,8 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { runtimeServerClusterField } from '../../../shared/runtime-server/runtime-server-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
-// Resolver lists of a cluster (D2a): client networks and conditional forwarding share one page, the
-// route data chooses the list.
+// Resolver lists of a cluster (D2a) and filter rules (D5a) share one page; the route data chooses
+// the list.
 const clientNetworks = defineCrud({
   endpoint: 'system/dns/client-networks',
   uuidField: 'DcnUUID',
@@ -122,7 +122,80 @@ const forwardZones = defineCrud({
   ],
 });
 
-const CONFIGS = { 'client-networks': clientNetworks, 'forward-zones': forwardZones };
+const FILTER_ACTIONS = [
+  { value: 'block', label: 'dns.filterActionBlock' },
+  { value: 'allow', label: 'dns.filterActionAllow' },
+] as const;
+
+const filterRules = defineCrud({
+  endpoint: 'system/dns/filter-rules',
+  uuidField: 'DfrUUID',
+  pageTitle: 'dns.filterRules',
+  pageDescription: 'dns.filterRulesDescription',
+  dialogDescription: 'dns.filterRulesDescription',
+  serverSidePagination: true,
+  initialPageSize: 50,
+  bulkDelete: false,
+  deletePayload: (row) => ({ revision: Number(row['DfrRevision']) }),
+  initialValues: {
+    domain: '',
+    action: 'block',
+    note: '',
+    status: 1,
+    revision: 1,
+    DnsClusterDncUUID: '',
+  },
+  payload: (values, editing) => {
+    const payload = dnsPayload(values, editing);
+    if (editing) delete payload['DnsClusterDncUUID'];
+    payload['note'] = String(values['note'] ?? '').trim() || null;
+    return payload;
+  },
+  fields: [
+    { key: 'status', source: 'DfrStatus', label: 'Status', type: 'status', span: 1 },
+    runtimeServerClusterField('DnsClusterDncUUID', 'system/dns/clusters', 'Dnc', 'dns'),
+    {
+      key: 'domain',
+      source: 'DfrDomain',
+      label: 'dns.filterDomain',
+      required: true,
+      span: 1,
+      help: 'dns.filterDomainHelp',
+    },
+    {
+      key: 'action',
+      source: 'DfrAction',
+      label: 'dns.filterAction',
+      type: 'select',
+      required: true,
+      span: 1,
+      translateOptions: true,
+      options: FILTER_ACTIONS,
+    },
+    { key: 'note', source: 'DfrNote', label: 'dns.filterNote', span: 2 },
+    { key: 'revision', source: 'DfrRevision', label: 'Revision', type: 'number', hidden: true },
+  ],
+  columns: [
+    { id: 'domain', field: 'DfrDomain', label: 'dns.filterDomain', kind: 'identity' },
+    {
+      id: 'action',
+      field: 'DfrAction',
+      label: 'dns.filterAction',
+      kind: 'text',
+      value: (row) =>
+        row['DfrAction'] === 'allow' ? 'dns.filterActionAllow' : 'dns.filterActionBlock',
+      translateValue: true,
+    },
+    { id: 'cluster', field: 'ClusterName', label: 'dns.cluster', kind: 'text' },
+    { id: 'status', field: 'DfrStatus', label: 'Status', kind: 'status' },
+  ],
+});
+
+const CONFIGS = {
+  'client-networks': clientNetworks,
+  'forward-zones': forwardZones,
+  'filter-rules': filterRules,
+};
 
 @Component({
   selector: 'app-dns-resolver-lists',

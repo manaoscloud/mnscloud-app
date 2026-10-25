@@ -12,8 +12,17 @@ import {
 } from '../../../shared/runtime-server/runtime-server-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
-/** Resolver settings read right before the form opens (revision included). */
-let resolverValues: ConfigurableCrudRecord = {};
+/** Cluster settings (resolver, filter) read right before their form opens (revision included). */
+const SETTINGS = ['resolver', 'filter'];
+let settingsValues: ConfigurableCrudRecord = {};
+
+const FILTER_CATEGORIES = [
+  { value: 'threats', label: 'dns.filterCategoryThreats' },
+  { value: 'gambling', label: 'dns.filterCategoryGambling' },
+  { value: 'adult', label: 'dns.filterCategoryAdult' },
+  { value: 'social', label: 'dns.filterCategorySocial' },
+  { value: 'fakenews', label: 'dns.filterCategoryFakenews' },
+] as const;
 
 const config = defineCrud({
   endpoint: 'system/dns/clusters',
@@ -45,9 +54,9 @@ const config = defineCrud({
           bulkDelete: false,
           columns: [],
           initialValues: {
-            serviceEnabled: Number(resolverValues['DcrServiceEnabled'] ?? 0),
-            dns64Prefix: resolverValues['DcrDns64Prefix'] ?? '',
-            revision: Number(resolverValues['DcrRevision'] ?? 0),
+            serviceEnabled: Number(settingsValues['DcrServiceEnabled'] ?? 0),
+            dns64Prefix: settingsValues['DcrDns64Prefix'] ?? '',
+            revision: Number(settingsValues['DcrRevision'] ?? 0),
           },
           payload: (values) => ({
             serviceEnabled: Number(values['serviceEnabled']),
@@ -75,6 +84,73 @@ const config = defineCrud({
           ],
         }),
     },
+    {
+      key: 'filter',
+      label: 'dns.filterSettings',
+      icon: 'filter_alt',
+      form: (row) =>
+        defineCrud({
+          endpoint: `system/dns/clusters/${row['DncUUID']}/filter`,
+          uuidField: 'DnsClusterDncUUID',
+          pageTitle: 'dns.filterSettings',
+          pageDescription: 'dns.filterSettingsDescription',
+          createTitle: 'dns.filterSettings',
+          dialogDescription: 'dns.filterSettingsDescription',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: {
+            enabled: Number(settingsValues['DcfEnabled'] ?? 0),
+            categories: Array.isArray(settingsValues['DcfCategoriesJson'])
+              ? settingsValues['DcfCategoriesJson']
+              : [],
+            safeSearch: Number(settingsValues['DcfSafeSearch'] ?? 0),
+            revision: Number(settingsValues['DcfRevision'] ?? 0),
+          },
+          payload: (values) => ({
+            enabled: Number(values['enabled']),
+            categories: Array.isArray(values['categories']) ? values['categories'] : [],
+            safeSearch: Number(values['safeSearch']),
+            revision: Number(values['revision']),
+          }),
+          fields: [
+            {
+              key: 'enabled',
+              label: 'dns.filterEnabled',
+              type: 'select',
+              required: true,
+              span: 1,
+              translateOptions: true,
+              options: DNS_BOOLEAN_OPTIONS,
+              help: 'dns.filterEnabledHelp',
+            },
+            {
+              key: 'safeSearch',
+              label: 'dns.filterSafeSearch',
+              type: 'select',
+              required: true,
+              span: 1,
+              translateOptions: true,
+              options: DNS_BOOLEAN_OPTIONS,
+              help: 'dns.filterSafeSearchHelp',
+            },
+            {
+              key: 'categories',
+              label: 'dns.filterCategories',
+              type: 'search-select',
+              multiple: true,
+              span: 2,
+              translateOptions: true,
+              options: FILTER_CATEGORIES,
+              quickCreate: false,
+              quickCreateExemptReason: 'Categories are a fixed list of the DNS runtime.',
+              help: 'dns.filterCategoriesHelp',
+            },
+            { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+          ],
+        }),
+    },
   ],
   fields: runtimeClusterFields('Dnc', 'dns'),
   columns: runtimeClusterColumns('Dnc', 'dns'),
@@ -92,17 +168,17 @@ export class DnsClusterPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
     super(config);
   }
 
-  /** The resolver form opens with the saved settings and their revision. */
+  /** The resolver and filter forms open with the saved settings and their revision. */
   override async runRowAction(
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
-    if (action.key === 'resolver') {
+    if (SETTINGS.includes(action.key)) {
       try {
         const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
-          `system/dns/clusters/${row['DncUUID']}/resolver`,
+          `system/dns/clusters/${row['DncUUID']}/${action.key}`,
         );
-        resolverValues = response?.data ?? {};
+        settingsValues = response?.data ?? {};
       } catch (error) {
         this.snack.error(this.t(this.errorMessage(error)));
         return;
