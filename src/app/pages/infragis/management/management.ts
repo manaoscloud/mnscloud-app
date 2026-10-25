@@ -12,7 +12,10 @@ import {
   QuickCreateRegistryKey,
   quickCreateFor,
 } from '../../../shared/crud/configurable-crud/quick-create';
+import { MatDialog } from '@angular/material/dialog';
+import { ApiService } from '../../../services/api.service';
 import { emptyToNull, propertiesTemplate, schemaSummary } from '../infragis-properties';
+import { assetAttachmentsCollection, assetHistoryCollection } from './asset-field';
 
 export type InfraGisResourceKey =
   'projects' | 'layers' | 'categories' | 'asset-types' | 'statuses' | 'assets';
@@ -438,6 +441,28 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
   }),
 };
 
+/** Assets with their photos and documents and their history (row actions). */
+function assetsConfig(api: ApiService, dialog: MatDialog): ConfigurableCrudConfig {
+  return {
+    ...CONFIGS.assets,
+    rowActions: [
+      ...(CONFIGS.assets.rowActions ?? []),
+      {
+        key: 'attachments',
+        label: 'Photos and documents',
+        icon: 'photo_library',
+        collection: (row) => assetAttachmentsCollection(api, dialog, row),
+      },
+      {
+        key: 'history',
+        label: 'History',
+        icon: 'history',
+        collection: (row) => assetHistoryCollection(row),
+      },
+    ],
+  };
+}
+
 @Component({
   selector: 'app-infragis-management',
   standalone: true,
@@ -448,7 +473,11 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
 export class InfraGisManagementPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     const resource = inject(ActivatedRoute).snapshot.data['resource'] as InfraGisResourceKey;
-    super(CONFIGS[resource] ?? CONFIGS.projects);
+    super(
+      resource === 'assets'
+        ? assetsConfig(inject(ApiService), inject(MatDialog))
+        : (CONFIGS[resource] ?? CONFIGS.projects),
+    );
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

@@ -1759,6 +1759,9 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   authentication access; Network › Outage impact simulates a failure (asset or port) and opens the
   canonical support ticket form prefilled (`openQuickCreate` of `SupportTicketsPage`). The map shows
   outage alerts (boxes whose accesses dropped together), refreshed every minute while on.
+- InfraGIS › Assets row actions (`management/asset-field.ts`): Photos and documents (upload through
+  `createUpload` with kind and caption, open through `openPrivateFile`, delete) and History (read-only
+  who/when/what changed, `historySummary` prints `{field: {from, to}}`).
 
 ## Auth/Guards
 

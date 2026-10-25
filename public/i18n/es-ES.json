@@ -10417,5 +10417,16 @@
   "Customer not found": "Cliente no encontrado",
   "Authentication access not found": "Acceso no encontrado",
   "Authentication access is already served by another port": "Este acceso ya es atendido por otro puerto",
-  "MNSCloud DNS": "MNSCloud DNS"
+  "MNSCloud DNS": "MNSCloud DNS",
+  "Photo": "Foto",
+  "Changed": "Modificado",
+  "File attached": "Archivo adjuntado",
+  "File removed": "Archivo eliminado",
+  "Photos and documents": "Fotos y documentos",
+  "No photos or documents.": "Ninguna foto o documento.",
+  "Caption": "Leyenda",
+  "Captured at": "Capturado el",
+  "Asset history": "Historial del activo",
+  "No changes recorded.": "Ningún cambio registrado.",
+  "By": "Por"
 }
