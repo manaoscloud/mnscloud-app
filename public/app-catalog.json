@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "982343ab2c31",
+  "version": "5790a31870d6",
   "language": "pt-BR",
   "entries": [
     {
@@ -12358,6 +12358,56 @@
         },
         {
           "label": "Longitude",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/workorders/checklists",
+      "menuPath": "Ordens de serviço › Listas de verificação",
+      "scope": "tenant",
+      "title": "Checklists das ordens de serviço",
+      "description": "O que o técnico confere em cada tipo de ordem. Novas ordens recebem uma cópia; itens obrigatórios precisam ser marcados para concluir.",
+      "fields": [
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Ordem",
+          "help": ""
+        },
+        {
+          "label": "Obrigatório para concluir",
+          "help": ""
+        },
+        {
+          "label": "Item",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/workorders/due-rules",
+      "menuPath": "Ordens de serviço › Prazos",
+      "scope": "tenant",
+      "title": "Checklists das ordens de serviço",
+      "description": "O que o técnico confere em cada tipo de ordem. Novas ordens recebem uma cópia; itens obrigatórios precisam ser marcados para concluir.",
+      "fields": [
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Ordem",
+          "help": ""
+        },
+        {
+          "label": "Obrigatório para concluir",
+          "help": ""
+        },
+        {
+          "label": "Item",
           "help": ""
         }
       ]
