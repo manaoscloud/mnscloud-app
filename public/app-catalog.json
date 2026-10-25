@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d3f9c6cc1e28",
+  "version": "c4c54585296f",
   "language": "pt-BR",
   "entries": [
     {
@@ -1609,6 +1609,80 @@
       "title": "Painel",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/dns/cloud/site-rules",
+      "menuPath": "DNS seguro › Regras dos sites",
+      "scope": "tenant",
+      "title": "Sites protegidos",
+      "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster DNS",
+          "help": "Os endereços mostrados são os DNS que o escritório deve usar."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "IPs públicos do site",
+          "help": "De 1 a 16 IPs ou redes fixos, separados por vírgula (IPv4 até /24, IPv6 até /48). Um IP só pode pertencer a um site."
+        },
+        {
+          "label": "Categorias bloqueadas",
+          "help": "Listas públicas mantidas pela comunidade; podem conter falsos positivos, que você libera com uma regra."
+        },
+        {
+          "label": "Busca segura",
+          "help": "Força a busca segura no Google, Bing e DuckDuckGo e o modo restrito do YouTube."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/dns/cloud/sites",
+      "menuPath": "DNS seguro › Sites",
+      "scope": "tenant",
+      "title": "Sites protegidos",
+      "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster DNS",
+          "help": "Os endereços mostrados são os DNS que o escritório deve usar."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "IPs públicos do site",
+          "help": "De 1 a 16 IPs ou redes fixos, separados por vírgula (IPv4 até /24, IPv6 até /48). Um IP só pode pertencer a um site."
+        },
+        {
+          "label": "Categorias bloqueadas",
+          "help": "Listas públicas mantidas pela comunidade; podem conter falsos positivos, que você libera com uma regra."
+        },
+        {
+          "label": "Busca segura",
+          "help": "Força a busca segura no Google, Bing e DuckDuckGo e o modo restrito do YouTube."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/financial/gateway-accounts",

@@ -1538,6 +1538,22 @@ export const routes: Routes = [
                 data: { scope: 'tenant', context: 'workorders' },
               },
 
+              // Cloud DNS for companies (DNS module E1)
+              {
+                path: 'dns/cloud/sites',
+                loadComponent: () =>
+                  import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
+                title: 'DNS • Sites | mnscloud',
+                data: { scope: 'tenant', context: 'dns', list: 'sites' },
+              },
+              {
+                path: 'dns/cloud/site-rules',
+                title: 'DNS • Site rules | mnscloud',
+                data: { list: 'site-rules', context: 'dns', scope: 'tenant' },
+                loadComponent: () =>
+                  import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
+              },
+
               // Hosting
               {
                 path: 'hosting',
