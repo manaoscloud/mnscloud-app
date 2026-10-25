@@ -1762,6 +1762,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
 - InfraGIS › Assets row actions (`management/asset-field.ts`): Photos and documents (upload through
   `createUpload` with kind and caption, open through `openPrivateFile`, delete) and History (read-only
   who/when/what changed, `historySummary` prints `{field: {from, to}}`).
+- Work orders (`src/app/pages/workorders/orders.ts`, `/workorders` and `/workorders/mine`,
+  entitlement `module.workorders.*`): generic CRUD with links (technician from `workorders/assignees`,
+  InfraGIS asset, customer, support ticket), place and dates; row actions Change status (only the
+  moves `allowedTransitions` offers; the API decides), Add note and Timeline.
 
 ## Auth/Guards
 
