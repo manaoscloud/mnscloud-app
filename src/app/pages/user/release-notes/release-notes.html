@@ -4,7 +4,7 @@
   [loading]="loading()"
   (refresh)="reload()"
 >
-  @if (isMaster()) {
+  @if (!publicFeed) {
     <mat-tab-group
       class="release-notes-tabs"
       mat-stretch-tabs="false"
@@ -17,7 +17,7 @@
     @if (status() === 'pending') {
       <p class="release-notes-hint" role="note">
         <mat-icon aria-hidden="true">info</mat-icon>
-        {{ 'releaseNotes.pendingHint' | transloco }}
+        {{ (isMaster() ? 'releaseNotes.pendingHint' : 'releaseNotes.upcomingHint') | transloco }}
       </p>
     }
   }

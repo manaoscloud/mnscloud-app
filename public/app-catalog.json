@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "885672191db9",
+  "version": "afb666e8087e",
   "language": "pt-BR",
   "entries": [
     {
@@ -3230,6 +3230,14 @@
         {
           "label": "Conectar",
           "help": "Uma fibra ou porta de cliente aceita duas conexões (uma de cada lado) e uma porta de splitter, uma. O drop sai de uma porta de cliente até o cliente. Perda padrão: fusão 0,1 dB; conector, cordão e drop 0,5 dB."
+        },
+        {
+          "label": "Acesso (login)",
+          "help": "Quando só o acesso é escolhido, o cliente vem dele."
+        },
+        {
+          "label": "Impacto de rompimento",
+          "help": "Portas de cliente que ficam sem sinal quando este ativo (ou uma porta, pela tabela de portas) falha: alcançadas a partir dele e que deixam de ser alimentadas por um ativo de OLT."
         },
         {
           "label": "Atenuação da fibra (dB/km)",
@@ -7036,6 +7044,39 @@
         {
           "label": "Agents que testam",
           "help": "Escolha de 1 a 20 Agents, de preferência em redes, operadoras ou cidades diferentes, para comparar os resultados."
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/filter-rules",
+      "menuPath": "DNS › Regras de filtro",
+      "scope": "platform",
+      "title": "Encaminhamento condicional",
+      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cluster",
+          "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Domínio",
+          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
+        },
+        {
+          "label": "Servidores",
+          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
+        },
+        {
+          "label": "Servidores são resolvedores",
+          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
         }
       ]
     },

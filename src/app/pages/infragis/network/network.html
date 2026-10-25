@@ -317,6 +317,186 @@
         </section>
       </mat-tab>
 
+      <mat-tab [label]="'Platform' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          <div class="panel-header">
+            <div>
+              <h2>{{ 'ISP POP and OLT' | transloco }}</h2>
+              <p>
+                {{
+                  'OLT assets are the roots of the outage impact: link the asset that represents each OLT.'
+                    | transloco
+                }}
+              </p>
+            </div>
+          </div>
+          @if (platformLinks(); as links) {
+            <output class="infragis-network-summary">
+              {{ 'POP' | transloco }}: <strong>{{ links['PopName'] || '—' }}</strong> ·
+              {{ 'OLT' | transloco }}: <strong>{{ links['OltName'] || '—' }}</strong>
+            </output>
+          }
+          @if (canWrite()) {
+            <form class="form-grid">
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="popUUID"
+                data-quick-create-exempt="Platform link; POPs are created in ISP › POP."
+                [label]="'POP' | transloco"
+                [options]="popOptions().length ? popOptions() : currentPop()"
+                [value]="popUUID() || currentPop()[0]?.value || ''"
+                [remoteSearch]="true"
+                (searchChange)="searchOptions('isp/pops', 'IppUUID', 'IppName', $event, 'pop')"
+                (valueChange)="popUUID.set($any($event) ?? '')"
+              />
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="oltUUID"
+                data-quick-create-exempt="Platform link; OLTs are created in ISP › OLT."
+                [label]="'OLT' | transloco"
+                [options]="oltOptions().length ? oltOptions() : currentOlt()"
+                [value]="oltUUID() || currentOlt()[0]?.value || ''"
+                [remoteSearch]="true"
+                (searchChange)="searchOptions('isp/olts', 'IolUUID', 'IolName', $event, 'olt')"
+                (valueChange)="oltUUID.set($any($event) ?? '')"
+              />
+            </form>
+            <div class="infragis-network-actions">
+              <button mat-flat-button type="button" [disabled]="busy()" (click)="savePlatform()">
+                <mat-icon>save</mat-icon>{{ 'Save links' | transloco }}
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="busy()"
+                (click)="clearPlatform()"
+              >
+                {{ 'Remove links' | transloco }}
+              </button>
+            </div>
+
+            <div class="panel-header">
+              <div>
+                <h2>{{ 'Customer of a port' | transloco }}</h2>
+                <p>
+                  {{
+                    'The access login connects the port to the RADIUS sessions (online state, outage alerts).'
+                      | transloco
+                  }}
+                </p>
+              </div>
+            </div>
+            <form class="form-grid">
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="linkPort"
+                [label]="'Customer port' | transloco"
+                [options]="customerPortOptions()"
+                [value]="linkPort()"
+                (valueChange)="linkPort.set($any($event) ?? '')"
+              />
+              <mns-search-select-field
+                fieldClass="span-2"
+                data-field-key="linkAccess"
+                data-quick-create-exempt="Platform link; accesses are created in Authentication › Accesses."
+                [label]="'Access (login)' | transloco"
+                [options]="accessOptions()"
+                [value]="linkAccess()"
+                [remoteSearch]="true"
+                [help]="'When only the access is chosen, the customer comes from it.' | transloco"
+                (searchChange)="
+                  searchOptions(
+                    'authentication/accesses',
+                    'AaxUUID',
+                    'AaxLoginName',
+                    $event,
+                    'access'
+                  )
+                "
+                (valueChange)="linkAccess.set($any($event) ?? '')"
+              />
+              <mns-search-select-field
+                fieldClass="span-1"
+                data-field-key="linkCustomer"
+                data-quick-create-exempt="Platform link; customers are created in Registry › Customers."
+                [label]="'Customer' | transloco"
+                [options]="customerOptions()"
+                [value]="linkCustomer()"
+                [remoteSearch]="true"
+                (searchChange)="
+                  searchOptions('registry/customers', 'RcuUUID', 'RcuName', $event, 'customer')
+                "
+                (valueChange)="linkCustomer.set($any($event) ?? '')"
+              />
+            </form>
+            <div class="infragis-network-actions">
+              <button
+                mat-flat-button
+                type="button"
+                [disabled]="busy() || !linkPort() || (!linkCustomer() && !linkAccess())"
+                (click)="saveCustomer()"
+              >
+                <mat-icon>person_add</mat-icon>{{ 'Bind customer' | transloco }}
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="busy() || !linkPort()"
+                (click)="saveCustomer(true)"
+              >
+                {{ 'Unbind' | transloco }}
+              </button>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab [label]="'Outage impact' | transloco">
+        <section class="dashboard-panel infragis-network-panel">
+          <div class="infragis-network-actions">
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="impactLoading()"
+              (click)="runImpact()"
+            >
+              <mat-icon>crisis_alert</mat-icon>{{ 'Simulate a failure of this asset' | transloco }}
+            </button>
+            <mns-field-help
+              [label]="'Outage impact' | transloco"
+              [text]="
+                'Customer ports cut off when this asset (or a port, from the ports table) fails: reachable from it and no longer fed by an OLT asset.'
+                  | transloco
+              "
+            />
+            @if (impactRows().length) {
+              <button mat-stroked-button type="button" (click)="openIncident()">
+                <mat-icon>support_agent</mat-icon>{{ 'Open incident' | transloco }}
+              </button>
+            }
+          </div>
+          @if (impactSummary(); as summary) {
+            <output class="infragis-network-summary">
+              {{ impactLabel() }} · {{ 'Customer ports' | transloco }}:
+              <strong>{{ summary.ports }}</strong> · {{ 'Customers' | transloco }}:
+              <strong>{{ summary.customers }}</strong> · {{ 'Online' | transloco }}:
+              <strong>{{ summary.online }}</strong>
+              @if (!summary.rootsKnown) {
+                ·
+                <strong class="infragis-network-alert">{{
+                  'No OLT asset is linked: every reachable port is counted.' | transloco
+                }}</strong>
+              }
+            </output>
+          }
+          <mns-global-table
+            [config]="impactTable"
+            [rows]="impactRows()"
+            [loading]="impactLoading()"
+          />
+        </section>
+      </mat-tab>
+
       <mat-tab [label]="'Trace' | transloco">
         <section class="dashboard-panel infragis-network-panel">
           <form class="form-grid">

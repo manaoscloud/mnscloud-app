@@ -50,6 +50,16 @@
       <mat-icon>{{ feasibilityMode() ? 'close' : 'radar' }}</mat-icon
       >{{ (feasibilityMode() ? 'Stop feasibility' : 'Feasibility') | transloco }}
     </button>
+    <button
+      mat-stroked-button
+      type="button"
+      [attr.aria-pressed]="outagesOn()"
+      [disabled]="loading()"
+      (click)="toggleOutages()"
+    >
+      <mat-icon>{{ outagesOn() ? 'notifications_off' : 'warning' }}</mat-icon
+      >{{ (outagesOn() ? 'Hide outage alerts' : 'Outage alerts') | transloco }}
+    </button>
   </div>
 
   @if (error(); as message) {
@@ -131,6 +141,34 @@
               </button>
             }
           </div>
+        </section>
+      }
+
+      @if (outagesOn()) {
+        <section class="dashboard-panel">
+          <div class="panel-header">
+            <h2>{{ 'Outage alerts' | transloco }}</h2>
+            <p>
+              {{
+                'Boxes whose customers dropped together in the last 15 minutes (RADIUS sessions).'
+                  | transloco
+              }}
+            </p>
+          </div>
+          @if (outages().length) {
+            <ul class="infragis-map-feasibility">
+              @for (row of outages(); track row['IgaUUID']) {
+                <li>
+                  <button mat-button type="button" (click)="flyTo(row)">
+                    <strong>{{ row['IgaName'] }}</strong> · {{ 'Dropped' | transloco }}:
+                    {{ row['DroppedCount'] }} / {{ row['AccessCount'] }}
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p>{{ 'No outage detected.' | transloco }}</p>
+          }
         </section>
       }
 
