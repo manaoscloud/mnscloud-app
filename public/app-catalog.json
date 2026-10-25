@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "bb020fdf64a2",
+  "version": "3a094e973e7f",
   "language": "pt-BR",
   "entries": [
     {
@@ -7067,8 +7067,8 @@
       "route": "/system/dns/client-networks",
       "menuPath": "DNS › Redes de clientes",
       "scope": "platform",
-      "title": "Encaminhamento condicional",
-      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "title": "Redes de clientes",
+      "description": "",
       "fields": [
         {
           "label": "Status",
@@ -7077,18 +7077,6 @@
         {
           "label": "Cluster",
           "help": "Este vínculo não pode ser alterado após a criação."
-        },
-        {
-          "label": "Domínio",
-          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
-        },
-        {
-          "label": "Servidores",
-          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
-        },
-        {
-          "label": "Servidores são resolvedores",
-          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
         },
         {
           "label": "Revisão",
@@ -7154,8 +7142,8 @@
       "route": "/system/dns/filter-rules",
       "menuPath": "DNS › Regras de filtro",
       "scope": "platform",
-      "title": "Encaminhamento condicional",
-      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "title": "Regras de filtro",
+      "description": "",
       "fields": [
         {
           "label": "Status",
@@ -7164,18 +7152,6 @@
         {
           "label": "Cluster",
           "help": "Este vínculo não pode ser alterado após a criação."
-        },
-        {
-          "label": "Domínio",
-          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
-        },
-        {
-          "label": "Servidores",
-          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
-        },
-        {
-          "label": "Servidores são resolvedores",
-          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
         },
         {
           "label": "Revisão",
@@ -7187,8 +7163,8 @@
       "route": "/system/dns/forward-zones",
       "menuPath": "DNS › Encaminhamento",
       "scope": "platform",
-      "title": "Encaminhamento condicional",
-      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "title": "Encaminhamento",
+      "description": "",
       "fields": [
         {
           "label": "Status",
@@ -7197,18 +7173,6 @@
         {
           "label": "Cluster",
           "help": "Este vínculo não pode ser alterado após a criação."
-        },
-        {
-          "label": "Domínio",
-          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
-        },
-        {
-          "label": "Servidores",
-          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
-        },
-        {
-          "label": "Servidores são resolvedores",
-          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
         },
         {
           "label": "Revisão",
@@ -7294,8 +7258,8 @@
       "route": "/system/dns/secondaries",
       "menuPath": "DNS › Secundários",
       "scope": "platform",
-      "title": "Encaminhamento condicional",
-      "description": "Consultas de um domínio vão direto para os servidores indicados (por exemplo o DNS interno de uma empresa ou o reverso do provedor).",
+      "title": "Secundários",
+      "description": "",
       "fields": [
         {
           "label": "Status",
@@ -7304,18 +7268,6 @@
         {
           "label": "Cluster",
           "help": "Este vínculo não pode ser alterado após a criação."
-        },
-        {
-          "label": "Domínio",
-          "help": "Domínio encaminhado, por exemplo corp.example ou 10.in-addr.arpa. A validação DNSSEC é desligada só para ele."
-        },
-        {
-          "label": "Servidores",
-          "help": "De 1 a 8 endereços separados por vírgula: IP, IPv4:porta ou [IPv6]:porta."
-        },
-        {
-          "label": "Servidores são resolvedores",
-          "help": "Sim quando os servidores são DNS recursivos (pedem recursão); Não quando são autoritativos do domínio."
         },
         {
           "label": "Revisão",
