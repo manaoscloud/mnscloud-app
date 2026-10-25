@@ -33,6 +33,9 @@
       <span class="website-editor-meta">
         {{ 'website.publishedVersion' | transloco }}: {{ current.publishedVersion || '—' }}
       </span>
+      <span class="website-editor-meta"
+        >{{ 'website.serving' | transloco }}: {{ servingLabel() | transloco }}</span
+      >
       <span class="website-editor-meta">DNS: {{ dnsLabel() | transloco }}</span>
       @if (siteUrl(); as url) {
         <a
