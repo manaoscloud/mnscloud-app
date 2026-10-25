@@ -473,6 +473,12 @@
               <button mat-stroked-button type="button" (click)="openIncident()">
                 <mat-icon>support_agent</mat-icon>{{ 'Open incident' | transloco }}
               </button>
+              <button mat-stroked-button type="button" (click)="openOutageAction('outage-notices')">
+                <mat-icon>campaign</mat-icon>{{ 'Notify customers' | transloco }}
+              </button>
+              <button mat-stroked-button type="button" (click)="openOutageAction('outage-credits')">
+                <mat-icon>savings</mat-icon>{{ 'Credit contracts' | transloco }}
+              </button>
             }
           </div>
           @if (impactSummary(); as summary) {
