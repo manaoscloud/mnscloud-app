@@ -833,6 +833,14 @@ export const NAV_ITEMS: NavItem[] = [
         entitlementCode: 'module.website.site',
       },
       {
+        id: 'website/orders',
+        label: 'nav.website.orders',
+        icon: 'shopping_cart',
+        requiresEnvironment: true,
+        route: '/website/orders',
+        entitlementCode: 'module.website.site',
+      },
+      {
         id: 'website/parameters',
         label: 'nav.website.parameters',
         icon: 'tune',
