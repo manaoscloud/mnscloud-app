@@ -24,6 +24,43 @@ const FILTER_CATEGORIES = [
   { value: 'fakenews', label: 'dns.filterCategoryFakenews' },
 ] as const;
 
+type CrudConfig = Parameters<typeof defineCrud>[0];
+
+/** Settings form of one cluster (`/clusters/:uuid/<setting>`): a single save, no list. */
+function settingsForm(
+  row: ConfigurableCrudRecord,
+  setting: string,
+  title: string,
+  description: string,
+  form: Pick<CrudConfig, 'initialValues' | 'payload' | 'fields'>,
+) {
+  return defineCrud({
+    endpoint: `system/dns/clusters/${row['DncUUID']}/${setting}`,
+    uuidField: 'DnsClusterDncUUID',
+    pageTitle: title,
+    pageDescription: description,
+    createTitle: title,
+    dialogDescription: description,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    columns: [],
+    ...form,
+  });
+}
+
+/** Yes/No field of a settings form. */
+const yesNo = (key: string, label: string, span: 1 | 2) => ({
+  key,
+  label,
+  type: 'select' as const,
+  required: true,
+  span,
+  translateOptions: true,
+  options: DNS_BOOLEAN_OPTIONS,
+  help: `${label}Help`,
+});
+
 const config = defineCrud({
   endpoint: 'system/dns/clusters',
   uuidField: 'DncUUID',
@@ -42,17 +79,7 @@ const config = defineCrud({
       label: 'dns.resolverSettings',
       icon: 'dns',
       form: (row) =>
-        defineCrud({
-          endpoint: `system/dns/clusters/${row['DncUUID']}/resolver`,
-          uuidField: 'DnsClusterDncUUID',
-          pageTitle: 'dns.resolverSettings',
-          pageDescription: 'dns.resolverSettingsDescription',
-          createTitle: 'dns.resolverSettings',
-          dialogDescription: 'dns.resolverSettingsDescription',
-          canEdit: false,
-          canDelete: false,
-          bulkDelete: false,
-          columns: [],
+        settingsForm(row, 'resolver', 'dns.resolverSettings', 'dns.resolverSettingsDescription', {
           initialValues: {
             serviceEnabled: Number(settingsValues['DcrServiceEnabled'] ?? 0),
             dns64Prefix: settingsValues['DcrDns64Prefix'] ?? '',
@@ -64,16 +91,7 @@ const config = defineCrud({
             revision: Number(values['revision']),
           }),
           fields: [
-            {
-              key: 'serviceEnabled',
-              label: 'dns.resolverService',
-              type: 'select',
-              required: true,
-              span: 2,
-              translateOptions: true,
-              options: DNS_BOOLEAN_OPTIONS,
-              help: 'dns.resolverServiceHelp',
-            },
+            yesNo('serviceEnabled', 'dns.resolverService', 2),
             {
               key: 'dns64Prefix',
               label: 'dns.resolverDns64',
@@ -89,17 +107,7 @@ const config = defineCrud({
       label: 'dns.filterSettings',
       icon: 'filter_alt',
       form: (row) =>
-        defineCrud({
-          endpoint: `system/dns/clusters/${row['DncUUID']}/filter`,
-          uuidField: 'DnsClusterDncUUID',
-          pageTitle: 'dns.filterSettings',
-          pageDescription: 'dns.filterSettingsDescription',
-          createTitle: 'dns.filterSettings',
-          dialogDescription: 'dns.filterSettingsDescription',
-          canEdit: false,
-          canDelete: false,
-          bulkDelete: false,
-          columns: [],
+        settingsForm(row, 'filter', 'dns.filterSettings', 'dns.filterSettingsDescription', {
           initialValues: {
             enabled: Number(settingsValues['DcfEnabled'] ?? 0),
             categories: Array.isArray(settingsValues['DcfCategoriesJson'])
@@ -115,36 +123,15 @@ const config = defineCrud({
             revision: Number(values['revision']),
           }),
           fields: [
-            {
-              key: 'enabled',
-              label: 'dns.filterEnabled',
-              type: 'select',
-              required: true,
-              span: 1,
-              translateOptions: true,
-              options: DNS_BOOLEAN_OPTIONS,
-              help: 'dns.filterEnabledHelp',
-            },
-            {
-              key: 'safeSearch',
-              label: 'dns.filterSafeSearch',
-              type: 'select',
-              required: true,
-              span: 1,
-              translateOptions: true,
-              options: DNS_BOOLEAN_OPTIONS,
-              help: 'dns.filterSafeSearchHelp',
-            },
+            yesNo('enabled', 'dns.filterEnabled', 1),
+            yesNo('safeSearch', 'dns.filterSafeSearch', 1),
             {
               key: 'categories',
               label: 'dns.filterCategories',
-              type: 'search-select',
-              multiple: true,
+              type: 'multi-select',
               span: 2,
               translateOptions: true,
               options: FILTER_CATEGORIES,
-              quickCreate: false,
-              quickCreateExemptReason: 'Categories are a fixed list of the DNS runtime.',
               help: 'dns.filterCategoriesHelp',
             },
             { key: 'revision', label: 'Revision', type: 'number', hidden: true },
