@@ -24,6 +24,13 @@ export type WebsiteSite = {
   hasUnpublishedChanges?: boolean;
   /** Automatic domain DNS publication; `status` is null when the platform does not publish. */
   dns?: { status: string | null; error: string | null; canRetry: boolean } | null;
+  /** Webapps serving state of the published snapshot (detail only). */
+  serving?: {
+    state: 'none' | 'installing' | 'live' | 'failed' | 'removed' | string;
+    snapshotVersion: number | null;
+    version: string | null;
+    errorCode: string | null;
+  } | null;
   /** Only on the detail (and on mutations that return it). */
   draftContent?: unknown;
   dateCreated?: string | null;

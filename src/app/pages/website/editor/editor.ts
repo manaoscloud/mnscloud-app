@@ -1,4 +1,12 @@
-import { Component, ViewEncapsulation, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ViewEncapsulation,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -50,6 +58,14 @@ import {
   websiteContentErrorPath,
 } from '../website.service';
 import { WEBSITE_DNS_STATE_OPTIONS, WEBSITE_SITE_STATUS_OPTIONS } from '../sites/sites';
+
+const SERVING_LABELS: Record<string, string> = {
+  none: 'website.servingInstalling',
+  installing: 'website.servingInstalling',
+  live: 'website.servingLive',
+  failed: 'website.servingFailed',
+  removed: 'website.servingNone',
+};
 
 type Busy = 'loading' | 'saving' | 'publishing' | 'unpublishing' | null;
 
@@ -134,7 +150,10 @@ export class WebsiteEditorPage {
     () => new Map(this.errors().map((error) => [error.path, error.message])),
   );
 
+  private destroyed = false;
+
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.destroyed = true));
     void this.load();
     effect((onCleanup) => {
       const name = this.site()?.name;
@@ -159,6 +178,14 @@ export class WebsiteEditorPage {
   statusLabel(): string {
     const status = this.site()?.status ?? '';
     return this.statusOptions.find((option) => option.value === status)?.label ?? status;
+  }
+
+  /** Where the published snapshot stands on the webapps servers (rendered at publish). */
+  servingLabel(): string {
+    const site = this.site();
+    if (!site || site.status !== 'published') return 'website.servingNone';
+    const state = site.serving?.state ?? 'none';
+    return SERVING_LABELS[state] ?? 'website.servingInstalling';
   }
 
   dnsLabel(): string {
@@ -331,6 +358,7 @@ export class WebsiteEditorPage {
       const result = await this.website.publish(this.uuid, Number(current.revision));
       this.snack.success(this.transloco.translate('website.published'));
       await this.afterMutation(result);
+      void this.watchServing();
     } catch (error) {
       await this.mutationFailed(error);
     } finally {
@@ -399,6 +427,22 @@ export class WebsiteEditorPage {
     } catch (error) {
       await this.mutationFailed(error);
       return false;
+    }
+  }
+
+  /** After publishing, refresh the serving state (only the site, never the editor content). */
+  private async watchServing(): Promise<void> {
+    for (let attempt = 0; attempt < 24 && !this.destroyed; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      if (this.destroyed || this.busy()) continue;
+      try {
+        const detail = await this.website.get(this.uuid);
+        this.site.set(detail.site);
+        const state = detail.site.serving?.state;
+        if (detail.site.status !== 'published' || state === 'live' || state === 'failed') return;
+      } catch {
+        return;
+      }
     }
   }
 
