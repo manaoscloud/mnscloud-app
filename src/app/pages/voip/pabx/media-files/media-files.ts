@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../../services/api.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -18,6 +19,7 @@ import { VoipPabxCdrRecordingDialogComponent } from '../cdr/recording-dialog/rec
 import { UploadCancelledError } from '../../../../shared/upload/file-upload-progress';
 import { VoipPabxMediaFilesService } from './media-files.service';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+import { resolveMediaPlayback } from './media-playback';
 
 const statuses: ConfigurableCrudOption[] = [
   { value: 1, label: 'Active' },
@@ -159,6 +161,7 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
   private readonly genericApi = inject(ApiService);
   private readonly mediaApi = inject(VoipPabxMediaFilesService);
   private readonly playbackDialog = inject(MatDialog);
+  private readonly playbackDestroyRef = inject(DestroyRef);
   private readonly notifications = inject(SnackbarService);
   private readonly pabxOptions = signal<ConfigurableCrudOption[]>([]);
   private readonly storageBucketOptions = signal<ConfigurableCrudOption[]>([]);
@@ -254,24 +257,33 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   private async openAudio(row: ConfigurableCrudRecord): Promise<void> {
+    let release: (() => void) | undefined;
     try {
       const uuid = text(row['uuid']);
       if (!uuid) throw new Error('Media file UUID was not returned.');
       const response = await this.mediaApi.playbackUrl(uuid);
       const url = response?.data?.url;
       if (!url) throw new Error('Media file playback URL was not returned.');
+      const playback = await resolveMediaPlayback(uuid, response.data, (endpoint) =>
+        this.genericApi.getBlob(endpoint),
+      );
+      release = playback.release;
+      if (this.playbackDestroyRef.destroyed) {
+        playback.release();
+        return;
+      }
       // Local extension (app.md "document the reason"): this opens a real custom audio-player
       // widget shared with CDR recordings, not a CRUD form, so it intentionally bypasses
       // openCrudTemplateDialog/openDataViewerDialog and keeps its own compact viewport sizing.
-      this.playbackDialog.open(VoipPabxCdrRecordingDialogComponent, {
+      const dialog = this.playbackDialog.open(VoipPabxCdrRecordingDialogComponent, {
         width: 'min(640px, calc(100vw - 32px))',
         maxWidth: '640px',
         maxHeight: '92vh',
         disableClose: false,
         panelClass: 'voip-pabx-recording-dialog-panel',
         data: {
-          url,
-          downloadUrl: response?.data?.downloadUrl || url,
+          url: playback.url,
+          downloadUrl: playback.downloadUrl,
           filename:
             response?.data?.filename ||
             text(row['originalFilename']) ||
@@ -282,7 +294,13 @@ export class VoipPabxMediaFilesPage extends ConfigurableCrudPageBase<Configurabl
           showCallSummary: false,
         },
       });
+      const stop = this.playbackDestroyRef.onDestroy(() => dialog.close());
+      void firstValueFrom(dialog.afterClosed()).finally(() => {
+        stop();
+        playback.release();
+      });
     } catch (error) {
+      release?.();
       this.notifications.error(this.errorMessage(error) || 'Failed to open media file audio.');
     }
   }
