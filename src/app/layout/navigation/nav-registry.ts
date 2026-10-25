@@ -1044,7 +1044,7 @@ export const NAV_ITEMS: NavItem[] = [
       },
       {
         id: 'workorders/due-rules',
-        label: 'nav.workorders.dueRules',
+        label: 'nav.workorders.due-rules',
         icon: 'timer',
         route: '/workorders/due-rules',
         entitlementCode: 'module.workorders.*',

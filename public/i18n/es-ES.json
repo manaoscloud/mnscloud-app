@@ -10679,7 +10679,7 @@
   "Item checked.": "Ítem marcado.",
   "Item unchecked.": "Ítem desmarcado.",
   "Required items open": "Ítems obligatorios pendientes",
-  "nav.workorders.checklists": "Checklists",
-  "nav.workorders.dueRules": "Plazos",
-  "notifications.workOrderOverdue": "Orden de servicio #{{id}} atrasada"
+  "nav.workorders.checklists": "Listas de verificación",
+  "notifications.workOrderOverdue": "Orden de servicio #{{id}} atrasada",
+  "nav.workorders.due-rules": "Plazos"
 }

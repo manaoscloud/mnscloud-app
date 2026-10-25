@@ -10680,6 +10680,6 @@
   "Item unchecked.": "Item unchecked.",
   "Required items open": "Required items open",
   "nav.workorders.checklists": "Checklists",
-  "nav.workorders.dueRules": "Due times",
-  "notifications.workOrderOverdue": "Work order #{{id}} is overdue"
+  "notifications.workOrderOverdue": "Work order #{{id}} is overdue",
+  "nav.workorders.due-rules": "Due times"
 }
