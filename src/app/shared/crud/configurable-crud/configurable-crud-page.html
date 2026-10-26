@@ -864,34 +864,10 @@
             </mat-form-field>
           }
           @case ('file') {
-            <div
-              [class]="'crud-file-field ' + fieldClass(field)"
-              [class.crud-file-field-invalid]="hasFieldError(field)"
-            >
-              <label class="crud-file-field-label"
-                >{{ translatedFieldLabel(field) }}{{ isFieldRequired(field) ? '*' : '' }}</label
-              >
-              <div class="crud-file-field-control">
-                <input
-                  class="crud-file-field-input"
-                  [attr.aria-label]="translatedFieldLabel(field)"
-                  type="file"
-                  [accept]="field.accept ?? ''"
-                  [attr.data-field-key]="field.key"
-                  [attr.data-report-mask]="reportMask(field)"
-                  (change)="onFileInput(field.key, $event)"
-                />
-                @if (fieldHelp(field); as help) {
-                  <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
-                }
-              </div>
-              <div class="crud-file-field-status">
-                {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
-              </div>
-              @if (hasFieldError(field)) {
-                <div class="crud-field-error" role="alert">{{ fieldErrorText(field) }}</div>
-              }
-            </div>
+            <ng-container
+              [ngTemplateOutlet]="crudFileField"
+              [ngTemplateOutletContext]="{ $implicit: field }"
+            />
           }
           @default {
             <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -1189,35 +1165,10 @@
                     </mat-form-field>
                   }
                   @case ('file') {
-                    <div
-                      [class]="'crud-file-field ' + fieldClass(field)"
-                      [class.crud-file-field-invalid]="hasFieldError(field)"
-                    >
-                      <label class="crud-file-field-label"
-                        >{{ translatedFieldLabel(field)
-                        }}{{ isFieldRequired(field) ? '*' : '' }}</label
-                      >
-                      <div class="crud-file-field-control">
-                        <input
-                          class="crud-file-field-input"
-                          [attr.aria-label]="translatedFieldLabel(field)"
-                          type="file"
-                          [accept]="field.accept ?? ''"
-                          [attr.data-field-key]="field.key"
-                          [attr.data-report-mask]="reportMask(field)"
-                          (change)="onFileInput(field.key, $event)"
-                        />
-                        @if (fieldHelp(field); as help) {
-                          <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
-                        }
-                      </div>
-                      <div class="crud-file-field-status">
-                        {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
-                      </div>
-                      @if (hasFieldError(field)) {
-                        <div class="crud-field-error" role="alert">{{ fieldErrorText(field) }}</div>
-                      }
-                    </div>
+                    <ng-container
+                      [ngTemplateOutlet]="crudFileField"
+                      [ngTemplateOutletContext]="{ $implicit: field }"
+                    />
                   }
                   @default {
                     <mat-form-field appearance="outline" [class]="fieldClass(field)">
@@ -2900,37 +2851,10 @@
                     }
 
                     @case ('file') {
-                      <div
-                        [class]="'crud-file-field ' + fieldClass(field)"
-                        [class.crud-file-field-invalid]="hasFieldError(field)"
-                      >
-                        <label class="crud-file-field-label"
-                          >{{ translatedFieldLabel(field)
-                          }}{{ isFieldRequired(field) ? '*' : '' }}</label
-                        >
-                        <div class="crud-file-field-control">
-                          <input
-                            class="crud-file-field-input"
-                            [attr.aria-label]="translatedFieldLabel(field)"
-                            type="file"
-                            [accept]="field.accept ?? ''"
-                            [attr.data-field-key]="field.key"
-                            [attr.data-report-mask]="reportMask(field)"
-                            (change)="onFileInput(field.key, $event)"
-                          />
-                          @if (fieldHelp(field); as help) {
-                            <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
-                          }
-                        </div>
-                        <div class="crud-file-field-status">
-                          {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
-                        </div>
-                        @if (hasFieldError(field)) {
-                          <div class="crud-field-error" role="alert">
-                            {{ fieldErrorText(field) }}
-                          </div>
-                        }
-                      </div>
+                      <ng-container
+                        [ngTemplateOutlet]="crudFileField"
+                        [ngTemplateOutletContext]="{ $implicit: field }"
+                      />
                     }
 
                     @case ('search-select') {
@@ -3570,5 +3494,37 @@
         </div>
       </div>
     </div>
+  </div>
+</ng-template>
+
+<!-- One file input for every form surface (page dialog, collection form, related tab). -->
+<ng-template #crudFileField let-field>
+  <div
+    [class]="'crud-file-field ' + fieldClass(field)"
+    [class.crud-file-field-invalid]="hasFieldError(field)"
+  >
+    <label class="crud-file-field-label"
+      >{{ translatedFieldLabel(field) }}{{ isFieldRequired(field) ? '*' : '' }}</label
+    >
+    <div class="crud-file-field-control">
+      <input
+        class="crud-file-field-input"
+        [attr.aria-label]="translatedFieldLabel(field)"
+        type="file"
+        [accept]="field.accept ?? ''"
+        [attr.data-field-key]="field.key"
+        [attr.data-report-mask]="reportMask(field)"
+        (change)="onFileInput(field.key, $event)"
+      />
+      @if (fieldHelp(field); as help) {
+        <mns-field-help [label]="translatedFieldLabel(field)" [text]="help" />
+      }
+    </div>
+    <div class="crud-file-field-status">
+      {{ fieldFileName(field.key) || ('No file selected' | transloco) }}
+    </div>
+    @if (hasFieldError(field)) {
+      <div class="crud-field-error" role="alert">{{ fieldErrorText(field) }}</div>
+    }
   </div>
 </ng-template>
