@@ -23,6 +23,7 @@
         <div class="search-field">
           <input
             [placeholder]="'layout.searchMenu' | transloco"
+            [attr.aria-label]="'layout.searchMenu' | transloco"
             [value]="menuSearch()"
             (input)="menuSearch.set($any($event.target).value)"
           />

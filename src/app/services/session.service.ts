@@ -29,7 +29,7 @@ export class SessionService {
     if (this.heartbeatHandle()) return;
 
     const handle = setInterval(() => {
-      this.ping();
+      void this.ping();
     }, this.intervalMs);
 
     this.heartbeatHandle.set(handle);

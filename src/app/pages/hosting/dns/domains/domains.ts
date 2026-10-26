@@ -388,7 +388,12 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     return changed.length ? { voipDnsPolicies: changed } : {};
   }
 
-  override async startEdit(row: ConfigurableCrudRecord) {
+  override startEdit(row: ConfigurableCrudRecord) {
+    void this.startEditWithVoipPolicies(row);
+  }
+
+  /** Loads the VoIP DNS policies before opening the edit dialog (the base startEdit is synchronous). */
+  private async startEditWithVoipPolicies(row: ConfigurableCrudRecord) {
     try {
       const result = await this.api.get<any>(
         `${this.config.endpoint}/${this.recordUUID(row)}/voip-policies`,

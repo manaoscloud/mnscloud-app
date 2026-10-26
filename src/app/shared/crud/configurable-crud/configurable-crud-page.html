@@ -874,6 +874,7 @@
               <div class="crud-file-field-control">
                 <input
                   class="crud-file-field-input"
+                  [attr.aria-label]="translatedFieldLabel(field)"
                   type="file"
                   [accept]="field.accept ?? ''"
                   [attr.data-field-key]="field.key"
@@ -1199,6 +1200,7 @@
                       <div class="crud-file-field-control">
                         <input
                           class="crud-file-field-input"
+                          [attr.aria-label]="translatedFieldLabel(field)"
                           type="file"
                           [accept]="field.accept ?? ''"
                           [attr.data-field-key]="field.key"
@@ -2909,6 +2911,7 @@
                         <div class="crud-file-field-control">
                           <input
                             class="crud-file-field-input"
+                            [attr.aria-label]="translatedFieldLabel(field)"
                             type="file"
                             [accept]="field.accept ?? ''"
                             [attr.data-field-key]="field.key"

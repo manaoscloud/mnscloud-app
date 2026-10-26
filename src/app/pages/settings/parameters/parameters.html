@@ -309,6 +309,7 @@
                   <input
                     #siadCertificateInput
                     type="file"
+                    [attr.aria-label]="'mTLS Certificate' | transloco"
                     hidden
                     accept=".pem,.crt,.cer,application/x-pem-file"
                     (change)="selectSiadCertificate($event)"
@@ -316,6 +317,7 @@
                   <input
                     #siadPrivateKeyInput
                     type="file"
+                    [attr.aria-label]="'mTLS Private Key' | transloco"
                     hidden
                     accept=".pem,.key,application/x-pem-file"
                     (change)="selectSiadPrivateKey($event)"

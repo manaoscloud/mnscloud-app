@@ -644,7 +644,7 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   }
 
   private webappApps(): string[] {
-    return [...new Set(this.webapps().map((row) => row.app))].sort();
+    return [...new Set(this.webapps().map((row) => row.app))].sort((a, b) => a.localeCompare(b));
   }
 
   /** Like runtime products, an app is offered only while a host is not current (or it is updating). */
