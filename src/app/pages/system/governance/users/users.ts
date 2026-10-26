@@ -24,6 +24,8 @@ import {
   GovernanceAction,
   GovernanceUser,
   LegalHold,
+  TEST_TENANT_API_ACTION,
+  TestTenantAction,
 } from './user-governance.models';
 import { ReportProblemButtonComponent } from '../../../../shared/support-report-dialog/report-problem-button';
 import { injectRevealInvalidFields } from '../../../../shared/forms/reveal-invalid-fields';
@@ -90,6 +92,40 @@ const RESEND_VERIFICATION_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Resend verification e-mail',
 };
 
+const TEST_MARK_ACTION: ConfigurableCrudRowAction = {
+  key: 'test-mark',
+  label: 'Mark as test tenant',
+  icon: 'science',
+  tooltip: 'Mark as test tenant',
+};
+
+const TEST_UNMARK_ACTION: ConfigurableCrudRowAction = {
+  key: 'test-unmark',
+  label: 'Remove test tenant marker',
+  icon: 'cancel',
+  tooltip: 'Remove test tenant marker',
+};
+
+const TEST_ALLOW_PROVISIONING_ACTION: ConfigurableCrudRowAction = {
+  key: 'test-allow-provisioning',
+  label: 'Allow real provisioning',
+  icon: 'cloud_done',
+  tooltip: 'Allow real provisioning',
+};
+
+const TEST_DENY_PROVISIONING_ACTION: ConfigurableCrudRowAction = {
+  key: 'test-deny-provisioning',
+  label: 'Block real provisioning',
+  icon: 'cloud_off',
+  tooltip: 'Block real provisioning',
+};
+
+const TEST_TENANT_ACTIONS: readonly string[] = Object.keys(TEST_TENANT_API_ACTION);
+
+function isTestTenantAction(action: AccountAction): action is TestTenantAction {
+  return TEST_TENANT_ACTIONS.includes(action);
+}
+
 const GOVERNANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'system/governance/users',
   uuidField: 'uuid',
@@ -123,6 +159,12 @@ const GOVERNANCE_CONFIG: ConfigurableCrudConfig = {
       id: 'emailVerified',
       label: 'Email verified',
       field: 'emailVerifiedLabel',
+      translateValue: true,
+    },
+    {
+      id: 'testTenant',
+      label: 'Test tenant',
+      field: 'testTenantLabel',
       translateValue: true,
     },
     { id: 'legalHolds', label: 'Legal holds', field: 'activeLegalHoldCount' },
@@ -199,7 +241,7 @@ type GovernanceActionFormModel = {
             <mat-error>{{ actionForm.reason().errors() | mnsFieldErrorKey | transloco }}</mat-error>
           </mat-form-field>
 
-          @if (data.action !== 'release-hold' && data.action !== 'resend-verification') {
+          @if (needsLegalBasis()) {
             <mat-form-field appearance="outline" class="span-4">
               <mat-label>{{ 'Legal basis' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.legalBasis" />
@@ -264,12 +306,24 @@ export class GovernanceActionDialogComponent {
   });
   private readonly revealInvalid = injectRevealInvalidFields();
 
+  needsLegalBasis(): boolean {
+    return (
+      this.data.action !== 'release-hold' &&
+      this.data.action !== 'resend-verification' &&
+      !isTestTenantAction(this.data.action)
+    );
+  }
+
   /** Invalid fields do not disable Confirm: confirming reveals them (app.md baseline). */
   canConfirm(): boolean {
     return !this.saving();
   }
 
   titleKey(): string {
+    if (this.data.action === 'test-mark') return 'Mark as test tenant';
+    if (this.data.action === 'test-unmark') return 'Remove test tenant marker';
+    if (this.data.action === 'test-allow-provisioning') return 'Allow real provisioning';
+    if (this.data.action === 'test-deny-provisioning') return 'Block real provisioning';
     if (this.data.action === 'verify-email') return 'Mark e-mail as verified';
     if (this.data.action === 'resend-verification') return 'Resend verification e-mail';
     if (this.data.action === 'legal-hold') return 'Create legal hold';
@@ -280,6 +334,18 @@ export class GovernanceActionDialogComponent {
   }
 
   helpKey(): string {
+    if (this.data.action === 'test-mark') {
+      return 'A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.';
+    }
+    if (this.data.action === 'test-unmark') {
+      return 'The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.';
+    }
+    if (this.data.action === 'test-allow-provisioning') {
+      return 'This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.';
+    }
+    if (this.data.action === 'test-deny-provisioning') {
+      return 'This test tenant can no longer create real cloud resources. Existing resources are not changed.';
+    }
     if (this.data.action === 'verify-email') {
       return 'Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.';
     }
@@ -340,6 +406,16 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
     if (!row['emailVerifiedAt'] && Number(row['status'] ?? 0) === 1) {
       actions.push(RESEND_VERIFICATION_ACTION, VERIFY_EMAIL_ACTION);
     }
+    if (!row['testTenant']) {
+      actions.push(TEST_MARK_ACTION);
+    } else {
+      actions.push(
+        row['testProvisioningAllowed']
+          ? TEST_DENY_PROVISIONING_ACTION
+          : TEST_ALLOW_PROVISIONING_ACTION,
+        TEST_UNMARK_ACTION,
+      );
+    }
     return actions;
   }
 
@@ -357,7 +433,8 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
       accountAction !== 'legal-hold' &&
       accountAction !== 'release-hold' &&
       accountAction !== 'verify-email' &&
-      accountAction !== 'resend-verification'
+      accountAction !== 'resend-verification' &&
+      !isTestTenantAction(accountAction)
     ) {
       return;
     }
@@ -395,6 +472,14 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
       emailVerifiedAt: row.EmailVerifiedAt ?? null,
       emailVerifiedLabel: row.EmailVerifiedAt ? 'Yes' : 'No',
       emailVerificationDeadlineAt: row.EmailVerificationDeadlineAt ?? null,
+      testTenant: Number(row.TestTenant ?? 0) === 1,
+      testProvisioningAllowed: Number(row.TestProvisioningAllowed ?? 0) === 1,
+      testTenantLabel:
+        Number(row.TestTenant ?? 0) !== 1
+          ? 'No'
+          : Number(row.TestProvisioningAllowed ?? 0) === 1
+            ? 'Yes, real provisioning allowed'
+            : 'Yes',
       dateDeleted: row.DateDeleted ?? null,
       dateCreated: row.DateCreated ?? null,
       accessCount: Number(row.AccessCount ?? 0),
@@ -434,6 +519,7 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
             value: row['emailVerificationDeadlineAt'],
             kind: 'datetime',
           },
+          { label: 'Test tenant', value: row['testTenantLabel'], translate: true },
           { label: 'Legal holds', value: row['activeLegalHoldCount'] },
           { label: 'Last action', value: row['lastAction'] },
           { label: 'Created', value: row['dateCreated'], kind: 'datetime' },
@@ -525,14 +611,17 @@ export class SystemGovernanceUsersPage extends ConfigurableCrudPageBase<Configur
     if (!result || typeof result !== 'object') return;
 
     const payload = result as GovernanceActionDialogResult;
-    const endpoint =
-      action === 'legal-hold'
+    const testAction = isTestTenantAction(action) ? TEST_TENANT_API_ACTION[action] : null;
+    const endpoint = testAction
+      ? `system/governance/users/${uuid}/test-tenant`
+      : action === 'legal-hold'
         ? `system/governance/users/${uuid}/legal-holds`
         : action === 'release-hold' && holdUUID
           ? `system/governance/users/${uuid}/legal-holds/${holdUUID}/release`
           : `system/governance/users/${uuid}/${action}`;
-    const body =
-      action === 'legal-hold'
+    const body = testAction
+      ? { action: testAction, reason: payload.reason }
+      : action === 'legal-hold'
         ? payload
         : action === 'resend-verification'
           ? { reason: payload.reason }

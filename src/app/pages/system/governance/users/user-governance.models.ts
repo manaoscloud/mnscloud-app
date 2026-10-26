@@ -5,7 +5,19 @@ export type AccountAction =
   | 'legal-hold'
   | 'release-hold'
   | 'verify-email'
-  | 'resend-verification';
+  | 'resend-verification'
+  | TestTenantAction;
+
+/** Test tenant marker actions (POST system/governance/users/:uuid/test-tenant). */
+export type TestTenantAction =
+  'test-mark' | 'test-unmark' | 'test-allow-provisioning' | 'test-deny-provisioning';
+
+export const TEST_TENANT_API_ACTION: Record<TestTenantAction, string> = {
+  'test-mark': 'mark',
+  'test-unmark': 'unmark',
+  'test-allow-provisioning': 'allow-provisioning',
+  'test-deny-provisioning': 'deny-provisioning',
+};
 
 export interface ApiListResponse<T> {
   data?: {
@@ -22,6 +34,8 @@ export interface GovernanceUser {
   Status?: number | null;
   EmailVerifiedAt?: string | null;
   EmailVerificationDeadlineAt?: string | null;
+  TestTenant?: number | null;
+  TestProvisioningAllowed?: number | null;
   DateDeleted?: string | null;
   DateCreated?: string | null;
   AccessCount?: number | null;

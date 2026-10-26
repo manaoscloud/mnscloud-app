@@ -10694,5 +10694,15 @@
   "The planned materials leave the stock now. Missing quantities stop the whole issue.": "Los materiales planificados salen del inventario ahora. Si falta cantidad, no se da de baja nada.",
   "We identified a failure in the network that serves your address. Our team is already working on it.": "Identificamos una falla en la red que atiende su dirección. Nuestro equipo ya está trabajando en la solución.",
   "Work order materials": "Materiales de la orden de servicio",
-  "Media playback URL does not match the selected file.": "La dirección de reproducción no corresponde al archivo seleccionado."
+  "Media playback URL does not match the selected file.": "La dirección de reproducción no corresponde al archivo seleccionado.",
+  "Test tenant": "Tenant de prueba",
+  "Mark as test tenant": "Marcar como tenant de prueba",
+  "Remove test tenant marker": "Quitar marca de prueba",
+  "Allow real provisioning": "Permitir aprovisionamiento real",
+  "Block real provisioning": "Bloquear aprovisionamiento real",
+  "Yes, real provisioning allowed": "Sí, aprovisionamiento real permitido",
+  "A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.": "Un tenant de prueba solo envía correo al buzón de su propietario, queda fuera de los indicadores de tenants de la plataforma y no puede crear servidores, contenedores, buckets de almacenamiento ni cuentas de hosting reales.",
+  "The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.": "El tenant vuelve al comportamiento normal: correo a cualquier destinatario, indicadores de la plataforma y aprovisionamiento según sus suscripciones.",
+  "This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.": "Este tenant de prueba podrá crear recursos reales en la nube, que tienen costo. Elimínelos al final de la prueba.",
+  "This test tenant can no longer create real cloud resources. Existing resources are not changed.": "Este tenant de prueba ya no podrá crear recursos reales en la nube. Los recursos existentes no se modifican."
 }
