@@ -2288,3 +2288,10 @@ Company Fiscal shows a read-only summary and opens the existing issuer profile a
 registrations with the company preselected. Fiscal API permissions/entitlements remain authoritative; Registry editing is independent.
 Annotations retain `Notes` translated as **Anotações**, `notes` in payloads, a full-width textarea
 and four rows. No observation field or new annotation-history model is introduced.
+
+### Support submission readiness
+
+Report a problem declares expected attachments before upload and explicitly finalizes submission.
+Keep retry and continue-without-missing actions on the saved ticket; never open a duplicate ticket
+for upload failures. My tickets offers completion for the creator of preparing/abandoned submissions.
+The platform AI panel exposes evidence revisions, preparation timing, manifest and discarded analyses.

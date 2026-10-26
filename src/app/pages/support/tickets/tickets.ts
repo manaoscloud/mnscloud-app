@@ -605,6 +605,15 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         { label: 'Suspected area', value: triage['SuspectedArea'] },
         { label: 'Provider', value: triage['ProviderName'] },
         { label: 'Model', value: triage['Model'], monospace: true },
+        { label: 'Submission state', value: triage['EvidenceState'], translate: true },
+        {
+          label: 'Evidence revision (analysed / current)',
+          value: `${triage['AnalysedEvidenceRevision'] ?? '-'} / ${triage['CurrentEvidenceRevision'] ?? '-'}`,
+        },
+        { label: 'Outdated analyses discarded', value: triage['DiscardedAnalyses'] ?? 0 },
+        { label: 'Evidence ready at', value: triage['EvidenceReadyAt'], kind: 'datetime' },
+        { label: 'Analysis started at', value: triage['ClaimedAt'], kind: 'datetime' },
+        { label: 'Model processing (ms)', value: triage['LatencyMs'] },
         {
           label: 'Tokens (input / output)',
           value:
@@ -616,6 +625,21 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         { label: 'Last error', value: triage['LastErrorCode'], monospace: true },
       ],
       sections: [
+        ...(Array.isArray(triage['EvidenceManifest']) && triage['EvidenceManifest'].length
+          ? [
+              {
+                title: 'Submitted evidence',
+                table: {
+                  columns: [
+                    { key: 'fileName', label: 'Name' },
+                    { key: 'kind', label: 'Kind' },
+                    { key: 'status', label: 'Status' },
+                  ],
+                  rows: triage['EvidenceManifest'] as ConfigurableCrudRecord[],
+                },
+              },
+            ]
+          : []),
         ...(triage['Summary']
           ? [{ title: 'Summary', code: { value: triage['Summary'], format: 'text' as const } }]
           : []),

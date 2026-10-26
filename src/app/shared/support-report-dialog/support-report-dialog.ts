@@ -100,8 +100,9 @@ export class SupportReportDialogComponent {
         const resp = await this.api.get<{ data?: { access?: unknown[] } }>('user/access');
         const list = extractEnvironmentAccess(resp);
         return (
-          list.find((item: NormalizedEnvironmentAccess) => item.EnvironmentUUID === this.environmentUUID) ??
-          null
+          list.find(
+            (item: NormalizedEnvironmentAccess) => item.EnvironmentUUID === this.environmentUUID,
+          ) ?? null
         );
       } catch {
         return null;
@@ -349,13 +350,45 @@ export class SupportReportDialogComponent {
 
   async retryImages() {
     const ticket = this.created()?.SupportTicketUUID;
-    if (ticket) await this.sendImages(ticket);
+    if (!ticket || this.uploadingImages()) return;
+    this.uploadingImages.set(true);
+    try {
+      const refreshed = await this.reports.retrySubmission();
+      if (refreshed) this.created.set(refreshed);
+      await this.sendImages(ticket);
+    } catch {
+      // The API interceptor shows the error; keep the submission available for retry.
+    } finally {
+      this.uploadingImages.set(false);
+    }
   }
 
   private async sendImages(ticketUUID: string) {
     this.uploadingImages.set(true);
     try {
-      await this.reports.uploadImages(ticketUUID);
+      const missing = await this.reports.uploadImages(ticketUUID);
+      if (!missing) {
+        const submission = await this.reports.completeSubmission(ticketUUID);
+        this.created.update((current) =>
+          current ? { ...current, Submission: submission } : current,
+        );
+      }
+    } finally {
+      this.uploadingImages.set(false);
+    }
+  }
+
+  async continueWithoutMissing() {
+    const ticket = this.created()?.SupportTicketUUID;
+    if (!ticket || this.uploadingImages()) return;
+    this.uploadingImages.set(true);
+    try {
+      const submission = await this.reports.completeSubmission(ticket, true);
+      this.created.update((current) =>
+        current ? { ...current, Submission: submission } : current,
+      );
+    } catch {
+      // The API interceptor shows the error; keep the submission available for retry.
     } finally {
       this.uploadingImages.set(false);
     }

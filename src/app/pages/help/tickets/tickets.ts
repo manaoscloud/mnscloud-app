@@ -73,6 +73,26 @@ function config(
     rowActions: [
       { key: 'view', label: 'View details', icon: 'visibility' },
       {
+        key: 'complete-submission',
+        label: 'Submit available information',
+        icon: 'send',
+        visible: (row) =>
+          open(row) &&
+          Number(row['IsMine']) === 1 &&
+          ['preparing', 'abandoned'].includes(String(row['EvidenceState'])),
+        request: {
+          method: 'post',
+          endpoint: (row) => `help/tickets/${String(row['SupportTicketUUID'])}/submission`,
+          body: () => ({ continueWithoutMissing: true }),
+          successMessage: 'Available information submitted.',
+          confirm: {
+            title: 'Submit available information',
+            message:
+              'Submit this ticket for analysis using the available attachments? Upload any missing files before continuing.',
+          },
+        },
+      },
+      {
         key: 'conversation',
         label: 'Conversation',
         icon: 'forum',

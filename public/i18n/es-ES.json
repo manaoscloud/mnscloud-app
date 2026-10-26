@@ -10704,5 +10704,21 @@
   "A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.": "Un tenant de prueba solo envía correo al buzón de su propietario, queda fuera de los indicadores de tenants de la plataforma y no puede crear servidores, contenedores, buckets de almacenamiento ni cuentas de hosting reales.",
   "The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.": "El tenant vuelve al comportamiento normal: correo a cualquier destinatario, indicadores de la plataforma y aprovisionamiento según sus suscripciones.",
   "This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.": "Este tenant de prueba podrá crear recursos reales en la nube, que tienen costo. Elimínelos al final de la prueba.",
-  "This test tenant can no longer create real cloud resources. Existing resources are not changed.": "Este tenant de prueba ya no podrá crear recursos reales en la nube. Los recursos existentes no se modifican."
+  "This test tenant can no longer create real cloud resources. Existing resources are not changed.": "Este tenant de prueba ya no podrá crear recursos reales en la nube. Los recursos existentes no se modifican.",
+  "Your ticket is saved. Analysis will start after the attachments are submitted.": "Su ticket está guardado. El análisis comenzará después del envío de los adjuntos.",
+  "Retry attachments": "Reintentar adjuntos",
+  "Continue without missing attachments": "Continuar sin los adjuntos pendientes",
+  "Submit available information": "Enviar información disponible",
+  "Available information submitted.": "Información disponible enviada.",
+  "Submit this ticket for analysis using the available attachments? Upload any missing files before continuing.": "¿Enviar este ticket para análisis con los adjuntos disponibles? Envíe los archivos pendientes antes de continuar.",
+  "Submission state": "Estado del envío",
+  "Evidence revision (analysed / current)": "Revisión de evidencias (analizada / actual)",
+  "Outdated analyses discarded": "Análisis desactualizados descartados",
+  "Evidence ready at": "Evidencias listas el",
+  "Analysis started at": "Análisis iniciado el",
+  "Model processing (ms)": "Procesamiento del modelo (ms)",
+  "Submitted evidence": "Evidencias enviadas",
+  "preparing": "Preparando",
+  "abandoned": "Envío interrumpido",
+  "Some attachments could not be saved. Retry here or continue without the missing attachments.": "No se pudieron guardar algunos adjuntos. Reintente aquí o continúe sin los adjuntos pendientes."
 }
