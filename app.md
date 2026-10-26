@@ -930,7 +930,8 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Editing the shared shell updates every consumer automatically. Only remove obsolete bindings
     when its public inputs change; never copy a shell into pages to apply a visual adjustment.
 - Table behavior:
-  - Standard list pages use signal-first tables:
+  - Shared base internals (the `ConfigurableCrudPageBase` template renders these; pages never write
+    them, see Global Table Component Baseline and `check:tables`): signal-first tables
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.
   - Read/list data comes from `resource()`; table state such as sorted rows, visible page rows,
     selected visible rows, and derived labels must be modeled with `computed()`.
@@ -983,7 +984,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
     sorted-row `computed()`.
   - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
-  - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator"
+  - Shared base internals (never in a page): after `.table-wrapper`, the template renders a real `<mat-paginator class="mobile-paginator"
 [length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
 [pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>`.
   - Do not use an empty `.mobile-paginator` placeholder.
@@ -1500,7 +1501,8 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
   - must pass `npm run check:crud -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run check:crud:i18n -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run check:crud:fk -- <component-folder-or-html>` for every CRUD page touched
-  - must pass `npm run build`
+  - the production build passes in the PR CI (locally run `npm run typecheck`; `npm run build` only
+    in the cases of the workspace `docs/delivery-pipeline.md` → section 1)
   - delivery must explicitly list each changed file and confirm checklist compliance, including
     translation coverage for all new/changed visible strings in `en-US`, `pt-BR`, and `es-ES`
 
@@ -1687,7 +1689,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - render notes fields in their own `mat-tab label="Notes"`; the PT-BR translation for `Notes` is `Anotações`.
   - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field must use a full-row textarea (`mat-form-field.span-4`) with `rows: 4` inside that tab unless a documented exception exists.
-- Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
+- Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`).
+  Superseded by "Unified Registry forms" below where they differ; kept for the tab/notes rules:
   - Record tab desktop row pattern for resources with `Type`/`Company` and no
     `Alias/Nickname` (`carrier`, `supplier`, `reseller`):
     - row 1: `Status`, `Type/Company selector`, `Document`
@@ -1883,9 +1886,10 @@ structure propagate to both consumers. Scaffolds in `templates/detail-page` and
 
 ## Supported Hosting DNS platforms
 
-Create/edit and platform filters expose only cPanel DNSOnly (`cpanel_dnsonly`) and
-Amazon Route 53 (`route53`). Consume the authorized API catalog; the bounded fallback
-catalog contains these same two options. Unsupported values from an older API must not
+Create/edit and platform filters expose the platforms of the authorized API catalog: cPanel
+DNSOnly (`cpanel_dnsonly`), Amazon Route 53 (`route53`) and the managed MNSCloud DNS
+(`mnscloud_dns`, not editable as a provider credential). The bounded fallback catalog contains the
+same options. Unsupported values from an older API must not
 reappear in dropdowns. cPanel is the explicit initial form selection; API/DB validate the
 submitted platform. Preserve scope, required credentials and connection tests.
 

@@ -108,7 +108,7 @@ Use DetailPageComponent for read-only resource pages and SettingsPageComponent f
 singleton configuration pages. Both inherit PageShellComponent. Follow app.md and
 templates/detail-page or templates/settings-page; shared styles belong in
 src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
-Run node scripts/validate-content-pages.mjs and the build; verify both responsive
+Run node scripts/validate-content-pages.mjs and `npm run typecheck` (the PR CI runs the build); verify both responsive
 layouts and settings dirty/cancel/save behavior before release.
 
 ## Canonical CRUD creation
