@@ -92,32 +92,44 @@ const RESEND_VERIFICATION_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Resend verification e-mail',
 };
 
-const TEST_MARK_ACTION: ConfigurableCrudRowAction = {
-  key: 'test-mark',
-  label: 'Mark as test tenant',
-  icon: 'science',
-  tooltip: 'Mark as test tenant',
-};
+const testTenantRowAction = (key: TestTenantAction, label: string, icon: string) =>
+  ({ key, label, icon, tooltip: label }) satisfies ConfigurableCrudRowAction;
 
-const TEST_UNMARK_ACTION: ConfigurableCrudRowAction = {
-  key: 'test-unmark',
-  label: 'Remove test tenant marker',
-  icon: 'cancel',
-  tooltip: 'Remove test tenant marker',
-};
+const TEST_MARK_ACTION = testTenantRowAction('test-mark', 'Mark as test tenant', 'science');
+const TEST_UNMARK_ACTION = testTenantRowAction(
+  'test-unmark',
+  'Remove test tenant marker',
+  'cancel',
+);
+const TEST_ALLOW_PROVISIONING_ACTION = testTenantRowAction(
+  'test-allow-provisioning',
+  'Allow real provisioning',
+  'cloud_done',
+);
+const TEST_DENY_PROVISIONING_ACTION = testTenantRowAction(
+  'test-deny-provisioning',
+  'Block real provisioning',
+  'cloud_off',
+);
 
-const TEST_ALLOW_PROVISIONING_ACTION: ConfigurableCrudRowAction = {
-  key: 'test-allow-provisioning',
-  label: 'Allow real provisioning',
-  icon: 'cloud_done',
-  tooltip: 'Allow real provisioning',
-};
-
-const TEST_DENY_PROVISIONING_ACTION: ConfigurableCrudRowAction = {
-  key: 'test-deny-provisioning',
-  label: 'Block real provisioning',
-  icon: 'cloud_off',
-  tooltip: 'Block real provisioning',
+/** Dialog title and help of each test tenant action. */
+const TEST_TENANT_TEXT: Record<TestTenantAction, readonly [string, string]> = {
+  'test-mark': [
+    'Mark as test tenant',
+    'A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.',
+  ],
+  'test-unmark': [
+    'Remove test tenant marker',
+    'The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.',
+  ],
+  'test-allow-provisioning': [
+    'Allow real provisioning',
+    'This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.',
+  ],
+  'test-deny-provisioning': [
+    'Block real provisioning',
+    'This test tenant can no longer create real cloud resources. Existing resources are not changed.',
+  ],
 };
 
 const TEST_TENANT_ACTIONS: readonly string[] = Object.keys(TEST_TENANT_API_ACTION);
@@ -320,10 +332,7 @@ export class GovernanceActionDialogComponent {
   }
 
   titleKey(): string {
-    if (this.data.action === 'test-mark') return 'Mark as test tenant';
-    if (this.data.action === 'test-unmark') return 'Remove test tenant marker';
-    if (this.data.action === 'test-allow-provisioning') return 'Allow real provisioning';
-    if (this.data.action === 'test-deny-provisioning') return 'Block real provisioning';
+    if (isTestTenantAction(this.data.action)) return TEST_TENANT_TEXT[this.data.action][0];
     if (this.data.action === 'verify-email') return 'Mark e-mail as verified';
     if (this.data.action === 'resend-verification') return 'Resend verification e-mail';
     if (this.data.action === 'legal-hold') return 'Create legal hold';
@@ -334,18 +343,7 @@ export class GovernanceActionDialogComponent {
   }
 
   helpKey(): string {
-    if (this.data.action === 'test-mark') {
-      return 'A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.';
-    }
-    if (this.data.action === 'test-unmark') {
-      return 'The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.';
-    }
-    if (this.data.action === 'test-allow-provisioning') {
-      return 'This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.';
-    }
-    if (this.data.action === 'test-deny-provisioning') {
-      return 'This test tenant can no longer create real cloud resources. Existing resources are not changed.';
-    }
+    if (isTestTenantAction(this.data.action)) return TEST_TENANT_TEXT[this.data.action][1];
     if (this.data.action === 'verify-email') {
       return 'Use only when the identity was confirmed by another channel. Reason and legal basis are required and recorded in the account history.';
     }
