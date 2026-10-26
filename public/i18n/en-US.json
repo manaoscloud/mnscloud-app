@@ -10694,5 +10694,15 @@
   "The planned materials leave the stock now. Missing quantities stop the whole issue.": "The planned materials leave the stock now. Missing quantities stop the whole issue.",
   "We identified a failure in the network that serves your address. Our team is already working on it.": "We identified a failure in the network that serves your address. Our team is already working on it.",
   "Work order materials": "Work order materials",
-  "Media playback URL does not match the selected file.": "Media playback URL does not match the selected file."
+  "Media playback URL does not match the selected file.": "Media playback URL does not match the selected file.",
+  "Test tenant": "Test tenant",
+  "Mark as test tenant": "Mark as test tenant",
+  "Remove test tenant marker": "Remove test tenant marker",
+  "Allow real provisioning": "Allow real provisioning",
+  "Block real provisioning": "Block real provisioning",
+  "Yes, real provisioning allowed": "Yes, real provisioning allowed",
+  "A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.": "A test tenant sends e-mail only to its owner mailbox, is left out of the platform tenant indicators and cannot create real servers, containers, storage buckets or web hosting accounts.",
+  "The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.": "The tenant goes back to normal behavior: e-mail to any recipient, platform indicators and provisioning by its subscriptions.",
+  "This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.": "This test tenant may create real cloud resources, which cost money. Delete them at the end of the test.",
+  "This test tenant can no longer create real cloud resources. Existing resources are not changed.": "This test tenant can no longer create real cloud resources. Existing resources are not changed."
 }
