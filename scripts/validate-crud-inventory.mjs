@@ -15,7 +15,7 @@ export function crudInventory(root) {
   };
   walk(resolve(root, 'src/app'));
   return directories
-    .flatMap(directoryCrud)
+    .flatMap((directory) => directoryCrud(directory))
     .map(({ path, kind }) => ({ path: relative(root, path).split('\\').join('/'), kind }));
 }
 

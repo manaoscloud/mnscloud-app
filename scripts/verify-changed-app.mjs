@@ -116,7 +116,7 @@ const crudRoots = [
       .map(findCrudRoot)
       .filter(Boolean),
   ),
-].sort();
+].sort((a, b) => Number(a > b) - Number(a < b));
 for (const crudRoot of crudRoots) {
   run('node', ['scripts/validate-crud-template.mjs', crudRoot]);
   run('node', ['scripts/validate-crud-layout.mjs', crudRoot]);
