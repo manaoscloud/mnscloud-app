@@ -124,8 +124,11 @@ const EMPTY_DRAFT: SupportReportDraft = {
 
 @Injectable({ providedIn: 'root' })
 export class SupportReportService {
-  private pendingSubmission: { body: Record<string, unknown>; environmentUUID: string } | null =
-    null;
+  private pendingSubmission: {
+    body: Record<string, unknown>;
+    environmentUUID: string;
+    ticketUUID?: string;
+  } | null = null;
 
   async retrySubmission(): Promise<SupportReportCreated | null> {
     const pending = this.pendingSubmission;
@@ -134,6 +137,7 @@ export class SupportReportService {
       'help/tickets',
       pending.body,
     );
+    pending.ticketUUID = response.data?.SupportTicketUUID ?? pending.ticketUUID;
     return response.data ?? null;
   }
 
@@ -141,9 +145,11 @@ export class SupportReportService {
     ticketUUID: string,
     continueWithoutMissing = false,
   ): Promise<SupportSubmission> {
+    const pending = this.pendingSubmission;
     if (
-      !this.pendingSubmission ||
-      this.pendingSubmission.environmentUUID !== readStoredEnvironmentUUID()
+      !pending ||
+      pending.ticketUUID !== ticketUUID ||
+      pending.environmentUUID !== readStoredEnvironmentUUID()
     ) {
       throw new Error('Support report environment changed');
     }
@@ -151,7 +157,8 @@ export class SupportReportService {
       `help/tickets/${encodeURIComponent(ticketUUID)}/submission`,
       { continueWithoutMissing },
     );
-    if (response.data.State === 'ready') this.pendingSubmission = null;
+    if (response.data.State === 'ready' && this.pendingSubmission === pending)
+      this.pendingSubmission = null;
     return response.data;
   }
 
@@ -434,13 +441,17 @@ export class SupportReportService {
         })),
       },
     );
-    this.pendingSubmission = { body, environmentUUID };
+    const pending = { body, environmentUUID, ticketUUID: undefined as string | undefined };
+    this.pendingSubmission = pending;
     const response = await this.api.post<{ data?: SupportReportCreated }>('help/tickets', body);
-    this.submission.clear();
     const created = response?.data;
-    // Extra images stay until uploadImages() sends them to the new ticket.
-    this.draft.set({ ...EMPTY_DRAFT });
-    this.prefillCodes.set({});
+    pending.ticketUUID = created?.SupportTicketUUID;
+    // A delayed response must not clear a newer report. Extra images stay for uploadImages().
+    if (this.pendingSubmission === pending) {
+      this.submission.clear();
+      this.draft.set({ ...EMPTY_DRAFT });
+      this.prefillCodes.set({});
+    }
     this.snack.success('Ticket #{{protocol}} opened.', 5000, {
       protocol: created?.SupportTicketID ?? '',
     });

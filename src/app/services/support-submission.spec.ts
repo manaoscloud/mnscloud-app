@@ -82,4 +82,27 @@ describe('Support evidence submission', () => {
     await expectAsync(service.completeSubmission('ticket')).toBeRejected();
     expect(post.calls.count()).toBe(1);
   });
+  it('does not let an older completion clear a newer report or complete the wrong ticket', async () => {
+    await service.submitReport(payload, tenant);
+    let finish!: (response: unknown) => void;
+    post.and.callFake(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const olderCompletion = service.completeSubmission('ticket');
+    post.and.resolveTo({
+      data: { SupportTicketUUID: 'new-ticket', SupportTicketID: 'TKT-NEW', Submission: pending },
+    });
+    await service.submitReport({ ...payload, title: 'New report' }, tenant);
+    const newBody = post.calls.mostRecent().args[1];
+    finish({ data: { ...pending, State: 'ready' } });
+    await olderCompletion;
+    const count = post.calls.count();
+    await expectAsync(service.completeSubmission('ticket')).toBeRejected();
+    expect(post.calls.count()).toBe(count);
+    await service.retrySubmission();
+    expect(post.calls.mostRecent().args).toEqual(['help/tickets', newBody]);
+  });
 });
