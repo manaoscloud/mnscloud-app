@@ -88,7 +88,7 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: |
           mkdir -p var/security/sbom
-          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/var/security/sbom:/out" aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa fs --format cyclonedx --output "/out/mnscloud-app.cdx.json" /repo
+          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/var/security/sbom:/out" aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c fs --format cyclonedx --output "/out/mnscloud-app.cdx.json" /repo
       - name: Upload SBOM to Dependency-Track
         env:
           DTRACK_API_URL: ${{ vars.DTRACK_API_URL || 'http://127.0.0.1:8089' }}
