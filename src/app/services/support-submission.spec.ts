@@ -8,7 +8,7 @@ import { SupportReportService } from './support-report.service';
 import { ENV_STORAGE_KEY } from '../core/environment/environment-context';
 
 describe('Support evidence submission', () => {
-  const tenant = '2533110e-d0ec-11f1-b591-bc2411db6508';
+  const tenant = '11111111-1111-4111-8111-111111111111';
   let service: SupportReportService;
   let post: jasmine.Spy;
   let previousEnvironment: string | null;
@@ -26,11 +26,9 @@ describe('Support evidence submission', () => {
   beforeEach(() => {
     previousEnvironment = localStorage.getItem(ENV_STORAGE_KEY);
     localStorage.setItem(ENV_STORAGE_KEY, tenant);
-    post = jasmine
-      .createSpy('post')
-      .and.resolveTo({
-        data: { SupportTicketUUID: 'ticket', SupportTicketID: 'TKT-TEST', Submission: pending },
-      });
+    post = jasmine.createSpy('post').and.resolveTo({
+      data: { SupportTicketUUID: 'ticket', SupportTicketID: 'TKT-TEST', Submission: pending },
+    });
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -79,7 +77,7 @@ describe('Support evidence submission', () => {
   });
   it('does not replay or complete evidence in another tenant', async () => {
     await service.submitReport(payload, tenant);
-    localStorage.setItem(ENV_STORAGE_KEY, '26435634-d0ec-11f1-b591-bc2411db6508');
+    localStorage.setItem(ENV_STORAGE_KEY, '22222222-2222-4222-8222-222222222222');
     expect(await service.retrySubmission()).toBeNull();
     await expectAsync(service.completeSubmission('ticket')).toBeRejected();
     expect(post.calls.count()).toBe(1);
