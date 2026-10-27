@@ -10770,5 +10770,10 @@
   "documents.cancelUpload": "Cancelar envío pendiente",
   "documents.cancelled": "Cancelado",
   "documents.cancelDescription": "¿Cancelar este envío? Se conserva el historial. Abra la colección de nuevo para enviar otra versión.",
-  "documents.notRequired": "Revisión opcional"
+  "documents.notRequired": "Revisión opcional",
+  "billing.priceAudience": "Disponibilidad del precio",
+  "billing.allTenants": "Todos los tenants elegibles",
+  "billing.selectedTenants": "Solo tenants seleccionados",
+  "billing.allowedTenants": "Tenants autorizados",
+  "billing.priceAudienceHelp": "Restringe nuevas contrataciones de este precio. Una lista vacía bloquea nuevas contrataciones; se conservan los contratos existentes."
 }

@@ -19,7 +19,9 @@ import { DOCUMENT_REVIEW_OPTIONS, documentCollection } from '../registry/documen
 })
 export class GedArchivePage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    const api = inject(ApiService), dialog = inject(MatDialog), auth = inject(AuthService);
+    const api = inject(ApiService),
+      dialog = inject(MatDialog),
+      auth = inject(AuthService);
     const canReview = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.review');
     const canAssist = () =>
@@ -42,18 +44,24 @@ export class GedArchivePage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       canDelete: false,
       bulkDelete: false,
       statusFilter: false,
-      listFilters: [{
-        key: 'review',
-        label: 'documents.review',
-        type: 'select',
-        span: 1,
-        options: DOCUMENT_REVIEW_OPTIONS,
-      }],
-      columns: [...config.columns, { id: 'dossier', field: 'GdsName', label: 'ged.dossiers' }, {
-        id: 'location',
-        field: 'GdsPhysicalLocation',
-        label: 'ged.physicalLocation',
-      }],
+      listFilters: [
+        {
+          key: 'review',
+          label: 'documents.review',
+          type: 'select',
+          span: 1,
+          options: DOCUMENT_REVIEW_OPTIONS,
+        },
+      ],
+      columns: [
+        ...config.columns,
+        { id: 'dossier', field: 'GdsName', label: 'ged.dossiers' },
+        {
+          id: 'location',
+          field: 'GdsPhysicalLocation',
+          label: 'ged.physicalLocation',
+        },
+      ],
       rowActions: [
         {
           key: 'versions',

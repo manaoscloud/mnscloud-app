@@ -951,7 +951,10 @@ export const routes: Routes = [
               // Registry (shared by every module)
               {
                 path: 'registry/document-types',
-                loadComponent: () => import('./pages/registry/document-types/document-types').then((m) => m.RegDocumentTypePage),
+                loadComponent: () =>
+                  import('./pages/registry/document-types/document-types').then(
+                    (m) => m.RegDocumentTypePage,
+                  ),
                 title: 'Registry • Document types | mnscloud',
               },
               {

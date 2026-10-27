@@ -38,18 +38,25 @@ export const DOCUMENT_TYPES_CONFIG = defineCrud({
       type: 'textarea',
       span: 1,
     },
-    ...([{ key: 'requireIssueDate', label: 'documents.requireIssueDate' }, {
-      key: 'requireExpiryDate',
-      label: 'documents.requireExpiryDate',
-    }, { key: 'requireReview', label: 'documents.requireReview' }] as const).map((
-      { key, label },
-    ) => ({
+    ...(
+      [
+        { key: 'requireIssueDate', label: 'documents.requireIssueDate' },
+        {
+          key: 'requireExpiryDate',
+          label: 'documents.requireExpiryDate',
+        },
+        { key: 'requireReview', label: 'documents.requireReview' },
+      ] as const
+    ).map(({ key, label }) => ({
       key,
       source: 'Rdt' + key[0].toUpperCase() + key.slice(1),
       label,
       type: 'select' as const,
       span: 1 as const,
-      options: [{ value: 0, label: 'No' }, { value: 1, label: 'Yes' }],
+      options: [
+        { value: 0, label: 'No' },
+        { value: 1, label: 'Yes' },
+      ],
     })),
     { key: 'revision', source: 'RdtRevision', label: 'documents.revision', hiddenWhen: () => true },
   ],

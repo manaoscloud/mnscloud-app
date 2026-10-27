@@ -10770,5 +10770,10 @@
   "documents.cancelUpload": "Cancel pending upload",
   "documents.cancelled": "Cancelled",
   "documents.cancelDescription": "Cancel this upload? History is preserved. Reopen the collection to upload a new version.",
-  "documents.notRequired": "Review optional"
+  "documents.notRequired": "Review optional",
+  "billing.priceAudience": "Price availability",
+  "billing.allTenants": "All eligible tenants",
+  "billing.selectedTenants": "Selected tenants only",
+  "billing.allowedTenants": "Allowed tenants",
+  "billing.priceAudienceHelp": "Restricts new purchases of this price. An empty list blocks new purchases; existing contracts are preserved."
 }

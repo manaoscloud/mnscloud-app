@@ -23,65 +23,70 @@ export class GedDossiersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     const api = inject(ApiService);
     const dialog = inject(MatDialog);
     const auth = inject(AuthService);
-    super(defineCrud({
-      endpoint: 'ged/dossiers',
-      uuidField: 'GdsUUID',
-      pageTitle: 'ged.dossiers',
-      pageDescription: 'ged.description',
-      createTitle: 'ged.newDossier',
-      editTitle: 'ged.editDossier',
-      serverSidePagination: true,
-      bulkDelete: true,
-      initialValues: { name: '', description: '', physicalLocation: '', status: 1 },
-      deletePayload: (row) => ({ revision: row['GdsRevision'] }),
-      bulkDeletePayload: (rows) => ({
-        ids: rows.map((row) => row['GdsUUID']),
-        revisions: Object.fromEntries(
-          rows.map((row) => [String(row['GdsUUID']), row['GdsRevision']]),
-        ),
+    super(
+      defineCrud({
+        endpoint: 'ged/dossiers',
+        uuidField: 'GdsUUID',
+        pageTitle: 'ged.dossiers',
+        pageDescription: 'ged.description',
+        createTitle: 'ged.newDossier',
+        editTitle: 'ged.editDossier',
+        serverSidePagination: true,
+        bulkDelete: true,
+        initialValues: { name: '', description: '', physicalLocation: '', status: 1 },
+        deletePayload: (row) => ({ revision: row['GdsRevision'] }),
+        bulkDeletePayload: (rows) => ({
+          ids: rows.map((row) => row['GdsUUID']),
+          revisions: Object.fromEntries(
+            rows.map((row) => [String(row['GdsUUID']), row['GdsRevision']]),
+          ),
+        }),
+        fields: [
+          { key: 'status', source: 'GdsStatus', label: 'Status', type: 'status', span: 1 },
+          { key: 'name', source: 'GdsName', label: 'Name', required: true, span: 1 },
+          {
+            key: 'physicalLocation',
+            source: 'GdsPhysicalLocation',
+            label: 'ged.physicalLocation',
+            span: 1,
+          },
+          {
+            key: 'description',
+            source: 'GdsDescription',
+            label: 'Description',
+            type: 'textarea',
+            span: 1,
+          },
+          {
+            key: 'revision',
+            source: 'GdsRevision',
+            label: 'documents.revision',
+            hiddenWhen: () => true,
+          },
+        ],
+        columns: [
+          { id: 'name', field: 'GdsName', label: 'Name', kind: 'identity' },
+          { id: 'location', field: 'GdsPhysicalLocation', label: 'ged.physicalLocation' },
+          { id: 'status', field: 'GdsStatus', label: 'Status', kind: 'status' },
+        ],
+        relatedCollections: [
+          registryDocuments(
+            'ged/dossiers',
+            api,
+            dialog,
+            () =>
+              hasEffectivePermission(
+                auth.user()?.permissions ?? [],
+                'tenant.registry.documents.review',
+              ),
+            () =>
+              hasEffectivePermission(
+                auth.user()?.permissions ?? [],
+                'tenant.registry.documents.ai',
+              ),
+          ),
+        ],
       }),
-      fields: [
-        { key: 'status', source: 'GdsStatus', label: 'Status', type: 'status', span: 1 },
-        { key: 'name', source: 'GdsName', label: 'Name', required: true, span: 1 },
-        {
-          key: 'physicalLocation',
-          source: 'GdsPhysicalLocation',
-          label: 'ged.physicalLocation',
-          span: 1,
-        },
-        {
-          key: 'description',
-          source: 'GdsDescription',
-          label: 'Description',
-          type: 'textarea',
-          span: 1,
-        },
-        {
-          key: 'revision',
-          source: 'GdsRevision',
-          label: 'documents.revision',
-          hiddenWhen: () => true,
-        },
-      ],
-      columns: [
-        { id: 'name', field: 'GdsName', label: 'Name', kind: 'identity' },
-        { id: 'location', field: 'GdsPhysicalLocation', label: 'ged.physicalLocation' },
-        { id: 'status', field: 'GdsStatus', label: 'Status', kind: 'status' },
-      ],
-      relatedCollections: [
-        registryDocuments(
-          'ged/dossiers',
-          api,
-          dialog,
-          () =>
-            hasEffectivePermission(
-              auth.user()?.permissions ?? [],
-              'tenant.registry.documents.review',
-            ),
-          () =>
-            hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.ai'),
-        ),
-      ],
-    }));
+    );
   }
 }

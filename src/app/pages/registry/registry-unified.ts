@@ -381,8 +381,30 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
     relatedCollections: [
       ...(original.relatedCollections ?? []),
       registryContacts(original.endpoint),
-      ...(['registry/customers', 'registry/companies', 'registry/suppliers', 'registry/resellers'].includes(original.endpoint)
-        ? [registryDocuments(original.endpoint, api, dialog, () => hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.review'), () => hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.ai'))] : []),
+      ...([
+        'registry/customers',
+        'registry/companies',
+        'registry/suppliers',
+        'registry/resellers',
+      ].includes(original.endpoint)
+        ? [
+            registryDocuments(
+              original.endpoint,
+              api,
+              dialog,
+              () =>
+                hasEffectivePermission(
+                  auth.user()?.permissions ?? [],
+                  'tenant.registry.documents.review',
+                ),
+              () =>
+                hasEffectivePermission(
+                  auth.user()?.permissions ?? [],
+                  'tenant.registry.documents.ai',
+                ),
+            ),
+          ]
+        : []),
       ...(company
         ? [
             {

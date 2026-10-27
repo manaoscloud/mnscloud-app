@@ -81,10 +81,14 @@ export function documentCollection(
             id: 'state',
             field: 'RdvState',
             label: 'Status',
-            options: [{ value: 'pending', label: 'documents.pending' }, {
-              value: 'ready',
-              label: 'documents.ready',
-            }, { value: 'cancelled', label: 'documents.cancelled' }],
+            options: [
+              { value: 'pending', label: 'documents.pending' },
+              {
+                value: 'ready',
+                label: 'documents.ready',
+              },
+              { value: 'cancelled', label: 'documents.cancelled' },
+            ],
           },
           { id: 'created', field: 'RdvDateCreated', label: 'Date', kind: 'datetime' },
           {
@@ -124,11 +128,17 @@ export function documentCollection(
             openDataViewerDialog(dialog, {
               title: 'documents.assist',
               description: 'documents.assistDescription',
-              details: ['title', 'documentType', 'issueDate', 'expiryDate', 'summary', 'warning']
-                .map((key) => ({
-                  label: suggestionLabels[key] ?? 'documents.revision',
-                  value: response.data[key],
-                })),
+              details: [
+                'title',
+                'documentType',
+                'issueDate',
+                'expiryDate',
+                'summary',
+                'warning',
+              ].map((key) => ({
+                label: suggestionLabels[key] ?? 'documents.revision',
+                value: response.data[key],
+              })),
             });
           },
         },
@@ -233,14 +243,18 @@ export function documentCollection(
             pageTitle: 'documents.review',
             pageDescription: 'documents.reviewDescription',
             initialValues: { revision: row['RdcRevision'], state: 'approved', notes: '' },
-            fields: [hidden('revision'), {
-              key: 'state',
-              label: 'Status',
-              type: 'select',
-              options: states.filter((state) => ['approved', 'rejected'].includes(state.value)),
-              required: true,
-              span: 1,
-            }, { key: 'notes', label: 'Notes', type: 'textarea', required: true, span: 1 }],
+            fields: [
+              hidden('revision'),
+              {
+                key: 'state',
+                label: 'Status',
+                type: 'select',
+                options: states.filter((state) => ['approved', 'rejected'].includes(state.value)),
+                required: true,
+                span: 1,
+              },
+              { key: 'notes', label: 'Notes', type: 'textarea', required: true, span: 1 },
+            ],
             columns: [],
           }),
       },

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a57f66fdaca0",
+  "version": "a8fff5052b74",
   "language": "pt-BR",
   "entries": [
     {
@@ -6626,6 +6626,14 @@
         {
           "label": "Valor mínimo por ciclo",
           "help": "Menor valor cobrado em cada ciclo: a cobrança é o maior entre preço unitário × quantidade e este valor. Use 0 para não ter mínimo. Não é fidelidade nem prazo de contrato."
+        },
+        {
+          "label": "Disponibilidade do preço",
+          "help": "Limita novas contratações deste preço. Uma lista vazia bloqueia novas contratações; contratos existentes são preservados."
+        },
+        {
+          "label": "Tenants autorizados",
+          "help": ""
         },
         {
           "label": "Configuração JSON",

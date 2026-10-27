@@ -312,7 +312,10 @@ export const QUICK_CREATE_REGISTRY = {
   RegDocumentTypeRdtUUID: {
     label: 'documents.newType',
     permission: 'tenant.registry.document-types.write',
-    loadComponent: () => import('../../../pages/registry/document-types/document-types').then((m) => m.RegDocumentTypePage),
+    loadComponent: () =>
+      import('../../../pages/registry/document-types/document-types').then(
+        (m) => m.RegDocumentTypePage,
+      ),
   },
   RegContactSectorRseUUID: {
     label: 'registry.newSector',
