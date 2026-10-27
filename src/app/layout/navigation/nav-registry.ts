@@ -207,6 +207,32 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  {
+    id: 'ged',
+    label: 'nav.ged',
+    icon: 'folder_copy',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'ged/archive',
+        label: 'nav.ged.archive',
+        icon: 'find_in_page',
+        route: '/ged/archive',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.dossiers.read'],
+        requiresEnvironment: true,
+      },
+      {
+        id: 'ged/dossiers',
+        label: 'nav.ged.dossiers',
+        icon: 'folder',
+        route: '/ged/dossiers',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.dossiers.read'],
+        requiresEnvironment: true,
+      },
+    ],
+  },
   // Registry: records shared by every module (no commercial entitlement).
   {
     id: 'registry',
@@ -214,6 +240,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'assignment',
     requiresEnvironment: true,
     children: [
+      {
+        id: 'registry/document-types',
+        label: 'nav.registry.document-types',
+        icon: 'description',
+        route: '/registry/document-types',
+        permissions: ['tenant.registry.document-types.read'],
+      },
       {
         id: 'registry/customers',
         label: 'nav.registry.customers',

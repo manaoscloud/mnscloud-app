@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "796445030f1f",
+  "version": "a8fff5052b74",
   "language": "pt-BR",
   "entries": [
     {
@@ -2106,6 +2106,43 @@
         },
         {
           "label": "Modo",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/ged/archive",
+      "menuPath": "Gestão de documentos › Acervo e revisão",
+      "scope": "tenant",
+      "title": "Acervo e revisão",
+      "description": "Pesquise títulos, observações, dossiês e locais físicos. Filtre documentos pendentes de revisão e consulte seus arquivos privados.",
+      "fields": []
+    },
+    {
+      "route": "/ged/dossiers",
+      "menuPath": "Gestão de documentos › Dossiês",
+      "scope": "tenant",
+      "title": "Dossiês",
+      "description": "Organize o acervo digital em dossiês independentes e localize os originais físicos. Os tipos de documentos são compartilhados com Cadastros.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Localização física (arquivo, caixa, pasta)",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
           "help": ""
         },
         {
@@ -4647,6 +4684,31 @@
       ]
     },
     {
+      "route": "/registry/document-types",
+      "menuPath": "Cadastros › Tipos de documentos",
+      "scope": "tenant",
+      "title": "Tipos de documentos",
+      "description": "Classifique os documentos de todos os cadastros e do GED com um catálogo compartilhado.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/registry/employees",
       "menuPath": "Cadastros › Funcionários",
       "scope": "tenant",
@@ -6564,6 +6626,14 @@
         {
           "label": "Valor mínimo por ciclo",
           "help": "Menor valor cobrado em cada ciclo: a cobrança é o maior entre preço unitário × quantidade e este valor. Use 0 para não ter mínimo. Não é fidelidade nem prazo de contrato."
+        },
+        {
+          "label": "Disponibilidade do preço",
+          "help": "Limita novas contratações deste preço. Uma lista vazia bloqueia novas contratações; contratos existentes são preservados."
+        },
+        {
+          "label": "Tenants autorizados",
+          "help": ""
         },
         {
           "label": "Configuração JSON",

@@ -309,6 +309,14 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.CyberSecurityTrustedNodesPage,
       ),
   },
+  RegDocumentTypeRdtUUID: {
+    label: 'documents.newType',
+    permission: 'tenant.registry.document-types.write',
+    loadComponent: () =>
+      import('../../../pages/registry/document-types/document-types').then(
+        (m) => m.RegDocumentTypePage,
+      ),
+  },
   RegContactSectorRseUUID: {
     label: 'registry.newSector',
     permission: 'tenant.registry.contact-sectors.write',

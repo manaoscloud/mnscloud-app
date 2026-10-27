@@ -938,7 +938,25 @@ export const routes: Routes = [
                 title: 'CRM',
               },
 
+              {
+                path: 'ged/archive',
+                loadComponent: () => import('./pages/ged/archive').then((m) => m.GedArchivePage),
+                title: 'GED • Archive | mnscloud',
+              },
+              {
+                path: 'ged/dossiers',
+                loadComponent: () => import('./pages/ged/dossiers').then((m) => m.GedDossiersPage),
+                title: 'GED • Dossiers | mnscloud',
+              },
               // Registry (shared by every module)
+              {
+                path: 'registry/document-types',
+                loadComponent: () =>
+                  import('./pages/registry/document-types/document-types').then(
+                    (m) => m.RegDocumentTypePage,
+                  ),
+                title: 'Registry • Document types | mnscloud',
+              },
               {
                 path: 'registry/customers',
                 loadComponent: () =>

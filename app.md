@@ -564,12 +564,12 @@ CSS hook classes (`.app-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
 the page must use the shared base named here.
 
-| Scenario                                                                                                                                       | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Scenario                                                                                                                         | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss`              | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
-| Read-only summary with indicators and record inventories; Refresh is the only action                                                           | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
-| Singleton configuration with dirty/cancel/save                                                                                                 | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
-| Read-only page for one resource                                                                                                                | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
+| Read-only summary with indicators and record inventories; Refresh is the only action                                             | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
+| Singleton configuration with dirty/cancel/save                                                                                   | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
+| Read-only page for one resource                                                                                                  | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
 
 - A page that needs behavior the shared base lacks gets a generic extension point in the base
   (row actions, `collection`/`form` factories, related collections, hooks); never page-local
@@ -2261,6 +2261,7 @@ Routing profiles (`VoipPabxAgentProfile` / `VoipPabxAgentProfileQueue`) group qu
 Runtime queue snapshots carry only aggregate waiting count/longest wait, never caller identity. Counters become unavailable after 30 seconds without observation. SSE sends authoritative snapshots as well as durable transition IDs; PhoneWeb does not poll queue state. `VoipPabxAgentContact` records a runtime-authenticated agent participation, with optional disposition and spelling-preserving notes. Notes are limited to 4000 characters and revision-checked against the originating phone session.
 
 Agent creation/enabling checks the active entitlement and passes its quota to the tenant-serialized configure routine, which counts enabled phone-linked agents. Standalone resource contracts without a package limit retain the billing system's unlimited quantity semantics. No prices or paid subscriptions are created by the schema seed. Revoked/expired sessions, disabled identities, lost line assignments and released/expired claims leave the routing set; hot-desk stations are cleared.
+
 ## Unified Registry forms
 
 Customers, complexes, companies, suppliers, carriers and resellers use
@@ -2295,3 +2296,22 @@ Report a problem declares expected attachments before upload and explicitly fina
 Keep retry and continue-without-missing actions on the saved ticket; never open a duplicate ticket
 for upload failures. My tickets offers completion for the creator of preparing/abandoned submissions.
 The platform AI panel exposes evidence revisions, preparation timing, manifest and discarded analyses.
+
+## Shared documents and GED
+
+`pages/registry/documents.ts` is the canonical embedded document collection. Registry customers,
+companies, suppliers and resellers and GED dossiers reuse it; never fork their document-type CRUD.
+`registry/document-types` is the sole catalog route and `RegDocumentTypeRdtUUID` is its canonical
+quick-create key. GED navigation owns dossiers and archive/review, both gated by `module.ged.*`;
+ordinary Registry attachments have no GED entitlement requirement.
+
+Documents use the shared CRUD/embedded collection, version collections, multipart upload progress
+and private file preview. Keep revisions as strings. Single and bulk removal submit the revisions
+shown to the operator. New uploads use a UUID retained across retries; resume a pending version with
+the original bytes or cancel it before starting another. Cancellation keeps the version in history.
+Never use public object URLs or present a cancelled/pending version as downloadable.
+
+`registry.documents.assist` is optional and configured in Settings > AI Features. Suggestions are
+shown in the shared data viewer for human verification; they never fill, approve or save a record
+automatically. The manual workflow remains available without a provider. Every new owning resource
+must add explicit server-side authorization and its own FK before reusing this collection.
