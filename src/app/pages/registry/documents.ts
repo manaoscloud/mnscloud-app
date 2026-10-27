@@ -9,7 +9,7 @@ import type {
   ConfigurableCrudRecord,
   ConfigurableCrudRelatedCollection,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { openPrivateFile } from '../support/shared/support-desk';
+import { openPrivateFile } from '../../shared/file-preview-dialog/private-file';
 
 export const DOCUMENT_REVIEW_OPTIONS = [
   { value: 'not-required', label: 'documents.notRequired' },
