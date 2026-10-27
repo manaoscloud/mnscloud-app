@@ -1,3 +1,5 @@
+import { MatDialog } from '@angular/material/dialog';
+import { registryDocuments } from './documents';
 import { registryText } from './registry-fields';
 import { TranslocoService } from '@jsverse/transloco';
 import { CONTACT_SECTORS_CONFIG } from './contact-sectors/contact-sectors';
@@ -127,6 +129,7 @@ export function registryContacts(endpoint: string): ConfigurableCrudRelatedColle
 /** Applied in the page injection context: one fiscal catalog and one layout for all six records. */
 export function registryUnifiedConfig(original: ConfigurableCrudConfig): ConfigurableCrudConfig {
   const api = inject(ApiService);
+  const dialog = inject(MatDialog);
   const auth = inject(AuthService);
   const i18n = inject(AppI18nService);
   const translations = inject(TranslocoService);
@@ -378,6 +381,8 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
     relatedCollections: [
       ...(original.relatedCollections ?? []),
       registryContacts(original.endpoint),
+      ...(['registry/customers', 'registry/companies', 'registry/suppliers', 'registry/resellers'].includes(original.endpoint)
+        ? [registryDocuments(original.endpoint, api, dialog, () => hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.review'), () => hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.registry.documents.ai'))] : []),
       ...(company
         ? [
             {

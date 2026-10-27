@@ -8,6 +8,7 @@ import {
 describe('AI feature catalog', () => {
   it('lists the text and speech features of the API catalog', () => {
     expect(AI_FEATURE_OPTIONS.map((option) => option.value)).toEqual([
+      'registry.documents.assist',
       'support.triage',
       'help.tutorial.script',
       'help.tutorial.narration',

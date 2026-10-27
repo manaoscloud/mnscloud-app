@@ -2295,3 +2295,22 @@ Report a problem declares expected attachments before upload and explicitly fina
 Keep retry and continue-without-missing actions on the saved ticket; never open a duplicate ticket
 for upload failures. My tickets offers completion for the creator of preparing/abandoned submissions.
 The platform AI panel exposes evidence revisions, preparation timing, manifest and discarded analyses.
+
+## Shared documents and GED
+
+`pages/registry/documents.ts` is the canonical embedded document collection. Registry customers,
+companies, suppliers and resellers and GED dossiers reuse it; never fork their document-type CRUD.
+`registry/document-types` is the sole catalog route and `RegDocumentTypeRdtUUID` is its canonical
+quick-create key. GED navigation owns dossiers and archive/review, both gated by `module.ged.*`;
+ordinary Registry attachments have no GED entitlement requirement.
+
+Documents use the shared CRUD/embedded collection, version collections, multipart upload progress
+and private file preview. Keep revisions as strings. Single and bulk removal submit the revisions
+shown to the operator. New uploads use a UUID retained across retries; resume a pending version with
+the original bytes or cancel it before starting another. Cancellation keeps the version in history.
+Never use public object URLs or present a cancelled/pending version as downloadable.
+
+`registry.documents.assist` is optional and configured in Settings > AI Features. Suggestions are
+shown in the shared data viewer for human verification; they never fill, approve or save a record
+automatically. The manual workflow remains available without a provider. Every new owning resource
+must add explicit server-side authorization and its own FK before reusing this collection.
