@@ -73,7 +73,13 @@ export type SupportReportPayload = {
   systemInfo: Record<string, unknown>;
 };
 
+export type SupportSubmission = {
+  State: 'preparing' | 'ready' | 'abandoned';
+  EvidenceRevision: number;
+  Attachments: Array<{ fileName: string; kind: string; sizeBytes: number; status: string }>;
+};
 export type SupportReportCreated = {
+  Submission?: SupportSubmission;
   SupportTicketUUID: string;
   SupportTicketID: string;
   AttachmentWarnings?: string[];
@@ -118,6 +124,44 @@ const EMPTY_DRAFT: SupportReportDraft = {
 
 @Injectable({ providedIn: 'root' })
 export class SupportReportService {
+  private pendingSubmission: {
+    body: Record<string, unknown>;
+    environmentUUID: string;
+    ticketUUID?: string;
+  } | null = null;
+
+  async retrySubmission(): Promise<SupportReportCreated | null> {
+    const pending = this.pendingSubmission;
+    if (!pending || pending.environmentUUID !== readStoredEnvironmentUUID()) return null;
+    const response = await this.api.post<{ data?: SupportReportCreated }>(
+      'help/tickets',
+      pending.body,
+    );
+    pending.ticketUUID = response.data?.SupportTicketUUID ?? pending.ticketUUID;
+    return response.data ?? null;
+  }
+
+  async completeSubmission(
+    ticketUUID: string,
+    continueWithoutMissing = false,
+  ): Promise<SupportSubmission> {
+    const pending = this.pendingSubmission;
+    if (
+      !pending ||
+      pending.ticketUUID !== ticketUUID ||
+      pending.environmentUUID !== readStoredEnvironmentUUID()
+    ) {
+      throw new Error('Support report environment changed');
+    }
+    const response = await this.api.post<{ data: SupportSubmission }>(
+      `help/tickets/${encodeURIComponent(ticketUUID)}/submission`,
+      { continueWithoutMissing },
+    );
+    if (response.data.State === 'ready' && this.pendingSubmission === pending)
+      this.pendingSubmission = null;
+    return response.data;
+  }
+
   private readonly api = inject(ApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
@@ -137,6 +181,7 @@ export class SupportReportService {
   private draftEnvironment = readStoredEnvironmentUUID();
 
   clearDraft() {
+    this.pendingSubmission = null;
     this.draft.set({ ...EMPTY_DRAFT });
     this.prefillCodes.set({});
     this.submission.clear();
@@ -376,6 +421,11 @@ export class SupportReportService {
         ...rest,
         subject: title,
         origin: 'app_report',
+        deferAnalysis: true,
+        expectedAttachments: this.images().map((image) => ({
+          fileName: image.fileName,
+          sizeBytes: image.blob.size,
+        })),
       },
       {
         title,
@@ -385,14 +435,23 @@ export class SupportReportService {
         screenshot: payload.screenshot,
         route: payload.route,
         includeDiagnostics: this.draft().includeDiagnostics,
+        expectedAttachments: this.images().map((image) => ({
+          fileName: image.fileName,
+          sizeBytes: image.blob.size,
+        })),
       },
     );
+    const pending = { body, environmentUUID, ticketUUID: undefined as string | undefined };
+    this.pendingSubmission = pending;
     const response = await this.api.post<{ data?: SupportReportCreated }>('help/tickets', body);
-    this.submission.clear();
     const created = response?.data;
-    // Extra images stay until uploadImages() sends them to the new ticket.
-    this.draft.set({ ...EMPTY_DRAFT });
-    this.prefillCodes.set({});
+    pending.ticketUUID = created?.SupportTicketUUID;
+    // A delayed response must not clear a newer report. Extra images stay for uploadImages().
+    if (this.pendingSubmission === pending) {
+      this.submission.clear();
+      this.draft.set({ ...EMPTY_DRAFT });
+      this.prefillCodes.set({});
+    }
     this.snack.success('Ticket #{{protocol}} opened.', 5000, {
       protocol: created?.SupportTicketID ?? '',
     });
@@ -400,6 +459,7 @@ export class SupportReportService {
       SupportTicketUUID: created?.SupportTicketUUID ?? '',
       SupportTicketID: created?.SupportTicketID ?? '',
       AttachmentWarnings: created?.AttachmentWarnings ?? [],
+      Submission: created?.Submission,
     };
   }
 }
