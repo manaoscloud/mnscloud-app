@@ -49,6 +49,7 @@ export const GED_ACCOUNTS_CONFIG = defineCrud({
   ],
   columns: [
     { id: 'name', field: 'GacName', label: 'Name', kind: 'identity' },
+    { id: 'publication', field: 'GacPortalEnabled', label: 'ged.portalEnabled', kind: 'status' },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },
     { id: 'status', field: 'GacStatus', label: 'Status', kind: 'status' },
   ],
