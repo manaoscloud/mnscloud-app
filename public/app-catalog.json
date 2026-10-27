@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b7dcbeeba72a",
+  "version": "d11ac3c78cd5",
   "language": "pt-BR",
   "entries": [
     {
@@ -2115,6 +2115,35 @@
       ]
     },
     {
+      "route": "/ged/accounts",
+      "menuPath": "Gestão de documentos › Contas",
+      "scope": "tenant",
+      "title": "Contas do GED",
+      "description": "Organize os dossiês por cliente ou uso interno, com os recursos contratados e configurados pela revenda.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Deixe vazio para uso interno. O cliente fica vinculado à conta e não pode ser trocado na edição."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/ged/archive",
       "menuPath": "Gestão de documentos › Acervo e revisão",
       "scope": "tenant",
@@ -2129,6 +2158,10 @@
       "title": "Dossiês",
       "description": "Organize o acervo digital em dossiês independentes e localize os originais físicos. Os tipos de documentos são compartilhados com Cadastros.",
       "fields": [
+        {
+          "label": "Conta do GED",
+          "help": ""
+        },
         {
           "label": "Status",
           "help": ""
