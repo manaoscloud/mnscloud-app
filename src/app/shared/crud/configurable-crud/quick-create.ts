@@ -312,7 +312,8 @@ export const QUICK_CREATE_REGISTRY = {
   GedAccountGacUUID: {
     label: 'ged.newAccount',
     permission: 'tenant.ged.accounts.all',
-    loadComponent: () => import('../../../pages/ged/accounts/accounts').then((m) => m.GedAccountsPage),
+    loadComponent: () =>
+      import('../../../pages/ged/accounts/accounts').then((m) => m.GedAccountsPage),
   },
   RegDocumentTypeRdtUUID: {
     label: 'documents.newType',

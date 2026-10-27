@@ -10809,5 +10809,15 @@
   "ged.newAccount": "New GED account",
   "ged.editAccount": "Edit GED account",
   "ged.account": "GED account",
-  "ged.accountCustomerHelp": "Leave empty for internal use. The customer is bound to the account and cannot be changed when editing."
+  "ged.accountCustomerHelp": "Leave empty for internal use. The customer is bound to the account and cannot be changed when editing.",
+  "ged.publication": "Portal publication",
+  "ged.publicationDescription": "Allow customers to view approved documents in their accounts, subject to portal permissions.",
+  "ged.portalEnabled": "Allow portal access",
+  "ged.assignOperator": "Assign operator",
+  "ged.operators": "Operators",
+  "ged.operatorsDescription": "Assign or revoke tenant operators. Their user permissions are still required.",
+  "ged.usage": "Account usage",
+  "ged.usageDescription": "View documents, retained versions and AI calls attributed to this account. These values do not create charges.",
+  "ged.readyBytes": "Ready version bytes",
+  "ged.aiCalls": "AI calls"
 }

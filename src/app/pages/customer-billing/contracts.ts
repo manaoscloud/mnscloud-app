@@ -255,10 +255,22 @@ const config = defineCrud({
         },
         {
           key: 'resourceUUID',
+          hiddenWhen: ({ values }) => values['module'] === 'ged',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
           span: 2,
+        },
+        {
+          key: 'gedAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'ged.account',
+          type: 'search-select',
+          span: 2,
+          hiddenWhen: ({ values }) => values['module'] !== 'ged',
+          requiredWhen: ({ values }) => values['module'] === 'ged',
+          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
+          quickCreate: quickCreateFor('GedAccountGacUUID'),
         },
         {
           key: 'productUUID',
@@ -346,7 +358,8 @@ const config = defineCrud({
       ],
       payload: (values) => ({
         module: values['module'] || 'manual',
-        resourceUUID: values['resourceUUID'] || null,
+        resourceUUID:
+          (values['module'] === 'ged' ? values['gedAccountUUID'] : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],

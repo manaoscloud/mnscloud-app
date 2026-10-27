@@ -45,8 +45,13 @@ export class GedArchivePage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       bulkDelete: false,
       statusFilter: false,
       listFilters: [
-        { key: 'GedAccountGacUUID', label: 'ged.account', type: 'search-select', span: 1,
-          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' } },
+        {
+          key: 'GedAccountGacUUID',
+          label: 'ged.account',
+          type: 'search-select',
+          span: 1,
+          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
+        },
         {
           key: 'review',
           label: 'documents.review',

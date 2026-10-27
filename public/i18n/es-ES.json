@@ -10809,5 +10809,15 @@
   "ged.newAccount": "Nueva cuenta de GED",
   "ged.editAccount": "Editar cuenta de GED",
   "ged.account": "Cuenta de GED",
-  "ged.accountCustomerHelp": "Deje vacío para uso interno. El cliente queda vinculado a la cuenta y no se puede cambiar al editar."
+  "ged.accountCustomerHelp": "Deje vacío para uso interno. El cliente queda vinculado a la cuenta y no se puede cambiar al editar.",
+  "ged.publication": "Publicación en el portal",
+  "ged.publicationDescription": "Permita consultar documentos aprobados en las cuentas del cliente, respetando los permisos del portal.",
+  "ged.portalEnabled": "Permitir acceso al portal",
+  "ged.assignOperator": "Asignar operador",
+  "ged.operators": "Operadores",
+  "ged.operatorsDescription": "Asigne o revoque operadores del entorno. Se siguen exigiendo los permisos del usuario.",
+  "ged.usage": "Uso de la cuenta",
+  "ged.usageDescription": "Consulte documentos, versiones conservadas y llamadas de IA atribuidos a esta cuenta. Los valores no generan cobros.",
+  "ged.readyBytes": "Bytes de versiones listas",
+  "ged.aiCalls": "Llamadas de IA"
 }
