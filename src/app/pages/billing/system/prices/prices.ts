@@ -359,6 +359,15 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
     return super.lookupLabel(key, value);
   }
 
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const config = payload['config'];
+    if (config != null && (typeof config !== 'object' || Array.isArray(config))) {
+      return this.rejectField('config', 'Enter a valid JSON object.');
+    }
+    return true;
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PRICE_PAYLOAD_KEYS);
     const config = { ...priceConfig(next['config']) };
