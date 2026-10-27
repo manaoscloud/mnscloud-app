@@ -1,3 +1,4 @@
+import { revisionDeletePayloads } from '../../shared/crud/configurable-crud/revision-delete';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../services/api.service';
@@ -34,13 +35,7 @@ export class GedDossiersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         serverSidePagination: true,
         bulkDelete: true,
         initialValues: { name: '', description: '', physicalLocation: '', status: 1 },
-        deletePayload: (row) => ({ revision: row['GdsRevision'] }),
-        bulkDeletePayload: (rows) => ({
-          ids: rows.map((row) => row['GdsUUID']),
-          revisions: Object.fromEntries(
-            rows.map((row) => [String(row['GdsUUID']), row['GdsRevision']]),
-          ),
-        }),
+        ...revisionDeletePayloads('GdsUUID', 'GdsRevision'),
         fields: [
           { key: 'status', source: 'GdsStatus', label: 'Status', type: 'status', span: 1 },
           { key: 'name', source: 'GdsName', label: 'Name', required: true, span: 1 },

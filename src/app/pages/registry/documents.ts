@@ -1,3 +1,4 @@
+import { revisionDeletePayloads } from '../../shared/crud/configurable-crud/revision-delete';
 import { openDataViewerDialog } from '../../shared/data-viewer-dialog/data-viewer-dialog';
 import { ApiService } from '../../services/api.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -181,13 +182,7 @@ export function documentCollection(
       expiryDate: '',
       status: 1,
     },
-    deletePayload: (row) => ({ revision: row['RdcRevision'] }),
-    bulkDeletePayload: (rows) => ({
-      ids: rows.map((row) => row['RdcUUID']),
-      revisions: Object.fromEntries(
-        rows.map((row) => [String(row['RdcUUID']), row['RdcRevision']]),
-      ),
-    }),
+    ...revisionDeletePayloads('RdcUUID', 'RdcRevision'),
     fields: [
       { key: 'status', source: 'RdcStatus', label: 'Status', type: 'status', span: 1 },
       { key: 'title', source: 'RdcTitle', label: 'Title', required: true, span: 1 },

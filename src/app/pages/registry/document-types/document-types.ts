@@ -1,3 +1,4 @@
+import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -23,11 +24,7 @@ export const DOCUMENT_TYPES_CONFIG = defineCrud({
     requireExpiryDate: 0,
     requireReview: 0,
   },
-  deletePayload: (row) => ({ revision: row['RdtRevision'] }),
-  bulkDeletePayload: (rows) => ({
-    ids: rows.map((row) => row['RdtUUID']),
-    revisions: Object.fromEntries(rows.map((row) => [String(row['RdtUUID']), row['RdtRevision']])),
-  }),
+  ...revisionDeletePayloads('RdtUUID', 'RdtRevision'),
   fields: [
     { key: 'status', source: 'RdtStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'RdtName', label: 'Name', required: true, span: 1 },
