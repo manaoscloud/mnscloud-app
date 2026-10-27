@@ -17,6 +17,7 @@ import { AuthService } from '../../../services/auth.service';
 import {
   ACTIVE_TICKET_STATUSES,
   SupportDesk,
+  TICKET_STATUS_FILTER_OPTIONS,
   TICKET_STATUS_OPTIONS,
   agentTimelineCollection,
   attachmentsCollection,
@@ -107,6 +108,14 @@ function priorityChip(row: ConfigurableCrudRecord): string {
   return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
 }
 
+export function supportTicketsConfig(
+  desk: SupportDesk,
+  api: () => ApiService,
+  dialog: () => MatDialog,
+): ConfigurableCrudConfig {
+  return config(desk, api, dialog);
+}
+
 function config(
   desk: SupportDesk,
   api: () => ApiService,
@@ -163,6 +172,8 @@ function config(
     inactiveValue: 'closed',
     statusOptions: TICKET_STATUS_OPTIONS,
     activeStatusValues: ACTIVE_TICKET_STATUSES,
+    initialStatus: 'active',
+    statusFilterOptions: TICKET_STATUS_FILTER_OPTIONS,
     bulkDelete: false,
     canCreate: !platform,
     serverSidePagination: true,
@@ -268,6 +279,16 @@ function config(
     },
     columns: [
       { id: 'protocol', field: 'SupportTicketID', label: 'Protocol', kind: 'identity' },
+      { id: 'openedAt', field: 'OpenedAt', label: 'Opened at', kind: 'datetime' },
+      {
+        id: 'status',
+        field: 'Status',
+        label: 'Status',
+        kind: 'status',
+        options: TICKET_STATUS_OPTIONS,
+        chipClass: ticketStatusChip,
+        className: 'status-col',
+      },
       {
         id: 'subject',
         field: 'Subject',
@@ -325,15 +346,6 @@ function config(
       { id: 'team', field: 'TeamName', label: 'Team' },
       { id: 'assigned', field: 'AssignedToName', label: 'Assigned to' },
       { id: 'activity', field: 'LastActivityAt', label: 'Last activity', kind: 'datetime' },
-      {
-        id: 'status',
-        field: 'Status',
-        label: 'Status',
-        kind: 'status',
-        options: TICKET_STATUS_OPTIONS,
-        chipClass: ticketStatusChip,
-        className: 'status-col',
-      },
     ],
     fields: [
       {

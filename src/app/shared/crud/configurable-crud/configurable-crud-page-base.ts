@@ -669,6 +669,8 @@ export type ConfigurableCrudConfig = {
   inactiveValue: string | number;
   statusOptions?: readonly ConfigurableCrudOption[];
   activeStatusValues?: readonly (string | number)[];
+  initialStatus?: '' | string | number;
+  statusFilterOptions?: readonly ConfigurableCrudOption[];
   addressSections?: readonly ConfigurableCrudAddressSection[];
   addressCopyActions?: readonly ConfigurableCrudCopyAction[];
   listFilters?: readonly ConfigurableCrudListFilter[];
@@ -1177,9 +1179,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       : (
           inject(ActivatedRoute, { optional: true })?.snapshot.queryParamMap.get('search') ?? ''
         ).trim();
-    if (initialSearch) {
-      this.search.set(initialSearch);
-      this.appliedFilters.set({ search: initialSearch, status: '', extra: {} });
+    const queryStatus = this.quickCreateMode
+      ? ''
+      : (
+          inject(ActivatedRoute, { optional: true })?.snapshot.queryParamMap.get('status') ?? ''
+        ).trim();
+    const initialStatus = queryStatus || (config.initialStatus ?? '');
+    if (initialSearch || initialStatus) {
+      if (initialSearch) this.search.set(initialSearch);
+      if (initialStatus) this.status.set(initialStatus);
+      this.appliedFilters.set({ search: initialSearch, status: initialStatus, extra: {} });
     }
     this.itemsResource = resource({
       params: () =>
@@ -2685,6 +2694,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   statusFilterOptions(): readonly ConfigurableCrudOption[] {
+    if (this.config.statusFilterOptions?.length) {
+      return this.config.statusFilterOptions.map((option) => ({
+        ...option,
+        label: this.t(option.label),
+      }));
+    }
     return [
       { value: '', label: this.t('All') },
       ...this.statusOptions().map((option) => ({ ...option, label: this.t(option.label) })),

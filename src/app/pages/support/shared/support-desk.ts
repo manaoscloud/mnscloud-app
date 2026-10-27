@@ -40,6 +40,12 @@ export const TICKET_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
 
 export const ACTIVE_TICKET_STATUSES = ['open', 'in_progress', 'pending'];
 
+export const TICKET_STATUS_FILTER_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'active', label: 'Active tickets' },
+  { value: '', label: 'All' },
+  ...TICKET_STATUS_OPTIONS,
+];
+
 export function ticketStatusChip(value: unknown): string {
   if (value === 'resolved' || value === 'closed') return 'chip-success';
   if (value === 'canceled') return 'chip-skipped';
