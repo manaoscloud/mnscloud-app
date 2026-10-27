@@ -939,6 +939,11 @@ export const routes: Routes = [
               },
 
               {
+                path: 'ged/accounts',
+                loadComponent: () => import('./pages/ged/accounts/accounts').then((m) => m.GedAccountsPage),
+                title: 'GED • Accounts | mnscloud',
+              },
+              {
                 path: 'ged/archive',
                 loadComponent: () => import('./pages/ged/archive').then((m) => m.GedArchivePage),
                 title: 'GED • Archive | mnscloud',

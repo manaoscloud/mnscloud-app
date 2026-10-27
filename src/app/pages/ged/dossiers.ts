@@ -34,9 +34,12 @@ export class GedDossiersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         editTitle: 'ged.editDossier',
         serverSidePagination: true,
         bulkDelete: true,
-        initialValues: { name: '', description: '', physicalLocation: '', status: 1 },
+        initialValues: { GedAccountGacUUID: null, name: '', description: '', physicalLocation: '', status: 1 },
         ...revisionDeletePayloads('GdsUUID', 'GdsRevision'),
         fields: [
+          { key: 'GedAccountGacUUID', source: 'GedAccountGacUUID', label: 'ged.account', type: 'search-select', required: true, span: 1,
+            disabledWhen: ({ editing }) => editing,
+            remoteLookup: { endpoint: 'ged/accounts?status=1', uuidField: 'GacUUID', labelField: 'GacName', selectedLabelField: 'GacName' } },
           { key: 'status', source: 'GdsStatus', label: 'Status', type: 'status', span: 1 },
           { key: 'name', source: 'GdsName', label: 'Name', required: true, span: 1 },
           {
@@ -60,10 +63,13 @@ export class GedDossiersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
           },
         ],
         columns: [
+          { id: 'account', field: 'GacName', label: 'ged.account' },
           { id: 'name', field: 'GdsName', label: 'Name', kind: 'identity' },
           { id: 'location', field: 'GdsPhysicalLocation', label: 'ged.physicalLocation' },
           { id: 'status', field: 'GdsStatus', label: 'Status', kind: 'status' },
         ],
+        listFilters: [{ key: 'GedAccountGacUUID', label: 'ged.account', type: 'search-select', span: 1,
+          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' } }],
         relatedCollections: [
           registryDocuments(
             'ged/dossiers',

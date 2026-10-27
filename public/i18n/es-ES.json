@@ -10802,5 +10802,12 @@
   "Sending At": "Enviando en",
   "Sent At": "Enviado en",
   "Delivered At": "Entregado en",
-  "Failed At": "Falló en"
+  "Failed At": "Falló en",
+  "nav.ged.accounts": "Cuentas",
+  "ged.accounts": "Cuentas de GED",
+  "ged.accountsDescription": "Organice los expedientes por cliente o uso interno con los recursos contratados y configurados por el revendedor.",
+  "ged.newAccount": "Nueva cuenta de GED",
+  "ged.editAccount": "Editar cuenta de GED",
+  "ged.account": "Cuenta de GED",
+  "ged.accountCustomerHelp": "Deje vacío para uso interno. El cliente queda vinculado a la cuenta y no se puede cambiar al editar."
 }
