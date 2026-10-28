@@ -3041,16 +3041,16 @@ export const routes: Routes = [
                     title: 'System SMTP Routes | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
-                  {
-                    path: 'messages',
-                    loadComponent: () =>
-                      import('./pages/hosting/smtp/messages/messages').then(
-                        (m) => m.HostingSmtpMessagesPage,
-                      ),
-                    title: 'System SMTP Messages | mnscloud',
-                    data: { scope: 'master', context: 'system' },
-                  },
                 ],
+              },
+              {
+                path: 'hosting/smtp/messages',
+                loadComponent: () =>
+                  import('./pages/hosting/smtp/messages/messages').then(
+                    (m) => m.HostingSmtpMessagesPage,
+                  ),
+                title: 'System SMTP Messages | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'hosting/storage',
