@@ -10803,5 +10803,22 @@
   "Sending At": "Enviando em",
   "Sent At": "Enviado em",
   "Delivered At": "Entregue em",
-  "Failed At": "Falhou em"
+  "Failed At": "Falhou em",
+  "nav.ged.accounts": "Contas",
+  "ged.accounts": "Contas do GED",
+  "ged.accountsDescription": "Organize os dossiês por cliente ou uso interno, com os recursos contratados e configurados pela revenda.",
+  "ged.newAccount": "Nova conta do GED",
+  "ged.editAccount": "Editar conta do GED",
+  "ged.account": "Conta do GED",
+  "ged.accountCustomerHelp": "Deixe vazio para uso interno. O cliente fica vinculado à conta e não pode ser trocado na edição.",
+  "ged.publication": "Publicação no portal",
+  "ged.publicationDescription": "Autorize a consulta de documentos aprovados nas contas do cliente, respeitando as permissões do portal.",
+  "ged.portalEnabled": "Permitir consulta no portal",
+  "ged.assignOperator": "Atribuir operador",
+  "ged.operators": "Operadores",
+  "ged.operatorsDescription": "Atribua ou revogue operadores do ambiente. As permissões do usuário continuam sendo exigidas.",
+  "ged.usage": "Uso da conta",
+  "ged.usageDescription": "Consulte os documentos, versões retidas e chamadas de IA atribuídos a esta conta. Os valores não criam cobranças.",
+  "ged.readyBytes": "Bytes de versões prontas",
+  "ged.aiCalls": "Chamadas de IA"
 }

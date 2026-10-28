@@ -46,6 +46,13 @@ export class GedArchivePage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       statusFilter: false,
       listFilters: [
         {
+          key: 'GedAccountGacUUID',
+          label: 'ged.account',
+          type: 'search-select',
+          span: 1,
+          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
+        },
+        {
           key: 'review',
           label: 'documents.review',
           type: 'select',
@@ -55,6 +62,7 @@ export class GedArchivePage extends ConfigurableCrudPageBase<ConfigurableCrudRec
       ],
       columns: [
         ...config.columns,
+        { id: 'account', field: 'GacName', label: 'ged.account' },
         { id: 'dossier', field: 'GdsName', label: 'ged.dossiers' },
         {
           id: 'location',

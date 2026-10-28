@@ -214,6 +214,15 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
+        id: 'ged/accounts',
+        label: 'nav.ged.accounts',
+        icon: 'account_tree',
+        route: '/ged/accounts',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.accounts.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'ged/archive',
         label: 'nav.ged.archive',
         icon: 'find_in_page',
