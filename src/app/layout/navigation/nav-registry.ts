@@ -1765,6 +1765,13 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/hosting/smtp/routes',
             masterRoute: '/system/hosting/smtp/routes',
           },
+          {
+            id: 'hosting/smtp/messages',
+            label: 'nav.hosting.smtp.messages',
+            icon: 'outgoing_mail',
+            route: '/hosting/smtp/messages',
+            masterRoute: '/system/hosting/smtp/messages',
+          },
         ],
       },
       {
