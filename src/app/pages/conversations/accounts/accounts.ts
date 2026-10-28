@@ -7,6 +7,77 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
+function customerSelector() {
+  return {
+    key: 'RegCustomerRcuUUID',
+    source: 'RegCustomerRcuUUID',
+    label: 'Customer',
+    type: 'search-select' as const,
+    span: 2 as const,
+    help: 'conversations.accountCustomerHelp',
+    disabledWhen: ({ editing }: { editing: boolean }) => editing,
+    remoteLookup: {
+      endpoint: 'registry/customers?status=1',
+      uuidField: 'CustomerUUID',
+      labelField: 'Name',
+      selectedLabelField: 'CustomerName',
+    },
+  };
+}
+
+function portalPublicationCrud(accountUUID: string, portalEnabled: unknown, rev: unknown) {
+  return defineCrud({
+    endpoint: `conversations/accounts/${accountUUID}/portal`,
+    uuidField: 'CvaUUID',
+    pageTitle: 'conversations.publication',
+    pageDescription: 'conversations.publicationDescription',
+    initialValues: { enabled: portalEnabled, revision: rev },
+    fields: [
+      {
+        key: 'enabled',
+        label: 'conversations.portalEnabled',
+        type: 'select',
+        span: 2,
+        options: [
+          { value: 1, label: 'Yes' },
+          { value: 0, label: 'No' },
+        ],
+      },
+      { key: 'revision', label: 'documents.revision', hidden: true },
+    ],
+    columns: [],
+  });
+}
+
+function operatorAssignmentCrud(accountUUID: string) {
+  return defineCrud({
+    endpoint: `conversations/accounts/${accountUUID}/members`,
+    uuidField: 'CvaUUID',
+    pageTitle: 'conversations.assignOperator',
+    pageDescription: 'conversations.operatorsDescription',
+    initialValues: { UserUsrUUID: '', status: 1 },
+    fields: [
+      {
+        key: 'UserUsrUUID',
+        source: 'UserUsrUUID',
+        label: 'User',
+        type: 'search-select',
+        required: true,
+        span: 2,
+        remoteLookup: {
+          endpoint: 'user/access/members',
+          uuidField: 'UserUUID',
+          labelField: 'Name',
+        },
+        quickCreate: false,
+        quickCreateExemptReason: 'Tenant operators must be invited through tenant access management.',
+      },
+      { key: 'status', label: 'Status', type: 'status', span: 2 },
+    ],
+    columns: [],
+  });
+}
+
 export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
   endpoint: 'conversations/accounts',
   uuidField: 'CvaUUID',
@@ -19,36 +90,24 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
   ...revisionDeletePayloads('CvaUUID', 'CvaRevision'),
   initialValues: { name: '', description: '', RegCustomerRcuUUID: null, status: 1 },
   fields: [
-    { key: 'status', source: 'CvaStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'CvaName', label: 'Name', required: true, span: 1 },
-    {
-      key: 'RegCustomerRcuUUID',
-      source: 'RegCustomerRcuUUID',
-      label: 'Customer',
-      type: 'search-select',
-      span: 1,
-      help: 'conversations.accountCustomerHelp',
-      disabledWhen: ({ editing }) => editing,
-      remoteLookup: {
-        endpoint: 'registry/customers?status=1',
-        uuidField: 'CustomerUUID',
-        labelField: 'Name',
-        selectedLabelField: 'CustomerName',
-      },
-    },
+    { key: 'name', source: 'CvaName', label: 'Name', required: true, span: 2 },
+    { key: 'status', source: 'CvaStatus', label: 'Status', type: 'status', span: 2 },
+    customerSelector(),
     {
       key: 'description',
       source: 'CvaDescription',
       label: 'Description',
       type: 'textarea',
-      span: 1,
+      span: 4,
     },
-    { key: 'revision', source: 'CvaRevision', label: 'documents.revision', hiddenWhen: () => true },
+    { key: 'revision', source: 'CvaRevision', label: 'documents.revision', hidden: true },
   ],
   columns: [
     { id: 'name', field: 'CvaName', label: 'Name', kind: 'identity' },
-    { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },
+    { id: 'channels', field: 'TotalChannels', label: 'Channels', kind: 'number' },
+    { id: 'conversations', field: 'TotalConversations', label: 'Conversations', kind: 'number' },
+    { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' },
     { id: 'status', field: 'CvaStatus', label: 'Status', kind: 'status' },
   ],
 });
@@ -70,61 +129,13 @@ export class ConversationsAccountsPage extends ConfigurableCrudPageBase<Configur
           label: 'conversations.publication',
           icon: 'public',
           visible: (row) => Boolean(row['RegCustomerRcuUUID']),
-          form: (row) =>
-            defineCrud({
-              endpoint: `conversations/accounts/${row['CvaUUID']}/portal`,
-              uuidField: 'CvaUUID',
-              pageTitle: 'conversations.publication',
-              pageDescription: 'conversations.publicationDescription',
-              initialValues: { enabled: row['CvaPortalEnabled'], revision: row['CvaRevision'] },
-              fields: [
-                {
-                  key: 'enabled',
-                  label: 'conversations.portalEnabled',
-                  type: 'select',
-                  span: 2,
-                  options: [
-                    { value: 0, label: 'No' },
-                    { value: 1, label: 'Yes' },
-                  ],
-                },
-                { key: 'revision', label: 'documents.revision', hiddenWhen: () => true },
-              ],
-              columns: [],
-            }),
+          form: (row) => portalPublicationCrud(String(row['CvaUUID']), row['CvaPortalEnabled'], row['CvaRevision']),
         },
         {
           key: 'assign',
           label: 'conversations.assignOperator',
           icon: 'person_add',
-          form: (row) =>
-            defineCrud({
-              endpoint: `conversations/accounts/${row['CvaUUID']}/members`,
-              uuidField: 'CvaUUID',
-              pageTitle: 'conversations.assignOperator',
-              pageDescription: 'conversations.operatorsDescription',
-              initialValues: { UserUsrUUID: '', status: 1 },
-              fields: [
-                {
-                  key: 'UserUsrUUID',
-                  source: 'UserUsrUUID',
-                  label: 'User',
-                  type: 'search-select',
-                  required: true,
-                  span: 1,
-                  remoteLookup: {
-                    endpoint: 'user/access/members',
-                    uuidField: 'UserUUID',
-                    labelField: 'Name',
-                  },
-                  quickCreate: false,
-                  quickCreateExemptReason:
-                    'Tenant operators must be invited through tenant access management.',
-                },
-                { key: 'status', label: 'Status', type: 'status', span: 1 },
-              ],
-              columns: [],
-            }),
+          form: (row) => operatorAssignmentCrud(String(row['CvaUUID'])),
         },
         {
           key: 'operators',

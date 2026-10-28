@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ff92dc459752",
+  "version": "5498e5b8f5da",
   "language": "pt-BR",
   "entries": [
     {
@@ -515,11 +515,11 @@
       "description": "Contas de atendimento internas e de revenda para clientes do tenant.",
       "fields": [
         {
-          "label": "Status",
+          "label": "Nome",
           "help": ""
         },
         {
-          "label": "Nome",
+          "label": "Status",
           "help": ""
         },
         {
