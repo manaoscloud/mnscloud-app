@@ -1695,6 +1695,15 @@ export const routes: Routes = [
                     title: 'Hosting • SMTP Routes | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
+                  {
+                    path: 'messages',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/messages/messages').then(
+                        (m) => m.HostingSmtpMessagesPage,
+                      ),
+                    title: 'Hosting • SMTP Messages | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
                 ],
               },
               {
@@ -3033,6 +3042,15 @@ export const routes: Routes = [
                     data: { scope: 'master', context: 'system' },
                   },
                 ],
+              },
+              {
+                path: 'hosting/smtp/messages',
+                loadComponent: () =>
+                  import('./pages/hosting/smtp/messages/messages').then(
+                    (m) => m.HostingSmtpMessagesPage,
+                  ),
+                title: 'System SMTP Messages | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'hosting/storage',
