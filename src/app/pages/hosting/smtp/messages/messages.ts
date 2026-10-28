@@ -64,40 +64,59 @@ function viewerTone(status: unknown): DataViewerTone {
   return 'neutral';
 }
 
+function emptyCrudTitles(): Pick<
+  ConfigurableCrudConfig,
+  | 'createTitle'
+  | 'deleteTitle'
+  | 'deleteMessage'
+  | 'deleteSelectedTitle'
+  | 'deleteSelectedMessage'
+  | 'savedMessage'
+  | 'deletedMessage'
+  | 'deleteFailedMessage'
+  | 'fields'
+> {
+  return {
+    createTitle: '',
+    deleteTitle: '',
+    deleteMessage: '',
+    deleteSelectedTitle: '',
+    deleteSelectedMessage: '',
+    savedMessage: '',
+    deletedMessage: '',
+    deleteFailedMessage: '',
+    fields: [],
+  };
+}
+
+const MESSAGE_COLUMNS: ConfigurableCrudConfig['columns'] = [
+  { id: 'queuedAt', label: 'Date/Time', field: 'queuedAt', kind: 'datetime' },
+  {
+    id: 'status',
+    label: 'Status',
+    field: 'status',
+    kind: 'status',
+    options: STATUS_OPTIONS,
+    chipClass: (value) => messageChipClass(value),
+  },
+  { id: 'eventType', label: 'Event', field: 'eventType' },
+  { id: 'subject', label: 'Subject', field: 'subject' },
+  { id: 'recipients', label: 'Recipients', field: 'recipientsSummary' },
+  { id: 'provider', label: 'Provider', field: 'provider' },
+  { id: 'lastError', label: 'Error', field: 'lastError' },
+];
+
 const MESSAGES_CONFIG: ConfigurableCrudConfig = {
-  endpoint: 'hosting/smtp/messages',
-  uuidField: 'messageUUID',
+  ...emptyCrudTitles(),
   pageTitle: 'SMTP Messages',
   pageDescription: 'Transactional email message delivery logs, status and monitoring.',
-  createTitle: '',
   editTitle: 'SMTP Message',
   dialogDescription: 'Review email delivery details and lifecycle events.',
   searchPlaceholder: 'Search by subject or idempotency key',
   emptyLabel: 'No SMTP messages found.',
-  deleteTitle: '',
-  deleteMessage: '',
-  deleteSelectedTitle: '',
-  deleteSelectedMessage: '',
-  savedMessage: '',
-  deletedMessage: '',
-  deleteFailedMessage: '',
-  fields: [],
-  columns: [
-    { id: 'queuedAt', label: 'Date/Time', field: 'queuedAt', kind: 'datetime' },
-    {
-      id: 'status',
-      label: 'Status',
-      field: 'status',
-      kind: 'status',
-      options: STATUS_OPTIONS,
-      chipClass: (value) => messageChipClass(value),
-    },
-    { id: 'eventType', label: 'Event', field: 'eventType' },
-    { id: 'subject', label: 'Subject', field: 'subject' },
-    { id: 'recipients', label: 'Recipients', field: 'recipientsSummary' },
-    { id: 'provider', label: 'Provider', field: 'provider' },
-    { id: 'lastError', label: 'Error', field: 'lastError' },
-  ],
+  endpoint: 'hosting/smtp/messages',
+  uuidField: 'messageUUID',
+  columns: MESSAGE_COLUMNS,
   initialValues: {},
   statusMode: 'string',
   activeValue: 'sent',
@@ -156,23 +175,28 @@ export class HostingSmtpMessagesPage extends ConfigurableCrudPageBase<Configurab
   protected override async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
   ): Promise<ConfigurableCrudRecord[]> {
-    const params = new URLSearchParams();
-    params.set('limit', String((filters as ConfigurableCrudListParams).limit ?? 25));
-    params.set('offset', String((filters as ConfigurableCrudListParams).offset ?? 0));
-    if (filters.search) params.set('search', filters.search);
-    if (filters.status) params.set('status', String(filters.status));
-    for (const [key, value] of Object.entries(filters.extra ?? {})) {
-      if (value === null || value === undefined || value === '') continue;
-      params.set(key, String(value));
+    const paging = filters as ConfigurableCrudListParams;
+    const query = new URLSearchParams({
+      limit: String(paging.limit || 25),
+      offset: String(paging.offset || 0),
+    });
+    if (filters.search?.trim()) query.set('search', filters.search.trim());
+    if (filters.status) query.set('status', String(filters.status));
+
+    const extraEntries = Object.entries(filters.extra ?? {});
+    for (const [filterKey, filterVal] of extraEntries) {
+      if (filterVal !== null && filterVal !== undefined && filterVal !== '') {
+        query.set(filterKey, String(filterVal));
+      }
     }
 
-    const response = await this.api.get<{
+    const res = await this.api.get<{
       data?: { items?: ConfigurableCrudRecord[]; total?: number };
-    }>(`${this.listEndpoint()}?${params.toString()}`);
-    const data = response.data ?? {};
-    const items = (data.items ?? []).map((item) => this.decorateRow(item));
-    this.serverTotal.set(Number(data.total ?? items.length));
-    return items;
+    }>(`${this.listEndpoint()}?${query.toString()}`);
+    const resData = res.data ?? {};
+    const messages = (resData.items ?? []).map((row) => this.decorateRow(row));
+    this.serverTotal.set(Number(resData.total ?? messages.length));
+    return messages;
   }
 
   private decorateRow(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
