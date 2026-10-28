@@ -41,6 +41,7 @@ const config = defineCrud({
     status: 1,
     kind: 'internal',
     name: '',
+    ConversationAccountCvaUUID: null,
     externalId: '',
     config: '',
     secret: '',
@@ -50,6 +51,7 @@ const config = defineCrud({
   columns: [
     { id: 'name', label: 'Name', field: 'ChcName', uuidField: 'ChcUUID', kind: 'identity' },
     { id: 'kind', label: 'Channel', field: 'ChcKind', options: CHANNEL_KINDS },
+    { id: 'account', label: 'Account', field: 'AccountName', optional: true },
     {
       id: 'state',
       label: 'Connection',
@@ -87,6 +89,20 @@ const config = defineCrud({
       required: true,
       placeholder: 'Example: Sales WhatsApp',
       span: 2,
+    },
+    {
+      key: 'ConversationAccountCvaUUID',
+      source: 'ConversationAccountCvaUUID',
+      label: 'Account',
+      type: 'search-select',
+      span: 2,
+      help: 'Reseller account for this channel, or leave empty for the internal account.',
+      remoteLookup: {
+        endpoint: 'conversations/accounts?status=1',
+        uuidField: 'CvaUUID',
+        labelField: 'CvaName',
+        selectedLabelField: 'AccountName',
+      },
     },
     {
       key: 'externalId',

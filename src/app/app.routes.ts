@@ -2300,6 +2300,14 @@ export const routes: Routes = [
                 title: 'Conversations • Channel connections | mnscloud',
               },
               {
+                path: 'conversations/accounts',
+                loadComponent: () =>
+                  import('./pages/conversations/accounts/accounts').then(
+                    (m) => m.ConversationsAccountsPage,
+                  ),
+                title: 'Conversations • Accounts | mnscloud',
+              },
+              {
                 path: 'voip/phone/users',
                 loadComponent: () =>
                   import('./pages/voip/phone/users/users').then((m) => m.VoipPhoneUsersPage),
