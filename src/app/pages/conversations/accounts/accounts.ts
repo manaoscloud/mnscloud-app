@@ -85,6 +85,17 @@ export function operatorAssignmentCrud(accountUUID: string) {
   });
 }
 
+export function buildAccountColumns() {
+  return [
+    { id: 'name', field: 'CvaName', label: 'Name', kind: 'identity' as const },
+    { id: 'customer', field: 'CustomerName', label: 'Customer' },
+    { id: 'channels', field: 'TotalChannels', label: 'Channels', kind: 'number' as const },
+    { id: 'conversations', field: 'TotalConversations', label: 'conversations.conversations', kind: 'number' as const },
+    { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' as const },
+    { id: 'status', field: 'CvaStatus', label: 'Status', kind: 'status' as const },
+  ];
+}
+
 export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
   endpoint: 'conversations/accounts',
   uuidField: 'CvaUUID',
@@ -109,14 +120,7 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
     },
     { key: 'revision', source: 'CvaRevision', label: 'documents.revision', hidden: true },
   ],
-  columns: [
-    { id: 'name', field: 'CvaName', label: 'Name', kind: 'identity' },
-    { id: 'customer', field: 'CustomerName', label: 'Customer' },
-    { id: 'channels', field: 'TotalChannels', label: 'Channels', kind: 'number' },
-    { id: 'conversations', field: 'TotalConversations', label: 'conversations.conversations', kind: 'number' },
-    { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' },
-    { id: 'status', field: 'CvaStatus', label: 'Status', kind: 'status' },
-  ],
+  columns: buildAccountColumns(),
 });
 
 @Component({

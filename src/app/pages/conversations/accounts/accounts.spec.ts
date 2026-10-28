@@ -1,6 +1,7 @@
 import {
   CONVERSATIONS_ACCOUNTS_CONFIG,
   CONVERSATION_ACCOUNT_LOOKUP,
+  buildAccountColumns,
   customerSelector,
   portalPublicationCrud,
   operatorAssignmentCrud,
@@ -16,6 +17,19 @@ describe('ConversationsAccountsConfig', () => {
     expect(CONVERSATIONS_ACCOUNTS_CONFIG.editTitle).toBe('conversations.editAccount');
     expect(CONVERSATIONS_ACCOUNTS_CONFIG.serverSidePagination).toBe(true);
     expect(CONVERSATIONS_ACCOUNTS_CONFIG.bulkDelete).toBe(false);
+  });
+
+  it('builds columns correctly via buildAccountColumns', () => {
+    const cols = buildAccountColumns();
+    expect(cols.length).toBe(6);
+    expect(cols.map((c) => c.id)).toEqual([
+      'name',
+      'customer',
+      'channels',
+      'conversations',
+      'publication',
+      'status',
+    ]);
   });
 
   it('contains the expected form fields including customer selector and status', () => {
