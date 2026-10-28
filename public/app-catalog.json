@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5498e5b8f5da",
+  "version": "38af5a13d20e",
   "language": "pt-BR",
   "entries": [
     {
@@ -561,7 +561,7 @@
         },
         {
           "label": "Conta",
-          "help": "Reseller account for this channel, or leave empty for the internal account."
+          "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
         },
         {
           "label": "ID do canal",

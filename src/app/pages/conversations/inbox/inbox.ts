@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { CONVERSATION_ACCOUNT_LOOKUP } from '../accounts/accounts';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import {
@@ -93,12 +94,7 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         type: 'search-select',
         span: 1,
         emptyLabel: 'All accounts',
-        remoteLookup: {
-          endpoint: 'conversations/accounts?status=1',
-          uuidField: 'CvaUUID',
-          labelField: 'CvaName',
-          selectedLabelField: 'AccountName',
-        },
+        remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
       },
     ],
     rowActions: [

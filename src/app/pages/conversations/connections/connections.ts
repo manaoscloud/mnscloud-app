@@ -1,3 +1,4 @@
+import { CONVERSATION_ACCOUNT_LOOKUP } from '../accounts/accounts';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -96,13 +97,8 @@ const config = defineCrud({
       label: 'Account',
       type: 'search-select',
       span: 2,
-      help: 'Reseller account for this channel, or leave empty for the internal account.',
-      remoteLookup: {
-        endpoint: 'conversations/accounts?status=1',
-        uuidField: 'CvaUUID',
-        labelField: 'CvaName',
-        selectedLabelField: 'AccountName',
-      },
+      help: 'conversations.channelAccountHelp',
+      remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
     },
     {
       key: 'externalId',

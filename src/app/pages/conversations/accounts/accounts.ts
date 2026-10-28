@@ -7,6 +7,13 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
+export const CONVERSATION_ACCOUNT_LOOKUP = {
+  endpoint: 'conversations/accounts?status=1',
+  uuidField: 'CvaUUID',
+  labelField: 'CvaName',
+  selectedLabelField: 'AccountName',
+};
+
 function customerSelector() {
   return {
     key: 'RegCustomerRcuUUID',
@@ -106,7 +113,7 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
     { id: 'name', field: 'CvaName', label: 'Name', kind: 'identity' },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },
     { id: 'channels', field: 'TotalChannels', label: 'Channels', kind: 'number' },
-    { id: 'conversations', field: 'TotalConversations', label: 'Conversations', kind: 'number' },
+    { id: 'conversations', field: 'TotalConversations', label: 'conversations.conversations', kind: 'number' },
     { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' },
     { id: 'status', field: 'CvaStatus', label: 'Status', kind: 'status' },
   ],
