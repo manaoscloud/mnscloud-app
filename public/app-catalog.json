@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d11ac3c78cd5",
+  "version": "674f977de62c",
   "language": "pt-BR",
   "entries": [
     {
@@ -2374,7 +2374,7 @@
     },
     {
       "route": "/hosting/smtp/messages",
-      "menuPath": "Hospedagem › SMTP › Mensagens e envios",
+      "menuPath": "Hospedagem › SMTP › Mensagens",
       "scope": "tenant",
       "title": "Mensagens SMTP",
       "description": "Histórico de entrega, status e monitoramento de e-mails transacionais.",
@@ -7761,7 +7761,7 @@
     },
     {
       "route": "/system/hosting/smtp/messages",
-      "menuPath": "Hospedagem › SMTP › Mensagens e envios",
+      "menuPath": "Hospedagem › SMTP › Mensagens",
       "scope": "platform",
       "title": "Mensagens SMTP",
       "description": "Histórico de entrega, status e monitoramento de e-mails transacionais.",
