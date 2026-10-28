@@ -14,7 +14,7 @@ export const CONVERSATION_ACCOUNT_LOOKUP = {
   selectedLabelField: 'AccountName',
 };
 
-function customerSelector() {
+export function customerSelector() {
   return {
     key: 'RegCustomerRcuUUID',
     source: 'RegCustomerRcuUUID',
@@ -32,7 +32,7 @@ function customerSelector() {
   };
 }
 
-function portalPublicationCrud(accountUUID: string, portalEnabled: unknown, rev: unknown) {
+export function portalPublicationCrud(accountUUID: string, portalEnabled: unknown, rev: unknown) {
   return defineCrud({
     endpoint: `conversations/accounts/${accountUUID}/portal`,
     uuidField: 'CvaUUID',
@@ -56,7 +56,7 @@ function portalPublicationCrud(accountUUID: string, portalEnabled: unknown, rev:
   });
 }
 
-function operatorAssignmentCrud(accountUUID: string) {
+export function operatorAssignmentCrud(accountUUID: string) {
   return defineCrud({
     endpoint: `conversations/accounts/${accountUUID}/members`,
     uuidField: 'CvaUUID',
@@ -127,6 +127,8 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class ConversationsAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  protected readonly accountConfig = CONVERSATIONS_ACCOUNTS_CONFIG;
+
   constructor() {
     super({
       ...CONVERSATIONS_ACCOUNTS_CONFIG,
