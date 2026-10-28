@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "674f977de62c",
+  "version": "38af5a13d20e",
   "language": "pt-BR",
   "entries": [
     {
@@ -508,6 +508,35 @@
       "fields": []
     },
     {
+      "route": "/conversations/accounts",
+      "menuPath": "Conversas › Contas",
+      "scope": "tenant",
+      "title": "Contas de conversas",
+      "description": "Contas de atendimento internas e de revenda para clientes do tenant.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do tenant a quem esta conta é revendida. O vínculo é imutável após a criação."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/conversations/connections",
       "menuPath": "Conversas › Conexões",
       "scope": "tenant",
@@ -529,6 +558,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
         },
         {
           "label": "ID do canal",

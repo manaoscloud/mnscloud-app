@@ -149,6 +149,13 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.ConversationConnectionsPage,
       ),
   },
+  ConversationAccountCvaUUID: {
+    label: 'conversations.newAccount',
+    loadComponent: () =>
+      import('../../../pages/conversations/accounts/accounts').then(
+        (m) => m.ConversationsAccountsPage,
+      ),
+  },
   CrmIndustryCinUUID: {
     label: 'crm.title.industries',
     loadComponent: () =>

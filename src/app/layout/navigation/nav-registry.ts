@@ -453,6 +453,12 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'hub',
         route: '/conversations/connections',
       },
+      {
+        id: 'conversations/accounts',
+        label: 'nav.conversations.accounts',
+        icon: 'manage_accounts',
+        route: '/conversations/accounts',
+      },
     ],
   },
   {
