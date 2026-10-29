@@ -39,6 +39,7 @@ const sites = defineCrud({
     status: 1,
     revision: 1,
     DnsClusterDncUUID: '',
+    accountUUID: null,
   },
   payload: (values, editing) => {
     const payload = dnsPayload(values, editing);
@@ -46,10 +47,29 @@ const sites = defineCrud({
     payload['addresses'] = String(values['addresses'] ?? '');
     payload['categories'] = Array.isArray(values['categories']) ? values['categories'] : [];
     payload['safeSearch'] = Number(values['safeSearch'] ?? 0);
+    if (values['accountUUID'] !== undefined) {
+      payload['accountUUID'] = values['accountUUID'] || null;
+    }
     return payload;
   },
   fields: [
     { key: 'status', source: 'DcsStatus', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'accountUUID',
+      source: 'DnsAccountDacUUID',
+      label: 'dns.account',
+      span: 1,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'dns/accounts?status=1',
+        uuidField: 'DacUUID',
+        labelField: 'DacName',
+        selectedLabelField: 'AccountName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason: 'DNS accounts are created in DNS > Accounts.',
+      help: 'dns.siteAccountHelp',
+    },
     {
       key: 'DnsClusterDncUUID',
       source: 'DnsClusterDncUUID',
@@ -103,6 +123,7 @@ const sites = defineCrud({
   ],
   columns: [
     { id: 'name', field: 'DcsName', label: 'Name', kind: 'identity' },
+    { id: 'account', field: 'AccountName', label: 'dns.account', kind: 'text' },
     { id: 'addresses', field: 'DcsAddresses', label: 'dns.cloudSiteAddresses', kind: 'text' },
     { id: 'cluster', field: 'ClusterName', label: 'dns.cloudCluster', kind: 'text' },
     { id: 'rules', field: 'Rules', label: 'dns.cloudSiteRules', kind: 'number' },

@@ -758,6 +758,13 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
+        id: 'dns-cloud/accounts',
+        label: 'nav.dns-cloud.accounts',
+        icon: 'manage_accounts',
+        route: '/dns/accounts',
+        requiresEnvironment: true,
+      },
+      {
         id: 'dns-cloud/sites',
         label: 'nav.dns-cloud.sites',
         icon: 'apartment',
