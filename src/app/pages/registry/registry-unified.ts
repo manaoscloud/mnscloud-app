@@ -1,3 +1,4 @@
+import { registryWorkspaceApi } from '../../shared/crud/configurable-crud/registry-workspace-api';
 import { MatDialog } from '@angular/material/dialog';
 import { registryDocuments } from './documents';
 import { registryText } from './registry-fields';
@@ -128,7 +129,7 @@ export function registryContacts(endpoint: string): ConfigurableCrudRelatedColle
 
 /** Applied in the page injection context: one fiscal catalog and one layout for all six records. */
 export function registryUnifiedConfig(original: ConfigurableCrudConfig): ConfigurableCrudConfig {
-  const api = inject(ApiService);
+  const api = original.requestApi ?? registryWorkspaceApi(original.endpoint);
   const dialog = inject(MatDialog);
   const auth = inject(AuthService);
   const i18n = inject(AppI18nService);
@@ -320,6 +321,7 @@ export function registryUnifiedConfig(original: ConfigurableCrudConfig): Configu
   };
   const config: ConfigurableCrudConfig = {
     ...original,
+    requestApi: api,
     saveAndContinue: true,
     authenticationAfterFiscal: customer,
     ...(company

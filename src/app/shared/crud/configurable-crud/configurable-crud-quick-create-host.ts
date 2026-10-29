@@ -1,3 +1,4 @@
+import type { ApiService } from '../../../services/api.service';
 import { NgComponentOutlet } from '@angular/common';
 import { Component, Injector, Provider, Type, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -11,6 +12,7 @@ import type {
 import { CONFIGURABLE_CRUD_QUICK_CREATE } from './quick-create';
 
 export type ConfigurableCrudQuickCreateHostData = {
+  requestApi?: ApiService;
   component: Type<unknown>;
   routeData?: Record<string, unknown>;
   initialValues?: Record<string, unknown>;
@@ -52,6 +54,7 @@ export class ConfigurableCrudQuickCreateHostComponent {
         provide: CONFIGURABLE_CRUD_QUICK_CREATE,
         useValue: {
           initialValues: this.data.initialValues,
+          requestApi: this.data.requestApi,
           complete: (result: ConfigurableCrudQuickCreateResult) => {
             if (this.completed) return;
             this.completed = true;
@@ -73,7 +76,7 @@ export async function openQuickCreate(
   quickCreate: Pick<
     ConfigurableCrudQuickCreateConfig,
     'component' | 'loadComponent' | 'routeData'
-  > & { initialValues?: Record<string, unknown> },
+  > & { initialValues?: Record<string, unknown>; requestApi?: ApiService },
 ): Promise<ConfigurableCrudQuickCreateResult | null> {
   const component = quickCreate.component ?? (await quickCreate.loadComponent?.());
   if (!component) return null;
@@ -82,7 +85,12 @@ export async function openQuickCreate(
     ConfigurableCrudQuickCreateHostData,
     ConfigurableCrudQuickCreateResult
   >(ConfigurableCrudQuickCreateHostComponent, {
-    data: { component, routeData: quickCreate.routeData, initialValues: quickCreate.initialValues },
+    data: {
+      component,
+      routeData: quickCreate.routeData,
+      initialValues: quickCreate.initialValues,
+      requestApi: quickCreate.requestApi,
+    },
     width: '0',
     height: '0',
     maxWidth: '0',

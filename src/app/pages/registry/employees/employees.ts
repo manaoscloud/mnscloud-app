@@ -124,7 +124,7 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class RegEmployeesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly lookupApi = inject(ApiService);
+  private readonly lookupApi = this.api;
 
   // List filter options for company, department and position (active records only).
   private readonly filterOptions = resource({

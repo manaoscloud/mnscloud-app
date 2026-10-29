@@ -54,6 +54,20 @@
       <div class="app-header">
         <div>
           <h1>{{ config.pageTitle | transloco }}</h1>
+          @if (registryWorkspacePage()) {
+            <p>
+              {{ 'registryWorkspace.context' | transloco }}:
+              @if (registryWorkspaceUUID()) {
+                {{
+                  registryWorkspaceInfo.hasValue() && registryWorkspaceInfo.value()
+                    ? registryWorkspaceInfo.value()?.['RwkName']
+                    : ('registryWorkspace.unavailable' | transloco)
+                }}
+              } @else {
+                {{ 'registryWorkspace.internal' | transloco }}
+              }
+            </p>
+          }
           <p>{{ config.pageDescription | transloco }}</p>
         </div>
         <div class="header-actions">

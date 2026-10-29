@@ -591,6 +591,14 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/registry/document-types',
         permissions: ['tenant.registry.document-types.read'],
       },
+      {
+        id: 'registry/workspaces',
+        label: 'nav.registry.workspaces',
+        icon: 'domain',
+        category: 'resale',
+        route: '/registry/workspaces',
+        permissions: ['tenant.registry.workspaces.read', 'tenant.registry.workspaces.all'],
+      },
     ],
   },
   // Financial: titles, settlements, payment charges, gateways and methods of the tenant.

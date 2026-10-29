@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "55c3b4238a33",
+  "version": "1b40e00de55e",
   "language": "pt-BR",
   "entries": [
     {
@@ -5125,6 +5125,35 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/workspaces",
+      "menuPath": "Cadastros › Espaços",
+      "scope": "tenant",
+      "title": "Espaços",
+      "description": "Organize empresas, colaboradores e estruturas de cada cliente da revenda em cadastros separados.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]

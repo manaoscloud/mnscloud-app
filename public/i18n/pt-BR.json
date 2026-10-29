@@ -1,4 +1,11 @@
 {
+  "registryWorkspace.title": "Espaços",
+  "registryWorkspace.description": "Organize empresas, colaboradores e estruturas de cada cliente da revenda em cadastros separados.",
+  "registryWorkspace.create": "Criar espaço",
+  "registryWorkspace.context": "Espaço",
+  "registryWorkspace.internal": "Interno da revenda",
+  "registryWorkspace.unavailable": "Carregando ou indisponível",
+  "nav.registry.workspaces": "Espaços",
   "9000": "9000",
   "Customer Portal": "Portal do Cliente",
   "Portal access": "Acesso ao portal",

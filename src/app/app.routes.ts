@@ -1000,6 +1000,18 @@ export const routes: Routes = [
                 title: 'Registry • Customer complexes | mnscloud',
               },
               {
+                path: 'registry/workspaces',
+                loadComponent: () =>
+                  import('./pages/registry/workspaces/workspaces').then((m) => m.RegWorkspacePage),
+                title: 'Registry • Workspaces | mnscloud',
+                data: {
+                  permissions: [
+                    'tenant.registry.workspaces.read',
+                    'tenant.registry.workspaces.all',
+                  ],
+                },
+              },
+              {
                 path: 'registry/companies',
                 loadComponent: () =>
                   import('./pages/registry/companies/companies').then((m) => m.RegCompanyPage),

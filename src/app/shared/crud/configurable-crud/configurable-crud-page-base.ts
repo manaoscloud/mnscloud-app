@@ -1,3 +1,4 @@
+import { registryWorkspaceApi } from './registry-workspace-api';
 import { crudReportMask } from './crud-report-mask';
 import { PhoneDialer } from '../../phone-dock/phone-dialer';
 import { generateCrudPassword } from './password-generation';
@@ -712,6 +713,8 @@ export type ConfigurableCrudConfig = {
   };
   /** Fixed list query parameters sent with every list request (for example `scope=all`). */
   listQuery?: Readonly<Record<string, string>>;
+  /** Captured request scope inherited by embedded collections and canonical quick-create. */
+  requestApi?: ApiService;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
   /** Send canonical column fields to APIs supporting global ordering. */
@@ -1128,6 +1131,20 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       recordUUID: record ? this.recordUUID(record) || undefined : undefined,
     };
   });
+  readonly registryWorkspaceUUID = signal<string | null>(null);
+  readonly registryWorkspaceInfo = resource({
+    params: () => this.registryWorkspaceUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: { item: ConfigurableCrudRecord } }>(
+        `registry/workspaces/${params}`,
+      );
+      return response.data.item;
+    },
+  });
+  readonly registryWorkspacePage = computed(() =>
+    ApiService.isRegistryWorkspaceEndpoint(this.config.endpoint),
+  );
   readonly canCreate = computed(
     () =>
       !this.config.readOnly &&
@@ -1146,6 +1163,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
 
   protected constructor(config: ConfigurableCrudConfig) {
+    this.api = config.requestApi ?? registryWorkspaceApi(config.endpoint);
+    this.registryWorkspaceUUID.set(this.api.registryWorkspaceUUID);
     this.config = config;
     this.viewStorageKey = crudViewStorageKey(config.endpoint);
     this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
@@ -1635,7 +1654,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     parentUUID: string,
   ): ConfigurableCrudEmbeddedHost {
     return {
-      config: this.embeddedCollectionConfig(collection, parentUUID),
+      config: { ...this.embeddedCollectionConfig(collection, parentUUID), requestApi: this.api },
       options: (field, values) => this.relatedCollectionFieldOptions(field, collection, values),
       label: (key, value) => this.lookupLabel(key, value),
       loading: (field) => !field.remoteLookup && this.fieldLoading(field),
@@ -1837,7 +1856,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         this.dialog,
         ConfigurableCrudCollectionDialog,
         ['crud-form-dialog', 'crud-collection-dialog'],
-        { data: { ...factory(row), collectionDialog: true, formOnly: false } },
+        {
+          data: { ...factory(row), requestApi: this.api, collectionDialog: true, formOnly: false },
+        },
       );
       await firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
       this.refreshList();
@@ -1845,7 +1866,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       return;
     }
     const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
-      data: { ...factory(row), collectionDialog: true, formOnly: true },
+      data: { ...factory(row), requestApi: this.api, collectionDialog: true, formOnly: true },
       width: '0',
       maxWidth: '0',
       height: '0',
@@ -2888,7 +2909,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
             values: this.formValues(),
           })
         : quickCreate.initialValues;
-    const result = await openQuickCreate(this.dialog, { ...quickCreate, initialValues });
+    const result = await openQuickCreate(this.dialog, {
+      ...quickCreate,
+      initialValues,
+      requestApi: this.api,
+    });
     const option = result?.option;
     if (!result || !option) return;
 
