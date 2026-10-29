@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4b5280065201",
+  "version": "685c211b9651",
   "language": "pt-BR",
   "entries": [
     {
@@ -822,27 +822,6 @@
         },
         {
           "label": "Anotações",
-          "help": ""
-        },
-        {
-          "label": "Revisão",
-          "help": ""
-        }
-      ]
-    },
-    {
-      "route": "/crm/industries",
-      "menuPath": "CRM › Configurações › Ramos",
-      "scope": "tenant",
-      "title": "Ramos",
-      "description": "Ramos de atividade usados para classificar contas e leads.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
           "help": ""
         },
         {
@@ -4849,6 +4828,31 @@
       ]
     },
     {
+      "route": "/registry/economic-sectors",
+      "menuPath": "Cadastros › Setores econômicos",
+      "scope": "tenant",
+      "title": "Setores econômicos",
+      "description": "Organize os setores econômicos utilizados para classificar os ramos de atividade entre módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/registry/employees",
       "menuPath": "Cadastros › Funcionários",
       "scope": "tenant",
@@ -4897,6 +4901,35 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/industries",
+      "menuPath": "Cadastros › Ramos de atividade",
+      "scope": "tenant",
+      "title": "Ramos de atividade",
+      "description": "Gerencie os ramos de atividade e seus setores econômicos para uso entre módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Setor econômico",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]

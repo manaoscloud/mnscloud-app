@@ -6372,7 +6372,6 @@
   "crm.field.UnitAmount": "Unit amount",
   "crm.field.DiscountPercent": "Discount (%)",
   "crm.title.industries": "Industries",
-  "nav.crm.industries": "Industries",
   "crm.title.sources": "Sources",
   "nav.crm.sources": "Sources",
   "crm.title.loss-reasons": "Loss reasons",
@@ -10862,5 +10861,12 @@
   "ged.usage": "Account usage",
   "ged.usageDescription": "View documents, retained versions and AI calls attributed to this account. These values do not create charges.",
   "ged.readyBytes": "Ready version bytes",
-  "ged.aiCalls": "AI calls"
+  "ged.aiCalls": "AI calls",
+  "registry.economy.economic-sectors": "Economic sectors",
+  "registry.economy.industries": "Industries",
+  "registry.economy.sector": "Economic sector",
+  "registry.economy.economic-sectors.description": "Organize the economic sectors used to classify industries across modules.",
+  "registry.economy.industries.description": "Manage industries and their economic sectors for use across modules.",
+  "nav.registry.economic-sectors": "Economic sectors",
+  "nav.registry.industries": "Industries"
 }

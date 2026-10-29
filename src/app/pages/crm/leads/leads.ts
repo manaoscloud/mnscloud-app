@@ -18,7 +18,7 @@ const config = defineCrud({
     CleEmail: '',
     ClePhone: '',
     CleDocument: '',
-    CrmIndustryCinUUID: '',
+    RegIndustryRinUUID: '',
     CrmSourceCsoUUID: '',
     CrmProductCprUUID: '',
     CleNeed: '',
@@ -94,17 +94,17 @@ const config = defineCrud({
       type: 'text',
     },
     {
-      key: 'CrmIndustryCinUUID',
-      source: 'CrmIndustryCinUUID',
+      key: 'RegIndustryRinUUID',
+      source: 'RegIndustryRinUUID',
       label: 'crm.title.industries',
       span: 1,
       required: false,
       type: 'search-select',
       remoteLookup: {
-        endpoint: 'crm/industries',
-        uuidField: 'CinUUID',
-        labelField: 'CinName',
-        selectedLabelField: 'CrmIndustryCinUUIDName',
+        endpoint: 'registry/industries',
+        uuidField: 'RinUUID',
+        labelField: 'RinName',
+        selectedLabelField: 'RegIndustryRinUUIDName',
       },
     },
     {
@@ -181,8 +181,8 @@ const config = defineCrud({
   ],
   columns: [
     {
-      id: 'CrmIndustryCinUUID',
-      field: 'CrmIndustryCinUUIDName',
+      id: 'RegIndustryRinUUID',
+      field: 'RegIndustryRinUUIDName',
       label: 'crm.title.industries',
       kind: 'text',
     },
@@ -244,12 +244,28 @@ const config = defineCrud({
   ],
   listFilters: [
     {
-      key: 'CrmIndustryCinUUID',
-      paramKey: 'CrmIndustryCinUUID',
+      key: 'RegEconomicSectorRecUUID',
+      paramKey: 'RegEconomicSectorRecUUID',
+      label: 'registry.economy.sector',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: {
+        endpoint: 'registry/economic-sectors',
+        uuidField: 'RecUUID',
+        labelField: 'RecName',
+      },
+    },
+    {
+      key: 'RegIndustryRinUUID',
+      paramKey: 'RegIndustryRinUUID',
       label: 'crm.title.industries',
       type: 'search-select',
       span: 1,
-      remoteLookup: { endpoint: 'crm/industries', uuidField: 'CinUUID', labelField: 'CinName' },
+      remoteLookup: {
+        endpoint: 'registry/industries',
+        uuidField: 'RinUUID',
+        labelField: 'RinName',
+      },
     },
     {
       key: 'CrmSourceCsoUUID',

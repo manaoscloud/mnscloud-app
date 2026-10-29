@@ -250,6 +250,20 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
+        id: 'registry/economic-sectors',
+        label: 'nav.registry.economic-sectors',
+        icon: 'category',
+        route: '/registry/economic-sectors',
+        permissions: ['tenant.registry.economic-sectors.read'],
+      },
+      {
+        id: 'registry/industries',
+        label: 'nav.registry.industries',
+        icon: 'domain',
+        route: '/registry/industries',
+        permissions: ['tenant.registry.industries.read'],
+      },
+      {
         id: 'registry/document-types',
         label: 'nav.registry.document-types',
         icon: 'description',
@@ -528,12 +542,6 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.crm.settings',
         icon: 'settings',
         children: [
-          {
-            id: 'crm/industries',
-            label: 'nav.crm.industries',
-            icon: 'domain',
-            route: '/crm/industries',
-          },
           { id: 'crm/sources', label: 'nav.crm.sources', icon: 'campaign', route: '/crm/sources' },
           {
             id: 'crm/loss-reasons',

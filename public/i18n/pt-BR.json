@@ -6373,7 +6373,6 @@
   "crm.field.UnitAmount": "Valor unitário",
   "crm.field.DiscountPercent": "Desconto (%)",
   "crm.title.industries": "Ramos",
-  "nav.crm.industries": "Ramos",
   "crm.title.sources": "Origens",
   "nav.crm.sources": "Origens",
   "crm.title.loss-reasons": "Motivos de perda",
@@ -10863,5 +10862,12 @@
   "ged.usage": "Uso da conta",
   "ged.usageDescription": "Consulte os documentos, versões retidas e chamadas de IA atribuídos a esta conta. Os valores não criam cobranças.",
   "ged.readyBytes": "Bytes de versões prontas",
-  "ged.aiCalls": "Chamadas de IA"
+  "ged.aiCalls": "Chamadas de IA",
+  "registry.economy.economic-sectors": "Setores econômicos",
+  "registry.economy.industries": "Ramos de atividade",
+  "registry.economy.sector": "Setor econômico",
+  "registry.economy.economic-sectors.description": "Organize os setores econômicos utilizados para classificar os ramos de atividade entre módulos.",
+  "registry.economy.industries.description": "Gerencie os ramos de atividade e seus setores econômicos para uso entre módulos.",
+  "nav.registry.economic-sectors": "Setores econômicos",
+  "nav.registry.industries": "Ramos de atividade"
 }

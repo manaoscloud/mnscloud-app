@@ -851,12 +851,6 @@ export const routes: Routes = [
                 title: 'CRM',
               },
               {
-                path: 'crm/industries',
-                loadComponent: () =>
-                  import('./pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
-                title: 'CRM',
-              },
-              {
                 path: 'crm/sources',
                 loadComponent: () =>
                   import('./pages/crm/sources/sources').then((m) => m.CrmSourcePage),
@@ -961,6 +955,20 @@ export const routes: Routes = [
                 title: 'GED • Dossiers | mnscloud',
               },
               // Registry (shared by every module)
+              {
+                path: 'registry/economic-sectors',
+                loadComponent: () =>
+                  import('./pages/registry/economic-sectors/economic-sectors').then(
+                    (m) => m.RegEconomicSectorPage,
+                  ),
+                title: 'Registry',
+              },
+              {
+                path: 'registry/industries',
+                loadComponent: () =>
+                  import('./pages/registry/industries/industries').then((m) => m.RegIndustryPage),
+                title: 'Registry',
+              },
               {
                 path: 'registry/document-types',
                 loadComponent: () =>
