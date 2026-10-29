@@ -8,7 +8,10 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
-import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
+import {
+  resaleAccountFields,
+  resaleAccountRowActions,
+} from '../../../shared/crud/configurable-crud/account-resale-actions';
 
 export const DNS_ACCOUNTS_CONFIG = defineCrud({
   endpoint: 'dns/accounts',
@@ -21,33 +24,13 @@ export const DNS_ACCOUNTS_CONFIG = defineCrud({
   bulkDelete: true,
   ...revisionDeletePayloads('DacUUID', 'DacRevision'),
   initialValues: { name: '', description: '', customerUUID: null, status: 1 },
-  fields: [
-    { key: 'status', source: 'DacStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'DacName', label: 'Name', required: true, span: 1 },
-    {
-      key: 'customerUUID',
-      source: 'RegCustomerRcuUUID',
-      label: 'Customer',
-      type: 'search-select',
-      span: 1,
-      help: 'dns.accountCustomerHelp',
-      disabledWhen: ({ editing }) => editing,
-      remoteLookup: {
-        endpoint: 'registry/customers?status=1',
-        uuidField: 'CustomerUUID',
-        labelField: 'Name',
-        selectedLabelField: 'CustomerName',
-      },
-    },
-    {
-      key: 'description',
-      source: 'DacDescription',
-      label: 'Description',
-      type: 'textarea',
-      span: 1,
-    },
-    { key: 'revision', source: 'DacRevision', label: 'documents.revision', hiddenWhen: () => true },
-  ],
+  fields: resaleAccountFields({
+    helpKey: 'dns.accountCustomerHelp',
+    statusField: 'DacStatus',
+    nameField: 'DacName',
+    descField: 'DacDescription',
+    revField: 'DacRevision',
+  }),
   columns: [
     { id: 'name', field: 'DacName', label: 'Name', kind: 'identity' },
     { id: 'publication', field: 'DacPortalEnabled', label: 'dns.portalEnabled', kind: 'status' },

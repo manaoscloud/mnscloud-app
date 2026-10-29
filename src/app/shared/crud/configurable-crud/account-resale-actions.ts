@@ -1,5 +1,53 @@
 import { defineCrud } from './define-crud';
-import type { ConfigurableCrudRowAction } from './configurable-crud-page-base';
+import type {
+  ConfigurableCrudField,
+  ConfigurableCrudRowAction,
+} from './configurable-crud-page-base';
+
+export interface ResaleAccountFieldsOptions {
+  helpKey: string;
+  statusField: string;
+  nameField: string;
+  descField: string;
+  revField: string;
+}
+
+export function resaleAccountFields(
+  options: ResaleAccountFieldsOptions,
+): ConfigurableCrudField[] {
+  return [
+    { key: 'status', source: options.statusField, label: 'Status', type: 'status', span: 1 },
+    { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
+    {
+      key: 'customerUUID',
+      source: 'RegCustomerRcuUUID',
+      label: 'Customer',
+      type: 'search-select',
+      span: 1,
+      help: options.helpKey,
+      disabledWhen: ({ editing }) => editing,
+      remoteLookup: {
+        endpoint: 'registry/customers?status=1',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+    },
+    {
+      key: 'description',
+      source: options.descField,
+      label: 'Description',
+      type: 'textarea',
+      span: 1,
+    },
+    {
+      key: 'revision',
+      source: options.revField,
+      label: 'documents.revision',
+      hiddenWhen: () => true,
+    },
+  ];
+}
 
 export interface ResaleAccountActionOptions {
   module: string;
