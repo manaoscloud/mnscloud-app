@@ -1,4 +1,8 @@
 {
+  "registryWorkspace.forbidden": "You do not have access to this workspace.",
+  "registryWorkspace.conflict": "Refresh the record and check the customer and linked records.",
+  "registryWorkspace.notFound": "The workspace or customer is unavailable.",
+  "registryWorkspace.failed": "The workspace operation could not be completed.",
   "registryWorkspace.title": "Workspaces",
   "registryWorkspace.description": "Keep each reseller customer’s companies, employees and organizational records in separate workspaces.",
   "registryWorkspace.create": "Create workspace",

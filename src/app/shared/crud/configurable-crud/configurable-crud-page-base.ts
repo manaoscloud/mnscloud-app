@@ -1,3 +1,4 @@
+import { registryWorkspaceErrorMessage } from '../../registry/registry-workspace-error';
 import { registryWorkspaceApi } from './registry-workspace-api';
 import { crudReportMask } from './crud-report-mask';
 import { PhoneDialer } from '../../phone-dock/phone-dialer';
@@ -1287,7 +1288,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   /** Explicit parent destination; never relies on browser history. */
   backLink(): string | null {
-    return null;
+    return this.registryWorkspaceUUID() && this.registryWorkspacePage()
+      ? '/registry/workspaces'
+      : null;
   }
 
   refreshList(): void {
@@ -4040,6 +4043,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected errorMessage(error: unknown): string {
+    const workspaceMessage = registryWorkspaceErrorMessage(error);
+    if (workspaceMessage) return workspaceMessage;
     const payMessage = payErrorMessage(error);
     if (payMessage) return payMessage;
     const billing = billingErrorText(error);

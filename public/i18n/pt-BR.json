@@ -1,4 +1,8 @@
 {
+  "registryWorkspace.forbidden": "Você não tem acesso a este espaço.",
+  "registryWorkspace.conflict": "Atualize o registro e verifique o cliente e os cadastros vinculados.",
+  "registryWorkspace.notFound": "O espaço ou cliente não está disponível.",
+  "registryWorkspace.failed": "Não foi possível concluir a operação no espaço.",
   "registryWorkspace.title": "Espaços",
   "registryWorkspace.description": "Organize empresas, colaboradores e estruturas de cada cliente da revenda em cadastros separados.",
   "registryWorkspace.create": "Criar espaço",
