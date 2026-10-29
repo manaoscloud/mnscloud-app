@@ -61,9 +61,6 @@
           <p>{{ 'home.attention.description.' + scope() | transloco }}</p>
         </div>
         <div class="dashboard-attention-actions">
-          <span class="panel-count" [class.panel-count-ok]="!attention().length">{{
-            attention().length
-          }}</span>
           <mat-icon class="dashboard-attention-chevron" aria-hidden="true">
             {{ attentionCollapsed() ? 'expand_more' : 'expand_less' }}
           </mat-icon>
