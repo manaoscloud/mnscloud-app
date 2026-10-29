@@ -156,11 +156,19 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.ConversationsAccountsPage,
       ),
   },
-  CrmIndustryCinUUID: {
-    label: 'crm.title.industries',
+  RegIndustryRinUUID: {
+    label: 'registry.economy.industries',
     loadComponent: () =>
-      import('../../../pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
-    permission: 'tenant.crm.manage',
+      import('../../../pages/registry/industries/industries').then((m) => m.RegIndustryPage),
+    permission: 'tenant.registry.industries.write',
+  },
+  RegEconomicSectorRecUUID: {
+    label: 'registry.economy.economic-sectors',
+    loadComponent: () =>
+      import('../../../pages/registry/economic-sectors/economic-sectors').then(
+        (m) => m.RegEconomicSectorPage,
+      ),
+    permission: 'tenant.registry.economic-sectors.write',
   },
   CrmSourceCsoUUID: {
     label: 'crm.title.sources',

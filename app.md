@@ -2156,7 +2156,7 @@ or master bypass for unrelated tenant modules.
 
 ## CRM form baseline
 
-CRM uses the shared configurable CRUD renderer for all fourteen resources and action forms.
+CRM uses the shared configurable CRUD renderer for all CRM resources and action forms.
 Record fields start with Status and workflow/ownership controls, followed by Name (span-2),
 related records and scheduling. Accounts keep City/State in Address. Activities, accounts and
 handoffs use the canonical frontend `notes` key in a dedicated Notes tab (span-4, rows-4);
@@ -2315,3 +2315,13 @@ Never use public object URLs or present a cancelled/pending version as downloada
 shown in the shared data viewer for human verification; they never fill, approve or save a record
 automatically. The manual workflow remains available without a provider. Every new owning resource
 must add explicit server-side authorization and its own FK before reusing this collection.
+
+## Shared economic classification
+
+Cadastros owns the canonical `/registry/economic-sectors` and `/registry/industries`
+CRUDs, independent of CRM entitlements and guarded by Registry permissions. Both use the
+configurable CRUD renderer, server pagination, status/search, bulk delete and canonical
+quick-create. Industry forms select `RegEconomicSectorRecUUID`; CRM accounts and leads
+select `RegIndustryRinUUID` and filter by branch and derived sector. No duplicate CRM
+management page exists. Standard tenant records are persisted by the database onboarding
+and reconcile flow, never by opening a page.

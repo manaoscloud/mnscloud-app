@@ -1,3 +1,8 @@
+import {
+  economicClassificationFilters,
+  industryReferenceField,
+  industryReferenceColumn,
+} from '../../src/app/shared/registry/economic-classification.ts';
 import { CRM_OPTIONS } from '../../src/app/pages/crm/crm-options.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,6 +30,9 @@ function formConfigs() {
             'crmLocalDate',
             'crmLocalTime',
             'CRM_OPTIONS',
+            'economicClassificationFilters',
+            'industryReferenceField',
+            'industryReferenceColumn',
             `return ${node.arguments[0].getText(source)}`,
           )(
             (v) => v,
@@ -33,6 +41,9 @@ function formConfigs() {
             crmLocalDate,
             crmLocalTime,
             CRM_OPTIONS,
+            economicClassificationFilters,
+            industryReferenceField,
+            industryReferenceColumn,
           ),
         });
       }
@@ -45,7 +56,8 @@ function formConfigs() {
 
 test('every CRM form follows semantic controls, notes, widths and commercial defaults', () => {
   const configs = formConfigs();
-  assert.equal(configs.length, 15);
+  assert.equal(configs.length, 14); // Industry management belongs to Registry.
+  assert.ok(configs.every(({ config }) => config.endpoint !== 'crm/industries'));
   for (const { path, config } of configs) {
     const record = config.fields.filter((f) => !f.hidden && (!f.tab || f.tab === 'record'));
     assert.equal(record[0].type, 'status', `${path}: status first`);

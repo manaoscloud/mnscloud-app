@@ -9,7 +9,6 @@ import {
 import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
 export function crmActions(route: string): ConfigurableCrudRowAction[] {
   const identity: Record<string, string> = {
-    industries: 'CinUUID',
     sources: 'CsoUUID',
     'loss-reasons': 'ClrUUID',
     pipelines: 'CpiUUID',
