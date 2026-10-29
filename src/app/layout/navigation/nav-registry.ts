@@ -518,6 +518,12 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/crm/products',
       },
       {
+        id: 'crm/workspaces',
+        label: 'nav.crm.workspaces',
+        icon: 'workspaces',
+        route: '/crm/workspaces',
+      },
+      {
         id: 'crm/settings',
         label: 'nav.crm.settings',
         icon: 'settings',

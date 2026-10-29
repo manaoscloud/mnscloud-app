@@ -937,6 +937,12 @@ export const routes: Routes = [
                   import('./pages/crm/handoffs/handoffs').then((m) => m.CrmHandoffPage),
                 title: 'CRM',
               },
+              {
+                path: 'crm/workspaces',
+                loadComponent: () =>
+                  import('./pages/crm/workspaces/workspaces').then((m) => m.CrmWorkspacePage),
+                title: 'CRM',
+              },
 
               {
                 path: 'ged/accounts',

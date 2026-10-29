@@ -202,6 +202,12 @@ export const QUICK_CREATE_REGISTRY = {
       import('../../../pages/crm/products/products').then((m) => m.CrmProductPage),
     permission: 'tenant.crm.manage',
   },
+  CrmWorkspaceCwsUUID: {
+    label: 'crm.title.workspaces',
+    loadComponent: () =>
+      import('../../../pages/crm/workspaces/workspaces').then((m) => m.CrmWorkspacePage),
+    permission: 'tenant.crm.manage',
+  },
   CrmLeadCleUUID: {
     label: 'crm.title.leads',
     loadComponent: () => import('../../../pages/crm/leads/leads').then((m) => m.CrmLeadPage),

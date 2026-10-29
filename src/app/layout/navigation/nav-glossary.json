@@ -66,6 +66,7 @@
   },
   "$sharedTermsComment": "Words spelled the same in pt-BR/es-ES and en-US that are correct in every locale.",
   "sharedTerms": [
+    "Workspaces",
     "Fiscal",
     "Series",
     "Séries",
