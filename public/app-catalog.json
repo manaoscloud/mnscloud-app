@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c85f572a5d7b",
+  "version": "4b5280065201",
   "language": "pt-BR",
   "entries": [
     {
@@ -1673,6 +1673,35 @@
       "fields": []
     },
     {
+      "route": "/dns/accounts",
+      "menuPath": "DNS seguro › Contas",
+      "scope": "tenant",
+      "title": "Contas de clientes",
+      "description": "Gerencie contas de clientes da revenda para delegação e isolamento de escritórios protegidos por DNS.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente cadastrado para quem esta conta e seus escritórios serão delegados na revenda."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/dns/cloud/site-rules",
       "menuPath": "DNS seguro › Regras",
       "scope": "tenant",
@@ -1682,6 +1711,10 @@
         {
           "label": "Status",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta ou cliente revendedor responsável por este escritório protegido."
         },
         {
           "label": "Cluster DNS",
@@ -1719,6 +1752,10 @@
         {
           "label": "Status",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta ou cliente revendedor responsável por este escritório protegido."
         },
         {
           "label": "Cluster DNS",

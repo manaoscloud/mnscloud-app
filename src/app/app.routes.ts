@@ -1577,6 +1577,13 @@ export const routes: Routes = [
 
               // Cloud DNS for companies (DNS module E1)
               {
+                path: 'dns/accounts',
+                loadComponent: () =>
+                  import('./pages/dns/accounts/accounts').then((m) => m.DnsAccountsPage),
+                title: 'DNS • Accounts | mnscloud',
+                data: { scope: 'tenant', context: 'dns' },
+              },
+              {
                 path: 'dns/cloud/sites',
                 loadComponent: () =>
                   import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
