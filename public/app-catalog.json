@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "685c211b9651",
+  "version": "0c02eaf66e18",
   "language": "pt-BR",
   "entries": [
     {
@@ -662,7 +662,7 @@
           "help": ""
         },
         {
-          "label": "Ramos",
+          "label": "Ramos de atividade",
           "help": ""
         },
         {
@@ -862,7 +862,7 @@
           "help": ""
         },
         {
-          "label": "Ramos",
+          "label": "Ramos de atividade",
           "help": ""
         },
         {
@@ -4840,6 +4840,10 @@
         },
         {
           "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Setor econômico",
           "help": ""
         },
         {

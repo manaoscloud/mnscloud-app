@@ -1,3 +1,8 @@
+import {
+  economicClassificationFilters,
+  industryReferenceField,
+  industryReferenceColumn,
+} from '../../registry/economic-classification';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
@@ -84,20 +89,7 @@ const config = defineCrud({
       required: false,
       type: 'text',
     },
-    {
-      key: 'RegIndustryRinUUID',
-      source: 'RegIndustryRinUUID',
-      label: 'crm.title.industries',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'registry/industries',
-        uuidField: 'RinUUID',
-        labelField: 'RinName',
-        selectedLabelField: 'RegIndustryRinUUIDName',
-      },
-    },
+    industryReferenceField(),
     {
       key: 'CacCity',
       source: 'CacCity',
@@ -130,12 +122,7 @@ const config = defineCrud({
     { key: 'CacRevision', source: 'CacRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
-    {
-      id: 'RegIndustryRinUUID',
-      field: 'RegIndustryRinUUIDName',
-      label: 'crm.title.industries',
-      kind: 'text',
-    },
+    industryReferenceColumn(),
     {
       id: 'CacName',
       field: 'CacName',
@@ -162,30 +149,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
-    {
-      key: 'RegEconomicSectorRecUUID',
-      paramKey: 'RegEconomicSectorRecUUID',
-      label: 'registry.economy.sector',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/economic-sectors',
-        uuidField: 'RecUUID',
-        labelField: 'RecName',
-      },
-    },
-    {
-      key: 'RegIndustryRinUUID',
-      paramKey: 'RegIndustryRinUUID',
-      label: 'crm.title.industries',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/industries',
-        uuidField: 'RinUUID',
-        labelField: 'RinName',
-      },
-    },
+    ...economicClassificationFilters(),
     {
       key: 'AssignedUserUsrUUID',
       paramKey: 'AssignedUserUsrUUID',

@@ -1,3 +1,8 @@
+import {
+  economicClassificationFilters,
+  industryReferenceField,
+  industryReferenceColumn,
+} from '../../src/app/pages/registry/economic-classification.ts';
 import { CRM_OPTIONS } from '../../src/app/pages/crm/crm-options.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,6 +30,9 @@ function formConfigs() {
             'crmLocalDate',
             'crmLocalTime',
             'CRM_OPTIONS',
+            'economicClassificationFilters',
+            'industryReferenceField',
+            'industryReferenceColumn',
             `return ${node.arguments[0].getText(source)}`,
           )(
             (v) => v,
@@ -33,6 +41,9 @@ function formConfigs() {
             crmLocalDate,
             crmLocalTime,
             CRM_OPTIONS,
+            economicClassificationFilters,
+            industryReferenceField,
+            industryReferenceColumn,
           ),
         });
       }

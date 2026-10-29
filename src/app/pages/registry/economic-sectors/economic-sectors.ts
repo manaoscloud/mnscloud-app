@@ -1,3 +1,4 @@
+import { economicCatalogFields, economicCatalogColumns } from '../economic-classification';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -13,26 +14,8 @@ const config = defineCrud({
   pageDescription: 'registry.economy.economic-sectors.description',
   serverSidePagination: true,
   initialValues: { RecName: '', RecDescription: '', RecStatus: 1 },
-  fields: [
-    { key: 'RecStatus', source: 'RecStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'RecName', source: 'RecName', label: 'Name', required: true, span: 2 },
-
-    {
-      key: 'RecDescription',
-      source: 'RecDescription',
-      label: 'Description',
-      type: 'textarea',
-      span: 4,
-    },
-    { key: 'RecRevision', source: 'RecRevision', label: 'Revision', hidden: true },
-  ],
-  columns: [
-    { id: 'name', field: 'RecName', label: 'Name', kind: 'identity' },
-
-    { id: 'description', field: 'RecDescription', label: 'Description', kind: 'text' },
-    { id: 'status', field: 'RecStatus', label: 'Status', kind: 'status' },
-  ],
-
+  fields: economicCatalogFields('Rec'),
+  columns: economicCatalogColumns('Rec'),
   quickCreateLabelField: 'RecName',
 });
 

@@ -1,3 +1,8 @@
+import {
+  economicCatalogFields,
+  economicCatalogColumns,
+  economicSectorFilter,
+} from '../economic-classification';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -13,52 +18,9 @@ const config = defineCrud({
   pageDescription: 'registry.economy.industries.description',
   serverSidePagination: true,
   initialValues: { RinName: '', RinDescription: '', RinStatus: 1 },
-  fields: [
-    { key: 'RinStatus', source: 'RinStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'RinName', source: 'RinName', label: 'Name', required: true, span: 2 },
-    {
-      key: 'RegEconomicSectorRecUUID',
-      source: 'RegEconomicSectorRecUUID',
-      label: 'registry.economy.sector',
-      required: true,
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/economic-sectors',
-        uuidField: 'RecUUID',
-        labelField: 'RecName',
-        selectedLabelField: 'SectorName',
-      },
-    },
-    {
-      key: 'RinDescription',
-      source: 'RinDescription',
-      label: 'Description',
-      type: 'textarea',
-      span: 4,
-    },
-    { key: 'RinRevision', source: 'RinRevision', label: 'Revision', hidden: true },
-  ],
-  columns: [
-    { id: 'name', field: 'RinName', label: 'Name', kind: 'identity' },
-    { id: 'sector', field: 'SectorName', label: 'registry.economy.sector', kind: 'text' },
-    { id: 'description', field: 'RinDescription', label: 'Description', kind: 'text' },
-    { id: 'status', field: 'RinStatus', label: 'Status', kind: 'status' },
-  ],
-  listFilters: [
-    {
-      key: 'RegEconomicSectorRecUUID',
-      paramKey: 'RegEconomicSectorRecUUID',
-      label: 'registry.economy.sector',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/economic-sectors',
-        uuidField: 'RecUUID',
-        labelField: 'RecName',
-      },
-    },
-  ],
+  fields: economicCatalogFields('Rin'),
+  columns: economicCatalogColumns('Rin'),
+  listFilters: [economicSectorFilter()],
   quickCreateLabelField: 'RinName',
 });
 

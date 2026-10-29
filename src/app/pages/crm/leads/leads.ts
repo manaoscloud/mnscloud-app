@@ -1,3 +1,8 @@
+import {
+  economicClassificationFilters,
+  industryReferenceField,
+  industryReferenceColumn,
+} from '../../registry/economic-classification';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload, crmLocalDate, crmLocalTime } from '../crm-input';
 import { Component } from '@angular/core';
@@ -93,20 +98,7 @@ const config = defineCrud({
       required: false,
       type: 'text',
     },
-    {
-      key: 'RegIndustryRinUUID',
-      source: 'RegIndustryRinUUID',
-      label: 'crm.title.industries',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'registry/industries',
-        uuidField: 'RinUUID',
-        labelField: 'RinName',
-        selectedLabelField: 'RegIndustryRinUUIDName',
-      },
-    },
+    industryReferenceField(),
     {
       key: 'CleEmail',
       source: 'CleEmail',
@@ -180,12 +172,7 @@ const config = defineCrud({
     { key: 'CleRevision', source: 'CleRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
-    {
-      id: 'RegIndustryRinUUID',
-      field: 'RegIndustryRinUUIDName',
-      label: 'crm.title.industries',
-      kind: 'text',
-    },
+    industryReferenceColumn(),
     {
       id: 'CrmSourceCsoUUID',
       field: 'CrmSourceCsoUUIDName',
@@ -243,56 +230,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
-    {
-      key: 'RegEconomicSectorRecUUID',
-      paramKey: 'RegEconomicSectorRecUUID',
-      label: 'registry.economy.sector',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/economic-sectors',
-        uuidField: 'RecUUID',
-        labelField: 'RecName',
-      },
-    },
-    {
-      key: 'RegIndustryRinUUID',
-      paramKey: 'RegIndustryRinUUID',
-      label: 'crm.title.industries',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        endpoint: 'registry/industries',
-        uuidField: 'RinUUID',
-        labelField: 'RinName',
-      },
-    },
-    {
-      key: 'CrmSourceCsoUUID',
-      paramKey: 'CrmSourceCsoUUID',
-      label: 'crm.title.sources',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        selectedLabelField: 'CrmSourceCsoUUIDName',
-        endpoint: 'crm/sources',
-        uuidField: 'CsoUUID',
-        labelField: 'CsoName',
-      },
-    },
-    {
-      key: 'CrmProductCprUUID',
-      paramKey: 'CrmProductCprUUID',
-      label: 'crm.title.products',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: {
-        selectedLabelField: 'CrmProductCprUUIDName',
-        endpoint: 'crm/products',
-        uuidField: 'CprUUID',
-        labelField: 'CprName',
-      },
-    },
+    ...economicClassificationFilters(),
     {
       key: 'AssignedUserUsrUUID',
       paramKey: 'AssignedUserUsrUUID',
