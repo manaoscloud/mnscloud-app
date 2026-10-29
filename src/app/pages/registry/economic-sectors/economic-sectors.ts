@@ -1,4 +1,7 @@
-import { economicCatalogFields, economicCatalogColumns } from '../economic-classification';
+import {
+  economicCatalogFields,
+  economicCatalogColumns,
+} from '../../../shared/registry/economic-classification';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,

@@ -2,7 +2,7 @@ import {
   economicCatalogFields,
   economicCatalogColumns,
   economicSectorFilter,
-} from '../economic-classification';
+} from '../../../shared/registry/economic-classification';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,

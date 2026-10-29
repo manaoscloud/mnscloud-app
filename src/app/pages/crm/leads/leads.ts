@@ -2,7 +2,7 @@ import {
   economicClassificationFilters,
   industryReferenceField,
   industryReferenceColumn,
-} from '../../registry/economic-classification';
+} from '../../../shared/registry/economic-classification';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload, crmLocalDate, crmLocalTime } from '../crm-input';
 import { Component } from '@angular/core';

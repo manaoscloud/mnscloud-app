@@ -2,7 +2,7 @@ import {
   economicClassificationFilters,
   industryReferenceField,
   industryReferenceColumn,
-} from '../../src/app/pages/registry/economic-classification.ts';
+} from '../../src/app/shared/registry/economic-classification.ts';
 import { CRM_OPTIONS } from '../../src/app/pages/crm/crm-options.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';

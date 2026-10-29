@@ -2,7 +2,7 @@ import type {
   ConfigurableCrudColumn,
   ConfigurableCrudField,
   ConfigurableCrudListFilter,
-} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+} from '../crud/configurable-crud/configurable-crud-page-base';
 
 const sectorLookup = {
   endpoint: 'registry/economic-sectors',
