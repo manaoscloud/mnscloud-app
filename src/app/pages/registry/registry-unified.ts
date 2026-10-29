@@ -8,7 +8,6 @@ import { AuthService } from '../../services/auth.service';
 import { hasEffectivePermission } from '../../core/guards/permission.guard';
 import { companyFiscalConfig } from '../fiscal/issuers';
 import { inject, resource } from '@angular/core';
-import { ApiService } from '../../services/api.service';
 import { AppI18nService } from '../../services/app-i18n.service';
 import { countryOptions } from '../../shared/i18n/countries';
 import type {

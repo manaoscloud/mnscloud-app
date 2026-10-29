@@ -1,3 +1,4 @@
+import { resaleAccountFields } from '../../../shared/crud/configurable-crud/account-resale-actions';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -20,40 +21,15 @@ const config = defineCrud({
   ...revisionDeletePayloads('RwkUUID', 'RwkRevision'),
   canDeleteRow: (row) => Boolean(row['RegCustomerRcuUUID']),
   initialValues: { name: '', description: '', RegCustomerRcuUUID: null, status: 1 },
-  fields: [
-    {
-      key: 'status',
-      source: 'RwkStatus',
-      label: 'Status',
-      type: 'status',
-      span: 1,
-      disabledWhen: ({ editing, values }) => editing && !values['RegCustomerRcuUUID'],
-    },
-    { key: 'name', source: 'RwkName', label: 'Name', required: true, span: 1 },
-    {
-      key: 'RegCustomerRcuUUID',
-      source: 'RegCustomerRcuUUID',
-      label: 'Customer',
-      type: 'search-select',
-      span: 1,
-      requiredWhen: ({ editing }) => !editing,
-      disabledWhen: ({ editing }) => editing,
-      remoteLookup: {
-        endpoint: 'registry/customers?status=1',
-        uuidField: 'CustomerUUID',
-        labelField: 'Name',
-        selectedLabelField: 'CustomerName',
-      },
-    },
-    {
-      key: 'description',
-      source: 'RwkDescription',
-      label: 'Description',
-      type: 'textarea',
-      span: 1,
-    },
-    { key: 'revision', source: 'RwkRevision', label: 'documents.revision', hiddenWhen: () => true },
-  ],
+  fields: resaleAccountFields({
+    statusField: 'RwkStatus',
+    nameField: 'RwkName',
+    descField: 'RwkDescription',
+    revField: 'RwkRevision',
+    customerKey: 'RegCustomerRcuUUID',
+    requireCustomer: true,
+    statusDisabledWhen: ({ editing, values }) => editing && !values['RegCustomerRcuUUID'],
+  }),
   columns: [
     { id: 'name', field: 'RwkName', label: 'Name', kind: 'identity' },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },

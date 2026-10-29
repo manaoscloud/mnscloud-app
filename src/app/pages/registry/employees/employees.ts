@@ -1,5 +1,4 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../services/api.service';
+import { Component, resource } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,

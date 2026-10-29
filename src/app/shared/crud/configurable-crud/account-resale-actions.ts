@@ -7,26 +7,35 @@ import type {
 } from './configurable-crud-page-base';
 
 export interface ResaleAccountFieldsOptions {
-  helpKey: string;
+  helpKey?: string;
+  customerKey?: string;
+  requireCustomer?: boolean;
+  statusDisabledWhen?: ConfigurableCrudField['disabledWhen'];
   statusField: string;
   nameField: string;
   descField: string;
   revField: string;
 }
 
-export function resaleAccountFields(
-  options: ResaleAccountFieldsOptions,
-): ConfigurableCrudField[] {
+export function resaleAccountFields(options: ResaleAccountFieldsOptions): ConfigurableCrudField[] {
   return [
-    { key: 'status', source: options.statusField, label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: options.statusField,
+      label: 'Status',
+      type: 'status',
+      span: 1,
+      disabledWhen: options.statusDisabledWhen,
+    },
     { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
     {
-      key: 'customerUUID',
+      key: options.customerKey ?? 'customerUUID',
       source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
       span: 1,
       help: options.helpKey,
+      requiredWhen: ({ editing }) => Boolean(options.requireCustomer) && !editing,
       disabledWhen: ({ editing }) => editing,
       remoteLookup: {
         endpoint: 'registry/customers?status=1',

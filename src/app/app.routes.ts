@@ -1004,12 +1004,8 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/registry/workspaces/workspaces').then((m) => m.RegWorkspacePage),
                 title: 'Registry • Workspaces | mnscloud',
-                data: {
-                  permissions: [
-                    'tenant.registry.workspaces.read',
-                    'tenant.registry.workspaces.all',
-                  ],
-                },
+                canActivate: [permissionGuard],
+                data: { permission: 'tenant.registry.workspaces.all' },
               },
               {
                 path: 'registry/companies',
