@@ -9,6 +9,15 @@ export interface ResaleAccountActionOptions {
   kindField: string;
   memberUuidField: string;
   memberStatusField: string;
+  publicationLabel: string;
+  publicationTitle: string;
+  publicationDescription: string;
+  portalEnabledLabel: string;
+  assignLabel: string;
+  assignTitle: string;
+  operatorsLabel: string;
+  operatorsTitle: string;
+  operatorsDescription: string;
   canManage: () => boolean;
 }
 
@@ -23,26 +32,35 @@ export function resaleAccountRowActions(
     kindField,
     memberUuidField,
     memberStatusField,
+    publicationLabel,
+    publicationTitle,
+    publicationDescription,
+    portalEnabledLabel,
+    assignLabel,
+    assignTitle,
+    operatorsLabel,
+    operatorsTitle,
+    operatorsDescription,
     canManage,
   } = options;
 
   return [
     {
       key: 'publication',
-      label: `${module}.publication`,
+      label: publicationLabel,
       icon: 'public',
       visible: (row) => canManage() && row[kindField] === 'customer',
       form: (row) =>
         defineCrud({
           endpoint: `${module}/accounts/${row[uuidField]}/portal`,
           uuidField,
-          pageTitle: `${module}.publication`,
-          pageDescription: `${module}.publicationDescription`,
+          pageTitle: publicationTitle,
+          pageDescription: publicationDescription,
           initialValues: { enabled: row[portalField], revision: row[revisionField] },
           fields: [
             {
               key: 'enabled',
-              label: `${module}.portalEnabled`,
+              label: portalEnabledLabel,
               type: 'select',
               span: 2,
               options: [
@@ -57,15 +75,15 @@ export function resaleAccountRowActions(
     },
     {
       key: 'assign',
-      label: `${module}.assignOperator`,
+      label: assignLabel,
       icon: 'person_add',
       visible: canManage,
       form: (row) =>
         defineCrud({
           endpoint: `${module}/accounts/${row[uuidField]}/members`,
           uuidField,
-          pageTitle: `${module}.assignOperator`,
-          pageDescription: `${module}.operatorsDescription`,
+          pageTitle: assignTitle,
+          pageDescription: operatorsDescription,
           initialValues: { UserUsrUUID: '', status: 1 },
           fields: [
             {
@@ -91,15 +109,15 @@ export function resaleAccountRowActions(
     },
     {
       key: 'operators',
-      label: `${module}.operators`,
+      label: operatorsLabel,
       icon: 'group',
       visible: canManage,
       collection: (row) =>
         defineCrud({
           endpoint: `${module}/accounts/${row[uuidField]}/members`,
           uuidField: memberUuidField,
-          pageTitle: `${module}.operators`,
-          pageDescription: `${module}.operatorsDescription`,
+          pageTitle: operatorsTitle,
+          pageDescription: operatorsDescription,
           readOnly: true,
           fields: [],
           columns: [
