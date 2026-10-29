@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ApiService } from './api.service';
@@ -23,11 +24,18 @@ describe('Registry workspace API client', () => {
       isLoggedIn: () => true,
       sessionGeneration: () => generation,
     } as unknown as AuthService;
-    api = new ApiService(http, auth, {} as SnackbarService);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: HttpClient, useValue: http },
+        { provide: AuthService, useValue: auth },
+        { provide: SnackbarService, useValue: {} },
+      ],
+    });
+    api = TestBed.inject(ApiService);
   });
   afterEach(() => localStorage.removeItem(ENV_STORAGE_KEY));
   const header = (call: jasmine.CallInfo<any>) =>
-    (call.args[1].headers as HttpHeaders).get('X-Registry-Workspace-UUID');
+    (call.args[1] as { headers: HttpHeaders }).headers.get('X-Registry-Workspace-UUID');
   it('keeps simultaneous client scopes separate and excludes legacy module requests', async () => {
     const a = api.withRegistryWorkspace(workspaceA);
     const b = api.withRegistryWorkspace(workspaceB);

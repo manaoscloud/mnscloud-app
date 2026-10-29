@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, inject, runInInjectionContext } from '@angular/core';
 import { HttpClient, HttpEventType, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom, map, Observable, startWith } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -15,11 +15,10 @@ export type { FileUploadProgress, FileUploadPhase } from '../shared/upload/file-
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  constructor(
-    private http: HttpClient,
-    private auth: AuthService,
-    private snack: SnackbarService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly snack = inject(SnackbarService);
+  private readonly injector = inject(Injector);
 
   private registryScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
 
@@ -27,7 +26,7 @@ export class ApiService {
   withRegistryWorkspace(uuid: string): ApiService {
     const normalized = normalizeEnvironmentUUID(uuid);
     if (!normalized) throw new Error('Invalid Registry workspace.');
-    const client = new ApiService(this.http, this.auth, this.snack);
+    const client = runInInjectionContext(this.injector, () => new ApiService());
     client.registryScope = {
       uuid: normalized,
       environment: this.currentEnvironmentUUID(),
