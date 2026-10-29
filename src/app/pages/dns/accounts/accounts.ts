@@ -1,13 +1,14 @@
-import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
+import { Component, inject } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
-import { Component, inject } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
+import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 
 export const DNS_ACCOUNTS_CONFIG = defineCrud({
   endpoint: 'dns/accounts',
@@ -71,89 +72,16 @@ export class DnsAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     super({
       ...DNS_ACCOUNTS_CONFIG,
       canCreate: canManage(),
-      rowActions: [
-        {
-          key: 'publication',
-          label: 'dns.publication',
-          icon: 'public',
-          visible: (row) => canManage() && row['DacKind'] === 'customer',
-          form: (row) =>
-            defineCrud({
-              endpoint: `dns/accounts/${row['DacUUID']}/portal`,
-              uuidField: 'DacUUID',
-              pageTitle: 'dns.publication',
-              pageDescription: 'dns.publicationDescription',
-              initialValues: { enabled: row['DacPortalEnabled'], revision: row['DacRevision'] },
-              fields: [
-                {
-                  key: 'enabled',
-                  label: 'dns.portalEnabled',
-                  type: 'select',
-                  span: 2,
-                  options: [
-                    { value: 0, label: 'No' },
-                    { value: 1, label: 'Yes' },
-                  ],
-                },
-                { key: 'revision', label: 'documents.revision', hiddenWhen: () => true },
-              ],
-              columns: [],
-            }),
-        },
-        {
-          key: 'assign',
-          label: 'dns.assignOperator',
-          icon: 'person_add',
-          visible: canManage,
-          form: (row) =>
-            defineCrud({
-              endpoint: `dns/accounts/${row['DacUUID']}/members`,
-              uuidField: 'DacUUID',
-              pageTitle: 'dns.assignOperator',
-              pageDescription: 'dns.operatorsDescription',
-              initialValues: { UserUsrUUID: '', status: 1 },
-              fields: [
-                {
-                  key: 'UserUsrUUID',
-                  source: 'UserUsrUUID',
-                  label: 'User',
-                  type: 'search-select',
-                  required: true,
-                  span: 1,
-                  remoteLookup: {
-                    endpoint: 'user/access/members',
-                    uuidField: 'UserUUID',
-                    labelField: 'Name',
-                  },
-                  quickCreate: false,
-                  quickCreateExemptReason:
-                    'Tenant operators must be invited through tenant access management.',
-                },
-                { key: 'status', label: 'Status', type: 'status', span: 1 },
-              ],
-              columns: [],
-            }),
-        },
-        {
-          key: 'operators',
-          label: 'dns.operators',
-          icon: 'group',
-          visible: canManage,
-          collection: (row) =>
-            defineCrud({
-              endpoint: `dns/accounts/${row['DacUUID']}/members`,
-              uuidField: 'DamUUID',
-              pageTitle: 'dns.operators',
-              pageDescription: 'dns.operatorsDescription',
-              readOnly: true,
-              fields: [],
-              columns: [
-                { id: 'user', field: 'MemberName', label: 'User', kind: 'identity' },
-                { id: 'status', field: 'DamStatus', label: 'Status', kind: 'status' },
-              ],
-            }),
-        },
-      ],
+      rowActions: resaleAccountRowActions({
+        module: 'dns',
+        uuidField: 'DacUUID',
+        revisionField: 'DacRevision',
+        portalField: 'DacPortalEnabled',
+        kindField: 'DacKind',
+        memberUuidField: 'DamUUID',
+        memberStatusField: 'DamStatus',
+        canManage,
+      }),
     });
   }
 }
