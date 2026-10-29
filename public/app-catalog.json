@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "38af5a13d20e",
+  "version": "c85f572a5d7b",
   "language": "pt-BR",
   "entries": [
     {
@@ -1183,6 +1183,35 @@
         },
         {
           "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/crm/workspaces",
+      "menuPath": "CRM › Workspaces",
+      "scope": "tenant",
+      "title": "Workspaces",
+      "description": "Workspaces de revenda do CRM para isolar funis, leads e oportunidades por cliente ou equipe interna.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do tenant a quem este workspace é revendido. O vínculo é imutável após a criação."
+        },
+        {
+          "label": "Descrição",
           "help": ""
         },
         {

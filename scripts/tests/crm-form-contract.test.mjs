@@ -45,7 +45,7 @@ function formConfigs() {
 
 test('every CRM form follows semantic controls, notes, widths and commercial defaults', () => {
   const configs = formConfigs();
-  assert.equal(configs.length, 14);
+  assert.equal(configs.length, 15);
   for (const { path, config } of configs) {
     const record = config.fields.filter((f) => !f.hidden && (!f.tab || f.tab === 'record'));
     assert.equal(record[0].type, 'status', `${path}: status first`);
