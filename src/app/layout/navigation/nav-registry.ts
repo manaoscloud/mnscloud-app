@@ -832,7 +832,7 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   // Human resources: the Pulse time clock (timesheets, schedules, holidays, policies, accounts)
-  // of the employees kept in Registry.
+  // of the employees kept in Registry, per HR account (internal or customer resale).
   {
     id: 'hr',
     label: 'nav.hr',
@@ -902,6 +902,14 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'badge',
         category: 'settings',
         route: '/hr/time-clock-accounts',
+      },
+      {
+        id: 'hr/accounts',
+        label: 'nav.hr.accounts',
+        icon: 'manage_accounts',
+        category: 'resale',
+        route: '/hr/accounts',
+        permissions: ['tenant.hr.accounts.read'],
       },
     ],
   },

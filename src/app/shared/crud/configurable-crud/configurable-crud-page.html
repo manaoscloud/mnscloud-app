@@ -3588,6 +3588,20 @@
       }
     </p>
   }
+  @if (hrAccountPage()) {
+    <p>
+      {{ 'hrAccount.context' | transloco }}:
+      @if (hrAccountUUID()) {
+        {{
+          hrAccountInfo.hasValue() && hrAccountInfo.value()
+            ? hrAccountInfo.value()?.['HraName']
+            : ('hrAccount.unavailable' | transloco)
+        }}
+      } @else {
+        {{ 'hrAccount.internal' | transloco }}
+      }
+    </p>
+  }
   @if (registryWorkspacePage()) {
     <p>
       {{ 'registryWorkspace.context' | transloco }}:

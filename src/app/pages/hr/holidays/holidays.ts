@@ -24,9 +24,9 @@ const YES_NO: readonly ConfigurableCrudOption[] = [
 ];
 
 const COMPANY_LOOKUP = {
-  endpoint: 'registry/companies?status=1',
-  uuidField: 'CompanyUUID',
-  labelField: 'Name',
+  endpoint: 'hr/companies',
+  uuidField: 'RcoUUID',
+  labelField: 'RcoName',
   selectedLabelField: 'CompanyName',
 };
 

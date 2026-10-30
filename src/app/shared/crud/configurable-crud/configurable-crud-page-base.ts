@@ -1169,6 +1169,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       ApiService.isCommerceAccountEndpoint(this.config.endpoint) &&
       !/^\/?registry\//.test(this.config.endpoint),
   );
+  /** HR pages work inside one HR account; without selection, the internal account. */
+  readonly hrAccountUUID = signal<string | null>(null);
+  readonly hrAccountInfo = resource({
+    params: () => this.hrAccountUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: ConfigurableCrudRecord }>(
+        `hr/accounts/${params}`,
+      );
+      return response.data;
+    },
+  });
+  readonly hrAccountPage = computed(() => ApiService.isHrAccountEndpoint(this.config.endpoint));
   readonly canCreate = computed(
     () =>
       !this.config.readOnly &&
@@ -1193,6 +1206,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       registryWorkspaceApi(config.endpoint);
     this.registryWorkspaceUUID.set(this.api.registryWorkspaceUUID);
     this.commerceAccountUUID.set(this.api.commerceAccountUUID);
+    this.hrAccountUUID.set(this.api.hrAccountUUID);
     this.config = config;
     this.viewStorageKey = crudViewStorageKey(config.endpoint);
     this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
@@ -1316,6 +1330,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   /** Explicit parent destination; never relies on browser history. */
   backLink(): string | null {
     if (this.commerceAccountUUID() && this.commerceAccountPage()) return '/sale/accounts';
+    if (this.hrAccountUUID() && this.hrAccountPage()) return '/hr/accounts';
     return this.registryWorkspaceUUID() && this.registryWorkspacePage()
       ? '/registry/workspaces'
       : null;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5f0067faa94e",
+  "version": "0a32d602cd63",
   "language": "pt-BR",
   "entries": [
     {
@@ -3080,6 +3080,39 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/accounts",
+      "menuPath": "Recursos humanos › Contas",
+      "scope": "tenant",
+      "title": "Contas de RH",
+      "description": "Atenda o RH de cada cliente da revenda em uma conta própria, separada do RH interno da revenda.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Espaço",
+          "help": "Espaço de cliente em Cadastros cujos colaboradores e empresas esta conta atende."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Interna",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]

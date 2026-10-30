@@ -9,9 +9,9 @@ import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-cre
 import { formatDay } from '../hr-time';
 
 const EMPLOYEE_LOOKUP = {
-  endpoint: 'registry/employees?status=1',
-  uuidField: 'EmployeeUUID',
-  labelField: 'Name',
+  endpoint: 'hr/employees',
+  uuidField: 'RemUUID',
+  labelField: 'RemName',
   selectedLabelField: 'EmployeeName',
 };
 

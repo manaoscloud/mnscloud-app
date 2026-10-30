@@ -68,9 +68,9 @@ const config = defineCrud({
       span: 1,
       emptyLabel: 'All',
       remoteLookup: {
-        endpoint: 'registry/employees',
-        uuidField: 'EmployeeUUID',
-        labelField: 'Name',
+        endpoint: 'hr/employees',
+        uuidField: 'RemUUID',
+        labelField: 'RemName',
       },
     },
   ],
@@ -179,6 +179,7 @@ export class HrTimeIssuesPage extends ConfigurableCrudPageBase<ConfigurableCrudR
     if (action.key !== TIMESHEET_ACTION) return;
     await this.router.navigate(['/hr/timesheets'], {
       queryParams: timesheetQuery(row['EmployeeUUID'], row['Date']),
+      queryParamsHandling: 'merge',
     });
   }
 }
