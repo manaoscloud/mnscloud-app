@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4dd485f961ee",
+  "version": "21ebcc8705c5",
   "language": "pt-BR",
   "entries": [
     {
@@ -428,7 +428,7 @@
     },
     {
       "route": "/clinic/agreement-plans",
-      "menuPath": "Clínica › Cadastros › Planos",
+      "menuPath": "Clínica › Planos",
       "scope": "tenant",
       "title": "Planos",
       "description": "",
@@ -436,7 +436,7 @@
     },
     {
       "route": "/clinic/agreements",
-      "menuPath": "Clínica › Cadastros › Convênios",
+      "menuPath": "Clínica › Convênios",
       "scope": "tenant",
       "title": "Convênios",
       "description": "",
@@ -444,7 +444,7 @@
     },
     {
       "route": "/clinic/bradesco/siad/guides",
-      "menuPath": "Clínica › Operação › Guias SIAD",
+      "menuPath": "Clínica › Guias SIAD",
       "scope": "tenant",
       "title": "Guias Bradesco SIAD",
       "description": "Mantenha dossiês privados de guias antes de enviá-los ao Bradesco SIAD.",
@@ -485,7 +485,7 @@
     },
     {
       "route": "/clinic/coverages",
-      "menuPath": "Clínica › Cadastros › Coberturas",
+      "menuPath": "Clínica › Coberturas",
       "scope": "tenant",
       "title": "Coberturas",
       "description": "",
@@ -493,7 +493,7 @@
     },
     {
       "route": "/clinic/customer-agreements",
-      "menuPath": "Clínica › Operação › Vínculos",
+      "menuPath": "Clínica › Vínculos",
       "scope": "tenant",
       "title": "Vínculos",
       "description": "",
@@ -501,7 +501,7 @@
     },
     {
       "route": "/clinic/procedures",
-      "menuPath": "Clínica › Cadastros › Procedimentos",
+      "menuPath": "Clínica › Procedimentos",
       "scope": "tenant",
       "title": "Procedimentos",
       "description": "",
@@ -901,7 +901,7 @@
     },
     {
       "route": "/crm/loss-reasons",
-      "menuPath": "CRM › Configurações › Motivos de perda",
+      "menuPath": "CRM › Motivos de perda",
       "scope": "tenant",
       "title": "Motivos de perda",
       "description": "Motivos registrados quando uma oportunidade é perdida.",
@@ -1007,7 +1007,7 @@
     },
     {
       "route": "/crm/pipelines",
-      "menuPath": "CRM › Configurações › Funis",
+      "menuPath": "CRM › Funis",
       "scope": "tenant",
       "title": "Funis",
       "description": "Funis de vendas que organizam as etapas das oportunidades.",
@@ -1118,7 +1118,7 @@
     },
     {
       "route": "/crm/sources",
-      "menuPath": "CRM › Configurações › Origens",
+      "menuPath": "CRM › Origens",
       "scope": "tenant",
       "title": "Origens",
       "description": "Origens dos leads, como site, indicação ou campanha, para medir os canais.",
@@ -1139,7 +1139,7 @@
     },
     {
       "route": "/crm/stages",
-      "menuPath": "CRM › Configurações › Etapas",
+      "menuPath": "CRM › Etapas",
       "scope": "tenant",
       "title": "Etapas",
       "description": "Etapas de cada funil, na ordem em que as oportunidades avançam.",
@@ -1319,7 +1319,7 @@
     },
     {
       "route": "/cyber-security/accounts",
-      "menuPath": "Cibersegurança › Contas de clientes",
+      "menuPath": "Cibersegurança › Contas",
       "scope": "tenant",
       "title": "Contas de clientes",
       "description": "Gerencie as contas de clientes da revenda e as contas internas que agrupam a proteção e os cofres de segredos de cada cliente.",
@@ -1327,7 +1327,7 @@
     },
     {
       "route": "/cyber-security/alerts",
-      "menuPath": "Cibersegurança › Ameaças › Alertas",
+      "menuPath": "Cibersegurança › Alertas",
       "scope": "tenant",
       "title": "Alertas",
       "description": "",
@@ -1335,7 +1335,7 @@
     },
     {
       "route": "/cyber-security/decisions",
-      "menuPath": "Cibersegurança › Ameaças › Decisões",
+      "menuPath": "Cibersegurança › Decisões",
       "scope": "tenant",
       "title": "Decisões",
       "description": "",
@@ -1343,7 +1343,7 @@
     },
     {
       "route": "/cyber-security/lists",
-      "menuPath": "Cibersegurança › Proteção › Listas de acesso",
+      "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "tenant",
       "title": "Listas de acesso",
       "description": "",
@@ -1351,7 +1351,7 @@
     },
     {
       "route": "/cyber-security/network-policies",
-      "menuPath": "Cibersegurança › Acesso › Políticas de API",
+      "menuPath": "Cibersegurança › Políticas de API",
       "scope": "tenant",
       "title": "Políticas de acesso à API",
       "description": "Grupos de endpoints, escopos de nós, limites de taxa e modo de aplicação.",
@@ -1416,7 +1416,7 @@
     },
     {
       "route": "/cyber-security/profiles",
-      "menuPath": "Cibersegurança › Proteção › Perfis",
+      "menuPath": "Cibersegurança › Perfis",
       "scope": "tenant",
       "title": "Perfis de segurança",
       "description": "Políticas reutilizáveis de proteção para serviços Linux e agentes de segurança.",
@@ -1547,7 +1547,7 @@
     },
     {
       "route": "/cyber-security/security-events",
-      "menuPath": "Cibersegurança › Ameaças › Eventos",
+      "menuPath": "Cibersegurança › Eventos",
       "scope": "tenant",
       "title": "Eventos",
       "description": "",
@@ -1555,7 +1555,7 @@
     },
     {
       "route": "/cyber-security/servers",
-      "menuPath": "Cibersegurança › Proteção › Servidores",
+      "menuPath": "Cibersegurança › Servidores",
       "scope": "tenant",
       "title": "Servidores",
       "description": "",
@@ -1563,7 +1563,7 @@
     },
     {
       "route": "/cyber-security/services",
-      "menuPath": "Cibersegurança › Proteção › Serviços",
+      "menuPath": "Cibersegurança › Serviços",
       "scope": "tenant",
       "title": "Serviços protegidos",
       "description": "Definições de serviços, portas, logs e coleções CrowdSec.",
@@ -1600,7 +1600,7 @@
     },
     {
       "route": "/cyber-security/trusted-nodes",
-      "menuPath": "Cibersegurança › Acesso › Nós confiáveis",
+      "menuPath": "Cibersegurança › Nós confiáveis",
       "scope": "tenant",
       "title": "Nós confiáveis",
       "description": "Nós de infraestrutura autenticados e integrações com agentes.",
@@ -1772,9 +1772,9 @@
     },
     {
       "route": "/financial/gateway-accounts",
-      "menuPath": "Financeiro › Pagamentos › Gateways",
+      "menuPath": "Financeiro › Gateways de pagamento",
       "scope": "tenant",
-      "title": "Gateways",
+      "title": "Gateways de pagamento",
       "description": "",
       "fields": []
     },
@@ -1858,7 +1858,7 @@
     },
     {
       "route": "/financial/payment-methods",
-      "menuPath": "Financeiro › Pagamentos › Métodos",
+      "menuPath": "Financeiro › Métodos de pagamento",
       "scope": "tenant",
       "title": "Métodos de pagamento",
       "description": "Formas como seus clientes podem pagar, usadas em contas a receber e faturas.",
@@ -3803,7 +3803,7 @@
     },
     {
       "route": "/isp/pool-ip/fixed-ipv4",
-      "menuPath": "ISP › IPs › IPv4 fixos",
+      "menuPath": "ISP › IPv4 fixos",
       "scope": "tenant",
       "title": "IPv4 fixo",
       "description": "Gerencie as atribuições CIDR de IPv4 fixo do seu ambiente ISP.",
@@ -3832,7 +3832,7 @@
     },
     {
       "route": "/isp/pool-ip/fixed-ipv6",
-      "menuPath": "ISP › IPs › IPv6 fixos",
+      "menuPath": "ISP › IPv6 fixos",
       "scope": "tenant",
       "title": "IPv6 fixo",
       "description": "Gerencie as atribuições CIDR de IPv6 fixo do seu ambiente ISP.",
@@ -3861,7 +3861,7 @@
     },
     {
       "route": "/isp/pool-ip/pool-ipv4",
-      "menuPath": "ISP › IPs › Faixas IPv4",
+      "menuPath": "ISP › Faixas IPv4",
       "scope": "tenant",
       "title": "Redes",
       "description": "Gerencie as redes IPv4 disponíveis deste pool.",
@@ -3886,7 +3886,7 @@
     },
     {
       "route": "/isp/pool-ip/pool-ipv6",
-      "menuPath": "ISP › IPs › Faixas IPv6",
+      "menuPath": "ISP › Faixas IPv6",
       "scope": "tenant",
       "title": "Redes",
       "description": "Gerencie as redes IPv6 disponíveis deste pool.",
@@ -3948,7 +3948,7 @@
     },
     {
       "route": "/isp/vendor",
-      "menuPath": "ISP › Equipamentos › Fabricantes",
+      "menuPath": "ISP › Fabricantes",
       "scope": "tenant",
       "title": "Fornecedores",
       "description": "Fornecedores de equipamentos vinculados ao inventário do ISP.",
@@ -3989,7 +3989,7 @@
     },
     {
       "route": "/isp/vendor-model",
-      "menuPath": "ISP › Equipamentos › Modelos",
+      "menuPath": "ISP › Modelos",
       "scope": "tenant",
       "title": "Modelos de fornecedores",
       "description": "Mapeie os modelos de equipamentos do fornecedor para o inventário do seu ISP.",
@@ -7010,7 +7010,7 @@
     },
     {
       "route": "/system/cyber-security/alerts",
-      "menuPath": "Cibersegurança › Ameaças › Alertas",
+      "menuPath": "Cibersegurança › Alertas",
       "scope": "platform",
       "title": "Alertas",
       "description": "",
@@ -7018,7 +7018,7 @@
     },
     {
       "route": "/system/cyber-security/decisions",
-      "menuPath": "Cibersegurança › Ameaças › Decisões",
+      "menuPath": "Cibersegurança › Decisões",
       "scope": "platform",
       "title": "Decisões",
       "description": "",
@@ -7026,7 +7026,7 @@
     },
     {
       "route": "/system/cyber-security/lists",
-      "menuPath": "Cibersegurança › Proteção › Listas de acesso",
+      "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "platform",
       "title": "Listas de acesso",
       "description": "",
@@ -7034,7 +7034,7 @@
     },
     {
       "route": "/system/cyber-security/network-policies",
-      "menuPath": "Cibersegurança › Acesso › Políticas de API",
+      "menuPath": "Cibersegurança › Políticas de API",
       "scope": "platform",
       "title": "Políticas de acesso à API",
       "description": "Grupos de endpoints, escopos de nós, limites de taxa e modo de aplicação.",
@@ -7099,7 +7099,7 @@
     },
     {
       "route": "/system/cyber-security/profiles",
-      "menuPath": "Cibersegurança › Proteção › Perfis",
+      "menuPath": "Cibersegurança › Perfis",
       "scope": "platform",
       "title": "Perfis de segurança",
       "description": "Políticas reutilizáveis de proteção para serviços Linux e agentes de segurança.",
@@ -7275,7 +7275,7 @@
     },
     {
       "route": "/system/cyber-security/security-events",
-      "menuPath": "Cibersegurança › Ameaças › Eventos",
+      "menuPath": "Cibersegurança › Eventos",
       "scope": "platform",
       "title": "Eventos",
       "description": "",
@@ -7283,7 +7283,7 @@
     },
     {
       "route": "/system/cyber-security/servers",
-      "menuPath": "Cibersegurança › Proteção › Servidores",
+      "menuPath": "Cibersegurança › Servidores",
       "scope": "platform",
       "title": "Servidores",
       "description": "",
@@ -7291,7 +7291,7 @@
     },
     {
       "route": "/system/cyber-security/services",
-      "menuPath": "Cibersegurança › Proteção › Serviços",
+      "menuPath": "Cibersegurança › Serviços",
       "scope": "platform",
       "title": "Serviços protegidos",
       "description": "Definições de serviços, portas, logs e coleções CrowdSec.",
@@ -7328,7 +7328,7 @@
     },
     {
       "route": "/system/cyber-security/trusted-nodes",
-      "menuPath": "Cibersegurança › Acesso › Nós confiáveis",
+      "menuPath": "Cibersegurança › Nós confiáveis",
       "scope": "platform",
       "title": "Nós confiáveis",
       "description": "Nós de infraestrutura autenticados e integrações com agentes.",

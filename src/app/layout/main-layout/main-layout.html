@@ -52,6 +52,9 @@
     <div class="sidenav-scroll">
       <nav class="nav-menu" [class.is-navigation-pending]="navigationLoading()">
         @for (item of filteredNavItems; track item.id) {
+          @if (item.areaTitle) {
+            <div class="menu-area-title">{{ item.areaTitle }}</div>
+          }
           <!-- ROOT -->
           <button
             type="button"
@@ -79,6 +82,9 @@
           @if (item.children?.length && (isExpanded(item.id) || isSearching())) {
             <div class="children">
               @for (child of item.children; track child.id) {
+                @if (child.categoryTitle) {
+                  <div class="menu-category-title">{{ child.categoryTitle }}</div>
+                }
                 @if (child.children?.length) {
                   <div class="child-with-grand">
                     <button
@@ -102,6 +108,9 @@
                     @if (isExpanded(child.id) || isSearching()) {
                       <div class="grand-children">
                         @for (grand of child.children; track grand.id) {
+                          @if (grand.categoryTitle) {
+                            <div class="menu-category-title">{{ grand.categoryTitle }}</div>
+                          }
                           @if (grand.children?.length) {
                             <div class="grand-with-great">
                               <button
@@ -124,6 +133,11 @@
                               @if (isExpanded(grand.id) || isSearching()) {
                                 <div class="great-children">
                                   @for (great of grand.children; track great.id) {
+                                    @if (great.categoryTitle) {
+                                      <div class="menu-category-title">
+                                        {{ great.categoryTitle }}
+                                      </div>
+                                    }
                                     <button
                                       class="menu-item great-item"
                                       (click)="navigateTo(great)"
@@ -207,6 +221,9 @@
           (mouseleave)="onCompactFlyoutLeave()"
         >
           @for (child of hoverRoot.children ?? []; track child.id) {
+            @if (child.categoryTitle) {
+              <div class="compact-flyout-title">{{ child.categoryTitle }}</div>
+            }
             <button
               type="button"
               class="compact-flyout-item"
@@ -249,6 +266,9 @@
           (mouseleave)="onCompactFlyoutLeave()"
         >
           @for (grand of hoverChild.children ?? []; track grand.id) {
+            @if (grand.categoryTitle) {
+              <div class="compact-flyout-title">{{ grand.categoryTitle }}</div>
+            }
             <button
               type="button"
               class="compact-flyout-item"
@@ -291,6 +311,9 @@
           (mouseleave)="onCompactFlyoutLeave()"
         >
           @for (great of hoverGrand.children ?? []; track great.id) {
+            @if (great.categoryTitle) {
+              <div class="compact-flyout-title">{{ great.categoryTitle }}</div>
+            }
             <button
               type="button"
               class="compact-flyout-item"

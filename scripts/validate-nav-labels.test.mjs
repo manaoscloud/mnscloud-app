@@ -105,3 +105,112 @@ test('verbs, English leftovers, first-word case and dashboard position fail', ()
   });
   assert.equal(english.filter((e) => e.includes('English word')).length, 2);
 });
+
+// Navigation Structure: area titles of the root modules and category titles inside a module.
+const titled = (id, category, extra = {}) => ({ ...leaf(id), category, ...extra });
+const structureLabels = {
+  ...base,
+  'nav.category.operation': ['Operação', 'Operations', 'Operación'],
+  'nav.category.settings': ['Configurações', 'Settings', 'Configuración'],
+  'nav.category.platform': ['Plataforma', 'Platform', 'Plataforma'],
+  'nav.support.a': ['Chamados', 'Tickets', 'Tickets'],
+  'nav.support.b': ['Equipes', 'Teams', 'Equipos'],
+  'nav.support.c': ['Tipos', 'Types', 'Tipos'],
+  'nav.support.d': ['Origens', 'Sources', 'Orígenes'],
+  'nav.support.e': ['Servidores', 'Servers', 'Servidores'],
+};
+
+test('categories in standard order, in one block each, pass and use their own keys', () => {
+  const errors = check(
+    support([
+      titled('support/a', 'operation'),
+      titled('support/b', 'settings'),
+      titled('support/c', 'settings'),
+      titled('support/d', 'settings'),
+      titled('support/e', 'platform', { route: undefined, masterRoute: '/system/e' }),
+    ]),
+    structureLabels,
+  );
+  assert.deepEqual(errors, []);
+});
+
+test('split, out-of-order, unknown and late-uncategorized categories fail', () => {
+  const errors = check(
+    support([
+      titled('support/a', 'settings'),
+      titled('support/b', 'operation'),
+      titled('support/c', 'settings'),
+      leaf('support/d'),
+      titled('support/e', 'nope'),
+    ]),
+    structureLabels,
+  );
+  assert.ok(errors.some((e) => e.includes('out of the standard order')));
+  assert.ok(errors.some((e) => e.includes('is split')));
+  assert.ok(errors.some((e) => e.includes('go before the first category title')));
+  assert.ok(errors.some((e) => e.includes('unknown category "nope"')));
+});
+
+test('platform holds master-only entries and small lists only use resale/platform', () => {
+  const errors = check(
+    support([titled('support/a', 'operation'), titled('support/e', 'platform')]),
+    structureLabels,
+  );
+  assert.ok(errors.some((e) => e.includes('only uses the resale/platform categories')));
+  assert.ok(errors.some((e) => e.includes('platform category holds only master-only entries')));
+});
+
+test('a category title is ancestor context of its entries and needs translations', () => {
+  const errors = check(
+    support([
+      titled('support/a', 'settings'),
+      titled('support/b', 'settings'),
+      titled('support/c', 'settings'),
+      titled('support/d', 'settings'),
+      titled('support/e', 'operation'),
+    ]),
+    {
+      ...Object.fromEntries(
+        Object.entries(structureLabels).filter(([key]) => key !== 'nav.category.operation'),
+      ),
+      'nav.support.a': ['Configurações gerais', 'General settings', 'Configuración general'],
+    },
+  );
+  assert.ok(errors.some((e) => e.includes('support/a') && e.includes('repeats ancestor context')));
+  assert.ok(
+    errors.some((e) => e.includes('missing pt-BR translation for "nav.category.operation"')),
+  );
+});
+
+test('root modules need an area after the first one, in area order, never split', () => {
+  const root = (id, area) => ({ id, label: `nav.${id}`, route: `/${id}`, area });
+  const labels = {
+    'nav.dashboard': ['Painel', 'Dashboard', 'Panel'],
+    'nav.crm': ['CRM', 'CRM', 'CRM'],
+    'nav.voip': ['VoIP', 'VoIP', 'VoIP'],
+    'nav.area.commercial': ['Comercial', 'Commercial', 'Comercial'],
+    'nav.area.telecom': ['Telecom', 'Telecom', 'Telecom'],
+  };
+  assert.deepEqual(
+    check(
+      [
+        { id: 'dashboard', label: 'nav.dashboard', route: '/' },
+        root('crm', 'commercial'),
+        root('voip', 'telecom'),
+      ],
+      labels,
+    ),
+    [],
+  );
+  const errors = check(
+    [
+      { id: 'dashboard', label: 'nav.dashboard', route: '/' },
+      root('voip', 'telecom'),
+      root('crm', 'commercial'),
+      root('hr'),
+    ],
+    { ...labels, 'nav.hr': ['Pessoal', 'People', 'Personal'] },
+  );
+  assert.ok(errors.some((e) => e.includes('crm') && e.includes('out of order')));
+  assert.ok(errors.some((e) => e.includes('hr: root modules after the first need an area')));
+});
