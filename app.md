@@ -140,8 +140,11 @@ Atribuições, Acúmulos`.
     stay findable by their parent words. Page titles and breadcrumbs may stay complete
     (`Prioridades de chamado`).
 
-New menu entries: add the entry to `nav-registry.ts`, add `nav.<id>` to the three dictionaries,
-run `npm run check:nav`, then validate PT/EN/ES at desktop (expanded and compact) and mobile width.
+New menu entries: follow the workspace checklist `docs/procedures/menu-change.md` (inherited
+visibility, routes, keys, quoted menu paths, app catalog, dashboard order), add the entry to
+`nav-registry.ts` with its `area` (roots) or `category` (Navigation Structure), add `nav.<id>` to
+the three dictionaries, run `npm run check:nav` and `npm run catalog:app`, then validate PT/EN/ES at
+desktop (expanded and compact) and mobile width.
 
 The check cannot judge meaning. Review by hand, for every new or renamed entry: the three
 translations name the same thing (`Handoffs` is `Repasses`, not `Entregas` = deliveries), one
@@ -165,15 +168,41 @@ and metrics monitor; `defineCrud` has no default, so a missing `pageDescription`
   allowlist; the CRUD/dashboard/detail/settings templates and `scripts/create-crud.mjs` start
   with a placeholder that fails the check until it is replaced and translated.
 
+## Navigation Structure
+
+The sidebar groups root modules under **area titles** and, inside a module, entries under
+**category titles** (workspace `docs/contracts/frontend.md` → Navigation structure). Titles are
+data on the entries, not tree nodes: they add no click, no id and no level, and they are not part
+of the menu path (tooltips, `app-catalog.json`, support knowledge), so a category change alone
+changes no URL, key or quoted path. `npm run check:nav` enforces it with the label rules.
+
+- **Areas** (`area` on every root after `Painel`, `nav.area.<area>`), in this order: Comercial,
+  Atendimento, Administrativo, Campo, Saúde, Telecom, Infraestrutura, Sistema
+  (`nav-glossary.json` `areas`). Root modules of one area stay together.
+- **Categories** (`category` on child entries, `nav.category.<category>`): the standard ones keep
+  this relative order: Operação (day to day), Cadastros (base data), Relatórios (CDR, sessions,
+  usage, events), Configurações (rules, types, parameters), Revenda (customer accounts of a resold
+  module), Plataforma (master-only entries, checked). Domain categories (`categories.domain`, for
+  example Funil, Fluxo de chamadas, Concessionárias) may sit between them. `Painel` and other
+  uncategorized entries only come before the first title; one block per category; a category
+  title counts as ancestor context of its entries; lists of up to 4 entries only use Revenda and
+  Plataforma.
+- Rendering (`layout/navigation/nav-sections.ts`): a title appears above the first **visible**
+  entry of its section, after permissions, entitlements and search, so a section the user cannot
+  see shows no title. Search also matches category words. In the compact rail an area is a
+  divider; flyouts show category titles; mobile uses the expanded menu.
+- Visibility is still inherited from the nearest ancestor (`filterMenu`): titles never change it,
+  and an entry that moves to another parent states its own `scope`/`entitlementCode`.
+
 ## Cyber Security navigation
 
-Cybersecurity groups the existing resources by operator task: Dashboard; Protection
-(Servers, Profiles, Services, Access lists); Threats (Alerts, Decisions, Events); Access
-(Trusted nodes, API policies); and Secrets (Dashboard, List, Accounts, master-only Servers).
-Menu labels follow the Navigation Label Contract; page titles keep the full names.
-Groups are navigation-only and inherit existing commercial visibility. Preserve the canonical
-`/cyber-security/*` and `/system/cyber-security/*` URLs, API contracts and resource permissions.
-Route metadata supplies translated breadcrumbs; groups without destinations render as text.
+Cybersecurity orders its resources by operator task under category titles: Dashboard; Threats
+(Alerts, Decisions, Events); Protection (Servers, Profiles, Services, Access lists); Access
+(Trusted nodes, API policies, and the Secrets group: Dashboard, List, Accounts, master-only
+Servers); Resale (customer Accounts). Menu labels follow the Navigation Label Contract; page
+titles keep the full names. Categories are navigation-only and inherit existing commercial
+visibility. Preserve the canonical `/cyber-security/*` and `/system/cyber-security/*` URLs, API
+contracts and resource permissions. Route metadata supplies translated breadcrumbs.
 Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact and mobile menus.
 
 ## Menus

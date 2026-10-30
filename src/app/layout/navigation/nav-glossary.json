@@ -94,7 +94,8 @@
     "General",
     "Ideas",
     "Videos",
-    "Vídeos"
+    "Vídeos",
+    "Telecom"
   ],
   "productTerms": [
     "Logs",
@@ -135,5 +136,44 @@
     "Pipes",
     "Boletos",
     "Tenants"
-  ]
+  ],
+  "$structureComment": "Navigation Structure (app.md): area order of the root modules and category vocabulary. Standard categories keep this relative order; domain categories may sit between them. Lists with up to smallListMax entries only use smallListCategories.",
+  "areas": [
+    "commercial",
+    "service",
+    "administrative",
+    "field",
+    "health",
+    "telecom",
+    "infrastructure",
+    "system"
+  ],
+  "categories": {
+    "standard": ["operation", "registry", "reports", "settings", "resale", "platform"],
+    "domain": [
+      "pipeline",
+      "people",
+      "organization",
+      "classifications",
+      "catalog",
+      "contracting",
+      "credits",
+      "access",
+      "environment",
+      "integrations",
+      "content",
+      "utilities",
+      "network",
+      "addressing",
+      "equipment",
+      "numbering",
+      "services",
+      "call-center",
+      "call-flow",
+      "threats",
+      "protection"
+    ]
+  },
+  "smallListMax": 4,
+  "smallListCategories": ["resale", "platform"]
 }
