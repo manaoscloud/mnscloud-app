@@ -1,5 +1,7 @@
 import { defineCrud } from './define-crud';
+import { revisionDeletePayloads } from './revision-delete';
 import type {
+  ConfigurableCrudColumn,
   ConfigurableCrudField,
   ConfigurableCrudRowAction,
 } from './configurable-crud-page-base';
@@ -47,6 +49,52 @@ export function resaleAccountFields(
       hiddenWhen: () => true,
     },
   ];
+}
+
+export interface ResaleAccountCrudOptions {
+  endpoint: string;
+  /** Column prefix of the account table, for example `Cya` (CyaUUID, CyaName, ...). */
+  prefix: string;
+  /** Translation keys of the page; `i18n` is the namespace of the remaining labels. */
+  pageTitle: string;
+  pageDescription: string;
+  createTitle: string;
+  editTitle: string;
+  i18n: string;
+  extraColumns?: ConfigurableCrudColumn[];
+}
+
+/** List and form of a reseller account page (internal or customer kind). */
+export function resaleAccountCrud(options: ResaleAccountCrudOptions) {
+  const { endpoint, prefix, i18n, extraColumns = [], ...labels } = options;
+  return defineCrud({
+    ...labels,
+    endpoint,
+    uuidField: `${prefix}UUID`,
+    serverSidePagination: true,
+    bulkDelete: true,
+    ...revisionDeletePayloads(`${prefix}UUID`, `${prefix}Revision`),
+    initialValues: { name: '', description: '', customerUUID: null, status: 1 },
+    fields: resaleAccountFields({
+      helpKey: `${i18n}.accountCustomerHelp`,
+      statusField: `${prefix}Status`,
+      nameField: `${prefix}Name`,
+      descField: `${prefix}Description`,
+      revField: `${prefix}Revision`,
+    }),
+    columns: [
+      { id: 'name', field: `${prefix}Name`, label: 'Name', kind: 'identity' },
+      {
+        id: 'publication',
+        field: `${prefix}PortalEnabled`,
+        label: `${i18n}.portalEnabled`,
+        kind: 'status',
+      },
+      { id: 'customer', field: 'CustomerName', label: 'Customer' },
+      ...extraColumns,
+      { id: 'status', field: `${prefix}Status`, label: 'Status', kind: 'status' },
+    ],
+  });
 }
 
 export interface ResaleAccountActionOptions {

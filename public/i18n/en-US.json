@@ -4176,6 +4176,7 @@
   "Waiting to retry": "Waiting to retry",
   "Name, customer or server": "Name, customer or server",
   "Secret Accounts": "Secret Accounts",
+  "Customer accounts": "Customer accounts",
   "New secret account": "New secret account",
   "Edit secret account": "Edit secret account",
   "Bind customers to Master OpenVault servers for Secrets Manager.": "Bind customers to Master OpenVault servers for Secrets Manager.",

@@ -6,42 +6,19 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
 import {
-  resaleAccountFields,
+  resaleAccountCrud,
   resaleAccountRowActions,
 } from '../../../shared/crud/configurable-crud/account-resale-actions';
 
-export const CYBER_SECURITY_ACCOUNTS_CONFIG = defineCrud({
+export const CYBER_SECURITY_ACCOUNTS_CONFIG = resaleAccountCrud({
   endpoint: 'cyber-security/accounts',
-  uuidField: 'CyaUUID',
+  prefix: 'Cya',
   pageTitle: 'cyberSecurity.accounts',
   pageDescription: 'cyberSecurity.accountsDescription',
   createTitle: 'cyberSecurity.newAccount',
   editTitle: 'cyberSecurity.editAccount',
-  serverSidePagination: true,
-  bulkDelete: true,
-  ...revisionDeletePayloads('CyaUUID', 'CyaRevision'),
-  initialValues: { name: '', description: '', customerUUID: null, status: 1 },
-  fields: resaleAccountFields({
-    helpKey: 'cyberSecurity.accountCustomerHelp',
-    statusField: 'CyaStatus',
-    nameField: 'CyaName',
-    descField: 'CyaDescription',
-    revField: 'CyaRevision',
-  }),
-  columns: [
-    { id: 'name', field: 'CyaName', label: 'Name', kind: 'identity' },
-    {
-      id: 'publication',
-      field: 'CyaPortalEnabled',
-      label: 'cyberSecurity.portalEnabled',
-      kind: 'status',
-    },
-    { id: 'customer', field: 'CustomerName', label: 'Customer' },
-    { id: 'status', field: 'CyaStatus', label: 'Status', kind: 'status' },
-  ],
+  i18n: 'cyberSecurity',
 });
 
 @Component({

@@ -4176,6 +4176,7 @@
   "Waiting to retry": "Esperando un nuevo intento",
   "Name, customer or server": "Nombre, cliente o servidor",
   "Secret Accounts": "Cuentas de secretos",
+  "Customer accounts": "Cuentas de clientes",
   "New secret account": "Nueva cuenta de secretos",
   "Edit secret account": "Editar cuenta de secretos",
   "Bind customers to Master OpenVault servers for Secrets Manager.": "Organice las cuentas de secretos y sus vínculos con clientes y servidores.",

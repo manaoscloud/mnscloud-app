@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "513a9decb8f9",
+  "version": "4dd485f961ee",
   "language": "pt-BR",
   "entries": [
     {
@@ -1323,28 +1323,7 @@
       "scope": "tenant",
       "title": "Contas de clientes",
       "description": "Gerencie as contas de clientes da revenda e as contas internas que agrupam a proteção e os cofres de segredos de cada cliente.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Cliente",
-          "help": "Cliente cadastrado para quem esta conta será revendida. Deixe vazio para uma conta de uso interno; o cliente não pode ser trocado depois."
-        },
-        {
-          "label": "Descrição",
-          "help": ""
-        },
-        {
-          "label": "Revisão",
-          "help": ""
-        }
-      ]
+      "fields": []
     },
     {
       "route": "/cyber-security/alerts",
