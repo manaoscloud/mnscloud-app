@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "21ebcc8705c5",
+  "version": "30320b45013a",
   "language": "pt-BR",
   "entries": [
     {
@@ -1661,7 +1661,7 @@
     },
     {
       "route": "/dns/accounts",
-      "menuPath": "DNS seguro › Contas",
+      "menuPath": "DNS › Contas",
       "scope": "tenant",
       "title": "Contas de clientes",
       "description": "Gerencie contas de clientes da revenda para delegação e isolamento de escritórios protegidos por DNS.",
@@ -1690,7 +1690,7 @@
     },
     {
       "route": "/dns/cloud/site-rules",
-      "menuPath": "DNS seguro › Regras",
+      "menuPath": "DNS › Regras",
       "scope": "tenant",
       "title": "Escritórios protegidos",
       "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
@@ -1731,7 +1731,7 @@
     },
     {
       "route": "/dns/cloud/sites",
-      "menuPath": "DNS seguro › Escritórios",
+      "menuPath": "DNS › Escritórios",
       "scope": "tenant",
       "title": "Escritórios protegidos",
       "description": "Cada escritório é reconhecido pelos IPs públicos fixos da sua internet e recebe a própria política: categorias bloqueadas, busca segura e regras próprias. Configure no roteador ou no DHCP do escritório os endereços DNS do cluster escolhido.",
@@ -2280,7 +2280,7 @@
     },
     {
       "route": "/hosting/dns",
-      "menuPath": "Hospedagem › DNS › Painel",
+      "menuPath": "DNS › Zonas › Painel",
       "scope": "tenant",
       "title": "Painel",
       "description": "",
@@ -2288,7 +2288,7 @@
     },
     {
       "route": "/hosting/dns/domains",
-      "menuPath": "Hospedagem › DNS › Domínios",
+      "menuPath": "DNS › Zonas › Domínios",
       "scope": "tenant",
       "title": "Domínios",
       "description": "Gerencie zonas DNS, vínculo com provedores e sincronização do provisionamento.",
@@ -2341,7 +2341,7 @@
     },
     {
       "route": "/hosting/dns/providers",
-      "menuPath": "Hospedagem › DNS › Provedores",
+      "menuPath": "DNS › Zonas › Provedores",
       "scope": "tenant",
       "title": "Provedores DNS",
       "description": "Gerencie contas de provedores DNS usadas pelos domínios dos tenants.",
@@ -2390,7 +2390,7 @@
     },
     {
       "route": "/hosting/dns/registers",
-      "menuPath": "Hospedagem › DNS › Registros",
+      "menuPath": "DNS › Zonas › Registros",
       "scope": "tenant",
       "title": "Registros",
       "description": "Acompanhe registros de domínio, metadados do registrador e o cliente responsável.",
@@ -6111,7 +6111,7 @@
     },
     {
       "route": "/support/platform/teams",
-      "menuPath": "Suporte › Configurações › Equipes",
+      "menuPath": "Suporte › Equipes",
       "scope": "platform",
       "title": "Equipes de suporte",
       "description": "Gerencie as equipes responsáveis pelo suporte do tenant.",
@@ -6148,7 +6148,7 @@
     },
     {
       "route": "/support/platform/ticket-channels",
-      "menuPath": "Suporte › Configurações › Origens",
+      "menuPath": "Suporte › Origens",
       "scope": "platform",
       "title": "Origens de chamado",
       "description": "De onde vêm os chamados da plataforma. app_report e help_center são usados pelo App.",
@@ -6173,7 +6173,7 @@
     },
     {
       "route": "/support/platform/ticket-priorities",
-      "menuPath": "Suporte › Configurações › Prioridades",
+      "menuPath": "Suporte › Prioridades",
       "scope": "platform",
       "title": "Prioridades de chamado",
       "description": "Cada prioridade define o SLA: prazo de primeira resposta e de resolução.",
@@ -6214,7 +6214,7 @@
     },
     {
       "route": "/support/platform/ticket-types",
-      "menuPath": "Suporte › Configurações › Tipos",
+      "menuPath": "Suporte › Tipos",
       "scope": "platform",
       "title": "Tipos de chamado",
       "description": "Tipos que os tenants escolhem ao abrir um chamado para a equipe da plataforma.",
@@ -6321,7 +6321,7 @@
     },
     {
       "route": "/support/teams",
-      "menuPath": "Suporte › Configurações › Equipes",
+      "menuPath": "Suporte › Equipes",
       "scope": "tenant",
       "title": "Equipes de suporte",
       "description": "Gerencie as equipes responsáveis pelo suporte do tenant.",
@@ -6358,7 +6358,7 @@
     },
     {
       "route": "/support/ticket-channels",
-      "menuPath": "Suporte › Configurações › Origens",
+      "menuPath": "Suporte › Origens",
       "scope": "tenant",
       "title": "Origens de chamado",
       "description": "De onde vêm os chamados dos seus clientes.",
@@ -6383,7 +6383,7 @@
     },
     {
       "route": "/support/ticket-priorities",
-      "menuPath": "Suporte › Configurações › Prioridades",
+      "menuPath": "Suporte › Prioridades",
       "scope": "tenant",
       "title": "Prioridades de chamado",
       "description": "Cada prioridade define o SLA: prazo de primeira resposta e de resolução.",
@@ -6424,7 +6424,7 @@
     },
     {
       "route": "/support/ticket-types",
-      "menuPath": "Suporte › Configurações › Tipos",
+      "menuPath": "Suporte › Tipos",
       "scope": "tenant",
       "title": "Tipos de chamado",
       "description": "Tipos usados para classificar os chamados dos seus clientes.",
@@ -6457,7 +6457,7 @@
     },
     {
       "route": "/support/tickets",
-      "menuPath": "Suporte › Chamados de clientes",
+      "menuPath": "Suporte › Chamados",
       "scope": "tenant",
       "title": "Tickets de suporte",
       "description": "Chamados dos seus clientes e o ciclo de atendimento.",
@@ -7729,7 +7729,7 @@
     },
     {
       "route": "/system/hosting/dns",
-      "menuPath": "Hospedagem › DNS › Painel",
+      "menuPath": "DNS › Zonas › Painel",
       "scope": "platform",
       "title": "Painel",
       "description": "",
@@ -7737,7 +7737,7 @@
     },
     {
       "route": "/system/hosting/dns/domains",
-      "menuPath": "Hospedagem › DNS › Domínios",
+      "menuPath": "DNS › Zonas › Domínios",
       "scope": "platform",
       "title": "Domínios",
       "description": "Gerencie zonas DNS, vínculo com provedores e sincronização do provisionamento.",
@@ -7790,7 +7790,7 @@
     },
     {
       "route": "/system/hosting/dns/providers",
-      "menuPath": "Hospedagem › DNS › Provedores",
+      "menuPath": "DNS › Zonas › Provedores",
       "scope": "platform",
       "title": "Provedores DNS",
       "description": "Gerencie contas de provedores DNS usadas pelos domínios dos tenants.",
@@ -7839,7 +7839,7 @@
     },
     {
       "route": "/system/hosting/dns/registers",
-      "menuPath": "Hospedagem › DNS › Registros",
+      "menuPath": "DNS › Zonas › Registros",
       "scope": "platform",
       "title": "Registros",
       "description": "Acompanhe registros de domínio, metadados do registrador e o cliente responsável.",
