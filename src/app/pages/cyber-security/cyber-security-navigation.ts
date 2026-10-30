@@ -1,6 +1,7 @@
 /** Navigation-only groups. Existing tenant/master URLs and API contracts stay canonical. */
 const sections: Record<string, { label: string; group?: string }> = {
   '': { label: 'Overview' },
+  accounts: { label: 'Customer accounts' },
   servers: { label: 'Servers', group: 'Protection' },
   profiles: { label: 'Security Profiles', group: 'Protection' },
   services: { label: 'Protected Services', group: 'Protection' },

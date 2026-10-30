@@ -703,6 +703,14 @@ export const routes: Routes = [
                 data: cyberSecurityRouteData('secret-accounts', 'tenant'),
               },
               {
+                path: 'cyber-security/accounts',
+                title: 'Cyber Security • Customer accounts | mnscloud',
+                data: cyberSecurityRouteData('accounts', 'tenant'),
+                loadComponent: async () =>
+                  (await import('./pages/cyber-security/accounts/accounts'))
+                    .CyberSecurityAccountsPage,
+              },
+              {
                 path: 'cyber-security/dashboard',
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
