@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../services/auth.service';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 import { logsPayload, logsTenantColumns } from '../logs-input';
 
 const config = defineCrud({
@@ -23,10 +26,17 @@ const config = defineCrud({
     status: 1,
     revision: 1,
     LogClusterLgcUUID: '',
+    customerUUID: null,
     dailyCapMb: '',
     warnPercent: 80,
   },
-  payload: (values, editing) => logsPayload(values, editing),
+  payload: (values, editing) => {
+    // The resale customer is fixed at creation; empty = internal use.
+    const payload = logsPayload(values, editing);
+    if (editing) delete payload['customerUUID'];
+    else payload['customerUUID'] ||= null;
+    return payload;
+  },
   fields: [
     { key: 'status', source: 'LgaStatus', label: 'Status', type: 'status', span: 1 },
     {
@@ -41,6 +51,21 @@ const config = defineCrud({
       help: 'logs.accountClusterHelp',
     },
     { key: 'name', source: 'LgaName', label: 'Name', required: true, span: 1 },
+    {
+      key: 'customerUUID',
+      source: 'RegCustomerRcuUUID',
+      label: 'Customer',
+      type: 'search-select',
+      span: 1,
+      help: 'logs.accountCustomerHelp',
+      disabledWhen: ({ editing }) => editing,
+      remoteLookup: {
+        endpoint: 'registry/customers?status=1',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+    },
     { key: 'revision', source: 'LgaRevision', label: 'Revision', type: 'number', hidden: true },
     {
       key: 'dailyCapMb',
@@ -76,6 +101,13 @@ const config = defineCrud({
     'Lga',
     { id: 'cluster', field: 'ClusterName', label: 'logs.cluster', uuidField: 'LogClusterLgcUUID' },
     [
+      { id: 'customer', field: 'CustomerName', label: 'Customer' },
+      {
+        id: 'publication',
+        field: 'LgaPortalEnabled',
+        label: 'logs.portalEnabled',
+        kind: 'status',
+      },
       { id: 'sources', field: 'SourceCount', label: 'logs.sources', kind: 'text' },
       {
         id: 'usage',
@@ -92,7 +124,13 @@ const config = defineCrud({
         field: 'CapState',
         label: 'logs.capState',
         kind: 'text',
-        value: (row, translate) => translate('logs.capStates.' + String(row['CapState'] ?? 'ok')),
+        // A suspended customer contract pauses the account like the daily cap.
+        value: (row, translate) =>
+          translate(
+            Number(row['ServiceAvailable'] ?? 1) === 0 && Number(row['LgaStatus']) === 1
+              ? 'logs.capStates.suspended'
+              : 'logs.capStates.' + String(row['CapState'] ?? 'ok'),
+          ),
       },
     ],
   ),
@@ -107,6 +145,31 @@ const config = defineCrud({
 })
 export class LogsAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(config);
+    const auth = inject(AuthService);
+    // Operators restricted to assigned accounts are refused by the API (tenant-wide scope only).
+    const canManage = () =>
+      hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.logs.write');
+    super({
+      ...config,
+      rowActions: resaleAccountRowActions({
+        module: 'logs',
+        uuidField: 'LgaUUID',
+        revisionField: 'LgaRevision',
+        portalField: 'LgaPortalEnabled',
+        kindField: 'LgaKind',
+        memberUuidField: 'LamUUID',
+        memberStatusField: 'LamStatus',
+        publicationLabel: 'logs.publication',
+        publicationTitle: 'logs.publication',
+        publicationDescription: 'logs.publicationDescription',
+        portalEnabledLabel: 'logs.portalEnabled',
+        assignLabel: 'logs.assignOperator',
+        assignTitle: 'logs.assignOperator',
+        operatorsLabel: 'logs.operators',
+        operatorsTitle: 'logs.operators',
+        operatorsDescription: 'logs.operatorsDescription',
+        canManage,
+      }),
+    });
   }
 }
