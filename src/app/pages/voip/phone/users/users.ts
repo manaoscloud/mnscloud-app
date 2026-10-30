@@ -94,7 +94,7 @@ const config = defineCrud({
       options: PHONE_REALMS,
       required: true,
       disabledWhen: ({ editing }) => editing,
-      help: 'App member: signs in with the MNSCloud e-mail. Employee: signs in with the Pulse login code (HR › Pulse access). Customer: signs in with the customer portal login and only sees lines of that customer.',
+      help: 'App member: signs in with the MNSCloud e-mail. Employee: signs in with the Pulse login code (Human resources › Time clock accounts). Customer: signs in with the customer portal login and only sees lines of that customer.',
       span: 1,
     },
     {

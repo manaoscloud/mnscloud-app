@@ -157,7 +157,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
           selectedLabelField: 'VerticalProfileName',
         },
         quickCreate: false,
-        quickCreateExemptReason: 'Vertical packages are platform resources (System › InfraGIS).',
+        quickCreateExemptReason: 'Vertical packages are platform resources (InfraGIS › Vertical packages).',
         help: 'Choosing a package copies its layers into the project and the categories, asset types and statuses the tenant does not have yet. Your copies can be edited freely.',
         span: 4,
       },

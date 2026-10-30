@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "30320b45013a",
+  "version": "55c3b4238a33",
   "language": "pt-BR",
   "entries": [
     {
@@ -11410,7 +11410,7 @@
         },
         {
           "label": "Login",
-          "help": "Membro do App: entra com o e-mail da MNSCloud. Funcionário: entra com o código de login do Pulse (RH › Acesso Pulse). Cliente: entra com o login do portal do cliente e só vê as linhas desse cliente."
+          "help": "Membro do App: entra com o e-mail da MNSCloud. Funcionário: entra com o código de login do Pulse (Recursos humanos › Contas de ponto). Cliente: entra com o login do portal do cliente e só vê as linhas desse cliente."
         },
         {
           "label": "Pessoa",
