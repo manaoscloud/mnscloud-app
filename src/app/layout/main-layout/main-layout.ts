@@ -67,6 +67,7 @@ import { SupportReportService } from '../../services/support-report.service';
 import { HelpVideoService } from '../../services/help-video.service';
 import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
+import { navCategoryKey, withSectionTitles } from '../navigation/nav-sections';
 import { MNS_MENU } from '../../shared/menu/mns-menu';
 import { ContextModeService, type ContextMode } from '../../services/context-mode.service';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -84,9 +85,15 @@ import {
 // Types
 // =======================================================
 
-/** Localized menu entry; `path` is the full translated trail used for search and tooltips. */
+/**
+ * Localized menu entry; `path` is the full translated trail used for tooltips, `searchText` adds
+ * the category titles above the entry (they are not part of the path) so search finds them too.
+ */
 interface ShellNavItem extends NavItem {
   path: string;
+  searchText: string;
+  areaTitle?: string;
+  categoryTitle?: string;
   children?: ShellNavItem[];
 }
 
@@ -550,7 +557,8 @@ export class MainLayout {
     if (!this.isDesktopCompact()) return null;
     const id = this.compactHoverRootId();
     if (!id) return null;
-    return this.localizedNavItems().find((item) => item.id === id) ?? null;
+    // Titled menu, so the flyouts show the category titles too.
+    return this.sectionedNavItems().find((item) => item.id === id) ?? null;
   });
 
   readonly compactHoverChildItem = computed(() => {
@@ -954,12 +962,12 @@ export class MainLayout {
     const terms = normalizeSearchText(this.menuSearch()).split(/\s+/).filter(Boolean);
     const base = this.localizedNavItems();
 
-    if (!terms.length) return base;
+    if (!terms.length) return this.sectionedNavItems();
 
     const filter = (items: ShellNavItem[]): ShellNavItem[] =>
       items
         .map((i) => {
-          const path = normalizeSearchText(i.path);
+          const path = normalizeSearchText(i.searchText);
           const match = terms.every((term) => path.includes(term));
           const children = i.children ? filter(i.children) : undefined;
           if (match || (children && children.length)) return { ...i, children };
@@ -967,8 +975,15 @@ export class MainLayout {
         })
         .filter(Boolean) as ShellNavItem[];
 
-    return filter(base);
+    return this.withTitles(filter(base));
   }
+
+  private withTitles(items: ShellNavItem[]): ShellNavItem[] {
+    return withSectionTitles(items, (key) => this.i18n.t(key));
+  }
+
+  /** The visible menu with its area and category titles (no search). */
+  private readonly sectionedNavItems = computed(() => this.withTitles(this.localizedNavItems()));
 
   // =======================================================
   // Avatar
@@ -1195,15 +1210,18 @@ export class MainLayout {
     this.isLoggingOut.set(false);
   }
 
-  private localizeMenu(items: NavItem[], parentPath = ''): ShellNavItem[] {
+  private localizeMenu(items: NavItem[], parentPath = '', parentSearch = ''): ShellNavItem[] {
     return items.map((item) => {
       const label = this.i18n.t(item.label);
       const path = parentPath ? `${parentPath} › ${label}` : label;
+      const category = item.category ? this.i18n.t(navCategoryKey(item.category)) : '';
+      const searchText = [parentSearch, category, label].filter(Boolean).join(' › ');
       return {
         ...item,
         label,
         path,
-        children: item.children ? this.localizeMenu(item.children, path) : undefined,
+        searchText,
+        children: item.children ? this.localizeMenu(item.children, path, searchText) : undefined,
       };
     });
   }
