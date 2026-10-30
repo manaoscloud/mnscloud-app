@@ -2308,6 +2308,14 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'cyber-security/accounts',
+        label: 'nav.cyber-security.accounts',
+        icon: 'manage_accounts',
+        route: '/cyber-security/accounts',
+        permissions: ['tenant.cyber-security.accounts.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'cyber-security/protection',
         label: 'nav.cyber-security.protection',
         icon: 'shield',

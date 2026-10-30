@@ -703,6 +703,15 @@ export const routes: Routes = [
                 data: cyberSecurityRouteData('secret-accounts', 'tenant'),
               },
               {
+                path: 'cyber-security/accounts',
+                loadComponent: () =>
+                  import('./pages/cyber-security/accounts/accounts').then(
+                    (m) => m.CyberSecurityAccountsPage,
+                  ),
+                title: 'Cyber Security • Accounts | mnscloud',
+                data: cyberSecurityRouteData('accounts', 'tenant'),
+              },
+              {
                 path: 'cyber-security/dashboard',
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
