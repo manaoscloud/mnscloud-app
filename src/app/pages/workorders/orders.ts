@@ -144,7 +144,8 @@ function statusForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
     pageTitle: 'Change status',
     pageDescription: `#${String(row['WorID'] ?? '')} · ${String(row['WorTitle'] ?? '')}`,
     createTitle: 'Change status',
-    dialogDescription: 'Finishing needs what was done; cancelling needs the reason.',
+    dialogDescription:
+      'Finishing needs what was done and every required checklist item; cancelling needs the reason.',
     savedMessage: 'Status changed.',
     statusFilter: false,
     initialValues: { status: options[0]?.value ?? '', note: '' },
@@ -189,7 +190,7 @@ const MATERIAL_STATUSES = [
 function materials(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
   return defineCrud({
     endpoint: `workorders/orders/${String(row['WorUUID'])}/materials`,
-    deleteEndpoint: (material) => `workorders/materials/${String(material['WomUUID'])}`,
+    deleteEndpoint: 'workorders/materials',
     uuidField: 'WomUUID',
     pageTitle: 'Work order materials',
     pageDescription: `#${String(row['WorID'] ?? '')} · ${String(row['WorTitle'] ?? '')}`,
@@ -258,6 +259,130 @@ function materials(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
       },
     ],
   });
+}
+
+/** Checked state for a checklist row: done or open. */
+const CHECK_STATES = [
+  { value: '1', label: 'Done' },
+  { value: '0', label: 'Open' },
+];
+
+/** The order checklist (template of its kind plus extra items); required items block finishing. */
+function checklist(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  const closed = ['DONE', 'CANCELLED'].includes(String(row['WorStatus']));
+  const check = (done: boolean) => ({
+    method: 'put' as const,
+    endpoint: (item: ConfigurableCrudRecord) => `workorders/checklist/${String(item['WciUUID'])}`,
+    body: () => ({ done }),
+    successMessage: done ? 'Item checked.' : 'Item unchecked.',
+  });
+  return defineCrud({
+    endpoint: `workorders/orders/${String(row['WorUUID'])}/checklist`,
+    updateEndpoint: 'workorders/checklist',
+    deleteEndpoint: 'workorders/checklist',
+    uuidField: 'WciUUID',
+    pageTitle: 'Work order checklist',
+    pageDescription: `#${String(row['WorID'] ?? '')} · ${String(row['WorTitle'] ?? '')}`,
+    createTitle: 'Add checklist item',
+    editTitle: 'Checklist item',
+    emptyLabel: 'No checklist items. Checklists per kind are set in Work orders › Checklists.',
+    savedMessage: 'Checklist saved.',
+    canCreate: !closed,
+    canEditRow: () => !closed,
+    canDeleteRow: (item) => !closed && Number(item['WciExtra']) === 1,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: { required: '0', done: '0' },
+    payload: (values, editing) =>
+      editing
+        ? { done: values['done'] === '1', note: values['note'] ?? '' }
+        : { label: values['label'], required: values['required'] === '1' },
+    fields: [
+      {
+        key: 'label',
+        source: 'WciLabel',
+        label: 'Item',
+        span: 4,
+        requiredWhen: ({ editing }) => !editing,
+        hiddenWhen: ({ editing }) => editing,
+      },
+      {
+        key: 'required',
+        hiddenWhen: ({ editing }) => editing,
+        source: 'WciRequired',
+        label: 'Required to finish',
+        type: 'select',
+        options: [
+          { value: '1', label: 'Yes' },
+          { value: '0', label: 'No' },
+        ],
+        translateOptions: true,
+        span: 2,
+      },
+      {
+        key: 'done',
+        source: 'WciDone',
+        hiddenWhen: ({ editing }) => !editing,
+        label: 'Status',
+        type: 'select',
+        options: CHECK_STATES,
+        translateOptions: true,
+        span: 2,
+      },
+      {
+        key: 'note',
+        source: 'WciNote',
+        label: 'Note',
+        type: 'textarea',
+        rows: 2,
+        span: 4,
+        hiddenWhen: ({ editing }) => !editing,
+      },
+    ],
+    columns: [
+      { id: 'item', field: 'WciLabel', label: 'Item', kind: 'identity', width: 'lg' },
+      {
+        id: 'done',
+        field: 'WciDone',
+        label: 'Status',
+        kind: 'status',
+        options: CHECK_STATES,
+        chipClass: (value) => (String(value) === '1' ? 'chip-success' : 'chip-queued'),
+      },
+      { id: 'required', field: 'WciRequired', label: 'Required', kind: 'boolean' },
+      { id: 'note', field: 'WciNote', label: 'Note' },
+      {
+        id: 'by',
+        field: 'DoneByName',
+        label: 'By',
+        detail: (item) => String(item['WciDoneAt'] ?? ''),
+      },
+    ],
+    rowActions: [
+      {
+        key: 'check',
+        label: 'Check',
+        icon: 'check_box',
+        inline: true,
+        visible: (item) => !closed && Number(item['WciDone']) !== 1,
+        request: check(true),
+      },
+      {
+        key: 'uncheck',
+        label: 'Uncheck',
+        icon: 'check_box_outline_blank',
+        inline: true,
+        visible: (item) => !closed && Number(item['WciDone']) === 1,
+        request: check(false),
+      },
+    ],
+  });
+}
+
+/** `done/total` of the order checklist ('' without one). */
+export function checklistProgress(row: ConfigurableCrudRecord): string {
+  const total = Number(row['ChecklistTotal'] ?? 0);
+  return total > 0 ? `${Number(row['ChecklistDone'] ?? 0)}/${total}` : '';
 }
 
 /** Work orders of the tenant; `mine` lists the ones assigned to the signed-in technician. */
@@ -332,6 +457,14 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         field: 'WorDueAt',
         kind: 'datetime',
         detail: (row) => (Number(row['Overdue']) === 1 ? 'Overdue' : ''),
+      },
+      {
+        id: 'checklist',
+        label: 'Checklist',
+        field: 'ChecklistDone',
+        value: (row) => checklistProgress(row),
+        detail: (row) =>
+          Number(row['ChecklistRequiredOpen'] ?? 0) > 0 ? 'Required items open' : '',
       },
       { id: 'ticket', label: 'Ticket', field: 'TicketSubject', optional: true },
       { id: 'address', label: 'Address', field: 'WorAddress', optional: true },
@@ -437,6 +570,7 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
     rowActions: [
       { key: 'status', label: 'Change status', icon: 'published_with_changes', form: statusForm },
       { key: 'note', label: 'Add note', icon: 'note_add', form: noteForm },
+      { key: 'checklist', label: 'Checklist', icon: 'checklist', collection: checklist },
       { key: 'timeline', label: 'Timeline', icon: 'timeline', collection: timeline },
       { key: 'materials', label: 'Materials', icon: 'inventory', collection: materials },
       {

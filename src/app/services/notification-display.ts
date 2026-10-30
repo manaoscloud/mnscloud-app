@@ -23,6 +23,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'phone_disabled';
     case 'dns.monitor.target':
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
+    case 'workorders.order.overdue':
+      return 'alarm';
     default:
       return 'notifications';
   }
@@ -64,6 +66,8 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           : 'notifications.dnsTargetRecovered',
         { name: param('name') },
       );
+    case 'workorders.order.overdue':
+      return t('notifications.workOrderOverdue', { id: param('id') });
     default:
       return t('notifications.generic');
   }
@@ -82,7 +86,7 @@ export function notificationDescription(item: InboxNotification, language: strin
   const subject =
     item.type === 'billing.subscription'
       ? item.params['offer']
-      : item.type === 'feature_request.status'
+      : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
         ? item.params['title']
         : item.type.startsWith('logs.account.')
           ? item.params['account']
