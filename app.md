@@ -564,12 +564,12 @@ CSS hook classes (`.app-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;
 the page must use the shared base named here.
 
-| Scenario                                                                                                                                       | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Scenario                                                                                                                         | Template (scaffold)                            | Shared base                                                                   | Validator                                                                    |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Any list of records with filters, table, create/edit dialog, delete/bulk delete, row actions or child collections (every module) | `templates/crud` via `scripts/create-crud.mjs` | `ConfigurableCrudPageBase` + `configurable-crud-page.html/.scss`              | `check:crud`, `check:crud:layout`, `check:crud:i18n`, `check:crud:inventory` |
-| Read-only summary with indicators and record inventories; Refresh is the only action                                                           | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
-| Singleton configuration with dirty/cancel/save                                                                                                 | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
-| Read-only page for one resource                                                                                                                | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
+| Read-only summary with indicators and record inventories; Refresh is the only action                                             | `templates/dashboard`                          | `DashboardPageComponent`, `dashboardResource`, `DashboardRecordListComponent` | `check:dashboard`                                                            |
+| Singleton configuration with dirty/cancel/save                                                                                   | `templates/settings-page`                      | `SettingsPageComponent` (on `PageShellComponent`)                             | `scripts/validate-content-pages.mjs`                                         |
+| Read-only page for one resource                                                                                                  | `templates/detail-page`                        | `DetailPageComponent` (on `PageShellComponent`)                               | `scripts/validate-content-pages.mjs`                                         |
 
 - A page that needs behavior the shared base lacks gets a generic extension point in the base
   (row actions, `collection`/`form` factories, related collections, hooks); never page-local
@@ -930,7 +930,8 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   - Editing the shared shell updates every consumer automatically. Only remove obsolete bindings
     when its public inputs change; never copy a shell into pages to apply a visual adjustment.
 - Table behavior:
-  - Standard list pages use signal-first tables:
+  - Shared base internals (the `ConfigurableCrudPageBase` template renders these; pages never write
+    them, see Global Table Component Baseline and `check:tables`): signal-first tables
     `<table mat-table [dataSource]="visibleRows()" matSort ...>`.
   - Read/list data comes from `resource()`; table state such as sorted rows, visible page rows,
     selected visible rows, and derived labels must be modeled with `computed()`.
@@ -983,7 +984,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     explicit signal-friendly sort logic, for example a `sortValue(row, column)` helper used by the
     sorted-row `computed()`.
   - Derived sort examples: provider label, plan label, status label, account/domain label, formatted price, region name, size/bundle display, image display.
-  - After `.table-wrapper`, render a real `<mat-paginator class="mobile-paginator"
+  - Shared base internals (never in a page): after `.table-wrapper`, the template renders a real `<mat-paginator class="mobile-paginator"
 [length]="sortedRows().length" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
 [pageSizeOptions]="[5, 10, 25, 100]" (page)="setPage($event)" showFirstLastButtons>`.
   - Do not use an empty `.mobile-paginator` placeholder.
@@ -1500,7 +1501,8 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
   - must pass `npm run check:crud -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run check:crud:i18n -- <component-folder-or-html>` for every CRUD page touched
   - must pass `npm run check:crud:fk -- <component-folder-or-html>` for every CRUD page touched
-  - must pass `npm run build`
+  - the production build passes in the PR CI (locally run `npm run typecheck`; `npm run build` only
+    in the cases of the workspace `docs/delivery-pipeline.md` → section 1)
   - delivery must explicitly list each changed file and confirm checklist compliance, including
     translation coverage for all new/changed visible strings in `en-US`, `pt-BR`, and `es-ES`
 
@@ -1687,7 +1689,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - render notes fields in their own `mat-tab label="Notes"`; the PT-BR translation for `Notes` is `Anotações`.
   - do not place notes fields in `Record`, `Config`, `Pricing`, `Provision`, or other mixed-purpose tabs.
   - the notes field must use a full-row textarea (`mat-form-field.span-4`) with `rows: 4` inside that tab unless a documented exception exists.
-- Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`):
+- Input distribution baseline for partner forms (`carrier`, `supplier`, `reseller`, `complex`).
+  Superseded by "Unified Registry forms" below where they differ; kept for the tab/notes rules:
   - Record tab desktop row pattern for resources with `Type`/`Company` and no
     `Alias/Nickname` (`carrier`, `supplier`, `reseller`):
     - row 1: `Status`, `Type/Company selector`, `Document`
@@ -1883,9 +1886,10 @@ structure propagate to both consumers. Scaffolds in `templates/detail-page` and
 
 ## Supported Hosting DNS platforms
 
-Create/edit and platform filters expose only cPanel DNSOnly (`cpanel_dnsonly`) and
-Amazon Route 53 (`route53`). Consume the authorized API catalog; the bounded fallback
-catalog contains these same two options. Unsupported values from an older API must not
+Create/edit and platform filters expose the platforms of the authorized API catalog: cPanel
+DNSOnly (`cpanel_dnsonly`), Amazon Route 53 (`route53`) and the managed MNSCloud DNS
+(`mnscloud_dns`, not editable as a provider credential). The bounded fallback catalog contains the
+same options. Unsupported values from an older API must not
 reappear in dropdowns. cPanel is the explicit initial form selection; API/DB validate the
 submitted platform. Preserve scope, required credentials and connection tests.
 
@@ -2152,7 +2156,7 @@ or master bypass for unrelated tenant modules.
 
 ## CRM form baseline
 
-CRM uses the shared configurable CRUD renderer for all fourteen resources and action forms.
+CRM uses the shared configurable CRUD renderer for all CRM resources and action forms.
 Record fields start with Status and workflow/ownership controls, followed by Name (span-2),
 related records and scheduling. Accounts keep City/State in Address. Activities, accounts and
 handoffs use the canonical frontend `notes` key in a dedicated Notes tab (span-4, rows-4);
@@ -2257,6 +2261,7 @@ Routing profiles (`VoipPabxAgentProfile` / `VoipPabxAgentProfileQueue`) group qu
 Runtime queue snapshots carry only aggregate waiting count/longest wait, never caller identity. Counters become unavailable after 30 seconds without observation. SSE sends authoritative snapshots as well as durable transition IDs; PhoneWeb does not poll queue state. `VoipPabxAgentContact` records a runtime-authenticated agent participation, with optional disposition and spelling-preserving notes. Notes are limited to 4000 characters and revision-checked against the originating phone session.
 
 Agent creation/enabling checks the active entitlement and passes its quota to the tenant-serialized configure routine, which counts enabled phone-linked agents. Standalone resource contracts without a package limit retain the billing system's unlimited quantity semantics. No prices or paid subscriptions are created by the schema seed. Revoked/expired sessions, disabled identities, lost line assignments and released/expired claims leave the routing set; hot-desk stations are cleared.
+
 ## Unified Registry forms
 
 Customers, complexes, companies, suppliers, carriers and resellers use
@@ -2284,3 +2289,39 @@ Company Fiscal shows a read-only summary and opens the existing issuer profile a
 registrations with the company preselected. Fiscal API permissions/entitlements remain authoritative; Registry editing is independent.
 Annotations retain `Notes` translated as **Anotações**, `notes` in payloads, a full-width textarea
 and four rows. No observation field or new annotation-history model is introduced.
+
+### Support submission readiness
+
+Report a problem declares expected attachments before upload and explicitly finalizes submission.
+Keep retry and continue-without-missing actions on the saved ticket; never open a duplicate ticket
+for upload failures. My tickets offers completion for the creator of preparing/abandoned submissions.
+The platform AI panel exposes evidence revisions, preparation timing, manifest and discarded analyses.
+
+## Shared documents and GED
+
+`pages/registry/documents.ts` is the canonical embedded document collection. Registry customers,
+companies, suppliers and resellers and GED dossiers reuse it; never fork their document-type CRUD.
+`registry/document-types` is the sole catalog route and `RegDocumentTypeRdtUUID` is its canonical
+quick-create key. GED navigation owns dossiers and archive/review, both gated by `module.ged.*`;
+ordinary Registry attachments have no GED entitlement requirement.
+
+Documents use the shared CRUD/embedded collection, version collections, multipart upload progress
+and private file preview. Keep revisions as strings. Single and bulk removal submit the revisions
+shown to the operator. New uploads use a UUID retained across retries; resume a pending version with
+the original bytes or cancel it before starting another. Cancellation keeps the version in history.
+Never use public object URLs or present a cancelled/pending version as downloadable.
+
+`registry.documents.assist` is optional and configured in Settings > AI Features. Suggestions are
+shown in the shared data viewer for human verification; they never fill, approve or save a record
+automatically. The manual workflow remains available without a provider. Every new owning resource
+must add explicit server-side authorization and its own FK before reusing this collection.
+
+## Shared economic classification
+
+Cadastros owns the canonical `/registry/economic-sectors` and `/registry/industries`
+CRUDs, independent of CRM entitlements and guarded by Registry permissions. Both use the
+configurable CRUD renderer, server pagination, status/search, bulk delete and canonical
+quick-create. Industry forms select `RegEconomicSectorRecUUID`; CRM accounts and leads
+select `RegIndustryRinUUID` and filter by branch and derived sector. No duplicate CRM
+management page exists. Standard tenant records are persisted by the database onboarding
+and reconcile flow, never by opening a page.

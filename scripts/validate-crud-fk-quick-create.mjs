@@ -188,7 +188,7 @@ function main(argv) {
   const files = new Set();
   for (const target of all ? ['src/app/pages'] : targets)
     collectFiles(resolve(root, target), files);
-  for (const file of [...files].sort()) {
+  for (const file of [...files].sort((a, b) => Number(a > b) - Number(a < b))) {
     const content = readFileSync(file, 'utf8');
     if (file.endsWith('.html') && isLegacyCrudTemplate(file)) {
       // Legacy CRUDs are blocked by the ConfigurableCrudPageBase migration gate as soon as they

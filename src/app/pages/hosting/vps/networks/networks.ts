@@ -423,7 +423,9 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
         .filter((plan) => plan.HostingVpsProviderHvrUUID === providerUUID && plan.HvpRegion)
         .map((plan) => String(plan.HvpRegion)),
     );
-    return [...regions].sort().map((region) => ({ value: region, label: region }));
+    return [...regions]
+      .sort((a, b) => a.localeCompare(b))
+      .map((region) => ({ value: region, label: region }));
   }
 
   private enrich(row: ConfigurableCrudRecord): ConfigurableCrudRecord {

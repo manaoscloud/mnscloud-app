@@ -17,6 +17,19 @@ import {
   numberOrNull,
 } from '../../shared/billing-crud';
 
+function priceConfig(value: unknown): Record<string, unknown> {
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 const PRICE_PAYLOAD_KEYS = [
   'productUUID',
   'packageUUID',
@@ -105,6 +118,8 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
     setupAmount: 0,
     minimumCommitment: 0,
     config: '',
+    priceAudience: 'all',
+    allowedTenantUUIDs: [],
     status: 1,
   },
   columns: [
@@ -256,6 +271,39 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'priceAudience',
+      source: 'BpcConfigJson',
+      label: 'billing.priceAudience',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: 'all', label: 'billing.allTenants' },
+        { value: 'selected', label: 'billing.selectedTenants' },
+      ],
+      fromRecord: (value) =>
+        Object.hasOwn(priceConfig(value), 'allowedTenantUUIDs') ? 'selected' : 'all',
+      help: 'billing.priceAudienceHelp',
+    },
+    {
+      key: 'allowedTenantUUIDs',
+      source: 'BpcConfigJson',
+      label: 'billing.allowedTenants',
+      type: 'search-select',
+      multiple: true,
+      span: 1,
+      remoteLookup: {
+        endpoint: 'system/billing/tenants',
+        uuidField: 'EnvironmentUUID',
+        labelField: 'EnvironmentName',
+        descriptionField: 'TenantEmail',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Existing tenants only; tenant identities are created through onboarding.',
+      hiddenWhen: ({ values }) => values['priceAudience'] !== 'selected',
+      fromRecord: (value) => priceConfig(value)['allowedTenantUUIDs'] ?? [],
+    },
+    {
       key: 'config',
       source: 'BpcConfigJson',
       payloadKey: 'config',
@@ -263,6 +311,11 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'notes',
       format: 'json',
+      fromRecord: (value) => {
+        const config = { ...priceConfig(value) };
+        delete config['allowedTenantUUIDs'];
+        return JSON.stringify(config, null, 2);
+      },
       span: 4,
       rows: 4,
     },
@@ -306,8 +359,22 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
     return super.lookupLabel(key, value);
   }
 
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    const config = payload['config'];
+    if (config != null && (typeof config !== 'object' || Array.isArray(config))) {
+      return this.rejectField('config', 'Enter a valid JSON object.');
+    }
+    return true;
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const next = cleanPayload(payload, PRICE_PAYLOAD_KEYS);
+    const config = { ...priceConfig(next['config']) };
+    delete config['allowedTenantUUIDs'];
+    if (payload['priceAudience'] === 'selected')
+      config['allowedTenantUUIDs'] = payload['allowedTenantUUIDs'] ?? [];
+    next['config'] = config;
     if (this.editingRecord()) {
       delete next['productUUID'];
       delete next['packageUUID'];

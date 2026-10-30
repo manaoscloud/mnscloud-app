@@ -207,6 +207,41 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
 
+  {
+    id: 'ged',
+    label: 'nav.ged',
+    icon: 'folder_copy',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'ged/accounts',
+        label: 'nav.ged.accounts',
+        icon: 'account_tree',
+        route: '/ged/accounts',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.accounts.read'],
+        requiresEnvironment: true,
+      },
+      {
+        id: 'ged/archive',
+        label: 'nav.ged.archive',
+        icon: 'find_in_page',
+        route: '/ged/archive',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.dossiers.read'],
+        requiresEnvironment: true,
+      },
+      {
+        id: 'ged/dossiers',
+        label: 'nav.ged.dossiers',
+        icon: 'folder',
+        route: '/ged/dossiers',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.dossiers.read'],
+        requiresEnvironment: true,
+      },
+    ],
+  },
   // Registry: records shared by every module (no commercial entitlement).
   {
     id: 'registry',
@@ -214,6 +249,27 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'assignment',
     requiresEnvironment: true,
     children: [
+      {
+        id: 'registry/economic-sectors',
+        label: 'nav.registry.economic-sectors',
+        icon: 'category',
+        route: '/registry/economic-sectors',
+        permissions: ['tenant.registry.economic-sectors.read'],
+      },
+      {
+        id: 'registry/industries',
+        label: 'nav.registry.industries',
+        icon: 'domain',
+        route: '/registry/industries',
+        permissions: ['tenant.registry.industries.read'],
+      },
+      {
+        id: 'registry/document-types',
+        label: 'nav.registry.document-types',
+        icon: 'description',
+        route: '/registry/document-types',
+        permissions: ['tenant.registry.document-types.read'],
+      },
       {
         id: 'registry/customers',
         label: 'nav.registry.customers',
@@ -411,6 +467,12 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'hub',
         route: '/conversations/connections',
       },
+      {
+        id: 'conversations/accounts',
+        label: 'nav.conversations.accounts',
+        icon: 'manage_accounts',
+        route: '/conversations/accounts',
+      },
     ],
   },
   {
@@ -470,16 +532,16 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/crm/products',
       },
       {
+        id: 'crm/workspaces',
+        label: 'nav.crm.workspaces',
+        icon: 'workspaces',
+        route: '/crm/workspaces',
+      },
+      {
         id: 'crm/settings',
         label: 'nav.crm.settings',
         icon: 'settings',
         children: [
-          {
-            id: 'crm/industries',
-            label: 'nav.crm.industries',
-            icon: 'domain',
-            route: '/crm/industries',
-          },
           { id: 'crm/sources', label: 'nav.crm.sources', icon: 'campaign', route: '/crm/sources' },
           {
             id: 'crm/loss-reasons',
@@ -704,6 +766,13 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
+        id: 'dns-cloud/accounts',
+        label: 'nav.dns-cloud.accounts',
+        icon: 'manage_accounts',
+        route: '/dns/accounts',
+        requiresEnvironment: true,
+      },
+      {
         id: 'dns-cloud/sites',
         label: 'nav.dns-cloud.sites',
         icon: 'apartment',
@@ -830,6 +899,14 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'sell',
         requiresEnvironment: true,
         route: '/website/offers',
+        entitlementCode: 'module.website.site',
+      },
+      {
+        id: 'website/orders',
+        label: 'nav.website.orders',
+        icon: 'shopping_cart',
+        requiresEnvironment: true,
+        route: '/website/orders',
         entitlementCode: 'module.website.site',
       },
       {
@@ -1741,6 +1818,13 @@ export const NAV_ITEMS: NavItem[] = [
             icon: 'route',
             route: '/hosting/smtp/routes',
             masterRoute: '/system/hosting/smtp/routes',
+          },
+          {
+            id: 'hosting/smtp/messages',
+            label: 'nav.hosting.smtp.messages',
+            icon: 'outgoing_mail',
+            route: '/hosting/smtp/messages',
+            masterRoute: '/system/hosting/smtp/messages',
           },
         ],
       },

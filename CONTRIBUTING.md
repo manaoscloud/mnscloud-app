@@ -8,7 +8,9 @@ We welcome contributions, but every change must follow our engineering, security
 
 All contributions must go through a Pull Request. Direct pushes to `main` are not part of the contribution workflow.
 
-Recommended flow:
+Recommended flow for external contributors (MNSCloud maintainers and AI agents working from the
+workspace use a `<type>/<task-slug>` branch in their own worktree and merge with the workspace
+`scripts/ops/merge.sh`; see `AGENTS.md`):
 
 ```bash
 git checkout -b feature/clear-change-name

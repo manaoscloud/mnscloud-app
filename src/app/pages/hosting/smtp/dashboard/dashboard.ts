@@ -232,7 +232,7 @@ export class HostingSmtpDashboardPage {
       ],
     })),
   );
-  routeTo(section: 'providers' | 'accounts' | 'routes') {
+  routeTo(section: 'providers' | 'accounts' | 'routes' | 'messages') {
     return [this.isMaster ? '/system/hosting/smtp' : '/hosting/smtp', section];
   }
 }

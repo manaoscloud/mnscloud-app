@@ -9,7 +9,6 @@ import {
 import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
 export function crmActions(route: string): ConfigurableCrudRowAction[] {
   const identity: Record<string, string> = {
-    industries: 'CinUUID',
     sources: 'CsoUUID',
     'loss-reasons': 'ClrUUID',
     pipelines: 'CpiUUID',
@@ -23,6 +22,7 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
     proposals: 'CppUUID',
     'proposal-items': 'CptUUID',
     handoffs: 'ChoUUID',
+    workspaces: 'CwsUUID',
   };
   const actions: ConfigurableCrudRowAction[] = [
     {
@@ -196,6 +196,94 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
         successMessage: 'crm.recorded',
       },
     });
+  }
+  if (route === 'workspaces') {
+    const publicationConfig = (r: ConfigurableCrudRecord) =>
+      defineCrud({
+        endpoint: `crm/workspaces/${r['CwsUUID']}/portal`,
+        uuidField: 'CwsUUID',
+        pageTitle: 'crm.publication',
+        pageDescription: 'crm.publicationDescription',
+        initialValues: { enabled: r['CwsPortalEnabled'], revision: r['CwsRevision'] },
+        fields: [
+          {
+            key: 'enabled',
+            label: 'crm.portalEnabled',
+            type: 'select',
+            span: 2,
+            options: [
+              { value: 1, label: 'Yes' },
+              { value: 0, label: 'No' },
+            ],
+          },
+          { key: 'revision', label: 'crm.field.Revision', hidden: true },
+        ],
+        columns: [],
+      });
+    const assignConfig = (r: ConfigurableCrudRecord) =>
+      defineCrud({
+        endpoint: `crm/workspaces/${r['CwsUUID']}/members`,
+        uuidField: 'CwsUUID',
+        pageTitle: 'crm.assignOperator',
+        pageDescription: 'crm.operatorsDescription',
+        initialValues: { UserUsrUUID: '', status: 1 },
+        fields: [
+          {
+            key: 'UserUsrUUID',
+            source: 'UserUsrUUID',
+            label: 'User',
+            type: 'search-select',
+            required: true,
+            span: 2,
+            remoteLookup: {
+              endpoint: 'user/access/members',
+              uuidField: 'UserUUID',
+              labelField: 'Name',
+            },
+            quickCreate: false,
+            quickCreateExemptReason:
+              'Tenant operators must be invited through tenant access management.',
+          },
+          { key: 'status', label: 'Status', type: 'status', span: 2 },
+        ],
+        columns: [],
+      });
+    const operatorsConfig = (r: ConfigurableCrudRecord) =>
+      defineCrud({
+        endpoint: `crm/workspaces/${r['CwsUUID']}/members`,
+        uuidField: 'CwmUUID',
+        pageTitle: 'crm.operators',
+        pageDescription: 'crm.operatorsDescription',
+        readOnly: true,
+        fields: [],
+        columns: [
+          { id: 'user', field: 'UsrName', label: 'User', kind: 'identity' },
+          { id: 'email', field: 'UsrEmail', label: 'Email' },
+          { id: 'status', field: 'CwmStatus', label: 'crm.field.Status', kind: 'status' },
+        ],
+      });
+
+    actions.push(
+      {
+        key: 'publication',
+        label: 'crm.publication',
+        icon: 'public',
+        visible: (row) => Boolean(row['RegCustomerRcuUUID']),
+        form: publicationConfig,
+      },
+      {
+        key: 'assign',
+        label: 'crm.assignOperator',
+        icon: 'person_add',
+        form: assignConfig,
+      },
+      {
+        key: 'operators',
+        label: 'crm.operators',
+        icon: 'group',
+        collection: operatorsConfig,
+      },
+    );
   }
   return actions;
 }

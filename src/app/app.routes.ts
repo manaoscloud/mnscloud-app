@@ -761,6 +761,13 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'website.sites' },
               },
               {
+                path: 'website/orders',
+                loadComponent: () =>
+                  import('./pages/website/orders/orders').then((m) => m.WebsiteOrdersPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.orders' },
+              },
+              {
                 path: 'website/offers',
                 loadComponent: () =>
                   import('./pages/website/offers/offers').then((m) => m.WebsiteOffersPage),
@@ -844,12 +851,6 @@ export const routes: Routes = [
                 title: 'CRM',
               },
               {
-                path: 'crm/industries',
-                loadComponent: () =>
-                  import('./pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
-                title: 'CRM',
-              },
-              {
                 path: 'crm/sources',
                 loadComponent: () =>
                   import('./pages/crm/sources/sources').then((m) => m.CrmSourcePage),
@@ -930,8 +931,52 @@ export const routes: Routes = [
                   import('./pages/crm/handoffs/handoffs').then((m) => m.CrmHandoffPage),
                 title: 'CRM',
               },
+              {
+                path: 'crm/workspaces',
+                loadComponent: () =>
+                  import('./pages/crm/workspaces/workspaces').then((m) => m.CrmWorkspacePage),
+                title: 'CRM',
+              },
 
+              {
+                path: 'ged/accounts',
+                loadComponent: () =>
+                  import('./pages/ged/accounts/accounts').then((m) => m.GedAccountsPage),
+                title: 'GED • Accounts | mnscloud',
+              },
+              {
+                path: 'ged/archive',
+                loadComponent: () => import('./pages/ged/archive').then((m) => m.GedArchivePage),
+                title: 'GED • Archive | mnscloud',
+              },
+              {
+                path: 'ged/dossiers',
+                loadComponent: () => import('./pages/ged/dossiers').then((m) => m.GedDossiersPage),
+                title: 'GED • Dossiers | mnscloud',
+              },
               // Registry (shared by every module)
+              {
+                path: 'registry/economic-sectors',
+                loadComponent: () =>
+                  import('./pages/registry/economic-sectors/economic-sectors').then(
+                    (m) => m.RegEconomicSectorPage,
+                  ),
+                title: 'Registry',
+              },
+              {
+                path: 'registry/industries',
+                loadComponent: () =>
+                  import('./pages/registry/industries/industries').then((m) => m.RegIndustryPage),
+                title: 'Registry',
+              },
+              {
+                path: 'registry/document-types',
+                loadComponent: () =>
+                  import('./pages/registry/document-types/document-types').then(
+                    (m) => m.RegDocumentTypePage,
+                  ),
+                title: 'Registry • Document types | mnscloud',
+              },
               {
                 path: 'registry/customers',
                 loadComponent: () =>
@@ -1554,6 +1599,13 @@ export const routes: Routes = [
 
               // Cloud DNS for companies (DNS module E1)
               {
+                path: 'dns/accounts',
+                loadComponent: () =>
+                  import('./pages/dns/accounts/accounts').then((m) => m.DnsAccountsPage),
+                title: 'DNS • Accounts | mnscloud',
+                data: { scope: 'tenant', context: 'dns' },
+              },
+              {
                 path: 'dns/cloud/sites',
                 loadComponent: () =>
                   import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
@@ -1566,6 +1618,15 @@ export const routes: Routes = [
                 data: { list: 'site-rules', context: 'dns', scope: 'tenant' },
                 loadComponent: () =>
                   import('./pages/dns/cloud/cloud-lists').then((m) => m.DnsCloudListsPage),
+              },
+              {
+                path: 'dns/cloud/sites/:uuid/report',
+                loadComponent: () =>
+                  import('./pages/dns/cloud/report/site-report').then(
+                    (m) => m.DnsCloudSiteReportPage,
+                  ),
+                title: 'DNS • Site report | mnscloud',
+                data: { scope: 'tenant', context: 'dns' },
               },
 
               // Hosting
@@ -1673,6 +1734,15 @@ export const routes: Routes = [
                         (m) => m.HostingSmtpRoutesPage,
                       ),
                     title: 'Hosting • SMTP Routes | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'messages',
+                    loadComponent: () =>
+                      import('./pages/hosting/smtp/messages/messages').then(
+                        (m) => m.HostingSmtpMessagesPage,
+                      ),
+                    title: 'Hosting • SMTP Messages | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                 ],
@@ -2263,6 +2333,14 @@ export const routes: Routes = [
                     (m) => m.ConversationConnectionsPage,
                   ),
                 title: 'Conversations • Channel connections | mnscloud',
+              },
+              {
+                path: 'conversations/accounts',
+                loadComponent: () =>
+                  import('./pages/conversations/accounts/accounts').then(
+                    (m) => m.ConversationsAccountsPage,
+                  ),
+                title: 'Conversations • Accounts | mnscloud',
               },
               {
                 path: 'voip/phone/users',
@@ -3013,6 +3091,15 @@ export const routes: Routes = [
                     data: { scope: 'master', context: 'system' },
                   },
                 ],
+              },
+              {
+                path: 'hosting/smtp/messages',
+                loadComponent: () =>
+                  import('./pages/hosting/smtp/messages/messages').then(
+                    (m) => m.HostingSmtpMessagesPage,
+                  ),
+                title: 'System SMTP Messages | mnscloud',
+                data: { scope: 'master', context: 'system' },
               },
               {
                 path: 'hosting/storage',

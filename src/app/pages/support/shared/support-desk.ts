@@ -1,7 +1,8 @@
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
-import { openImagePreview } from '../../../shared/file-preview-dialog/file-preview-dialog';
+import { openPrivateFile } from '../../../shared/file-preview-dialog/private-file';
+export { openPrivateFile } from '../../../shared/file-preview-dialog/private-file';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
   ConfigurableCrudConfig,
@@ -39,6 +40,12 @@ export const TICKET_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 export const ACTIVE_TICKET_STATUSES = ['open', 'in_progress', 'pending'];
+
+export const TICKET_STATUS_FILTER_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'active', label: 'Active tickets' },
+  { value: '', label: 'All' },
+  ...TICKET_STATUS_OPTIONS,
+];
 
 export function ticketStatusChip(value: unknown): string {
   if (value === 'resolved' || value === 'closed') return 'chip-success';
@@ -79,35 +86,6 @@ export const ATTACHMENT_ACCEPT = '.png,.jpg,.jpeg,.webp,.gif,.pdf,.txt,.log,.csv
 function statusLabel(value: unknown, translate: (key: string) => string): string {
   const option = TICKET_STATUS_OPTIONS.find((item) => item.value === value);
   return option ? translate(option.label) : '';
-}
-
-/**
- * Opens a private file. Images (screenshots, report images) open in an in-App preview dialog;
- * other files open in a new tab, opened synchronously so popup blockers allow it.
- */
-export async function openPrivateFile(
-  api: ApiService,
-  endpoint: string,
-  preview?: { dialog: MatDialog; contentType: string; fileName: string },
-): Promise<void> {
-  if (preview && preview.contentType.toLowerCase().startsWith('image/')) {
-    try {
-      openImagePreview(preview.dialog, await api.getBlob(endpoint), preview.fileName);
-    } catch {
-      /* the API error toast already explains the failure */
-    }
-    return;
-  }
-  const tab = window.open('', '_blank');
-  try {
-    const blob = await api.getBlob(endpoint);
-    const url = URL.createObjectURL(blob);
-    if (tab) tab.location.href = url;
-    else window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  } catch {
-    tab?.close();
-  }
 }
 
 const optionLabel = (options: readonly ConfigurableCrudOption[], value: unknown) =>

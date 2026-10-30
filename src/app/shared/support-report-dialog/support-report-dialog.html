@@ -16,7 +16,12 @@
           <mat-icon class="support-report-success-icon">task_alt</mat-icon>
           <h3>{{ successTitle(report.SupportTicketID) }}</h3>
           <p>
-            {{ 'Your ticket was opened. Follow the conversation in My tickets.' | transloco }}
+            {{
+              (report.Submission?.State === 'ready'
+                ? 'Your ticket was opened. Follow the conversation in My tickets.'
+                : 'Your ticket is saved. Analysis will start after the attachments are submitted.'
+              ) | transloco
+            }}
           </p>
           @if (images().length) {
             <ul class="support-report-upload-list" [attr.aria-busy]="uploadingImages()">
@@ -40,7 +45,7 @@
           @if (report.AttachmentWarnings?.length) {
             <p class="support-report-warning" role="alert">
               {{
-                'Some attachments could not be saved. Open My tickets to attach them again; do not create another ticket.'
+                'Some attachments could not be saved. Retry here or continue without the missing attachments.'
                   | transloco
               }}
             </p>
@@ -224,6 +229,7 @@
               <input
                 #filePicker
                 type="file"
+                [attr.aria-label]="'Additional images' | transloco"
                 class="support-report-file-input"
                 multiple
                 [accept]="imageAccept"
@@ -358,7 +364,7 @@
     </div>
     <div class="primary-actions">
       @if (created()) {
-        @if (missingImages()) {
+        @if (created()?.Submission?.State !== 'ready') {
           <button
             mat-stroked-button
             type="button"
@@ -366,7 +372,12 @@
             (click)="retryImages()"
           >
             <mat-icon>refresh</mat-icon>
-            {{ 'Retry images' | transloco }}
+            {{ 'Retry attachments' | transloco }}
+          </button>
+        }
+        @if (created()?.Submission?.State !== 'ready' && !uploadingImages()) {
+          <button mat-stroked-button type="button" (click)="continueWithoutMissing()">
+            {{ 'Continue without missing attachments' | transloco }}
           </button>
         }
         <button

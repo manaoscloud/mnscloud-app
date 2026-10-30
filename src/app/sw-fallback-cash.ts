@@ -1,8 +1,8 @@
 // habilita fallback de navegação
 export function setupOfflineFallback() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then((reg) => {
-      fetch('/offline.html'); // pré-carrega offline
-    });
+    void navigator.serviceWorker.ready
+      .then(() => fetch('/offline.html')) // pré-carrega offline
+      .catch(() => undefined);
   }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5790a31870d6",
+  "version": "c86964626723",
   "language": "pt-BR",
   "entries": [
     {
@@ -508,6 +508,35 @@
       "fields": []
     },
     {
+      "route": "/conversations/accounts",
+      "menuPath": "Conversas › Contas",
+      "scope": "tenant",
+      "title": "Contas de conversas",
+      "description": "Contas de atendimento internas e de revenda para clientes do tenant.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do tenant a quem esta conta é revendida. O vínculo é imutável após a criação."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/conversations/connections",
       "menuPath": "Conversas › Conexões",
       "scope": "tenant",
@@ -529,6 +558,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
         },
         {
           "label": "ID do canal",
@@ -629,7 +662,7 @@
           "help": ""
         },
         {
-          "label": "Ramos",
+          "label": "Ramos de atividade",
           "help": ""
         },
         {
@@ -798,27 +831,6 @@
       ]
     },
     {
-      "route": "/crm/industries",
-      "menuPath": "CRM › Configurações › Ramos",
-      "scope": "tenant",
-      "title": "Ramos",
-      "description": "Ramos de atividade usados para classificar contas e leads.",
-      "fields": [
-        {
-          "label": "Status",
-          "help": ""
-        },
-        {
-          "label": "Nome",
-          "help": ""
-        },
-        {
-          "label": "Revisão",
-          "help": ""
-        }
-      ]
-    },
-    {
       "route": "/crm/leads",
       "menuPath": "CRM › Leads",
       "scope": "tenant",
@@ -850,7 +862,7 @@
           "help": ""
         },
         {
-          "label": "Ramos",
+          "label": "Ramos de atividade",
           "help": ""
         },
         {
@@ -1150,6 +1162,35 @@
         },
         {
           "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/crm/workspaces",
+      "menuPath": "CRM › Workspaces",
+      "scope": "tenant",
+      "title": "Workspaces",
+      "description": "Workspaces de revenda do CRM para isolar funis, leads e oportunidades por cliente ou equipe interna.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do tenant a quem este workspace é revendido. O vínculo é imutável após a criação."
+        },
+        {
+          "label": "Descrição",
           "help": ""
         },
         {
@@ -1611,6 +1652,35 @@
       "fields": []
     },
     {
+      "route": "/dns/accounts",
+      "menuPath": "DNS seguro › Contas",
+      "scope": "tenant",
+      "title": "Contas de clientes",
+      "description": "Gerencie contas de clientes da revenda para delegação e isolamento de escritórios protegidos por DNS.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente cadastrado para quem esta conta e seus escritórios serão delegados na revenda."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/dns/cloud/site-rules",
       "menuPath": "DNS seguro › Regras",
       "scope": "tenant",
@@ -1620,6 +1690,10 @@
         {
           "label": "Status",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta ou cliente revendedor responsável por este escritório protegido."
         },
         {
           "label": "Cluster DNS",
@@ -1657,6 +1731,10 @@
         {
           "label": "Status",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta ou cliente revendedor responsável por este escritório protegido."
         },
         {
           "label": "Cluster DNS",
@@ -2115,6 +2193,76 @@
       ]
     },
     {
+      "route": "/ged/accounts",
+      "menuPath": "Gestão de documentos › Contas",
+      "scope": "tenant",
+      "title": "Contas do GED",
+      "description": "Organize os dossiês por cliente ou uso interno, com os recursos contratados e configurados pela revenda.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Deixe vazio para uso interno. O cliente fica vinculado à conta e não pode ser trocado na edição."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/ged/archive",
+      "menuPath": "Gestão de documentos › Acervo e revisão",
+      "scope": "tenant",
+      "title": "Acervo e revisão",
+      "description": "Pesquise títulos, observações, dossiês e locais físicos. Filtre documentos pendentes de revisão e consulte seus arquivos privados.",
+      "fields": []
+    },
+    {
+      "route": "/ged/dossiers",
+      "menuPath": "Gestão de documentos › Dossiês",
+      "scope": "tenant",
+      "title": "Dossiês",
+      "description": "Organize o acervo digital em dossiês independentes e localize os originais físicos. Os tipos de documentos são compartilhados com Cadastros.",
+      "fields": [
+        {
+          "label": "Conta do GED",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Localização física (arquivo, caixa, pasta)",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hosting",
       "menuPath": "Hospedagem › Painel",
       "scope": "tenant",
@@ -2301,6 +2449,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/hosting/smtp/messages",
+      "menuPath": "Hospedagem › SMTP › Mensagens",
+      "scope": "tenant",
+      "title": "Mensagens SMTP",
+      "description": "Histórico de entrega, status e monitoramento de e-mails transacionais.",
+      "fields": []
     },
     {
       "route": "/hosting/smtp/providers",
@@ -4647,6 +4803,60 @@
       ]
     },
     {
+      "route": "/registry/document-types",
+      "menuPath": "Cadastros › Tipos de documentos",
+      "scope": "tenant",
+      "title": "Tipos de documentos",
+      "description": "Classifique os documentos de todos os cadastros e do GED com um catálogo compartilhado.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/economic-sectors",
+      "menuPath": "Cadastros › Setores econômicos",
+      "scope": "tenant",
+      "title": "Setores econômicos",
+      "description": "Organize os setores econômicos utilizados para classificar os ramos de atividade entre módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Setor econômico",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/registry/employees",
       "menuPath": "Cadastros › Funcionários",
       "scope": "tenant",
@@ -4695,6 +4905,35 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/industries",
+      "menuPath": "Cadastros › Ramos de atividade",
+      "scope": "tenant",
+      "title": "Ramos de atividade",
+      "description": "Gerencie os ramos de atividade e seus setores econômicos para uso entre módulos.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Setor econômico",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
@@ -6566,6 +6805,14 @@
           "help": "Menor valor cobrado em cada ciclo: a cobrança é o maior entre preço unitário × quantidade e este valor. Use 0 para não ter mínimo. Não é fidelidade nem prazo de contrato."
         },
         {
+          "label": "Disponibilidade do preço",
+          "help": "Limita novas contratações deste preço. Uma lista vazia bloqueia novas contratações; contratos existentes são preservados."
+        },
+        {
+          "label": "Tenants autorizados",
+          "help": ""
+        },
+        {
           "label": "Configuração JSON",
           "help": ""
         }
@@ -7647,6 +7894,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/hosting/smtp/messages",
+      "menuPath": "Hospedagem › SMTP › Mensagens",
+      "scope": "platform",
+      "title": "Mensagens SMTP",
+      "description": "Histórico de entrega, status e monitoramento de e-mails transacionais.",
+      "fields": []
     },
     {
       "route": "/system/hosting/smtp/providers",
@@ -12287,6 +12542,14 @@
           "help": "Posição da oferta no site (menor primeiro)."
         }
       ]
+    },
+    {
+      "route": "/website/orders",
+      "menuPath": "Website › Pedidos",
+      "scope": "tenant",
+      "title": "Pedidos",
+      "description": "Contratações feitas pelos clientes no site e na área do cliente: oferta, valores, cobrança emitida no seu gateway e situação. Ofertas com aprovação esperam aqui.",
+      "fields": []
     },
     {
       "route": "/website/sites",

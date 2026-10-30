@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
@@ -29,6 +30,7 @@ const sites = defineCrud({
   initialPageSize: 50,
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['DcsRevision']) }),
+  rowActions: [{ key: 'report', label: 'dns.cloudSiteReport', icon: 'insights' }],
   initialValues: {
     name: '',
     addresses: '',
@@ -37,6 +39,7 @@ const sites = defineCrud({
     status: 1,
     revision: 1,
     DnsClusterDncUUID: '',
+    accountUUID: null,
   },
   payload: (values, editing) => {
     const payload = dnsPayload(values, editing);
@@ -44,10 +47,29 @@ const sites = defineCrud({
     payload['addresses'] = String(values['addresses'] ?? '');
     payload['categories'] = Array.isArray(values['categories']) ? values['categories'] : [];
     payload['safeSearch'] = Number(values['safeSearch'] ?? 0);
+    if (values['accountUUID'] !== undefined) {
+      payload['accountUUID'] = values['accountUUID'] || null;
+    }
     return payload;
   },
   fields: [
     { key: 'status', source: 'DcsStatus', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'accountUUID',
+      source: 'DnsAccountDacUUID',
+      label: 'dns.account',
+      span: 1,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'dns/accounts?status=1',
+        uuidField: 'DacUUID',
+        labelField: 'DacName',
+        selectedLabelField: 'AccountName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason: 'DNS accounts are created in DNS > Accounts.',
+      help: 'dns.siteAccountHelp',
+    },
     {
       key: 'DnsClusterDncUUID',
       source: 'DnsClusterDncUUID',
@@ -101,6 +123,7 @@ const sites = defineCrud({
   ],
   columns: [
     { id: 'name', field: 'DcsName', label: 'Name', kind: 'identity' },
+    { id: 'account', field: 'AccountName', label: 'dns.account', kind: 'text' },
     { id: 'addresses', field: 'DcsAddresses', label: 'dns.cloudSiteAddresses', kind: 'text' },
     { id: 'cluster', field: 'ClusterName', label: 'dns.cloudCluster', kind: 'text' },
     { id: 'rules', field: 'Rules', label: 'dns.cloudSiteRules', kind: 'number' },
@@ -206,5 +229,13 @@ export class DnsCloudListsPage extends ConfigurableCrudPageBase<ConfigurableCrud
   constructor() {
     const list = inject(ActivatedRoute).snapshot.data['list'] as keyof typeof CONFIGS;
     super(CONFIGS[list] ?? sites);
+  }
+
+  private readonly navigation = inject(Router);
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'report') {
+      await this.navigation.navigateByUrl(`/dns/cloud/sites/${this.recordUUID(row)}/report`);
+    }
   }
 }

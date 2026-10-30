@@ -17,6 +17,7 @@ import { AuthService } from '../../../services/auth.service';
 import {
   ACTIVE_TICKET_STATUSES,
   SupportDesk,
+  TICKET_STATUS_FILTER_OPTIONS,
   TICKET_STATUS_OPTIONS,
   agentTimelineCollection,
   attachmentsCollection,
@@ -107,6 +108,14 @@ function priorityChip(row: ConfigurableCrudRecord): string {
   return rank <= 10 ? 'chip-failed' : rank <= 20 ? 'chip-running' : 'chip-skipped';
 }
 
+export function supportTicketsConfig(
+  desk: SupportDesk,
+  api: () => ApiService,
+  dialog: () => MatDialog,
+): ConfigurableCrudConfig {
+  return config(desk, api, dialog);
+}
+
 function config(
   desk: SupportDesk,
   api: () => ApiService,
@@ -163,6 +172,8 @@ function config(
     inactiveValue: 'closed',
     statusOptions: TICKET_STATUS_OPTIONS,
     activeStatusValues: ACTIVE_TICKET_STATUSES,
+    initialStatus: 'active',
+    statusFilterOptions: TICKET_STATUS_FILTER_OPTIONS,
     bulkDelete: false,
     canCreate: !platform,
     serverSidePagination: true,
@@ -268,6 +279,16 @@ function config(
     },
     columns: [
       { id: 'protocol', field: 'SupportTicketID', label: 'Protocol', kind: 'identity' },
+      { id: 'openedAt', field: 'OpenedAt', label: 'Opened at', kind: 'datetime' },
+      {
+        id: 'status',
+        field: 'Status',
+        label: 'Status',
+        kind: 'status',
+        options: TICKET_STATUS_OPTIONS,
+        chipClass: ticketStatusChip,
+        className: 'status-col',
+      },
       {
         id: 'subject',
         field: 'Subject',
@@ -325,15 +346,6 @@ function config(
       { id: 'team', field: 'TeamName', label: 'Team' },
       { id: 'assigned', field: 'AssignedToName', label: 'Assigned to' },
       { id: 'activity', field: 'LastActivityAt', label: 'Last activity', kind: 'datetime' },
-      {
-        id: 'status',
-        field: 'Status',
-        label: 'Status',
-        kind: 'status',
-        options: TICKET_STATUS_OPTIONS,
-        chipClass: ticketStatusChip,
-        className: 'status-col',
-      },
     ],
     fields: [
       {
@@ -605,6 +617,15 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         { label: 'Suspected area', value: triage['SuspectedArea'] },
         { label: 'Provider', value: triage['ProviderName'] },
         { label: 'Model', value: triage['Model'], monospace: true },
+        { label: 'Submission state', value: triage['EvidenceState'], translate: true },
+        {
+          label: 'Evidence revision (analysed / current)',
+          value: `${triage['AnalysedEvidenceRevision'] ?? '-'} / ${triage['CurrentEvidenceRevision'] ?? '-'}`,
+        },
+        { label: 'Outdated analyses discarded', value: triage['DiscardedAnalyses'] ?? 0 },
+        { label: 'Evidence ready at', value: triage['EvidenceReadyAt'], kind: 'datetime' },
+        { label: 'Analysis started at', value: triage['ClaimedAt'], kind: 'datetime' },
+        { label: 'Model processing (ms)', value: triage['LatencyMs'] },
         {
           label: 'Tokens (input / output)',
           value:
@@ -616,6 +637,21 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
         { label: 'Last error', value: triage['LastErrorCode'], monospace: true },
       ],
       sections: [
+        ...(Array.isArray(triage['EvidenceManifest']) && triage['EvidenceManifest'].length
+          ? [
+              {
+                title: 'Submitted evidence',
+                table: {
+                  columns: [
+                    { key: 'fileName', label: 'Name' },
+                    { key: 'kind', label: 'Kind' },
+                    { key: 'status', label: 'Status' },
+                  ],
+                  rows: triage['EvidenceManifest'] as ConfigurableCrudRecord[],
+                },
+              },
+            ]
+          : []),
         ...(triage['Summary']
           ? [{ title: 'Summary', code: { value: triage['Summary'], format: 'text' as const } }]
           : []),

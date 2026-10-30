@@ -36,6 +36,24 @@ validate_browser_assets() {
 
 validate_browser_assets "$BUILD_DIR"
 
+# Prints the main bundle and every chunk reachable from it through static imports: the bundler
+# may move the build-info constant into a shared chunk that main imports (Angular 22.2 does).
+eager_bundle_files() {
+  local root="$1" main_asset="$2" file chunk
+  local -a queue=("$main_asset")
+  local -A seen=(["$main_asset"]=1)
+  while [[ "${#queue[@]}" -gt 0 ]]; do
+    file="${queue[0]}"
+    queue=("${queue[@]:1}")
+    printf '%s\n' "${root}/${file}"
+    while IFS= read -r chunk; do
+      [[ -n "$chunk" && -z "${seen[$chunk]:-}" && -f "${root}/${chunk}" ]] || continue
+      seen["$chunk"]=1
+      queue+=("$chunk")
+    done < <(grep -Eo '(from|import) ?"\./chunk-[A-Za-z0-9_-]+[.]js"' "${root}/${file}" | grep -Eo 'chunk-[A-Za-z0-9_-]+[.]js' || true)
+  done
+}
+
 validate_embedded_version() {
   local root="$1"
   local expected_version="$2"
@@ -46,8 +64,8 @@ validate_embedded_version() {
   [[ -n "$main_asset" ]] || die "browser build index.html does not reference a main bundle"
   [[ -f "${root}/${main_asset}" ]] || die "browser build main bundle is missing: ${main_asset}"
 
-  if ! grep -Fq "$expected_version" "${root}/${main_asset}"; then
-    die "browser build main bundle ${main_asset} does not contain release version ${expected_version}; run scripts/write-app-build-info.ts before ng build"
+  if ! eager_bundle_files "$root" "$main_asset" | xargs grep -Flq "$expected_version"; then
+    die "browser build main bundle ${main_asset} (with its static imports) does not contain release version ${expected_version}; run scripts/write-app-build-info.ts before ng build"
   fi
 }
 

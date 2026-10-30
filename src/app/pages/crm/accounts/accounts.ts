@@ -1,3 +1,8 @@
+import {
+  economicClassificationFilters,
+  industryReferenceField,
+  industryReferenceColumn,
+} from '../../../shared/registry/economic-classification';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
@@ -17,7 +22,7 @@ const config = defineCrud({
     CacName: '',
     CacType: 'company',
     CacDocument: '',
-    CrmIndustryCinUUID: '',
+    RegIndustryRinUUID: '',
     CacOccupation: '',
     CacCity: '',
     CacState: '',
@@ -84,20 +89,7 @@ const config = defineCrud({
       required: false,
       type: 'text',
     },
-    {
-      key: 'CrmIndustryCinUUID',
-      source: 'CrmIndustryCinUUID',
-      label: 'crm.title.industries',
-      span: 1,
-      required: false,
-      type: 'search-select',
-      remoteLookup: {
-        endpoint: 'crm/industries',
-        uuidField: 'CinUUID',
-        labelField: 'CinName',
-        selectedLabelField: 'CrmIndustryCinUUIDName',
-      },
-    },
+    industryReferenceField(),
     {
       key: 'CacCity',
       source: 'CacCity',
@@ -130,12 +122,7 @@ const config = defineCrud({
     { key: 'CacRevision', source: 'CacRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
-    {
-      id: 'CrmIndustryCinUUID',
-      field: 'CrmIndustryCinUUIDName',
-      label: 'crm.title.industries',
-      kind: 'text',
-    },
+    industryReferenceColumn(),
     {
       id: 'CacName',
       field: 'CacName',
@@ -162,14 +149,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
-    {
-      key: 'CrmIndustryCinUUID',
-      paramKey: 'CrmIndustryCinUUID',
-      label: 'crm.title.industries',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: { endpoint: 'crm/industries', uuidField: 'CinUUID', labelField: 'CinName' },
-    },
+    ...economicClassificationFilters(),
     {
       key: 'AssignedUserUsrUUID',
       paramKey: 'AssignedUserUsrUUID',

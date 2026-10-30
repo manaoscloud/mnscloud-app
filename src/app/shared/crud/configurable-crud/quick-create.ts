@@ -149,11 +149,26 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.ConversationConnectionsPage,
       ),
   },
-  CrmIndustryCinUUID: {
-    label: 'crm.title.industries',
+  ConversationAccountCvaUUID: {
+    label: 'conversations.newAccount',
     loadComponent: () =>
-      import('../../../pages/crm/industries/industries').then((m) => m.CrmIndustryPage),
-    permission: 'tenant.crm.manage',
+      import('../../../pages/conversations/accounts/accounts').then(
+        (m) => m.ConversationsAccountsPage,
+      ),
+  },
+  RegIndustryRinUUID: {
+    label: 'registry.economy.industries',
+    loadComponent: () =>
+      import('../../../pages/registry/industries/industries').then((m) => m.RegIndustryPage),
+    permission: 'tenant.registry.industries.write',
+  },
+  RegEconomicSectorRecUUID: {
+    label: 'registry.economy.economic-sectors',
+    loadComponent: () =>
+      import('../../../pages/registry/economic-sectors/economic-sectors').then(
+        (m) => m.RegEconomicSectorPage,
+      ),
+    permission: 'tenant.registry.economic-sectors.write',
   },
   CrmSourceCsoUUID: {
     label: 'crm.title.sources',
@@ -193,6 +208,12 @@ export const QUICK_CREATE_REGISTRY = {
     label: 'crm.title.products',
     loadComponent: () =>
       import('../../../pages/crm/products/products').then((m) => m.CrmProductPage),
+    permission: 'tenant.crm.manage',
+  },
+  CrmWorkspaceCwsUUID: {
+    label: 'crm.title.workspaces',
+    loadComponent: () =>
+      import('../../../pages/crm/workspaces/workspaces').then((m) => m.CrmWorkspacePage),
     permission: 'tenant.crm.manage',
   },
   CrmLeadCleUUID: {
@@ -307,6 +328,20 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/cyber-security/trusted-nodes/trusted-nodes').then(
         (m) => m.CyberSecurityTrustedNodesPage,
+      ),
+  },
+  GedAccountGacUUID: {
+    label: 'ged.newAccount',
+    permission: 'tenant.ged.accounts.all',
+    loadComponent: () =>
+      import('../../../pages/ged/accounts/accounts').then((m) => m.GedAccountsPage),
+  },
+  RegDocumentTypeRdtUUID: {
+    label: 'documents.newType',
+    permission: 'tenant.registry.document-types.write',
+    loadComponent: () =>
+      import('../../../pages/registry/document-types/document-types').then(
+        (m) => m.RegDocumentTypePage,
       ),
   },
   RegContactSectorRseUUID: {

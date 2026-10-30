@@ -2,6 +2,16 @@ import type { ConfigurableCrudOption } from '../../shared/crud/configurable-crud
 
 /** One translated option source for CRM forms, list filters and table cells. */
 export const CRM_OPTIONS = {
+  workspaceKinds: [
+    {
+      value: 'internal',
+      label: 'crm.enum.internal',
+    },
+    {
+      value: 'customer',
+      label: 'crm.enum.customer',
+    },
+  ],
   stageKinds: [
     {
       value: 'open',

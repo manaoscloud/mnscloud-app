@@ -54,7 +54,9 @@ export function localInputToUtc(value: unknown): string | null {
 export function utcToLocalInput(value: unknown): string {
   const text = String(value ?? '').trim();
   if (!text) return '';
-  const date = new Date(text.replace(' ', 'T') + (/[zZ]|[+-]\d{2}:?\d{2}$/.test(text) ? '' : 'Z'));
+  const date = new Date(
+    text.replace(' ', 'T') + (/(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(text) ? '' : 'Z'),
+  );
   if (!Number.isFinite(date.getTime())) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;

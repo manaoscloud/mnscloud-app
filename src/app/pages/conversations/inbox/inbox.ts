@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { CONVERSATION_ACCOUNT_LOOKUP } from '../accounts/accounts';
 import { MatDialog } from '@angular/material/dialog';
 import { ApiService } from '../../../services/api.service';
 import {
@@ -86,6 +87,15 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         emptyLabel: 'All channels',
         remoteLookup: CONNECTION_LOOKUP,
       },
+      {
+        key: 'accountUUID',
+        paramKey: 'accountUUID',
+        label: 'Account',
+        type: 'search-select',
+        span: 1,
+        emptyLabel: 'All accounts',
+        remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
+      },
     ],
     rowActions: [
       {
@@ -124,6 +134,7 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         detail: (row) => String(row['ContactPhone'] ?? row['ContactEmail'] ?? ''),
       },
       { id: 'channel', label: 'Channel', field: 'ChannelName' },
+      { id: 'account', label: 'Account', field: 'AccountName', optional: true },
       { id: 'phone', label: 'Contact phone', field: 'ContactPhone', kind: 'phone', optional: true },
       { id: 'linked', label: 'Linked to', value: (row) => linkedLabel(row) },
       { id: 'last', label: 'Last message', field: 'LastMessage' },

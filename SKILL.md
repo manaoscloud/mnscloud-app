@@ -81,10 +81,14 @@ Run `npm run build` locally only when changing `angular.json`, budgets, build/re
 dependencies. It is queued machine-wide with a memory cap (`scripts/guarded-build.sh`, see
 `AGENTS.md` → Shared Host Builds).
 
-Use `npm run check:crud` when changing CRUD templates or CRUD baseline behavior, and
+Use `npm run check:crud -- <page-or-file>` when changing CRUD templates or CRUD baseline behavior, and
 `npm run check:crud:fk -- <page-folder>` for every CRUD page with FK fields.
 
-For bare-metal production runtime install/update, use the module-local latest-release helper:
+Delivery to DEV/PROD is the workspace `scripts/ops/rollout.sh <dev|prod> mnscloud-app` (PROD only
+after the user authorizes the task). The helper below is the App runtime host installer that the
+Agent runs; a person runs it by hand only on an App runtime host (never on the workspace host,
+where `/opt/mnscloud` is the workspace) and, on a shared host, only with the user's explicit
+authorization for that host:
 
 ```bash
 cd /opt/mnscloud/mnscloud-app
@@ -100,7 +104,8 @@ run local Angular builds. The app runtime listens on `0.0.0.0:8080` by default s
 restrict access to the edge host, or use `APP_LISTEN_ADDR=127.0.0.1` for same-host edge
 deployments. Do not manage nftables in this installer.
 
-Fresh runtime hosts use the same helper after cloning the repository:
+Fresh App runtime hosts (bootstrap, never the workspace host) use the same helper after cloning
+the repository:
 
 ```bash
 sudo install -d -m 0755 /opt/mnscloud
@@ -114,7 +119,7 @@ Use `sudo ./scripts/rollback-nginx-runtime.sh --ref <known-good-release-tag> --a
 --artifact-sha256 <sha256>` only for explicit emergency rollback to a known-good release artifact.
 
 Production App releases are created by the repository `Auto Release` GitHub Actions workflow after
-validated changes are committed and pushed to `main`. The workflow uses
+a PR is merged to `main` with `scripts/ops/merge.sh`. The workflow uses
 `scripts/release-app.sh` as the canonical release engine. Do not mark a new App version as available
 to operators until the matching release commit, Git tag, and GitHub Release exist on GitHub.
 The runtime release cache `buildRef` must be the commit resolved by that immutable release tag; it
@@ -147,8 +152,8 @@ are not implemented by this collector. Link state is optional when `ip` is missi
 or the OS reports unknown. Filesystem observations are space usage, not block I/O.
 
 Canonical SQL owns twelve resource metric seeds and four new procedures. Existing
-production DBs apply the `agent-resource-metrics` scope via `scripts/update-schema.py`
-from mnscloud-db, using reviewed plan/apply and backup. DB must precede API and Agent;
+production DBs receive it only through a released `mnscloud-db` tag and the Agent reconcile
+(`scripts/ops/promote.sh schema <tag>`), never by running `scripts/update-schema.py` by hand. DB must precede API and Agent;
 the App follows after endpoint validation. Catalog promotion never applies SQL.
 There is no separate persistent migration definition.
 
@@ -178,7 +183,7 @@ Use DetailPageComponent for read-only resource pages and SettingsPageComponent f
 singleton configuration pages. Both inherit PageShellComponent. Follow app.md and
 templates/detail-page or templates/settings-page; shared styles belong in
 src/styles/_content-page.scss. Never style a routed configuration page as a dialog.
-Run node scripts/validate-content-pages.mjs and the build; verify both responsive
+Run node scripts/validate-content-pages.mjs and `npm run typecheck` (the PR CI runs the build); verify both responsive
 layouts and settings dirty/cancel/save behavior before release.
 
 ## Secrets dashboard

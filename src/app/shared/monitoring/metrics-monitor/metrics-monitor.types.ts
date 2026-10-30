@@ -124,7 +124,7 @@ export function defaultMetricGroupKey(metricKey: string): string {
 }
 
 export function parseUtcDate(value: string): Date {
-  return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
+  return new Date(/(?:[zZ]|[+-]\d\d:\d\d)$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
 }
 
 export function formatMetricDisplay(

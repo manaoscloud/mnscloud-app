@@ -26,6 +26,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
        !startsWith(github.event.workflow_run.head_commit.message, 'Release mnscloud-app '))
     runs-on: ubuntu-latest
     env:
@@ -43,7 +45,7 @@ jobs:
           git fetch origin main
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
       - name: Setup Deno
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: v2.8.1
       - name: Setup Node.js
@@ -54,7 +56,7 @@ jobs:
           cache: npm
       - name: Install emergency release dependencies
         if: github.event_name == 'workflow_dispatch'
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Download validated release candidate
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v7
@@ -69,11 +71,13 @@ jobs:
           git config user.email 'actions@users.noreply.github.com'
       - name: Prepare emergency release candidate
         if: github.event_name == 'workflow_dispatch'
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           bash scripts/prepare-release-candidate.sh \
             --output "$RUNNER_TEMP/mnscloud-app-release-candidate" \
             --source-sha "$GITHUB_SHA" \
-            --version '${{ inputs.version }}'
+            --version "$RELEASE_VERSION"
           bash scripts/release-app.sh --verify-promotion-artifact "$RUNNER_TEMP/mnscloud-app-release-candidate"
       - name: Promote validated artifact
         if: github.event_name == 'workflow_run'
@@ -84,7 +88,7 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: |
           mkdir -p var/security/sbom
-          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/var/security/sbom:/out" aquasec/trivy:latest fs --format cyclonedx --output "/out/mnscloud-app.cdx.json" /repo
+          docker run --rm -v "$PWD:/repo:ro" -v "$PWD/var/security/sbom:/out" aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c fs --format cyclonedx --output "/out/mnscloud-app.cdx.json" /repo
       - name: Upload SBOM to Dependency-Track
         env:
           DTRACK_API_URL: ${{ vars.DTRACK_API_URL || 'http://127.0.0.1:8089' }}

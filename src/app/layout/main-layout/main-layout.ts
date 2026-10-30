@@ -350,7 +350,7 @@ export class MainLayout {
     this.scheduleAutoExpandSections();
 
     // Carrega environments (tenants); reloads when a tenant identity changes.
-    this.initEnvironments();
+    void this.initEnvironments();
     let accessRevision = this.tenantAccess.accessRevision();
     effect(() => {
       const revision = this.tenantAccess.accessRevision();
@@ -530,7 +530,7 @@ export class MainLayout {
     }
 
     if (item.children?.length) this.toggleSection(item.id);
-    else this.navigateTo(item);
+    else void this.navigateTo(item);
   }
 
   private setDesktopCompact(enabled: boolean) {

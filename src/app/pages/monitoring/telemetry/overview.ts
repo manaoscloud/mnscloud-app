@@ -187,7 +187,7 @@ export class TelemetryOverviewPage {
     return `↓ ${mbps(agent.receiveBps)} / ↑ ${mbps(agent.transmitBps)} Mbps`;
   }
   utc(value: string) {
-    return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
+    return new Date(/(?:[zZ]|[+-]\d\d:\d\d)$/.test(value) ? value : value.replace(' ', 'T') + 'Z');
   }
   stale(value: string | null) {
     return !value || this.now() - this.utc(value).getTime() > 180000;
