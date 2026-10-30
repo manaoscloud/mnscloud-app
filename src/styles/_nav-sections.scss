@@ -1,0 +1,44 @@
+// Sidebar section titles (app.md → Navigation Structure), rendered by main-layout. Global so the
+// layout component keeps its style budget; the selectors only exist inside the sidenav.
+.menu-area-title {
+  margin: 0.6rem 0.25rem 0;
+  padding: 0.7rem 0.75rem 0.3rem;
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 55%, transparent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-category-title,
+.compact-flyout-title {
+  padding: 0.55rem 0.75rem 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-flyout-title {
+  padding: 0.45rem 0.6rem 0.1rem;
+}
+
+.compact-flyout-title:first-child {
+  padding-top: 0.15rem;
+}
+
+// The compact rail has no room for text: an area becomes a divider between module icons.
+.sidenav.compact .menu-area-title {
+  margin: 0.35rem 1rem;
+  padding: 0;
+  height: 0;
+  font-size: 0;
+}
