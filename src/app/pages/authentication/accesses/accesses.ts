@@ -187,7 +187,12 @@ function accessConfig(api: ApiService) {
     ],
     columns: [
       { id: 'customer', field: 'CustomerName', label: 'Customer', kind: 'identity' },
-      { id: 'subscriber', field: 'AaxSubscriberLabel', label: 'authentication.subscriberLabel', kind: 'text' },
+      {
+        id: 'subscriber',
+        field: 'AaxSubscriberLabel',
+        label: 'authentication.subscriberLabel',
+        kind: 'text',
+      },
       {
         id: 'login',
         field: 'AaxLoginName',
