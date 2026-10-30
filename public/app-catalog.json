@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0c02eaf66e18",
+  "version": "54a353e7f673",
   "language": "pt-BR",
   "entries": [
     {
@@ -4030,6 +4030,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente cadastrado para quem esta conta é revendida. Vazio = uso interno. Não pode ser alterado depois."
         },
         {
           "label": "Revisão",
