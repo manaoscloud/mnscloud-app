@@ -12,6 +12,60 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 
+// Tenant vaults belong to a Cyber Security account (their customer comes from it); platform
+// vaults keep the Master server/customer form.
+const CYBER_ACCOUNT_FILTER = {
+  key: 'cyberAccountUUID',
+  label: 'cyberSecurity.account',
+  paramKey: 'cyberAccountUUID',
+  type: 'search-select',
+  span: 1,
+  placeholder: 'Search account',
+  emptyLabel: 'No accounts found.',
+} as const;
+
+const CYBER_ACCOUNT_COLUMN = {
+  id: 'cyberAccount',
+  label: 'cyberSecurity.account',
+  kind: 'related',
+  uuidField: 'CyberSecurityAccountCyaUUID',
+  lookupKey: 'cyberAccountUUID',
+} as const;
+
+const CYBER_ACCOUNT_FIELD: ConfigurableCrudField = {
+  key: 'cyberAccountUUID',
+  source: 'CyberSecurityAccountCyaUUID',
+  payloadKey: 'cyberAccountUUID',
+  label: 'cyberSecurity.account',
+  type: 'search-select',
+  required: true,
+  span: 1,
+  tab: 'record',
+  help: 'cyberSecurity.vaultAccountHelp',
+  disabledWhen: ({ editing }) => editing,
+  quickCreate: false,
+  quickCreateExemptReason:
+    'Cyber Security accounts are created by account administrators in Customer accounts.',
+};
+
+function accountConfig(master: boolean): ConfigurableCrudConfig {
+  if (master) return ACCOUNT_CONFIG;
+  return {
+    ...ACCOUNT_CONFIG,
+    dialogDescription: 'cyberSecurity.vaultDialogDescription',
+    listFilters: [
+      ACCOUNT_CONFIG.listFilters![0],
+      CYBER_ACCOUNT_FILTER,
+      ACCOUNT_CONFIG.listFilters![1],
+    ],
+    initialValues: { ...ACCOUNT_CONFIG.initialValues, cyberAccountUUID: '' },
+    columns: [ACCOUNT_CONFIG.columns[0], CYBER_ACCOUNT_COLUMN, ...ACCOUNT_CONFIG.columns.slice(1)],
+    fields: ACCOUNT_CONFIG.fields.map((field) =>
+      field.key === 'customerUUID' ? CYBER_ACCOUNT_FIELD : field,
+    ),
+  };
+}
+
 const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'cyber-security/secret-accounts',
   uuidField: 'CxaUUID',
@@ -155,15 +209,19 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
 
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
   readonly customerOptions = signal<ConfigurableCrudOption[]>([]);
+  readonly cyberAccountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
 
   constructor() {
-    super(ACCOUNT_CONFIG);
+    super(accountConfig(inject(ActivatedRoute).snapshot.data?.['scope'] === 'master'));
     void this.loadLookups();
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
-    return ['serverUUID', 'customerUUID'].includes(field.key) && this.lookupsLoading();
+    return (
+      ['serverUUID', 'customerUUID', 'cyberAccountUUID'].includes(field.key) &&
+      this.lookupsLoading()
+    );
   }
 
   protected override listEndpoint(): string {
@@ -185,6 +243,7 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'serverUUID') return this.serverOptions();
     if (key === 'customerUUID') return this.customerOptions();
+    if (key === 'cyberAccountUUID') return this.cyberAccountOptions();
     return [];
   }
 
@@ -192,15 +251,21 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
     await Promise.all([
       this.serverOptions().length ? Promise.resolve() : this.loadServers(),
       this.customerOptions().length ? Promise.resolve() : this.loadCustomers(),
+      this.isMaster() || this.cyberAccountOptions().length
+        ? Promise.resolve()
+        : this.loadCyberAccounts(),
     ]);
     return super.fetchItems(filters);
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const owner = this.isMaster()
+      ? { customerUUID: payload['customerUUID'] }
+      : { cyberAccountUUID: payload['cyberAccountUUID'] };
     return {
       name: payload['name'],
       serverUUID: payload['serverUUID'],
-      customerUUID: payload['customerUUID'],
+      ...owner,
       status: payload['status'],
       notes: payload['notes'],
     };
@@ -209,7 +274,11 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   private async loadLookups(): Promise<void> {
     this.lookupsLoading.set(true);
     try {
-      await Promise.all([this.loadServers(), this.loadCustomers()]);
+      await Promise.all([
+        this.loadServers(),
+        this.loadCustomers(),
+        this.isMaster() ? Promise.resolve() : this.loadCyberAccounts(),
+      ]);
     } finally {
       this.lookupsLoading.set(false);
     }
@@ -230,6 +299,13 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
       ]),
     );
     this.customerOptions.set(options);
+  }
+
+  private async loadCyberAccounts(): Promise<void> {
+    const options = await this.fetchPaged('cyber-security/accounts?status=1', (row) =>
+      option(row.CyaUUID, row.CyaName, [row.CustomerName]),
+    );
+    this.cyberAccountOptions.set(options);
   }
 
   private async fetchPaged(
