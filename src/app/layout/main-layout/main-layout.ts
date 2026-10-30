@@ -557,7 +557,8 @@ export class MainLayout {
     if (!this.isDesktopCompact()) return null;
     const id = this.compactHoverRootId();
     if (!id) return null;
-    return this.localizedNavItems().find((item) => item.id === id) ?? null;
+    // Titled menu, so the flyouts show the category titles too.
+    return this.sectionedNavItems().find((item) => item.id === id) ?? null;
   });
 
   readonly compactHoverChildItem = computed(() => {
