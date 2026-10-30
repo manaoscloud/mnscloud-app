@@ -62,10 +62,18 @@ describe('ApiService auth and tenant context', () => {
 
   it('uses the selected tenant for membership, profiles and effective permissions after switching', async () => {
     localStorage.setItem('mc_current_env', '22222222-2222-2222-2222-222222222222');
-    for (const endpoint of ['user/me', 'user/access/members', 'user/access/invites', 'user/access/roles?limit=500', 'user/permissions/roles']) {
+    for (const endpoint of [
+      'user/me',
+      'user/access/members',
+      'user/access/invites',
+      'user/access/roles?limit=500',
+      'user/permissions/roles',
+    ]) {
       const pending = api.get(endpoint);
       const req = http.expectOne('https://api.example.com/api/v1/' + endpoint);
-      expect(req.request.headers.get('X-Environment-UUID')).toBe('22222222-2222-2222-2222-222222222222');
+      expect(req.request.headers.get('X-Environment-UUID')).toBe(
+        '22222222-2222-2222-2222-222222222222',
+      );
       req.flush({ data: { items: [] } });
       await pending;
     }
