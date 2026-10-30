@@ -6250,6 +6250,8 @@
   "cyberSecurity.newAccount": "New cyber security account",
   "cyberSecurity.editAccount": "Edit cyber security account",
   "cyberSecurity.accountCustomerHelp": "Registered customer this account is resold to. Leave empty for an internal account; the customer cannot be changed later.",
+  "cyberSecurity.vaultAccountHelp": "Customer or internal account that owns this vault; the vault customer comes from the account, which cannot be changed later.",
+  "cyberSecurity.vaultDialogDescription": "Choose the cyber security account that owns the vault and the OpenVault server that stores it.",
   "cyberSecurity.portalEnabled": "Published in portal",
   "cyberSecurity.publication": "Portal publication",
   "cyberSecurity.publicationDescription": "Defines whether the end customer can follow this account in the Customer Portal.",
