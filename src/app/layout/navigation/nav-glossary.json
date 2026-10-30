@@ -171,7 +171,10 @@
       "call-center",
       "call-flow",
       "threats",
-      "protection"
+      "protection",
+      "web-filter",
+      "customers",
+      "help"
     ]
   },
   "smallListMax": 4,
