@@ -1,41 +1,21 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { of } from 'rxjs';
+import type { HttpClient } from '@angular/common/http';
 import { ApiService } from './api.service';
-import { AuthService } from './auth.service';
-import { SnackbarService } from './snackbar.service';
 import { ENV_STORAGE_KEY } from '../core/environment/environment-context';
+import { requestHeader, scopedApiTestBed } from './api-scope-bed.spec';
 
 describe('Registry workspace API client', () => {
-  const tenant = '11111111-1111-4111-8111-111111111111';
   const workspaceA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   const workspaceB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-  let generation: number;
+  let generation = { generation: 1 };
   let http: jasmine.SpyObj<HttpClient>;
   let api: ApiService;
   beforeEach(() => {
-    localStorage.removeItem(ENV_STORAGE_KEY);
-    generation = 1;
-    http = jasmine.createSpyObj('HttpClient', ['get', 'request']);
-    http.get.and.returnValue(of({}));
-    http.request.and.returnValue(of({}));
-    const auth = {
-      user: () => ({ uuid: 'actor', EnvironmentUUID: tenant }),
-      isLoggedIn: () => true,
-      sessionGeneration: () => generation,
-    } as unknown as AuthService;
-    TestBed.configureTestingModule({
-      providers: [
-        { provide: HttpClient, useValue: http },
-        { provide: AuthService, useValue: auth },
-        { provide: SnackbarService, useValue: {} },
-      ],
-    });
-    api = TestBed.inject(ApiService);
+    const bed = scopedApiTestBed();
+    ({ api, http } = bed);
+    generation = bed.state;
   });
   afterEach(() => localStorage.removeItem(ENV_STORAGE_KEY));
-  const header = (call: jasmine.CallInfo<any>) =>
-    (call.args[1] as { headers: HttpHeaders }).headers.get('X-Registry-Workspace-UUID');
+  const header = requestHeader('X-Registry-Workspace-UUID');
   it('keeps simultaneous client scopes separate and excludes legacy module requests', async () => {
     const a = api.withRegistryWorkspace(workspaceA);
     const b = api.withRegistryWorkspace(workspaceB);
@@ -55,7 +35,7 @@ describe('Registry workspace API client', () => {
     localStorage.setItem(ENV_STORAGE_KEY, workspaceB);
     await expectAsync(scoped.get('registry/employees')).toBeRejectedWithError('Session changed.');
     localStorage.removeItem(ENV_STORAGE_KEY);
-    generation++;
+    generation.generation++;
     await expectAsync(scoped.get('registry/employees')).toBeRejectedWithError('Session changed.');
     expect(http.get).not.toHaveBeenCalled();
   });

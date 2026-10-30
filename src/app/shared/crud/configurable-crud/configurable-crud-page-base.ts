@@ -1,5 +1,7 @@
 import { registryWorkspaceErrorMessage } from '../../registry/registry-workspace-error';
 import { registryWorkspaceApi } from './registry-workspace-api';
+import { commerceAccountApi } from './commerce-account-api';
+import { commerceAccountErrorMessage } from '../../commerce/commerce-account-error';
 import { crudReportMask } from './crud-report-mask';
 import { PhoneDialer } from '../../phone-dock/phone-dialer';
 import { generateCrudPassword } from './password-generation';
@@ -1150,6 +1152,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly registryWorkspacePage = computed(() =>
     ApiService.isRegistryWorkspaceEndpoint(this.config.endpoint),
   );
+  readonly commerceAccountUUID = signal<string | null>(null);
+  readonly commerceAccountInfo = resource({
+    params: () => this.commerceAccountUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: { item: ConfigurableCrudRecord } }>(
+        `sale/accounts/${params}`,
+      );
+      return response.data.item;
+    },
+  });
+  /** Sales pages state their account; the reseller's Registry customer list stays unlabeled. */
+  readonly commerceAccountPage = computed(
+    () =>
+      ApiService.isCommerceAccountEndpoint(this.config.endpoint) &&
+      !/^\/?registry\//.test(this.config.endpoint),
+  );
   readonly canCreate = computed(
     () =>
       !this.config.readOnly &&
@@ -1168,8 +1187,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
 
   protected constructor(config: ConfigurableCrudConfig) {
-    this.api = config.requestApi ?? registryWorkspaceApi(config.endpoint);
+    this.api =
+      config.requestApi ??
+      commerceAccountApi(config.endpoint) ??
+      registryWorkspaceApi(config.endpoint);
     this.registryWorkspaceUUID.set(this.api.registryWorkspaceUUID);
+    this.commerceAccountUUID.set(this.api.commerceAccountUUID);
     this.config = config;
     this.viewStorageKey = crudViewStorageKey(config.endpoint);
     this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
@@ -1292,6 +1315,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   /** Explicit parent destination; never relies on browser history. */
   backLink(): string | null {
+    if (this.commerceAccountUUID() && this.commerceAccountPage()) return '/sale/accounts';
     return this.registryWorkspaceUUID() && this.registryWorkspacePage()
       ? '/registry/workspaces'
       : null;
@@ -4049,6 +4073,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected errorMessage(error: unknown): string {
     const workspaceMessage = registryWorkspaceErrorMessage(error);
     if (workspaceMessage) return workspaceMessage;
+    const commerceMessage = commerceAccountErrorMessage(error);
+    if (commerceMessage) return commerceMessage;
     const payMessage = payErrorMessage(error);
     if (payMessage) return payMessage;
     const billing = billingErrorText(error);

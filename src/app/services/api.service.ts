@@ -39,6 +39,34 @@ export class ApiService {
     return this.registryScope?.uuid ?? null;
   }
 
+  private commerceScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
+
+  /** Isolated client for one opened commerce account (Sales catalog, prices, quotations, buyers). */
+  withCommerceAccount(uuid: string): ApiService {
+    const normalized = normalizeEnvironmentUUID(uuid);
+    if (!normalized) throw new Error('Invalid commerce account.');
+    const client = runInInjectionContext(this.injector, () => new ApiService());
+    client.commerceScope = {
+      uuid: normalized,
+      environment: this.currentEnvironmentUUID(),
+      session: this.auth.sessionGeneration(),
+    };
+    return client;
+  }
+
+  get commerceAccountUUID(): string | null {
+    return this.commerceScope?.uuid ?? null;
+  }
+
+  /** Sales resources (account administration excluded) and their Registry buyers. */
+  static isCommerceAccountEndpoint(endpoint: string): boolean {
+    const path = endpoint.replace(/^\//, '');
+    return (
+      (/^sale\//.test(path) && !/^sale\/accounts([/?]|$)/.test(path)) ||
+      /^registry\/customers([/?]|$)/.test(path)
+    );
+  }
+
   static isRegistryWorkspaceEndpoint(endpoint: string): boolean {
     return /^\/?registry\/(companies|employees|departments|positions|cost-centers)([/?]|$)/.test(
       endpoint,
@@ -67,6 +95,17 @@ export class ApiService {
       }
       if (ApiService.isRegistryWorkspaceEndpoint(endpoint))
         headers['X-Registry-Workspace-UUID'] = this.registryScope.uuid;
+    }
+
+    if (this.commerceScope) {
+      if (
+        this.commerceScope.environment !== environmentUUID ||
+        this.commerceScope.session !== this.auth.sessionGeneration()
+      ) {
+        throw new Error('Session changed.');
+      }
+      if (ApiService.isCommerceAccountEndpoint(endpoint))
+        headers['X-Commerce-Account-UUID'] = this.commerceScope.uuid;
     }
 
     // 🔹 Environment atual (multi-tenant)
@@ -207,6 +246,7 @@ export class ApiService {
       endpoint,
       headers.get('X-Environment-UUID'),
       headers.get('X-Registry-Workspace-UUID'),
+      headers.get('X-Commerce-Account-UUID'),
       this.auth.user()?.uuid,
       session,
       isFormData ? crypto.randomUUID() : (body ?? null),

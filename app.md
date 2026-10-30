@@ -2369,3 +2369,19 @@ or session invalidates the captured client. Include workspace identity in mutati
 Embedded collections and canonical quick-create inherit `requestApi`; callback-based file reads
 and document actions must use the same client. Never keep selection in a global mutable header.
 The API/DB remain responsible for current permissions, customer state and FK isolation.
+
+## Commerce account request scope
+
+`sale/accounts` (Vendas › Contas) manages the commercial accounts shared by Sales and POS: the
+reseller's internal account (automatic, never suspended or deleted) and one account per retail
+customer Registry workspace. Row actions open the canonical Sales pages (products, quotations,
+price lists, categories, brands, units) with `accountUUID`; operators use the shared resale
+assignment and collection actions (`resaleAccountRowActions`, publication off). Missing selection
+keeps the internal account, and every Sales page states the account it shows.
+
+`commerceAccountApi` captures the account, tenant and session when opening a Sales page. Its
+isolated ApiService sends `X-Commerce-Account-UUID` only to `sale/*` (except `sale/accounts`) and
+`registry/customers*`, so quotation buyer quick-create creates the buyer in the shop's workspace.
+POS, Stock, Fiscal and Financial requests stay internal until their own account phase. Embedded
+collections and canonical quick-create inherit `requestApi`; never keep the account in a global
+mutable header. The API/DB remain responsible for membership, account state and FK isolation.

@@ -1364,6 +1364,14 @@ export const routes: Routes = [
                 title: 'Sale • Price Lists | mnscloud',
               },
               {
+                path: 'sale/accounts',
+                loadComponent: () =>
+                  import('./pages/sales/account/account').then((m) => m.SaleAccountPage),
+                title: 'Sale • Accounts | mnscloud',
+                canActivate: [permissionGuard],
+                data: { permission: 'tenant.commerce.accounts.read' },
+              },
+              {
                 path: 'sale/quotation',
                 loadComponent: () =>
                   import('./pages/sales/quotation/quotation').then((m) => m.SaleQuotationPage),

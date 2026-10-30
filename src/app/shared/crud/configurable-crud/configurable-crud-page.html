@@ -3574,6 +3574,20 @@
 </ng-template>
 
 <ng-template #registryScopeLabel>
+  @if (commerceAccountPage()) {
+    <p>
+      {{ 'commerceAccount.context' | transloco }}:
+      @if (commerceAccountUUID()) {
+        {{
+          commerceAccountInfo.hasValue() && commerceAccountInfo.value()
+            ? commerceAccountInfo.value()?.['CmaName']
+            : ('commerceAccount.unavailable' | transloco)
+        }}
+      } @else {
+        {{ 'commerceAccount.internal' | transloco }}
+      }
+    </p>
+  }
   @if (registryWorkspacePage()) {
     <p>
       {{ 'registryWorkspace.context' | transloco }}:

@@ -124,6 +124,8 @@ export interface ResaleAccountActionOptions {
   operatorsTitle: string;
   operatorsDescription: string;
   canManage: () => boolean;
+  /** False while customer publication is not available for the module (portal off). */
+  publication?: boolean;
 }
 
 export function resaleAccountRowActions(
@@ -147,6 +149,7 @@ export function resaleAccountRowActions(
     operatorsTitle,
     operatorsDescription,
     canManage,
+    publication = true,
   } = options;
 
   return [
@@ -154,7 +157,7 @@ export function resaleAccountRowActions(
       key: 'publication',
       label: publicationLabel,
       icon: 'public',
-      visible: (row) => canManage() && row[kindField] === 'customer',
+      visible: (row) => publication && canManage() && row[kindField] === 'customer',
       form: (row) =>
         defineCrud({
           endpoint: `${module}/accounts/${row[uuidField]}/portal`,
