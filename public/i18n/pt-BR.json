@@ -6252,6 +6252,7 @@
   "cyberSecurity.editAccount": "Editar conta de cibersegurança",
   "cyberSecurity.accountCustomerHelp": "Cliente cadastrado para quem esta conta será revendida. Deixe vazio para uma conta de uso interno; o cliente não pode ser trocado depois.",
   "cyberSecurity.vaultAccountHelp": "Conta de cliente ou interna dona deste cofre; o cliente do cofre vem da conta e ela não pode ser trocada depois.",
+  "cyberSecurity.secretVaults": "Cofres",
   "cyberSecurity.vaultDialogDescription": "Escolha a conta de cibersegurança dona do cofre e o servidor OpenVault onde ele fica.",
   "cyberSecurity.portalEnabled": "Publicado no portal",
   "cyberSecurity.publication": "Publicação no portal",

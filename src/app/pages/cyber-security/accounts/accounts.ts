@@ -19,6 +19,7 @@ export const CYBER_SECURITY_ACCOUNTS_CONFIG = resaleAccountCrud({
   createTitle: 'cyberSecurity.newAccount',
   editTitle: 'cyberSecurity.editAccount',
   i18n: 'cyberSecurity',
+  extraColumns: [{ id: 'vaults', field: 'SecretVaultsCount', label: 'cyberSecurity.secretVaults' }],
 });
 
 @Component({
