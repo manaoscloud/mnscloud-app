@@ -1,4 +1,4 @@
-import { authenticationPayload } from '../authentication-input';
+import { authenticationPayload, authenticationRecordFields } from '../authentication-input';
 import { Component, inject } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
@@ -71,16 +71,7 @@ const config = defineCrud({
       disabledWhen: ({ editing }) => editing,
       help: 'authentication.accountCustomerHelp',
     },
-    { key: 'revision', source: 'AacRevision', label: 'Revision', type: 'number', hidden: true },
-    {
-      key: 'notes',
-      source: 'AacNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
+    ...authenticationRecordFields('Aac'),
   ],
   columns: [
     { id: 'name', field: 'AacName', label: 'Name', kind: 'identity' },
