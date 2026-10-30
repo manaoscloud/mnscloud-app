@@ -3,6 +3,7 @@
     <header class="dialog-header">
       <div>
         <h2>{{ config.pageTitle | transloco }}</h2>
+        <ng-container [ngTemplateOutlet]="registryScopeLabel" />
         @if (config.pageDescription) {
           <p>{{ config.pageDescription | transloco }}</p>
         }
@@ -54,6 +55,7 @@
       <div class="app-header">
         <div>
           <h1>{{ config.pageTitle | transloco }}</h1>
+          <ng-container [ngTemplateOutlet]="registryScopeLabel" />
           <p>{{ config.pageDescription | transloco }}</p>
         </div>
         <div class="header-actions">
@@ -947,6 +949,7 @@
     <div class="dialog-header">
       <div>
         <h2>{{ dialogTitle() | transloco }}</h2>
+        <ng-container [ngTemplateOutlet]="registryScopeLabel" />
         <p>{{ config.dialogDescription | transloco }}</p>
       </div>
       <mns-report-problem-button [context]="reportContext()" />
@@ -3568,4 +3571,21 @@
       </div>
     </div>
   </div>
+</ng-template>
+
+<ng-template #registryScopeLabel>
+  @if (registryWorkspacePage()) {
+    <p>
+      {{ 'registryWorkspace.context' | transloco }}:
+      @if (registryWorkspaceUUID()) {
+        {{
+          registryWorkspaceInfo.hasValue() && registryWorkspaceInfo.value()
+            ? registryWorkspaceInfo.value()?.['RwkName']
+            : ('registryWorkspace.unavailable' | transloco)
+        }}
+      } @else {
+        {{ 'registryWorkspace.internal' | transloco }}
+      }
+    </p>
+  }
 </ng-template>

@@ -1,3 +1,4 @@
+import type { ApiService } from '../../../services/api.service';
 import { InjectionToken, Type } from '@angular/core';
 
 import type {
@@ -10,6 +11,7 @@ import type {
  * the create form of a related FK select: no list, create dialog only, result returned here.
  */
 export type ConfigurableCrudQuickCreateSession = {
+  requestApi?: ApiService;
   initialValues?: Record<string, unknown>;
   complete(result: ConfigurableCrudQuickCreateResult): void;
 };
@@ -36,6 +38,12 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  RegWorkspaceRwkUUID: {
+    label: 'registryWorkspace.create',
+    loadComponent: () =>
+      import('../../../pages/registry/workspaces/workspaces').then((m) => m.RegWorkspacePage),
+    permission: 'tenant.registry.workspaces.all',
+  },
   AiProviderAipUUID: {
     label: 'Create AI provider',
     loadComponent: () =>

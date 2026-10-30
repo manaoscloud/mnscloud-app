@@ -2354,3 +2354,18 @@ quick-create. Industry forms select `RegEconomicSectorRecUUID`; CRM accounts and
 select `RegIndustryRinUUID` and filter by branch and derived sector. No duplicate CRM
 management page exists. Standard tenant records are persisted by the database onboarding
 and reconcile flow, never by opening a page.
+
+## Registry workspace request scope
+
+`registry/workspaces` manages one shared organizational workspace per reseller customer and an
+internal workspace for legacy records. Row actions open the canonical companies, employees,
+departments, positions and cost centers pages with `workspaceUUID`. The shared renderer displays
+the server-loaded workspace name. Missing selection retains internal behavior.
+
+`registryWorkspaceApi` captures the workspace, tenant and session when opening a canonical page.
+Its isolated ApiService sends `X-Registry-Workspace-UUID` only to those five Registry resource
+families (including company contacts/documents). Other modules remain internal. A changed tenant
+or session invalidates the captured client. Include workspace identity in mutation deduplication.
+Embedded collections and canonical quick-create inherit `requestApi`; callback-based file reads
+and document actions must use the same client. Never keep selection in a global mutable header.
+The API/DB remain responsible for current permissions, customer state and FK isolation.

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject, runInInjectionContext } from '@angular/core';
 import { HttpClient, HttpEventType, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom, map, Observable, startWith } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -15,9 +15,35 @@ export type { FileUploadProgress, FileUploadPhase } from '../shared/upload/file-
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private http = inject(HttpClient);
-  private auth = inject(AuthService);
-  private snack = inject(SnackbarService);
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly snack = inject(SnackbarService);
+  private readonly injector = inject(Injector);
+
+  private registryScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
+
+  /** Isolated client for one opened Registry workspace, never shared mutable application state. */
+  withRegistryWorkspace(uuid: string): ApiService {
+    const normalized = normalizeEnvironmentUUID(uuid);
+    if (!normalized) throw new Error('Invalid Registry workspace.');
+    const client = runInInjectionContext(this.injector, () => new ApiService());
+    client.registryScope = {
+      uuid: normalized,
+      environment: this.currentEnvironmentUUID(),
+      session: this.auth.sessionGeneration(),
+    };
+    return client;
+  }
+
+  get registryWorkspaceUUID(): string | null {
+    return this.registryScope?.uuid ?? null;
+  }
+
+  static isRegistryWorkspaceEndpoint(endpoint: string): boolean {
+    return /^\/?registry\/(companies|employees|departments|positions|cost-centers)([/?]|$)/.test(
+      endpoint,
+    );
+  }
 
   private currentEnvironmentUUID(): string | null {
     const envFromStorage = readStoredEnvironmentUUID();
@@ -31,6 +57,17 @@ export class ApiService {
     const headers: Record<string, string> = {
       Accept: 'application/json',
     };
+
+    if (this.registryScope) {
+      if (
+        this.registryScope.environment !== environmentUUID ||
+        this.registryScope.session !== this.auth.sessionGeneration()
+      ) {
+        throw new Error('Session changed.');
+      }
+      if (ApiService.isRegistryWorkspaceEndpoint(endpoint))
+        headers['X-Registry-Workspace-UUID'] = this.registryScope.uuid;
+    }
 
     // 🔹 Environment atual (multi-tenant)
     if (environmentUUID && this.sendsEnvironment(endpoint)) {
@@ -169,6 +206,7 @@ export class ApiService {
       method,
       endpoint,
       headers.get('X-Environment-UUID'),
+      headers.get('X-Registry-Workspace-UUID'),
       this.auth.user()?.uuid,
       session,
       isFormData ? crypto.randomUUID() : (body ?? null),

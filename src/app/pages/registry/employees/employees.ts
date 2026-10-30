@@ -1,5 +1,4 @@
-import { Component, inject, resource } from '@angular/core';
-import { ApiService } from '../../../services/api.service';
+import { Component, resource } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
@@ -124,7 +123,7 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class RegEmployeesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly lookupApi = inject(ApiService);
+  private readonly lookupApi = this.api;
 
   // List filter options for company, department and position (active records only).
   private readonly filterOptions = resource({
