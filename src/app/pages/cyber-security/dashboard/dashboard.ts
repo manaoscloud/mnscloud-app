@@ -1,5 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ApiService } from '../../../services/api.service';
@@ -25,6 +25,9 @@ type CyberSummary = Partial<{
 export class CyberSecurityDashboardPage {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  /** Counters of one Cyber Security account (opened from Customer accounts); empty = every account. */
+  readonly cyberAccountUUID = inject(ActivatedRoute).snapshot.queryParamMap.get('cyberAccountUUID');
+  readonly cyberAccountName = signal('');
   readonly snapshot = dashboardResource({
     defaultValue: {} as CyberSummary,
     loader: async () => {
@@ -32,8 +35,16 @@ export class CyberSecurityDashboardPage {
       // platform-wide route.
       const endpoint = this.router.url.startsWith('/system/cyber-security')
         ? 'system/cyber-security/dashboard'
-        : 'cyber-security/dashboard';
+        : this.cyberAccountUUID
+          ? `cyber-security/dashboard?cyberAccountUUID=${encodeURIComponent(this.cyberAccountUUID)}`
+          : 'cyber-security/dashboard';
       const result = await this.api.get<{ data: CyberSummary }>(endpoint, { timeout: 30000 });
+      if (this.cyberAccountUUID && !endpoint.startsWith('system/')) {
+        const account = await this.api.get<{ data?: { CyaName?: string } }>(
+          `cyber-security/accounts/${encodeURIComponent(this.cyberAccountUUID)}`,
+        );
+        this.cyberAccountName.set(account?.data?.CyaName ?? '');
+      }
       if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data))
         throw new Error('Invalid dashboard response');
       return result.data;

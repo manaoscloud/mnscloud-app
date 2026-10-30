@@ -6,6 +6,13 @@
   [hasData]="snapshot.hasData()"
   (refresh)="snapshot.reload()"
 >
+  @if (cyberAccountUUID) {
+    <p class="dashboard-account">
+      {{ 'cyberSecurity.account' | transloco }}:
+      <strong>{{ cyberAccountName() || cyberAccountUUID }}</strong>
+      <a routerLink="/cyber-security">{{ 'cyberSecurity.allAccounts' | transloco }}</a>
+    </p>
+  }
   <div class="dashboard-grid">
     @for (item of dashboardKpis(); track item.label) {
       <article class="dashboard-metric">
