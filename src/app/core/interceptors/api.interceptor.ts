@@ -1,4 +1,5 @@
 import { registryWorkspaceErrorMessage } from '../../shared/registry/registry-workspace-error';
+import { commerceAccountErrorMessage } from '../../shared/commerce/commerce-account-error';
 import { isRuntimeTokenReplaceConfirmationRequired } from '../../shared/install-command-dialog/runtime-install-token';
 import { payErrorMessage } from '../../shared/payment/pay-error';
 import { billingErrorMessage } from '../../shared/billing/billing-error';
@@ -234,6 +235,7 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
       // Billing codes first: their requiredEntitlement must not fall into the generic entitlement text.
       const commercialMessage =
         registryWorkspaceErrorMessage(error) ??
+        commerceAccountErrorMessage(error) ??
         payErrorMessage(error) ??
         billingErrorMessage(error) ??
         entitlementErrorMessage(error);

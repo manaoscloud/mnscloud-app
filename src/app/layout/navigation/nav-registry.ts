@@ -191,6 +191,16 @@ export const NAV_ITEMS: NavItem[] = [
         category: 'registry',
         route: '/sale/price-list',
       },
+      {
+        id: 'sale/accounts',
+        label: 'nav.sale.accounts',
+        icon: 'storefront',
+        // Customer accounts belong to Revenda, but "Revenda" repeats the stem of "Vendas"
+        // (check:nav); base commercial data stays with the catalog under Cadastros.
+        category: 'registry',
+        route: '/sale/accounts',
+        permissions: ['tenant.commerce.accounts.read'],
+      },
     ],
   },
   {

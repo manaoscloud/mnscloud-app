@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1b40e00de55e",
+  "version": "5f0067faa94e",
   "language": "pt-BR",
   "entries": [
     {
@@ -5147,6 +5147,35 @@
         {
           "label": "Cliente",
           "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/sale/accounts",
+      "menuPath": "Vendas › Contas",
+      "scope": "tenant",
+      "title": "Contas comerciais",
+      "description": "Separe catálogo, preços, compradores e orçamentos de cada loja de cliente da revenda, mantendo a conta interna.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Espaço de cadastros",
+          "help": "Espaço do cliente da revenda em Cadastros › Espaços. A conta interna é criada automaticamente."
         },
         {
           "label": "Descrição",
