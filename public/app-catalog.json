@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "711ad4974655",
+  "version": "361b50e3ac10",
   "language": "pt-BR",
   "entries": [
     {
@@ -1772,9 +1772,9 @@
     },
     {
       "route": "/financial/gateway-accounts",
-      "menuPath": "Financeiro › Gateways de pagamento",
+      "menuPath": "Financeiro › Gateways",
       "scope": "tenant",
-      "title": "Gateways de pagamento",
+      "title": "Gateways",
       "description": "",
       "fields": []
     },
@@ -1858,7 +1858,7 @@
     },
     {
       "route": "/financial/payment-methods",
-      "menuPath": "Financeiro › Métodos de pagamento",
+      "menuPath": "Financeiro › Meios de pagamento",
       "scope": "tenant",
       "title": "Métodos de pagamento",
       "description": "Formas como seus clientes podem pagar, usadas em contas a receber e faturas.",
@@ -2815,7 +2815,7 @@
     },
     {
       "route": "/hosting/webhost/database-grants",
-      "menuPath": "Hospedagem › Webhosts › Bancos de dados › Permissões",
+      "menuPath": "Hospedagem › Webhosts › Bancos › Permissões",
       "scope": "tenant",
       "title": "Permissões",
       "description": "Gerencie bancos, usuários e acessos da hospedagem.",
@@ -2856,7 +2856,7 @@
     },
     {
       "route": "/hosting/webhost/database-users",
-      "menuPath": "Hospedagem › Webhosts › Bancos de dados › Usuários",
+      "menuPath": "Hospedagem › Webhosts › Bancos › Usuários",
       "scope": "tenant",
       "title": "Usuários",
       "description": "Gerencie bancos, usuários e acessos da hospedagem.",
@@ -2897,7 +2897,7 @@
     },
     {
       "route": "/hosting/webhost/databases",
-      "menuPath": "Hospedagem › Webhosts › Bancos de dados › Lista",
+      "menuPath": "Hospedagem › Webhosts › Bancos › Lista",
       "scope": "tenant",
       "title": "Lista",
       "description": "Gerencie bancos, usuários e acessos da hospedagem.",
@@ -3725,9 +3725,9 @@
     },
     {
       "route": "/infragis/transfer",
-      "menuPath": "InfraGIS › Importação/exportação",
+      "menuPath": "InfraGIS › Transferência",
       "scope": "tenant",
-      "title": "Importação/exportação",
+      "title": "Transferência",
       "description": "Importe ativos de GeoJSON, KML/KMZ, CSV ou Shapefile e exporte nos mesmos formatos.",
       "fields": [
         {

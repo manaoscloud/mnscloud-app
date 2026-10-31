@@ -11,6 +11,7 @@ import ts from 'typescript';
 export const REGISTRY_PATH = 'src/app/layout/navigation/nav-registry.ts';
 export const GLOSSARY_PATH = 'src/app/layout/navigation/nav-glossary.json';
 export const SECTIONS_PATH = 'src/app/layout/navigation/nav-sections.ts';
+export const WIDTHS_PATH = 'src/app/layout/navigation/nav-label-widths.json';
 
 export function navLabelKey(id) {
   return `nav.${id.replace(/\//g, '.')}`;
@@ -363,6 +364,146 @@ export function validateNavigation({ items, dictionaries, glossary }) {
   return errors;
 }
 
+/**
+ * Display tree of the expanded sidebar, as `withCategoryGroups` (nav-sections.ts) builds it: in
+ * every group, a category with 2+ entries becomes a group row; a single-entry category is inline.
+ */
+export function sidebarView(items, parentId = '') {
+  const sizes = new Map();
+  for (const item of items) {
+    if (item.category) sizes.set(item.category, (sizes.get(item.category) ?? 0) + 1);
+  }
+  const out = [];
+  const groups = new Map();
+  for (const item of items) {
+    const node = {
+      ...item,
+      children: item.children ? sidebarView(item.children, item.id) : undefined,
+    };
+    if (parentId && item.category && sizes.get(item.category) > 1) {
+      if (!groups.has(item.category)) {
+        const group = {
+          id: `${parentId}/@${item.category}`,
+          label: navCategoryKey(item.category),
+          categoryGroup: true,
+          children: [],
+        };
+        groups.set(item.category, group);
+        out.push(group);
+      }
+      groups.get(item.category).children.push(node);
+    } else out.push(node);
+  }
+  return out;
+}
+
+/**
+ * Rows that open (inner groups and category groups) are one word in every locale: they carry a
+ * chevron, and a category group also its page count, so a second word is what gets cut. Root
+ * modules keep their product names (checked by width only).
+ */
+export function validateSingleWordGroups({ items, dictionaries, glossary }) {
+  const errors = [];
+  const keys = new Map();
+  const visit = (list, depth) => {
+    for (const item of list) {
+      if (item.categoryGroup || (depth > 0 && item.children?.length)) keys.set(item.label, item.id);
+      if (item.children) visit(item.children, depth + 1);
+    }
+  };
+  visit(sidebarView(items), 0);
+  for (const locale of glossary.locales) {
+    for (const [key, id] of keys) {
+      const label = dictionaries[locale]?.[key];
+      if (typeof label === 'string' && /\s/.test(label.trim())) {
+        errors.push(
+          `[${locale}] ${id}: "${label}" opens a group and must be one word (app.md → Navigation Label Contract 5)`,
+        );
+      }
+    }
+  }
+  return errors;
+}
+
+const textWidth = (text, glyphs, fontPx) => {
+  const widest = Math.max(...Object.values(glyphs));
+  let em = 0;
+  for (const char of text) em += glyphs[char] ?? widest;
+  return em * fontPx;
+};
+
+/**
+ * No label is truncated (app.md → Navigation Label Contract 5): every row of the expanded sidebar
+ * (category groups included, at their real indentation) and of the compact flyouts is measured with
+ * the Roboto glyph advances and layout of nav-label-widths.json, in every locale.
+ */
+export function validateLabelWidths({ items, dictionaries, glossary, widths }) {
+  const errors = [];
+  const { sidebar, flyout, safetyPx } = widths;
+  const check = (locale, id, label, need, have, where) => {
+    if (need + safetyPx > have) {
+      errors.push(
+        `[${locale}] ${id}: "${label}" needs ${Math.ceil(need)}px but the ${where} row has ${Math.floor(have)}px (app.md → Navigation Label Contract 5); shorten it`,
+      );
+    }
+  };
+  for (const locale of glossary.locales) {
+    const dict = dictionaries[locale] ?? {};
+    const expanded = (list, depth, indent) => {
+      for (const item of list) {
+        const label = dict[item.label];
+        if (typeof label !== 'string') continue;
+        const opens = Boolean(item.children?.length);
+        let have = sidebar.width - sidebar.reserve - indent - sidebar.rowChrome;
+        if (opens) have -= sidebar.chevron;
+        if (item.categoryGroup) {
+          have -= sidebar.countMargin + String(item.children.length).length * sidebar.countDigitPx;
+        }
+        check(
+          locale,
+          item.id,
+          label,
+          textWidth(label, widths.glyphs500, sidebar.fontPx),
+          have,
+          'sidebar',
+        );
+        if (!opens) continue;
+        const wrapper = item.categoryGroup
+          ? 'category'
+          : depth === 0
+            ? 'children'
+            : depth === 1
+              ? 'grand'
+              : 'great';
+        expanded(item.children, depth + 1, indent + sidebar.wrappers[wrapper]);
+      }
+    };
+    expanded(sidebarView(items), 0, 0);
+
+    const flyouts = (list) => {
+      for (const item of list) {
+        const label = dict[item.label];
+        if (typeof label === 'string') {
+          const opens = Boolean(item.children?.length);
+          const have =
+            flyout.width - flyout.reserve - flyout.rowChrome - (opens ? flyout.chevron : 0);
+          check(
+            locale,
+            item.id,
+            label,
+            textWidth(label, widths.glyphs400, flyout.fontPx),
+            have,
+            'compact flyout',
+          );
+        }
+        if (item.children) flyouts(item.children);
+      }
+    };
+    for (const root of items) if (root.children) flyouts(root.children);
+  }
+  return errors;
+}
+
 export function validateNavigationAt(root) {
   const glossary = JSON.parse(readFileSync(resolve(root, GLOSSARY_PATH), 'utf8'));
   const items = readRegistry(readFileSync(resolve(root, REGISTRY_PATH), 'utf8'));
@@ -376,6 +517,13 @@ export function validateNavigationAt(root) {
     errors: [
       ...validateNavigation({ items, dictionaries, glossary }),
       ...validateCategoryIcons(icons, glossary),
+      ...validateSingleWordGroups({ items, dictionaries, glossary }),
+      ...validateLabelWidths({
+        items,
+        dictionaries,
+        glossary,
+        widths: JSON.parse(readFileSync(resolve(root, WIDTHS_PATH), 'utf8')),
+      }),
     ],
     items,
   };

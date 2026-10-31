@@ -112,7 +112,14 @@ allowlist — fix the label or the tree.
 Atribuições, Acúmulos`.
 5. **Length budget** (longest of PT/EN/ES, in characters): level 1 ≤ 24, level 2 ≤ 22,
    level 3 ≤ 18, level 4 ≤ 16; aim for ≤ 16 everywhere. No label may be truncated in any locale
-   at 260px desktop, the compact flyout or 360px mobile.
+   at 260px desktop, the compact flyout or 360px mobile: `check:nav` measures every row with the
+   Roboto glyph advances and layout of `layout/navigation/nav-label-widths.json` (category groups
+   at their real indentation, with chevron and page count) and fails a label that does not fit.
+   A row that **opens** (an inner group or a category group) is **one word** in every locale (an
+   acronym or product term counts as one word; user decision 2026-10-31): `Pessoas`, `Fluxos`,
+   `Bancos`, never `Pessoas e empresas`. Root modules keep their product names and are only
+   measured. A change to the sidebar CSS (`main-layout.scss` indentation, `_nav-sections.scss`)
+   updates the same values in `nav-label-widths.json`.
 6. **Shortening order**: drop context already given by an ancestor → drop prepositions and
    qualifiers → use the glossary's short term → use an established acronym (DNS, CDR, URA).
    Never invent abbreviations (`Config.`, `Prior.`).
