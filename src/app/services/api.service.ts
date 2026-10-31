@@ -77,12 +77,19 @@ export class ApiService {
     return this.commerceScope?.uuid ?? null;
   }
 
-  /** Sales resources (account administration excluded) and their Registry buyers. */
+  /**
+   * Sales resources (account administration excluded), their Registry buyers and the shop's Stock,
+   * Financial titles/gateways, Fiscal and Accounting. Tenant catalogs stay unscoped.
+   */
   static isCommerceAccountEndpoint(endpoint: string): boolean {
     const path = endpoint.replace(/^\//, '');
     return (
       (/^sale\//.test(path) && !/^sale\/accounts([/?]|$)/.test(path)) ||
-      /^registry\/customers([/?]|$)/.test(path)
+      /^registry\/customers([/?]|$)/.test(path) ||
+      /^(stock|fiscal|accounting)\//.test(path) ||
+      /^financial\/(gateway-accounts|payables|payment-charges|receivables|settlements)([/?]|$)/.test(
+        path,
+      )
     );
   }
 
