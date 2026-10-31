@@ -105,6 +105,12 @@ const GRANTS: readonly [string, string][] = [
   ['HpgTimesheets', 'hrAccount.grantTimesheets'],
 ];
 
+const PORTAL_ROLES = [
+  { value: 'CUSTOMER_OWNER', label: 'hrAccount.portalRoleOwner' },
+  { value: 'CUSTOMER_ADMIN', label: 'hrAccount.portalRoleAdmin' },
+  { value: 'CUSTOMER_USER', label: 'hrAccount.portalRoleUser' },
+] as const;
+
 /** Customer Portal users of the account's customer and the HR operations each one may read. */
 function portalAccessConfig(row: ConfigurableCrudRecord) {
   const base = `hr/accounts/${row['HraUUID']}`;
@@ -164,7 +170,7 @@ function portalAccessConfig(row: ConfigurableCrudRecord) {
     ],
     columns: [
       { id: 'user', field: 'PortalUsername', label: 'hrAccount.portalUser', kind: 'identity' },
-      { id: 'role', field: 'PortalRole', label: 'hrAccount.portalRole' },
+      { id: 'role', field: 'PortalRole', label: 'hrAccount.portalRole', options: PORTAL_ROLES },
       ...GRANTS.map(([field, label]) => ({
         id: field,
         field,
