@@ -4,6 +4,7 @@ import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -82,9 +83,97 @@ const config = defineCrud({
       kind: 'number',
     },
     { id: 'service', field: 'ServiceAvailable', label: 'hrAccount.inService', kind: 'boolean' },
+    {
+      id: 'publication',
+      field: 'HraPortalEnabled',
+      label: 'hrAccount.portalEnabled',
+      kind: 'boolean',
+    },
     { id: 'status', field: 'HraStatus', label: 'Status', kind: 'status' },
   ],
 });
+
+const YES_NO: readonly ConfigurableCrudOption[] = [
+  { value: 0, label: 'No' },
+  { value: 1, label: 'Yes' },
+];
+const GRANTS: readonly [string, string][] = [
+  ['HpgDashboard', 'hrAccount.grantDashboard'],
+  ['HpgEmployees', 'hrAccount.grantEmployees'],
+  ['HpgSchedules', 'hrAccount.grantSchedules'],
+  ['HpgTimesheets', 'hrAccount.grantTimesheets'],
+];
+
+/** Customer Portal users of the account's customer and the HR operations each one may read. */
+function portalAccessConfig(row: ConfigurableCrudRecord) {
+  const base = `hr/accounts/${row['HraUUID']}`;
+  return defineCrud({
+    endpoint: `${base}/portal-grants`,
+    uuidField: 'HpgUUID',
+    pageTitle: 'hrAccount.portalAccess',
+    pageDescription: 'hrAccount.portalAccessDescription',
+    createTitle: 'hrAccount.portalAccessCreate',
+    editTitle: 'hrAccount.portalAccessEdit',
+    emptyLabel: 'hrAccount.portalAccessEmpty',
+    bulkDelete: false,
+    ...revisionDeletePayloads('HpgUUID', 'HpgRevision'),
+    initialValues: {
+      RegCustomerUserRcsUUID: '',
+      HpgDashboard: 1,
+      HpgEmployees: 1,
+      HpgSchedules: 0,
+      HpgTimesheets: 0,
+      status: 1,
+    },
+    fields: [
+      { key: 'status', source: 'HpgStatus', label: 'Status', type: 'status', span: 1 },
+      {
+        key: 'RegCustomerUserRcsUUID',
+        source: 'RegCustomerUserRcsUUID',
+        label: 'hrAccount.portalUser',
+        type: 'search-select',
+        required: true,
+        span: 1,
+        disabledWhen: ({ editing }) => editing,
+        remoteLookup: {
+          endpoint: `${base}/portal-users`,
+          uuidField: 'RcsUUID',
+          labelField: 'RcsUsername',
+          descriptionField: 'RcsRole',
+          selectedLabelField: 'PortalUsername',
+        },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Portal users are the customer logins managed in Registry > Customers.',
+      },
+      ...GRANTS.map(([key, label]) => ({
+        key,
+        source: key,
+        label,
+        type: 'select' as const,
+        span: 1 as const,
+        options: YES_NO,
+      })),
+      {
+        key: 'revision',
+        source: 'HpgRevision',
+        label: 'documents.revision',
+        hiddenWhen: () => true,
+      },
+    ],
+    columns: [
+      { id: 'user', field: 'PortalUsername', label: 'hrAccount.portalUser', kind: 'identity' },
+      { id: 'role', field: 'PortalRole', label: 'hrAccount.portalRole' },
+      ...GRANTS.map(([field, label]) => ({
+        id: field,
+        field,
+        label,
+        kind: 'boolean' as const,
+      })),
+      { id: 'status', field: 'HpgStatus', label: 'Status', kind: 'status' },
+    ],
+  });
+}
 
 const PAGES: readonly [string, string, string, string][] = [
   ['dashboard', 'nav.hr.dashboard', 'dashboard', 'tenant.hr.timesheets.read'],
@@ -155,17 +244,24 @@ export class HrAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
           kindField: 'HraKind',
           memberUuidField: 'HamUUID',
           memberStatusField: 'HamStatus',
-          publicationLabel: 'hrAccount.title',
-          publicationTitle: 'hrAccount.title',
-          publicationDescription: 'hrAccount.description',
-          portalEnabledLabel: 'hrAccount.title',
+          publicationLabel: 'hrAccount.publication',
+          publicationTitle: 'hrAccount.publication',
+          publicationDescription: 'hrAccount.publicationDescription',
+          portalEnabledLabel: 'hrAccount.portalEnabled',
           assignLabel: 'hrAccount.assignOperator',
           assignTitle: 'hrAccount.assignOperator',
           operatorsLabel: 'hrAccount.operators',
           operatorsTitle: 'hrAccount.operators',
           operatorsDescription: 'hrAccount.operatorsDescription',
           canManage,
-        }).filter((action) => action.key !== 'publication'),
+        }),
+        {
+          key: 'portalAccess',
+          label: 'hrAccount.portalAccess',
+          icon: 'badge',
+          visible: (row) => canManage() && row['HraKind'] === 'customer',
+          collection: (row) => portalAccessConfig(row),
+        },
       ],
     });
   }
