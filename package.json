@@ -59,7 +59,7 @@
     "@xmldom/xmldom": "0.9.12",
     "fflate": "0.8.3",
     "html2canvas-pro": "^2.5.0",
-    "maplibre-gl": "6.13.0",
+    "maplibre-gl": "6.16.0",
     "pmtiles": "4.5.0",
     "rxjs": "~7.8.0",
     "shpjs": "6.2.0",
