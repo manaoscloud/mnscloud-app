@@ -143,7 +143,6 @@ const config = defineCrud({
       quickCreate: false,
       quickCreateExemptReason:
         'Agents enroll from the host installer; they cannot be created from a form.',
-      span: 2,
     },
     {
       key: 'product',
@@ -187,7 +186,6 @@ const config = defineCrud({
       type: 'select',
       options: RESOLUTION_OPTIONS,
       hiddenWhen: ({ values }) => stage(values) !== 'plan',
-      span: 2,
     },
     {
       key: 'planDigest',
@@ -195,7 +193,6 @@ const config = defineCrud({
       label: 'Plan digest',
       hiddenWhen: ({ values }) => stage(values) !== 'apply',
       requiredWhen: ({ values }) => stage(values) === 'apply',
-      span: 4,
     },
     {
       key: 'desired',
@@ -206,7 +203,6 @@ const config = defineCrud({
       hiddenWhen: ({ values }) => stage(values) !== 'plan',
       requiredWhen: ({ values }) => stage(values) === 'plan',
       span: 4,
-      rows: 5,
     },
   ],
   rowActions: [

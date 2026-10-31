@@ -28,12 +28,13 @@ export const DOCUMENT_TYPES_CONFIG = defineCrud({
   fields: [
     { key: 'status', source: 'RdtStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'RdtName', label: 'Name', required: true, span: 1 },
+    // business-description: what the document type is, shown when classifying documents.
     {
       key: 'description',
       source: 'RdtDescription',
       label: 'Description',
       type: 'textarea',
-      span: 1,
+      span: 4,
     },
     ...(
       [

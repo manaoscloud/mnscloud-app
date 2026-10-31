@@ -24,11 +24,11 @@ const config = defineCrud({
   bulkDelete: false,
   ...revisionDeletePayloads('CmaUUID', 'CmaRevision'),
   canDeleteRow: (row) => row['CmaKind'] === 'customer',
-  initialValues: { workspaceUUID: null, name: '', description: '', status: 1 },
+  initialValues: { workspaceUUID: null, name: '', notes: '', status: 1 },
   payload: (values, editing) => {
     const payload: Record<string, unknown> = {
       name: values['name'],
-      description: String(values['description'] ?? '').trim() || null,
+      notes: String(values['notes'] ?? '').trim() || null,
       status: Number(values['status'] ?? 1) === 0 ? 0 : 1,
     };
     if (editing) payload['revision'] = String(values['revision'] ?? '');
@@ -50,7 +50,6 @@ const config = defineCrud({
       source: 'RegWorkspaceRwkUUID',
       label: 'commerceAccount.workspace',
       type: 'search-select',
-      span: 2,
       help: 'commerceAccount.workspaceHelp',
       requiredWhen: ({ editing }) => !editing,
       disabledWhen: ({ editing }) => editing,
@@ -62,7 +61,14 @@ const config = defineCrud({
         selectedLabelField: 'WorkspaceName',
       },
     },
-    { key: 'description', source: 'CmaDescription', label: 'Description', type: 'textarea', span: 2 },
+    {
+      key: 'notes',
+      source: 'CmaNotes',
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+    },
     { key: 'revision', source: 'CmaRevision', label: 'documents.revision', hiddenWhen: () => true },
   ],
   columns: [

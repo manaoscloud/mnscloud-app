@@ -107,9 +107,8 @@ const config = defineCrud({
       type: 'search-select',
       options: DISPOSITIONS,
       translateOptions: true,
-      span: 2,
     },
-    { key: 'notes', source: 'VhkNotes', label: 'Notes', type: 'textarea', rows: 4, span: 4 },
+    { key: 'notes', source: 'VhkNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
     {
       key: 'customer',
       source: 'RegCustomerRcuUUID',
@@ -122,7 +121,6 @@ const config = defineCrud({
         labelField: 'Name',
         selectedLabelField: 'CustomerName',
       },
-      span: 4,
     },
     {
       key: 'contact',
@@ -135,7 +133,6 @@ const config = defineCrud({
         labelField: 'CcoName',
         selectedLabelField: 'CrmContactName',
       },
-      span: 2,
     },
     {
       key: 'lead',
@@ -148,7 +145,6 @@ const config = defineCrud({
         labelField: 'CleName',
         selectedLabelField: 'CrmLeadName',
       },
-      span: 2,
     },
   ],
   payload: (values) => ({

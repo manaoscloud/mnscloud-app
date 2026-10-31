@@ -104,7 +104,6 @@ const config = defineCrud({
         selectedLabelField: 'CustomerName',
       },
       quickCreate: quickCreateFor('RegCustomerRcuUUID'),
-      span: 2,
     },
     {
       key: 'companyUUID',
@@ -114,7 +113,6 @@ const config = defineCrud({
       required: true,
       remoteLookup: COMPANY_LOOKUP,
       help: 'Establishment that issues the receivables and the fiscal documents.',
-      span: 2,
     },
     {
       key: 'cycle',
@@ -148,7 +146,6 @@ const config = defineCrud({
         selectedLabelField: 'DueDayName',
       },
       help: 'With a rule, cycles follow the calendar month, are issued on its billing day and fall due on its fixed day; the first cycle is prorated.',
-      span: 2,
     },
     {
       key: 'paymentTermsDays',
@@ -166,7 +163,7 @@ const config = defineCrud({
       help: 'Days after the due date before the contract is suspended and its modules suspend their resources.',
       span: 1,
     },
-    { key: 'notes', source: 'BctNotes', label: 'Notes', type: 'textarea', rows: 3, span: 4 },
+    { key: 'notes', source: 'BctNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
     { key: 'revision', source: 'BctRevision', label: 'Revision', hidden: true },
   ],
   payload: (values, editing) => ({
@@ -259,14 +256,12 @@ const config = defineCrud({
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
-          span: 2,
         },
         {
           key: 'gedAccountUUID',
           source: 'BciSourceResourceUUID',
           label: 'ged.account',
           type: 'search-select',
-          span: 2,
           hiddenWhen: ({ values }) => values['module'] !== 'ged',
           requiredWhen: ({ values }) => values['module'] === 'ged',
           remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
@@ -284,14 +279,12 @@ const config = defineCrud({
             selectedLabelField: 'ProductName',
           },
           quickCreate: quickCreateFor('SaleProductSprUUID'),
-          span: 2,
         },
         {
           key: 'description',
           source: 'BciDescription',
           label: 'Description',
           required: true,
-          span: 2,
         },
         {
           key: 'nature',
@@ -301,7 +294,6 @@ const config = defineCrud({
           options: ITEM_NATURES,
           required: true,
           help: 'Chooses the fiscal document of the line: goods NF-e, communication and telephony NFCom, services NFS-e.',
-          span: 2,
         },
         {
           key: 'kind',
@@ -311,7 +303,6 @@ const config = defineCrud({
           options: ITEM_KINDS,
           required: true,
           help: 'Recurring is prorated by days in the cycle; one-off is billed once; usage bills what the module reports above the included quantity.',
-          span: 2,
         },
         { key: 'quantity', source: 'BciQuantity', label: 'Quantity', type: 'number', span: 1 },
         {
@@ -328,7 +319,6 @@ const config = defineCrud({
           help: 'Name of the metric reported by the module (for example minutes or gigabytes).',
           hiddenWhen: ({ values }) => values['kind'] !== 'usage',
           requiredWhen: ({ values }) => values['kind'] === 'usage',
-          span: 2,
         },
         {
           key: 'includedQuantity',
@@ -412,7 +402,6 @@ const config = defineCrud({
           source: 'BadDescription',
           label: 'Description',
           required: true,
-          span: 3,
         },
         {
           key: 'amount',

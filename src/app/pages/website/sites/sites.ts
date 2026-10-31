@@ -114,7 +114,6 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
         source: 'name',
         label: 'Name',
         required: true,
-        span: 2,
         help: 'website.nameHelp',
       },
       {
@@ -151,7 +150,6 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
           selectedLabelField: 'themeDomain',
         },
         quickCreate: quickCreateFor('ThemeDomainTdoUUID'),
-        span: 2,
         help: 'website.customDomainHelp',
       },
     ],

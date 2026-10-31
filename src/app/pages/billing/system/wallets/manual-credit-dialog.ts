@@ -48,7 +48,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
         <mat-tab-group class="form-tabs crud-tabs">
           <mat-tab [label]="'Record' | transloco">
             <div class="tab-content form-grid">
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Tenant' | transloco }}</mat-label>
                 <input matInput [value]="tenantLabel()" readonly />
               </mat-form-field>
@@ -81,7 +81,7 @@ export type BillingManualCreditDialogData = BillingTenantLookupItem;
                 ></textarea>
                 <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'Reference' | transloco }}</mat-label>
                 <input
                   matInput

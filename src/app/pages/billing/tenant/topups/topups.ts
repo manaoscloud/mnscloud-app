@@ -188,7 +188,6 @@ const TOPUPS_CONFIG: ConfigurableCrudConfig = {
       key: 'payer',
       label: 'Payer',
       type: 'text',
-      span: 2,
       lineFillAfter: 2,
       disabledWhen: () => true,
       help: 'The payer is the tenant tax identity. Change it in Billing > Tax identity.',

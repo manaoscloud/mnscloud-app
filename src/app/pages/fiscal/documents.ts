@@ -129,7 +129,6 @@ const config = defineCrud({
               required: true,
               help: 'At least 15 characters.',
               span: 4,
-              rows: 3,
             },
           ],
         }),

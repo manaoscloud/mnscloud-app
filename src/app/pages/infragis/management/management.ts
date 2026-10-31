@@ -142,7 +142,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     ],
     fields: [
       statusField('IprStatus'),
-      { key: 'name', source: 'IprName', label: 'Name', required: true, span: 2 },
+      { key: 'name', source: 'IprName', label: 'Name', required: true, span: 1 },
       sortOrderField('IprSortOrder'),
       {
         key: 'verticalProfileUUID',
@@ -159,14 +159,13 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         quickCreate: false,
         quickCreateExemptReason: 'Vertical packages are platform resources (InfraGIS › Vertical packages).',
         help: 'Choosing a package copies its layers into the project and the categories, asset types and statuses the tenant does not have yet. Your copies can be edited freely.',
-        span: 4,
       },
       {
-        key: 'description',
+        key: 'notes',
+        payloadKey: 'description',
         source: 'IprDescription',
-        label: 'Description',
+        label: 'Notes',
         type: 'textarea',
-        rows: 5,
         tab: 'notes',
         span: 4,
       },
@@ -221,7 +220,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Style JSON',
         type: 'textarea',
         format: 'json',
-        rows: 6,
         tab: 'transform',
         span: 4,
       },
@@ -239,7 +237,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     fields: [
       ...codedFields('Iac', 'Category Code'),
       { key: 'color', source: 'IacColor', label: 'Color', tab: 'transform', span: 1 },
-      { key: 'icon', source: 'IacIcon', label: 'Icon', tab: 'transform', span: 2 },
+      { key: 'icon', source: 'IacIcon', label: 'Icon', tab: 'transform', span: 1 },
     ],
   }),
   'asset-types': defineCrud({
@@ -277,7 +275,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Suggested layer code',
         help: 'Code of the project layer where imports place assets of this type.',
         tab: 'match',
-        span: 2,
       },
       {
         key: 'propertiesSchemaJson',
@@ -285,7 +282,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Properties schema',
         type: 'textarea',
         format: 'json',
-        rows: 8,
         help: 'JSON Schema of the asset properties: an object with properties (each with type string, number or boolean and optional title, enum, minimum, maximum, maxLength and x-unit) and required (list of keys).',
         tab: 'transform',
         span: 4,
@@ -324,7 +320,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     ],
     fields: [
       statusField('IgaStatus'),
-      { key: 'name', source: 'IgaName', label: 'Name', required: true, span: 2 },
+      { key: 'name', source: 'IgaName', label: 'Name', required: true, span: 1 },
       { key: 'externalID', source: 'IgaExternalID', label: 'External ID', span: 1 },
       lookup(
         'projectUUID',
@@ -373,7 +369,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         source: 'AssetTypePropertiesSchemaJson',
         label: 'Properties schema',
         hidden: true,
-        span: 4,
       },
       lookup(
         'assetStatusUUID',
@@ -407,7 +402,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'GeoJSON',
         type: 'textarea',
         format: 'json',
-        rows: 5,
         tab: 'monitoring',
         span: 4,
       },
@@ -417,7 +411,6 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
         label: 'Properties JSON',
         type: 'textarea',
         format: 'json',
-        rows: 6,
         tab: 'transform',
         span: 4,
         helpWhen: ({ values }) =>

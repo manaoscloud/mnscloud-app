@@ -45,7 +45,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'status', source: 'FcrStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'label', source: 'FcrLabel', label: 'Name', required: true, span: 3 },
+    { key: 'label', source: 'FcrLabel', label: 'Name', required: true, span: 1 },
     {
       key: 'companyUUID',
       source: 'RegCompanyRcoUUID',
@@ -53,7 +53,6 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       remoteLookup: COMPANY_LOOKUP,
-      span: 2,
     },
     {
       key: 'environment',
@@ -62,7 +61,6 @@ const config = defineCrud({
       type: 'select',
       options: FISCAL_ENVIRONMENTS,
       required: true,
-      span: 2,
     },
     {
       key: 'pfx',
@@ -81,7 +79,6 @@ const config = defineCrud({
       required: true,
       autocomplete: 'new-password',
       hiddenWhen: ({ editing }) => editing,
-      span: 2,
     },
     { key: 'kind', label: 'Kind', hidden: true },
     { key: 'revision', source: 'FcrRevision', label: 'Revision', hidden: true },

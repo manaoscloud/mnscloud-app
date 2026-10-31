@@ -254,7 +254,7 @@ type GovernanceActionFormModel = {
           </mat-form-field>
 
           @if (needsLegalBasis()) {
-            <mat-form-field appearance="outline" class="span-4">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Legal basis' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.legalBasis" />
               <mat-error>{{
@@ -264,7 +264,7 @@ type GovernanceActionFormModel = {
           }
 
           @if (data.action === 'legal-hold') {
-            <mat-form-field appearance="outline" class="span-4">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Reference' | transloco }}</mat-label>
               <input matInput [formField]="actionForm.reference" />
               <mat-error>{{

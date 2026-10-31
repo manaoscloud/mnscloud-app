@@ -33,9 +33,9 @@ const YES_NO: readonly ConfigurableCrudOption[] = [
 ];
 
 const COMPANY_LOOKUP = {
-  endpoint: 'registry/companies?status=1',
-  uuidField: 'CompanyUUID',
-  labelField: 'Name',
+  endpoint: 'hr/companies',
+  uuidField: 'RcoUUID',
+  labelField: 'RcoName',
   selectedLabelField: 'CompanyName',
 };
 
@@ -128,7 +128,6 @@ const config = defineCrud({
       quickCreate: quickCreateFor('RegCompanyRcoUUID'),
       disabledWhen: ({ editing }) => editing,
       help: 'Empty creates the tenant default policy, used by every company without its own policy. The company cannot be changed after saving.',
-      span: 2,
     },
     {
       key: 'timezone',
@@ -139,7 +138,6 @@ const config = defineCrud({
       translateOptions: false,
       required: true,
       help: 'Local time of the workplace: days, expected times and the night period are computed in this zone.',
-      span: 2,
     },
     {
       key: 'markToleranceMinutes',

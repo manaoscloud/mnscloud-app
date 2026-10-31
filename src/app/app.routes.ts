@@ -1123,6 +1123,14 @@ export const routes: Routes = [
                   import('./pages/hr/time-punches/time-punches').then((m) => m.HrTimePunchesPage),
                 title: 'Human resources • Time punches | mnscloud',
               },
+              {
+                path: 'hr/accounts',
+                loadComponent: () =>
+                  import('./pages/hr/accounts/accounts').then((m) => m.HrAccountsPage),
+                title: 'Human resources • Accounts | mnscloud',
+                canActivate: [permissionGuard],
+                data: { permission: 'tenant.hr.accounts.read' },
+              },
 
               // Financial
               {

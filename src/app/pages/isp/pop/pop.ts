@@ -34,7 +34,7 @@ const config = defineCrud({
     { key: 'name', source: 'IppName', label: 'Name', required: true, span: 1 },
     { key: 'city', source: 'IppCity', label: 'City', required: true, span: 1 },
     { key: 'state', source: 'IppState', label: 'State', required: true, span: 1 },
-    { key: 'address', source: 'IppAddress', label: 'Address', span: 4 },
+    { key: 'address', source: 'IppAddress', label: 'Address', span: 1 },
     {
       key: 'notes',
       source: 'IppNotes',

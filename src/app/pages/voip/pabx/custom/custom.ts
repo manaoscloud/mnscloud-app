@@ -284,7 +284,7 @@ function config(): ConfigurableCrudConfig {
       timeoutSeconds: 30,
       fallbackRouteType: 'hangup',
       fallbackRouteTargetUUID: '',
-      description: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -376,10 +376,10 @@ function config(): ConfigurableCrudConfig {
         hiddenWhen: ({ values }) => values['fallbackRouteType'] === 'hangup',
       },
       {
-        key: 'description',
+        key: 'notes',
         source: 'description',
         payloadKey: 'description',
-        label: 'Description',
+        label: 'Notes',
         type: 'textarea',
         tab: 'notes',
         span: 4,
@@ -620,7 +620,7 @@ export type VoipCustomStepsDialogData = {
                   </p>
                 }
                 @case ('api_request') {
-                  <mat-form-field appearance="outline" class="span-3">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'HTTPS URL' | transloco }}*</mat-label>
                     <input
                       matInput
@@ -636,7 +636,7 @@ export type VoipCustomStepsDialogData = {
                     [value]="stepDraft.config['method'] || 'POST'"
                     (valueChange)="setConfig('method', $event)"
                   />
-                  <mat-form-field appearance="outline" class="span-3">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'Headers (JSON)' | transloco }}</mat-label>
                     <input
                       matInput
@@ -686,7 +686,7 @@ export type VoipCustomStepsDialogData = {
                   </p>
                 }
                 @case ('notification') {
-                  <mat-form-field appearance="outline" class="span-3">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'HTTPS URL' | transloco }}*</mat-label>
                     <input
                       matInput
@@ -702,7 +702,7 @@ export type VoipCustomStepsDialogData = {
                     [value]="stepDraft.config['method'] || 'POST'"
                     (valueChange)="setConfig('method', $event)"
                   />
-                  <mat-form-field appearance="outline" class="span-4">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'Headers (JSON)' | transloco }}</mat-label>
                     <input
                       matInput
@@ -731,7 +731,7 @@ export type VoipCustomStepsDialogData = {
                 }
                 @case ('route') {
                   <mns-search-select-field
-                    fieldClass="span-2"
+                    fieldClass="span-1"
                     [label]="'Destination type' | transloco"
                     [options]="routeTypes"
                     [translateOptions]="true"
@@ -740,7 +740,7 @@ export type VoipCustomStepsDialogData = {
                   />
                   <mns-search-select-field
                     data-quick-create-exempt="Route target is polymorphic and depends on the selected destination type."
-                    fieldClass="span-2"
+                    fieldClass="span-1"
                     [label]="('Destination' | transloco) + '*'"
                     [options]="routeDestinations()"
                     [loading]="lookupsLoading()"
@@ -750,7 +750,7 @@ export type VoipCustomStepsDialogData = {
                 }
                 @case ('hangup') {
                   <mns-search-select-field
-                    fieldClass="span-4"
+                    fieldClass="span-1"
                     [label]="'Hangup cause' | transloco"
                     [options]="hangupCauses"
                     [translateOptions]="true"

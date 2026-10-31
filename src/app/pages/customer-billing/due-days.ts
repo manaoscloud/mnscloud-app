@@ -43,7 +43,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'status', source: 'BddStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'BddName', label: 'Name', required: true, span: 3 },
+    { key: 'name', source: 'BddName', label: 'Name', required: true, span: 1 },
     {
       key: 'dueDay',
       source: 'BddDueDay',
@@ -75,7 +75,6 @@ const config = defineCrud({
       options: closedMonthOptions,
       required: true,
       help: 'Closed month bills the cycle after it ends, with the usage measured in it.',
-      span: 2,
     },
   ],
   payload: (values) => ({

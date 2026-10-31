@@ -32,7 +32,7 @@ const config = defineCrud({
     { key: 'status', source: 'If4Status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'If4Name', label: 'Name', required: true, span: 1 },
     { key: 'cidr', source: 'If4Cidr', label: 'IP/Mask', required: true, span: 1 },
-    { key: 'description', source: 'If4Description', label: 'Description', span: 4 },
+    { key: 'description', source: 'If4Description', label: 'Description', span: 1 },
   ],
 });
 

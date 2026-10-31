@@ -269,7 +269,6 @@ export function refinementForm(
           'The original of a duplicate is an existing ticket of the same desk; creating one here would defeat the triage.',
         hiddenWhen: (context) => context.values['resolution'] !== 'duplicate',
         requiredWhen: (context) => context.values['resolution'] === 'duplicate',
-        span: 4,
       },
       {
         key: 'featureRequest',
@@ -277,7 +276,6 @@ export function refinementForm(
         hiddenWhen: (context) => !context.values['featureRequest'],
         disabledWhen: () => true,
         help: 'Moderate the public idea in Support › Platform › Ideas.',
-        span: 4,
       },
       {
         key: 'reproductionSteps',
@@ -286,13 +284,12 @@ export function refinementForm(
         rows: 4,
         span: 4,
       },
-      { key: 'impactAnalysis', label: 'Impact analysis', type: 'textarea', rows: 3, span: 4 },
-      { key: 'specification', label: 'Specification', type: 'textarea', rows: 5, span: 4 },
+      { key: 'impactAnalysis', label: 'Impact analysis', type: 'textarea', span: 4 },
+      { key: 'specification', label: 'Specification', type: 'textarea', span: 4 },
       {
         key: 'acceptanceCriteria',
         label: 'Acceptance criteria',
         type: 'textarea',
-        rows: 5,
         span: 4,
       },
     ],

@@ -190,7 +190,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'endpoint',
       label: 'Endpoint',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => !usesS3StyleConfig(values),
     },
     {
@@ -226,7 +225,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'clientEmail',
       label: 'Client email',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'gcs',
       requiredWhen: ({ values }) => storageProvider(values['provider']) === 'gcs',
     },
@@ -235,7 +233,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'accountName',
       label: 'Account name',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'azure',
       requiredWhen: ({ values }) => storageProvider(values['provider']) === 'azure',
     },
@@ -256,7 +253,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'apiUrl',
       label: 'API URL',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => !usesSangforScpConfig(values),
       requiredWhen: ({ values }) => usesSangforScpConfig(values),
     },
@@ -334,7 +330,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current secret access key',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => !usesSecretAccessKey(values),
       requiredWhen: ({ editing, values }) => !editing && requiresSecretAccessKey(values),
     },
@@ -346,7 +341,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current private key',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'gcs',
       requiredWhen: ({ editing, values }) =>
         !editing && storageProvider(values['provider']) === 'gcs',
@@ -359,7 +353,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current account key',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'azure',
       requiredWhen: ({ editing, values }) =>
         !editing && storageProvider(values['provider']) === 'azure',
@@ -372,7 +365,6 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current API token',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
       hiddenWhen: ({ values }) => storageProvider(values['provider']) !== 'sangfor_scp',
     },
     {

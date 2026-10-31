@@ -44,7 +44,6 @@ export function portalPublicationCrud(accountUUID: string, portalEnabled: unknow
         key: 'enabled',
         label: 'conversations.portalEnabled',
         type: 'select',
-        span: 2,
         options: [
           { value: 1, label: 'Yes' },
           { value: 0, label: 'No' },
@@ -70,7 +69,6 @@ export function operatorAssignmentCrud(accountUUID: string) {
         label: 'User',
         type: 'search-select',
         required: true,
-        span: 2,
         remoteLookup: {
           endpoint: 'user/access/members',
           uuidField: 'UserUUID',
@@ -79,7 +77,7 @@ export function operatorAssignmentCrud(accountUUID: string) {
         quickCreate: false,
         quickCreateExemptReason: 'Tenant operators must be invited through tenant access management.',
       },
-      { key: 'status', label: 'Status', type: 'status', span: 2 },
+      { key: 'status', label: 'Status', type: 'status', span: 1 },
     ],
     columns: [],
   });
@@ -106,16 +104,17 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
   serverSidePagination: true,
   bulkDelete: false,
   ...revisionDeletePayloads('CvaUUID', 'CvaRevision'),
-  initialValues: { name: '', description: '', RegCustomerRcuUUID: null, status: 1 },
+  initialValues: { name: '', notes: '', RegCustomerRcuUUID: null, status: 1 },
   fields: [
-    { key: 'name', source: 'CvaName', label: 'Name', required: true, span: 2 },
-    { key: 'status', source: 'CvaStatus', label: 'Status', type: 'status', span: 2 },
+    { key: 'name', source: 'CvaName', label: 'Name', required: true, span: 1 },
+    { key: 'status', source: 'CvaStatus', label: 'Status', type: 'status', span: 1 },
     customerSelector(),
     {
-      key: 'description',
-      source: 'CvaDescription',
-      label: 'Description',
+      key: 'notes',
+      source: 'CvaNotes',
+      label: 'Notes',
       type: 'textarea',
+      tab: 'notes',
       span: 4,
     },
     { key: 'revision', source: 'CvaRevision', label: 'documents.revision', hidden: true },

@@ -23,12 +23,12 @@ export const DNS_ACCOUNTS_CONFIG = defineCrud({
   serverSidePagination: true,
   bulkDelete: true,
   ...revisionDeletePayloads('DacUUID', 'DacRevision'),
-  initialValues: { name: '', description: '', customerUUID: null, status: 1 },
+  initialValues: { name: '', notes: '', customerUUID: null, status: 1 },
   fields: resaleAccountFields({
     helpKey: 'dns.accountCustomerHelp',
     statusField: 'DacStatus',
     nameField: 'DacName',
-    descField: 'DacDescription',
+    notesField: 'DacNotes',
     revField: 'DacRevision',
   }),
   columns: [

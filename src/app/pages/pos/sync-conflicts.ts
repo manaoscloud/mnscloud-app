@@ -89,7 +89,7 @@ const config = defineCrud({
           statusFilter: false,
           initialValues: { resolution: '' },
           columns: [],
-          fields: [{ key: 'resolution', label: 'Resolution', required: true, span: 4 }],
+          fields: [{ key: 'resolution', label: 'Resolution', required: true, span: 1 }],
         }),
     },
   ],

@@ -70,7 +70,7 @@
 
         <form class="form-grid">
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="projectUUID"
             data-quick-create-exempt="Import target; projects are created in InfraGIS › Projects."
             [label]="'Project' | transloco"
@@ -82,7 +82,7 @@
             (valueChange)="setProject($event)"
           />
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="layerUUID"
             data-quick-create-exempt="Import target; layers are created in InfraGIS › Layers."
             [label]="'Default layer' | transloco"
@@ -97,7 +97,7 @@
             (valueChange)="layerUUID.set($any($event) ?? '')"
           />
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="mode"
             [label]="'Mode' | transloco"
             [options]="modes"
@@ -109,7 +109,7 @@
             "
             (valueChange)="mode.set($any($event) || 'upsert')"
           />
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Source system' | transloco }}</mat-label>
             <input
               matInput
@@ -129,7 +129,7 @@
 
           @for (key of mappingKeys; track key) {
             <mns-search-select-field
-              fieldClass="span-2"
+              fieldClass="span-1"
               [attr.data-field-key]="key"
               [label]="mappingLabels[key] | transloco"
               [options]="columns()"
@@ -140,7 +140,7 @@
             />
           }
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="fixedTypeCode"
             data-quick-create-exempt="Import default; asset types are created in InfraGIS › Asset Types."
             [label]="'Asset type for rows without one' | transloco"
@@ -150,7 +150,7 @@
             (valueChange)="setMapping('fixedTypeCode', $event)"
           />
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="fixedStatusCode"
             data-quick-create-exempt="Import default; statuses are created in InfraGIS › Statuses."
             [label]="'Status for rows without one' | transloco"
@@ -223,7 +223,7 @@
       </div>
       <form class="form-grid">
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="exportFormat"
           [label]="'Format' | transloco"
           [options]="exportFormats"
@@ -231,7 +231,7 @@
           (valueChange)="exportFormat.set($any($event) || 'geojson')"
         />
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="exportProjectUUID"
           data-quick-create-exempt="Export filter; projects are created in InfraGIS › Projects."
           [label]="'Project' | transloco"
@@ -242,7 +242,7 @@
           (valueChange)="setExportProject($event)"
         />
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="exportLayerUUID"
           data-quick-create-exempt="Export filter; layers are created in InfraGIS › Layers."
           [label]="'Layer' | transloco"

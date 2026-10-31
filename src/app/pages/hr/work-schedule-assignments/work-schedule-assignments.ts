@@ -9,9 +9,9 @@ import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-cre
 import { formatDay } from '../hr-time';
 
 const EMPLOYEE_LOOKUP = {
-  endpoint: 'registry/employees?status=1',
-  uuidField: 'EmployeeUUID',
-  labelField: 'Name',
+  endpoint: 'hr/employees',
+  uuidField: 'RemUUID',
+  labelField: 'RemName',
   selectedLabelField: 'EmployeeName',
 };
 
@@ -113,7 +113,6 @@ const config = defineCrud({
       required: true,
       remoteLookup: EMPLOYEE_LOOKUP,
       quickCreate: quickCreateFor('RegEmployeeRemUUID'),
-      span: 2,
     },
     {
       key: 'workScheduleUUID',
@@ -123,7 +122,6 @@ const config = defineCrud({
       required: true,
       remoteLookup: SCHEDULE_LOOKUP,
       quickCreate: quickCreateFor('HrWorkScheduleHwsUUID'),
-      span: 2,
     },
     { key: 'workScheduleKind', source: 'WorkScheduleKind', label: 'Kind', hidden: true },
     {

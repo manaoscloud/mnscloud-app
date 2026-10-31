@@ -62,7 +62,6 @@ const config = defineCrud({
       key: 'CprName',
       source: 'CprName',
       label: 'crm.field.Name',
-      span: 2,
       required: true,
       type: 'text',
     },

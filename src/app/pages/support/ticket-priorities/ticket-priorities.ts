@@ -74,7 +74,7 @@ function config(desk: SupportDesk) {
         type: 'status',
         span: 1,
       },
-      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
       {
         key: 'code',
         source: 'Code',

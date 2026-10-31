@@ -63,7 +63,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'status', source: 'PtmStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'PtmName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'PtmName', label: 'Name', required: true, span: 1 },
     {
       key: 'maxDiscountPercent',
       source: 'PtmMaxDiscountPercent',
@@ -86,7 +86,6 @@ const config = defineCrud({
         descriptionField: 'Document',
         selectedLabelField: 'CompanyName',
       },
-      span: 2,
     },
     {
       key: 'locationUUID',
@@ -100,7 +99,6 @@ const config = defineCrud({
         labelField: 'StlName',
         selectedLabelField: 'StockLocationName',
       },
-      span: 2,
     },
     {
       key: 'priceListUUID',
@@ -114,7 +112,6 @@ const config = defineCrud({
         labelField: 'SplName',
         selectedLabelField: 'PriceListName',
       },
-      span: 2,
     },
     {
       key: 'customerUUID',
@@ -129,7 +126,6 @@ const config = defineCrud({
         labelField: 'Name',
         selectedLabelField: 'CustomerName',
       },
-      span: 2,
     },
     {
       key: 'paymentMethods',
@@ -155,7 +151,6 @@ const config = defineCrud({
       ],
       fromRecord: (value) => Number(value ?? 0),
       help: 'Installed apps keep selling without internet within their offline authorization; the web version is always online.',
-      span: 2,
     },
     { key: 'revision', source: 'PtmRevision', label: 'Revision', hidden: true },
     {

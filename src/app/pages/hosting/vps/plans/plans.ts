@@ -313,7 +313,6 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'promotionalReason',
       label: 'Promotional reason',
       tab: 'financial',
-      span: 3,
       requiredWhen: (context) => String(context.values['isPromotional'] ?? '0') === '1',
       hiddenWhen: (context) => String(context.values['isPromotional'] ?? '0') !== '1',
     },
@@ -324,7 +323,6 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Cost source',
       placeholder: 'https://www.digitalocean.com/pricing/droplets',
       tab: 'financial',
-      span: 3,
       breakBefore: true,
     },
     {
@@ -361,7 +359,6 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Size / Bundle',
       type: 'search-select',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
       translateOptions: false,
     },
@@ -372,7 +369,6 @@ const HOSTING_VPS_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Size / Bundle',
       placeholder: 's-1vcpu-1gb',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
     },
     {

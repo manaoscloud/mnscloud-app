@@ -27,6 +27,7 @@ const SECRET_REVEAL_MS = 10_000;
 /** Table view menus with more columns than this offer a column search. */
 const COLUMN_SEARCH_MIN = 8;
 import { resolveCrudFieldHelp } from './crud-field-help';
+import { crudFieldSpan, TEXTAREA_ROWS } from './crud-field-layout';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
 import { billingErrorText } from '../../billing/billing-error';
@@ -305,11 +306,17 @@ export type ConfigurableCrudField = {
     | 'loginPhoneweb'
     | 'loginInfragis';
   addressSection?: string;
+  /**
+   * Grid columns of composite controls only (file, checkbox group, permission tree, secret
+   * content). Single-line controls are always `span-1` and text areas `span-4`
+   * (`crud-field-layout.ts`); `npm run check:crud:fields` rejects other values for them.
+   */
   span?: 1 | 2 | 3 | 4;
   lineFillAfter?: 1 | 2 | 3;
   breakBefore?: boolean;
   breakBeforeWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   postalLookup?: ConfigurableCrudPostalCodeLookup;
+  /** Visible rows of a permission tree. Text areas always show four rows. */
   rows?: number;
   required?: boolean;
   /** Numeric value that must be greater than zero when filled (amounts, quantities). */
@@ -1169,6 +1176,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       ApiService.isCommerceAccountEndpoint(this.config.endpoint) &&
       !/^\/?registry\//.test(this.config.endpoint),
   );
+  /** HR pages work inside one HR account; without selection, the internal account. */
+  readonly hrAccountUUID = signal<string | null>(null);
+  readonly hrAccountInfo = resource({
+    params: () => this.hrAccountUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: ConfigurableCrudRecord }>(
+        `hr/accounts/${params}`,
+      );
+      return response.data;
+    },
+  });
+  readonly hrAccountPage = computed(() => ApiService.isHrAccountEndpoint(this.config.endpoint));
   readonly canCreate = computed(
     () =>
       !this.config.readOnly &&
@@ -1193,6 +1213,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       registryWorkspaceApi(config.endpoint);
     this.registryWorkspaceUUID.set(this.api.registryWorkspaceUUID);
     this.commerceAccountUUID.set(this.api.commerceAccountUUID);
+    this.hrAccountUUID.set(this.api.hrAccountUUID);
     this.config = config;
     this.viewStorageKey = crudViewStorageKey(config.endpoint);
     this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
@@ -1316,6 +1337,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   /** Explicit parent destination; never relies on browser history. */
   backLink(): string | null {
     if (this.commerceAccountUUID() && this.commerceAccountPage()) return '/sale/accounts';
+    if (this.hrAccountUUID() && this.hrAccountPage()) return '/hr/accounts';
     return this.registryWorkspaceUUID() && this.registryWorkspacePage()
       ? '/registry/workspaces'
       : null;
@@ -2335,7 +2357,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         editing: Boolean(this.editingRecord()),
         values: this.formValues(),
       });
-    return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
+    const span = crudFieldSpan(this.resolvedFieldType(field), field.span);
+    return [`span-${span}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
+  }
+
+  /** Visible rows of a text area: the layout baseline fixes four (`crud-field-layout.ts`). */
+  fieldRows(_field: ConfigurableCrudField): number {
+    return TEXTAREA_ROWS;
   }
 
   fieldLabel(field: ConfigurableCrudField): string {

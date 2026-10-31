@@ -122,14 +122,12 @@ const config = defineCrud({
       quickCreateExemptReason:
         'Polymorphic target: members join by invitation, employees need an HR record with a Pulse access account, customers come from the customer form.',
       disabledWhen: ({ editing }) => editing,
-      span: 2,
     },
     {
       key: 'displayName',
       source: 'VhuDisplayName',
       label: 'Display name',
       placeholder: 'Uses the person name when empty',
-      span: 2,
     },
     {
       key: 'maxSessions',
@@ -182,10 +180,25 @@ const config = defineCrud({
           quickCreateExemptReason: LINE_TARGET_EXEMPT,
           disabledWhen: ({ editing }) => editing,
           help: 'PABX extension or Softswitch subscriber. Customer logins only accept lines of their customer.',
-          span: 2,
         },
-        { key: 'mode', source: 'VhlMode', label: 'Use', type: 'select', options: PHONE_LINE_MODES, required: true, span: 2 },
-        { key: 'primary', source: 'VhlIsPrimary', label: 'Primary line', type: 'select', options: YES_NO, required: true, span: 1 },
+        {
+          key: 'mode',
+          source: 'VhlMode',
+          label: 'Use',
+          type: 'select',
+          options: PHONE_LINE_MODES,
+          required: true,
+          span: 1,
+        },
+        {
+          key: 'primary',
+          source: 'VhlIsPrimary',
+          label: 'Primary line',
+          type: 'select',
+          options: YES_NO,
+          required: true,
+          span: 1,
+        },
         { key: 'revision', source: 'VhlRevision', label: 'Revision', hidden: true },
       ],
       columns: [

@@ -51,7 +51,6 @@ function prices(list: ConfigurableCrudRecord) {
           labelField: 'SprName',
           selectedLabelField: 'SaleProductName',
         },
-        span: 2,
       },
       {
         key: 'minQuantity',
@@ -110,7 +109,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'status', source: 'SplStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'SplName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'SplName', label: 'Name', required: true, span: 1 },
     {
       key: 'currency',
       source: 'SplCurrency',

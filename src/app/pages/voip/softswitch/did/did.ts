@@ -153,7 +153,6 @@ const DID_CONFIG: ConfigurableCrudConfig = {
       source: 'VsdDescription',
       payloadKey: 'description',
       label: 'Description',
-      span: 4,
     },
   ],
 };

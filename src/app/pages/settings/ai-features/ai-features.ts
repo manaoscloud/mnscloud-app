@@ -218,10 +218,9 @@ const config = defineCrud({
       payloadKey: 'voiceInstructions',
       label: 'Tone and style',
       type: 'textarea',
-      rows: 3,
       hiddenWhen: ({ values }) => !isSpeechFeature(values['feature']),
       help: 'How the voice should sound, e.g. warm, energetic and clear, like a friendly teacher. Ignored by tts-1 models.',
-      span: 2,
+      span: 4,
     },
     {
       key: 'maxOutputTokens',
