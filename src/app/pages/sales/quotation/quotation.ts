@@ -147,7 +147,15 @@ const config = defineCrud({
       span: 1,
     },
     { key: 'title', source: 'SqtTitle', label: 'Title', required: true, span: 1 },
-    { key: 'number', source: 'SqtNumber', label: 'Number', span: 1 },
+    // The database numbers each quotation with its QUO- public protocol; it is shown, never typed.
+    {
+      key: 'number',
+      source: 'SqtNumber',
+      label: 'Number',
+      span: 1,
+      hiddenWhen: ({ editing }) => !editing,
+      disabledWhen: () => true,
+    },
     { key: 'currency', source: 'SqtCurrency', label: 'Currency', required: true, span: 1 },
     { key: 'validUntil', source: 'SqtValidUntil', label: 'Valid Until', type: 'date', span: 1 },
     { key: 'description', source: 'SqtDescription', label: 'Description', span: 2 },
