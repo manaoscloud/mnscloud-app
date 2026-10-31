@@ -170,11 +170,13 @@ and metrics monitor; `defineCrud` has no default, so a missing `pageDescription`
 
 ## Navigation Structure
 
-The sidebar groups root modules under **area titles** and, inside a module, entries under
-**category titles** (workspace `docs/contracts/frontend.md` → Navigation structure). Titles are
-data on the entries, not tree nodes: they add no click, no id and no level, and they are not part
-of the menu path (tooltips, `app-catalog.json`, support knowledge), so a category change alone
-changes no URL, key or quoted path. `npm run check:nav` enforces it with the label rules.
+The sidebar groups root modules under **area titles** and, inside a module, entries by
+**category** (workspace `docs/contracts/frontend.md` → Navigation structure). Categories are data
+on the entries (`category`), not registry nodes: they add no registry id, no `nav.<id>` key and no
+label level, and they are not part of the menu path (tooltips, `app-catalog.json`, support
+knowledge), so a category change alone changes no URL, key or quoted path. `npm run check:nav`
+enforces it with the label rules and requires one group icon per category
+(`NAV_CATEGORY_ICONS` in `layout/navigation/nav-sections.ts`).
 
 - **Areas** (`area` on every root after `Painel`, `nav.area.<area>`), in this order: Comercial,
   Atendimento, Administrativo, Campo, Saúde, Telecom, Infraestrutura, Sistema
@@ -187,10 +189,15 @@ changes no URL, key or quoted path. `npm run check:nav` enforces it with the lab
   uncategorized entries only come before the first title; one block per category; a category
   title counts as ancestor context of its entries; lists of up to 4 entries only use Revenda and
   Plataforma.
-- Rendering (`layout/navigation/nav-sections.ts`): a title appears above the first **visible**
-  entry of its section, after permissions, entitlements and search, so a section the user cannot
-  see shows no title. Search also matches category words. In the compact rail an area is a
-  divider; flyouts show category titles; mobile uses the expanded menu.
+- Rendering (`layout/navigation/nav-sections.ts`), always on the menu the user actually sees
+  (after permissions, entitlements and search): an area title appears above the first visible root
+  of its area. In the **expanded menu** (desktop and mobile, user decision 2026-10-31) a category
+  with 2 or more visible entries is a **collapsible group row** like the module itself (category
+  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), one open group per
+  parent, opened automatically on the path of the current page; a category with a single visible
+  entry shows that entry directly; no category title is shown. Search opens every group with a
+  match and also matches category words; the unread dot lights the group too. In the **compact
+  rail** an area is a divider and the flyouts keep category titles.
 - Visibility is still inherited from the nearest ancestor (`filterMenu`): titles never change it,
   and an entry that moves to another parent states its own `scope`/`entitlementCode`.
 
