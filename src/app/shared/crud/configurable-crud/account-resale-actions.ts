@@ -13,11 +13,8 @@ export interface ResaleAccountFieldsOptions {
   statusDisabledWhen?: ConfigurableCrudField['disabledWhen'];
   statusField: string;
   nameField: string;
-  /**
-   * Column of the account's free-text annotation. Older account tables named it
-   * `<Prefix>Description`; the form still shows it as Notes (app.md → Notes/anotações rule).
-   */
-  descField: string;
+  /** Column of the account's free-text annotation (`<Prefix>Notes`). */
+  notesField: string;
   revField: string;
 }
 
@@ -50,8 +47,7 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
     },
     {
       key: 'notes',
-      source: options.descField,
-      payloadKey: 'description',
+      source: options.notesField,
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',
@@ -94,7 +90,7 @@ export function resaleAccountCrud(options: ResaleAccountCrudOptions) {
       helpKey: `${i18n}.accountCustomerHelp`,
       statusField: `${prefix}Status`,
       nameField: `${prefix}Name`,
-      descField: `${prefix}Description`,
+      notesField: `${prefix}Notes`,
       revField: `${prefix}Revision`,
     }),
     columns: [

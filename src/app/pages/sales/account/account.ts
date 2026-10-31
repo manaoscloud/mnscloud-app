@@ -28,7 +28,7 @@ const config = defineCrud({
   payload: (values, editing) => {
     const payload: Record<string, unknown> = {
       name: values['name'],
-      description: String(values['notes'] ?? '').trim() || null,
+      notes: String(values['notes'] ?? '').trim() || null,
       status: Number(values['status'] ?? 1) === 0 ? 0 : 1,
     };
     if (editing) payload['revision'] = String(values['revision'] ?? '');
@@ -63,8 +63,7 @@ const config = defineCrud({
     },
     {
       key: 'notes',
-      source: 'CmaDescription',
-      payloadKey: 'description',
+      source: 'CmaNotes',
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',

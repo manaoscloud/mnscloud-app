@@ -24,7 +24,7 @@ const config = defineCrud({
   fields: resaleAccountFields({
     statusField: 'RwkStatus',
     nameField: 'RwkName',
-    descField: 'RwkDescription',
+    notesField: 'RwkNotes',
     revField: 'RwkRevision',
     customerKey: 'RegCustomerRcuUUID',
     requireCustomer: true,

@@ -111,8 +111,7 @@ export const CONVERSATIONS_ACCOUNTS_CONFIG = defineCrud({
     customerSelector(),
     {
       key: 'notes',
-      source: 'CvaDescription',
-      payloadKey: 'description',
+      source: 'CvaNotes',
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',
