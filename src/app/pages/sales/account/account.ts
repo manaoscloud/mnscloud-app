@@ -79,13 +79,38 @@ const config = defineCrud({
   ],
 });
 
+// Canonical pages opened in the account's scope: Sales catalog and the shop's shared resources.
 const SCOPED_PAGES = [
-  ['product', 'nav.sale.product', 'shopping_bag', 'tenant.sale.products.read'],
-  ['quotation', 'nav.sale.quotation', 'request_quote', 'tenant.sale.quotations.read'],
-  ['price-list', 'nav.sale.price-list', 'price_change', 'tenant.sale.price-lists.read'],
-  ['category', 'nav.sale.category', 'sell', 'tenant.sale.categories.read'],
-  ['brand', 'nav.sale.brand', 'branding_watermark', 'tenant.sale.brands.read'],
-  ['unit', 'nav.sale.unit', 'straighten', 'tenant.sale.units.read'],
+  ['sale/product', 'nav.sale.product', 'shopping_bag', 'tenant.sale.products.read'],
+  ['sale/quotation', 'nav.sale.quotation', 'request_quote', 'tenant.sale.quotations.read'],
+  ['sale/price-list', 'nav.sale.price-list', 'price_change', 'tenant.sale.price-lists.read'],
+  ['sale/category', 'nav.sale.category', 'sell', 'tenant.sale.categories.read'],
+  ['sale/brand', 'nav.sale.brand', 'branding_watermark', 'tenant.sale.brands.read'],
+  ['sale/unit', 'nav.sale.unit', 'straighten', 'tenant.sale.units.read'],
+  ['stock/locations', 'nav.stock.locations', 'warehouse', 'tenant.stock.locations.read'],
+  ['stock/movements', 'nav.stock.movements', 'swap_vert', 'tenant.stock.movements.read'],
+  [
+    'financial/receivables',
+    'nav.financial.receivables',
+    'receipt_long',
+    'tenant.financial.receivables.read',
+  ],
+  ['financial/payables', 'nav.financial.payables', 'payments', 'tenant.financial.payables.read'],
+  [
+    'financial/payment-charges',
+    'nav.financial.payment-charges',
+    'qr_code_2',
+    'tenant.financial.payment-charges.read',
+  ],
+  [
+    'financial/gateway-accounts',
+    'nav.financial.gateway-accounts',
+    'credit_card',
+    'tenant.financial.gateway-accounts.read',
+  ],
+  ['fiscal/issuers', 'nav.fiscal.issuers', 'receipt_long', 'tenant.fiscal.issuers.read'],
+  ['fiscal/documents', 'nav.fiscal.documents', 'description', 'tenant.fiscal.documents.read'],
+  ['accounting/events', 'nav.accounting.events', 'list_alt', 'tenant.accounting.events.read'],
 ] as const;
 
 @Component({
@@ -115,7 +140,7 @@ export class SaleAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
           visible: (row: ConfigurableCrudRecord) =>
             Number(row['ServiceAvailable']) === 1 && allowed(permission),
           run: async (row: ConfigurableCrudRecord) => {
-            await router.navigate(['/sale', path], {
+            await router.navigate([`/${path}`], {
               queryParams: row['CmaKind'] === 'customer' ? { accountUUID: row['CmaUUID'] } : {},
             });
           },
