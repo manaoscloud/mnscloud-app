@@ -126,7 +126,7 @@
                 />
                 <mat-error>{{ errorText('theme.accentColor') | transloco }}</mat-error>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-2">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'website.logoUrl' | transloco }}</mat-label>
                 <input
                   matInput
@@ -198,7 +198,7 @@
                 />
                 <mat-error>{{ errorText('contact.whatsapp') | transloco }}</mat-error>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="span-4">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'website.address' | transloco }}</mat-label>
                 <input
                   matInput
@@ -241,7 +241,7 @@
                   [help]="'website.socialNetworkHelp' | transloco"
                   (valueChange)="set('social.' + i + '.network', $event)"
                 />
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>{{ 'website.socialUrl' | transloco }}</mat-label>
                   <input
                     matInput
@@ -287,7 +287,7 @@
             <div class="tab-content">
               <h2 class="website-editor-heading">{{ 'website.seoHeading' | transloco }}</h2>
               <div class="form-grid">
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>{{ 'website.seoTitle' | transloco }}*</mat-label>
                   <input
                     matInput
@@ -304,7 +304,7 @@
                   />
                   <mat-error>{{ errorText(locale + '.seo.title') | transloco }}</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-2">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>{{ 'website.seoDescription' | transloco }}</mat-label>
                   <input
                     matInput
@@ -341,7 +341,7 @@
                   />
                   <mat-error>{{ errorText(locale + '.hero.eyebrow') | transloco }}</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="span-3">
+                <mat-form-field appearance="outline" class="span-1">
                   <mat-label>{{ 'website.heroTitle' | transloco }}*</mat-label>
                   <input
                     matInput
@@ -486,7 +486,7 @@
                       [help]="'website.sectionTypeHelp' | transloco"
                       (valueChange)="setSectionType(locale, s, $event)"
                     />
-                    <mat-form-field appearance="outline" class="span-3">
+                    <mat-form-field appearance="outline" class="span-1">
                       <mat-label>{{ 'website.sectionTitle' | transloco }}</mat-label>
                       <input
                         matInput
@@ -565,7 +565,7 @@
                               | transloco
                           }}</mat-error>
                         </mat-form-field>
-                        <mat-form-field appearance="outline" class="span-2">
+                        <mat-form-field appearance="outline" class="span-4">
                           <mat-label>{{
                             (section.type === 'faq' ? 'website.answer' : 'website.itemText')
                               | transloco
@@ -668,7 +668,7 @@
               <h2 class="website-editor-heading">{{ 'website.legalHeading' | transloco }}</h2>
               <div class="form-grid">
                 @for (legal of ['privacy', 'terms']; track legal) {
-                  <mat-form-field appearance="outline" class="span-2">
+                  <mat-form-field appearance="outline" class="span-4">
                     <mat-label>{{ 'website.legal.' + legal | transloco }}</mat-label>
                     <textarea
                       matInput

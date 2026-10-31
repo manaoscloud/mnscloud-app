@@ -60,7 +60,6 @@ const config = defineCrud({
       key: 'ChoName',
       source: 'ChoName',
       label: 'crm.field.Name',
-      span: 2,
       required: true,
       type: 'text',
       breakBefore: true,
@@ -69,7 +68,6 @@ const config = defineCrud({
       key: 'CrmOpportunityCopUUID',
       source: 'CrmOpportunityCopUUID',
       label: 'crm.title.opportunities',
-      span: 2,
       required: true,
       type: 'search-select',
       remoteLookup: {

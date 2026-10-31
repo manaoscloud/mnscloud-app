@@ -142,7 +142,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'date', source: 'Date', label: 'Date', type: 'date', required: true, span: 1 },
-    { key: 'name', source: 'Name', label: 'Name', required: true, span: 3 },
+    { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
     {
       key: 'scope',
       source: 'Scope',
@@ -170,7 +170,6 @@ const config = defineCrud({
       remoteLookup: COMPANY_LOOKUP,
       quickCreate: quickCreateFor('RegCompanyRcoUUID'),
       help: 'Empty applies the holiday to every company of the tenant.',
-      span: 2,
     },
     {
       key: 'notes',

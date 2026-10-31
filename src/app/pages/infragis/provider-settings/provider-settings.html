@@ -12,7 +12,7 @@
 >
   <form class="form-grid">
     <mns-search-select-field
-      fieldClass="span-2"
+      fieldClass="span-1"
       data-field-key="provider"
       [label]="'Provider' | transloco"
       [options]="providers"
@@ -27,7 +27,7 @@
       (valueChange)="update({ provider: $any($event) })"
     />
 
-    <mat-form-field appearance="outline" class="span-2">
+    <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'Attribution' | transloco }}</mat-label>
       <input
         matInput
@@ -47,7 +47,7 @@
     </mat-form-field>
 
     @if (needsStyle()) {
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'Style URL' | transloco }}</mat-label>
         <input
           matInput
@@ -67,7 +67,7 @@
     }
 
     @if (needsPmtiles()) {
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'PMTiles URL' | transloco }}</mat-label>
         <input
           matInput

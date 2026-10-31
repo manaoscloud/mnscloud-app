@@ -81,7 +81,7 @@
     @if (managedDns()) {
       <mns-search-select-field
         data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
-        fieldClass="span-4"
+        fieldClass="span-1"
         data-field-key="dnsPolicyUUID"
         [label]="'website.dnsPolicy' | transloco"
         [options]="dns.options()"
@@ -103,7 +103,7 @@
         <p class="span-4 settings-page-feedback" role="alert">{{ error | transloco }}</p>
       }
     } @else {
-      <mat-form-field appearance="outline" class="span-4">
+      <mat-form-field appearance="outline" class="span-1">
         <mat-label>{{ 'website.autoDomainBase' | transloco }}</mat-label>
         <input
           matInput
@@ -121,7 +121,7 @@
       </mat-form-field>
     }
 
-    <mat-form-field appearance="outline" class="span-2">
+    <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'website.edgeIPv4' | transloco }}</mat-label>
       <input
         matInput
@@ -139,7 +139,7 @@
       <mat-error>{{ 'website.validation.ipv4' | transloco }}</mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="span-2">
+    <mat-form-field appearance="outline" class="span-1">
       <mat-label>{{ 'website.edgeIPv6' | transloco }}</mat-label>
       <input
         matInput

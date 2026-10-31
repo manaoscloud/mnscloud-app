@@ -210,7 +210,6 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
             key: 'enabled',
             label: 'crm.portalEnabled',
             type: 'select',
-            span: 2,
             options: [
               { value: 1, label: 'Yes' },
               { value: 0, label: 'No' },
@@ -234,7 +233,6 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
             label: 'User',
             type: 'search-select',
             required: true,
-            span: 2,
             remoteLookup: {
               endpoint: 'user/access/members',
               uuidField: 'UserUUID',
@@ -244,7 +242,7 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
             quickCreateExemptReason:
               'Tenant operators must be invited through tenant access management.',
           },
-          { key: 'status', label: 'Status', type: 'status', span: 2 },
+          { key: 'status', label: 'Status', type: 'status', span: 1 },
         ],
         columns: [],
       });

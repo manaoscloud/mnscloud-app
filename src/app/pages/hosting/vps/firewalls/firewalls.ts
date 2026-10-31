@@ -178,16 +178,15 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           type: 'select',
           options: OUTBOUND_OPTIONS,
           required: true,
-          span: 2,
           help: 'Lightsail cannot restrict outbound traffic.',
         },
+        // business-description: description of the firewall kept with the cloud resource.
         {
           key: 'description',
           source: 'HvfDescription',
           payloadKey: 'description',
           label: 'Description',
           type: 'textarea',
-          rows: 2,
           span: 4,
         },
       ],
@@ -246,7 +245,6 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               key: 'remoteCidrs',
               label: 'Addresses (CIDR)',
               placeholder: '203.0.113.0/24, 2001:db8::/32',
-              span: 2,
               help: 'Separate with commas. Empty with no networks = any address.',
             },
             {
@@ -254,12 +252,11 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               label: 'Private networks',
               type: 'search-select',
               multiple: true,
-              span: 2,
               quickCreate: false,
               quickCreateExemptReason:
                 'Rule sources reference existing networks; networks have their own page.',
             },
-            { key: 'comment', label: 'Comment', span: 2 },
+            { key: 'comment', label: 'Comment', span: 1 },
           ],
           columns: [
             { id: 'direction', label: 'Direction', field: 'HfrDirection' },
@@ -303,7 +300,6 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               label: 'Instance',
               type: 'search-select',
               required: true,
-              span: 2,
               quickCreate: false,
               quickCreateExemptReason:
                 'Profiles apply to existing instances; instance creation has its own flow.',

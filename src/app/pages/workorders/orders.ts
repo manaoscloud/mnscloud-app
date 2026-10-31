@@ -158,9 +158,8 @@ function statusForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         options,
         translateOptions: true,
         required: true,
-        span: 4,
       },
-      { key: 'note', label: 'Note', type: 'textarea', rows: 3, span: 4 },
+      { key: 'note', label: 'Note', type: 'textarea', span: 4 },
     ],
   });
 }
@@ -211,7 +210,6 @@ function materials(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         remoteLookup: { endpoint: 'sale/products', uuidField: 'SprUUID', labelField: 'SprName' },
         quickCreate: false,
         quickCreateExemptReason: 'Stock products are registered in Sales › Products.',
-        span: 2,
       },
       {
         key: 'locationUUID',
@@ -221,10 +219,9 @@ function materials(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         remoteLookup: { endpoint: 'stock/locations', uuidField: 'StlUUID', labelField: 'StlName' },
         quickCreate: false,
         quickCreateExemptReason: 'Stock locations are registered in Stock › Locations.',
-        span: 2,
       },
       { key: 'quantity', label: 'Quantity', type: 'number', required: true, span: 1 },
-      { key: 'notes', label: 'Notes', span: 3 },
+      { key: 'notes', label: 'Notes', span: 1 },
     ],
     columns: [
       { id: 'product', field: 'ProductName', label: 'Product', kind: 'identity' },
@@ -302,7 +299,6 @@ function checklist(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         key: 'label',
         source: 'WciLabel',
         label: 'Item',
-        span: 4,
         requiredWhen: ({ editing }) => !editing,
         hiddenWhen: ({ editing }) => editing,
       },
@@ -317,7 +313,6 @@ function checklist(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
           { value: '0', label: 'No' },
         ],
         translateOptions: true,
-        span: 2,
       },
       {
         key: 'done',
@@ -327,14 +322,12 @@ function checklist(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         type: 'select',
         options: CHECK_STATES,
         translateOptions: true,
-        span: 2,
       },
       {
         key: 'note',
         source: 'WciNote',
         label: 'Note',
         type: 'textarea',
-        rows: 2,
         span: 4,
         hiddenWhen: ({ editing }) => !editing,
       },
@@ -470,7 +463,7 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
       { id: 'address', label: 'Address', field: 'WorAddress', optional: true },
     ],
     fields: [
-      { key: 'title', source: 'WorTitle', label: 'Title', required: true, span: 4 },
+      { key: 'title', source: 'WorTitle', label: 'Title', required: true, span: 1 },
       {
         key: 'kind',
         source: 'WorKind',
@@ -478,7 +471,6 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         type: 'select',
         options: WORK_ORDER_KINDS,
         translateOptions: true,
-        span: 2,
       },
       {
         key: 'priority',
@@ -487,8 +479,8 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         type: 'select',
         options: WORK_ORDER_PRIORITIES,
         translateOptions: true,
-        span: 2,
       },
+      // business-description: the work to be done, part of the order itself.
       {
         key: 'description',
         source: 'WorDescription',
@@ -539,7 +531,6 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         label: 'Scheduled for',
         type: 'datetime',
         tab: 'monitoring',
-        span: 2,
       },
       {
         key: 'dueAt',
@@ -547,16 +538,14 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         label: 'Due',
         type: 'datetime',
         tab: 'monitoring',
-        span: 2,
       },
-      { key: 'address', source: 'WorAddress', label: 'Address', tab: 'monitoring', span: 4 },
+      { key: 'address', source: 'WorAddress', label: 'Address', tab: 'monitoring', span: 1 },
       {
         key: 'latitude',
         source: 'WorLatitude',
         label: 'Latitude',
         type: 'number',
         tab: 'monitoring',
-        span: 2,
       },
       {
         key: 'longitude',
@@ -564,7 +553,6 @@ export function workOrdersConfig(mine: boolean): ConfigurableCrudConfig {
         label: 'Longitude',
         type: 'number',
         tab: 'monitoring',
-        span: 2,
       },
     ],
     rowActions: [
@@ -626,14 +614,13 @@ export function workOrderQuickForm(
     initialValues: { ...links, title, kind: 'REPAIR', priority: 'NORMAL' },
     columns: [],
     fields: [
-      { key: 'title', label: 'Title', required: true, span: 4 },
+      { key: 'title', label: 'Title', required: true, span: 1 },
       {
         key: 'kind',
         label: 'Kind',
         type: 'select',
         options: WORK_ORDER_KINDS,
         translateOptions: true,
-        span: 2,
       },
       {
         key: 'priority',
@@ -641,7 +628,6 @@ export function workOrderQuickForm(
         type: 'select',
         options: WORK_ORDER_PRIORITIES,
         translateOptions: true,
-        span: 2,
       },
       {
         key: 'assigneeUUID',
@@ -652,13 +638,13 @@ export function workOrderQuickForm(
           uuidField: 'UsrUUID',
           labelField: 'UsrName',
         },
-        span: 2,
       },
-      { key: 'dueAt', label: 'Due', type: 'datetime', span: 2 },
-      { key: 'description', label: 'Description', type: 'textarea', rows: 3, span: 4 },
-      { key: 'assetUUID', label: 'Asset', hidden: true, span: 4 },
-      { key: 'customerUUID', label: 'Customer', hidden: true, span: 4 },
-      { key: 'ticketUUID', label: 'Support ticket', hidden: true, span: 4 },
+      { key: 'dueAt', label: 'Due', type: 'datetime', span: 1 },
+      // business-description: the work to be done, part of the order itself.
+      { key: 'description', label: 'Description', type: 'textarea', span: 4 },
+      { key: 'assetUUID', label: 'Asset', hidden: true, span: 1 },
+      { key: 'customerUUID', label: 'Customer', hidden: true, span: 1 },
+      { key: 'ticketUUID', label: 'Support ticket', hidden: true, span: 1 },
     ],
   });
 }

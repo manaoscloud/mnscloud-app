@@ -81,7 +81,6 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       remoteLookup: COMPANY_LOOKUP,
-      span: 2,
     },
     {
       key: 'environment',
@@ -90,7 +89,6 @@ const config = defineCrud({
       type: 'select',
       options: FISCAL_ENVIRONMENTS,
       required: true,
-      span: 2,
     },
     {
       key: 'terminalUUID',
@@ -106,9 +104,8 @@ const config = defineCrud({
       },
       quickCreate: false,
       quickCreateExemptReason: 'Terminals are configured in POS › Terminals.',
-      span: 2,
     },
-    { key: 'mode', source: 'FseMode', label: 'Mode', type: 'select', options: MODES, span: 2 },
+    { key: 'mode', source: 'FseMode', label: 'Mode', type: 'select', options: MODES, span: 1 },
     { key: 'revision', source: 'FseRevision', label: 'Revision', hidden: true },
   ],
   payload: (values, editing) => ({

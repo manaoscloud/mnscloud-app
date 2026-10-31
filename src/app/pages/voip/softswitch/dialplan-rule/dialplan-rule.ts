@@ -84,7 +84,7 @@ const CONFIG: ConfigurableCrudConfig = {
   fields: [
     { key: 'dialplanUUID', source: 'dialplanUUID', payloadKey: 'dialplanUUID', label: 'Dialplan', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchDialplanVdpUUID'), required: true, span: 1, tab: 'record' },
     { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1, tab: 'record' },
-    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2, tab: 'record' },
+    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 1, tab: 'record' },
     { key: 'direction', source: 'direction', payloadKey: 'direction', label: 'Direction', type: 'select', options: directions, required: true, span: 1, tab: 'match' },
     { key: 'matchType', source: 'matchType', payloadKey: 'matchType', label: 'Match type', type: 'select', options: matchTypes, required: true, span: 1, tab: 'match' },
     { key: 'matchValue', source: 'matchValue', payloadKey: 'matchValue', label: 'Match value', required: true, span: 1, tab: 'match' },

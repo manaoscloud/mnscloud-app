@@ -170,11 +170,13 @@ and metrics monitor; `defineCrud` has no default, so a missing `pageDescription`
 
 ## Navigation Structure
 
-The sidebar groups root modules under **area titles** and, inside a module, entries under
-**category titles** (workspace `docs/contracts/frontend.md` → Navigation structure). Titles are
-data on the entries, not tree nodes: they add no click, no id and no level, and they are not part
-of the menu path (tooltips, `app-catalog.json`, support knowledge), so a category change alone
-changes no URL, key or quoted path. `npm run check:nav` enforces it with the label rules.
+The sidebar groups root modules under **area titles** and, inside a module, entries by
+**category** (workspace `docs/contracts/frontend.md` → Navigation structure). Categories are data
+on the entries (`category`), not registry nodes: they add no registry id, no `nav.<id>` key and no
+label level, and they are not part of the menu path (tooltips, `app-catalog.json`, support
+knowledge), so a category change alone changes no URL, key or quoted path. `npm run check:nav`
+enforces it with the label rules and requires one group icon per category
+(`NAV_CATEGORY_ICONS` in `layout/navigation/nav-sections.ts`).
 
 - **Areas** (`area` on every root after `Painel`, `nav.area.<area>`), in this order: Comercial,
   Atendimento, Administrativo, Campo, Saúde, Telecom, Infraestrutura, Sistema
@@ -187,10 +189,15 @@ changes no URL, key or quoted path. `npm run check:nav` enforces it with the lab
   uncategorized entries only come before the first title; one block per category; a category
   title counts as ancestor context of its entries; lists of up to 4 entries only use Revenda and
   Plataforma.
-- Rendering (`layout/navigation/nav-sections.ts`): a title appears above the first **visible**
-  entry of its section, after permissions, entitlements and search, so a section the user cannot
-  see shows no title. Search also matches category words. In the compact rail an area is a
-  divider; flyouts show category titles; mobile uses the expanded menu.
+- Rendering (`layout/navigation/nav-sections.ts`), always on the menu the user actually sees
+  (after permissions, entitlements and search): an area title appears above the first visible root
+  of its area. In the **expanded menu** (desktop and mobile, user decision 2026-10-31) a category
+  with 2 or more visible entries is a **collapsible group row** like the module itself (category
+  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), one open group per
+  parent, opened automatically on the path of the current page; a category with a single visible
+  entry shows that entry directly; no category title is shown. Search opens every group with a
+  match and also matches category words; the unread dot lights the group too. In the **compact
+  rail** an area is a divider and the flyouts keep category titles.
 - Visibility is still inherited from the nearest ancestor (`filterMenu`): titles never change it,
   and an entry that moves to another parent states its own `scope`/`entitlementCode`.
 
@@ -1699,7 +1706,8 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - `filter-actions` is the only full-row element inside `.filter-grid`.
   - Do not add component-local filter width overrides; update `src/styles.scss` if the reusable
     filter baseline needs to evolve.
-- Dialog CRUD form grids must follow the same breakpoint rule (`4/3/2/1`) and span behavior (`.span-2/.span-3/.span-4`) as page forms.
+- Dialog CRUD form grids must follow the same breakpoint rule (`4/3/2/1`) as page forms; field
+  widths follow the Form Field Layout Baseline below (`span-1` controls, `span-4` text areas).
 - When a dialog row intentionally leaves columns empty, use the shared field config `breakBefore: true`
   on the next field instead of adding invisible spacer controls or local CSS.
   `breakBefore` must collapse with the same responsive span rules as normal fields, so it never
@@ -1710,9 +1718,39 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - form fields and custom field components must fill their grid track and keep `min-width: 0`
   - tab content must scroll inside the tab body wrapper, not by expanding the dialog past its viewport
   - mobile CRUD dialogs keep the 12px viewport inset from `openCrudTemplateDialog` instead of forcing edge-to-edge `100vw`
-  - avoid `Name` or `Street` full-width by default when 4-column grid is available; use `span-2` unless business context requires full row.
+  - `Name`, `Street` and every other single-line control take one column (`span-1`); see the
+    Form Field Layout Baseline below.
+- Form Field Layout Baseline (mandatory, every form, enforced by `npm run check:crud:fields`):
+  - single-line controls (text, e-mail, password, number, currency, phone, date, datetime, time,
+    status, select, multi-select and FK `search-select`) are always `span-1`: one column of the
+    4/3/2/1 grid. Never `span-2`, `span-3` or `span-4`, whatever the label (`Name`, `Street`,
+    `Description` line, FK, ...). Use `breakBefore`/`lineFillAfter` to start a new row, never a wider span.
+  - text areas are always `span-4` (full row) with four visible rows (`rows-4`). Do not declare other
+    `rows`; the field is resizable when the user needs more space.
+  - composite controls (file upload, checkbox group, permission tree, secret content) keep the span
+    they declare.
+  - the generic CRUD renderer owns this: `fieldClass(field)` and `fieldRows(field)` derive the width
+    and rows from the control type (`src/app/shared/crud/configurable-crud/crud-field-layout.ts`), so
+    a stale `span` in a config cannot widen a control. Hand-written forms in `src/app/pages` use the
+    same classes (`span-1` on inputs/selects, `span-4` on textareas).
+  - `check:crud:fields` (part of `verify:changed`, app-wide, no allowlist) rejects a single-line field
+    declared wider than `span: 1`, a textarea not `span: 4` or with other `rows`, a `Notes` textarea
+    outside the Notes tab and a `Description` textarea without a `// business-description: <why>`
+    marker on the line above. An action dialog whose only input is a note says
+    `// notes-tab-exempt: <why>` above it.
+- FK fields look the same everywhere: the shared `mns-search-select-field` with the floating label,
+  the dropdown arrow and the `+` quick-create action. When a FK with quick-create also has `help`,
+  the help text is shown at the top of the open dropdown (`select-help-note`) instead of a second
+  suffix button, so the closed control never shows `▾ + ⓘ`. A FK without quick-create (or disabled
+  while editing) keeps the help button in the suffix.
 - Notes/anotações rule:
   - whenever a CRUD dialog has a free-text annotation field, the canonical technical name is `Notes`.
+  - free-text observations about a record (account, workspace, contract, ...) are annotations, not a
+    `Description`: use key `notes`, label `Notes` (pt-BR **Anotações**) and `tab: 'notes'`. Never
+    put a `Description` textarea in the Record tab for them. Resale accounts store it in
+    `<Prefix>Notes` and the API takes `notes` (`resaleAccountFields({ notesField })`); the former
+    `<Prefix>Description` columns of DNS, Cyber Security, GED, HR, Commerce, Conversations, CRM and
+    Registry workspaces were renamed (mnscloud-db `carry_account_description`).
   - use `notes` in frontend form keys, API payloads, DTOs, and response fields; use `<TablePrefix>Notes` in database columns when the value is a free-text operational observation.
   - keep `Description` only for business descriptions that are part of the resource identity, commercial meaning, or public/API documentation text, not for operational observations.
   - render notes fields in their own `mat-tab label="Notes"`; the PT-BR translation for `Notes` is `Anotações`.
@@ -1723,10 +1761,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - Record tab desktop row pattern for resources with `Type`/`Company` and no
     `Alias/Nickname` (`carrier`, `supplier`, `reseller`):
     - row 1: `Status`, `Type/Company selector`, `Document`
-    - row 2: `Name (span-2)`, `Email`, `Phone`
+    - row 2: `Name`, `Email`, `Phone`
   - Record tab desktop row pattern for resources without `Type`:
     - row 1: `Status`, `Document`, `Alias/Nickname`
-    - row 2: `Name (span-2)`, `Email`, `Phone`
+    - row 2: `Name`, `Email`, `Phone`
   - Notes tab:
     - `Notes (span-4, rows-4)`
   - Addresses tab desktop row pattern:
@@ -2098,7 +2136,9 @@ address fields and the create/edit dialogs of related collections. No per-page o
 - Related columns should display a name returned by the child list (for example `BprName`)
   instead of relying on a parent lookup that can miss and show the UUID.
 - Use `matIconSuffix` on Material fields and the shared `help` input on searchable
-  relation fields. Native file controls place help inside their existing outline;
+  relation fields. A searchable FK that offers quick-create shows its help at the top of the open
+  dropdown instead of a second suffix button (Form Field Layout Baseline), so every FK keeps the
+  same `▾ +` look. Native file controls place help inside their existing outline;
   the selected filename remains visible as operational state.
 - Keep the full control width and `--form-control-height` (40px baseline), independently
   of select arrows, password toggles and quick-create actions. Never place help in an
@@ -2186,7 +2226,7 @@ or master bypass for unrelated tenant modules.
 ## CRM form baseline
 
 CRM uses the shared configurable CRUD renderer for all CRM resources and action forms.
-Record fields start with Status and workflow/ownership controls, followed by Name (span-2),
+Record fields start with Status and workflow/ownership controls, followed by Name (span-1),
 related records and scheduling. Accounts keep City/State in Address. Activities, accounts and
 handoffs use the canonical frontend `notes` key in a dedicated Notes tab (span-4, rows-4);
 `source`/`payloadKey` map to the existing prefixed API fields without changing the wire contract.
@@ -2295,12 +2335,12 @@ Agent creation/enabling checks the active entitlement and passes its quota to th
 
 Customers, complexes, companies, suppliers, carriers and resellers use
 `registryUnifiedConfig` on top of the shared configurable CRUD. Their identity layout is
-Status / Country / Person type / Document type; Document / Legal or full name (two columns) /
-Trade name; Display name (two columns) / opening or birth date. Display name is never silently
+Status / Country / Person type / Document type; Document / Legal or full name /
+Trade name; Display name / opening or birth date (every control `span-1`). Display name is never silently
 converted into a legal or trade name. Companies are business entities. Identity country and
 address country are separate fields. An explicit same-country option controls copying from identity;
 legacy missing countries remain missing when editing. Foreign regions accept text, and CEP lookup is Brazil-only.
-The address grid uses Zip / Street (two columns) / Number, then Complement / District / City / State.
+The address grid uses Zip / Street / Number, then Complement / District / City / State (`span-1` each).
 
 `contacts` is a shared form tab: general email/phone fields plus the `relatedCollections` global
 table. Related collections can opt into server pagination, list filters and bulk deletion.

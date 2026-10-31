@@ -39,7 +39,7 @@ function config(): ConfigurableCrudConfig {
     initialValues: {
       VbkEnabled: 1,
       VbkName: '',
-      VbkDescription: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'VbkName', uuidField: 'VbkUUID' },
@@ -52,9 +52,10 @@ function config(): ConfigurableCrudConfig {
       { key: 'VbkEnabled', source: 'VbkEnabled', label: 'Status', type: 'status', span: 1 },
       { key: 'VbkName', source: 'VbkName', label: 'Name', required: true, span: 1 },
       {
-        key: 'VbkDescription',
+        key: 'notes',
+        payloadKey: 'VbkDescription',
         source: 'VbkDescription',
-        label: 'Description',
+        label: 'Notes',
         type: 'textarea',
         tab: 'notes',
         span: 4,

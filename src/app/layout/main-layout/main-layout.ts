@@ -67,7 +67,14 @@ import { SupportReportService } from '../../services/support-report.service';
 import { HelpVideoService } from '../../services/help-video.service';
 import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
 import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
-import { navCategoryKey, withSectionTitles } from '../navigation/nav-sections';
+import {
+  NAV_CATEGORY_ICONS,
+  isNavCategoryGroupId,
+  navCategoryGroupId,
+  navCategoryKey,
+  withCategoryGroups,
+  withSectionTitles,
+} from '../navigation/nav-sections';
 import { MNS_MENU } from '../../shared/menu/mns-menu';
 import { ContextModeService, type ContextMode } from '../../services/context-mode.service';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -94,6 +101,8 @@ interface ShellNavItem extends NavItem {
   searchText: string;
   areaTitle?: string;
   categoryTitle?: string;
+  /** Display-only category group of the expanded sidebar (`withCategoryGroups`). */
+  categoryGroup?: boolean;
   children?: ShellNavItem[];
 }
 
@@ -436,7 +445,7 @@ export class MainLayout {
    */
   readonly navUnread = computed(() =>
     navUnreadCounts(
-      this.localizedNavItems(),
+      this.sidebarGroupedItems(),
       (item) => this.routeForItem(item),
       this.inbox.unreadByRoute(),
     ),
@@ -498,7 +507,7 @@ export class MainLayout {
         if (it.children) scan(it.children);
       }
     };
-    scan(this.localizedNavItems());
+    scan(this.sidebarGroupedItems());
     this.expandedSections.set(expanded);
   }
 
@@ -519,7 +528,18 @@ export class MainLayout {
   toggleSection(id: string) {
     const current = new Set(this.expandedSections());
     if (current.has(id)) current.delete(id);
-    else current.add(id);
+    else {
+      // One open category group per parent, so a module never shows all its pages at once.
+      if (isNavCategoryGroupId(id)) {
+        const siblings = `${id.slice(0, id.lastIndexOf('/@'))}/@`;
+        for (const open of [...current]) {
+          if (open.startsWith(siblings) && !open.slice(siblings.length).includes('/')) {
+            current.delete(open);
+          }
+        }
+      }
+      current.add(id);
+    }
     this.expandedSections.set(current);
   }
 
@@ -984,6 +1004,37 @@ export class MainLayout {
 
   /** The visible menu with its area and category titles (no search). */
   private readonly sectionedNavItems = computed(() => this.withTitles(this.localizedNavItems()));
+
+  /**
+   * Expanded sidebar (desktop and mobile): categories with 2+ visible entries become collapsible
+   * groups and no category title is shown (app.md → Navigation Structure). The compact rail
+   * flyouts keep `filteredNavItems` with category titles.
+   */
+  get sidebarNavItems(): ShellNavItem[] {
+    return this.isSearching()
+      ? this.groupCategories(this.filteredNavItems)
+      : this.sidebarGroupedItems();
+  }
+
+  private readonly sidebarGroupedItems = computed(() =>
+    this.groupCategories(this.sectionedNavItems()),
+  );
+
+  private groupCategories(items: ShellNavItem[]): ShellNavItem[] {
+    return withCategoryGroups(items, (parent, category, children) => {
+      const label = this.i18n.t(navCategoryKey(category));
+      return {
+        id: navCategoryGroupId(parent.id, category),
+        label,
+        icon: NAV_CATEGORY_ICONS[category] ?? 'folder',
+        category,
+        categoryGroup: true,
+        path: `${parent.path} › ${label}`,
+        searchText: `${parent.searchText} › ${label}`,
+        children,
+      };
+    });
+  }
 
   // =======================================================
   // Avatar

@@ -67,15 +67,13 @@ export function settlementsCollection(direction: 'receivable' | 'payable', uuidF
             uuidField: 'FinPayMethodUUID',
             labelField: 'Name',
           },
-          span: 2,
         },
         {
           key: 'externalReference',
           label: 'Reference',
           help: 'Bank, terminal or receipt reference; the same reference is never settled twice.',
-          span: 2,
         },
-        { key: 'notes', label: 'Notes', span: 2 },
+        { key: 'notes', label: 'Notes', span: 1 },
       ],
       rowActions: [
         {

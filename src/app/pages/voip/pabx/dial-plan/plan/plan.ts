@@ -49,7 +49,7 @@ function config(): ConfigurableCrudConfig {
     initialValues: {
       enabled: 1,
       name: '',
-      description: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -59,9 +59,10 @@ function config(): ConfigurableCrudConfig {
       { key: 'enabled', source: 'enabled', label: 'Status', type: 'status', span: 1 },
       { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
       {
-        key: 'description',
+        key: 'notes',
+        payloadKey: 'description',
         source: 'description',
-        label: 'Description',
+        label: 'Notes',
         fromRecord: (value) => optionalText(value),
         type: 'textarea',
         tab: 'notes',

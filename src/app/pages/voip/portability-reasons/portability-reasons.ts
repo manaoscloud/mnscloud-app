@@ -78,12 +78,13 @@ const config: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
+    // business-description: meaning of the portability reason code.
     {
       key: 'description',
       source: 'VprDescription',
       type: 'textarea',
       label: 'Description',
-      span: 1,
+      span: 4,
       rows: 4,
     },
   ],

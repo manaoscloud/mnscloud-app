@@ -26,7 +26,6 @@ const config = defineCrud({
       source: 'MonitoringAgentMagUUID',
       label: 'Agent',
       required: true,
-      span: 3,
       type: 'search-select',
       remoteLookup: {
         endpoint: 'system/dns/monitor/candidates',

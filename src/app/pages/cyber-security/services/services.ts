@@ -33,12 +33,12 @@ const config = defineCrud({
     { key: 'enabled', source: 'enabled', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'name', label: 'Name', required: true, span: 1 },
     { key: 'slug', source: 'slug', label: 'Slug', required: true, span: 1 },
+    // business-description: catalog text of the protected service.
     {
       key: 'description',
       source: 'description',
       label: 'Description',
       type: 'textarea',
-      rows: 3,
       span: 4,
     },
     {

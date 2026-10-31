@@ -18,7 +18,7 @@
     <mat-tab [label]="'Storage' | transloco">
       <form class="tab-content form-grid">
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="recordingStorageMode"
           [label]="'Call recordings storage' | transloco"
           [options]="storageModeOptions()"
@@ -32,7 +32,7 @@
         />
         @if (form().recordingStorageMode === 'storage') {
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="recordingStorageBucketUUID"
             [label]="'Recording storage account' | transloco"
             [options]="storageBucketOptions()"
@@ -47,7 +47,7 @@
           />
         }
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="mediaStorageMode"
           [label]="'Media files storage' | transloco"
           [options]="storageModeOptions()"
@@ -61,7 +61,7 @@
         />
         @if (form().mediaStorageMode === 'storage') {
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="mediaStorageBucketUUID"
             [label]="'Media file storage account' | transloco"
             [options]="storageBucketOptions()"
@@ -89,7 +89,7 @@
     <mat-tab [label]="'Media' | transloco">
       <form class="tab-content form-grid">
         <mns-search-select-field
-          fieldClass="span-2"
+          fieldClass="span-1"
           data-field-key="mediaDeliveryMode"
           [label]="'Media file delivery' | transloco"
           [options]="deliveryModeOptions()"
@@ -114,7 +114,7 @@
       <form class="tab-content form-grid">
         @if (!isMaster()) {
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="realmSource"
             [label]="'Configuration source' | transloco"
             [options]="realmSourceOptions"
@@ -129,7 +129,7 @@
         }
         @if (ownRealm()) {
           <mns-search-select-field
-            fieldClass="span-2"
+            fieldClass="span-1"
             data-field-key="autoDomainDnsMode"
             [label]="'SIP realm DNS mode' | transloco"
             [options]="dnsModeOptions"
@@ -144,7 +144,7 @@
           @if (managedDns()) {
             <mns-search-select-field
               data-quick-create-exempt="DNS policies require explicit authorization in the owning DNS domain."
-              fieldClass="span-4"
+              fieldClass="span-1"
               data-field-key="dnsPolicyUUID"
               [label]="'Domain for SIP realm publication' | transloco"
               [options]="dns.options()"
@@ -171,7 +171,7 @@
               </p>
             }
           } @else {
-            <mat-form-field appearance="outline" class="span-4">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'SIP realm base' | transloco }}</mat-label>
               <input
                 matInput
@@ -192,7 +192,7 @@
             </mat-form-field>
           }
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Domain label' | transloco }}</mat-label>
             <input matInput [value]="'Short UUID' | transloco" readonly />
             <mns-field-help
@@ -205,7 +205,7 @@
             />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'UUID length' | transloco }}</mat-label>
             <input
               matInput
@@ -245,7 +245,7 @@
             </mat-slide-toggle>
           </div>
         } @else {
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Inherited publication mode' | transloco }}</mat-label>
             <input
               matInput
@@ -258,7 +258,7 @@
               readonly
             />
           </mat-form-field>
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Inherited SIP Realm domain' | transloco }}</mat-label>
             <input matInput [value]="inheritedRealmLabel()" readonly />
           </mat-form-field>
@@ -278,7 +278,7 @@
 
     <mat-tab [label]="'Retention' | transloco">
       <form class="tab-content form-grid">
-        <mat-form-field appearance="outline" class="span-2">
+        <mat-form-field appearance="outline" class="span-1">
           <mat-label>{{ 'CDR history retention (days)' | transloco }}</mat-label>
           <input
             matInput
@@ -305,7 +305,7 @@
           <mat-error>{{ 'Enter zero or a positive whole number.' | transloco }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="span-2">
+        <mat-form-field appearance="outline" class="span-1">
           <mat-label>{{ 'Call recordings retention (days)' | transloco }}</mat-label>
           <input
             matInput
@@ -335,7 +335,7 @@
         </mat-form-field>
 
         @if (isMaster()) {
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Orphan records grace (days)' | transloco }}</mat-label>
             <input
               matInput
@@ -366,7 +366,7 @@
 
     <mat-tab [label]="'Alerts' | transloco">
       <form class="tab-content form-grid">
-        <mat-form-field appearance="outline" class="span-2">
+        <mat-form-field appearance="outline" class="span-1">
           <mat-label>{{ 'Extension offline alert (minutes)' | transloco }}</mat-label>
           <input
             matInput

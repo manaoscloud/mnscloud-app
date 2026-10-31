@@ -10,6 +10,7 @@ import ts from 'typescript';
 
 export const REGISTRY_PATH = 'src/app/layout/navigation/nav-registry.ts';
 export const GLOSSARY_PATH = 'src/app/layout/navigation/nav-glossary.json';
+export const SECTIONS_PATH = 'src/app/layout/navigation/nav-sections.ts';
 
 export function navLabelKey(id) {
   return `nav.${id.replace(/\//g, '.')}`;
@@ -35,7 +36,8 @@ function literalValue(node, file) {
     for (const prop of node.properties) {
       if (!ts.isPropertyAssignment(prop))
         throw new Error(`${file}: registry entries must be data only`);
-      value[prop.name.getText()] = literalValue(prop.initializer, file);
+      const name = ts.isStringLiteral(prop.name) ? prop.name.text : prop.name.getText();
+      value[name] = literalValue(prop.initializer, file);
     }
     return value;
   }
@@ -45,17 +47,48 @@ function literalValue(node, file) {
   );
 }
 
-export function readRegistry(source, file = REGISTRY_PATH) {
+function readConstant(source, file, name) {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   for (const statement of sf.statements) {
     if (!ts.isVariableStatement(statement)) continue;
     for (const decl of statement.declarationList.declarations) {
-      if (decl.name.getText() === 'NAV_ITEMS' && decl.initializer) {
+      if (decl.name.getText() === name && decl.initializer) {
         return literalValue(decl.initializer, file);
       }
     }
   }
-  throw new Error(`${file}: NAV_ITEMS array not found`);
+  throw new Error(`${file}: ${name} not found`);
+}
+
+export function readRegistry(source, file = REGISTRY_PATH) {
+  return readConstant(source, file, 'NAV_ITEMS');
+}
+
+/** `NAV_CATEGORY_ICONS` of nav-sections.ts: the icon of each category group row. */
+export function readCategoryIcons(source, file = SECTIONS_PATH) {
+  return readConstant(source, file, 'NAV_CATEGORY_ICONS');
+}
+
+/** Every glossary category has one Material Symbols icon, and no icon names an unknown one. */
+export function validateCategoryIcons(icons, glossary) {
+  const categories = [
+    ...(glossary.categories?.standard ?? []),
+    ...(glossary.categories?.domain ?? []),
+  ];
+  const errors = [];
+  for (const category of categories) {
+    if (typeof icons[category] !== 'string' || !/^[a-z0-9_]+$/.test(icons[category])) {
+      errors.push(
+        `category "${category}": missing group icon in NAV_CATEGORY_ICONS (nav-sections.ts)`,
+      );
+    }
+  }
+  for (const key of Object.keys(icons)) {
+    if (!categories.includes(key)) {
+      errors.push(`NAV_CATEGORY_ICONS: "${key}" is not a category of nav-glossary.json`);
+    }
+  }
+  return errors;
 }
 
 const fold = (text) =>
@@ -338,7 +371,14 @@ export function validateNavigationAt(root) {
     const path = resolve(root, `public/i18n/${locale}.json`);
     dictionaries[locale] = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : {};
   }
-  return { errors: validateNavigation({ items, dictionaries, glossary }), items };
+  const icons = readCategoryIcons(readFileSync(resolve(root, SECTIONS_PATH), 'utf8'));
+  return {
+    errors: [
+      ...validateNavigation({ items, dictionaries, glossary }),
+      ...validateCategoryIcons(icons, glossary),
+    ],
+    items,
+  };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

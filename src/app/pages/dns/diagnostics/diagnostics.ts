@@ -37,7 +37,6 @@ const config = defineCrud({
       label: 'dns.diagnosisTarget',
       help: 'dns.diagnosisTargetHelp',
       required: true,
-      span: 2,
       type: 'text',
     },
     {
@@ -46,7 +45,6 @@ const config = defineCrud({
       label: 'dns.diagnosisAgents',
       help: 'dns.diagnosisAgentsHelp',
       required: true,
-      span: 2,
       type: 'search-select',
       multiple: true,
       remoteLookup: {

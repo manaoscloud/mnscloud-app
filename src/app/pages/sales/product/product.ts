@@ -86,7 +86,7 @@ function barcodes(product: ConfigurableCrudRecord) {
       { id: 'quantity', label: 'Quantity', field: 'SpbQuantity', kind: 'number' },
     ],
     fields: [
-      { key: 'barcode', source: 'SpbBarcode', label: 'Barcode', required: true, span: 2 },
+      { key: 'barcode', source: 'SpbBarcode', label: 'Barcode', required: true, span: 1 },
       {
         key: 'kind',
         source: 'SpbKind',
@@ -116,7 +116,6 @@ function barcodes(product: ConfigurableCrudRecord) {
           labelField: 'SunName',
           selectedLabelField: 'SaleUnitName',
         },
-        span: 2,
       },
     ],
   });
@@ -271,8 +270,8 @@ const config = defineCrud({
       span: 1,
     },
     { key: 'barcode', source: 'SprBarcode', label: 'Barcode', span: 1 },
-    { key: 'description', source: 'SprDescription', label: 'Description', required: true, span: 4 },
-    { key: 'tags', source: 'SprTags', label: 'Tags (CSV)', span: 4 },
+    { key: 'description', source: 'SprDescription', label: 'Description', required: true, span: 1 },
+    { key: 'tags', source: 'SprTags', label: 'Tags (CSV)', span: 1 },
     {
       key: 'fiscalNature',
       source: 'FicNature',
@@ -282,7 +281,6 @@ const config = defineCrud({
       fromRecord: (value) => String(value ?? ''),
       help: 'Real nature of the item; it decides which fiscal document is issued for it.',
       tab: 'fiscal',
-      span: 2,
     },
     {
       key: 'fiscalRevision',

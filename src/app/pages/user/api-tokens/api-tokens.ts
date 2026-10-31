@@ -79,12 +79,12 @@ type ApiTokenSecretDialogData = {
 
       <mat-dialog-content class="dialog-content">
         <div class="form-grid">
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Name' | transloco }}</mat-label>
             <input matInput [value]="data.name" readonly />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Prefix' | transloco }}</mat-label>
             <input matInput [value]="data.prefix" readonly />
           </mat-form-field>
@@ -164,7 +164,7 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
     customExpirationDate: '',
     permissions: [],
     allowedIpsText: '',
-    description: '',
+    notes: '',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -220,7 +220,6 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       tab: 'authentication',
       required: true,
-      span: 4,
       multiple: true,
       placeholder: 'Search',
       options: PERMISSION_OPTIONS,
@@ -239,10 +238,10 @@ const API_TOKEN_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (value) => listToLines(value),
     },
     {
-      key: 'description',
+      key: 'notes',
       source: 'description',
       payloadKey: 'description',
-      label: 'Description',
+      label: 'Notes',
       type: 'textarea',
       tab: 'notes',
       rows: 4,

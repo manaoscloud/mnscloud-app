@@ -99,9 +99,8 @@ export function assetAttachmentsCollection(
         type: 'select',
         options: ATTACHMENT_KINDS,
         translateOptions: true,
-        span: 2,
       },
-      { key: 'caption', label: 'Caption', span: 2 },
+      { key: 'caption', label: 'Caption', span: 1 },
     ],
     rowActions: [
       {

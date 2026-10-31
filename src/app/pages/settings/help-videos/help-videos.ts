@@ -115,9 +115,8 @@ const config = defineCrud({
       translateOptions: false,
       required: true,
       help: 'The video appears on this page and on its dialogs.',
-      span: 2,
     },
-    { key: 'title', source: 'Title', payloadKey: 'title', label: 'Title', required: true, span: 2 },
+    { key: 'title', source: 'Title', payloadKey: 'title', label: 'Title', required: true, span: 1 },
     {
       key: 'youtubeUrl',
       source: 'YoutubeVideoId',
@@ -127,7 +126,6 @@ const config = defineCrud({
       placeholder: 'https://youtu.be/...',
       help: 'Paste the video link (watch, youtu.be, shorts or embed). Unlisted videos work.',
       fromRecord: (value) => (value ? `https://youtu.be/${String(value)}` : ''),
-      span: 2,
     },
   ],
   payload: (values) => ({

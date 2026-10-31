@@ -54,7 +54,6 @@ function items(transfer: ConfigurableCrudRecord) {
           labelField: 'SprName',
           selectedLabelField: 'SaleProductName',
         },
-        span: 3,
       },
       {
         key: 'quantity',
@@ -120,7 +119,6 @@ const config = defineCrud({
       required: true,
       remoteLookup: { ...locationLookup, selectedLabelField: 'OriginName' },
       quickCreate: quickCreateFor('StockLocationStlUUID'),
-      span: 2,
     },
     {
       key: 'destinationUUID',
@@ -130,7 +128,6 @@ const config = defineCrud({
       required: true,
       remoteLookup: { ...locationLookup, selectedLabelField: 'DestinationName' },
       quickCreate: quickCreateFor('StockLocationStlUUID'),
-      span: 2,
     },
     {
       key: 'notes',

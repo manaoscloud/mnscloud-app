@@ -215,7 +215,7 @@ export function documentCollection(
         type: 'date',
         span: 1,
       },
-      { key: 'notes', source: 'RdcNotes', label: 'Notes', type: 'textarea', span: 1 },
+      { key: 'notes', source: 'RdcNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
       hidden('revision', 'RdcRevision'),
     ],
     columns: [
@@ -248,7 +248,8 @@ export function documentCollection(
                 required: true,
                 span: 1,
               },
-              { key: 'notes', label: 'Notes', type: 'textarea', required: true, span: 1 },
+              // notes-tab-exempt: the review reason is the only input of this action dialog.
+              { key: 'notes', label: 'Notes', type: 'textarea', required: true, span: 4 },
             ],
             columns: [],
           }),

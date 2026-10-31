@@ -108,7 +108,6 @@ function localeFields(): ConfigurableCrudConfig['fields'] {
       source: `name${locale.suffix}`,
       label: `website.offerName${locale.suffix}`,
       tab: 'public' as const,
-      span: 2,
       help: 'website.offerNameHelp',
     },
     {
@@ -117,7 +116,7 @@ function localeFields(): ConfigurableCrudConfig['fields'] {
       label: `website.offerSummary${locale.suffix}`,
       type: 'textarea' as const,
       tab: 'public' as const,
-      span: 2,
+      span: 4,
       help: 'website.offerSummaryHelp',
     },
     {
@@ -126,7 +125,7 @@ function localeFields(): ConfigurableCrudConfig['fields'] {
       label: `website.offerFeatures${locale.suffix}`,
       type: 'textarea' as const,
       tab: 'public' as const,
-      span: 2,
+      span: 4,
       help: 'website.offerFeaturesHelp',
     },
   ]);
@@ -216,7 +215,6 @@ function websiteOffersConfig(): ConfigurableCrudConfig {
         quickCreateExemptReason:
           'Platform VPS and hosting plans are created by the platform master.',
         required: true,
-        span: 2,
         help: 'website.offerPlanHelp',
       },
       {

@@ -222,7 +222,6 @@ const PRICE_ADJUSTMENT_CONFIG: ConfigurableCrudConfig = {
       label: 'Price',
       type: 'search-select',
       required: true,
-      span: 2,
       remoteLookup: {
         endpoint: 'system/billing/prices?status=1',
         uuidField: 'BpcUUID',
@@ -237,7 +236,6 @@ const PRICE_ADJUSTMENT_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'name',
       label: 'Name',
       required: true,
-      span: 2,
       placeholder: 'Annual adjustment 2027',
     },
     {
@@ -318,7 +316,6 @@ const PRICE_ADJUSTMENT_CONFIG: ConfigurableCrudConfig = {
       label: 'Reason shown to tenants',
       type: 'textarea',
       span: 4,
-      rows: 2,
     },
   ],
 };

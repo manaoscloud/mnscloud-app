@@ -46,7 +46,7 @@ function config(desk: SupportDesk) {
         type: 'status',
         span: 1,
       },
-      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
       {
         key: 'code',
         source: 'Code',
@@ -74,13 +74,13 @@ function config(desk: SupportDesk) {
         translateOptions: true,
         span: 1,
       },
+      // business-description: catalog text of the ticket type.
       {
         key: 'description',
         source: 'Description',
         payloadKey: 'description',
         label: 'Description',
         type: 'textarea',
-        rows: 2,
         span: 4,
       },
     ],
