@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { ApiService } from '../../../services/api.service';
+import { registryWorkspaceApi } from '../../../shared/crud/configurable-crud/registry-workspace-api';
 import { AppI18nService } from '../../../services/app-i18n.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import type { ConfigurableCrudRecord } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -84,7 +84,8 @@ const DAY_CHIPS: Record<string, string> = {
   styleUrl: './timesheets.scss',
 })
 export class HrTimesheetsPage {
-  private readonly api = inject(ApiService);
+  // The HR account opened from HR > Accounts (?hrAccountUUID=), else the internal account.
+  private readonly api = registryWorkspaceApi('hr/timesheets');
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
@@ -104,7 +105,7 @@ export class HrTimesheetsPage {
   readonly months = computed(() => monthOptions(this.i18n.language()));
   readonly recalculating = signal(false);
 
-  // Employees: server-searched, paginated (registry/employees), like every remote FK select.
+  // Employees of the current HR account: server-searched, paginated (hr/employees).
   private readonly employeeSearch = signal('');
   private readonly employeeOffset = signal(0);
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -119,7 +120,7 @@ export class HrTimesheetsPage {
         offset: String(params.offset),
       });
       const response = await this.api.get<{ data?: { items?: Row[]; total?: number } }>(
-        `registry/employees?${query}`,
+        `hr/employees?${query}`,
       );
       return { items: response?.data?.items ?? [], total: Number(response?.data?.total ?? 0) };
     },
@@ -151,8 +152,8 @@ export class HrTimesheetsPage {
   readonly employeeOptions = computed<Option[]>(() => {
     const items = this.employeeList.hasValue() ? this.employeeList.value().items : [];
     const options = items.map((item) => ({
-      value: String(item['EmployeeUUID'] ?? ''),
-      label: String(item['Name'] ?? ''),
+      value: String(item['RemUUID'] ?? ''),
+      label: String(item['RemName'] ?? ''),
     }));
     const selected = this.employeeUUID();
     if (selected && !options.some((option) => option.value === selected)) {
@@ -377,6 +378,8 @@ export class HrTimesheetsPage {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { employeeUUID: this.employeeUUID() || null, month: this.month(), ...changes },
+      // Keeps the opened HR account (hrAccountUUID, workspaceUUID) in the address.
+      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   }

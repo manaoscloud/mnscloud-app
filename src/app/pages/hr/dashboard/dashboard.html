@@ -15,8 +15,12 @@
             | transloco
         }}
       </p>
-      <a routerLink="/hr/work-schedules">{{ 'Create work schedule' | transloco }}</a>
-      <a routerLink="/hr/work-schedule-assignments">{{ 'Assign schedules' | transloco }}</a>
+      <a routerLink="/hr/work-schedules" queryParamsHandling="merge">{{
+        'Create work schedule' | transloco
+      }}</a>
+      <a routerLink="/hr/work-schedule-assignments" queryParamsHandling="merge">{{
+        'Assign schedules' | transloco
+      }}</a>
     </div>
   } @else {
     <div class="dashboard-grid">
@@ -46,6 +50,7 @@
               [class.alert-error]="item.severe"
               [class.alert-warning]="!item.severe"
               routerLink="/hr/timesheets"
+              queryParamsHandling="merge"
               [queryParams]="item.query"
             >
               <mat-icon aria-hidden="true">{{ item.severe ? 'error' : 'warning' }}</mat-icon>
@@ -75,7 +80,9 @@
       <div class="panel-header">
         <h2>{{ 'Issues by type' | transloco }}</h2>
         <p>{{ 'Days with each issue in the last 30 days.' | transloco }}</p>
-        <a routerLink="/hr/time-issues">{{ 'Open issues' | transloco }}</a>
+        <a routerLink="/hr/time-issues" queryParamsHandling="merge">{{
+          'Open issues' | transloco
+        }}</a>
       </div>
       <mns-global-table [config]="issueTable" [rows]="issueRows()" />
     </section>

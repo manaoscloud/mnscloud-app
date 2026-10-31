@@ -2385,3 +2385,15 @@ isolated ApiService sends `X-Commerce-Account-UUID` only to `sale/*` (except `sa
 POS, Stock, Fiscal and Financial requests stay internal until their own account phase. Embedded
 collections and canonical quick-create inherit `requestApi`; never keep the account in a global
 mutable header. The API/DB remain responsible for membership, account state and FK isolation.
+
+## HR account request scope
+
+`hr/accounts` (RH › Revenda › Contas) manages one HR account per Registry workspace: the internal
+account (the default of every HR page) and one account per customer workspace. Row actions open the
+HR pages with `hrAccountUUID` and `workspaceUUID`; `registryWorkspaceApi` resolves them into
+`ApiService.withHrAccount`, which sends `X-Hr-Account-UUID` only to HR resource routes (and the
+workspace only to the canonical Registry routes, so the employee/company quick-create lands in the
+customer workspace). The shared renderer shows the account name; HR internal links merge query
+params to keep the account. HR forms never look up Registry lists directly: employees come from
+`hr/employees` (`RemUUID`/`RemName`) and companies from `hr/companies` (`RcoUUID`/`RcoName`).
+Operators and assignment reuse `resaleAccountRowActions` (no Portal publication before R2).

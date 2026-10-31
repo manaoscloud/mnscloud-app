@@ -21,6 +21,7 @@ export class ApiService {
   private readonly injector = inject(Injector);
 
   private registryScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
+  private hrScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
 
   /** Isolated client for one opened Registry workspace, never shared mutable application state. */
   withRegistryWorkspace(uuid: string): ApiService {
@@ -54,6 +55,24 @@ export class ApiService {
     return client;
   }
 
+  /**
+   * Isolated client for one opened HR account (X-Hr-Account-UUID on HR routes). Its Registry
+   * workspace, when known, scopes the canonical Registry quick-create of employees and companies.
+   */
+  withHrAccount(uuid: string, workspaceUUID?: string | null): ApiService {
+    const normalized = normalizeEnvironmentUUID(uuid);
+    if (!normalized) throw new Error('Invalid HR account.');
+    const client = workspaceUUID
+      ? this.withRegistryWorkspace(workspaceUUID)
+      : runInInjectionContext(this.injector, () => new ApiService());
+    client.hrScope = {
+      uuid: normalized,
+      environment: this.currentEnvironmentUUID(),
+      session: this.auth.sessionGeneration(),
+    };
+    return client;
+  }
+
   get commerceAccountUUID(): string | null {
     return this.commerceScope?.uuid ?? null;
   }
@@ -64,6 +83,16 @@ export class ApiService {
     return (
       (/^sale\//.test(path) && !/^sale\/accounts([/?]|$)/.test(path)) ||
       /^registry\/customers([/?]|$)/.test(path)
+    );
+  }
+
+  get hrAccountUUID(): string | null {
+    return this.hrScope?.uuid ?? null;
+  }
+
+  static isHrAccountEndpoint(endpoint: string): boolean {
+    return /^\/?hr\/(time-clock-accounts|time-punches|work-schedules|work-schedule-assignments|holidays|time-policies|timesheets|time-issues|dashboard|employees|companies)([/?]|$)/.test(
+      endpoint,
     );
   }
 
@@ -95,6 +124,16 @@ export class ApiService {
       }
       if (ApiService.isRegistryWorkspaceEndpoint(endpoint))
         headers['X-Registry-Workspace-UUID'] = this.registryScope.uuid;
+    }
+    if (this.hrScope) {
+      if (
+        this.hrScope.environment !== environmentUUID ||
+        this.hrScope.session !== this.auth.sessionGeneration()
+      ) {
+        throw new Error('Session changed.');
+      }
+      if (ApiService.isHrAccountEndpoint(endpoint))
+        headers['X-Hr-Account-UUID'] = this.hrScope.uuid;
     }
 
     if (this.commerceScope) {
@@ -247,6 +286,7 @@ export class ApiService {
       headers.get('X-Environment-UUID'),
       headers.get('X-Registry-Workspace-UUID'),
       headers.get('X-Commerce-Account-UUID'),
+      headers.get('X-Hr-Account-UUID'),
       this.auth.user()?.uuid,
       session,
       isFormData ? crypto.randomUUID() : (body ?? null),
