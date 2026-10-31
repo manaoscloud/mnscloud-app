@@ -188,14 +188,12 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         required: true,
         remoteLookup: CONNECTION_LOOKUP,
         hiddenWhen: ({ editing }) => editing,
-        span: 2,
       },
       {
         key: 'name',
         source: 'ContactName',
         label: 'Contact name',
         hiddenWhen: ({ editing }) => editing,
-        span: 2,
       },
       {
         key: 'phone',
@@ -204,7 +202,6 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         placeholder: '+5592999990000',
         help: 'International format with the country code.',
         hiddenWhen: ({ editing }) => editing,
-        span: 2,
       },
       {
         key: 'email',
@@ -212,9 +209,8 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         label: 'Contact e-mail',
         type: 'email',
         hiddenWhen: ({ editing }) => editing,
-        span: 2,
       },
-      { key: 'subject', source: 'CnvSubject', label: 'Subject', span: 4 },
+      { key: 'subject', source: 'CnvSubject', label: 'Subject', span: 1 },
       {
         key: 'state',
         source: 'CnvState',
@@ -243,7 +239,6 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         quickCreate: false,
         quickCreateExemptReason: MEMBER_EXEMPT,
         hiddenWhen: ({ editing }) => !editing,
-        span: 2,
       },
       {
         key: 'snoozedUntil',
@@ -252,7 +247,6 @@ function inboxConfig(dialog: () => MatDialog): ConfigurableCrudConfig {
         type: 'datetime',
         help: 'Required when the state is Snoozed; the conversation returns to the inbox at this time.',
         hiddenWhen: ({ editing, values }) => !editing || values['state'] !== 'snoozed',
-        span: 2,
       },
     ],
     payload: (values, editing) =>

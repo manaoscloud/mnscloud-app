@@ -59,7 +59,7 @@ export function industryReferenceColumn(): ConfigurableCrudColumn {
 export function economicCatalogFields(prefix: 'Rec' | 'Rin'): ConfigurableCrudField[] {
   return [
     { key: prefix + 'Status', source: prefix + 'Status', label: 'Status', type: 'status', span: 1 },
-    { key: prefix + 'Name', source: prefix + 'Name', label: 'Name', required: true, span: 2 },
+    { key: prefix + 'Name', source: prefix + 'Name', label: 'Name', required: true, span: 1 },
     ...(prefix === 'Rin'
       ? [
           {
@@ -73,6 +73,7 @@ export function economicCatalogFields(prefix: 'Rec' | 'Rin'): ConfigurableCrudFi
           },
         ]
       : []),
+    // business-description: official text of the classification code.
     {
       key: prefix + 'Description',
       source: prefix + 'Description',

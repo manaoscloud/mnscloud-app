@@ -25,7 +25,7 @@ const config = defineCrud({
   serverSidePagination: true,
   ...revisionDeletePayloads('HraUUID', 'HraRevision'),
   canDeleteRow: (row) => Number(row['HraIsInternal']) !== 1,
-  initialValues: { name: '', description: '', workspaceUUID: null, status: 1 },
+  initialValues: { name: '', notes: '', workspaceUUID: null, status: 1 },
   fields: [
     {
       key: 'status',
@@ -56,11 +56,13 @@ const config = defineCrud({
       quickCreateExemptReason: 'Customer workspaces are managed in Registry > Workspaces.',
     },
     {
-      key: 'description',
+      key: 'notes',
       source: 'HraDescription',
-      label: 'Description',
+      payloadKey: 'description',
+      label: 'Notes',
       type: 'textarea',
-      span: 1,
+      tab: 'notes',
+      span: 4,
     },
     {
       key: 'HraIsInternal',

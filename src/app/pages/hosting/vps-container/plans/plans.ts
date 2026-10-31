@@ -200,7 +200,6 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Size / Bundle',
       type: 'search-select',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
       translateOptions: false,
     },
@@ -211,7 +210,6 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Size / Bundle',
       placeholder: 'custom-flavor',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
     },
     {
@@ -221,7 +219,6 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Image',
       type: 'search-select',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
       translateOptions: false,
     },
@@ -232,7 +229,6 @@ const HOSTING_VPS_CONTAINER_PLAN_CONFIG: ConfigurableCrudConfig = {
       label: 'Image',
       placeholder: 'ubuntu/22.04',
       tab: 'storage',
-      span: 2,
       lineFillAfter: 1,
     },
     {

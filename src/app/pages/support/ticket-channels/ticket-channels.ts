@@ -45,7 +45,7 @@ function config(desk: SupportDesk) {
         type: 'status',
         span: 1,
       },
-      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+      { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
       {
         key: 'code',
         source: 'Code',
@@ -54,13 +54,13 @@ function config(desk: SupportDesk) {
         help: 'Lowercase letters, digits, dashes or underscores.',
         span: 1,
       },
+      // business-description: catalog text of the channel.
       {
         key: 'description',
         source: 'Description',
         payloadKey: 'description',
         label: 'Description',
         type: 'textarea',
-        rows: 2,
         span: 4,
       },
     ],

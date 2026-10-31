@@ -65,7 +65,7 @@ const RATE_CONFIG: ConfigurableCrudConfig = {
       type: 'status',
       span: 1,
     },
-    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     {
       key: 'prefix',
       source: 'prefix',

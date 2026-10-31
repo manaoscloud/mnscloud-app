@@ -90,7 +90,6 @@ const CDR_CONFIG: ConfigurableCrudConfig = {
       source: 'callId',
       payloadKey: 'providerCallId',
       label: 'Call-ID',
-      span: 2,
     },
     {
       key: 'callStatus',

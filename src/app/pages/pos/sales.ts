@@ -96,7 +96,7 @@ const config = defineCrud({
           statusFilter: false,
           initialValues: { reason: '' },
           columns: [],
-          fields: [{ key: 'reason', label: 'Reason', required: true, span: 4 }],
+          fields: [{ key: 'reason', label: 'Reason', required: true, span: 1 }],
         }),
     },
   ],

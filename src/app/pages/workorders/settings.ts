@@ -53,7 +53,6 @@ export function checklistTemplatesConfig(): ConfigurableCrudConfig {
         options: WORK_ORDER_KINDS,
         translateOptions: true,
         required: true,
-        span: 2,
       },
       { key: 'position', source: 'WctPosition', label: 'Order', type: 'number', span: 1 },
       {
@@ -65,7 +64,7 @@ export function checklistTemplatesConfig(): ConfigurableCrudConfig {
         translateOptions: true,
         span: 1,
       },
-      { key: 'label', source: 'WctLabel', label: 'Item', required: true, span: 4 },
+      { key: 'label', source: 'WctLabel', label: 'Item', required: true, span: 1 },
     ],
     columns: [
       {
@@ -102,7 +101,6 @@ export function dueRulesConfig(): ConfigurableCrudConfig {
         source: 'WdrHours',
         label: 'Hours (empty for no due time)',
         type: 'number',
-        span: 4,
       },
     ],
     columns: [

@@ -63,7 +63,7 @@ const CONFIG: ConfigurableCrudConfig = {
   fields: [
     { key: 'accountUUID', source: 'accountUUID', payloadKey: 'accountUUID', label: 'Softswitch', type: 'search-select', quickCreate: quickCreateFor('VoipSoftswitchAccountVssUUID'), required: true, span: 1 },
     { key: 'status', source: 'status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     { key: 'scope', source: 'scope', payloadKey: 'scope', label: 'Scope', type: 'select', options: scopes, required: true, span: 1, tab: 'routing' },
     { key: 'defaultAction', source: 'defaultAction', payloadKey: 'defaultAction', label: 'Default action', type: 'select', options: actions, required: true, span: 1, tab: 'routing' },
     { key: 'priority', source: 'priority', payloadKey: 'priority', label: 'Priority', type: 'number', span: 1, tab: 'routing' },

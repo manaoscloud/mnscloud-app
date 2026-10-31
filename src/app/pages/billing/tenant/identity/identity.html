@@ -123,7 +123,7 @@
             }}</mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{
               (model().partyType === 'individual' ? 'Full name' : 'Legal name') | transloco
             }}</mat-label>
@@ -208,7 +208,7 @@
             }}</mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Address' | transloco }}</mat-label>
             <input matInput [formField]="identityForm.addressStreet" autocomplete="address-line1" />
             <mat-error>{{

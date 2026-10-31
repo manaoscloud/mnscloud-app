@@ -162,7 +162,6 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'publicSummary',
       label: 'Public summary',
       tab: 'public',
-      span: 4,
     },
     {
       key: 'publicDescription',
@@ -172,7 +171,6 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'public',
       span: 4,
-      rows: 3,
     },
     {
       key: 'notes',

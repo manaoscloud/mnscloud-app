@@ -21,7 +21,7 @@ export function namedRecordFields(): ConfigurableCrudField[] {
   return [
     { key: 'status', source: 'Status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
-    { key: 'description', source: 'Description', label: 'Description', span: 2 },
+    { key: 'description', source: 'Description', label: 'Description', span: 1 },
     {
       key: 'notes',
       source: 'Notes',

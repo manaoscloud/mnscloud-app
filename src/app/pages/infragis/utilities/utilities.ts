@@ -166,7 +166,7 @@ function linesForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
     statusFilter: false,
     initialValues: { text: '' },
     columns: [],
-    fields: [{ key: 'text', label: 'Lines', type: 'textarea', rows: 10, required: true, span: 4 }],
+    fields: [{ key: 'text', label: 'Lines', type: 'textarea', required: true, span: 4 }],
     payload: (values) => ({ lines: parseInvoiceLines(String(values['text'] ?? '')) }),
   });
 }
@@ -271,7 +271,6 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
           labelField: 'IgaName',
           selectedLabelField: 'PoleName',
         },
-        span: 2,
       },
       {
         key: 'occupantKind',
@@ -280,11 +279,10 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
         type: 'select',
         options: OCCUPANT_KINDS,
         translateOptions: true,
-        span: 2,
       },
-      { key: 'occupantName', source: 'IpaOccupantName', label: 'Company', required: true, span: 2 },
-      { key: 'occupantDocument', source: 'IpaOccupantDocument', label: 'Company tax ID', span: 2 },
-      { key: 'poleOwner', source: 'IpaPoleOwner', label: 'Pole owner', required: true, span: 2 },
+      { key: 'occupantName', source: 'IpaOccupantName', label: 'Company', required: true, span: 1 },
+      { key: 'occupantDocument', source: 'IpaOccupantDocument', label: 'Company tax ID', span: 1 },
+      { key: 'poleOwner', source: 'IpaPoleOwner', label: 'Pole owner', required: true, span: 1 },
       { key: 'points', source: 'IpaPoints', label: 'Points', type: 'number', span: 1 },
       {
         key: 'regularization',
@@ -295,8 +293,8 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
         translateOptions: true,
         span: 1,
       },
-      { key: 'contractRef', source: 'IpaContractRef', label: 'Contract', span: 2 },
-      { key: 'notes', source: 'IpaNotes', label: 'Notes', type: 'textarea', rows: 2, span: 4 },
+      { key: 'contractRef', source: 'IpaContractRef', label: 'Contract', span: 1 },
+      { key: 'notes', source: 'IpaNotes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
     ],
   }),
   'pole-price-rules': defineCrud({
@@ -323,7 +321,7 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
       { id: 'notes', field: 'IpqNotes', label: 'Basis' },
     ],
     fields: [
-      { key: 'poleOwner', source: 'IpqPoleOwner', label: 'Pole owner', required: true, span: 2 },
+      { key: 'poleOwner', source: 'IpqPoleOwner', label: 'Pole owner', required: true, span: 1 },
       {
         key: 'pricePerPoint',
         source: 'IpqPricePerPoint',
@@ -340,7 +338,7 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
         required: true,
         span: 1,
       },
-      { key: 'notes', source: 'IpqNotes', label: 'Basis', type: 'textarea', rows: 2, span: 4 },
+      { key: 'notes', source: 'IpqNotes', label: 'Basis', type: 'textarea', span: 4 },
     ],
   }),
   'outage-notices': defineCrud({
@@ -377,9 +375,9 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
     ],
     fields: [
       outageAsset,
-      { key: 'portUUID', label: 'Failed port', hidden: true, span: 4 },
-      { key: 'subject', label: 'Subject', required: true, span: 4 },
-      { key: 'message', label: 'Message', type: 'textarea', rows: 6, required: true, span: 4 },
+      { key: 'portUUID', label: 'Failed port', hidden: true, span: 1 },
+      { key: 'subject', label: 'Subject', required: true, span: 1 },
+      { key: 'message', label: 'Message', type: 'textarea', required: true, span: 4 },
     ],
     rowActions: [{ key: 'recipients', label: 'Recipients', icon: 'group', collection: recipients }],
   }),
@@ -424,8 +422,8 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
     ],
     fields: [
       outageAsset,
-      { key: 'portUUID', label: 'Failed port', hidden: true, span: 4 },
-      { key: 'outageKey', label: 'Outage identification', required: true, span: 4 },
+      { key: 'portUUID', label: 'Failed port', hidden: true, span: 1 },
+      { key: 'outageKey', label: 'Outage identification', required: true, span: 1 },
       {
         key: 'mode',
         label: 'Credit',
@@ -433,11 +431,10 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
         options: CREDIT_MODES,
         translateOptions: true,
         required: true,
-        span: 2,
       },
       { key: 'hours', label: 'Hours without service', type: 'number', span: 1 },
       { key: 'amount', label: 'Amount per contract', type: 'number', span: 1 },
-      { key: 'description', label: 'Description on the invoice', span: 4 },
+      { key: 'description', label: 'Description on the invoice', span: 1 },
     ],
   }),
   'pole-invoices': defineCrud({
@@ -471,7 +468,7 @@ const CONFIGS: Record<InfraGisUtilityResource, ConfigurableCrudConfig> = {
       { id: 'linesAmount', field: 'LinesAmount', label: 'Lines total', kind: 'currency' },
     ],
     fields: [
-      { key: 'poleOwner', label: 'Pole owner', required: true, span: 2 },
+      { key: 'poleOwner', label: 'Pole owner', required: true, span: 1 },
       { key: 'referenceMonth', label: 'Month', type: 'date', required: true, span: 1 },
       { key: 'number', label: 'Number', span: 1 },
       { key: 'totalAmount', label: 'Invoice total', type: 'number', span: 1 },

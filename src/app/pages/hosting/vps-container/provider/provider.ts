@@ -164,7 +164,6 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Incus API URL',
       placeholder: 'https://incus.example.com:8443',
       tab: 'authentication',
-      span: 2,
       required: true,
     },
     {
@@ -240,7 +239,6 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'Leave blank to keep the current token',
       autocomplete: 'new-password',
       tab: 'authentication',
-      span: 2,
     },
     {
       key: 'clientCertificate',
@@ -250,7 +248,7 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       placeholder: '-----BEGIN CERTIFICATE-----',
       tab: 'authentication',
-      span: 2,
+      span: 4,
     },
     {
       key: 'clientPrivateKey',
@@ -260,7 +258,7 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       placeholder: '-----BEGIN PRIVATE KEY-----',
       tab: 'authentication',
-      span: 2,
+      span: 4,
     },
     {
       key: 'serverCertificate',
@@ -270,7 +268,7 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       rows: 4,
       placeholder: 'Optional trusted server certificate',
       tab: 'authentication',
-      span: 2,
+      span: 4,
     },
   ],
 };

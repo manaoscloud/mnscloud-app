@@ -78,7 +78,7 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
       storageMode: 'default',
       storageBucketUUID: '',
       uploadFile: null,
-      description: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -138,9 +138,10 @@ function config(listFilters: readonly ConfigurableCrudListFilter[]): Configurabl
         requiredWhen: ({ values }) => values['storageMode'] === 'storage',
       },
       {
-        key: 'description',
+        key: 'notes',
+        payloadKey: 'description',
         source: 'description',
-        label: 'Description',
+        label: 'Notes',
         type: 'textarea',
         tab: 'notes',
         span: 4,

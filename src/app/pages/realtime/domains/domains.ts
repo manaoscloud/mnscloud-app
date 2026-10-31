@@ -81,7 +81,6 @@ const DNS_FIELDS: ConfigurableCrudField[] = [
       'Realtime DNS policies are authorized per DNS zone in Hosting / DNS / Domains (Realtime DNS tab), not as standalone records.',
     hiddenWhen: ({ values }) => values['dnsMode'] !== 'managed',
     requiredWhen: ({ values }) => values['dnsMode'] === 'managed',
-    span: 2,
     help: 'Platform DNS zone policy with the Realtime service enabled. The domain must be inside its base.',
   },
 ];

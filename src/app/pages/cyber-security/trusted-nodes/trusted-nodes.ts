@@ -113,7 +113,6 @@ const config = defineCrud({
       type: 'password',
       tab: 'authentication',
       placeholder: 'Leave blank to keep the current secret',
-      span: 2,
     },
     {
       key: 'allowedNetworks',

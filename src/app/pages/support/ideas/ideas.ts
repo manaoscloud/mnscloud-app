@@ -109,7 +109,6 @@ function config(publicBoard: boolean): ConfigurableCrudConfig {
         quickCreateExemptReason:
           'Choosing an existing idea adds a vote to it; new ideas are proposed by this same form.',
         help: 'Type a few words of your idea. Choosing an existing one votes for it instead of creating a duplicate.',
-        span: 4,
       },
       {
         key: 'title',
@@ -117,13 +116,12 @@ function config(publicBoard: boolean): ConfigurableCrudConfig {
         requiredWhen: (context) => !context.values['similar'],
         hiddenWhen: (context) => Boolean(context.values['similar']),
         help: 'One short sentence with the improvement (8 to 160 characters).',
-        span: 4,
       },
+      // business-description: the content of the idea.
       {
         key: 'description',
         label: 'Description',
         type: 'textarea',
-        rows: 6,
         requiredWhen: (context) => !context.values['similar'],
         hiddenWhen: (context) => Boolean(context.values['similar']),
         help: 'What problem it solves and who it helps. Do not include passwords or customer data: published ideas are public.',

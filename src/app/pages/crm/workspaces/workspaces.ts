@@ -24,7 +24,7 @@ export const CRM_WORKSPACES_CONFIG = defineCrud({
   serverSidePagination: true,
   bulkDelete: false,
   deletePayload: (row) => ({ revision: row['CwsRevision'] }),
-  initialValues: { CwsName: '', CwsDescription: '', RegCustomerRcuUUID: null, CwsStatus: 1 },
+  initialValues: { CwsName: '', notes: '', RegCustomerRcuUUID: null, CwsStatus: 1 },
   fields: [
     {
       key: 'CwsStatus',
@@ -34,13 +34,12 @@ export const CRM_WORKSPACES_CONFIG = defineCrud({
       required: true,
       type: 'status',
     },
-    { key: 'CwsName', source: 'CwsName', label: 'crm.field.Name', required: true, span: 2 },
+    { key: 'CwsName', source: 'CwsName', label: 'crm.field.Name', required: true, span: 1 },
     {
       key: 'RegCustomerRcuUUID',
       source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
-      span: 2,
       help: 'crm.workspaceCustomerHelp',
       disabledWhen: ({ editing }) => editing,
       remoteLookup: {
@@ -51,10 +50,12 @@ export const CRM_WORKSPACES_CONFIG = defineCrud({
       },
     },
     {
-      key: 'CwsDescription',
+      key: 'notes',
       source: 'CwsDescription',
-      label: 'Description',
+      payloadKey: 'CwsDescription',
+      label: 'Notes',
       type: 'textarea',
+      tab: 'notes',
       span: 4,
       rows: 4,
     },

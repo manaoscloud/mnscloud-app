@@ -59,7 +59,7 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     code: 'promo.',
     name: '',
-    description: '',
+    notes: '',
     currency: 'BRL',
     requiresCoupon: 0,
     maxRedemptions: null,
@@ -123,7 +123,6 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'name',
       label: 'Name',
       required: true,
-      span: 2,
     },
     {
       key: 'requiresCoupon',
@@ -183,7 +182,6 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       quickCreate: quickCreateFor('BillingProductBprUUID'),
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',
-      span: 2,
     },
     {
       key: 'rulePriceUUID',
@@ -193,7 +191,6 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       quickCreate: quickCreateFor('BillingPriceBpcUUID'),
       hiddenWhen: ({ editing }) => editing,
       tab: 'financial',
-      span: 2,
     },
     {
       key: 'discountType',
@@ -269,14 +266,13 @@ const PROMOTION_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
-      key: 'description',
+      key: 'notes',
       source: 'BpmDescription',
       payloadKey: 'description',
-      label: 'Description',
+      label: 'Notes',
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 3,
     },
     {
       key: 'eligibility',

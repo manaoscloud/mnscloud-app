@@ -137,7 +137,6 @@ function config(
         quickCreateExemptReason:
           'Ticket types of the platform team are managed by the platform, not by tenants.',
         help: 'Leave empty to use the default.',
-        span: 2,
       },
       {
         key: 'priorityUUID',
@@ -153,15 +152,14 @@ function config(
         quickCreateExemptReason:
           'Priorities and SLA of the platform team are managed by the platform, not by tenants.',
         help: 'Leave empty to use the default.',
-        span: 2,
       },
-      { key: 'subject', payloadKey: 'subject', label: 'Subject', required: true, span: 4 },
+      { key: 'subject', payloadKey: 'subject', label: 'Subject', required: true, span: 1 },
+      // business-description: the body of the support request.
       {
         key: 'description',
         payloadKey: 'description',
         label: 'Description',
         type: 'textarea',
-        rows: 6,
         required: true,
         span: 4,
       },

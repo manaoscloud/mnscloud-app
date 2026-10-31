@@ -79,7 +79,7 @@ const rulesCollection = (row: ConfigurableCrudRecord) =>
       { id: 'rate', label: 'ICMS (%)', field: 'FruIcmsRate', kind: 'number' },
     ],
     fields: [
-      { key: 'name', label: 'Name', required: true, span: 3 },
+      { key: 'name', label: 'Name', required: true, span: 1 },
       { key: 'priority', label: 'Priority', type: 'number', span: 1 },
       { key: 'model', label: 'Model', type: 'select', options: FISCAL_MODELS, span: 1 },
       {
@@ -90,12 +90,12 @@ const rulesCollection = (row: ConfigurableCrudRecord) =>
         required: true,
         span: 1,
       },
-      { key: 'taxRegime', label: 'Tax regime', type: 'select', options: REGIMES, span: 2 },
+      { key: 'taxRegime', label: 'Tax regime', type: 'select', options: REGIMES, span: 1 },
       { key: 'originState', label: 'Origin state (UF)', span: 1 },
       { key: 'destinationState', label: 'Destination state (UF)', span: 1 },
       { key: 'nature', label: 'Item nature', span: 1 },
       { key: 'ncmPrefix', label: 'NCM prefix', span: 1 },
-      { key: 'recipientType', label: 'Recipient', type: 'select', options: RECIPIENTS, span: 2 },
+      { key: 'recipientType', label: 'Recipient', type: 'select', options: RECIPIENTS, span: 1 },
       { key: 'cfop', label: 'CFOP', required: true, span: 1 },
       { key: 'icmsCst', label: 'ICMS CST or CSOSN', required: true, span: 1 },
       { key: 'icmsRate', label: 'ICMS (%)', type: 'number', span: 1 },
@@ -105,7 +105,7 @@ const rulesCollection = (row: ConfigurableCrudRecord) =>
       { key: 'pisRate', label: 'PIS (%)', type: 'number', span: 1 },
       { key: 'cofinsCst', label: 'COFINS CST', required: true, span: 1 },
       { key: 'cofinsRate', label: 'COFINS (%)', type: 'number', span: 1 },
-      { key: 'legalText', label: 'Legal text', type: 'textarea', span: 4, rows: 2 },
+      { key: 'legalText', label: 'Legal text', type: 'textarea', span: 4 },
     ],
   });
 
@@ -129,11 +129,11 @@ const sourcesCollection = (row: ConfigurableCrudRecord) =>
       { id: 'url', label: 'Address', field: 'FrsUrl', optional: true },
     ],
     fields: [
-      { key: 'title', label: 'Title', required: true, span: 4 },
-      { key: 'url', label: 'Address (https)', required: true, span: 4 },
-      { key: 'consultedAt', label: 'Consulted at', type: 'date', required: true, span: 2 },
-      { key: 'validation', label: 'Validation', type: 'select', options: VALIDATIONS, span: 2 },
-      { key: 'notes', label: 'Notes', type: 'textarea', span: 4, rows: 2 },
+      { key: 'title', label: 'Title', required: true, span: 1 },
+      { key: 'url', label: 'Address (https)', required: true, span: 1 },
+      { key: 'consultedAt', label: 'Consulted at', type: 'date', required: true, span: 1 },
+      { key: 'validation', label: 'Validation', type: 'select', options: VALIDATIONS, span: 1 },
+      { key: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
     ],
   });
 
@@ -167,7 +167,7 @@ const config = defineCrud({
     { id: 'from', label: 'Valid from', field: 'FrpValidFrom', kind: 'datetime', optional: true },
   ],
   fields: [
-    { key: 'code', source: 'FrpCode', label: 'Code', required: true, span: 2 },
+    { key: 'code', source: 'FrpCode', label: 'Code', required: true, span: 1 },
     { key: 'version', source: 'FrpVersion', label: 'Version', type: 'number', span: 1 },
     {
       key: 'status',
@@ -177,9 +177,9 @@ const config = defineCrud({
       options: STATUSES,
       span: 1,
     },
-    { key: 'description', source: 'FrpDescription', label: 'Description', span: 4 },
-    { key: 'validFrom', source: 'FrpValidFrom', label: 'Valid from', type: 'datetime', span: 2 },
-    { key: 'validUntil', source: 'FrpValidUntil', label: 'Valid until', type: 'datetime', span: 2 },
+    { key: 'description', source: 'FrpDescription', label: 'Description', span: 1 },
+    { key: 'validFrom', source: 'FrpValidFrom', label: 'Valid from', type: 'datetime', span: 1 },
+    { key: 'validUntil', source: 'FrpValidUntil', label: 'Valid until', type: 'datetime', span: 1 },
     {
       key: 'validation',
       source: 'FrpValidation',
@@ -187,7 +187,6 @@ const config = defineCrud({
       type: 'select',
       options: VALIDATIONS,
       help: 'Validated packages are frozen; changing a rule then needs a new version.',
-      span: 2,
     },
     { key: 'revision', source: 'FrpRevision', label: 'Revision', hidden: true },
   ],

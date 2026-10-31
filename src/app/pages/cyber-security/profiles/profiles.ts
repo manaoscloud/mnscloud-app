@@ -89,14 +89,13 @@ const config = defineCrud({
       quickCreate: false,
       quickCreateExemptReason:
         'Protected services are catalog entries maintained on their own page.',
-      span: 3,
     },
+    // business-description: what the protection profile covers, shown when choosing it.
     {
       key: 'description',
       source: 'description',
       label: 'Description',
       type: 'textarea',
-      rows: 3,
       span: 4,
     },
     {
@@ -116,7 +115,6 @@ const config = defineCrud({
       label: 'Rules',
       type: 'textarea',
       format: 'json',
-      rows: 8,
       required: true,
       tab: 'network',
       span: 4,

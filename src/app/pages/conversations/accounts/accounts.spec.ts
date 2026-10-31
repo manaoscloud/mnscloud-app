@@ -37,7 +37,7 @@ describe('ConversationsAccountsConfig', () => {
     expect(keys).toContain('name');
     expect(keys).toContain('status');
     expect(keys).toContain('RegCustomerRcuUUID');
-    expect(keys).toContain('description');
+    expect(keys).toContain('notes');
     expect(keys).toContain('revision');
   });
 
@@ -54,7 +54,7 @@ describe('ConversationsAccountsConfig', () => {
   it('has initial values for new accounts with status active', () => {
     expect(CONVERSATIONS_ACCOUNTS_CONFIG.initialValues).toEqual({
       name: '',
-      description: '',
+      notes: '',
       RegCustomerRcuUUID: null,
       status: 1,
     });

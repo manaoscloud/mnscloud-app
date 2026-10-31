@@ -257,7 +257,6 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'legalName',
       label: 'Legal name',
       required: true,
-      span: 2,
     },
     { ...REGISTRY_EMAIL_FIELD, required: true },
     { ...REGISTRY_PHONE_FIELD, required: true },

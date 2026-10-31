@@ -171,7 +171,6 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Plan',
       type: 'search-select',
       required: true,
-      span: 2,
     },
     {
       key: 'image',
@@ -180,7 +179,6 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Image',
       type: 'search-select',
       placeholder: 'ubuntu-22-04',
-      span: 2,
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     {
@@ -189,7 +187,6 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'sshKey',
       label: 'SSH Key',
       placeholder: 'ssh-rsa AAAA... comment',
-      span: 2,
       fromRecord: (value) => configString(value, 'sshKey'),
     },
     {

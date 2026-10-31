@@ -167,7 +167,6 @@ const config = defineCrud({
         descriptionField: 'Document',
         selectedLabelField: 'CompanyName',
       },
-      span: 2,
     },
     {
       key: 'environment',
@@ -187,7 +186,6 @@ const config = defineCrud({
       options: taxRegimes,
       required: true,
       breakBefore: true,
-      span: 2,
     },
     { key: 'cnae', source: 'FipCnae', label: 'CNAE', translateLabel: false, span: 1 },
     {

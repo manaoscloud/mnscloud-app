@@ -77,7 +77,6 @@ const config = defineCrud({
       key: 'CacName',
       source: 'CacName',
       label: 'crm.field.Name',
-      span: 2,
       required: true,
       type: 'text',
     },

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0a32d602cd63",
+  "version": "711ad4974655",
   "language": "pt-BR",
   "entries": [
     {
@@ -527,7 +527,7 @@
           "help": "Cliente do tenant a quem esta conta é revendida. O vínculo é imutável após a criação."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -1190,7 +1190,7 @@
           "help": "Cliente do tenant a quem este workspace é revendido. O vínculo é imutável após a criação."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -1679,7 +1679,7 @@
           "help": "Cliente cadastrado para quem esta conta e seus escritórios serão delegados na revenda."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -2220,7 +2220,7 @@
           "help": "Deixe vazio para uso interno. O cliente fica vinculado à conta e não pode ser trocado na edição."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -2449,11 +2449,11 @@
           "help": ""
         },
         {
-          "label": "Default from name",
+          "label": "Nome de remetente padrão",
           "help": ""
         },
         {
-          "label": "Default from email",
+          "label": "E-mail de remetente padrão",
           "help": ""
         }
       ]
@@ -3104,7 +3104,7 @@
           "help": "Espaço de cliente em Cadastros cujos colaboradores e empresas esta conta atende."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -3697,7 +3697,7 @@
           "help": "Ao escolher um pacote, as camadas dele são copiadas para o projeto, junto com as categorias, os tipos de ativo e as situações que o tenant ainda não tem. As cópias podem ser editadas livremente."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -5182,7 +5182,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -5211,7 +5211,7 @@
           "help": "Espaço do cliente da revenda em Cadastros › Espaços. A conta interna é criada automaticamente."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -6232,7 +6232,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -6442,7 +6442,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -7066,7 +7066,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -7989,11 +7989,11 @@
           "help": ""
         },
         {
-          "label": "Default from name",
+          "label": "Nome de remetente padrão",
           "help": ""
         },
         {
-          "label": "Default from email",
+          "label": "E-mail de remetente padrão",
           "help": ""
         }
       ]
@@ -8507,7 +8507,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -10506,7 +10506,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -10824,7 +10824,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -10910,7 +10910,7 @@
           "help": "Destino ativo do PABX selecionado. Escolha o PABX primeiro."
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -10931,7 +10931,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -11008,7 +11008,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -11189,7 +11189,7 @@
           "help": ""
         },
         {
-          "label": "Descrição",
+          "label": "Anotações",
           "help": ""
         }
       ]

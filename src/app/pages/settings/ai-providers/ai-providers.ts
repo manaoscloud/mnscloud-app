@@ -147,7 +147,6 @@ const config = defineCrud({
         editing
           ? 'Leave blank to keep the stored key. A new key replaces it.'
           : 'Stored encrypted and never shown again. The models of the provider load once the key is filled in.',
-      span: 2,
     },
     {
       key: 'maxOutputTokens',
