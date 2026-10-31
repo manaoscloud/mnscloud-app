@@ -221,7 +221,6 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 3,
     },
   ],
 };

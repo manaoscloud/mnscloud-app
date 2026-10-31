@@ -180,7 +180,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'bucket',
       label: 'Bucket',
       tab: 'storage',
-      span: 2,
       hiddenWhen: ({ values }) => !usesBucketField(bucketProviderType(values)),
       requiredWhen: ({ values }) =>
         values['provisionMode'] !== 'create' && requiresBucketField(bucketProviderType(values)),
@@ -191,7 +190,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'container',
       label: 'Container',
       tab: 'storage',
-      span: 2,
       hiddenWhen: ({ values }) => bucketProviderType(values) !== 'azure',
       requiredWhen: ({ values }) =>
         values['provisionMode'] !== 'create' && bucketProviderType(values) === 'azure',
@@ -202,7 +200,6 @@ const BUCKET_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'pathPrefix',
       label: 'Path prefix',
       tab: 'storage',
-      span: 2,
       hiddenWhen: ({ values }) => !bucketProviderType(values),
     },
   ],

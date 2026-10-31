@@ -119,6 +119,13 @@ const SELECT_NAVIGATION_KEYS = new Set([
             </mat-form-field>
           </mat-option>
 
+          @if (panelHelp()) {
+            <div class="select-help-note" role="note">
+              <mat-icon aria-hidden="true">info_outline</mat-icon>
+              <span>{{ help() }}</span>
+            </div>
+          }
+
           @if (multiple() && selectableOptions().length > 1) {
             <div
               class="select-toggle-all"
@@ -252,6 +259,13 @@ const SELECT_NAVIGATION_KEYS = new Set([
             </mat-form-field>
           </mat-option>
 
+          @if (panelHelp()) {
+            <div class="select-help-note" role="note">
+              <mat-icon aria-hidden="true">info_outline</mat-icon>
+              <span>{{ help() }}</span>
+            </div>
+          }
+
           @if (multiple() && selectableOptions().length > 1) {
             <div
               class="select-toggle-all"
@@ -352,7 +366,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
           <mat-icon>add</mat-icon>
         </button>
       }
-      @if (help()) {
+      @if (suffixHelp()) {
         <mns-field-help matIconSuffix [label]="label()" [text]="help()" />
       }
       @if (errorMessage()) {
@@ -376,6 +390,24 @@ const SELECT_NAVIGATION_KEYS = new Set([
         --mdc-icon-button-state-layer-size: 36px;
         color: var(--mns-color-accent, #00d5d5);
         margin-right: -0.35rem;
+      }
+
+      .select-help-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.5rem 0 0.75rem;
+        color: var(--mat-sys-color-on-surface-variant, currentColor);
+        font-size: 0.8125rem;
+        line-height: 1.4;
+        white-space: pre-line;
+      }
+
+      .select-help-note mat-icon {
+        flex: 0 0 auto;
+        font-size: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
       }
 
       .select-clear-option {
@@ -403,6 +435,13 @@ export class MnsSearchSelectFieldComponent {
   readonly label = input.required<string>();
   /** Already-translated optional contextual guidance, rendered inside the field outline. */
   readonly help = input('');
+  /**
+   * FK fields keep the same closed look everywhere (`▾ +`): when quick-create is offered, the help
+   * moves into the open panel instead of adding a second suffix action. Fields without
+   * quick-create (including disabled ones) keep the help button in the suffix.
+   */
+  readonly suffixHelp = computed(() => Boolean(this.help()) && !this.canCreate());
+  readonly panelHelp = computed(() => Boolean(this.help()) && this.canCreate());
   readonly options = input.required<readonly MnsSearchSelectFieldOption[]>();
   readonly fieldClass = input('');
   readonly placeholder = input('Search');

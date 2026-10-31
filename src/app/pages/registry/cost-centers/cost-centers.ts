@@ -46,7 +46,7 @@ const config = defineCrud({
   fields: [
     { key: 'status', source: 'RccStatus', label: 'Status', type: 'status', span: 1 },
     { key: 'code', source: 'RccCode', label: 'Code', required: true, span: 1 },
-    { key: 'name', source: 'RccName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'RccName', label: 'Name', required: true, span: 1 },
     {
       key: 'parentUUID',
       source: 'RccParentRccUUID',
@@ -60,7 +60,6 @@ const config = defineCrud({
         selectedLabelField: 'ParentName',
       },
       quickCreate: quickCreateFor('RegCostCenterRccUUID'),
-      span: 2,
     },
     {
       key: 'companyUUID',
@@ -68,7 +67,6 @@ const config = defineCrud({
       label: 'Company',
       type: 'search-select',
       remoteLookup: COMPANY_LOOKUP,
-      span: 2,
     },
     { key: 'revision', source: 'RccRevision', label: 'Revision', hidden: true },
   ],

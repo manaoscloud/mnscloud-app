@@ -151,7 +151,7 @@ export function messagesCollection(
     rowActions: [viewMessageAction(dialog, conversation)],
     initialValues: { body: '', kind: windowClosed ? 'note' : 'text' },
     fields: [
-      { key: 'body', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
+      { key: 'body', label: 'Message', type: 'textarea', span: 4, required: true },
       {
         key: 'kind',
         label: 'Message type',
@@ -161,7 +161,6 @@ export function messagesCollection(
           : MESSAGE_KINDS,
         translateOptions: true,
         help: 'Internal notes are never sent to the contact.',
-        span: 2,
       },
     ],
     payload: (values) => ({ kind: values['kind'] || 'text', body: values['body'] }),
@@ -241,7 +240,6 @@ export function linkContactForm(conversation: ConfigurableCrudRecord): Configura
           labelField: 'Name',
           selectedLabelField: 'CustomerName',
         },
-        span: 4,
       },
       {
         key: 'contact',
@@ -254,7 +252,6 @@ export function linkContactForm(conversation: ConfigurableCrudRecord): Configura
           labelField: 'CcoName',
           selectedLabelField: 'CrmContactName',
         },
-        span: 2,
       },
       {
         key: 'lead',
@@ -267,7 +264,6 @@ export function linkContactForm(conversation: ConfigurableCrudRecord): Configura
           labelField: 'CleName',
           selectedLabelField: 'CrmLeadName',
         },
-        span: 2,
       },
     ],
     payload: (values) => ({

@@ -93,7 +93,6 @@ const config = defineCrud({
         uuidField: 'StlUUID',
         labelField: 'StlName',
       },
-      span: 2,
     },
     {
       key: 'productUUID',
@@ -106,7 +105,6 @@ const config = defineCrud({
         uuidField: 'SprUUID',
         labelField: 'SprName',
       },
-      span: 2,
     },
     { key: 'kind', label: 'Kind', type: 'select', options: MANUAL_KINDS, required: true, span: 1 },
     {
@@ -118,7 +116,7 @@ const config = defineCrud({
       span: 1,
     },
     { key: 'unitCost', label: 'Unit cost', type: 'currency', span: 1 },
-    { key: 'notes', label: 'Notes', span: 4 },
+    { key: 'notes', label: 'Notes', span: 1 },
     { key: 'idempotencyKey', label: 'Idempotency key', hidden: true },
   ],
   rowActions: [

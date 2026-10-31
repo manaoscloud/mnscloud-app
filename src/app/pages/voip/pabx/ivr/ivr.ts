@@ -187,7 +187,6 @@ function config(): ConfigurableCrudConfig {
             key: 'description',
             payloadKey: 'description',
             label: 'Description',
-            span: 4,
           },
         ],
         columns: [

@@ -113,7 +113,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'defaultFromName',
       label: 'Default from name',
       tab: 'authentication',
-      span: 2,
     },
     {
       key: 'defaultFromEmail',
@@ -122,7 +121,6 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       label: 'Default from email',
       type: 'email',
       tab: 'authentication',
-      span: 2,
     },
   ],
 };

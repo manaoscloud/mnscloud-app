@@ -72,7 +72,6 @@ const config = defineCrud({
       source: 'LgsIngestAddress6',
       label: 'logs.ingestAddress6',
       type: 'text',
-      span: 2,
       tab: 'network',
       help: 'logs.ingestAddress6Help',
     },

@@ -34,7 +34,7 @@ function networks(pool: ConfigurableCrudRecord) {
       { key: 'revision', source: 'I6nRevision', label: 'Revision', type: 'number', hidden: true },
       { key: 'status', source: 'I6nStatus', label: 'Status', type: 'status', span: 1 },
       { key: 'cidr', source: 'I6nCidr', label: 'IP/Mask', required: true, span: 1 },
-      { key: 'description', source: 'I6nDescription', label: 'Description', span: 4 },
+      { key: 'description', source: 'I6nDescription', label: 'Description', span: 1 },
     ],
   });
 }
@@ -64,7 +64,7 @@ const config = defineCrud({
     { key: 'revision', source: 'Ip6Revision', label: 'Revision', type: 'number', hidden: true },
     { key: 'status', source: 'Ip6Status', label: 'Status', type: 'status', span: 1 },
     { key: 'name', source: 'Ip6Name', label: 'Name', required: true, span: 1 },
-    { key: 'description', source: 'Ip6Description', label: 'Description', span: 4 },
+    { key: 'description', source: 'Ip6Description', label: 'Description', span: 1 },
   ],
   rowActions: [{ key: 'networks', label: 'Networks', icon: 'lan', collection: networks }],
 });

@@ -52,7 +52,7 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'status', source: 'StlStatus', label: 'Status', type: 'status', span: 1 },
-    { key: 'name', source: 'StlName', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'StlName', label: 'Name', required: true, span: 1 },
     {
       key: 'kind',
       source: 'StlKind',
@@ -75,7 +75,6 @@ const config = defineCrud({
         descriptionField: 'Document',
         selectedLabelField: 'CompanyName',
       },
-      span: 2,
     },
     {
       key: 'allowNegative',
@@ -88,7 +87,6 @@ const config = defineCrud({
       ],
       fromRecord: (value) => Number(value ?? 0),
       help: 'Allowed lets sales continue without balance here, for example on routes; the divergence stays in the ledger.',
-      span: 2,
     },
     {
       key: 'notes',

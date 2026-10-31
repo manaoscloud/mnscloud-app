@@ -73,7 +73,6 @@ const config = defineCrud({
       key: 'CppName',
       source: 'CppName',
       label: 'crm.field.Name',
-      span: 2,
       required: true,
       type: 'text',
     },
@@ -81,7 +80,6 @@ const config = defineCrud({
       key: 'CrmOpportunityCopUUID',
       source: 'CrmOpportunityCopUUID',
       label: 'crm.title.opportunities',
-      span: 2,
       required: true,
       type: 'search-select',
       remoteLookup: {

@@ -71,7 +71,7 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
 
       <div class="dialog-body">
         <div class="form-grid">
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Recipient' | transloco }}</mat-label>
             <input
               matInput
@@ -85,7 +85,7 @@ const TEST_ACTION: ConfigurableCrudRowAction = {
             <mat-error>{{ 'form.validation.required' | transloco }}</mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Subject' | transloco }}</mat-label>
             <input
               matInput
@@ -259,7 +259,6 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'fromName',
       label: 'From name',
       tab: 'routing',
-      span: 2,
     },
     {
       key: 'fromEmail',
@@ -268,7 +267,6 @@ const ROUTE_CONFIG: ConfigurableCrudConfig = {
       label: 'From email',
       type: 'email',
       tab: 'routing',
-      span: 2,
     },
   ],
 };

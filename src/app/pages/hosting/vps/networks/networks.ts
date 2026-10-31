@@ -244,13 +244,13 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           hiddenWhen: ({ editing, values }) =>
             editing || !this.isMaster() || !String(values['externalId'] ?? '').trim(),
         },
+        // business-description: description of the network kept with the cloud resource.
         {
           key: 'description',
           source: 'HvnDescription',
           payloadKey: 'description',
           label: 'Description',
           type: 'textarea',
-          rows: 2,
           span: 4,
         },
       ],
@@ -276,7 +276,6 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
               label: 'Instance',
               type: 'search-select',
               required: true,
-              span: 2,
             },
           ],
           columns: [

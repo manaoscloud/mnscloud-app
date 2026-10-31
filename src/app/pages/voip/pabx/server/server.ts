@@ -321,7 +321,6 @@ const config: ConfigurableCrudConfig = {
       payloadKey: 'controlAllowedIps',
       label: 'Allowed IPs',
       tab: 'authentication',
-      span: 4,
       help: 'Comma-separated list. E.g.: 168.0.230.247/32',
     },
     {

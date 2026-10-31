@@ -51,7 +51,7 @@ function config(desk: SupportDesk): ConfigurableCrudConfig {
       code: '',
       queuePriority: 0,
       maxConcurrentTickets: 0,
-      description: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'SupportTeamUUID' },
@@ -88,11 +88,12 @@ function config(desk: SupportDesk): ConfigurableCrudConfig {
         span: 1,
       },
       {
-        key: 'description',
+        key: 'notes',
+        payloadKey: 'description',
         source: 'Description',
         type: 'textarea',
         tab: 'notes',
-        label: 'Description',
+        label: 'Notes',
         span: 4,
         rows: 4,
       },

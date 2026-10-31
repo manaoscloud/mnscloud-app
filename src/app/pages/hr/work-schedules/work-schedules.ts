@@ -221,9 +221,8 @@ const config = defineCrud({
       type: 'select',
       options: PRESETS.map((preset) => ({ value: preset.value, label: preset.label })),
       help: 'Fills the kind and the day grid with a common Brazilian schedule; review the times before saving.',
-      span: 3,
     },
-    { key: 'name', source: 'Name', label: 'Name', required: true, span: 2, breakBefore: true },
+    { key: 'name', source: 'Name', label: 'Name', required: true, span: 1, breakBefore: true },
     {
       key: 'kind',
       source: 'Kind',
@@ -253,7 +252,6 @@ const config = defineCrud({
       type: 'select',
       options: YES_NO,
       help: 'CLT art. 74 §2: with only two marks a day (clock in and clock out), the scheduled break is deducted as if it had been punched.',
-      span: 2,
       breakBefore: true,
     },
     ...DAY_FIELDS,

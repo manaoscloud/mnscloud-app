@@ -211,7 +211,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Plan',
       type: 'search-select',
       required: true,
-      span: 2,
     },
     {
       key: 'image',
@@ -220,7 +219,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Image',
       type: 'search-select',
       placeholder: 'ubuntu-22-04-x64',
-      span: 2,
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     {
@@ -229,7 +227,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'networkUUID',
       label: 'Private network',
       type: 'search-select',
-      span: 2,
       tab: 'network',
       help: 'Only available networks of the plan provider and region are listed.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
@@ -241,7 +238,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Firewall profiles',
       type: 'search-select',
       multiple: true,
-      span: 2,
       tab: 'network',
       help: 'Applied by the provider right after provisioning.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
@@ -303,7 +299,6 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'sshKey',
       label: 'SSH Key',
       placeholder: 'ssh-rsa AAAA... comment (Lightsail: ssh-rsa OpenSSH only)',
-      span: 2,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
       hiddenWhen: ({ values }) =>

@@ -67,7 +67,8 @@ test('every CRM form follows semantic controls, notes, widths and commercial def
       assert.notEqual(field.type, 'datetime', `${context}: datepicker and separate time required`);
       if (field.required && field.requiredWhen)
         assert.ok(field.requiredWhen({ values: {} }), context);
-      if (field.source?.endsWith('Name')) assert.equal(field.span, 2, context);
+      // Form Field Layout Baseline (app.md): single-line controls take one column.
+      if (field.source?.endsWith('Name')) assert.equal(field.span ?? 1, 1, context);
       if (field.source?.endsWith('Notes')) {
         assert.equal(field.key, 'notes', context);
         assert.equal(field.tab, 'notes', context);
@@ -95,6 +96,8 @@ test('CRM notes retain existing wire keys and edit revisions', () => {
     if (!notes) continue;
     assert.equal(notes.payloadKey, notes.source);
     assert.equal(config.initialValues.notes, '');
+    // Workspaces use the generic payload (notes sent under payloadKey by the CRUD base).
+    if (!config.payload) continue;
     const revision = config.uuidField.slice(0, 3) + 'Revision';
     const payload = config.payload(
       { [notes.payloadKey]: 'Line one\nLine two', [revision]: 3 },

@@ -119,6 +119,39 @@ describe('Remote relationship dropdown accessibility', () => {
     expect(fixture.componentInstance.value()).toBe('saved');
     fixture.destroy();
   });
+  it('keeps FK fields with quick-create to one suffix action and shows help in the panel', async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        MnsSearchSelectFieldComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(MnsSearchSelectFieldComponent);
+    fixture.componentRef.setInput('label', 'Customer');
+    fixture.componentRef.setInput('help', 'Leave empty for internal use.');
+    fixture.componentRef.setInput('canCreate', true);
+    fixture.componentRef.setInput('options', [{ value: 'c1', label: 'Customer one' }]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const suffix = fixture.nativeElement.querySelector('.mat-mdc-form-field-icon-suffix');
+    expect(suffix.querySelector('.select-create-button')).not.toBeNull();
+    expect(suffix.querySelector('mns-field-help')).toBeNull();
+    fixture.nativeElement.querySelector('mat-select').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const note = document.querySelector('.mat-mdc-select-panel .select-help-note');
+    expect(note?.textContent).toContain('Leave empty for internal use.');
+
+    // Without quick-create (for example a disabled FK while editing) the help stays reachable.
+    fixture.componentRef.setInput('canCreate', false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('mns-field-help')).not.toBeNull();
+    fixture.destroy();
+  });
 
   describe('search focus and keyboard', () => {
     async function create(options: { remote?: boolean } = {}) {

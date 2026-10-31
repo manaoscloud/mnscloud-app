@@ -850,7 +850,7 @@
                 matInput
                 [mnsInvalid]="hasFieldError(field)"
                 [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                [rows]="field.rows ?? 4"
+                [rows]="fieldRows(field)"
                 [autocomplete]="field.autocomplete ?? 'off'"
                 [attr.data-field-key]="field.key"
                 [attr.data-report-mask]="reportMask(field)"
@@ -1171,7 +1171,7 @@
                         matInput
                         [mnsInvalid]="hasFieldError(field)"
                         [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                        [rows]="field.rows ?? 4"
+                        [rows]="fieldRows(field)"
                         [autocomplete]="field.autocomplete ?? 'off'"
                         [attr.data-field-key]="field.key"
                         [attr.data-report-mask]="reportMask(field)"
@@ -2345,7 +2345,7 @@
                           matInput
                           [mnsInvalid]="hasFieldError(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                          [rows]="field.rows ?? 4"
+                          [rows]="fieldRows(field)"
                           [autocomplete]="field.autocomplete ?? 'off'"
                           [attr.data-field-key]="field.key"
                           [attr.data-report-mask]="reportMask(field)"
@@ -2816,7 +2816,7 @@
                           matInput
                           [mnsInvalid]="hasFieldError(field)"
                           [attr.data-field-key]="field.key"
-                          [rows]="field.rows ?? 4"
+                          [rows]="fieldRows(field)"
                           [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
                           [value]="fieldValueString(field.key)"
                           (input)="setFieldValue(field.key, $any($event.target).value)"
@@ -3470,7 +3470,7 @@
                       [mnsInvalid]="hasFieldError(field)"
                       [attr.data-field-key]="field.key"
                       [placeholder]="field.placeholder ? (field.placeholder | transloco) : ''"
-                      [rows]="field.rows ?? 4"
+                      [rows]="fieldRows(field)"
                       [value]="fieldValueString(field.key)"
                       (input)="setFieldValue(field.key, $any($event.target).value)"
                     ></textarea>

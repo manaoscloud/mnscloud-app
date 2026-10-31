@@ -164,7 +164,7 @@ export function agentTimelineCollection(
     rowActions: [viewMessageAction(dialog, ticket, true)],
     initialValues: { message: '', isInternal: 0, status: '' },
     fields: [
-      { key: 'message', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
+      { key: 'message', label: 'Message', type: 'textarea', span: 4, required: true },
       {
         key: 'isInternal',
         label: 'Message visibility',
@@ -175,7 +175,6 @@ export function agentTimelineCollection(
         ],
         translateOptions: true,
         help: 'Internal notes are never shown to the requester.',
-        span: 2,
       },
       {
         key: 'status',
@@ -184,7 +183,6 @@ export function agentTimelineCollection(
         options: [{ value: '', label: 'Keep current status' }, ...TICKET_STATUS_OPTIONS],
         translateOptions: true,
         help: 'Use “Waiting for requester” when you asked for information.',
-        span: 2,
       },
     ],
     payload: (values) => ({
@@ -254,9 +252,7 @@ export function helpConversationCollection(
     initialPageSize: 25,
     rowActions: [viewMessageAction(dialog, ticket, false)],
     initialValues: { message: '' },
-    fields: [
-      { key: 'message', label: 'Message', type: 'textarea', rows: 5, span: 4, required: true },
-    ],
+    fields: [{ key: 'message', label: 'Message', type: 'textarea', span: 4, required: true }],
     columns: [
       { id: 'date', field: 'DateCreated', label: 'Date', kind: 'datetime' },
       {

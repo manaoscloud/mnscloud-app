@@ -477,7 +477,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
               label: 'dns.dnssecEnabled',
               type: 'select',
               required: true,
-              span: 2,
               translateOptions: true,
               options: DNS_BOOLEAN_OPTIONS,
               help: 'dns.dnssecEnabledHelp',
@@ -485,7 +484,6 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
             {
               key: 'ds',
               label: 'dns.dnssecDs',
-              span: 2,
               disabledWhen: () => true,
               help: 'dns.dnssecDsHelp',
             },

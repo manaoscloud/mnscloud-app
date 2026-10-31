@@ -53,7 +53,6 @@ function items(quotation: ConfigurableCrudRecord) {
           labelField: 'SprName',
           selectedLabelField: 'SaleProductName',
         },
-        span: 2,
       },
       {
         key: 'quantity',
@@ -72,7 +71,7 @@ function items(quotation: ConfigurableCrudRecord) {
         span: 1,
       },
       { key: 'discount', source: 'SqiDiscount', label: 'Discount', type: 'currency', span: 1 },
-      { key: 'description', source: 'SqiDescription', label: 'Description', span: 3 },
+      { key: 'description', source: 'SqiDescription', label: 'Description', span: 1 },
     ],
     payload: (values) => ({
       productUUID: values['productUUID'],
@@ -150,7 +149,7 @@ const config = defineCrud({
     { key: 'number', source: 'SqtNumber', label: 'Number', span: 1 },
     { key: 'currency', source: 'SqtCurrency', label: 'Currency', required: true, span: 1 },
     { key: 'validUntil', source: 'SqtValidUntil', label: 'Valid Until', type: 'date', span: 1 },
-    { key: 'description', source: 'SqtDescription', label: 'Description', span: 2 },
+    { key: 'description', source: 'SqtDescription', label: 'Description', span: 1 },
     {
       key: 'notes',
       source: 'SqtNotes',
