@@ -10095,6 +10095,8 @@
   "nav.hr.time-clock-accounts": "Time clock accounts",
   "nav.hr.accounts": "Accounts",
   "hrAccount.title": "HR accounts",
+  "hrAccount.account": "HR account",
+  "hrAccount.contractItemHelp": "HR account of the contract's own customer. To charge per employee, use the Usage kind: the quantity is the number of employees with an active time clock account on any day of the month, published 72 h after the month ends.",
   "hrAccount.description": "Serve the HR of each resale customer in its own account, separated from the internal HR of the reseller.",
   "hrAccount.create": "Create HR account",
   "hrAccount.edit": "Edit HR account",

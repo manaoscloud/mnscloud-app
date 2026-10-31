@@ -10096,6 +10096,8 @@
   "nav.hr.time-clock-accounts": "Contas de ponto",
   "nav.hr.accounts": "Contas",
   "hrAccount.title": "Contas de RH",
+  "hrAccount.account": "Conta de RH",
+  "hrAccount.contractItemHelp": "Conta de RH do mesmo cliente do contrato. Para cobrar por colaborador, use o tipo Uso: a quantidade é o número de colaboradores com conta de ponto ativa em algum dia do mês, publicado 72 h após o fim do mês.",
   "hrAccount.description": "Atenda o RH de cada cliente da revenda em uma conta própria, separada do RH interno da revenda.",
   "hrAccount.create": "Criar conta de RH",
   "hrAccount.edit": "Editar conta de RH",

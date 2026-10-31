@@ -2448,3 +2448,6 @@ only for `HraKind === 'customer'`). The row action **Acessos do Portal** is the 
 `hr/accounts/:uuid/portal-grants`: each portal user of the account's customer (lookup
 `/portal-users`) gets independent yes/no grants (painel, colaboradores, jornadas, espelhos); owner
 or admin portal roles get nothing without a row. Both actions need `tenant.hr.accounts.all`.
+Faturamento › contract items of module `hr` pick the account in the **Conta de RH** search-select
+(`hr/accounts?status=1`, quick-create `HrAccountHraUUID`). A usage item has no metric field: the
+payload sends `hr.active_employees`, the only HR metric.

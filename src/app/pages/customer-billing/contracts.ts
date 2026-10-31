@@ -252,7 +252,7 @@ const config = defineCrud({
         },
         {
           key: 'resourceUUID',
-          hiddenWhen: ({ values }) => values['module'] === 'ged',
+          hiddenWhen: ({ values }) => values['module'] === 'ged' || values['module'] === 'hr',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -266,6 +266,21 @@ const config = defineCrud({
           requiredWhen: ({ values }) => values['module'] === 'ged',
           remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
           quickCreate: quickCreateFor('GedAccountGacUUID'),
+        },
+        {
+          key: 'hrAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'hrAccount.account',
+          type: 'search-select',
+          help: 'hrAccount.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'hr',
+          requiredWhen: ({ values }) => values['module'] === 'hr',
+          remoteLookup: {
+            endpoint: 'hr/accounts?status=1',
+            uuidField: 'HraUUID',
+            labelField: 'HraName',
+          },
+          quickCreate: quickCreateFor('HrAccountHraUUID'),
         },
         {
           key: 'productUUID',
@@ -317,8 +332,9 @@ const config = defineCrud({
           source: 'BciMetric',
           label: 'Metric',
           help: 'Name of the metric reported by the module (for example minutes or gigabytes).',
-          hiddenWhen: ({ values }) => values['kind'] !== 'usage',
-          requiredWhen: ({ values }) => values['kind'] === 'usage',
+          // HR reports a single metric (active employees in the month), filled in by the payload.
+          hiddenWhen: ({ values }) => values['kind'] !== 'usage' || values['module'] === 'hr',
+          requiredWhen: ({ values }) => values['kind'] === 'usage' && values['module'] !== 'hr',
         },
         {
           key: 'includedQuantity',
@@ -349,14 +365,23 @@ const config = defineCrud({
       payload: (values) => ({
         module: values['module'] || 'manual',
         resourceUUID:
-          (values['module'] === 'ged' ? values['gedAccountUUID'] : values['resourceUUID']) || null,
+          (values['module'] === 'ged'
+            ? values['gedAccountUUID']
+            : values['module'] === 'hr'
+              ? values['hrAccountUUID']
+              : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
         kind: values['kind'],
         quantity: Number(values['quantity'] ?? 1),
         unitPrice: Number(values['unitPrice'] ?? 0),
-        metric: values['kind'] === 'usage' ? values['metric'] || null : null,
+        metric:
+          values['kind'] !== 'usage'
+            ? null
+            : values['module'] === 'hr'
+              ? 'hr.active_employees'
+              : values['metric'] || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],

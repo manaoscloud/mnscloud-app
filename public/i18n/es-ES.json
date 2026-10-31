@@ -10095,6 +10095,8 @@
   "nav.hr.time-clock-accounts": "Cuentas de fichaje",
   "nav.hr.accounts": "Cuentas",
   "hrAccount.title": "Cuentas de RR. HH.",
+  "hrAccount.account": "Cuenta de RR. HH.",
+  "hrAccount.contractItemHelp": "Cuenta de RR. HH. del mismo cliente del contrato. Para cobrar por colaborador, use el tipo Uso: la cantidad es el número de colaboradores con cuenta de fichaje activa en algún día del mes, publicado 72 h después del fin del mes.",
   "hrAccount.description": "Atienda los RR. HH. de cada cliente de la reventa en una cuenta propia, separada de los RR. HH. internos del revendedor.",
   "hrAccount.create": "Crear cuenta de RR. HH.",
   "hrAccount.edit": "Editar cuenta de RR. HH.",
