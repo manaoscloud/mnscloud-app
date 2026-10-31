@@ -2436,4 +2436,8 @@ workspace only to the canonical Registry routes, so the employee/company quick-c
 customer workspace). The shared renderer shows the account name; HR internal links merge query
 params to keep the account. HR forms never look up Registry lists directly: employees come from
 `hr/employees` (`RemUUID`/`RemName`) and companies from `hr/companies` (`RcoUUID`/`RcoName`).
-Operators and assignment reuse `resaleAccountRowActions` (no Portal publication before R2).
+Operators, assignment and Customer Portal publication reuse `resaleAccountRowActions` (publication
+only for `HraKind === 'customer'`). The row action **Acessos do Portal** is the editable collection
+`hr/accounts/:uuid/portal-grants`: each portal user of the account's customer (lookup
+`/portal-users`) gets independent yes/no grants (painel, colaboradores, jornadas, espelhos); owner
+or admin portal roles get nothing without a row. Both actions need `tenant.hr.accounts.all`.
