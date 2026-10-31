@@ -48,10 +48,83 @@
       }
     </ng-template>
 
+    <!--
+      Entries below a module (app.md → Navigation Structure). A category with 2+ visible entries is a
+      collapsible group row like the module itself (one open per parent); no category titles here.
+      depth 1 = child, 2 = grand, 3+ = great (indentation and size).
+    -->
+    <ng-template #navBranch let-entries let-depth="depth">
+      @for (entry of entries; track entry.id) {
+        @if (entry.children?.length) {
+          <button
+            type="button"
+            class="menu-item"
+            [class.child-item]="depth === 1"
+            [class.grand-item]="depth === 2"
+            [class.great-item]="depth >= 3"
+            [class.category-group]="entry.categoryGroup"
+            [class.active-child]="depth === 1 && isActiveSection(entry)"
+            [class.active-grand]="depth > 1 && isActiveSection(entry)"
+            [attr.aria-expanded]="isExpanded(entry.id) || isSearching()"
+            (click)="toggleSection(entry.id); $event.stopPropagation()"
+          >
+            @if (entry.icon) {
+              <mat-icon class="menu-icon">{{ entry.icon }}</mat-icon>
+            }
+            <span class="menu-label">{{ entry.label }}</span>
+            <span class="menu-spacer"></span>
+            <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: entry }" />
+            @if (entry.categoryGroup) {
+              <span class="menu-group-count" aria-hidden="true">{{ entry.children.length }}</span>
+            }
+            <mat-icon class="collapse-icon">
+              {{ isExpanded(entry.id) || isSearching() ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </button>
+          @if (isExpanded(entry.id) || isSearching()) {
+            <div
+              [class.category-children]="entry.categoryGroup"
+              [class.grand-children]="!entry.categoryGroup && depth === 1"
+              [class.great-children]="!entry.categoryGroup && depth > 1"
+            >
+              <ng-container
+                *ngTemplateOutlet="
+                  navBranch;
+                  context: { $implicit: entry.children, depth: depth + 1 }
+                "
+              />
+            </div>
+          }
+        } @else {
+          <button
+            type="button"
+            class="menu-item"
+            [class.child-item]="depth === 1"
+            [class.grand-item]="depth === 2"
+            [class.great-item]="depth >= 3"
+            (click)="navigateTo(entry)"
+            [matTooltip]="entry.path"
+            matTooltipPosition="right"
+            [matTooltipShowDelay]="600"
+            matTooltipTouchGestures="off"
+            [class.active-child]="depth === 1 && isActiveItem(entry)"
+            [class.active-grand]="depth > 1 && isActiveItem(entry)"
+            [class.is-notified]="notifiedNavId() === entry.id"
+          >
+            @if (entry.icon) {
+              <mat-icon class="menu-icon">{{ entry.icon }}</mat-icon>
+            }
+            <span class="menu-label">{{ entry.label }}</span>
+            <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: entry }" />
+          </button>
+        }
+      }
+    </ng-template>
+
     <!-- MENU -->
     <div class="sidenav-scroll">
       <nav class="nav-menu" [class.is-navigation-pending]="navigationLoading()">
-        @for (item of filteredNavItems; track item.id) {
+        @for (item of sidebarNavItems; track item.id) {
           @if (item.areaTitle) {
             <div class="menu-area-title">{{ item.areaTitle }}</div>
           }
@@ -78,134 +151,12 @@
               </mat-icon>
             }
           </button>
-          <!-- CHILDREN -->
+          <!-- CHILDREN: every level below the module, category groups included -->
           @if (item.children?.length && (isExpanded(item.id) || isSearching())) {
             <div class="children">
-              @for (child of item.children; track child.id) {
-                @if (child.categoryTitle) {
-                  <div class="menu-category-title">{{ child.categoryTitle }}</div>
-                }
-                @if (child.children?.length) {
-                  <div class="child-with-grand">
-                    <button
-                      type="button"
-                      class="menu-item child-item"
-                      (click)="toggleSection(child.id); $event.stopPropagation()"
-                      [class.active-child]="isActiveSection(child)"
-                    >
-                      @if (child.icon) {
-                        <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
-                      }
-                      <span class="menu-label">{{ child.label }}</span>
-                      <span class="menu-spacer"></span>
-                      <ng-container
-                        *ngTemplateOutlet="navIndicator; context: { $implicit: child }"
-                      />
-                      <mat-icon class="collapse-icon">
-                        {{ isExpanded(child.id) ? 'expand_less' : 'expand_more' }}
-                      </mat-icon>
-                    </button>
-                    @if (isExpanded(child.id) || isSearching()) {
-                      <div class="grand-children">
-                        @for (grand of child.children; track grand.id) {
-                          @if (grand.categoryTitle) {
-                            <div class="menu-category-title">{{ grand.categoryTitle }}</div>
-                          }
-                          @if (grand.children?.length) {
-                            <div class="grand-with-great">
-                              <button
-                                class="menu-item grand-item"
-                                (click)="toggleSection(grand.id); $event.stopPropagation()"
-                                [class.active-grand]="isActiveSection(grand)"
-                              >
-                                @if (grand.icon) {
-                                  <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
-                                }
-                                <span class="menu-label">{{ grand.label }}</span>
-                                <span class="menu-spacer"></span>
-                                <ng-container
-                                  *ngTemplateOutlet="navIndicator; context: { $implicit: grand }"
-                                />
-                                <mat-icon class="collapse-icon">
-                                  {{ isExpanded(grand.id) ? 'expand_less' : 'expand_more' }}
-                                </mat-icon>
-                              </button>
-                              @if (isExpanded(grand.id) || isSearching()) {
-                                <div class="great-children">
-                                  @for (great of grand.children; track great.id) {
-                                    @if (great.categoryTitle) {
-                                      <div class="menu-category-title">
-                                        {{ great.categoryTitle }}
-                                      </div>
-                                    }
-                                    <button
-                                      class="menu-item great-item"
-                                      (click)="navigateTo(great)"
-                                      [matTooltip]="great.path"
-                                      matTooltipPosition="right"
-                                      [matTooltipShowDelay]="600"
-                                      matTooltipTouchGestures="off"
-                                      [class.active-grand]="isActiveItem(great)"
-                                      [class.is-notified]="notifiedNavId() === great.id"
-                                    >
-                                      @if (great.icon) {
-                                        <mat-icon class="menu-icon">{{ great.icon }}</mat-icon>
-                                      }
-                                      <span class="menu-label">{{ great.label }}</span>
-                                      <ng-container
-                                        *ngTemplateOutlet="
-                                          navIndicator;
-                                          context: { $implicit: great }
-                                        "
-                                      />
-                                    </button>
-                                  }
-                                </div>
-                              }
-                            </div>
-                          } @else {
-                            <button
-                              class="menu-item grand-item"
-                              (click)="navigateTo(grand)"
-                              [matTooltip]="grand.path"
-                              matTooltipPosition="right"
-                              [matTooltipShowDelay]="600"
-                              matTooltipTouchGestures="off"
-                              [class.active-grand]="isActiveItem(grand)"
-                              [class.is-notified]="notifiedNavId() === grand.id"
-                            >
-                              @if (grand.icon) {
-                                <mat-icon class="menu-icon">{{ grand.icon }}</mat-icon>
-                              }
-                              <span class="menu-label">{{ grand.label }}</span>
-                              <ng-container
-                                *ngTemplateOutlet="navIndicator; context: { $implicit: grand }"
-                              />
-                            </button>
-                          }
-                        }
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <button
-                    class="menu-item child-item"
-                    (click)="navigateTo(child)"
-                    [matTooltip]="child.path"
-                    matTooltipPosition="right"
-                    [matTooltipShowDelay]="600"
-                    matTooltipTouchGestures="off"
-                    [class.active-child]="isActiveItem(child)"
-                    [class.is-notified]="notifiedNavId() === child.id"
-                  >
-                    @if (child.icon) {
-                      <mat-icon class="menu-icon">{{ child.icon }}</mat-icon>
-                    }
-                    <span class="menu-label">{{ child.label }}</span>
-                    <ng-container *ngTemplateOutlet="navIndicator; context: { $implicit: child }" />
-                  </button>
-                }
-              }
+              <ng-container
+                *ngTemplateOutlet="navBranch; context: { $implicit: item.children, depth: 1 }"
+              />
             </div>
           }
         }

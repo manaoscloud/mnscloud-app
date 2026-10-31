@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readRegistry, validateNavigation, validateNavigationAt } from './validate-nav-labels.mjs';
+import {
+  readCategoryIcons,
+  readRegistry,
+  validateCategoryIcons,
+  validateNavigation,
+  validateNavigationAt,
+} from './validate-nav-labels.mjs';
 
 const glossary = JSON.parse(
   readFileSync(new URL('../src/app/layout/navigation/nav-glossary.json', import.meta.url), 'utf8'),
@@ -213,4 +219,20 @@ test('root modules need an area after the first one, in area order, never split'
   );
   assert.ok(errors.some((e) => e.includes('crm') && e.includes('out of order')));
   assert.ok(errors.some((e) => e.includes('hr: root modules after the first need an area')));
+});
+
+test('every category has one group icon and no icon is orphan', () => {
+  const glossary = { categories: { standard: ['registry'], domain: ['pipeline'] } };
+  assert.deepEqual(
+    validateCategoryIcons({ registry: 'folder_open', pipeline: 'filter_alt' }, glossary),
+    [],
+  );
+  const errors = validateCategoryIcons({ registry: 'folder_open', extra: 'x' }, glossary);
+  assert.equal(errors.length, 2);
+  assert.match(errors[0], /pipeline/);
+  assert.match(errors[1], /extra/);
+  assert.deepEqual(
+    readCategoryIcons("export const NAV_CATEGORY_ICONS: Record<string, string> = { a: 'b' };"),
+    { a: 'b' },
+  );
 });
