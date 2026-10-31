@@ -51,8 +51,8 @@ export const CRM_WORKSPACES_CONFIG = defineCrud({
     },
     {
       key: 'notes',
-      source: 'CwsDescription',
-      payloadKey: 'CwsDescription',
+      source: 'CwsNotes',
+      payloadKey: 'CwsNotes',
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',

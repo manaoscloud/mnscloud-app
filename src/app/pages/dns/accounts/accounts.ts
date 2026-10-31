@@ -28,7 +28,7 @@ export const DNS_ACCOUNTS_CONFIG = defineCrud({
     helpKey: 'dns.accountCustomerHelp',
     statusField: 'DacStatus',
     nameField: 'DacName',
-    descField: 'DacDescription',
+    notesField: 'DacNotes',
     revField: 'DacRevision',
   }),
   columns: [

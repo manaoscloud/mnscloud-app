@@ -57,8 +57,7 @@ const config = defineCrud({
     },
     {
       key: 'notes',
-      source: 'HraDescription',
-      payloadKey: 'description',
+      source: 'HraNotes',
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',

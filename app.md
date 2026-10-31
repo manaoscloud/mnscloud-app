@@ -1740,10 +1740,10 @@ npm run check:crud:layout -- src/app/pages/<area>/<component>
   - whenever a CRUD dialog has a free-text annotation field, the canonical technical name is `Notes`.
   - free-text observations about a record (account, workspace, contract, ...) are annotations, not a
     `Description`: use key `notes`, label `Notes` (pt-BR **Anotações**) and `tab: 'notes'`. Never
-    put a `Description` textarea in the Record tab for them. When the API/DB already names the
-    column `<Prefix>Description` (resale accounts created before this rule: DNS, Cyber Security,
-    GED, HR, Commerce, Conversations, CRM and Registry workspaces), keep the wire name with
-    `source: '<Prefix>Description'` + `payloadKey: 'description'` (`resaleAccountFields` does this).
+    put a `Description` textarea in the Record tab for them. Resale accounts store it in
+    `<Prefix>Notes` and the API takes `notes` (`resaleAccountFields({ notesField })`); the former
+    `<Prefix>Description` columns of DNS, Cyber Security, GED, HR, Commerce, Conversations, CRM and
+    Registry workspaces were renamed (mnscloud-db `carry_account_description`).
   - use `notes` in frontend form keys, API payloads, DTOs, and response fields; use `<TablePrefix>Notes` in database columns when the value is a free-text operational observation.
   - keep `Description` only for business descriptions that are part of the resource identity, commercial meaning, or public/API documentation text, not for operational observations.
   - render notes fields in their own `mat-tab label="Notes"`; the PT-BR translation for `Notes` is `Anotações`.

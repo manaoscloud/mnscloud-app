@@ -41,8 +41,7 @@ export const GED_ACCOUNTS_CONFIG = defineCrud({
     },
     {
       key: 'notes',
-      source: 'GacDescription',
-      payloadKey: 'description',
+      source: 'GacNotes',
       label: 'Notes',
       type: 'textarea',
       tab: 'notes',
