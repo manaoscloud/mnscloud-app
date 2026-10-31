@@ -14,13 +14,31 @@ describe('Commerce account API client', () => {
     const a = bed.api.withCommerceAccount(shopA);
     const b = bed.api.withCommerceAccount(shopB);
     await Promise.all(
-      ['sale/products', 'registry/customers?status=1', 'sale/accounts', 'pos/terminals'].map((e) =>
-        a.get(e),
-      ),
+      [
+        'sale/products',
+        'registry/customers?status=1',
+        'sale/accounts',
+        'pos/terminals',
+        'stock/movements',
+        'financial/receivables',
+        'financial/payment-methods',
+        'fiscal/documents',
+      ].map((e) => a.get(e)),
     );
     await b.get('sale/products');
     await bed.api.get('sale/products');
-    expect(bed.http.get.calls.all().map(header)).toEqual([shopA, shopA, null, null, shopB, null]);
+    expect(bed.http.get.calls.all().map(header)).toEqual([
+      shopA,
+      shopA,
+      null,
+      null,
+      shopA,
+      shopA,
+      null,
+      shopA,
+      shopB,
+      null,
+    ]);
   });
   it('refuses stale dialogs after a tenant or session change', async () => {
     const scoped = bed.api.withCommerceAccount(shopA);
