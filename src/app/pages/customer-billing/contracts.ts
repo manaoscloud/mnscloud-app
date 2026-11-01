@@ -254,7 +254,9 @@ const config = defineCrud({
         {
           key: 'resourceUUID',
           hiddenWhen: ({ values }) =>
-            values['module'] === 'ged' || values['module'] === 'cyber_security',
+            values['module'] === 'ged' ||
+            values['module'] === 'hr' ||
+            values['module'] === 'cyber_security',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -268,6 +270,21 @@ const config = defineCrud({
           requiredWhen: ({ values }) => values['module'] === 'ged',
           remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
           quickCreate: quickCreateFor('GedAccountGacUUID'),
+        },
+        {
+          key: 'hrAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'hrAccount.account',
+          type: 'search-select',
+          help: 'hrAccount.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'hr',
+          requiredWhen: ({ values }) => values['module'] === 'hr',
+          remoteLookup: {
+            endpoint: 'hr/accounts?status=1',
+            uuidField: 'HraUUID',
+            labelField: 'HraName',
+          },
+          quickCreate: quickCreateFor('HrAccountHraUUID'),
         },
         {
           key: 'cyberAccountUUID',
@@ -336,11 +353,16 @@ const config = defineCrud({
           source: 'BciMetric',
           label: 'Metric',
           help: 'Name of the metric reported by the module (for example minutes or gigabytes).',
+          // HR reports a single metric (active employees in the month), filled in by the payload;
           // Cyber Security reports two fixed metrics, chosen in the field below.
           hiddenWhen: ({ values }) =>
-            values['kind'] !== 'usage' || values['module'] === 'cyber_security',
+            values['kind'] !== 'usage' ||
+            values['module'] === 'hr' ||
+            values['module'] === 'cyber_security',
           requiredWhen: ({ values }) =>
-            values['kind'] === 'usage' && values['module'] !== 'cyber_security',
+            values['kind'] === 'usage' &&
+            values['module'] !== 'hr' &&
+            values['module'] !== 'cyber_security',
         },
         {
           key: 'cyberMetric',
@@ -386,9 +408,11 @@ const config = defineCrud({
         resourceUUID:
           (values['module'] === 'ged'
             ? values['gedAccountUUID']
-            : values['module'] === 'cyber_security'
-              ? values['cyberAccountUUID']
-              : values['resourceUUID']) || null,
+            : values['module'] === 'hr'
+              ? values['hrAccountUUID']
+              : values['module'] === 'cyber_security'
+                ? values['cyberAccountUUID']
+                : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -398,8 +422,11 @@ const config = defineCrud({
         metric:
           values['kind'] !== 'usage'
             ? null
-            : (values['module'] === 'cyber_security' ? values['cyberMetric'] : values['metric']) ||
-              null,
+            : values['module'] === 'hr'
+              ? 'hr.active_employees'
+              : (values['module'] === 'cyber_security'
+                  ? values['cyberMetric']
+                  : values['metric']) || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],

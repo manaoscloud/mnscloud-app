@@ -338,6 +338,12 @@ export const QUICK_CREATE_REGISTRY = {
         (m) => m.CyberSecurityTrustedNodesPage,
       ),
   },
+  HrAccountHraUUID: {
+    label: 'hrAccount.create',
+    permission: 'tenant.hr.accounts.write',
+    loadComponent: () =>
+      import('../../../pages/hr/accounts/accounts').then((m) => m.HrAccountsPage),
+  },
   GedAccountGacUUID: {
     label: 'ged.newAccount',
     permission: 'tenant.ged.accounts.all',
