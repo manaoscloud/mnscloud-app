@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "20afceefbfad",
+  "version": "e35de55b3077",
   "language": "pt-BR",
   "entries": [
     {
@@ -3336,6 +3336,10 @@
         {
           "label": "Adicional de descanso e feriado (%)",
           "help": "O trabalho em descansos e feriados sem compensação é pago em dobro (100%, Lei 605/1949 art. 9º)."
+        },
+        {
+          "label": "Lembretes de marcação",
+          "help": "Os colaboradores podem ativar no Pulse lembretes de entrada e de saída por notificação."
         },
         {
           "label": "Anotações",
