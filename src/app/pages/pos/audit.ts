@@ -5,6 +5,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
+import { POS_READ_ONLY, POS_TERMINAL_FILTER } from './pos-report';
 
 export const POS_AUDIT_ACTIONS = [
   { value: 'terminal.created', label: 'Terminal created' },
@@ -28,26 +29,22 @@ const ORIGINS = [
 // Immutable record of POS actions, written by the database in the same transaction as each action;
 // opened from Vendas › Contas it shows only the terminals of that account.
 const config = defineCrud({
+  ...POS_READ_ONLY,
   endpoint: 'pos/audit-events',
   uuidField: 'PaeUUID',
   pageTitle: 'POS audit',
   pageDescription:
     'Who did what at each register: terminal changes, register opening and closing, cash movements, sales, cancelations and payments.',
-  canCreate: false,
-  canEdit: false,
-  canDelete: false,
-  bulkDelete: false,
-  statusFilter: false,
-  serverSidePagination: true,
+  columns: [
+    { id: 'occurred', label: 'When', field: 'PaeOccurredAt', kind: 'datetime' },
+    { id: 'terminal', label: 'Terminal', field: 'TerminalName' },
+    { id: 'action', label: 'Action', field: 'PaeAction', options: POS_AUDIT_ACTIONS },
+    { id: 'actor', label: 'User', field: 'ActorName' },
+    { id: 'origin', label: 'Origin', field: 'PaeOrigin', options: ORIGINS },
+    { id: 'details', label: 'Details', field: 'PaeDetails', optional: true },
+  ],
   listFilters: [
-    {
-      key: 'terminalUUID',
-      label: 'Terminal',
-      paramKey: 'terminalUUID',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: { endpoint: 'pos/terminals', uuidField: 'PtmUUID', labelField: 'PtmName' },
-    },
+    POS_TERMINAL_FILTER,
     {
       key: 'action',
       label: 'Action',
@@ -57,14 +54,6 @@ const config = defineCrud({
       options: POS_AUDIT_ACTIONS,
       emptyLabel: 'All',
     },
-  ],
-  columns: [
-    { id: 'occurred', label: 'When', field: 'PaeOccurredAt', kind: 'datetime' },
-    { id: 'terminal', label: 'Terminal', field: 'TerminalName' },
-    { id: 'action', label: 'Action', field: 'PaeAction', options: POS_AUDIT_ACTIONS },
-    { id: 'actor', label: 'User', field: 'ActorName' },
-    { id: 'origin', label: 'Origin', field: 'PaeOrigin', options: ORIGINS },
-    { id: 'details', label: 'Details', field: 'PaeDetails', optional: true },
   ],
   fields: [],
 });
