@@ -162,7 +162,7 @@ function assignAccount(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         quickCreate: false,
         quickCreateExemptReason:
           'Cyber Security accounts are created by account administrators in Customer accounts.',
-        span: 4,
+        span: 1,
       },
     ],
     payload: (values) => ({
