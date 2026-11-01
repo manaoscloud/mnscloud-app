@@ -2,7 +2,9 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudColumn,
   ConfigurableCrudConfig,
+  ConfigurableCrudListFilter,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -114,6 +116,84 @@ function assignProfile(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
       profileUUID: values['profileUUID'] || null,
     }),
   });
+}
+
+// Tenant servers belong to a Cyber Security account; alerts and decisions follow their server's.
+const CYBER_ACCOUNT_LOOKUP = {
+  endpoint: 'cyber-security/accounts?status=1',
+  uuidField: 'CyaUUID',
+  labelField: 'CyaName',
+};
+
+const CYBER_ACCOUNT_FILTER: ConfigurableCrudListFilter = {
+  key: 'cyberAccountUUID',
+  label: 'cyberSecurity.account',
+  paramKey: 'cyberAccountUUID',
+  type: 'search-select',
+  span: 1,
+  remoteLookup: CYBER_ACCOUNT_LOOKUP,
+};
+
+const CYBER_ACCOUNT_COLUMN: ConfigurableCrudColumn = {
+  id: 'cyberAccount',
+  label: 'cyberSecurity.account',
+  field: 'cyberAccountName',
+};
+
+function assignAccount(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: 'cyber-security/servers/account',
+    uuidField: 'agentUUID',
+    pageTitle: 'cyberSecurity.assignServerAccount',
+    pageDescription: 'cyberSecurity.assignServerAccountDescription',
+    createTitle: 'cyberSecurity.assignServerAccount',
+    savedMessage: 'cyberSecurity.serverAccountAssigned',
+    ...readOnly,
+    canCreate: true,
+    initialValues: { cyberAccountUUID: row['cyberAccountUUID'] ?? '' },
+    columns: [{ id: 'account', label: 'cyberSecurity.account', field: 'cyberAccountUUID' }],
+    fields: [
+      {
+        key: 'cyberAccountUUID',
+        label: 'cyberSecurity.account',
+        type: 'search-select',
+        required: true,
+        remoteLookup: CYBER_ACCOUNT_LOOKUP,
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Cyber Security accounts are created by account administrators in Customer accounts.',
+        span: 1,
+      },
+    ],
+    payload: (values) => ({
+      agentUUID: row['agentUUID'],
+      cyberAccountUUID: values['cyberAccountUUID'],
+    }),
+  });
+}
+
+/** Account filter, column and (for servers) assignment, only in the tenant area. */
+function withCyberAccount(section: CyberSection, config: ConfigurableCrudConfig) {
+  if (!['servers', 'alerts', 'decisions'].includes(section)) return config;
+  const [first, ...rest] = config.columns;
+  return {
+    ...config,
+    listFilters: [CYBER_ACCOUNT_FILTER, ...(config.listFilters ?? [])],
+    columns: [first, CYBER_ACCOUNT_COLUMN, ...rest],
+    rowActions:
+      section === 'servers'
+        ? [
+            ...(config.rowActions ?? []),
+            {
+              key: 'assignAccount',
+              label: 'cyberSecurity.assignServerAccount',
+              icon: 'business',
+              visible: (row: ConfigurableCrudRecord) => Boolean(row['agentUUID']),
+              form: assignAccount,
+            },
+          ]
+        : config.rowActions,
+  };
 }
 
 const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
@@ -377,8 +457,10 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
 })
 export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    const section = inject(ActivatedRoute).snapshot.data['section'] as CyberSection | undefined;
-    super(CONFIGS[section ?? 'servers'] ?? CONFIGS.servers);
+    const data = inject(ActivatedRoute).snapshot.data;
+    const section = (data['section'] as CyberSection | undefined) ?? 'servers';
+    const config = CONFIGS[section] ?? CONFIGS.servers;
+    super(data['scope'] === 'master' ? config : withCyberAccount(section, config));
   }
 
   override async handleRowAction(
