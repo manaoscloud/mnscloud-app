@@ -224,6 +224,14 @@ search-select (`cyber-security/accounts?status=1`, no quick-create: accounts are
 Cybersecurity › Customer accounts). A usage item replaces the free metric field with a select of the
 two Cyber Security metrics (`cyber_security.protected_servers`, `cyber_security.vaults`).
 
+Cybersecurity › Customer accounts has two row actions on customer accounts. **Acessos do Portal**
+(`.../portal-grants`, needs `tenant.cyber-security.accounts.all`) picks a portal user of the account
+customer and its operations; reading is on by default, while alert acknowledgement, unblock requests
+and the audited secret reveal are opt-in. **Pedidos de desbloqueio** (`.../unblock-requests`) lists the
+customer's requests, pending first; only a pending request opens the answer form (approve or reject,
+a rejection needs a note) and the answer is final. A new request shows in the topbar bell
+(`cyber_security.unblock_request`).
+
 ## Menus
 
 Every menu in the App (topbar, CRUD row actions, table view, contextual filter actions, split
