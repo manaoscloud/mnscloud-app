@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d93e15600628",
+  "version": "80c13bbe92ca",
   "language": "pt-BR",
   "entries": [
     {
@@ -3352,6 +3352,14 @@
       "fields": []
     },
     {
+      "route": "/infragis/accounts",
+      "menuPath": "InfraGIS › Contas",
+      "scope": "tenant",
+      "title": "Contas",
+      "description": "Gerencie as contas da revenda: a rede própria e uma conta por cliente, cada uma com seus projetos, ativos, operadores e publicação no Portal do Cliente.",
+      "fields": []
+    },
+    {
       "route": "/infragis/asset-types",
       "menuPath": "InfraGIS › Tipos de ativo",
       "scope": "tenant",
@@ -3691,6 +3699,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta da revenda dona deste projeto: a rede própria ou a conta de um cliente. Camadas e ativos do projeto ficam na mesma conta; ela não pode ser trocada depois."
         },
         {
           "label": "Pacote setorial",
