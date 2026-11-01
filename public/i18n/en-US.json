@@ -8035,6 +8035,8 @@
   "Offline until": "Offline until",
   "Open conflicts": "Open conflicts",
   "Operator outside the grant": "Operator outside the grant",
+  "Shop suspended before sync": "Shop suspended before sync",
+  "Operator without access to the shop": "Operator without access to the shop",
   "Outside the offline grant": "Outside the offline grant",
   "POS devices": "POS devices",
   "POS sync conflicts": "POS sync conflicts",

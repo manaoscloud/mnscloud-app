@@ -8035,6 +8035,8 @@
   "Offline until": "Offline hasta",
   "Open conflicts": "Conflictos abiertos",
   "Operator outside the grant": "Operador fuera de la autorización",
+  "Shop suspended before sync": "Tienda suspendida antes de la sincronización",
+  "Operator without access to the shop": "Operador sin acceso a la tienda",
   "Outside the offline grant": "Fuera de la autorización offline",
   "POS devices": "Equipos del TPV",
   "POS sync conflicts": "Conflictos de sincronización del TPV",
