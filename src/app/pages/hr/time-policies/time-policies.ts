@@ -74,6 +74,7 @@ const config = defineCrud({
     overtimeRate: 50,
     restDayRate: 100,
     nightRate: 20,
+    markReminders: false,
     notes: '',
   },
   columns: [
@@ -225,6 +226,16 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'markReminders',
+      source: 'MarkReminders',
+      label: 'Mark reminders',
+      type: 'select',
+      options: YES_NO,
+      help: 'Employees may turn on clock-in and clock-out reminders by push notification in Pulse.',
+      span: 1,
+      breakBefore: true,
+    },
+    {
       key: 'notes',
       source: 'Notes',
       label: 'Notes',
@@ -247,6 +258,7 @@ const config = defineCrud({
     overtimeRate: number(values['overtimeRate'], 50),
     restDayRate: number(values['restDayRate'], 100),
     nightRate: number(values['nightRate'], 20),
+    markReminders: values['markReminders'] === true,
     notes: values['notes'] ?? null,
   }),
 });
