@@ -9,10 +9,17 @@ export function registryWorkspaceApi(endpoint: string): ApiService {
   const session = inject(CONFIGURABLE_CRUD_QUICK_CREATE, { optional: true });
   if (session?.requestApi) return session.requestApi;
   const route = inject(ActivatedRoute, { optional: true });
+  const path = route?.snapshot.routeConfig?.path ?? '';
+  const query = route?.snapshot.queryParamMap;
+  // HR pages opened from HR > Accounts: the HR account, plus its workspace for Registry quick-create.
+  const hrAccount =
+    ApiService.isHrAccountEndpoint(endpoint) && ApiService.isHrAccountEndpoint(path)
+      ? query?.get('hrAccountUUID')
+      : null;
+  if (hrAccount) return api.withHrAccount(hrAccount, query?.get('workspaceUUID'));
   const workspace =
-    ApiService.isRegistryWorkspaceEndpoint(endpoint) &&
-    ApiService.isRegistryWorkspaceEndpoint(route?.snapshot.routeConfig?.path ?? '')
-      ? route?.snapshot.queryParamMap.get('workspaceUUID')
+    ApiService.isRegistryWorkspaceEndpoint(endpoint) && ApiService.isRegistryWorkspaceEndpoint(path)
+      ? query?.get('workspaceUUID')
       : null;
   return workspace ? api.withRegistryWorkspace(workspace) : api;
 }

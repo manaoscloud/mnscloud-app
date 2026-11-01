@@ -63,7 +63,6 @@ const COMPLEX_CONFIG: ConfigurableCrudConfig = {
       source: 'Alias',
       payloadKey: 'alias',
       label: 'Alias',
-      span: 2,
       breakBefore: true,
     },
     registryNameField(),

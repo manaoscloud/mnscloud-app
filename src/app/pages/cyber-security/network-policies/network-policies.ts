@@ -163,7 +163,6 @@ const config = defineCrud({
       label: 'Methods',
       type: 'textarea',
       format: 'json',
-      rows: 3,
       required: true,
       tab: 'network',
       span: 4,

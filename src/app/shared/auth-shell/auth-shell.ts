@@ -37,7 +37,7 @@ export class AuthShell {
   readonly previewLocale = input<LoginLocale | null>(null);
   readonly previewMobile = input(false);
   readonly preview = input(false);
-  readonly module = input<'app' | 'pulse' | 'pos' | 'phoneweb'>('app');
+  readonly module = input<'app' | 'pulse' | 'pos' | 'phoneweb' | 'infragis'>('app');
   readonly failedLogo = signal<string | null>(null);
   readonly context = computed(() => this.previewContext() ?? this.publicTheme.context());
   readonly appearance = computed<LoginAppearance>(() => this.context()?.LoginAppearance ?? {});
@@ -50,6 +50,7 @@ export class AuthShell {
         pulse: 'MNSCloud Pulse',
         pos: 'MNSCloud POS',
         phoneweb: 'MNSCloud PhoneWeb',
+        infragis: 'MNSCloud InfraGIS',
       }[this.module()],
   );
   readonly color = computed(() => brandColor(this.context()?.PrimaryColor));

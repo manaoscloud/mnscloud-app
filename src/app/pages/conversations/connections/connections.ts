@@ -89,14 +89,12 @@ const config = defineCrud({
       label: 'Name',
       required: true,
       placeholder: 'Example: Sales WhatsApp',
-      span: 2,
     },
     {
       key: 'ConversationAccountCvaUUID',
       source: 'ConversationAccountCvaUUID',
       label: 'Account',
       type: 'search-select',
-      span: 2,
       help: 'conversations.channelAccountHelp',
       remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
     },
@@ -106,7 +104,6 @@ const config = defineCrud({
       label: 'Channel ID',
       help: 'Provider identifier that routes incoming messages here (for WhatsApp, the phone number ID).',
       hiddenWhen: ({ values }) => values['kind'] === 'internal',
-      span: 2,
     },
     {
       key: 'config',
@@ -114,7 +111,6 @@ const config = defineCrud({
       label: 'Settings (JSON)',
       type: 'textarea',
       format: 'json',
-      rows: 3,
       help: 'Optional non-secret settings as a JSON object.',
       hiddenWhen: ({ values }) => values['kind'] === 'internal',
       span: 4,
@@ -125,7 +121,6 @@ const config = defineCrud({
       type: 'password',
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
       hiddenWhen: ({ values }) => values['kind'] === 'internal',
-      span: 3,
     },
     {
       key: 'clearSecret',

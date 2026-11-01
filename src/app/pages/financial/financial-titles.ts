@@ -104,7 +104,7 @@ export function financialTitleFields(spec: FinancialTitleSpec): ConfigurableCrud
       quickCreate: spec.party.quickCreate,
       span: 1,
     },
-    { key: 'description', source: 'Description', label: 'Description', required: true, span: 2 },
+    { key: 'description', source: 'Description', label: 'Description', required: true, span: 1 },
     { key: 'docNumber', source: 'DocNumber', label: 'Document number', span: 1 },
     { key: 'dueDate', source: 'DueDate', label: 'Due date', type: 'date', required: true, span: 1 },
     {

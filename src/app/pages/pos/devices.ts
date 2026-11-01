@@ -109,29 +109,25 @@ const config = defineCrud({
               },
               quickCreate: false,
               quickCreateExemptReason: 'Operators are existing users of the environment.',
-              span: 4,
             },
             {
               key: 'maxSaleValue',
               label: 'Maximum value per sale',
               type: 'currency',
               required: true,
-              span: 2,
             },
             {
               key: 'maxTotalValue',
               label: 'Maximum total sold offline',
               type: 'currency',
               required: true,
-              span: 2,
             },
-            { key: 'maxItems', label: 'Maximum items per sale', type: 'number', span: 2 },
+            { key: 'maxItems', label: 'Maximum items per sale', type: 'number', span: 1 },
             {
               key: 'maxDiscountPercent',
               label: 'Maximum discount (%)',
               type: 'number',
               help: 'Up to the terminal maximum discount.',
-              span: 2,
             },
             {
               key: 'validUntil',
@@ -139,7 +135,6 @@ const config = defineCrud({
               type: 'datetime',
               required: true,
               help: 'At most 31 days from now.',
-              span: 2,
             },
           ],
           payload: (values) => ({

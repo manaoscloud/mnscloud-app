@@ -55,7 +55,6 @@ const config = defineCrud({
       source: 'DmtTarget',
       label: 'dns.monitorTarget',
       required: true,
-      span: 2,
       helpWhen: ({ values }) =>
         isResolver(values) ? 'dns.monitorResolverTargetHelp' : 'dns.monitorServiceTargetHelp',
     },

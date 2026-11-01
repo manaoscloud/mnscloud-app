@@ -200,7 +200,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
                 'Only existing live subscriptions of this package can be migrated.',
               help: 'Every live subscription of this package starts selected (up to 200 per migration). Untick the subscribers that stay; reopen the action to migrate the rest.',
               tab: 'record',
-              span: 2,
             },
             {
               key: 'sourcePackage',
@@ -209,7 +208,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               disabledWhen: () => true,
               help: 'Current package of the selected subscriptions. Read-only reference for choosing the target package.',
               tab: 'record',
-              span: 2,
             },
             {
               key: 'targetPackageUUID',
@@ -226,7 +224,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               quickCreate: quickCreateFor('BillingPackageBpaUUID'),
               help: 'Active package that receives the selected subscriptions. Choose its target price for the next billing cycle.',
               tab: 'record',
-              span: 2,
               breakBefore: true,
             },
             {
@@ -236,7 +233,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
               type: 'search-select',
               required: true,
               tab: 'record',
-              span: 2,
               remoteLookup: {
                 endpoint: 'system/billing/prices?status=1',
                 uuidField: 'BpcUUID',
@@ -400,7 +396,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       label: 'Name',
       required: true,
       help: 'Commercial name of the package shown to operators and tenants.',
-      span: 2,
     },
     {
       key: 'primaryProductUUID',
@@ -413,7 +408,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       quickCreateExemptReason:
         'The primary product must already be an active module item of this package.',
       help: 'Identity of the package (for example VoIP, Hosting or ISP): an active module item of this package. Packages with the same primary product are plans of one product line and replace each other when a tenant changes plan; packages with different primary products are separate contracts and are all billed. On creation, the initial module item becomes the primary product.',
-      span: 2,
     },
     // Public: catalog visibility, name, slug, sort order; summary; description.
     {
@@ -459,7 +453,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'publicSummary',
       label: 'Public summary',
       tab: 'public',
-      span: 4,
     },
     {
       key: 'publicDescription',
@@ -469,7 +462,6 @@ export const PACKAGE_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'public',
       span: 4,
-      rows: 3,
     },
     // Financial (create only): the first package item, created in the same transaction.
     {

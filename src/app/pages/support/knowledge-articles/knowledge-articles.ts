@@ -65,14 +65,13 @@ const config = defineCrud({
       translateOptions: true,
       span: 1,
     },
-    { key: 'title', source: 'Title', payloadKey: 'title', label: 'Title', required: true, span: 3 },
+    { key: 'title', source: 'Title', payloadKey: 'title', label: 'Title', required: true, span: 1 },
     {
       key: 'menuPath',
       source: 'MenuPath',
       payloadKey: 'menuPath',
       label: 'Menu path',
       help: 'Where the customer finds it, exactly as the menu shows it, for example Suporte › Meus chamados.',
-      span: 2,
     },
     {
       key: 'route',
@@ -96,7 +95,6 @@ const config = defineCrud({
       payloadKey: 'body',
       label: 'Content',
       type: 'textarea',
-      rows: 10,
       required: true,
       help: 'Plain text with numbered steps. Do not include passwords, internal links or customer data.',
       span: 4,

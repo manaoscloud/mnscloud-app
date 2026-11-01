@@ -13,7 +13,8 @@ export interface ResaleAccountFieldsOptions {
   statusDisabledWhen?: ConfigurableCrudField['disabledWhen'];
   statusField: string;
   nameField: string;
-  descField: string;
+  /** Column of the account's free-text annotation (`<Prefix>Notes`). */
+  notesField: string;
   revField: string;
 }
 
@@ -45,11 +46,12 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
       },
     },
     {
-      key: 'description',
-      source: options.descField,
-      label: 'Description',
+      key: 'notes',
+      source: options.notesField,
+      label: 'Notes',
       type: 'textarea',
-      span: 1,
+      tab: 'notes',
+      span: 4,
     },
     {
       key: 'revision',
@@ -83,12 +85,12 @@ export function resaleAccountCrud(options: ResaleAccountCrudOptions) {
     serverSidePagination: true,
     bulkDelete: true,
     ...revisionDeletePayloads(`${prefix}UUID`, `${prefix}Revision`),
-    initialValues: { name: '', description: '', customerUUID: null, status: 1 },
+    initialValues: { name: '', notes: '', customerUUID: null, status: 1 },
     fields: resaleAccountFields({
       helpKey: `${i18n}.accountCustomerHelp`,
       statusField: `${prefix}Status`,
       nameField: `${prefix}Name`,
-      descField: `${prefix}Description`,
+      notesField: `${prefix}Notes`,
       revField: `${prefix}Revision`,
     }),
     columns: [
@@ -124,6 +126,8 @@ export interface ResaleAccountActionOptions {
   operatorsTitle: string;
   operatorsDescription: string;
   canManage: () => boolean;
+  /** False while customer publication is not available for the module (portal off). */
+  publication?: boolean;
 }
 
 export function resaleAccountRowActions(
@@ -147,6 +151,7 @@ export function resaleAccountRowActions(
     operatorsTitle,
     operatorsDescription,
     canManage,
+    publication = true,
   } = options;
 
   return [
@@ -154,7 +159,7 @@ export function resaleAccountRowActions(
       key: 'publication',
       label: publicationLabel,
       icon: 'public',
-      visible: (row) => canManage() && row[kindField] === 'customer',
+      visible: (row) => publication && canManage() && row[kindField] === 'customer',
       form: (row) =>
         defineCrud({
           endpoint: `${module}/accounts/${row[uuidField]}/portal`,
@@ -167,7 +172,6 @@ export function resaleAccountRowActions(
               key: 'enabled',
               label: portalEnabledLabel,
               type: 'select',
-              span: 2,
               options: [
                 { value: 0, label: 'No' },
                 { value: 1, label: 'Yes' },

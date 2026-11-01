@@ -109,7 +109,6 @@ function assignProfile(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
         quickCreate: false,
         quickCreateExemptReason:
           'Security profiles carry rules and services; create them on the Profiles page.',
-        span: 4,
       },
     ],
     payload: (values) => ({
@@ -414,7 +413,7 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         span: 1,
       },
       { key: 'value', source: 'value', label: 'Value', required: true, span: 1 },
-      { key: 'reason', source: 'reason', label: 'Reason', span: 4 },
+      { key: 'reason', source: 'reason', label: 'Reason', span: 1 },
     ],
   }),
   'security-events': defineCrud({

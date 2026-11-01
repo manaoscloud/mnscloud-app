@@ -262,7 +262,6 @@ const TURN_SERVER_CONFIG: ConfigurableCrudConfig = {
       format: 'json',
       tab: 'notes',
       span: 4,
-      rows: 8,
     },
     {
       key: 'notes',

@@ -126,7 +126,6 @@ const forwardZones = clusterList(
         source: 'DfzServersJson',
         label: 'dns.forwardServers',
         required: true,
-        span: 2,
         help: 'dns.forwardServersHelp',
       },
       {
@@ -192,7 +191,7 @@ const filterRules = clusterList(
         translateOptions: true,
         options: FILTER_ACTIONS,
       },
-      { key: 'note', source: 'DfrNote', label: 'dns.filterNote', span: 2 },
+      { key: 'note', source: 'DfrNote', label: 'dns.filterNote', span: 1 },
     ],
     columns: [
       { id: 'domain', field: 'DfrDomain', label: 'dns.filterDomain', kind: 'identity' },
@@ -240,7 +239,6 @@ const secondaries = clusterList(
         key: 'rotateKey',
         label: 'dns.secondaryRotateKey',
         type: 'select',
-        span: 2,
         translateOptions: true,
         options: DNS_BOOLEAN_OPTIONS,
         help: 'dns.secondaryRotateKeyHelp',

@@ -107,7 +107,6 @@ const BILLING_PARAMETER_CONFIG: ConfigurableCrudConfig = {
         'Tenants are provisioned through onboarding; there is no in-place create form.',
       required: true,
       hiddenWhen: ({ editing }) => editing,
-      span: 2,
     },
     {
       key: 'suspensionGraceDays',
@@ -199,7 +198,6 @@ const BILLING_PARAMETER_CONFIG: ConfigurableCrudConfig = {
       label: 'Reason',
       type: 'textarea',
       span: 4,
-      rows: 2,
       placeholder: 'Corporate contract',
     },
   ],

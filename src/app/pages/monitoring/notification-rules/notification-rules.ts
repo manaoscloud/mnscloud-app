@@ -129,7 +129,6 @@ const RULE_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'ops@example.com, oncall@example.com',
       help: 'Up to 10 emails separated by commas.',
       type: 'textarea',
-      rows: 2,
       required: true,
       span: 4,
     },

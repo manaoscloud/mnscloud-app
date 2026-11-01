@@ -225,7 +225,6 @@ const MEDIA_SERVER_CONFIG: ConfigurableCrudConfig = {
       format: 'json',
       tab: 'notes',
       span: 4,
-      rows: 8,
     },
     {
       key: 'notes',
@@ -307,7 +306,6 @@ const MEDIA_DOMAIN_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'notes',
       span: 4,
-      rows: 8,
     },
   ],
 };

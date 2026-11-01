@@ -42,7 +42,6 @@ const config = defineCrud({
       label: 'Period start',
       type: 'date',
       required: true,
-      span: 2,
     },
     {
       key: 'periodEnd',
@@ -50,7 +49,6 @@ const config = defineCrud({
       type: 'date',
       required: true,
       help: 'Inclusive; at most one year.',
-      span: 2,
     },
   ],
   payload: (values) => ({ periodStart: values['periodStart'], periodEnd: values['periodEnd'] }),

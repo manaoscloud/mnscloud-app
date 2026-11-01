@@ -83,7 +83,6 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       quickCreateExemptReason:
         'Users join tenants through invitations; there is no in-place create form.',
       required: true,
-      span: 4,
       tab: 'record',
       placeholder: 'Search user',
     },
@@ -94,7 +93,6 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       label: 'Permission',
       type: 'search-select',
       required: true,
-      span: 4,
       tab: 'record',
       placeholder: 'Search permission',
     },
@@ -106,7 +104,6 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: EFFECT_OPTIONS,
       required: true,
-      span: 2,
       tab: 'record',
     },
     {
@@ -118,7 +115,6 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       quickCreate: false,
       quickCreateExemptReason:
         'Tenants are provisioned through onboarding; there is no in-place create form.',
-      span: 2,
       tab: 'record',
       placeholder: 'Search tenant',
       hiddenWhen: ({ values }) => String(values['permissionCode'] ?? '').startsWith('platform.'),

@@ -226,6 +226,7 @@ const config = defineCrud({
         { value: 0, label: 'No' },
       ],
     },
+    // business-description: commercial description of the fee plan.
     {
       key: 'description',
       source: 'PfpDescription',

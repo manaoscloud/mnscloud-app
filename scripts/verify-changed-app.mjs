@@ -67,6 +67,7 @@ run('node', [
   'scripts/validate-menus.test.mjs',
   'scripts/validate-page-descriptions.test.mjs',
   'scripts/validate-required-fields.test.mjs',
+  'scripts/validate-crud-fields.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -108,6 +109,9 @@ run('node', ['scripts/validate-menus.mjs']);
 run('node', ['scripts/validate-page-descriptions.mjs']);
 // Invalid fields turn red, are named and focused on save (app.md Required Field Feedback Baseline).
 run('node', ['scripts/validate-required-fields.mjs']);
+// Inputs/selects span-1, text areas span-4 with four rows, annotations in the Notes tab
+// (app.md Form Field Layout Baseline).
+run('node', ['scripts/validate-crud-fields.mjs']);
 
 const crudRoots = [
   ...new Set(

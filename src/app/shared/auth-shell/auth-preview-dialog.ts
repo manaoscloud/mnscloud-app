@@ -168,20 +168,23 @@ export class AuthPreviewDialog {
     pulse: PublicThemeRuntimeContext;
     pos: PublicThemeRuntimeContext;
     phoneweb: PublicThemeRuntimeContext;
-    module: 'app' | 'pulse' | 'pos' | 'phoneweb';
+    infragis: PublicThemeRuntimeContext;
+    module: 'app' | 'pulse' | 'pos' | 'phoneweb' | 'infragis';
   }>(MAT_DIALOG_DATA);
-  /** First field of each login: App/POS e-mail, Pulse code, PhoneWeb any MNSCloud login. */
+  /** First field of each login: App/POS/InfraGIS e-mail, Pulse code, PhoneWeb any MNSCloud login. */
   readonly identityLabel = {
     app: 'signin.email',
     pos: 'signin.email',
     pulse: 'access.employeeCode',
     phoneweb: 'access.phonewebUser',
+    infragis: 'signin.email',
   } as const;
   readonly modules = [
     { key: 'app', label: 'App' },
     { key: 'pulse', label: 'Pulse' },
     { key: 'pos', label: 'POS' },
     { key: 'phoneweb', label: 'PhoneWeb' },
+    { key: 'infragis', label: 'InfraGIS' },
   ] as const;
   private readonly transloco = inject(TranslocoService);
   private readonly translationEvents = toSignal(this.transloco.events$);

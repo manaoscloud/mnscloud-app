@@ -187,7 +187,6 @@ function configuration(kind: Kind): ConfigurableCrudConfig {
         type: 'textarea',
         tab: 'notes',
         span: 4,
-        rows: 3,
         hiddenWhen: (c) => !!c.values['passwordAction'],
       },
     ],

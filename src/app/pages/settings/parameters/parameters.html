@@ -57,7 +57,7 @@
 
         <mns-search-select-field
           data-field-key="defaultTimezone"
-          class="span-2"
+          class="span-1"
           [label]="'Default Timezone' | transloco"
           [placeholder]="defaultTimezonePlaceholder()"
           [options]="timezoneOptions()"
@@ -102,7 +102,7 @@
       <mat-tab-group class="nested-tabs integration-tabs">
         <mat-tab [label]="'Google' | transloco">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-3">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Google Maps Embed API Key' | transloco }}</mat-label>
               <input
                 matInput
@@ -148,7 +148,7 @@
 
         <mat-tab [label]="'Mapbox' | transloco">
           <form class="tab-content form-grid">
-            <mat-form-field appearance="outline" class="span-3">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Mapbox Token' | transloco }}</mat-label>
               <input
                 matInput
@@ -259,7 +259,7 @@
                     />
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'Client ID' | transloco }}</mat-label>
                     <input
                       matInput
@@ -278,7 +278,7 @@
                     />
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'Client Secret' | transloco }}</mat-label>
                     <input
                       matInput
@@ -323,7 +323,7 @@
                     (change)="selectSiadPrivateKey($event)"
                   />
 
-                  <mat-form-field appearance="outline" class="span-2">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'mTLS Certificate' | transloco }}</mat-label>
                     <input
                       matInput
@@ -351,7 +351,7 @@
                     />
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="span-2">
+                  <mat-form-field appearance="outline" class="span-1">
                     <mat-label>{{ 'mTLS Private Key' | transloco }}</mat-label>
                     <input
                       matInput
@@ -403,7 +403,7 @@
         } @else {
           <mat-tab [label]="'SignalWire' | transloco">
             <form class="tab-content form-grid">
-              <mat-form-field appearance="outline" class="span-3">
+              <mat-form-field appearance="outline" class="span-1">
                 <mat-label>{{ 'SignalWire Repo Token' | transloco }}</mat-label>
                 <input
                   matInput
@@ -582,7 +582,7 @@
             />
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="span-2">
+          <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Captcha Site Key' | transloco }}</mat-label>
             <input
               matInput

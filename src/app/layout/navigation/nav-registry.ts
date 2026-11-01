@@ -191,6 +191,16 @@ export const NAV_ITEMS: NavItem[] = [
         category: 'registry',
         route: '/sale/price-list',
       },
+      {
+        id: 'sale/accounts',
+        label: 'nav.sale.accounts',
+        icon: 'storefront',
+        // Customer accounts belong to Revenda, but "Revenda" repeats the stem of "Vendas"
+        // (check:nav); base commercial data stays with the catalog under Cadastros.
+        category: 'registry',
+        route: '/sale/accounts',
+        permissions: ['tenant.commerce.accounts.read'],
+      },
     ],
   },
   {
@@ -822,7 +832,7 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   // Human resources: the Pulse time clock (timesheets, schedules, holidays, policies, accounts)
-  // of the employees kept in Registry.
+  // of the employees kept in Registry, per HR account (internal or customer resale).
   {
     id: 'hr',
     label: 'nav.hr',
@@ -892,6 +902,14 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'badge',
         category: 'settings',
         route: '/hr/time-clock-accounts',
+      },
+      {
+        id: 'hr/accounts',
+        label: 'nav.hr.accounts',
+        icon: 'manage_accounts',
+        category: 'resale',
+        route: '/hr/accounts',
+        permissions: ['tenant.hr.accounts.read'],
       },
     ],
   },

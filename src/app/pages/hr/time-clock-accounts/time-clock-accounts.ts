@@ -76,9 +76,9 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       remoteLookup: {
-        endpoint: 'registry/employees?status=1',
-        uuidField: 'EmployeeUUID',
-        labelField: 'Name',
+        endpoint: 'hr/employees',
+        uuidField: 'RemUUID',
+        labelField: 'RemName',
         selectedLabelField: 'EmployeeName',
       },
       quickCreate: quickCreateFor('RegEmployeeRemUUID'),

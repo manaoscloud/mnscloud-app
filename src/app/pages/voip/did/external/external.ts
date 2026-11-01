@@ -103,7 +103,6 @@ function externalConfig(system: boolean): ConfigurableCrudConfig {
         help: 'One DID number, or a range of up to 100 numbers as start-end (same number of digits). Example: 559230423000-559230423049.',
         required: true,
         tab: 'record',
-        span: 2,
       },
       {
         key: 'notes',

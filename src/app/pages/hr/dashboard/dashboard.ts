@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { ApiService } from '../../../services/api.service';
+import { registryWorkspaceApi } from '../../../shared/crud/configurable-crud/registry-workspace-api';
 import { DateTimeFormatService } from '../../../services/date-time-format.service';
 import {
   GlobalTableComponent,
@@ -80,7 +80,8 @@ const count = (value: number | null | undefined) =>
   templateUrl: './dashboard.html',
 })
 export class HrDashboardPage {
-  private readonly api = inject(ApiService);
+  // The HR account opened from HR > Accounts (?hrAccountUUID=), else the internal account.
+  private readonly api = registryWorkspaceApi('hr/dashboard');
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly dateTime = inject(DateTimeFormatService);
@@ -202,7 +203,10 @@ export class HrDashboardPage {
         label: 'Open issues',
         icon: 'list',
         run: (row) =>
-          void this.router.navigate(['/hr/time-issues'], { queryParams: { flag: row['flag'] } }),
+          void this.router.navigate(['/hr/time-issues'], {
+            queryParams: { flag: row['flag'] },
+            queryParamsHandling: 'merge',
+          }),
       },
     ],
   });

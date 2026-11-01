@@ -20,11 +20,11 @@ const config = defineCrud({
   bulkDelete: true,
   ...revisionDeletePayloads('RwkUUID', 'RwkRevision'),
   canDeleteRow: (row) => Boolean(row['RegCustomerRcuUUID']),
-  initialValues: { name: '', description: '', RegCustomerRcuUUID: null, status: 1 },
+  initialValues: { name: '', notes: '', RegCustomerRcuUUID: null, status: 1 },
   fields: resaleAccountFields({
     statusField: 'RwkStatus',
     nameField: 'RwkName',
-    descField: 'RwkDescription',
+    notesField: 'RwkNotes',
     revField: 'RwkRevision',
     customerKey: 'RegCustomerRcuUUID',
     requireCustomer: true,

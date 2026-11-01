@@ -1,5 +1,7 @@
 import { registryWorkspaceErrorMessage } from '../../registry/registry-workspace-error';
 import { registryWorkspaceApi } from './registry-workspace-api';
+import { commerceAccountApi } from './commerce-account-api';
+import { commerceAccountErrorMessage } from '../../commerce/commerce-account-error';
 import { crudReportMask } from './crud-report-mask';
 import { PhoneDialer } from '../../phone-dock/phone-dialer';
 import { generateCrudPassword } from './password-generation';
@@ -25,6 +27,7 @@ const SECRET_REVEAL_MS = 10_000;
 /** Table view menus with more columns than this offer a column search. */
 const COLUMN_SEARCH_MIN = 8;
 import { resolveCrudFieldHelp } from './crud-field-help';
+import { crudFieldSpan, TEXTAREA_ROWS } from './crud-field-layout';
 import { FieldHelpComponent } from '../../forms/field-help';
 import { payErrorMessage } from '../../payment/pay-error';
 import { billingErrorText } from '../../billing/billing-error';
@@ -291,21 +294,29 @@ export type ConfigurableCrudField = {
     | 'codecs'
     | 'retention'
     | 'notes'
-    /** Brand per client (Settings › Themes): App, POS, Pulse and PhoneWeb. */
+    /** Brand per client (Settings › Themes): App, POS, Pulse, PhoneWeb and InfraGIS. */
     | 'brandApp'
     | 'brandPos'
     | 'brandPulse'
     | 'brandPhoneweb'
+    | 'brandInfragis'
     | 'loginApp'
     | 'loginPulse'
     | 'loginPos'
-    | 'loginPhoneweb';
+    | 'loginPhoneweb'
+    | 'loginInfragis';
   addressSection?: string;
+  /**
+   * Grid columns of composite controls only (file, checkbox group, permission tree, secret
+   * content). Single-line controls are always `span-1` and text areas `span-4`
+   * (`crud-field-layout.ts`); `npm run check:crud:fields` rejects other values for them.
+   */
   span?: 1 | 2 | 3 | 4;
   lineFillAfter?: 1 | 2 | 3;
   breakBefore?: boolean;
   breakBeforeWhen?: (context: ConfigurableCrudFieldContext) => boolean;
   postalLookup?: ConfigurableCrudPostalCodeLookup;
+  /** Visible rows of a permission tree. Text areas always show four rows. */
   rows?: number;
   required?: boolean;
   /** Numeric value that must be greater than zero when filled (amounts, quantities). */
@@ -1089,10 +1100,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         { key: 'brandPos', label: 'access.tabPos' },
         { key: 'brandPulse', label: 'Pulse' },
         { key: 'brandPhoneweb', label: 'PhoneWeb' },
+        { key: 'brandInfragis', label: 'InfraGIS' },
         { key: 'loginApp', label: 'access.loginApp' },
         { key: 'loginPulse', label: 'access.loginPulse' },
         { key: 'loginPos', label: 'access.loginPos' },
         { key: 'loginPhoneweb', label: 'access.loginPhoneweb' },
+        { key: 'loginInfragis', label: 'access.loginInfragis' },
       ] as const
     ).map((tab) => ({
       ...tab,
@@ -1146,6 +1159,36 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly registryWorkspacePage = computed(() =>
     ApiService.isRegistryWorkspaceEndpoint(this.config.endpoint),
   );
+  readonly commerceAccountUUID = signal<string | null>(null);
+  readonly commerceAccountInfo = resource({
+    params: () => this.commerceAccountUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: { item: ConfigurableCrudRecord } }>(
+        `sale/accounts/${params}`,
+      );
+      return response.data.item;
+    },
+  });
+  /** Sales pages state their account; the reseller's Registry customer list stays unlabeled. */
+  readonly commerceAccountPage = computed(
+    () =>
+      ApiService.isCommerceAccountEndpoint(this.config.endpoint) &&
+      !/^\/?registry\//.test(this.config.endpoint),
+  );
+  /** HR pages work inside one HR account; without selection, the internal account. */
+  readonly hrAccountUUID = signal<string | null>(null);
+  readonly hrAccountInfo = resource({
+    params: () => this.hrAccountUUID() || undefined,
+    defaultValue: null as ConfigurableCrudRecord | null,
+    loader: async ({ params }): Promise<ConfigurableCrudRecord | null> => {
+      const response = await this.api.get<{ data: ConfigurableCrudRecord }>(
+        `hr/accounts/${params}`,
+      );
+      return response.data;
+    },
+  });
+  readonly hrAccountPage = computed(() => ApiService.isHrAccountEndpoint(this.config.endpoint));
   readonly canCreate = computed(
     () =>
       !this.config.readOnly &&
@@ -1164,8 +1207,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
 
   protected constructor(config: ConfigurableCrudConfig) {
-    this.api = config.requestApi ?? registryWorkspaceApi(config.endpoint);
+    this.api =
+      config.requestApi ??
+      commerceAccountApi(config.endpoint) ??
+      registryWorkspaceApi(config.endpoint);
     this.registryWorkspaceUUID.set(this.api.registryWorkspaceUUID);
+    this.commerceAccountUUID.set(this.api.commerceAccountUUID);
+    this.hrAccountUUID.set(this.api.hrAccountUUID);
     this.config = config;
     this.viewStorageKey = crudViewStorageKey(config.endpoint);
     this.viewPreferences.set(readCrudViewPreferences(this.viewStorageKey));
@@ -1288,6 +1336,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   /** Explicit parent destination; never relies on browser history. */
   backLink(): string | null {
+    if (this.commerceAccountUUID() && this.commerceAccountPage()) return '/sale/accounts';
+    if (this.hrAccountUUID() && this.hrAccountPage()) return '/hr/accounts';
     return this.registryWorkspaceUUID() && this.registryWorkspacePage()
       ? '/registry/workspaces'
       : null;
@@ -2307,7 +2357,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         editing: Boolean(this.editingRecord()),
         values: this.formValues(),
       });
-    return [`span-${field.span ?? 1}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
+    const span = crudFieldSpan(this.resolvedFieldType(field), field.span);
+    return [`span-${span}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
+  }
+
+  /** Visible rows of a text area: the layout baseline fixes four (`crud-field-layout.ts`). */
+  fieldRows(_field: ConfigurableCrudField): number {
+    return TEXTAREA_ROWS;
   }
 
   fieldLabel(field: ConfigurableCrudField): string {
@@ -4045,6 +4101,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   protected errorMessage(error: unknown): string {
     const workspaceMessage = registryWorkspaceErrorMessage(error);
     if (workspaceMessage) return workspaceMessage;
+    const commerceMessage = commerceAccountErrorMessage(error);
+    if (commerceMessage) return commerceMessage;
     const payMessage = payErrorMessage(error);
     if (payMessage) return payMessage;
     const billing = billingErrorText(error);

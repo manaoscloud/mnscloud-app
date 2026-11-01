@@ -59,7 +59,7 @@ export const paymentMethodConfig = defineCrud({
     },
     { key: 'name', source: 'Name', label: 'Name', required: true, span: 1 },
     { key: 'code', source: 'Code', label: 'Code', span: 1, autocomplete: 'off' },
-    { key: 'notes', source: 'Notes', label: 'Notes', type: 'textarea', span: 4, rows: 3 },
+    { key: 'notes', source: 'Notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
   ],
   columns: [
     { id: 'id', label: 'ID', field: 'FinPayMethodID', kind: 'text' },

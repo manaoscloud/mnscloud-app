@@ -21,6 +21,7 @@ export class ApiService {
   private readonly injector = inject(Injector);
 
   private registryScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
+  private hrScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
 
   /** Isolated client for one opened Registry workspace, never shared mutable application state. */
   withRegistryWorkspace(uuid: string): ApiService {
@@ -37,6 +38,69 @@ export class ApiService {
 
   get registryWorkspaceUUID(): string | null {
     return this.registryScope?.uuid ?? null;
+  }
+
+  private commerceScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
+
+  /** Isolated client for one opened commerce account (Sales catalog, prices, quotations, buyers). */
+  withCommerceAccount(uuid: string): ApiService {
+    const normalized = normalizeEnvironmentUUID(uuid);
+    if (!normalized) throw new Error('Invalid commerce account.');
+    const client = runInInjectionContext(this.injector, () => new ApiService());
+    client.commerceScope = {
+      uuid: normalized,
+      environment: this.currentEnvironmentUUID(),
+      session: this.auth.sessionGeneration(),
+    };
+    return client;
+  }
+
+  /**
+   * Isolated client for one opened HR account (X-Hr-Account-UUID on HR routes). Its Registry
+   * workspace, when known, scopes the canonical Registry quick-create of employees and companies.
+   */
+  withHrAccount(uuid: string, workspaceUUID?: string | null): ApiService {
+    const normalized = normalizeEnvironmentUUID(uuid);
+    if (!normalized) throw new Error('Invalid HR account.');
+    const client = workspaceUUID
+      ? this.withRegistryWorkspace(workspaceUUID)
+      : runInInjectionContext(this.injector, () => new ApiService());
+    client.hrScope = {
+      uuid: normalized,
+      environment: this.currentEnvironmentUUID(),
+      session: this.auth.sessionGeneration(),
+    };
+    return client;
+  }
+
+  get commerceAccountUUID(): string | null {
+    return this.commerceScope?.uuid ?? null;
+  }
+
+  /**
+   * Sales resources (account administration excluded), their Registry buyers and the shop's Stock,
+   * Financial titles/gateways, Fiscal and Accounting. Tenant catalogs stay unscoped.
+   */
+  static isCommerceAccountEndpoint(endpoint: string): boolean {
+    const path = endpoint.replace(/^\//, '');
+    return (
+      (/^sale\//.test(path) && !/^sale\/accounts([/?]|$)/.test(path)) ||
+      /^registry\/customers([/?]|$)/.test(path) ||
+      /^(stock|fiscal|accounting)\//.test(path) ||
+      /^financial\/(gateway-accounts|payables|payment-charges|receivables|settlements)([/?]|$)/.test(
+        path,
+      )
+    );
+  }
+
+  get hrAccountUUID(): string | null {
+    return this.hrScope?.uuid ?? null;
+  }
+
+  static isHrAccountEndpoint(endpoint: string): boolean {
+    return /^\/?hr\/(time-clock-accounts|time-punches|work-schedules|work-schedule-assignments|holidays|time-policies|timesheets|time-issues|dashboard|employees|companies)([/?]|$)/.test(
+      endpoint,
+    );
   }
 
   static isRegistryWorkspaceEndpoint(endpoint: string): boolean {
@@ -67,6 +131,27 @@ export class ApiService {
       }
       if (ApiService.isRegistryWorkspaceEndpoint(endpoint))
         headers['X-Registry-Workspace-UUID'] = this.registryScope.uuid;
+    }
+    if (this.hrScope) {
+      if (
+        this.hrScope.environment !== environmentUUID ||
+        this.hrScope.session !== this.auth.sessionGeneration()
+      ) {
+        throw new Error('Session changed.');
+      }
+      if (ApiService.isHrAccountEndpoint(endpoint))
+        headers['X-Hr-Account-UUID'] = this.hrScope.uuid;
+    }
+
+    if (this.commerceScope) {
+      if (
+        this.commerceScope.environment !== environmentUUID ||
+        this.commerceScope.session !== this.auth.sessionGeneration()
+      ) {
+        throw new Error('Session changed.');
+      }
+      if (ApiService.isCommerceAccountEndpoint(endpoint))
+        headers['X-Commerce-Account-UUID'] = this.commerceScope.uuid;
     }
 
     // 🔹 Environment atual (multi-tenant)
@@ -207,6 +292,8 @@ export class ApiService {
       endpoint,
       headers.get('X-Environment-UUID'),
       headers.get('X-Registry-Workspace-UUID'),
+      headers.get('X-Commerce-Account-UUID'),
+      headers.get('X-Hr-Account-UUID'),
       this.auth.user()?.uuid,
       session,
       isFormData ? crypto.randomUUID() : (body ?? null),

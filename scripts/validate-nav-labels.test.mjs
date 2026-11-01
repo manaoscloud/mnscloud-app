@@ -1,7 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readRegistry, validateNavigation, validateNavigationAt } from './validate-nav-labels.mjs';
+import {
+  readCategoryIcons,
+  readRegistry,
+  sidebarView,
+  validateCategoryIcons,
+  validateLabelWidths,
+  validateNavigation,
+  validateSingleWordGroups,
+  validateNavigationAt,
+} from './validate-nav-labels.mjs';
 
 const glossary = JSON.parse(
   readFileSync(new URL('../src/app/layout/navigation/nav-glossary.json', import.meta.url), 'utf8'),
@@ -213,4 +222,99 @@ test('root modules need an area after the first one, in area order, never split'
   );
   assert.ok(errors.some((e) => e.includes('crm') && e.includes('out of order')));
   assert.ok(errors.some((e) => e.includes('hr: root modules after the first need an area')));
+});
+
+test('every category has one group icon and no icon is orphan', () => {
+  const glossary = { categories: { standard: ['registry'], domain: ['pipeline'] } };
+  assert.deepEqual(
+    validateCategoryIcons({ registry: 'folder_open', pipeline: 'filter_alt' }, glossary),
+    [],
+  );
+  const errors = validateCategoryIcons({ registry: 'folder_open', extra: 'x' }, glossary);
+  assert.equal(errors.length, 2);
+  assert.match(errors[0], /pipeline/);
+  assert.match(errors[1], /extra/);
+  assert.deepEqual(
+    readCategoryIcons("export const NAV_CATEGORY_ICONS: Record<string, string> = { a: 'b' };"),
+    { a: 'b' },
+  );
+});
+
+const tinyGlossary = { locales: ['pt-BR'] };
+const tree = [
+  {
+    id: 'm',
+    label: 'nav.m',
+    children: [
+      { id: 'm/a', label: 'nav.m.a', category: 'people' },
+      { id: 'm/b', label: 'nav.m.b', category: 'people' },
+      { id: 'm/c', label: 'nav.m.c', category: 'settings' },
+      { id: 'm/g', label: 'nav.m.g', children: [{ id: 'm/g/x', label: 'nav.m.g.x' }] },
+    ],
+  },
+];
+
+test('sidebarView groups categories with 2+ entries like the shell', () => {
+  const [m] = sidebarView(tree);
+  assert.deepEqual(
+    m.children.map((child) => child.id),
+    ['m/@people', 'm/c', 'm/g'],
+  );
+  assert.equal(m.children[0].label, 'nav.category.people');
+});
+
+test('rows that open a group are one word in every locale', () => {
+  const dict = {
+    'nav.category.people': 'Pessoas e empresas',
+    'nav.m.g': 'Bancos de dados',
+    'nav.m': 'Recursos humanos',
+  };
+  const errors = validateSingleWordGroups({
+    items: tree,
+    dictionaries: { 'pt-BR': dict },
+    glossary: tinyGlossary,
+  });
+  assert.equal(errors.length, 2);
+  assert.match(errors[0], /Pessoas e empresas/);
+  assert.match(errors[1], /Bancos de dados/);
+});
+
+test('a label wider than its sidebar row fails, a short one passes', () => {
+  const widths = {
+    safetyPx: 2,
+    sidebar: {
+      width: 260,
+      reserve: 13,
+      fontPx: 10,
+      rowChrome: 56,
+      chevron: 20,
+      countMargin: 8,
+      countDigitPx: 6.5,
+      wrappers: { children: 21, category: 13, grand: 29, great: 21 },
+    },
+    flyout: { width: 234, reserve: 12, fontPx: 10, rowChrome: 60.8, chevron: 32 },
+    glyphs500: { a: 1 },
+    glyphs400: { a: 0.1 },
+  };
+  const dict = (people) => ({
+    'nav.m': 'a',
+    'nav.m.a': 'a',
+    'nav.m.b': 'a',
+    'nav.m.c': 'a',
+    'nav.m.g': 'a',
+    'nav.m.g.x': 'a',
+    'nav.category.people': people,
+  });
+  const run = (people) =>
+    validateLabelWidths({
+      items: tree,
+      dictionaries: { 'pt-BR': dict(people) },
+      glossary: tinyGlossary,
+      widths,
+    });
+  // Category row: 260 - 13 - 21 - 56 - 20 - 8 - 6.5 = 135.5px; 13 glyphs = 130px + 2 fits, 14 do not.
+  assert.deepEqual(run('a'.repeat(13)), []);
+  const errors = run('a'.repeat(14));
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /m\/@people: .* needs 140px but the sidebar row has 135px/);
 });

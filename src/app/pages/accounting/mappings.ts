@@ -64,7 +64,6 @@ const config = defineCrud({
       type: 'select',
       options: ACCOUNTING_EVENT_TYPES,
       required: true,
-      span: 3,
     },
     {
       key: 'companyUUID',
@@ -73,14 +72,12 @@ const config = defineCrud({
       type: 'search-select',
       remoteLookup: COMPANY_LOOKUP,
       help: 'Empty applies to every company.',
-      span: 2,
     },
     {
       key: 'attribute',
       source: 'AamAttribute',
       label: 'Attribute',
       help: 'Empty applies to every event of the type. Otherwise the title source (manual, bill_charge, pos_sale), settlement origin (manual, gateway, pos), fiscal model (55, 65, 62, nfse) or stock movement kind (receipt, issue, sale...).',
-      span: 2,
     },
     {
       key: 'debitAccount',
@@ -102,7 +99,6 @@ const config = defineCrud({
       label: 'Cost center',
       type: 'search-select',
       remoteLookup: COST_CENTER_LOOKUP,
-      span: 2,
     },
     { key: 'revision', source: 'AamRevision', label: 'Revision', hidden: true },
   ],

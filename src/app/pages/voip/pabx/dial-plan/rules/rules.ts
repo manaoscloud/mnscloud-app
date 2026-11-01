@@ -122,7 +122,7 @@ function config(): ConfigurableCrudConfig {
       callerIdMode: 'extension',
       callerIdValue: '',
       fallbackTrunkUUIDs: [],
-      description: '',
+      notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'name', uuidField: 'uuid' },
@@ -252,7 +252,6 @@ function config(): ConfigurableCrudConfig {
         type: 'search-select',
         quickCreate: quickCreateFor('VoipPabxTrunkVptUUID'),
         multiple: true,
-        span: 4,
         tab: 'network',
         breakBefore: true,
         fromRecord: (value) => {
@@ -277,9 +276,10 @@ function config(): ConfigurableCrudConfig {
         hiddenWhen: ({ values }) => values['callerIdMode'] !== 'fixed',
       },
       {
-        key: 'description',
+        key: 'notes',
+        payloadKey: 'description',
         source: 'description',
-        label: 'Description',
+        label: 'Notes',
         type: 'textarea',
         span: 4,
         rows: 4,

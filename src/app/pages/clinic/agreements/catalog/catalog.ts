@@ -27,7 +27,7 @@ const CONFIGS: Record<string, ConfigurableCrudConfig> = {
   agreements: config('clinic/agreements', 'AgreementUUID', 'Clinic agreements', 'clinic.description.agreements', [
     { key: 'status', source: 'Status', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
     { key: 'code', source: 'Code', payloadKey: 'code', label: 'Code', required: true, span: 1 },
-    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 2 },
+    { key: 'name', source: 'Name', payloadKey: 'name', label: 'Name', required: true, span: 1 },
     { key: 'registration', source: 'Registration', payloadKey: 'registration', label: 'Registration', span: 1 },
     { key: 'notes', source: 'Notes', payloadKey: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ], [{ id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'AgreementUUID' }, { id: 'code', label: 'Code', field: 'Code' }, { id: 'registration', label: 'Registration', field: 'Registration' }, { id: 'status', label: 'Status', kind: 'status', field: 'Status' }]),

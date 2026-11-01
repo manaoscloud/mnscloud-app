@@ -71,7 +71,6 @@ const COMPANY_CONFIG: ConfigurableCrudConfig = {
       source: 'LegalName',
       payloadKey: 'legalName',
       label: 'Legal name',
-      span: 2,
     },
     { ...REGISTRY_EMAIL_FIELD, breakBefore: true },
     REGISTRY_PHONE_FIELD,

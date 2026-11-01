@@ -127,7 +127,7 @@
           @if (canWrite()) {
             <form class="form-grid">
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="fromPort"
                 [label]="'Port of this asset' | transloco"
                 [options]="portOptions()"
@@ -135,7 +135,7 @@
                 (valueChange)="fromPort.set($any($event) ?? '')"
               />
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="targetAsset"
                 data-quick-create-exempt="Connection target; assets are created on the map."
                 [label]="'Other asset' | transloco"
@@ -146,7 +146,7 @@
                 (valueChange)="targetAsset.set($any($event) ?? ''); targetPort.set('')"
               />
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="targetPort"
                 [label]="'Port of the other asset' | transloco"
                 [options]="targetPortOptions()"
@@ -291,7 +291,7 @@
                 (valueChange)="relationKind.set($any($event) || 'CONTAINS')"
               />
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="relationAsset"
                 data-quick-create-exempt="Relation target; assets are created on the map."
                 [label]="'Other asset' | transloco"
@@ -339,7 +339,7 @@
           @if (canWrite()) {
             <form class="form-grid">
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="popUUID"
                 data-quick-create-exempt="Platform link; POPs are created in ISP › POP."
                 [label]="'POP' | transloco"
@@ -350,7 +350,7 @@
                 (valueChange)="popUUID.set($any($event) ?? '')"
               />
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="oltUUID"
                 data-quick-create-exempt="Platform link; OLTs are created in ISP › OLT."
                 [label]="'OLT' | transloco"
@@ -396,7 +396,7 @@
                 (valueChange)="linkPort.set($any($event) ?? '')"
               />
               <mns-search-select-field
-                fieldClass="span-2"
+                fieldClass="span-1"
                 data-field-key="linkAccess"
                 data-quick-create-exempt="Platform link; accesses are created in Authentication › Accesses."
                 [label]="'Access (login)' | transloco"
@@ -507,7 +507,7 @@
         <section class="dashboard-panel infragis-network-panel">
           <form class="form-grid">
             <mns-search-select-field
-              fieldClass="span-2"
+              fieldClass="span-1"
               data-field-key="tracePort"
               [label]="'Start port' | transloco"
               [options]="portOptions()"

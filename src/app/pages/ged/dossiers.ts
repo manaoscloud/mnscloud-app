@@ -66,12 +66,13 @@ export class GedDossiersPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
             label: 'ged.physicalLocation',
             span: 1,
           },
+          // business-description: subject of the dossier, part of its identity.
           {
             key: 'description',
             source: 'GdsDescription',
             label: 'Description',
             type: 'textarea',
-            span: 1,
+            span: 4,
           },
           {
             key: 'revision',

@@ -95,7 +95,6 @@ const config = defineCrud({
             {
               key: 'dns64Prefix',
               label: 'dns.resolverDns64',
-              span: 2,
               help: 'dns.resolverDns64Help',
             },
             { key: 'revision', label: 'Revision', type: 'number', hidden: true },
@@ -129,7 +128,6 @@ const config = defineCrud({
               key: 'categories',
               label: 'dns.filterCategories',
               type: 'multi-select',
-              span: 2,
               translateOptions: true,
               options: FILTER_CATEGORIES,
               help: 'dns.filterCategoriesHelp',
@@ -169,7 +167,6 @@ const config = defineCrud({
                 key: 'nameservers',
                 label: 'dns.authorityNameservers',
                 required: true,
-                span: 2,
                 help: 'dns.authorityNameserversHelp',
               },
               {
@@ -177,7 +174,6 @@ const config = defineCrud({
                 label: 'dns.authorityHostmaster',
                 type: 'email',
                 required: true,
-                span: 2,
                 help: 'dns.authorityHostmasterHelp',
               },
               { key: 'revision', label: 'Revision', type: 'number', hidden: true },
@@ -208,7 +204,6 @@ const config = defineCrud({
             {
               key: 'addresses',
               label: 'dns.cloudAddresses',
-              span: 2,
               help: 'dns.cloudAddressesHelp',
             },
             { key: 'revision', label: 'Revision', type: 'number', hidden: true },
