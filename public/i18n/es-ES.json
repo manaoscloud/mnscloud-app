@@ -11154,5 +11154,19 @@
   "Treated marks": "Tratamientos",
   "Treatment": "Tratamiento",
   "Treatment saved.": "Tratamiento guardado.",
-  "View certificate": "Ver certificado"
+  "View certificate": "Ver certificado",
+  "authentication.accountCustomerHelp": "Cliente de reventa dueño de esta cuenta. Vacío = uso propio. No se puede cambiar después.",
+  "authentication.accountKind": "Tipo",
+  "authentication.kindInternal": "Uso propio",
+  "authentication.kindCustomer": "Reventa",
+  "authentication.publication": "Publicación en el portal",
+  "authentication.publicationDescription": "Define si el cliente ve esta cuenta, sus accesos y sesiones en el Portal del Cliente. Crear y editar accesos y ver o generar contraseñas dependen de permisos del portal concedidos al usuario del cliente.",
+  "authentication.portalEnabled": "Publicado en el portal",
+  "authentication.assignOperator": "Vincular operador",
+  "authentication.operators": "Operadores de la cuenta",
+  "authentication.operatorsDescription": "Los operadores vinculados pasan a ser los únicos (además de quienes gestionan todas las cuentas) en operar esta cuenta. Sin vínculos, todos los operadores de Autenticación del tenant la operan.",
+  "authentication.accessCount": "Accesos",
+  "authentication.subscriberLabel": "Suscriptor",
+  "authentication.subscriberLabelHelp": "Identificación opcional del suscriptor final (p. ej. dirección o punto), útil en cuentas de reventa.",
+  "authentication.accessCustomerHelp": "Obligatorio en cuentas de uso propio. En cuentas de reventa queda vacío: se usa el cliente de la cuenta."
 }

@@ -11154,5 +11154,19 @@
   "Treated marks": "Treated marks",
   "Treatment": "Treatment",
   "Treatment saved.": "Treatment saved.",
-  "View certificate": "View certificate"
+  "View certificate": "View certificate",
+  "authentication.accountCustomerHelp": "Resale customer that owns this account. Empty = own use. Cannot be changed later.",
+  "authentication.accountKind": "Type",
+  "authentication.kindInternal": "Own use",
+  "authentication.kindCustomer": "Resale",
+  "authentication.publication": "Portal publication",
+  "authentication.publicationDescription": "Defines whether the customer sees this account, its accesses and sessions in the Customer Portal. Creating and editing accesses and showing or generating passwords depend on portal permissions granted to the customer user.",
+  "authentication.portalEnabled": "Published to portal",
+  "authentication.assignOperator": "Assign operator",
+  "authentication.operators": "Account operators",
+  "authentication.operatorsDescription": "Assigned operators become the only ones (besides those who manage all accounts) to operate this account. Without assignments, every Authentication operator of the tenant operates it.",
+  "authentication.accessCount": "Accesses",
+  "authentication.subscriberLabel": "Subscriber",
+  "authentication.subscriberLabelHelp": "Optional end subscriber identification (e.g. address or site), useful in resale accounts.",
+  "authentication.accessCustomerHelp": "Required in own-use accounts. Leave empty in resale accounts: the account customer is used."
 }

@@ -1,4 +1,4 @@
-import { authenticationPayload } from '../authentication-input';
+import { authenticationPayload, authenticationRecordFields } from '../authentication-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -54,16 +54,7 @@ const config = defineCrud({
       disabledWhen: ({ editing }) => editing,
       help: 'authentication.domainNameHelp',
     },
-    { key: 'revision', source: 'AadRevision', label: 'Revision', type: 'number', hidden: true },
-    {
-      key: 'notes',
-      source: 'AadNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
+    ...authenticationRecordFields('Aad'),
   ],
   columns: [
     { id: 'name', field: 'AadName', label: 'authentication.domain', kind: 'identity' },
