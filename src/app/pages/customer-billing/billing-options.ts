@@ -33,6 +33,12 @@ export const ITEM_NATURES = [
   { value: 'other', label: 'Other (no fiscal document)' },
 ];
 
+/** Usage metrics reported by Cyber Security per customer account and closed month. */
+export const CYBER_SECURITY_METRICS = [
+  { value: 'cyber_security.protected_servers', label: 'cyberSecurity.metricProtectedServers' },
+  { value: 'cyber_security.vaults', label: 'cyberSecurity.metricVaults' },
+];
+
 export const CHARGE_STATUSES = [
   { value: 'issued', label: 'Issued' },
   { value: 'partial', label: 'Partially paid' },

@@ -219,6 +219,11 @@ visibility. Preserve the canonical `/cyber-security/*` and `/system/cyber-securi
 contracts and resource permissions. Route metadata supplies translated breadcrumbs.
 Keep menu labels and page titles aligned in PT/EN/ES, including desktop compact and mobile menus.
 
+Faturamento › contract items of module `cyber_security` pick the customer account in the **Conta**
+search-select (`cyber-security/accounts?status=1`, no quick-create: accounts are created in
+Cybersecurity › Customer accounts). A usage item replaces the free metric field with a select of the
+two Cyber Security metrics (`cyber_security.protected_servers`, `cyber_security.vaults`).
+
 ## Menus
 
 Every menu in the App (topbar, CRUD row actions, table view, contextual filter actions, split
