@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
+  ConfigurableCrudConfig,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -26,6 +27,62 @@ const CERTIFICATE: ConfigurableCrudRowAction = {
   key: 'certificate',
   label: 'View certificate',
   icon: 'attach_file',
+};
+
+const AUTHORS = [
+  { value: 'employee', label: 'Employee' },
+  { value: 'app', label: 'HR' },
+  { value: 'portal', label: 'Customer Portal' },
+] as const;
+
+/**
+ * Conversation of a request (PU10) as a collection dialog: whoever decides writes while the
+ * request is pending; the employee answers in Pulse and never sees the author's name.
+ */
+function conversationConfig(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  const uuid = String(row['RequestUUID'] ?? '');
+  const open = row['Status'] === 'pending' && row['CanDecide'] === true;
+  return defineCrud({
+    endpoint: `hr/time-requests/${uuid}/messages`,
+    uuidField: 'MessageUUID',
+    pageTitle: 'Request conversation',
+    pageDescription: `#${String(row['RequestID'] ?? '')} · ${String(row['EmployeeName'] ?? '')}`,
+    createTitle: 'New message',
+    dialogDescription:
+      'The employee reads it in Pulse, without your name. The conversation closes when the request is decided.',
+    emptyLabel: 'No messages yet.',
+    savedMessage: 'Message sent.',
+    canCreate: open,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    initialValues: { body: '' },
+    fields: [
+      { key: 'body', label: 'Message', type: 'textarea', span: 4, rows: 4, required: true },
+    ],
+    payload: (values) => ({ uuid: crypto.randomUUID(), body: values['body'] }),
+    columns: [
+      { id: 'date', field: 'DateCreated', label: 'Date', kind: 'datetime' },
+      {
+        id: 'author',
+        field: 'AuthorKind',
+        label: 'Author',
+        kind: 'status',
+        options: AUTHORS,
+        chipClass: (value) => (value === 'employee' ? 'chip-success' : 'chip-running'),
+        detail: (message) => String(message['AuthorName'] ?? ''),
+      },
+      { id: 'message', field: 'Body', label: 'Message', width: 'lg' },
+    ],
+  });
+}
+
+const CONVERSATION: ConfigurableCrudRowAction = {
+  key: 'conversation',
+  label: 'Conversation',
+  icon: 'forum',
+  collection: (row) => conversationConfig(row),
 };
 
 const readOnly = () => true;
@@ -85,7 +142,7 @@ const config = defineCrud({
       options: REQUEST_TYPES,
     },
   ],
-  rowActions: [CERTIFICATE],
+  rowActions: [CONVERSATION, CERTIFICATE],
   columns: [
     {
       id: 'employee',
@@ -110,6 +167,13 @@ const config = defineCrud({
       translateValue: false,
     },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status', options: REQUEST_STATUSES },
+    {
+      id: 'messages',
+      label: 'Messages',
+      field: 'MessageCount',
+      rowAction: 'conversation',
+      value: (row) => String(row['MessageCount'] ?? 0),
+    },
     { id: 'note', label: 'Decision note', field: 'DecisionNote', translateValue: false },
     {
       id: 'decidedBy',
@@ -184,7 +248,7 @@ export class HrTimeRequestsPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return row['AttachmentUUID'] ? [CERTIFICATE] : [];
+    return row['AttachmentUUID'] ? [CONVERSATION, CERTIFICATE] : [CONVERSATION];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {

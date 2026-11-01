@@ -25,6 +25,8 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     case 'workorders.order.overdue':
       return 'alarm';
+    case 'hr.time_request':
+      return item.params['event'] === 'request_message' ? 'chat' : 'pending_actions';
     default:
       return 'notifications';
   }
@@ -68,6 +70,13 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       );
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });
+    case 'hr.time_request':
+      return t(
+        param('event') === 'request_message'
+          ? 'notifications.hrTimeRequestMessage'
+          : 'notifications.hrTimeRequest',
+        { employee: param('employee') },
+      );
     default:
       return t('notifications.generic');
   }
@@ -94,6 +103,8 @@ export function notificationDescription(item: InboxNotification, language: strin
             ? item.params['extensions']
             : item.type === 'dns.monitor.target'
               ? item.params['failing'] || item.params['target']
+              : item.type === 'hr.time_request'
+                ? `#${String(item.params['id'] ?? '')}`
               : item.type.startsWith('release_note.')
                 ? releaseNoteTitle(item, language)
                 : item.params['subject'];

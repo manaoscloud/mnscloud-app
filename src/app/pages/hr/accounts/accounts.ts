@@ -103,6 +103,7 @@ const GRANTS: readonly [string, string][] = [
   ['HpgEmployees', 'hrAccount.grantEmployees'],
   ['HpgSchedules', 'hrAccount.grantSchedules'],
   ['HpgTimesheets', 'hrAccount.grantTimesheets'],
+  ['HpgRequests', 'hrAccount.grantRequests'],
 ];
 
 const PORTAL_ROLES = [
@@ -130,6 +131,7 @@ function portalAccessConfig(row: ConfigurableCrudRecord) {
       HpgEmployees: 1,
       HpgSchedules: 0,
       HpgTimesheets: 0,
+      HpgRequests: 0,
       status: 1,
     },
     fields: [
