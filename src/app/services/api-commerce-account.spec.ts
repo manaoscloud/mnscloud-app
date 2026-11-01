@@ -19,6 +19,7 @@ describe('Commerce account API client', () => {
         'registry/customers?status=1',
         'sale/accounts',
         'pos/terminals',
+        'pos/auth/signin',
         'stock/movements',
         'financial/receivables',
         'financial/payment-methods',
@@ -31,6 +32,7 @@ describe('Commerce account API client', () => {
       shopA,
       shopA,
       null,
+      shopA,
       null,
       shopA,
       shopA,
@@ -39,6 +41,23 @@ describe('Commerce account API client', () => {
       shopB,
       null,
     ]);
+  });
+  it('opens the POS in the account and scopes the shop companies to its workspace', async () => {
+    const workspace = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const scoped = bed.api.withCommerceAccount(shopA, workspace);
+    await scoped.post('pos/auth/handoffs', { terminalUUID: null });
+    await scoped.get('registry/companies');
+    const registry = requestHeader('X-Registry-Workspace-UUID');
+    const posted = bed.http.request.calls
+      .all()
+      .map((call) =>
+        (call.args[2] as { headers: { get(n: string): string | null } }).headers.get(
+          'X-Commerce-Account-UUID',
+        ),
+      );
+    expect(posted).toEqual([shopA]);
+    expect(bed.http.get.calls.all().map(registry)).toEqual([workspace]);
+    expect(bed.http.get.calls.all().map(header)).toEqual([null]);
   });
   it('refuses stale dialogs after a tenant or session change', async () => {
     const scoped = bed.api.withCommerceAccount(shopA);

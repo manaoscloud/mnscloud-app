@@ -42,11 +42,16 @@ export class ApiService {
 
   private commerceScope?: Readonly<{ uuid: string; environment: string | null; session: number }>;
 
-  /** Isolated client for one opened commerce account (Sales catalog, prices, quotations, buyers). */
-  withCommerceAccount(uuid: string): ApiService {
+  /**
+   * Isolated client for one opened commerce account (Sales, shop resources, POS). Its Registry
+   * workspace, when known, scopes the canonical Registry lookups of the shop's companies.
+   */
+  withCommerceAccount(uuid: string, workspaceUUID?: string | null): ApiService {
     const normalized = normalizeEnvironmentUUID(uuid);
     if (!normalized) throw new Error('Invalid commerce account.');
-    const client = runInInjectionContext(this.injector, () => new ApiService());
+    const client = workspaceUUID
+      ? this.withRegistryWorkspace(workspaceUUID)
+      : runInInjectionContext(this.injector, () => new ApiService());
     client.commerceScope = {
       uuid: normalized,
       environment: this.currentEnvironmentUUID(),
@@ -87,6 +92,8 @@ export class ApiService {
       (/^sale\//.test(path) && !/^sale\/accounts([/?]|$)/.test(path)) ||
       /^registry\/customers([/?]|$)/.test(path) ||
       /^(stock|fiscal|accounting)\//.test(path) ||
+      (/^pos\//.test(path) &&
+        (!/^pos\/auth\//.test(path) || /^pos\/auth\/handoffs([/?]|$)/.test(path))) ||
       /^financial\/(gateway-accounts|payables|payment-charges|receivables|settlements)([/?]|$)/.test(
         path,
       )

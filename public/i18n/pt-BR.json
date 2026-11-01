@@ -11055,5 +11055,20 @@
   "cyberSecurity.billingMetric": "Métrica",
   "cyberSecurity.billingMetricHelp": "Contada por mês: cada servidor protegido (monitor ou bloqueio) ou cofre ativo em qualquer dia do mês conta uma vez.",
   "cyberSecurity.metricProtectedServers": "Servidores protegidos",
-  "cyberSecurity.metricVaults": "Cofres de segredos"
+  "cyberSecurity.metricVaults": "Cofres de segredos",
+  "nav.pos.audit": "Auditoria",
+  "POS audit": "Auditoria do PDV",
+  "Who did what at each register: terminal changes, register opening and closing, cash movements, sales, cancelations and payments.": "Quem fez o quê em cada caixa: alterações de terminal, abertura e fechamento de caixa, movimentos de dinheiro, vendas, cancelamentos e pagamentos.",
+  "Terminal created": "Terminal criado",
+  "Terminal updated": "Terminal alterado",
+  "Terminal deleted": "Terminal excluído",
+  "Offline NFC-e changed": "NFC-e offline alterada",
+  "POS opened from the App": "PDV aberto pelo App",
+  "Register opened": "Caixa aberto",
+  "Cash movement": "Movimento de dinheiro",
+  "Register closed": "Caixa fechado",
+  "Sale recorded": "Venda registrada",
+  "Sale canceled": "Venda cancelada",
+  "Payment confirmed": "Pagamento confirmado",
+  "Payment declined": "Pagamento recusado"
 }
