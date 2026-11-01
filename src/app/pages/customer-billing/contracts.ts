@@ -12,6 +12,7 @@ import {
   BILLING_CYCLES,
   CONTRACT_STATUSES,
   ITEM_KINDS,
+  CYBER_SECURITY_METRICS,
   ITEM_NATURES,
   MODULE_LOOKUP,
 } from './billing-options';
@@ -252,7 +253,10 @@ const config = defineCrud({
         },
         {
           key: 'resourceUUID',
-          hiddenWhen: ({ values }) => values['module'] === 'ged' || values['module'] === 'hr',
+          hiddenWhen: ({ values }) =>
+            values['module'] === 'ged' ||
+            values['module'] === 'hr' ||
+            values['module'] === 'cyber_security',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -281,6 +285,23 @@ const config = defineCrud({
             labelField: 'HraName',
           },
           quickCreate: quickCreateFor('HrAccountHraUUID'),
+        },
+        {
+          key: 'cyberAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'cyberSecurity.account',
+          type: 'search-select',
+          help: 'cyberSecurity.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'cyber_security',
+          requiredWhen: ({ values }) => values['module'] === 'cyber_security',
+          remoteLookup: {
+            endpoint: 'cyber-security/accounts?status=1',
+            uuidField: 'CyaUUID',
+            labelField: 'CyaName',
+          },
+          quickCreate: false,
+          quickCreateExemptReason:
+            'Cyber Security accounts are created by account administrators in Customer accounts.',
         },
         {
           key: 'productUUID',
@@ -332,9 +353,29 @@ const config = defineCrud({
           source: 'BciMetric',
           label: 'Metric',
           help: 'Name of the metric reported by the module (for example minutes or gigabytes).',
-          // HR reports a single metric (active employees in the month), filled in by the payload.
-          hiddenWhen: ({ values }) => values['kind'] !== 'usage' || values['module'] === 'hr',
-          requiredWhen: ({ values }) => values['kind'] === 'usage' && values['module'] !== 'hr',
+          // HR reports a single metric (active employees in the month), filled in by the payload;
+          // Cyber Security reports two fixed metrics, chosen in the field below.
+          hiddenWhen: ({ values }) =>
+            values['kind'] !== 'usage' ||
+            values['module'] === 'hr' ||
+            values['module'] === 'cyber_security',
+          requiredWhen: ({ values }) =>
+            values['kind'] === 'usage' &&
+            values['module'] !== 'hr' &&
+            values['module'] !== 'cyber_security',
+        },
+        {
+          key: 'cyberMetric',
+          source: 'BciMetric',
+          label: 'cyberSecurity.billingMetric',
+          type: 'select',
+          options: CYBER_SECURITY_METRICS,
+          help: 'cyberSecurity.billingMetricHelp',
+          hiddenWhen: ({ values }) =>
+            values['kind'] !== 'usage' || values['module'] !== 'cyber_security',
+          requiredWhen: ({ values }) =>
+            values['kind'] === 'usage' && values['module'] === 'cyber_security',
+          span: 1,
         },
         {
           key: 'includedQuantity',
@@ -369,7 +410,9 @@ const config = defineCrud({
             ? values['gedAccountUUID']
             : values['module'] === 'hr'
               ? values['hrAccountUUID']
-              : values['resourceUUID']) || null,
+              : values['module'] === 'cyber_security'
+                ? values['cyberAccountUUID']
+                : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -381,7 +424,9 @@ const config = defineCrud({
             ? null
             : values['module'] === 'hr'
               ? 'hr.active_employees'
-              : values['metric'] || null,
+              : (values['module'] === 'cyber_security'
+                  ? values['cyberMetric']
+                  : values['metric']) || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],

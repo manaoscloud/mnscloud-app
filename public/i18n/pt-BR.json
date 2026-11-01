@@ -11050,5 +11050,10 @@
   "SMTP account saved successfully.": "Conta SMTP salva com sucesso.",
   "SMTP provider deleted successfully.": "Provedor SMTP excluído com sucesso.",
   "SMTP provider saved successfully.": "Provedor SMTP salvo com sucesso.",
-  "STARTTLS / Plain (587)": "STARTTLS / Simples (587)"
+  "STARTTLS / Plain (587)": "STARTTLS / Simples (587)",
+  "cyberSecurity.contractItemHelp": "Conta Cibersegurança do cliente do contrato. Contas internas não podem ser cobradas.",
+  "cyberSecurity.billingMetric": "Métrica",
+  "cyberSecurity.billingMetricHelp": "Contada por mês: cada servidor protegido (monitor ou bloqueio) ou cofre ativo em qualquer dia do mês conta uma vez.",
+  "cyberSecurity.metricProtectedServers": "Servidores protegidos",
+  "cyberSecurity.metricVaults": "Cofres de segredos"
 }
