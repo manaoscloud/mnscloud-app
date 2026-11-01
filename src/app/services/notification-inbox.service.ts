@@ -17,7 +17,8 @@ export type NotificationType =
   | 'logs.account.capped'
   | 'voip.pabx.extension.offline'
   | 'dns.monitor.target'
-  | 'workorders.order.overdue';
+  | 'workorders.order.overdue'
+  | 'cyber_security.unblock_request';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {

@@ -11,6 +11,7 @@ import {
   resaleAccountCrud,
   resaleAccountRowActions,
 } from '../../../shared/crud/configurable-crud/account-resale-actions';
+import { portalAccessConfig, unblockRequestsConfig } from './account-portal';
 
 export const CYBER_SECURITY_ACCOUNTS_CONFIG = resaleAccountCrud({
   endpoint: 'cyber-security/accounts',
@@ -39,6 +40,7 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
     const router = inject(Router);
     const canManage = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.cyber-security.accounts.all');
+    const isCustomer = (row: ConfigurableCrudRecord) => row['CyaKind'] === 'customer';
     super({
       ...CYBER_SECURITY_ACCOUNTS_CONFIG,
       canCreate: canManage(),
@@ -71,6 +73,20 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
           operatorsDescription: 'cyberSecurity.operatorsDescription',
           canManage,
         }),
+        {
+          key: 'portalAccess',
+          label: 'cyberSecurity.portalAccess',
+          icon: 'badge',
+          visible: (row) => canManage() && isCustomer(row),
+          collection: (row) => portalAccessConfig(row),
+        },
+        {
+          key: 'unblockRequests',
+          label: 'cyberSecurity.unblockRequests',
+          icon: 'lock_open',
+          visible: isCustomer,
+          collection: unblockRequestsConfig(),
+        },
       ],
     });
   }
