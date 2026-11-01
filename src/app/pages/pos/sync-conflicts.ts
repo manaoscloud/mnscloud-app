@@ -21,6 +21,8 @@ const KINDS = [
   { value: 'GRANT_LIMIT_EXCEEDED', label: 'Offline limit exceeded' },
   { value: 'OPERATOR_NOT_IN_GRANT', label: 'Operator outside the grant' },
   { value: 'DEVICE_COUNTER_REPLAY', label: 'Cloned or restored device' },
+  { value: 'ACCOUNT_SUSPENDED', label: 'Shop suspended before sync' },
+  { value: 'OPERATOR_NOT_IN_ACCOUNT', label: 'Operator without access to the shop' },
 ];
 const POLICIES = [
   { value: 'accept_flag', label: 'Accepted and flagged' },
