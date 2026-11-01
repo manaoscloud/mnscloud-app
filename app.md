@@ -2437,7 +2437,12 @@ isolated ApiService sends `X-Commerce-Account-UUID` only to `sale/*` (except `sa
 `registry/customers*`, so quotation buyer quick-create creates the buyer in the shop's workspace.
 Since C2 it also scopes the shop's `stock/*`, `fiscal/*`, `accounting/*` and Financial titles,
 charges, settlements and gateway accounts; Contas opens those canonical pages in account scope.
-POS requests and tenant catalogs (payment methods, gateway providers) stay internal. Embedded
+Since C3 it also scopes `pos/*` (except the public `pos/auth/*` sign-in routes; `pos/auth/handoffs`
+included): Contas opens the POS terminals, cash sessions, sales, devices and audit pages
+(`point-of-sale/*`, recognized by `isCommerceAccountPage`) with `accountUUID` and `workspaceUUID`, so
+**Abrir no PDV** opens a terminal of that account and the company lookup of the terminal form lists
+the shop's companies (the workspace goes only to the canonical Registry routes, like HR). Tenant
+catalogs (payment methods, gateway providers) stay internal. Embedded
 collections and canonical quick-create inherit `requestApi`; never keep the account in a global
 mutable header. The API/DB remain responsible for membership, account state and FK isolation.
 
