@@ -1123,6 +1123,16 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.infragis.statuses.read'],
       },
       {
+        id: 'infragis/accounts',
+        label: 'nav.infragis.accounts',
+        icon: 'manage_accounts',
+        category: 'resale',
+        route: '/infragis/accounts',
+        entitlementCode: 'module.infragis.*',
+        requiresEnvironment: true,
+        permissions: ['tenant.infragis.accounts.read'],
+      },
+      {
         id: 'infragis/provider-settings',
         label: 'nav.infragis.provider-settings',
         icon: 'public',

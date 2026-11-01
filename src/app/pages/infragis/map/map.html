@@ -6,6 +6,17 @@
 >
   <div class="infragis-map-toolbar">
     <mns-search-select-field
+      data-quick-create-exempt="Map filter; accounts are created in InfraGIS › Accounts."
+      fieldClass="infragis-map-project"
+      data-field-key="accountUUID"
+      [label]="'infragis.account' | transloco"
+      [options]="accounts()"
+      [value]="accountUUID()"
+      [clearable]="true"
+      clearLabel="infragis.allAccounts"
+      (valueChange)="selectAccount($event)"
+    />
+    <mns-search-select-field
       data-quick-create-exempt="Map filter; projects are created in InfraGIS › Projects."
       fieldClass="infragis-map-project"
       data-field-key="projectUUID"

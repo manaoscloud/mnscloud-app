@@ -4,6 +4,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudListFilter,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -104,6 +105,20 @@ const lookup = (
   span: 2,
 });
 
+/** Account (resale) of the listed rows: the API limits it to the accounts the operator may use. */
+const accountFilter: ConfigurableCrudListFilter = {
+  key: 'accountUUID',
+  label: 'infragis.account',
+  type: 'search-select',
+  span: 1,
+  remoteLookup: {
+    endpoint: 'infragis/accounts',
+    uuidField: 'IgcUUID',
+    labelField: 'IgcName',
+    descriptionField: 'CustomerName',
+  },
+};
+
 const common = { bulkDelete: true } as const;
 const initial = { status: 1, sortOrder: 1000 } as const;
 const visualInitial = { ...initial, color: '#22C55E' } as const;
@@ -119,8 +134,10 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     pageTitle: 'Projects',
     pageDescription: 'InfraGIS projects grouping layers and assets.',
     tabLabels: { notes: 'Description' },
+    listFilters: [accountFilter],
     columns: [
       { id: 'name', label: 'Name', field: 'IprName', uuidField: 'IprUUID', kind: 'identity' },
+      { id: 'account', label: 'infragis.account', field: 'AccountName' },
       { id: 'vertical', label: 'Vertical', field: 'VerticalProfileName' },
       { id: 'layers', label: 'Layers', field: 'LayerCount', kind: 'number' },
       { id: 'assets', label: 'Assets', field: 'AssetCount', kind: 'number' },
@@ -145,6 +162,25 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
       { key: 'name', source: 'IprName', label: 'Name', required: true, span: 1 },
       sortOrderField('IprSortOrder'),
       {
+        key: 'accountUUID',
+        source: 'InfraGisAccountIgcUUID',
+        label: 'infragis.account',
+        type: 'search-select',
+        span: 1,
+        requiredWhen: ({ editing }) => !editing,
+        disabledWhen: ({ editing }) => editing,
+        remoteLookup: {
+          endpoint: 'infragis/accounts?status=1',
+          uuidField: 'IgcUUID',
+          labelField: 'IgcName',
+          descriptionField: 'CustomerName',
+          selectedLabelField: 'AccountName',
+        },
+        quickCreate: false,
+        quickCreateExemptReason: 'InfraGIS accounts are created in InfraGIS › Accounts.',
+        help: 'infragis.projectAccountHelp',
+      },
+      {
         key: 'verticalProfileUUID',
         source: 'InfraGisVerticalProfileIgvUUID',
         label: 'Vertical package',
@@ -157,7 +193,8 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
           selectedLabelField: 'VerticalProfileName',
         },
         quickCreate: false,
-        quickCreateExemptReason: 'Vertical packages are platform resources (InfraGIS › Vertical packages).',
+        quickCreateExemptReason:
+          'Vertical packages are platform resources (InfraGIS › Vertical packages).',
         help: 'Choosing a package copies its layers into the project and the categories, asset types and statuses the tenant does not have yet. Your copies can be edited freely.',
       },
       {
@@ -310,6 +347,7 @@ const CONFIGS: Record<InfraGisResourceKey, ConfigurableCrudConfig> = {
     pageTitle: 'Assets',
     pageDescription: 'Georeferenced InfraGIS assets.',
     tabLabels: { match: 'Assignment', monitoring: 'Geometry', transform: 'Advanced' },
+    listFilters: [accountFilter],
     columns: [
       { id: 'name', label: 'Name', field: 'IgaName', uuidField: 'IgaUUID', kind: 'identity' },
       { id: 'project', label: 'Project', field: 'ProjectName' },

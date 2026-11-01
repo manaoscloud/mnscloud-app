@@ -1521,6 +1521,13 @@ export const routes: Routes = [
               },
               // InfraGIS
               {
+                path: 'infragis/accounts',
+                loadComponent: () =>
+                  import('./pages/infragis/accounts/accounts').then((m) => m.InfraGisAccountsPage),
+                title: 'InfraGIS • Accounts | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
+              {
                 path: 'infragis/projects',
                 loadComponent: () =>
                   import('./pages/infragis/management/management').then(
