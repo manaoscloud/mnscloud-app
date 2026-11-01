@@ -206,6 +206,20 @@ const PAGES: readonly [string, string, string, string][] = [
   ['time-policies', 'nav.hr.time-policies', 'rule', 'tenant.hr.time-policies.read'],
   ['time-punches', 'nav.hr.time-punches', 'schedule', 'tenant.hr.time-punches.read'],
   ['timesheets', 'nav.hr.timesheets', 'event_note', 'tenant.hr.timesheets.read'],
+  ['time-requests', 'nav.hr.time-requests', 'pending_actions', 'tenant.hr.time-requests.read'],
+  ['absences', 'nav.hr.absences', 'event_busy', 'tenant.hr.absences.read'],
+  [
+    'time-adjustments',
+    'nav.hr.time-adjustments',
+    'edit_calendar',
+    'tenant.hr.time-adjustments.read',
+  ],
+  [
+    'department-approvers',
+    'nav.hr.department-approvers',
+    'how_to_reg',
+    'tenant.hr.department-approvers.read',
+  ],
 ];
 
 @Component({

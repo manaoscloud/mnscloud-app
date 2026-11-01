@@ -135,3 +135,46 @@ export function formatDay(value: unknown, weekday = false): string {
     ...(weekday ? { weekday: 'short' as const } : {}),
   }).format(new Date(`${text}T00:00:00Z`));
 }
+
+/** Pulse requests (F2a): what the employee asked. */
+export const REQUEST_TYPES: readonly ConfigurableCrudOption[] = [
+  { value: 'missing_punch', label: 'Missing mark' },
+  { value: 'punch_contest', label: 'Punch contest' },
+  { value: 'absence', label: 'Absence' },
+];
+
+export const REQUEST_STATUSES: readonly ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+/** Whole-day absences (`HrAbsence.HabType`); no CID is ever recorded. */
+export const ABSENCE_TYPES: readonly ConfigurableCrudOption[] = [
+  { value: 'medical_certificate', label: 'Medical certificate' },
+  { value: 'justified', label: 'Justified absence' },
+  { value: 'day_off', label: 'Day off' },
+  { value: 'leave', label: 'Leave' },
+];
+
+/** `HH:MM` of a UTC instant in the browser time zone (the App user's wall clock). */
+export function formatInstant(value: unknown): string {
+  const text = String(value ?? '');
+  const at = Date.parse(text);
+  if (!text || Number.isNaN(at)) return '—';
+  const locale = (typeof document !== 'undefined' && document.documentElement.lang) || undefined;
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(at));
+}
+
+/** Opens a private attachment the API streamed after its scoped read. */
+export function openBlob(blob: Blob): void {
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

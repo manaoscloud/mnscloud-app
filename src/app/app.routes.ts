@@ -1080,6 +1080,36 @@ export const routes: Routes = [
                 title: 'Human resources • Timesheet issues | mnscloud',
               },
               {
+                path: 'hr/time-requests',
+                loadComponent: () =>
+                  import('./pages/hr/time-requests/time-requests').then(
+                    (m) => m.HrTimeRequestsPage,
+                  ),
+                title: 'Human resources • Requests | mnscloud',
+              },
+              {
+                path: 'hr/absences',
+                loadComponent: () =>
+                  import('./pages/hr/absences/absences').then((m) => m.HrAbsencesPage),
+                title: 'Human resources • Absences | mnscloud',
+              },
+              {
+                path: 'hr/time-adjustments',
+                loadComponent: () =>
+                  import('./pages/hr/time-adjustments/time-adjustments').then(
+                    (m) => m.HrTimeAdjustmentsPage,
+                  ),
+                title: 'Human resources • Treated marks | mnscloud',
+              },
+              {
+                path: 'hr/department-approvers',
+                loadComponent: () =>
+                  import('./pages/hr/department-approvers/department-approvers').then(
+                    (m) => m.HrDepartmentApproversPage,
+                  ),
+                title: 'Human resources • Approvers | mnscloud',
+              },
+              {
                 path: 'hr/work-schedules',
                 loadComponent: () =>
                   import('./pages/hr/work-schedules/work-schedules').then(

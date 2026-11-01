@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f1a0d1dee089",
+  "version": "20afceefbfad",
   "language": "pt-BR",
   "entries": [
     {
@@ -3085,6 +3085,43 @@
       ]
     },
     {
+      "route": "/hr/absences",
+      "menuPath": "Recursos humanos › Ausências",
+      "scope": "tenant",
+      "title": "Faltas",
+      "description": "Ausências por atestado, faltas justificadas, folgas e licenças. O espelho não conta como falta um dia útil coberto.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Data de início",
+          "help": ""
+        },
+        {
+          "label": "Data de término",
+          "help": "Vazio: um único dia. No máximo 366 dias."
+        },
+        {
+          "label": "Motivo",
+          "help": "Não informe a doença nem o CID."
+        },
+        {
+          "label": "Certificado",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/accounts",
       "menuPath": "Recursos humanos › Contas",
       "scope": "tenant",
@@ -3126,6 +3163,27 @@
       "fields": []
     },
     {
+      "route": "/hr/department-approvers",
+      "menuPath": "Recursos humanos › Aprovadores",
+      "scope": "tenant",
+      "title": "Aprovadores",
+      "description": "O responsável de cada departamento aprova as solicitações que os colaboradores enviam no Pulse. Na conta interna é um usuário do App; na conta de um cliente, um usuário do Portal do Cliente desse cliente. O RH sempre pode decidir.",
+      "fields": [
+        {
+          "label": "Departamento",
+          "help": ""
+        },
+        {
+          "label": "Responsável",
+          "help": "Usuários do App na conta interna; usuários do Portal do Cliente na conta de um cliente."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/holidays",
       "menuPath": "Recursos humanos › Feriados",
       "scope": "tenant",
@@ -3154,6 +3212,43 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/time-adjustments",
+      "menuPath": "Recursos humanos › Tratamento",
+      "scope": "tenant",
+      "title": "Tratamentos",
+      "description": "Marcações incluídas no espelho e batidas desconsideradas, com autor e motivo. As batidas originais nunca mudam; revogue um tratamento para desfazê-lo.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Data",
+          "help": ""
+        },
+        {
+          "label": "Horário",
+          "help": "Horário local da política de ponto do colaborador."
+        },
+        {
+          "label": "Marcar",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        },
+        {
+          "label": "Motivo da revogação",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
@@ -3255,6 +3350,39 @@
       "title": "Batidas",
       "description": "Todas as batidas do Pulse dos seus colaboradores, como foram registradas: horário oficial do servidor, número sequencial (NSR) e hash de integridade. Batidas nunca são editadas nem excluídas; as sinalizações apontam as que merecem conferência.",
       "fields": []
+    },
+    {
+      "route": "/hr/time-requests",
+      "menuPath": "Recursos humanos › Solicitações",
+      "scope": "tenant",
+      "title": "Solicitações",
+      "description": "Marcações esquecidas, contestações de batida e ausências enviadas pelos colaboradores no Pulse. Aprove para registrar o tratamento ou a ausência no espelho, ou recuse com uma resposta que o colaborador verá.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        },
+        {
+          "label": "Decisão",
+          "help": ""
+        },
+        {
+          "label": "Resposta",
+          "help": "Aparece para o colaborador no Pulse. Obrigatória para recusar."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/hr/timesheets",
