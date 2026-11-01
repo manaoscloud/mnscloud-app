@@ -14,6 +14,7 @@ export const STORAGE_MODULE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'users', label: 'Users' },
   { value: 'registry', label: 'documents.title' },
   { value: 'infragis', label: 'InfraGIS' },
+  { value: 'hr', label: 'nav.hr' },
 ];
 
 const CONSUMER_SCOPES: readonly ConfigurableCrudOption[] = [

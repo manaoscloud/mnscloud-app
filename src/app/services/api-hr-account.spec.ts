@@ -66,6 +66,19 @@ describe('HR account API client', () => {
       null,
     ]);
   });
+  it('scopes the Pulse request, absence, treatment and approver routes to the HR account', () => {
+    for (const endpoint of [
+      'hr/time-requests?status=pending',
+      'hr/time-requests/x/attachment',
+      'hr/absences',
+      'hr/absences/x/attachment',
+      'hr/time-adjustments',
+      'hr/department-approvers/candidates',
+    ]) {
+      expect(ApiService.isHrAccountEndpoint(endpoint)).withContext(endpoint).toBeTrue();
+    }
+    expect(ApiService.isHrAccountEndpoint('hr/accounts')).toBeFalse();
+  });
   it('rejects stale HR clients after tenant or session changes without issuing HTTP', async () => {
     const scoped = api.withHrAccount(accountA);
     generation++;
