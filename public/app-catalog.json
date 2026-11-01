@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "361b50e3ac10",
+  "version": "d93e15600628",
   "language": "pt-BR",
   "entries": [
     {
@@ -4206,6 +4206,14 @@
       "scope": "tenant",
       "title": "Métricas",
       "description": "",
+      "fields": []
+    },
+    {
+      "route": "/point-of-sale/audit",
+      "menuPath": "PDV › Auditoria",
+      "scope": "tenant",
+      "title": "Auditoria do PDV",
+      "description": "Quem fez o quê em cada caixa: alterações de terminal, abertura e fechamento de caixa, movimentos de dinheiro, vendas, cancelamentos e pagamentos.",
       "fields": []
     },
     {

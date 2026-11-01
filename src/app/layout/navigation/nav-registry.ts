@@ -246,6 +246,13 @@ export const NAV_ITEMS: NavItem[] = [
         category: 'registry',
         route: '/point-of-sale/devices',
       },
+      {
+        id: 'pos/audit',
+        label: 'nav.pos.audit',
+        icon: 'policy',
+        category: 'reports',
+        route: '/point-of-sale/audit',
+      },
     ],
   },
   {

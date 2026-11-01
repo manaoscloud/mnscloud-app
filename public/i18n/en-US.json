@@ -11054,5 +11054,20 @@
   "cyberSecurity.billingMetric": "Metric",
   "cyberSecurity.billingMetricHelp": "Counted per month: each protected server (monitor or enforce) or vault active on any day of the month counts once.",
   "cyberSecurity.metricProtectedServers": "Protected servers",
-  "cyberSecurity.metricVaults": "Secret vaults"
+  "cyberSecurity.metricVaults": "Secret vaults",
+  "nav.pos.audit": "Audit",
+  "POS audit": "POS audit",
+  "Who did what at each register: terminal changes, register opening and closing, cash movements, sales, cancelations and payments.": "Who did what at each register: terminal changes, register opening and closing, cash movements, sales, cancelations and payments.",
+  "Terminal created": "Terminal created",
+  "Terminal updated": "Terminal updated",
+  "Terminal deleted": "Terminal deleted",
+  "Offline NFC-e changed": "Offline NFC-e changed",
+  "POS opened from the App": "POS opened from the App",
+  "Register opened": "Register opened",
+  "Cash movement": "Cash movement",
+  "Register closed": "Register closed",
+  "Sale recorded": "Sale recorded",
+  "Sale canceled": "Sale canceled",
+  "Payment confirmed": "Payment confirmed",
+  "Payment declined": "Payment declined"
 }

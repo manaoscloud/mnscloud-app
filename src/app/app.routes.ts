@@ -1335,6 +1335,11 @@ export const routes: Routes = [
                 title: 'POS • Devices | mnscloud',
               },
               {
+                path: 'point-of-sale/audit',
+                loadComponent: () => import('./pages/pos/audit').then((m) => m.PosAuditPage),
+                title: 'POS • Audit | mnscloud',
+              },
+              {
                 path: 'point-of-sale/sync-conflicts',
                 loadComponent: () =>
                   import('./pages/pos/sync-conflicts').then((m) => m.PosSyncConflictsPage),
