@@ -7,7 +7,17 @@ export type VpsProviderConfig = {
     cidrPool: string[];
     tagRange?: [number, number] | null;
     snat?: boolean;
+    tenantZones?: {
+      controller: string;
+      vrfVniRange: [number, number];
+      vniRange: [number, number];
+      exitNodes: string[];
+      mtu?: number;
+      defaultCidr?: string;
+    } | null;
   } | null;
+  vlanTag?: number | null;
+  customerProvisioning?: boolean;
   region?: string;
   projectId?: string;
   accessKeyId?: string;

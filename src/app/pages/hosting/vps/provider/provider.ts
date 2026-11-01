@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudField,
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -21,6 +22,33 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Yes' },
   { value: 0, label: 'No' },
 ];
+
+// Private default network of each customer zone (the API re-validates it); not a host address.
+const DEFAULT_TENANT_CIDR = ['10', '0', '0', '0'].join('.') + '/24';
+const DEFAULT_TENANT_MTU = 1450;
+
+/** A Proxmox provider field shown only when isolated customer networks (EVPN) are on. */
+function tenantZoneField(
+  key: string,
+  label: string,
+  options: { number?: boolean; required?: boolean } = {},
+): ConfigurableCrudField {
+  return {
+    key,
+    payloadKey: key,
+    label,
+    ...(options.number ? { type: 'number' as const } : {}),
+    tab: 'authentication',
+    span: 1,
+    hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) => !tenantZonesEnabled(values),
+    ...(options.required
+      ? {
+          requiredWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
+            tenantZonesEnabled(values),
+        }
+      : {}),
+  };
+}
 
 const PROVIDER_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'digitalocean', label: 'DigitalOcean Droplets' },
@@ -123,6 +151,17 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTagStart: '',
     sdnTagEnd: '',
     sdnSnat: 0,
+    sdnTenantZones: 0,
+    sdnTenantController: '',
+    sdnTenantVrfStart: '',
+    sdnTenantVrfEnd: '',
+    sdnTenantVniStart: '',
+    sdnTenantVniEnd: '',
+    sdnTenantExitNodes: '',
+    sdnTenantMtu: DEFAULT_TENANT_MTU,
+    sdnTenantDefaultCidr: DEFAULT_TENANT_CIDR,
+    vlanTag: '',
+    customerProvisioning: 0,
     vcenterUrl: '',
     datacenter: '',
     cluster: '',
@@ -337,6 +376,55 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       span: 1,
       hiddenWhen: ({ values }) => !sdnEnabled(values),
+    },
+    {
+      key: 'sdnTenantZones',
+      payloadKey: 'sdnTenantZones',
+      label: 'Isolated network per customer (EVPN)',
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => !sdnEnabled(values),
+    },
+    tenantZoneField('sdnTenantController', 'EVPN controller ID', { required: true }),
+    tenantZoneField('sdnTenantVrfStart', 'Customer VRF VNI range start', {
+      number: true,
+      required: true,
+    }),
+    tenantZoneField('sdnTenantVrfEnd', 'Customer VRF VNI range end', {
+      number: true,
+      required: true,
+    }),
+    tenantZoneField('sdnTenantVniStart', 'Customer network VNI range start', {
+      number: true,
+      required: true,
+    }),
+    tenantZoneField('sdnTenantVniEnd', 'Customer network VNI range end', {
+      number: true,
+      required: true,
+    }),
+    tenantZoneField('sdnTenantExitNodes', 'Exit nodes (comma separated)', { required: true }),
+    tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
+    tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
+    {
+      key: 'vlanTag',
+      payloadKey: 'vlanTag',
+      label: 'Server network VLAN tag',
+      type: 'number',
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+    },
+    {
+      key: 'customerProvisioning',
+      payloadKey: 'customerProvisioning',
+      label: 'Customers may create servers',
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
     },
     {
       key: 'tokenId',
@@ -712,6 +800,17 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       sdnTagStart: config.sdn?.tagRange?.[0] ?? '',
       sdnTagEnd: config.sdn?.tagRange?.[1] ?? '',
       sdnSnat: config.sdn?.snat ? 1 : 0,
+      sdnTenantZones: config.sdn?.tenantZones ? 1 : 0,
+      sdnTenantController: config.sdn?.tenantZones?.controller ?? '',
+      sdnTenantVrfStart: config.sdn?.tenantZones?.vrfVniRange?.[0] ?? '',
+      sdnTenantVrfEnd: config.sdn?.tenantZones?.vrfVniRange?.[1] ?? '',
+      sdnTenantVniStart: config.sdn?.tenantZones?.vniRange?.[0] ?? '',
+      sdnTenantVniEnd: config.sdn?.tenantZones?.vniRange?.[1] ?? '',
+      sdnTenantExitNodes: config.sdn?.tenantZones?.exitNodes?.join(', ') ?? '',
+      sdnTenantMtu: config.sdn?.tenantZones?.mtu ?? DEFAULT_TENANT_MTU,
+      sdnTenantDefaultCidr: config.sdn?.tenantZones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
+      vlanTag: config.vlanTag ?? '',
+      customerProvisioning: config.customerProvisioning ? 1 : 0,
       region: config.region ?? '',
       projectId: config.projectId ?? '',
       accessKeyId: config.accessKeyId ?? '',
@@ -792,6 +891,31 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
           'Enter both ends of an ordered reserved VLAN/VNI range.',
         );
       }
+    }
+
+    if (tenantZonesEnabled(payload)) {
+      for (const [startKey, endKey] of [
+        ['sdnTenantVrfStart', 'sdnTenantVrfEnd'],
+        ['sdnTenantVniStart', 'sdnTenantVniEnd'],
+      ] as const) {
+        const start = Number(payload[startKey]);
+        const end = Number(payload[endKey]);
+        if (
+          ![start, end].every((vni) => Number.isInteger(vni) && vni >= 1 && vni <= 16777215) ||
+          start > end
+        ) {
+          return this.rejectField(startKey, 'Enter both ends of an ordered VNI range.');
+        }
+      }
+    }
+
+    const vlanTag = normalizeString(payload['vlanTag']);
+    if (
+      providerOf(payload) === 'proxmox' &&
+      vlanTag &&
+      !(Number.isInteger(Number(vlanTag)) && Number(vlanTag) >= 1 && Number(vlanTag) <= 4094)
+    ) {
+      return this.rejectField('vlanTag', 'Enter a VLAN tag between 1 and 4094.');
     }
 
     if (!editing && !credentials) {
@@ -926,8 +1050,12 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
               ? [Number(values['sdnTagStart']), Number(values['sdnTagEnd'])]
               : null,
           snat: truthyNumber(values['sdnSnat']) === 1,
+          tenantZones: buildTenantZonesPayload(values),
         }
       : null;
+    const vlanTag = normalizeString(values['vlanTag']);
+    config.vlanTag = vlanTag ? Number(vlanTag) : null;
+    config.customerProvisioning = truthyNumber(values['customerProvisioning']) === 1;
   }
   if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {
     config.verifyTls = truthyNumber(values['verifyTls']) === 1;
@@ -953,4 +1081,29 @@ function buildCredentialsPayload(values: ConfigurableCrudRecord): VpsProviderCre
 
 function sdnEnabled(values: ConfigurableCrudRecord): boolean {
   return providerOf(values) === 'proxmox' && truthyNumber(values['sdnEnabled']) === 1;
+}
+
+function tenantZonesEnabled(values: ConfigurableCrudRecord): boolean {
+  return sdnEnabled(values) && truthyNumber(values['sdnTenantZones']) === 1;
+}
+
+function buildTenantZonesPayload(
+  values: ConfigurableCrudRecord,
+): NonNullable<NonNullable<VpsProviderConfig['sdn']>['tenantZones']> | null {
+  if (!tenantZonesEnabled(values)) return null;
+  const range = (start: string, end: string): [number, number] => [
+    Number(values[start]),
+    Number(values[end]),
+  ];
+  return {
+    controller: normalizeString(values['sdnTenantController']) ?? '',
+    vrfVniRange: range('sdnTenantVrfStart', 'sdnTenantVrfEnd'),
+    vniRange: range('sdnTenantVniStart', 'sdnTenantVniEnd'),
+    exitNodes: (normalizeString(values['sdnTenantExitNodes']) ?? '')
+      .split(/[,\n]+/)
+      .map((node) => node.trim())
+      .filter(Boolean),
+    mtu: Number(values['sdnTenantMtu']) || DEFAULT_TENANT_MTU,
+    defaultCidr: normalizeString(values['sdnTenantDefaultCidr']) ?? DEFAULT_TENANT_CIDR,
+  };
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "80c13bbe92ca",
+  "version": "f1a0d1dee089",
   "language": "pt-BR",
   "entries": [
     {
@@ -10323,6 +10323,18 @@
           "help": ""
         },
         {
+          "label": "Rede isolada por cliente (EVPN)",
+          "help": ""
+        },
+        {
+          "label": "VLAN da rede dos servidores",
+          "help": ""
+        },
+        {
+          "label": "Clientes podem criar servidores",
+          "help": ""
+        },
+        {
           "label": "ID do token",
           "help": ""
         },
@@ -10400,18 +10412,6 @@
         },
         {
           "label": "ID do datastore",
-          "help": ""
-        },
-        {
-          "label": "ID do pool de armazenamento",
-          "help": ""
-        },
-        {
-          "label": "ID da imagem",
-          "help": ""
-        },
-        {
-          "label": "Tempo limite em segundos",
           "help": ""
         }
       ]
