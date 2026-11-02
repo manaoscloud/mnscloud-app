@@ -11255,5 +11255,19 @@
   "VPS provider": "VPS provider",
   "CORE01": "CORE01",
   "https://router.example": "https://router.example",
-  "No automation yet": "No automation yet"
+  "No automation yet": "No automation yet",
+  "Starting": "Starting",
+  "Shutting down": "Shutting down",
+  "Rebooting": "Rebooting",
+  "Power on": "Power on",
+  "Shut down": "Shut down",
+  "Reboot": "Reboot",
+  "Power on the VPS": "Power on the VPS",
+  "Shut down the VPS": "Shut down the VPS",
+  "Reboot the VPS": "Reboot the VPS",
+  "Shut down VPS": "Shut down VPS",
+  "Reboot VPS": "Reboot VPS",
+  "Failed to change the VPS power state.": "Failed to change the VPS power state.",
+  "Shut down {name}? Services on the VPS stop until it is started again.": "Shut down {name}? Services on the VPS stop until it is started again.",
+  "Reboot {name}? Services on the VPS are unavailable during the restart.": "Reboot {name}? Services on the VPS are unavailable during the restart."
 }
