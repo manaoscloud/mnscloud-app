@@ -32,6 +32,12 @@ const STORAGE_RESOURCE_ROUTES: Routes = [
 ];
 
 /** InfraGIS utility pages (lighting, pole sharing) share one component chosen by `data.resource`. */
+const loadVpsPublicIps = () =>
+  import('./pages/hosting/vps/public-ips/public-ips').then((m) => m.HostingVpsPublicIpsPage);
+const loadNetworkDevices = () =>
+  import('./pages/hosting/vps/network-devices/network-devices').then(
+    (m) => m.HostingNetworkDevicesPage,
+  );
 const loadInfraGisUtilities = () =>
   import('./pages/infragis/utilities/utilities').then((m) => m.InfraGisUtilitiesPage);
 const INFRAGIS_UTILITY_ROUTES: Routes = (
@@ -1896,10 +1902,7 @@ export const routes: Routes = [
                   },
                   {
                     path: 'public-ips',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps/public-ips/public-ips').then(
-                        (m) => m.HostingVpsPublicIpsPage,
-                      ),
+                    loadComponent: loadVpsPublicIps,
                     title: 'Hosting • VPS Public IPs | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
@@ -3491,19 +3494,13 @@ export const routes: Routes = [
                   },
                   {
                     path: 'public-ips',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps/public-ips/public-ips').then(
-                        (m) => m.HostingVpsPublicIpsPage,
-                      ),
+                    loadComponent: loadVpsPublicIps,
                     title: 'System VPS Public IPs | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                   {
                     path: 'network-devices',
-                    loadComponent: () =>
-                      import('./pages/hosting/vps/network-devices/network-devices').then(
-                        (m) => m.HostingNetworkDevicesPage,
-                      ),
+                    loadComponent: loadNetworkDevices,
                     title: 'System Network Devices | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },

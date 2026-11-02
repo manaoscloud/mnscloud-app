@@ -2,6 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudField,
   ConfigurableCrudFilters,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -14,6 +15,11 @@ const ENDPOINT = 'system/hosting/vps/network-devices';
 
 type NetworkDeviceType = { code: string; label: string; access: string; roles: string[] };
 
+function providerOption(provider: HostingVpsProvider): ConfigurableCrudOption {
+  const { HvrUUID: value, HvrName: label, HvrProvider: description } = provider;
+  return { value, label, description, searchText: `${label} ${description}` };
+}
+
 const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'vps_public_ip_route', label: 'Routes VPS public IPs' },
 ];
@@ -21,6 +27,74 @@ const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
 const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Yes' },
   { value: 0, label: 'No' },
+];
+
+/** Device record fields; the type list is filled from the API catalog (lookupOptions). */
+const DEVICE_FIELDS: ConfigurableCrudField[] = [
+  { key: 'status', source: 'HndIsActive', label: 'Status', type: 'status', span: 1 },
+  {
+    key: 'name',
+    source: 'HndName',
+    payloadKey: 'name',
+    label: 'Name',
+    placeholder: 'CORE01',
+    required: true,
+    span: 1,
+  },
+  {
+    key: 'vendor',
+    source: 'HndVendor',
+    payloadKey: 'vendor',
+    label: 'Type',
+    type: 'search-select',
+    required: true,
+    span: 1,
+    quickCreate: false,
+    quickCreateExemptReason: 'Device types come from the API catalog, not a CRUD resource.',
+  },
+  {
+    key: 'apiUrl',
+    source: 'HndApiUrl',
+    payloadKey: 'apiUrl',
+    label: 'API URL',
+    placeholder: 'https://router.example',
+    required: true,
+    span: 1,
+  },
+  {
+    key: 'verifyTls',
+    source: 'HndVerifyTls',
+    payloadKey: 'verifyTls',
+    label: 'Verify TLS certificate',
+    type: 'select',
+    options: YES_NO_OPTIONS,
+    span: 1,
+  },
+  {
+    key: 'username',
+    payloadKey: 'username',
+    label: 'API user',
+    span: 1,
+    help: 'Written only; never shown again.',
+  },
+  {
+    key: 'password',
+    payloadKey: 'password',
+    label: 'API password',
+    type: 'password',
+    span: 1,
+    help: 'Written only; never shown again.',
+  },
+  {
+    key: 'notes',
+    source: 'HndNotes',
+    payloadKey: 'notes',
+    label: 'Notes',
+    type: 'textarea',
+    tab: 'notes',
+    span: 4,
+    rows: 4,
+  },
 ];
 
 /** Network equipment the platform automates, and what each one does per VPS provider (master). */
@@ -87,84 +161,12 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
       searchText: `${type.label} ${type.access}`,
     })),
   );
-  private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.providers().map((provider) => ({
-      value: provider.HvrUUID,
-      label: provider.HvrName,
-      description: provider.HvrProvider,
-      searchText: `${provider.HvrName} ${provider.HvrProvider}`,
-    })),
-  );
+  private readonly providerOptions = computed(() => this.providers().map(providerOption));
 
   constructor() {
     super({
       ...config,
-      fields: [
-        { key: 'status', source: 'HndIsActive', label: 'Status', type: 'status', span: 1 },
-        {
-          key: 'name',
-          source: 'HndName',
-          payloadKey: 'name',
-          label: 'Name',
-          placeholder: 'CORE01',
-          required: true,
-          span: 1,
-        },
-        {
-          key: 'vendor',
-          source: 'HndVendor',
-          payloadKey: 'vendor',
-          label: 'Type',
-          type: 'search-select',
-          required: true,
-          span: 1,
-          quickCreate: false,
-          quickCreateExemptReason: 'Device types come from the API catalog, not a CRUD resource.',
-        },
-        {
-          key: 'apiUrl',
-          source: 'HndApiUrl',
-          payloadKey: 'apiUrl',
-          label: 'API URL',
-          placeholder: 'https://router.example',
-          required: true,
-          span: 1,
-        },
-        {
-          key: 'verifyTls',
-          source: 'HndVerifyTls',
-          payloadKey: 'verifyTls',
-          label: 'Verify TLS certificate',
-          type: 'select',
-          options: YES_NO_OPTIONS,
-          span: 1,
-        },
-        {
-          key: 'username',
-          payloadKey: 'username',
-          label: 'API user',
-          span: 1,
-          help: 'Written only; never shown again.',
-        },
-        {
-          key: 'password',
-          payloadKey: 'password',
-          label: 'API password',
-          type: 'password',
-          span: 1,
-          help: 'Written only; never shown again.',
-        },
-        {
-          key: 'notes',
-          source: 'HndNotes',
-          payloadKey: 'notes',
-          label: 'Notes',
-          type: 'textarea',
-          tab: 'notes',
-          span: 4,
-          rows: 4,
-        },
-      ],
+      fields: DEVICE_FIELDS,
       relatedCollections: [
         {
           key: 'roles',
