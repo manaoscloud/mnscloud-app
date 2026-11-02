@@ -54,7 +54,7 @@
     "@angular/platform-browser": "~22.2.2",
     "@angular/router": "~22.2.2",
     "@jsverse/transloco": "^8.4.0",
-    "@novnc/novnc": "1.7.0",
+    "@novnc/novnc": "1.4.0",
     "@protomaps/basemaps": "5.7.2",
     "@tmcw/togeojson": "7.1.3",
     "@xmldom/xmldom": "0.9.12",

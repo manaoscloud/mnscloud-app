@@ -1,5 +1,5 @@
 // Minimal typings of the noVNC RFB client used by the VPS web console.
-declare module '@novnc/novnc' {
+declare module '@novnc/novnc/core/rfb.js' {
   export default class RFB extends EventTarget {
     constructor(
       target: HTMLElement,

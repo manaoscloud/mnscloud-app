@@ -30,7 +30,7 @@ type ConsoleSession = {
 
 type ConsoleEnvelope = { data?: ConsoleSession };
 
-type NoVncRfb = InstanceType<typeof import('@novnc/novnc').default>;
+type NoVncRfb = InstanceType<typeof import('@novnc/novnc/core/rfb.js').default>;
 
 /** WebSocket URL of a console session on the same API origin as the App. */
 export function vpsConsoleSocketUrl(apiBase: string, session: ConsoleSession): string {
@@ -229,7 +229,7 @@ export class VpsInstanceConsoleComponent {
   }
 
   private async connectVnc(url: string, password: string) {
-    const { default: RFB } = await import('@novnc/novnc');
+    const { default: RFB } = await import('@novnc/novnc/core/rfb.js');
     const host = this.screen().nativeElement;
     const rfb = new RFB(host, url, { credentials: { password }, wsProtocols: ['binary'] });
     rfb.scaleViewport = true;
