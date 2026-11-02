@@ -1895,6 +1895,15 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'public-ips',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/public-ips/public-ips').then(
+                        (m) => m.HostingVpsPublicIpsPage,
+                      ),
+                    title: 'Hosting • VPS Public IPs | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
                     path: 'firewalls',
                     loadComponent: () =>
                       import('./pages/hosting/vps/firewalls/firewalls').then(
@@ -3478,6 +3487,24 @@ export const routes: Routes = [
                         (m) => m.HostingVpsNetworksPage,
                       ),
                     title: 'System VPS Networks | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'public-ips',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/public-ips/public-ips').then(
+                        (m) => m.HostingVpsPublicIpsPage,
+                      ),
+                    title: 'System VPS Public IPs | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'network-devices',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/network-devices/network-devices').then(
+                        (m) => m.HostingNetworkDevicesPage,
+                      ),
+                    title: 'System Network Devices | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                   {
