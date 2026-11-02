@@ -19,6 +19,7 @@ import {
 } from './change-plan-dialog';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { openVpsInstanceMonitor } from './instance-monitor';
+import { openVpsInstanceConsole } from './instance-console';
 import type {
   HostingVpsFirewall,
   HostingVpsInstance,
@@ -68,6 +69,13 @@ const MONITOR_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Monitor',
 };
 
+const CONSOLE_ACTION: ConfigurableCrudRowAction = {
+  key: 'console',
+  label: 'Console',
+  icon: 'terminal',
+  tooltip: 'Open the VPS console',
+};
+
 const DETAILS_ACTION: ConfigurableCrudRowAction = {
   key: 'details',
   label: 'Details',
@@ -109,7 +117,13 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   statusFilter: true,
   showAsyncOperationStatus: false,
   pageSizeOptions: [5, 10, 25, 100],
-  rowActions: [MONITOR_ACTION, DETAILS_ACTION, RETRY_PROVISION_ACTION, UPGRADE_ACTION],
+  rowActions: [
+    MONITOR_ACTION,
+    CONSOLE_ACTION,
+    DETAILS_ACTION,
+    RETRY_PROVISION_ACTION,
+    UPGRADE_ACTION,
+  ],
   listFilters: [
     {
       key: 'customerUUID',
@@ -733,7 +747,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
     if (row['HviExternalId']) {
-      actions.push(MONITOR_ACTION, DETAILS_ACTION);
+      actions.push(MONITOR_ACTION);
+      if (this.isProxmoxInstance(row)) actions.push(CONSOLE_ACTION);
+      actions.push(DETAILS_ACTION);
     }
     if (this.canRetryProvision(row)) {
       actions.push({
@@ -754,6 +770,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       await this.openInstanceDetails(row);
       return;
     }
+    if (action.key === 'console') {
+      await openVpsInstanceConsole(this.dialog, {
+        uuid: this.recordUUID(row),
+        name: String(row['HviName'] ?? ''),
+        scope: this.isMaster() ? 'master' : 'tenant',
+      });
+      return;
+    }
     if (action.key === 'retry-provision') {
       await this.retryProvision(row);
       return;
@@ -761,6 +785,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (action.key === 'upgrade') {
       await this.openUpgradeDialog(row);
     }
+  }
+
+  /** The web console exists for Proxmox VPS only. */
+  private isProxmoxInstance(row: ConfigurableCrudRecord) {
+    const providerUUID = String(row['HostingVpsProviderHvrUUID'] ?? '');
+    const provider = this.providers().find((item) => item.HvrUUID === providerUUID);
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    return (provider?.HvrProvider ?? plan?.HvpProvider) === 'proxmox';
   }
 
   private canRetryProvision(row: ConfigurableCrudRecord) {
