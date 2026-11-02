@@ -256,7 +256,8 @@ const config = defineCrud({
           hiddenWhen: ({ values }) =>
             values['module'] === 'ged' ||
             values['module'] === 'hr' ||
-            values['module'] === 'cyber_security',
+            values['module'] === 'cyber_security' ||
+            values['module'] === 'commerce',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -302,6 +303,23 @@ const config = defineCrud({
           quickCreate: false,
           quickCreateExemptReason:
             'Cyber Security accounts are created by account administrators in Customer accounts.',
+        },
+        {
+          key: 'commerceAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'commerceAccount.context',
+          type: 'search-select',
+          help: 'commerceAccount.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'commerce',
+          requiredWhen: ({ values }) => values['module'] === 'commerce',
+          remoteLookup: {
+            endpoint: 'sale/accounts?status=1&kind=customer',
+            uuidField: 'CmaUUID',
+            labelField: 'CmaName',
+          },
+          quickCreate: false,
+          quickCreateExemptReason:
+            'Commerce accounts are created by account administrators in Sales › Commerce accounts.',
         },
         {
           key: 'productUUID',
@@ -353,15 +371,17 @@ const config = defineCrud({
           source: 'BciMetric',
           label: 'Metric',
           help: 'Name of the metric reported by the module (for example minutes or gigabytes).',
-          // HR reports a single metric (active employees in the month), filled in by the payload;
-          // Cyber Security reports two fixed metrics, chosen in the field below.
+          // HR and commerce report a single metric (active employees or terminals in the month),
+          // filled in by the payload; Cyber Security reports two fixed metrics, chosen below.
           hiddenWhen: ({ values }) =>
             values['kind'] !== 'usage' ||
             values['module'] === 'hr' ||
+            values['module'] === 'commerce' ||
             values['module'] === 'cyber_security',
           requiredWhen: ({ values }) =>
             values['kind'] === 'usage' &&
             values['module'] !== 'hr' &&
+            values['module'] !== 'commerce' &&
             values['module'] !== 'cyber_security',
         },
         {
@@ -412,7 +432,9 @@ const config = defineCrud({
               ? values['hrAccountUUID']
               : values['module'] === 'cyber_security'
                 ? values['cyberAccountUUID']
-                : values['resourceUUID']) || null,
+                : values['module'] === 'commerce'
+                  ? values['commerceAccountUUID']
+                  : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -424,7 +446,9 @@ const config = defineCrud({
             ? null
             : values['module'] === 'hr'
               ? 'hr.active_employees'
-              : (values['module'] === 'cyber_security'
+              : values['module'] === 'commerce'
+                ? 'commerce.active_terminals'
+                : (values['module'] === 'cyber_security'
                   ? values['cyberMetric']
                   : values['metric']) || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),

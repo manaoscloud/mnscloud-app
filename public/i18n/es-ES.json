@@ -16,6 +16,8 @@
   "commerceAccount.conflict": "Actualice la cuenta y verifique el espacio, los registros y la revisión.",
   "commerceAccount.notFound": "La cuenta, el espacio, el cliente o el operador no está disponible.",
   "commerceAccount.failed": "No se pudo completar la operación en la cuenta comercial.",
+  "commerceAccount.contractItemHelp": "Tienda (cuenta comercial de cliente) del mismo cliente del contrato; la cuenta interna no se puede cobrar. Para cobrar por terminal, use el tipo Uso: la cantidad es el número de terminales activos en algún día del mes, publicado 72 h después del fin del mes. Sin un ítem abierto la tienda no crea terminales ni instala dispositivos; un contrato suspendido o cancelado suspende la tienda.",
+  "commerceAccount.contractRequired": "Esta tienda necesita un ítem de contrato abierto en Facturación › Contratos antes de crear terminales o instalar dispositivos.",
   "registryWorkspace.forbidden": "No tiene acceso a este espacio.",
   "registryWorkspace.conflict": "Actualice el registro y revise el cliente y los registros vinculados.",
   "registryWorkspace.notFound": "El espacio o cliente no está disponible.",

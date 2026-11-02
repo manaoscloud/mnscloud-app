@@ -2446,6 +2446,12 @@ catalogs (payment methods, gateway providers) stay internal. Embedded
 collections and canonical quick-create inherit `requestApi`; never keep the account in a global
 mutable header. The API/DB remain responsible for membership, account state and FK isolation.
 
+Resale billing (C5): Faturamento › contract items of module `commerce` pick the shop in the
+**Conta comercial** search-select (`sale/accounts?status=1&kind=customer`, no quick-create). A usage
+item has no metric field: the payload sends `commerce.active_terminals`, the only commerce metric.
+A shop without an open item gets 402 `COMMERCE_ACCOUNT_CONTRACT_REQUIRED` on terminal or device
+creation, translated by `commerceAccountErrorMessage` (`commerceAccount.contractRequired`).
+
 ## HR account request scope
 
 `hr/accounts` (RH › Revenda › Contas) manages one HR account per Registry workspace: the internal
