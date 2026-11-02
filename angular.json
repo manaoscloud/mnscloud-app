@@ -37,6 +37,10 @@
                 "bundleName": "styles"
               },
               {
+                "input": "node_modules/@xterm/xterm/css/xterm.css",
+                "bundleName": "xterm"
+              },
+              {
                 "input": "node_modules/maplibre-gl/dist/maplibre-gl.css",
                 "bundleName": "maplibre",
                 "inject": false
