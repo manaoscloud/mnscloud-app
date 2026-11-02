@@ -12,9 +12,7 @@ import type { HostingVpsProvider } from '../vps.types';
 
 const ENDPOINT = 'system/hosting/vps/network-devices';
 
-const VENDOR_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'mikrotik_routeros', label: 'MikroTik RouterOS (REST)' },
-];
+type NetworkDeviceType = { code: string; label: string; access: string; roles: string[] };
 
 const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'vps_public_ip_route', label: 'Routes VPS public IPs' },
@@ -77,6 +75,18 @@ const config = defineCrud({
 })
 export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly providers = signal<HostingVpsProvider[]>([]);
+  private readonly types = signal<NetworkDeviceType[]>([]);
+  /** Device types of the API catalog; types without roles can be registered but not automated. */
+  private readonly typeOptions = computed<ConfigurableCrudOption[]>(() =>
+    this.types().map((type) => ({
+      value: type.code,
+      label: type.label,
+      description: type.roles.length
+        ? `${type.access} · ${this.t('Routes VPS public IPs')}`
+        : `${type.access} · ${this.t('No automation yet')}`,
+      searchText: `${type.label} ${type.access}`,
+    })),
+  );
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.providers().map((provider) => ({
       value: provider.HvrUUID,
@@ -105,10 +115,11 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
           source: 'HndVendor',
           payloadKey: 'vendor',
           label: 'Type',
-          type: 'select',
-          options: VENDOR_OPTIONS,
+          type: 'search-select',
           required: true,
           span: 1,
+          quickCreate: false,
+          quickCreateExemptReason: 'Device types come from the API catalog, not a CRUD resource.',
         },
         {
           key: 'apiUrl',
@@ -199,6 +210,7 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'providerUUID') return this.providerOptions();
+    if (key === 'vendor') return this.typeOptions();
     return [];
   }
 
@@ -223,9 +235,15 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
   }
 
   private async fetchProviders() {
-    const response = await this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
-      'system/hosting/vps/providers?limit=500',
-    );
-    this.providers.set(response?.data?.items ?? []);
+    const [providers, types] = await Promise.all([
+      this.api.get<{ data?: { items?: HostingVpsProvider[] } }>(
+        'system/hosting/vps/providers?limit=500',
+      ),
+      this.api.get<{ data?: { items?: NetworkDeviceType[] } }>(
+        'system/hosting/vps/network-device-types',
+      ),
+    ]);
+    this.providers.set(providers?.data?.items ?? []);
+    this.types.set(types?.data?.items ?? []);
   }
 }
