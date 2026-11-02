@@ -48,6 +48,34 @@ const BILLING_POWER_LABELS: Record<string, string> = {
   DESTROY_PENDING: 'Releasing: unpaid',
 };
 
+/** Customer power actions in progress (the VPS worker records the final status). */
+const POWER_STATUS_LABELS: Record<string, string> = {
+  starting: 'Starting',
+  stopping: 'Shutting down',
+  rebooting: 'Rebooting',
+};
+
+const POWER_START_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-start',
+  label: 'Power on',
+  icon: 'play_arrow',
+  tooltip: 'Power on the VPS',
+};
+
+const POWER_STOP_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-stop',
+  label: 'Shut down',
+  icon: 'power_settings_new',
+  tooltip: 'Shut down the VPS',
+};
+
+const POWER_REBOOT_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-reboot',
+  label: 'Reboot',
+  icon: 'restart_alt',
+  tooltip: 'Reboot the VPS',
+};
+
 const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
   key: 'retry-provision',
   label: 'Retry provisioning',
@@ -120,6 +148,9 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   rowActions: [
     MONITOR_ACTION,
     CONSOLE_ACTION,
+    POWER_START_ACTION,
+    POWER_STOP_ACTION,
+    POWER_REBOOT_ACTION,
     DETAILS_ACTION,
     RETRY_PROVISION_ACTION,
     UPGRADE_ACTION,
@@ -180,7 +211,12 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       // The collection policy state wins over the provider status while billing controls power.
       value: (row, translate) => {
         const billing = BILLING_POWER_LABELS[String(row['HviBillingPowerState'] ?? '')];
-        return billing ? translate(billing) : String(row['HviStatus'] ?? '');
+        const power = POWER_STATUS_LABELS[String(row['HviStatus'] ?? '')];
+        return billing
+          ? translate(billing)
+          : power
+            ? translate(power)
+            : String(row['HviStatus'] ?? '');
       },
     },
     {
@@ -749,6 +785,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (row['HviExternalId']) {
       actions.push(MONITOR_ACTION);
       if (this.isProxmoxInstance(row)) actions.push(CONSOLE_ACTION);
+      actions.push(...this.powerActions(row));
       actions.push(DETAILS_ACTION);
     }
     if (this.canRetryProvision(row)) {
@@ -782,8 +819,61 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       await this.retryProvision(row);
       return;
     }
+    if (action.key === 'power-start') {
+      await this.requestPower(row, 'start');
+      return;
+    }
+    if (action.key === 'power-stop') {
+      await this.requestPower(row, 'stop');
+      return;
+    }
+    if (action.key === 'power-reboot') {
+      await this.requestPower(row, 'reboot');
+      return;
+    }
     if (action.key === 'upgrade') {
       await this.openUpgradeDialog(row);
+    }
+  }
+
+  /**
+   * Power actions the current status allows. None while billing holds the power (overdue balance)
+   * or while another power action runs.
+   */
+  private powerActions(row: ConfigurableCrudRecord): ConfigurableCrudRowAction[] {
+    if (row['HviBillingPowerState'] || Number(row['HviIsActive'] ?? 0) !== 1) return [];
+    const status = String(row['HviStatus'] ?? '')
+      .trim()
+      .toLowerCase();
+    if (status === 'stopped') return [POWER_START_ACTION];
+    if (status === 'running' || status === 'active')
+      return [POWER_STOP_ACTION, POWER_REBOOT_ACTION];
+    return [];
+  }
+
+  private async requestPower(row: ConfigurableCrudRecord, action: 'start' | 'stop' | 'reboot') {
+    const uuid = this.recordUUID(row);
+    const name = String(row['HviName'] ?? '');
+    if (action !== 'start') {
+      const confirmed = await this.confirmAction(
+        action === 'stop' ? 'Shut down VPS' : 'Reboot VPS',
+        (action === 'stop'
+          ? this.t('Shut down {name}? Services on the VPS stop until it is started again.')
+          : this.t('Reboot {name}? Services on the VPS are unavailable during the restart.')
+        ).replace('{name}', name),
+        action === 'stop' ? 'Shut down' : 'Reboot',
+      );
+      if (!confirmed) return;
+    }
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(`${this.instanceEndpoint()}/${uuid}/power`, { action });
+      this.trackOperation(response);
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to change the VPS power state.'));
+    } finally {
+      this.mutating.set(false);
     }
   }
 
