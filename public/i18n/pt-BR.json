@@ -11185,7 +11185,7 @@
   "Open the VPS console": "Abrir o console da VPS",
   "Start the VPS to open its console.": "Ligue a VPS para abrir o console.",
   "nav.hosting.vps.public-ips": "IPs públicos",
-  "nav.hosting.vps.network-devices": "Equipamentos de rede",
+  "nav.hosting.vps.network-devices": "Equipamentos",
   "VPS public IPs": "IPs públicos das VPS",
   "Public IPv4 addresses for VPS on the isolated network: contract one, associate it with a VPS and reach it from the internet.": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
   "New public IP": "Novo IP público",
