@@ -6,8 +6,10 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { generateCrudPassword } from '../../../shared/crud/configurable-crud/password-generation';
 import {
@@ -171,6 +173,64 @@ const DEFAULT_CUSTOMER_INITIAL_VALUES: ConfigurableCrudRecord = {
   sendWelcomeEmail: true,
 };
 
+function customerUUIDOf(row: ConfigurableCrudRecord): unknown {
+  return row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid'];
+}
+
+/**
+ * Customer Portal permissions per portal user: the effective value is the explicit grant when set,
+ * otherwise the rule's role default. Allow/Deny set an explicit grant; Default removes it.
+ */
+function portalPermissionsCollection(customerUUID: unknown) {
+  const endpoint = `registry/customers/${customerUUID}/portal-rules`;
+  const setRule = (
+    key: string,
+    label: string,
+    icon: string,
+    allowed: 0 | 1 | null,
+    visible: (row: ConfigurableCrudRecord) => boolean,
+  ): ConfigurableCrudRowAction => ({
+    key,
+    label,
+    icon,
+    inline: true,
+    visible,
+    request: {
+      method: 'put',
+      endpoint: () => endpoint,
+      body: (row) => ({
+        PortalUserUUID: row['PortalUserUUID'],
+        RuleCode: row['RuleCode'],
+        allowed,
+      }),
+      successMessage: 'Portal permission saved.',
+    },
+  });
+  return defineCrud({
+    endpoint,
+    uuidField: 'uuid',
+    pageTitle: 'Portal permissions',
+    pageDescription: 'crud.customer.portalPermissionsDescription',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    statusFilter: false,
+    fields: [],
+    columns: [
+      { id: 'user', field: 'PortalUsername', label: 'Portal user', kind: 'identity' },
+      { id: 'module', field: 'RuleModule', label: 'Module' },
+      { id: 'rule', field: 'RuleDescription', label: 'Permission' },
+      { id: 'default', field: 'DefaultAllowed', label: 'Default', kind: 'boolean' },
+      { id: 'effective', field: 'EffectiveAllowed', label: 'Allowed', kind: 'boolean' },
+    ],
+    rowActions: [
+      setRule('allow', 'Allow', 'check_circle', 1, (row) => row['EffectiveAllowed'] !== 1),
+      setRule('deny', 'Deny', 'block', 0, (row) => row['EffectiveAllowed'] !== 0),
+      setRule('reset', 'Use default', 'restart_alt', null, (row) => row['ExplicitAllowed'] != null),
+    ],
+  });
+}
+
 const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'registry/customers',
   uuidField: 'CustomerUUID',
@@ -204,6 +264,13 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
   }),
   rowActions: [
     {
+      key: 'portalPermissions',
+      label: 'Portal permissions',
+      icon: 'admin_panel_settings',
+      tooltip: 'crud.customer.portalPermissions',
+      collection: (row) => portalPermissionsCollection(customerUUIDOf(row)),
+    },
+    {
       key: 'resendPortalCredentials',
       label: 'Resend portal credentials',
       icon: 'mark_email_read',
@@ -211,8 +278,7 @@ const CUSTOMER_CONFIG: ConfigurableCrudConfig = {
       visible: (row) => Boolean(row['Email']),
       request: {
         method: 'post',
-        endpoint: (row) =>
-          `registry/customers/${row['CustomerUUID'] ?? row['RcuUUID'] ?? row['uuid']}/portal/resend-welcome-email`,
+        endpoint: (row) => `registry/customers/${customerUUIDOf(row)}/portal/resend-welcome-email`,
         successMessage: 'Welcome email with credentials resent successfully.',
         confirm: {
           title: 'Resend portal credentials',
