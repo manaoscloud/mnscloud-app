@@ -27,28 +27,25 @@ const RESALE_ACCOUNTS = resaleAccountCrud({
   ],
 });
 
-// InfraGIS keeps the account annotation in `description` (IgcDescription) and adds the asset
-// limit of the account; the API has no bulk delete for accounts.
+// InfraGIS adds the asset limit of the account; the API has no bulk delete for accounts.
 export const INFRAGIS_ACCOUNTS_CONFIG = {
   ...RESALE_ACCOUNTS,
   bulkDelete: false,
   initialValues: { ...RESALE_ACCOUNTS.initialValues, maxAssets: null },
   fields: RESALE_ACCOUNTS.fields.flatMap((field) =>
-    field.key === 'notes'
-      ? [{ ...field, payloadKey: 'description', source: 'IgcDescription' }]
-      : field.key === 'name'
-        ? [
-            field,
-            {
-              key: 'maxAssets',
-              source: 'IgcMaxAssets',
-              label: 'infragis.maxAssets',
-              type: 'number' as const,
-              span: 1 as const,
-              help: 'infragis.maxAssetsHelp',
-            },
-          ]
-        : [field],
+    field.key === 'name'
+      ? [
+          field,
+          {
+            key: 'maxAssets',
+            source: 'IgcMaxAssets',
+            label: 'infragis.maxAssets',
+            type: 'number' as const,
+            span: 1 as const,
+            help: 'infragis.maxAssetsHelp',
+          },
+        ]
+      : [field],
   ),
 };
 
