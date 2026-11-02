@@ -11169,5 +11169,11 @@
   "authentication.accessCount": "Acessos",
   "authentication.subscriberLabel": "Assinante",
   "authentication.subscriberLabelHelp": "Identificação opcional do assinante final (ex.: endereço ou ponto), útil em contas de revenda.",
-  "authentication.accessCustomerHelp": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado."
+  "authentication.accessCustomerHelp": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado.",
+  "Portal permissions": "Permissões do portal",
+  "crud.customer.portalPermissions": "Permitir ou negar recursos do Portal do Cliente para cada usuário do portal deste cliente.",
+  "crud.customer.portalPermissionsDescription": "Sem ajuste, vale o padrão do papel do usuário (dono/admin ou usuário). Permitir ou Negar substitui o padrão; Usar padrão remove o ajuste. A mudança vale na próxima ação do cliente no portal.",
+  "Portal user": "Usuário do portal",
+  "Use default": "Usar padrão",
+  "Portal permission saved.": "Permissão do portal salva."
 }

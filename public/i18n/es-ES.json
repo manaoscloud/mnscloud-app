@@ -11168,5 +11168,11 @@
   "authentication.accessCount": "Accesos",
   "authentication.subscriberLabel": "Suscriptor",
   "authentication.subscriberLabelHelp": "Identificación opcional del suscriptor final (p. ej. dirección o punto), útil en cuentas de reventa.",
-  "authentication.accessCustomerHelp": "Obligatorio en cuentas de uso propio. En cuentas de reventa queda vacío: se usa el cliente de la cuenta."
+  "authentication.accessCustomerHelp": "Obligatorio en cuentas de uso propio. En cuentas de reventa queda vacío: se usa el cliente de la cuenta.",
+  "Portal permissions": "Permisos del portal",
+  "crud.customer.portalPermissions": "Permitir o denegar funciones del Portal del Cliente para cada usuario del portal de este cliente.",
+  "crud.customer.portalPermissionsDescription": "Sin ajuste, se aplica el valor predeterminado del rol del usuario (dueño/admin o usuario). Permitir o Denegar reemplaza el predeterminado; Usar predeterminado elimina el ajuste. El cambio vale en la próxima acción del cliente en el portal.",
+  "Portal user": "Usuario del portal",
+  "Use default": "Usar predeterminado",
+  "Portal permission saved.": "Permiso del portal guardado."
 }

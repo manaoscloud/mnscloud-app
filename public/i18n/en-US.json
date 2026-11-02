@@ -11168,5 +11168,11 @@
   "authentication.accessCount": "Accesses",
   "authentication.subscriberLabel": "Subscriber",
   "authentication.subscriberLabelHelp": "Optional end subscriber identification (e.g. address or site), useful in resale accounts.",
-  "authentication.accessCustomerHelp": "Required in own-use accounts. Leave empty in resale accounts: the account customer is used."
+  "authentication.accessCustomerHelp": "Required in own-use accounts. Leave empty in resale accounts: the account customer is used.",
+  "Portal permissions": "Portal permissions",
+  "crud.customer.portalPermissions": "Allow or deny Customer Portal features for each portal user of this customer.",
+  "crud.customer.portalPermissionsDescription": "Without an override, the user role default applies (owner/admin or user). Allow or Deny replaces the default; Use default removes the override. The change applies to the customer's next action in the portal.",
+  "Portal user": "Portal user",
+  "Use default": "Use default",
+  "Portal permission saved.": "Portal permission saved."
 }
