@@ -11176,5 +11176,12 @@
   "authentication.accessCount": "Acessos",
   "authentication.subscriberLabel": "Assinante",
   "authentication.subscriberLabelHelp": "Identificação opcional do assinante final (ex.: endereço ou ponto), útil em contas de revenda.",
-  "authentication.accessCustomerHelp": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado."
+  "authentication.accessCustomerHelp": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado.",
+  "VPS console": "Console da VPS",
+  "Connecting...": "Conectando...",
+  "The console could not be opened.": "Não foi possível abrir o console.",
+  "Reconnect": "Reconectar",
+  "Console": "Console",
+  "Open the VPS console": "Abrir o console da VPS",
+  "Start the VPS to open its console.": "Ligue a VPS para abrir o console."
 }

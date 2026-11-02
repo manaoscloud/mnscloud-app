@@ -11175,5 +11175,12 @@
   "authentication.accessCount": "Accesses",
   "authentication.subscriberLabel": "Subscriber",
   "authentication.subscriberLabelHelp": "Optional end subscriber identification (e.g. address or site), useful in resale accounts.",
-  "authentication.accessCustomerHelp": "Required in own-use accounts. Leave empty in resale accounts: the account customer is used."
+  "authentication.accessCustomerHelp": "Required in own-use accounts. Leave empty in resale accounts: the account customer is used.",
+  "VPS console": "VPS console",
+  "Connecting...": "Connecting...",
+  "The console could not be opened.": "The console could not be opened.",
+  "Reconnect": "Reconnect",
+  "Console": "Console",
+  "Open the VPS console": "Open the VPS console",
+  "Start the VPS to open its console.": "Start the VPS to open its console."
 }
