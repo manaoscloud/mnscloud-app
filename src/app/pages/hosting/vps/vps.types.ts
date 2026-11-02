@@ -11,9 +11,16 @@ export type VpsProviderConfig = {
       controller: string;
       vrfVniRange: [number, number];
       vniRange: [number, number];
-      exitNodes: string[];
+      gateway: {
+        templateVmid: number;
+        node: string;
+        transitBridge?: string;
+        transitVlan: number;
+        transitCidr: string;
+      };
       mtu?: number;
       defaultCidr?: string;
+      nameservers?: string[];
     } | null;
   } | null;
   vlanTag?: number | null;
