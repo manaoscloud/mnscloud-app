@@ -16,6 +16,8 @@
   "commerceAccount.conflict": "Refresh the account and check its workspace, records and revision.",
   "commerceAccount.notFound": "The account, workspace, customer or operator is unavailable.",
   "commerceAccount.failed": "The commerce account operation could not be completed.",
+  "commerceAccount.contractItemHelp": "Shop (customer commerce account) of the contract's own customer; the internal account cannot be billed. To charge per terminal, use the Usage kind: the quantity is the number of terminals active on any day of the month, published 72 h after the month ends. Without an open item the shop cannot create terminals or install devices; a suspended or cancelled contract suspends the shop.",
+  "commerceAccount.contractRequired": "This shop needs an open contract item in Invoicing › Contracts before creating terminals or installing devices.",
   "registryWorkspace.forbidden": "You do not have access to this workspace.",
   "registryWorkspace.conflict": "Refresh the record and check the customer and linked records.",
   "registryWorkspace.notFound": "The workspace or customer is unavailable.",

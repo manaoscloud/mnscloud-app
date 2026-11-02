@@ -3,6 +3,7 @@ const messages: Record<string, string> = {
   COMMERCE_ACCOUNT_CONFLICT: 'commerceAccount.conflict',
   COMMERCE_ACCOUNT_NOT_FOUND: 'commerceAccount.notFound',
   COMMERCE_ACCOUNT_UNAVAILABLE: 'commerceAccount.failed',
+  COMMERCE_ACCOUNT_CONTRACT_REQUIRED: 'commerceAccount.contractRequired',
 };
 
 /** Stable server codes select translations without displaying server implementation details. */
