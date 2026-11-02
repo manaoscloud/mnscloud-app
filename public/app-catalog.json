@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "20afceefbfad",
+  "version": "784fa5430bfb",
   "language": "pt-BR",
   "entries": [
     {
@@ -86,7 +86,7 @@
         },
         {
           "label": "Cliente",
-          "help": ""
+          "help": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado."
         },
         {
           "label": "Grupos",
@@ -99,6 +99,10 @@
         {
           "label": "Domínio",
           "help": "Opcional. Com domínio, o equipamento pode autenticar com usuário@domínio ou só com o usuário. Não pode ser alterado depois de criado."
+        },
+        {
+          "label": "Assinante",
+          "help": "Identificação opcional do assinante final (ex.: endereço ou ponto), útil em contas de revenda."
         },
         {
           "label": "IP atribuído",
@@ -136,6 +140,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente da revenda dono desta conta. Vazio = uso próprio. Não pode ser alterado depois."
         },
         {
           "label": "Revisão",

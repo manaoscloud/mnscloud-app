@@ -11155,5 +11155,19 @@
   "Treated marks": "Tratamentos",
   "Treatment": "Tratamento",
   "Treatment saved.": "Tratamento salvo.",
-  "View certificate": "Ver atestado"
+  "View certificate": "Ver atestado",
+  "authentication.accountCustomerHelp": "Cliente da revenda dono desta conta. Vazio = uso próprio. Não pode ser alterado depois.",
+  "authentication.accountKind": "Tipo",
+  "authentication.kindInternal": "Uso próprio",
+  "authentication.kindCustomer": "Revenda",
+  "authentication.publication": "Publicação no portal",
+  "authentication.publicationDescription": "Define se o cliente vê as contas, acessos e sessões desta conta no Portal do Cliente. Criar e editar acessos e ver ou gerar senhas dependem de permissões do portal concedidas ao usuário do cliente.",
+  "authentication.portalEnabled": "Publicado no portal",
+  "authentication.assignOperator": "Vincular operador",
+  "authentication.operators": "Operadores da conta",
+  "authentication.operatorsDescription": "Operadores vinculados passam a ser os únicos (além de quem gerencia todas as contas) a operar esta conta. Sem vínculos, todos os operadores de Autenticação do tenant a operam.",
+  "authentication.accessCount": "Acessos",
+  "authentication.subscriberLabel": "Assinante",
+  "authentication.subscriberLabelHelp": "Identificação opcional do assinante final (ex.: endereço ou ponto), útil em contas de revenda.",
+  "authentication.accessCustomerHelp": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado."
 }
