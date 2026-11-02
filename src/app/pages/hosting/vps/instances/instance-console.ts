@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
@@ -52,7 +51,6 @@ export function termproxyResize(cols: number, rows: number): string {
 @Component({
   selector: 'mns-vps-instance-console',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
   styles: [
     `
