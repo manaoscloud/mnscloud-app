@@ -11250,5 +11250,7 @@
   "Responsibility saved.": "Responsabilidad guardada.",
   "Responsibility removed.": "Responsabilidad eliminada.",
   "Responsibility": "Responsabilidad",
-  "VPS provider": "Proveedor de VPS"
+  "VPS provider": "Proveedor de VPS",
+  "CORE01": "CORE01",
+  "https://router.example": "https://router.example"
 }
