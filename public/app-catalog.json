@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "784fa5430bfb",
+  "version": "38e2c6122324",
   "language": "pt-BR",
   "entries": [
     {
@@ -2803,6 +2803,14 @@
       "scope": "tenant",
       "title": "Redes privadas VPS",
       "description": "Redes privadas compartilhadas por uma ou mais instâncias VPS do mesmo provedor e região.",
+      "fields": []
+    },
+    {
+      "route": "/hosting/vps/public-ips",
+      "menuPath": "Hospedagem › VPS › IPs públicos",
+      "scope": "tenant",
+      "title": "IPs públicos das VPS",
+      "description": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
       "fields": []
     },
     {
@@ -10251,6 +10259,14 @@
       ]
     },
     {
+      "route": "/system/vps/network-devices",
+      "menuPath": "Hospedagem › VPS › Equipamentos",
+      "scope": "platform",
+      "title": "Equipamentos de rede",
+      "description": "Equipamentos de rede que a plataforma configura automaticamente e o que cada um faz para os provedores de VPS.",
+      "fields": []
+    },
+    {
       "route": "/system/vps/networks",
       "menuPath": "Hospedagem › VPS › Redes privadas",
       "scope": "platform",
@@ -10551,6 +10567,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/vps/public-ips",
+      "menuPath": "Hospedagem › VPS › IPs públicos",
+      "scope": "platform",
+      "title": "IPs públicos das VPS",
+      "description": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
+      "fields": []
     },
     {
       "route": "/system/vps/snapshots",
