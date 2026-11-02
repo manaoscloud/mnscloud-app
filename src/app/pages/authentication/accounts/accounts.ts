@@ -2,7 +2,7 @@ import { authenticationPayload, authenticationRecordFields } from '../authentica
 import { Component, inject } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
-import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
+import { conventionalResaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -115,25 +115,7 @@ export class AuthenticationAccountPage extends ConfigurableCrudPageBase<Configur
       hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.authentication.accounts.all');
     super({
       ...config,
-      rowActions: resaleAccountRowActions({
-        module: 'authentication',
-        uuidField: 'AacUUID',
-        revisionField: 'AacRevision',
-        portalField: 'AacPortalEnabled',
-        kindField: 'AacKind',
-        memberUuidField: 'AamUUID',
-        memberStatusField: 'AamStatus',
-        publicationLabel: 'authentication.publication',
-        publicationTitle: 'authentication.publication',
-        publicationDescription: 'authentication.publicationDescription',
-        portalEnabledLabel: 'authentication.portalEnabled',
-        assignLabel: 'authentication.assignOperator',
-        assignTitle: 'authentication.assignOperator',
-        operatorsLabel: 'authentication.operators',
-        operatorsTitle: 'authentication.operators',
-        operatorsDescription: 'authentication.operatorsDescription',
-        canManage,
-      }),
+      rowActions: conventionalResaleAccountRowActions('authentication', 'Aac', 'Aam', canManage),
     });
   }
 }

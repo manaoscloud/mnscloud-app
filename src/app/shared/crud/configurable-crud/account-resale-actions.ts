@@ -130,6 +130,38 @@ export interface ResaleAccountActionOptions {
   publication?: boolean;
 }
 
+/**
+ * Row actions of a `<module>/accounts` page that follows the naming convention: account columns
+ * `<prefix>UUID/Revision/PortalEnabled/Kind`, member columns `<memberPrefix>UUID/Status` and the
+ * `<module>.publication`, `.portalEnabled`, `.assignOperator` and `.operators` translation keys.
+ */
+export function conventionalResaleAccountRowActions(
+  module: string,
+  prefix: string,
+  memberPrefix: string,
+  canManage: () => boolean,
+): ConfigurableCrudRowAction[] {
+  return resaleAccountRowActions({
+    module,
+    uuidField: `${prefix}UUID`,
+    revisionField: `${prefix}Revision`,
+    portalField: `${prefix}PortalEnabled`,
+    kindField: `${prefix}Kind`,
+    memberUuidField: `${memberPrefix}UUID`,
+    memberStatusField: `${memberPrefix}Status`,
+    publicationLabel: `${module}.publication`,
+    publicationTitle: `${module}.publication`,
+    publicationDescription: `${module}.publicationDescription`,
+    portalEnabledLabel: `${module}.portalEnabled`,
+    assignLabel: `${module}.assignOperator`,
+    assignTitle: `${module}.assignOperator`,
+    operatorsLabel: `${module}.operators`,
+    operatorsTitle: `${module}.operators`,
+    operatorsDescription: `${module}.operatorsDescription`,
+    canManage,
+  });
+}
+
 export function resaleAccountRowActions(
   options: ResaleAccountActionOptions,
 ): ConfigurableCrudRowAction[] {
