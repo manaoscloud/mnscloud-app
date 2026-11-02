@@ -26,6 +26,7 @@ const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
 // Private default network of each customer zone (the API re-validates it); not a host address.
 const DEFAULT_TENANT_CIDR = ['10', '0', '0', '0'].join('.') + '/24';
 const DEFAULT_TENANT_MTU = 1450;
+const DEFAULT_TRANSIT_BRIDGE = 'vmbr0';
 
 /** A Proxmox provider field shown only when isolated customer networks (EVPN) are on. */
 function tenantZoneField(
@@ -157,7 +158,12 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTenantVrfEnd: '',
     sdnTenantVniStart: '',
     sdnTenantVniEnd: '',
-    sdnTenantExitNodes: '',
+    sdnTenantGatewayTemplate: '',
+    sdnTenantGatewayNode: '',
+    sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
+    sdnTenantTransitVlan: '',
+    sdnTenantTransitCidr: '',
+    sdnTenantNameservers: '',
     sdnTenantMtu: DEFAULT_TENANT_MTU,
     sdnTenantDefaultCidr: DEFAULT_TENANT_CIDR,
     vlanTag: '',
@@ -404,7 +410,15 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       number: true,
       required: true,
     }),
-    tenantZoneField('sdnTenantExitNodes', 'Exit nodes (comma separated)', { required: true }),
+    tenantZoneField('sdnTenantGatewayTemplate', 'Customer gateway template VMID', {
+      number: true,
+      required: true,
+    }),
+    tenantZoneField('sdnTenantGatewayNode', 'Customer gateway node', { required: true }),
+    tenantZoneField('sdnTenantTransitBridge', 'Transit bridge'),
+    tenantZoneField('sdnTenantTransitVlan', 'Transit VLAN', { number: true, required: true }),
+    tenantZoneField('sdnTenantTransitCidr', 'Transit network CIDR', { required: true }),
+    tenantZoneField('sdnTenantNameservers', 'Customer DNS resolvers (comma separated)'),
     tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
     tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
     {
@@ -806,7 +820,13 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       sdnTenantVrfEnd: config.sdn?.tenantZones?.vrfVniRange?.[1] ?? '',
       sdnTenantVniStart: config.sdn?.tenantZones?.vniRange?.[0] ?? '',
       sdnTenantVniEnd: config.sdn?.tenantZones?.vniRange?.[1] ?? '',
-      sdnTenantExitNodes: config.sdn?.tenantZones?.exitNodes?.join(', ') ?? '',
+      sdnTenantGatewayTemplate: config.sdn?.tenantZones?.gateway?.templateVmid ?? '',
+      sdnTenantGatewayNode: config.sdn?.tenantZones?.gateway?.node ?? '',
+      sdnTenantTransitBridge:
+        config.sdn?.tenantZones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
+      sdnTenantTransitVlan: config.sdn?.tenantZones?.gateway?.transitVlan ?? '',
+      sdnTenantTransitCidr: config.sdn?.tenantZones?.gateway?.transitCidr ?? '',
+      sdnTenantNameservers: config.sdn?.tenantZones?.nameservers?.join(', ') ?? '',
       sdnTenantMtu: config.sdn?.tenantZones?.mtu ?? DEFAULT_TENANT_MTU,
       sdnTenantDefaultCidr: config.sdn?.tenantZones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
       vlanTag: config.vlanTag ?? '',
@@ -906,6 +926,17 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
         ) {
           return this.rejectField(startKey, 'Enter both ends of an ordered VNI range.');
         }
+      }
+      const transitVlan = Number(payload['sdnTenantTransitVlan']);
+      if (!Number.isInteger(transitVlan) || transitVlan < 1 || transitVlan > 4094) {
+        return this.rejectField('sdnTenantTransitVlan', 'Enter a VLAN ID from 1 to 4094.');
+      }
+      const templateVmid = Number(payload['sdnTenantGatewayTemplate']);
+      if (!Number.isInteger(templateVmid) || templateVmid < 100) {
+        return this.rejectField(
+          'sdnTenantGatewayTemplate',
+          'Enter the template VMID (100 or more).',
+        );
       }
     }
 
@@ -1099,9 +1130,16 @@ function buildTenantZonesPayload(
     controller: normalizeString(values['sdnTenantController']) ?? '',
     vrfVniRange: range('sdnTenantVrfStart', 'sdnTenantVrfEnd'),
     vniRange: range('sdnTenantVniStart', 'sdnTenantVniEnd'),
-    exitNodes: (normalizeString(values['sdnTenantExitNodes']) ?? '')
-      .split(/[,\n]+/)
-      .map((node) => node.trim())
+    gateway: {
+      templateVmid: Number(values['sdnTenantGatewayTemplate']),
+      node: normalizeString(values['sdnTenantGatewayNode']) ?? '',
+      transitBridge: normalizeString(values['sdnTenantTransitBridge']) ?? DEFAULT_TRANSIT_BRIDGE,
+      transitVlan: Number(values['sdnTenantTransitVlan']),
+      transitCidr: normalizeString(values['sdnTenantTransitCidr']) ?? '',
+    },
+    nameservers: (normalizeString(values['sdnTenantNameservers']) ?? '')
+      .split(/[,\s]+/)
+      .map((server) => server.trim())
       .filter(Boolean),
     mtu: Number(values['sdnTenantMtu']) || DEFAULT_TENANT_MTU,
     defaultCidr: normalizeString(values['sdnTenantDefaultCidr']) ?? DEFAULT_TENANT_CIDR,
