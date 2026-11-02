@@ -201,14 +201,15 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           span: 1,
           hiddenWhen: ({ editing }) => !editing,
         },
-        // business-description: master notes about the public IP (origin, block, restrictions).
         {
           key: 'notes',
           source: 'HpiNotes',
           payloadKey: 'notes',
           label: 'Notes',
           type: 'textarea',
+          tab: 'notes',
           span: 4,
+          rows: 4,
         },
       ],
     });

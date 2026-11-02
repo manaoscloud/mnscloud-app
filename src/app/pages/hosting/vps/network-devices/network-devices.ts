@@ -143,14 +143,15 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
           span: 1,
           help: 'Written only; never shown again.',
         },
-        // business-description: notes about the device (location, access, contacts).
         {
           key: 'notes',
           source: 'HndNotes',
           payloadKey: 'notes',
           label: 'Notes',
           type: 'textarea',
+          tab: 'notes',
           span: 4,
+          rows: 4,
         },
       ],
       relatedCollections: [
