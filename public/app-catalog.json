@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f2bd6e484bce",
+  "version": "a37d30e3a820",
   "language": "pt-BR",
   "entries": [
     {
@@ -10927,6 +10927,18 @@
         },
         {
           "label": "Servidor",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.title",
+          "help": "voipCluster.placementHelp"
+        },
+        {
+          "label": "voipCluster.reservedCalls",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.reservedCps",
           "help": ""
         },
         {
