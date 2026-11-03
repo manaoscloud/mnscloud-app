@@ -119,6 +119,38 @@ function members(row: ConfigurableCrudRecord) {
       { id: 'calls', field: 'VcmCapacityCalls', label: 'voipCluster.capacityCalls' },
       { id: 'cps', field: 'VcmCapacityCps', label: 'voipCluster.capacityCps' },
       { id: 'failureDomain', field: 'VcmFailureDomain', label: 'voipCluster.failureDomain' },
+      {
+        id: 'observedCalls',
+        field: 'VloActiveCalls',
+        label: 'voipCluster.observedCalls',
+        value: (row, t) =>
+          row['VloActiveCalls'] == null ? t('voipCluster.unknown') : String(row['VloActiveCalls']),
+      },
+      {
+        id: 'cpu',
+        field: 'VloCpuPercent',
+        label: 'voipCluster.cpu',
+        value: (row, t) =>
+          row['VloCpuPercent'] == null
+            ? t('voipCluster.unknown')
+            : `${Number(row['VloCpuPercent']).toFixed(1)}%`,
+      },
+      {
+        id: 'memory',
+        field: 'VloMemoryPercent',
+        label: 'voipCluster.memory',
+        value: (row, t) =>
+          row['VloMemoryPercent'] == null
+            ? t('voipCluster.unknown')
+            : `${Number(row['VloMemoryPercent']).toFixed(1)}%`,
+      },
+      {
+        id: 'freshness',
+        field: 'ObservationFresh',
+        label: 'voipCluster.freshness',
+        value: (row, t) =>
+          t(Number(row['ObservationFresh']) === 1 ? 'voipCluster.fresh' : 'voipCluster.stale'),
+      },
     ],
   });
 }

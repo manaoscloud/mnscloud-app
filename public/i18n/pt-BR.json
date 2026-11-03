@@ -11309,7 +11309,14 @@
     "preparing": "Em preparação",
     "ready": "Pronto",
     "draining": "Em drenagem",
-    "maintenance": "Manutenção"
+    "maintenance": "Manutenção",
+    "observedCalls": "Chamadas observadas",
+    "cpu": "CPU",
+    "memory": "Memória",
+    "freshness": "Atualidade dos dados",
+    "fresh": "Recentes",
+    "stale": "Ausentes ou vencidos",
+    "unknown": "Desconhecido"
   },
   "nav.voip.clusters": "Clusters"
 }
