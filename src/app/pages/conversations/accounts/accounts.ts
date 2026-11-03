@@ -20,7 +20,7 @@ export function customerSelector() {
     source: 'RegCustomerRcuUUID',
     label: 'Customer',
     type: 'search-select' as const,
-    span: 2 as const,
+    span: 1 as const,
     help: 'conversations.accountCustomerHelp',
     disabledWhen: ({ editing }: { editing: boolean }) => editing,
     remoteLookup: {
@@ -75,7 +75,8 @@ export function operatorAssignmentCrud(accountUUID: string) {
           labelField: 'Name',
         },
         quickCreate: false,
-        quickCreateExemptReason: 'Tenant operators must be invited through tenant access management.',
+        quickCreateExemptReason:
+          'Tenant operators must be invited through tenant access management.',
       },
       { key: 'status', label: 'Status', type: 'status', span: 1 },
     ],
@@ -88,8 +89,18 @@ export function buildAccountColumns() {
     { id: 'name', field: 'CvaName', label: 'Name', kind: 'identity' as const },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },
     { id: 'channels', field: 'TotalChannels', label: 'Channels', kind: 'number' as const },
-    { id: 'conversations', field: 'TotalConversations', label: 'conversations.conversations', kind: 'number' as const },
-    { id: 'publication', field: 'CvaPortalEnabled', label: 'conversations.portalEnabled', kind: 'status' as const },
+    {
+      id: 'conversations',
+      field: 'TotalConversations',
+      label: 'conversations.conversations',
+      kind: 'number' as const,
+    },
+    {
+      id: 'publication',
+      field: 'CvaPortalEnabled',
+      label: 'conversations.portalEnabled',
+      kind: 'status' as const,
+    },
     { id: 'status', field: 'CvaStatus', label: 'Status', kind: 'status' as const },
   ];
 }
@@ -141,7 +152,12 @@ export class ConversationsAccountsPage extends ConfigurableCrudPageBase<Configur
           label: 'conversations.publication',
           icon: 'public',
           visible: (row) => Boolean(row['RegCustomerRcuUUID']),
-          form: (row) => portalPublicationCrud(String(row['CvaUUID']), row['CvaPortalEnabled'], row['CvaRevision']),
+          form: (row) =>
+            portalPublicationCrud(
+              String(row['CvaUUID']),
+              row['CvaPortalEnabled'],
+              row['CvaRevision'],
+            ),
         },
         {
           key: 'assign',
@@ -162,8 +178,7 @@ export class ConversationsAccountsPage extends ConfigurableCrudPageBase<Configur
               readOnly: true,
               fields: [],
               columns: [
-                { id: 'user', field: 'UsrName', label: 'User', kind: 'identity' },
-                { id: 'email', field: 'UsrEmail', label: 'Email' },
+                { id: 'user', field: 'MemberName', label: 'User', kind: 'identity' },
                 { id: 'status', field: 'CamStatus', label: 'Status', kind: 'status' },
               ],
             }),
