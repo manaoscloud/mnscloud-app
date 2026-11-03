@@ -11324,5 +11324,6 @@
     "reservedCps": "Reserva de criação de canais/s",
     "placementHelp": "Opcional. Na criação, o cluster seleciona o servidor com capacidade verificada e reserva a demanda informada. Não move contas existentes."
   },
-  "nav.voip.clusters": "Clusters"
+  "nav.voip.clusters": "Clusters",
+  "crm.field.Workspace": "Espaço de trabalho"
 }

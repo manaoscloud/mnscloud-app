@@ -1,3 +1,4 @@
+import { crmWorkspaceField, crmWorkspaceFilter } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
   industryReferenceField,
@@ -19,6 +20,7 @@ const config = defineCrud({
   pageTitle: 'crm.title.accounts',
   pageDescription: 'crm.description.accounts',
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CacName: '',
     CacType: 'company',
     CacDocument: '',
@@ -31,6 +33,7 @@ const config = defineCrud({
     AssignedUserUsrUUID: '',
   },
   fields: [
+    crmWorkspaceField,
     {
       key: 'CacStatus',
       source: 'CacStatus',
@@ -121,6 +124,7 @@ const config = defineCrud({
     { key: 'CacRevision', source: 'CacRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    { id: 'WorkspaceName', field: 'WorkspaceName', label: 'crm.field.Workspace' },
     industryReferenceColumn(),
     {
       id: 'CacName',
@@ -148,6 +152,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
+    crmWorkspaceFilter,
     ...economicClassificationFilters(),
     {
       key: 'AssignedUserUsrUUID',

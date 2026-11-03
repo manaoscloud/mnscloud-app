@@ -1,3 +1,4 @@
+import { crmWorkspaceField, crmWorkspaceFilter } from '../crm-workspace-fields';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
@@ -15,6 +16,7 @@ const config = defineCrud({
   pageDescription: 'crm.description.products',
   defaultCurrencyFields: ['CprCurrency'],
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CprName: '',
     CprDescription: '',
     CprAmount: 0,
@@ -23,6 +25,7 @@ const config = defineCrud({
     CprStatus: 1,
   },
   fields: [
+    crmWorkspaceField,
     {
       key: 'CprStatus',
       source: 'CprStatus',
@@ -78,6 +81,7 @@ const config = defineCrud({
     { key: 'CprRevision', source: 'CprRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    { id: 'WorkspaceName', field: 'WorkspaceName', label: 'crm.field.Workspace' },
     {
       id: 'CprName',
       field: 'CprName',
@@ -99,6 +103,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
+    crmWorkspaceFilter,
     {
       key: 'CprPeriod',
       paramKey: 'CprPeriod',

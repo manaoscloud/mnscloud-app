@@ -2470,3 +2470,8 @@ or admin portal roles get nothing without a row. Both actions need `tenant.hr.ac
 Faturamento › contract items of module `hr` pick the account in the **Conta de RH** search-select
 (`hr/accounts?status=1`, quick-create `HrAccountHraUUID`). A usage item has no metric field: the
 payload sends `hr.active_employees`, the only HR metric.
+
+CRM root forms (pipelines, accounts, products, leads and opportunities) explicitly select
+`CrmWorkspaceCwsUUID` with the shared searchable FK and canonical quick-create. Ownership is
+read-only on edit. The workspace filter queries the API before pagination; related account,
+product and stage lookups bind the selected workspace. API/DB validate visibility and relationships.

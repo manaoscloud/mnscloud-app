@@ -1,3 +1,4 @@
+import { crmWorkspaceField, crmWorkspaceFilter } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
   industryReferenceField,
@@ -19,6 +20,7 @@ const config = defineCrud({
   pageTitle: 'crm.title.leads',
   pageDescription: 'crm.description.leads',
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CleName: '',
     CleEmail: '',
     ClePhone: '',
@@ -34,6 +36,7 @@ const config = defineCrud({
     AssignedUserUsrUUID: '',
   },
   fields: [
+    crmWorkspaceField,
     {
       key: 'CleStatus',
       source: 'CleStatus',
@@ -170,6 +173,7 @@ const config = defineCrud({
     { key: 'CleRevision', source: 'CleRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    { id: 'WorkspaceName', field: 'WorkspaceName', label: 'crm.field.Workspace' },
     industryReferenceColumn(),
     {
       id: 'CrmSourceCsoUUID',
@@ -228,6 +232,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
+    crmWorkspaceFilter,
     ...economicClassificationFilters(),
     {
       key: 'AssignedUserUsrUUID',
