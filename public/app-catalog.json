@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a37d30e3a820",
+  "version": "de2663f74c66",
   "language": "pt-BR",
   "entries": [
     {
@@ -650,6 +650,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Tipo",
           "help": ""
         },
@@ -850,6 +854,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Situação",
           "help": ""
         },
@@ -940,6 +948,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Etapas",
           "help": ""
         },
@@ -1025,6 +1037,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Nome",
           "help": ""
         },
@@ -1043,6 +1059,10 @@
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Espaço de trabalho",
           "help": ""
         },
         {
