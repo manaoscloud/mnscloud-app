@@ -1,4 +1,5 @@
 {
+  "hostingVps.platformDescription": "Manage internal platform VPS and commercial customer VPS. Select an environment to choose its customers.",
   "hostingVps.platformCustomerHelp": "Leave empty for an internal platform VPS without a commercial subscription. Select a customer for a commercial VPS. Ownership cannot be changed after creation.",
   "nav.sale.accounts": "Accounts",
   "commerceAccount.title": "Commerce accounts",
