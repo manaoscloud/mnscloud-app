@@ -11315,7 +11315,10 @@
     "freshness": "Data freshness",
     "fresh": "Recent",
     "stale": "Missing or stale",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "reservedCalls": "Concurrent call reservation",
+    "reservedCps": "Calls per second reservation",
+    "placementHelp": "Optional. On creation, the cluster selects a server with verified capacity and reserves the requested demand. Existing accounts are not moved."
   },
   "nav.voip.clusters": "Clusters"
 }

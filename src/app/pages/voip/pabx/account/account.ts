@@ -73,6 +73,9 @@ function config(): ConfigurableCrudConfig {
       isActive: 1,
       name: '',
       serverUUID: '',
+      clusterUUID: '',
+      reservedCalls: null,
+      reservedCps: null,
       customerUUID: '',
       dialPlanUUID: '',
       blacklistUUID: '',
@@ -134,8 +137,47 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'serverUUID',
         label: 'Server',
         type: 'search-select',
-        required: true,
+        requiredWhen: ({ values }) => !values['clusterUUID'],
+        disabledWhen: ({ values }) => Boolean(values['clusterUUID']),
         span: 1,
+      },
+      {
+        key: 'clusterUUID',
+        source: 'VoipClusterVclUUID',
+        payloadKey: 'clusterUUID',
+        label: 'voipCluster.title',
+        type: 'search-select',
+        span: 1,
+        remoteLookup: {
+          endpoint: 'voip/pabx/accounts/cluster-options',
+          uuidField: 'VclUUID',
+          labelField: 'VclName',
+          descriptionField: 'VclEngine',
+        },
+        quickCreateExemptReason:
+          'Clusters are platform infrastructure; tenant accounts select existing clusters and cannot create infrastructure.',
+        disabledWhen: ({ editing }) => editing,
+        help: 'voipCluster.placementHelp',
+      },
+      {
+        key: 'reservedCalls',
+        source: 'VcpReservedCalls',
+        label: 'voipCluster.reservedCalls',
+        type: 'number',
+        span: 1,
+        hiddenWhen: ({ values }) => !values['clusterUUID'],
+        requiredWhen: ({ values }) => Boolean(values['clusterUUID']),
+        disabledWhen: ({ editing }) => editing,
+      },
+      {
+        key: 'reservedCps',
+        source: 'VcpReservedCps',
+        label: 'voipCluster.reservedCps',
+        type: 'number',
+        span: 1,
+        hiddenWhen: ({ values }) => !values['clusterUUID'],
+        requiredWhen: ({ values }) => Boolean(values['clusterUUID']),
+        disabledWhen: ({ editing }) => editing,
       },
       {
         key: 'customerUUID',
@@ -370,8 +412,18 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const outgoing = { ...payload };
+    if (!this.editingRecord() && outgoing['clusterUUID']) {
+      delete outgoing['serverUUID'];
+      outgoing['reservedCalls'] = Number(outgoing['reservedCalls']);
+      outgoing['reservedCps'] = Number(outgoing['reservedCps']);
+    } else {
+      delete outgoing['clusterUUID'];
+      delete outgoing['reservedCalls'];
+      delete outgoing['reservedCps'];
+    }
     return {
-      ...payload,
+      ...outgoing,
       ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
       isActive: Number(payload['isActive']) === 1,
       blacklistUUID: payload['blacklistUUID'] || null,

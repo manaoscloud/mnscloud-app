@@ -11316,7 +11316,10 @@
     "freshness": "Atualidade dos dados",
     "fresh": "Recentes",
     "stale": "Ausentes ou vencidos",
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "reservedCalls": "Reserva de chamadas simultâneas",
+    "reservedCps": "Reserva de chamadas por segundo",
+    "placementHelp": "Opcional. Na criação, o cluster seleciona o servidor com capacidade verificada e reserva a demanda informada. Não move contas existentes."
   },
   "nav.voip.clusters": "Clusters"
 }
