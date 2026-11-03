@@ -1,6 +1,7 @@
 import {
   crmWorkspaceField,
   crmWorkspaceFilter,
+  crmWorkspaceColumn,
 } from '../../src/app/pages/crm/crm-workspace-fields.ts';
 import {
   economicClassificationFilters,
@@ -39,6 +40,7 @@ function formConfigs() {
             'industryReferenceColumn',
             'crmWorkspaceField',
             'crmWorkspaceFilter',
+            'crmWorkspaceColumn',
             `return ${node.arguments[0].getText(source)}`,
           )(
             (v) => v,
@@ -52,6 +54,7 @@ function formConfigs() {
             industryReferenceColumn,
             crmWorkspaceField,
             crmWorkspaceFilter,
+            crmWorkspaceColumn,
           ),
         });
       }

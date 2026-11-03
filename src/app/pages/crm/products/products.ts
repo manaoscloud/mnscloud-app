@@ -1,4 +1,4 @@
-import { crmWorkspaceField, crmWorkspaceFilter } from '../crm-workspace-fields';
+import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
@@ -81,7 +81,7 @@ const config = defineCrud({
     { key: 'CprRevision', source: 'CprRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
-    { id: 'WorkspaceName', field: 'WorkspaceName', label: 'crm.field.Workspace' },
+    crmWorkspaceColumn,
     {
       id: 'CprName',
       field: 'CprName',

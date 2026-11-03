@@ -1,4 +1,4 @@
-import { crmWorkspaceField, crmWorkspaceFilter } from '../crm-workspace-fields';
+import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
   industryReferenceField,
@@ -173,7 +173,7 @@ const config = defineCrud({
     { key: 'CleRevision', source: 'CleRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
-    { id: 'WorkspaceName', field: 'WorkspaceName', label: 'crm.field.Workspace' },
+    crmWorkspaceColumn,
     industryReferenceColumn(),
     {
       id: 'CrmSourceCsoUUID',

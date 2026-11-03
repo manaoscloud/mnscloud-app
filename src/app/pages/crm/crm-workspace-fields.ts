@@ -1,5 +1,6 @@
 import type {
   ConfigurableCrudField,
+  ConfigurableCrudColumn,
   ConfigurableCrudListFilter,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 
@@ -28,4 +29,10 @@ export const crmWorkspaceFilter: ConfigurableCrudListFilter = {
   type: 'search-select',
   span: 1,
   remoteLookup: lookup,
+};
+
+export const crmWorkspaceColumn: ConfigurableCrudColumn = {
+  id: 'WorkspaceName',
+  field: 'WorkspaceName',
+  label: 'crm.field.Workspace',
 };
