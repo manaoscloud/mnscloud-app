@@ -163,6 +163,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
     sdnTenantTransitVlan: '',
     sdnTenantTransitCidr: '',
+    sdnTenantTransitPool: '',
     sdnTenantNameservers: '',
     sdnTenantMtu: DEFAULT_TENANT_MTU,
     sdnTenantDefaultCidr: DEFAULT_TENANT_CIDR,
@@ -418,6 +419,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     tenantZoneField('sdnTenantTransitBridge', 'Transit bridge'),
     tenantZoneField('sdnTenantTransitVlan', 'Transit VLAN', { number: true, required: true }),
     tenantZoneField('sdnTenantTransitCidr', 'Transit network CIDR', { required: true }),
+    tenantZoneField('sdnTenantTransitPool', 'Transit pool of this provider (CIDR)'),
     tenantZoneField('sdnTenantNameservers', 'Customer DNS resolvers (comma separated)'),
     tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
     tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
@@ -826,6 +828,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
         config.sdn?.tenantZones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
       sdnTenantTransitVlan: config.sdn?.tenantZones?.gateway?.transitVlan ?? '',
       sdnTenantTransitCidr: config.sdn?.tenantZones?.gateway?.transitCidr ?? '',
+      sdnTenantTransitPool: config.sdn?.tenantZones?.gateway?.transitPool ?? '',
       sdnTenantNameservers: config.sdn?.tenantZones?.nameservers?.join(', ') ?? '',
       sdnTenantMtu: config.sdn?.tenantZones?.mtu ?? DEFAULT_TENANT_MTU,
       sdnTenantDefaultCidr: config.sdn?.tenantZones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
@@ -1136,6 +1139,10 @@ function buildTenantZonesPayload(
       transitBridge: normalizeString(values['sdnTenantTransitBridge']) ?? DEFAULT_TRANSIT_BRIDGE,
       transitVlan: Number(values['sdnTenantTransitVlan']),
       transitCidr: normalizeString(values['sdnTenantTransitCidr']) ?? '',
+      // Disjoint pools when several providers share the transit VLAN (DEV and PROD).
+      ...(normalizeString(values['sdnTenantTransitPool'])
+        ? { transitPool: normalizeString(values['sdnTenantTransitPool'])! }
+        : {}),
     },
     nameservers: (normalizeString(values['sdnTenantNameservers']) ?? '')
       .split(/[,\s]+/)
