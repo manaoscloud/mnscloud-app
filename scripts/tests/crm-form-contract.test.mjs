@@ -1,4 +1,8 @@
 import {
+  crmWorkspaceField,
+  crmWorkspaceFilter,
+} from '../../src/app/pages/crm/crm-workspace-fields.ts';
+import {
   economicClassificationFilters,
   industryReferenceField,
   industryReferenceColumn,
@@ -33,6 +37,8 @@ function formConfigs() {
             'economicClassificationFilters',
             'industryReferenceField',
             'industryReferenceColumn',
+            'crmWorkspaceField',
+            'crmWorkspaceFilter',
             `return ${node.arguments[0].getText(source)}`,
           )(
             (v) => v,
@@ -44,6 +50,8 @@ function formConfigs() {
             economicClassificationFilters,
             industryReferenceField,
             industryReferenceColumn,
+            crmWorkspaceField,
+            crmWorkspaceFilter,
           ),
         });
       }
@@ -132,5 +140,23 @@ test('calendar/time pair round-trips local instants, clears both and rejects inv
       () => crmPayload({ When: date, WhenTime: time }, false, 'Revision', [], ['When']),
       /CRM_INVALID_DATE/,
     );
+  }
+});
+
+test('CRM root ownership is explicit, immutable on edit and filterable before pagination', () => {
+  const roots = new Set([
+    'crm/pipelines',
+    'crm/leads',
+    'crm/opportunities',
+    'crm/accounts',
+    'crm/products',
+  ]);
+  for (const { config } of formConfigs().filter(({ config }) => roots.has(config.endpoint))) {
+    const field = config.fields.find((f) => f.source === 'CrmWorkspaceCwsUUID');
+    assert.equal(field.required, true);
+    assert.equal(field.disabledWhen({ editing: true }), true);
+    assert.equal(field.disabledWhen({ editing: false }), false);
+    assert.ok(config.listFilters.some((f) => f.paramKey === 'CrmWorkspaceCwsUUID'));
+    assert.equal(config.serverSidePagination, true);
   }
 });

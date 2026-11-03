@@ -33,7 +33,6 @@ const config = defineCrud({
     AssignedUserUsrUUID: '',
   },
   fields: [
-    crmWorkspaceField,
     {
       key: 'CacStatus',
       source: 'CacStatus',
@@ -42,6 +41,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CacType',
       source: 'CacType',

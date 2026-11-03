@@ -25,7 +25,6 @@ const config = defineCrud({
     CprStatus: 1,
   },
   fields: [
-    crmWorkspaceField,
     {
       key: 'CprStatus',
       source: 'CprStatus',
@@ -34,6 +33,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CprPeriod',
       source: 'CprPeriod',

@@ -19,7 +19,6 @@ const config = defineCrud({
     CpiStatus: 1,
   },
   fields: [
-    crmWorkspaceField,
     {
       key: 'CpiStatus',
       source: 'CpiStatus',
@@ -28,6 +27,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CpiName',
       source: 'CpiName',
