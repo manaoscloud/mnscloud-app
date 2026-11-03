@@ -11270,5 +11270,16 @@
   "Failed to change the VPS power state.": "Failed to change the VPS power state.",
   "Shut down {name}? Services on the VPS stop until it is started again.": "Shut down {name}? Services on the VPS stop until it is started again.",
   "Reboot {name}? Services on the VPS are unavailable during the restart.": "Reboot {name}? Services on the VPS are unavailable during the restart.",
-  "Transit pool of this provider (CIDR)": "Transit pool of this provider (CIDR)"
+  "Transit pool of this provider (CIDR)": "Transit pool of this provider (CIDR)",
+  "Test the connection and the configuration of the device": "Test the connection and the configuration of the device",
+  "Failed to test the network device.": "Failed to test the network device.",
+  "Network device test": "Network device test",
+  "Read-only checks with the stored credential; nothing is changed on the device.": "Read-only checks with the stored credential; nothing is changed on the device.",
+  "Passed with warnings": "Passed with warnings",
+  "Passed": "Passed",
+  "Identity": "Identity",
+  "OK": "OK",
+  "Platform entries": "Platform entries",
+  "Firewall": "Firewall",
+  "Device type": "Device type"
 }
