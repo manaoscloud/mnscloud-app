@@ -1,3 +1,4 @@
+import { webhostResaleActions } from './resale-actions';
 import { Component, computed, inject, signal } from '@angular/core';
 
 import {
@@ -192,6 +193,8 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'customerUUID',
       label: 'Customer',
       type: 'search-select',
+      disabledWhen: ({ editing }) => editing,
+      help: 'webhostResale.identityLocked',
       required: true,
       span: 1,
     },
@@ -201,6 +204,8 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'planUUID',
       label: 'Plan',
       type: 'search-select',
+      disabledWhen: ({ editing }) => editing,
+      help: 'webhostResale.identityLocked',
       required: true,
       span: 1,
     },
@@ -210,6 +215,8 @@ const HOST_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'hostingDnsRegisterUUID',
       label: 'Register',
       type: 'search-select',
+      disabledWhen: ({ editing }) => editing,
+      help: 'webhostResale.identityLocked',
       required: true,
       span: 1,
     },
@@ -411,7 +418,7 @@ export class HostingWebhostHostsPage extends ConfigurableCrudPageBase<Configurab
       actions.push(SYNC_ACTION);
       actions.push(suspended ? UNSUSPEND_ACTION : SUSPEND_ACTION);
     }
-    return actions;
+    return [...actions, ...webhostResaleActions(row)];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
