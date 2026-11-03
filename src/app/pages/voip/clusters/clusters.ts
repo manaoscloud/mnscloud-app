@@ -40,6 +40,24 @@ function members(row: ConfigurableCrudRecord) {
     // Revision-checked individual deletion; no bulk endpoint.
     bulkDelete: false,
     deletePayload: (member) => ({ revision: Number(member['VcmRevision']) }),
+    rowActions:
+      purpose === 'pabx'
+        ? [
+            {
+              key: 'prepare',
+              label: 'voipCluster.prepare',
+              icon: 'sync',
+              visible: (member) => member['VcmState'] === 'preparing',
+              request: {
+                method: 'post',
+                endpoint: (member) =>
+                  `system/voip/clusters/${row['VclUUID']}/members/${member['VcmUUID']}/prepare`,
+                body: (member) => ({ revision: Number(member['VcmRevision']) }),
+                successMessage: 'voipCluster.preparationQueued',
+              },
+            },
+          ]
+        : [],
     initialValues: {
       [source]: '',
       capacityCalls: '',

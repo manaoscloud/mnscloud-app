@@ -11283,6 +11283,8 @@
   "Firewall": "Firewall",
   "Device type": "Device type",
   "voipCluster": {
+    "prepare": "Prepare server",
+    "preparationQueued": "Reconciliation requested. State changes after Agent verification.",
     "title": "VoIP clusters",
     "description": "Organize compatible voice servers and plan their capacity and availability.",
     "members": "Members",
@@ -11298,7 +11300,7 @@
     "maxAgeHelp": "Older observations cannot establish that a member is ready to receive new allocations.",
     "engineHelp": "Use FreeSWITCH or Asterisk for PABX, OpenSIPS for SBC and Kamailio for Softswitch.",
     "capacityCalls": "Concurrent call capacity",
-    "capacityCps": "Call attempts per second",
+    "capacityCps": "Channel starts per second capacity",
     "capacityHelp": "Enter the safe capacity measured with the expected codecs, recording and transcoding.",
     "failureDomain": "Failure domain",
     "failureDomainHelp": "Servers sharing power, network or a physical host belong to the same failure domain. Use lowercase letters, digits and hyphens.",
@@ -11317,7 +11319,7 @@
     "stale": "Missing or stale",
     "unknown": "Unknown",
     "reservedCalls": "Concurrent call reservation",
-    "reservedCps": "Calls per second reservation",
+    "reservedCps": "Channel starts per second reservation",
     "placementHelp": "Optional. On creation, the cluster selects a server with verified capacity and reserves the requested demand. Existing accounts are not moved."
   },
   "nav.voip.clusters": "Clusters"
