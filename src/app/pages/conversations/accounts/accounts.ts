@@ -1,5 +1,8 @@
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../services/auth.service';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { conventionalResaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -32,56 +35,8 @@ export function customerSelector() {
   };
 }
 
-export function portalPublicationCrud(accountUUID: string, portalEnabled: unknown, rev: unknown) {
-  return defineCrud({
-    endpoint: `conversations/accounts/${accountUUID}/portal`,
-    uuidField: 'CvaUUID',
-    pageTitle: 'conversations.publication',
-    pageDescription: 'conversations.publicationDescription',
-    initialValues: { enabled: portalEnabled, revision: rev },
-    fields: [
-      {
-        key: 'enabled',
-        label: 'conversations.portalEnabled',
-        type: 'select',
-        options: [
-          { value: 1, label: 'Yes' },
-          { value: 0, label: 'No' },
-        ],
-      },
-      { key: 'revision', label: 'documents.revision', hidden: true },
-    ],
-    columns: [],
-  });
-}
-
-export function operatorAssignmentCrud(accountUUID: string) {
-  return defineCrud({
-    endpoint: `conversations/accounts/${accountUUID}/members`,
-    uuidField: 'CvaUUID',
-    pageTitle: 'conversations.assignOperator',
-    pageDescription: 'conversations.operatorsDescription',
-    initialValues: { UserUsrUUID: '', status: 1 },
-    fields: [
-      {
-        key: 'UserUsrUUID',
-        source: 'UserUsrUUID',
-        label: 'User',
-        type: 'search-select',
-        required: true,
-        remoteLookup: {
-          endpoint: 'user/access/members',
-          uuidField: 'UserUUID',
-          labelField: 'Name',
-        },
-        quickCreate: false,
-        quickCreateExemptReason:
-          'Tenant operators must be invited through tenant access management.',
-      },
-      { key: 'status', label: 'Status', type: 'status', span: 1 },
-    ],
-    columns: [],
-  });
+export function conversationAccountActions(canManage: () => boolean) {
+  return conventionalResaleAccountRowActions('conversations', 'Cva', 'Cam', canManage);
 }
 
 export function buildAccountColumns() {
@@ -144,46 +99,12 @@ export class ConversationsAccountsPage extends ConfigurableCrudPageBase<Configur
   protected readonly accountConfig = CONVERSATIONS_ACCOUNTS_CONFIG;
 
   constructor() {
+    const auth = inject(AuthService);
+    const canManage = () =>
+      hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.conversations.accounts.all');
     super({
       ...CONVERSATIONS_ACCOUNTS_CONFIG,
-      rowActions: [
-        {
-          key: 'publication',
-          label: 'conversations.publication',
-          icon: 'public',
-          visible: (row) => Boolean(row['RegCustomerRcuUUID']),
-          form: (row) =>
-            portalPublicationCrud(
-              String(row['CvaUUID']),
-              row['CvaPortalEnabled'],
-              row['CvaRevision'],
-            ),
-        },
-        {
-          key: 'assign',
-          label: 'conversations.assignOperator',
-          icon: 'person_add',
-          form: (row) => operatorAssignmentCrud(String(row['CvaUUID'])),
-        },
-        {
-          key: 'operators',
-          label: 'conversations.operators',
-          icon: 'group',
-          collection: (row) =>
-            defineCrud({
-              endpoint: `conversations/accounts/${row['CvaUUID']}/members`,
-              uuidField: 'CamUUID',
-              pageTitle: 'conversations.operators',
-              pageDescription: 'conversations.operatorsDescription',
-              readOnly: true,
-              fields: [],
-              columns: [
-                { id: 'user', field: 'MemberName', label: 'User', kind: 'identity' },
-                { id: 'status', field: 'CamStatus', label: 'Status', kind: 'status' },
-              ],
-            }),
-        },
-      ],
+      rowActions: conversationAccountActions(canManage),
     });
   }
 }

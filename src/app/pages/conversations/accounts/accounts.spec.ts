@@ -3,8 +3,7 @@ import {
   CONVERSATION_ACCOUNT_LOOKUP,
   buildAccountColumns,
   customerSelector,
-  portalPublicationCrud,
-  operatorAssignmentCrud,
+  conversationAccountActions,
 } from './accounts';
 
 describe('ConversationsAccountsConfig', () => {
@@ -78,7 +77,10 @@ describe('ConversationsAccountsConfig', () => {
   });
 
   it('builds a portal publication CRUD sub-dialog configuration', () => {
-    const pub = portalPublicationCrud('uuid-123', 1, 4);
+    const action = conversationAccountActions(() => true).find(
+      (item) => item.key === 'publication',
+    )!;
+    const pub = action.form!({ CvaUUID: 'uuid-123', CvaPortalEnabled: 1, CvaRevision: 4 });
     expect(pub.endpoint).toBe('conversations/accounts/uuid-123/portal');
     expect(pub.uuidField).toBe('CvaUUID');
     expect(pub.pageTitle).toBe('conversations.publication');
@@ -89,7 +91,8 @@ describe('ConversationsAccountsConfig', () => {
   });
 
   it('builds operator assignment CRUD configuration with quick create exemption', () => {
-    const op = operatorAssignmentCrud('uuid-456');
+    const action = conversationAccountActions(() => true).find((item) => item.key === 'assign')!;
+    const op = action.form!({ CvaUUID: 'uuid-456' });
     expect(op.endpoint).toBe('conversations/accounts/uuid-456/members');
     expect(op.uuidField).toBe('CvaUUID');
     expect(op.pageTitle).toBe('conversations.assignOperator');
@@ -98,5 +101,26 @@ describe('ConversationsAccountsConfig', () => {
     expect(op.fields[0].quickCreate).toBe(false);
     expect(op.fields[0].quickCreateExemptReason).toBeDefined();
     expect(op.fields[1].key).toBe('status');
+  });
+});
+
+describe('Conversation account action authorization and member projection', () => {
+  it('only offers publication for customer accounts to account managers', () => {
+    const customer = { CvaKind: 'customer', CvaUUID: 'account' };
+    const action = conversationAccountActions(() => true).find(
+      (item) => item.key === 'publication',
+    )!;
+    expect(action.visible!(customer)).toBe(true);
+    expect(action.visible!({ CvaKind: 'internal' })).toBe(false);
+    const denied = conversationAccountActions(() => false);
+    expect(denied.every((item) => !item.visible!(customer))).toBe(true);
+  });
+
+  it('renders canonical operator names returned by the account member API', () => {
+    const action = conversationAccountActions(() => true).find((item) => item.key === 'operators')!;
+    const collection = action.collection!({ CvaUUID: 'account' });
+    expect(collection.endpoint).toBe('conversations/accounts/account/members');
+    expect(collection.uuidField).toBe('CamUUID');
+    expect(collection.columns.map((column) => column.field)).toEqual(['MemberName', 'CamStatus']);
   });
 });
