@@ -11307,7 +11307,7 @@
     "failureDomainHelp": "Los servidores que comparten energía, red o host físico pertenecen al mismo dominio de fallo. Use minúsculas, números y guiones.",
     "serverHelp": "Elija un servidor existente de la plataforma con el mismo motor del cluster.",
     "state": "Estado operativo",
-    "stateHelp": "Los nuevos miembros comienzan en preparación. La disponibilidad requiere verificación del runtime; la asociación por sí sola no la garantiza.",
+    "stateHelp": "Los nuevos miembros comienzan en preparación. Al editar un miembro listo, elija explícitamente preparación, drenaje o mantenimiento. Volver a listo requiere una nueva verificación del Agent; la asociación por sí sola no garantiza disponibilidad.",
     "preparing": "En preparación",
     "ready": "Listo",
     "draining": "En drenaje",

@@ -120,6 +120,8 @@ function members(row: ConfigurableCrudRecord) {
         type: 'select',
         translateOptions: true,
         options: STATES,
+        required: true,
+        fromRecord: (value) => (value === 'ready' ? '' : value),
         span: 1,
         hiddenWhen: ({ editing }) => !editing,
         help: 'voipCluster.stateHelp',

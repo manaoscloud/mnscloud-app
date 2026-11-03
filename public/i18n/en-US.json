@@ -11307,7 +11307,7 @@
     "failureDomainHelp": "Servers sharing power, network or a physical host belong to the same failure domain. Use lowercase letters, digits and hyphens.",
     "serverHelp": "Choose an existing platform server with the same engine as the cluster.",
     "state": "Operational state",
-    "stateHelp": "New members start in preparation. Readiness requires runtime verification; membership alone does not guarantee availability.",
+    "stateHelp": "New members start in preparation. When editing a ready member, explicitly choose preparation, draining or maintenance. Returning to ready requires a new Agent verification; membership alone does not guarantee availability.",
     "preparing": "Preparing",
     "ready": "Ready",
     "draining": "Draining",
