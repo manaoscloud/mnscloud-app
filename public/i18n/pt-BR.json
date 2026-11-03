@@ -11270,5 +11270,6 @@
   "Reboot VPS": "Reiniciar VPS",
   "Failed to change the VPS power state.": "Falha ao alterar a energia da VPS.",
   "Shut down {name}? Services on the VPS stop until it is started again.": "Desligar {name}? Os serviços da VPS ficam parados até ela ser ligada novamente.",
-  "Reboot {name}? Services on the VPS are unavailable during the restart.": "Reiniciar {name}? Os serviços da VPS ficam indisponíveis durante o reinício."
+  "Reboot {name}? Services on the VPS are unavailable during the restart.": "Reiniciar {name}? Os serviços da VPS ficam indisponíveis durante o reinício.",
+  "Transit pool of this provider (CIDR)": "Faixa de trânsito deste provedor (CIDR)"
 }

@@ -17,6 +17,7 @@ export type VpsProviderConfig = {
         transitBridge?: string;
         transitVlan: number;
         transitCidr: string;
+        transitPool?: string;
       };
       mtu?: number;
       defaultCidr?: string;
