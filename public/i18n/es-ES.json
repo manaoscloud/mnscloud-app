@@ -11270,5 +11270,16 @@
   "Failed to change the VPS power state.": "No se pudo cambiar el estado de energía del VPS.",
   "Shut down {name}? Services on the VPS stop until it is started again.": "¿Apagar {name}? Los servicios del VPS se detienen hasta que se vuelva a encender.",
   "Reboot {name}? Services on the VPS are unavailable during the restart.": "¿Reiniciar {name}? Los servicios del VPS no están disponibles durante el reinicio.",
-  "Transit pool of this provider (CIDR)": "Rango de tránsito de este proveedor (CIDR)"
+  "Transit pool of this provider (CIDR)": "Rango de tránsito de este proveedor (CIDR)",
+  "Test the connection and the configuration of the device": "Probar la conexión y la configuración del equipo",
+  "Failed to test the network device.": "No se pudo probar el equipo.",
+  "Network device test": "Prueba del equipo",
+  "Read-only checks with the stored credential; nothing is changed on the device.": "Verificaciones solo de lectura con la credencial registrada; no se cambia nada en el equipo.",
+  "Passed with warnings": "Aprobado con avisos",
+  "Passed": "Aprobado",
+  "Identity": "Identidad",
+  "OK": "OK",
+  "Platform entries": "Entradas de la plataforma",
+  "Firewall": "Firewall",
+  "Device type": "Tipo de equipo"
 }

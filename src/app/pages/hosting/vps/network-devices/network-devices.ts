@@ -7,8 +7,13 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
+import {
+  DataViewerTone,
+  openDataViewerDialog,
+} from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import type { HostingVpsProvider } from '../vps.types';
 
 const ENDPOINT = 'system/hosting/vps/network-devices';
@@ -19,6 +24,32 @@ function providerOption(provider: HostingVpsProvider): ConfigurableCrudOption {
   const { HvrUUID: value, HvrName: label, HvrProvider: description } = provider;
   return { value, label, description, searchText: `${label} ${description}` };
 }
+
+type NetworkDeviceCheck = {
+  key: string;
+  label: string;
+  status: 'ok' | 'warn' | 'fail';
+  detail: string;
+};
+
+type NetworkDeviceTestResult = {
+  passed: boolean;
+  checks: NetworkDeviceCheck[];
+  identity: Record<string, unknown>;
+};
+
+const TEST_ACTION: ConfigurableCrudRowAction = {
+  key: 'test',
+  label: 'Test connection',
+  icon: 'network_check',
+  tooltip: 'Test the connection and the configuration of the device',
+};
+
+const CHECK_RESULT: Record<NetworkDeviceCheck['status'], string> = {
+  ok: 'OK',
+  warn: 'Attention',
+  fail: 'Failed',
+};
 
 const ROLE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'vps_public_ip_route', label: 'Routes VPS public IPs' },
@@ -118,6 +149,7 @@ const config = defineCrud({
   deletedMessage: 'Network device deleted.',
   deleteFailedMessage: 'Failed to delete network device.',
   bulkDelete: false,
+  rowActions: [TEST_ACTION],
   pageSizeOptions: [10, 25, 100],
   initialValues: {
     status: 1,
@@ -208,6 +240,69 @@ export class HostingNetworkDevicesPage extends ConfigurableCrudPageBase<Configur
       ],
     });
     void this.fetchProviders();
+  }
+
+  override rowActions(): readonly ConfigurableCrudRowAction[] {
+    return [TEST_ACTION];
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'test') await this.testDevice(row);
+  }
+
+  /** Read-only checks on the device with its stored credential (nothing is written on it). */
+  private async testDevice(row: ConfigurableCrudRecord) {
+    this.mutating.set(true);
+    let result: NetworkDeviceTestResult | null = null;
+    try {
+      const response = await this.api.post<{ data?: NetworkDeviceTestResult }>(
+        `${ENDPOINT}/${this.recordUUID(row)}/test`,
+        {},
+      );
+      result = response?.data ?? null;
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to test the network device.'));
+      return;
+    } finally {
+      this.mutating.set(false);
+    }
+    if (!result) return;
+    const warned = result.checks.some((check) => check.status === 'warn');
+    const tone: DataViewerTone = !result.passed ? 'danger' : warned ? 'warning' : 'success';
+    openDataViewerDialog(this.dialog, {
+      title: this.t('Network device test'),
+      description: this.t(
+        'Read-only checks with the stored credential; nothing is changed on the device.',
+      ),
+      status: {
+        label: 'Result',
+        value: this.t(!result.passed ? 'Failed' : warned ? 'Passed with warnings' : 'Passed'),
+        tone,
+      },
+      details: [
+        { label: 'Name', value: row['HndName'] },
+        { label: 'Identity', value: result.identity['name'] ?? '-' },
+        { label: 'Model', value: result.identity['board'] ?? '-' },
+        { label: 'Version', value: result.identity['version'] ?? '-' },
+      ],
+      sections: [
+        {
+          title: this.t('Checks'),
+          table: {
+            columns: [
+              { key: 'label', label: 'Check', translate: true },
+              { key: 'result', label: 'Result', translate: true },
+              { key: 'detail', label: 'Detail' },
+            ],
+            rows: result.checks.map((check) => ({
+              label: check.label,
+              result: CHECK_RESULT[check.status],
+              detail: check.detail,
+            })),
+          },
+        },
+      ],
+    });
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
