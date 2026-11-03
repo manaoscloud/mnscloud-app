@@ -138,6 +138,15 @@ function members(row: ConfigurableCrudRecord) {
       { id: 'cps', field: 'VcmCapacityCps', label: 'voipCluster.capacityCps' },
       { id: 'failureDomain', field: 'VcmFailureDomain', label: 'voipCluster.failureDomain' },
       {
+        id: 'observedChannelStarts',
+        field: 'VloChannelStartsPeak',
+        label: 'voipCluster.observedChannelStarts',
+        value: (member, t) =>
+          member['VloChannelStartsPeak'] == null
+            ? t('voipCluster.unknown')
+            : String(Number(member['VloChannelStartsPeak'])),
+      },
+      {
         id: 'observedCalls',
         field: 'VloActiveCalls',
         label: 'voipCluster.observedCalls',

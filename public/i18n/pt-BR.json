@@ -11284,6 +11284,7 @@
   "Firewall": "Firewall",
   "Device type": "Tipo de equipamento",
   "voipCluster": {
+    "observedChannelStarts": "Pico observado de canais/s",
     "prepare": "Preparar servidor",
     "preparationQueued": "Reconciliação solicitada. O estado será atualizado após a verificação pelo Agent.",
     "title": "Clusters VoIP",

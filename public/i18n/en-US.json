@@ -11283,6 +11283,7 @@
   "Firewall": "Firewall",
   "Device type": "Device type",
   "voipCluster": {
+    "observedChannelStarts": "Observed channel starts/s peak",
     "prepare": "Prepare server",
     "preparationQueued": "Reconciliation requested. State changes after Agent verification.",
     "title": "VoIP clusters",
