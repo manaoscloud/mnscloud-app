@@ -1,4 +1,5 @@
 {
+  "hostingVps.platformCustomerHelp": "Deje vacío para una VPS interna de la plataforma, sin suscripción comercial. Seleccione un cliente para una VPS comercial. La propiedad no se puede cambiar después de la creación.",
   "nav.sale.accounts": "Cuentas",
   "commerceAccount.title": "Cuentas comerciales",
   "commerceAccount.description": "Separe el catálogo, los precios, los compradores y los presupuestos de cada tienda de cliente del revendedor, junto con la cuenta interna.",
