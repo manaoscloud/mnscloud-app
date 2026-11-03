@@ -4440,6 +4440,7 @@
   "operations.kind.activityLog": "Activity log",
   "operations.action.provision": "Provision",
   "operations.action.update": "Update",
+  "operations.action.updateQuota": "Update mailbox quota",
   "operations.action.delete": "Delete",
   "operations.action.deprovision": "Deprovision",
   "operations.action.sync": "Sync",

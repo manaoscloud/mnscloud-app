@@ -4440,6 +4440,7 @@
   "operations.kind.activityLog": "Registro de actividad",
   "operations.action.provision": "Aprovisionar",
   "operations.action.update": "Actualizar",
+  "operations.action.updateQuota": "Cambiar cuota de correo",
   "operations.action.delete": "Eliminar",
   "operations.action.deprovision": "Desaprovisionar",
   "operations.action.sync": "Sincronizar",

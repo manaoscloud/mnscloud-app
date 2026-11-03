@@ -4441,6 +4441,7 @@
   "operations.kind.activityLog": "Registro de atividade",
   "operations.action.provision": "Provisionar",
   "operations.action.update": "Atualizar",
+  "operations.action.updateQuota": "Alterar quota de e-mail",
   "operations.action.delete": "Excluir",
   "operations.action.deprovision": "Desprovisionar",
   "operations.action.sync": "Sincronizar",
