@@ -3224,6 +3224,13 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'authentication.dashboard' },
               },
               {
+                path: 'voip/clusters',
+                loadComponent: () =>
+                  import('./pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
+                title: 'VoIP clusters | mnscloud',
+                data: { scope: 'master', breadcrumb: 'voipCluster.title' },
+              },
+              {
                 path: 'authentication/clusters',
                 loadComponent: () =>
                   import('./pages/authentication/clusters/clusters').then(
