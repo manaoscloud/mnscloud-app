@@ -1,3 +1,4 @@
+import { crmRecordColumn, crmOperatorFilter } from '../crm-table-fields';
 import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
@@ -126,42 +127,15 @@ const config = defineCrud({
   columns: [
     crmWorkspaceColumn,
     industryReferenceColumn(),
-    {
-      id: 'CacName',
-      field: 'CacName',
-      label: 'crm.field.Name',
-      kind: 'identity',
-    },
-    {
-      id: 'CacDocument',
-      field: 'CacDocument',
-      label: 'crm.field.Document',
-      kind: 'text',
-    },
-    {
-      id: 'CacState',
-      field: 'CacState',
-      label: 'crm.field.RegionState',
-      kind: 'text',
-    },
-    {
-      id: 'CacStatus',
-      field: 'CacStatus',
-      label: 'crm.field.Status',
-      kind: 'status',
-    },
+    crmRecordColumn('CacName', 'crm.field.Name', 'identity'),
+    crmRecordColumn('CacDocument', 'crm.field.Document'),
+    crmRecordColumn('CacState', 'crm.field.RegionState'),
+    crmRecordColumn('CacStatus', 'crm.field.Status', 'status'),
   ],
   listFilters: [
     crmWorkspaceFilter,
     ...economicClassificationFilters(),
-    {
-      key: 'AssignedUserUsrUUID',
-      paramKey: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: { endpoint: 'crm/members', uuidField: 'UsrUUID', labelField: 'UsrName' },
-    },
+    crmOperatorFilter,
     {
       key: 'CacType',
       paramKey: 'CacType',

@@ -1,3 +1,4 @@
+import { crmRecordColumn, crmOperatorFilter } from '../../src/app/pages/crm/crm-table-fields.ts';
 import {
   crmWorkspaceField,
   crmWorkspaceFilter,
@@ -41,6 +42,8 @@ function formConfigs() {
             'crmWorkspaceField',
             'crmWorkspaceFilter',
             'crmWorkspaceColumn',
+            'crmRecordColumn',
+            'crmOperatorFilter',
             `return ${node.arguments[0].getText(source)}`,
           )(
             (v) => v,
@@ -55,6 +58,8 @@ function formConfigs() {
             crmWorkspaceField,
             crmWorkspaceFilter,
             crmWorkspaceColumn,
+            crmRecordColumn,
+            crmOperatorFilter,
           ),
         });
       }

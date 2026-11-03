@@ -1,3 +1,4 @@
+import { crmRecordColumn, crmOperatorFilter } from '../crm-table-fields';
 import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
@@ -187,30 +188,10 @@ const config = defineCrud({
       label: 'crm.title.products',
       kind: 'text',
     },
-    {
-      id: 'CleName',
-      field: 'CleName',
-      label: 'crm.field.Name',
-      kind: 'identity',
-    },
-    {
-      id: 'CleEmail',
-      field: 'CleEmail',
-      label: 'crm.field.Email',
-      kind: 'text',
-    },
-    {
-      id: 'ClePhone',
-      field: 'ClePhone',
-      label: 'crm.field.Phone',
-      kind: 'phone',
-    },
-    {
-      id: 'CleDocument',
-      field: 'CleDocument',
-      label: 'crm.field.Document',
-      kind: 'text',
-    },
+    crmRecordColumn('CleName', 'crm.field.Name', 'identity'),
+    crmRecordColumn('CleEmail', 'crm.field.Email'),
+    crmRecordColumn('ClePhone', 'crm.field.Phone', 'phone'),
+    crmRecordColumn('CleDocument', 'crm.field.Document'),
     {
       id: 'CleState',
       field: 'CleState',
@@ -218,30 +199,13 @@ const config = defineCrud({
       kind: 'text',
       options: CRM_OPTIONS.leadStates,
     },
-    {
-      id: 'CleNextContactAt',
-      field: 'CleNextContactAt',
-      label: 'crm.field.NextContactAt',
-      kind: 'datetime',
-    },
-    {
-      id: 'CleStatus',
-      field: 'CleStatus',
-      label: 'crm.field.Status',
-      kind: 'status',
-    },
+    crmRecordColumn('CleNextContactAt', 'crm.field.NextContactAt', 'datetime'),
+    crmRecordColumn('CleStatus', 'crm.field.Status', 'status'),
   ],
   listFilters: [
     crmWorkspaceFilter,
     ...economicClassificationFilters(),
-    {
-      key: 'AssignedUserUsrUUID',
-      paramKey: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: { endpoint: 'crm/members', uuidField: 'UsrUUID', labelField: 'UsrName' },
-    },
+    crmOperatorFilter,
     {
       key: 'CleState',
       paramKey: 'CleState',
