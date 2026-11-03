@@ -1,3 +1,4 @@
+import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
 import {
@@ -13,6 +14,7 @@ const config = defineCrud({
   pageTitle: 'crm.title.pipelines',
   pageDescription: 'crm.description.pipelines',
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CpiName: '',
     CpiStatus: 1,
   },
@@ -25,6 +27,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CpiName',
       source: 'CpiName',
@@ -35,6 +38,7 @@ const config = defineCrud({
     { key: 'CpiRevision', source: 'CpiRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    crmWorkspaceColumn,
     {
       id: 'CpiName',
       field: 'CpiName',
@@ -48,7 +52,7 @@ const config = defineCrud({
       kind: 'status',
     },
   ],
-  listFilters: [],
+  listFilters: [crmWorkspaceFilter],
   serverSidePagination: true,
   // CRM deletion is individually audited; see app.md, CRM form baseline.
   bulkDelete: false,

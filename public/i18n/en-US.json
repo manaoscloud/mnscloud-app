@@ -11323,5 +11323,6 @@
     "reservedCps": "Channel starts per second reservation",
     "placementHelp": "Optional. On creation, the cluster selects a server with verified capacity and reserves the requested demand. Existing accounts are not moved."
   },
-  "nav.voip.clusters": "Clusters"
+  "nav.voip.clusters": "Clusters",
+  "crm.field.Workspace": "Workspace"
 }
