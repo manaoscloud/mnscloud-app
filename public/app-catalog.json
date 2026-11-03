@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "38e2c6122324",
+  "version": "f2bd6e484bce",
   "language": "pt-BR",
   "entries": [
     {
@@ -9960,6 +9960,51 @@
       "title": "Painel",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/system/voip/clusters",
+      "menuPath": "VoIP › Clusters",
+      "scope": "platform",
+      "title": "voipCluster.title",
+      "description": "voipCluster.description",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.purpose",
+          "help": ""
+        },
+        {
+          "label": "Motor",
+          "help": "voipCluster.engineHelp"
+        },
+        {
+          "label": "voipCluster.region",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.reserve",
+          "help": "voipCluster.reserveHelp"
+        },
+        {
+          "label": "voipCluster.maxAge",
+          "help": "voipCluster.maxAgeHelp"
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/system/voip/domains",

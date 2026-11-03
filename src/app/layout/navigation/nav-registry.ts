@@ -1736,6 +1736,16 @@ export const NAV_ITEMS: NavItem[] = [
           },
         ],
       },
+      {
+        id: 'voip/clusters',
+        label: 'nav.voip.clusters',
+        icon: 'hub',
+        category: 'platform',
+        masterRoute: '/system/voip/clusters',
+        scope: 'master',
+        permissions: ['platform.master.access'],
+        requiresEnvironment: false,
+      },
     ],
   },
   // ✅ Realtime media/signaling infrastructure
