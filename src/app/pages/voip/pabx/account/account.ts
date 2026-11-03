@@ -154,6 +154,7 @@ function config(): ConfigurableCrudConfig {
           labelField: 'VclName',
           descriptionField: 'VclEngine',
         },
+        quickCreate: false,
         quickCreateExemptReason:
           'Clusters are platform infrastructure; tenant accounts select existing clusters and cannot create infrastructure.',
         disabledWhen: ({ editing }) => editing,
