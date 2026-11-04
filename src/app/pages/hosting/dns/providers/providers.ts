@@ -23,7 +23,41 @@ type HostingDnsProviderCatalogItem = {
   supportsRegistration: boolean;
   credentialFields?: HostingDnsProviderCredentialField[];
   requiredCredentialFields?: HostingDnsProviderCredentialField[];
+  credentialLabels?: Partial<Record<HostingDnsProviderCredentialField, string>>;
+  capabilities?: HostingDnsProviderCapabilities;
 };
+
+/** What the platform manages through each provider (API catalog), shown side by side. */
+type HostingDnsProviderCapabilities = {
+  dnssec?: boolean;
+  zoneTransfer?: boolean;
+  privateZones?: boolean;
+  resolverAndFilter?: boolean;
+  probes?: boolean;
+  onPremise?: boolean;
+  registration?: boolean;
+  dataInBrazil?: boolean;
+};
+
+type HostingDnsManagedProviderItem = {
+  value: string;
+  label: string;
+  capabilities?: HostingDnsProviderCapabilities;
+};
+
+const CAPABILITY_LABELS: readonly [keyof HostingDnsProviderCapabilities, string][] = [
+  ['dnssec', 'DNSSEC'],
+  ['zoneTransfer', 'Zone transfer'],
+  ['privateZones', 'Private zones'],
+  ['resolverAndFilter', 'Resolver and filter'],
+  ['probes', 'Probes'],
+  ['onPremise', 'On-premises servers'],
+  ['registration', 'Registration'],
+  ['dataInBrazil', 'Data in Brazil'],
+];
+
+/** Last catalog received from the API; field rules fall back to the built-in list until then. */
+let activeCatalog: HostingDnsProviderCatalogItem[] = [];
 
 type HostingDnsProviderTestResult = {
   providerUUID: string;
@@ -259,10 +293,11 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     this.catalog().map((item) => ({
       value: item.value,
       label: item.label,
-      description: providerCatalogDescription(item),
+      description: this.capabilityDescription(item),
       searchText: `${item.value} ${item.label}`,
     })),
   );
+  private readonly managedOption = signal<ConfigurableCrudOption>(MANAGED_PROVIDER_OPTION);
 
   constructor() {
     super(HOSTING_DNS_PROVIDER_CONFIG);
@@ -277,7 +312,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return this.providerOptions();
     // The list also shows the own authoritative clusters' providers, which are never created here.
-    if (key === 'platform') return [...this.providerOptions(), MANAGED_PROVIDER_OPTION];
+    if (key === 'platform') return [...this.providerOptions(), this.managedOption()];
     if (key === 'scope') return SCOPE_OPTIONS;
     return [];
   }
@@ -341,17 +376,41 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     if (action.key === 'test' && this.ownsRow(row)) await this.testProvider(row);
   }
 
+  private capabilityDescription(item: {
+    capabilities?: HostingDnsProviderCapabilities;
+    supportsApi?: boolean;
+    supportsDns?: boolean;
+    supportsRegistration?: boolean;
+  }): string {
+    if (!item.capabilities) return providerCatalogDescription(item);
+    const labels = CAPABILITY_LABELS.filter(([key]) => item.capabilities?.[key]).map(([, label]) =>
+      this.t(label),
+    );
+    return ['DNS', ...labels].join(' · ');
+  }
+
   private async fetchCatalog() {
     try {
-      const response = await this.api.get<{ data?: { items?: HostingDnsProviderCatalogItem[] } }>(
-        `${this.endpoint()}/catalog`,
-      );
-      const items = (response?.data?.items ?? []).filter(
-        (item) => item.value === 'route53' || item.value === 'cpanel_dnsonly',
-      );
-      this.catalog.set(items.length ? items : fallbackCatalog());
+      const response = await this.api.get<{
+        data?: {
+          items?: HostingDnsProviderCatalogItem[];
+          managed?: HostingDnsManagedProviderItem[];
+        };
+      }>(`${this.endpoint()}/catalog`);
+      const items = (response?.data?.items ?? []).filter((item) => item.value && item.label);
+      activeCatalog = items.length ? items : fallbackCatalog();
+      this.catalog.set(activeCatalog);
+      const managed = response?.data?.managed?.find((item) => item.value === 'mnscloud_dns');
+      if (managed) {
+        this.managedOption.set({
+          ...MANAGED_PROVIDER_OPTION,
+          label: managed.label,
+          description: this.capabilityDescription(managed),
+        });
+      }
     } catch (error) {
-      this.catalog.set(fallbackCatalog());
+      activeCatalog = fallbackCatalog();
+      this.catalog.set(activeCatalog);
       this.snack.error(this.errorMessage(error) || 'Failed to load provider catalog.');
     }
   }
@@ -436,7 +495,11 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   }
 }
 
-function providerCatalogDescription(item: HostingDnsProviderCatalogItem): string {
+function providerCatalogDescription(item: {
+  supportsApi?: boolean;
+  supportsDns?: boolean;
+  supportsRegistration?: boolean;
+}): string {
   const capabilities = [
     item.supportsApi ? 'API' : '',
     item.supportsDns ? 'DNS' : '',
@@ -445,18 +508,26 @@ function providerCatalogDescription(item: HostingDnsProviderCatalogItem): string
   return capabilities.join(' / ');
 }
 
+function catalogItem(provider: unknown): HostingDnsProviderCatalogItem | undefined {
+  return activeCatalog.find((item) => item.value === String(provider ?? ''));
+}
+
 function providerUsesField(field: HostingDnsProviderCredentialField, provider: unknown): boolean {
-  return fallbackCredentialFields(String(provider ?? '')).includes(field);
+  const fields = catalogItem(provider)?.credentialFields;
+  return (fields ?? fallbackCredentialFields(String(provider ?? ''))).includes(field);
 }
 
 function providerRequiresField(
   field: HostingDnsProviderCredentialField,
   provider: unknown,
 ): boolean {
-  return fallbackRequiredCredentialFields(String(provider ?? '')).includes(field);
+  const fields = catalogItem(provider)?.requiredCredentialFields;
+  return (fields ?? fallbackRequiredCredentialFields(String(provider ?? ''))).includes(field);
 }
 
 function providerFieldLabel(field: HostingDnsProviderCredentialField, provider: unknown): string {
+  const catalogLabel = catalogItem(provider)?.credentialLabels?.[field];
+  if (catalogLabel) return catalogLabel;
   const normalizedProvider = String(provider ?? '');
   if (normalizedProvider === 'route53') {
     const labels: Partial<Record<HostingDnsProviderCredentialField, string>> = {

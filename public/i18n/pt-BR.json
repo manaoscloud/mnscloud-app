@@ -11373,5 +11373,12 @@
     "unsupported": "Restrição não suportada",
     "unavailableResource": "Recurso indisponível",
     "and": "e"
-  }
+  },
+  "DNSSEC": "DNSSEC",
+  "Zone transfer": "Transferência de zona",
+  "Private zones": "Zonas privadas",
+  "Resolver and filter": "Resolvedor e filtro",
+  "Probes": "Sondas",
+  "On-premises servers": "Servidores no cliente",
+  "Data in Brazil": "Dados no Brasil"
 }
