@@ -200,11 +200,17 @@ enforces it with the label rules and requires one group icon per category
   (after permissions, entitlements and search): an area title appears above the first visible root
   of its area. In the **expanded menu** (desktop and mobile, user decision 2026-10-31) a category
   with 2 or more visible entries is a **collapsible group row** like the module itself (category
-  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), one open group per
-  parent, opened automatically on the path of the current page; a category with a single visible
-  entry shows that entry directly; no category title is shown. Search opens every group with a
+  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), opened
+  automatically on the path of the current page; a category with a single visible entry shows that
+  entry directly; no category title is shown. The expanded menu is an **accordion at every level**
+  (user decision 2026-11-04, `toggleNavSection`): opening a module, group or page group closes its
+  open siblings, the one on the current page path included (it keeps its active highlight), and
+  everything open below them; closing an entry only closes it. Search opens every group with a
   match and also matches category words; the unread dot lights the group too. In the **compact
-  rail** an area is a divider and the flyouts keep category titles.
+  rail** an area is a divider and the flyouts keep category titles; flyout rows look like the
+  expanded menu rows (40px pill, same label size and tints), never shrink (a long list scrolls
+  inside the flyout) and the flyout is placed from its real height to stay inside the viewport
+  (`fitCompactFlyout`).
 - Visibility is still inherited from the nearest ancestor (`filterMenu`): titles never change it,
   and an entry that moves to another parent states its own `scope`/`entitlementCode`.
 
