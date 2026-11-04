@@ -1444,19 +1444,19 @@ function configString(value: unknown, key: keyof HostingVpsInstanceConfig): stri
   return typeof field === 'string' ? field : '';
 }
 
+/**
+ * An image option shows only the operating system. The server takes CPU, memory and disk from
+ * the plan; image hardware is only the minimum used to hide images the plan cannot run
+ * (`isImageCompatibleWithPlan`), so it is not shown as if it were the server size.
+ */
 function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
   const name = option.name || option.label || option.id;
   const versionArch = [option.version, option.architecture].filter(Boolean).join(' ');
-  const specs = [
-    option.cpu ? `${option.cpu} vCPU` : null,
-    option.memoryMb ? `${option.memoryMb} MB` : null,
-    option.minDiskGb || option.diskGb ? `${option.minDiskGb || option.diskGb} GB` : null,
-  ].filter(Boolean);
-  const meta = [option.source, option.type, ...specs].filter(Boolean).join(' · ');
+  const label = [name, versionArch].filter(Boolean).join(' ');
   return {
     value: option.id,
-    label: [name, versionArch].filter(Boolean).join(' '),
-    description: [meta, option.slug || option.id].filter(Boolean).join(' · '),
+    label,
+    description: [option.source, option.slug || option.id].filter(Boolean).join(' · '),
     searchText: [
       option.id,
       option.label,
@@ -1466,7 +1466,6 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
       option.architecture,
       option.type,
       option.slug,
-      ...specs,
     ]
       .filter(Boolean)
       .join(' '),
