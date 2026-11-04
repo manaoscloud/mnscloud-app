@@ -544,6 +544,17 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       field.disabledWhen = (context) => this.isProvisionedEdit() || Boolean(previous?.(context));
     }
 
+    // Image providers need a chosen image when the plan has none (the API refuses it too).
+    const imageField = this.config.fields.find((item) => item.key === 'image');
+    if (imageField) {
+      imageField.requiredWhen = ({ editing, values }) => {
+        if (editing) return false;
+        const plan = this.planById(String(values['planUUID'] ?? ''));
+        if (!plan || normalizeString(plan.HvpImage)) return false;
+        return IMAGE_PROVIDERS.has(String(plan.HvpProvider ?? '').toLowerCase());
+      };
+    }
+
     const planField = this.config.fields.find((item) => item.key === 'planUUID');
     if (planField) {
       const previous = planField.disabledWhen;
@@ -1415,6 +1426,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return this.t('Platform provider');
   }
 }
+
+/** Providers whose servers are created from an image chosen per server (or the plan's). */
+const IMAGE_PROVIDERS = new Set(['proxmox', 'digitalocean', 'lightsail']);
 
 function instanceImageFromRecord(row: ConfigurableCrudRecord): string {
   const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
