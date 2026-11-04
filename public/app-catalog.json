@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0d971461ad22",
+  "version": "3f8f5d1ee334",
   "language": "pt-BR",
   "entries": [
     {
@@ -10786,6 +10786,18 @@
         {
           "label": "Tenant",
           "help": ""
+        },
+        {
+          "label": "capacityAccess.restrict",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.clusters",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.providers",
+          "help": "capacityAccess.scopeHelp"
         },
         {
           "label": "Expiração",

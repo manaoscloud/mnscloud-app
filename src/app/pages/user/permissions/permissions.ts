@@ -169,7 +169,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
         uuidField: 'HvrUUID',
         labelField: 'HvrName',
       },
-      quickCreate: quickCreateFor('HostingVpsProviderHvrUUID'),
+      quickCreate: quickCreateFor('HostingVpsProviderHvrUUID', { routeData: { scope: 'master' } }),
       help: 'capacityAccess.scopeHelp',
     },
     {
