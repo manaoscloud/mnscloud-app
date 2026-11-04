@@ -1,4 +1,6 @@
 {
+  "hostingVps.platformDescription": "Gerencie VPS internas da plataforma e VPS comerciais de clientes. Selecione um ambiente para escolher seus clientes.",
+  "hostingVps.platformCustomerHelp": "Deixe vazio para uma VPS interna da plataforma, sem assinatura comercial. Selecione um cliente para uma VPS comercial. A propriedade não pode ser alterada depois da criação.",
   "nav.sale.accounts": "Contas",
   "commerceAccount.title": "Contas comerciais",
   "commerceAccount.description": "Separe catálogo, preços, compradores e orçamentos de cada loja de cliente da revenda, mantendo a conta interna.",

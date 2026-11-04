@@ -1,6 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../../../services/auth.service';
+import {
+  normalizeEnvironmentUUID,
+  readStoredEnvironmentUUID,
+} from '../../../../core/environment/environment-context';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -383,6 +388,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
 })
 export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
+  private readonly vpsAuth = inject(AuthService);
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<HostingVpsProvider[]>([]);
   private readonly plans = signal<HostingVpsPlan[]>([]);
@@ -499,20 +505,26 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   });
 
   constructor() {
-    super(HOSTING_VPS_INSTANCE_CONFIG);
+    super({
+      ...HOSTING_VPS_INSTANCE_CONFIG,
+      fields: HOSTING_VPS_INSTANCE_CONFIG.fields.map((field) => ({ ...field })),
+      listFilters: HOSTING_VPS_INSTANCE_CONFIG.listFilters?.map((filter) => ({ ...filter })),
+    });
 
-    const customerFilter = HOSTING_VPS_INSTANCE_CONFIG.listFilters?.find(
-      (filter) => filter.key === 'customerUUID',
-    );
-    if (customerFilter) customerFilter.hiddenWhen = undefined;
+    const customerFilter = this.config.listFilters?.find((filter) => filter.key === 'customerUUID');
+    if (this.isMaster()) {
+      this.config.pageDescription = 'hostingVps.platformDescription';
+      this.config.dialogDescription = 'hostingVps.platformCustomerHelp';
+    }
+    if (customerFilter) customerFilter.hiddenWhen = () => !this.hasCustomerScope();
 
-    const customerField = HOSTING_VPS_INSTANCE_CONFIG.fields.find(
-      (field) => field.key === 'customerUUID',
-    );
+    const customerField = this.config.fields.find((field) => field.key === 'customerUUID');
     if (customerField) {
-      customerField.hiddenWhen = undefined;
-      customerField.required = true;
-      customerField.requiredWhen = undefined;
+      customerField.hiddenWhen = () => !this.hasCustomerScope();
+      customerField.required = false;
+      customerField.requiredWhen = () => !this.isMaster();
+      customerField.disabledWhen = ({ editing }) => editing;
+      customerField.helpWhen = () => (this.isMaster() ? 'hostingVps.platformCustomerHelp' : '');
     }
 
     const provisionedLockKeys = [
@@ -526,13 +538,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       'notes',
     ];
     for (const key of provisionedLockKeys) {
-      const field = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === key);
+      const field = this.config.fields.find((item) => item.key === key);
       if (!field) continue;
       const previous = field.disabledWhen;
       field.disabledWhen = (context) => this.isProvisionedEdit() || Boolean(previous?.(context));
     }
 
-    const planField = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === 'planUUID');
+    const planField = this.config.fields.find((item) => item.key === 'planUUID');
     if (planField) {
       const previous = planField.disabledWhen;
       planField.disabledWhen = (context) => context.editing || Boolean(previous?.(context));
@@ -1171,7 +1183,21 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
+  private hasCustomerScope(): boolean {
+    return (
+      !this.isMaster() ||
+      Boolean(
+        readStoredEnvironmentUUID() ??
+        normalizeEnvironmentUUID(this.vpsAuth.user()?.EnvironmentUUID),
+      )
+    );
+  }
+
   private async fetchCustomers() {
+    if (!this.hasCustomerScope()) {
+      this.customers.set([]);
+      return;
+    }
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         'registry/customers?status=1&limit=500&offset=0',
