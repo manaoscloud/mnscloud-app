@@ -5479,6 +5479,8 @@
   "Default customer network CIDR": "CIDR predeterminado de la red del cliente",
   "Server network VLAN tag": "VLAN de la red de los servidores",
   "Customers may create servers": "Los clientes pueden crear servidores",
+  "When No, customers do not see the plans of this provider and cannot create servers on it; test tenants are not limited. On Proxmox, Yes requires the isolated network per customer (EVPN).": "Con No, los clientes no ven los planes de este proveedor y no pueden crear servidores en él; los tenants de prueba no están limitados. En Proxmox, Sí requiere la red aislada por cliente (EVPN).",
+  "Turn on the isolated network per customer (EVPN) before allowing customers on Proxmox.": "Active la red aislada por cliente (EVPN) antes de habilitar clientes en Proxmox.",
   "Enter both ends of an ordered VNI range.": "Indique los dos extremos de un rango de VNI ordenado.",
   "Enter a VLAN tag between 1 and 4094.": "Indique una VLAN entre 1 y 4094.",
   "Enter both ends of an ordered reserved VLAN/VNI range.": "Ingrese ambos límites ordenados del rango VLAN/VNI reservado.",
