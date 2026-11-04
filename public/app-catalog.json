@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3e1b60182f65",
+  "version": "5ce1b06a5c9a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3018,15 +3018,15 @@
         },
         {
           "label": "Cliente",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Plano",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Registro",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Nome",
