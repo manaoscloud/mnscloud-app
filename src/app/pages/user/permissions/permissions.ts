@@ -1,3 +1,4 @@
+import { capacityScopeLabel } from '../capacity-scope';
 import { Component, computed, inject, signal } from '@angular/core';
 
 /** Special permission grants CRUD — uses shared ConfigurableCrudPageBase (app.md generic CRUD). */
@@ -75,6 +76,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
     providerUUIDs: [],
   },
   columns: [
+    { id: 'resourceScope', label: 'capacityAccess.resourceScope', value: capacityScopeLabel },
     { id: 'userName', label: 'User', kind: 'identity', field: 'userName', uuidField: 'userUUID' },
     { id: 'permissionCode', label: 'Permission', field: 'permissionCode' },
     { id: 'scope', label: 'Scope', field: 'scope', translateValue: true },
@@ -254,6 +256,11 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
         { label: 'Tenant', value: row['environmentName'] || '-' },
         { label: 'Expires', value: row['expiresAt'], kind: 'datetime' },
         { label: 'Reason', value: row['reason'] || '-', wide: true },
+        {
+          label: 'capacityAccess.resourceScope',
+          value: capacityScopeLabel(row, (key) => this.t(key)),
+          wide: true,
+        },
       ],
     });
   }

@@ -2,6 +2,7 @@ import type {
   ConfigurableCrudConfig,
   ConfigurableCrudRecord,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { capacityScopeLabel } from './capacity-scope';
 import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
 
 /** The canonical role-assignment collection; permissions stay on the reusable role. */
@@ -98,6 +99,7 @@ export function capacityAssignments(role: ConfigurableCrudRecord): ConfigurableC
       },
     ],
     columns: [
+      { id: 'resourceScope', label: 'capacityAccess.resourceScope', value: capacityScopeLabel },
       { id: 'user', field: 'userName', label: 'User', kind: 'identity', uuidField: 'userUUID' },
       { id: 'email', field: 'userEmail', label: 'E-mail' },
       { id: 'status', field: 'status', label: 'Status', kind: 'status' },

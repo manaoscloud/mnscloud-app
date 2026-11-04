@@ -11358,6 +11358,12 @@
     "revokeConfirm": "Revoke this profile assignment?",
     "assigned": "Profile assigned with resource restrictions.",
     "revoked": "Profile assignment revoked.",
-    "revokeFailed": "Failed to revoke profile assignment."
+    "revokeFailed": "Failed to revoke profile assignment.",
+    "resourceScope": "Resource restrictions",
+    "scopeUnavailable": "Restrictions unavailable",
+    "unrestricted": "No resource restrictions",
+    "unsupported": "Unsupported restriction",
+    "unavailableResource": "Unavailable resource",
+    "and": "and"
   }
 }

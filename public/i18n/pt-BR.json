@@ -11359,6 +11359,12 @@
     "revokeConfirm": "Revogar este vínculo de perfil?",
     "assigned": "Perfil vinculado com restrições por recurso.",
     "revoked": "Vínculo de perfil revogado.",
-    "revokeFailed": "Falha ao revogar vínculo de perfil."
+    "revokeFailed": "Falha ao revogar vínculo de perfil.",
+    "resourceScope": "Restrições por recurso",
+    "scopeUnavailable": "Restrições indisponíveis",
+    "unrestricted": "Sem restrições por recurso",
+    "unsupported": "Restrição não suportada",
+    "unavailableResource": "Recurso indisponível",
+    "and": "e"
   }
 }
