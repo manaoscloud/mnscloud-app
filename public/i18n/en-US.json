@@ -11379,5 +11379,10 @@
   "Resolver and filter": "Resolver and filter",
   "Probes": "Probes",
   "On-premises servers": "On-premises servers",
-  "Data in Brazil": "Data in Brazil"
+  "Data in Brazil": "Data in Brazil",
+  "dns.visibility": "Visibility",
+  "dns.visibilityDescription": "A public zone answers everyone. A private zone answers only the client networks of the cluster (internal names and private addresses) and is never copied to secondary servers.",
+  "dns.visibilityHelp": "To make a signed zone private, turn DNSSEC off first (and remove the DS at the registry).",
+  "dns.visibilityPublic": "Public",
+  "dns.visibilityPrivate": "Private"
 }

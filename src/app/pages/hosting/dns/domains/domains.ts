@@ -18,6 +18,12 @@ import { DNS_BOOLEAN_OPTIONS } from '../../../dns/dns-input';
 
 /** DNSSEC state read right before its form opens (zones on the MNSCloud DNS provider, D7b). */
 let dnssecValues: ConfigurableCrudRecord = {};
+/** Zone visibility read right before its form opens (private zones, PD3). */
+let visibilityValues: ConfigurableCrudRecord = {};
+const DNS_VISIBILITY_OPTIONS = [
+  { value: 'public', label: 'dns.visibilityPublic' },
+  { value: 'private', label: 'dns.visibilityPrivate' },
+];
 
 const IN_FLIGHT_OPERATION_STATES = new Set(['queued', 'running', 'waiting_retry', 'verifying']);
 
@@ -428,7 +434,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
         : []),
       ...(String(row['ProviderPlatform'] ?? row['HddProvider']).toLowerCase() === 'mnscloud_dns' &&
       row['HddLastProvisionedAt']
-        ? [this.dnssecAction(row)]
+        ? [this.dnssecAction(row), this.visibilityAction(row)]
         : []),
       {
         ...PROVISION_DOMAIN_ACTION,
@@ -492,7 +498,58 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
     };
   }
 
+  private visibilityEndpoint(row: ConfigurableCrudRecord): string {
+    const prefix = this.isMaster() ? 'system/hosting/dns' : 'hosting/dns';
+    return `${prefix}/domains/${this.recordUUID(row)}/visibility`;
+  }
+
+  /** Public: answered to everyone. Private: only the cluster client networks, never transferred. */
+  private visibilityAction(row: ConfigurableCrudRecord): ConfigurableCrudRowAction {
+    return {
+      key: 'visibility',
+      label: 'dns.visibility',
+      icon: 'visibility',
+      form: () =>
+        defineCrud({
+          endpoint: this.visibilityEndpoint(row),
+          uuidField: 'zone',
+          pageTitle: 'dns.visibility',
+          pageDescription: 'dns.visibilityDescription',
+          createTitle: 'dns.visibility',
+          dialogDescription: 'dns.visibilityDescription',
+          canEdit: false,
+          canDelete: false,
+          bulkDelete: false,
+          columns: [],
+          initialValues: { visibility: String(visibilityValues['visibility'] ?? 'public') },
+          payload: (values) => ({ visibility: String(values['visibility']) }),
+          fields: [
+            {
+              key: 'visibility',
+              label: 'dns.visibility',
+              type: 'select',
+              required: true,
+              translateOptions: true,
+              options: DNS_VISIBILITY_OPTIONS,
+              help: 'dns.visibilityHelp',
+            },
+          ],
+        }),
+    };
+  }
+
   override async runRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === 'visibility') {
+      try {
+        const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+          this.visibilityEndpoint(row),
+        );
+        visibilityValues = response?.data ?? {};
+      } catch (error) {
+        this.snack.error(this.t(this.errorMessage(error)));
+        return;
+      }
+    }
     if (action.key === 'dnssec') {
       try {
         const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
