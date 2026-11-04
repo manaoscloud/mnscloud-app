@@ -320,8 +320,25 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
+  // Platform providers are a choice for tenant domains; only the platform page manages or tests them.
+  private ownsRow(row: ConfigurableCrudRecord): boolean {
+    return this.isMaster() || String(row['HdpScope'] ?? '').toUpperCase() !== 'MASTER';
+  }
+
+  override canEditRow(row: ConfigurableCrudRecord): boolean {
+    return this.ownsRow(row) && super.canEditRow(row);
+  }
+
+  override canDeleteRow(row: ConfigurableCrudRecord): boolean {
+    return this.ownsRow(row) && super.canDeleteRow(row);
+  }
+
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return this.ownsRow(row) ? super.rowActions(row) : [];
+  }
+
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    if (action.key === 'test') await this.testProvider(row);
+    if (action.key === 'test' && this.ownsRow(row)) await this.testProvider(row);
   }
 
   private async fetchCatalog() {
