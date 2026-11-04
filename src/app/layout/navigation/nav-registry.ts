@@ -22,6 +22,8 @@ export interface NavItem {
   children?: NavItem[];
 
   permissions?: string[];
+  /** Server-confirmed navigation hint, never a global permission. */
+  resourceAccess?: 'voipCapacityRead';
 
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
@@ -1740,10 +1742,11 @@ export const NAV_ITEMS: NavItem[] = [
         id: 'voip/clusters',
         label: 'nav.voip.clusters',
         icon: 'hub',
-        category: 'platform',
-        masterRoute: '/system/voip/clusters',
-        scope: 'master',
-        permissions: ['platform.master.access'],
+        category: 'operation',
+        route: '/system/voip/clusters',
+        scope: 'public',
+        entitlementCode: '',
+        resourceAccess: 'voipCapacityRead',
         requiresEnvironment: false,
       },
     ],

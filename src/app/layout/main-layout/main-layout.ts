@@ -1,3 +1,4 @@
+import { visibleNavigation } from '../navigation/nav-visibility';
 import { MatDialog } from '@angular/material/dialog';
 // ==========================================================
 // Layout: main-layout.ts
@@ -66,7 +67,7 @@ import { BillingService } from '../../pages/billing/shared/billing.service';
 import { SupportReportService } from '../../services/support-report.service';
 import { HelpVideoService } from '../../services/help-video.service';
 import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
-import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
+import { NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import {
   NAV_CATEGORY_ICONS,
   isNavCategoryGroupId,
@@ -881,6 +882,7 @@ export class MainLayout {
   }
 
   private hasPermissions(item: NavItem): boolean {
+    if (item.resourceAccess && this.auth.user()?.resourceAccess?.[item.resourceAccess] !== true) return false;
     if (!item.permissions || item.permissions.length === 0) return true;
     return item.permissions.every((permission) => this.hasPermission(permission));
   }
@@ -899,14 +901,6 @@ export class MainLayout {
       return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
     }
     return false;
-  }
-
-  private resolveMenuScope(item: NavItem, inheritedScope?: MenuScope): MenuScope {
-    if (item.scope) return item.scope;
-    if (item.masterRoute && item.route) return 'both';
-    if (item.masterRoute) return 'master';
-    if (item.requiresEnvironment) return 'tenant';
-    return inheritedScope ?? 'public';
   }
 
   private hasCommercialEntitlement(required?: string): boolean {
@@ -935,44 +929,14 @@ export class MainLayout {
     });
   }
 
-  private filterMenu(
-    items: NavItem[],
-    inheritedScope?: MenuScope,
-    inheritedEntitlement?: string,
-  ): NavItem[] {
-    return items
-      .map((i) => {
-        const scope = this.resolveMenuScope(i, inheritedScope);
-        const entitlementCode = i.entitlementCode ?? inheritedEntitlement;
-        const scopedItem = { ...i, scope };
-
-        if (!this.hasPermissions(scopedItem)) return null;
-
-        // 2) Commercial entitlement projection. API remains the source of truth.
-        if (scope === 'tenant' || scope === 'both') {
-          if (!this.hasCommercialEntitlement(entitlementCode)) return null;
-        }
-
-        // 3) Filtra filhos antes do escopo do grupo, porque grupos tenant podem conter filhos both.
-        const children = scopedItem.children
-          ? this.filterMenu(scopedItem.children, scope, entitlementCode)
-          : undefined;
-
-        // Se era grupo e perdeu todos os filhos, remove
-        if (scopedItem.children?.length && (!children || children.length === 0)) return null;
-
-        // 4) Escopo/contexto
-        if (!scopedItem.children?.length && !this.canShowByEnvironment(scopedItem)) return null;
-
-        return { ...scopedItem, children };
-      })
-      .filter(Boolean) as NavItem[];
-  }
-
   // menu final (filtrado)
   readonly localizedNavItems = computed(() => {
     this.i18n.language();
-    return this.localizeMenu(this.filterMenu(this.navItemsRaw));
+    return this.localizeMenu(visibleNavigation(this.navItemsRaw, {
+      permitted: (item) => this.hasPermissions(item),
+      entitled: (code) => this.hasCommercialEntitlement(code),
+      context: (item) => this.canShowByEnvironment(item),
+    }));
   });
 
   // Getter filtrado por busca (usa o menu filtrado)

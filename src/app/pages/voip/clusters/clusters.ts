@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+
+import { AuthService } from '../../../services/auth.service';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 
 const PURPOSES = ['pabx', 'sbc', 'softswitch'].map((value) => ({
   value,
@@ -21,7 +24,7 @@ const ENGINES = [
   { value: 'kamailio', label: 'Kamailio' },
 ];
 
-function members(row: ConfigurableCrudRecord) {
+function members(row: ConfigurableCrudRecord, canManage = true) {
   const purpose = String(row['VclPurpose']);
   const [source, labelField] =
     purpose === 'pabx'
@@ -34,6 +37,9 @@ function members(row: ConfigurableCrudRecord) {
     endpoint: `system/voip/clusters/${row['VclUUID']}/members`,
     uuidField: 'VcmUUID',
     pageTitle: 'voipCluster.members',
+    canCreate: canManage,
+    canEdit: canManage,
+    canDelete: canManage,
     pageDescription: 'voipCluster.membersDescription',
     serverSidePagination: true,
     initialPageSize: 50,
@@ -41,7 +47,7 @@ function members(row: ConfigurableCrudRecord) {
     bulkDelete: false,
     deletePayload: (member) => ({ revision: Number(member['VcmRevision']) }),
     rowActions:
-      purpose === 'pabx'
+      canManage && purpose === 'pabx'
         ? [
             {
               key: 'prepare',
@@ -305,6 +311,14 @@ const config = defineCrud({
 })
 export class VoipClustersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(config);
+    const canManage = hasEffectivePermission(inject(AuthService).user()?.permissions ?? [], 'platform.master.access');
+    super({
+      ...config,
+      canCreate: canManage,
+      canEdit: canManage,
+      canDelete: canManage,
+      rowActions: [{ key: 'members', label: 'voipCluster.members', icon: 'dns',
+        collection: (row) => members(row, canManage) }],
+    });
   }
 }

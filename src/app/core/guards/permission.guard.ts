@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ApiService } from '../../services/api.service';
 
 export const permissionGuard: CanActivateFn = (route) => {
   const auth = inject(AuthService);
@@ -36,3 +37,13 @@ export function hasEffectivePermission(permissions: readonly unknown[], required
     return new RegExp(pattern).test(normalizedRequired);
   });
 }
+
+/** Refresh the navigation hint; the resource API independently authorizes each read. */
+export const voipCapacityReadGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const api = inject(ApiService);
+  const router = inject(Router);
+  const loaded = await auth.loadMeFromApi(api);
+  return loaded && auth.user()?.resourceAccess?.voipCapacityRead === true
+    ? true : router.parseUrl('/dashboard');
+};
