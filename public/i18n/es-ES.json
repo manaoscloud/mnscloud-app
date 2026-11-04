@@ -11342,5 +11342,13 @@
   "crm.field.Workspace": "Espacio de trabajo",
   "Optional. When empty, the VPS uses the default network of your account. Choose a network only to connect an additional private network.": "Opcional. Si se deja vacío, el VPS usa la red predeterminada de su cuenta. Elija una red solo para conectar una red privada adicional.",
   "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.": "Opcional. Si se deja vacío, se permite el tráfico de entrada y salida. Elija un perfil para restringir el acceso.",
-  "Default network": "Red predeterminada"
+  "Default network": "Red predeterminada",
+  "capacityAccess": {
+    "restrict": "Restringir acceso a capacidad",
+    "clusters": "Clústeres permitidos",
+    "providers": "Proveedores permitidos",
+    "scopeHelp": "Seleccione al menos un clúster o proveedor. Las opciones de un campo son alternativas; cuando ambos campos están completos, se aplican ambas restricciones. Esto no concede acceso master.",
+    "scopeRequired": "Seleccione al menos un clúster o proveedor.",
+    "createCluster": "Crear clúster VoIP"
+  }
 }

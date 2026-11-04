@@ -38,6 +38,13 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  VoipClusterVclUUID: {
+    label: 'capacityAccess.createCluster',
+    loadComponent: () =>
+      import('../../../pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
+    permission: MASTER_PERMISSION,
+    routeData: { scope: 'master' },
+  },
   RegWorkspaceRwkUUID: {
     label: 'registryWorkspace.create',
     loadComponent: () =>
