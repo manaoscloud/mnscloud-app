@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "31b86241fc16",
+  "version": "ef8a616c3a0c",
   "language": "pt-BR",
   "entries": [
     {
@@ -7843,6 +7843,31 @@
         {
           "label": "Cluster",
           "help": "Este vínculo não pode ser alterado após a criação."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/host-zones",
+      "menuPath": "DNS › Nomes de servidores",
+      "scope": "platform",
+      "title": "Nomes de servidores",
+      "description": "Uma zona privada da plataforma no MNSCloud DNS recebe sozinha os nomes dos servidores: cada Agent ativo do ambiente escolhido ganha registros A/AAAA com o nome do host, o nome do Agent e o nome do papel (agent-api-prod1 → api). Só endereços privados são publicados; um nome já cadastrado no editor da zona nunca é gerado.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Zona",
+          "help": "Domínio da plataforma no MNSCloud DNS, tornado privado em DNS › Zonas › Domínios › Visibilidade."
+        },
+        {
+          "label": "Ambiente dos Agents",
+          "help": "Ambiente cujos Agents ativos rodam os servidores da plataforma."
         },
         {
           "label": "Revisão",
