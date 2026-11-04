@@ -55,6 +55,7 @@ export interface AuthUser {
   avatarVersion?: number | null;
   EnvironmentUUID?: string | null;
   permissions?: string[];
+  resourceAccess?: { voipCapacityRead: boolean };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -200,6 +201,7 @@ export class AuthService {
         EnvironmentUUID:
           readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(prev?.EnvironmentUUID) ?? null,
         permissions: prev?.permissions ?? [],
+        resourceAccess: prev?.resourceAccess,
       };
 
       writeAuthValue(USER_KEY, JSON.stringify(updated), isRememberedSession());
@@ -232,6 +234,7 @@ export class AuthService {
           readStoredEnvironmentUUID() ??
           normalizeEnvironmentUUID(current.EnvironmentUUID) ??
           null,
+        resourceAccess: { voipCapacityRead: raw?.resourceAccess?.voipCapacityRead === true },
         permissions: Array.isArray(raw?.permissions)
           ? raw.permissions
           : (current.permissions ?? []),

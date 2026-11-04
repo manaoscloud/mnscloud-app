@@ -11,6 +11,7 @@ import {
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { capacityAssignments } from '../capacity-access';
 import { AuthService } from '../../../services/auth.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -147,7 +148,27 @@ export class UserAccessProfilesPage extends ConfigurableCrudPageBase<Configurabl
   override readonly canDelete = computed(() => this.isMaster());
 
   override rowActions(row: ConfigurableCrudRecord) {
-    return this.isMaster() ? super.rowActions(row) : [];
+    if (!this.isMaster()) return [];
+    const actions = super.rowActions(row);
+    const permissions = this.permissionsFromRow(row);
+    if (
+      row['scope'] === 'platform' &&
+      permissions.length &&
+      permissions.every((code) =>
+        /^platform\.voip\.capacity\.(read|provision|drain|retire|policy)$/.test(code),
+      )
+    ) {
+      return [
+        ...actions,
+        {
+          key: 'capacity-assignments',
+          label: 'capacityAccess.assignments',
+          icon: 'group',
+          collection: capacityAssignments,
+        },
+      ];
+    }
+    return actions;
   }
 
   constructor() {
