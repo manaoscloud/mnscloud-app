@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f42b730eaefa",
+  "version": "3f8f5d1ee334",
   "language": "pt-BR",
   "entries": [
     {
@@ -10801,7 +10801,7 @@
         },
         {
           "label": "Expiração",
-          "help": "capacityAccess.expiryHelp"
+          "help": ""
         },
         {
           "label": "Motivo",

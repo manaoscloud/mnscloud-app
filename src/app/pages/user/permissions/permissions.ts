@@ -181,7 +181,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'expiresAt',
       label: 'Expiration',
       type: 'datetime',
-      help: 'capacityAccess.expiryHelp',
+      helpWhen: ({ values }) => (capacityRestricted(values) ? 'capacityAccess.expiryHelp' : ''),
       span: 1,
       tab: 'record',
     },
