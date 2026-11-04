@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5ce1b06a5c9a",
+  "version": "0d971461ad22",
   "language": "pt-BR",
   "entries": [
     {
@@ -10549,7 +10549,7 @@
         },
         {
           "label": "Clientes podem criar servidores",
-          "help": ""
+          "help": "Com Não, os clientes não veem os planos deste provedor e não podem criar servidores nele; tenants de teste não são limitados. No Proxmox, Sim exige a rede isolada por cliente (EVPN)."
         },
         {
           "label": "ID do token",
