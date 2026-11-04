@@ -7600,7 +7600,7 @@
   "Default upper bound of each answer (256 to 32000). Limits cost per call.": "Default upper bound of each answer (256 to 32000). Limits cost per call.",
   "Each feature has one configuration.": "Each feature has one configuration.",
   "Edit AI feature": "Edit AI feature",
-  "Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.": "Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.",
+  "Every call made by an AI feature: tenant, provider, model, tokens, AI credits billed and result, to follow cost and failures.": "Every call made by an AI feature: tenant, provider, model, tokens, AI credits billed and result, to follow cost and failures.",
   "Failed to remove the AI feature configuration.": "Failed to remove the AI feature configuration.",
   "Feature": "Feature",
   "Feature, provider or model": "Feature, provider or model",
@@ -11384,5 +11384,10 @@
   "dns.visibilityDescription": "A public zone answers everyone. A private zone answers only the client networks of the cluster (internal names and private addresses) and is never copied to secondary servers.",
   "dns.visibilityHelp": "To make a signed zone private, turn DNSSEC off first (and remove the DS at the registry).",
   "dns.visibilityPublic": "Public",
-  "dns.visibilityPrivate": "Private"
+  "dns.visibilityPrivate": "Private",
+  "AI credits": "AI credits",
+  "Billed amount": "Billed amount",
+  "No price": "No price",
+  "Included": "Included",
+  "Not metered": "Not metered"
 }

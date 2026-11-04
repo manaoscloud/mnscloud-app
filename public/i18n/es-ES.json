@@ -7600,7 +7600,7 @@
   "Default upper bound of each answer (256 to 32000). Limits cost per call.": "Límite predeterminado de cada respuesta (256 a 32000). Limita el costo por llamada.",
   "Each feature has one configuration.": "Cada función tiene una única configuración.",
   "Edit AI feature": "Editar función de IA",
-  "Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.": "Cada llamada hecha por una función de IA: tenant, proveedor, modelo, tokens y resultado, para seguir costos y fallas.",
+  "Every call made by an AI feature: tenant, provider, model, tokens, AI credits billed and result, to follow cost and failures.": "Cada llamada hecha por una función de IA: tenant, proveedor, modelo, tokens, créditos de IA cobrados y resultado, para seguir costos y fallas.",
   "Failed to remove the AI feature configuration.": "Error al eliminar la configuración de la función de IA.",
   "Feature": "Función",
   "Feature, provider or model": "Función, proveedor o modelo",
@@ -11384,5 +11384,10 @@
   "dns.visibilityDescription": "Una zona pública responde a todos. Una zona privada responde solo a las redes de clientes del clúster (nombres internos y direcciones privadas) y nunca se copia a servidores secundarios.",
   "dns.visibilityHelp": "Para hacer privada una zona con DNSSEC, desactive antes el DNSSEC (y retire el DS del registro).",
   "dns.visibilityPublic": "Pública",
-  "dns.visibilityPrivate": "Privada"
+  "dns.visibilityPrivate": "Privada",
+  "AI credits": "Créditos de IA",
+  "Billed amount": "Valor cobrado",
+  "No price": "Sin precio",
+  "Included": "Incluida",
+  "Not metered": "No medida"
 }

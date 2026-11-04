@@ -9,6 +9,16 @@ import { logSelectFilter, READ_ONLY_LOG_CRUD } from '../platform-provider-crud';
 import { AI_FEATURE_OPTIONS, aiFeatureLabel } from '../ai-features/ai-features';
 import { aiProviderKindLabel } from '../ai-providers/ai-providers';
 
+/** AI credit settlement of a call (`module.ai.credits`); empty = not settled. */
+const BILLING_OPTIONS = [
+  { value: 'platform', label: 'Platform' },
+  { value: 'unpriced', label: 'No price' },
+  { value: 'included', label: 'Included' },
+  { value: 'charged', label: 'Charged' },
+  { value: 'failed', label: 'Not paid' },
+  { value: 'unmetered', label: 'Not metered' },
+];
+
 const OUTCOME_OPTIONS = [
   { value: 'success', label: 'Success' },
   { value: 'error', label: 'Error' },
@@ -20,7 +30,7 @@ const config = defineCrud({
   uuidField: 'AiUsageLogUUID',
   pageTitle: 'AI usage',
   pageDescription:
-    'Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.',
+    'Every call made by an AI feature: tenant, provider, model, tokens, AI credits billed and result, to follow cost and failures.',
   searchPlaceholder: 'Model, feature, reference or error',
   emptyLabel: 'No AI calls recorded.',
   ...READ_ONLY_LOG_CRUD,
@@ -70,6 +80,25 @@ const config = defineCrud({
       kind: 'currency',
       currencyCode: 'USD',
       maximumFractionDigits: 6,
+    },
+    { id: 'credits', field: 'Credits', label: 'AI credits', kind: 'number' },
+    {
+      id: 'billing',
+      field: 'BillingStatus',
+      label: 'Billing status',
+      kind: 'status',
+      options: BILLING_OPTIONS,
+      translateValue: true,
+      chipClass: (value) =>
+        value === 'charged' ? 'chip-success' : value === 'failed' ? 'chip-failed' : '',
+    },
+    {
+      id: 'billed',
+      field: 'BilledAmount',
+      label: 'Billed amount',
+      kind: 'currency',
+      currencyField: 'Currency',
+      optional: true,
     },
     {
       id: 'outcome',
