@@ -12,6 +12,7 @@ import {
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   HostBinding,
   inject,
   signal,
@@ -70,9 +71,11 @@ import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-but
 import { NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import {
   NAV_CATEGORY_ICONS,
-  isNavCategoryGroupId,
+  estimateCompactFlyoutHeight,
+  fitCompactFlyout,
   navCategoryGroupId,
   navCategoryKey,
+  toggleNavSection,
   withCategoryGroups,
   withSectionTitles,
 } from '../navigation/nav-sections';
@@ -181,6 +184,7 @@ export class MainLayout {
   private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
@@ -527,21 +531,8 @@ export class MainLayout {
   }
 
   toggleSection(id: string) {
-    const current = new Set(this.expandedSections());
-    if (current.has(id)) current.delete(id);
-    else {
-      // One open category group per parent, so a module never shows all its pages at once.
-      if (isNavCategoryGroupId(id)) {
-        const siblings = `${id.slice(0, id.lastIndexOf('/@'))}/@`;
-        for (const open of [...current]) {
-          if (open.startsWith(siblings) && !open.slice(siblings.length).includes('/')) {
-            current.delete(open);
-          }
-        }
-      }
-      current.add(id);
-    }
-    this.expandedSections.set(current);
+    // Accordion at every level: opening an entry closes its open siblings (app.md → Navigation).
+    this.expandedSections.set(toggleNavSection(this.sidebarNavItems, this.expandedSections(), id));
   }
 
   async navigateTo(item: NavItem) {
@@ -609,10 +600,11 @@ export class MainLayout {
     this.compactHoverRootId.set(item.id);
     this.compactHoverChildId.set(null);
     this.compactHoverGrandId.set(null);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, this.compactFlyoutEntries(item.id));
     this.compactRootFlyoutTop.set(placement.top);
     this.compactFlyoutLeft.set(placement.left);
     this.compactRootFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('root', placement.anchorTop);
   }
 
   onCompactRootLeave() {
@@ -630,10 +622,11 @@ export class MainLayout {
 
     this.compactHoverChildId.set(item.id);
     this.compactHoverGrandId.set(null);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, item.children ?? []);
     this.compactChildFlyoutTop.set(placement.top);
     this.compactChildFlyoutLeft.set(placement.left);
     this.compactChildFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('child', placement.anchorTop);
   }
 
   onCompactGrandEnter(item: NavItem, event?: MouseEvent) {
@@ -645,10 +638,11 @@ export class MainLayout {
     }
 
     this.compactHoverGrandId.set(item.id);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, item.children ?? []);
     this.compactGrandFlyoutTop.set(placement.top);
     this.compactGrandFlyoutLeft.set(placement.left);
     this.compactGrandFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('grand', placement.anchorTop);
   }
 
   onCompactFlyoutEnter() {
@@ -664,28 +658,32 @@ export class MainLayout {
     this.closeCompactFlyouts();
   }
 
-  private computeFlyoutPlacement(event: MouseEvent | undefined, itemCount: number) {
+  /** Entries of the root flyout as rendered (with category titles), for the height estimate. */
+  private compactFlyoutEntries(rootId: string): NavItem[] {
+    return this.filteredNavItems.find((root) => root.id === rootId)?.children ?? [];
+  }
+
+  private computeFlyoutPlacement(
+    event: MouseEvent | undefined,
+    entries: readonly { id: string; categoryTitle?: string }[],
+  ) {
     const target = event?.currentTarget as HTMLElement | null;
     if (!target || typeof window === 'undefined') {
       return {
         top: this.compactRootFlyoutTop(),
         left: this.compactFlyoutLeft(),
         maxHeight: this.compactRootFlyoutMaxHeight(),
+        anchorTop: this.compactRootFlyoutTop(),
       };
     }
 
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
     const margin = 16;
     const gap = 8;
     const flyoutWidth = 234;
-    const maxFlyoutHeight = Math.min(560, Math.max(112, viewportHeight - margin * 2));
-    const estimatedHeight = Math.min(Math.max(itemCount * 42 + 18, 112), maxFlyoutHeight);
     const targetRect = target.getBoundingClientRect();
     const sidenav = target.closest('mat-sidenav') as HTMLElement | null;
     const sidenavRect = sidenav?.getBoundingClientRect();
-    const preferredTop = targetRect.top;
-    const maxTop = Math.max(margin, viewportHeight - estimatedHeight - margin);
     const preferredLeft =
       target.classList.contains('root-item') && sidenavRect
         ? sidenavRect.right + gap
@@ -694,12 +692,33 @@ export class MainLayout {
     const maxLeft = Math.max(margin, viewportWidth - flyoutWidth - margin);
     const left =
       preferredLeft <= maxLeft ? preferredLeft : Math.max(margin, Math.min(fallbackLeft, maxLeft));
+    const { top, maxHeight } = fitCompactFlyout(
+      targetRect.top,
+      estimateCompactFlyoutHeight(entries),
+      window.innerHeight,
+      margin,
+    );
 
-    return {
-      top: Math.round(Math.max(margin, Math.min(preferredTop, maxTop))),
-      left: Math.round(left),
-      maxHeight: Math.round(maxFlyoutHeight),
-    };
+    return { top, left: Math.round(left), maxHeight, anchorTop: targetRect.top };
+  }
+
+  /**
+   * The estimate places the flyout at once; after it renders, its real height (fonts, badges,
+   * long labels) decides the final top, so it never runs past the bottom of the viewport.
+   */
+  private refitCompactFlyout(level: 'root' | 'child' | 'grand', anchorTop: number) {
+    if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
+    requestAnimationFrame(() => {
+      const panel = this.host.nativeElement.querySelector<HTMLElement>(`.compact-flyout-${level}`);
+      if (!panel) return;
+      const { top } = fitCompactFlyout(anchorTop, panel.scrollHeight, window.innerHeight);
+      const signals = {
+        root: this.compactRootFlyoutTop,
+        child: this.compactChildFlyoutTop,
+        grand: this.compactGrandFlyoutTop,
+      };
+      signals[level].set(top);
+    });
   }
 
   private scheduleCompactClose() {
