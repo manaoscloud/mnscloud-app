@@ -32,8 +32,41 @@ const DEFAULT_TRANSIT_BRIDGE = 'vmbr0';
 // Master switch of every provider: closed providers hide their plans from customers (API filter).
 const CUSTOMER_PROVISIONING_HELP =
   'When No, customers do not see the plans of this provider and cannot create servers on it; test tenants are not limited. On Proxmox, Yes requires the isolated network per customer (EVPN).';
+const TENANT_ZONES_HELP =
+  'Each customer gets its own EVPN zone and gateway. Turning it on fills empty fields with the recommended values of this environment; review them before saving.';
+const SHARED_SDN_HELP =
+  'Optional: one shared Proxmox zone for private networks. Not needed when the isolated network per customer is on.';
 const PROXMOX_CUSTOMER_PROVISIONING_ERROR =
   'Turn on the isolated network per customer (EVPN) before allowing customers on Proxmox.';
+
+type TenantZonesConfig = NonNullable<NonNullable<VpsProviderConfig['sdn']>['tenantZones']>;
+
+/** Form defaults of the tenant zone fields (replaced by the recommendation when untouched). */
+const BUILT_IN_TENANT_DEFAULTS: Record<string, string | number> = {
+  sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
+  sdnTenantMtu: DEFAULT_TENANT_MTU,
+  sdnTenantDefaultCidr: DEFAULT_TENANT_CIDR,
+};
+
+/** Form values of a tenant zones configuration (stored or recommended). */
+function tenantZoneFormValues(zones: TenantZonesConfig | null | undefined): ConfigurableCrudRecord {
+  return {
+    sdnTenantController: zones?.controller ?? '',
+    sdnTenantVrfStart: zones?.vrfVniRange?.[0] ?? '',
+    sdnTenantVrfEnd: zones?.vrfVniRange?.[1] ?? '',
+    sdnTenantVniStart: zones?.vniRange?.[0] ?? '',
+    sdnTenantVniEnd: zones?.vniRange?.[1] ?? '',
+    sdnTenantGatewayTemplate: zones?.gateway?.templateVmid ?? '',
+    sdnTenantGatewayNode: zones?.gateway?.node ?? '',
+    sdnTenantTransitBridge: zones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
+    sdnTenantTransitVlan: zones?.gateway?.transitVlan ?? '',
+    sdnTenantTransitCidr: zones?.gateway?.transitCidr ?? '',
+    sdnTenantTransitPool: zones?.gateway?.transitPool ?? '',
+    sdnTenantNameservers: zones?.nameservers?.join(', ') ?? '',
+    sdnTenantMtu: zones?.mtu ?? DEFAULT_TENANT_MTU,
+    sdnTenantDefaultCidr: zones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
+  };
+}
 
 function tenantZoneField(
   key: string,
@@ -45,7 +78,7 @@ function tenantZoneField(
     payloadKey: key,
     label,
     ...(options.number ? { type: 'number' as const } : {}),
-    tab: 'authentication',
+    tab: 'routing',
     span: 1,
     hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) => !tenantZonesEnabled(values),
     ...(options.required
@@ -139,6 +172,8 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
   rowActions: [TEST_PROVIDER_ACTION],
   tabLabels: {
     authentication: 'API',
+    network: 'Server network',
+    routing: 'Customer network',
   },
   initialValues: {
     name: '',
@@ -251,6 +286,15 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'customerProvisioning',
+      payloadKey: 'customerProvisioning',
+      label: 'Customers may create servers',
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      span: 1,
+      help: CUSTOMER_PROVISIONING_HELP,
+    },
+    {
       key: 'provider',
       source: 'HvrProvider',
       payloadKey: 'provider',
@@ -307,15 +351,6 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
     },
     {
-      key: 'bridge',
-      payloadKey: 'bridge',
-      label: 'Bridge',
-      placeholder: 'vmbr0',
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
-    },
-    {
       key: 'templateVmid',
       payloadKey: 'templateVmid',
       label: 'Template VMID',
@@ -336,12 +371,32 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
         !['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(providerOf(values)),
     },
     {
+      key: 'bridge',
+      payloadKey: 'bridge',
+      label: 'Bridge',
+      placeholder: 'vmbr0',
+      tab: 'network',
+      span: 1,
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+    },
+    {
+      key: 'vlanTag',
+      payloadKey: 'vlanTag',
+      label: 'Server network VLAN tag',
+      type: 'number',
+      tab: 'network',
+      span: 1,
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+    },
+    {
       key: 'sdnEnabled',
       payloadKey: 'sdnEnabled',
-      label: 'Private network SDN binding',
+      label: 'Shared SDN zone for private networks',
+      breakBefore: true,
+      help: SHARED_SDN_HELP,
       type: 'select',
       options: [...YES_NO_OPTIONS],
-      tab: 'authentication',
+      tab: 'network',
       span: 1,
       hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
     },
@@ -349,7 +404,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       key: 'sdnZone',
       payloadKey: 'sdnZone',
       label: 'Approved SDN zone ID',
-      tab: 'authentication',
+      tab: 'network',
       span: 1,
       hiddenWhen: ({ values }) => !sdnEnabled(values),
       requiredWhen: ({ values }) => sdnEnabled(values),
@@ -358,7 +413,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       key: 'sdnCidrPool',
       payloadKey: 'sdnCidrPool',
       label: 'Authorized private CIDRs (comma separated)',
-      tab: 'authentication',
+      tab: 'network',
       hiddenWhen: ({ values }) => !sdnEnabled(values),
       requiredWhen: ({ values }) => sdnEnabled(values),
     },
@@ -367,7 +422,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'sdnTagStart',
       label: 'Reserved VLAN/VNI range start',
       type: 'number',
-      tab: 'authentication',
+      tab: 'network',
       span: 1,
       hiddenWhen: ({ values }) => !sdnEnabled(values),
     },
@@ -376,7 +431,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'sdnTagEnd',
       label: 'Reserved VLAN/VNI range end',
       type: 'number',
-      tab: 'authentication',
+      tab: 'network',
       span: 1,
       hiddenWhen: ({ values }) => !sdnEnabled(values),
     },
@@ -386,7 +441,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Enable subnet SNAT',
       type: 'select',
       options: [...YES_NO_OPTIONS],
-      tab: 'authentication',
+      tab: 'network',
       span: 1,
       hiddenWhen: ({ values }) => !sdnEnabled(values),
     },
@@ -396,9 +451,10 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       label: 'Isolated network per customer (EVPN)',
       type: 'select',
       options: [...YES_NO_OPTIONS],
-      tab: 'authentication',
+      tab: 'routing',
       span: 1,
-      hiddenWhen: ({ values }) => !sdnEnabled(values),
+      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+      help: TENANT_ZONES_HELP,
     },
     tenantZoneField('sdnTenantController', 'EVPN controller ID', { required: true }),
     tenantZoneField('sdnTenantVrfStart', 'Customer VRF VNI range start', {
@@ -429,25 +485,6 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     tenantZoneField('sdnTenantNameservers', 'Customer DNS resolvers (comma separated)'),
     tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
     tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
-    {
-      key: 'vlanTag',
-      payloadKey: 'vlanTag',
-      label: 'Server network VLAN tag',
-      type: 'number',
-      tab: 'authentication',
-      span: 1,
-      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
-    },
-    {
-      key: 'customerProvisioning',
-      payloadKey: 'customerProvisioning',
-      label: 'Customers may create servers',
-      type: 'select',
-      options: [...YES_NO_OPTIONS],
-      tab: 'authentication',
-      span: 1,
-      help: CUSTOMER_PROVISIONING_HELP,
-    },
     {
       key: 'tokenId',
       payloadKey: 'tokenId',
@@ -787,6 +824,35 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
     return `${this.endpoint()}/bulk`;
   }
 
+  /** Turning on the isolated network per customer fills its empty fields with this environment's recommendation. */
+  protected override onFieldValueChanged(key: string, value: unknown): void {
+    if (key !== 'sdnTenantZones' || truthyNumber(value) !== 1 || !this.isMaster()) return;
+    void this.prefillTenantZones();
+  }
+
+  private async prefillTenantZones(): Promise<void> {
+    try {
+      const result = await this.api.get<{ data?: { item?: { tenantZones?: TenantZonesConfig } } }>(
+        `${this.endpoint()}/network-defaults`,
+      );
+      const recommended = result?.data?.item?.tenantZones;
+      if (!recommended || truthyNumber(this.formValues()['sdnTenantZones']) !== 1) return;
+      const suggested = tenantZoneFormValues(recommended);
+      const current = this.formValues();
+      const patch: ConfigurableCrudRecord = {};
+      for (const [field, value] of Object.entries(suggested)) {
+        const existing = String(current[field] ?? '').trim();
+        // Only empty fields or untouched built-in defaults; what the master typed stays.
+        if (!existing || existing === String(BUILT_IN_TENANT_DEFAULTS[field] ?? '')) {
+          patch[field] = value;
+        }
+      }
+      if (Object.keys(patch).length) this.patchFormValues(patch);
+    } catch {
+      // Suggestions are optional: the master can still fill the fields by hand.
+    }
+  }
+
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'provider') return PROVIDER_OPTIONS;
     return [];
@@ -816,28 +882,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       ...base,
       name: String(row['HvrName'] ?? base['name'] ?? ''),
       provider: providerOf(row['HvrProvider'] ?? base['provider']),
-      sdnEnabled: config.sdn ? 1 : 0,
+      sdnEnabled: config.sdn?.zone ? 1 : 0,
       sdnZone: config.sdn?.zone ?? '',
       sdnCidrPool: config.sdn?.cidrPool?.join(', ') ?? '',
       sdnTagStart: config.sdn?.tagRange?.[0] ?? '',
       sdnTagEnd: config.sdn?.tagRange?.[1] ?? '',
       sdnSnat: config.sdn?.snat ? 1 : 0,
       sdnTenantZones: config.sdn?.tenantZones ? 1 : 0,
-      sdnTenantController: config.sdn?.tenantZones?.controller ?? '',
-      sdnTenantVrfStart: config.sdn?.tenantZones?.vrfVniRange?.[0] ?? '',
-      sdnTenantVrfEnd: config.sdn?.tenantZones?.vrfVniRange?.[1] ?? '',
-      sdnTenantVniStart: config.sdn?.tenantZones?.vniRange?.[0] ?? '',
-      sdnTenantVniEnd: config.sdn?.tenantZones?.vniRange?.[1] ?? '',
-      sdnTenantGatewayTemplate: config.sdn?.tenantZones?.gateway?.templateVmid ?? '',
-      sdnTenantGatewayNode: config.sdn?.tenantZones?.gateway?.node ?? '',
-      sdnTenantTransitBridge:
-        config.sdn?.tenantZones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
-      sdnTenantTransitVlan: config.sdn?.tenantZones?.gateway?.transitVlan ?? '',
-      sdnTenantTransitCidr: config.sdn?.tenantZones?.gateway?.transitCidr ?? '',
-      sdnTenantTransitPool: config.sdn?.tenantZones?.gateway?.transitPool ?? '',
-      sdnTenantNameservers: config.sdn?.tenantZones?.nameservers?.join(', ') ?? '',
-      sdnTenantMtu: config.sdn?.tenantZones?.mtu ?? DEFAULT_TENANT_MTU,
-      sdnTenantDefaultCidr: config.sdn?.tenantZones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
+      ...tenantZoneFormValues(config.sdn?.tenantZones),
       vlanTag: config.vlanTag ?? '',
       // Never set: Proxmox stays closed and the other providers open (the API rule).
       customerProvisioning:
@@ -1108,7 +1160,16 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
           snat: truthyNumber(values['sdnSnat']) === 1,
           tenantZones: buildTenantZonesPayload(values),
         }
-      : null;
+      : tenantZonesEnabled(values)
+        ? // Only the per-customer zones: the API accepts sdn without the shared zone.
+          {
+            zone: '',
+            cidrPool: [],
+            tagRange: null,
+            snat: false,
+            tenantZones: buildTenantZonesPayload(values),
+          }
+        : null;
     const vlanTag = normalizeString(values['vlanTag']);
     config.vlanTag = vlanTag ? Number(vlanTag) : null;
   }
@@ -1140,7 +1201,7 @@ function sdnEnabled(values: ConfigurableCrudRecord): boolean {
 }
 
 function tenantZonesEnabled(values: ConfigurableCrudRecord): boolean {
-  return sdnEnabled(values) && truthyNumber(values['sdnTenantZones']) === 1;
+  return providerOf(values) === 'proxmox' && truthyNumber(values['sdnTenantZones']) === 1;
 }
 
 function buildTenantZonesPayload(
