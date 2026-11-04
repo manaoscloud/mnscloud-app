@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudColumn,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -16,6 +17,14 @@ const RECORDS_ACTION: ConfigurableCrudRowAction = {
   icon: 'dns',
   tooltip: 'dns.hostRecordsTooltip',
 };
+
+const HOST_ZONE_COLUMNS: ConfigurableCrudColumn[] = [
+  { id: 'zone', field: 'ZoneName', label: 'dns.hostZoneDomain', kind: 'identity' },
+  { id: 'environment', field: 'EnvironmentName', label: 'dns.hostZoneEnvironment', kind: 'text' },
+  { id: 'records', field: 'RecordCount', label: 'dns.hostRecords', kind: 'text' },
+  { id: 'synced', field: 'DhzSyncedAt', label: 'dns.hostZoneSyncedAt', kind: 'datetime' },
+  { id: 'status', field: 'DhzEnabled', label: 'Status', kind: 'status' },
+];
 
 /** Platform host records (PD4): a private platform zone receives the records of the platform Agents. */
 const config = defineCrud({
@@ -33,7 +42,6 @@ const config = defineCrud({
     enabled: Number(values['status']) === 1 ? 1 : 0,
     ...(editing ? { revision: Number(values['revision']) } : {}),
   }),
-  rowActions: [RECORDS_ACTION],
   fields: [
     { key: 'status', source: 'DhzEnabled', label: 'Status', type: 'status', span: 1 },
     {
@@ -70,21 +78,16 @@ const config = defineCrud({
     },
     { key: 'revision', source: 'DhzRevision', label: 'Revision', type: 'number', hidden: true },
   ],
-  columns: [
-    { id: 'zone', field: 'ZoneName', label: 'dns.hostZoneDomain', kind: 'identity' },
-    { id: 'environment', field: 'EnvironmentName', label: 'dns.hostZoneEnvironment', kind: 'text' },
-    { id: 'records', field: 'RecordCount', label: 'dns.hostRecords', kind: 'text' },
-    { id: 'synced', field: 'DhzSyncedAt', label: 'dns.hostZoneSyncedAt', kind: 'datetime' },
-    { id: 'status', field: 'DhzEnabled', label: 'Status', kind: 'status' },
-  ],
+  columns: HOST_ZONE_COLUMNS,
+  rowActions: [RECORDS_ACTION],
 });
 
 @Component({
-  selector: 'app-dns-host-zones',
   standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
+  selector: 'app-dns-host-zones',
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
 })
 export class DnsHostZonesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
