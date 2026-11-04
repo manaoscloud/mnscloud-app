@@ -1,3 +1,5 @@
+import { capacityExpiryInstant } from '../capacity-expiry';
+import { capacityScopeLabel } from '../capacity-scope';
 import { Component, computed, inject, signal } from '@angular/core';
 
 /** Special permission grants CRUD — uses shared ConfigurableCrudPageBase (app.md generic CRUD). */
@@ -10,6 +12,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { AuthService } from '../../../services/auth.service';
 import { TenantAccess, TenantService } from '../../../services/tenant.service';
 
@@ -22,6 +25,13 @@ const EFFECT_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'allow', label: 'Allow access' },
   { value: 'deny', label: 'Block access' },
 ];
+
+const capacityPermission = (values: ConfigurableCrudRecord) =>
+  /^platform\.voip\.capacity\.(read|provision|drain|retire|policy)$/.test(
+    String(values['permissionCode'] ?? ''),
+  );
+const capacityRestricted = (values: ConfigurableCrudRecord) =>
+  capacityPermission(values) && values['capacityRestricted'] === true;
 
 const PERMISSION_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'user/permissions/grants',
@@ -62,8 +72,12 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
     expiresAt: '',
     environmentUUID: '',
     reason: '',
+    capacityRestricted: true,
+    clusterUUIDs: [],
+    providerUUIDs: [],
   },
   columns: [
+    { id: 'resourceScope', label: 'capacityAccess.resourceScope', value: capacityScopeLabel },
     { id: 'userName', label: 'User', kind: 'identity', field: 'userName', uuidField: 'userUUID' },
     { id: 'permissionCode', label: 'Permission', field: 'permissionCode' },
     { id: 'scope', label: 'Scope', field: 'scope', translateValue: true },
@@ -120,11 +134,54 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       hiddenWhen: ({ values }) => String(values['permissionCode'] ?? '').startsWith('platform.'),
     },
     {
+      key: 'capacityRestricted',
+      label: 'capacityAccess.restrict',
+      type: 'select',
+      options: [
+        { value: true, label: 'Yes' },
+        { value: false, label: 'No' },
+      ],
+      tab: 'record',
+      hiddenWhen: ({ values }) => !capacityPermission(values),
+      help: 'capacityAccess.scopeHelp',
+    },
+    {
+      key: 'clusterUUIDs',
+      label: 'capacityAccess.clusters',
+      type: 'search-select',
+      multiple: true,
+      tab: 'record',
+      hiddenWhen: ({ values }) => !capacityRestricted(values),
+      remoteLookup: {
+        endpoint: 'system/voip/clusters',
+        uuidField: 'VclUUID',
+        labelField: 'VclName',
+      },
+      quickCreate: quickCreateFor('VoipClusterVclUUID'),
+      help: 'capacityAccess.scopeHelp',
+    },
+    {
+      key: 'providerUUIDs',
+      label: 'capacityAccess.providers',
+      type: 'search-select',
+      multiple: true,
+      tab: 'record',
+      hiddenWhen: ({ values }) => !capacityRestricted(values),
+      remoteLookup: {
+        endpoint: 'system/hosting/vps/providers',
+        uuidField: 'HvrUUID',
+        labelField: 'HvrName',
+      },
+      quickCreate: quickCreateFor('HostingVpsProviderHvrUUID', { routeData: { scope: 'master' } }),
+      help: 'capacityAccess.scopeHelp',
+    },
+    {
       key: 'expiresAt',
       source: 'expiresAt',
       payloadKey: 'expiresAt',
       label: 'Expiration',
-      type: 'date',
+      type: 'datetime',
+      helpWhen: ({ values }) => (capacityRestricted(values) ? 'capacityAccess.expiryHelp' : ''),
       span: 1,
       tab: 'record',
     },
@@ -133,6 +190,7 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       source: 'reason',
       payloadKey: 'reason',
       label: 'Reason',
+      requiredWhen: ({ values }) => capacityRestricted(values),
       type: 'textarea',
       placeholder: 'Explain why this exception is needed.',
       rows: 4,
@@ -200,6 +258,11 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
         { label: 'Tenant', value: row['environmentName'] || '-' },
         { label: 'Expires', value: row['expiresAt'], kind: 'datetime' },
         { label: 'Reason', value: row['reason'] || '-', wide: true },
+        {
+          label: 'capacityAccess.resourceScope',
+          value: capacityScopeLabel(row, (key) => this.t(key)),
+          wide: true,
+        },
       ],
     });
   }
@@ -244,11 +307,37 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
     }
   }
 
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    if (capacityRestricted(payload) && capacityExpiryInstant(payload['expiresAt']) === undefined) {
+      return this.rejectField('expiresAt', 'capacityAccess.expiryInvalid');
+    }
+    if (
+      capacityRestricted(payload) &&
+      !this.fieldValueArray('clusterUUIDs').length &&
+      !this.fieldValueArray('providerUUIDs').length
+    ) {
+      return this.rejectField('clusterUUIDs', 'capacityAccess.scopeRequired');
+    }
+    return true;
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const permissionCode = String(payload['permissionCode'] ?? '');
     const environmentUUID = String(payload['environmentUUID'] ?? '').trim();
+    const { capacityRestricted: restricted, clusterUUIDs, providerUUIDs, ...base } = payload;
     return {
-      ...payload,
+      ...base,
+      ...(capacityRestricted(payload)
+        ? {
+            expiresAt: capacityExpiryInstant(base['expiresAt']),
+            conditions: {
+              version: 1,
+              ...(Array.isArray(clusterUUIDs) && clusterUUIDs.length ? { clusterUUIDs } : {}),
+              ...(Array.isArray(providerUUIDs) && providerUUIDs.length ? { providerUUIDs } : {}),
+            },
+          }
+        : {}),
       permissionCode,
       environmentUUID: permissionCode.startsWith('platform.')
         ? null

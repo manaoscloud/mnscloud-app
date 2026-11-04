@@ -4,7 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
-import { permissionGuard } from './core/guards/permission.guard';
+import { permissionGuard, voipCapacityReadGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 import { publicBoardGuard } from './core/guards/public-board.guard';
 import { publicReleaseNotesGuard } from './core/guards/public-release-notes.guard';
@@ -2539,6 +2539,14 @@ export const routes: Routes = [
           // SYSTEM AREA
           // =================================================
           {
+            path: 'system/voip/clusters',
+            canActivate: [voipCapacityReadGuard],
+            loadComponent: () =>
+              import('./pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
+            title: 'VoIP clusters | mnscloud',
+            data: { breadcrumb: 'voipCluster.title' },
+          },
+          {
             path: 'system',
             canActivate: [permissionGuard],
             data: { permission: 'platform.master.access' },
@@ -3222,13 +3230,6 @@ export const routes: Routes = [
                   ),
                 title: 'Authentication',
                 data: { scope: 'master', breadcrumb: 'authentication.dashboard' },
-              },
-              {
-                path: 'voip/clusters',
-                loadComponent: () =>
-                  import('./pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
-                title: 'VoIP clusters | mnscloud',
-                data: { scope: 'master', breadcrumb: 'voipCluster.title' },
               },
               {
                 path: 'authentication/clusters',
