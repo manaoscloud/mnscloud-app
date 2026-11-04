@@ -11349,7 +11349,7 @@
     "restrict": "Restrict capacity access",
     "clusters": "Clusters",
     "providers": "Providers",
-    "scopeHelp": "Select at least one cluster or provider. Multiple selections within a field are alternatives; when both fields are filled, both restrictions apply. This does not grant master access. Users who already have master access retain global authority.",
+    "scopeHelp": "To view clusters, select the clusters and leave the provider field empty. Select at least one cluster or provider. Multiple selections within a field are alternatives; when both fields are filled, both restrictions apply. This does not grant master access. Users who already have master access retain global authority.",
     "scopeRequired": "Select at least one cluster or provider.",
     "createCluster": "Create VoIP cluster",
     "assignments": "Profile assignments",

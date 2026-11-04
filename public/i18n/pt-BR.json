@@ -11350,7 +11350,7 @@
     "restrict": "Restringir acesso à capacidade",
     "clusters": "Clusters",
     "providers": "Provedores",
-    "scopeHelp": "Selecione ao menos um cluster ou provedor. As opções de um campo são alternativas; quando os dois campos estão preenchidos, ambas as restrições se aplicam. Isso não concede acesso master. Quem já possui acesso master mantém autoridade global.",
+    "scopeHelp": "Para consultar clusters, selecione os clusters e deixe o campo de provedores vazio. Selecione ao menos um cluster ou provedor. As opções de um campo são alternativas; quando os dois campos estão preenchidos, ambas as restrições se aplicam. Isso não concede acesso master. Quem já possui acesso master mantém autoridade global.",
     "scopeRequired": "Selecione ao menos um cluster ou provedor.",
     "createCluster": "Criar cluster VoIP",
     "assignments": "Vínculos do perfil",
