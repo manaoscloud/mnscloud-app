@@ -11367,5 +11367,12 @@
     "unsupported": "Unsupported restriction",
     "unavailableResource": "Unavailable resource",
     "and": "and"
-  }
+  },
+  "DNSSEC": "DNSSEC",
+  "Zone transfer": "Zone transfer",
+  "Private zones": "Private zones",
+  "Resolver and filter": "Resolver and filter",
+  "Probes": "Probes",
+  "On-premises servers": "On-premises servers",
+  "Data in Brazil": "Data in Brazil"
 }
