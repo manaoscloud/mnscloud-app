@@ -907,7 +907,13 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       node: config.node ?? '',
       storage: config.storage ?? '',
       bridge: config.bridge ?? '',
-      templateVmid: config.templateVmid === undefined ? '' : String(config.templateVmid),
+      // Older saves stored an empty field as the text "null".
+      templateVmid:
+        config.templateVmid === undefined ||
+        config.templateVmid === null ||
+        ['null', 'undefined'].includes(String(config.templateVmid).trim().toLowerCase())
+          ? ''
+          : String(config.templateVmid),
       verifyTls: config.verifyTls === undefined ? 1 : truthyNumber(config.verifyTls),
       vcenterUrl: config.vcenterUrl ?? '',
       datacenter: config.datacenter ?? '',
