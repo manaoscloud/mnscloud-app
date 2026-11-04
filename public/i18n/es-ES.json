@@ -11344,6 +11344,8 @@
   "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.": "Opcional. Si se deja vacío, se permite el tráfico de entrada y salida. Elija un perfil para restringir el acceso.",
   "Default network": "Red predeterminada",
   "capacityAccess": {
+    "expiryHelp": "Fecha y hora en la zona horaria de su navegador. El acceso vence en ese instante.",
+    "expiryInvalid": "Introduzca una fecha y hora de vencimiento válidas.",
     "restrict": "Restringir acceso a capacidad",
     "clusters": "Clústeres",
     "providers": "Proveedores",

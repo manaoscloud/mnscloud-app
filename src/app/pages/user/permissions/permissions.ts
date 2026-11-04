@@ -1,3 +1,4 @@
+import { capacityExpiryInstant } from '../capacity-expiry';
 import { capacityScopeLabel } from '../capacity-scope';
 import { Component, computed, inject, signal } from '@angular/core';
 
@@ -179,7 +180,8 @@ const PERMISSION_CONFIG: ConfigurableCrudConfig = {
       source: 'expiresAt',
       payloadKey: 'expiresAt',
       label: 'Expiration',
-      type: 'date',
+      type: 'datetime',
+      help: 'capacityAccess.expiryHelp',
       span: 1,
       tab: 'record',
     },
@@ -307,6 +309,9 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
+    if (capacityRestricted(payload) && capacityExpiryInstant(payload['expiresAt']) === undefined) {
+      return this.rejectField('expiresAt', 'capacityAccess.expiryInvalid');
+    }
     if (
       capacityRestricted(payload) &&
       !this.fieldValueArray('clusterUUIDs').length &&
@@ -325,6 +330,7 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
       ...base,
       ...(capacityRestricted(payload)
         ? {
+            expiresAt: capacityExpiryInstant(base['expiresAt']),
             conditions: {
               version: 1,
               ...(Array.isArray(clusterUUIDs) && clusterUUIDs.length ? { clusterUUIDs } : {}),

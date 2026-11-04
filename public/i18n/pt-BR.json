@@ -11345,6 +11345,8 @@
   "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso.",
   "Default network": "Rede padrão",
   "capacityAccess": {
+    "expiryHelp": "Data e hora no fuso do seu navegador. O acesso expira nesse instante.",
+    "expiryInvalid": "Informe uma data e hora válidas para a expiração.",
     "restrict": "Restringir acesso à capacidade",
     "clusters": "Clusters",
     "providers": "Provedores",

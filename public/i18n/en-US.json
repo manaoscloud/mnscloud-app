@@ -11344,6 +11344,8 @@
   "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.": "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.",
   "Default network": "Default network",
   "capacityAccess": {
+    "expiryHelp": "Date and time in your browser timezone. Access expires at that instant.",
+    "expiryInvalid": "Enter a valid expiration date and time.",
     "restrict": "Restrict capacity access",
     "clusters": "Clusters",
     "providers": "Providers",
