@@ -32,6 +32,7 @@ import type {
   VpsProviderCatalog,
   VpsProviderConfig,
 } from '../vps.types';
+import { isAccountDefaultNetwork } from '../vps.types';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -278,7 +279,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Private network',
       type: 'search-select',
       tab: 'network',
-      help: 'Only available networks of the plan provider and region are listed.',
+      help: 'Optional. When empty, the VPS uses the default network of your account. Choose a network only to connect an additional private network.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
@@ -289,7 +290,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       multiple: true,
       tab: 'network',
-      help: 'Applied by the provider right after provisioning.',
+      help: 'Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
@@ -422,6 +423,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return this.networks()
       .filter(
         (network) =>
+          // The account default network is always attached; only additional networks are offered.
+          !isAccountDefaultNetwork(network) &&
           network.HostingVpsProviderHvrUUID === plan.HostingVpsProviderHvrUUID &&
           (network.HvnRegion === '*' ||
             network.HvnRegion.toLowerCase() === String(plan.HvpRegion ?? '').toLowerCase()),

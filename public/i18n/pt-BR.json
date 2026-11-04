@@ -11325,5 +11325,8 @@
     "placementHelp": "Opcional. Na criação, o cluster seleciona o servidor com capacidade verificada e reserva a demanda informada. Não move contas existentes."
   },
   "nav.voip.clusters": "Clusters",
-  "crm.field.Workspace": "Espaço de trabalho"
+  "crm.field.Workspace": "Espaço de trabalho",
+  "Optional. When empty, the VPS uses the default network of your account. Choose a network only to connect an additional private network.": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional.",
+  "Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso.",
+  "Default network": "Rede padrão"
 }
