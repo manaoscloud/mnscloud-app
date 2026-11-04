@@ -11350,6 +11350,15 @@
     "providers": "Provedores permitidos",
     "scopeHelp": "Selecione ao menos um cluster ou provedor. As opções de um campo são alternativas; quando os dois campos estão preenchidos, ambas as restrições se aplicam. Isso não concede acesso master.",
     "scopeRequired": "Selecione ao menos um cluster ou provedor.",
-    "createCluster": "Criar cluster VoIP"
+    "createCluster": "Criar cluster VoIP",
+    "assignments": "Vínculos do perfil",
+    "assignmentDescription": "Atribua este perfil de capacidade a usuários nos clusters e provedores selecionados. Revogue o vínculo para remover esta origem de acesso.",
+    "assign": "Vincular perfil",
+    "noAssignments": "Nenhum vínculo de perfil encontrado.",
+    "revoke": "Revogar vínculo",
+    "revokeConfirm": "Revogar este vínculo de perfil?",
+    "assigned": "Perfil vinculado com restrições por recurso.",
+    "revoked": "Vínculo de perfil revogado.",
+    "revokeFailed": "Falha ao revogar vínculo de perfil."
   }
 }

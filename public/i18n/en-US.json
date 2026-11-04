@@ -11349,6 +11349,15 @@
     "providers": "Allowed providers",
     "scopeHelp": "Select at least one cluster or provider. Multiple selections within a field are alternatives; when both fields are filled, both restrictions apply. This does not grant master access.",
     "scopeRequired": "Select at least one cluster or provider.",
-    "createCluster": "Create VoIP cluster"
+    "createCluster": "Create VoIP cluster",
+    "assignments": "Profile assignments",
+    "assignmentDescription": "Assign this capacity profile to users within selected clusters and providers. Revoke the assignment to remove this source of access.",
+    "assign": "Assign profile",
+    "noAssignments": "No profile assignments found.",
+    "revoke": "Revoke assignment",
+    "revokeConfirm": "Revoke this profile assignment?",
+    "assigned": "Profile assigned with resource restrictions.",
+    "revoked": "Profile assignment revoked.",
+    "revokeFailed": "Failed to revoke profile assignment."
   }
 }
