@@ -29,6 +29,12 @@ const DEFAULT_TENANT_MTU = 1450;
 const DEFAULT_TRANSIT_BRIDGE = 'vmbr0';
 
 /** A Proxmox provider field shown only when isolated customer networks (EVPN) are on. */
+// Master switch of every provider: closed providers hide their plans from customers (API filter).
+const CUSTOMER_PROVISIONING_HELP =
+  'When No, customers do not see the plans of this provider and cannot create servers on it; test tenants are not limited. On Proxmox, Yes requires the isolated network per customer (EVPN).';
+const PROXMOX_CUSTOMER_PROVISIONING_ERROR =
+  'Turn on the isolated network per customer (EVPN) before allowing customers on Proxmox.';
+
 function tenantZoneField(
   key: string,
   label: string,
@@ -440,7 +446,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       options: [...YES_NO_OPTIONS],
       tab: 'authentication',
       span: 1,
-      hiddenWhen: ({ values }) => providerOf(values) !== 'proxmox',
+      help: CUSTOMER_PROVISIONING_HELP,
     },
     {
       key: 'tokenId',
@@ -833,7 +839,15 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       sdnTenantMtu: config.sdn?.tenantZones?.mtu ?? DEFAULT_TENANT_MTU,
       sdnTenantDefaultCidr: config.sdn?.tenantZones?.defaultCidr ?? DEFAULT_TENANT_CIDR,
       vlanTag: config.vlanTag ?? '',
-      customerProvisioning: config.customerProvisioning ? 1 : 0,
+      // Never set: Proxmox stays closed and the other providers open (the API rule).
+      customerProvisioning:
+        config.customerProvisioning === undefined || config.customerProvisioning === null
+          ? providerOf(row['HvrProvider'] ?? base['provider']) === 'proxmox'
+            ? 0
+            : 1
+          : config.customerProvisioning
+            ? 1
+            : 0,
       region: config.region ?? '',
       projectId: config.projectId ?? '',
       accessKeyId: config.accessKeyId ?? '',
@@ -896,6 +910,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
     const editing = !!this.editingRecord();
     const selected = providerOf(payload['provider']);
     const credentials = buildCredentialsPayload(payload);
+
+    if (
+      selected === 'proxmox' &&
+      truthyNumber(payload['customerProvisioning']) === 1 &&
+      !tenantZonesEnabled(payload)
+    ) {
+      return this.rejectField('customerProvisioning', PROXMOX_CUSTOMER_PROVISIONING_ERROR);
+    }
 
     if (sdnEnabled(payload)) {
       const start = String(payload['sdnTagStart'] ?? '').trim();
@@ -1089,8 +1111,8 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
       : null;
     const vlanTag = normalizeString(values['vlanTag']);
     config.vlanTag = vlanTag ? Number(vlanTag) : null;
-    config.customerProvisioning = truthyNumber(values['customerProvisioning']) === 1;
   }
+  config.customerProvisioning = truthyNumber(values['customerProvisioning']) === 1;
   if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {
     config.verifyTls = truthyNumber(values['verifyTls']) === 1;
   }
