@@ -49,9 +49,9 @@ export function capacityAssignments(role: ConfigurableCrudRecord): ConfigurableC
         required: true,
         remoteLookup: {
           endpoint: 'system/governance/users',
-          uuidField: 'UserUUID',
-          labelField: 'Email',
-          descriptionField: 'FirstName',
+          uuidField: 'uuid',
+          labelField: 'email',
+          descriptionField: 'displayName',
         },
         quickCreate: false,
         quickCreateExemptReason:
