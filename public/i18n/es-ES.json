@@ -11379,5 +11379,10 @@
   "Resolver and filter": "Resolvedor y filtro",
   "Probes": "Sondas",
   "On-premises servers": "Servidores en el cliente",
-  "Data in Brazil": "Datos en Brasil"
+  "Data in Brazil": "Datos en Brasil",
+  "dns.visibility": "Visibilidad",
+  "dns.visibilityDescription": "Una zona pública responde a todos. Una zona privada responde solo a las redes de clientes del clúster (nombres internos y direcciones privadas) y nunca se copia a servidores secundarios.",
+  "dns.visibilityHelp": "Para hacer privada una zona con DNSSEC, desactive antes el DNSSEC (y retire el DS del registro).",
+  "dns.visibilityPublic": "Pública",
+  "dns.visibilityPrivate": "Privada"
 }

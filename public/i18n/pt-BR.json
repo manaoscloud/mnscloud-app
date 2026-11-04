@@ -11380,5 +11380,10 @@
   "Resolver and filter": "Resolvedor e filtro",
   "Probes": "Sondas",
   "On-premises servers": "Servidores no cliente",
-  "Data in Brazil": "Dados no Brasil"
+  "Data in Brazil": "Dados no Brasil",
+  "dns.visibility": "Visibilidade",
+  "dns.visibilityDescription": "Zona pública responde para todos. Zona privada responde só para as redes de clientes do cluster (nomes internos e endereços privados) e nunca é copiada para servidores secundários.",
+  "dns.visibilityHelp": "Para tornar privada uma zona com DNSSEC, desligue o DNSSEC antes (e retire o DS do registro).",
+  "dns.visibilityPublic": "Pública",
+  "dns.visibilityPrivate": "Privada"
 }
