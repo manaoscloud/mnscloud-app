@@ -311,14 +311,23 @@ const config = defineCrud({
 })
 export class VoipClustersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    const canManage = hasEffectivePermission(inject(AuthService).user()?.permissions ?? [], 'platform.master.access');
+    const canManage = hasEffectivePermission(
+      inject(AuthService).user()?.permissions ?? [],
+      'platform.master.access',
+    );
     super({
       ...config,
       canCreate: canManage,
       canEdit: canManage,
       canDelete: canManage,
-      rowActions: [{ key: 'members', label: 'voipCluster.members', icon: 'dns',
-        collection: (row) => members(row, canManage) }],
+      rowActions: [
+        {
+          key: 'members',
+          label: 'voipCluster.members',
+          icon: 'dns',
+          collection: (row) => members(row, canManage),
+        },
+      ],
     });
   }
 }

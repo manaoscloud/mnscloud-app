@@ -882,7 +882,8 @@ export class MainLayout {
   }
 
   private hasPermissions(item: NavItem): boolean {
-    if (item.resourceAccess && this.auth.user()?.resourceAccess?.[item.resourceAccess] !== true) return false;
+    if (item.resourceAccess && this.auth.user()?.resourceAccess?.[item.resourceAccess] !== true)
+      return false;
     if (!item.permissions || item.permissions.length === 0) return true;
     return item.permissions.every((permission) => this.hasPermission(permission));
   }
@@ -932,11 +933,13 @@ export class MainLayout {
   // menu final (filtrado)
   readonly localizedNavItems = computed(() => {
     this.i18n.language();
-    return this.localizeMenu(visibleNavigation(this.navItemsRaw, {
-      permitted: (item) => this.hasPermissions(item),
-      entitled: (code) => this.hasCommercialEntitlement(code),
-      context: (item) => this.canShowByEnvironment(item),
-    }));
+    return this.localizeMenu(
+      visibleNavigation(this.navItemsRaw, {
+        permitted: (item) => this.hasPermissions(item),
+        entitled: (code) => this.hasCommercialEntitlement(code),
+        context: (item) => this.canShowByEnvironment(item),
+      }),
+    );
   });
 
   // Getter filtrado por busca (usa o menu filtrado)

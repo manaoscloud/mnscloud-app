@@ -45,5 +45,6 @@ export const voipCapacityReadGuard: CanActivateFn = async () => {
   const router = inject(Router);
   const loaded = await auth.loadMeFromApi(api);
   return loaded && auth.user()?.resourceAccess?.voipCapacityRead === true
-    ? true : router.parseUrl('/dashboard');
+    ? true
+    : router.parseUrl('/dashboard');
 };
