@@ -3324,6 +3324,14 @@ export const routes: Routes = [
                   import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
               },
               {
+                // Platform host records (PD4): private platform zone fed by the platform Agents.
+                path: 'dns/host-zones',
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.hostZones' },
+                loadComponent: () =>
+                  import('./pages/dns/host-zones/host-zones').then((m) => m.DnsHostZonesPage),
+              },
+              {
                 path: 'dns/client-tests',
                 loadComponent: () =>
                   import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),

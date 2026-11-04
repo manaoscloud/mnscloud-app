@@ -11389,5 +11389,17 @@
   "Billed amount": "Billed amount",
   "No price": "No price",
   "Included": "Included",
-  "Not metered": "Not metered"
+  "Not metered": "Not metered",
+  "nav.dns.host-zones": "Server names",
+  "dns.hostZones": "Server names",
+  "dns.hostZonesDescription": "A private platform zone on MNSCloud DNS receives the server names by itself: every active Agent of the chosen environment gets A/AAAA records with its host name, its Agent name and its role name (agent-api-prod1 → api). Only private addresses are published; a name already in the zone editor is never generated.",
+  "dns.hostZoneDomain": "Zone",
+  "dns.hostZoneDomainHelp": "Platform domain on MNSCloud DNS made private in DNS › Zones › Domains › Visibility.",
+  "dns.hostZoneEnvironment": "Agents environment",
+  "dns.hostZoneEnvironmentHelp": "Environment whose active Agents run the platform servers.",
+  "dns.hostZoneSyncedAt": "Last sync",
+  "dns.hostRecords": "Generated records",
+  "dns.hostRecordsTooltip": "Show the generated records",
+  "dns.hostRecordsDescription": "Records built from the Agents; updated within a minute when an Agent changes.",
+  "dns.hostRecordsEmpty": "No record generated yet."
 }

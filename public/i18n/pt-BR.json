@@ -11390,5 +11390,17 @@
   "Billed amount": "Valor cobrado",
   "No price": "Sem preço",
   "Included": "Incluída",
-  "Not metered": "Não medida"
+  "Not metered": "Não medida",
+  "nav.dns.host-zones": "Nomes de servidores",
+  "dns.hostZones": "Nomes de servidores",
+  "dns.hostZonesDescription": "Uma zona privada da plataforma no MNSCloud DNS recebe sozinha os nomes dos servidores: cada Agent ativo do ambiente escolhido ganha registros A/AAAA com o nome do host, o nome do Agent e o nome do papel (agent-api-prod1 → api). Só endereços privados são publicados; um nome já cadastrado no editor da zona nunca é gerado.",
+  "dns.hostZoneDomain": "Zona",
+  "dns.hostZoneDomainHelp": "Domínio da plataforma no MNSCloud DNS, tornado privado em DNS › Zonas › Domínios › Visibilidade.",
+  "dns.hostZoneEnvironment": "Ambiente dos Agents",
+  "dns.hostZoneEnvironmentHelp": "Ambiente cujos Agents ativos rodam os servidores da plataforma.",
+  "dns.hostZoneSyncedAt": "Última sincronização",
+  "dns.hostRecords": "Registros gerados",
+  "dns.hostRecordsTooltip": "Ver os registros gerados",
+  "dns.hostRecordsDescription": "Registros criados a partir dos Agents; atualizados em até um minuto quando um Agent muda.",
+  "dns.hostRecordsEmpty": "Nenhum registro gerado ainda."
 }

@@ -2539,6 +2539,14 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['platform.master.access'],
       },
       {
+        id: 'dns/host-zones',
+        label: 'nav.dns.host-zones',
+        icon: 'dns',
+        category: 'platform',
+        masterRoute: '/system/dns/host-zones',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'dns/client-tests',
         label: 'nav.dns.client-tests',
         icon: 'network_check',
