@@ -137,3 +137,77 @@ export function withCategoryGroups<T extends GroupableEntry>(
   };
   return items.map(regroup);
 }
+
+export interface AccordionEntry {
+  id: string;
+  children?: AccordionEntry[];
+}
+
+/**
+ * Expanded sidebar accordion (app.md → Navigation Structure): opening an entry closes every open
+ * sibling at the same level, including the one on the path of the current page, together with all
+ * the entries open below it, so a reopened sibling starts collapsed. Closing an entry only closes
+ * it (its open descendants show again when it reopens, as before). `items` is the menu as rendered.
+ */
+export function toggleNavSection(
+  items: AccordionEntry[],
+  expanded: ReadonlySet<string>,
+  id: string,
+): Set<string> {
+  const next = new Set(expanded);
+  if (next.has(id)) {
+    next.delete(id);
+    return next;
+  }
+  const closeBranch = (entry: AccordionEntry) => {
+    next.delete(entry.id);
+    entry.children?.forEach(closeBranch);
+  };
+  const siblingsOf = (list: AccordionEntry[]): AccordionEntry[] | null => {
+    if (list.some((entry) => entry.id === id)) return list;
+    for (const entry of list) {
+      const found = entry.children?.length ? siblingsOf(entry.children) : null;
+      if (found) return found;
+    }
+    return null;
+  };
+  for (const sibling of siblingsOf(items) ?? []) {
+    if (sibling.id !== id) closeBranch(sibling);
+  }
+  next.add(id);
+  return next;
+}
+
+/** Height of one compact flyout row, category title and the panel padding (main-layout.scss). */
+export const COMPACT_FLYOUT_ROW_PX = 42;
+export const COMPACT_FLYOUT_TITLE_PX = 26;
+export const COMPACT_FLYOUT_PADDING_PX = 14;
+
+/** Estimated height of a compact flyout listing `entries` (rows plus their category titles). */
+export function estimateCompactFlyoutHeight(
+  entries: readonly { id: string; categoryTitle?: string }[],
+): number {
+  const titles = entries.filter((entry) => entry.categoryTitle).length;
+  return (
+    entries.length * COMPACT_FLYOUT_ROW_PX +
+    titles * COMPACT_FLYOUT_TITLE_PX +
+    COMPACT_FLYOUT_PADDING_PX
+  );
+}
+
+/**
+ * Vertical placement of a compact flyout: it starts at its anchor row when it fits, otherwise moves
+ * up just enough to end `margin` above the viewport bottom; taller than the viewport, it takes the
+ * whole height and scrolls. Rows never shrink (main-layout.scss), so nothing is squeezed or cut.
+ */
+export function fitCompactFlyout(
+  anchorTop: number,
+  height: number,
+  viewportHeight: number,
+  margin = 16,
+): { top: number; maxHeight: number } {
+  const maxHeight = Math.max(112, viewportHeight - margin * 2);
+  const visible = Math.min(height, maxHeight);
+  const top = Math.max(margin, Math.min(anchorTop, viewportHeight - margin - visible));
+  return { top: Math.round(top), maxHeight: Math.round(maxHeight) };
+}
