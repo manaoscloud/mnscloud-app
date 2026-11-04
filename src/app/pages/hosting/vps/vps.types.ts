@@ -280,7 +280,26 @@ export type HostingVpsNetwork = {
   HvnIsDefault: number;
   HvnIsActive: number;
   UserUsrUUID?: string | null;
+  /** Provider settings; `tenantDefaultZone` marks the default network of the account. */
+  HvnConfig?: unknown;
 };
+
+/**
+ * Default network of the customer's account (created with the first Proxmox VPS, always attached):
+ * marked by HvnConfig.tenantDefaultZone. Accepts the parsed object or the JSON text.
+ */
+export function isAccountDefaultNetwork(network: { HvnConfig?: unknown }): boolean {
+  let config = network.HvnConfig;
+  if (typeof config === 'string') {
+    try {
+      config = JSON.parse(config);
+    } catch {
+      return false;
+    }
+  }
+  const zone = (config as { tenantDefaultZone?: unknown } | null | undefined)?.tenantDefaultZone;
+  return typeof zone === 'string' && zone.length > 0;
+}
 
 export type HostingVpsNetworkCapabilities = {
   create: boolean;

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "de2663f74c66",
+  "version": "3e1b60182f65",
   "language": "pt-BR",
   "entries": [
     {
@@ -2789,11 +2789,11 @@
         },
         {
           "label": "Rede privada",
-          "help": "Somente redes disponíveis do provedor e da região do plano são listadas."
+          "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
         {
           "label": "Perfis de firewall",
-          "help": "Aplicados pelo provedor logo após o provisionamento."
+          "help": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso."
         },
         {
           "label": "Método de autenticação",
@@ -10295,11 +10295,11 @@
         },
         {
           "label": "Rede privada",
-          "help": "Somente redes disponíveis do provedor e da região do plano são listadas."
+          "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
         {
           "label": "Perfis de firewall",
-          "help": "Aplicados pelo provedor logo após o provisionamento."
+          "help": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso."
         },
         {
           "label": "Método de autenticação",

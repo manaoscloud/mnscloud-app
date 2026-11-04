@@ -17,6 +17,7 @@ import type {
   HostingVpsPlan,
   HostingVpsProvider,
 } from '../vps.types';
+import { isAccountDefaultNetwork } from '../vps.types';
 
 const NETWORK_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'queued', label: 'Queued' },
@@ -96,7 +97,16 @@ const config = defineCrud({
   },
   fields: [],
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'HvnName', uuidField: 'HvnUUID' },
+    {
+      id: 'name',
+      label: 'Name',
+      kind: 'identity',
+      field: 'HvnName',
+      uuidField: 'HvnUUID',
+      // The account default network keeps its technical name; customers see "Default network".
+      value: (row, translate) =>
+        isAccountDefaultNetwork(row) ? translate('Default network') : String(row['HvnName'] ?? ''),
+    },
     {
       id: 'provider',
       label: 'Provider',
