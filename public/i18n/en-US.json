@@ -11417,5 +11417,13 @@
   "dns.hostRecords": "Generated records",
   "dns.hostRecordsTooltip": "Show the generated records",
   "dns.hostRecordsDescription": "Records built from the Agents; updated within a minute when an Agent changes.",
-  "dns.hostRecordsEmpty": "No record generated yet."
+  "dns.hostRecordsEmpty": "No record generated yet.",
+  "dns.dedication": "Dedicated customer",
+  "dns.dedicationDescription": "Servers inside the customer network, installed and operated by the platform (outbound Agent connection only, no management port). This cluster's MNSCloud DNS provider is offered only to the tenant that owns the account, which sees the servers in DNS › Accounts › Servers (and the customer in the portal, when published). Leave empty to release the cluster.",
+  "dns.dedicationAccount": "DNS account",
+  "dns.dedicationAccountHelp": "Tenant account (and customer) that receives this cluster's servers. It cannot move to another tenant while the cluster hosts zones of another tenant.",
+  "dns.managedServers": "Servers",
+  "dns.managedServersTooltip": "DNS servers in the customer network",
+  "dns.managedServersDescription": "DNS servers installed in the customer network and operated by the platform for this account (read only).",
+  "dns.managedServersEmpty": "No server dedicated to this account."
 }

@@ -11417,5 +11417,13 @@
   "dns.hostRecords": "Registros generados",
   "dns.hostRecordsTooltip": "Ver los registros generados",
   "dns.hostRecordsDescription": "Registros creados a partir de los Agents; actualizados en hasta un minuto cuando un Agent cambia.",
-  "dns.hostRecordsEmpty": "Ningún registro generado todavía."
+  "dns.hostRecordsEmpty": "Ningún registro generado todavía.",
+  "dns.dedication": "Cliente dedicado",
+  "dns.dedicationDescription": "Servidores en la red del cliente, instalados y operados por la plataforma (solo conexión saliente del Agent, ningún puerto de gestión). El proveedor MNSCloud DNS de este clúster queda disponible solo para el tenant dueño de la cuenta, que ve los servidores en DNS › Cuentas › Servidores (y el cliente en el portal, si está publicado). Deje vacío para liberar el clúster.",
+  "dns.dedicationAccount": "Cuenta DNS",
+  "dns.dedicationAccountHelp": "Cuenta del tenant (y cliente) que recibe los servidores de este clúster. No puede pasar a otro tenant mientras el clúster aloje zonas de otro tenant.",
+  "dns.managedServers": "Servidores",
+  "dns.managedServersTooltip": "Servidores DNS en la red del cliente",
+  "dns.managedServersDescription": "Servidores DNS instalados en la red del cliente y operados por la plataforma para esta cuenta (solo lectura).",
+  "dns.managedServersEmpty": "Ningún servidor dedicado a esta cuenta."
 }
