@@ -122,9 +122,20 @@ const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'password', label: 'Username and password' },
 ];
 
-const LIGHTSAIL_AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
+const KEY_ONLY_AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'ssh_key', label: 'SSH key' },
 ];
+
+/** Providers whose images accept only SSH keys (Lightsail; Proxmox templates are key-only). */
+const KEY_ONLY_PROVIDERS = new Set(['lightsail', 'proxmox']);
+
+function isKeyOnlyProvider(provider: unknown): boolean {
+  return KEY_ONLY_PROVIDERS.has(
+    String(provider ?? '')
+      .trim()
+      .toLowerCase(),
+  );
+}
 
 const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/instances',
@@ -304,8 +315,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'authMethod',
       label: 'Authentication method',
       labelWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail'
-          ? 'Authentication method (Lightsail requires SSH key)'
+        isKeyOnlyProvider(values['planProvider'])
+          ? 'Authentication method (this provider requires SSH key)'
           : 'Authentication method',
       type: 'select',
       options: AUTH_METHOD_OPTIONS,
@@ -313,7 +324,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'authMethod') || 'ssh_key',
-      disabledWhen: ({ values }) => String(values['planProvider'] ?? '') === 'lightsail',
+      disabledWhen: ({ values }) => isKeyOnlyProvider(values['planProvider']),
     },
     {
       key: 'username',
@@ -323,12 +334,16 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'root',
       span: 1,
       tab: 'authentication',
-      fromRecord: (value) => configString(value, 'username') || 'root',
-      hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
-        String(values['authMethod'] ?? 'ssh_key') !== 'password',
-      requiredWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+      fromRecord: (value) => configString(value, 'username'),
+      // Key-only providers set the login user from the image (Proxmox: the template's cloud-init
+      // user); it is shown read-only once the server exists.
+      hiddenWhen: ({ editing, values }) =>
+        !(editing && normalizeString(values['username'])) &&
+        (isKeyOnlyProvider(values['planProvider']) ||
+          String(values['authMethod'] ?? 'ssh_key') !== 'password'),
+      requiredWhen: ({ editing, values }) =>
+        !editing &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
@@ -342,11 +357,11 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       fromRecord: () => '',
       hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
+        isKeyOnlyProvider(values['planProvider']) ||
         String(values['authMethod'] ?? 'ssh_key') !== 'password',
       requiredWhen: ({ editing, values }) =>
         !editing &&
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
@@ -358,10 +373,10 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
       hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') !== 'ssh_key',
       requiredWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
+        isKeyOnlyProvider(values['planProvider']) ||
         String(values['authMethod'] ?? 'ssh_key') === 'ssh_key',
     },
     {
@@ -629,7 +644,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
     if (field.key === 'authMethod') {
-      return this.isSelectedPlanLightsail() ? LIGHTSAIL_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
+      return this.isSelectedPlanKeyOnly() ? KEY_ONLY_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
     }
     return super.fieldOptions(field);
   }
@@ -648,13 +663,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return field.key === 'image' ? this.catalogLoading() : super.fieldLoading(field);
   }
 
-  private isSelectedPlanLightsail(): boolean {
+  private isSelectedPlanKeyOnly(): boolean {
     const fromForm = String(this.formValues()['planProvider'] ?? '')
       .trim()
       .toLowerCase();
-    if (fromForm) return fromForm === 'lightsail';
+    if (fromForm) return isKeyOnlyProvider(fromForm);
     const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
-    return plan?.HvpProvider === 'lightsail';
+    return isKeyOnlyProvider(plan?.HvpProvider);
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
@@ -663,7 +678,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       return;
     }
     if (key === 'authMethod') {
-      if (this.isSelectedPlanLightsail()) {
+      if (this.isSelectedPlanKeyOnly()) {
         this.patchFormValues({
           authMethod: 'ssh_key',
           password: '',
@@ -686,10 +701,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
     const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
-    const lightsail =
-      plan?.HvpProvider === 'lightsail' ||
-      String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
-    const authMethod = lightsail
+    const keyOnly =
+      isKeyOnlyProvider(plan?.HvpProvider) ||
+      isKeyOnlyProvider(payload['planProvider'] ?? this.formValues()['planProvider']);
+    const authMethod = keyOnly
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
             .trim()
@@ -697,10 +712,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         ? 'password'
         : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
-    const username = lightsail
+    // Key-only providers take the login user from the image; the API records it.
+    const username = keyOnly
       ? null
       : (normalizeString(payload['username']) ?? (authMethod === 'password' ? 'root' : null));
-    const password = lightsail ? null : normalizeString(payload['password']);
+    const password = keyOnly ? null : normalizeString(payload['password']);
     const providerImageId = normalizeString(payload['image']);
     const notes = normalizeString(payload['notes']);
     const config: HostingVpsInstanceConfig = {
@@ -762,7 +778,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const lightsail =
       plan?.HvpProvider === 'lightsail' ||
       String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
-    const authMethod = lightsail
+    const keyOnly =
+      lightsail ||
+      isKeyOnlyProvider(plan?.HvpProvider) ||
+      isKeyOnlyProvider(payload['planProvider'] ?? this.formValues()['planProvider']);
+    const authMethod = keyOnly
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
             .trim()
@@ -1063,9 +1083,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.patchFormValues({ image: '' });
     }
 
-    if (provider === 'lightsail') {
+    if (isKeyOnlyProvider(provider)) {
       this.patchFormValues({
-        planProvider: 'lightsail',
+        planProvider: provider,
         authMethod: 'ssh_key',
         password: '',
         username: '',

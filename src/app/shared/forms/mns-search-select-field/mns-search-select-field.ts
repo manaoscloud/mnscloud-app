@@ -38,6 +38,14 @@ export type MnsSearchSelectFieldOption = {
 
 type MnsSearchSelectValue = string | number | boolean | null | readonly unknown[];
 
+/**
+ * Value of the "No selection" option. It must never equal an empty field value: if it were `''`,
+ * mat-select would treat the clear option as selected while the field is empty, leave its empty
+ * state and render the (blank) trigger instead of the placeholder, so optional FK fields grew
+ * taller and lowered their arrow and `+` compared with every other field.
+ */
+export const MNS_SEARCH_SELECT_CLEAR_VALUE = '__mns_clear_selection__';
+
 /** Remote searches wait for a typing pause so each keystroke does not hit the API. */
 export const MNS_REMOTE_SEARCH_DEBOUNCE_MS = 250;
 
@@ -177,7 +185,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
           }
 
           @if (showClearOption()) {
-            <mat-option [value]="''" class="select-clear-option">
+            <mat-option [value]="clearOptionValue" class="select-clear-option">
               <span class="select-option-main">{{ clearLabel() | transloco }}</span>
             </mat-option>
           }
@@ -317,7 +325,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
           }
 
           @if (showClearOption()) {
-            <mat-option [value]="''" class="select-clear-option">
+            <mat-option [value]="clearOptionValue" class="select-clear-option">
               <span class="select-option-main">{{ clearLabel() | transloco }}</span>
             </mat-option>
           }
@@ -457,6 +465,7 @@ export class MnsSearchSelectFieldComponent {
   /** Optional single selects: offer an empty choice so a picked value can be removed. */
   readonly clearable = input(false);
   readonly clearLabel = input('No selection');
+  readonly clearOptionValue = MNS_SEARCH_SELECT_CLEAR_VALUE;
 
   readonly remoteSearch = input(false);
   readonly hasPrevious = input(false);
@@ -680,6 +689,11 @@ export class MnsSearchSelectFieldComponent {
   }
 
   selectValue(value: MnsSearchSelectValue): void {
+    if (value === MNS_SEARCH_SELECT_CLEAR_VALUE) {
+      value = '';
+      // A bound signal form field received the sentinel from mat-select: store the empty value.
+      this.field()?.().value.set('');
+    }
     const nextValue = this.multiple() ? this.orderMultipleValues(value) : value;
     this.valueChange.emit(nextValue);
     this.selectionChange.emit(nextValue);
