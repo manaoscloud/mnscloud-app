@@ -291,7 +291,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
     const state = String(row['HpiNetworkState'] ?? '');
     const actions: ConfigurableCrudRowAction[] = [];
     if (!this.isMaster() && row['HpiStatus'] === 'available') actions.push(ACTIONS.contract);
-    if (!this.isMaster() && mine && !associated) actions.push(ACTIONS.assign, ACTIONS.release);
+    if (!this.isMaster() && mine && !associated) actions.push(ACTIONS.assign);
+    if ((mine || this.isMaster()) && row['HpiStatus'] === 'allocated' && !associated)
+      actions.push(ACTIONS.release);
     if ((mine || this.isMaster()) && associated && state !== 'removing')
       actions.push(ACTIONS.unassign);
     if ((mine || this.isMaster()) && associated && state === 'failed') actions.push(ACTIONS.retry);
