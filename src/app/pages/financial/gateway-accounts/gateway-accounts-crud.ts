@@ -267,6 +267,17 @@ export const paymentGatewayConfig = defineCrud({
   rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
   payload: (values, editing) => {
     const provider = text(values['provider']);
+    if (provider === MNSCLOUD_PAY) {
+      return {
+        name: text(values['name']),
+        ...(editing ? {} : { provider: MNSCLOUD_PAY }),
+        environment: text(values['environment']) || 'production',
+        receiveMethods: text(values['receiveMethods']) || 'BOLETO,PIX',
+        autoCancelDays: Number(values['autoCancelDays']) || 30,
+        isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
+        isActive: Number(values['status']) === 1 ? 1 : 0,
+      };
+    }
     if (provider === ASAAS_OWN_ACCOUNT) {
       const apiKey = text(values['apiKey']);
       const credentials: Record<string, string> = {};
