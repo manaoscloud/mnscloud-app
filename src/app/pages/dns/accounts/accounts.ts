@@ -5,13 +5,22 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
 import {
   resaleAccountFields,
   resaleAccountRowActions,
 } from '../../../shared/crud/configurable-crud/account-resale-actions';
+
+const SERVERS_ACTION: ConfigurableCrudRowAction = {
+  key: 'servers',
+  label: 'dns.managedServers',
+  icon: 'dns',
+  tooltip: 'dns.managedServersTooltip',
+};
 
 export const DNS_ACCOUNTS_CONFIG = defineCrud({
   endpoint: 'dns/accounts',
@@ -73,7 +82,53 @@ export class DnsAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         operatorsTitle: 'dns.operators',
         operatorsDescription: 'dns.operatorsDescription',
         canManage,
-      }),
+      }).concat([SERVERS_ACTION]),
     });
+  }
+
+  /** Managed on-premises servers of the account (PD8): read only, operated by the platform. */
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== SERVERS_ACTION.key) return super.handleRowAction(action, row);
+    try {
+      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        `dns/accounts/${row['DacUUID']}/servers`,
+      );
+      const roles = (item: ConfigurableCrudRecord) =>
+        [
+          Number(item['Recursive']) ? this.t('dns.roles.recursive') : '',
+          Number(item['Authoritative']) ? this.t('dns.roles.authoritative') : '',
+          Number(item['Edge']) ? this.t('dns.roles.edge') : '',
+        ]
+          .filter(Boolean)
+          .join(', ');
+      openDataViewerDialog(this.dialog, {
+        title: 'dns.managedServers',
+        description: 'dns.managedServersDescription',
+        sections: [
+          {
+            title: String(row['DacName'] ?? ''),
+            table: {
+              columns: [
+                { key: 'name', label: 'Name' },
+                { key: 'cluster', label: 'dns.cluster' },
+                { key: 'roles', label: 'dns.roles.title' },
+                { key: 'state', label: 'Status', translate: true },
+                { key: 'lastSeen', label: 'Last seen', kind: 'datetime' },
+              ],
+              rows: (response?.data?.items ?? []).map((item) => ({
+                name: item['DsvName'],
+                cluster: item['ClusterName'],
+                roles: roles(item),
+                state: `dns.states.${String(item['ProvisioningState'] ?? 'awaiting_installation')}`,
+                lastSeen: item['LastSeenAt'],
+              })),
+              emptyLabel: 'dns.managedServersEmpty',
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 }
