@@ -16,7 +16,7 @@ const bankPartners = [
 const transactionTypes = [
   { value: 'boleto', label: 'Boleto' },
   { value: 'pix', label: 'Pix' },
-  { value: 'credit_card', label: 'Cartão de Crédito' },
+  { value: 'credit_card', label: 'Credit card' },
 ];
 
 const statuses = [
@@ -201,7 +201,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         type: 'currency',
         currencyKey: 'currency',
         span: 1,
-        help: 'Custo retido pelo parceiro bancário na subconta (deduzido no split).',
+        help: 'Base fee retained by the bank partner in the subaccount.',
       },
       {
         key: 'partnerCostPercent',
@@ -209,7 +209,7 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         label: 'Partner cost (%)',
         type: 'number',
         span: 1,
-        help: 'Percentual retido pelo parceiro bancário na subconta.',
+        help: 'Percentage fee retained by the bank partner in the subaccount.',
       },
       {
         key: 'minFeeAmount',

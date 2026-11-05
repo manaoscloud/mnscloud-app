@@ -228,7 +228,7 @@ const fields: ConfigurableCrudField[] = [
     label: 'Wallet ID (Split)',
     tab: 'financial',
     span: 1,
-    help: 'ID da carteira principal no Asaas para recebimento das taxas de split.',
+    help: 'Primary Asaas wallet ID to receive platform fee splits.',
     hiddenWhen: hideUnlessSplit,
   },
   {
