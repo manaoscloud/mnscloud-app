@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ef8a616c3a0c",
+  "version": "3491c2e4472e",
   "language": "pt-BR",
   "entries": [
     {
@@ -9280,15 +9280,19 @@
       "route": "/system/pay/fee-plans",
       "menuPath": "Pay › Tarifas › Planos",
       "scope": "platform",
-      "title": "Pay — Faixas de volume",
-      "description": "Faixas de volume que reduzem a tarifa conforme a quantidade de transações.",
+      "title": "Pay — Tarifas",
+      "description": "Tarifas do plano por forma de pagamento: valor fixo e percentual.",
       "fields": [
         {
-          "label": "Quantidade mínima do volume",
+          "label": "Tipo de transação",
           "help": ""
         },
         {
-          "label": "Valor mínimo do volume",
+          "label": "Banco parceiro",
+          "help": ""
+        },
+        {
+          "label": "Moeda",
           "help": ""
         },
         {
@@ -9300,15 +9304,19 @@
           "help": ""
         },
         {
+          "label": "Custo parceiro (fixo)",
+          "help": "Tarifa base retida pelo parceiro bancário na subconta."
+        },
+        {
+          "label": "Custo parceiro (%)",
+          "help": "Percentual de tarifa retido pelo parceiro bancário na subconta."
+        },
+        {
           "label": "Tarifa mínima",
           "help": ""
         },
         {
           "label": "Tarifa máxima",
-          "help": ""
-        },
-        {
-          "label": "Período",
           "help": ""
         }
       ]

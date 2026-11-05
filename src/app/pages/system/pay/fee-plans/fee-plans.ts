@@ -9,12 +9,14 @@ import { defineCrud } from '../../../../shared/crud/configurable-crud/define-cru
 
 const bankPartners = [
   { value: '', label: 'All' },
+  { value: 'asaas', label: 'Asaas' },
   { value: 'inter_business', label: 'Inter Empresas' },
 ];
 
 const transactionTypes = [
   { value: 'boleto', label: 'Boleto' },
   { value: 'pix', label: 'Pix' },
+  { value: 'credit_card', label: 'Credit card' },
 ];
 
 const statuses = [
@@ -122,7 +124,14 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
     bulkDelete: false,
     defaultCurrencyFields: ['currency'],
     defaultCurrencyScope: 'master',
-    initialValues: { transactionType: 'boleto', provider: '', fixedAmount: 0, percentRate: 0 },
+    initialValues: {
+      transactionType: 'boleto',
+      provider: '',
+      fixedAmount: 0,
+      percentRate: 0,
+      partnerCostFixed: 0,
+      partnerCostPercent: 0,
+    },
     columns: [
       {
         id: 'transaction',
@@ -140,6 +149,14 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         currencyField: 'PfrCurrency',
       },
       { id: 'percent', label: 'Percentage rate', field: 'PfrPercentRate', kind: 'number' },
+      {
+        id: 'costFixed',
+        label: 'Partner cost (fixed)',
+        field: 'PfrPartnerCostFixed',
+        kind: 'currency',
+        currencyField: 'PfrCurrency',
+      },
+      { id: 'costPercent', label: 'Partner cost (%)', field: 'PfrPartnerCostPercent', kind: 'number' },
     ],
     fields: [
       {
@@ -176,6 +193,23 @@ function rates(plan: ConfigurableCrudRecord): ConfigurableCrudConfig {
         label: 'Percentage rate',
         type: 'number',
         span: 1,
+      },
+      {
+        key: 'partnerCostFixed',
+        source: 'PfrPartnerCostFixed',
+        label: 'Partner cost (fixed)',
+        type: 'currency',
+        currencyKey: 'currency',
+        span: 1,
+        help: 'Base fee retained by the bank partner in the subaccount.',
+      },
+      {
+        key: 'partnerCostPercent',
+        source: 'PfrPartnerCostPercent',
+        label: 'Partner cost (%)',
+        type: 'number',
+        span: 1,
+        help: 'Percentage fee retained by the bank partner in the subaccount.',
       },
       {
         key: 'minFeeAmount',

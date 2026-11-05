@@ -10,6 +10,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
  * Independent from MNSCloud Pay bank partners (System > Pay). The gateway list comes from the
  * tenant catalog API; each gateway shows only the fields its integration needs.
  */
+export const MNSCLOUD_PAY = 'mnscloud_pay';
 export const INTER_OWN_ACCOUNT = 'inter_business';
 export const ASAAS_OWN_ACCOUNT = 'asaas';
 
@@ -30,10 +31,9 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
   { value: 'BOLETO', label: 'Boleto only' },
   { value: 'PIX', label: 'Pix only' },
 ];
-/** Fallback until the catalog loads; the API remains the source of truth. */
+/** Fallback until the catalog loads; the API remains the source of truth. Only MNSCloud Pay is offered. */
 export const defaultGatewayOptions: readonly ConfigurableCrudOption[] = [
-  { value: INTER_OWN_ACCOUNT, label: 'Inter Empresas (conta própria)' },
-  { value: ASAAS_OWN_ACCOUNT, label: 'Asaas (conta própria)' },
+  { value: MNSCLOUD_PAY, label: 'MNSCloud Pay' },
 ];
 
 export const GATEWAY_PEM_FIELDS = ['certPem', 'keyPem'] as const;
@@ -43,10 +43,13 @@ const isInter = ({ values }: { values: ConfigurableCrudRecord }) =>
   String(values['provider'] ?? '') === INTER_OWN_ACCOUNT;
 const isAsaas = ({ values }: { values: ConfigurableCrudRecord }) =>
   String(values['provider'] ?? '') === ASAAS_OWN_ACCOUNT;
+const isMnscloudPay = ({ values }: { values: ConfigurableCrudRecord }) =>
+  String(values['provider'] ?? '') === MNSCLOUD_PAY;
+
 const hideUnlessInter = (context: { values: ConfigurableCrudRecord }) => !isInter(context);
 const hideUnlessAsaas = (context: { values: ConfigurableCrudRecord }) => !isAsaas(context);
-const hideUnlessInterOrAsaas = (context: { values: ConfigurableCrudRecord }) =>
-  !isInter(context) && !isAsaas(context);
+const hideUnlessSupportedGateway = (context: { values: ConfigurableCrudRecord }) =>
+  !isMnscloudPay(context) && !isInter(context) && !isAsaas(context);
 
 const requiredOnCreate = ({
   editing,
@@ -95,7 +98,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: environmentOptions,
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'isDefault',
@@ -125,7 +128,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: receiveMethodOptions,
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'autoCancelDays',
@@ -136,7 +139,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     help: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'apiKey',
@@ -222,10 +225,10 @@ export const paymentGatewayConfig = defineCrud({
   },
   initialValues: {
     status: 1,
-    provider: INTER_OWN_ACCOUNT,
-    name: '',
+    provider: MNSCLOUD_PAY,
+    name: 'MNSCloud Pay',
     environment: 'production',
-    isDefault: 0,
+    isDefault: 1,
     accountNumber: '',
     receiveMethods: 'BOLETO,PIX',
     autoCancelDays: 30,
@@ -264,6 +267,17 @@ export const paymentGatewayConfig = defineCrud({
   rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
   payload: (values, editing) => {
     const provider = text(values['provider']);
+    if (provider === MNSCLOUD_PAY) {
+      return {
+        name: text(values['name']),
+        ...(editing ? {} : { provider: MNSCLOUD_PAY }),
+        environment: text(values['environment']) || 'production',
+        receiveMethods: text(values['receiveMethods']) || 'BOLETO,PIX',
+        autoCancelDays: Number(values['autoCancelDays']) || 30,
+        isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
+        isActive: Number(values['status']) === 1 ? 1 : 0,
+      };
+    }
     if (provider === ASAAS_OWN_ACCOUNT) {
       const apiKey = text(values['apiKey']);
       const credentials: Record<string, string> = {};
