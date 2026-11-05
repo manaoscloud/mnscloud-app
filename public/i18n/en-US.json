@@ -11433,5 +11433,11 @@
   "dns.managedServers": "Servers",
   "dns.managedServersTooltip": "DNS servers in the customer network",
   "dns.managedServersDescription": "DNS servers installed in the customer network and operated by the platform for this account (read only).",
-  "dns.managedServersEmpty": "No server dedicated to this account."
+  "dns.managedServersEmpty": "No server dedicated to this account.",
+  "Reserve for platform": "Reserve for platform",
+  "Reserve this IP for an internal VPS": "Reserve this IP for an internal VPS",
+  "Reserve public IP for platform": "Reserve public IP for platform",
+  "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.": "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.",
+  "Public IP reserved for platform.": "Public IP reserved for platform.",
+  "Release {address}? The address returns to the available pool.": "Release {address}? The address returns to the available pool."
 }

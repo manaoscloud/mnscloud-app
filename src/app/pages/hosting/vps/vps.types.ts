@@ -210,6 +210,7 @@ export type VpsProviderCatalog = {
 };
 
 export type HostingVpsInstance = {
+  UserUsrUUID?: string | null;
   HviUUID: string;
   HviName: string;
   HviConfig?: HostingVpsInstanceConfig | null;
