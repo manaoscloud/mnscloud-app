@@ -119,6 +119,8 @@ const requiredOnCreate =
   ({ editing, values }: FieldContext) =>
     !editing && Boolean(credentialOf(values, key)?.required);
 const isCardPurpose = ({ values }: FieldContext) => values['purpose'] === CARD_PURPOSE;
+const isSplitPurpose = ({ values }: FieldContext) => values['purpose'] === 'PAY_SPLIT';
+const hideUnlessSplit = (context: FieldContext) => !isSplitPurpose(context);
 /** Blank card fee fields mean no fee of that kind. */
 const feeValue = (value: unknown) => {
   const raw = text(value).replace(',', '.');
@@ -221,6 +223,15 @@ const fields: ConfigurableCrudField[] = [
     hiddenWhen: hiddenUnless('autoCancelDays'),
   },
   {
+    key: 'walletId',
+    source: 'PbcWalletId',
+    label: 'Wallet ID (Split)',
+    tab: 'financial',
+    span: 1,
+    help: 'ID da carteira principal no Asaas para recebimento das taxas de split.',
+    hiddenWhen: hideUnlessSplit,
+  },
+  {
     key: 'apiKey',
     label: 'API Key',
     type: 'password',
@@ -320,6 +331,7 @@ export const bankPartnersConfig = defineCrud({
     name: '',
     environment: 'production',
     purpose: 'TENANT_BILLING',
+    walletId: '',
     cardFeePercent: '',
     cardFeeFixed: '',
     accountNumber: '',
@@ -336,6 +348,7 @@ export const bankPartnersConfig = defineCrud({
   columns: [
     { id: 'name', label: 'Name', field: 'PbcName', kind: 'identity' },
     { id: 'purpose', label: 'Purpose', field: 'PbcPurpose', options: purposeOptions },
+    { id: 'wallet', label: 'Wallet ID', field: 'PbcWalletId', kind: 'text' },
     {
       id: 'provider',
       label: 'Bank',
