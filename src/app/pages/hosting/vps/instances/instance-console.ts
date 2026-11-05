@@ -55,6 +55,14 @@ export function consoleErrorMessage(error: unknown): string | null {
   return typeof text === 'string' && text.trim() ? text.trim() : null;
 }
 
+/** Proxmox banner of a serial session; it is not output of the VM. */
+export function isSerialBanner(text: string): boolean {
+  return /^\s*starting serial terminal on interface \S+\s*$/i.test(text);
+}
+
+/** Milliseconds of VM silence after connecting before Enter asks the getty to show the login. */
+export const SERIAL_WAKE_DELAY_MS = 700;
+
 /** Seconds to wait for the console handshake before showing an error. */
 export const VPS_CONSOLE_HANDSHAKE_SECONDS = 15;
 
@@ -258,6 +266,8 @@ export class VpsInstanceConsoleComponent {
     const socket = new WebSocket(url, ['binary']);
     socket.binaryType = 'arraybuffer';
     let ready = false;
+    let guestSpoke = false;
+    let wake: ReturnType<typeof setTimeout> | undefined;
     const decoder = new TextDecoder();
     const ping = setInterval(() => {
       if (socket.readyState === WebSocket.OPEN) socket.send('2');
@@ -278,7 +288,17 @@ export class VpsInstanceConsoleComponent {
           socket.send(termproxyResize(terminal.cols, terminal.rows));
           terminal.focus();
           const rest = text.slice(2);
-          if (rest) terminal.write(rest);
+          if (rest) {
+            terminal.write(rest);
+            if (!isSerialBanner(rest)) guestSpoke = true;
+          }
+          // The login prompt was printed at boot and a serial port does not replay it: when the
+          // VM stays silent, one Enter makes the getty show the login (an SSH shell already did).
+          wake = setTimeout(() => {
+            if (!guestSpoke && socket.readyState === WebSocket.OPEN) {
+              socket.send(termproxyInput('\r'));
+            }
+          }, SERIAL_WAKE_DELAY_MS);
           return;
         }
         clearTimeout(handshake);
@@ -286,6 +306,7 @@ export class VpsInstanceConsoleComponent {
         socket.close();
         return;
       }
+      if (!isSerialBanner(text)) guestSpoke = true;
       terminal.write(text);
     };
     socket.onclose = () => {
@@ -306,6 +327,7 @@ export class VpsInstanceConsoleComponent {
     this.teardown = () => {
       clearInterval(ping);
       clearTimeout(handshake);
+      clearTimeout(wake);
       observer.disconnect();
       input.dispose();
       resize.dispose();
