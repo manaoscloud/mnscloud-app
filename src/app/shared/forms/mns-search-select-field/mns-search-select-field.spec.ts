@@ -153,6 +153,63 @@ describe('Remote relationship dropdown accessibility', () => {
     fixture.destroy();
   });
 
+  it('keeps an empty optional (clearable) field in the same empty state as the other fields', async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        MnsSearchSelectFieldComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    }).compileComponents();
+    for (const value of ['', null]) {
+      const fixture = TestBed.createComponent(MnsSearchSelectFieldComponent);
+      fixture.componentRef.setInput('label', 'Customer');
+      fixture.componentRef.setInput('options', [{ value: 'c1', label: 'Customer 1' }]);
+      fixture.componentRef.setInput('clearable', true);
+      fixture.componentRef.setInput('canCreate', true);
+      fixture.componentRef.setInput('value', value);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      // The "No selection" option must not count as selected: mat-select keeps its empty state
+      // and placeholder, so the closed field has the same height and arrow as a required one.
+      const select = fixture.nativeElement.querySelector('.mat-mdc-select')!;
+      expect(select.classList).toContain('mat-mdc-select-empty');
+      expect(fixture.nativeElement.querySelector('.mat-mdc-select-placeholder')).not.toBeNull();
+      fixture.destroy();
+    }
+  });
+  it('emits an empty value when "No selection" is picked', async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        MnsSearchSelectFieldComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(MnsSearchSelectFieldComponent);
+    fixture.componentRef.setInput('label', 'Customer');
+    fixture.componentRef.setInput('options', [{ value: 'c1', label: 'Customer 1' }]);
+    fixture.componentRef.setInput('clearable', true);
+    fixture.componentRef.setInput('value', 'c1');
+    const selections = spyOn(fixture.componentInstance.valueChange, 'emit').and.callThrough();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.nativeElement.querySelector('mat-select').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const panel = document.querySelector('.mat-mdc-select-panel')!;
+    (panel.querySelector('.select-clear-option') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(selections).toHaveBeenCalledOnceWith('');
+    fixture.destroy();
+  });
   describe('search focus and keyboard', () => {
     async function create(options: { remote?: boolean } = {}) {
       await TestBed.configureTestingModule({
