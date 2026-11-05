@@ -169,6 +169,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           placeholder: 'WEB',
           required: true,
           span: 1,
+          help: 'Name of the profile, shown when attaching it to a VPS.',
         },
         {
           key: 'outboundPolicy',
@@ -178,7 +179,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           type: 'select',
           options: OUTBOUND_OPTIONS,
           required: true,
-          help: 'Lightsail cannot restrict outbound traffic.',
+          help: 'Allow all outbound: the VPS may open any outbound connection. Allow only listed outbound: only the outbound rules of this profile are allowed. Lightsail cannot restrict outbound traffic.',
         },
         // business-description: description of the firewall kept with the cloud resource.
         {
@@ -188,6 +189,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           label: 'Description',
           type: 'textarea',
           span: 4,
+          help: 'Free text to remember what this profile is for.',
         },
       ],
       relatedCollections: [
@@ -221,6 +223,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               options: DIRECTION_OPTIONS,
               required: true,
               span: 1,
+              help: 'Inbound: traffic that reaches the VPS. Outbound: traffic the VPS sends. With a profile attached, every inbound connection not allowed by a rule is blocked, ping (ICMP) included.',
             },
             {
               key: 'action',
@@ -229,6 +232,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               options: ACTION_OPTIONS,
               required: true,
               span: 1,
+              help: 'Allow opens the traffic of the rule. Deny blocks it even when another rule allows it. Inbound traffic without an Allow rule is already blocked, so a profile with only Deny rules blocks all inbound traffic, ping included: add Allow rules for what must stay open.',
             },
             {
               key: 'protocol',
@@ -238,9 +242,22 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               translateOptions: false,
               required: true,
               span: 1,
+              help: 'TCP and UDP use the ports below. ICMP is ping. All protocols ignores the ports.',
             },
-            { key: 'portFrom', label: 'Port from', type: 'number', span: 1 },
-            { key: 'portTo', label: 'Port to', type: 'number', span: 1 },
+            {
+              key: 'portFrom',
+              label: 'Port from',
+              type: 'number',
+              span: 1,
+              help: 'First port of the range (TCP/UDP). Empty = every port.',
+            },
+            {
+              key: 'portTo',
+              label: 'Port to',
+              type: 'number',
+              span: 1,
+              help: 'Last port of the range. Empty = only the port in Port from.',
+            },
             {
               key: 'remoteCidrs',
               label: 'Addresses (CIDR)',
@@ -255,8 +272,9 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               quickCreate: false,
               quickCreateExemptReason:
                 'Rule sources reference existing networks; networks have their own page.',
+              help: 'Private networks of this account used as source (inbound) or destination (outbound) of the rule.',
             },
-            { key: 'comment', label: 'Comment', span: 1 },
+            { key: 'comment', label: 'Comment', span: 1, help: 'Note shown in the rule list.' },
           ],
           columns: [
             { id: 'direction', label: 'Direction', field: 'HfrDirection' },

@@ -110,6 +110,22 @@ export const routes: Routes = [
     title: 'Accept Invitation | mnscloud',
   },
 
+  // VPS web console in its own browser window (no shell), opened from the console dialog.
+  {
+    path: 'console',
+    canActivateChild: [authGuard],
+    children: [
+      {
+        path: 'vps/:uuid',
+        loadComponent: () =>
+          import('./pages/hosting/vps/instances/instance-console').then(
+            (m) => m.VpsInstanceConsoleComponent,
+          ),
+        title: 'VPS console | mnscloud',
+      },
+    ],
+  },
+
   // Public changelog of this environment (every module, RSS); signed-in users go to /user/release-notes.
   {
     path: 'release-notes',

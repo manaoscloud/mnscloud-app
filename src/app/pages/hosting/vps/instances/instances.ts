@@ -1313,6 +1313,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const statusValue = String(
       runtime?.['status'] ?? config.runtime?.providerStatus ?? item.HviStatus ?? '-',
     );
+    const isProxmox = String(plan?.HvpProvider ?? '').toLowerCase() === 'proxmox';
 
     openDataViewerDialog(this.dialog, {
       title: this.t('VPS instance details'),
@@ -1338,16 +1339,23 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           value: runtime?.['privateIpv4'] ?? config.privateIpv4 ?? '-',
           monospace: true,
         },
-        {
-          label: 'Public IPv6',
-          value: runtime?.['publicIpv6'] ?? config.publicIpv6 ?? '-',
-          monospace: true,
-        },
+        // Proxmox VPS have no public IPv6 and no provider size (the plan sets CPU, memory, disk).
+        ...(isProxmox
+          ? []
+          : [
+              {
+                label: 'Public IPv6',
+                value: runtime?.['publicIpv6'] ?? config.publicIpv6 ?? '-',
+                monospace: true,
+              },
+            ]),
         {
           label: 'Region',
           value: runtime?.['region'] ?? config.runtime?.region ?? plan?.HvpRegion,
         },
-        { label: 'Size', value: runtime?.['size'] ?? config.runtime?.size ?? plan?.HvpSize },
+        ...(isProxmox
+          ? []
+          : [{ label: 'Size', value: runtime?.['size'] ?? config.runtime?.size ?? plan?.HvpSize }]),
         {
           label: 'Image',
           value: runtime?.['image'] ?? config.runtime?.image ?? config.providerImageId,
