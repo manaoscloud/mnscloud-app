@@ -30,6 +30,7 @@ import { PublicThemeContextService } from './services/public-theme-context.servi
 import { PublicThemeTitleStrategy } from './services/public-theme-title.strategy';
 import { MnsDateAdapterModule } from './shared/date-mask/mns-date-adapter.module';
 import { GlobalErrorHandler } from './core/global-error-handler';
+import { provideMnsFormFieldDefaults } from './shared/forms/form-field-defaults';
 
 registerLocaleData(localeEn);
 registerLocaleData(localeEs);
@@ -39,6 +40,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: MatPaginatorIntl, useClass: PaginatorIntlService },
+    provideMnsFormFieldDefaults(),
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideAppInitializer(() => {
