@@ -8,6 +8,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
@@ -47,6 +48,13 @@ export function vpsConsoleWindowPath(data: VpsInstanceConsoleData): string {
   return `/console/vps/${encodeURIComponent(data.uuid)}${suffix ? `?${suffix}` : ''}`;
 }
 
+/** Error text of a failed console request, when the API returned one. */
+export function consoleErrorMessage(error: unknown): string | null {
+  const body = (error as { error?: { error?: unknown; message?: unknown } } | null)?.error;
+  const text = body?.error ?? body?.message;
+  return typeof text === 'string' && text.trim() ? text.trim() : null;
+}
+
 /** Seconds to wait for the console handshake before showing an error. */
 export const VPS_CONSOLE_HANDSHAKE_SECONDS = 15;
 
@@ -63,7 +71,7 @@ export function termproxyResize(cols: number, rows: number): string {
 @Component({
   selector: 'mns-vps-instance-console',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslocoPipe],
   styles: [
     `
       :host {
@@ -130,9 +138,14 @@ export function termproxyResize(cols: number, rows: number): string {
           </button>
         }
         @if (dialogRef) {
-          <button mat-stroked-button type="button" (click)="openInNewWindow()">
+          <button
+            mat-icon-button
+            type="button"
+            (click)="openInNewWindow()"
+            [matTooltip]="'Open in new window' | transloco"
+            [attr.aria-label]="'Open in new window' | transloco"
+          >
             <mat-icon>open_in_new</mat-icon>
-            {{ 'Open in new window' | transloco }}
           </button>
         }
       </div>
@@ -209,8 +222,9 @@ export class VpsInstanceConsoleComponent {
         {},
       );
       session = envelope.data;
-    } catch {
-      this.fail('The console could not be opened.');
+    } catch (error) {
+      // The API explains why (server created before the console, no public IPv4, stopped VPS).
+      this.fail(consoleErrorMessage(error) ?? 'The console could not be opened.');
       return;
     }
     if (!session?.token) {

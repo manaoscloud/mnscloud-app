@@ -810,7 +810,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const actions: ConfigurableCrudRowAction[] = [];
     if (row['HviExternalId']) {
       actions.push(MONITOR_ACTION);
-      if (this.isProxmoxInstance(row)) actions.push(CONSOLE_ACTION);
+      if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
       actions.push(...this.powerActions(row));
       actions.push(DETAILS_ACTION);
     }
@@ -904,11 +904,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   /** The web console exists for Proxmox VPS only. */
-  private isProxmoxInstance(row: ConfigurableCrudRecord) {
+  /** Proxmox (provider console) and DigitalOcean/Lightsail (SSH console with the platform key). */
+  private hasWebConsole(row: ConfigurableCrudRecord) {
     const providerUUID = String(row['HostingVpsProviderHvrUUID'] ?? '');
     const provider = this.providers().find((item) => item.HvrUUID === providerUUID);
     const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
-    return (provider?.HvrProvider ?? plan?.HvpProvider) === 'proxmox';
+    return ['proxmox', 'digitalocean', 'lightsail'].includes(
+      String(provider?.HvrProvider ?? plan?.HvpProvider ?? ''),
+    );
   }
 
   private canRetryProvision(row: ConfigurableCrudRecord) {
