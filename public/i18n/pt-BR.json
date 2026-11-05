@@ -11449,5 +11449,19 @@
   "Reserve public IP for platform": "Reservar IP público para a plataforma",
   "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.": "Reservar {address} para uma VPS interna? O endereço sai do pool disponível sem contratação comercial.",
   "Public IP reserved for platform.": "IP público reservado para a plataforma.",
-  "Release {address}? The address returns to the available pool.": "Liberar {address}? O endereço volta ao pool disponível."
+  "Release {address}? The address returns to the available pool.": "Liberar {address}? O endereço volta ao pool disponível.",
+  "nav.dns.zones.reverse": "Reverso",
+  "dns.reverseZones": "DNS reverso",
+  "dns.reverseZonesDescription": "Uma zona reversa sua no MNSCloud DNS (in-addr.arpa ou ip6.arpa) recebe sozinha o PTR de cada endereço dos seus pools IPv4 ativos e dos IPv4/IPv6 fixos dos clientes que caem dentro dela: ip-100-64-0-1.<sufixo>. Um nome já cadastrado no editor da zona nunca é gerado; até 10.000 registros por zona, atualizados em até um minuto.",
+  "dns.reverseZone": "Zona reversa",
+  "dns.reverseZoneHelp": "Domínio in-addr.arpa ou ip6.arpa no MNSCloud DNS, criado em DNS › Zonas › Domínios.",
+  "dns.reverseSuffix": "Sufixo dos nomes",
+  "dns.reverseSuffixHelp": "Domínio usado nos nomes gerados, por exemplo clientes.seudominio.com.br.",
+  "dns.reverseRecords": "PTR gerados",
+  "dns.reverseRecordsTooltip": "Ver os PTR gerados",
+  "dns.reverseRecordsDescription": "PTR criados a partir dos pools e endereços fixos do ISP; atualizados em até um minuto quando um endereço muda.",
+  "dns.reverseRecordsEmpty": "Nenhum PTR gerado ainda.",
+  "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "A zona reversa precisa ser uma zona in-addr.arpa ou ip6.arpa no MNSCloud DNS.",
+  "DNS reverse suffix is invalid": "Sufixo inválido: use um domínio como clientes.seudominio.com.br.",
+  "DNS reverse zone already exists": "Esta zona reversa já está configurada."
 }

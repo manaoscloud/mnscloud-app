@@ -11448,5 +11448,19 @@
   "Reserve public IP for platform": "Reservar IP pública para la plataforma",
   "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.": "¿Reservar {address} para una VPS interna? La dirección sale del pool disponible sin contratación comercial.",
   "Public IP reserved for platform.": "IP pública reservada para la plataforma.",
-  "Release {address}? The address returns to the available pool.": "¿Liberar {address}? La dirección vuelve al pool disponible."
+  "Release {address}? The address returns to the available pool.": "¿Liberar {address}? La dirección vuelve al pool disponible.",
+  "nav.dns.zones.reverse": "Inverso",
+  "dns.reverseZones": "DNS inverso",
+  "dns.reverseZonesDescription": "Una zona inversa suya en MNSCloud DNS (in-addr.arpa o ip6.arpa) recibe sola el PTR de cada dirección de sus pools IPv4 activos y de las IPv4/IPv6 fijas de los clientes dentro de ella: ip-100-64-0-1.<sufijo>. Un nombre ya registrado en el editor de la zona nunca se genera; hasta 10.000 registros por zona, actualizados en hasta un minuto.",
+  "dns.reverseZone": "Zona inversa",
+  "dns.reverseZoneHelp": "Dominio in-addr.arpa o ip6.arpa en MNSCloud DNS, creado en DNS › Zonas › Dominios.",
+  "dns.reverseSuffix": "Sufijo de los nombres",
+  "dns.reverseSuffixHelp": "Dominio usado en los nombres generados, por ejemplo clientes.sudominio.com.",
+  "dns.reverseRecords": "PTR generados",
+  "dns.reverseRecordsTooltip": "Ver los PTR generados",
+  "dns.reverseRecordsDescription": "PTR creados a partir de los pools y direcciones fijas del ISP; actualizados en hasta un minuto cuando cambia una dirección.",
+  "dns.reverseRecordsEmpty": "Ningún PTR generado todavía.",
+  "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "La zona inversa debe ser una zona in-addr.arpa o ip6.arpa en MNSCloud DNS.",
+  "DNS reverse suffix is invalid": "Sufijo inválido: use un dominio como clientes.sudominio.com.",
+  "DNS reverse zone already exists": "Esta zona inversa ya está configurada."
 }

@@ -11448,5 +11448,19 @@
   "Reserve public IP for platform": "Reserve public IP for platform",
   "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.": "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.",
   "Public IP reserved for platform.": "Public IP reserved for platform.",
-  "Release {address}? The address returns to the available pool.": "Release {address}? The address returns to the available pool."
+  "Release {address}? The address returns to the available pool.": "Release {address}? The address returns to the available pool.",
+  "nav.dns.zones.reverse": "Reverse",
+  "dns.reverseZones": "Reverse DNS",
+  "dns.reverseZonesDescription": "A reverse zone of yours on MNSCloud DNS (in-addr.arpa or ip6.arpa) receives by itself the PTR of every address of your active IPv4 pools and of the customers' fixed IPv4/IPv6 addresses inside it: ip-100-64-0-1.<suffix>. A name already in the zone editor is never generated; up to 10,000 records per zone, updated within a minute.",
+  "dns.reverseZone": "Reverse zone",
+  "dns.reverseZoneHelp": "in-addr.arpa or ip6.arpa domain on MNSCloud DNS, created in DNS › Zones › Domains.",
+  "dns.reverseSuffix": "Name suffix",
+  "dns.reverseSuffixHelp": "Domain used in the generated names, for example customers.yourdomain.com.",
+  "dns.reverseRecords": "Generated PTR",
+  "dns.reverseRecordsTooltip": "See the generated PTR",
+  "dns.reverseRecordsDescription": "PTR created from the ISP pools and fixed addresses; updated within a minute when an address changes.",
+  "dns.reverseRecordsEmpty": "No PTR generated yet.",
+  "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "The reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS.",
+  "DNS reverse suffix is invalid": "Invalid suffix: use a domain such as customers.yourdomain.com.",
+  "DNS reverse zone already exists": "This reverse zone is already configured."
 }

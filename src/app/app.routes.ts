@@ -1780,6 +1780,16 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    // Automatic reverse DNS of the tenant ISP addresses (PD5c).
+                    path: 'reverse-zones',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/reverse-zones/reverse-zones').then(
+                        (m) => m.DnsReverseZonesPage,
+                      ),
+                    title: 'Hosting • DNS • Reverse | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting', breadcrumb: 'dns.reverseZones' },
+                  },
+                  {
                     path: 'providers',
                     loadComponent: () =>
                       import('./pages/hosting/dns/providers/providers').then(
