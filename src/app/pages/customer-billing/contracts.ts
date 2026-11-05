@@ -257,10 +257,26 @@ const config = defineCrud({
             values['module'] === 'ged' ||
             values['module'] === 'hr' ||
             values['module'] === 'cyber_security' ||
-            values['module'] === 'commerce',
+            values['module'] === 'commerce' ||
+            values['module'] === 'conversations',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
+        },
+        {
+          key: 'conversationsAccountUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'conversations.account',
+          type: 'search-select',
+          help: 'conversations.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'conversations',
+          requiredWhen: ({ values }) => values['module'] === 'conversations',
+          remoteLookup: {
+            endpoint: 'conversations/accounts?status=1',
+            uuidField: 'CvaUUID',
+            labelField: 'CvaName',
+          },
+          quickCreate: quickCreateFor('ConversationAccountCvaUUID'),
         },
         {
           key: 'gedAccountUUID',
@@ -434,7 +450,9 @@ const config = defineCrud({
                 ? values['cyberAccountUUID']
                 : values['module'] === 'commerce'
                   ? values['commerceAccountUUID']
-                  : values['resourceUUID']) || null,
+                  : values['module'] === 'conversations'
+                    ? values['conversationsAccountUUID']
+                    : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -449,8 +467,8 @@ const config = defineCrud({
               : values['module'] === 'commerce'
                 ? 'commerce.active_terminals'
                 : (values['module'] === 'cyber_security'
-                  ? values['cyberMetric']
-                  : values['metric']) || null,
+                    ? values['cyberMetric']
+                    : values['metric']) || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],

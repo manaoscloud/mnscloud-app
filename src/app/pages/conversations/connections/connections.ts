@@ -1,11 +1,14 @@
 import { CONVERSATION_ACCOUNT_LOOKUP } from '../accounts/accounts';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { CHANNEL_KINDS, CHANNEL_STATES } from '../conversation-options';
 
 function parseObject(value: unknown): Record<string, unknown> | null | 'invalid' {
@@ -96,6 +99,7 @@ const config = defineCrud({
       label: 'Account',
       type: 'search-select',
       help: 'conversations.channelAccountHelp',
+      disabledWhen: ({ editing }) => editing,
       remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
     },
     {
@@ -140,7 +144,14 @@ const config = defineCrud({
     const secretJson = parseObject(secretText);
     const configJson = parseObject(values['config']);
     return {
-      ...(editing ? { ChcRevision: Number(values['revision']) } : { ChcKind: values['kind'] }),
+      ...(editing
+        ? { ChcRevision: Number(values['revision']) }
+        : {
+            ChcKind: values['kind'],
+            ...(values['ConversationAccountCvaUUID']
+              ? { ConversationAccountCvaUUID: values['ConversationAccountCvaUUID'] }
+              : {}),
+          }),
       ChcName: values['name'],
       ChcExternalId: values['externalId'] || null,
       ...(configJson && configJson !== 'invalid' ? { ChcConfig: configJson } : {}),
@@ -153,6 +164,52 @@ const config = defineCrud({
   },
 });
 
+function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction {
+  return {
+    key: 'webchat-embed',
+    label: 'conversations.embedWidget',
+    icon: 'code',
+    visible: (row) => row['ChcKind'] === 'webchat',
+    run: (row) => {
+      const origin =
+        typeof globalThis.location?.origin === 'string' && globalThis.location.origin
+          ? globalThis.location.origin
+          : 'https://portal.example.com';
+      const channelUUID = String(row['ChcUUID'] ?? '');
+      const snippet = `<script src="${origin}/api/v1/conversations/webchat/widget.js" data-channel="${channelUUID}" async></script>`;
+      const originsExample = JSON.stringify({ allowedOrigins: [origin] }, null, 2);
+      openDataViewerDialog(dialog(), {
+        title: 'conversations.embedWidgetTitle',
+        description: String(row['ChcName'] ?? ''),
+        details: [
+          { label: 'Channel ID', value: channelUUID, monospace: true },
+          { label: 'Account', value: row['AccountName'] || '—' },
+        ],
+        sections: [
+          {
+            title: 'conversations.embedWidgetScriptTitle',
+            code: {
+              title: 'HTML',
+              value: snippet,
+              format: 'text',
+              copy: true,
+            },
+          },
+          {
+            title: 'conversations.embedWidgetOriginsTitle',
+            code: {
+              title: 'Settings (JSON)',
+              value: originsExample,
+              format: 'json',
+              copy: true,
+            },
+          },
+        ],
+      });
+    },
+  };
+}
+
 @Component({
   selector: 'app-conversation-connections',
   standalone: true,
@@ -162,6 +219,10 @@ const config = defineCrud({
 })
 export class ConversationConnectionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(config);
+    const dialog = inject(MatDialog);
+    super({
+      ...config,
+      rowActions: [webchatEmbedAction(() => dialog)],
+    });
   }
 }
