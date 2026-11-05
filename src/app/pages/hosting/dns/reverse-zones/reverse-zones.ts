@@ -7,7 +7,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { openGeneratedRecords } from '../../../dns/generated-records';
 
 const ENDPOINT = 'dns/reverse-zones';
 
@@ -91,36 +91,18 @@ export class DnsReverseZonesPage extends ConfigurableCrudPageBase<ConfigurableCr
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key !== 'records') return;
     try {
-      const response = await this.api.get<{
-        data?: { zone?: string; records?: Record<string, unknown>[]; syncedAt?: string };
-      }>(`${ENDPOINT}/${this.recordUUID(row)}/records`);
-      const records = (response?.data?.records ?? []).map((record) => ({
-        name: String(record['name'] ?? ''),
-        type: String(record['type'] ?? ''),
-        value: Array.isArray(record['data']) ? record['data'].join(' ') : '',
-      }));
-      openDataViewerDialog(this.dialog, {
-        title: 'dns.reverseRecords',
-        description: 'dns.reverseRecordsDescription',
-        details: [
-          { label: 'dns.reverseZone', value: response?.data?.zone ?? '' },
-          { label: 'dns.hostZoneSyncedAt', value: response?.data?.syncedAt ?? '' },
-        ],
-        sections: [
-          {
-            title: 'dns.reverseRecords',
-            table: {
-              columns: [
-                { key: 'name', label: 'Name', monospace: true },
-                { key: 'type', label: 'Type' },
-                { key: 'value', label: 'Value', monospace: true },
-              ],
-              rows: records,
-              emptyLabel: 'dns.reverseRecordsEmpty',
-            },
-          },
-        ],
-      });
+      await openGeneratedRecords(
+        this.api,
+        this.dialog,
+        `${ENDPOINT}/${this.recordUUID(row)}/records`,
+        {
+          title: 'dns.reverseRecords',
+          description: 'dns.reverseRecordsDescription',
+          zone: 'dns.reverseZone',
+          syncedAt: 'dns.hostZoneSyncedAt',
+          empty: 'dns.reverseRecordsEmpty',
+        },
+      );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     }
