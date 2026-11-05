@@ -11428,5 +11428,11 @@
   "dns.managedServers": "Servidores",
   "dns.managedServersTooltip": "Servidores DNS na rede do cliente",
   "dns.managedServersDescription": "Servidores DNS instalados na rede do cliente e operados pela plataforma para esta conta (somente leitura).",
-  "dns.managedServersEmpty": "Nenhum servidor dedicado a esta conta."
+  "dns.managedServersEmpty": "Nenhum servidor dedicado a esta conta.",
+  "Reserve for platform": "Reservar para a plataforma",
+  "Reserve this IP for an internal VPS": "Reservar este IP para uma VPS interna",
+  "Reserve public IP for platform": "Reservar IP público para a plataforma",
+  "Reserve {address} for an internal VPS? The address leaves the available pool without a commercial subscription.": "Reservar {address} para uma VPS interna? O endereço sai do pool disponível sem contratação comercial.",
+  "Public IP reserved for platform.": "IP público reservado para a plataforma.",
+  "Release {address}? The address returns to the available pool.": "Liberar {address}? O endereço volta ao pool disponível."
 }

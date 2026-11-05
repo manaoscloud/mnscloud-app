@@ -29,6 +29,12 @@ const NETWORK_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 const ACTIONS = {
+  reserve: {
+    key: 'reserve',
+    label: 'Reserve for platform',
+    icon: 'add_circle',
+    tooltip: 'Reserve this IP for an internal VPS',
+  },
   contract: {
     key: 'contract',
     label: 'Contract',
@@ -291,7 +297,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
     const state = String(row['HpiNetworkState'] ?? '');
     const actions: ConfigurableCrudRowAction[] = [];
     if (!this.isMaster() && row['HpiStatus'] === 'available') actions.push(ACTIONS.contract);
-    if (!this.isMaster() && mine && !associated) actions.push(ACTIONS.assign);
+    if (this.isMaster() && row['HpiStatus'] === 'available') actions.push(ACTIONS.reserve);
+    if ((mine || this.isMaster()) && row['HpiStatus'] === 'allocated' && !associated)
+      actions.push(ACTIONS.assign);
     if ((mine || this.isMaster()) && row['HpiStatus'] === 'allocated' && !associated)
       actions.push(ACTIONS.release);
     if ((mine || this.isMaster()) && associated && state !== 'removing')
@@ -303,6 +311,15 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     const uuid = String(row['HpiUUID'] ?? '');
     const address = String(row['HpiAddress'] ?? '');
+    if (action.key === 'reserve') {
+      const ok = await this.confirmAction(
+        'Reserve public IP for platform',
+        `Reserve ${address} for an internal VPS? The address leaves the available pool without a commercial subscription.`,
+        'Reserve for platform',
+      );
+      if (ok) await this.post(`${uuid}/allocate`, {}, 'Public IP reserved for platform.');
+      return;
+    }
     if (action.key === 'contract') {
       const ok = await this.confirmAction(
         'Contract public IP',
@@ -334,7 +351,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
     if (action.key === 'release') {
       const ok = await this.confirmAction(
         'Release public IP',
-        `Release ${address}? Its monthly charge ends and the address returns to the pool.`,
+        this.isMaster() && !row['UserUsrUUID']
+          ? `Release ${address}? The address returns to the available pool.`
+          : `Release ${address}? Its monthly charge ends and the address returns to the pool.`,
         'Release',
       );
       if (ok) await this.post(`${uuid}/release`, {}, 'Public IP released.');
@@ -370,6 +389,7 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           : (instance.HviConfig ?? {});
       return (
         instance.HostingVpsProviderHvrUUID === providerUUID &&
+        (!this.isMaster() || (instance.UserUsrUUID ?? null) === (row['UserUsrUUID'] ?? null)) &&
         !!instance.HviExternalId &&
         !!(config as Record<string, unknown>)['privateIpv4']
       );
