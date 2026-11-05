@@ -230,7 +230,7 @@ const config = defineCrud({
               key: 'account',
               label: 'dns.dedicationAccount',
               type: 'search-select',
-              span: 2,
+              span: 1,
               remoteLookup: {
                 endpoint: 'system/dns/dedication-accounts',
                 uuidField: 'DacUUID',
