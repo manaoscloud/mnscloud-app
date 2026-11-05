@@ -5480,6 +5480,8 @@
   "Default customer network CIDR": "CIDR padrão da rede do cliente",
   "Server network VLAN tag": "VLAN da rede dos servidores",
   "Customers may create servers": "Clientes podem criar servidores",
+  "A free public IPv4 address is contracted automatically and billed monthly from your prepaid credit until you release it.": "Um IPv4 público livre é contratado automaticamente e cobrado mensalmente do seu crédito pré-pago até você liberá-lo.",
+  "No public IPv4 address is available at the moment. Please try again later or contact support.": "No momento não há IPs públicos disponíveis. Tente novamente mais tarde ou fale com o suporte.",
   "The web console is available for servers created after it was enabled. Use SSH with your own key.": "O console web está disponível para servidores criados depois que ele foi habilitado. Use SSH com a sua própria chave.",
   "The VPS has no public IPv4 yet; try again in a moment.": "A VPS ainda não tem IPv4 público; tente novamente em instantes.",
   "The web console is not available for this provider.": "O console web não está disponível para este provedor.",

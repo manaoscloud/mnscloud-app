@@ -165,8 +165,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   constructor() {
     super({
       ...config,
-      // Tenants contract IPs of the pool; only the master registers, edits or removes them.
-      canCreate: (inject(ActivatedRoute).snapshot.data?.['scope'] ?? 'tenant') === 'master',
+      // The master registers, edits or removes pool IPs; a tenant's "New" contracts the next free
+      // IP (it never browses the pool, which may hold thousands of addresses).
+      canCreate: true,
       canEditRow: () => this.isMaster(),
       canDeleteRow: (row) => this.isMaster() && row['HpiStatus'] !== 'allocated',
       fields: [
@@ -176,9 +177,11 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           payloadKey: 'providerUUID',
           label: 'Provider',
           type: 'search-select',
-          required: true,
           span: 1,
           disabledWhen: ({ editing }) => editing,
+          // A tenant with a single provider does not choose it.
+          requiredWhen: () => this.isMaster() || this.providerOptions().length > 1,
+          hiddenWhen: () => !this.isMaster() && this.providerOptions().length <= 1,
         },
         {
           key: 'address',
@@ -186,9 +189,10 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           payloadKey: 'address',
           label: 'Address',
           placeholder: '203.0.113.10',
-          required: true,
           span: 1,
           disabledWhen: ({ editing }) => editing,
+          requiredWhen: () => this.isMaster(),
+          hiddenWhen: () => !this.isMaster(),
         },
         {
           key: 'ipStatus',
@@ -210,10 +214,17 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           tab: 'notes',
           span: 4,
           rows: 4,
+          hiddenWhen: () => !this.isMaster(),
         },
       ],
     });
     void this.fetchCatalog();
+    if (!this.isMaster()) {
+      this.config.createTitle = 'Contract public IP';
+      this.config.dialogDescription =
+        'A free public IPv4 address is contracted automatically and billed monthly from your prepaid credit until you release it.';
+      this.config.savedMessage = 'Public IP contracted.';
+    }
   }
 
   protected override listEndpoint(): string {
@@ -221,7 +232,7 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override createEndpoint(): string {
-    return this.ipEndpoint();
+    return this.isMaster() ? this.ipEndpoint() : `${this.ipEndpoint()}/allocate`;
   }
 
   protected override updateEndpoint(): string {
@@ -259,6 +270,13 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     if (this.editingRecord()) {
       return { status: payload['status'] || null, notes: payload['notes'] || null };
+    }
+    if (!this.isMaster()) {
+      const options = this.providerOptions();
+      return {
+        providerUUID:
+          payload['providerUUID'] || (options.length === 1 ? String(options[0].value) : null),
+      };
     }
     return {
       providerUUID: payload['providerUUID'],
