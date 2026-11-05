@@ -18,13 +18,24 @@ const RECORDS_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'dns.reverseRecordsTooltip',
 };
 
-const REVERSE_ZONE_COLUMNS: ConfigurableCrudColumn[] = [
-  { id: 'zone', field: 'ZoneName', label: 'dns.reverseZone', kind: 'identity' },
-  { id: 'suffix', field: 'DrzForwardSuffix', label: 'dns.reverseSuffix', kind: 'text' },
-  { id: 'records', field: 'RecordCount', label: 'dns.reverseRecords', kind: 'text' },
-  { id: 'synced', field: 'DrzSyncedAt', label: 'dns.hostZoneSyncedAt', kind: 'datetime' },
-  { id: 'status', field: 'DrzEnabled', label: 'Status', kind: 'status' },
-];
+// [id, field, label, kind] of each list column.
+const REVERSE_ZONE_COLUMNS: ConfigurableCrudColumn[] = (
+  [
+    ['zone', 'ZoneName', 'dns.reverseZone', 'identity'],
+    ['suffix', 'DrzForwardSuffix', 'dns.reverseSuffix', 'text'],
+    ['records', 'RecordCount', 'dns.reverseRecords', 'text'],
+    ['synced', 'DrzSyncedAt', 'dns.hostZoneSyncedAt', 'datetime'],
+    ['status', 'DrzEnabled', 'Status', 'status'],
+  ] as const
+).map(([id, field, label, kind]) => ({ id, field, label, kind }));
+
+const RECORDS_LABELS = {
+  title: 'dns.reverseRecords',
+  description: 'dns.reverseRecordsDescription',
+  zone: 'dns.reverseZone',
+  syncedAt: 'dns.hostZoneSyncedAt',
+  empty: 'dns.reverseRecordsEmpty',
+};
 
 /** Automatic reverse DNS (PD5c): a reverse zone receives PTR records of the tenant ISP addresses. */
 const config = defineCrud({
@@ -33,23 +44,20 @@ const config = defineCrud({
   pageTitle: 'dns.reverseZones',
   pageDescription: 'dns.reverseZonesDescription',
   dialogDescription: 'dns.reverseZonesDescription',
+  columns: REVERSE_ZONE_COLUMNS,
+  rowActions: [RECORDS_ACTION],
   bulkDelete: false,
-  deletePayload: (row) => ({ revision: Number(row['DrzRevision']) }),
   initialValues: { status: 1, domainUUID: '', suffix: '', revision: 1 },
-  payload: (values, editing) => ({
-    domainUUID: values['domainUUID'],
-    suffix: String(values['suffix'] ?? '').trim(),
-    enabled: Number(values['status']) === 1 ? 1 : 0,
-    ...(editing ? { revision: Number(values['revision']) } : {}),
-  }),
   fields: [
-    { key: 'status', source: 'DrzEnabled', label: 'Status', type: 'status', span: 1 },
+    { type: 'status', key: 'status', source: 'DrzEnabled', label: 'Status', span: 1 },
     {
+      type: 'search-select',
       key: 'domainUUID',
       source: 'DomainUUID',
       label: 'dns.reverseZone',
+      help: 'dns.reverseZoneHelp',
       required: true,
-      type: 'search-select',
+      disabledWhen: ({ editing }) => editing,
       remoteLookup: {
         endpoint: 'hosting/dns/domains',
         uuidField: 'HddUUID',
@@ -58,22 +66,28 @@ const config = defineCrud({
       quickCreate: false,
       quickCreateExemptReason:
         'The reverse zone is a domain on MNSCloud DNS created in DNS › Zonas › Domínios.',
-      disabledWhen: ({ editing }) => editing,
-      help: 'dns.reverseZoneHelp',
     },
     {
+      type: 'text',
       key: 'suffix',
       source: 'DrzForwardSuffix',
       label: 'dns.reverseSuffix',
-      required: true,
-      type: 'text',
-      span: 1,
       help: 'dns.reverseSuffixHelp',
+      required: true,
+      span: 1,
     },
-    { key: 'revision', source: 'DrzRevision', label: 'Revision', type: 'number', hidden: true },
+    { type: 'number', key: 'revision', source: 'DrzRevision', label: 'Revision', hidden: true },
   ],
-  columns: REVERSE_ZONE_COLUMNS,
-  rowActions: [RECORDS_ACTION],
+  payload: (values, editing) => {
+    const body: Record<string, unknown> = {
+      domainUUID: values['domainUUID'],
+      suffix: String(values['suffix'] ?? '').trim(),
+      enabled: Number(values['status']) === 1 ? 1 : 0,
+    };
+    if (editing) body['revision'] = Number(values['revision']);
+    return body;
+  },
+  deletePayload: (row) => ({ revision: Number(row['DrzRevision']) }),
 });
 
 @Component({
@@ -89,22 +103,14 @@ export class DnsReverseZonesPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    if (action.key !== 'records') return;
-    try {
-      await openGeneratedRecords(
-        this.api,
-        this.dialog,
-        `${ENDPOINT}/${this.recordUUID(row)}/records`,
-        {
-          title: 'dns.reverseRecords',
-          description: 'dns.reverseRecordsDescription',
-          zone: 'dns.reverseZone',
-          syncedAt: 'dns.hostZoneSyncedAt',
-          empty: 'dns.reverseRecordsEmpty',
-        },
-      );
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    }
+    if (action.key === RECORDS_ACTION.key) await this.showRecords(this.recordUUID(row));
+  }
+
+  /** Generated PTR of one reverse zone, read only. */
+  private async showRecords(uuid: unknown) {
+    const url = `${ENDPOINT}/${String(uuid)}/records`;
+    await openGeneratedRecords(this.api, this.dialog, url, RECORDS_LABELS).catch((error) =>
+      this.snack.error(this.t(this.errorMessage(error))),
+    );
   }
 }
