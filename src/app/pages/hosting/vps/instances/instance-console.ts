@@ -27,7 +27,11 @@ type ConsoleSession = {
   token: string;
   path: string;
   vncPassword?: string;
+  /** RouterOS servers: a generated console password exists (reveal endpoint). */
+  consolePasswordAvailable?: boolean;
 };
+
+type ConsolePasswordEnvelope = { data?: { username?: string; password?: string } };
 
 type ConsoleEnvelope = { data?: ConsoleSession };
 
@@ -110,6 +114,17 @@ export function termproxyResize(cols: number, rows: number): string {
       .title {
         font-weight: 600;
       }
+      .password {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+        font-family: var(--mat-sys-typescale-body-medium-font, monospace);
+        font-size: 0.875rem;
+      }
+      .password code {
+        user-select: all;
+      }
       .status {
         color: var(--mat-sys-on-surface-variant);
         font-size: 0.875rem;
@@ -139,6 +154,39 @@ export function termproxyResize(cols: number, rows: number): string {
         <div class="status" [class.error]="failed()">{{ status() | transloco }}</div>
       </div>
       <div class="header-actions">
+        @if (passwordAvailable()) {
+          @if (credential(); as shown) {
+            <span class="password">
+              {{ 'User' | transloco }}: <code>{{ shown.username }}</code> ·
+              {{ 'Password' | transloco }}: <code>{{ shown.password }}</code>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="copyPassword()"
+                [matTooltip]="'Copy password' | transloco"
+                [attr.aria-label]="'Copy password' | transloco"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              @if (type() === 'serial') {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="typePassword()"
+                  [matTooltip]="'Type password in the console' | transloco"
+                  [attr.aria-label]="'Type password in the console' | transloco"
+                >
+                  <mat-icon>keyboard</mat-icon>
+                </button>
+              }
+            </span>
+          } @else {
+            <button mat-stroked-button type="button" (click)="revealPassword()">
+              <mat-icon>key</mat-icon>
+              {{ 'Console password' | transloco }}
+            </button>
+          }
+        }
         @if (type() === 'vnc') {
           <button mat-stroked-button type="button" (click)="sendCtrlAltDel()">
             <mat-icon>keyboard</mat-icon>
@@ -180,7 +228,10 @@ export class VpsInstanceConsoleComponent {
   readonly status = signal('Connecting...');
   readonly failed = signal(false);
   readonly type = signal<'serial' | 'vnc' | null>(null);
+  readonly passwordAvailable = signal(false);
+  readonly credential = signal<{ username: string; password: string } | null>(null);
   private teardown: (() => void) | null = null;
+  private typeInput: ((data: string) => void) | null = null;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.close());
@@ -219,6 +270,34 @@ export class VpsInstanceConsoleComponent {
     this.rfb?.sendCtrlAltDel?.();
   }
 
+  /** Generated console password of a RouterOS VPS (never kept after the console closes). */
+  async revealPassword() {
+    const prefix = this.data.scope === 'master' ? 'system/' : '';
+    try {
+      const envelope = await this.api.post<ConsolePasswordEnvelope>(
+        `${prefix}hosting/vps/instances/${this.data.uuid}/console-password/reveal`,
+        {},
+      );
+      const password = envelope.data?.password;
+      if (password) {
+        this.credential.set({ username: envelope.data?.username ?? 'mnsadmin', password });
+      }
+    } catch (error) {
+      this.fail(consoleErrorMessage(error) ?? 'The console password could not be read.');
+    }
+  }
+
+  async copyPassword() {
+    const password = this.credential()?.password;
+    if (password) await navigator.clipboard?.writeText(password);
+  }
+
+  /** Types the password and Enter at the serial console (for the Password: prompt). */
+  typePassword() {
+    const password = this.credential()?.password;
+    if (password) this.typeInput?.(`${password}\r`);
+  }
+
   private async connect() {
     this.failed.set(false);
     this.status.set('Connecting...');
@@ -240,6 +319,7 @@ export class VpsInstanceConsoleComponent {
       return;
     }
     this.type.set(session.type);
+    this.passwordAvailable.set(session.consolePasswordAvailable === true);
     const url = vpsConsoleSocketUrl(resolveApiBaseUrl(), session);
     if (session.type === 'vnc') await this.connectVnc(url, session.vncPassword ?? '');
     else await this.connectSerial(url);
@@ -317,6 +397,12 @@ export class VpsInstanceConsoleComponent {
     const input = terminal.onData((data) => {
       if (ready && socket.readyState === WebSocket.OPEN) socket.send(termproxyInput(data));
     });
+    this.typeInput = (data) => {
+      if (ready && socket.readyState === WebSocket.OPEN) {
+        socket.send(termproxyInput(data));
+        terminal.focus();
+      }
+    };
     const resize = terminal.onResize(({ cols, rows }) => {
       if (ready && socket.readyState === WebSocket.OPEN) {
         socket.send(termproxyResize(cols, rows));
@@ -325,6 +411,7 @@ export class VpsInstanceConsoleComponent {
     const observer = new ResizeObserver(() => fit());
     observer.observe(host);
     this.teardown = () => {
+      this.typeInput = null;
       clearInterval(ping);
       clearTimeout(handshake);
       clearTimeout(wake);
