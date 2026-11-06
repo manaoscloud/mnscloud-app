@@ -11680,5 +11680,9 @@
   "notifications.websiteOrderManual": "Website order {{id}}: link the customer resource",
   "website.activationRetried": "The activation goes back to the next run.",
   "Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.": "Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.",
-  "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.": "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server."
+  "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.": "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.",
+  "Console password": "Console password",
+  "Copy password": "Copy password",
+  "Type password in the console": "Type password in the console",
+  "The console password could not be read.": "The console password could not be read."
 }
