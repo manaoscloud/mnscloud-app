@@ -9,6 +9,7 @@ import {
 import {
   defaultGatewayOptions,
   GATEWAY_PEM_FIELDS,
+  MNSCLOUD_PAY,
   paymentGatewayConfig,
 } from './gateway-accounts-crud';
 import { readPemFileInput } from '../../../shared/crud/configurable-crud/pem-file-input';
@@ -56,6 +57,53 @@ export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<Config
   override startEdit(row: ConfigurableCrudRecord): void {
     this.pemFileNames.clear();
     super.startEdit(row);
+    if (String(row['FgaProvider'] ?? '') === MNSCLOUD_PAY) {
+      void this.api
+        .get<{ data?: { item?: Record<string, unknown>; configured?: boolean } }>(
+          'financial/gateway-accounts/mnscloud-pay/subaccount',
+        )
+        .then((res) => {
+          const sub = res?.data?.item;
+          if (sub) {
+            if (sub['PtsCompanyType']) this.setFieldValue('companyType', sub['PtsCompanyType']);
+            if (sub['PtsIncomeValue'] !== undefined) {
+              this.setFieldValue('incomeValue', sub['PtsIncomeValue']);
+            }
+            if (sub['PtsMobilePhone']) this.setFieldValue('mobilePhone', sub['PtsMobilePhone']);
+            if (sub['PtsPayoutMode']) this.setFieldValue('payoutMode', sub['PtsPayoutMode']);
+            if (sub['PtsPayoutMinAmount'] !== undefined) {
+              this.setFieldValue('payoutMinAmount', sub['PtsPayoutMinAmount']);
+            }
+            if (sub['PtsPayoutPixKeyType']) {
+              this.setFieldValue('payoutPixKeyType', sub['PtsPayoutPixKeyType']);
+            }
+            if (sub['PtsPayoutPixKey']) this.setFieldValue('payoutPixKey', sub['PtsPayoutPixKey']);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    const isMnsPay = String(this.formValues()['provider'] ?? '') === MNSCLOUD_PAY;
+    if (isMnsPay) {
+      const subData = {
+        companyType: this.formValues()['companyType'],
+        incomeValue: this.formValues()['incomeValue'],
+        mobilePhone: this.formValues()['mobilePhone'],
+        payoutMode: this.formValues()['payoutMode'],
+        payoutMinAmount: this.formValues()['payoutMinAmount'],
+        payoutPixKeyType: this.formValues()['payoutPixKeyType'],
+        payoutPixKey: this.formValues()['payoutPixKey'],
+      };
+      await this.api
+        .put('financial/gateway-accounts/mnscloud-pay/subaccount/payout-config', subData)
+        .catch(() =>
+          this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', subData)
+        )
+        .catch(() => {});
+    }
+    await super.saveItem(saveAndNew);
   }
 
   override onFileInput(key: string, event: Event): void {
@@ -78,6 +126,14 @@ export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<Config
   ): Promise<void> {
     if (action.key !== 'validate') return;
     try {
+      if (String(row['FgaProvider'] ?? '') === MNSCLOUD_PAY) {
+        const sub = await this.api.get<{ data?: { item?: any; configured?: boolean } }>(
+          'financial/gateway-accounts/mnscloud-pay/subaccount',
+        );
+        if (!sub?.data?.configured) {
+          await this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', {});
+        }
+      }
       await this.api.post(`${this.config.endpoint}/${this.recordUUID(row)}/validate`, {});
       this.snack.success(this.t('Connection validated.'));
     } catch (error) {
