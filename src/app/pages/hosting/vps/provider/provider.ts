@@ -11,6 +11,7 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import type {
   HostingVpsProvider,
   VpsProvider,
@@ -166,6 +167,86 @@ const TEST_PROVIDER_ACTION: ConfigurableCrudRowAction = {
   label: 'Test',
   icon: 'science',
   tooltip: 'Test provider',
+};
+
+const IMAGE_COPY_STATES: readonly ConfigurableCrudOption[] = [
+  { value: 'ready', label: 'Ready' },
+  { value: 'copying', label: 'Copying' },
+  { value: 'missing', label: 'Missing' },
+  { value: 'outdated', label: 'Outdated' },
+];
+
+/**
+ * Images of a Proxmox provider by identity, one row per image and node (API PL2): copy the current
+ * revision to a node that lacks it. The copy runs in the background; Refresh shows its progress.
+ */
+function providerImages(providerUUID: string): ConfigurableCrudConfig {
+  const base = `system/hosting/vps/providers/${providerUUID}/images`;
+  return defineCrud({
+    endpoint: base,
+    uuidField: 'key',
+    pageTitle: 'Images per node',
+    pageDescription:
+      'Each server image and whether its current version exists on every node. A server can only be created on a node that has the image; copy it to the nodes that lack it.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusMode: 'string',
+    columns: [
+      { id: 'image', label: 'Image', field: 'name' },
+      { id: 'imageId', label: 'Image ID', field: 'imageId' },
+      { id: 'node', label: 'Node', field: 'node' },
+      {
+        id: 'state',
+        label: 'Status',
+        field: 'state',
+        kind: 'status',
+        options: IMAGE_COPY_STATES,
+        chipClass: (value) =>
+          value === 'ready'
+            ? 'chip-success'
+            : value === 'copying'
+              ? 'chip-running'
+              : value === 'outdated'
+                ? 'chip-warning'
+                : 'chip-skipped',
+      },
+      { id: 'vmid', label: 'Template VMID', field: 'vmid' },
+      { id: 'disk', label: 'Disk (GB)', field: 'diskGb', kind: 'number' },
+      { id: 'visibility', label: 'Visibility', field: 'visibility', optional: true },
+    ],
+    fields: [],
+    rowActions: [
+      {
+        key: 'copyImage',
+        label: 'Copy to this node',
+        icon: 'content_copy',
+        visible: (row) => row['state'] === 'missing' || row['state'] === 'outdated',
+        request: {
+          method: 'post',
+          endpoint: (row) => `${base}/${String(row['sourceVmid'] ?? '')}/replicas`,
+          body: (row) => ({ node: row['node'] }),
+          successMessage: 'Image copy started. Refresh to follow it.',
+          confirm: {
+            title: 'Copy image',
+            message:
+              'Copy this image to the node? The disk crosses the network and may take several minutes.',
+            confirmLabel: 'Copy',
+          },
+        },
+      },
+    ],
+  });
+}
+
+const PROVIDER_IMAGES_ACTION: ConfigurableCrudRowAction = {
+  key: 'images',
+  label: 'Images per node',
+  icon: 'layers',
+  tooltip: 'Images per node',
+  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+  collection: (row) => providerImages(String(row['HvrUUID'] ?? '')),
 };
 
 const CONFIG_FIELD_KEYS = [
@@ -888,6 +969,9 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       canCreate: masterScope,
       canEdit: masterScope,
       canDelete: masterScope,
+      rowActions: masterScope
+        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION]
+        : [TEST_PROVIDER_ACTION],
     });
   }
 
