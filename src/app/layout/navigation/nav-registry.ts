@@ -1009,6 +1009,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'contracts/envelopes',
+        label: 'nav.contracts.envelopes',
+        icon: 'mark_email_read',
+        route: '/contracts/envelopes',
+        entitlementCode: 'module.contracts.*',
+        permissions: ['tenant.contracts.envelopes.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'contracts/templates',
         label: 'nav.contracts.templates',
         icon: 'auto_stories',

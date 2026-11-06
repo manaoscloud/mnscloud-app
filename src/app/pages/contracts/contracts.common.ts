@@ -104,3 +104,24 @@ export const SUPPLIER_LOOKUP = {
   uuidField: 'RsuUUID',
   labelField: 'RsuName',
 };
+
+export const ENVELOPE_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'draft', label: 'contracts.envelopeDraft' },
+  { value: 'sent', label: 'contracts.envelopeSent' },
+  { value: 'partially_signed', label: 'contracts.envelopePartiallySigned' },
+  { value: 'completed', label: 'contracts.envelopeCompleted' },
+  { value: 'declined', label: 'contracts.envelopeDeclined' },
+  { value: 'voided', label: 'contracts.envelopeVoided' },
+  { value: 'expired', label: 'contracts.envelopeExpired' },
+];
+
+export const ROUTING_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'sequential', label: 'contracts.routingSequential' },
+  { value: 'parallel', label: 'contracts.routingParallel' },
+];
+
+export const DOCUMENT_LOOKUP = {
+  endpoint: 'contracts/documents?status=1',
+  uuidField: 'CtdUUID',
+  labelField: 'CtdTitle',
+};

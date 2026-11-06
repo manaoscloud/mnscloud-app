@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "559667529120",
+  "version": "6ec3293e334c",
   "language": "pt-BR",
   "entries": [
     {
@@ -653,6 +653,55 @@
         },
         {
           "label": "Observações e negociações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/envelopes",
+      "menuPath": "Contratos › Assinaturas",
+      "scope": "tenant",
+      "title": "Envelopes de Assinatura",
+      "description": "Gerencie fluxos de assinatura eletrônica nativa, ordem dos signatários, evidências digitais e validação jurídica.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Título do envelope",
+          "help": ""
+        },
+        {
+          "label": "Ordem de assinatura",
+          "help": ""
+        },
+        {
+          "label": "Carimbo do tempo (ICP-Brasil)",
+          "help": ""
+        },
+        {
+          "label": "Código verificador",
+          "help": ""
+        },
+        {
+          "label": "Data limite para assinatura",
+          "help": ""
+        },
+        {
+          "label": "Hash SHA-256 do documento original",
+          "help": ""
+        },
+        {
+          "label": "Hash SHA-256 do documento final assinado",
           "help": ""
         },
         {
