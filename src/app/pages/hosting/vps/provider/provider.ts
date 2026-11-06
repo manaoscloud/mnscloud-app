@@ -184,67 +184,108 @@ const IMAGE_COPY_STATES: readonly ConfigurableCrudOption[] = [
   { value: 'outdated', label: 'Outdated' },
 ];
 
-/**
- * Images of a Proxmox provider by identity, one row per image and node (API PL2): copy the current
- * revision to a node that lacks it. The copy runs in the background; Refresh shows its progress.
- */
-function providerImages(providerUUID: string): ConfigurableCrudConfig {
-  const base = `system/hosting/vps/providers/${providerUUID}/images`;
+/** One row per item and cluster node, with one background action per row (images, gateways). */
+function providerNodeRows(input: {
+  base: string;
+  pageTitle: string;
+  pageDescription: string;
+  states: readonly ConfigurableCrudOption[];
+  chip: (value: unknown) => string;
+  columns: ConfigurableCrudConfig['columns'];
+  action: ConfigurableCrudRowAction & {
+    request: NonNullable<ConfigurableCrudRowAction['request']>;
+  };
+}): ConfigurableCrudConfig {
+  const [first, ...rest] = input.columns;
   return defineCrud({
-    endpoint: base,
+    endpoint: input.base,
     uuidField: 'key',
-    pageTitle: 'Images per node',
-    pageDescription:
-      'Each server image and whether its current version exists on every node. A server can only be created on a node that has the image; copy it to the nodes that lack it.',
+    pageTitle: input.pageTitle,
+    pageDescription: input.pageDescription,
     canCreate: false,
     canEdit: false,
     canDelete: false,
     bulkDelete: false,
     statusMode: 'string',
     columns: [
-      { id: 'image', label: 'Image', field: 'name' },
-      { id: 'imageId', label: 'Image ID', field: 'imageId' },
+      first,
       { id: 'node', label: 'Node', field: 'node' },
       {
         id: 'state',
         label: 'Status',
         field: 'state',
         kind: 'status',
-        options: IMAGE_COPY_STATES,
-        chipClass: (value) =>
-          value === 'ready'
-            ? 'chip-success'
-            : value === 'copying'
-              ? 'chip-running'
-              : value === 'outdated'
-                ? 'chip-warning'
-                : 'chip-skipped',
+        options: input.states,
+        chipClass: input.chip,
       },
+      ...rest,
+    ],
+    fields: [],
+    rowActions: [input.action],
+  });
+}
+
+function providerCollectionAction(
+  key: string,
+  label: string,
+  icon: string,
+  collection: (providerUUID: string) => ConfigurableCrudConfig,
+): ConfigurableCrudRowAction {
+  return {
+    key,
+    label,
+    icon,
+    tooltip: label,
+    visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+    collection: (row) => collection(String(row['HvrUUID'] ?? '')),
+  };
+}
+
+/**
+ * Images of a Proxmox provider by identity, one row per image and node (API PL2): copy the current
+ * revision to a node that lacks it. The copy runs in the background; Refresh shows its progress.
+ */
+function providerImages(providerUUID: string): ConfigurableCrudConfig {
+  const base = `system/hosting/vps/providers/${providerUUID}/images`;
+  return providerNodeRows({
+    base,
+    pageTitle: 'Images per node',
+    pageDescription:
+      'Each server image and whether its current version exists on every node. A server can only be created on a node that has the image; copy it to the nodes that lack it.',
+    states: IMAGE_COPY_STATES,
+    chip: (value) =>
+      value === 'ready'
+        ? 'chip-success'
+        : value === 'copying'
+          ? 'chip-running'
+          : value === 'outdated'
+            ? 'chip-warning'
+            : 'chip-skipped',
+    columns: [
+      { id: 'image', label: 'Image', field: 'name' },
+      { id: 'imageId', label: 'Image ID', field: 'imageId' },
       { id: 'vmid', label: 'Template VMID', field: 'vmid' },
       { id: 'disk', label: 'Disk (GB)', field: 'diskGb', kind: 'number' },
       { id: 'visibility', label: 'Visibility', field: 'visibility', optional: true },
     ],
-    fields: [],
-    rowActions: [
-      {
-        key: 'copyImage',
-        label: 'Copy to this node',
-        icon: 'content_copy',
-        visible: (row) => row['state'] === 'missing' || row['state'] === 'outdated',
-        request: {
-          method: 'post',
-          endpoint: (row) => `${base}/${String(row['sourceVmid'] ?? '')}/replicas`,
-          body: (row) => ({ node: row['node'] }),
-          successMessage: 'Image copy started. Refresh to follow it.',
-          confirm: {
-            title: 'Copy image',
-            message:
-              'Copy this image to the node? The disk crosses the network and may take several minutes.',
-            confirmLabel: 'Copy',
-          },
+    action: {
+      key: 'copyImage',
+      label: 'Copy to this node',
+      icon: 'content_copy',
+      visible: (row) => row['state'] === 'missing' || row['state'] === 'outdated',
+      request: {
+        method: 'post',
+        endpoint: (row) => `${base}/${String(row['sourceVmid'] ?? '')}/replicas`,
+        body: (row) => ({ node: row['node'] }),
+        successMessage: 'Image copy started. Refresh to follow it.',
+        confirm: {
+          title: 'Copy image',
+          message:
+            'Copy this image to the node? The disk crosses the network and may take several minutes.',
+          confirmLabel: 'Copy',
         },
       },
-    ],
+    },
   });
 }
 
@@ -262,79 +303,58 @@ const GATEWAY_NODE_STATES: readonly ConfigurableCrudOption[] = [
  */
 function providerGateways(providerUUID: string): ConfigurableCrudConfig {
   const base = `system/hosting/vps/providers/${providerUUID}/gateways`;
-  return defineCrud({
-    endpoint: base,
-    uuidField: 'key',
+  return providerNodeRows({
+    base,
     pageTitle: 'Customer gateways',
     pageDescription:
       'Internet gateway of each customer network and the node it runs on. New gateways go to the node with the fewest gateways; move an existing one in a window agreed with the customer.',
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    bulkDelete: false,
-    statusMode: 'string',
+    states: GATEWAY_NODE_STATES,
+    chip: (value) =>
+      value === 'current'
+        ? 'chip-success'
+        : value === 'available'
+          ? 'chip-skipped'
+          : 'chip-warning',
     columns: [
       { id: 'zone', label: 'Customer zone', field: 'zone' },
-      { id: 'node', label: 'Node', field: 'node' },
-      {
-        id: 'state',
-        label: 'Status',
-        field: 'state',
-        kind: 'status',
-        options: GATEWAY_NODE_STATES,
-        chipClass: (value) =>
-          value === 'current'
-            ? 'chip-success'
-            : value === 'available'
-              ? 'chip-skipped'
-              : 'chip-warning',
-      },
       { id: 'gateways', label: 'Gateways on node', field: 'gatewaysOnNode', kind: 'number' },
       { id: 'freeMemory', label: 'Free memory (GB)', field: 'freeMemoryGb', kind: 'number' },
       { id: 'vmid', label: 'Gateway VMID', field: 'vmid', optional: true },
       { id: 'currentNode', label: 'Current node', field: 'currentNode', optional: true },
     ],
-    fields: [],
-    rowActions: [
-      {
-        key: 'moveGateway',
-        label: 'Move gateway here',
-        icon: 'swap_horiz',
-        visible: (row) => row['state'] === 'available' && row['moving'] !== true,
-        request: {
-          method: 'post',
-          endpoint: (row) => `${base}/${String(row['zoneUUID'] ?? '')}/move`,
-          body: (row) => ({ node: row['node'] }),
-          successMessage: 'Gateway move started. Refresh to follow it.',
-          confirm: {
-            title: 'Move gateway',
-            message:
-              "Move this customer's gateway to the node? The customer's servers lose internet access for about a minute while it moves.",
-            confirmLabel: 'Move',
-          },
+    action: {
+      key: 'moveGateway',
+      label: 'Move gateway here',
+      icon: 'swap_horiz',
+      visible: (row) => row['state'] === 'available' && row['moving'] !== true,
+      request: {
+        method: 'post',
+        endpoint: (row) => `${base}/${String(row['zoneUUID'] ?? '')}/move`,
+        body: (row) => ({ node: row['node'] }),
+        successMessage: 'Gateway move started. Refresh to follow it.',
+        confirm: {
+          title: 'Move gateway',
+          message:
+            "Move this customer's gateway to the node? The customer's servers lose internet access for about a minute while it moves.",
+          confirmLabel: 'Move',
         },
       },
-    ],
+    },
   });
 }
 
-const PROVIDER_GATEWAYS_ACTION: ConfigurableCrudRowAction = {
-  key: 'gateways',
-  label: 'Customer gateways',
-  icon: 'router',
-  tooltip: 'Customer gateways',
-  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
-  collection: (row) => providerGateways(String(row['HvrUUID'] ?? '')),
-};
-
-const PROVIDER_IMAGES_ACTION: ConfigurableCrudRowAction = {
-  key: 'images',
-  label: 'Images per node',
-  icon: 'layers',
-  tooltip: 'Images per node',
-  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
-  collection: (row) => providerImages(String(row['HvrUUID'] ?? '')),
-};
+const PROVIDER_IMAGES_ACTION = providerCollectionAction(
+  'images',
+  'Images per node',
+  'layers',
+  providerImages,
+);
+const PROVIDER_GATEWAYS_ACTION = providerCollectionAction(
+  'gateways',
+  'Customer gateways',
+  'router',
+  providerGateways,
+);
 
 const CONFIG_FIELD_KEYS = [
   'region',
