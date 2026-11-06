@@ -11678,5 +11678,7 @@
   "website.retryActivationTooltip": "Sends the blocked or failed activation back to the next run (every 10 minutes)",
   "notifications.websiteOrderBlocked": "Website order {{id}} needs action to activate",
   "notifications.websiteOrderManual": "Website order {{id}}: link the customer resource",
-  "website.activationRetried": "The activation goes back to the next run."
+  "website.activationRetried": "The activation goes back to the next run.",
+  "Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.": "Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.",
+  "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.": "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server."
 }

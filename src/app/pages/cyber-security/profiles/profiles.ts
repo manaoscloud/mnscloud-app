@@ -74,6 +74,7 @@ const config = defineCrud({
       options: levels,
       required: true,
       span: 1,
+      help: 'Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.',
     },
     {
       key: 'defaultDecisionDuration',
@@ -102,6 +103,7 @@ const config = defineCrud({
       key: 'trustedNetworks',
       source: 'trustedNetworks',
       label: 'Trusted networks',
+      help: 'Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.',
       type: 'textarea',
       format: 'json',
       rows: 4,
