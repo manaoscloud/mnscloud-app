@@ -57,6 +57,7 @@ export type WebsiteParameterForm = {
   edgeIPv4: string;
   edgeIPv6: string;
   defaultLocale: string;
+  institutionalDomain: string;
 };
 
 type FieldKey =
@@ -65,7 +66,8 @@ type FieldKey =
   | 'dnsPolicyUUID'
   | 'edgeIPv4'
   | 'edgeIPv6'
-  | 'defaultLocale';
+  | 'defaultLocale'
+  | 'institutionalDomain';
 
 const FQDN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
@@ -81,6 +83,7 @@ const EMPTY_FORM: WebsiteParameterForm = {
   edgeIPv4: '',
   edgeIPv6: '',
   defaultLocale: 'pt-BR',
+  institutionalDomain: '',
 };
 
 export function websiteParameterForm(item: Record<string, unknown>): WebsiteParameterForm {
@@ -95,6 +98,7 @@ export function websiteParameterForm(item: Record<string, unknown>): WebsitePara
     edgeIPv4: String(item['edgeIPv4'] ?? ''),
     edgeIPv6: String(item['edgeIPv6'] ?? ''),
     defaultLocale: isWebsiteLocale(item['defaultLocale']) ? item['defaultLocale'] : 'pt-BR',
+    institutionalDomain: String(item['institutionalDomain'] ?? ''),
   };
 }
 
@@ -115,6 +119,11 @@ export function websiteParameterPayload(form: WebsiteParameterForm): Record<stri
     edgeIPv4: form.edgeIPv4.trim() || null,
     edgeIPv6: form.edgeIPv6.trim().toLowerCase() || null,
     defaultLocale: form.defaultLocale,
+    institutionalDomain:
+      form.institutionalDomain
+        .trim()
+        .toLowerCase()
+        .replace(/^\.+|\.+$/g, '') || null,
   };
 }
 
@@ -224,6 +233,13 @@ export class WebsiteParametersPage {
       return !value || IPV6.test(value);
     },
     defaultLocale: () => isWebsiteLocale(this.form().defaultLocale),
+    institutionalDomain: () => {
+      const value = this.form()
+        .institutionalDomain.trim()
+        .toLowerCase()
+        .replace(/^\.+|\.+$/g, '');
+      return !value || FQDN.test(value);
+    },
   });
 
   constructor() {

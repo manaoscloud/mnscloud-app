@@ -156,6 +156,23 @@
       <mat-error>{{ 'website.validation.ipv6' | transloco }}</mat-error>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="span-1">
+      <mat-label>{{ 'website.institutionalDomain' | transloco }}</mat-label>
+      <input
+        matInput
+        data-field-key="institutionalDomain"
+        [value]="form().institutionalDomain"
+        [mnsInvalid]="invalid('institutionalDomain')"
+        (input)="update({ institutionalDomain: textValue($event) })"
+      />
+      <mns-field-help
+        matIconSuffix
+        [label]="'website.institutionalDomain' | transloco"
+        [text]="'website.institutionalDomainHelp' | transloco"
+      />
+      <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
+    </mat-form-field>
+
     @if (managedDns()) {
       <section class="span-4 website-edge-certificates" aria-labelledby="website-edge-title">
         <div class="website-edge-header">
