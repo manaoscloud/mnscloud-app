@@ -11487,7 +11487,7 @@
   "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "The reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS.",
   "DNS reverse suffix is invalid": "Invalid suffix: use a domain such as customers.yourdomain.com.",
   "DNS reverse zone already exists": "This reverse zone is already configured.",
-"nav.contracts": "Contracts",
+  "nav.contracts": "Contracts",
   "nav.contracts.documents": "Documents",
   "nav.contracts.templates": "Templates",
   "nav.contracts.clauses": "Clauses",
@@ -11586,5 +11586,15 @@
   "contracts.langEsEs": "Spanish",
   "contracts.indexIpca": "IPCA (IBGE)",
   "contracts.indexIgpm": "IGP-M (FGV)",
-  "contracts.indexInpc": "INPC (IBGE)"
+  "contracts.indexInpc": "INPC (IBGE)",
+  "dns.vpsReverseZones": "VPS reverse DNS",
+  "dns.vpsReverseZonesDescription": "A platform reverse zone on MNSCloud DNS (in-addr.arpa of the VPS public IP blocks) receives by itself the PTR of every public IP of the pool inside it: the name the customer chose for a contracted IP or ip-203-0-113-10.<suffix>. A name already in the zone editor is never generated; updated within a minute.",
+  "dns.vpsReverseZoneHelp": "in-addr.arpa platform domain on MNSCloud DNS, delegated by the block owner (registro.br/LACNIC).",
+  "dns.vpsReverseRecordsDescription": "PTR of the VPS public IPs; updated within a minute when a customer changes the name or an IP is contracted or released.",
+  "Reverse DNS": "Reverse DNS",
+  "Reverse DNS (PTR)": "Reverse DNS (PTR)",
+  "Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.": "Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.",
+  "Public IP reverse name is invalid": "Invalid reverse DNS name: use a host name such as mail.example.com.",
+  "DNS VPS reverse zone must be an in-addr.arpa platform zone on MNSCloud DNS": "Choose an in-addr.arpa platform domain on MNSCloud DNS.",
+  "mail.example.com": "mail.example.com"
 }
