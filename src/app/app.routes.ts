@@ -1000,13 +1000,17 @@ export const routes: Routes = [
               {
                 path: 'contracts/templates',
                 loadComponent: () =>
-                  import('./pages/contracts/templates/templates').then((m) => m.ContractTemplatesPage),
+                  import('./pages/contracts/templates/templates').then(
+                    (m) => m.ContractTemplatesPage,
+                  ),
                 title: 'Contracts • Templates | mnscloud',
               },
               {
                 path: 'contracts/documents',
                 loadComponent: () =>
-                  import('./pages/contracts/documents/documents').then((m) => m.ContractDocumentsPage),
+                  import('./pages/contracts/documents/documents').then(
+                    (m) => m.ContractDocumentsPage,
+                  ),
                 title: 'Contracts • Documents | mnscloud',
               },
               // Registry (shared by every module)
@@ -3381,6 +3385,16 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.hostZones' },
                 loadComponent: () =>
                   import('./pages/dns/host-zones/host-zones').then((m) => m.DnsHostZonesPage),
+              },
+              {
+                // Reverse DNS of the VPS public IPs (PD5b): same page as the tenant ISP reverse zones.
+                path: 'dns/vps-reverse-zones',
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.vpsReverseZones' },
+                loadComponent: () =>
+                  import('./pages/hosting/dns/reverse-zones/reverse-zones').then(
+                    (m) => m.DnsReverseZonesPage,
+                  ),
               },
               {
                 path: 'dns/client-tests',

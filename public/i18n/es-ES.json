@@ -11487,7 +11487,7 @@
   "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "La zona inversa debe ser una zona in-addr.arpa o ip6.arpa en MNSCloud DNS.",
   "DNS reverse suffix is invalid": "Sufijo inválido: use un dominio como clientes.sudominio.com.",
   "DNS reverse zone already exists": "Esta zona inversa ya está configurada.",
-"nav.contracts": "Contratos",
+  "nav.contracts": "Contratos",
   "nav.contracts.documents": "Instrumentos",
   "nav.contracts.templates": "Plantillas",
   "nav.contracts.clauses": "Cláusulas",
@@ -11586,5 +11586,14 @@
   "contracts.langEsEs": "Español",
   "contracts.indexIpca": "IPCA (IBGE)",
   "contracts.indexIgpm": "IGP-M (FGV)",
-  "contracts.indexInpc": "INPC (IBGE)"
+  "contracts.indexInpc": "INPC (IBGE)",
+  "dns.vpsReverseZones": "DNS inverso de las VPS",
+  "dns.vpsReverseZonesDescription": "Una zona inversa de la plataforma en MNSCloud DNS (in-addr.arpa de los bloques de IP pública de las VPS) recibe sola el PTR de cada IP pública del pool dentro de ella: el nombre que el cliente eligió para una IP contratada o ip-203-0-113-10.<sufijo>. Un nombre que ya está en el editor de la zona nunca se genera; se actualiza en un minuto.",
+  "dns.vpsReverseZoneHelp": "Dominio in-addr.arpa de la plataforma en MNSCloud DNS, delegado por el dueño del bloque (registro.br/LACNIC).",
+  "dns.vpsReverseRecordsDescription": "PTR de las IP públicas de las VPS; se actualiza en un minuto cuando el cliente cambia el nombre o una IP se contrata o libera.",
+  "Reverse DNS": "DNS inverso",
+  "Reverse DNS (PTR)": "DNS inverso (PTR)",
+  "Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.": "Nombre que responde el DNS inverso de esta IP. Vacío = nombre generado. Para correo, el nombre también debe apuntar a esta IP.",
+  "Public IP reverse name is invalid": "Nombre de DNS inverso no válido: use un nombre de host como mail.ejemplo.com.",
+  "DNS VPS reverse zone must be an in-addr.arpa platform zone on MNSCloud DNS": "Elija un dominio in-addr.arpa de la plataforma en MNSCloud DNS."
 }

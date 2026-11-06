@@ -99,7 +99,7 @@ const config = defineCrud({
       span: 1,
     },
   ],
-  initialValues: { providerUUID: '', address: '', ipStatus: 'available', notes: '' },
+  initialValues: { providerUUID: '', address: '', ipStatus: 'available', ptrName: '', notes: '' },
   fields: [],
   columns: [
     {
@@ -135,6 +135,7 @@ const config = defineCrud({
       options: NETWORK_STATE_OPTIONS,
       className: 'status-col',
     },
+    { id: 'ptr', label: 'Reverse DNS', field: 'HpiPtrName', copyable: true },
     { id: 'tenant', label: 'Tenant', field: 'TenantName' },
     { id: 'lastError', label: 'Last error', field: 'HpiLastError' },
   ],
@@ -174,7 +175,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
       // The master registers, edits or removes pool IPs; a tenant's "New" contracts the next free
       // IP (it never browses the pool, which may hold thousands of addresses).
       canCreate: true,
-      canEditRow: () => this.isMaster(),
+      // A tenant edits only the reverse DNS name (PTR) of an IP it contracted (PD5b).
+      canEditRow: (row) =>
+        this.isMaster() || (Number(row['IsMine']) === 1 && row['HpiStatus'] === 'allocated'),
       canDeleteRow: (row) => this.isMaster() && row['HpiStatus'] !== 'allocated',
       fields: [
         {
@@ -210,6 +213,16 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           translateOptions: true,
           span: 1,
           hiddenWhen: ({ editing }) => !editing,
+        },
+        {
+          key: 'ptrName',
+          source: 'HpiPtrName',
+          payloadKey: 'ptrName',
+          label: 'Reverse DNS (PTR)',
+          placeholder: 'mail.example.com',
+          help: 'Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.',
+          span: 1,
+          hiddenWhen: () => this.isMaster(),
         },
         {
           key: 'notes',
@@ -274,6 +287,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    if (this.editingRecord() && !this.isMaster()) {
+      return { ptrName: String(payload['ptrName'] ?? '').trim() };
+    }
     if (this.editingRecord()) {
       return { status: payload['status'] || null, notes: payload['notes'] || null };
     }

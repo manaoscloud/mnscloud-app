@@ -11488,7 +11488,7 @@
   "DNS reverse zone must be an in-addr.arpa or ip6.arpa zone on MNSCloud DNS": "A zona reversa precisa ser uma zona in-addr.arpa ou ip6.arpa no MNSCloud DNS.",
   "DNS reverse suffix is invalid": "Sufixo inválido: use um domínio como clientes.seudominio.com.br.",
   "DNS reverse zone already exists": "Esta zona reversa já está configurada.",
-"nav.contracts": "Contratos",
+  "nav.contracts": "Contratos",
   "nav.contracts.documents": "Instrumentos",
   "nav.contracts.templates": "Modelos",
   "nav.contracts.clauses": "Cláusulas",
@@ -11587,5 +11587,14 @@
   "contracts.langEsEs": "Espanhol",
   "contracts.indexIpca": "IPCA (IBGE)",
   "contracts.indexIgpm": "IGP-M (FGV)",
-  "contracts.indexInpc": "INPC (IBGE)"
+  "contracts.indexInpc": "INPC (IBGE)",
+  "dns.vpsReverseZones": "DNS reverso das VPS",
+  "dns.vpsReverseZonesDescription": "Uma zona reversa da plataforma no MNSCloud DNS (in-addr.arpa dos blocos de IP público das VPS) recebe sozinha o PTR de cada IP público do pool dentro dela: o nome que o cliente escolheu para um IP contratado ou ip-203-0-113-10.<sufixo>. Um nome que já está no editor da zona nunca é gerado; atualizado em até um minuto.",
+  "dns.vpsReverseZoneHelp": "Domínio in-addr.arpa da plataforma no MNSCloud DNS, delegado pelo dono do bloco (registro.br/LACNIC).",
+  "dns.vpsReverseRecordsDescription": "PTR dos IPs públicos das VPS; atualizado em até um minuto quando o cliente muda o nome ou um IP é contratado ou liberado.",
+  "Reverse DNS": "DNS reverso",
+  "Reverse DNS (PTR)": "DNS reverso (PTR)",
+  "Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.": "Nome que o DNS reverso deste IP responde. Vazio = nome gerado. Para e-mail, o nome também precisa apontar para este IP.",
+  "Public IP reverse name is invalid": "Nome de DNS reverso inválido: use um nome de host como mail.exemplo.com.br.",
+  "DNS VPS reverse zone must be an in-addr.arpa platform zone on MNSCloud DNS": "Escolha um domínio in-addr.arpa da plataforma no MNSCloud DNS."
 }

@@ -2501,13 +2501,13 @@ export const NAV_ITEMS: NavItem[] = [
             scope: 'both',
           },
           {
-            // Automatic reverse DNS of the tenant ISP addresses (PD5c); tenant environment only.
+            // Reverse DNS: tenant ISP addresses (PD5c); master platform zones of the VPS public IPs (PD5b).
             id: 'dns/zones/reverse',
             label: 'nav.dns.zones.reverse',
             icon: 'swap_horiz',
             route: '/hosting/dns/reverse-zones',
-            scope: 'tenant',
-            permissions: ['tenant.hosting.dns.domains.read'],
+            masterRoute: '/system/dns/vps-reverse-zones',
+            scope: 'both',
           },
         ],
       },
