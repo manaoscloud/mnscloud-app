@@ -11705,5 +11705,18 @@
   "Customer gateway placement": "Posicionamento dos gateways dos clientes",
   "Spread across nodes": "Distribuir entre os nós",
   "Always the gateway node": "Sempre o nó do gateway",
-  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Distribuir: cada gateway novo vai para o nó com menos gateways, assim a falha de um nó afeta menos clientes. Gateways existentes só mudam de nó em Gateways dos clientes."
+  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Distribuir: cada gateway novo vai para o nó com menos gateways, assim a falha de um nó afeta menos clientes. Gateways existentes só mudam de nó em Gateways dos clientes.",
+  "Can receive": "Pode receber",
+  "Live (no stop)": "Ao vivo (sem parar)",
+  "Offline (server stopped)": "Offline (servidor desligado)",
+  "Migrate server": "Migrar servidor",
+  "Move the server to another node. The disk is copied over the network; a running server keeps running. One migration at a time in the cluster.": "Mova o servidor para outro nó. O disco é copiado pela rede; um servidor ligado continua ligado. Uma migração por vez no cluster.",
+  "Recommended": "Recomendado",
+  "Estimate (min)": "Estimativa (min)",
+  "Why not": "Motivo",
+  "Migrate to this node": "Migrar para este nó",
+  "Migration started. It may take several minutes; Refresh to follow it.": "Migração iniciada. Pode levar vários minutos; atualize para acompanhar.",
+  "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.": "Migrar o servidor para este nó? O disco é copiado pela rede (veja a estimativa). Um servidor ligado continua ligado; um desligado continua desligado.",
+  "Migrate": "Migrar",
+  "Migrate to another node": "Migrar para outro nó"
 }

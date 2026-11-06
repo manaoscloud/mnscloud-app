@@ -11704,5 +11704,18 @@
   "Customer gateway placement": "Customer gateway placement",
   "Spread across nodes": "Spread across nodes",
   "Always the gateway node": "Always the gateway node",
-  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways."
+  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.",
+  "Can receive": "Can receive",
+  "Live (no stop)": "Live (no stop)",
+  "Offline (server stopped)": "Offline (server stopped)",
+  "Migrate server": "Migrate server",
+  "Move the server to another node. The disk is copied over the network; a running server keeps running. One migration at a time in the cluster.": "Move the server to another node. The disk is copied over the network; a running server keeps running. One migration at a time in the cluster.",
+  "Recommended": "Recommended",
+  "Estimate (min)": "Estimate (min)",
+  "Why not": "Why not",
+  "Migrate to this node": "Migrate to this node",
+  "Migration started. It may take several minutes; Refresh to follow it.": "Migration started. It may take several minutes; Refresh to follow it.",
+  "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.": "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.",
+  "Migrate": "Migrate",
+  "Migrate to another node": "Migrate to another node"
 }

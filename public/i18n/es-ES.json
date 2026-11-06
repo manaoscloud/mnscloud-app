@@ -11704,5 +11704,18 @@
   "Customer gateway placement": "Ubicación de los gateways de los clientes",
   "Spread across nodes": "Distribuir entre los nodos",
   "Always the gateway node": "Siempre el nodo del gateway",
-  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Distribuir: cada gateway nuevo va al nodo con menos gateways, así la falla de un nodo afecta a menos clientes. Los gateways existentes solo cambian de nodo en Gateways de los clientes."
+  "Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.": "Distribuir: cada gateway nuevo va al nodo con menos gateways, así la falla de un nodo afecta a menos clientes. Los gateways existentes solo cambian de nodo en Gateways de los clientes.",
+  "Can receive": "Puede recibir",
+  "Live (no stop)": "En vivo (sin detener)",
+  "Offline (server stopped)": "Sin conexión (servidor detenido)",
+  "Migrate server": "Migrar servidor",
+  "Move the server to another node. The disk is copied over the network; a running server keeps running. One migration at a time in the cluster.": "Mueva el servidor a otro nodo. El disco se copia por la red; un servidor encendido sigue encendido. Una migración a la vez en el clúster.",
+  "Recommended": "Recomendado",
+  "Estimate (min)": "Estimación (min)",
+  "Why not": "Motivo",
+  "Migrate to this node": "Migrar a este nodo",
+  "Migration started. It may take several minutes; Refresh to follow it.": "Migración iniciada. Puede tardar varios minutos; actualice para seguirla.",
+  "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.": "¿Migrar el servidor a este nodo? El disco se copia por la red (vea la estimación). Un servidor encendido sigue encendido; uno detenido sigue detenido.",
+  "Migrate": "Migrar",
+  "Migrate to another node": "Migrar a otro nodo"
 }
