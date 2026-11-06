@@ -23,6 +23,66 @@ export const WEBSITE_ORDER_STATUS_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'expired', label: 'website.orderStatus.expired' },
 ];
 
+/** S5: where the activation of a paid order stands. */
+export const WEBSITE_ORDER_ACTIVATION_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'website.activationStep.pending' },
+  { value: 'creating', label: 'website.activationStep.creating' },
+  { value: 'waiting_resource', label: 'website.activationStep.waiting_resource' },
+  { value: 'blocked', label: 'website.activationStep.blocked' },
+  { value: 'manual', label: 'website.activationStep.manual' },
+  { value: 'failed_resource', label: 'website.activationStep.failed_resource' },
+  { value: 'done', label: 'website.activationStep.done' },
+];
+
+const LINKABLE = new Set(['paid', 'provisioning']);
+const RETRYABLE_STEPS = new Set(['blocked', 'failed_resource']);
+
+/** Link form: a resource of the order's kind (the API checks it belongs to the order customer). */
+function linkForm(row: ConfigurableCrudRecord, kind: 'vps' | 'webhost'): ConfigurableCrudConfig {
+  const vps = kind === 'vps';
+  return defineCrud({
+    endpoint: `${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(String(row['orderUUID'] ?? ''))}/link`,
+    uuidField: 'orderUUID',
+    pageTitle: vps ? 'website.linkServer' : 'website.linkHosting',
+    pageDescription: 'website.linkResourceDescription',
+    createTitle: vps ? 'website.linkServer' : 'website.linkHosting',
+    savedMessage: 'website.orderActivated',
+    statusFilter: false,
+    initialValues: {
+      resourceType: vps ? 'HostingVpsInstance' : 'HostingWebhostHost',
+      resourceUUID: '',
+    },
+    columns: [],
+    fields: [
+      { key: 'resourceType', label: 'website.resourceType', hidden: true },
+      {
+        key: 'resourceUUID',
+        label: vps ? 'website.linkServerField' : 'website.linkHostingField',
+        type: 'search-select',
+        required: true,
+        help: 'website.linkResourceHelp',
+        span: 1,
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Servers and hostings are created in Hosting; this action only links one.',
+        remoteLookup: vps
+          ? {
+              endpoint: 'hosting/vps/instances',
+              uuidField: 'HviUUID',
+              labelField: 'HviName',
+              descriptionField: 'CustomerName',
+            }
+          : {
+              endpoint: 'hosting/webhost/hosts',
+              uuidField: 'HwhUUID',
+              labelField: 'HwhName',
+              descriptionField: 'CustomerName',
+            },
+      },
+    ],
+  });
+}
+
 function statusChip(value: unknown): string {
   const status = String(value ?? '');
   if (status === 'active' || status === 'paid') return 'chip-success';
@@ -126,6 +186,32 @@ function websiteOrdersConfig(): ConfigurableCrudConfig {
         optional: true,
       },
       {
+        id: 'activationStep',
+        field: 'activationStep',
+        label: 'website.activationStepLabel',
+        kind: 'text',
+        width: 'sm',
+        optional: true,
+        value: (row, translate) =>
+          row['activationStep']
+            ? optionLabel(WEBSITE_ORDER_ACTIVATION_OPTIONS, row['activationStep'], translate)
+            : '',
+      },
+      {
+        id: 'activationError',
+        field: 'activationError',
+        label: 'website.activationError',
+        kind: 'text',
+        optional: true,
+      },
+      {
+        id: 'activatedAt',
+        field: 'activatedAt',
+        label: 'website.activatedAt',
+        kind: 'datetime',
+        optional: true,
+      },
+      {
         id: 'status',
         field: 'status',
         label: 'Status',
@@ -150,10 +236,37 @@ const CANCEL_ACTION: ConfigurableCrudRowAction = {
   icon: 'cancel',
   tooltip: 'website.cancelOrderTooltip',
 };
+const LINK_SERVER_ACTION: ConfigurableCrudRowAction = {
+  key: 'link-server',
+  label: 'website.linkServer',
+  icon: 'link',
+  tooltip: 'website.linkResourceTooltip',
+  form: (row) => linkForm(row, 'vps'),
+};
+const LINK_HOSTING_ACTION: ConfigurableCrudRowAction = {
+  key: 'link-hosting',
+  label: 'website.linkHosting',
+  icon: 'link',
+  tooltip: 'website.linkResourceTooltip',
+  form: (row) => linkForm(row, 'webhost'),
+};
+const RETRY_ACTION: ConfigurableCrudRowAction = {
+  key: 'retry-activation',
+  label: 'website.retryActivation',
+  icon: 'refresh',
+  tooltip: 'website.retryActivationTooltip',
+  request: {
+    method: 'post',
+    endpoint: (row) =>
+      `${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(String(row['orderUUID'] ?? ''))}/activation/retry`,
+    successMessage: 'website.activationRetried',
+  },
+};
 
 /**
  * Website › Orders (tenant): offers contracted on the sites and in the customer portal, with the
- * first charge issued on the tenant's gateway. Approval offers wait here for "Approve".
+ * first charge issued on the tenant's gateway. Approval offers wait here for "Approve". Paid orders
+ * are activated by the platform (S5) or linked here to an existing server or hosting of the customer.
  */
 @Component({
   selector: 'app-website-orders',
@@ -171,9 +284,14 @@ export class WebsiteOrdersPage extends ConfigurableCrudPageBase<ConfigurableCrud
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const status = String(row['status'] ?? '');
+    const step = String(row['activationStep'] ?? '');
     return [
       ...(status === 'awaiting_approval' ? [APPROVE_ACTION] : []),
       ...(status === 'awaiting_approval' || status === 'awaiting_payment' ? [CANCEL_ACTION] : []),
+      ...(LINKABLE.has(status)
+        ? [row['kind'] === 'webhost' ? LINK_HOSTING_ACTION : LINK_SERVER_ACTION]
+        : []),
+      ...(status === 'provisioning' && RETRYABLE_STEPS.has(step) ? [RETRY_ACTION] : []),
     ];
   }
 
