@@ -11595,5 +11595,6 @@
   "Reverse DNS (PTR)": "DNS inverso (PTR)",
   "Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.": "Nombre que responde el DNS inverso de esta IP. Vacío = nombre generado. Para correo, el nombre también debe apuntar a esta IP.",
   "Public IP reverse name is invalid": "Nombre de DNS inverso no válido: use un nombre de host como mail.ejemplo.com.",
-  "DNS VPS reverse zone must be an in-addr.arpa platform zone on MNSCloud DNS": "Elija un dominio in-addr.arpa de la plataforma en MNSCloud DNS."
+  "DNS VPS reverse zone must be an in-addr.arpa platform zone on MNSCloud DNS": "Elija un dominio in-addr.arpa de la plataforma en MNSCloud DNS.",
+  "mail.example.com": "mail.ejemplo.com"
 }
