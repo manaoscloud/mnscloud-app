@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "38889f8445a3",
+  "version": "ea8d39da6ccb",
   "language": "pt-BR",
   "entries": [
     {
@@ -11033,7 +11033,7 @@
         },
         {
           "label": "Cliente",
-          "help": ""
+          "help": "Deixe vazio para uso interno da operadora. O cliente fica vinculado à conta e não pode ser trocado na edição."
         },
         {
           "label": "Nome",
@@ -11082,6 +11082,14 @@
         {
           "label": "Retenção de gravações de chamadas (dias)",
           "help": "Dias para manter as gravações de chamadas deste PABX. Vazio herda o padrão do Tenant e depois o Global; 0 mantém para sempre."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
         }
       ]
     },
