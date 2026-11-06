@@ -875,6 +875,18 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/voip/softswitch/trunk/trunk').then((m) => m.VoipSoftswitchTrunkPage),
   },
+  ContractAccountCtaUUID: {
+    label: 'contracts.newAccount',
+    loadComponent: () =>
+      import('../../../pages/contracts/accounts/accounts').then((m) => m.ContractAccountsPage),
+    permission: 'tenant.contracts.accounts.all',
+  },
+  ContractTemplateCttUUID: {
+    label: 'contracts.newTemplate',
+    loadComponent: () =>
+      import('../../../pages/contracts/templates/templates').then((m) => m.ContractTemplatesPage),
+    permission: 'tenant.contracts.templates.write',
+  },
 } satisfies Record<string, QuickCreateRegistryEntry>;
 
 export type QuickCreateRegistryKey = keyof typeof QUICK_CREATE_REGISTRY;

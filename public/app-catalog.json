@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ea8d39da6ccb",
+  "version": "0286f1677875",
   "language": "pt-BR",
   "entries": [
     {
@@ -514,6 +514,213 @@
       "title": "Procedimentos",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/contracts/accounts",
+      "menuPath": "Contratos › Contas",
+      "scope": "tenant",
+      "title": "Contas de Contratos",
+      "description": "Gerencie contas de contratos internas e de revenda para clientes com controle de operadores e publicação no portal.",
+      "fields": []
+    },
+    {
+      "route": "/contracts/clauses",
+      "menuPath": "Contratos › Cláusulas",
+      "scope": "tenant",
+      "title": "Biblioteca de Cláusulas",
+      "description": "Acervo de cláusulas contratuais padronizadas por categoria, nível de risco e idioma para montagem de minutas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Código da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Título da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Categoria",
+          "help": ""
+        },
+        {
+          "label": "Idioma",
+          "help": ""
+        },
+        {
+          "label": "Nível de risco",
+          "help": ""
+        },
+        {
+          "label": "Texto da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Orientações internas",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/documents",
+      "menuPath": "Contratos › Instrumentos",
+      "scope": "tenant",
+      "title": "Instrumentos Contratuais",
+      "description": "Contratos vigentes, minutas, propostas e aditivos com controle de ciclo de vida e partes vinculadas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Título / Objeto",
+          "help": ""
+        },
+        {
+          "label": "Número do contrato",
+          "help": ""
+        },
+        {
+          "label": "Modelo base",
+          "help": ""
+        },
+        {
+          "label": "Tipo de documento",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        },
+        {
+          "label": "Fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Tipo de instrumento",
+          "help": ""
+        },
+        {
+          "label": "Direcionamento",
+          "help": ""
+        },
+        {
+          "label": "Estado do ciclo de vida",
+          "help": ""
+        },
+        {
+          "label": "Nível de assinatura exigido",
+          "help": ""
+        },
+        {
+          "label": "Valor total contratado",
+          "help": ""
+        },
+        {
+          "label": "Valor recorrente mensal",
+          "help": ""
+        },
+        {
+          "label": "Data de início da vigência",
+          "help": ""
+        },
+        {
+          "label": "Data de término da vigência",
+          "help": ""
+        },
+        {
+          "label": "Texto compilado do contrato",
+          "help": ""
+        },
+        {
+          "label": "Observações e negociações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/templates",
+      "menuPath": "Contratos › Modelos",
+      "scope": "tenant",
+      "title": "Modelos de Instrumentos",
+      "description": "Modelos parametrizados de contratos, termos, aditivos e acordos com suporte a placeholders.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Tipo de documento",
+          "help": ""
+        },
+        {
+          "label": "Código do modelo",
+          "help": ""
+        },
+        {
+          "label": "Nome do modelo",
+          "help": ""
+        },
+        {
+          "label": "Categoria",
+          "help": ""
+        },
+        {
+          "label": "Tipo de instrumento",
+          "help": ""
+        },
+        {
+          "label": "Nível de assinatura exigido",
+          "help": ""
+        },
+        {
+          "label": "Prazo padrão (meses)",
+          "help": ""
+        },
+        {
+          "label": "Índice de reajuste",
+          "help": ""
+        },
+        {
+          "label": "Conteúdo do modelo (Markdown)",
+          "help": ""
+        },
+        {
+          "label": "Observações internas",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/conversations/accounts",

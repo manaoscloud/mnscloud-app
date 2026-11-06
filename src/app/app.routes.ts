@@ -984,6 +984,31 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/ged/dossiers').then((m) => m.GedDossiersPage),
                 title: 'GED • Dossiers | mnscloud',
               },
+              // Contracts & CLM
+              {
+                path: 'contracts/accounts',
+                loadComponent: () =>
+                  import('./pages/contracts/accounts/accounts').then((m) => m.ContractAccountsPage),
+                title: 'Contracts • Accounts | mnscloud',
+              },
+              {
+                path: 'contracts/clauses',
+                loadComponent: () =>
+                  import('./pages/contracts/clauses/clauses').then((m) => m.ContractClausesPage),
+                title: 'Contracts • Clauses | mnscloud',
+              },
+              {
+                path: 'contracts/templates',
+                loadComponent: () =>
+                  import('./pages/contracts/templates/templates').then((m) => m.ContractTemplatesPage),
+                title: 'Contracts • Templates | mnscloud',
+              },
+              {
+                path: 'contracts/documents',
+                loadComponent: () =>
+                  import('./pages/contracts/documents/documents').then((m) => m.ContractDocumentsPage),
+                title: 'Contracts • Documents | mnscloud',
+              },
               // Registry (shared by every module)
               {
                 path: 'registry/economic-sectors',
