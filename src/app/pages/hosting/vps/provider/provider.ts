@@ -41,6 +41,69 @@ const PROXMOX_CUSTOMER_PROVISIONING_ERROR =
 
 type TenantZonesConfig = NonNullable<NonNullable<VpsProviderConfig['sdn']>['tenantZones']>;
 
+// Placement policy of a Proxmox provider (API services/proxmoxPlacementService.ts). PL1 shadow mode:
+// new servers still go to the plan node; the decision is only recorded for comparison.
+const PLACEMENT_POLICY_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'spread', label: 'Spread (most free memory)' },
+  { value: 'pack', label: 'Pack (fill nodes first)' },
+];
+const PLACEMENT_POLICY_HELP =
+  'Where new servers should go. Shadow mode: servers still go to the plan node; the decision is recorded to compare.';
+const PLACEMENT_NODES_HELP = 'Comma separated node names. Empty: every node of the cluster.';
+const PLACEMENT_DRAIN_HELP =
+  'Nodes that stop receiving new servers (maintenance). Existing servers stay.';
+const PLACEMENT_FALLBACK_HELP =
+  'Yes: a node without the image can still be chosen (cloned on the image node, then migrated).';
+const PLACEMENT_DEFAULT_VALUES: Record<string, string | number> = {
+  placementPolicy: 'spread',
+  placementNodes: '',
+  placementDrainNodes: '',
+  placementCpuRatio: 4,
+  placementMemoryRatio: 1,
+  placementHostReserveMb: 4096,
+  placementDiskFullRatio: 0.8,
+  placementImageFallback: 1,
+};
+
+function placementField(
+  key: string,
+  label: string,
+  extra: Partial<ConfigurableCrudField> = {},
+): ConfigurableCrudField {
+  return {
+    key,
+    payloadKey: key,
+    label,
+    tab: 'limits',
+    span: 1,
+    hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
+      providerOf(values) !== 'proxmox',
+    ...extra,
+  };
+}
+
+function nodeNames(value: unknown): string[] {
+  return String(value ?? '')
+    .split(/[\s,]+/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+/** Form values of the stored placement policy (defaults when absent). */
+function placementFormValues(placement: VpsProviderConfig['placement']): ConfigurableCrudRecord {
+  if (!placement) return { ...PLACEMENT_DEFAULT_VALUES };
+  return {
+    placementPolicy: placement.policy ?? 'spread',
+    placementNodes: placement.nodes?.join(', ') ?? '',
+    placementDrainNodes: placement.drainNodes?.join(', ') ?? '',
+    placementCpuRatio: placement.cpuRatio ?? 4,
+    placementMemoryRatio: placement.memoryRatio ?? 1,
+    placementHostReserveMb: placement.hostReserveMb ?? 4096,
+    placementDiskFullRatio: placement.diskFullRatio ?? 0.8,
+    placementImageFallback: placement.imageFallback === false ? 0 : 1,
+  };
+}
+
 /** Form defaults of the tenant zone fields (replaced by the recommendation when untouched). */
 const BUILT_IN_TENANT_DEFAULTS: Record<string, string | number> = {
   sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
@@ -174,6 +237,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     authentication: 'API',
     network: 'Server network',
     routing: 'Customer network',
+    limits: 'Placement',
   },
   initialValues: {
     name: '',
@@ -210,6 +274,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTenantDefaultCidr: DEFAULT_TENANT_CIDR,
     vlanTag: '',
     customerProvisioning: 0,
+    ...PLACEMENT_DEFAULT_VALUES,
     vcenterUrl: '',
     datacenter: '',
     cluster: '',
@@ -485,6 +550,28 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     tenantZoneField('sdnTenantNameservers', 'Customer DNS resolvers (comma separated)'),
     tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
     tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
+    placementField('placementPolicy', 'Placement policy', {
+      type: 'select',
+      options: [...PLACEMENT_POLICY_OPTIONS],
+      help: PLACEMENT_POLICY_HELP,
+    }),
+    placementField('placementImageFallback', 'Allow nodes without the image', {
+      type: 'select',
+      options: [...YES_NO_OPTIONS],
+      help: PLACEMENT_FALLBACK_HELP,
+    }),
+    placementField('placementNodes', 'Allowed nodes', {
+      breakBefore: true,
+      help: PLACEMENT_NODES_HELP,
+    }),
+    placementField('placementDrainNodes', 'Draining nodes', { help: PLACEMENT_DRAIN_HELP }),
+    placementField('placementCpuRatio', 'vCPU per physical thread', {
+      type: 'number',
+      breakBefore: true,
+    }),
+    placementField('placementMemoryRatio', 'Memory per physical memory', { type: 'number' }),
+    placementField('placementHostReserveMb', 'Host memory reserve (MiB)', { type: 'number' }),
+    placementField('placementDiskFullRatio', 'Maximum storage use (0.1 to 1)', { type: 'number' }),
     {
       key: 'tokenId',
       payloadKey: 'tokenId',
@@ -891,6 +978,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       sdnTenantZones: config.sdn?.tenantZones ? 1 : 0,
       ...tenantZoneFormValues(config.sdn?.tenantZones),
       vlanTag: config.vlanTag ?? '',
+      ...placementFormValues(config.placement),
       // Never set: Proxmox stays closed and the other providers open (the API rule).
       customerProvisioning:
         config.customerProvisioning === undefined || config.customerProvisioning === null
@@ -1020,6 +1108,33 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
           'sdnTenantGatewayTemplate',
           'Enter the template VMID (100 or more).',
         );
+      }
+    }
+
+    if (providerOf(payload) === 'proxmox') {
+      const ranges: Array<[string, number, number, boolean, string]> = [
+        ['placementCpuRatio', 0.5, 32, false, 'Enter a number from 0.5 to 32.'],
+        ['placementMemoryRatio', 0.5, 4, false, 'Enter a number from 0.5 to 4.'],
+        ['placementHostReserveMb', 0, 262144, true, 'Enter whole MiB from 0 to 262144.'],
+        ['placementDiskFullRatio', 0.1, 1, false, 'Enter a number from 0.1 to 1.'],
+      ];
+      for (const [key, min, max, integer, message] of ranges) {
+        const value = Number(payload[key]);
+        if (
+          !Number.isFinite(value) ||
+          value < min ||
+          value > max ||
+          (integer && !Number.isInteger(value))
+        ) {
+          return this.rejectField(key, message);
+        }
+      }
+      for (const key of ['placementNodes', 'placementDrainNodes']) {
+        if (
+          nodeNames(payload[key]).some((name) => !/^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/.test(name))
+        ) {
+          return this.rejectField(key, 'Enter node names separated by commas.');
+        }
       }
     }
 
@@ -1178,6 +1293,16 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
         : null;
     const vlanTag = normalizeString(values['vlanTag']);
     config.vlanTag = vlanTag ? Number(vlanTag) : null;
+    config.placement = {
+      policy: values['placementPolicy'] === 'pack' ? 'pack' : 'spread',
+      nodes: nodeNames(values['placementNodes']),
+      drainNodes: nodeNames(values['placementDrainNodes']),
+      cpuRatio: Number(values['placementCpuRatio'] ?? 4),
+      memoryRatio: Number(values['placementMemoryRatio'] ?? 1),
+      hostReserveMb: Number(values['placementHostReserveMb'] ?? 4096),
+      diskFullRatio: Number(values['placementDiskFullRatio'] ?? 0.8),
+      imageFallback: truthyNumber(values['placementImageFallback']) === 1,
+    };
   }
   config.customerProvisioning = truthyNumber(values['customerProvisioning']) === 1;
   if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {

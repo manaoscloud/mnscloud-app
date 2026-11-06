@@ -26,6 +26,17 @@ export type VpsProviderConfig = {
   } | null;
   vlanTag?: number | null;
   customerProvisioning?: boolean;
+  /** Proxmox placement policy (PL1 shadow mode; API services/proxmoxPlacementService.ts). */
+  placement?: {
+    policy?: 'spread' | 'pack';
+    nodes?: string[];
+    drainNodes?: string[];
+    cpuRatio?: number;
+    memoryRatio?: number;
+    hostReserveMb?: number;
+    diskFullRatio?: number;
+    imageFallback?: boolean;
+  } | null;
   region?: string;
   projectId?: string;
   accessKeyId?: string;
