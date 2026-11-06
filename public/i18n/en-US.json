@@ -11587,7 +11587,7 @@
   "contracts.indexIpca": "IPCA (IBGE)",
   "contracts.indexIgpm": "IGP-M (FGV)",
   "contracts.indexInpc": "INPC (IBGE)",
-  "nav.contracts.envelopes": "Envelopes & Signatures",
+  "nav.contracts.envelopes": "Signatures",
   "contracts.envelopes": "Signature Envelopes",
   "contracts.envelopesDescription": "Manage native electronic signature workflows, signers routing, digital evidences, and legal validity.",
   "contracts.newEnvelope": "New signature envelope",
