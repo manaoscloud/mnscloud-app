@@ -11617,5 +11617,13 @@
   "Enter a number from 0.5 to 4.": "Informe um número de 0,5 a 4.",
   "Enter whole MiB from 0 to 262144.": "Informe MiB inteiros de 0 a 262144.",
   "Enter a number from 0.1 to 1.": "Informe um número de 0,1 a 1.",
-  "Enter node names separated by commas.": "Informe os nomes dos nós separados por vírgula."
+  "Enter node names separated by commas.": "Informe os nomes dos nós separados por vírgula.",
+  "Copying": "Copiando",
+  "Images per node": "Imagens por nó",
+  "Each server image and whether its current version exists on every node. A server can only be created on a node that has the image; copy it to the nodes that lack it.": "Cada imagem de servidor e se a versão atual existe em todos os nós. Um servidor só pode ser criado em um nó que tenha a imagem; copie-a para os nós que não a têm.",
+  "Visibility": "Visibilidade",
+  "Copy to this node": "Copiar para este nó",
+  "Image copy started. Refresh to follow it.": "Cópia da imagem iniciada. Atualize para acompanhar.",
+  "Copy image": "Copiar imagem",
+  "Copy this image to the node? The disk crosses the network and may take several minutes.": "Copiar esta imagem para o nó? O disco atravessa a rede e pode levar vários minutos."
 }
