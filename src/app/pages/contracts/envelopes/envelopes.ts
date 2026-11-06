@@ -67,6 +67,8 @@ export const CONTRACT_ENVELOPES_CONFIG = defineCrud({
     { id: 'title', field: 'CteTitle', label: 'contracts.envelopeTitle' },
     { id: 'documentTitle', field: 'DocumentTitle', label: 'contracts.document' },
     { id: 'status', field: 'CteStatus', label: 'contracts.envelopeStatus' },
+    { id: 'padesStatus', field: 'CtePadesStatus', label: 'contracts.padesStatus' },
+    { id: 'timestampStatus', field: 'CteTimestampStatus', label: 'contracts.timestampStatus' },
     { id: 'signerCount', field: 'SignerCount', label: 'contracts.signers' },
     { id: 'signedCount', field: 'SignedCount', label: 'contracts.signed' },
     { id: 'dateCreated', field: 'CteDateCreated', label: 'contracts.dateCreated' },

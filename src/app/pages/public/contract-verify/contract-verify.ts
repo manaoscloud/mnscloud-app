@@ -14,6 +14,10 @@ interface ContractVerificationData {
   CteVerificationCode: string;
   CteOriginalSha256: string;
   CteSignedSha256?: string;
+  CtePadesStatus?: string;
+  CteTimestampStatus?: string;
+  CteTimestampAppliedAt?: string;
+  TrustProviderName?: string;
   CteCompletedAt?: string;
   CteDateCreated: string;
   DocumentNumber?: string;
@@ -92,6 +96,22 @@ interface ContractVerificationData {
                   <div class="sm:col-span-2">
                     <strong>Hash SHA-256 Final Assinado:</strong>
                     <span class="font-mono text-xs block break-all text-slate-500">{{ data.CteSignedSha256 }}</span>
+                  </div>
+                }
+                @if (data.CtePadesStatus === 'sealed' || data.CteTimestampStatus === 'applied') {
+                  <div class="sm:col-span-2 flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+                    @if (data.CtePadesStatus === 'sealed') {
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                        <mat-icon class="text-xs !w-4 !h-4 text-base">verified_user</mat-icon>
+                        PAdES B-LTV Selado (A1/ICP-Brasil)
+                      </span>
+                    }
+                    @if (data.CteTimestampStatus === 'applied') {
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-800">
+                        <mat-icon class="text-xs !w-4 !h-4 text-base">alarm_on</mat-icon>
+                        Carimbo do Tempo ICP-Brasil (ACT {{ data.TrustProviderName || 'Credenciada' }})
+                      </span>
+                    }
                   </div>
                 }
               </div>

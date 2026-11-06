@@ -11614,6 +11614,8 @@
   "contracts.envelopeExpired": "Prazo expirado",
   "contracts.routingSequential": "Sequencial (por ordem)",
   "contracts.routingParallel": "Paralelo (qualquer ordem)",
+  "contracts.padesStatus": "Selagem PAdES",
+  "contracts.timestampStatus": "Carimbo do tempo",
   "dns.vpsReverseZones": "DNS reverso das VPS",
   "dns.vpsReverseZonesDescription": "Uma zona reversa da plataforma no MNSCloud DNS (in-addr.arpa dos blocos de IP público das VPS) recebe sozinha o PTR de cada IP público do pool dentro dela: o nome que o cliente escolheu para um IP contratado ou ip-203-0-113-10.<sufixo>. Um nome que já está no editor da zona nunca é gerado; atualizado em até um minuto.",
   "dns.vpsReverseZoneHelp": "Domínio in-addr.arpa da plataforma no MNSCloud DNS, delegado pelo dono do bloco (registro.br/LACNIC).",
