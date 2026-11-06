@@ -25,6 +25,8 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     case 'workorders.order.overdue':
       return 'alarm';
+    case 'website.order.activation':
+      return 'storefront';
     default:
       return 'notifications';
   }
@@ -68,6 +70,13 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       );
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });
+    case 'website.order.activation':
+      return t(
+        param('step') === 'manual'
+          ? 'notifications.websiteOrderManual'
+          : 'notifications.websiteOrderBlocked',
+        { id: param('orderId') },
+      );
     default:
       return t('notifications.generic');
   }
@@ -88,15 +97,17 @@ export function notificationDescription(item: InboxNotification, language: strin
       ? item.params['offer']
       : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
         ? item.params['title']
-        : item.type.startsWith('logs.account.')
-          ? item.params['account']
-          : item.type === 'voip.pabx.extension.offline'
-            ? item.params['extensions']
-            : item.type === 'dns.monitor.target'
-              ? item.params['failing'] || item.params['target']
-              : item.type.startsWith('release_note.')
-                ? releaseNoteTitle(item, language)
-                : item.params['subject'];
+        : item.type === 'website.order.activation'
+          ? item.params['offer']
+          : item.type.startsWith('logs.account.')
+            ? item.params['account']
+            : item.type === 'voip.pabx.extension.offline'
+              ? item.params['extensions']
+              : item.type === 'dns.monitor.target'
+                ? item.params['failing'] || item.params['target']
+                : item.type.startsWith('release_note.')
+                  ? releaseNoteTitle(item, language)
+                  : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())
