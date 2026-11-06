@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "27a062df265a",
+  "version": "4a6860aed81f",
   "language": "pt-BR",
   "entries": [
     {
@@ -1719,7 +1719,7 @@
         },
         {
           "label": "Nível",
-          "help": ""
+          "help": "Básico protege só o sistema operacional e o SSH; Balanceado inclui os serviços deste perfil; Rigoroso inclui também os cenários MNSCloud de SIP e PABX."
         },
         {
           "label": "Duração da decisão",
@@ -1735,7 +1735,7 @@
         },
         {
           "label": "Redes confiáveis",
-          "help": ""
+          "help": "Aplicar o perfil também aplica no servidor as listas de permissão e bloqueio (IP e CIDR) e as redes confiáveis."
         },
         {
           "label": "Regras",
@@ -7674,7 +7674,7 @@
         },
         {
           "label": "Nível",
-          "help": ""
+          "help": "Básico protege só o sistema operacional e o SSH; Balanceado inclui os serviços deste perfil; Rigoroso inclui também os cenários MNSCloud de SIP e PABX."
         },
         {
           "label": "Duração da decisão",
@@ -7690,7 +7690,7 @@
         },
         {
           "label": "Redes confiáveis",
-          "help": ""
+          "help": "Aplicar o perfil também aplica no servidor as listas de permissão e bloqueio (IP e CIDR) e as redes confiáveis."
         },
         {
           "label": "Regras",

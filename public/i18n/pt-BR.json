@@ -11679,5 +11679,7 @@
   "website.retryActivationTooltip": "Devolve a ativação bloqueada ou com falha para a próxima execução (a cada 10 minutos)",
   "notifications.websiteOrderBlocked": "Pedido {{id}} do site aguarda ação para ativar",
   "notifications.websiteOrderManual": "Pedido {{id}} do site: vincule o recurso do cliente",
-  "website.activationRetried": "A ativação volta para a próxima execução."
+  "website.activationRetried": "A ativação volta para a próxima execução.",
+  "Basic protects the operating system and SSH only; Balanced adds the services of this profile; Strict also adds the MNSCloud SIP and PBX scenarios.": "Básico protege só o sistema operacional e o SSH; Balanceado inclui os serviços deste perfil; Rigoroso inclui também os cenários MNSCloud de SIP e PABX.",
+  "Applying the profile also enforces the allow and block lists (IP and CIDR) and the trusted networks on the server.": "Aplicar o perfil também aplica no servidor as listas de permissão e bloqueio (IP e CIDR) e as redes confiáveis."
 }
