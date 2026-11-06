@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3491c2e4472e",
+  "version": "38889f8445a3",
   "language": "pt-BR",
   "entries": [
     {
@@ -2441,6 +2441,31 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hosting/dns/reverse-zones",
+      "menuPath": "DNS › Zonas › Reverso",
+      "scope": "tenant",
+      "title": "DNS reverso",
+      "description": "Uma zona reversa sua no MNSCloud DNS (in-addr.arpa ou ip6.arpa) recebe sozinha o PTR de cada endereço dos seus pools IPv4 ativos e dos IPv4/IPv6 fixos dos clientes que caem dentro dela: ip-100-64-0-1.<sufixo>. Um nome já cadastrado no editor da zona nunca é gerado; até 10.000 registros por zona, atualizados em até um minuto.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Zona reversa",
+          "help": "Domínio in-addr.arpa ou ip6.arpa no MNSCloud DNS, criado em DNS › Zonas › Domínios."
+        },
+        {
+          "label": "Sufixo dos nomes",
+          "help": "Domínio usado nos nomes gerados, por exemplo clientes.seudominio.com.br."
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]

@@ -7,7 +7,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { openGeneratedRecords } from '../generated-records';
 
 const ENDPOINT = 'system/dns/host-zones';
 
@@ -97,36 +97,18 @@ export class DnsHostZonesPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key !== 'records') return;
     try {
-      const response = await this.api.get<{
-        data?: { zone?: string; records?: Record<string, unknown>[]; syncedAt?: string };
-      }>(`${ENDPOINT}/${this.recordUUID(row)}/records`);
-      const records = (response?.data?.records ?? []).map((record) => ({
-        name: String(record['name'] ?? ''),
-        type: String(record['type'] ?? ''),
-        value: Array.isArray(record['data']) ? record['data'].join(' ') : '',
-      }));
-      openDataViewerDialog(this.dialog, {
-        title: 'dns.hostRecords',
-        description: 'dns.hostRecordsDescription',
-        details: [
-          { label: 'dns.hostZoneDomain', value: response?.data?.zone ?? '' },
-          { label: 'dns.hostZoneSyncedAt', value: response?.data?.syncedAt ?? '' },
-        ],
-        sections: [
-          {
-            title: 'dns.hostRecords',
-            table: {
-              columns: [
-                { key: 'name', label: 'Name', monospace: true },
-                { key: 'type', label: 'Type' },
-                { key: 'value', label: 'Value', monospace: true },
-              ],
-              rows: records,
-              emptyLabel: 'dns.hostRecordsEmpty',
-            },
-          },
-        ],
-      });
+      await openGeneratedRecords(
+        this.api,
+        this.dialog,
+        `${ENDPOINT}/${this.recordUUID(row)}/records`,
+        {
+          title: 'dns.hostRecords',
+          description: 'dns.hostRecordsDescription',
+          zone: 'dns.hostZoneDomain',
+          syncedAt: 'dns.hostZoneSyncedAt',
+          empty: 'dns.hostRecordsEmpty',
+        },
+      );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
     }

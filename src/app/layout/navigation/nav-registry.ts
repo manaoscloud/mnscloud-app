@@ -2453,6 +2453,15 @@ export const NAV_ITEMS: NavItem[] = [
             masterRoute: '/system/hosting/dns/domains',
             scope: 'both',
           },
+          {
+            // Automatic reverse DNS of the tenant ISP addresses (PD5c); tenant environment only.
+            id: 'dns/zones/reverse',
+            label: 'nav.dns.zones.reverse',
+            icon: 'swap_horiz',
+            route: '/hosting/dns/reverse-zones',
+            scope: 'tenant',
+            permissions: ['tenant.hosting.dns.domains.read'],
+          },
         ],
       },
       {
