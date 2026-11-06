@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6ec3293e334c",
+  "version": "27a062df265a",
   "language": "pt-BR",
   "entries": [
     {
@@ -13266,9 +13266,18 @@
       "route": "/website/orders",
       "menuPath": "Website › Pedidos",
       "scope": "tenant",
-      "title": "Pedidos",
-      "description": "Contratações feitas pelos clientes no site e na área do cliente: oferta, valores, cobrança emitida no seu gateway e situação. Ofertas com aprovação esperam aqui.",
-      "fields": []
+      "title": "Vincular servidor",
+      "description": "O pedido pago fica ativo com o recurso escolhido e a recorrência dos próximos ciclos é criada.",
+      "fields": [
+        {
+          "label": "Tipo de recurso",
+          "help": ""
+        },
+        {
+          "label": "Servidor",
+          "help": "Escolha um recurso do mesmo cliente do pedido que não atenda outro pedido."
+        }
+      ]
     },
     {
       "route": "/website/sites",
