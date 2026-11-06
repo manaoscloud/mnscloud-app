@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,6 +8,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { resolveApiUrl } from '../../../shared/runtime/app-runtime-config';
 
 interface SignerCeremonyData {
@@ -71,16 +72,16 @@ interface SignerCeremonyData {
         </div>
 
         <div class="bg-white py-8 px-6 shadow sm:rounded-lg sm:px-10 border border-slate-200">
-          @if (loading()) {
+          @if (ceremonyResource.isLoading()) {
             <div class="flex flex-col items-center justify-center py-12">
               <mat-spinner diameter="48"></mat-spinner>
               <p class="mt-4 text-slate-600 font-medium">Carregando dados da cerimônia de assinatura...</p>
             </div>
-          } @else if (errorMessage()) {
+          } @else if (errorMessage() || ceremonyResource.error()) {
             <div class="rounded-md bg-red-50 p-6 text-center">
               <mat-icon class="text-red-500 text-4xl mb-2">error_outline</mat-icon>
               <h3 class="text-lg font-semibold text-red-800">Assinatura Indisponível</h3>
-              <p class="mt-2 text-sm text-red-700">{{ errorMessage() }}</p>
+              <p class="mt-2 text-sm text-red-700">{{ errorMessage() || 'Cerimônia de assinatura não encontrada ou expirada.' }}</p>
             </div>
           } @else if (completed()) {
             <div class="rounded-md bg-emerald-50 p-6 text-center">
@@ -95,22 +96,22 @@ interface SignerCeremonyData {
                 </div>
               }
             </div>
-          } @else if (ceremony()) {
+          } @else if (ceremonyResource.value(); as ceremony) {
             <div class="space-y-6">
               <!-- Document Details -->
               <div class="border-b border-slate-200 pb-4">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 uppercase tracking-wide">
-                  {{ ceremony()?.Envelope?.CteStatus }}
+                  {{ ceremony.Envelope.CteStatus }}
                 </span>
                 <h2 class="text-2xl font-bold text-slate-800 mt-2">
-                  {{ ceremony()?.Envelope?.CteTitle }}
+                  {{ ceremony.Envelope.CteTitle }}
                 </h2>
                 <div class="mt-2 text-sm text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div><strong>Documento:</strong> {{ ceremony()?.Envelope?.DocumentTitle }}</div>
-                  <div><strong>Código Verificador:</strong> <span class="font-mono text-xs">{{ ceremony()?.Envelope?.CteVerificationCode }}</span></div>
+                  <div><strong>Documento:</strong> {{ ceremony.Envelope.DocumentTitle }}</div>
+                  <div><strong>Código Verificador:</strong> <span class="font-mono text-xs">{{ ceremony.Envelope.CteVerificationCode }}</span></div>
                   <div class="sm:col-span-2">
                     <strong>Hash SHA-256 Original:</strong>
-                    <span class="font-mono text-xs block break-all text-slate-500">{{ ceremony()?.Envelope?.CteOriginalSha256 }}</span>
+                    <span class="font-mono text-xs block break-all text-slate-500">{{ ceremony.Envelope.CteOriginalSha256 }}</span>
                   </div>
                 </div>
               </div>
@@ -119,13 +120,13 @@ interface SignerCeremonyData {
               <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-2">Seus Dados de Signatário</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-800">
-                  <div><strong>Nome:</strong> {{ ceremony()?.CtsName }}</div>
-                  <div><strong>E-mail:</strong> {{ ceremony()?.CtsEmail }}</div>
-                  @if (ceremony()?.CtsTaxID) {
-                    <div><strong>CPF/CNPJ:</strong> {{ ceremony()?.CtsTaxID }}</div>
+                  <div><strong>Nome:</strong> {{ ceremony.CtsName }}</div>
+                  <div><strong>E-mail:</strong> {{ ceremony.CtsEmail }}</div>
+                  @if (ceremony.CtsTaxID) {
+                    <div><strong>CPF/CNPJ:</strong> {{ ceremony.CtsTaxID }}</div>
                   }
-                  <div><strong>Papel:</strong> {{ ceremony()?.CtsRole }}</div>
-                  <div><strong>Nível Exigido:</strong> {{ ceremony()?.CtsRequiredLevel }}</div>
+                  <div><strong>Papel:</strong> {{ ceremony.CtsRole }}</div>
+                  <div><strong>Nível Exigido:</strong> {{ ceremony.CtsRequiredLevel }}</div>
                 </div>
               </div>
 
@@ -133,7 +134,7 @@ interface SignerCeremonyData {
               <div>
                 <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-2">Quadro de Signatários</h3>
                 <ul class="divide-y divide-slate-200 border border-slate-200 rounded-md">
-                  @for (s of ceremony()?.AllSigners; track s.CtsName) {
+                  @for (s of ceremony.AllSigners; track s.CtsName) {
                     <li class="py-2.5 px-4 flex items-center justify-between text-sm">
                       <div class="flex items-center gap-2">
                         <mat-icon [class.text-emerald-500]="s.CtsStatus === 'signed'" [class.text-slate-400]="s.CtsStatus !== 'signed'" class="text-base">
@@ -150,9 +151,9 @@ interface SignerCeremonyData {
                 </ul>
               </div>
 
-              @if (ceremony()?.CtsStatus === 'signed') {
+              @if (ceremony.CtsStatus === 'signed') {
                 <div class="p-4 bg-emerald-50 rounded text-center text-emerald-800 font-medium">
-                  Você já assinou este documento em {{ ceremony()?.CtsSignedAt | date:'dd/MM/yyyy HH:mm:ss' }}.
+                  Você já assinou este documento em {{ ceremony.CtsSignedAt | date:'dd/MM/yyyy HH:mm:ss' }}.
                 </div>
               } @else {
                 <!-- Agreement and Sign Action -->
@@ -186,85 +187,65 @@ interface SignerCeremonyData {
     </div>
   `,
 })
-export class ContractSigningPage implements OnInit {
+export class ContractSigningPage {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
 
-  readonly token = signal<string>('');
-  readonly ceremony = signal<SignerCeremonyData | null>(null);
-  readonly loading = signal<boolean>(true);
+  readonly token = signal<string>(this.route.snapshot.paramMap.get('token') ?? '');
   readonly submitting = signal<boolean>(false);
   readonly agreed = signal<boolean>(false);
   readonly completed = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
   readonly actionResult = signal<any>(null);
 
-  ngOnInit() {
-    const tokenParam = this.route.snapshot.paramMap.get('token') ?? '';
-    this.token.set(tokenParam);
-    if (!tokenParam) {
-      this.errorMessage.set('Token de cerimônia não informado.');
-      this.loading.set(false);
-      return;
-    }
-    this.loadCeremony(tokenParam);
-  }
+  readonly ceremonyResource = resource({
+    params: () => ({ token: this.token() }),
+    loader: async ({ params }) => {
+      if (!params.token) throw new Error('Token de cerimônia não informado.');
+      const url = resolveApiUrl(`public/contracts/sign/${params.token}`);
+      const res = await firstValueFrom(this.http.get<{ status: string; data: SignerCeremonyData }>(url));
+      if (res.data?.CtsStatus === 'pending') {
+        const actionUrl = resolveApiUrl(`public/contracts/sign/${params.token}/action`);
+        firstValueFrom(this.http.post(actionUrl, { eventType: 'signer.viewed', evidence: {} })).catch(() => {});
+      }
+      return res.data;
+    },
+  });
 
-  private loadCeremony(token: string) {
-    this.loading.set(true);
-    const url = resolveApiUrl(`public/contracts/sign/${token}`);
-    this.http.get<{ status: string; data: SignerCeremonyData }>(url).subscribe({
-      next: (res) => {
-        this.ceremony.set(res.data);
-        this.loading.set(false);
-        // Record viewed action automatically
-        if (res.data?.CtsStatus === 'pending') {
-          this.recordAction('signer.viewed');
-        }
-      },
-      error: (err) => {
-        this.errorMessage.set(err.error?.error || 'Cerimônia de assinatura não encontrada ou expirada.');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  sign() {
+  async sign() {
     if (!this.agreed() || this.submitting()) return;
     this.submitting.set(true);
-    this.recordAction('signer.signed', {
+    await this.executeAction('signer.signed', {
       agreed: true,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
     });
   }
 
-  decline() {
+  async decline() {
     if (this.submitting()) return;
     this.submitting.set(true);
-    this.recordAction('signer.declined', {
+    await this.executeAction('signer.declined', {
       reason: 'Recusado pelo signatário',
       timestamp: new Date().toISOString(),
     });
   }
 
-  private recordAction(eventType: string, evidence?: Record<string, unknown>) {
+  private async executeAction(eventType: string, evidence?: Record<string, unknown>) {
     const token = this.token();
     const url = resolveApiUrl(`public/contracts/sign/${token}/action`);
-    this.http.post<{ status: string; data: any }>(url, { eventType, evidence: evidence ?? {} }).subscribe({
-      next: (res) => {
-        this.submitting.set(false);
-        this.actionResult.set(res.data);
-        if (eventType === 'signer.signed') {
-          this.completed.set(true);
-        } else if (eventType === 'signer.declined') {
-          this.errorMessage.set('A assinatura foi recusada pelo signatário.');
-        }
-      },
-      error: (err) => {
-        this.submitting.set(false);
-        this.errorMessage.set(err.error?.error || 'Erro ao registrar ação de assinatura.');
-      },
-    });
+    try {
+      const res = await firstValueFrom(this.http.post<{ status: string; data: any }>(url, { eventType, evidence: evidence ?? {} }));
+      this.submitting.set(false);
+      this.actionResult.set(res.data);
+      if (eventType === 'signer.signed') {
+        this.completed.set(true);
+      } else if (eventType === 'signer.declined') {
+        this.errorMessage.set('A assinatura foi recusada pelo signatário.');
+      }
+    } catch (err: any) {
+      this.submitting.set(false);
+      this.errorMessage.set(err?.error?.error || 'Erro ao registrar ação de assinatura.');
+    }
   }
 }
