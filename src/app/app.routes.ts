@@ -159,6 +159,24 @@ export const routes: Routes = [
     title: 'Ideas board | mnscloud',
     data: { publicBoard: true },
   },
+  // Public electronic signature ceremony
+  {
+    path: 'sign/:token',
+    loadComponent: () =>
+      import('./pages/public/contract-signing/contract-signing').then(
+        (m) => m.ContractSigningPage,
+      ),
+    title: 'Assinatura de Documento | mnscloud',
+  },
+  // Public contract verification
+  {
+    path: 'verify/contract/:code',
+    loadComponent: () =>
+      import('./pages/public/contract-verify/contract-verify').then(
+        (m) => m.ContractVerifyPage,
+      ),
+    title: 'Verificação de Contrato | mnscloud',
+  },
 
   // =====================================================
   // 🔒 PRIVADAS
@@ -1012,6 +1030,14 @@ export const routes: Routes = [
                     (m) => m.ContractDocumentsPage,
                   ),
                 title: 'Contracts • Documents | mnscloud',
+              },
+              {
+                path: 'contracts/envelopes',
+                loadComponent: () =>
+                  import('./pages/contracts/envelopes/envelopes').then(
+                    (m) => m.ContractEnvelopesPage,
+                  ),
+                title: 'Contracts • Envelopes | mnscloud',
               },
               // Registry (shared by every module)
               {
