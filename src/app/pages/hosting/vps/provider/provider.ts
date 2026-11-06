@@ -50,6 +50,13 @@ const PLACEMENT_POLICY_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 const PLACEMENT_POLICY_HELP =
   'Where new servers should go. Shadow mode: servers still go to the plan node; the decision is recorded to compare.';
+// Gateways of customer networks (API PL4): spread over the nodes, or every new one on the gateway node.
+const GATEWAY_PLACEMENT_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'spread', label: 'Spread across nodes' },
+  { value: 'fixed', label: 'Always the gateway node' },
+];
+const GATEWAY_PLACEMENT_HELP =
+  'Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.';
 const PLACEMENT_NODES_HELP = 'Comma separated node names. Empty: every node of the cluster.';
 const PLACEMENT_DRAIN_HELP =
   'Nodes that stop receiving new servers (maintenance). Existing servers stay.';
@@ -122,6 +129,7 @@ function tenantZoneFormValues(zones: TenantZonesConfig | null | undefined): Conf
     sdnTenantVniEnd: zones?.vniRange?.[1] ?? '',
     sdnTenantGatewayTemplate: zones?.gateway?.templateVmid ?? '',
     sdnTenantGatewayNode: zones?.gateway?.node ?? '',
+    sdnTenantGatewayPlacement: zones?.gateway?.placement === 'fixed' ? 'fixed' : 'spread',
     sdnTenantTransitBridge: zones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
     sdnTenantTransitVlan: zones?.gateway?.transitVlan ?? '',
     sdnTenantTransitCidr: zones?.gateway?.transitCidr ?? '',
@@ -240,6 +248,85 @@ function providerImages(providerUUID: string): ConfigurableCrudConfig {
   });
 }
 
+const GATEWAY_NODE_STATES: readonly ConfigurableCrudOption[] = [
+  { value: 'current', label: 'Gateway here' },
+  { value: 'available', label: 'Available' },
+  { value: 'unavailable', label: 'Offline' },
+  { value: 'missing', label: 'Gateway not found' },
+];
+
+/**
+ * Customer network gateways of a Proxmox provider, one row per customer zone and node (API PL4):
+ * where each gateway runs and the nodes it can move to. Moving stops the customer's internet access
+ * for about a minute; it runs in the background and Refresh shows the new node.
+ */
+function providerGateways(providerUUID: string): ConfigurableCrudConfig {
+  const base = `system/hosting/vps/providers/${providerUUID}/gateways`;
+  return defineCrud({
+    endpoint: base,
+    uuidField: 'key',
+    pageTitle: 'Customer gateways',
+    pageDescription:
+      'Internet gateway of each customer network and the node it runs on. New gateways go to the node with the fewest gateways; move an existing one in a window agreed with the customer.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusMode: 'string',
+    columns: [
+      { id: 'zone', label: 'Customer zone', field: 'zone' },
+      { id: 'node', label: 'Node', field: 'node' },
+      {
+        id: 'state',
+        label: 'Status',
+        field: 'state',
+        kind: 'status',
+        options: GATEWAY_NODE_STATES,
+        chipClass: (value) =>
+          value === 'current'
+            ? 'chip-success'
+            : value === 'available'
+              ? 'chip-skipped'
+              : 'chip-warning',
+      },
+      { id: 'gateways', label: 'Gateways on node', field: 'gatewaysOnNode', kind: 'number' },
+      { id: 'freeMemory', label: 'Free memory (GB)', field: 'freeMemoryGb', kind: 'number' },
+      { id: 'vmid', label: 'Gateway VMID', field: 'vmid', optional: true },
+      { id: 'currentNode', label: 'Current node', field: 'currentNode', optional: true },
+    ],
+    fields: [],
+    rowActions: [
+      {
+        key: 'moveGateway',
+        label: 'Move gateway here',
+        icon: 'swap_horiz',
+        visible: (row) => row['state'] === 'available' && row['moving'] !== true,
+        request: {
+          method: 'post',
+          endpoint: (row) => `${base}/${String(row['zoneUUID'] ?? '')}/move`,
+          body: (row) => ({ node: row['node'] }),
+          successMessage: 'Gateway move started. Refresh to follow it.',
+          confirm: {
+            title: 'Move gateway',
+            message:
+              "Move this customer's gateway to the node? The customer's servers lose internet access for about a minute while it moves.",
+            confirmLabel: 'Move',
+          },
+        },
+      },
+    ],
+  });
+}
+
+const PROVIDER_GATEWAYS_ACTION: ConfigurableCrudRowAction = {
+  key: 'gateways',
+  label: 'Customer gateways',
+  icon: 'router',
+  tooltip: 'Customer gateways',
+  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+  collection: (row) => providerGateways(String(row['HvrUUID'] ?? '')),
+};
+
 const PROVIDER_IMAGES_ACTION: ConfigurableCrudRowAction = {
   key: 'images',
   label: 'Images per node',
@@ -346,6 +433,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTenantVniEnd: '',
     sdnTenantGatewayTemplate: '',
     sdnTenantGatewayNode: '',
+    sdnTenantGatewayPlacement: 'spread',
     sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
     sdnTenantTransitVlan: '',
     sdnTenantTransitCidr: '',
@@ -624,6 +712,12 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       required: true,
     }),
     tenantZoneField('sdnTenantGatewayNode', 'Customer gateway node', { required: true }),
+    {
+      ...tenantZoneField('sdnTenantGatewayPlacement', 'Customer gateway placement'),
+      type: 'select',
+      options: [...GATEWAY_PLACEMENT_OPTIONS],
+      help: GATEWAY_PLACEMENT_HELP,
+    },
     tenantZoneField('sdnTenantTransitBridge', 'Transit bridge'),
     tenantZoneField('sdnTenantTransitVlan', 'Transit VLAN', { number: true, required: true }),
     tenantZoneField('sdnTenantTransitCidr', 'Transit network CIDR', { required: true }),
@@ -970,7 +1064,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       canEdit: masterScope,
       canDelete: masterScope,
       rowActions: masterScope
-        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION]
+        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION, PROVIDER_GATEWAYS_ACTION]
         : [TEST_PROVIDER_ACTION],
     });
   }
@@ -1434,6 +1528,7 @@ function buildTenantZonesPayload(
     gateway: {
       templateVmid: Number(values['sdnTenantGatewayTemplate']),
       node: normalizeString(values['sdnTenantGatewayNode']) ?? '',
+      placement: values['sdnTenantGatewayPlacement'] === 'fixed' ? 'fixed' : 'spread',
       transitBridge: normalizeString(values['sdnTenantTransitBridge']) ?? DEFAULT_TRANSIT_BRIDGE,
       transitVlan: Number(values['sdnTenantTransitVlan']),
       transitCidr: normalizeString(values['sdnTenantTransitCidr']) ?? '',

@@ -18,6 +18,7 @@ export type VpsProviderConfig = {
         transitVlan: number;
         transitCidr: string;
         transitPool?: string;
+        placement?: 'spread' | 'fixed';
       };
       mtu?: number;
       defaultCidr?: string;
