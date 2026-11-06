@@ -11650,5 +11650,9 @@
   "Copy to this node": "Copiar a este nodo",
   "Image copy started. Refresh to follow it.": "Copia de la imagen iniciada. Actualice para seguirla.",
   "Copy image": "Copiar imagen",
-  "Copy this image to the node? The disk crosses the network and may take several minutes.": "¿Copiar esta imagen al nodo? El disco cruza la red y puede tardar varios minutos."
+  "Copy this image to the node? The disk crosses the network and may take several minutes.": "¿Copiar esta imagen al nodo? El disco cruza la red y puede tardar varios minutos.",
+  "Automatic (best node)": "Automático (mejor nodo)",
+  "No server node has capacity for this plan right now. Choose a smaller plan or try again later.": "Ningún nodo de servidor tiene capacidad para este plan ahora. Elija un plan menor o inténtelo de nuevo más tarde.",
+  "No node has capacity for this server.": "Ningún nodo tiene capacidad para este servidor.",
+  "Placement is busy; try again.": "La ubicación está ocupada; inténtelo de nuevo."
 }
