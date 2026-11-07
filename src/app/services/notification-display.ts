@@ -25,6 +25,12 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     case 'workorders.order.overdue':
       return 'alarm';
+    case 'security.alert':
+      return 'gpp_bad';
+    case 'security.protection':
+      return item.params['kind'] === 'restored' ? 'verified_user' : 'gpp_maybe';
+    case 'security.agent':
+      return item.params['kind'] === 'restored' ? 'lan' : 'portable_wifi_off';
     case 'website.order.activation':
       return 'storefront';
     case 'website.order.cancelled':
@@ -72,6 +78,22 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       );
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });
+    case 'security.alert':
+      return t('notifications.securityCriticalAlert', { server: param('server') });
+    case 'security.protection':
+      return t(
+        param('kind') === 'restored'
+          ? 'notifications.securityProtectionRestored'
+          : 'notifications.securityProtectionLost',
+        { server: param('server') },
+      );
+    case 'security.agent':
+      return t(
+        param('kind') === 'restored'
+          ? 'notifications.securityAgentRestored'
+          : 'notifications.securityAgentOffline',
+        { server: param('server') },
+      );
     case 'website.order.activation':
       return t(
         param('step') === 'manual'
@@ -116,9 +138,15 @@ export function notificationDescription(item: InboxNotification, language: strin
               ? item.params['extensions']
               : item.type === 'dns.monitor.target'
                 ? item.params['failing'] || item.params['target']
-                : item.type.startsWith('release_note.')
-                  ? releaseNoteTitle(item, language)
-                  : item.params['subject'];
+                : item.type === 'security.alert'
+                  ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
+                  : item.type === 'security.protection' && item.params['kind'] === 'lost'
+                    ? item.params['services']
+                    : item.type.startsWith('security.')
+                      ? item.params['hostname']
+                      : item.type.startsWith('release_note.')
+                        ? releaseNoteTitle(item, language)
+                        : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())
