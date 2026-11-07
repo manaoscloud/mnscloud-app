@@ -59,98 +59,100 @@ export const CONTRACT_OBLIGATIONS_CONFIG = defineCrud({
   ],
   fields: [
     {
-      key: 'documentUuid',
-      source: 'ContractDocumentCtdUUID',
       label: 'contracts.document',
-      type: 'search-select',
-      required: true,
       span: 1,
+      required: true,
+      type: 'search-select',
       remoteLookup: DOCUMENT_LOOKUP,
       quickCreate: false,
       quickCreateExemptReason: 'Contract documents are generated or imported through the document lifecycle workflow, not created from an inline modal.',
+      source: 'ContractDocumentCtdUUID',
+      key: 'documentUuid',
     },
     {
-      key: 'title',
-      source: 'CtoTitle',
       label: 'contracts.obligationTitle',
+      span: 1,
+      required: true,
       type: 'text',
-      required: true,
-      span: 1,
+      source: 'CtoTitle',
+      key: 'title',
     },
     {
-      key: 'party',
-      source: 'CtoParty',
       label: 'contracts.obligationParty',
-      type: 'select',
-      required: true,
       span: 1,
+      required: true,
+      type: 'select',
       options: OBLIGATION_PARTY_OPTIONS,
+      source: 'CtoParty',
+      key: 'party',
     },
     {
-      key: 'dueDate',
-      source: 'CtoDueDate',
       label: 'contracts.dueDate',
-      type: 'date',
+      span: 1,
       required: true,
-      span: 1,
+      type: 'date',
+      source: 'CtoDueDate',
+      key: 'dueDate',
     },
     {
-      key: 'recurrence',
-      source: 'CtoRecurrence',
       label: 'contracts.recurrence',
-      type: 'select',
       span: 1,
+      type: 'select',
       options: OBLIGATION_RECURRENCE_OPTIONS,
+      source: 'CtoRecurrence',
+      key: 'recurrence',
     },
     {
-      key: 'noticeDays',
-      source: 'CtoNoticeDays',
       label: 'contracts.noticeDays',
+      span: 1,
       type: 'number',
-      span: 1,
+      source: 'CtoNoticeDays',
+      key: 'noticeDays',
     },
     {
-      key: 'status',
-      source: 'CtoStatus',
       label: 'contracts.obligationStatus',
-      type: 'select',
       span: 1,
+      type: 'select',
       options: OBLIGATION_STATUS_OPTIONS,
+      source: 'CtoStatus',
+      key: 'status',
     },
     {
-      key: 'description',
-      source: 'CtoDescription',
       label: 'contracts.description',
-      type: 'textarea',
       span: 4,
+      type: 'textarea',
+      source: 'CtoDescription',
+      key: 'description',
     },
     {
-      key: 'notes',
-      source: 'CtoNotes',
       label: 'contracts.notes',
-      type: 'textarea',
       span: 4,
+      type: 'textarea',
+      source: 'CtoNotes',
+      key: 'notes',
     },
   ],
   columns: [
-    { id: 'documentNumber', field: 'DocumentNumber', label: 'contracts.documentNumber', kind: 'identity' },
-    { id: 'title', field: 'CtoTitle', label: 'contracts.obligationTitle' },
-    { id: 'party', field: 'CtoParty', label: 'contracts.obligationParty' },
-    { id: 'dueDate', field: 'CtoDueDate', label: 'contracts.dueDate', kind: 'date' },
-    { id: 'recurrence', field: 'CtoRecurrence', label: 'contracts.recurrence' },
-    { id: 'status', field: 'CtoStatus', label: 'contracts.obligationStatus' },
+    Object.freeze({ id: 'documentNumber', label: 'contracts.documentNumber', field: 'DocumentNumber', kind: 'identity' as const }),
+    Object.freeze({ id: 'title', label: 'contracts.obligationTitle', field: 'CtoTitle' }),
+    Object.freeze({ id: 'party', label: 'contracts.obligationParty', field: 'CtoParty' }),
+    Object.freeze({ id: 'dueDate', label: 'contracts.dueDate', field: 'CtoDueDate', kind: 'date' as const }),
+    Object.freeze({ id: 'recurrence', label: 'contracts.recurrence', field: 'CtoRecurrence' }),
+    Object.freeze({ id: 'status', label: 'contracts.obligationStatus', field: 'CtoStatus' }),
   ],
 });
 
 @Component({
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
-  imports: CONFIGURABLE_CRUD_IMPORTS,
   standalone: true,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   selector: 'mns-contracts-obligations',
+  imports: CONFIGURABLE_CRUD_IMPORTS,
 })
 export class ContractsObligationsComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   public readonly defaultObligationParty = 'company';
+  public readonly fulfilledStatus = 'fulfilled';
+  public readonly waivedStatus = 'waived';
 
   constructor() {
     super(CONTRACT_OBLIGATIONS_CONFIG);
@@ -158,9 +160,9 @@ export class ContractsObligationsComponent extends ConfigurableCrudPageBase<Conf
 
   public getObligationBadge(status: string): string {
     switch (status) {
-      case 'fulfilled': return 'success';
+      case this.fulfilledStatus: return 'success';
       case 'breached': return 'danger';
-      case 'waived': return 'neutral';
+      case this.waivedStatus: return 'neutral';
       default: return 'warning';
     }
   }
@@ -168,7 +170,11 @@ export class ContractsObligationsComponent extends ConfigurableCrudPageBase<Conf
   public isObligationOverdue(record: ConfigurableCrudRecord): boolean {
     const dueDateStr = String(record['CtoDueDate'] ?? '');
     const status = String(record['CtoStatus'] ?? '');
-    if (!dueDateStr || status === 'fulfilled' || status === 'waived') return false;
+    if (!dueDateStr || status === this.fulfilledStatus || status === this.waivedStatus) return false;
     return new Date(dueDateStr) < new Date();
+  }
+
+  public getPartyLabel(party: string): string {
+    return party === this.defaultObligationParty ? 'Empresa' : party;
   }
 }

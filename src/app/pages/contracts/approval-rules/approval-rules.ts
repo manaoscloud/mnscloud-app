@@ -9,6 +9,7 @@ import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/r
 import {
   CONTRACT_ACCOUNT_LOOKUP,
   CONTRACT_KIND_OPTIONS,
+  createColumns,
 } from '../contracts.common';
 
 export const CONTRACT_APPROVAL_RULES_CONFIG = defineCrud({
@@ -96,25 +97,26 @@ export const CONTRACT_APPROVAL_RULES_CONFIG = defineCrud({
       span: 1,
     },
   ],
-  columns: [
-    { id: 'ruleId', field: 'CtrID', label: 'contracts.ruleId', kind: 'identity' },
-    { id: 'name', field: 'CtrName', label: 'contracts.ruleName' },
-    { id: 'documentKind', field: 'CtrDocumentKind', label: 'contracts.documentKind' },
-    { id: 'minTotalValue', field: 'CtrMinTotalValue', label: 'contracts.minTotalValue', kind: 'currency' },
-    { id: 'role', field: 'CtrRole', label: 'contracts.approverRole' },
-    { id: 'stepOrder', field: 'CtrStepOrder', label: 'contracts.stepOrder' },
-    { id: 'dateCreated', field: 'CtrDateCreated', label: 'contracts.dateCreated' },
-  ],
+  columns: createColumns([
+    ['ruleId', 'CtrID', 'contracts.ruleId', 'identity'],
+    ['name', 'CtrName', 'contracts.ruleName'],
+    ['documentKind', 'CtrDocumentKind', 'contracts.documentKind'],
+    ['minTotalValue', 'CtrMinTotalValue', 'contracts.minTotalValue', 'currency'],
+    ['role', 'CtrRole', 'contracts.approverRole'],
+    ['stepOrder', 'CtrStepOrder', 'contracts.stepOrder'],
+    ['dateCreated', 'CtrDateCreated', 'contracts.dateCreated'],
+  ]),
 });
 
 @Component({
+  selector: 'mns-contracts-approval-rules',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
-  imports: CONFIGURABLE_CRUD_IMPORTS,
-  standalone: true,
-  selector: 'mns-contracts-approval-rules',
 })
 export class ContractsApprovalRulesComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  public readonly ruleStepPrefix = 'Etapa ';
   public readonly thresholdPrefix = 'R$ ';
 
   constructor() {
@@ -124,7 +126,7 @@ export class ContractsApprovalRulesComponent extends ConfigurableCrudPageBase<Co
   public getRuleSummary(record: ConfigurableCrudRecord): string {
     const role = String(record['CtrRole'] ?? 'Responsavel');
     const step = Number(record['CtrStepOrder'] ?? 1);
-    return `${role} - Passo ${step}`;
+    return `${role} - ${this.ruleStepPrefix}${step}`;
   }
 
   public hasThreshold(record: ConfigurableCrudRecord): boolean {

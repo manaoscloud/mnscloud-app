@@ -1,4 +1,7 @@
-import { ConfigurableCrudOption } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  ConfigurableCrudColumn,
+  ConfigurableCrudOption,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 export const CONTRACT_KIND_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'contract', label: 'contracts.kindContract' },
@@ -165,4 +168,13 @@ export const OBLIGATION_RECURRENCE_OPTIONS: readonly ConfigurableCrudOption[] = 
   { value: 'semi_annual', label: 'contracts.recurrenceSemiAnnual' },
   { value: 'annual', label: 'contracts.recurrenceAnnual' },
 ];
+
+export function createColumns(
+  defs: ReadonlyArray<readonly [string, string, string, ConfigurableCrudColumn['kind']?]>,
+): ConfigurableCrudColumn[] {
+  return defs.map(([id, field, label, kind]) =>
+    kind ? { id, field, label, kind } : { id, field, label },
+  );
+}
+
 

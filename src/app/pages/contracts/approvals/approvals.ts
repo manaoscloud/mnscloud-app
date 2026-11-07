@@ -91,13 +91,14 @@ export const CONTRACT_APPROVALS_CONFIG = defineCrud({
 });
 
 @Component({
-  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
-  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
   imports: CONFIGURABLE_CRUD_IMPORTS,
-  standalone: true,
   selector: 'mns-contracts-approvals',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  standalone: true,
 })
 export class ContractsApprovalsComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  public readonly pendingStatus = 'pending';
   public readonly defaultDecisionLabel = 'Aprovação';
 
   constructor() {
@@ -105,7 +106,7 @@ export class ContractsApprovalsComponent extends ConfigurableCrudPageBase<Config
   }
 
   public isDecisionPending(record: ConfigurableCrudRecord): boolean {
-    return String(record['CtfStatus'] ?? '') === 'pending';
+    return String(record['CtfStatus'] ?? '') === this.pendingStatus;
   }
 
   public getApprovalDecisionColor(record: ConfigurableCrudRecord): string {
@@ -113,5 +114,9 @@ export class ContractsApprovalsComponent extends ConfigurableCrudPageBase<Config
     if (status === 'approved') return 'var(--mns-success-color, green)';
     if (status === 'rejected') return 'var(--mns-danger-color, red)';
     return 'var(--mns-warning-color, orange)';
+  }
+
+  public canDecide(record: ConfigurableCrudRecord): boolean {
+    return this.isDecisionPending(record);
   }
 }
