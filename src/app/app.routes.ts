@@ -163,18 +163,14 @@ export const routes: Routes = [
   {
     path: 'sign/:token',
     loadComponent: () =>
-      import('./pages/public/contract-signing/contract-signing').then(
-        (m) => m.ContractSigningPage,
-      ),
+      import('./pages/public/contract-signing/contract-signing').then((m) => m.ContractSigningPage),
     title: 'Assinatura de Documento | mnscloud',
   },
   // Public contract verification
   {
     path: 'verify/contract/:code',
     loadComponent: () =>
-      import('./pages/public/contract-verify/contract-verify').then(
-        (m) => m.ContractVerifyPage,
-      ),
+      import('./pages/public/contract-verify/contract-verify').then((m) => m.ContractVerifyPage),
     title: 'Verificação de Contrato | mnscloud',
   },
 
@@ -2705,6 +2701,15 @@ export const routes: Routes = [
                     (m) => m.SystemRuntimeReconcilePage,
                   ),
                 title: 'System Monitoring • Runtime reconcile | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'monitoring/automation-access',
+                loadComponent: () =>
+                  import('./pages/system/automation/tokens/tokens').then(
+                    (m) => m.SystemAutomationTokensPage,
+                  ),
+                title: 'System Monitoring • Automation access | mnscloud',
                 data: { scope: 'master' },
               },
               {

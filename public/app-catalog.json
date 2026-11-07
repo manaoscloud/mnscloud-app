@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "375da5e531b4",
+  "version": "616e50ab14f2",
   "language": "pt-BR",
   "entries": [
     {
@@ -9157,6 +9157,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/monitoring/automation-access",
+      "menuPath": "Monitoramento › Acesso de automação",
+      "scope": "platform",
+      "title": "Acesso de automação",
+      "description": "Tokens que os scripts de entrega do workspace usam no lugar de uma pessoa entrar. Cada um só funciona a partir dos endereços permitidos, expira e se renova sozinho. Revogue um para cortar esse acesso na hora.",
+      "fields": []
     },
     {
       "route": "/system/monitoring/client-versions",
