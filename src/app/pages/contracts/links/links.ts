@@ -35,7 +35,7 @@ export const CONTRACT_LINKS_CONFIG = defineCrud({
     { key: 'contractDocumentUuid', source: 'ContractDocumentCtdUUID', label: 'contracts.document', type: 'search-select', required: true, span: 1, remoteLookup: DOCUMENT_LOOKUP },
     { key: 'targetType', source: 'CtlTargetType', label: 'contracts.targetType', type: 'select', required: true, span: 1, options: TARGET_TYPE_OPTIONS },
     { key: 'targetUuid', source: 'CtlTargetUUID', label: 'contracts.targetUuid', type: 'text', required: true, span: 1 },
-    { key: 'notes', source: 'CtlNotes', label: 'contracts.notes', type: 'textarea', span: 2 },
+    { key: 'notes', source: 'CtlNotes', label: 'contracts.notes', type: 'textarea', span: 4 },
   ],
   columns: [
     { id: 'documentNumber', field: 'DocumentNumber', label: 'contracts.documentNumber', kind: 'identity' },
