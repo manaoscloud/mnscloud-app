@@ -1,4 +1,7 @@
-import { ConfigurableCrudOption } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  ConfigurableCrudColumn,
+  ConfigurableCrudOption,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 
 export const CONTRACT_KIND_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'contract', label: 'contracts.kindContract' },
@@ -137,4 +140,41 @@ export const TARGET_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'infragis_asset', label: 'contracts.targetInfraGisAsset' },
   { value: 'website_form', label: 'contracts.targetWebsiteForm' },
 ];
+
+export const APPROVAL_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'contracts.approvalPending' },
+  { value: 'approved', label: 'contracts.approvalApproved' },
+  { value: 'rejected', label: 'contracts.approvalRejected' },
+];
+
+export const OBLIGATION_PARTY_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'company', label: 'contracts.partyCompany' },
+  { value: 'customer', label: 'contracts.partyCustomer' },
+  { value: 'supplier', label: 'contracts.partySupplier' },
+  { value: 'guarantor', label: 'contracts.partyGuarantor' },
+];
+
+export const OBLIGATION_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'contracts.obligationPending' },
+  { value: 'fulfilled', label: 'contracts.obligationFulfilled' },
+  { value: 'breached', label: 'contracts.obligationBreached' },
+  { value: 'waived', label: 'contracts.obligationWaived' },
+];
+
+export const OBLIGATION_RECURRENCE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'one_time', label: 'contracts.recurrenceOneTime' },
+  { value: 'monthly', label: 'contracts.recurrenceMonthly' },
+  { value: 'quarterly', label: 'contracts.recurrenceQuarterly' },
+  { value: 'semi_annual', label: 'contracts.recurrenceSemiAnnual' },
+  { value: 'annual', label: 'contracts.recurrenceAnnual' },
+];
+
+export function createColumns(
+  defs: ReadonlyArray<readonly [string, string, string, ConfigurableCrudColumn['kind']?]>,
+): ConfigurableCrudColumn[] {
+  return defs.map(([id, field, label, kind]) =>
+    kind ? { id, field, label, kind } : { id, field, label },
+  );
+}
+
 
