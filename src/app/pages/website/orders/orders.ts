@@ -41,6 +41,14 @@ export const WEBSITE_ORDER_CANCEL_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'end_of_cycle', label: 'website.cancelMode.end_of_cycle' },
 ];
 
+/** S6 P3: customer plan change from the next cycle (the platform resizes the server then). */
+export const WEBSITE_ORDER_PLAN_CHANGE_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'scheduled', label: 'website.planChangeStatus.scheduled' },
+  { value: 'applying', label: 'website.planChangeStatus.applying' },
+  { value: 'applied', label: 'website.planChangeStatus.applied' },
+  { value: 'failed', label: 'website.planChangeStatus.failed' },
+];
+
 /** S6: manual refund of a withdrawal (the tenant records it). */
 export const WEBSITE_ORDER_REFUND_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'pending', label: 'website.refundStatus.pending' },
@@ -281,6 +289,40 @@ function websiteOrdersConfig(): ConfigurableCrudConfig {
             : '',
       },
       {
+        id: 'planChangeStatus',
+        field: 'planChangeStatus',
+        label: 'website.planChangeStatusLabel',
+        kind: 'text',
+        width: 'sm',
+        optional: true,
+        value: (row, translate) =>
+          row['planChangeStatus']
+            ? optionLabel(WEBSITE_ORDER_PLAN_CHANGE_OPTIONS, row['planChangeStatus'], translate)
+            : '',
+      },
+      {
+        id: 'planChangeOfferSlug',
+        field: 'planChangeOfferSlug',
+        label: 'website.planChangeOffer',
+        kind: 'text',
+        width: 'sm',
+        optional: true,
+      },
+      {
+        id: 'planChangeAt',
+        field: 'planChangeAt',
+        label: 'website.planChangeAt',
+        kind: 'date',
+        optional: true,
+      },
+      {
+        id: 'planChangeError',
+        field: 'planChangeError',
+        label: 'website.planChangeError',
+        kind: 'text',
+        optional: true,
+      },
+      {
         id: 'status',
         field: 'status',
         label: 'Status',
@@ -339,6 +381,19 @@ const RETRY_ACTION: ConfigurableCrudRowAction = {
   },
 };
 
+const RETRY_PLAN_CHANGE_ACTION: ConfigurableCrudRowAction = {
+  key: 'retry-plan-change',
+  label: 'website.retryPlanChange',
+  icon: 'sync',
+  tooltip: 'website.retryPlanChangeTooltip',
+  request: {
+    method: 'post',
+    endpoint: (row) =>
+      `${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(String(row['orderUUID'] ?? ''))}/plan-change/retry`,
+    successMessage: 'website.planChangeRetried',
+  },
+};
+
 /**
  * Website › Orders (tenant): offers contracted on the sites and in the customer portal, with the
  * first charge issued on the tenant's gateway. Approval offers wait here for "Approve". Paid orders
@@ -369,6 +424,7 @@ export class WebsiteOrdersPage extends ConfigurableCrudPageBase<ConfigurableCrud
         : []),
       ...(status === 'provisioning' && RETRYABLE_STEPS.has(step) ? [RETRY_ACTION] : []),
       ...(row['refundStatus'] === 'pending' ? [REFUND_ACTION] : []),
+      ...(row['planChangeStatus'] === 'failed' ? [RETRY_PLAN_CHANGE_ACTION] : []),
     ];
   }
 
