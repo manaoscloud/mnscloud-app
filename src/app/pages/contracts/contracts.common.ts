@@ -125,3 +125,16 @@ export const DOCUMENT_LOOKUP = {
   uuidField: 'CtdUUID',
   labelField: 'CtdTitle',
 };
+
+export const TARGET_TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'crm_proposal', label: 'contracts.targetCrmProposal' },
+  { value: 'crm_opportunity', label: 'contracts.targetCrmOpportunity' },
+  { value: 'bill_contract', label: 'contracts.targetBillContract' },
+  { value: 'reg_customer', label: 'contracts.targetRegCustomer' },
+  { value: 'reg_supplier', label: 'contracts.targetRegSupplier' },
+  { value: 'reg_employee', label: 'contracts.targetRegEmployee' },
+  { value: 'work_order', label: 'contracts.targetWorkOrder' },
+  { value: 'infragis_asset', label: 'contracts.targetInfraGisAsset' },
+  { value: 'website_form', label: 'contracts.targetWebsiteForm' },
+];
+
