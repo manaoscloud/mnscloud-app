@@ -1043,6 +1043,30 @@ export const routes: Routes = [
                   ),
                 title: 'Contracts • Links | mnscloud',
               },
+              {
+                path: 'contracts/approval-rules',
+                loadComponent: () =>
+                  import('./pages/contracts/approval-rules/approval-rules').then(
+                    (m) => m.ContractsApprovalRulesComponent,
+                  ),
+                title: 'Contracts • Approval Rules | mnscloud',
+              },
+              {
+                path: 'contracts/approvals',
+                loadComponent: () =>
+                  import('./pages/contracts/approvals/approvals').then(
+                    (m) => m.ContractsApprovalsComponent,
+                  ),
+                title: 'Contracts • Approvals | mnscloud',
+              },
+              {
+                path: 'contracts/obligations',
+                loadComponent: () =>
+                  import('./pages/contracts/obligations/obligations').then(
+                    (m) => m.ContractsObligationsComponent,
+                  ),
+                title: 'Contracts • Obligations | mnscloud',
+              },
               // Registry (shared by every module)
               {
                 path: 'registry/economic-sectors',

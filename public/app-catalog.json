@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "616e50ab14f2",
+  "version": "4a8e0df1aff4",
   "language": "pt-BR",
   "entries": [
     {
@@ -524,6 +524,68 @@
       "fields": []
     },
     {
+      "route": "/contracts/approval-rules",
+      "menuPath": "Contratos › Regras de aprovação",
+      "scope": "tenant",
+      "title": "Regras de Aprovação",
+      "description": "Configure alçadas e regras de aprovação interna com limites de valor e papéis exigidos antes do envio para assinatura.",
+      "fields": [
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Nome da regra",
+          "help": ""
+        },
+        {
+          "label": "contracts.documentKind",
+          "help": ""
+        },
+        {
+          "label": "Valor mínimo exigido",
+          "help": ""
+        },
+        {
+          "label": "Papel / Alçada do Aprovador",
+          "help": ""
+        },
+        {
+          "label": "Ordem da etapa",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/approvals",
+      "menuPath": "Contratos › Aprovações",
+      "scope": "tenant",
+      "title": "Aprovações de Contratos",
+      "description": "Acompanhe e registre decisões de aprovação de instrumentos e minutas antes da coleta de assinaturas.",
+      "fields": [
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Papel / Alçada do Aprovador",
+          "help": ""
+        },
+        {
+          "label": "Status da aprovação",
+          "help": ""
+        },
+        {
+          "label": "Parecer / Justificativa",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/contracts/clauses",
       "menuPath": "Contratos › Cláusulas",
       "scope": "tenant",
@@ -706,6 +768,51 @@
         },
         {
           "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/obligations",
+      "menuPath": "Contratos › Obrigações",
+      "scope": "tenant",
+      "title": "Obrigações Contratuais",
+      "description": "Gestão de obrigações, entregáveis, prazos de SLA e marcos contratuais com alerta de vencimento.",
+      "fields": [
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Título da obrigação",
+          "help": ""
+        },
+        {
+          "label": "Parte responsável",
+          "help": ""
+        },
+        {
+          "label": "Data de vencimento",
+          "help": ""
+        },
+        {
+          "label": "Recorrência",
+          "help": ""
+        },
+        {
+          "label": "Dias de aviso prévio",
+          "help": ""
+        },
+        {
+          "label": "Status da obrigação",
+          "help": ""
+        },
+        {
+          "label": "contracts.description",
+          "help": ""
+        },
+        {
+          "label": "Observações do vínculo",
           "help": ""
         }
       ]
