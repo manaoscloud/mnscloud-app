@@ -34,6 +34,19 @@ export const WEBSITE_ORDER_ACTIVATION_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'done', label: 'website.activationStep.done' },
 ];
 
+/** S6: how the customer cancelled from the portal. */
+export const WEBSITE_ORDER_CANCEL_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'unpaid', label: 'website.cancelMode.unpaid' },
+  { value: 'withdrawal', label: 'website.cancelMode.withdrawal' },
+  { value: 'end_of_cycle', label: 'website.cancelMode.end_of_cycle' },
+];
+
+/** S6: manual refund of a withdrawal (the tenant records it). */
+export const WEBSITE_ORDER_REFUND_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'website.refundStatus.pending' },
+  { value: 'refunded', label: 'website.refundStatus.refunded' },
+];
+
 const LINKABLE = new Set(['paid', 'provisioning']);
 const RETRYABLE_STEPS = new Set(['blocked', 'failed_resource']);
 
@@ -78,6 +91,31 @@ function linkForm(row: ConfigurableCrudRecord, kind: 'vps' | 'webhost'): Configu
               labelField: 'HwhName',
               descriptionField: 'CustomerName',
             },
+      },
+    ],
+  });
+}
+
+/** Refund form: the tenant refunded the withdrawal through its own gateway or bank. */
+function refundForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(String(row['orderUUID'] ?? ''))}/refund`,
+    uuidField: 'orderUUID',
+    pageTitle: 'website.markRefunded',
+    pageDescription: 'website.markRefundedDescription',
+    createTitle: 'website.markRefunded',
+    savedMessage: 'website.refundRecorded',
+    statusFilter: false,
+    initialValues: { note: '' },
+    columns: [],
+    fields: [
+      {
+        key: 'note',
+        label: 'website.refundNote',
+        type: 'textarea',
+        span: 4,
+        rows: 4,
+        help: 'website.refundNoteHelp',
       },
     ],
   });
@@ -212,6 +250,37 @@ function websiteOrdersConfig(): ConfigurableCrudConfig {
         optional: true,
       },
       {
+        id: 'cancelMode',
+        field: 'cancelMode',
+        label: 'website.cancelModeLabel',
+        kind: 'text',
+        width: 'sm',
+        optional: true,
+        value: (row, translate) =>
+          row['cancelMode']
+            ? optionLabel(WEBSITE_ORDER_CANCEL_OPTIONS, row['cancelMode'], translate)
+            : '',
+      },
+      {
+        id: 'cancelAt',
+        field: 'cancelAt',
+        label: 'website.cancelAt',
+        kind: 'datetime',
+        optional: true,
+      },
+      {
+        id: 'refundStatus',
+        field: 'refundStatus',
+        label: 'website.refundStatusLabel',
+        kind: 'text',
+        width: 'sm',
+        optional: true,
+        value: (row, translate) =>
+          row['refundStatus']
+            ? optionLabel(WEBSITE_ORDER_REFUND_OPTIONS, row['refundStatus'], translate)
+            : '',
+      },
+      {
         id: 'status',
         field: 'status',
         label: 'Status',
@@ -249,6 +318,13 @@ const LINK_HOSTING_ACTION: ConfigurableCrudRowAction = {
   icon: 'link',
   tooltip: 'website.linkResourceTooltip',
   form: (row) => linkForm(row, 'webhost'),
+};
+const REFUND_ACTION: ConfigurableCrudRowAction = {
+  key: 'mark-refunded',
+  label: 'website.markRefunded',
+  icon: 'currency_exchange',
+  tooltip: 'website.markRefundedTooltip',
+  form: (row) => refundForm(row),
 };
 const RETRY_ACTION: ConfigurableCrudRowAction = {
   key: 'retry-activation',
@@ -292,6 +368,7 @@ export class WebsiteOrdersPage extends ConfigurableCrudPageBase<ConfigurableCrud
         ? [row['kind'] === 'webhost' ? LINK_HOSTING_ACTION : LINK_SERVER_ACTION]
         : []),
       ...(status === 'provisioning' && RETRYABLE_STEPS.has(step) ? [RETRY_ACTION] : []),
+      ...(row['refundStatus'] === 'pending' ? [REFUND_ACTION] : []),
     ];
   }
 

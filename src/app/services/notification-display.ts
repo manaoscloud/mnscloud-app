@@ -27,6 +27,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'alarm';
     case 'website.order.activation':
       return 'storefront';
+    case 'website.order.cancelled':
+      return 'event_busy';
     default:
       return 'notifications';
   }
@@ -77,6 +79,15 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           : 'notifications.websiteOrderBlocked',
         { id: param('orderId') },
       );
+    case 'website.order.cancelled':
+      return t(
+        param('mode') === 'withdrawal'
+          ? 'notifications.websiteOrderWithdrawal'
+          : param('mode') === 'end_of_cycle'
+            ? 'notifications.websiteOrderCancelScheduled'
+            : 'notifications.websiteOrderCancelled',
+        { id: param('orderId') },
+      );
     default:
       return t('notifications.generic');
   }
@@ -97,7 +108,7 @@ export function notificationDescription(item: InboxNotification, language: strin
       ? item.params['offer']
       : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
         ? item.params['title']
-        : item.type === 'website.order.activation'
+        : item.type === 'website.order.activation' || item.type === 'website.order.cancelled'
           ? item.params['offer']
           : item.type.startsWith('logs.account.')
             ? item.params['account']
