@@ -25,6 +25,7 @@ import {
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { openVpsInstanceMonitor } from './instance-monitor';
 import { openVpsInstanceConsole } from './instance-console';
+import { MIGRATE_INSTANCE_ACTION } from './instance-migration';
 import type {
   HostingVpsFirewall,
   HostingVpsInstance,
@@ -171,6 +172,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     DETAILS_ACTION,
     RETRY_PROVISION_ACTION,
     UPGRADE_ACTION,
+    MIGRATE_INSTANCE_ACTION,
   ],
   listFilters: [
     {
@@ -833,6 +835,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
       actions.push(...this.powerActions(row));
       actions.push(DETAILS_ACTION);
+      if (this.isMaster() && this.providerOf(row) === 'proxmox')
+        actions.push(MIGRATE_INSTANCE_ACTION);
     }
     if (this.canRetryProvision(row)) {
       actions.push({
@@ -926,12 +930,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   /** The web console exists for Proxmox VPS only. */
   /** Proxmox (provider console) and DigitalOcean/Lightsail (SSH console with the platform key). */
   private hasWebConsole(row: ConfigurableCrudRecord) {
+    return ['proxmox', 'digitalocean', 'lightsail'].includes(this.providerOf(row));
+  }
+
+  private providerOf(row: ConfigurableCrudRecord): string {
     const providerUUID = String(row['HostingVpsProviderHvrUUID'] ?? '');
     const provider = this.providers().find((item) => item.HvrUUID === providerUUID);
     const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
-    return ['proxmox', 'digitalocean', 'lightsail'].includes(
-      String(provider?.HvrProvider ?? plan?.HvpProvider ?? ''),
-    );
+    return String(provider?.HvrProvider ?? plan?.HvpProvider ?? '');
   }
 
   private canRetryProvision(row: ConfigurableCrudRecord) {
