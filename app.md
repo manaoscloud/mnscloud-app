@@ -38,6 +38,32 @@
   production IPs, provider account IDs, or private infrastructure topology.
 - Full contract: `docs/public-api-clients.md`.
 
+## Master pages and tenant data
+
+Each tenant sees only its own data, the master included (workspace
+`docs/platform-resource-ownership.md` → Tenant isolation by layer, user decision 2026-11-06).
+
+- `/system/*` pages (children of `path: 'system'`, `permissionGuard` with `platform.master.access`)
+  manage platform records. They never list, edit or delete tenant records. Support on a tenant's
+  records happens on the tenant pages with that tenant selected.
+- The only cross-tenant views are the registered platform functions (dashboard aggregates, platform
+  billing, user governance, support desk, shared pools such as public IPs and DIDs, infrastructure
+  operation such as tenant zones, gateways, VM migration and the Agent fleet). Such a view shows the
+  owning tenant column and only the fields the API returns for it.
+- The endpoint comes only from the route's declared scope (`route.snapshot.data.scope`), and the
+  tenant header is always sent on tenant routes and never on `/system` routes. Never choose the
+  scope, the endpoint or the header from `localStorage`, `window.location`, `router.url` or the
+  user's permission list.
+- When the API or database decides whether a row can be edited or deleted, the row action comes
+  from a server field (`canEdit`, `canDelete`, `editable`); bulk selection respects the same rule.
+- A picker offers only records of the owner of the record being edited (the selected tenant, or
+  platform records that tenants may consume, such as default networks and firewalls). Platform
+  fallbacks shown to tenants (shared catalogs, providers, servers, Parameter defaults) stay as they
+  are.
+- Existing pages that still break these rules are tracked by phase in the workspace handoff
+  `docs/handoffs/2026-11-06-tenant-scope-layer-audit.md` (sections 5 and 10); the
+  `check:tenant-scope` validator arrives in phase T1. New or changed pages follow this section now.
+
 ## Layout
 
 - Main shell and menu are in:
