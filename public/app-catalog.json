@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "26332daf6677",
+  "version": "375da5e531b4",
   "language": "pt-BR",
   "entries": [
     {
@@ -3067,6 +3067,10 @@
         {
           "label": "Imagem",
           "help": ""
+        },
+        {
+          "label": "Grupo de posicionamento",
+          "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
         },
         {
           "label": "Rede privada",
@@ -10631,6 +10635,10 @@
         {
           "label": "Imagem",
           "help": ""
+        },
+        {
+          "label": "Grupo de posicionamento",
+          "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
         },
         {
           "label": "Rede privada",

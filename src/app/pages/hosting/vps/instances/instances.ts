@@ -121,6 +121,18 @@ const DETAILS_ACTION: ConfigurableCrudRowAction = {
 const PLACEMENT_GROUP_HELP =
   'Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.';
 
+/** PL7 placement group `spread`: shown for Proxmox plans only, sent lower case in the config. */
+const PLACEMENT_GROUP_FIELD: ConfigurableCrudField = {
+  key: 'placementGroup',
+  source: 'HviConfig',
+  payloadKey: 'placementGroup',
+  label: 'Placement group',
+  placeholder: 'db-cluster',
+  help: PLACEMENT_GROUP_HELP,
+  fromRecord: (value) => configString(value, 'placementGroup'),
+  hiddenWhen: ({ values }) => !/^proxmox$/i.test(String(values['planProvider'] ?? '').trim()),
+};
+
 const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'ssh_key', label: 'SSH key' },
   { value: 'password', label: 'Username and password' },
@@ -293,19 +305,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'ubuntu-22-04-x64',
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
-    {
-      key: 'placementGroup',
-      source: 'HviConfig',
-      payloadKey: 'placementGroup',
-      label: 'Placement group',
-      placeholder: 'db-cluster',
-      help: PLACEMENT_GROUP_HELP,
-      fromRecord: (value) => configString(value, 'placementGroup'),
-      hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '')
-          .trim()
-          .toLowerCase() !== 'proxmox',
-    },
+    PLACEMENT_GROUP_FIELD,
     {
       key: 'networkUUID',
       source: 'HostingVpsNetworkHvnUUID',
