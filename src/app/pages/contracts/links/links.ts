@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -28,8 +28,20 @@ export const CONTRACT_LINKS_CONFIG = defineCrud({
   },
   ...revisionDeletePayloads('CtlUUID', 'CtlRevision'),
   listFilters: [
-    { key: 'targetType', label: 'contracts.targetType', type: 'select', span: 1, options: TARGET_TYPE_OPTIONS },
-    { key: 'contractDocumentUuid', label: 'contracts.document', type: 'search-select', span: 1, remoteLookup: DOCUMENT_LOOKUP },
+    {
+      key: 'targetType',
+      label: 'contracts.targetType',
+      type: 'select',
+      span: 1,
+      options: TARGET_TYPE_OPTIONS,
+    },
+    {
+      key: 'contractDocumentUuid',
+      label: 'contracts.document',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: DOCUMENT_LOOKUP,
+    },
   ],
   fields: [
     {
@@ -43,23 +55,70 @@ export const CONTRACT_LINKS_CONFIG = defineCrud({
       quickCreate: false,
       quickCreateExemptReason: 'Contract documents are generated or imported through the document lifecycle workflow, not created from an inline modal.',
     },
-    { key: 'targetType', source: 'CtlTargetType', label: 'contracts.targetType', type: 'select', required: true, span: 1, options: TARGET_TYPE_OPTIONS },
-    { key: 'targetUuid', source: 'CtlTargetUUID', label: 'contracts.targetUuid', type: 'text', required: true, span: 1 },
-    { key: 'notes', source: 'CtlNotes', label: 'contracts.notes', type: 'textarea', span: 4 },
+    {
+      key: 'targetType',
+      source: 'CtlTargetType',
+      label: 'contracts.targetType',
+      type: 'select',
+      required: true,
+      span: 1,
+      options: TARGET_TYPE_OPTIONS,
+    },
+    {
+      key: 'targetUuid',
+      source: 'CtlTargetUUID',
+      label: 'contracts.targetUuid',
+      type: 'text',
+      required: true,
+      span: 1,
+    },
+    {
+      key: 'notes',
+      source: 'CtlNotes',
+      label: 'contracts.notes',
+      type: 'textarea',
+      span: 4,
+    },
   ],
   columns: [
-    { id: 'documentNumber', field: 'DocumentNumber', label: 'contracts.documentNumber', kind: 'identity' },
-    { id: 'documentTitle', field: 'DocumentTitle', label: 'contracts.document' },
-    { id: 'documentState', field: 'DocumentState', label: 'contracts.documentState' },
-    { id: 'targetType', field: 'CtlTargetType', label: 'contracts.targetType' },
-    { id: 'notes', field: 'CtlNotes', label: 'contracts.notes' },
-    { id: 'dateCreated', field: 'CtlDateCreated', label: 'contracts.dateCreated' },
+    {
+      id: 'documentNumber',
+      field: 'DocumentNumber',
+      label: 'contracts.documentNumber',
+      kind: 'identity',
+    },
+    {
+      id: 'documentTitle',
+      field: 'DocumentTitle',
+      label: 'contracts.document',
+    },
+    {
+      id: 'documentState',
+      field: 'DocumentState',
+      label: 'contracts.documentState',
+    },
+    {
+      id: 'targetType',
+      field: 'CtlTargetType',
+      label: 'contracts.targetType',
+    },
+    {
+      id: 'notes',
+      field: 'CtlNotes',
+      label: 'contracts.notes',
+    },
+    {
+      id: 'dateCreated',
+      field: 'CtlDateCreated',
+      label: 'contracts.dateCreated',
+    },
   ],
 });
 
 @Component({
   selector: 'mns-contracts-links',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
@@ -67,5 +126,14 @@ export const CONTRACT_LINKS_CONFIG = defineCrud({
 export class ContractsLinksComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(CONTRACT_LINKS_CONFIG);
+  }
+
+  /**
+   * Helper returning target identifier for cross-module integrations.
+   */
+  public resolveTargetSummary(record: ConfigurableCrudRecord): string {
+    const targetType = String(record['CtlTargetType'] ?? '');
+    const targetUuid = String(record['CtlTargetUUID'] ?? '');
+    return `${targetType}:${targetUuid}`;
   }
 }
