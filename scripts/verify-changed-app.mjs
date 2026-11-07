@@ -71,6 +71,7 @@ run('node', [
   'scripts/validate-page-descriptions.test.mjs',
   'scripts/validate-required-fields.test.mjs',
   'scripts/validate-crud-fields.test.mjs',
+  'scripts/validate-tenant-scope.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -115,6 +116,8 @@ run('node', ['scripts/validate-required-fields.mjs']);
 // Inputs/selects span-1, text areas span-4 with four rows, annotations in the Notes tab
 // (app.md Form Field Layout Baseline).
 run('node', ['scripts/validate-crud-fields.mjs']);
+// Endpoint and tenant header only from the route's declared scope (app.md Master pages and tenant data).
+run('node', ['scripts/validate-tenant-scope.mjs']);
 
 const crudRoots = [
   ...new Set(

@@ -53,7 +53,9 @@ Each tenant sees only its own data, the master included (workspace
 - The endpoint comes only from the route's declared scope (`route.snapshot.data.scope`), and the
   tenant header is always sent on tenant routes and never on `/system` routes. Never choose the
   scope, the endpoint or the header from `localStorage`, `window.location`, `router.url` or the
-  user's permission list.
+  user's permission list. `npm run check:tenant-scope` (`scripts/validate-tenant-scope.mjs`, run by
+  `verify:changed`) counts the legacy forms per file against `scripts/tenant-scope-baseline.json`;
+  a file may not gain one and a fix lowers its entry in the same PR.
 - When the API or database decides whether a row can be edited or deleted, the row action comes
   from a server field (`canEdit`, `canDelete`, `editable`); bulk selection respects the same rule.
 - A picker offers only records of the owner of the record being edited (the selected tenant, or
