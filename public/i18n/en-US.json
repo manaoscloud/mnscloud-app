@@ -4789,6 +4789,7 @@
   "Segredos": "Secrets",
   "Gerenciar": "Manage",
   "Insufficient prepaid credit.": "Insufficient prepaid credit.",
+  "This resource is not for sale yet. Ask the platform to publish its price.": "This resource is not for sale yet. Ask the platform to publish its price.",
   "Invalid fee amount limits.": "Invalid fee amount limits.",
   "Invalid fee volume threshold or period.": "Invalid fee volume threshold or period.",
   "A valid currency is required.": "A valid currency is required.",
