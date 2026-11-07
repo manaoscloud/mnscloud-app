@@ -18,7 +18,8 @@ export type NotificationType =
   | 'voip.pabx.extension.offline'
   | 'dns.monitor.target'
   | 'workorders.order.overdue'
-  | 'website.order.activation';
+  | 'website.order.activation'
+  | 'website.order.cancelled';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {
