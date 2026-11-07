@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4a8e0df1aff4",
+  "version": "6dcf05e712ca",
   "language": "pt-BR",
   "entries": [
     {
@@ -539,7 +539,7 @@
           "help": ""
         },
         {
-          "label": "contracts.documentKind",
+          "label": "Tipo de instrumento",
           "help": ""
         },
         {
@@ -808,7 +808,7 @@
           "help": ""
         },
         {
-          "label": "contracts.description",
+          "label": "Descrição detalhada",
           "help": ""
         },
         {

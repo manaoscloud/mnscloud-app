@@ -11658,6 +11658,8 @@
   "contracts.targetInfraGisAsset": "Ativo de Rede (InfraGIS)",
   "contracts.targetWebsiteForm": "Formulário Web / Adesão",
   "contracts.approvalRules": "Regras de Aprovação",
+  "contracts.documentKind": "Tipo de instrumento",
+  "contracts.description": "Descrição detalhada",
   "contracts.approvalRulesDescription": "Configure alçadas e regras de aprovação interna com limites de valor e papéis exigidos antes do envio para assinatura.",
   "contracts.newApprovalRule": "Nova regra de aprovação",
   "contracts.editApprovalRule": "Editar regra de aprovação",

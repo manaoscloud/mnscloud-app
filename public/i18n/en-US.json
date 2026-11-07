@@ -11657,6 +11657,8 @@
   "contracts.targetInfraGisAsset": "Network Asset (InfraGIS)",
   "contracts.targetWebsiteForm": "Web Form / Agreement",
   "contracts.approvalRules": "Approval Rules",
+  "contracts.documentKind": "Document kind",
+  "contracts.description": "Detailed description",
   "contracts.approvalRulesDescription": "Configure internal approval rules with threshold limits and required roles before envelope dispatch.",
   "contracts.newApprovalRule": "New approval rule",
   "contracts.editApprovalRule": "Edit approval rule",
