@@ -20,6 +20,7 @@ export type NotificationType =
   | 'workorders.order.overdue'
   | 'website.order.activation'
   | 'website.order.cancelled'
+  | 'website.order.plan_changed'
   | 'security.alert'
   | 'security.protection'
   | 'security.agent';
