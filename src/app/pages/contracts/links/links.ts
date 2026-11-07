@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -118,7 +118,6 @@ export const CONTRACT_LINKS_CONFIG = defineCrud({
 @Component({
   selector: 'mns-contracts-links',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
