@@ -79,64 +79,39 @@ export const CONTRACT_APPROVALS_CONFIG = defineCrud({
     },
   ],
   columns: [
-    {
-      id: 'documentNumber',
-      field: 'DocumentNumber',
-      label: 'contracts.documentNumber',
-      kind: 'identity',
-    },
-    {
-      id: 'documentTitle',
-      field: 'DocumentTitle',
-      label: 'contracts.document',
-    },
-    {
-      id: 'documentTotalValue',
-      field: 'DocumentTotalValue',
-      label: 'contracts.totalValue',
-      kind: 'currency',
-    },
-    {
-      id: 'stepOrder',
-      field: 'CtfStepOrder',
-      label: 'contracts.stepOrder',
-    },
-    {
-      id: 'role',
-      field: 'CtfRole',
-      label: 'contracts.approverRole',
-    },
-    {
-      id: 'status',
-      field: 'CtfStatus',
-      label: 'contracts.approvalStatus',
-    },
-    {
-      id: 'decisionNotes',
-      field: 'CtfDecisionNotes',
-      label: 'contracts.decisionNotes',
-    },
-    {
-      id: 'dateDecided',
-      field: 'CtfDateDecided',
-      label: 'contracts.dateDecided',
-    },
+    { id: 'documentNumber', field: 'DocumentNumber', label: 'contracts.documentNumber', kind: 'identity' },
+    { id: 'documentTitle', field: 'DocumentTitle', label: 'contracts.document' },
+    { id: 'documentTotalValue', field: 'DocumentTotalValue', label: 'contracts.totalValue', kind: 'currency' },
+    { id: 'stepOrder', field: 'CtfStepOrder', label: 'contracts.stepOrder' },
+    { id: 'role', field: 'CtfRole', label: 'contracts.approverRole' },
+    { id: 'status', field: 'CtfStatus', label: 'contracts.approvalStatus' },
+    { id: 'decisionNotes', field: 'CtfDecisionNotes', label: 'contracts.decisionNotes' },
+    { id: 'dateDecided', field: 'CtfDateDecided', label: 'contracts.dateDecided' },
   ],
 });
 
 @Component({
-  selector: 'mns-contracts-approvals',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  standalone: true,
+  selector: 'mns-contracts-approvals',
 })
 export class ContractsApprovalsComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  public readonly defaultDecisionLabel = 'Aprovação';
+
   constructor() {
     super(CONTRACT_APPROVALS_CONFIG);
   }
 
   public isDecisionPending(record: ConfigurableCrudRecord): boolean {
     return String(record['CtfStatus'] ?? '') === 'pending';
+  }
+
+  public getApprovalDecisionColor(record: ConfigurableCrudRecord): string {
+    const status = String(record['CtfStatus'] ?? '');
+    if (status === 'approved') return 'var(--mns-success-color, green)';
+    if (status === 'rejected') return 'var(--mns-danger-color, red)';
+    return 'var(--mns-warning-color, orange)';
   }
 }

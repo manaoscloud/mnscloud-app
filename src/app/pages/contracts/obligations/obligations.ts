@@ -133,49 +133,25 @@ export const CONTRACT_OBLIGATIONS_CONFIG = defineCrud({
     },
   ],
   columns: [
-    {
-      id: 'documentNumber',
-      field: 'DocumentNumber',
-      label: 'contracts.documentNumber',
-      kind: 'identity',
-    },
-    {
-      id: 'title',
-      field: 'CtoTitle',
-      label: 'contracts.obligationTitle',
-    },
-    {
-      id: 'party',
-      field: 'CtoParty',
-      label: 'contracts.obligationParty',
-    },
-    {
-      id: 'dueDate',
-      field: 'CtoDueDate',
-      label: 'contracts.dueDate',
-      kind: 'date',
-    },
-    {
-      id: 'recurrence',
-      field: 'CtoRecurrence',
-      label: 'contracts.recurrence',
-    },
-    {
-      id: 'status',
-      field: 'CtoStatus',
-      label: 'contracts.obligationStatus',
-    },
+    { id: 'documentNumber', field: 'DocumentNumber', label: 'contracts.documentNumber', kind: 'identity' },
+    { id: 'title', field: 'CtoTitle', label: 'contracts.obligationTitle' },
+    { id: 'party', field: 'CtoParty', label: 'contracts.obligationParty' },
+    { id: 'dueDate', field: 'CtoDueDate', label: 'contracts.dueDate', kind: 'date' },
+    { id: 'recurrence', field: 'CtoRecurrence', label: 'contracts.recurrence' },
+    { id: 'status', field: 'CtoStatus', label: 'contracts.obligationStatus' },
   ],
 });
 
 @Component({
-  selector: 'mns-contracts-obligations',
-  standalone: true,
-  imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  standalone: true,
+  selector: 'mns-contracts-obligations',
 })
 export class ContractsObligationsComponent extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  public readonly defaultObligationParty = 'company';
+
   constructor() {
     super(CONTRACT_OBLIGATIONS_CONFIG);
   }
@@ -187,5 +163,12 @@ export class ContractsObligationsComponent extends ConfigurableCrudPageBase<Conf
       case 'waived': return 'neutral';
       default: return 'warning';
     }
+  }
+
+  public isObligationOverdue(record: ConfigurableCrudRecord): boolean {
+    const dueDateStr = String(record['CtoDueDate'] ?? '');
+    const status = String(record['CtoStatus'] ?? '');
+    if (!dueDateStr || status === 'fulfilled' || status === 'waived') return false;
+    return new Date(dueDateStr) < new Date();
   }
 }
