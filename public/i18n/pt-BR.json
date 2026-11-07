@@ -4790,6 +4790,7 @@
   "Segredos": "Segredos",
   "Gerenciar": "Gerenciar",
   "Insufficient prepaid credit.": "Crédito pré-pago insuficiente.",
+  "This resource is not for sale yet. Ask the platform to publish its price.": "Este recurso ainda não está à venda. Peça à plataforma para publicar o preço.",
   "Invalid fee amount limits.": "Os limites de valor da tarifa são inválidos.",
   "Invalid fee volume threshold or period.": "O limite de volume ou período da tarifa é inválido.",
   "A valid currency is required.": "É necessário informar uma moeda válida.",
