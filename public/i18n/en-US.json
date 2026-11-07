@@ -10045,6 +10045,8 @@
   "website.edgeIPv4Help": "Target of the A records of automatic addresses: the public IPv4 of the edge that serves the websites. Managed DNS needs this address or the IPv6 one.",
   "website.edgeIPv6": "Edge public IPv6",
   "website.edgeIPv6Help": "Optional target of the AAAA records; leave empty to publish IPv4 only.",
+  "website.institutionalDomain": "Institutional website domain",
+  "website.institutionalDomainHelp": "Domain of the platform website (for example www.company.com). Create the domain in Themes and issue its certificate; the edge then serves the institutional website on it instead of the App. Leave empty to not use one.",
   "website.edgeCertificates": "Edge wildcard certificate",
   "website.edgeCertificatesHelp": "*.<base> certificate issued by Let's Encrypt (DNS validation) on each platform edge, so the automatic site addresses use HTTPS. The platform renews it 30 days before it expires.",
   "website.edgeSync": "Sync edge",

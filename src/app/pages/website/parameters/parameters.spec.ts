@@ -96,7 +96,21 @@ describe('WebsiteParametersPage', () => {
       edgeIPv4: '203.0.113.10',
       edgeIPv6: '2001:db8::10',
       defaultLocale: 'pt-BR',
+      institutionalDomain: null,
     });
+  });
+
+  it('sends the institutional domain normalized, empty as null', () => {
+    const form = websiteParameterForm({ institutionalDomain: 'www.example.com' });
+    expect(form.institutionalDomain).toBe('www.example.com');
+    expect(
+      websiteParameterPayload({ ...form, institutionalDomain: ' WWW.Example.COM. ' })[
+        'institutionalDomain'
+      ],
+    ).toBe('www.example.com');
+    expect(
+      websiteParameterPayload({ ...form, institutionalDomain: ' ' })['institutionalDomain'],
+    ).toBeNull();
   });
 
   it('normalizes the stored item and the managed payload', () => {

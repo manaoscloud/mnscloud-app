@@ -10046,6 +10046,8 @@
   "website.edgeIPv4Help": "Destino dos registros A dos endereços automáticos: o IPv4 público da borda que atende os sites. O DNS gerenciado exige este endereço ou o IPv6.",
   "website.edgeIPv6": "IPv6 público da borda",
   "website.edgeIPv6Help": "Destino opcional dos registros AAAA; deixe vazio para publicar só IPv4.",
+  "website.institutionalDomain": "Domínio do site institucional",
+  "website.institutionalDomainHelp": "Domínio do site da plataforma (por exemplo www.empresa.com). Crie o domínio em Temas e emita o certificado; a borda passa a servir o site institucional nele, em vez do App. Deixe vazio para não usar.",
   "website.edgeCertificates": "Certificado curinga da borda",
   "website.edgeCertificatesHelp": "Certificado *.<base> emitido pela Let's Encrypt (validação DNS) em cada borda da plataforma, para os endereços automáticos dos sites em HTTPS. A plataforma o renova 30 dias antes de vencer.",
   "website.edgeSync": "Sincronizar borda",
