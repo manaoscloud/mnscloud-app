@@ -2770,6 +2770,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: false,
       },
       {
+        id: 'monitoring/automation-access',
+        label: 'nav.monitoring.automation-access',
+        icon: 'smart_toy',
+        category: 'platform',
+        masterRoute: '/system/monitoring/automation-access',
+        scope: 'master',
+        requiresEnvironment: false,
+      },
+      {
         id: 'monitoring/client-versions',
         label: 'nav.monitoring.client-versions',
         icon: 'update',
