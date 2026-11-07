@@ -11720,5 +11720,8 @@
   "Migration started. It may take several minutes; Refresh to follow it.": "Migração iniciada. Pode levar vários minutos; atualize para acompanhar.",
   "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.": "Migrar o servidor para este nó? O disco é copiado pela rede (veja a estimativa). Um servidor ligado continua ligado; um desligado continua desligado.",
   "Migrate": "Migrar",
-  "Migrate to another node": "Migrar para outro nó"
+  "Migrate to another node": "Migrar para outro nó",
+  "Placement group": "Grupo de posicionamento",
+  "Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático.",
+  "db-cluster": "db-cluster"
 }

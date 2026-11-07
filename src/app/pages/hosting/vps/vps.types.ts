@@ -155,6 +155,8 @@ export type HostingVpsPlan = {
 
 export type HostingVpsInstanceConfig = {
   providerImageId?: string | null;
+  /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
+  placementGroup?: string | null;
   authMethod?: 'ssh_key' | 'password' | string | null;
   username?: string | null;
   password?: string | null;

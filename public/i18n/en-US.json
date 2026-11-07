@@ -11719,5 +11719,8 @@
   "Migration started. It may take several minutes; Refresh to follow it.": "Migration started. It may take several minutes; Refresh to follow it.",
   "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.": "Migrate the server to this node? The disk is copied over the network (see the estimate). A running server keeps running; a stopped one stays stopped.",
   "Migrate": "Migrate",
-  "Migrate to another node": "Migrate to another node"
+  "Migrate to another node": "Migrate to another node",
+  "Placement group": "Placement group",
+  "Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.": "Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.",
+  "db-cluster": "db-cluster"
 }
