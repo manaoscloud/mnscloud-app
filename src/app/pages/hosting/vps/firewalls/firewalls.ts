@@ -129,7 +129,9 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
   private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.platformScope() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly firewallEndpoint = computed(() => `${this.base()}/firewalls`);
 
   // Attach/apply only to an instance of the same owner: /system acts on platform instances only.

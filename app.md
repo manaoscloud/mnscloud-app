@@ -53,18 +53,23 @@ Each tenant sees only its own data, the master included (workspace
 - The endpoint comes only from the route's declared scope (`route.snapshot.data.scope`), and the
   tenant header is always sent on tenant routes and never on `/system` routes. Never choose the
   scope, the endpoint or the header from `localStorage`, `window.location`, `router.url` or the
-  user's permission list. `npm run check:tenant-scope` (`scripts/validate-tenant-scope.mjs`, run by
-  `verify:changed`) counts the legacy forms per file against `scripts/tenant-scope-baseline.json`;
-  a file may not gain one and a fix lowers its entry in the same PR.
+  user's permission list. `src/app/core/scope/route-scope.ts` is the one source: `injectPlatformScope()`
+  in a page (the `system` parent declares `scope: 'master'` for every child), `RouteScopeService`
+  in services and dialogs (`current()`, and `isSystemTree()`, which `ApiService` uses for the
+  header). Master pages outside `/system` (support desk, AI, lookups) keep the selected tenant.
+  The user's permissions decide actions (buttons, options), never the endpoint.
+  `npm run check:tenant-scope` (`scripts/validate-tenant-scope.mjs`, run by `verify:changed`) has an
+  empty baseline since phase T8: any legacy form fails. The only exception is a use that is not a
+  scope decision, marked `// tenant-scope-exempt: <reason>` (the single store of the selected
+  tenant in `core/environment/environment-context.ts`).
 - When the API or database decides whether a row can be edited or deleted, the row action comes
   from a server field (`canEdit`, `canDelete`, `editable`); bulk selection respects the same rule.
 - A picker offers only records of the owner of the record being edited (the selected tenant, or
   platform records that tenants may consume, such as default networks and firewalls). Platform
   fallbacks shown to tenants (shared catalogs, providers, servers, Parameter defaults) stay as they
   are.
-- Existing pages that still break these rules are tracked by phase in the workspace handoff
-  `docs/handoffs/2026-11-06-tenant-scope-layer-audit.md` (sections 5 and 10); the
-  `check:tenant-scope` validator arrives in phase T1. New or changed pages follow this section now.
+- The phases that brought the pages to these rules are recorded in the workspace handoff
+  `docs/handoffs/2026-11-06-tenant-scope-layer-audit.md` (sections 5 and 10).
 
 ## Layout
 

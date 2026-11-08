@@ -155,7 +155,9 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.platformScope() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly ipEndpoint = computed(() => `${this.base()}/public-ips`);
 
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -320,7 +322,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
       actions.push(ACTIONS.release);
     if ((mine || this.platformScope()) && associated && state !== 'removing')
       actions.push(ACTIONS.unassign);
-    if ((mine || this.platformScope()) && associated && state === 'failed') actions.push(ACTIONS.retry);
+    if ((mine || this.platformScope()) && associated && state === 'failed')
+      actions.push(ACTIONS.retry);
     return actions;
   }
 
@@ -405,7 +408,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           : (instance.HviConfig ?? {});
       return (
         instance.HostingVpsProviderHvrUUID === providerUUID &&
-        (!this.platformScope() || (instance.UserUsrUUID ?? null) === (row['UserUsrUUID'] ?? null)) &&
+        (!this.platformScope() ||
+          (instance.UserUsrUUID ?? null) === (row['UserUsrUUID'] ?? null)) &&
         !!instance.HviExternalId &&
         !!(config as Record<string, unknown>)['privateIpv4']
       );

@@ -31,7 +31,8 @@ export function countSource(source) {
     for (const match of source.matchAll(new RegExp(re.source, re.flags))) {
       const line = source.slice(0, match.index).split('\n').length - 1;
       const above = (lines[line - 1] ?? '').trim();
-      if (EXEMPT.test(lines[line] ?? '') || (above.startsWith('//') && EXEMPT.test(above))) continue;
+      if (EXEMPT.test(lines[line] ?? '') || (above.startsWith('//') && EXEMPT.test(above)))
+        continue;
       n += 1;
     }
     if (n > 0) out[name] = n;

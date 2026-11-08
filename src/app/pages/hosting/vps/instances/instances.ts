@@ -561,7 +561,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       customerField.required = false;
       customerField.requiredWhen = () => !this.platformScope();
       customerField.disabledWhen = ({ editing }) => editing;
-      customerField.helpWhen = () => (this.platformScope() ? 'hostingVps.platformCustomerHelp' : '');
+      customerField.helpWhen = () =>
+        this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
 
     const provisionedLockKeys = [

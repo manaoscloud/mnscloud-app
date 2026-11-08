@@ -184,7 +184,8 @@ export class SettingsParametersPage {
 
   readonly loading = computed(
     () =>
-      this.parametersResource.isLoading() || (!this.platformScope() && this.siadResource.isLoading()),
+      this.parametersResource.isLoading() ||
+      (!this.platformScope() && this.siadResource.isLoading()),
   );
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);

@@ -226,10 +226,14 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly providerEndpoint = computed(() =>
-    this.platformScope() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
+    this.platformScope()
+      ? 'system/hosting/vps-container/providers'
+      : 'hosting/vps-container/providers',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.platformScope() ? 'system/hosting/vps-container/instances' : 'hosting/vps-container/instances',
+    this.platformScope()
+      ? 'system/hosting/vps-container/instances'
+      : 'hosting/vps-container/instances',
   );
   private readonly planEndpoint = computed(() =>
     this.platformScope() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans',

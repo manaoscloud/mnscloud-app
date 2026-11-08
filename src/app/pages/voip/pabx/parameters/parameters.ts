@@ -202,7 +202,8 @@ export class VoipPabxParametersPage {
     loader: async ({ params }) => (await this.api.get<any>(params))?.data?.item ?? {},
   });
   private readonly storageAccounts = resource({
-    params: () => (this.platformScope() ? 'system/hosting/storage/buckets' : 'hosting/storage/buckets'),
+    params: () =>
+      this.platformScope() ? 'system/hosting/storage/buckets' : 'hosting/storage/buckets',
     defaultValue: [] as Array<Record<string, any>>,
     loader: async ({ params }) => {
       const result = await this.api.get<any>(`${params}?status=1&limit=500`);

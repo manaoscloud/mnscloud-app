@@ -1,11 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { injectPlatformScope } from '../../../core/scope/route-scope';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudFilters,
-  ConfigurableCrudListFilter,
   ConfigurableCrudListParams,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -16,7 +15,6 @@ import {
   DataViewerTone,
   openDataViewerDialog,
 } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { AuthService } from '../../../services/auth.service';
 
 const LEVEL_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'info', label: 'Info' },
@@ -134,7 +132,6 @@ const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly auth = inject(AuthService);
   /**
    * Each tenant sees only its own logs, the master included: /system lists the platform (global)
    * logs and a tenant route the selected tenant's. There is no cross-tenant tenant filter.
@@ -153,7 +150,6 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     if (action.key !== 'view-details') return;
     this.openDetails(row);
   }
-
 
   protected override async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,

@@ -150,7 +150,9 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
   private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.platformScope() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly networkEndpoint = computed(() => `${this.base()}/networks`);
 
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>

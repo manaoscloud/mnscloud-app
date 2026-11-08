@@ -66,13 +66,7 @@ export class CyberSecurityDashboardPage {
     { section: 'trusted-nodes', icon: 'hub', label: 'Review trusted nodes' },
   ];
   routeFor(section: string) {
-    return (
-      (this.platform
-        ? '/system/cyber-security'
-        : '/cyber-security') +
-      '/' +
-      section
-    );
+    return (this.platform ? '/system/cyber-security' : '/cyber-security') + '/' + section;
   }
   readonly dashboardKpis = computed(() => {
     const item = this.dashboard();

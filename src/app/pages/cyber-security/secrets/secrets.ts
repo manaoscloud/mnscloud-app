@@ -260,7 +260,9 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
     this.platformScope() ? 'system/cyber-security/secrets' : SECRET_CONFIG.endpoint,
   );
   private readonly accountEndpoint = computed(() =>
-    this.platformScope() ? 'system/cyber-security/secret-accounts' : 'cyber-security/secret-accounts',
+    this.platformScope()
+      ? 'system/cyber-security/secret-accounts'
+      : 'cyber-security/secret-accounts',
   );
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
@@ -272,7 +274,10 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   }
 
   private allowed(action: string): boolean {
-    if (this.platformScope() && (this.auth.user()?.permissions ?? []).includes('platform.master.access'))
+    if (
+      this.platformScope() &&
+      (this.auth.user()?.permissions ?? []).includes('platform.master.access')
+    )
       return true;
     const required = `${this.platformScope() ? 'platform' : 'tenant'}.cyber-security.secrets.${action}`;
     return (this.auth.user()?.permissions ?? []).some((permission) => {

@@ -313,7 +313,6 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
       this.setFieldValue('environmentUUID', '');
       return;
     }
-
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
