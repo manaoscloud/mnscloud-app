@@ -297,13 +297,24 @@ export type HostingVpsNetwork = {
   UserUsrUUID?: string | null;
   /** Provider settings; `tenantDefaultZone` marks the default network of the account. */
   HvnConfig?: unknown;
+  /** Default network of the account, decided by the database (tenant scope T5). */
+  HvnIsZoneDefault?: number;
+  /** Rights of the caller decided by the server. */
+  CanEdit?: number;
+  CanDelete?: number;
 };
 
 /**
  * Default network of the customer's account (created with the first Proxmox VPS, always attached):
- * marked by HvnConfig.tenantDefaultZone. Accepts the parsed object or the JSON text.
+ * HvnIsZoneDefault from the server (HvnConfig.tenantDefaultZone for older responses).
  */
-export function isAccountDefaultNetwork(network: { HvnConfig?: unknown }): boolean {
+export function isAccountDefaultNetwork(network: {
+  HvnConfig?: unknown;
+  HvnIsZoneDefault?: unknown;
+}): boolean {
+  if (network.HvnIsZoneDefault !== undefined && network.HvnIsZoneDefault !== null) {
+    return Number(network.HvnIsZoneDefault) === 1;
+  }
   let config = network.HvnConfig;
   if (typeof config === 'string') {
     try {
@@ -348,3 +359,27 @@ export type HostingVpsFirewallCapabilities = {
   maxRules: number;
   scope: 'profile' | 'instance' | 'none';
 };
+
+/**
+ * Edit/delete right of a row decided by the server (`CanEdit`/`CanDelete`); `fallback` only for a
+ * response without the field.
+ */
+export function serverRowRight(
+  row: Record<string, unknown>,
+  field: 'CanEdit' | 'CanDelete',
+  fallback: () => boolean,
+): boolean {
+  const value = row[field];
+  return value === undefined || value === null ? fallback() : Number(value) === 1;
+}
+
+/**
+ * Instances a network or firewall of this scope may be attached to (the database requires the same
+ * owner): a tenant lists only its own instances; /system acts only on platform instances.
+ */
+export function attachableInstances<T extends { UserUsrUUID?: string | null }>(
+  instances: readonly T[],
+  platformScope: boolean,
+): T[] {
+  return platformScope ? instances.filter((instance) => !instance.UserUsrUUID) : [...instances];
+}

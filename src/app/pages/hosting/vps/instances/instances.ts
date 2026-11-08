@@ -459,11 +459,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private readonly networkOptions = computed<ConfigurableCrudOption[]>(() => {
     const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
     if (!plan) return [];
+    // A VPS created from /system for a customer belongs to that customer: of the platform networks
+    // (the only ones /system lists) it may join only the platform default networks.
+    const forCustomer =
+      this.isMaster() && String(this.formValues()['customerUUID'] ?? '').trim().length > 0;
     return this.networks()
       .filter(
         (network) =>
           // The account default network is always attached; only additional networks are offered.
           !isAccountDefaultNetwork(network) &&
+          (!forCustomer || Number(network.HvnIsDefault) === 1) &&
           network.HostingVpsProviderHvrUUID === plan.HostingVpsProviderHvrUUID &&
           (network.HvnRegion === '*' ||
             network.HvnRegion.toLowerCase() === String(plan.HvpRegion ?? '').toLowerCase()),

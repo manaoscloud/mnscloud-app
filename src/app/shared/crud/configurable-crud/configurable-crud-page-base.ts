@@ -2042,8 +2042,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async deleteSelectedItems(): Promise<void> {
     if (!this.bulkDeleteEnabled()) return;
-    const ids = [...this.selectedUUIDs()];
-    if (!ids.length) return;
+    // Bulk delete follows the per-row rule (canDeleteRow, often decided by the server).
+    const known = new Map(this.rows().map((row) => [String(row[this.config.uuidField]), row]));
+    const ids = [...this.selectedUUIDs()].filter((id) => {
+      const row = known.get(id);
+      return !row || this.canDeleteRow(row);
+    });
+    if (!ids.length) {
+      if (this.selectedUUIDs().size) this.snack.warning(this.t(this.config.deleteFailedMessage));
+      return;
+    }
     const preconditions = this.config.bulkDeletePayload?.(
       this.rows().filter((row) => ids.includes(String(row[this.config.uuidField]))),
     );
