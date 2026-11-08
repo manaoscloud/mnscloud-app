@@ -13,6 +13,7 @@ import {
   CONTRACT_STATUSES,
   ITEM_KINDS,
   CYBER_SECURITY_METRICS,
+  CONTRACT_USAGE_METRICS,
   ITEM_NATURES,
   MODULE_LOOKUP,
 } from './billing-options';
@@ -258,7 +259,8 @@ const config = defineCrud({
             values['module'] === 'hr' ||
             values['module'] === 'cyber_security' ||
             values['module'] === 'commerce' ||
-            values['module'] === 'conversations',
+            values['module'] === 'conversations' ||
+            values['module'] === 'contracts',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -338,6 +340,18 @@ const config = defineCrud({
             'Commerce accounts are created by account administrators in Sales › Commerce accounts.',
         },
         {
+          key: 'contractsAccountUUID',
+          label: 'contracts.account',
+          type: 'search-select',
+          source: 'BciSourceResourceUUID',
+          help: 'contracts.contractItemHelp',
+          remoteLookup: { endpoint: 'contracts/accounts?status=1', uuidField: 'CtaUUID', labelField: 'CtaName' },
+          hiddenWhen: ({ values }) => values['module'] !== 'contracts',
+          requiredWhen: ({ values }) => values['module'] === 'contracts',
+          quickCreate: false,
+          quickCreateExemptReason: 'Customer accounts manage contract accounts.',
+        },
+        {
           key: 'productUUID',
           source: 'SaleProductSprUUID',
           label: 'Catalog item',
@@ -393,12 +407,27 @@ const config = defineCrud({
             values['kind'] !== 'usage' ||
             values['module'] === 'hr' ||
             values['module'] === 'commerce' ||
-            values['module'] === 'cyber_security',
+            values['module'] === 'cyber_security' ||
+            values['module'] === 'contracts',
           requiredWhen: ({ values }) =>
             values['kind'] === 'usage' &&
             values['module'] !== 'hr' &&
             values['module'] !== 'commerce' &&
-            values['module'] !== 'cyber_security',
+            values['module'] !== 'cyber_security' &&
+            values['module'] !== 'contracts',
+        },
+        {
+          key: 'contractsMetric',
+          label: 'contracts.billingMetric',
+          type: 'select',
+          source: 'BciMetric',
+          options: CONTRACT_USAGE_METRICS,
+          help: 'contracts.billingMetricHelp',
+          span: 1,
+          hiddenWhen: ({ values }) =>
+            values['kind'] !== 'usage' || values['module'] !== 'contracts',
+          requiredWhen: ({ values }) =>
+            values['kind'] === 'usage' && values['module'] === 'contracts',
         },
         {
           key: 'cyberMetric',
@@ -452,7 +481,9 @@ const config = defineCrud({
                   ? values['commerceAccountUUID']
                   : values['module'] === 'conversations'
                     ? values['conversationsAccountUUID']
-                    : values['resourceUUID']) || null,
+                    : values['module'] === 'contracts'
+                      ? values['contractsAccountUUID']
+                      : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -466,9 +497,11 @@ const config = defineCrud({
               ? 'hr.active_employees'
               : values['module'] === 'commerce'
                 ? 'commerce.active_terminals'
-                : (values['module'] === 'cyber_security'
-                    ? values['cyberMetric']
-                    : values['metric']) || null,
+                : values['module'] === 'cyber_security'
+                  ? values['cyberMetric']
+                  : values['module'] === 'contracts'
+                    ? values['contractsMetric']
+                    : values['metric'] || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],

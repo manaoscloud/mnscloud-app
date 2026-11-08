@@ -39,6 +39,13 @@ export const CYBER_SECURITY_METRICS = [
   { value: 'cyber_security.vaults', label: 'cyberSecurity.metricVaults' },
 ];
 
+/** Usage metrics reported by Contracts per customer account and closed month. */
+export const CONTRACT_USAGE_METRICS = [
+  { value: 'contracts.envelopes_completed', label: 'contracts.metricEnvelopes' },
+  { value: 'contracts.timestamps_applied', label: 'contracts.metricTimestamps' },
+  { value: 'contracts.verifications_used', label: 'contracts.metricVerifications' },
+];
+
 export const CHARGE_STATUSES = [
   { value: 'issued', label: 'Issued' },
   { value: 'partial', label: 'Partially paid' },
