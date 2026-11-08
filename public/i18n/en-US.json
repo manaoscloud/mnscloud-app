@@ -12014,5 +12014,7 @@
   "A reason is required to accept a vulnerability risk": "Enter the reason to accept the risk (at least 5 characters).",
   "The risk acceptance must end within one year": "The acceptance must end within one year from today.",
   "Only an open vulnerability finding can be accepted": "Only an open finding can have its risk accepted.",
-  "The vulnerability risk is not accepted": "The risk of this finding is not accepted."
+  "The vulnerability risk is not accepted": "The risk of this finding is not accepted.",
+  "P2": "P2",
+  "P3": "P3"
 }

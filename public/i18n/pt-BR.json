@@ -12015,5 +12015,7 @@
   "A reason is required to accept a vulnerability risk": "Informe o motivo para aceitar o risco (mínimo de 5 caracteres).",
   "The risk acceptance must end within one year": "O aceite deve terminar em até um ano a partir de hoje.",
   "Only an open vulnerability finding can be accepted": "Só um achado aberto pode ter o risco aceito.",
-  "The vulnerability risk is not accepted": "O risco deste achado não está aceito."
+  "The vulnerability risk is not accepted": "O risco deste achado não está aceito.",
+  "P2": "P2",
+  "P3": "P3"
 }

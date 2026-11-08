@@ -12014,5 +12014,7 @@
   "A reason is required to accept a vulnerability risk": "Indique el motivo para aceptar el riesgo (mínimo 5 caracteres).",
   "The risk acceptance must end within one year": "La aceptación debe terminar en hasta un año a partir de hoy.",
   "Only an open vulnerability finding can be accepted": "Solo un hallazgo abierto puede tener el riesgo aceptado.",
-  "The vulnerability risk is not accepted": "El riesgo de este hallazgo no está aceptado."
+  "The vulnerability risk is not accepted": "El riesgo de este hallazgo no está aceptado.",
+  "P2": "P2",
+  "P3": "P3"
 }
