@@ -757,6 +757,8 @@ export const routes: Routes = [
                 { section: 'decisions', title: 'Protection Decisions' },
                 { section: 'lists', title: 'Allowlist / Blocklist' },
                 { section: 'security-events', title: 'Security Events' },
+                { section: 'vulnerabilities', title: 'Vulnerabilities' },
+                { section: 'inventory', title: 'Software inventory' },
               ].map(({ section, title }) => ({
                 path: `cyber-security/${section}`,
                 loadComponent: () =>

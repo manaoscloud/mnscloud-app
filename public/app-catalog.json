@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6dcf05e712ca",
+  "version": "e0a8ee50abe6",
   "language": "pt-BR",
   "entries": [
     {
@@ -1733,6 +1733,14 @@
       "fields": []
     },
     {
+      "route": "/cyber-security/inventory",
+      "menuPath": "Cibersegurança › Inventário",
+      "scope": "tenant",
+      "title": "Inventário",
+      "description": "",
+      "fields": []
+    },
+    {
       "route": "/cyber-security/lists",
       "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "tenant",
@@ -2041,6 +2049,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/cyber-security/vulnerabilities",
+      "menuPath": "Cibersegurança › Vulnerabilidades",
+      "scope": "tenant",
+      "title": "Vulnerabilidades",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/dashboard",

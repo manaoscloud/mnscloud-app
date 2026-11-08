@@ -31,6 +31,8 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['kind'] === 'restored' ? 'verified_user' : 'gpp_maybe';
     case 'security.agent':
       return item.params['kind'] === 'restored' ? 'lan' : 'portable_wifi_off';
+    case 'security.vulnerability':
+      return 'bug_report';
     case 'website.order.activation':
       return 'storefront';
     case 'website.order.cancelled':
@@ -96,6 +98,11 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           : 'notifications.securityAgentOffline',
         { server: param('server') },
       );
+    case 'security.vulnerability':
+      return t('notifications.securityVulnerability', {
+        code: param('code'),
+        count: param('serverCount') || '1',
+      });
     case 'website.order.activation':
       return t(
         param('step') === 'manual'
@@ -153,13 +160,15 @@ export function notificationDescription(item: InboxNotification, language: strin
                 ? item.params['failing'] || item.params['target']
                 : item.type === 'security.alert'
                   ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
-                  : item.type === 'security.protection' && item.params['kind'] === 'lost'
-                    ? item.params['services']
-                    : item.type.startsWith('security.')
-                      ? item.params['hostname']
-                      : item.type.startsWith('release_note.')
-                        ? releaseNoteTitle(item, language)
-                        : item.params['subject'];
+                  : item.type === 'security.vulnerability'
+                    ? item.params['servers']
+                    : item.type === 'security.protection' && item.params['kind'] === 'lost'
+                      ? item.params['services']
+                      : item.type.startsWith('security.')
+                        ? item.params['hostname']
+                        : item.type.startsWith('release_note.')
+                          ? releaseNoteTitle(item, language)
+                          : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

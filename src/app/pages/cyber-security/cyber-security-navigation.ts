@@ -2,7 +2,9 @@
 const sections: Record<string, { label: string; group?: string }> = {
   '': { label: 'Overview' },
   accounts: { label: 'Customer accounts' },
+  vulnerabilities: { label: 'Vulnerabilities', group: 'Threats and Events' },
   servers: { label: 'Servers', group: 'Protection' },
+  inventory: { label: 'Software inventory', group: 'Protection' },
   profiles: { label: 'Security Profiles', group: 'Protection' },
   services: { label: 'Protected Services', group: 'Protection' },
   lists: { label: 'Allowlist / Blocklist', group: 'Protection' },

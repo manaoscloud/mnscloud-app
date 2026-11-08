@@ -23,7 +23,8 @@ export type NotificationType =
   | 'website.order.plan_changed'
   | 'security.alert'
   | 'security.protection'
-  | 'security.agent';
+  | 'security.agent'
+  | 'security.vulnerability';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {
