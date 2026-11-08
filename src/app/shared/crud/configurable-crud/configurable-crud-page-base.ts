@@ -1572,6 +1572,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     };
 
     const created = quickCreateResponseRecord(response);
+    const createdUUID = created
+      ? (optionText(created[this.config.uuidField]) ?? optionText(created['uuid']))
+      : null;
+    // Most create responses carry only the identifier. Read the persisted record so the option
+    // shows the value the database stored (trigger casing/trim), not what was typed.
+    if (created && createdUUID && labelSource && !optionText(created[labelSource])) {
+      try {
+        const loaded = await this.api.get<unknown>(`${this.config.endpoint}/${createdUUID}`);
+        const canonical = quickCreateResponseRecord(loaded);
+        const option = canonical ? toOption({ ...created, ...canonical }) : null;
+        if (option) return option;
+      } catch {
+        // Fall back to the response and the typed label below.
+      }
+    }
     const direct = created ? toOption(created) : null;
     if (direct) return direct;
     if (!payloadLabel) return null;
