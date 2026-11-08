@@ -1572,6 +1572,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     };
 
     const created = quickCreateResponseRecord(response);
+    const createdUUID = created
+      ? (optionText(created[this.config.uuidField]) ?? optionText(created['uuid']))
+      : null;
+    // Most create responses carry only the identifier. Read the persisted record so the option
+    // shows the value the database stored (trigger casing/trim), not what was typed.
+    if (created && createdUUID && labelSource && !optionText(created[labelSource])) {
+      try {
+        const loaded = await this.api.get<unknown>(`${this.config.endpoint}/${createdUUID}`);
+        const canonical = quickCreateResponseRecord(loaded);
+        const option = canonical ? toOption({ ...created, ...canonical }) : null;
+        if (option) return option;
+      } catch {
+        // Fall back to the response and the typed label below.
+      }
+    }
     const direct = created ? toOption(created) : null;
     if (direct) return direct;
     if (!payloadLabel) return null;
@@ -2042,8 +2057,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   async deleteSelectedItems(): Promise<void> {
     if (!this.bulkDeleteEnabled()) return;
-    const ids = [...this.selectedUUIDs()];
-    if (!ids.length) return;
+    // Bulk delete follows the per-row rule (canDeleteRow, often decided by the server).
+    const known = new Map(this.rows().map((row) => [String(row[this.config.uuidField]), row]));
+    const ids = [...this.selectedUUIDs()].filter((id) => {
+      const row = known.get(id);
+      return !row || this.canDeleteRow(row);
+    });
+    if (!ids.length) {
+      if (this.selectedUUIDs().size) this.snack.warning(this.t(this.config.deleteFailedMessage));
+      return;
+    }
     const preconditions = this.config.bulkDeletePayload?.(
       this.rows().filter((row) => ids.includes(String(row[this.config.uuidField]))),
     );
@@ -2995,6 +3018,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     } else {
       this.setFieldValue(field.key, option.value);
     }
+  }
+
+  /**
+   * Makes a known record selectable (with its label) in a remote lookup before the lookup pages
+   * reach it, for example a create opened from another page with the related record preset.
+   */
+  protected presetRemoteOption(fieldKey: string, option: ConfigurableCrudOption): void {
+    this.quickCreatedOptions.update((current) => ({
+      ...current,
+      [fieldKey]: [
+        option,
+        ...(current[fieldKey] ?? []).filter((item) => String(item.value) !== String(option.value)),
+      ],
+    }));
+    this.selectedRemoteOptions.set(fieldKey, option);
   }
 
   /** Keeps options created through quick-create visible until the page reloads its lookups. */

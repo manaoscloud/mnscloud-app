@@ -6,6 +6,13 @@
   [hasData]="dashboardResource.hasData()"
   (refresh)="dashboardResource.reload()"
 >
+  @if (accountUUID()) {
+    <p class="dashboard-account">
+      {{ 'infragis.account' | transloco }}:
+      <strong>{{ accountName() || accountUUID() }}</strong>
+      <a routerLink="/infragis">{{ 'infragis.allAccounts' | transloco }}</a>
+    </p>
+  }
   @if (empty()) {
     <div class="empty-state dashboard-onboarding">
       <mat-icon aria-hidden="true">rocket_launch</mat-icon>
@@ -29,7 +36,11 @@
       <div class="panel-header">
         <h2>{{ 'Map' | transloco }}</h2>
         <p>{{ 'Map preview: up to 1,000 authorized assets.' | transloco }}</p>
-        <a routerLink="/infragis/map">{{ 'Open map' | transloco }}</a>
+        <a
+          routerLink="/infragis/map"
+          [queryParams]="accountUUID() ? { accountUUID: accountUUID() } : {}"
+          >{{ 'Open map' | transloco }}</a
+        >
       </div>
       <div
         class="dashboard-map-canvas"

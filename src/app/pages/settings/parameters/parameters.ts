@@ -146,45 +146,46 @@ export class SettingsParametersPage {
   private readonly i18n = inject(AppI18nService);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
-  readonly pageTitle = computed(() => (this.isMaster() ? 'System Parameters' : 'Parameters'));
+  readonly platformScope = computed(() => this.scope() === 'master');
+  readonly pageTitle = computed(() => (this.platformScope() ? 'System Parameters' : 'Parameters'));
   readonly pageSubtitle = computed(() =>
-    this.isMaster()
+    this.platformScope()
       ? 'Single master record with global default values.'
       : 'Single tenant record. Empty tenant values fallback to master defaults.',
   );
   readonly defaultTimezonePlaceholder = computed(() =>
-    this.isMaster() ? 'UTC' : 'Master timezone',
+    this.platformScope() ? 'UTC' : 'Master timezone',
   );
   readonly timezoneOptions = computed(() =>
     buildTimezoneOptions({
-      fallbackLabel: this.isMaster() ? 'System default (UTC)' : 'Master default timezone',
+      fallbackLabel: this.platformScope() ? 'System default (UTC)' : 'Master default timezone',
       currentValue: this.item().defaultTimezone,
     }),
   );
   readonly baseEndpoint = computed(() =>
-    this.isMaster() ? 'system/parameters' : 'settings/parameters',
+    this.platformScope() ? 'system/parameters' : 'settings/parameters',
   );
   readonly languageOptions = this.i18n.availableLanguages;
 
   private readonly parametersResource = resource({
     params: () => ({
       endpoint: this.baseEndpoint(),
-      isMaster: this.isMaster(),
+      platformScope: this.platformScope(),
     }),
     defaultValue: { ...DEFAULT_ITEM },
     loader: async ({ params }) => this.readItem(await this.api.get<any>(params.endpoint)),
   });
 
   private readonly siadResource = resource({
-    params: () => (this.isMaster() ? undefined : true),
+    params: () => (this.platformScope() ? undefined : true),
     defaultValue: { ...DEFAULT_SIAD_ITEM },
     loader: () => this.loadSiad(),
   });
 
   readonly loading = computed(
     () =>
-      this.parametersResource.isLoading() || (!this.isMaster() && this.siadResource.isLoading()),
+      this.parametersResource.isLoading() ||
+      (!this.platformScope() && this.siadResource.isLoading()),
   );
   readonly saving = signal(false);
   readonly feedback = signal<string | null>(null);
@@ -207,9 +208,9 @@ export class SettingsParametersPage {
   readonly hasChanges = computed(
     () =>
       this.buildSignature(this.item()) !== this.baselineSignature() ||
-      (!this.isMaster() &&
+      (!this.platformScope() &&
         this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature()) ||
-      (!this.isMaster() &&
+      (!this.platformScope() &&
         Object.values(this.siadCredentials()).some((value) => value.trim() !== '')),
   );
 
@@ -223,7 +224,7 @@ export class SettingsParametersPage {
     });
 
     effect(() => {
-      if (this.isMaster()) return;
+      if (this.platformScope()) return;
       if (!this.siadResource.hasValue()) return;
       const item = this.siadResource.value();
       this.siadItem.set(item);
@@ -242,7 +243,7 @@ export class SettingsParametersPage {
     });
 
     effect(() => {
-      if (this.isMaster()) return;
+      if (this.platformScope()) return;
       const error = this.siadResource.error();
       if (!error) return;
       this.feedback.set(this.friendlyError(error, 'Failed to load SIAD integration.'));
@@ -254,7 +255,7 @@ export class SettingsParametersPage {
     this.feedback.set(null);
     this.success.set(null);
     this.parametersResource.reload();
-    if (!this.isMaster()) this.siadResource.reload();
+    if (!this.platformScope()) this.siadResource.reload();
   }
 
   updateItem(patch: Partial<SystemParametersItem>) {
@@ -317,7 +318,7 @@ export class SettingsParametersPage {
           this.i18n.applyResolvedSystemLanguage(savedItem.defaultLanguage, true);
         }
       }
-      if (!this.isMaster()) {
+      if (!this.platformScope()) {
         const siadChanged =
           this.buildSiadSignature(this.siadItem()) !== this.baselineSiadSignature();
         let savedSiad = this.siadItem();
@@ -405,7 +406,7 @@ export class SettingsParametersPage {
       ...value,
       googleMapsEmbedApiKey: value.googleMapsEmbedApiKey.trim(),
       mapboxToken: value.mapboxToken.trim(),
-      signalWireRepoToken: this.isMaster() ? value.signalWireRepoToken.trim() : '',
+      signalWireRepoToken: this.platformScope() ? value.signalWireRepoToken.trim() : '',
       defaultCurrency: (value.defaultCurrency.trim() || 'BRL').toUpperCase(),
       defaultLanguage: isAppLanguage(value.defaultLanguage) ? value.defaultLanguage : 'pt-BR',
       defaultTimezone: value.defaultTimezone.trim(),

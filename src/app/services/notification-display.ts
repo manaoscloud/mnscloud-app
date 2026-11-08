@@ -27,6 +27,20 @@ export function notificationIcon(item: InboxNotification): string {
       return 'alarm';
     case 'cyber_security.unblock_request':
       return 'lock_open';
+    case 'security.alert':
+      return 'gpp_bad';
+    case 'security.protection':
+      return item.params['kind'] === 'restored' ? 'verified_user' : 'gpp_maybe';
+    case 'security.agent':
+      return item.params['kind'] === 'restored' ? 'lan' : 'portable_wifi_off';
+    case 'security.vulnerability':
+      return 'bug_report';
+    case 'website.order.activation':
+      return 'storefront';
+    case 'website.order.cancelled':
+      return 'event_busy';
+    case 'website.order.plan_changed':
+      return 'swap_vert';
     default:
       return 'notifications';
   }
@@ -72,6 +86,52 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       return t('notifications.workOrderOverdue', { id: param('id') });
     case 'cyber_security.unblock_request':
       return t('notifications.cyberUnblockRequest', { value: param('value') });
+    case 'security.alert':
+      return t('notifications.securityCriticalAlert', { server: param('server') });
+    case 'security.protection':
+      return t(
+        param('kind') === 'restored'
+          ? 'notifications.securityProtectionRestored'
+          : 'notifications.securityProtectionLost',
+        { server: param('server') },
+      );
+    case 'security.agent':
+      return t(
+        param('kind') === 'restored'
+          ? 'notifications.securityAgentRestored'
+          : 'notifications.securityAgentOffline',
+        { server: param('server') },
+      );
+    case 'security.vulnerability':
+      return t('notifications.securityVulnerability', {
+        code: param('code'),
+        count: param('serverCount') || '1',
+      });
+    case 'website.order.activation':
+      return t(
+        param('step') === 'manual'
+          ? 'notifications.websiteOrderManual'
+          : 'notifications.websiteOrderBlocked',
+        { id: param('orderId') },
+      );
+    case 'website.order.cancelled':
+      return t(
+        param('mode') === 'withdrawal'
+          ? 'notifications.websiteOrderWithdrawal'
+          : param('mode') === 'end_of_cycle'
+            ? 'notifications.websiteOrderCancelScheduled'
+            : 'notifications.websiteOrderCancelled',
+        { id: param('orderId') },
+      );
+    case 'website.order.plan_changed':
+      return t(
+        param('change') === 'failed'
+          ? 'notifications.websiteOrderPlanChangeFailed'
+          : param('change') === 'dropped'
+            ? 'notifications.websiteOrderPlanChangeDropped'
+            : 'notifications.websiteOrderPlanChangeScheduled',
+        { id: param('orderId'), offer: param('newOffer') },
+      );
     default:
       return t('notifications.generic');
   }
@@ -92,15 +152,27 @@ export function notificationDescription(item: InboxNotification, language: strin
       ? item.params['offer']
       : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
         ? item.params['title']
-        : item.type.startsWith('logs.account.') || item.type === 'cyber_security.unblock_request'
-          ? item.params['account']
-          : item.type === 'voip.pabx.extension.offline'
-            ? item.params['extensions']
-            : item.type === 'dns.monitor.target'
-              ? item.params['failing'] || item.params['target']
-              : item.type.startsWith('release_note.')
-                ? releaseNoteTitle(item, language)
-                : item.params['subject'];
+        : item.type === 'website.order.activation' ||
+            item.type === 'website.order.cancelled' ||
+            item.type === 'website.order.plan_changed'
+          ? item.params['offer']
+          : item.type.startsWith('logs.account.') || item.type === 'cyber_security.unblock_request'
+            ? item.params['account']
+            : item.type === 'voip.pabx.extension.offline'
+              ? item.params['extensions']
+              : item.type === 'dns.monitor.target'
+                ? item.params['failing'] || item.params['target']
+                : item.type === 'security.alert'
+                  ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
+                  : item.type === 'security.vulnerability'
+                    ? item.params['servers']
+                    : item.type === 'security.protection' && item.params['kind'] === 'lost'
+                      ? item.params['services']
+                      : item.type.startsWith('security.')
+                        ? item.params['hostname']
+                        : item.type.startsWith('release_note.')
+                          ? releaseNoteTitle(item, language)
+                          : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

@@ -136,9 +136,9 @@ export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<Configurab
   private readonly route = inject(ActivatedRoute);
   private readonly providers = signal<HostingSmtpProvider[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly rootEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/smtp' : 'hosting/smtp',
+    this.platformScope() ? 'system/hosting/smtp' : 'hosting/smtp',
   );
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/accounts`);
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>

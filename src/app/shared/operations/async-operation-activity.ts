@@ -21,6 +21,7 @@ const KIND_LABELS: Record<string, string> = {
 const ACTION_LABELS: Record<string, string> = {
   provision: 'operations.action.provision',
   update: 'operations.action.update',
+  'quota-update': 'operations.action.updateQuota',
   delete: 'operations.action.delete',
   deprovision: 'operations.action.deprovision',
   sync: 'operations.action.sync',

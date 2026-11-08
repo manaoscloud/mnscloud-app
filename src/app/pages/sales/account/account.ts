@@ -111,6 +111,16 @@ const SCOPED_PAGES = [
   ['fiscal/issuers', 'nav.fiscal.issuers', 'receipt_long', 'tenant.fiscal.issuers.read'],
   ['fiscal/documents', 'nav.fiscal.documents', 'description', 'tenant.fiscal.documents.read'],
   ['accounting/events', 'nav.accounting.events', 'list_alt', 'tenant.accounting.events.read'],
+  ['point-of-sale/terminals', 'nav.pos.terminals', 'point_of_sale', 'tenant.pos.terminals.read'],
+  [
+    'point-of-sale/sessions',
+    'nav.pos.sessions',
+    'account_balance_wallet',
+    'tenant.pos.sessions.read',
+  ],
+  ['point-of-sale/sales', 'nav.pos.sales', 'receipt_long', 'tenant.pos.sales.read'],
+  ['point-of-sale/devices', 'nav.pos.devices', 'phonelink_lock', 'tenant.pos.devices.read'],
+  ['point-of-sale/audit', 'nav.pos.audit', 'policy', 'tenant.pos.audit-events.read'],
 ] as const;
 
 @Component({
@@ -141,7 +151,10 @@ export class SaleAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
             Number(row['ServiceAvailable']) === 1 && allowed(permission),
           run: async (row: ConfigurableCrudRecord) => {
             await router.navigate([`/${path}`], {
-              queryParams: row['CmaKind'] === 'customer' ? { accountUUID: row['CmaUUID'] } : {},
+              queryParams:
+                row['CmaKind'] === 'customer'
+                  ? { accountUUID: row['CmaUUID'], workspaceUUID: row['RegWorkspaceRwkUUID'] }
+                  : {},
             });
           },
         })),

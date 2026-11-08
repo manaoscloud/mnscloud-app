@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "361b50e3ac10",
+  "version": "7aa9e67f4fcc",
   "language": "pt-BR",
   "entries": [
     {
@@ -86,7 +86,7 @@
         },
         {
           "label": "Cliente",
-          "help": ""
+          "help": "Obrigatório em contas de uso próprio. Em contas de revenda fica vazio: o cliente da conta é usado."
         },
         {
           "label": "Grupos",
@@ -99,6 +99,10 @@
         {
           "label": "Domínio",
           "help": "Opcional. Com domínio, o equipamento pode autenticar com usuário@domínio ou só com o usuário. Não pode ser alterado depois de criado."
+        },
+        {
+          "label": "Assinante",
+          "help": "Identificação opcional do assinante final (ex.: endereço ou ponto), útil em contas de revenda."
         },
         {
           "label": "IP atribuído",
@@ -136,6 +140,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente da revenda dono desta conta. Vazio = uso próprio. Não pode ser alterado depois."
         },
         {
           "label": "Revisão",
@@ -508,6 +516,369 @@
       "fields": []
     },
     {
+      "route": "/contracts/accounts",
+      "menuPath": "Contratos › Contas",
+      "scope": "tenant",
+      "title": "Contas de Contratos",
+      "description": "Gerencie contas de contratos internas e de revenda para clientes com controle de operadores e publicação no portal.",
+      "fields": []
+    },
+    {
+      "route": "/contracts/approval-rules",
+      "menuPath": "Contratos › Regras de aprovação",
+      "scope": "tenant",
+      "title": "Regras de Aprovação",
+      "description": "Configure alçadas e regras de aprovação interna com limites de valor e papéis exigidos antes do envio para assinatura.",
+      "fields": [
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Nome da regra",
+          "help": ""
+        },
+        {
+          "label": "Tipo de instrumento",
+          "help": ""
+        },
+        {
+          "label": "Valor mínimo exigido",
+          "help": ""
+        },
+        {
+          "label": "Papel / Alçada do Aprovador",
+          "help": ""
+        },
+        {
+          "label": "Ordem da etapa",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/approvals",
+      "menuPath": "Contratos › Aprovações",
+      "scope": "tenant",
+      "title": "Aprovações de Contratos",
+      "description": "Acompanhe e registre decisões de aprovação de instrumentos e minutas antes da coleta de assinaturas.",
+      "fields": [
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Papel / Alçada do Aprovador",
+          "help": ""
+        },
+        {
+          "label": "Status da aprovação",
+          "help": ""
+        },
+        {
+          "label": "Parecer / Justificativa",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/clauses",
+      "menuPath": "Contratos › Cláusulas",
+      "scope": "tenant",
+      "title": "Biblioteca de Cláusulas",
+      "description": "Acervo de cláusulas contratuais padronizadas por categoria, nível de risco e idioma para montagem de minutas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Código da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Título da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Categoria",
+          "help": ""
+        },
+        {
+          "label": "Idioma",
+          "help": ""
+        },
+        {
+          "label": "Nível de risco",
+          "help": ""
+        },
+        {
+          "label": "Texto da cláusula",
+          "help": ""
+        },
+        {
+          "label": "Orientações internas",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/documents",
+      "menuPath": "Contratos › Instrumentos",
+      "scope": "tenant",
+      "title": "Instrumentos Contratuais",
+      "description": "Contratos vigentes, minutas, propostas e aditivos com controle de ciclo de vida e partes vinculadas.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Título / Objeto",
+          "help": ""
+        },
+        {
+          "label": "Número do contrato",
+          "help": ""
+        },
+        {
+          "label": "Modelo base",
+          "help": ""
+        },
+        {
+          "label": "Tipo de documento",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": ""
+        },
+        {
+          "label": "Fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Tipo de instrumento",
+          "help": ""
+        },
+        {
+          "label": "Direcionamento",
+          "help": ""
+        },
+        {
+          "label": "Estado do ciclo de vida",
+          "help": ""
+        },
+        {
+          "label": "Nível de assinatura exigido",
+          "help": ""
+        },
+        {
+          "label": "Valor total contratado",
+          "help": ""
+        },
+        {
+          "label": "Valor recorrente mensal",
+          "help": ""
+        },
+        {
+          "label": "Data de início da vigência",
+          "help": ""
+        },
+        {
+          "label": "Data de término da vigência",
+          "help": ""
+        },
+        {
+          "label": "Texto compilado do contrato",
+          "help": ""
+        },
+        {
+          "label": "Observações e negociações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/envelopes",
+      "menuPath": "Contratos › Assinaturas",
+      "scope": "tenant",
+      "title": "Envelopes de Assinatura",
+      "description": "Gerencie fluxos de assinatura eletrônica nativa, ordem dos signatários, evidências digitais e validação jurídica.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Título do envelope",
+          "help": ""
+        },
+        {
+          "label": "Ordem de assinatura",
+          "help": ""
+        },
+        {
+          "label": "Carimbo do tempo (ICP-Brasil)",
+          "help": ""
+        },
+        {
+          "label": "Código verificador",
+          "help": ""
+        },
+        {
+          "label": "Data limite para assinatura",
+          "help": ""
+        },
+        {
+          "label": "Hash SHA-256 do documento original",
+          "help": ""
+        },
+        {
+          "label": "Hash SHA-256 do documento final assinado",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/obligations",
+      "menuPath": "Contratos › Obrigações",
+      "scope": "tenant",
+      "title": "Obrigações Contratuais",
+      "description": "Gestão de obrigações, entregáveis, prazos de SLA e marcos contratuais com alerta de vencimento.",
+      "fields": [
+        {
+          "label": "Instrumento contratual",
+          "help": ""
+        },
+        {
+          "label": "Título da obrigação",
+          "help": ""
+        },
+        {
+          "label": "Parte responsável",
+          "help": ""
+        },
+        {
+          "label": "Data de vencimento",
+          "help": ""
+        },
+        {
+          "label": "Recorrência",
+          "help": ""
+        },
+        {
+          "label": "Dias de aviso prévio",
+          "help": ""
+        },
+        {
+          "label": "Status da obrigação",
+          "help": ""
+        },
+        {
+          "label": "Descrição detalhada",
+          "help": ""
+        },
+        {
+          "label": "Observações do vínculo",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/templates",
+      "menuPath": "Contratos › Modelos",
+      "scope": "tenant",
+      "title": "Modelos de Instrumentos",
+      "description": "Modelos parametrizados de contratos, termos, aditivos e acordos com suporte a placeholders.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Tipo de documento",
+          "help": ""
+        },
+        {
+          "label": "Código do modelo",
+          "help": ""
+        },
+        {
+          "label": "Nome do modelo",
+          "help": ""
+        },
+        {
+          "label": "Categoria",
+          "help": ""
+        },
+        {
+          "label": "Tipo de instrumento",
+          "help": ""
+        },
+        {
+          "label": "Nível de assinatura exigido",
+          "help": ""
+        },
+        {
+          "label": "Prazo padrão (meses)",
+          "help": ""
+        },
+        {
+          "label": "Índice de reajuste",
+          "help": ""
+        },
+        {
+          "label": "Conteúdo do modelo (Markdown)",
+          "help": ""
+        },
+        {
+          "label": "Observações internas",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/conversations/accounts",
       "menuPath": "Conversas › Contas",
       "scope": "tenant",
@@ -639,6 +1010,10 @@
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Espaço de trabalho",
           "help": ""
         },
         {
@@ -842,6 +1217,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Situação",
           "help": ""
         },
@@ -932,6 +1311,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Etapas",
           "help": ""
         },
@@ -1017,6 +1400,10 @@
           "help": ""
         },
         {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
           "label": "Nome",
           "help": ""
         },
@@ -1035,6 +1422,10 @@
       "fields": [
         {
           "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Espaço de trabalho",
           "help": ""
         },
         {
@@ -1342,6 +1733,14 @@
       "fields": []
     },
     {
+      "route": "/cyber-security/inventory",
+      "menuPath": "Cibersegurança › Inventário",
+      "scope": "tenant",
+      "title": "Inventário",
+      "description": "",
+      "fields": []
+    },
+    {
       "route": "/cyber-security/lists",
       "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "tenant",
@@ -1435,7 +1834,7 @@
         },
         {
           "label": "Nível",
-          "help": ""
+          "help": "Básico protege só o sistema operacional e o SSH; Balanceado inclui os serviços deste perfil; Rigoroso inclui também os cenários MNSCloud de SIP e PABX."
         },
         {
           "label": "Duração da decisão",
@@ -1451,7 +1850,7 @@
         },
         {
           "label": "Redes confiáveis",
-          "help": ""
+          "help": "Aplicar o perfil também aplica no servidor as listas de permissão e bloqueio (IP e CIDR) e as redes confiáveis."
         },
         {
           "label": "Regras",
@@ -1650,6 +2049,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/cyber-security/vulnerabilities",
+      "menuPath": "Cibersegurança › Vulnerabilidades",
+      "scope": "tenant",
+      "title": "Vulnerabilidades",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/dashboard",
@@ -2418,6 +2825,31 @@
       ]
     },
     {
+      "route": "/hosting/dns/reverse-zones",
+      "menuPath": "DNS › Zonas › Reverso",
+      "scope": "tenant",
+      "title": "Reverso",
+      "description": "",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Zona reversa",
+          "help": ""
+        },
+        {
+          "label": "Sufixo dos nomes",
+          "help": "Domínio usado nos nomes gerados, por exemplo clientes.seudominio.com.br."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hosting/smtp",
       "menuPath": "Hospedagem › SMTP › Painel",
       "scope": "tenant",
@@ -2760,12 +3192,16 @@
           "help": ""
         },
         {
+          "label": "Grupo de posicionamento",
+          "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
           "label": "Rede privada",
-          "help": "Somente redes disponíveis do provedor e da região do plano são listadas."
+          "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
         {
           "label": "Perfis de firewall",
-          "help": "Aplicados pelo provedor logo após o provisionamento."
+          "help": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso."
         },
         {
           "label": "Método de autenticação",
@@ -2795,6 +3231,14 @@
       "scope": "tenant",
       "title": "Redes privadas VPS",
       "description": "Redes privadas compartilhadas por uma ou mais instâncias VPS do mesmo provedor e região.",
+      "fields": []
+    },
+    {
+      "route": "/hosting/vps/public-ips",
+      "menuPath": "Hospedagem › VPS › IPs públicos",
+      "scope": "tenant",
+      "title": "IPs públicos das VPS",
+      "description": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
       "fields": []
     },
     {
@@ -2982,15 +3426,15 @@
         },
         {
           "label": "Cliente",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Plano",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Registro",
-          "help": ""
+          "help": "Alterar cliente, plano ou domínio exige um fluxo específico do serviço."
         },
         {
           "label": "Nome",
@@ -3085,6 +3529,43 @@
       ]
     },
     {
+      "route": "/hr/absences",
+      "menuPath": "Recursos humanos › Ausências",
+      "scope": "tenant",
+      "title": "Faltas",
+      "description": "Ausências por atestado, faltas justificadas, folgas e licenças. O espelho não conta como falta um dia útil coberto.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Data de início",
+          "help": ""
+        },
+        {
+          "label": "Data de término",
+          "help": "Vazio: um único dia. No máximo 366 dias."
+        },
+        {
+          "label": "Motivo",
+          "help": "Não informe a doença nem o CID."
+        },
+        {
+          "label": "Certificado",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/accounts",
       "menuPath": "Recursos humanos › Contas",
       "scope": "tenant",
@@ -3126,6 +3607,27 @@
       "fields": []
     },
     {
+      "route": "/hr/department-approvers",
+      "menuPath": "Recursos humanos › Aprovadores",
+      "scope": "tenant",
+      "title": "Aprovadores",
+      "description": "O responsável de cada departamento aprova as solicitações que os colaboradores enviam no Pulse. Na conta interna é um usuário do App; na conta de um cliente, um usuário do Portal do Cliente desse cliente. O RH sempre pode decidir.",
+      "fields": [
+        {
+          "label": "Departamento",
+          "help": ""
+        },
+        {
+          "label": "Responsável",
+          "help": "Usuários do App na conta interna; usuários do Portal do Cliente na conta de um cliente."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/holidays",
       "menuPath": "Recursos humanos › Feriados",
       "scope": "tenant",
@@ -3154,6 +3656,43 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/time-adjustments",
+      "menuPath": "Recursos humanos › Tratamento",
+      "scope": "tenant",
+      "title": "Tratamentos",
+      "description": "Marcações incluídas no espelho e batidas desconsideradas, com autor e motivo. As batidas originais nunca mudam; revogue um tratamento para desfazê-lo.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Data",
+          "help": ""
+        },
+        {
+          "label": "Horário",
+          "help": "Horário local da política de ponto do colaborador."
+        },
+        {
+          "label": "Marcar",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        },
+        {
+          "label": "Motivo da revogação",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
@@ -3257,6 +3796,39 @@
       "fields": []
     },
     {
+      "route": "/hr/time-requests",
+      "menuPath": "Recursos humanos › Solicitações",
+      "scope": "tenant",
+      "title": "Solicitações",
+      "description": "Marcações esquecidas, contestações de batida e ausências enviadas pelos colaboradores no Pulse. Aprove para registrar o tratamento ou a ausência no espelho, ou recuse com uma resposta que o colaborador verá.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        },
+        {
+          "label": "Decisão",
+          "help": ""
+        },
+        {
+          "label": "Resposta",
+          "help": "Aparece para o colaborador no Pulse. Obrigatória para recusar."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/timesheets",
       "menuPath": "Recursos humanos › Espelho de ponto",
       "scope": "tenant",
@@ -3349,6 +3921,14 @@
       "scope": "tenant",
       "title": "Painel",
       "description": "Plano de controle GIS corporativo para ativos de infraestrutura georreferenciados.",
+      "fields": []
+    },
+    {
+      "route": "/infragis/accounts",
+      "menuPath": "InfraGIS › Contas",
+      "scope": "tenant",
+      "title": "Contas",
+      "description": "Gerencie as contas da revenda: a rede própria e uma conta por cliente, cada uma com seus projetos, ativos, operadores e publicação no Portal do Cliente.",
       "fields": []
     },
     {
@@ -3691,6 +4271,10 @@
         {
           "label": "Nome",
           "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": "Conta da revenda dona deste projeto: a rede própria ou a conta de um cliente. Camadas e ativos do projeto ficam na mesma conta; ela não pode ser trocada depois."
         },
         {
           "label": "Pacote setorial",
@@ -4206,6 +4790,14 @@
       "scope": "tenant",
       "title": "Métricas",
       "description": "",
+      "fields": []
+    },
+    {
+      "route": "/point-of-sale/audit",
+      "menuPath": "PDV › Auditoria",
+      "scope": "tenant",
+      "title": "Auditoria do PDV",
+      "description": "Quem fez o quê em cada caixa: alterações de terminal, abertura e fechamento de caixa, movimentos de dinheiro, vendas, cancelamentos e pagamentos.",
       "fields": []
     },
     {
@@ -5578,7 +6170,7 @@
       "menuPath": "Configurações › IA › Uso",
       "scope": "platform",
       "title": "Uso de IA",
-      "description": "Cada chamada feita por um recurso de IA: tenant, provedor, modelo, tokens e resultado, para acompanhar custo e falhas.",
+      "description": "Cada chamada feita por um recurso de IA: tenant, provedor, modelo, tokens, créditos de IA cobrados e resultado, para acompanhar custo e falhas.",
       "fields": []
     },
     {
@@ -7209,7 +7801,7 @@
         },
         {
           "label": "Nível",
-          "help": ""
+          "help": "Básico protege só o sistema operacional e o SSH; Balanceado inclui os serviços deste perfil; Rigoroso inclui também os cenários MNSCloud de SIP e PABX."
         },
         {
           "label": "Duração da decisão",
@@ -7225,7 +7817,7 @@
         },
         {
           "label": "Redes confiáveis",
-          "help": ""
+          "help": "Aplicar o perfil também aplica no servidor as listas de permissão e bloqueio (IP e CIDR) e as redes confiáveis."
         },
         {
           "label": "Regras",
@@ -7667,6 +8259,31 @@
       ]
     },
     {
+      "route": "/system/dns/host-zones",
+      "menuPath": "DNS › Nomes de servidores",
+      "scope": "platform",
+      "title": "Nomes de servidores",
+      "description": "Uma zona privada da plataforma no MNSCloud DNS recebe sozinha os nomes dos servidores: cada Agent ativo do ambiente escolhido ganha registros A/AAAA com o nome do host, o nome do Agent e o nome do papel (agent-api-prod1 → api). Só endereços privados são publicados; um nome já cadastrado no editor da zona nunca é gerado.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Zona",
+          "help": "Domínio da plataforma no MNSCloud DNS, tornado privado em DNS › Zonas › Domínios › Visibilidade."
+        },
+        {
+          "label": "Ambiente dos Agents",
+          "help": "Ambiente cujos Agents ativos rodam os servidores da plataforma."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/system/dns/monitor-agents",
       "menuPath": "DNS › Sondas contínuas",
       "scope": "platform",
@@ -7798,6 +8415,31 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/dns/vps-reverse-zones",
+      "menuPath": "DNS › Zonas › Reverso",
+      "scope": "platform",
+      "title": "Reverso",
+      "description": "",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Zona reversa",
+          "help": ""
+        },
+        {
+          "label": "Sufixo dos nomes",
+          "help": "Domínio usado nos nomes gerados, por exemplo clientes.seudominio.com.br."
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
@@ -8640,6 +9282,14 @@
       ]
     },
     {
+      "route": "/system/monitoring/automation-access",
+      "menuPath": "Monitoramento › Acesso de automação",
+      "scope": "platform",
+      "title": "Acesso de automação",
+      "description": "Tokens que os scripts de entrega do workspace usam no lugar de uma pessoa entrar. Cada um só funciona a partir dos endereços permitidos, expira e se renova sozinho. Revogue um para cortar esse acesso na hora.",
+      "fields": []
+    },
+    {
       "route": "/system/monitoring/client-versions",
       "menuPath": "Monitoramento › Versões em uso",
       "scope": "platform",
@@ -9071,15 +9721,19 @@
       "route": "/system/pay/fee-plans",
       "menuPath": "Pay › Tarifas › Planos",
       "scope": "platform",
-      "title": "Pay — Faixas de volume",
-      "description": "Faixas de volume que reduzem a tarifa conforme a quantidade de transações.",
+      "title": "Pay — Tarifas",
+      "description": "Tarifas do plano por forma de pagamento: valor fixo e percentual.",
       "fields": [
         {
-          "label": "Quantidade mínima do volume",
+          "label": "Tipo de transação",
           "help": ""
         },
         {
-          "label": "Valor mínimo do volume",
+          "label": "Banco parceiro",
+          "help": ""
+        },
+        {
+          "label": "Moeda",
           "help": ""
         },
         {
@@ -9091,15 +9745,19 @@
           "help": ""
         },
         {
+          "label": "Custo parceiro (fixo)",
+          "help": "Tarifa base retida pelo parceiro bancário na subconta."
+        },
+        {
+          "label": "Custo parceiro (%)",
+          "help": "Percentual de tarifa retido pelo parceiro bancário na subconta."
+        },
+        {
           "label": "Tarifa mínima",
           "help": ""
         },
         {
           "label": "Tarifa máxima",
-          "help": ""
-        },
-        {
-          "label": "Período",
           "help": ""
         }
       ]
@@ -9790,12 +10448,102 @@
       ]
     },
     {
+      "route": "/system/user/permissions",
+      "menuPath": "Usuário › Permissões › Exceções",
+      "scope": "platform",
+      "title": "Permissões especiais",
+      "description": "Crie exceções específicas por usuário fora dos perfis de acesso.",
+      "fields": [
+        {
+          "label": "Usuário",
+          "help": ""
+        },
+        {
+          "label": "Permissão",
+          "help": ""
+        },
+        {
+          "label": "Efeito",
+          "help": ""
+        },
+        {
+          "label": "Tenant",
+          "help": ""
+        },
+        {
+          "label": "capacityAccess.restrict",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.clusters",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.providers",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "Expiração",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/system/voip",
       "menuPath": "VoIP › Painel",
       "scope": "platform",
       "title": "Painel",
       "description": "",
       "fields": []
+    },
+    {
+      "route": "/system/voip/clusters",
+      "menuPath": "VoIP › Clusters",
+      "scope": "platform",
+      "title": "voipCluster.title",
+      "description": "voipCluster.description",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.purpose",
+          "help": ""
+        },
+        {
+          "label": "Motor",
+          "help": "voipCluster.engineHelp"
+        },
+        {
+          "label": "voipCluster.region",
+          "help": ""
+        },
+        {
+          "label": "voipCluster.reserve",
+          "help": "voipCluster.reserveHelp"
+        },
+        {
+          "label": "voipCluster.maxAge",
+          "help": "voipCluster.maxAgeHelp"
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/system/voip/domains",
@@ -10065,12 +10813,16 @@
           "help": ""
         },
         {
+          "label": "Grupo de posicionamento",
+          "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
           "label": "Rede privada",
-          "help": "Somente redes disponíveis do provedor e da região do plano são listadas."
+          "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
         {
           "label": "Perfis de firewall",
-          "help": "Aplicados pelo provedor logo após o provisionamento."
+          "help": "Opcional. Em branco, a entrada e a saída ficam liberadas. Escolha um perfil para restringir o acesso."
         },
         {
           "label": "Método de autenticação",
@@ -10093,6 +10845,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/vps/network-devices",
+      "menuPath": "Hospedagem › VPS › Equipamentos",
+      "scope": "platform",
+      "title": "Equipamentos de rede",
+      "description": "Equipamentos de rede que a plataforma configura automaticamente e o que cada um faz para os provedores de VPS.",
+      "fields": []
     },
     {
       "route": "/system/vps/networks",
@@ -10243,6 +11003,10 @@
           "help": ""
         },
         {
+          "label": "Clientes podem criar servidores",
+          "help": "Com Não, os clientes não veem os planos deste provedor e não podem criar servidores nele; tenants de teste não são limitados. No Proxmox, Sim exige a rede isolada por cliente (EVPN)."
+        },
+        {
           "label": "Provedor",
           "help": ""
         },
@@ -10267,10 +11031,6 @@
           "help": ""
         },
         {
-          "label": "Bridge",
-          "help": ""
-        },
-        {
           "label": "VMID do template",
           "help": ""
         },
@@ -10279,8 +11039,16 @@
           "help": ""
         },
         {
-          "label": "Vínculo SDN de rede privada",
+          "label": "Bridge",
           "help": ""
+        },
+        {
+          "label": "VLAN da rede dos servidores",
+          "help": ""
+        },
+        {
+          "label": "Zona SDN compartilhada para redes privadas",
+          "help": "Opcional: uma zona do Proxmox compartilhada para redes privadas. Não é necessária com a rede isolada por cliente ligada."
         },
         {
           "label": "ID da zona SDN aprovada",
@@ -10301,6 +11069,10 @@
         {
           "label": "Habilitar SNAT da sub-rede",
           "help": ""
+        },
+        {
+          "label": "Rede isolada por cliente (EVPN)",
+          "help": "Cada cliente recebe a própria zona EVPN e o próprio gateway. Ao ligar, os campos vazios são preenchidos com os valores recomendados deste ambiente; revise antes de salvar."
         },
         {
           "label": "ID do token",
@@ -10381,20 +11153,16 @@
         {
           "label": "ID do datastore",
           "help": ""
-        },
-        {
-          "label": "ID do pool de armazenamento",
-          "help": ""
-        },
-        {
-          "label": "ID da imagem",
-          "help": ""
-        },
-        {
-          "label": "Tempo limite em segundos",
-          "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/vps/public-ips",
+      "menuPath": "Hospedagem › VPS › IPs públicos",
+      "scope": "platform",
+      "title": "IPs públicos das VPS",
+      "description": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
+      "fields": []
     },
     {
       "route": "/system/vps/snapshots",
@@ -10442,6 +11210,10 @@
         {
           "label": "IPv6 público da borda",
           "help": "Destino opcional dos registros AAAA; deixe vazio para publicar só IPv4."
+        },
+        {
+          "label": "Domínio do site institucional",
+          "help": "Domínio do site da plataforma (por exemplo www.empresa.com). Crie o domínio em Temas e emita o certificado; a borda passa a servir o site institucional nele, em vez do App. Deixe vazio para não usar."
         },
         {
           "label": "Certificado curinga da borda",
@@ -10541,6 +11313,18 @@
         {
           "label": "Tenant",
           "help": ""
+        },
+        {
+          "label": "capacityAccess.restrict",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.clusters",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.providers",
+          "help": "capacityAccess.scopeHelp"
         },
         {
           "label": "Expiração",
@@ -10705,8 +11489,20 @@
           "help": ""
         },
         {
-          "label": "Cliente",
+          "label": "voipCluster.title",
+          "help": "voipCluster.placementHelp"
+        },
+        {
+          "label": "voipCluster.reservedCalls",
           "help": ""
+        },
+        {
+          "label": "voipCluster.reservedCps",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Deixe vazio para uso interno da operadora. O cliente fica vinculado à conta e não pode ser trocado na edição."
         },
         {
           "label": "Nome",
@@ -10755,6 +11551,14 @@
         {
           "label": "Retenção de gravações de chamadas (dias)",
           "help": "Dias para manter as gravações de chamadas deste PABX. Vazio herda o padrão do Tenant e depois o Global; 0 mantém para sempre."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
         }
       ]
     },
@@ -12650,9 +13454,18 @@
       "route": "/website/orders",
       "menuPath": "Website › Pedidos",
       "scope": "tenant",
-      "title": "Pedidos",
-      "description": "Contratações feitas pelos clientes no site e na área do cliente: oferta, valores, cobrança emitida no seu gateway e situação. Ofertas com aprovação esperam aqui.",
-      "fields": []
+      "title": "Vincular servidor",
+      "description": "O pedido pago fica ativo com o recurso escolhido e a recorrência dos próximos ciclos é criada.",
+      "fields": [
+        {
+          "label": "Tipo de recurso",
+          "help": ""
+        },
+        {
+          "label": "Servidor",
+          "help": "Escolha um recurso do mesmo cliente do pedido que não atenda outro pedido."
+        }
+      ]
     },
     {
       "route": "/website/sites",

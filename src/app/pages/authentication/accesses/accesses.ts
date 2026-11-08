@@ -35,11 +35,14 @@ function accessConfig(api: ApiService) {
       AuthenticationDomainAadUUID: '',
       expiresAt: '',
       framedIp: '',
+      subscriberLabel: '',
     },
     payload: (values, editing) => {
       const payload = authenticationPayload(values, editing);
       // The realm is part of the login configured in the equipment: set once, at creation.
       if (editing) delete payload['AuthenticationDomainAadUUID'];
+      for (const key of ['RegCustomerRcuUUID', 'subscriberLabel'])
+        if (payload[key] === '') payload[key] = null;
       return payload;
     },
     fields: [
@@ -64,8 +67,9 @@ function accessConfig(api: ApiService) {
         source: 'RegCustomerRcuUUID',
         label: 'Customer',
         span: 1,
-        required: true,
+        required: false,
         type: 'search-select',
+        help: 'authentication.accessCustomerHelp',
         remoteLookup: {
           endpoint: 'registry/customers?status=1',
           searchParam: 'q',
@@ -142,6 +146,15 @@ function accessConfig(api: ApiService) {
         disabledWhen: ({ editing }) => editing,
       },
       {
+        key: 'subscriberLabel',
+        source: 'AaxSubscriberLabel',
+        label: 'authentication.subscriberLabel',
+        span: 1,
+        required: false,
+        type: 'text',
+        help: 'authentication.subscriberLabelHelp',
+      },
+      {
         key: 'framedIp',
         source: 'AaxFramedIp',
         label: 'authentication.framedIp',
@@ -174,6 +187,12 @@ function accessConfig(api: ApiService) {
     ],
     columns: [
       { id: 'customer', field: 'CustomerName', label: 'Customer', kind: 'identity' },
+      {
+        id: 'subscriber',
+        field: 'AaxSubscriberLabel',
+        label: 'authentication.subscriberLabel',
+        kind: 'text',
+      },
       {
         id: 'login',
         field: 'AaxLoginName',

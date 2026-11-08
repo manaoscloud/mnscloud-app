@@ -1,3 +1,4 @@
+import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload, crmLocalDate, crmLocalTime } from '../crm-input';
 import { Component } from '@angular/core';
@@ -15,6 +16,7 @@ const config = defineCrud({
   pageDescription: 'crm.description.opportunities',
   defaultCurrencyFields: ['CopCurrency'],
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CopName: '',
     CrmAccountCacUUID: '',
     CrmContactCcoUUID: '',
@@ -42,6 +44,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CrmStageCstUUID',
       source: 'CrmStageCstUUID',
@@ -102,6 +105,7 @@ const config = defineCrud({
       type: 'search-select',
       remoteLookup: {
         endpoint: 'crm/accounts',
+        parameters: { CrmWorkspaceCwsUUID: 'CrmWorkspaceCwsUUID' },
         uuidField: 'CacUUID',
         labelField: 'CacName',
         selectedLabelField: 'CrmAccountCacUUIDName',
@@ -241,6 +245,7 @@ const config = defineCrud({
     { key: 'CopRevision', source: 'CopRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    crmWorkspaceColumn,
     {
       id: 'CrmAccountCacUUID',
       field: 'CrmAccountCacUUIDName',
@@ -318,6 +323,7 @@ const config = defineCrud({
     },
   ],
   listFilters: [
+    crmWorkspaceFilter,
     {
       key: 'CrmAccountCacUUID',
       paramKey: 'CrmAccountCacUUID',

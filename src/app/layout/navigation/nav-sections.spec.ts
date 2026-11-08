@@ -1,5 +1,8 @@
 import {
+  estimateCompactFlyoutHeight,
+  fitCompactFlyout,
   isNavCategoryGroupId,
+  toggleNavSection,
   navCategoryGroupId,
   withCategoryGroups,
   withSectionTitles,
@@ -160,5 +163,74 @@ describe('withCategoryGroups', () => {
     const snapshot = JSON.stringify(items);
     withCategoryGroups(items, group);
     expect(JSON.stringify(items)).toBe(snapshot);
+  });
+});
+
+describe('toggleNavSection', () => {
+  const menu = [
+    {
+      id: 'crm',
+      children: [
+        { id: 'crm/dashboard' },
+        { id: 'crm/@pipeline', children: [{ id: 'crm/leads' }, { id: 'crm/opportunities' }] },
+        { id: 'crm/@registry', children: [{ id: 'crm/accounts' }, { id: 'crm/contacts' }] },
+      ],
+    },
+    {
+      id: 'voip',
+      children: [
+        {
+          id: 'voip/@services',
+          children: [{ id: 'voip/pabx', children: [{ id: 'voip/pabx/cdr' }] }],
+        },
+      ],
+    },
+    { id: 'financial', children: [{ id: 'financial/receivables' }] },
+  ];
+
+  it('closes the open root modules, the current page path included, when another opens', () => {
+    const next = toggleNavSection(menu, new Set(['crm', 'crm/@pipeline']), 'financial');
+    expect([...next]).toEqual(['financial']);
+  });
+
+  it('closes the open siblings inside a module and keeps the module open', () => {
+    const next = toggleNavSection(menu, new Set(['crm', 'crm/@pipeline']), 'crm/@registry');
+    expect([...next].sort()).toEqual(['crm', 'crm/@registry']);
+  });
+
+  it('closes everything open below a closed sibling, so it reopens collapsed', () => {
+    const open = new Set(['voip', 'voip/@services', 'voip/pabx']);
+    const next = toggleNavSection(menu, open, 'crm');
+    expect([...next]).toEqual(['crm']);
+  });
+
+  it('closing an entry only closes that entry', () => {
+    const next = toggleNavSection(menu, new Set(['crm', 'crm/@pipeline']), 'crm');
+    expect([...next]).toEqual(['crm/@pipeline']);
+  });
+
+  it('opens an id it cannot find without touching the others', () => {
+    const next = toggleNavSection(menu, new Set(['crm']), 'unknown');
+    expect([...next].sort()).toEqual(['crm', 'unknown']);
+  });
+});
+
+describe('compact flyout placement', () => {
+  it('counts category titles in the estimated height', () => {
+    expect(
+      estimateCompactFlyoutHeight([{ id: 'a' }, { id: 'b', categoryTitle: 'B' }, { id: 'c' }]),
+    ).toBe(3 * 42 + 26 + 14);
+  });
+
+  it('starts at the anchor row when the flyout fits', () => {
+    expect(fitCompactFlyout(100, 300, 900)).toEqual({ top: 100, maxHeight: 868 });
+  });
+
+  it('moves up so the bottom stays inside the viewport', () => {
+    expect(fitCompactFlyout(700, 400, 900)).toEqual({ top: 484, maxHeight: 868 });
+  });
+
+  it('takes the whole viewport and scrolls when taller than it', () => {
+    expect(fitCompactFlyout(300, 1500, 700)).toEqual({ top: 16, maxHeight: 668 });
   });
 });

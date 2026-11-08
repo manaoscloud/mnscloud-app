@@ -234,9 +234,9 @@ const PROVIDER_CONFIG: ConfigurableCrudConfig = {
 export class HostingSmtpProvidersPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/smtp/providers' : PROVIDER_CONFIG.endpoint,
+    this.platformScope() ? 'system/hosting/smtp/providers' : PROVIDER_CONFIG.endpoint,
   );
 
   constructor() {

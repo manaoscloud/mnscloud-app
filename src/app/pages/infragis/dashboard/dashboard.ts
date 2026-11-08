@@ -1,6 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgStyle } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -14,6 +16,11 @@ type Asset = {
   IgmLatitude: number | string;
   IgmLongitude: number | string;
   Color?: string;
+};
+type Feature = {
+  id: string;
+  geometry: { type: string; coordinates: unknown } | null;
+  properties: Record<string, any>;
 };
 type Summary = Partial<
   Record<
@@ -37,18 +44,65 @@ type Summary = Partial<
 })
 export class InfraGisDashboardPage {
   private readonly api = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
+  /** Counters of one InfraGIS account (opened from InfraGIS › Accounts); empty = every account. */
+  readonly accountUUID = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('accountUUID') ?? '')),
+    { initialValue: this.route.snapshot.queryParamMap.get('accountUUID') ?? '' },
+  );
+  readonly accountName = signal('');
   readonly dashboardResource = dashboardResource({
     defaultValue: { summary: {} as Summary, assets: [] as Asset[] },
-    loader: async () => {
-      const [summary, map] = await Promise.all([
-        this.api.get<{ data: { summary: Summary } }>('infragis/dashboard', { timeout: 30000 }),
-        this.api.get<{ data: { items: Asset[] } }>('infragis/map/assets?limit=1000', {
-          timeout: 30000,
-        }),
+    params: () => ({ account: this.accountUUID() }),
+    loader: async ({ params }) => {
+      const account = params.account;
+      const scoped = account ? `accountUUID=${encodeURIComponent(account)}` : '';
+      const [summary, assets, item] = await Promise.all([
+        this.api.get<{ data: { summary: Summary } }>(
+          `infragis/dashboard${scoped ? `?${scoped}` : ''}`,
+          { timeout: 30000 },
+        ),
+        account ? this.accountAssets(scoped) : this.allAssets(),
+        account
+          ? this.api.get<{ data: { item?: { IgcName?: string } } }>(
+              `infragis/accounts/${encodeURIComponent(account)}`,
+            )
+          : Promise.resolve(null),
       ]);
-      return { summary: summary.data.summary, assets: map.data.items };
+      this.accountName.set(item?.data?.item?.IgcName ?? '');
+      return { summary: summary.data.summary, assets };
     },
   });
+  private async allAssets(): Promise<Asset[]> {
+    const result = await this.api.get<{ data: { items: Asset[] } }>(
+      'infragis/map/assets?limit=1000',
+      { timeout: 30000 },
+    );
+    return result.data.items;
+  }
+
+  /** Preview points of one account: the first vertex of each map feature of the account. */
+  private async accountAssets(scoped: string): Promise<Asset[]> {
+    const result = await this.api.get<{ data: { features: Feature[] } }>(
+      `infragis/map/features?${scoped}`,
+      { timeout: 30000 },
+    );
+    return (result.data.features ?? []).slice(0, 1000).flatMap((feature) => {
+      const point = firstVertex(feature.geometry?.coordinates);
+      return point
+        ? [
+            {
+              IgaUUID: String(feature.properties?.['IgaUUID'] ?? feature.id),
+              IgaName: String(feature.properties?.['IgaName'] ?? ''),
+              IgmLongitude: point[0],
+              IgmLatitude: point[1],
+              Color: feature.properties?.['Color'],
+            },
+          ]
+        : [];
+    });
+  }
+
   readonly metrics = computed(() => {
     const summary = this.dashboardResource.value().summary;
     return [
@@ -95,4 +149,13 @@ export class InfraGisDashboardPage {
       background: asset.Color || null,
     };
   }
+}
+
+/** First [lng, lat] of a GeoJSON Point, LineString or Polygon coordinate array. */
+export function firstVertex(coordinates: unknown): [number, number] | null {
+  let value = coordinates;
+  while (Array.isArray(value) && Array.isArray(value[0])) value = value[0];
+  return Array.isArray(value) && typeof value[0] === 'number' && typeof value[1] === 'number'
+    ? [value[0], value[1]]
+    : null;
 }

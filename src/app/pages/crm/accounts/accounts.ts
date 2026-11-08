@@ -1,3 +1,5 @@
+import { crmRecordColumn, crmOperatorFilter } from '../crm-table-fields';
+import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
   industryReferenceField,
@@ -19,6 +21,7 @@ const config = defineCrud({
   pageTitle: 'crm.title.accounts',
   pageDescription: 'crm.description.accounts',
   initialValues: {
+    CrmWorkspaceCwsUUID: null,
     CacName: '',
     CacType: 'company',
     CacDocument: '',
@@ -39,6 +42,7 @@ const config = defineCrud({
       required: true,
       type: 'status',
     },
+    crmWorkspaceField,
     {
       key: 'CacType',
       source: 'CacType',
@@ -121,42 +125,17 @@ const config = defineCrud({
     { key: 'CacRevision', source: 'CacRevision', label: 'crm.field.Revision', hidden: true },
   ],
   columns: [
+    crmWorkspaceColumn,
     industryReferenceColumn(),
-    {
-      id: 'CacName',
-      field: 'CacName',
-      label: 'crm.field.Name',
-      kind: 'identity',
-    },
-    {
-      id: 'CacDocument',
-      field: 'CacDocument',
-      label: 'crm.field.Document',
-      kind: 'text',
-    },
-    {
-      id: 'CacState',
-      field: 'CacState',
-      label: 'crm.field.RegionState',
-      kind: 'text',
-    },
-    {
-      id: 'CacStatus',
-      field: 'CacStatus',
-      label: 'crm.field.Status',
-      kind: 'status',
-    },
+    crmRecordColumn('CacName', 'crm.field.Name', 'identity'),
+    crmRecordColumn('CacDocument', 'crm.field.Document'),
+    crmRecordColumn('CacState', 'crm.field.RegionState'),
+    crmRecordColumn('CacStatus', 'crm.field.Status', 'status'),
   ],
   listFilters: [
+    crmWorkspaceFilter,
     ...economicClassificationFilters(),
-    {
-      key: 'AssignedUserUsrUUID',
-      paramKey: 'AssignedUserUsrUUID',
-      label: 'crm.field.AssignedUserUsrUUID',
-      type: 'search-select',
-      span: 1,
-      remoteLookup: { endpoint: 'crm/members', uuidField: 'UsrUUID', labelField: 'UsrName' },
-    },
+    crmOperatorFilter,
     {
       key: 'CacType',
       paramKey: 'CacType',

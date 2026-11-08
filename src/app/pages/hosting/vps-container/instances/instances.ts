@@ -224,15 +224,19 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   private activePlanUUID = '';
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/providers' : 'hosting/vps-container/providers',
+    this.platformScope()
+      ? 'system/hosting/vps-container/providers'
+      : 'hosting/vps-container/providers',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/instances' : 'hosting/vps-container/instances',
+    this.platformScope()
+      ? 'system/hosting/vps-container/instances'
+      : 'hosting/vps-container/instances',
   );
   private readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans',
+    this.platformScope() ? 'system/hosting/vps-container/plans' : 'hosting/vps-container/plans',
   );
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -705,7 +709,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
       );
     } catch (error) {
       this.providers.set([]);
-      if (this.isMaster()) {
+      if (this.platformScope()) {
         this.snack.error(
           this.errorMessage(error) || this.t('Failed to load VPS Container providers.'),
         );

@@ -7,6 +7,36 @@ export type VpsProviderConfig = {
     cidrPool: string[];
     tagRange?: [number, number] | null;
     snat?: boolean;
+    tenantZones?: {
+      controller: string;
+      vrfVniRange: [number, number];
+      vniRange: [number, number];
+      gateway: {
+        templateVmid: number;
+        node: string;
+        transitBridge?: string;
+        transitVlan: number;
+        transitCidr: string;
+        transitPool?: string;
+        placement?: 'spread' | 'fixed';
+      };
+      mtu?: number;
+      defaultCidr?: string;
+      nameservers?: string[];
+    } | null;
+  } | null;
+  vlanTag?: number | null;
+  customerProvisioning?: boolean;
+  /** Proxmox placement policy (PL1 shadow mode; API services/proxmoxPlacementService.ts). */
+  placement?: {
+    policy?: 'spread' | 'pack';
+    nodes?: string[];
+    drainNodes?: string[];
+    cpuRatio?: number;
+    memoryRatio?: number;
+    hostReserveMb?: number;
+    diskFullRatio?: number;
+    imageFallback?: boolean;
   } | null;
   region?: string;
   projectId?: string;
@@ -125,6 +155,8 @@ export type HostingVpsPlan = {
 
 export type HostingVpsInstanceConfig = {
   providerImageId?: string | null;
+  /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
+  placementGroup?: string | null;
   authMethod?: 'ssh_key' | 'password' | string | null;
   username?: string | null;
   password?: string | null;
@@ -192,6 +224,7 @@ export type VpsProviderCatalog = {
 };
 
 export type HostingVpsInstance = {
+  UserUsrUUID?: string | null;
   HviUUID: string;
   HviName: string;
   HviConfig?: HostingVpsInstanceConfig | null;
@@ -262,7 +295,37 @@ export type HostingVpsNetwork = {
   HvnIsDefault: number;
   HvnIsActive: number;
   UserUsrUUID?: string | null;
+  /** Provider settings; `tenantDefaultZone` marks the default network of the account. */
+  HvnConfig?: unknown;
+  /** Default network of the account, decided by the database (tenant scope T5). */
+  HvnIsZoneDefault?: number;
+  /** Rights of the caller decided by the server. */
+  CanEdit?: number;
+  CanDelete?: number;
 };
+
+/**
+ * Default network of the customer's account (created with the first Proxmox VPS, always attached):
+ * HvnIsZoneDefault from the server (HvnConfig.tenantDefaultZone for older responses).
+ */
+export function isAccountDefaultNetwork(network: {
+  HvnConfig?: unknown;
+  HvnIsZoneDefault?: unknown;
+}): boolean {
+  if (network.HvnIsZoneDefault !== undefined && network.HvnIsZoneDefault !== null) {
+    return Number(network.HvnIsZoneDefault) === 1;
+  }
+  let config = network.HvnConfig;
+  if (typeof config === 'string') {
+    try {
+      config = JSON.parse(config);
+    } catch {
+      return false;
+    }
+  }
+  const zone = (config as { tenantDefaultZone?: unknown } | null | undefined)?.tenantDefaultZone;
+  return typeof zone === 'string' && zone.length > 0;
+}
 
 export type HostingVpsNetworkCapabilities = {
   create: boolean;
@@ -296,3 +359,27 @@ export type HostingVpsFirewallCapabilities = {
   maxRules: number;
   scope: 'profile' | 'instance' | 'none';
 };
+
+/**
+ * Edit/delete right of a row decided by the server (`CanEdit`/`CanDelete`); `fallback` only for a
+ * response without the field.
+ */
+export function serverRowRight(
+  row: Record<string, unknown>,
+  field: 'CanEdit' | 'CanDelete',
+  fallback: () => boolean,
+): boolean {
+  const value = row[field];
+  return value === undefined || value === null ? fallback() : Number(value) === 1;
+}
+
+/**
+ * Instances a network or firewall of this scope may be attached to (the database requires the same
+ * owner): a tenant lists only its own instances; /system acts only on platform instances.
+ */
+export function attachableInstances<T extends { UserUsrUUID?: string | null }>(
+  instances: readonly T[],
+  platformScope: boolean,
+): T[] {
+  return platformScope ? instances.filter((instance) => !instance.UserUsrUUID) : [...instances];
+}

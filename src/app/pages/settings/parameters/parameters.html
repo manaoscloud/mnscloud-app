@@ -186,7 +186,7 @@
           </form>
         </mat-tab>
 
-        @if (!isMaster()) {
+        @if (!platformScope()) {
           <mat-tab [label]="'Bradesco' | transloco">
             <mat-tab-group class="nested-tabs siad-tabs">
               <mat-tab [label]="'SIAD' | transloco">
@@ -450,7 +450,7 @@
       </mat-tab-group>
     </mat-tab>
 
-    @if (isMaster()) {
+    @if (platformScope()) {
       <mat-tab [label]="'Access' | transloco">
         <form class="tab-content form-grid">
           <mat-form-field appearance="outline" class="span-1">

@@ -28,7 +28,7 @@
 }
 
 .compact-flyout-title {
-  padding: 0.45rem 0.6rem 0.1rem;
+  padding: 0.45rem 0.75rem 0.1rem;
 }
 
 .compact-flyout-title:first-child {
@@ -57,4 +57,96 @@
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   opacity: 0.7; // color is inherited from the row (main-layout .menu-item *)
+}
+
+// Compact rail flyouts (main-layout): global so the layout component keeps its style budget; the
+// selectors only exist inside the sidenav. Rows match the expanded menu (.menu-item): 40px pill,
+// same label size and tints.
+.compact-flyout {
+  box-sizing: border-box;
+  position: fixed;
+  z-index: 1202;
+  width: 234px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 12px;
+  background: var(--mat-sys-color-surface-container-high);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.3);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  scrollbar-width: thin;
+}
+
+// Rows and category titles keep their size: a long list scrolls inside the flyout instead of
+// squeezing every row (fitCompactFlyout places it inside the viewport).
+.compact-flyout > * {
+  flex: 0 0 auto;
+}
+
+.compact-flyout-item {
+  width: 100%;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: var(--mat-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.compact-flyout-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-flyout-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.compact-flyout-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+}
+
+.compact-flyout-main > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-flyout-item:hover {
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 6%, transparent);
+}
+
+.compact-flyout-item:focus-visible {
+  outline: 2px solid var(--mat-sys-color-primary);
+  outline-offset: -2px;
+}
+
+.compact-flyout-item.is-active {
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 16%, transparent);
+  color: var(--mc-menu-active-text);
 }

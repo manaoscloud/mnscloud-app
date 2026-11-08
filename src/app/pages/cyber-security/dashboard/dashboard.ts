@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -25,7 +26,10 @@ type CyberSummary = Partial<{
 export class CyberSecurityDashboardPage {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   /** Counters of one Cyber Security account (opened from Customer accounts); empty = every account. */
+  /** The route declares the scope: /system pages ask the platform-wide route. */
+  private readonly platform = injectPlatformScope();
   readonly cyberAccountUUID = inject(ActivatedRoute).snapshot.queryParamMap.get('cyberAccountUUID');
   readonly cyberAccountName = signal('');
   readonly snapshot = dashboardResource({
@@ -33,7 +37,7 @@ export class CyberSecurityDashboardPage {
     loader: async () => {
       // The tenant route answers the selected tenant (masters included); the System area asks the
       // platform-wide route.
-      const endpoint = this.router.url.startsWith('/system/cyber-security')
+      const endpoint = this.platform
         ? 'system/cyber-security/dashboard'
         : this.cyberAccountUUID
           ? `cyber-security/dashboard?cyberAccountUUID=${encodeURIComponent(this.cyberAccountUUID)}`
@@ -52,19 +56,17 @@ export class CyberSecurityDashboardPage {
   });
   readonly dashboard = this.snapshot.value;
   readonly actions = [
+    // Vulnerabilities live only in the tenant area (findings of the selected tenant's servers).
+    ...(this.platform
+      ? []
+      : [{ section: 'vulnerabilities', icon: 'bug_report', label: 'Review vulnerabilities' }]),
     { section: 'servers', icon: 'dns', label: 'Review server protection' },
     { section: 'profiles', icon: 'shield', label: 'Maintain security profiles' },
     { section: 'alerts', icon: 'notification_important', label: 'Investigate open alerts' },
     { section: 'trusted-nodes', icon: 'hub', label: 'Review trusted nodes' },
   ];
   routeFor(section: string) {
-    return (
-      (this.router.url.startsWith('/system/cyber-security')
-        ? '/system/cyber-security'
-        : '/cyber-security') +
-      '/' +
-      section
-    );
+    return (this.platform ? '/system/cyber-security' : '/cyber-security') + '/' + section;
   }
   readonly dashboardKpis = computed(() => {
     const item = this.dashboard();

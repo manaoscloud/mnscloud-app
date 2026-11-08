@@ -13,7 +13,14 @@ import {
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../shared/data-viewer-dialog/data-viewer-dialog';
 
-type CyberSection = 'servers' | 'decisions' | 'alerts' | 'lists' | 'security-events';
+type CyberSection =
+  | 'servers'
+  | 'decisions'
+  | 'alerts'
+  | 'lists'
+  | 'security-events'
+  | 'vulnerabilities'
+  | 'inventory';
 
 const options = (values: string[]): ConfigurableCrudOption[] =>
   values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
@@ -196,7 +203,323 @@ function withCyberAccount(section: CyberSection, config: ConfigurableCrudConfig)
   };
 }
 
+// ----- Vulnerabilities and software inventory (vulnerability management V3) -----
+
+const priorities: ConfigurableCrudOption[] = [
+  { value: 'P0', label: 'cyberSecurity.vuln.priority.P0' },
+  { value: 'P1', label: 'cyberSecurity.vuln.priority.P1' },
+  { value: 'P2', label: 'cyberSecurity.vuln.priority.P2' },
+  { value: 'P3', label: 'cyberSecurity.vuln.priority.P3' },
+  { value: 'info', label: 'cyberSecurity.vuln.priority.info' },
+];
+const findingStatuses: ConfigurableCrudOption[] = [
+  { value: 'open', label: 'cyberSecurity.vuln.status.open' },
+  { value: 'fixed', label: 'cyberSecurity.vuln.status.fixed' },
+  { value: 'accepted_risk', label: 'cyberSecurity.vuln.status.accepted_risk' },
+  { value: 'false_positive', label: 'cyberSecurity.vuln.status.false_positive' },
+];
+const fixStates: ConfigurableCrudOption[] = [
+  { value: 'fixed', label: 'cyberSecurity.vuln.fixState.fixed' },
+  { value: 'no_fix', label: 'cyberSecurity.vuln.fixState.no_fix' },
+];
+
+const priorityTone = (value: unknown) => {
+  switch (String(value ?? '')) {
+    case 'P0':
+      return 'chip-failed';
+    case 'P1':
+      return 'chip-warning';
+    case 'P2':
+      return 'chip-queued';
+    case 'P3':
+      return 'chip-running';
+    default:
+      return 'chip-skipped';
+  }
+};
+
+const decimal = (value: unknown, digits: number) =>
+  value === null || value === undefined || value === '' ? '' : Number(value).toFixed(digits);
+
+/** Servers affected by one vulnerability (collection dialog of the vulnerability row). */
+function vulnerabilityFindings(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    ...readOnly,
+    endpoint: `cyber-security/vulnerabilities/${encodeURIComponent(String(row['code']))}/findings`,
+    uuidField: 'findingUUID',
+    pageTitle: String(row['code']),
+    pageDescription: 'cyberSecurity.vuln.findingsDescription',
+    serverSidePagination: true,
+    statusMode: 'string',
+    activeValue: 'open',
+    inactiveValue: 'fixed',
+    statusOptions: findingStatuses,
+    columns: [
+      {
+        id: 'agent',
+        label: 'Agent',
+        field: 'agentName',
+        uuidField: 'findingUUID',
+        kind: 'identity',
+      },
+      {
+        id: 'package',
+        label: 'cyberSecurity.vuln.package',
+        field: 'package',
+        translateValue: false,
+      },
+      {
+        id: 'installed',
+        label: 'cyberSecurity.vuln.installed',
+        field: 'installedVersion',
+        translateValue: false,
+      },
+      {
+        id: 'fixed',
+        label: 'cyberSecurity.vuln.fixedVersion',
+        field: 'fixedVersion',
+        translateValue: false,
+      },
+      {
+        id: 'priority',
+        label: 'cyberSecurity.vuln.priority',
+        field: 'priority',
+        kind: 'status',
+        options: priorities,
+        chipClass: priorityTone,
+      },
+      { id: 'due', label: 'cyberSecurity.vuln.due', field: 'dueAt', kind: 'datetime' },
+      { id: 'status', label: 'Status', field: 'status', kind: 'status', options: findingStatuses },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [
+      {
+        key: 'fix',
+        label: 'cyberSecurity.vuln.howToFix',
+        icon: 'build',
+        inline: true,
+        run: (finding) => showRemediation(finding),
+      },
+    ],
+  });
+}
+
+/** Findings of one server (collection dialog of the inventory row). */
+function vulnerabilityFindingsOfAgent(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  const base = vulnerabilityFindings({ code: '' });
+  return {
+    ...base,
+    endpoint: `cyber-security/inventory/${encodeURIComponent(String(row['agentUUID']))}/findings`,
+    pageTitle: String(row['agentName'] ?? row['agentUUID']),
+    columns: [
+      {
+        id: 'code',
+        label: 'CVE',
+        field: 'code',
+        uuidField: 'findingUUID',
+        kind: 'identity',
+        translateValue: false,
+      },
+      ...base.columns.slice(1),
+    ],
+  };
+}
+
+let remediationDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
+function showRemediation(finding: ConfigurableCrudRecord) {
+  remediationDialog?.(finding);
+}
+
 const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
+  vulnerabilities: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/vulnerabilities',
+    uuidField: 'code',
+    pageTitle: 'Vulnerabilities',
+    pageDescription: 'cyberSecurity.vuln.pageDescription',
+    serverSidePagination: true,
+    statusMode: 'string',
+    activeValue: 'open',
+    inactiveValue: 'fixed',
+    statusOptions: findingStatuses,
+    listFilters: [
+      {
+        key: 'priority',
+        label: 'cyberSecurity.vuln.priority',
+        type: 'select',
+        span: 1,
+        options: priorities,
+      },
+    ],
+    columns: [
+      {
+        id: 'code',
+        label: 'CVE',
+        field: 'code',
+        uuidField: 'code',
+        kind: 'identity',
+        translateValue: false,
+      },
+      {
+        id: 'summary',
+        label: 'cyberSecurity.vuln.summary',
+        field: 'summary',
+        translateValue: false,
+      },
+      {
+        id: 'priority',
+        label: 'cyberSecurity.vuln.priority',
+        field: 'priority',
+        kind: 'status',
+        options: priorities,
+        chipClass: priorityTone,
+      },
+      { id: 'kev', label: 'KEV', field: 'kev', kind: 'boolean' },
+      {
+        id: 'cvss',
+        label: 'CVSS',
+        field: 'cvssScore',
+        value: (row: ConfigurableCrudRecord) => decimal(row['cvssScore'], 1),
+      },
+      {
+        id: 'epss',
+        label: 'EPSS',
+        field: 'epssScore',
+        value: (row: ConfigurableCrudRecord) => decimal(row['epssScore'], 3),
+      },
+      { id: 'servers', label: 'cyberSecurity.vuln.servers', field: 'serverCount', kind: 'number' },
+      {
+        id: 'packages',
+        label: 'cyberSecurity.vuln.packages',
+        field: 'packages',
+        translateValue: false,
+      },
+      { id: 'fixState', label: 'cyberSecurity.vuln.fix', field: 'fixState', options: fixStates },
+      { id: 'due', label: 'cyberSecurity.vuln.due', field: 'dueAt', kind: 'datetime' },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [
+      {
+        key: 'findings',
+        label: 'cyberSecurity.vuln.affectedServers',
+        icon: 'dns',
+        inline: true,
+        collection: vulnerabilityFindings,
+      },
+      { key: 'vulnerability', label: 'Details', icon: 'visibility', tooltip: 'Details' },
+    ],
+  }),
+  inventory: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/inventory',
+    uuidField: 'agentUUID',
+    pageTitle: 'cyberSecurity.inventory.title',
+    pageDescription: 'cyberSecurity.inventory.pageDescription',
+    serverSidePagination: true,
+    statusFilter: false,
+    filterActions: [
+      {
+        key: 'enableAll',
+        label: 'cyberSecurity.inventory.enableAll',
+        icon: 'playlist_add_check',
+        tooltip: 'cyberSecurity.inventory.enableAllHelp',
+      },
+    ],
+    columns: [
+      { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
+      { id: 'os', label: 'cyberSecurity.inventory.os', field: 'osName', translateValue: false },
+      {
+        id: 'enabled',
+        label: 'cyberSecurity.inventory.collection',
+        field: 'enabled',
+        kind: 'status',
+        options: [
+          { value: 1, label: 'cyberSecurity.inventory.on' },
+          { value: 0, label: 'cyberSecurity.inventory.off' },
+        ],
+        chipClass: (value: unknown) => (Number(value) === 1 ? 'chip-success' : 'chip-skipped'),
+      },
+      {
+        id: 'packages',
+        label: 'cyberSecurity.vuln.packages',
+        field: 'packageCount',
+        kind: 'number',
+      },
+      {
+        id: 'open',
+        label: 'cyberSecurity.vuln.openFindings',
+        field: 'openFindings',
+        kind: 'number',
+      },
+      { id: 'p0', label: 'P0', field: 'findingsP0', kind: 'number' },
+      { id: 'p1', label: 'P1', field: 'findingsP1', kind: 'number' },
+      {
+        id: 'overdue',
+        label: 'cyberSecurity.vuln.overdue',
+        field: 'findingsOverdue',
+        kind: 'number',
+      },
+      { id: 'eol', label: 'cyberSecurity.inventory.endOfLife', field: 'endOfLife', kind: 'date' },
+      {
+        id: 'reboot',
+        label: 'cyberSecurity.inventory.reboot',
+        field: 'rebootRequired',
+        kind: 'boolean',
+      },
+      {
+        id: 'received',
+        label: 'cyberSecurity.inventory.received',
+        field: 'receivedAt',
+        kind: 'datetime',
+      },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: [
+      {
+        key: 'agentFindings',
+        label: 'Vulnerabilities',
+        icon: 'bug_report',
+        inline: true,
+        visible: (row) => Number(row['openFindings'] ?? 0) > 0,
+        collection: (row) => ({
+          ...vulnerabilityFindingsOfAgent(row),
+        }),
+      },
+      {
+        key: 'inventoryOn',
+        label: 'cyberSecurity.inventory.turnOn',
+        icon: 'toggle_on',
+        visible: (row) => Number(row['enabled']) !== 1,
+        request: {
+          method: 'put',
+          endpoint: (row) => `cyber-security/inventory/${row['agentUUID']}`,
+          body: () => ({ enabled: true }),
+          successMessage: 'cyberSecurity.inventory.turnedOn',
+        },
+      },
+      {
+        key: 'inventoryOff',
+        label: 'cyberSecurity.inventory.turnOff',
+        icon: 'toggle_off',
+        visible: (row) => Number(row['enabled']) === 1,
+        request: {
+          method: 'put',
+          endpoint: (row) => `cyber-security/inventory/${row['agentUUID']}`,
+          body: () => ({ enabled: false }),
+          successMessage: 'cyberSecurity.inventory.turnedOff',
+          confirm: {
+            title: 'cyberSecurity.inventory.turnOff',
+            message: 'cyberSecurity.inventory.turnOffConfirm',
+            confirmLabel: 'cyberSecurity.inventory.turnOff',
+          },
+        },
+      },
+    ],
+  }),
+
   servers: defineCrud({
     ...readOnly,
     endpoint: 'cyber-security/servers',
@@ -461,6 +784,166 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const section = (data['section'] as CyberSection | undefined) ?? 'servers';
     const config = CONFIGS[section] ?? CONFIGS.servers;
     super(data['scope'] === 'master' ? config : withCyberAccount(section, config));
+    remediationDialog = (finding) => this.showRemediation(finding);
+  }
+
+  override async handleFilterAction(action: { key: string }): Promise<void> {
+    if (action.key !== 'enableAll') return;
+    const ok = await this.confirmAction(
+      'cyberSecurity.inventory.enableAll',
+      'cyberSecurity.inventory.enableAllConfirm',
+      'cyberSecurity.inventory.enableAll',
+    );
+    if (!ok) return;
+    try {
+      const result = await this.api.post<{ data?: { count?: number } }>(
+        'cyber-security/inventory/enable-all',
+        {},
+      );
+      this.snack.success(
+        this.t('cyberSecurity.inventory.enabledAll').replace(
+          '{{count}}',
+          String(result?.data?.count ?? 0),
+        ),
+      );
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(
+        this.t(this.errorMessage(error) || 'cyberSecurity.inventory.enableAllFailed'),
+      );
+    }
+  }
+
+  private async showVulnerability(row: ConfigurableCrudRecord): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `cyber-security/vulnerabilities/${encodeURIComponent(String(row['code']))}`,
+      );
+      const item = response?.data ?? row;
+      const code = String(item['code'] ?? '');
+      const links = [
+        ...(code.startsWith('CVE-') ? [`https://nvd.nist.gov/vuln/detail/${code}`] : []),
+        `https://osv.dev/vulnerability/${encodeURIComponent(code)}`,
+      ];
+      openDataViewerDialog(this.dialog, {
+        title: code,
+        description: String(item['kevName'] ?? item['summary'] ?? ''),
+        status: { label: 'cyberSecurity.vuln.priority', value: String(row['priority'] ?? '') },
+        details: [
+          { label: 'CVSS', value: item['cvssScore'] ?? '', translate: false },
+          {
+            label: 'cyberSecurity.vuln.vector',
+            value: item['cvssVector'] ?? '',
+            monospace: true,
+            translate: false,
+          },
+          { label: 'EPSS', value: item['epssScore'] ?? '', translate: false },
+          {
+            label: 'cyberSecurity.vuln.epssPercentile',
+            value: item['epssPercentile'] ?? '',
+            translate: false,
+          },
+          { label: 'KEV', value: item['kev'] ? this.t('Yes') : this.t('No') },
+          { label: 'cyberSecurity.vuln.kevDue', value: item['kevDueDate'] ?? '', translate: false },
+          {
+            label: 'cyberSecurity.vuln.kevRansomware',
+            value: item['kevRansomware'] ? this.t('Yes') : this.t('No'),
+          },
+          {
+            label: 'cyberSecurity.vuln.published',
+            value: item['publishedAt'] ?? '',
+            kind: 'datetime',
+          },
+        ],
+        sections: [
+          ...(item['details'] || item['summary']
+            ? [
+                {
+                  title: 'cyberSecurity.vuln.description',
+                  message: item['details'] ?? item['summary'],
+                },
+              ]
+            : []),
+          ...(item['kevAction']
+            ? [{ title: 'cyberSecurity.vuln.kevAction', message: item['kevAction'] }]
+            : []),
+          {
+            title: 'cyberSecurity.vuln.references',
+            code: { value: links.join('\n'), format: 'text', copy: true },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'cyberSecurity.vuln.loadFailed'));
+    }
+  }
+
+  /** Rule-based "how to fix" of one finding (command, restart, advisory and links from the API). */
+  showRemediation(finding: ConfigurableCrudRecord): void {
+    const fix = (finding['remediation'] ?? {}) as {
+      action?: string;
+      command?: string | null;
+      restart?: string;
+      advisory?: string | null;
+      advisoryUrl?: string | null;
+      links?: Array<{ kind: string; url: string }>;
+    };
+    const update = fix.action === 'update';
+    const links = [
+      ...(fix.advisoryUrl ? [fix.advisoryUrl] : []),
+      ...(fix.links ?? []).map((link) => link.url),
+    ];
+    openDataViewerDialog(this.dialog, {
+      title: 'cyberSecurity.vuln.howToFix',
+      description: `${finding['code'] ?? ''} · ${finding['agentName'] ?? ''}`,
+      details: [
+        { label: 'cyberSecurity.vuln.package', value: finding['package'] ?? '', translate: false },
+        {
+          label: 'cyberSecurity.vuln.installed',
+          value: finding['installedVersion'] ?? '',
+          monospace: true,
+          translate: false,
+        },
+        {
+          label: 'cyberSecurity.vuln.fixedVersion',
+          value: finding['fixedVersion'] ?? '',
+          monospace: true,
+          translate: false,
+        },
+        { label: 'cyberSecurity.vuln.advisory', value: fix.advisory ?? '', translate: false },
+        {
+          label: 'cyberSecurity.vuln.exposed',
+          value: finding['exposed'] ? this.t('Yes') : this.t('No'),
+        },
+        {
+          label: 'cyberSecurity.vuln.attacked',
+          value: finding['attacked'] ? this.t('Yes') : this.t('No'),
+        },
+      ],
+      sections: [
+        update && fix.command
+          ? {
+              title: 'cyberSecurity.vuln.updateCommand',
+              code: { value: fix.command, format: 'shell', copy: true },
+            }
+          : {
+              title: 'cyberSecurity.vuln.mitigate',
+              message: this.t('cyberSecurity.vuln.mitigateSteps'),
+            },
+        {
+          title: 'cyberSecurity.vuln.restart',
+          message: this.t(`cyberSecurity.vuln.restart.${fix.restart ?? 'service'}`),
+        },
+        ...(links.length
+          ? [
+              {
+                title: 'cyberSecurity.vuln.references',
+                code: { value: links.join('\n'), format: 'text' as const, copy: true },
+              },
+            ]
+          : []),
+      ],
+    });
   }
 
   override async handleRowAction(
@@ -469,6 +952,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
   ): Promise<void> {
     if (action.key === 'jobs') await this.showJobs(row);
     if (action.key === 'details') this.showDetails(row);
+    if (action.key === 'vulnerability') await this.showVulnerability(row);
   }
 
   private async showJobs(row: ConfigurableCrudRecord): Promise<void> {

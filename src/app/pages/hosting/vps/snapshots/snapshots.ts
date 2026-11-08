@@ -162,12 +162,12 @@ export class HostingVpsSnapshotsPage extends ConfigurableCrudPageBase<Configurab
   private readonly mutatingActionUUIDs = signal<Set<string>>(new Set());
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly snapshotEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/snapshots' : 'hosting/vps/snapshots',
+    this.platformScope() ? 'system/hosting/vps/snapshots' : 'hosting/vps/snapshots',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
+    this.platformScope() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
   );
 
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>

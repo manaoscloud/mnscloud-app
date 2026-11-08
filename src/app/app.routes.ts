@@ -4,7 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
-import { permissionGuard } from './core/guards/permission.guard';
+import { permissionGuard, voipCapacityReadGuard } from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 import { publicBoardGuard } from './core/guards/public-board.guard';
 import { publicReleaseNotesGuard } from './core/guards/public-release-notes.guard';
@@ -32,6 +32,12 @@ const STORAGE_RESOURCE_ROUTES: Routes = [
 ];
 
 /** InfraGIS utility pages (lighting, pole sharing) share one component chosen by `data.resource`. */
+const loadVpsPublicIps = () =>
+  import('./pages/hosting/vps/public-ips/public-ips').then((m) => m.HostingVpsPublicIpsPage);
+const loadNetworkDevices = () =>
+  import('./pages/hosting/vps/network-devices/network-devices').then(
+    (m) => m.HostingNetworkDevicesPage,
+  );
 const loadInfraGisUtilities = () =>
   import('./pages/infragis/utilities/utilities').then((m) => m.InfraGisUtilitiesPage);
 const INFRAGIS_UTILITY_ROUTES: Routes = (
@@ -104,6 +110,22 @@ export const routes: Routes = [
     title: 'Accept Invitation | mnscloud',
   },
 
+  // VPS web console in its own browser window (no shell), opened from the console dialog.
+  {
+    path: 'console',
+    canActivateChild: [authGuard],
+    children: [
+      {
+        path: 'vps/:uuid',
+        loadComponent: () =>
+          import('./pages/hosting/vps/instances/instance-console').then(
+            (m) => m.VpsInstanceConsoleComponent,
+          ),
+        title: 'VPS console | mnscloud',
+      },
+    ],
+  },
+
   // Public changelog of this environment (every module, RSS); signed-in users go to /user/release-notes.
   {
     path: 'release-notes',
@@ -136,6 +158,20 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/support/ideas/ideas').then((m) => m.FeatureRequestsPage),
     title: 'Ideas board | mnscloud',
     data: { publicBoard: true },
+  },
+  // Public electronic signature ceremony
+  {
+    path: 'sign/:token',
+    loadComponent: () =>
+      import('./pages/public/contract-signing/contract-signing').then((m) => m.ContractSigningPage),
+    title: 'Assinatura de Documento | mnscloud',
+  },
+  // Public contract verification
+  {
+    path: 'verify/contract/:code',
+    loadComponent: () =>
+      import('./pages/public/contract-verify/contract-verify').then((m) => m.ContractVerifyPage),
+    title: 'Verificação de Contrato | mnscloud',
   },
 
   // =====================================================
@@ -721,6 +757,8 @@ export const routes: Routes = [
                 { section: 'decisions', title: 'Protection Decisions' },
                 { section: 'lists', title: 'Allowlist / Blocklist' },
                 { section: 'security-events', title: 'Security Events' },
+                { section: 'vulnerabilities', title: 'Vulnerabilities' },
+                { section: 'inventory', title: 'Software inventory' },
               ].map(({ section, title }) => ({
                 path: `cyber-security/${section}`,
                 loadComponent: () =>
@@ -962,6 +1000,75 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/ged/dossiers').then((m) => m.GedDossiersPage),
                 title: 'GED • Dossiers | mnscloud',
               },
+              // Contracts & CLM
+              {
+                path: 'contracts/accounts',
+                loadComponent: () =>
+                  import('./pages/contracts/accounts/accounts').then((m) => m.ContractAccountsPage),
+                title: 'Contracts • Accounts | mnscloud',
+              },
+              {
+                path: 'contracts/clauses',
+                loadComponent: () =>
+                  import('./pages/contracts/clauses/clauses').then((m) => m.ContractClausesPage),
+                title: 'Contracts • Clauses | mnscloud',
+              },
+              {
+                path: 'contracts/templates',
+                loadComponent: () =>
+                  import('./pages/contracts/templates/templates').then(
+                    (m) => m.ContractTemplatesPage,
+                  ),
+                title: 'Contracts • Templates | mnscloud',
+              },
+              {
+                path: 'contracts/documents',
+                loadComponent: () =>
+                  import('./pages/contracts/documents/documents').then(
+                    (m) => m.ContractDocumentsPage,
+                  ),
+                title: 'Contracts • Documents | mnscloud',
+              },
+              {
+                path: 'contracts/envelopes',
+                loadComponent: () =>
+                  import('./pages/contracts/envelopes/envelopes').then(
+                    (m) => m.ContractEnvelopesPage,
+                  ),
+                title: 'Contracts • Envelopes | mnscloud',
+              },
+              {
+                path: 'contracts/links',
+                loadComponent: () =>
+                  import('./pages/contracts/links/links').then(
+                    (m) => m.ContractsLinksComponent,
+                  ),
+                title: 'Contracts • Links | mnscloud',
+              },
+              {
+                path: 'contracts/approval-rules',
+                loadComponent: () =>
+                  import('./pages/contracts/approval-rules/approval-rules').then(
+                    (m) => m.ContractsApprovalRulesComponent,
+                  ),
+                title: 'Contracts • Approval Rules | mnscloud',
+              },
+              {
+                path: 'contracts/approvals',
+                loadComponent: () =>
+                  import('./pages/contracts/approvals/approvals').then(
+                    (m) => m.ContractsApprovalsComponent,
+                  ),
+                title: 'Contracts • Approvals | mnscloud',
+              },
+              {
+                path: 'contracts/obligations',
+                loadComponent: () =>
+                  import('./pages/contracts/obligations/obligations').then(
+                    (m) => m.ContractsObligationsComponent,
+                  ),
+                title: 'Contracts • Obligations | mnscloud',
+              },
               // Registry (shared by every module)
               {
                 path: 'registry/economic-sectors',
@@ -1078,6 +1185,36 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/hr/time-issues/time-issues').then((m) => m.HrTimeIssuesPage),
                 title: 'Human resources • Timesheet issues | mnscloud',
+              },
+              {
+                path: 'hr/time-requests',
+                loadComponent: () =>
+                  import('./pages/hr/time-requests/time-requests').then(
+                    (m) => m.HrTimeRequestsPage,
+                  ),
+                title: 'Human resources • Requests | mnscloud',
+              },
+              {
+                path: 'hr/absences',
+                loadComponent: () =>
+                  import('./pages/hr/absences/absences').then((m) => m.HrAbsencesPage),
+                title: 'Human resources • Absences | mnscloud',
+              },
+              {
+                path: 'hr/time-adjustments',
+                loadComponent: () =>
+                  import('./pages/hr/time-adjustments/time-adjustments').then(
+                    (m) => m.HrTimeAdjustmentsPage,
+                  ),
+                title: 'Human resources • Treated marks | mnscloud',
+              },
+              {
+                path: 'hr/department-approvers',
+                loadComponent: () =>
+                  import('./pages/hr/department-approvers/department-approvers').then(
+                    (m) => m.HrDepartmentApproversPage,
+                  ),
+                title: 'Human resources • Approvers | mnscloud',
               },
               {
                 path: 'hr/work-schedules',
@@ -1335,6 +1472,11 @@ export const routes: Routes = [
                 title: 'POS • Devices | mnscloud',
               },
               {
+                path: 'point-of-sale/audit',
+                loadComponent: () => import('./pages/pos/audit').then((m) => m.PosAuditPage),
+                title: 'POS • Audit | mnscloud',
+              },
+              {
                 path: 'point-of-sale/sync-conflicts',
                 loadComponent: () =>
                   import('./pages/pos/sync-conflicts').then((m) => m.PosSyncConflictsPage),
@@ -1515,6 +1657,13 @@ export const routes: Routes = [
                 title: 'ISP • Fixed IPv6 | mnscloud',
               },
               // InfraGIS
+              {
+                path: 'infragis/accounts',
+                loadComponent: () =>
+                  import('./pages/infragis/accounts/accounts').then((m) => m.InfraGisAccountsPage),
+                title: 'InfraGIS • Accounts | mnscloud',
+                data: { scope: 'tenant', context: 'infragis' },
+              },
               {
                 path: 'infragis/projects',
                 loadComponent: () =>
@@ -1716,6 +1865,16 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    // Automatic reverse DNS of the tenant ISP addresses (PD5c).
+                    path: 'reverse-zones',
+                    loadComponent: () =>
+                      import('./pages/hosting/dns/reverse-zones/reverse-zones').then(
+                        (m) => m.DnsReverseZonesPage,
+                      ),
+                    title: 'Hosting • DNS • Reverse | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting', breadcrumb: 'dns.reverseZones' },
+                  },
+                  {
                     path: 'providers',
                     loadComponent: () =>
                       import('./pages/hosting/dns/providers/providers').then(
@@ -1850,6 +2009,12 @@ export const routes: Routes = [
                         (m) => m.HostingVpsNetworksPage,
                       ),
                     title: 'Hosting • VPS Networks | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'public-ips',
+                    loadComponent: loadVpsPublicIps,
+                    title: 'Hosting • VPS Public IPs | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
@@ -2485,9 +2650,18 @@ export const routes: Routes = [
           // SYSTEM AREA
           // =================================================
           {
+            path: 'system/voip/clusters',
+            canActivate: [voipCapacityReadGuard],
+            loadComponent: () =>
+              import('./pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
+            title: 'VoIP clusters | mnscloud',
+            data: { breadcrumb: 'voipCluster.title' },
+          },
+          {
             path: 'system',
             canActivate: [permissionGuard],
-            data: { permission: 'platform.master.access' },
+            // Every /system page is a platform (master) page: children inherit the scope.
+            data: { permission: 'platform.master.access', scope: 'master' },
             children: [
               {
                 path: 'monitoring',
@@ -2504,6 +2678,14 @@ export const routes: Routes = [
                     (m) => m.MonitoringActivityLogsPage,
                   ),
                 title: 'System Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                // Governance view of the special permissions of every tenant (user.governance).
+                path: 'user/permissions',
+                loadComponent: () =>
+                  import('./pages/user/permissions/permissions').then((m) => m.UserPermissionsPage),
+                title: 'System • Permissions | mnscloud',
+                data: { breadcrumb: 'nav.user.special-permissions' },
               },
               {
                 path: 'monitoring/incidents',
@@ -2554,6 +2736,15 @@ export const routes: Routes = [
                     (m) => m.SystemRuntimeReconcilePage,
                   ),
                 title: 'System Monitoring • Runtime reconcile | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
+                path: 'monitoring/automation-access',
+                loadComponent: () =>
+                  import('./pages/system/automation/tokens/tokens').then(
+                    (m) => m.SystemAutomationTokensPage,
+                  ),
+                title: 'System Monitoring • Automation access | mnscloud',
                 data: { scope: 'master' },
               },
               {
@@ -3262,6 +3453,24 @@ export const routes: Routes = [
                   import('./pages/dns/resolver/resolver-lists').then((m) => m.DnsResolverListsPage),
               },
               {
+                // Platform host records (PD4): private platform zone fed by the platform Agents.
+                path: 'dns/host-zones',
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.hostZones' },
+                loadComponent: () =>
+                  import('./pages/dns/host-zones/host-zones').then((m) => m.DnsHostZonesPage),
+              },
+              {
+                // Reverse DNS of the VPS public IPs (PD5b): same page as the tenant ISP reverse zones.
+                path: 'dns/vps-reverse-zones',
+                title: 'DNS',
+                data: { scope: 'master', breadcrumb: 'dns.vpsReverseZones' },
+                loadComponent: () =>
+                  import('./pages/hosting/dns/reverse-zones/reverse-zones').then(
+                    (m) => m.DnsReverseZonesPage,
+                  ),
+              },
+              {
                 path: 'dns/client-tests',
                 loadComponent: () =>
                   import('./pages/dns/client-tests/client-tests').then((m) => m.DnsClientTestsPage),
@@ -3436,6 +3645,18 @@ export const routes: Routes = [
                         (m) => m.HostingVpsNetworksPage,
                       ),
                     title: 'System VPS Networks | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'public-ips',
+                    loadComponent: loadVpsPublicIps,
+                    title: 'System VPS Public IPs | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
+                    path: 'network-devices',
+                    loadComponent: loadNetworkDevices,
+                    title: 'System Network Devices | mnscloud',
                     data: { scope: 'master', context: 'system' },
                   },
                   {

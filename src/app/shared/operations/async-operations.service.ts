@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouteScopeService } from '../../core/scope/route-scope';
 import { AuthService } from '../../services/auth.service';
 import { TenantService } from '../../services/tenant.service';
 import { ApiService } from '../../services/api.service';
@@ -61,7 +61,7 @@ function shouldResume(operation: AsyncOperation) {
 export class AsyncOperationsService {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly routeScope = inject(RouteScopeService);
   private readonly tenants = inject(TenantService);
   private readonly snack = inject(SnackbarService);
   private readonly watched = new WeakMap<DestroyRef, Set<string>>();
@@ -112,7 +112,7 @@ export class AsyncOperationsService {
   async resume(destroy: DestroyRef) {
     const environment = readStoredEnvironmentUUID();
     const session = this.auth.sessionGeneration();
-    const platform = this.router.url.split('?')[0].startsWith('/system/');
+    const platform = this.routeScope.isSystemTree();
     if (!this.auth.isLoggedIn() || (!environment && !platform)) return;
     try {
       const response = await this.api.get<{ data: { items: AsyncOperation[] } }>(

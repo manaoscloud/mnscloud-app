@@ -1,5 +1,5 @@
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-import { authenticationPayload } from '../authentication-input';
+import { authenticationPayload, authenticationRecordFields } from '../authentication-input';
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -87,16 +87,7 @@ const config = defineCrud({
       },
     },
     { key: 'name', source: 'AagName', label: 'Name', required: true, span: 1 },
-    { key: 'revision', source: 'AagRevision', label: 'Revision', type: 'number', hidden: true },
-    {
-      key: 'notes',
-      source: 'AagNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
+    ...authenticationRecordFields('Aag'),
   ],
   columns: [
     { id: 'name', field: 'AagName', label: 'Name', kind: 'identity' },

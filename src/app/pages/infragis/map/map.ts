@@ -12,7 +12,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -128,15 +128,34 @@ export class InfraGisMapPage {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly projects = signal<Option[]>([]);
+  readonly accounts = signal<Option[]>([]);
   readonly layers = signal<Option[]>([]);
+  /** InfraGIS account (resale) of the map; opened from InfraGIS › Accounts with `accountUUID`. */
+  readonly accountUUID = signal(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('accountUUID') ?? '',
+  );
+  /** Projects of the selected account (all the operator may use when none is selected). */
+  private readonly projectList = resource({
+    params: () => ({ account: this.accountUUID() }),
+    defaultValue: [] as Option[],
+    loader: async ({ params }) => {
+      const scoped = params.account ? `&accountUUID=${encodeURIComponent(params.account)}` : '';
+      const result = await this.api.get<{ data: { items: Record<string, any>[] } }>(
+        `infragis/projects?limit=500${scoped}`,
+      );
+      return result.data.items.map((item) => ({ value: item['IprUUID'], label: item['IprName'] }));
+    },
+  });
+  readonly projects = computed(() => this.projectList.value() ?? []);
   readonly projectUUID = signal('');
   readonly hiddenLayers = signal<ReadonlySet<string>>(new Set());
   /** Assets of the visible area (and project filter); the API caps the window at 2000 features. */
   private readonly features = resource({
     params: () => {
       const box = this.viewport();
-      return box ? { ...box, projectUUID: this.projectUUID() } : undefined;
+      return box
+        ? { ...box, accountUUID: this.accountUUID(), projectUUID: this.projectUUID() }
+        : undefined;
     },
     defaultValue: EMPTY,
     loader: async ({ params }) => {
@@ -146,6 +165,7 @@ export class InfraGisMapPage {
         maxLng: String(params.east),
         maxLat: String(params.north),
       });
+      if (params.accountUUID) query.set('accountUUID', params.accountUUID);
       if (params.projectUUID) query.set('projectUUID', params.projectUUID);
       return (await this.api.get<{ data: FeatureCollection }>(`infragis/map/features?${query}`))
         .data;
@@ -181,7 +201,7 @@ export class InfraGisMapPage {
       }
     });
     effect(() => {
-      const error = this.features.error();
+      const error = this.features.error() ?? this.projectList.error();
       this.error.set(error ? this.message(error, 'Assets could not be loaded.') : null);
     });
     afterNextRender(() => void this.initialize());
@@ -190,12 +210,12 @@ export class InfraGisMapPage {
   private async initialize() {
     ensureMapLibreAssets();
     try {
-      const [config, projects] = await Promise.all([
+      const [config, accounts] = await Promise.all([
         this.api.get<{ data: { config: InfraGisMapConfig } }>('infragis/map/config'),
-        this.api.get<{ data: { items: Record<string, any>[] } }>('infragis/projects?limit=500'),
+        this.api.get<{ data: { items: Record<string, any>[] } }>('infragis/accounts?limit=500'),
       ]);
-      this.projects.set(
-        projects.data.items.map((item) => ({ value: item['IprUUID'], label: item['IprName'] })),
+      this.accounts.set(
+        accounts.data.items.map((item) => ({ value: item['IgcUUID'], label: item['IgcName'] })),
       );
       this.createMap(config.data.config);
     } catch (error) {
@@ -355,6 +375,11 @@ export class InfraGisMapPage {
       east: clamp(bounds.getEast(), 180),
       north: clamp(bounds.getNorth(), 90),
     });
+  }
+
+  async selectAccount(value: unknown) {
+    await this.selectProject('');
+    this.accountUUID.set(String(value ?? ''));
   }
 
   async selectProject(value: unknown) {

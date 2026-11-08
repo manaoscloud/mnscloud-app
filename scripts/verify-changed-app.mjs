@@ -61,6 +61,9 @@ run('node', [
   'scripts/validate-nav-labels.test.mjs',
   'scripts/tests/crm-form-contract.test.mjs',
   'scripts/tests/pabx-media-playback.test.mjs',
+  'scripts/tests/capacity-scope.test.mjs',
+  'scripts/tests/capacity-expiry.test.mjs',
+  'scripts/tests/nav-resource-access.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
   'scripts/validate-global-table.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',
@@ -68,6 +71,7 @@ run('node', [
   'scripts/validate-page-descriptions.test.mjs',
   'scripts/validate-required-fields.test.mjs',
   'scripts/validate-crud-fields.test.mjs',
+  'scripts/validate-tenant-scope.test.mjs',
 ]);
 run('node', ['scripts/pay-i18n-coverage.mjs']);
 run('node', ['scripts/validate-field-help.mjs']);
@@ -112,6 +116,8 @@ run('node', ['scripts/validate-required-fields.mjs']);
 // Inputs/selects span-1, text areas span-4 with four rows, annotations in the Notes tab
 // (app.md Form Field Layout Baseline).
 run('node', ['scripts/validate-crud-fields.mjs']);
+// Endpoint and tenant header only from the route's declared scope (app.md Master pages and tenant data).
+run('node', ['scripts/validate-tenant-scope.mjs']);
 
 const crudRoots = [
   ...new Set(

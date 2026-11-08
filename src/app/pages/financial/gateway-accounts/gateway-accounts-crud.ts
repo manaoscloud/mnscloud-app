@@ -10,6 +10,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
  * Independent from MNSCloud Pay bank partners (System > Pay). The gateway list comes from the
  * tenant catalog API; each gateway shows only the fields its integration needs.
  */
+export const MNSCLOUD_PAY = 'mnscloud_pay';
 export const INTER_OWN_ACCOUNT = 'inter_business';
 export const ASAAS_OWN_ACCOUNT = 'asaas';
 
@@ -30,10 +31,27 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
   { value: 'BOLETO', label: 'Boleto only' },
   { value: 'PIX', label: 'Pix only' },
 ];
-/** Fallback until the catalog loads; the API remains the source of truth. */
+const companyTypeOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'LIMITED', label: 'Limited Company (LTDA)' },
+  { value: 'MEI', label: 'Individual Microentrepreneur (MEI)' },
+  { value: 'INDIVIDUAL', label: 'Sole Proprietorship (EI)' },
+  { value: 'ASSOCIATION', label: 'Association / Non-profit' },
+];
+const payoutModeOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'DAILY_BATCH', label: 'Daily batch (recommended)' },
+  { value: 'IMMEDIATE', label: 'Immediate on settlement' },
+  { value: 'MANUAL', label: 'Manual withdrawal' },
+];
+const pixKeyTypeOptions: readonly ConfigurableCrudOption[] = [
+  { value: 'CNPJ', label: 'CNPJ' },
+  { value: 'CPF', label: 'CPF' },
+  { value: 'EMAIL', label: 'E-mail' },
+  { value: 'PHONE', label: 'Phone' },
+  { value: 'EVP', label: 'Random key (EVP)' },
+];
+/** Fallback until the catalog loads; the API remains the source of truth. Only MNSCloud Pay is offered. */
 export const defaultGatewayOptions: readonly ConfigurableCrudOption[] = [
-  { value: INTER_OWN_ACCOUNT, label: 'Inter Empresas (conta própria)' },
-  { value: ASAAS_OWN_ACCOUNT, label: 'Asaas (conta própria)' },
+  { value: MNSCLOUD_PAY, label: 'MNSCloud Pay' },
 ];
 
 export const GATEWAY_PEM_FIELDS = ['certPem', 'keyPem'] as const;
@@ -43,10 +61,13 @@ const isInter = ({ values }: { values: ConfigurableCrudRecord }) =>
   String(values['provider'] ?? '') === INTER_OWN_ACCOUNT;
 const isAsaas = ({ values }: { values: ConfigurableCrudRecord }) =>
   String(values['provider'] ?? '') === ASAAS_OWN_ACCOUNT;
+const isMnscloudPay = ({ values }: { values: ConfigurableCrudRecord }) =>
+  String(values['provider'] ?? '') === MNSCLOUD_PAY;
+
 const hideUnlessInter = (context: { values: ConfigurableCrudRecord }) => !isInter(context);
 const hideUnlessAsaas = (context: { values: ConfigurableCrudRecord }) => !isAsaas(context);
-const hideUnlessInterOrAsaas = (context: { values: ConfigurableCrudRecord }) =>
-  !isInter(context) && !isAsaas(context);
+const hideUnlessSupportedGateway = (context: { values: ConfigurableCrudRecord }) =>
+  !isMnscloudPay(context) && !isInter(context) && !isAsaas(context);
 
 const requiredOnCreate = ({
   editing,
@@ -95,7 +116,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: environmentOptions,
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'isDefault',
@@ -125,7 +146,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     options: receiveMethodOptions,
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'autoCancelDays',
@@ -136,7 +157,7 @@ const fields: ConfigurableCrudField[] = [
     span: 1,
     required: true,
     help: 'Between 0 and 60 days. After this period the bank cancels the unpaid charge.',
-    hiddenWhen: hideUnlessInterOrAsaas,
+    hiddenWhen: hideUnlessSupportedGateway,
   },
   {
     key: 'apiKey',
@@ -194,6 +215,65 @@ const fields: ConfigurableCrudField[] = [
     requiredWhen: requiredOnCreate,
     hiddenWhen: hideUnlessInter,
   },
+  {
+    key: 'companyType',
+    label: 'Company type',
+    type: 'select',
+    tab: 'financial',
+    span: 1,
+    options: companyTypeOptions,
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'incomeValue',
+    label: 'Estimated monthly revenue',
+    type: 'number',
+    tab: 'financial',
+    span: 1,
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'mobilePhone',
+    label: 'Commercial mobile phone',
+    tab: 'financial',
+    span: 1,
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'payoutMode',
+    label: 'Payout mode',
+    type: 'select',
+    tab: 'financial',
+    span: 1,
+    options: payoutModeOptions,
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'payoutMinAmount',
+    label: 'Minimum payout amount',
+    type: 'number',
+    tab: 'financial',
+    span: 1,
+    help: 'Minimum R$ 50.00 for automatic payouts.',
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'payoutPixKeyType',
+    label: 'Payout Pix key type',
+    type: 'select',
+    tab: 'financial',
+    span: 1,
+    options: pixKeyTypeOptions,
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'payoutPixKey',
+    label: 'Payout Pix key',
+    tab: 'financial',
+    span: 1,
+    help: 'Same ownership: must match the CPF or CNPJ of the tenant tax identity.',
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
 ];
 
 function text(value: unknown): string {
@@ -222,10 +302,10 @@ export const paymentGatewayConfig = defineCrud({
   },
   initialValues: {
     status: 1,
-    provider: INTER_OWN_ACCOUNT,
-    name: '',
+    provider: MNSCLOUD_PAY,
+    name: 'MNSCloud Pay',
     environment: 'production',
-    isDefault: 0,
+    isDefault: 1,
     accountNumber: '',
     receiveMethods: 'BOLETO,PIX',
     autoCancelDays: 30,
@@ -233,6 +313,13 @@ export const paymentGatewayConfig = defineCrud({
     clientSecret: '',
     certPem: '',
     keyPem: '',
+    companyType: 'LIMITED',
+    incomeValue: 10000,
+    mobilePhone: '',
+    payoutMode: 'DAILY_BATCH',
+    payoutMinAmount: 50,
+    payoutPixKeyType: 'CNPJ',
+    payoutPixKey: '',
   },
   fields,
   columns: [
@@ -264,6 +351,17 @@ export const paymentGatewayConfig = defineCrud({
   rowActions: [{ key: 'validate', label: 'Validate connection', icon: 'verified' }],
   payload: (values, editing) => {
     const provider = text(values['provider']);
+    if (provider === MNSCLOUD_PAY) {
+      return {
+        name: text(values['name']),
+        ...(editing ? {} : { provider: MNSCLOUD_PAY }),
+        environment: text(values['environment']) || 'production',
+        receiveMethods: text(values['receiveMethods']) || 'BOLETO,PIX',
+        autoCancelDays: Number(values['autoCancelDays']) || 30,
+        isDefault: Number(values['isDefault']) === 1 ? 1 : 0,
+        isActive: Number(values['status']) === 1 ? 1 : 0,
+      };
+    }
     if (provider === ASAAS_OWN_ACCOUNT) {
       const apiKey = text(values['apiKey']);
       const credentials: Record<string, string> = {};
