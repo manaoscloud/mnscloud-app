@@ -3,14 +3,9 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
+import { portalGrantCrud } from '../../../shared/crud/configurable-crud/portal-grant-crud';
 
 // Dialogs opened from the rows of customer Cyber Security accounts (Customer Portal, resale R4).
-
-const YES_NO: readonly ConfigurableCrudOption[] = [
-  { value: 0, label: 'No' },
-  { value: 1, label: 'Yes' },
-];
 
 // Acknowledge and unblock need threats; reveal needs secrets (the database drops them otherwise).
 const GRANTS: readonly [string, string][] = [
@@ -23,12 +18,6 @@ const GRANTS: readonly [string, string][] = [
   ['CpgSecretReveal', 'cyberSecurity.grantSecretReveal'],
 ];
 
-const PORTAL_ROLES = [
-  { value: 'CUSTOMER_OWNER', label: 'cyberSecurity.portalRoleOwner' },
-  { value: 'CUSTOMER_ADMIN', label: 'cyberSecurity.portalRoleAdmin' },
-  { value: 'CUSTOMER_USER', label: 'cyberSecurity.portalRoleUser' },
-] as const;
-
 const REQUEST_STATUSES: readonly ConfigurableCrudOption[] = [
   { value: 'pending', label: 'cyberSecurity.unblockPending' },
   { value: 'approved', label: 'cyberSecurity.unblockApproved' },
@@ -37,20 +26,26 @@ const REQUEST_STATUSES: readonly ConfigurableCrudOption[] = [
 
 /** Customer Portal users of the account's customer and the Cyber Security operations of each one. */
 export function portalAccessConfig(row: ConfigurableCrudRecord) {
-  const base = `cyber-security/accounts/${row['CyaUUID']}`;
-  return defineCrud({
-    endpoint: `${base}/portal-grants`,
+  return portalGrantCrud({
+    base: `cyber-security/accounts/${row['CyaUUID']}`,
     uuidField: 'CpgUUID',
-    pageTitle: 'cyberSecurity.portalAccess',
-    pageDescription: 'cyberSecurity.portalAccessDescription',
-    createTitle: 'cyberSecurity.portalAccessCreate',
-    editTitle: 'cyberSecurity.portalAccessEdit',
-    emptyLabel: 'cyberSecurity.portalAccessEmpty',
-    bulkDelete: false,
-    ...revisionDeletePayloads('CpgUUID', 'CpgRevision'),
+    statusField: 'CpgStatus',
+    revisionField: 'CpgRevision',
+    labels: {
+      pageTitle: 'cyberSecurity.portalAccess',
+      pageDescription: 'cyberSecurity.portalAccessDescription',
+      createTitle: 'cyberSecurity.portalAccessCreate',
+      editTitle: 'cyberSecurity.portalAccessEdit',
+      emptyLabel: 'cyberSecurity.portalAccessEmpty',
+      portalUser: 'cyberSecurity.portalUser',
+      portalRole: 'cyberSecurity.portalRole',
+      roleOwner: 'cyberSecurity.portalRoleOwner',
+      roleAdmin: 'cyberSecurity.portalRoleAdmin',
+      roleUser: 'cyberSecurity.portalRoleUser',
+    },
+    grants: GRANTS,
     // Reading is on by default; actions and the audited secret reveal (CS6) are opt-in.
     initialValues: {
-      RegCustomerUserRcsUUID: '',
       CpgDashboard: 1,
       CpgServers: 1,
       CpgThreats: 1,
@@ -58,65 +53,7 @@ export function portalAccessConfig(row: ConfigurableCrudRecord) {
       CpgUnblock: 0,
       CpgSecrets: 0,
       CpgSecretReveal: 0,
-      status: 1,
     },
-    fields: [
-      { key: 'status', source: 'CpgStatus', label: 'Status', type: 'status', span: 1 },
-      {
-        key: 'RegCustomerUserRcsUUID',
-        source: 'RegCustomerUserRcsUUID',
-        label: 'cyberSecurity.portalUser',
-        type: 'search-select',
-        required: true,
-        span: 1,
-        disabledWhen: ({ editing }) => editing,
-        remoteLookup: {
-          endpoint: `${base}/portal-users`,
-          uuidField: 'RcsUUID',
-          labelField: 'RcsUsername',
-          descriptionField: 'RcsRole',
-          selectedLabelField: 'PortalUsername',
-        },
-        quickCreate: false,
-        quickCreateExemptReason:
-          'Portal users are the customer logins managed in Registry > Customers.',
-      },
-      ...GRANTS.map(([key, label]) => ({
-        key,
-        source: key,
-        label,
-        type: 'select' as const,
-        span: 1 as const,
-        options: YES_NO,
-      })),
-      {
-        key: 'revision',
-        source: 'CpgRevision',
-        label: 'documents.revision',
-        hiddenWhen: () => true,
-      },
-    ],
-    columns: [
-      {
-        id: 'user',
-        field: 'PortalUsername',
-        label: 'cyberSecurity.portalUser',
-        kind: 'identity',
-      },
-      {
-        id: 'role',
-        field: 'PortalRole',
-        label: 'cyberSecurity.portalRole',
-        options: PORTAL_ROLES,
-      },
-      ...GRANTS.map(([field, label]) => ({
-        id: field,
-        field,
-        label,
-        kind: 'boolean' as const,
-      })),
-      { id: 'status', field: 'CpgStatus', label: 'Status', kind: 'status' },
-    ],
   });
 }
 
