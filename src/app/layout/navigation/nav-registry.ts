@@ -2836,6 +2836,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'cyber-security/vulnerabilities',
+        label: 'nav.cyber-security.vulnerabilities',
+        icon: 'bug_report',
+        category: 'threats',
+        route: '/cyber-security/vulnerabilities',
+        permissions: ['tenant.cyber-security.servers.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'cyber-security/alerts',
         label: 'nav.cyber-security.alerts',
         icon: 'notification_important',
@@ -2873,6 +2882,15 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/cyber-security/servers',
         masterRoute: '/system/cyber-security/servers',
         permissions: ['tenant.access.manage'],
+        requiresEnvironment: true,
+      },
+      {
+        id: 'cyber-security/inventory',
+        label: 'nav.cyber-security.inventory',
+        icon: 'inventory_2',
+        category: 'protection',
+        route: '/cyber-security/inventory',
+        permissions: ['tenant.cyber-security.servers.read'],
         requiresEnvironment: true,
       },
       {

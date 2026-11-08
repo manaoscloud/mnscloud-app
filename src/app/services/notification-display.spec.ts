@@ -64,4 +64,20 @@ describe('cyber security notifications', () => {
     expect(notificationIcon(back)).toBe('lan');
     expect(notificationTitle(back, t)).toBe('notifications.securityAgentRestored:agent-web-1');
   });
+
+  it('shows an urgent vulnerability with its servers', () => {
+    const urgent = item('security.vulnerability', {
+      kind: 'urgent',
+      code: 'CVE-2024-6387',
+      serverCount: '2',
+      servers: 'agent-web-1, agent-api-1',
+    });
+    const titled = (key: string, params?: Record<string, string>) =>
+      `${key}:${params?.['code']}:${params?.['count']}`;
+    expect(notificationIcon(urgent)).toBe('bug_report');
+    expect(notificationTitle(urgent, titled)).toBe(
+      'notifications.securityVulnerability:CVE-2024-6387:2',
+    );
+    expect(notificationDescription(urgent, 'pt-BR')).toBe('agent-web-1, agent-api-1');
+  });
 });
