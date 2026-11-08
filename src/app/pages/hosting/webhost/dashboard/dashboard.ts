@@ -128,7 +128,7 @@ export class HostingWebhostDashboardPage {
   private readonly snack = inject(SnackbarService);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
+  readonly platformScope = computed(() => this.scope() === 'master');
 
   readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
@@ -243,7 +243,7 @@ export class HostingWebhostDashboardPage {
   }
 
   async loadDashboardSnapshot(): Promise<WebhostDashboardSnapshot> {
-    const endpoint = this.isMaster()
+    const endpoint = this.platformScope()
       ? 'system/hosting/webhost/dashboard?limit=50'
       : 'hosting/webhost/dashboard?limit=50';
     const response = await this.api.get<{ data?: WebhostDashboardSnapshot }>(endpoint, {

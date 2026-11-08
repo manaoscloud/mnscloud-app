@@ -285,9 +285,9 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
   private readonly route = inject(ActivatedRoute);
   private readonly catalog = signal<HostingDnsProviderCatalogItem[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/dns/providers' : HOSTING_DNS_PROVIDER_CONFIG.endpoint,
+    this.platformScope() ? 'system/hosting/dns/providers' : HOSTING_DNS_PROVIDER_CONFIG.endpoint,
   );
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
     this.catalog().map((item) => ({
@@ -342,7 +342,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
 
     return {
       name: payload['name'],
-      scope: this.isMaster() ? 'MASTER' : 'TENANT',
+      scope: this.platformScope() ? 'MASTER' : 'TENANT',
       provider,
       apiEndpoint: providerUsesField('apiEndpoint', provider) ? payload['apiEndpoint'] : null,
       accessKey: providerUsesField('accessKey', provider) ? payload['accessKey'] : null,
@@ -357,7 +357,7 @@ export class HostingDnsProvidersPage extends ConfigurableCrudPageBase<Configurab
 
   // Platform providers are a choice for tenant domains; only the platform page manages or tests them.
   private ownsRow(row: ConfigurableCrudRecord): boolean {
-    return this.isMaster() || String(row['HdpScope'] ?? '').toUpperCase() !== 'MASTER';
+    return this.platformScope() || String(row['HdpScope'] ?? '').toUpperCase() !== 'MASTER';
   }
 
   override canEditRow(row: ConfigurableCrudRecord): boolean {

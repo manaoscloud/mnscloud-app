@@ -11,7 +11,7 @@
   (save)="save()"
 >
   <form class="form-grid">
-    @if (!isMaster()) {
+    @if (!platformScope()) {
       <mns-search-select-field
         data-field-key="realmSource"
         [label]="'Configuration source' | transloco"

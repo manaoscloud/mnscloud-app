@@ -3145,6 +3145,7 @@ export const NAV_ITEMS: NavItem[] = [
             label: 'nav.user.special-permissions',
             icon: 'verified_user',
             route: '/user/permissions',
+            masterRoute: '/system/user/permissions',
           },
         ],
       },

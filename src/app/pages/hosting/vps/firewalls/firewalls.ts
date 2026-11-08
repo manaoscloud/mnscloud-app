@@ -126,15 +126,15 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
   private readonly instances = signal<HostingVpsInstance[]>([]);
   private readonly networks = signal<HostingVpsNetwork[]>([]);
 
-  private readonly isMaster = computed(
+  private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() => (this.platformScope() ? 'system/hosting/vps' : 'hosting/vps'));
   private readonly firewallEndpoint = computed(() => `${this.base()}/firewalls`);
 
   // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    attachableInstances(this.instances(), this.isMaster()).map((instance) => ({
+    attachableInstances(this.instances(), this.platformScope()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
@@ -161,9 +161,9 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
       // Platform profiles are templates for tenants: applied from the instance form, edited by master.
       // The server decides (owner only; delete only when no instance uses the profile).
       canEditRow: (row) =>
-        serverRowRight(row, 'CanEdit', () => this.isMaster() || !!row['UserUsrUUID']),
+        serverRowRight(row, 'CanEdit', () => this.platformScope() || !!row['UserUsrUUID']),
       canDeleteRow: (row) =>
-        serverRowRight(row, 'CanDelete', () => this.isMaster() || !!row['UserUsrUUID']),
+        serverRowRight(row, 'CanDelete', () => this.platformScope() || !!row['UserUsrUUID']),
       fields: [
         { key: 'status', source: 'HvfIsActive', label: 'Status', type: 'status', span: 1 },
         {

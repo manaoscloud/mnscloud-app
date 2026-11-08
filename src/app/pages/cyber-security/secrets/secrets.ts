@@ -255,12 +255,12 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   private readonly rawApi = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secrets' : SECRET_CONFIG.endpoint,
+    this.platformScope() ? 'system/cyber-security/secrets' : SECRET_CONFIG.endpoint,
   );
   private readonly accountEndpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secret-accounts' : 'cyber-security/secret-accounts',
+    this.platformScope() ? 'system/cyber-security/secret-accounts' : 'cyber-security/secret-accounts',
   );
   readonly accountOptions = signal<ConfigurableCrudOption[]>([]);
   readonly lookupsLoading = signal(false);
@@ -272,9 +272,9 @@ export class CyberSecuritySecretsPage extends ConfigurableCrudPageBase<Configura
   }
 
   private allowed(action: string): boolean {
-    if (this.isMaster() && (this.auth.user()?.permissions ?? []).includes('platform.master.access'))
+    if (this.platformScope() && (this.auth.user()?.permissions ?? []).includes('platform.master.access'))
       return true;
-    const required = `${this.isMaster() ? 'platform' : 'tenant'}.cyber-security.secrets.${action}`;
+    const required = `${this.platformScope() ? 'platform' : 'tenant'}.cyber-security.secrets.${action}`;
     return (this.auth.user()?.permissions ?? []).some((permission) => {
       const parts = permission
         .toLowerCase()

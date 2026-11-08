@@ -147,10 +147,10 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
   private readonly instances = signal<HostingVpsInstance[]>([]);
   private readonly capabilities = signal<Record<string, HostingVpsNetworkCapabilities>>({});
 
-  private readonly isMaster = computed(
+  private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() => (this.platformScope() ? 'system/hosting/vps' : 'hosting/vps'));
   private readonly networkEndpoint = computed(() => `${this.base()}/networks`);
 
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -164,7 +164,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
 
   // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    attachableInstances(this.instances(), this.isMaster()).map((instance) => ({
+    attachableInstances(this.instances(), this.platformScope()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
@@ -244,7 +244,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           label: 'Existing provider network ID',
           span: 1,
           help: 'Registers an existing provider network without creating it.',
-          hiddenWhen: ({ editing }) => editing || !this.isMaster(),
+          hiddenWhen: ({ editing }) => editing || !this.platformScope(),
         },
         {
           key: 'isDefault',
@@ -255,7 +255,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           options: YES_NO_OPTIONS,
           span: 1,
           hiddenWhen: ({ editing, values }) =>
-            editing || !this.isMaster() || !String(values['externalId'] ?? '').trim(),
+            editing || !this.platformScope() || !String(values['externalId'] ?? '').trim(),
         },
         // business-description: description of the network kept with the cloud resource.
         {
@@ -391,7 +391,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
       gateway: caps?.gateway ? String(payload['gateway'] ?? '').trim() || null : null,
       description: payload['description'] || null,
       isActive,
-      ...(this.isMaster() && externalId
+      ...(this.platformScope() && externalId
         ? { externalId, isDefault: Number(payload['isDefault']) === 1 }
         : {}),
     };

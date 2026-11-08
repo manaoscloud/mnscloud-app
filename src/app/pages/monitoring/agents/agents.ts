@@ -1,4 +1,5 @@
 import { openAgentTelemetry } from '../telemetry/telemetry';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 
 import {
@@ -264,6 +265,9 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   readonly webapps = signal<WebappInventoryRow[]>([]);
   readonly updatingWebapps = signal(new Set<string>());
 
+  /** The webapps inventory is a platform view: only the /system route asks for it. */
+  private readonly platformScope = injectPlatformScope();
+  /** Action rights (update platform runtimes) follow the permission; the scope follows the route. */
   private readonly isMaster = computed(() =>
     (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
@@ -406,7 +410,7 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
         `monitoring/agents${this.queryString(filters)}`,
       ),
       this.api.get<{ data?: RuntimeProductFleet[] }>('monitoring/agents/runtime-products'),
-      this.isMaster()
+      this.platformScope
         ? this.api.get<{ data?: { items?: WebappInventoryRow[] } }>(
             'monitoring/agents/runtime-products/mnscloud-webapps/apps',
           )

@@ -66,6 +66,7 @@ export function readStoredEnvironmentUUID(): string | null {
 }
 
 export function writeStoredEnvironmentUUID(value: string | null | undefined): string | null {
+  // tenant-scope-exempt: the single store of the tenant the user selected, not a scope decision
   if (typeof localStorage === 'undefined') return normalizeEnvironmentUUID(value);
 
   const normalized = normalizeEnvironmentUUID(value);

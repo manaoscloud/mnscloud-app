@@ -19,10 +19,21 @@ export const PATTERNS = {
   'scope-from-storage': /localStorage[^;\n]*[Ee]nvironment/g,
 };
 
+// A use that is not a scope decision (the one store of the tenant the user selected) carries
+// `// tenant-scope-exempt: <reason>` at the end of its line or on a comment line right above.
+const EXEMPT = /\/\/\s*tenant-scope-exempt:\s*\S/;
+
 export function countSource(source) {
   const out = {};
+  const lines = source.split('\n');
   for (const [name, re] of Object.entries(PATTERNS)) {
-    const n = source.match(new RegExp(re.source, re.flags))?.length ?? 0;
+    let n = 0;
+    for (const match of source.matchAll(new RegExp(re.source, re.flags))) {
+      const line = source.slice(0, match.index).split('\n').length - 1;
+      const above = (lines[line - 1] ?? '').trim();
+      if (EXEMPT.test(lines[line] ?? '') || (above.startsWith('//') && EXEMPT.test(above))) continue;
+      n += 1;
+    }
     if (n > 0) out[name] = n;
   }
   return out;
@@ -67,8 +78,13 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     const counts = countSource(readFileSync(file, 'utf8'));
     if (Object.keys(counts).length) found[relative(root, file)] = counts;
   }
-  if (Object.keys(found).length === 0) {
-    console.error('check:tenant-scope found nothing; the detector is broken');
+  // Every legacy form is gone (phase T8): a canary proves each pattern still detects its form.
+  const canary = countSource(
+    "x = isMaster() ? 'system/a' : 'a';\nif (window.location.pathname) {}\n" +
+      "localStorage.getItem('mc_current_env') // Environment\n",
+  );
+  if (Object.keys(PATTERNS).some((name) => !canary[name])) {
+    console.error('check:tenant-scope canary not detected; the detector is broken');
     process.exit(1);
   }
   if (process.argv.includes('--write-baseline')) {

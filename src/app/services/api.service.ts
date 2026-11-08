@@ -7,6 +7,7 @@ import { createInitialFileUploadProgress } from '../shared/upload/file-upload-pr
 import type { FileUploadProgress } from '../shared/upload/file-upload-progress';
 import { resolveApiUrl } from '../shared/runtime/app-runtime-config';
 import { silentErrorsContext } from '../core/interceptors/silent-errors';
+import { RouteScopeService } from '../core/scope/route-scope';
 import {
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
@@ -175,28 +176,42 @@ export class ApiService {
     return resolveApiUrl(endpoint);
   }
 
+  /**
+   * Scope of the active route (app.md "Master pages and tenant data"): `/system` pages never send the
+   * tenant header; the other pages always send the selected tenant. Resolved lazily (the router may
+   * not exist yet while the app boots, which is a tenant-scope call without a tenant).
+   */
+  private platformRoute(): boolean {
+    try {
+      return this.injector.get(RouteScopeService).isSystemTree();
+    } catch {
+      return false;
+    }
+  }
+
+  /** Session endpoints (sign-in, own profile, health, docs) are the same with or without a tenant. */
+  private sessionEndpoint(endpoint: string): boolean {
+    const normalized = endpoint.replace(/^\//, '');
+    return ['auth', 'user', 'health', 'openapi.yaml', 'docs', 'help/videos'].some(
+      (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+    );
+  }
+
   private requiresEnvironment(endpoint: string): boolean {
-    if (!this.auth.isLoggedIn()) return false;
+    if (!this.auth.isLoggedIn() || this.platformRoute()) return false;
 
     const normalized = endpoint.replace(/^\//, '');
     if (this.tenantUserEndpoint(endpoint)) return true;
     if (/^user\/operations(?:[/?]|$)/.test(normalized))
       return new URLSearchParams(normalized.split('?')[1] ?? '').get('scope') !== 'platform';
-    const allowPrefixes = [
-      'auth',
-      'user',
-      'health',
-      'openapi.yaml',
-      'docs',
-      'system',
-      'help/videos',
-    ];
-
-    if (this.systemTelemetryContext(endpoint)) return false;
-    if (this.environmentOptional(endpoint)) return false;
-
-    return !allowPrefixes.some(
-      (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+    if (this.sessionEndpoint(endpoint)) return false;
+    // A master widget on a tenant page may call a platform endpoint; it gets the tenant when one is
+    // selected, and Cyber Security pages load their account picker before a tenant is chosen.
+    return !(
+      normalized === 'system' ||
+      normalized.startsWith('system/') ||
+      normalized === 'cyber-security' ||
+      normalized.startsWith('cyber-security/')
     );
   }
 
@@ -212,37 +227,10 @@ export class ApiService {
   }
 
   private sendsEnvironment(endpoint: string): boolean {
-    if (this.systemCyberSecurityContext(endpoint) || this.systemTelemetryContext(endpoint))
-      return false;
-    return (
-      endpoint.replace(/^\//, '').split('?')[0] === 'user/me' ||
-      this.requiresEnvironment(endpoint) ||
-      this.environmentOptional(endpoint)
-    );
-  }
-
-  private systemTelemetryContext(endpoint: string): boolean {
-    if (typeof window === 'undefined') return false;
+    if (this.platformRoute()) return false;
+    if (!this.sessionEndpoint(endpoint)) return true;
     const path = endpoint.replace(/^\//, '').split('?')[0];
-    const telemetry =
-      path === 'monitoring/agents/telemetry-overview' ||
-      /^monitoring\/agents\/[^/]+\/resources$/.test(path);
-    return telemetry && window.location.pathname.startsWith('/system/monitoring/');
-  }
-
-  private environmentOptional(endpoint: string): boolean {
-    const normalized = endpoint.replace(/^\//, '');
-    return (
-      normalized === 'cyber-security' ||
-      normalized.startsWith('cyber-security/') ||
-      // System hosting writes still need the selected tenant (create host/plan/etc.).
-      normalized.startsWith('system/hosting/')
-    );
-  }
-
-  private systemCyberSecurityContext(endpoint: string): boolean {
-    if (!this.environmentOptional(endpoint) || typeof window === 'undefined') return false;
-    return window.location.pathname.replace(/\/+$/, '').startsWith('/system/cyber-security');
+    return path === 'user/me' || this.requiresEnvironment(endpoint);
   }
 
   private assertEnvironment(endpoint: string) {

@@ -95,12 +95,12 @@ export class VoipSoftswitchParametersPage {
   private readonly route = inject(ActivatedRoute);
   private readonly revealInvalid = injectRevealInvalidFields();
 
-  readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
+  readonly platformScope = signal(this.route.snapshot.data?.['scope'] === 'master');
   readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/voip/softswitch/parameters' : 'voip/softswitch/parameters',
+    this.platformScope() ? 'system/voip/softswitch/parameters' : 'voip/softswitch/parameters',
   );
   readonly pageDescription = computed(() =>
-    this.isMaster()
+    this.platformScope()
       ? 'Platform default of the SIP domain generated for new Softswitch accounts. Tenants inherit it unless they use their own configuration.'
       : 'SIP domain generated for new Softswitch accounts of this tenant, or the inherited platform configuration.',
   );
@@ -139,7 +139,7 @@ export class VoipSoftswitchParametersPage {
     { value: 'identity_only', label: 'SIP identity without DNS publication' },
     { value: 'managed_dns', label: 'Managed DNS publication' },
   ];
-  readonly ownRealm = computed(() => this.isMaster() || this.form().realmSource === 'own');
+  readonly ownRealm = computed(() => this.platformScope() || this.form().realmSource === 'own');
   readonly managedDns = computed(
     () => this.ownRealm() && this.form().autoDomainDnsMode === 'managed_dns',
   );
@@ -238,7 +238,7 @@ export class VoipSoftswitchParametersPage {
     try {
       const form = this.form();
       const result = await this.api.put<any>(this.endpoint(), {
-        realmSource: this.isMaster() ? 'own' : form.realmSource,
+        realmSource: this.platformScope() ? 'own' : form.realmSource,
         autoDomainEnabled: form.autoDomainEnabled,
         autoDomainDnsMode: form.autoDomainDnsMode,
         autoDomainBase: this.managedDns() ? null : this.normalizedBase(),
@@ -263,7 +263,7 @@ export class VoipSoftswitchParametersPage {
 
   private apply(item: Record<string, any>) {
     const form: SoftswitchParameterForm = {
-      realmSource: item['realmSource'] === 'own' || this.isMaster() ? 'own' : 'inherit',
+      realmSource: item['realmSource'] === 'own' || this.platformScope() ? 'own' : 'inherit',
       autoDomainEnabled: item['autoDomainEnabled'] !== false,
       autoDomainDnsMode:
         item['autoDomainDnsMode'] === 'managed_dns' ? 'managed_dns' : 'identity_only',

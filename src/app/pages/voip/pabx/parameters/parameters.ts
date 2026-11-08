@@ -166,12 +166,12 @@ export class VoipPabxParametersPage {
   private readonly route = inject(ActivatedRoute);
   private readonly revealInvalid = injectRevealInvalidFields();
 
-  readonly isMaster = signal(this.route.snapshot.data?.['scope'] === 'master');
+  readonly platformScope = signal(this.route.snapshot.data?.['scope'] === 'master');
   readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/voip/pabx/parameters' : 'voip/pabx/parameters',
+    this.platformScope() ? 'system/voip/pabx/parameters' : 'voip/pabx/parameters',
   );
   readonly pageDescription = computed(() =>
-    this.isMaster()
+    this.platformScope()
       ? 'Platform defaults of PABX accounts: recording and media storage, media delivery, SIP realm and retention. Tenants inherit them unless they set their own value.'
       : 'PABX settings of this tenant. Empty values inherit the platform defaults.',
   );
@@ -202,7 +202,7 @@ export class VoipPabxParametersPage {
     loader: async ({ params }) => (await this.api.get<any>(params))?.data?.item ?? {},
   });
   private readonly storageAccounts = resource({
-    params: () => (this.isMaster() ? 'system/hosting/storage/buckets' : 'hosting/storage/buckets'),
+    params: () => (this.platformScope() ? 'system/hosting/storage/buckets' : 'hosting/storage/buckets'),
     defaultValue: [] as Array<Record<string, any>>,
     loader: async ({ params }) => {
       const result = await this.api.get<any>(`${params}?status=1&limit=500`);
@@ -212,12 +212,12 @@ export class VoipPabxParametersPage {
   readonly loading = computed(() => this.parameters.isLoading());
 
   readonly storageModeOptions = computed(() => [
-    { value: '', label: this.isMaster() ? 'Default' : 'Inherit platform value' },
+    { value: '', label: this.platformScope() ? 'Default' : 'Inherit platform value' },
     { value: 'filesystem', label: 'Filesystem' },
     { value: 'storage', label: 'Storage' },
   ]);
   readonly deliveryModeOptions = computed(() => [
-    { value: '', label: this.isMaster() ? 'Offline (default)' : 'Inherit platform value' },
+    { value: '', label: this.platformScope() ? 'Offline (default)' : 'Inherit platform value' },
     { value: 'online', label: 'Online' },
     { value: 'offline', label: 'Offline' },
   ]);
@@ -237,7 +237,7 @@ export class VoipPabxParametersPage {
         .join(' · '),
     })),
   );
-  readonly ownRealm = computed(() => this.isMaster() || this.form().realmSource === 'own');
+  readonly ownRealm = computed(() => this.platformScope() || this.form().realmSource === 'own');
   readonly managedDns = computed(
     () => this.ownRealm() && this.form().autoDomainDnsMode === 'managed_dns',
   );
@@ -371,7 +371,7 @@ export class VoipPabxParametersPage {
         mediaStorageBucketUUID:
           form.mediaStorageMode === 'storage' ? form.mediaStorageBucketUUID || null : null,
         mediaDeliveryMode: form.mediaDeliveryMode || null,
-        realmSource: this.isMaster() ? 'own' : form.realmSource,
+        realmSource: this.platformScope() ? 'own' : form.realmSource,
         autoDomainEnabled: form.autoDomainEnabled,
         autoDomainDnsMode: form.autoDomainDnsMode,
         autoDomainBase: this.managedDns() ? null : this.normalizedBase(),
@@ -380,7 +380,7 @@ export class VoipPabxParametersPage {
         dnsPolicyUUID: this.managedDns() ? form.dnsPolicyUUID : null,
         cdrRetentionDays: form.cdrRetentionDays,
         recordingRetentionDays: form.recordingRetentionDays,
-        orphanRetentionDays: this.isMaster() ? form.orphanRetentionDays : null,
+        orphanRetentionDays: this.platformScope() ? form.orphanRetentionDays : null,
         extensionOfflineAlertMinutes: form.extensionOfflineAlertMinutes,
       });
       this.apply(result?.data?.item ?? {});
@@ -415,7 +415,7 @@ export class VoipPabxParametersPage {
       mediaStorageMode: (item['mediaStorageMode'] ?? '') as StorageMode,
       mediaStorageBucketUUID: String(item['mediaStorageBucketUUID'] ?? ''),
       mediaDeliveryMode: (item['mediaDeliveryMode'] ?? '') as DeliveryMode,
-      realmSource: item['realmSource'] === 'own' || this.isMaster() ? 'own' : 'inherit',
+      realmSource: item['realmSource'] === 'own' || this.platformScope() ? 'own' : 'inherit',
       autoDomainEnabled: item['autoDomainEnabled'] !== false,
       autoDomainDnsMode:
         item['autoDomainDnsMode'] === 'managed_dns' ? 'managed_dns' : 'identity_only',
@@ -425,7 +425,7 @@ export class VoipPabxParametersPage {
       dnsPolicyUUID: String(item['dnsPolicyUUID'] ?? ''),
       cdrRetentionDays: days(item['cdrRetentionDays']),
       recordingRetentionDays: days(item['recordingRetentionDays']),
-      orphanRetentionDays: this.isMaster() ? days(item['orphanRetentionDays']) : null,
+      orphanRetentionDays: this.platformScope() ? days(item['orphanRetentionDays']) : null,
       extensionOfflineAlertMinutes: days(item['extensionOfflineAlertMinutes']),
     };
     this.form.set(form);

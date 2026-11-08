@@ -310,13 +310,13 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   private readonly router = inject(Router);
   private readonly provisioningDomainUUIDs = signal<Set<string>>(new Set());
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   constructor() {
     super(hostingDnsDomainConfig(inject(ActivatedRoute).snapshot.data?.['scope'] === 'master'));
   }
 
   private dnsServices(): readonly VoipDnsService[] {
-    return this.isMaster() ? PLATFORM_DNS_SERVICES : VOIP_DNS_SERVICES;
+    return this.platformScope() ? PLATFORM_DNS_SERVICES : VOIP_DNS_SERVICES;
   }
 
   private domainsPath(): string {
@@ -338,12 +338,12 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       if (
         operationUUID &&
         IN_FLIGHT_OPERATION_STATES.has(mopState) &&
-        (this.isMaster() || environment)
+        (this.platformScope() || environment)
       ) {
         this.operations.watch(
           {
             operationUUID,
-            scope: this.isMaster() ? 'platform' : 'tenant',
+            scope: this.platformScope() ? 'platform' : 'tenant',
             state: mopState,
             errorCode: (row['MopErrorCode'] as string | null | undefined) ?? null,
             environmentUUID: environment,
@@ -381,7 +381,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
       ttl: Number(values[`${service}PolicyTtl`]),
       capacity: Number(values[`${service}PolicyCapacity`]),
       // Master policies are platform policies; a tenant keeps the stored audience.
-      platform: this.isMaster() || this.loadedPolicyPlatform[service] === true,
+      platform: this.platformScope() || this.loadedPolicyPlatform[service] === true,
       status: values[`${service}PolicyEnabled`] === true,
     };
   }
@@ -450,7 +450,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   }
 
   private dnssecEndpoint(row: ConfigurableCrudRecord): string {
-    const prefix = this.isMaster() ? 'system/hosting/dns' : 'hosting/dns';
+    const prefix = this.platformScope() ? 'system/hosting/dns' : 'hosting/dns';
     return `${prefix}/domains/${this.recordUUID(row)}/dnssec`;
   }
 
@@ -499,7 +499,7 @@ export class HostingDnsDomainsPage extends ConfigurableCrudPageBase<Configurable
   }
 
   private visibilityEndpoint(row: ConfigurableCrudRecord): string {
-    const prefix = this.isMaster() ? 'system/hosting/dns' : 'hosting/dns';
+    const prefix = this.platformScope() ? 'system/hosting/dns' : 'hosting/dns';
     return `${prefix}/domains/${this.recordUUID(row)}/visibility`;
   }
 
