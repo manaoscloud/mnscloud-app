@@ -11917,5 +11917,11 @@
   "cyberSecurity.vuln.kevAction": "Required action (KEV)",
   "cyberSecurity.vuln.published": "Published",
   "cyberSecurity.vuln.loadFailed": "Could not load the vulnerability.",
-  "Review vulnerabilities": "Review vulnerabilities"
+  "Review vulnerabilities": "Review vulnerabilities",
+  "Pulse access": "Pulse access",
+  "Sent to": "Sent to",
+  "This employee already has Pulse access. Use Reset password to send new credentials.": "This employee already has Pulse access. Use Reset password to send new credentials.",
+  "The access was e-mailed to the employee. Keep these credentials only if you need to help them sign in.": "The access was e-mailed to the employee. Keep these credentials only if you need to help them sign in.",
+  "The employee has no e-mail in the registry, so nothing was sent. Hand these credentials over securely, or add an e-mail and reset the password.": "The employee has no e-mail in the registry, so nothing was sent. Hand these credentials over securely, or add an e-mail and reset the password.",
+  "The access e-mail could not be sent. Hand these credentials over securely, or check the SMTP route and reset the password.": "The access e-mail could not be sent. Hand these credentials over securely, or check the SMTP route and reset the password."
 }

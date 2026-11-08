@@ -3020,6 +3020,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
   }
 
+  /**
+   * Makes a known record selectable (with its label) in a remote lookup before the lookup pages
+   * reach it, for example a create opened from another page with the related record preset.
+   */
+  protected presetRemoteOption(fieldKey: string, option: ConfigurableCrudOption): void {
+    this.quickCreatedOptions.update((current) => ({
+      ...current,
+      [fieldKey]: [
+        option,
+        ...(current[fieldKey] ?? []).filter((item) => String(item.value) !== String(option.value)),
+      ],
+    }));
+    this.selectedRemoteOptions.set(fieldKey, option);
+  }
+
   /** Keeps options created through quick-create visible until the page reloads its lookups. */
   private withQuickCreatedOptions(
     field: ConfigurableCrudField,

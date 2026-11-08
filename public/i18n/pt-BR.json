@@ -11918,5 +11918,11 @@
   "cyberSecurity.vuln.kevAction": "Ação exigida (KEV)",
   "cyberSecurity.vuln.published": "Publicada",
   "cyberSecurity.vuln.loadFailed": "Não foi possível carregar a vulnerabilidade.",
-  "Review vulnerabilities": "Revisar vulnerabilidades"
+  "Review vulnerabilities": "Revisar vulnerabilidades",
+  "Pulse access": "Acesso ao Pulse",
+  "Sent to": "Enviado para",
+  "This employee already has Pulse access. Use Reset password to send new credentials.": "Este funcionário já tem acesso ao Pulse. Use Redefinir senha para enviar novas credenciais.",
+  "The access was e-mailed to the employee. Keep these credentials only if you need to help them sign in.": "O acesso foi enviado por e-mail ao funcionário. Guarde estas credenciais só se precisar ajudá-lo a entrar.",
+  "The employee has no e-mail in the registry, so nothing was sent. Hand these credentials over securely, or add an e-mail and reset the password.": "O funcionário não tem e-mail no cadastro, então nada foi enviado. Entregue estas credenciais com segurança, ou cadastre um e-mail e redefina a senha.",
+  "The access e-mail could not be sent. Hand these credentials over securely, or check the SMTP route and reset the password.": "Não foi possível enviar o e-mail de acesso. Entregue estas credenciais com segurança, ou verifique a rota SMTP e redefina a senha."
 }
