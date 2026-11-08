@@ -2,10 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../services/auth.service';
-import {
-  normalizeEnvironmentUUID,
-  readStoredEnvironmentUUID,
-} from '../../../../core/environment/environment-context';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -437,6 +433,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly isPlatformMasterUser = computed(() =>
+    (this.vpsAuth.user()?.permissions ?? []).includes('platform.master.access'),
+  );
   private readonly providerEndpoint = computed(() =>
     this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
@@ -859,7 +858,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
       actions.push(...this.powerActions(row));
       actions.push(DETAILS_ACTION);
-      if (this.isMaster() && this.providerOf(row) === 'proxmox')
+      // Node migration is the platform function vps.migration: the master offers it on /system and
+      // on a tenant's servers with that tenant selected (tenant scope T6).
+      if (this.isPlatformMasterUser() && this.providerOf(row) === 'proxmox')
         actions.push(MIGRATE_INSTANCE_ACTION);
     }
     if (this.canRetryProvision(row)) {
@@ -1247,14 +1248,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
   }
 
+  /**
+   * Customers exist only inside a tenant (tenant scope T6, TS2): /system creates platform servers;
+   * a customer's server is created with its tenant selected, acting as the tenant.
+   */
   private hasCustomerScope(): boolean {
-    return (
-      !this.isMaster() ||
-      Boolean(
-        readStoredEnvironmentUUID() ??
-        normalizeEnvironmentUUID(this.vpsAuth.user()?.EnvironmentUUID),
-      )
-    );
+    return !this.isMaster();
   }
 
   private async fetchCustomers() {
