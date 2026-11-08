@@ -266,23 +266,6 @@ const config = defineCrud({
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
         },
         {
-          key: 'contractsAccountUUID',
-          source: 'BciSourceResourceUUID',
-          label: 'contracts.account',
-          type: 'search-select',
-          help: 'contracts.contractItemHelp',
-          hiddenWhen: ({ values }) => values['module'] !== 'contracts',
-          requiredWhen: ({ values }) => values['module'] === 'contracts',
-          remoteLookup: {
-            endpoint: 'contracts/accounts?status=1',
-            uuidField: 'CtaUUID',
-            labelField: 'CtaName',
-          },
-          quickCreate: false,
-          quickCreateExemptReason:
-            'Contract accounts are created by account administrators in Customer accounts.',
-        },
-        {
           key: 'conversationsAccountUUID',
           source: 'BciSourceResourceUUID',
           label: 'conversations.account',
@@ -357,6 +340,18 @@ const config = defineCrud({
             'Commerce accounts are created by account administrators in Sales › Commerce accounts.',
         },
         {
+          key: 'contractsAccountUUID',
+          label: 'contracts.account',
+          type: 'search-select',
+          source: 'BciSourceResourceUUID',
+          help: 'contracts.contractItemHelp',
+          remoteLookup: { endpoint: 'contracts/accounts?status=1', uuidField: 'CtaUUID', labelField: 'CtaName' },
+          hiddenWhen: ({ values }) => values['module'] !== 'contracts',
+          requiredWhen: ({ values }) => values['module'] === 'contracts',
+          quickCreate: false,
+          quickCreateExemptReason: 'Customer accounts manage contract accounts.',
+        },
+        {
           key: 'productUUID',
           source: 'SaleProductSprUUID',
           label: 'Catalog item',
@@ -423,16 +418,16 @@ const config = defineCrud({
         },
         {
           key: 'contractsMetric',
-          source: 'BciMetric',
           label: 'contracts.billingMetric',
           type: 'select',
+          source: 'BciMetric',
           options: CONTRACT_USAGE_METRICS,
           help: 'contracts.billingMetricHelp',
+          span: 1,
           hiddenWhen: ({ values }) =>
             values['kind'] !== 'usage' || values['module'] !== 'contracts',
           requiredWhen: ({ values }) =>
             values['kind'] === 'usage' && values['module'] === 'contracts',
-          span: 1,
         },
         {
           key: 'cyberMetric',
