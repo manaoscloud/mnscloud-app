@@ -1,7 +1,7 @@
 {
   "9000": "9000",
-  "hostingVps.platformDescription": "Manage internal platform VPS and commercial customer VPS. Select an environment to choose its customers.",
-  "hostingVps.platformCustomerHelp": "Leave empty for an internal platform VPS without a commercial subscription. Select a customer for a commercial VPS. Ownership cannot be changed after creation.",
+  "hostingVps.platformDescription": "Internal platform VPS. A customer's VPS is created and operated with its environment selected.",
+  "hostingVps.platformCustomerHelp": "Internal platform VPS, without a commercial subscription. To create a VPS for a customer, select the customer's environment first. Ownership cannot be changed after creation.",
   "webhostResale.publication": "Portal publication",
   "webhostResale.publicationDescription": "Publish access explicitly. The Webhost customer area is delivered in the next integration phase.",
   "webhostResale.enabled": "Published in the Portal",

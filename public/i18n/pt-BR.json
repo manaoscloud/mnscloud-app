@@ -1,7 +1,7 @@
 {
   "9000": "9000",
-  "hostingVps.platformDescription": "Gerencie VPS internas da plataforma e VPS comerciais de clientes. Selecione um ambiente para escolher seus clientes.",
-  "hostingVps.platformCustomerHelp": "Deixe vazio para uma VPS interna da plataforma, sem assinatura comercial. Selecione um cliente para uma VPS comercial. A propriedade não pode ser alterada depois da criação.",
+  "hostingVps.platformDescription": "VPS internas da plataforma. A VPS de um cliente é criada e operada com o ambiente dele selecionado.",
+  "hostingVps.platformCustomerHelp": "VPS interna da plataforma, sem assinatura comercial. Para criar uma VPS para um cliente, selecione antes o ambiente do cliente. A propriedade não pode ser alterada depois da criação.",
   "webhostResale.publication": "Publicação no Portal",
   "webhostResale.publicationDescription": "Publique o acesso explicitamente. A área Webhost do cliente será entregue na próxima fase de integração.",
   "webhostResale.enabled": "Publicado no Portal",
