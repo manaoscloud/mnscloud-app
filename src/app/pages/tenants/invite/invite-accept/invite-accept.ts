@@ -2,6 +2,7 @@ import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormField, form, minLength, required } from '@angular/forms/signals';
 import { TenantsService } from '../../tenants.service';
+import { writeStoredEnvironmentUUID } from '../../../../core/environment/environment-context';
 import { StateMessageComponent } from '../../../../shared/state-message/state-message';
 import { InviteSessionService } from '../../../../services/invite-session.service';
 import type { InviteValidateData } from '../../../../models/invite-validate.model';
@@ -111,9 +112,7 @@ export class InviteAcceptPage {
       const validate = await this.accessService.validateInviteToken(this.token);
       inviteData = validate?.data ?? validate;
 
-      if (inviteData?.EnvironmentUUID && typeof localStorage !== 'undefined') {
-        localStorage.setItem('mc_current_env', inviteData.EnvironmentUUID);
-      }
+      if (inviteData?.EnvironmentUUID) writeStoredEnvironmentUUID(inviteData.EnvironmentUUID);
     } catch (err: any) {
       console.error('❌ validate invite error:', err);
       this.error.set(err?.error?.message ?? this.i18n.t('Invalid or expired invitation token.'));

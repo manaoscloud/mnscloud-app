@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { injectPlatformScope } from '../../../../core/scope/route-scope';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -14,7 +15,6 @@ import {
   DataViewerTone,
   openDataViewerDialog,
 } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { AuthService } from '../../../../services/auth.service';
 
 const STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'queued', label: 'Queued' },
@@ -148,19 +148,16 @@ const MESSAGES_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HostingSmtpMessagesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly auth = inject(AuthService);
 
-  private readonly isMaster = computed(() =>
-    (this.auth.user()?.permissions ?? []).includes('platform.master.access') ||
-    (this.auth.user()?.permissions ?? []).includes('platform.hosting.smtp.manage'),
-  );
+  /** /system/hosting/smtp/messages lists platform messages; the tenant route, the tenant's. */
+  private readonly platformScope = injectPlatformScope();
 
   constructor() {
     super(MESSAGES_CONFIG);
   }
 
   protected override listEndpoint(): string {
-    return this.isMaster() ? 'system/hosting/smtp/messages' : 'hosting/smtp/messages';
+    return this.platformScope ? 'system/hosting/smtp/messages' : 'hosting/smtp/messages';
   }
 
   override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {

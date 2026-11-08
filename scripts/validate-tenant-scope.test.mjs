@@ -33,3 +33,13 @@ test('fails on growth, new files and stale baseline', () => {
   );
   assert.equal(compare({}, base).length, 1);
 });
+
+test('skips a use marked tenant-scope-exempt with a reason, on its line or the line above', () => {
+  const source = `
+    // tenant-scope-exempt: the single store of the selected tenant
+    if (typeof localStorage === 'undefined') return normalizeEnvironmentUUID(value);
+    localStorage.setItem('x', normalizeEnvironmentUUID(v)); // tenant-scope-exempt: same store
+    const z = localStorage.getItem('selectedEnvironment');
+    localStorage.setItem('y', readEnvironment()); // tenant-scope-exempt:`;
+  assert.deepEqual(countSource(source), { 'scope-from-storage': 2 });
+});

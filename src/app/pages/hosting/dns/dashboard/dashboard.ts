@@ -149,7 +149,7 @@ export class HostingDnsDashboardPage {
   private readonly snack = inject(SnackbarService);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
+  readonly platformScope = computed(() => this.scope() === 'master');
 
   readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
@@ -329,7 +329,7 @@ export class HostingDnsDashboardPage {
 
   async loadDashboardSnapshot(): Promise<DnsDashboardSnapshot> {
     const response = await this.api.get<{ data?: DnsDashboardSnapshot }>(
-      `${this.isMaster() ? 'system/' : ''}hosting/dns/dashboard?limit=50`,
+      `${this.platformScope() ? 'system/' : ''}hosting/dns/dashboard?limit=50`,
       { timeout: 30000 },
     );
     const data = response?.data;
@@ -346,11 +346,11 @@ export class HostingDnsDashboardPage {
   }
 
   routeTo(section: 'providers' | 'domains') {
-    return this.isMaster() ? ['/system/hosting/dns', section] : ['/hosting/dns', section];
+    return this.platformScope() ? ['/system/hosting/dns', section] : ['/hosting/dns', section];
   }
 
   domainRecordsLink(row: DomainRow) {
-    const base = this.isMaster() ? '/system/hosting/dns/domains' : '/hosting/dns/domains';
+    const base = this.platformScope() ? '/system/hosting/dns/domains' : '/hosting/dns/domains';
     return [base, row.uuid, 'records'];
   }
 

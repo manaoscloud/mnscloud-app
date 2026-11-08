@@ -1,4 +1,5 @@
 import { capacityExpiryInstant } from '../capacity-expiry';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 import { capacityScopeLabel } from '../capacity-scope';
 import { Component, computed, inject, signal } from '@angular/core';
 
@@ -224,15 +225,26 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly tenantRecords = signal<TenantAccess[]>([]);
   private readonly loadingUsers = signal(false);
   private readonly loadingTenants = signal(false);
+  /**
+   * /system/user/permissions is the governance view (grants of every tenant through the registered
+   * user.governance function: list and revoke). /user/permissions manages the grants of the
+   * selected tenant only, the master included; a master may also give a platform permission to a
+   * member of that tenant, which goes to the platform grants endpoint by its permission code.
+   */
+  private readonly platformScope = injectPlatformScope();
   private readonly isMaster = computed(() =>
     (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
   );
+  override readonly canCreate = computed(() => !this.platformScope);
 
   constructor() {
     super(PERMISSION_CONFIG);
     void this.loadCatalog();
-    void this.loadTenants();
-    void this.loadUsers();
+    // The governance view only lists and revokes; the form lookups belong to the tenant route.
+    if (!this.platformScope) {
+      void this.loadTenants();
+      void this.loadUsers();
+    }
   }
 
   override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
@@ -268,15 +280,19 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   protected override listEndpoint(): string {
-    return this.isMaster() ? 'user/permissions/platform/grants' : 'user/permissions/grants';
+    return this.platformScope ? 'user/permissions/platform/grants' : 'user/permissions/grants';
   }
 
   protected override createEndpoint(): string {
-    return this.isMaster() ? 'user/permissions/platform/grants' : 'user/permissions/grants';
+    return this.fieldValueString('permissionCode').startsWith('platform.')
+      ? 'user/permissions/platform/grants'
+      : 'user/permissions/grants';
   }
 
-  protected override deleteEndpointFor(_row: ConfigurableCrudRecord): string {
-    return this.isMaster() ? 'user/permissions/platform/grants' : 'user/permissions/grants';
+  protected override deleteEndpointFor(row: ConfigurableCrudRecord): string {
+    return this.platformScope || String(row['permissionCode'] ?? '').startsWith('platform.')
+      ? 'user/permissions/platform/grants'
+      : 'user/permissions/grants';
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -296,14 +312,6 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
     if (key === 'permissionCode' && String(value ?? '').startsWith('platform.')) {
       this.setFieldValue('environmentUUID', '');
       return;
-    }
-
-    if (key === 'environmentUUID') {
-      const tenant = this.tenantRecords().find(
-        (item) => item.EnvironmentUUID === String(value ?? ''),
-      );
-      if (tenant) this.selectTenantContext(tenant);
-      void this.loadUsers();
     }
   }
 
@@ -361,12 +369,9 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
   private async loadTenants(): Promise<void> {
     this.loadingTenants.set(true);
     try {
-      if (this.tenantService.tenants().length === 0) await this.tenantService.loadTenants();
-      let tenants = this.tenantService.tenants();
-      if (this.isMaster()) {
-        const masterLookup = await this.fetchMasterTenantLookup();
-        if (masterLookup.length) tenants = masterLookup;
-      }
+      // A grant belongs to the selected tenant (the master acts inside it): no cross-tenant picker.
+      const selectedTenant = this.tenantService.selectedTenant();
+      const tenants = selectedTenant ? [selectedTenant] : [];
       this.tenantRecords.set(tenants);
       this.tenantOptions.set(tenants.map((tenant) => this.tenantOption(tenant)));
       const selected = this.tenantService.selectedTenant()?.EnvironmentUUID;
@@ -377,25 +382,6 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
       this.snack.error(this.errorMessage(error) || 'Failed to load tenants.');
     } finally {
       this.loadingTenants.set(false);
-    }
-  }
-
-  private async fetchMasterTenantLookup(): Promise<TenantAccess[]> {
-    try {
-      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-        'system/billing/tenants?search=&limit=500&offset=0',
-      );
-      return (response.data?.items ?? [])
-        .map((row) => ({
-          EnvironmentUUID: String(row['EnvironmentUUID'] ?? row['environmentUUID'] ?? ''),
-          EnvironmentName: String(
-            row['EnvironmentName'] ?? row['environmentName'] ?? row['TenantEmail'] ?? '',
-          ),
-          Status: Number(row['TenantStatus'] ?? row['status'] ?? 1),
-        }))
-        .filter((tenant) => tenant.EnvironmentUUID);
-    } catch {
-      return [];
     }
   }
 
@@ -421,13 +407,6 @@ export class UserPermissionsPage extends ConfigurableCrudPageBase<ConfigurableCr
       description: tenant.EnvironmentUUID,
       searchText: `${tenant.EnvironmentName} ${tenant.EnvironmentUUID}`,
     };
-  }
-
-  private selectTenantContext(tenant: TenantAccess): void {
-    this.tenantService.selectedTenant.set(tenant);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('mc_current_env', tenant.EnvironmentUUID);
-    }
   }
 
   private userOption(member: ConfigurableCrudRecord): ConfigurableCrudOption {

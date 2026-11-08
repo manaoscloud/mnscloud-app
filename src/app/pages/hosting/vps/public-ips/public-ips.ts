@@ -152,10 +152,12 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   private readonly route = inject(ActivatedRoute);
   private readonly providers = signal<HostingVpsProvider[]>([]);
   private readonly instances = signal<HostingVpsInstance[]>([]);
-  private readonly isMaster = computed(
+  private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly ipEndpoint = computed(() => `${this.base()}/public-ips`);
 
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -177,8 +179,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
       canCreate: true,
       // A tenant edits only the reverse DNS name (PTR) of an IP it contracted (PD5b).
       canEditRow: (row) =>
-        this.isMaster() || (Number(row['IsMine']) === 1 && row['HpiStatus'] === 'allocated'),
-      canDeleteRow: (row) => this.isMaster() && row['HpiStatus'] !== 'allocated',
+        this.platformScope() || (Number(row['IsMine']) === 1 && row['HpiStatus'] === 'allocated'),
+      canDeleteRow: (row) => this.platformScope() && row['HpiStatus'] !== 'allocated',
       fields: [
         {
           key: 'providerUUID',
@@ -189,8 +191,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           span: 1,
           disabledWhen: ({ editing }) => editing,
           // A tenant with a single provider does not choose it.
-          requiredWhen: () => this.isMaster() || this.providerOptions().length > 1,
-          hiddenWhen: () => !this.isMaster() && this.providerOptions().length <= 1,
+          requiredWhen: () => this.platformScope() || this.providerOptions().length > 1,
+          hiddenWhen: () => !this.platformScope() && this.providerOptions().length <= 1,
         },
         {
           key: 'address',
@@ -200,8 +202,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           placeholder: '203.0.113.10',
           span: 1,
           disabledWhen: ({ editing }) => editing,
-          requiredWhen: () => this.isMaster(),
-          hiddenWhen: () => !this.isMaster(),
+          requiredWhen: () => this.platformScope(),
+          hiddenWhen: () => !this.platformScope(),
         },
         {
           key: 'ipStatus',
@@ -222,7 +224,7 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           placeholder: 'mail.example.com',
           help: 'Host name the reverse DNS of this IP returns. Empty = generated name. For e-mail, the name must also resolve to this IP.',
           span: 1,
-          hiddenWhen: () => this.isMaster(),
+          hiddenWhen: () => this.platformScope(),
         },
         {
           key: 'notes',
@@ -233,12 +235,12 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           tab: 'notes',
           span: 4,
           rows: 4,
-          hiddenWhen: () => !this.isMaster(),
+          hiddenWhen: () => !this.platformScope(),
         },
       ],
     });
     void this.fetchCatalog();
-    if (!this.isMaster()) {
+    if (!this.platformScope()) {
       this.config.createTitle = 'Contract public IP';
       this.config.dialogDescription =
         'A free public IPv4 address is contracted automatically and billed monthly from your prepaid credit until you release it.';
@@ -251,7 +253,7 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override createEndpoint(): string {
-    return this.isMaster() ? this.ipEndpoint() : `${this.ipEndpoint()}/allocate`;
+    return this.platformScope() ? this.ipEndpoint() : `${this.ipEndpoint()}/allocate`;
   }
 
   protected override updateEndpoint(): string {
@@ -287,13 +289,13 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    if (this.editingRecord() && !this.isMaster()) {
+    if (this.editingRecord() && !this.platformScope()) {
       return { ptrName: String(payload['ptrName'] ?? '').trim() };
     }
     if (this.editingRecord()) {
       return { status: payload['status'] || null, notes: payload['notes'] || null };
     }
-    if (!this.isMaster()) {
+    if (!this.platformScope()) {
       const options = this.providerOptions();
       return {
         providerUUID:
@@ -312,15 +314,16 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
     const associated = !!row['HostingVpsInstanceHviUUID'];
     const state = String(row['HpiNetworkState'] ?? '');
     const actions: ConfigurableCrudRowAction[] = [];
-    if (!this.isMaster() && row['HpiStatus'] === 'available') actions.push(ACTIONS.contract);
-    if (this.isMaster() && row['HpiStatus'] === 'available') actions.push(ACTIONS.reserve);
-    if ((mine || this.isMaster()) && row['HpiStatus'] === 'allocated' && !associated)
+    if (!this.platformScope() && row['HpiStatus'] === 'available') actions.push(ACTIONS.contract);
+    if (this.platformScope() && row['HpiStatus'] === 'available') actions.push(ACTIONS.reserve);
+    if ((mine || this.platformScope()) && row['HpiStatus'] === 'allocated' && !associated)
       actions.push(ACTIONS.assign);
-    if ((mine || this.isMaster()) && row['HpiStatus'] === 'allocated' && !associated)
+    if ((mine || this.platformScope()) && row['HpiStatus'] === 'allocated' && !associated)
       actions.push(ACTIONS.release);
-    if ((mine || this.isMaster()) && associated && state !== 'removing')
+    if ((mine || this.platformScope()) && associated && state !== 'removing')
       actions.push(ACTIONS.unassign);
-    if ((mine || this.isMaster()) && associated && state === 'failed') actions.push(ACTIONS.retry);
+    if ((mine || this.platformScope()) && associated && state === 'failed')
+      actions.push(ACTIONS.retry);
     return actions;
   }
 
@@ -367,7 +370,7 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
     if (action.key === 'release') {
       const ok = await this.confirmAction(
         'Release public IP',
-        this.isMaster() && !row['UserUsrUUID']
+        this.platformScope() && !row['UserUsrUUID']
           ? `Release ${address}? The address returns to the available pool.`
           : `Release ${address}? Its monthly charge ends and the address returns to the pool.`,
         'Release',
@@ -405,7 +408,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
           : (instance.HviConfig ?? {});
       return (
         instance.HostingVpsProviderHvrUUID === providerUUID &&
-        (!this.isMaster() || (instance.UserUsrUUID ?? null) === (row['UserUsrUUID'] ?? null)) &&
+        (!this.platformScope() ||
+          (instance.UserUsrUUID ?? null) === (row['UserUsrUUID'] ?? null)) &&
         !!instance.HviExternalId &&
         !!(config as Record<string, unknown>)['privateIpv4']
       );

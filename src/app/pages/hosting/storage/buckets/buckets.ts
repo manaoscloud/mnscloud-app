@@ -226,9 +226,9 @@ export class HostingStorageBucketsPage extends ConfigurableCrudPageBase<Configur
   private readonly route = inject(ActivatedRoute);
   private readonly providers = signal<HostingStorageProvider[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly rootEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/storage' : 'hosting/storage',
+    this.platformScope() ? 'system/hosting/storage' : 'hosting/storage',
   );
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/buckets`);
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>

@@ -199,12 +199,12 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   private readonly rawApi = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secret-accounts' : ACCOUNT_CONFIG.endpoint,
+    this.platformScope() ? 'system/cyber-security/secret-accounts' : ACCOUNT_CONFIG.endpoint,
   );
   private readonly serverLookupEndpoint = computed(() =>
-    this.isMaster() ? 'system/cyber-security/secret-servers' : 'cyber-security/secret-servers',
+    this.platformScope() ? 'system/cyber-security/secret-servers' : 'cyber-security/secret-servers',
   );
 
   readonly serverOptions = signal<ConfigurableCrudOption[]>([]);
@@ -251,7 +251,7 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
     await Promise.all([
       this.serverOptions().length ? Promise.resolve() : this.loadServers(),
       this.customerOptions().length ? Promise.resolve() : this.loadCustomers(),
-      this.isMaster() || this.cyberAccountOptions().length
+      this.platformScope() || this.cyberAccountOptions().length
         ? Promise.resolve()
         : this.loadCyberAccounts(),
     ]);
@@ -259,7 +259,7 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    const owner = this.isMaster()
+    const owner = this.platformScope()
       ? { customerUUID: payload['customerUUID'] }
       : { cyberAccountUUID: payload['cyberAccountUUID'] };
     return {
@@ -277,7 +277,7 @@ export class CyberSecuritySecretAccountsPage extends ConfigurableCrudPageBase<Co
       await Promise.all([
         this.loadServers(),
         this.loadCustomers(),
-        this.isMaster() ? Promise.resolve() : this.loadCyberAccounts(),
+        this.platformScope() ? Promise.resolve() : this.loadCyberAccounts(),
       ]);
     } finally {
       this.lookupsLoading.set(false);

@@ -283,9 +283,9 @@ const HOSTING_VPS_CONTAINER_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 export class HostingVpsContainerProviderPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster()
+    this.platformScope()
       ? 'system/hosting/vps-container/providers'
       : HOSTING_VPS_CONTAINER_PROVIDER_CONFIG.endpoint,
   );

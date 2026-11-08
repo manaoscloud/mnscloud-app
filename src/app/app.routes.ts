@@ -2660,7 +2660,8 @@ export const routes: Routes = [
           {
             path: 'system',
             canActivate: [permissionGuard],
-            data: { permission: 'platform.master.access' },
+            // Every /system page is a platform (master) page: children inherit the scope.
+            data: { permission: 'platform.master.access', scope: 'master' },
             children: [
               {
                 path: 'monitoring',
@@ -2677,6 +2678,14 @@ export const routes: Routes = [
                     (m) => m.MonitoringActivityLogsPage,
                   ),
                 title: 'System Monitoring • Activity Logs | mnscloud',
+              },
+              {
+                // Governance view of the special permissions of every tenant (user.governance).
+                path: 'user/permissions',
+                loadComponent: () =>
+                  import('./pages/user/permissions/permissions').then((m) => m.UserPermissionsPage),
+                title: 'System • Permissions | mnscloud',
+                data: { breadcrumb: 'nav.user.special-permissions' },
               },
               {
                 path: 'monitoring/incidents',

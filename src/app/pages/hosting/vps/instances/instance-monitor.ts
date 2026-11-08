@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, effect, inject, resource, signal } from '@angular/core';
+import { routeScopeOf } from '../../../../core/scope/route-scope';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
@@ -65,10 +66,7 @@ export class VpsInstanceMonitorPage {
 
   readonly uuid = this.data?.uuid ?? this.route.snapshot.paramMap.get('uuid') ?? '';
   readonly scope = signal<'tenant' | 'master'>(
-    this.data?.scope ??
-      (this.router.url.startsWith('/system') || this.route.snapshot.data?.['scope'] === 'master'
-        ? 'master'
-        : 'tenant'),
+    this.data?.scope ?? routeScopeOf(this.route.snapshot),
   );
   readonly name = signal(this.data?.name ?? '');
   readonly hours = signal(

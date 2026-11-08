@@ -432,18 +432,18 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private activePlanUUID = '';
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly isPlatformMasterUser = computed(() =>
     (this.vpsAuth.user()?.permissions ?? []).includes('platform.master.access'),
   );
   private readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
+    this.platformScope() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
+    this.platformScope() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
   );
   private readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
+    this.platformScope() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
   );
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -461,7 +461,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     // A VPS created from /system for a customer belongs to that customer: of the platform networks
     // (the only ones /system lists) it may join only the platform default networks.
     const forCustomer =
-      this.isMaster() && String(this.formValues()['customerUUID'] ?? '').trim().length > 0;
+      this.platformScope() && String(this.formValues()['customerUUID'] ?? '').trim().length > 0;
     return this.networks()
       .filter(
         (network) =>
@@ -549,7 +549,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     });
 
     const customerFilter = this.config.listFilters?.find((filter) => filter.key === 'customerUUID');
-    if (this.isMaster()) {
+    if (this.platformScope()) {
       this.config.pageDescription = 'hostingVps.platformDescription';
       this.config.dialogDescription = 'hostingVps.platformCustomerHelp';
     }
@@ -559,9 +559,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (customerField) {
       customerField.hiddenWhen = () => !this.hasCustomerScope();
       customerField.required = false;
-      customerField.requiredWhen = () => !this.isMaster();
+      customerField.requiredWhen = () => !this.platformScope();
       customerField.disabledWhen = ({ editing }) => editing;
-      customerField.helpWhen = () => (this.isMaster() ? 'hostingVps.platformCustomerHelp' : '');
+      customerField.helpWhen = () =>
+        this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
 
     const provisionedLockKeys = [
@@ -886,7 +887,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       await openVpsInstanceConsole(this.dialog, {
         uuid: this.recordUUID(row),
         name: String(row['HviName'] ?? ''),
-        scope: this.isMaster() ? 'master' : 'tenant',
+        scope: this.platformScope() ? 'master' : 'tenant',
       });
       return;
     }
@@ -1242,7 +1243,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     } catch (error) {
       this.providers.set([]);
       // Plans come from the platform catalog; providers are optional for the picker.
-      if (this.isMaster()) {
+      if (this.platformScope()) {
         this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
       }
     }
@@ -1253,7 +1254,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
    * a customer's server is created with its tenant selected, acting as the tenant.
    */
   private hasCustomerScope(): boolean {
-    return !this.isMaster();
+    return !this.platformScope();
   }
 
   private async fetchCustomers() {
@@ -1273,7 +1274,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async fetchNetworkCatalog() {
-    const base = this.isMaster() ? 'system/hosting/vps' : 'hosting/vps';
+    const base = this.platformScope() ? 'system/hosting/vps' : 'hosting/vps';
     try {
       const [networks, firewalls] = await Promise.all([
         this.api.get<{ data?: { items?: HostingVpsNetwork[] } }>(
@@ -1443,7 +1444,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     await openVpsInstanceMonitor(this.dialog, {
       uuid: this.recordUUID(row),
       name: String(row['HviName'] ?? ''),
-      scope: this.isMaster() ? 'master' : 'tenant',
+      scope: this.platformScope() ? 'master' : 'tenant',
     });
   }
 

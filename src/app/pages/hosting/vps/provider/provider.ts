@@ -1071,9 +1071,9 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 export class HostingVpsProviderPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : HOSTING_VPS_PROVIDER_CONFIG.endpoint,
+    this.platformScope() ? 'system/hosting/vps/providers' : HOSTING_VPS_PROVIDER_CONFIG.endpoint,
   );
 
   constructor() {
@@ -1111,7 +1111,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
 
   /** Turning on the isolated network per customer fills its empty fields with this environment's recommendation. */
   protected override onFieldValueChanged(key: string, value: unknown): void {
-    if (key !== 'sdnTenantZones' || truthyNumber(value) !== 1 || !this.isMaster()) return;
+    if (key !== 'sdnTenantZones' || truthyNumber(value) !== 1 || !this.platformScope()) return;
     void this.prefillTenantZones();
   }
 

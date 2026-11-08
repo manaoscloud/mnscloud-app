@@ -8,6 +8,11 @@
 
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
+import {
+  normalizeEnvironmentUUID,
+  readStoredEnvironmentUUID,
+  writeStoredEnvironmentUUID,
+} from '../core/environment/environment-context';
 
 export interface TenantAccess {
   EnvironmentUUID: string;
@@ -47,7 +52,6 @@ export class TenantService {
   }
 
   // Chave única usada também pelo ApiService para enviar o header
-  private readonly LS_KEY = 'mc_current_env';
 
   // ----------------------------------------------------------
   // Carrega tenants do backend
@@ -62,10 +66,12 @@ export class TenantService {
       this.tenants.set(list);
 
       // Recupera tenant previamente salvo
-      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(this.LS_KEY) : null;
+      const saved = readStoredEnvironmentUUID();
 
       if (saved) {
-        const found = list.find((t: TenantAccess) => t.EnvironmentUUID === saved);
+        const found = list.find(
+          (t: TenantAccess) => normalizeEnvironmentUUID(t.EnvironmentUUID) === saved,
+        );
 
         if (found) {
           this.selectedTenant.set(found);
@@ -79,9 +85,7 @@ export class TenantService {
         const target = defaultTenant ?? list[0];
         this.selectedTenant.set(target);
 
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(this.LS_KEY, target.EnvironmentUUID);
-        }
+        writeStoredEnvironmentUUID(target.EnvironmentUUID);
       }
     } catch (err) {
       console.error('❌ Failed to load tenants (user/access)', err);
@@ -98,8 +102,6 @@ export class TenantService {
   setTenant(env: TenantAccess) {
     this.selectedTenant.set(env);
 
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(this.LS_KEY, env.EnvironmentUUID);
-    }
+    writeStoredEnvironmentUUID(env.EnvironmentUUID);
   }
 }
