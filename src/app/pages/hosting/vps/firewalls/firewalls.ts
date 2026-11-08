@@ -11,6 +11,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import type { HostingVpsInstance, HostingVpsNetwork } from '../vps.types';
+import { attachableInstances, serverRowRight } from '../vps.types';
 
 const OUTBOUND_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'accept', label: 'Allow all outbound' },
@@ -131,8 +132,9 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
   private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
   private readonly firewallEndpoint = computed(() => `${this.base()}/firewalls`);
 
+  // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.instances().map((instance) => ({
+    attachableInstances(this.instances(), this.isMaster()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
@@ -157,8 +159,11 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
     super({
       ...config,
       // Platform profiles are templates for tenants: applied from the instance form, edited by master.
-      canEditRow: (row) => this.isMaster() || !!row['UserUsrUUID'],
-      canDeleteRow: (row) => this.isMaster() || !!row['UserUsrUUID'],
+      // The server decides (owner only; delete only when no instance uses the profile).
+      canEditRow: (row) =>
+        serverRowRight(row, 'CanEdit', () => this.isMaster() || !!row['UserUsrUUID']),
+      canDeleteRow: (row) =>
+        serverRowRight(row, 'CanDelete', () => this.isMaster() || !!row['UserUsrUUID']),
       fields: [
         { key: 'status', source: 'HvfIsActive', label: 'Status', type: 'status', span: 1 },
         {

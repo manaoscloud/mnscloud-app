@@ -17,7 +17,7 @@ import type {
   HostingVpsPlan,
   HostingVpsProvider,
 } from '../vps.types';
-import { isAccountDefaultNetwork } from '../vps.types';
+import { attachableInstances, isAccountDefaultNetwork, serverRowRight } from '../vps.types';
 
 const NETWORK_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'queued', label: 'Queued' },
@@ -62,8 +62,10 @@ const config = defineCrud({
   deleteFailedMessage: 'Failed to delete private network.',
   bulkDelete: true,
   pageSizeOptions: [5, 10, 25, 100],
-  canEditRow: (row) => Number(row['HvnIsDefault'] ?? 0) !== 1,
-  canDeleteRow: (row) => Number(row['HvnIsDefault'] ?? 0) !== 1,
+  // The server decides: owner only, never a default network, delete only when no instance uses it.
+  canEditRow: (row) => serverRowRight(row, 'CanEdit', () => Number(row['HvnIsDefault'] ?? 0) !== 1),
+  canDeleteRow: (row) =>
+    serverRowRight(row, 'CanDelete', () => Number(row['HvnIsDefault'] ?? 0) !== 1),
   listFilters: [
     {
       key: 'providerUUID',
@@ -160,8 +162,9 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
     })),
   );
 
+  // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.instances().map((instance) => ({
+    attachableInstances(this.instances(), this.isMaster()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
