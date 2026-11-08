@@ -52,6 +52,9 @@ export class CyberSecurityDashboardPage {
   });
   readonly dashboard = this.snapshot.value;
   readonly actions = [
+    ...(this.router.url.startsWith('/system/cyber-security')
+      ? []
+      : [{ section: 'vulnerabilities', icon: 'bug_report', label: 'Review vulnerabilities' }]),
     { section: 'servers', icon: 'dns', label: 'Review server protection' },
     { section: 'profiles', icon: 'shield', label: 'Maintain security profiles' },
     { section: 'alerts', icon: 'notification_important', label: 'Investigate open alerts' },

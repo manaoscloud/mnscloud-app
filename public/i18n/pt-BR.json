@@ -11917,5 +11917,6 @@
   "cyberSecurity.vuln.kevRansomware": "Usada por ransomware",
   "cyberSecurity.vuln.kevAction": "Ação exigida (KEV)",
   "cyberSecurity.vuln.published": "Publicada",
-  "cyberSecurity.vuln.loadFailed": "Não foi possível carregar a vulnerabilidade."
+  "cyberSecurity.vuln.loadFailed": "Não foi possível carregar a vulnerabilidade.",
+  "Review vulnerabilities": "Revisar vulnerabilidades"
 }
