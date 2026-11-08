@@ -25,6 +25,8 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     case 'workorders.order.overdue':
       return 'alarm';
+    case 'cyber_security.unblock_request':
+      return 'lock_open';
     case 'security.alert':
       return 'gpp_bad';
     case 'security.protection':
@@ -82,6 +84,8 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
       );
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });
+    case 'cyber_security.unblock_request':
+      return t('notifications.cyberUnblockRequest', { value: param('value') });
     case 'security.alert':
       return t('notifications.securityCriticalAlert', { server: param('server') });
     case 'security.protection':
@@ -152,7 +156,7 @@ export function notificationDescription(item: InboxNotification, language: strin
             item.type === 'website.order.cancelled' ||
             item.type === 'website.order.plan_changed'
           ? item.params['offer']
-          : item.type.startsWith('logs.account.')
+          : item.type.startsWith('logs.account.') || item.type === 'cyber_security.unblock_request'
             ? item.params['account']
             : item.type === 'voip.pabx.extension.offline'
               ? item.params['extensions']

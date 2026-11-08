@@ -18,6 +18,7 @@ export type NotificationType =
   | 'voip.pabx.extension.offline'
   | 'dns.monitor.target'
   | 'workorders.order.overdue'
+  | 'cyber_security.unblock_request'
   | 'website.order.activation'
   | 'website.order.cancelled'
   | 'website.order.plan_changed'
