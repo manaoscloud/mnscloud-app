@@ -1,4 +1,7 @@
-import { Component, resource } from '@angular/core';
+import { Component, inject, resource } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
@@ -146,7 +149,33 @@ export class RegEmployeesPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   });
 
   constructor() {
-    super(config);
+    const router = inject(Router);
+    const auth = inject(AuthService);
+    super({
+      ...config,
+      rowActions: [
+        {
+          key: 'pulseAccess',
+          label: 'Pulse access',
+          icon: 'badge',
+          tooltip: 'Pulse access',
+          // HR › Time clock accounts: needs the HR module and its permission.
+          visible: () =>
+            hasEffectivePermission(
+              auth.user()?.permissions ?? [],
+              'tenant.hr.time-clock-accounts.read',
+            ),
+          run: async (row) => {
+            await router.navigate(['/hr/time-clock-accounts'], {
+              queryParams: {
+                employeeUUID: row['EmployeeUUID'],
+                employeeName: row['Name'] ?? null,
+              },
+            });
+          },
+        },
+      ],
+    });
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
