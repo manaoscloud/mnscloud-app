@@ -25,6 +25,7 @@ type CyberSummary = Partial<{
 export class CyberSecurityDashboardPage {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   /** Counters of one Cyber Security account (opened from Customer accounts); empty = every account. */
   readonly cyberAccountUUID = inject(ActivatedRoute).snapshot.queryParamMap.get('cyberAccountUUID');
   readonly cyberAccountName = signal('');
@@ -52,7 +53,8 @@ export class CyberSecurityDashboardPage {
   });
   readonly dashboard = this.snapshot.value;
   readonly actions = [
-    ...(this.router.url.startsWith('/system/cyber-security')
+    // Vulnerabilities live only in the tenant area (findings of the selected tenant's servers).
+    ...(this.route.snapshot.data['scope'] === 'master'
       ? []
       : [{ section: 'vulnerabilities', icon: 'bug_report', label: 'Review vulnerabilities' }]),
     { section: 'servers', icon: 'dns', label: 'Review server protection' },
