@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e0a8ee50abe6",
+  "version": "7aa9e67f4fcc",
   "language": "pt-BR",
   "entries": [
     {
@@ -10443,6 +10443,51 @@
         },
         {
           "label": "Período de retenção (dias)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/user/permissions",
+      "menuPath": "Usuário › Permissões › Exceções",
+      "scope": "platform",
+      "title": "Permissões especiais",
+      "description": "Crie exceções específicas por usuário fora dos perfis de acesso.",
+      "fields": [
+        {
+          "label": "Usuário",
+          "help": ""
+        },
+        {
+          "label": "Permissão",
+          "help": ""
+        },
+        {
+          "label": "Efeito",
+          "help": ""
+        },
+        {
+          "label": "Tenant",
+          "help": ""
+        },
+        {
+          "label": "capacityAccess.restrict",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.clusters",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "capacityAccess.providers",
+          "help": "capacityAccess.scopeHelp"
+        },
+        {
+          "label": "Expiração",
+          "help": ""
+        },
+        {
+          "label": "Motivo",
           "help": ""
         }
       ]
