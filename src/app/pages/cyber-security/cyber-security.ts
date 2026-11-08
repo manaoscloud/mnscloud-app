@@ -301,6 +301,66 @@ function vulnerabilityFindings(row: ConfigurableCrudRecord): ConfigurableCrudCon
         inline: true,
         run: (finding) => showRemediation(finding),
       },
+      {
+        key: 'acceptRisk',
+        label: 'cyberSecurity.vuln.acceptRisk',
+        icon: 'verified_user',
+        visible: (finding) => finding['status'] === 'open',
+        form: (finding) => riskAcceptanceForm(finding),
+      },
+      {
+        key: 'revokeRisk',
+        label: 'cyberSecurity.vuln.revokeRisk',
+        icon: 'undo',
+        visible: (finding) => finding['status'] === 'accepted_risk',
+        request: {
+          method: 'delete',
+          endpoint: (finding) => riskAcceptanceEndpoint(finding),
+          successMessage: 'cyberSecurity.vuln.riskRevoked',
+          confirm: {
+            title: 'cyberSecurity.vuln.revokeRisk',
+            message: 'cyberSecurity.vuln.revokeRiskConfirm',
+            confirmLabel: 'cyberSecurity.vuln.revokeRisk',
+          },
+        },
+      },
+    ],
+  });
+}
+
+const riskAcceptanceEndpoint = (finding: ConfigurableCrudRecord) =>
+  `cyber-security/vulnerabilities/findings/${encodeURIComponent(String(finding['findingUUID']))}/risk-acceptance`;
+
+/** Accept the risk of an open finding until a date (at most one year) with a reason (V4). */
+function riskAcceptanceForm(finding: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: riskAcceptanceEndpoint(finding),
+    uuidField: 'findingUUID',
+    pageTitle: 'cyberSecurity.vuln.acceptRisk',
+    pageDescription: 'cyberSecurity.vuln.acceptRiskDescription',
+    createTitle: 'cyberSecurity.vuln.acceptRisk',
+    savedMessage: 'cyberSecurity.vuln.riskAccepted',
+    statusFilter: false,
+    initialValues: { until: '', reason: '' },
+    columns: [],
+    fields: [
+      {
+        key: 'until',
+        label: 'cyberSecurity.vuln.riskUntil',
+        type: 'date',
+        required: true,
+        span: 1,
+        help: 'cyberSecurity.vuln.riskUntilHelp',
+      },
+      {
+        key: 'reason',
+        label: 'cyberSecurity.vuln.riskReason',
+        type: 'textarea',
+        required: true,
+        span: 4,
+        rows: 4,
+        help: 'cyberSecurity.vuln.riskReasonHelp',
+      },
     ],
   });
 }
@@ -919,6 +979,20 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
           label: 'cyberSecurity.vuln.attacked',
           value: finding['attacked'] ? this.t('Yes') : this.t('No'),
         },
+        ...(finding['status'] === 'accepted_risk'
+          ? [
+              {
+                label: 'cyberSecurity.vuln.riskUntil',
+                value: finding['riskAcceptedUntil'] ?? '',
+                kind: 'datetime' as const,
+              },
+              { label: 'cyberSecurity.vuln.riskReason', value: finding['riskReason'] ?? '' },
+              {
+                label: 'cyberSecurity.vuln.riskAcceptedVia',
+                value: this.t(`cyberSecurity.vuln.riskVia.${finding['riskAcceptedVia'] ?? 'app'}`),
+              },
+            ]
+          : []),
       ],
       sections: [
         update && fix.command
