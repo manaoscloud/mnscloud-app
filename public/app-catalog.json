@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "b59e70123344",
+  "version": "ef87d5548521",
   "language": "pt-BR",
   "entries": [
     {
@@ -3628,6 +3628,47 @@
       ]
     },
     {
+      "route": "/hr/employee-documents",
+      "menuPath": "Recursos humanos › Documentos",
+      "scope": "tenant",
+      "title": "Documentos dos colaboradores",
+      "description": "Documentos, advertências e holerites que os colaboradores veem e dão ciência no Pulse, e os documentos que eles enviam ao RH.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Competência",
+          "help": "Mês do holerite, por exemplo 2026-10."
+        },
+        {
+          "label": "Pedir ciência",
+          "help": "Advertências e holerites sempre pedem."
+        },
+        {
+          "label": "Arquivo",
+          "help": "PDF ou imagem de até 10 MB. Opcional para advertência."
+        },
+        {
+          "label": "Texto",
+          "help": "Obrigatório para advertência: o colaborador lê antes de dar ciência."
+        },
+        {
+          "label": "Documento",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/holidays",
       "menuPath": "Recursos humanos › Feriados",
       "scope": "tenant",
@@ -3656,6 +3697,47 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/notices",
+      "menuPath": "Recursos humanos › Avisos",
+      "scope": "tenant",
+      "title": "Avisos",
+      "description": "Avisos da empresa que os colaboradores leem no Pulse, com quem leu e quem deu ciência de cada um.",
+      "fields": [
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": "Vazio: todos os colaboradores da conta."
+        },
+        {
+          "label": "Pedir ciência",
+          "help": ""
+        },
+        {
+          "label": "Publicar em",
+          "help": "Vazio: agora."
+        },
+        {
+          "label": "Mostrar até",
+          "help": "Vazio: sem fim. O aviso some no início deste dia."
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Texto",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
@@ -3844,6 +3926,14 @@
           "help": "Colaboradores do Cadastro; o espelho precisa de uma escala atribuída."
         }
       ]
+    },
+    {
+      "route": "/hr/vacation-balances",
+      "menuPath": "Recursos humanos › Férias",
+      "scope": "tenant",
+      "title": "Férias",
+      "description": "Saldo de férias de cada colaborador por período aquisitivo, a partir da data de admissão em Cadastros. Os pedidos são decididos em Solicitações e viram ausências do tipo Férias.",
+      "fields": []
     },
     {
       "route": "/hr/work-schedule-assignments",
