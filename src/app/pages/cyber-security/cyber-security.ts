@@ -22,6 +22,16 @@ import {
   exposureView,
   triageView,
 } from './cyber-ai';
+import {
+  findingPatchAction,
+  patchRunsCollection,
+  patchServerActions,
+  rebootOptions,
+  runStateOptions,
+  runStateTone,
+  runView,
+  windowLabel,
+} from './cyber-patch';
 
 type CyberSection =
   | 'servers'
@@ -30,7 +40,8 @@ type CyberSection =
   | 'lists'
   | 'security-events'
   | 'vulnerabilities'
-  | 'inventory';
+  | 'inventory'
+  | 'patches';
 
 const options = (values: string[]): ConfigurableCrudOption[] =>
   values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
@@ -318,6 +329,7 @@ function vulnerabilityFindings(row: ConfigurableCrudRecord): ConfigurableCrudCon
         visible: (finding) => Boolean(finding['agentUUID']),
         run: (finding) => aiExplainDialog?.(finding),
       },
+      findingPatchAction,
       {
         key: 'acceptRisk',
         label: 'cyberSecurity.vuln.acceptRisk',
@@ -406,6 +418,8 @@ function vulnerabilityFindingsOfAgent(row: ConfigurableCrudRecord): Configurable
 let remediationDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
 let aiExplainDialog: ((finding: ConfigurableCrudRecord) => Promise<void>) | null = null;
 let platformMaster: () => boolean = () => false;
+let patchRunDialog: ((run: ConfigurableCrudRecord) => Promise<void>) | null = null;
+const showPatchRun = (run: ConfigurableCrudRecord) => void patchRunDialog?.(run);
 function showRemediation(finding: ConfigurableCrudRecord) {
   remediationDialog?.(finding);
 }
@@ -611,6 +625,74 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         },
       },
     ],
+  }),
+
+  patches: defineCrud({
+    ...readOnly,
+    endpoint: 'cyber-security/patch/servers',
+    uuidField: 'agentUUID',
+    pageTitle: 'cyberSecurity.patch.title',
+    pageDescription: 'cyberSecurity.patch.pageDescription',
+    serverSidePagination: true,
+    statusFilter: false,
+    filterActions: [
+      {
+        key: 'patchRuns',
+        label: 'cyberSecurity.patch.runs',
+        icon: 'history',
+        tooltip: 'cyberSecurity.patch.runsDescription',
+      },
+    ],
+    columns: [
+      { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
+      { id: 'os', label: 'cyberSecurity.inventory.os', field: 'osName', translateValue: false },
+      {
+        id: 'enabled',
+        label: 'cyberSecurity.patch.managed',
+        field: 'enabled',
+        kind: 'status',
+        options: [
+          { value: true, label: 'cyberSecurity.inventory.on' },
+          { value: false, label: 'cyberSecurity.inventory.off' },
+        ],
+        chipClass: (value: unknown) => (value === true ? 'chip-success' : 'chip-skipped'),
+      },
+      {
+        id: 'window',
+        label: 'cyberSecurity.patch.window',
+        value: (row, t) => windowLabel(row, t),
+      },
+      {
+        id: 'reboot',
+        label: 'cyberSecurity.patch.rebootPolicy',
+        field: 'rebootPolicy',
+        kind: 'status',
+        options: rebootOptions,
+      },
+      {
+        id: 'next',
+        label: 'cyberSecurity.patch.nextWindow',
+        field: 'nextWindowAt',
+        translateValue: false,
+      },
+      {
+        id: 'fixable',
+        label: 'cyberSecurity.patch.openFixable',
+        field: 'openFixable',
+        kind: 'number',
+      },
+      {
+        id: 'last',
+        label: 'cyberSecurity.patch.lastRun',
+        field: 'lastRunStatus',
+        kind: 'status',
+        options: runStateOptions,
+        chipClass: runStateTone,
+      },
+    ],
+    fields: [],
+    initialValues: {},
+    rowActions: patchServerActions(showPatchRun),
   }),
 
   servers: defineCrud({
@@ -888,6 +970,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const auth = inject(AuthService);
     remediationDialog = (finding) => this.showRemediation(finding);
     aiExplainDialog = (finding) => this.explainFinding(finding);
+    patchRunDialog = (run) => this.showPatchRun(run);
     platformMaster = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
   }
@@ -973,7 +1056,30 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     }
   }
 
+  /** Patch run detail with the Agent result (V6). */
+  async showPatchRun(run: ConfigurableCrudRecord): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `cyber-security/patch/runs/${encodeURIComponent(String(run['runUUID']))}`,
+      );
+      openDataViewerDialog(this.dialog, runView(response?.data ?? run, this.t.bind(this)));
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'cyberSecurity.patch.loadFailed'));
+    }
+  }
+
   override async handleFilterAction(action: { key: string }): Promise<void> {
+    if (action.key === 'patchRuns') {
+      return this.runRowAction(
+        {
+          key: 'patchRuns',
+          label: 'cyberSecurity.patch.runs',
+          icon: 'history',
+          collection: () => patchRunsCollection(showPatchRun),
+        },
+        {},
+      );
+    }
     if (action.key === 'aiDigest') return this.showDigest();
     if (action.key === 'aiTriage') return this.showTriage();
     if (action.key !== 'enableAll') return;
