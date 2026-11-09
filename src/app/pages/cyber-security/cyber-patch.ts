@@ -416,7 +416,7 @@ export function runView(
       title: t('cyberSecurity.patch.updated'),
       table: {
         columns: [
-          { key: 'kb', label: 'KB' },
+          { key: 'kb', label: t('cyberSecurity.patch.kb') },
           { key: 'title', label: t('cyberSecurity.patch.updateTitle') },
         ],
         rows: installed.map((item) => ({ kb: item['kb'], title: item['title'] })),
