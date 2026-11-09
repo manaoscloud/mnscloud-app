@@ -12279,5 +12279,14 @@
   "Each completed period of 12 months gives 30 days, to be taken within the next 12 months.": "Cada período completo de 12 meses dá 30 dias, a tirar nos 12 meses seguintes.",
   "nav.hr.employee-documents": "Documentos",
   "nav.hr.notices": "Avisos",
-  "nav.hr.vacation-balances": "Férias"
+  "nav.hr.vacation-balances": "Férias",
+  "Request conversation": "Conversa da solicitação",
+  "New message": "Nova mensagem",
+  "The employee reads it in Pulse, without your name. The conversation closes when the request is decided.": "O colaborador lê no Pulse, sem o seu nome. A conversa fecha quando a solicitação é decidida.",
+  "HR": "RH",
+  "hrAccount.grantRequests": "Solicitações do Pulse",
+  "Mark reminders": "Lembretes de marcação",
+  "Employees may turn on clock-in and clock-out reminders by push notification in Pulse.": "Os colaboradores podem ativar no Pulse lembretes de entrada e de saída por notificação.",
+  "notifications.hrTimeRequest": "Solicitação de ponto de {{employee}}",
+  "notifications.hrTimeRequestMessage": "Mensagem de {{employee}} numa solicitação"
 }

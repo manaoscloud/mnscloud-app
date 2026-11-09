@@ -161,7 +161,9 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
         this.search.set(String(account['LoginCode'] ?? employeeName));
         this.applySearchFilters();
         this.snack.info(
-          this.t('This employee already has Pulse access. Use Reset password to send new credentials.'),
+          this.t(
+            'This employee already has Pulse access. Use Reset password to send new credentials.',
+          ),
         );
         return;
       }

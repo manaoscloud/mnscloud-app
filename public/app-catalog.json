@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ccf394f653ac",
+  "version": "ced907ab5b70",
   "language": "pt-BR",
   "entries": [
     {
@@ -3935,6 +3935,10 @@
         {
           "label": "Foto na marcação",
           "help": "O Pulse tira uma foto com a câmera frontal antes de cada marcação ser confirmada. Sem foto (câmera recusada, sem conexão) a marcação é registrada mesmo assim e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de batidas e apagadas após 90 dias."
+        },
+        {
+          "label": "Lembretes de marcação",
+          "help": "Os colaboradores podem ativar no Pulse lembretes de entrada e de saída por notificação."
         },
         {
           "label": "Anotações",

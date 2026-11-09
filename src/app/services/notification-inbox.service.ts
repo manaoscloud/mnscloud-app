@@ -25,7 +25,8 @@ export type NotificationType =
   | 'security.alert'
   | 'security.protection'
   | 'security.agent'
-  | 'security.vulnerability';
+  | 'security.vulnerability'
+  | 'hr.time_request';
 
 /** One notification of the signed-in user in the active tenant (API `/user/notifications`). */
 export interface InboxNotification {

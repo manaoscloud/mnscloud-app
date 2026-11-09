@@ -82,6 +82,7 @@ const config = defineCrud({
     restDayRate: 100,
     nightRate: 20,
     punchPhotoMode: 'off',
+    markReminders: false,
     notes: '',
   },
   columns: [
@@ -249,6 +250,15 @@ const config = defineCrud({
       breakBefore: true,
     },
     {
+      key: 'markReminders',
+      source: 'MarkReminders',
+      label: 'Mark reminders',
+      type: 'select',
+      options: YES_NO,
+      help: 'Employees may turn on clock-in and clock-out reminders by push notification in Pulse.',
+      span: 1,
+    },
+    {
       key: 'notes',
       source: 'Notes',
       label: 'Notes',
@@ -274,6 +284,7 @@ const config = defineCrud({
     punchPhotoMode: ['optional', 'required'].includes(String(values['punchPhotoMode']))
       ? values['punchPhotoMode']
       : 'off',
+    markReminders: values['markReminders'] === true,
     notes: values['notes'] ?? null,
   }),
 });

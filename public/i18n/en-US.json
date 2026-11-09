@@ -12278,5 +12278,14 @@
   "Each completed period of 12 months gives 30 days, to be taken within the next 12 months.": "Each completed period of 12 months gives 30 days, to be taken within the next 12 months.",
   "nav.hr.employee-documents": "Documents",
   "nav.hr.notices": "Notices",
-  "nav.hr.vacation-balances": "Vacation"
+  "nav.hr.vacation-balances": "Vacation",
+  "Request conversation": "Request conversation",
+  "New message": "New message",
+  "The employee reads it in Pulse, without your name. The conversation closes when the request is decided.": "The employee reads it in Pulse, without your name. The conversation closes when the request is decided.",
+  "HR": "HR",
+  "hrAccount.grantRequests": "Pulse requests",
+  "Mark reminders": "Mark reminders",
+  "Employees may turn on clock-in and clock-out reminders by push notification in Pulse.": "Employees may turn on clock-in and clock-out reminders by push notification in Pulse.",
+  "notifications.hrTimeRequest": "Time request from {{employee}}",
+  "notifications.hrTimeRequestMessage": "Message from {{employee}} on a request"
 }

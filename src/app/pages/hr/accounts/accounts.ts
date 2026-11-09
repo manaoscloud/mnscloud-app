@@ -99,6 +99,7 @@ const GRANTS: readonly [string, string][] = [
   ['HpgEmployees', 'hrAccount.grantEmployees'],
   ['HpgSchedules', 'hrAccount.grantSchedules'],
   ['HpgTimesheets', 'hrAccount.grantTimesheets'],
+  ['HpgRequests', 'hrAccount.grantRequests'],
 ];
 
 /** Customer Portal users of the account's customer and the HR operations each one may read. */
@@ -121,7 +122,13 @@ function portalAccessConfig(row: ConfigurableCrudRecord) {
       roleUser: 'hrAccount.portalRoleUser',
     },
     grants: GRANTS,
-    initialValues: { HpgDashboard: 1, HpgEmployees: 1, HpgSchedules: 0, HpgTimesheets: 0 },
+    initialValues: {
+      HpgDashboard: 1,
+      HpgEmployees: 1,
+      HpgSchedules: 0,
+      HpgTimesheets: 0,
+      HpgRequests: 0,
+    },
   });
 }
 

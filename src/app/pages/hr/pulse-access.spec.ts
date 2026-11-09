@@ -2,9 +2,9 @@ import { credentialEmailNote } from './time-clock-accounts/time-clock-accounts';
 
 describe('Pulse access credentials dialog', () => {
   it('says the access was e-mailed when the API sent it', () => {
-    expect(credentialEmailNote({ EmailDelivery: 'sent', EmailRecipient: 'a@example.com' })).toContain(
-      'e-mailed to the employee',
-    );
+    expect(
+      credentialEmailNote({ EmailDelivery: 'sent', EmailRecipient: 'a@example.com' }),
+    ).toContain('e-mailed to the employee');
   });
 
   it('asks to hand the credentials over when the employee has no e-mail', () => {
