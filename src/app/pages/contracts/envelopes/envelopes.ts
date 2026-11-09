@@ -10,6 +10,7 @@ import {
   CONTRACT_ACCOUNT_LOOKUP,
   DOCUMENT_LOOKUP,
   ENVELOPE_STATUS_OPTIONS,
+  PROVIDER_BINDING_LOOKUP,
   ROUTING_TYPE_OPTIONS,
 } from '../contracts.common';
 
@@ -54,6 +55,17 @@ export const CONTRACT_ENVELOPES_CONFIG = defineCrud({
       quickCreateExemptReason: 'Contract documents are generated or imported through the document lifecycle workflow, not created from an inline modal.',
     },
     { key: 'title', source: 'CteTitle', label: 'contracts.envelopeTitle', required: true, span: 1 },
+    {
+      key: 'providerBindingUUID',
+      source: 'ContractProviderBindingCtbUUID',
+      label: 'contracts.providerBinding',
+      type: 'search-select',
+      span: 1,
+      remoteLookup: PROVIDER_BINDING_LOOKUP,
+      quickCreate: false,
+      quickCreateExemptReason:
+        'External signature provider bindings are configured in settings with API credentials and webhooks, not created inline during envelope creation.',
+    },
     { key: 'routingType', source: 'CteRoutingType', label: 'contracts.routingType', type: 'select', span: 1, options: ROUTING_TYPE_OPTIONS },
     { key: 'requireTimestamp', source: 'CteRequireTimestamp', label: 'contracts.requireTimestamp', type: 'status', span: 1 },
     { key: 'verificationCode', source: 'CteVerificationCode', label: 'contracts.verificationCode', span: 1, disabledWhen: () => true },

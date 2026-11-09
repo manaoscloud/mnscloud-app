@@ -1067,6 +1067,14 @@ export const routes: Routes = [
                   ),
                 title: 'Contracts • Obligations | mnscloud',
               },
+              {
+                path: 'contracts/providers',
+                loadComponent: () =>
+                  import('./pages/contracts/providers/providers').then(
+                    (m) => m.ContractProvidersPage,
+                  ),
+                title: 'Contracts • Signature Providers | mnscloud',
+              },
               // Registry (shared by every module)
               {
                 path: 'registry/economic-sectors',
