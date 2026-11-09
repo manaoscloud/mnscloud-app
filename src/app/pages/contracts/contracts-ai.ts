@@ -13,24 +13,34 @@ type Row = Record<string, unknown>;
 
 export const AI_LANGUAGES = ['pt-BR', 'en-US', 'es-ES'] as const;
 
-export function aiLanguage(active: string): string {
-  return (AI_LANGUAGES as readonly string[]).includes(active) ? active : 'pt-BR';
-}
+export const aiLanguage = (locale: string): string =>
+  (AI_LANGUAGES as readonly string[]).includes(locale) ? locale : 'pt-BR';
 
-/** AI refusals (no provider, credits, hourly limit, rejected answer) have their own translated message. */
+/** Map HTTP error status codes to contract AI localization keys. */
 export function aiFailureKey(error: unknown): string | null {
-  const status = (error as { status?: number } | null)?.status;
-  if (status === 402) return 'contracts.ai.noCredit';
-  if (status === 429) return 'contracts.ai.rateLimited';
-  if (status === 502) return 'contracts.ai.rejected';
-  if (status === 503) return 'contracts.ai.unavailable';
-  return null;
+  const code = (error as { status?: number } | null)?.status;
+  switch (code) {
+    case 402:
+      return 'contracts.ai.noCredit';
+    case 429:
+      return 'contracts.ai.rateLimited';
+    case 502:
+      return 'contracts.ai.rejected';
+    case 503:
+      return 'contracts.ai.unavailable';
+    default:
+      return null;
+  }
 }
 
-const list = (items: unknown, numbered = false) =>
-  (Array.isArray(items) ? items : [])
-    .map((item, index) => `${numbered ? `${index + 1}.` : '-'} ${String(item)}`)
+function formatItemList(elements: unknown, ordered = false): string {
+  if (!Array.isArray(elements) || elements.length === 0) return '';
+  return elements
+    .map((elem, idx) => (ordered ? `${idx + 1}. ${String(elem)}` : `• ${String(elem)}`))
     .join('\n');
+}
+
+const list = formatItemList;
 
 const AI_NOTE = 'contracts.ai.generatedNote';
 
