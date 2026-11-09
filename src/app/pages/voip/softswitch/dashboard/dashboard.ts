@@ -33,10 +33,10 @@ export class VoipSoftswitchDashboardPage {
   private readonly route = inject(ActivatedRoute);
   private readonly snack = inject(SnackbarService);
 
-  readonly isMaster = computed(() => this.route.snapshot.data?.['scope'] === 'master');
+  readonly platformScope = computed(() => this.route.snapshot.data?.['scope'] === 'master');
   readonly dashboardResource = dashboardResource({
-    params: () => ({ isMaster: this.isMaster() }),
-    loader: ({ params }) => this.api.get(params.isMaster),
+    params: () => ({ platformScope: this.platformScope() }),
+    loader: ({ params }) => this.api.get(params.platformScope),
   });
 
   readonly loading = this.dashboardResource.isLoading;
@@ -65,37 +65,37 @@ export class VoipSoftswitchDashboardPage {
           data?.servers.length,
         ),
         icon: 'dns',
-        route: this.isMaster() ? '/system/softswitch/server' : null,
+        route: this.platformScope() ? '/system/softswitch/server' : null,
       },
       {
         label: 'Accounts active',
         value: this.ratio(data?.activeAccounts, data?.accounts),
         icon: 'router',
-        route: this.isMaster() ? null : '/voip/softswitch/accounts',
+        route: this.platformScope() ? null : '/voip/softswitch/accounts',
       },
       {
         label: 'Subscribers active',
         value: this.ratio(data?.activeSubscribers, data?.subscribers),
         icon: 'person',
-        route: this.isMaster() ? null : '/voip/softswitch/subscriber',
+        route: this.platformScope() ? null : '/voip/softswitch/subscriber',
       },
       {
         label: 'DIDs active',
         value: this.ratio(data?.activeDids, data?.dids),
         icon: 'tag',
-        route: this.isMaster() ? null : '/voip/softswitch/did',
+        route: this.platformScope() ? null : '/voip/softswitch/did',
       },
       {
         label: 'Trunks active',
         value: this.ratio(data?.activeTrunks, data?.trunks),
         icon: 'settings_input_component',
-        route: this.isMaster() ? null : '/voip/softswitch/trunks',
+        route: this.platformScope() ? null : '/voip/softswitch/trunks',
       },
       {
         label: 'Routes active',
         value: this.ratio(data?.activeRoutes, data?.routes),
         icon: 'alt_route',
-        route: this.isMaster() ? null : '/voip/softswitch/routes',
+        route: this.platformScope() ? null : '/voip/softswitch/routes',
       },
     ];
   });

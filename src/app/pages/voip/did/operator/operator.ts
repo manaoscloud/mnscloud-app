@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { injectPlatformScope } from '../../../../core/scope/route-scope';
 
 import { ApiService } from '../../../../services/api.service';
 import {
@@ -11,7 +12,8 @@ import {
 import { VoipDidOperatorItem } from './operator.service';
 
 function isSystemScope() {
-  return globalThis.location?.pathname.startsWith('/system/') ?? false;
+  // The route declares the scope (data.scope 'master' on /system); call in an injection context.
+  return injectPlatformScope();
 }
 
 function operatorConfig(system: boolean): ConfigurableCrudConfig {

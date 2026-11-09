@@ -498,12 +498,12 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly route = inject(ActivatedRoute);
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
+    this.platformScope() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
   private readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/plans' : HOSTING_VPS_PLAN_CONFIG.endpoint,
+    this.platformScope() ? 'system/hosting/vps/plans' : HOSTING_VPS_PLAN_CONFIG.endpoint,
   );
 
   private readonly providers = signal<HostingVpsProvider[]>([]);
@@ -895,7 +895,7 @@ export class HostingVpsPlansPage extends ConfigurableCrudPageBase<ConfigurableCr
 
     const diskIops = optionalNumber(payload['diskIops']);
     const dedicatedCpu = normalizeString(payload['dedicatedCpu']);
-    const commercial = this.isMaster()
+    const commercial = this.platformScope()
       ? {
           sku: normalizeString(payload['sku']),
           providerCostAmount: optionalNumber(payload['providerCostAmount']),

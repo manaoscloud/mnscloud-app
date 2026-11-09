@@ -5,6 +5,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { SnackbarService } from './snackbar.service';
+import { RouteScopeService } from '../core/scope/route-scope';
 
 describe('ApiService auth and tenant context', () => {
   let api: ApiService;
@@ -87,19 +88,36 @@ describe('ApiService auth and tenant context', () => {
     await pending;
   });
 
-  it('does not attach a selected tenant to the master telemetry overview', async () => {
-    const previous = window.location.pathname;
-    history.replaceState(null, '', '/system/monitoring/overview');
-    try {
-      const promise = api.get('monitoring/agents/telemetry-overview?limit=12');
-      const req = http.expectOne(
-        'https://api.example.com/api/v1/monitoring/agents/telemetry-overview?limit=12',
-      );
+  it('never attaches the selected tenant on /system routes, whatever the endpoint', async () => {
+    const scope = TestBed.inject(RouteScopeService);
+    spyOn(scope, 'isSystemTree').and.returnValue(true);
+    for (const endpoint of [
+      'monitoring/agents/telemetry-overview?limit=12',
+      'system/hosting/vps/instances',
+      'cyber-security/lists',
+    ]) {
+      const promise = api.get(endpoint);
+      const req = http.expectOne(`https://api.example.com/api/v1/${endpoint}`);
       expect(req.request.headers.has('X-Environment-UUID')).toBeFalse();
-      req.flush({ status: 'success', data: { items: [], total: 0, limit: 12, offset: 0 } });
+      req.flush({ status: 'success', data: { items: [] } });
       await promise;
-    } finally {
-      history.replaceState(null, '', previous);
+    }
+  });
+
+  it('always attaches the selected tenant on tenant routes, platform endpoints included', async () => {
+    localStorage.setItem('mc_current_env', '22222222-2222-2222-2222-222222222222');
+    for (const endpoint of [
+      'system/voip/did/numbers',
+      'cyber-security/lists',
+      'monitoring/agents',
+    ]) {
+      const promise = api.get(endpoint);
+      const req = http.expectOne(`https://api.example.com/api/v1/${endpoint}`);
+      expect(req.request.headers.get('X-Environment-UUID')).toBe(
+        '22222222-2222-2222-2222-222222222222',
+      );
+      req.flush({ status: 'success', data: { items: [] } });
+      await promise;
     }
   });
 

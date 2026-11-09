@@ -4,13 +4,13 @@ import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
-  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
+import { portalGrantCrud } from '../../../shared/crud/configurable-crud/portal-grant-crud';
 import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 
 // One HR account per Registry workspace: the internal account keeps the reseller's own HR; each
@@ -94,10 +94,6 @@ const config = defineCrud({
   ],
 });
 
-const YES_NO: readonly ConfigurableCrudOption[] = [
-  { value: 0, label: 'No' },
-  { value: 1, label: 'Yes' },
-];
 const GRANTS: readonly [string, string][] = [
   ['HpgDashboard', 'hrAccount.grantDashboard'],
   ['HpgEmployees', 'hrAccount.grantEmployees'],
@@ -106,81 +102,33 @@ const GRANTS: readonly [string, string][] = [
   ['HpgRequests', 'hrAccount.grantRequests'],
 ];
 
-const PORTAL_ROLES = [
-  { value: 'CUSTOMER_OWNER', label: 'hrAccount.portalRoleOwner' },
-  { value: 'CUSTOMER_ADMIN', label: 'hrAccount.portalRoleAdmin' },
-  { value: 'CUSTOMER_USER', label: 'hrAccount.portalRoleUser' },
-] as const;
-
 /** Customer Portal users of the account's customer and the HR operations each one may read. */
 function portalAccessConfig(row: ConfigurableCrudRecord) {
-  const base = `hr/accounts/${row['HraUUID']}`;
-  return defineCrud({
-    endpoint: `${base}/portal-grants`,
+  return portalGrantCrud({
+    base: `hr/accounts/${row['HraUUID']}`,
     uuidField: 'HpgUUID',
-    pageTitle: 'hrAccount.portalAccess',
-    pageDescription: 'hrAccount.portalAccessDescription',
-    createTitle: 'hrAccount.portalAccessCreate',
-    editTitle: 'hrAccount.portalAccessEdit',
-    emptyLabel: 'hrAccount.portalAccessEmpty',
-    bulkDelete: false,
-    ...revisionDeletePayloads('HpgUUID', 'HpgRevision'),
+    statusField: 'HpgStatus',
+    revisionField: 'HpgRevision',
+    labels: {
+      pageTitle: 'hrAccount.portalAccess',
+      pageDescription: 'hrAccount.portalAccessDescription',
+      createTitle: 'hrAccount.portalAccessCreate',
+      editTitle: 'hrAccount.portalAccessEdit',
+      emptyLabel: 'hrAccount.portalAccessEmpty',
+      portalUser: 'hrAccount.portalUser',
+      portalRole: 'hrAccount.portalRole',
+      roleOwner: 'hrAccount.portalRoleOwner',
+      roleAdmin: 'hrAccount.portalRoleAdmin',
+      roleUser: 'hrAccount.portalRoleUser',
+    },
+    grants: GRANTS,
     initialValues: {
-      RegCustomerUserRcsUUID: '',
       HpgDashboard: 1,
       HpgEmployees: 1,
       HpgSchedules: 0,
       HpgTimesheets: 0,
       HpgRequests: 0,
-      status: 1,
     },
-    fields: [
-      { key: 'status', source: 'HpgStatus', label: 'Status', type: 'status', span: 1 },
-      {
-        key: 'RegCustomerUserRcsUUID',
-        source: 'RegCustomerUserRcsUUID',
-        label: 'hrAccount.portalUser',
-        type: 'search-select',
-        required: true,
-        span: 1,
-        disabledWhen: ({ editing }) => editing,
-        remoteLookup: {
-          endpoint: `${base}/portal-users`,
-          uuidField: 'RcsUUID',
-          labelField: 'RcsUsername',
-          descriptionField: 'RcsRole',
-          selectedLabelField: 'PortalUsername',
-        },
-        quickCreate: false,
-        quickCreateExemptReason:
-          'Portal users are the customer logins managed in Registry > Customers.',
-      },
-      ...GRANTS.map(([key, label]) => ({
-        key,
-        source: key,
-        label,
-        type: 'select' as const,
-        span: 1 as const,
-        options: YES_NO,
-      })),
-      {
-        key: 'revision',
-        source: 'HpgRevision',
-        label: 'documents.revision',
-        hiddenWhen: () => true,
-      },
-    ],
-    columns: [
-      { id: 'user', field: 'PortalUsername', label: 'hrAccount.portalUser', kind: 'identity' },
-      { id: 'role', field: 'PortalRole', label: 'hrAccount.portalRole', options: PORTAL_ROLES },
-      ...GRANTS.map(([field, label]) => ({
-        id: field,
-        field,
-        label,
-        kind: 'boolean' as const,
-      })),
-      { id: 'status', field: 'HpgStatus', label: 'Status', kind: 'status' },
-    ],
   });
 }
 
@@ -210,6 +158,19 @@ const PAGES: readonly [string, string, string, string][] = [
   ['timesheets', 'nav.hr.timesheets', 'event_note', 'tenant.hr.timesheets.read'],
   ['time-requests', 'nav.hr.time-requests', 'pending_actions', 'tenant.hr.time-requests.read'],
   ['absences', 'nav.hr.absences', 'event_busy', 'tenant.hr.absences.read'],
+  [
+    'employee-documents',
+    'nav.hr.employee-documents',
+    'folder_shared',
+    'tenant.hr.employee-documents.read',
+  ],
+  ['notices', 'nav.hr.notices', 'campaign', 'tenant.hr.notices.read'],
+  [
+    'vacation-balances',
+    'nav.hr.vacation-balances',
+    'beach_access',
+    'tenant.hr.vacation-balances.read',
+  ],
   [
     'time-adjustments',
     'nav.hr.time-adjustments',

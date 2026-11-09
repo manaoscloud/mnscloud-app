@@ -38,6 +38,13 @@ const MASTER_PERMISSION = 'platform.master.access';
  * Entries load the routed page lazily, so registering a resource never pulls it into every bundle.
  */
 export const QUICK_CREATE_REGISTRY = {
+  VoipClusterVclUUID: {
+    label: 'capacityAccess.createCluster',
+    loadComponent: () =>
+      import('../../../pages/voip/clusters/clusters').then((m) => m.VoipClustersPage),
+    permission: MASTER_PERMISSION,
+    routeData: { scope: 'master' },
+  },
   RegWorkspaceRwkUUID: {
     label: 'registryWorkspace.create',
     loadComponent: () =>
@@ -867,6 +874,18 @@ export const QUICK_CREATE_REGISTRY = {
     label: 'Create trunk',
     loadComponent: () =>
       import('../../../pages/voip/softswitch/trunk/trunk').then((m) => m.VoipSoftswitchTrunkPage),
+  },
+  ContractAccountCtaUUID: {
+    label: 'contracts.newAccount',
+    loadComponent: () =>
+      import('../../../pages/contracts/accounts/accounts').then((m) => m.ContractAccountsPage),
+    permission: 'tenant.contracts.accounts.all',
+  },
+  ContractTemplateCttUUID: {
+    label: 'contracts.newTemplate',
+    loadComponent: () =>
+      import('../../../pages/contracts/templates/templates').then((m) => m.ContractTemplatesPage),
+    permission: 'tenant.contracts.templates.write',
   },
 } satisfies Record<string, QuickCreateRegistryEntry>;
 

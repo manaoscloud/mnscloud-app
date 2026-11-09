@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 
 import { ApiService } from '../../../services/api.service';
 import {
@@ -16,7 +17,8 @@ import { DID_NUMBER_INPUT_ERRORS, parseDidNumberInput } from './did-number-input
 import { VoipDidItem, VoipDidService } from './did.service';
 
 function isSystemScope() {
-  return globalThis.location?.pathname.startsWith('/system/') ?? false;
+  // The route declares the scope (data.scope 'master' on /system); call in an injection context.
+  return injectPlatformScope();
 }
 
 function didConfig(system: boolean): ConfigurableCrudConfig {

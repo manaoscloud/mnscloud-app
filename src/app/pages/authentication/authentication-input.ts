@@ -1,4 +1,7 @@
-import type { ConfigurableCrudRecord } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import type {
+  ConfigurableCrudField,
+  ConfigurableCrudRecord,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 export const AUTHENTICATION_BOOLEAN_OPTIONS = [
   { value: 0, label: 'No' },
   { value: 1, label: 'Yes' },
@@ -60,4 +63,26 @@ export function utcToLocalInput(value: unknown): string {
   if (!Number.isFinite(date.getTime())) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** Hidden optimistic-lock revision and the notes tab shared by every authentication record. */
+export function authenticationRecordFields(prefix: string): ConfigurableCrudField[] {
+  return [
+    {
+      key: 'revision',
+      source: `${prefix}Revision`,
+      label: 'Revision',
+      type: 'number',
+      hidden: true,
+    },
+    {
+      key: 'notes',
+      source: `${prefix}Notes`,
+      label: 'Notes',
+      type: 'textarea',
+      tab: 'notes',
+      span: 4,
+      rows: 4,
+    },
+  ];
 }

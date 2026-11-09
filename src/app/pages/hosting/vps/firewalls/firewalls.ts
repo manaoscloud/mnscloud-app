@@ -11,6 +11,7 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 import type { HostingVpsInstance, HostingVpsNetwork } from '../vps.types';
+import { attachableInstances, serverRowRight } from '../vps.types';
 
 const OUTBOUND_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'accept', label: 'Allow all outbound' },
@@ -125,14 +126,17 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
   private readonly instances = signal<HostingVpsInstance[]>([]);
   private readonly networks = signal<HostingVpsNetwork[]>([]);
 
-  private readonly isMaster = computed(
+  private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly firewallEndpoint = computed(() => `${this.base()}/firewalls`);
 
+  // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.instances().map((instance) => ({
+    attachableInstances(this.instances(), this.platformScope()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
@@ -157,8 +161,11 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
     super({
       ...config,
       // Platform profiles are templates for tenants: applied from the instance form, edited by master.
-      canEditRow: (row) => this.isMaster() || !!row['UserUsrUUID'],
-      canDeleteRow: (row) => this.isMaster() || !!row['UserUsrUUID'],
+      // The server decides (owner only; delete only when no instance uses the profile).
+      canEditRow: (row) =>
+        serverRowRight(row, 'CanEdit', () => this.platformScope() || !!row['UserUsrUUID']),
+      canDeleteRow: (row) =>
+        serverRowRight(row, 'CanDelete', () => this.platformScope() || !!row['UserUsrUUID']),
       fields: [
         { key: 'status', source: 'HvfIsActive', label: 'Status', type: 'status', span: 1 },
         {
@@ -169,6 +176,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           placeholder: 'WEB',
           required: true,
           span: 1,
+          help: 'Name of the profile, shown when attaching it to a VPS.',
         },
         {
           key: 'outboundPolicy',
@@ -178,7 +186,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           type: 'select',
           options: OUTBOUND_OPTIONS,
           required: true,
-          help: 'Lightsail cannot restrict outbound traffic.',
+          help: 'Allow all outbound: the VPS may open any outbound connection. Allow only listed outbound: only the outbound rules of this profile are allowed. Lightsail cannot restrict outbound traffic.',
         },
         // business-description: description of the firewall kept with the cloud resource.
         {
@@ -188,6 +196,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
           label: 'Description',
           type: 'textarea',
           span: 4,
+          help: 'Free text to remember what this profile is for.',
         },
       ],
       relatedCollections: [
@@ -221,6 +230,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               options: DIRECTION_OPTIONS,
               required: true,
               span: 1,
+              help: 'Inbound: traffic that reaches the VPS. Outbound: traffic the VPS sends. With a profile attached, every inbound connection not allowed by a rule is blocked, ping (ICMP) included.',
             },
             {
               key: 'action',
@@ -229,6 +239,7 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               options: ACTION_OPTIONS,
               required: true,
               span: 1,
+              help: 'Allow opens the traffic of the rule. Deny blocks it even when another rule allows it. Inbound traffic without an Allow rule is already blocked, so a profile with only Deny rules blocks all inbound traffic, ping included: add Allow rules for what must stay open.',
             },
             {
               key: 'protocol',
@@ -238,9 +249,22 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               translateOptions: false,
               required: true,
               span: 1,
+              help: 'TCP and UDP use the ports below. ICMP is ping. All protocols ignores the ports.',
             },
-            { key: 'portFrom', label: 'Port from', type: 'number', span: 1 },
-            { key: 'portTo', label: 'Port to', type: 'number', span: 1 },
+            {
+              key: 'portFrom',
+              label: 'Port from',
+              type: 'number',
+              span: 1,
+              help: 'First port of the range (TCP/UDP). Empty = every port.',
+            },
+            {
+              key: 'portTo',
+              label: 'Port to',
+              type: 'number',
+              span: 1,
+              help: 'Last port of the range. Empty = only the port in Port from.',
+            },
             {
               key: 'remoteCidrs',
               label: 'Addresses (CIDR)',
@@ -255,8 +279,9 @@ export class HostingVpsFirewallsPage extends ConfigurableCrudPageBase<Configurab
               quickCreate: false,
               quickCreateExemptReason:
                 'Rule sources reference existing networks; networks have their own page.',
+              help: 'Private networks of this account used as source (inbound) or destination (outbound) of the rule.',
             },
-            { key: 'comment', label: 'Comment', span: 1 },
+            { key: 'comment', label: 'Comment', span: 1, help: 'Note shown in the rule list.' },
           ],
           columns: [
             { id: 'direction', label: 'Direction', field: 'HfrDirection' },

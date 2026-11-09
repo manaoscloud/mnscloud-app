@@ -13,7 +13,7 @@ import {
 import { DNS_BOOLEAN_OPTIONS, dnsPayload } from '../dns-input';
 
 /** Cluster settings (resolver, filter) read right before their form opens (revision included). */
-const SETTINGS = ['resolver', 'filter', 'authority', 'cloud'];
+const SETTINGS = ['resolver', 'filter', 'authority', 'cloud', 'dedication'];
 let settingsValues: ConfigurableCrudRecord = {};
 
 const FILTER_CATEGORIES = [
@@ -205,6 +205,41 @@ const config = defineCrud({
               key: 'addresses',
               label: 'dns.cloudAddresses',
               help: 'dns.cloudAddressesHelp',
+            },
+            { key: 'revision', label: 'Revision', type: 'number', hidden: true },
+          ],
+        }),
+    },
+    {
+      // Managed on-premises DNS (PD8): the cluster's servers run in one customer network.
+      key: 'dedication',
+      label: 'dns.dedication',
+      icon: 'home_work',
+      form: (row) =>
+        settingsForm(row, 'dedication', 'dns.dedication', 'dns.dedicationDescription', {
+          initialValues: {
+            account: String(settingsValues['DnsAccountDacUUID'] ?? ''),
+            revision: Number(settingsValues['DncRevision'] ?? row['DncRevision'] ?? 1),
+          },
+          payload: (values) => ({
+            account: String(values['account'] ?? '') || null,
+            revision: Number(values['revision']),
+          }),
+          fields: [
+            {
+              key: 'account',
+              label: 'dns.dedicationAccount',
+              type: 'search-select',
+              span: 1,
+              remoteLookup: {
+                endpoint: 'system/dns/dedication-accounts',
+                uuidField: 'DacUUID',
+                labelField: 'Label',
+              },
+              quickCreate: false,
+              quickCreateExemptReason:
+                'DNS accounts belong to the tenant (DNS › Contas); the master only links one.',
+              help: 'dns.dedicationAccountHelp',
             },
             { key: 'revision', label: 'Revision', type: 'number', hidden: true },
           ],

@@ -283,9 +283,9 @@ export class HostingSmtpRoutesPage extends ConfigurableCrudPageBase<Configurable
   private readonly accounts = signal<SmtpAccount[]>([]);
   private readonly eventTypes = signal<SmtpEventType[]>([]);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly rootEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/smtp' : 'hosting/smtp',
+    this.platformScope() ? 'system/hosting/smtp' : 'hosting/smtp',
   );
   private readonly endpoint = computed(() => `${this.rootEndpoint()}/routes`);
   private readonly accountOptions = computed<ConfigurableCrudOption[]>(() =>

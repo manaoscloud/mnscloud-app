@@ -76,7 +76,7 @@ export class HostingVpsDashboardPage {
   private readonly snack = inject(SnackbarService);
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  readonly isMaster = computed(() => this.scope() === 'master');
+  readonly platformScope = computed(() => this.scope() === 'master');
 
   readonly dashboardResource = dashboardResource({
     params: () => ({ scope: this.scope() }),
@@ -237,7 +237,7 @@ export class HostingVpsDashboardPage {
   async loadDashboardSnapshot(): Promise<VpsDashboardSnapshot> {
     return loadInstanceDashboard<HostingVpsProvider, HostingVpsPlan>(
       this.api,
-      this.isMaster() ? 'system/hosting/vps' : 'hosting/vps',
+      this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
       { provider: 'HvrConfig', plan: 'HvpConfig' },
       FAILURE,
     );

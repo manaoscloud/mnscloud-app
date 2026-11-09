@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../../../services/auth.service';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -19,6 +20,8 @@ import {
 } from './change-plan-dialog';
 import { openDataViewerDialog } from '../../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { openVpsInstanceMonitor } from './instance-monitor';
+import { openVpsInstanceConsole } from './instance-console';
+import { MIGRATE_INSTANCE_ACTION } from './instance-migration';
 import type {
   HostingVpsFirewall,
   HostingVpsInstance,
@@ -31,6 +34,7 @@ import type {
   VpsProviderCatalog,
   VpsProviderConfig,
 } from '../vps.types';
+import { isAccountDefaultNetwork } from '../vps.types';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -45,6 +49,34 @@ const BILLING_POWER_LABELS: Record<string, string> = {
   STOPPED: 'Powered off: unpaid',
   START_PENDING: 'Powering on: payment received',
   DESTROY_PENDING: 'Releasing: unpaid',
+};
+
+/** Customer power actions in progress (the VPS worker records the final status). */
+const POWER_STATUS_LABELS: Record<string, string> = {
+  starting: 'Starting',
+  stopping: 'Shutting down',
+  rebooting: 'Rebooting',
+};
+
+const POWER_START_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-start',
+  label: 'Power on',
+  icon: 'play_arrow',
+  tooltip: 'Power on the VPS',
+};
+
+const POWER_STOP_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-stop',
+  label: 'Shut down',
+  icon: 'power_settings_new',
+  tooltip: 'Shut down the VPS',
+};
+
+const POWER_REBOOT_ACTION: ConfigurableCrudRowAction = {
+  key: 'power-reboot',
+  label: 'Reboot',
+  icon: 'restart_alt',
+  tooltip: 'Reboot the VPS',
 };
 
 const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
@@ -68,6 +100,13 @@ const MONITOR_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Monitor',
 };
 
+const CONSOLE_ACTION: ConfigurableCrudRowAction = {
+  key: 'console',
+  label: 'Console',
+  icon: 'terminal',
+  tooltip: 'Open the VPS console',
+};
+
 const DETAILS_ACTION: ConfigurableCrudRowAction = {
   key: 'details',
   label: 'Details',
@@ -75,14 +114,40 @@ const DETAILS_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Details',
 };
 
+const PLACEMENT_GROUP_HELP =
+  'Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.';
+
+/** PL7 placement group `spread`: shown for Proxmox plans only, sent lower case in the config. */
+const PLACEMENT_GROUP_FIELD: ConfigurableCrudField = {
+  key: 'placementGroup',
+  source: 'HviConfig',
+  payloadKey: 'placementGroup',
+  label: 'Placement group',
+  placeholder: 'db-cluster',
+  help: PLACEMENT_GROUP_HELP,
+  fromRecord: (value) => configString(value, 'placementGroup'),
+  hiddenWhen: ({ values }) => !/^proxmox$/i.test(String(values['planProvider'] ?? '').trim()),
+};
+
 const AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'ssh_key', label: 'SSH key' },
   { value: 'password', label: 'Username and password' },
 ];
 
-const LIGHTSAIL_AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
+const KEY_ONLY_AUTH_METHOD_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'ssh_key', label: 'SSH key' },
 ];
+
+/** Providers whose images accept only SSH keys (Lightsail; Proxmox templates are key-only). */
+const KEY_ONLY_PROVIDERS = new Set(['lightsail', 'proxmox']);
+
+function isKeyOnlyProvider(provider: unknown): boolean {
+  return KEY_ONLY_PROVIDERS.has(
+    String(provider ?? '')
+      .trim()
+      .toLowerCase(),
+  );
+}
 
 const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'hosting/vps/instances',
@@ -109,7 +174,17 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   statusFilter: true,
   showAsyncOperationStatus: false,
   pageSizeOptions: [5, 10, 25, 100],
-  rowActions: [MONITOR_ACTION, DETAILS_ACTION, RETRY_PROVISION_ACTION, UPGRADE_ACTION],
+  rowActions: [
+    MONITOR_ACTION,
+    CONSOLE_ACTION,
+    POWER_START_ACTION,
+    POWER_STOP_ACTION,
+    POWER_REBOOT_ACTION,
+    DETAILS_ACTION,
+    RETRY_PROVISION_ACTION,
+    UPGRADE_ACTION,
+    MIGRATE_INSTANCE_ACTION,
+  ],
   listFilters: [
     {
       key: 'customerUUID',
@@ -166,7 +241,12 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       // The collection policy state wins over the provider status while billing controls power.
       value: (row, translate) => {
         const billing = BILLING_POWER_LABELS[String(row['HviBillingPowerState'] ?? '')];
-        return billing ? translate(billing) : String(row['HviStatus'] ?? '');
+        const power = POWER_STATUS_LABELS[String(row['HviStatus'] ?? '')];
+        return billing
+          ? translate(billing)
+          : power
+            ? translate(power)
+            : String(row['HviStatus'] ?? '');
       },
     },
     {
@@ -221,6 +301,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'ubuntu-22-04-x64',
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
+    PLACEMENT_GROUP_FIELD,
     {
       key: 'networkUUID',
       source: 'HostingVpsNetworkHvnUUID',
@@ -228,7 +309,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Private network',
       type: 'search-select',
       tab: 'network',
-      help: 'Only available networks of the plan provider and region are listed.',
+      help: 'Optional. When empty, the VPS uses the default network of your account. Choose a network only to connect an additional private network.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
@@ -239,7 +320,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       multiple: true,
       tab: 'network',
-      help: 'Applied by the provider right after provisioning.',
+      help: 'Optional. When empty, inbound and outbound traffic are allowed. Choose a profile to restrict access.',
       hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
@@ -248,8 +329,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'authMethod',
       label: 'Authentication method',
       labelWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail'
-          ? 'Authentication method (Lightsail requires SSH key)'
+        isKeyOnlyProvider(values['planProvider'])
+          ? 'Authentication method (this provider requires SSH key)'
           : 'Authentication method',
       type: 'select',
       options: AUTH_METHOD_OPTIONS,
@@ -257,7 +338,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'authMethod') || 'ssh_key',
-      disabledWhen: ({ values }) => String(values['planProvider'] ?? '') === 'lightsail',
+      disabledWhen: ({ values }) => isKeyOnlyProvider(values['planProvider']),
     },
     {
       key: 'username',
@@ -267,12 +348,16 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       placeholder: 'root',
       span: 1,
       tab: 'authentication',
-      fromRecord: (value) => configString(value, 'username') || 'root',
-      hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
-        String(values['authMethod'] ?? 'ssh_key') !== 'password',
-      requiredWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+      fromRecord: (value) => configString(value, 'username'),
+      // Key-only providers set the login user from the image (Proxmox: the template's cloud-init
+      // user); it is shown read-only once the server exists.
+      hiddenWhen: ({ editing, values }) =>
+        !(editing && normalizeString(values['username'])) &&
+        (isKeyOnlyProvider(values['planProvider']) ||
+          String(values['authMethod'] ?? 'ssh_key') !== 'password'),
+      requiredWhen: ({ editing, values }) =>
+        !editing &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
@@ -286,11 +371,11 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       fromRecord: () => '',
       hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
+        isKeyOnlyProvider(values['planProvider']) ||
         String(values['authMethod'] ?? 'ssh_key') !== 'password',
       requiredWhen: ({ editing, values }) =>
         !editing &&
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') === 'password',
     },
     {
@@ -302,10 +387,10 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       tab: 'authentication',
       fromRecord: (value) => configString(value, 'sshKey'),
       hiddenWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') !== 'lightsail' &&
+        !isKeyOnlyProvider(values['planProvider']) &&
         String(values['authMethod'] ?? 'ssh_key') !== 'ssh_key',
       requiredWhen: ({ values }) =>
-        String(values['planProvider'] ?? '') === 'lightsail' ||
+        isKeyOnlyProvider(values['planProvider']) ||
         String(values['authMethod'] ?? 'ssh_key') === 'ssh_key',
     },
     {
@@ -332,6 +417,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
 })
 export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
+  private readonly vpsAuth = inject(AuthService);
   private readonly customers = signal<CustomerOption[]>([]);
   private readonly providers = signal<HostingVpsProvider[]>([]);
   private readonly plans = signal<HostingVpsPlan[]>([]);
@@ -346,15 +432,18 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private activePlanUUID = '';
 
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
-  private readonly isMaster = computed(() => this.scope() === 'master');
+  private readonly platformScope = computed(() => this.scope() === 'master');
+  private readonly isPlatformMasterUser = computed(() =>
+    (this.vpsAuth.user()?.permissions ?? []).includes('platform.master.access'),
+  );
   private readonly providerEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
+    this.platformScope() ? 'system/hosting/vps/providers' : 'hosting/vps/providers',
   );
   private readonly instanceEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
+    this.platformScope() ? 'system/hosting/vps/instances' : 'hosting/vps/instances',
   );
   private readonly planEndpoint = computed(() =>
-    this.isMaster() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
+    this.platformScope() ? 'system/hosting/vps/plans' : 'hosting/vps/plans',
   );
 
   private readonly customerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -369,9 +458,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private readonly networkOptions = computed<ConfigurableCrudOption[]>(() => {
     const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
     if (!plan) return [];
+    // A VPS created from /system for a customer belongs to that customer: of the platform networks
+    // (the only ones /system lists) it may join only the platform default networks.
+    const forCustomer =
+      this.platformScope() && String(this.formValues()['customerUUID'] ?? '').trim().length > 0;
     return this.networks()
       .filter(
         (network) =>
+          // The account default network is always attached; only additional networks are offered.
+          !isAccountDefaultNetwork(network) &&
+          (!forCustomer || Number(network.HvnIsDefault) === 1) &&
           network.HostingVpsProviderHvrUUID === plan.HostingVpsProviderHvrUUID &&
           (network.HvnRegion === '*' ||
             network.HvnRegion.toLowerCase() === String(plan.HvpRegion ?? '').toLowerCase()),
@@ -446,20 +542,27 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   });
 
   constructor() {
-    super(HOSTING_VPS_INSTANCE_CONFIG);
+    super({
+      ...HOSTING_VPS_INSTANCE_CONFIG,
+      fields: HOSTING_VPS_INSTANCE_CONFIG.fields.map((field) => ({ ...field })),
+      listFilters: HOSTING_VPS_INSTANCE_CONFIG.listFilters?.map((filter) => ({ ...filter })),
+    });
 
-    const customerFilter = HOSTING_VPS_INSTANCE_CONFIG.listFilters?.find(
-      (filter) => filter.key === 'customerUUID',
-    );
-    if (customerFilter) customerFilter.hiddenWhen = undefined;
+    const customerFilter = this.config.listFilters?.find((filter) => filter.key === 'customerUUID');
+    if (this.platformScope()) {
+      this.config.pageDescription = 'hostingVps.platformDescription';
+      this.config.dialogDescription = 'hostingVps.platformCustomerHelp';
+    }
+    if (customerFilter) customerFilter.hiddenWhen = () => !this.hasCustomerScope();
 
-    const customerField = HOSTING_VPS_INSTANCE_CONFIG.fields.find(
-      (field) => field.key === 'customerUUID',
-    );
+    const customerField = this.config.fields.find((field) => field.key === 'customerUUID');
     if (customerField) {
-      customerField.hiddenWhen = undefined;
-      customerField.required = true;
-      customerField.requiredWhen = undefined;
+      customerField.hiddenWhen = () => !this.hasCustomerScope();
+      customerField.required = false;
+      customerField.requiredWhen = () => !this.platformScope();
+      customerField.disabledWhen = ({ editing }) => editing;
+      customerField.helpWhen = () =>
+        this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
 
     const provisionedLockKeys = [
@@ -471,15 +574,27 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       'password',
       'sshKey',
       'notes',
+      'placementGroup',
     ];
     for (const key of provisionedLockKeys) {
-      const field = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === key);
+      const field = this.config.fields.find((item) => item.key === key);
       if (!field) continue;
       const previous = field.disabledWhen;
       field.disabledWhen = (context) => this.isProvisionedEdit() || Boolean(previous?.(context));
     }
 
-    const planField = HOSTING_VPS_INSTANCE_CONFIG.fields.find((item) => item.key === 'planUUID');
+    // Image providers need a chosen image when the plan has none (the API refuses it too).
+    const imageField = this.config.fields.find((item) => item.key === 'image');
+    if (imageField) {
+      imageField.requiredWhen = ({ editing, values }) => {
+        if (editing) return false;
+        const plan = this.planById(String(values['planUUID'] ?? ''));
+        if (!plan || normalizeString(plan.HvpImage)) return false;
+        return IMAGE_PROVIDERS.has(String(plan.HvpProvider ?? '').toLowerCase());
+      };
+    }
+
+    const planField = this.config.fields.find((item) => item.key === 'planUUID');
     if (planField) {
       const previous = planField.disabledWhen;
       planField.disabledWhen = (context) => context.editing || Boolean(previous?.(context));
@@ -553,7 +668,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
     if (field.key === 'authMethod') {
-      return this.isSelectedPlanLightsail() ? LIGHTSAIL_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
+      return this.isSelectedPlanKeyOnly() ? KEY_ONLY_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
     }
     return super.fieldOptions(field);
   }
@@ -572,13 +687,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     return field.key === 'image' ? this.catalogLoading() : super.fieldLoading(field);
   }
 
-  private isSelectedPlanLightsail(): boolean {
+  private isSelectedPlanKeyOnly(): boolean {
     const fromForm = String(this.formValues()['planProvider'] ?? '')
       .trim()
       .toLowerCase();
-    if (fromForm) return fromForm === 'lightsail';
+    if (fromForm) return isKeyOnlyProvider(fromForm);
     const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
-    return plan?.HvpProvider === 'lightsail';
+    return isKeyOnlyProvider(plan?.HvpProvider);
   }
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
@@ -587,7 +702,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       return;
     }
     if (key === 'authMethod') {
-      if (this.isSelectedPlanLightsail()) {
+      if (this.isSelectedPlanKeyOnly()) {
         this.patchFormValues({
           authMethod: 'ssh_key',
           password: '',
@@ -610,10 +725,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const editing = this.editingRecord();
     const plan = this.planById(String(payload['planUUID'] ?? this.formValues()['planUUID'] ?? ''));
-    const lightsail =
-      plan?.HvpProvider === 'lightsail' ||
-      String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
-    const authMethod = lightsail
+    const keyOnly =
+      isKeyOnlyProvider(plan?.HvpProvider) ||
+      isKeyOnlyProvider(payload['planProvider'] ?? this.formValues()['planProvider']);
+    const authMethod = keyOnly
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
             .trim()
@@ -621,12 +736,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         ? 'password'
         : 'ssh_key';
     const sshKey = normalizeString(payload['sshKey']);
-    const username = lightsail
+    // Key-only providers take the login user from the image; the API records it.
+    const username = keyOnly
       ? null
       : (normalizeString(payload['username']) ?? (authMethod === 'password' ? 'root' : null));
-    const password = lightsail ? null : normalizeString(payload['password']);
+    const password = keyOnly ? null : normalizeString(payload['password']);
     const providerImageId = normalizeString(payload['image']);
     const notes = normalizeString(payload['notes']);
+    const placementGroup = normalizeString(payload['placementGroup'])?.toLowerCase() ?? null;
     const config: HostingVpsInstanceConfig = {
       authMethod,
       username,
@@ -640,6 +757,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
     if (providerImageId) config.providerImageId = providerImageId;
     if (notes) config.notes = notes;
+    if (placementGroup) config.placementGroup = placementGroup;
 
     if (editing?.['HviExternalId']) {
       const current = parseConfig<HostingVpsInstanceConfig>(editing['HviConfig']) ?? {};
@@ -686,7 +804,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const lightsail =
       plan?.HvpProvider === 'lightsail' ||
       String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '') === 'lightsail';
-    const authMethod = lightsail
+    const keyOnly =
+      lightsail ||
+      isKeyOnlyProvider(plan?.HvpProvider) ||
+      isKeyOnlyProvider(payload['planProvider'] ?? this.formValues()['planProvider']);
+    const authMethod = keyOnly
       ? 'ssh_key'
       : String(payload['authMethod'] ?? 'ssh_key')
             .trim()
@@ -733,7 +855,14 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
     if (row['HviExternalId']) {
-      actions.push(MONITOR_ACTION, DETAILS_ACTION);
+      actions.push(MONITOR_ACTION);
+      if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
+      actions.push(...this.powerActions(row));
+      actions.push(DETAILS_ACTION);
+      // Node migration is the platform function vps.migration: the master offers it on /system and
+      // on a tenant's servers with that tenant selected (tenant scope T6).
+      if (this.isPlatformMasterUser() && this.providerOf(row) === 'proxmox')
+        actions.push(MIGRATE_INSTANCE_ACTION);
     }
     if (this.canRetryProvision(row)) {
       actions.push({
@@ -754,13 +883,87 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       await this.openInstanceDetails(row);
       return;
     }
+    if (action.key === 'console') {
+      await openVpsInstanceConsole(this.dialog, {
+        uuid: this.recordUUID(row),
+        name: String(row['HviName'] ?? ''),
+        scope: this.platformScope() ? 'master' : 'tenant',
+      });
+      return;
+    }
     if (action.key === 'retry-provision') {
       await this.retryProvision(row);
+      return;
+    }
+    if (action.key === 'power-start') {
+      await this.requestPower(row, 'start');
+      return;
+    }
+    if (action.key === 'power-stop') {
+      await this.requestPower(row, 'stop');
+      return;
+    }
+    if (action.key === 'power-reboot') {
+      await this.requestPower(row, 'reboot');
       return;
     }
     if (action.key === 'upgrade') {
       await this.openUpgradeDialog(row);
     }
+  }
+
+  /**
+   * Power actions the current status allows. None while billing holds the power (overdue balance)
+   * or while another power action runs.
+   */
+  private powerActions(row: ConfigurableCrudRecord): ConfigurableCrudRowAction[] {
+    if (row['HviBillingPowerState'] || Number(row['HviIsActive'] ?? 0) !== 1) return [];
+    const status = String(row['HviStatus'] ?? '')
+      .trim()
+      .toLowerCase();
+    if (status === 'stopped') return [POWER_START_ACTION];
+    if (status === 'running' || status === 'active')
+      return [POWER_STOP_ACTION, POWER_REBOOT_ACTION];
+    return [];
+  }
+
+  private async requestPower(row: ConfigurableCrudRecord, action: 'start' | 'stop' | 'reboot') {
+    const uuid = this.recordUUID(row);
+    const name = String(row['HviName'] ?? '');
+    if (action !== 'start') {
+      const confirmed = await this.confirmAction(
+        action === 'stop' ? 'Shut down VPS' : 'Reboot VPS',
+        (action === 'stop'
+          ? this.t('Shut down {name}? Services on the VPS stop until it is started again.')
+          : this.t('Reboot {name}? Services on the VPS are unavailable during the restart.')
+        ).replace('{name}', name),
+        action === 'stop' ? 'Shut down' : 'Reboot',
+      );
+      if (!confirmed) return;
+    }
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(`${this.instanceEndpoint()}/${uuid}/power`, { action });
+      this.trackOperation(response);
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to change the VPS power state.'));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  /** The web console exists for Proxmox VPS only. */
+  /** Proxmox (provider console) and DigitalOcean/Lightsail (SSH console with the platform key). */
+  private hasWebConsole(row: ConfigurableCrudRecord) {
+    return ['proxmox', 'digitalocean', 'lightsail'].includes(this.providerOf(row));
+  }
+
+  private providerOf(row: ConfigurableCrudRecord): string {
+    const providerUUID = String(row['HostingVpsProviderHvrUUID'] ?? '');
+    const provider = this.providers().find((item) => item.HvrUUID === providerUUID);
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    return String(provider?.HvrProvider ?? plan?.HvpProvider ?? '');
   }
 
   private canRetryProvision(row: ConfigurableCrudRecord) {
@@ -912,9 +1115,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.patchFormValues({ image: '' });
     }
 
-    if (provider === 'lightsail') {
+    if (isKeyOnlyProvider(provider)) {
       this.patchFormValues({
-        planProvider: 'lightsail',
+        planProvider: provider,
         authMethod: 'ssh_key',
         password: '',
         username: '',
@@ -1040,13 +1243,25 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     } catch (error) {
       this.providers.set([]);
       // Plans come from the platform catalog; providers are optional for the picker.
-      if (this.isMaster()) {
+      if (this.platformScope()) {
         this.snack.error(this.errorMessage(error) || this.t('Failed to load VPS providers.'));
       }
     }
   }
 
+  /**
+   * Customers exist only inside a tenant (tenant scope T6, TS2): /system creates platform servers;
+   * a customer's server is created with its tenant selected, acting as the tenant.
+   */
+  private hasCustomerScope(): boolean {
+    return !this.platformScope();
+  }
+
   private async fetchCustomers() {
+    if (!this.hasCustomerScope()) {
+      this.customers.set([]);
+      return;
+    }
     try {
       const result = await this.api.get<{ data?: { items?: CustomerOption[] } }>(
         'registry/customers?status=1&limit=500&offset=0',
@@ -1059,7 +1274,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async fetchNetworkCatalog() {
-    const base = this.isMaster() ? 'system/hosting/vps' : 'hosting/vps';
+    const base = this.platformScope() ? 'system/hosting/vps' : 'hosting/vps';
     try {
       const [networks, firewalls] = await Promise.all([
         this.api.get<{ data?: { items?: HostingVpsNetwork[] } }>(
@@ -1151,6 +1366,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const statusValue = String(
       runtime?.['status'] ?? config.runtime?.providerStatus ?? item.HviStatus ?? '-',
     );
+    const isProxmox = String(plan?.HvpProvider ?? '').toLowerCase() === 'proxmox';
 
     openDataViewerDialog(this.dialog, {
       title: this.t('VPS instance details'),
@@ -1176,16 +1392,23 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           value: runtime?.['privateIpv4'] ?? config.privateIpv4 ?? '-',
           monospace: true,
         },
-        {
-          label: 'Public IPv6',
-          value: runtime?.['publicIpv6'] ?? config.publicIpv6 ?? '-',
-          monospace: true,
-        },
+        // Proxmox VPS have no public IPv6 and no provider size (the plan sets CPU, memory, disk).
+        ...(isProxmox
+          ? []
+          : [
+              {
+                label: 'Public IPv6',
+                value: runtime?.['publicIpv6'] ?? config.publicIpv6 ?? '-',
+                monospace: true,
+              },
+            ]),
         {
           label: 'Region',
           value: runtime?.['region'] ?? config.runtime?.region ?? plan?.HvpRegion,
         },
-        { label: 'Size', value: runtime?.['size'] ?? config.runtime?.size ?? plan?.HvpSize },
+        ...(isProxmox
+          ? []
+          : [{ label: 'Size', value: runtime?.['size'] ?? config.runtime?.size ?? plan?.HvpSize }]),
         {
           label: 'Image',
           value: runtime?.['image'] ?? config.runtime?.image ?? config.providerImageId,
@@ -1221,7 +1444,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     await openVpsInstanceMonitor(this.dialog, {
       uuid: this.recordUUID(row),
       name: String(row['HviName'] ?? ''),
-      scope: this.isMaster() ? 'master' : 'tenant',
+      scope: this.platformScope() ? 'master' : 'tenant',
     });
   }
 
@@ -1265,6 +1488,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   }
 }
 
+/** Providers whose servers are created from an image chosen per server (or the plan's). */
+const IMAGE_PROVIDERS = new Set(['proxmox', 'digitalocean', 'lightsail']);
+
 function instanceImageFromRecord(row: ConfigurableCrudRecord): string {
   const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
   if (typeof config?.providerImageId === 'string' && config.providerImageId.trim()) {
@@ -1279,19 +1505,19 @@ function configString(value: unknown, key: keyof HostingVpsInstanceConfig): stri
   return typeof field === 'string' ? field : '';
 }
 
+/**
+ * An image option shows only the operating system. The server takes CPU, memory and disk from
+ * the plan; image hardware is only the minimum used to hide images the plan cannot run
+ * (`isImageCompatibleWithPlan`), so it is not shown as if it were the server size.
+ */
 function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
   const name = option.name || option.label || option.id;
   const versionArch = [option.version, option.architecture].filter(Boolean).join(' ');
-  const specs = [
-    option.cpu ? `${option.cpu} vCPU` : null,
-    option.memoryMb ? `${option.memoryMb} MB` : null,
-    option.minDiskGb || option.diskGb ? `${option.minDiskGb || option.diskGb} GB` : null,
-  ].filter(Boolean);
-  const meta = [option.source, option.type, ...specs].filter(Boolean).join(' · ');
+  const label = [name, versionArch].filter(Boolean).join(' ');
   return {
     value: option.id,
-    label: [name, versionArch].filter(Boolean).join(' '),
-    description: [meta, option.slug || option.id].filter(Boolean).join(' · '),
+    label,
+    description: [option.source, option.slug || option.id].filter(Boolean).join(' · '),
     searchText: [
       option.id,
       option.label,
@@ -1301,7 +1527,6 @@ function catalogOptionToCrud(option: VpsCatalogOption): ConfigurableCrudOption {
       option.architecture,
       option.type,
       option.slug,
-      ...specs,
     ]
       .filter(Boolean)
       .join(' '),

@@ -58,9 +58,7 @@ function conversationConfig(row: ConfigurableCrudRecord): ConfigurableCrudConfig
     bulkDelete: false,
     statusFilter: false,
     initialValues: { body: '' },
-    fields: [
-      { key: 'body', label: 'Message', type: 'textarea', span: 4, rows: 4, required: true },
-    ],
+    fields: [{ key: 'body', label: 'Message', type: 'textarea', span: 4, rows: 4, required: true }],
     payload: (values) => ({ uuid: crypto.randomUUID(), body: values['body'] }),
     columns: [
       { id: 'date', field: 'DateCreated', label: 'Date', kind: 'datetime' },

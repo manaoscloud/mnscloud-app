@@ -38,6 +38,39 @@
   production IPs, provider account IDs, or private infrastructure topology.
 - Full contract: `docs/public-api-clients.md`.
 
+## Master pages and tenant data
+
+Each tenant sees only its own data, the master included (workspace
+`docs/platform-resource-ownership.md` → Tenant isolation by layer, user decision 2026-11-06).
+
+- `/system/*` pages (children of `path: 'system'`, `permissionGuard` with `platform.master.access`)
+  manage platform records. They never list, edit or delete tenant records. Support on a tenant's
+  records happens on the tenant pages with that tenant selected.
+- The only cross-tenant views are the registered platform functions (dashboard aggregates, platform
+  billing, user governance, support desk, shared pools such as public IPs and DIDs, infrastructure
+  operation such as tenant zones, gateways, VM migration and the Agent fleet). Such a view shows the
+  owning tenant column and only the fields the API returns for it.
+- The endpoint comes only from the route's declared scope (`route.snapshot.data.scope`), and the
+  tenant header is always sent on tenant routes and never on `/system` routes. Never choose the
+  scope, the endpoint or the header from `localStorage`, `window.location`, `router.url` or the
+  user's permission list. `src/app/core/scope/route-scope.ts` is the one source: `injectPlatformScope()`
+  in a page (the `system` parent declares `scope: 'master'` for every child), `RouteScopeService`
+  in services and dialogs (`current()`, and `isSystemTree()`, which `ApiService` uses for the
+  header). Master pages outside `/system` (support desk, AI, lookups) keep the selected tenant.
+  The user's permissions decide actions (buttons, options), never the endpoint.
+  `npm run check:tenant-scope` (`scripts/validate-tenant-scope.mjs`, run by `verify:changed`) has an
+  empty baseline since phase T8: any legacy form fails. The only exception is a use that is not a
+  scope decision, marked `// tenant-scope-exempt: <reason>` (the single store of the selected
+  tenant in `core/environment/environment-context.ts`).
+- When the API or database decides whether a row can be edited or deleted, the row action comes
+  from a server field (`canEdit`, `canDelete`, `editable`); bulk selection respects the same rule.
+- A picker offers only records of the owner of the record being edited (the selected tenant, or
+  platform records that tenants may consume, such as default networks and firewalls). Platform
+  fallbacks shown to tenants (shared catalogs, providers, servers, Parameter defaults) stay as they
+  are.
+- The phases that brought the pages to these rules are recorded in the workspace handoff
+  `docs/handoffs/2026-11-06-tenant-scope-layer-audit.md` (sections 5 and 10).
+
 ## Layout
 
 - Main shell and menu are in:
@@ -200,11 +233,17 @@ enforces it with the label rules and requires one group icon per category
   (after permissions, entitlements and search): an area title appears above the first visible root
   of its area. In the **expanded menu** (desktop and mobile, user decision 2026-10-31) a category
   with 2 or more visible entries is a **collapsible group row** like the module itself (category
-  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), one open group per
-  parent, opened automatically on the path of the current page; a category with a single visible
-  entry shows that entry directly; no category title is shown. Search opens every group with a
+  icon, label, page count, chevron; display-only id `<parent id>/@<category>`), opened
+  automatically on the path of the current page; a category with a single visible entry shows that
+  entry directly; no category title is shown. The expanded menu is an **accordion at every level**
+  (user decision 2026-11-04, `toggleNavSection`): opening a module, group or page group closes its
+  open siblings, the one on the current page path included (it keeps its active highlight), and
+  everything open below them; closing an entry only closes it. Search opens every group with a
   match and also matches category words; the unread dot lights the group too. In the **compact
-  rail** an area is a divider and the flyouts keep category titles.
+  rail** an area is a divider and the flyouts keep category titles; flyout rows look like the
+  expanded menu rows (40px pill, same label size and tints), never shrink (a long list scrolls
+  inside the flyout) and the flyout is placed from its real height to stay inside the viewport
+  (`fitCompactFlyout`).
 - Visibility is still inherited from the nearest ancestor (`filterMenu`): titles never change it,
   and an entry that moves to another parent states its own `scope`/`entitlementCode`.
 
@@ -223,6 +262,14 @@ Faturamento › contract items of module `cyber_security` pick the customer acco
 search-select (`cyber-security/accounts?status=1`, no quick-create: accounts are created in
 Cybersecurity › Customer accounts). A usage item replaces the free metric field with a select of the
 two Cyber Security metrics (`cyber_security.protected_servers`, `cyber_security.vaults`).
+
+Cybersecurity › Customer accounts has two row actions on customer accounts. **Acessos do Portal**
+(`.../portal-grants`, needs `tenant.cyber-security.accounts.all`) picks a portal user of the account
+customer and its operations; reading is on by default, while alert acknowledgement, unblock requests
+and the audited secret reveal are opt-in. **Pedidos de desbloqueio** (`.../unblock-requests`) lists the
+customer's requests, pending first; only a pending request opens the answer form (approve or reject,
+a rejection needs a note) and the answer is final. A new request shows in the topbar bell
+(`cyber_security.unblock_request`).
 
 ## Menus
 
@@ -2446,6 +2493,12 @@ catalogs (payment methods, gateway providers) stay internal. Embedded
 collections and canonical quick-create inherit `requestApi`; never keep the account in a global
 mutable header. The API/DB remain responsible for membership, account state and FK isolation.
 
+Resale billing (C5): Faturamento › contract items of module `commerce` pick the shop in the
+**Conta comercial** search-select (`sale/accounts?status=1&kind=customer`, no quick-create). A usage
+item has no metric field: the payload sends `commerce.active_terminals`, the only commerce metric.
+A shop without an open item gets 402 `COMMERCE_ACCOUNT_CONTRACT_REQUIRED` on terminal or device
+creation, translated by `commerceAccountErrorMessage` (`commerceAccount.contractRequired`).
+
 ## HR account request scope
 
 `hr/accounts` (RH › Revenda › Contas) manages one HR account per Registry workspace: the internal
@@ -2464,3 +2517,8 @@ or admin portal roles get nothing without a row. Both actions need `tenant.hr.ac
 Faturamento › contract items of module `hr` pick the account in the **Conta de RH** search-select
 (`hr/accounts?status=1`, quick-create `HrAccountHraUUID`). A usage item has no metric field: the
 payload sends `hr.active_employees`, the only HR metric.
+
+CRM root forms (pipelines, accounts, products, leads and opportunities) explicitly select
+`CrmWorkspaceCwsUUID` with the shared searchable FK and canonical quick-create. Ownership is
+read-only on edit. The workspace filter queries the API before pagination; related account,
+product and stage lookups bind the selected workspace. API/DB validate visibility and relationships.

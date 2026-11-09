@@ -121,6 +121,7 @@ test('Tenant gateway (own Inter account) is typed, independent from Pay and has 
   assert.equal(config.endpoint, 'financial/gateway-accounts');
   const values = {
     ...config.initialValues,
+    provider: 'inter_business',
     name: ' Inter proprio ',
     environment: 'sandbox',
     accountNumber: '12.345-6',
@@ -161,4 +162,18 @@ test('Tenant gateway (own Inter account) is typed, independent from Pay and has 
   assert.equal(edited.credentials, undefined);
   assert.equal(edited.provider, undefined);
   assert.throws(() => config.payload({ ...values, keyPem: '' }, true), /together/);
+});
+
+test('Tenant gateway (MNSCloud Pay) defaults to mnscloud_pay, requires no checking account or credentials', () => {
+  const config = paymentGatewayConfig;
+  const values = {
+    ...config.initialValues,
+    name: ' MNSCloud Pay Tenant ',
+    environment: 'production',
+  };
+  const created = config.payload(values, false);
+  assert.equal(created.provider, 'mnscloud_pay');
+  assert.equal(created.accountNumber, undefined);
+  assert.equal(created.credentials, undefined);
+  assert.equal(created.environment, 'production');
 });

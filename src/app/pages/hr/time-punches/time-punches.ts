@@ -9,6 +9,7 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { openPrivateFile } from '../../../shared/file-preview-dialog/private-file';
 import { PUNCH_FLAGS, PUNCH_TYPES } from '../hr-time';
 import { openPunchMapDialog, punchLocations } from './punch-map-dialog';
 
@@ -28,6 +29,8 @@ const PERIODS: readonly ConfigurableCrudOption[] = [
 
 const hasLocation = (row: ConfigurableCrudRecord) =>
   row['Latitude'] !== null && row['Latitude'] !== undefined;
+
+const hasPhoto = (row: ConfigurableCrudRecord) => row['HasPhoto'] === true;
 
 /** Map of the punches of the current page that carry a captured location. */
 const MAP_ACTION: ConfigurableCrudFilterAction = {
@@ -126,6 +129,12 @@ const config = defineCrud({
       value: (row, t) => (hasLocation(row) ? t('Captured') : t('None')),
       rowAction: 'map',
     },
+    {
+      id: 'photo',
+      label: 'Photo',
+      value: (row, t) => (hasPhoto(row) ? t('Taken') : t('None')),
+      rowAction: 'photo',
+    },
     { id: 'nsr', label: 'NSR', field: 'NSR', kind: 'number' },
     {
       id: 'company',
@@ -159,6 +168,13 @@ const config = defineCrud({
       icon: 'location_on',
       tooltip: 'Location captured with this punch',
       visible: hasLocation,
+    },
+    {
+      key: 'photo',
+      label: 'Show photo',
+      icon: 'photo_camera',
+      tooltip: 'Photo taken with this punch',
+      visible: hasPhoto,
     },
   ],
 });
@@ -199,6 +215,15 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
         await openPunchMapDialog(this.dialog, { title: 'Punch location', punches });
       return;
     }
+    if (action.key === 'photo') {
+      if (!hasPhoto(row)) return;
+      await openPrivateFile(this.api, `hr/time-punches/${row['TimePunchUUID']}/photo`, {
+        dialog: this.dialog,
+        contentType: 'image/jpeg',
+        fileName: `${this.t('Photo')} ${row['EmployeeName'] ?? ''}`.trim(),
+      });
+      return;
+    }
     if (action.key !== 'details') return;
     const type = PUNCH_TYPES.find((option) => option.value === row['Type'])?.label ?? '';
     const located = hasLocation(row);
@@ -212,6 +237,11 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
         { label: 'Received at', value: row['ServerReceivedAt'] ?? '', kind: 'datetime' },
         { label: 'Device time', value: row['ClientOccurredAt'] ?? '', kind: 'datetime' },
         { label: 'NSR', value: row['NSR'] ?? '', translate: false },
+        {
+          label: 'Photo',
+          value: hasPhoto(row) ? this.t('Taken') : this.t('None'),
+          translate: false,
+        },
         {
           label: 'Location',
           value: located

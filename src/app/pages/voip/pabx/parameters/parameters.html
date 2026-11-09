@@ -76,7 +76,7 @@
             (valueChange)="update({ mediaStorageBucketUUID: $any($event) })"
           />
         }
-        @if (!isMaster()) {
+        @if (!platformScope()) {
           <p class="span-4 settings-page-note">
             {{ 'Platform value' | transloco }}:
             {{ modeLabel(info().platform.recordingStorageMode) | transloco }} /
@@ -101,7 +101,7 @@
           "
           (valueChange)="update({ mediaDeliveryMode: $any($event) })"
         />
-        @if (!isMaster()) {
+        @if (!platformScope()) {
           <p class="span-2 settings-page-note">
             {{ 'Platform value' | transloco }}:
             {{ modeLabel(info().platform.mediaDeliveryMode) | transloco }}
@@ -112,7 +112,7 @@
 
     <mat-tab [label]="'SIP Realm' | transloco">
       <form class="tab-content form-grid">
-        @if (!isMaster()) {
+        @if (!platformScope()) {
           <mns-search-select-field
             fieldClass="span-1"
             data-field-key="realmSource"
@@ -286,7 +286,7 @@
             min="0"
             data-field-key="cdrRetentionDays"
             [placeholder]="
-              isMaster() ? ('Keep forever' | transloco) : info().platform.cdrRetentionDays + ''
+              platformScope() ? ('Keep forever' | transloco) : info().platform.cdrRetentionDays + ''
             "
             [value]="form().cdrRetentionDays"
             [mnsInvalid]="invalid('cdrRetentionDays')"
@@ -296,7 +296,7 @@
             matIconSuffix
             [label]="'CDR history retention (days)' | transloco"
             [text]="
-              (isMaster()
+              (platformScope()
                 ? 'Platform default for tenants and PABXs without their own value. Empty or 0 keeps call history forever. Order: PABX, then tenant, then platform. A CDR is kept while its recording is still stored.'
                 : 'Tenant default for PABXs without their own value. Empty inherits the platform value; 0 keeps call history forever. Order: PABX, then tenant, then platform. A CDR is kept while its recording is still stored.'
               ) | transloco
@@ -313,7 +313,7 @@
             min="0"
             data-field-key="recordingRetentionDays"
             [placeholder]="
-              isMaster()
+              platformScope()
                 ? ('Keep forever' | transloco)
                 : info().platform.recordingRetentionDays + ''
             "
@@ -325,7 +325,7 @@
             matIconSuffix
             [label]="'Call recordings retention (days)' | transloco"
             [text]="
-              (isMaster()
+              (platformScope()
                 ? 'Platform default for tenants and PABXs without their own value. Empty or 0 keeps recordings forever. Order: PABX, then tenant, then platform.'
                 : 'Tenant default for PABXs without their own value. Empty inherits the platform value; 0 keeps recordings forever. Order: PABX, then tenant, then platform.'
               ) | transloco
@@ -334,7 +334,7 @@
           <mat-error>{{ 'Enter zero or a positive whole number.' | transloco }}</mat-error>
         </mat-form-field>
 
-        @if (isMaster()) {
+        @if (platformScope()) {
           <mat-form-field appearance="outline" class="span-1">
             <mat-label>{{ 'Orphan records grace (days)' | transloco }}</mat-label>
             <input
@@ -375,7 +375,7 @@
             max="1440"
             data-field-key="extensionOfflineAlertMinutes"
             [placeholder]="
-              isMaster()
+              platformScope()
                 ? ('Off' | transloco)
                 : info().platform.extensionOfflineAlertMinutes
                   ? info().platform.extensionOfflineAlertMinutes + ''
@@ -389,7 +389,7 @@
             matIconSuffix
             [label]="'Extension offline alert (minutes)' | transloco"
             [text]="
-              (isMaster()
+              (platformScope()
                 ? 'Platform default for tenants without their own value. Empty or 0 turns the alert off. An enabled extension that registered before and stays offline this long raises one notification per PABX account, once per drop.'
                 : 'Empty inherits the platform value; 0 turns the alert off. An enabled extension that registered before and stays offline this long raises one notification per PABX account, once per drop.'
               ) | transloco

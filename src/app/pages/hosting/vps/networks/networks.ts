@@ -17,6 +17,7 @@ import type {
   HostingVpsPlan,
   HostingVpsProvider,
 } from '../vps.types';
+import { attachableInstances, isAccountDefaultNetwork, serverRowRight } from '../vps.types';
 
 const NETWORK_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'queued', label: 'Queued' },
@@ -61,8 +62,10 @@ const config = defineCrud({
   deleteFailedMessage: 'Failed to delete private network.',
   bulkDelete: true,
   pageSizeOptions: [5, 10, 25, 100],
-  canEditRow: (row) => Number(row['HvnIsDefault'] ?? 0) !== 1,
-  canDeleteRow: (row) => Number(row['HvnIsDefault'] ?? 0) !== 1,
+  // The server decides: owner only, never a default network, delete only when no instance uses it.
+  canEditRow: (row) => serverRowRight(row, 'CanEdit', () => Number(row['HvnIsDefault'] ?? 0) !== 1),
+  canDeleteRow: (row) =>
+    serverRowRight(row, 'CanDelete', () => Number(row['HvnIsDefault'] ?? 0) !== 1),
   listFilters: [
     {
       key: 'providerUUID',
@@ -96,7 +99,16 @@ const config = defineCrud({
   },
   fields: [],
   columns: [
-    { id: 'name', label: 'Name', kind: 'identity', field: 'HvnName', uuidField: 'HvnUUID' },
+    {
+      id: 'name',
+      label: 'Name',
+      kind: 'identity',
+      field: 'HvnName',
+      uuidField: 'HvnUUID',
+      // The account default network keeps its technical name; customers see "Default network".
+      value: (row, translate) =>
+        isAccountDefaultNetwork(row) ? translate('Default network') : String(row['HvnName'] ?? ''),
+    },
     {
       id: 'provider',
       label: 'Provider',
@@ -135,10 +147,12 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
   private readonly instances = signal<HostingVpsInstance[]>([]);
   private readonly capabilities = signal<Record<string, HostingVpsNetworkCapabilities>>({});
 
-  private readonly isMaster = computed(
+  private readonly platformScope = computed(
     () => (this.route.snapshot.data?.['scope'] ?? 'tenant') === 'master',
   );
-  private readonly base = computed(() => (this.isMaster() ? 'system/hosting/vps' : 'hosting/vps'));
+  private readonly base = computed(() =>
+    this.platformScope() ? 'system/hosting/vps' : 'hosting/vps',
+  );
   private readonly networkEndpoint = computed(() => `${this.base()}/networks`);
 
   private readonly providerOptions = computed<ConfigurableCrudOption[]>(() =>
@@ -150,8 +164,9 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
     })),
   );
 
+  // Attach/apply only to an instance of the same owner: /system acts on platform instances only.
   private readonly instanceOptions = computed<ConfigurableCrudOption[]>(() =>
-    this.instances().map((instance) => ({
+    attachableInstances(this.instances(), this.platformScope()).map((instance) => ({
       value: instance.HviUUID,
       label: instance.HviName,
       description: [instance.ProviderName || instance.ProviderCode, instance.HviStatus]
@@ -231,7 +246,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           label: 'Existing provider network ID',
           span: 1,
           help: 'Registers an existing provider network without creating it.',
-          hiddenWhen: ({ editing }) => editing || !this.isMaster(),
+          hiddenWhen: ({ editing }) => editing || !this.platformScope(),
         },
         {
           key: 'isDefault',
@@ -242,7 +257,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
           options: YES_NO_OPTIONS,
           span: 1,
           hiddenWhen: ({ editing, values }) =>
-            editing || !this.isMaster() || !String(values['externalId'] ?? '').trim(),
+            editing || !this.platformScope() || !String(values['externalId'] ?? '').trim(),
         },
         // business-description: description of the network kept with the cloud resource.
         {
@@ -378,7 +393,7 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
       gateway: caps?.gateway ? String(payload['gateway'] ?? '').trim() || null : null,
       description: payload['description'] || null,
       isActive,
-      ...(this.isMaster() && externalId
+      ...(this.platformScope() && externalId
         ? { externalId, isDefault: Number(payload['isDefault']) === 1 }
         : {}),
     };

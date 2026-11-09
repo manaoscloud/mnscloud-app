@@ -1,5 +1,9 @@
-import { authenticationPayload } from '../authentication-input';
-import { Component } from '@angular/core';
+import { authenticationPayload, authenticationRecordFields } from '../authentication-input';
+import { Component, inject } from '@angular/core';
+import { AuthService } from '../../../services/auth.service';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { conventionalResaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
@@ -17,8 +21,21 @@ const config = defineCrud({
   // Each deletion carries its own revision and dependency confirmation; no bulk deletion contract.
   bulkDelete: false,
   deletePayload: (row) => ({ revision: Number(row['AacRevision']) }),
-  initialValues: { name: '', notes: '', status: 1, revision: 1, AuthenticationClusterAtcUUID: '' },
-  payload: (values, editing) => authenticationPayload(values, editing),
+  initialValues: {
+    name: '',
+    notes: '',
+    status: 1,
+    revision: 1,
+    AuthenticationClusterAtcUUID: '',
+    RegCustomerRcuUUID: '',
+  },
+  payload: (values, editing) => {
+    const payload = authenticationPayload(values, editing);
+    // The resale customer is set once, at creation; empty means an own-use account.
+    if (editing) delete payload['RegCustomerRcuUUID'];
+    else if (!payload['RegCustomerRcuUUID']) payload['RegCustomerRcuUUID'] = null;
+    return payload;
+  },
   fields: [
     { key: 'status', source: 'AacStatus', label: 'Status', type: 'status', span: 1 },
     {
@@ -37,16 +54,24 @@ const config = defineCrud({
       help: 'authentication.scopeHelp',
     },
     { key: 'name', source: 'AacName', label: 'Name', required: true, span: 1 },
-    { key: 'revision', source: 'AacRevision', label: 'Revision', type: 'number', hidden: true },
     {
-      key: 'notes',
-      source: 'AacNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
+      key: 'RegCustomerRcuUUID',
+      source: 'RegCustomerRcuUUID',
+      label: 'Customer',
+      span: 1,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'registry/customers?status=1',
+        searchParam: 'q',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+      quickCreate: quickCreateFor('RegCustomerRcuUUID'),
+      disabledWhen: ({ editing }) => editing,
+      help: 'authentication.accountCustomerHelp',
     },
+    ...authenticationRecordFields('Aac'),
   ],
   columns: [
     { id: 'name', field: 'AacName', label: 'Name', kind: 'identity' },
@@ -57,6 +82,20 @@ const config = defineCrud({
       kind: 'related',
       uuidField: 'AuthenticationClusterAtcUUID',
     },
+    {
+      id: 'customer',
+      field: 'CustomerName',
+      label: 'Customer',
+      kind: 'related',
+      uuidField: 'RegCustomerRcuUUID',
+    },
+    {
+      id: 'publication',
+      field: 'AacPortalEnabled',
+      label: 'authentication.portalEnabled',
+      kind: 'status',
+    },
+    { id: 'accesses', field: 'AccessCount', label: 'authentication.accessCount', kind: 'number' },
     { id: 'status', field: 'AacStatus', label: 'Status', kind: 'status' },
   ],
 });
@@ -70,6 +109,13 @@ const config = defineCrud({
 })
 export class AuthenticationAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(config);
+    const auth = inject(AuthService);
+    // Members and portal publication are account-wide administration.
+    const canManage = () =>
+      hasEffectivePermission(auth.user()?.permissions ?? [], 'tenant.authentication.accounts.all');
+    super({
+      ...config,
+      rowActions: conventionalResaleAccountRowActions('authentication', 'Aac', 'Aam', canManage),
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, effect, inject, resource, signal } from '@angular/core';
+import { RouteScopeService } from '../../../core/scope/route-scope';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
@@ -108,12 +109,15 @@ export class AgentTelemetryPage {
     })),
   );
 
+  /** Page or dialog: the active route's scope picks the /system or tenant link. */
+  private readonly routeScope = inject(RouteScopeService);
+
   constructor() {
     effect((onCleanup) => {
       if (this.dialog) return;
       const name = this.name().trim();
       if (!name) return;
-      const prefix = this.router.url.startsWith('/system') ? '/system' : '';
+      const prefix = this.routeScope.isPlatform() ? '/system' : '';
       onCleanup(this.breadcrumbLabels.register(`${prefix}/monitoring/agents/${this.uuid}`, name));
     });
     effect(() => {
@@ -138,7 +142,7 @@ export class AgentTelemetryPage {
   }
 
   fullPage() {
-    const prefix = this.router.url.startsWith('/system') ? '/system' : '';
+    const prefix = this.routeScope.isPlatform() ? '/system' : '';
     this.dialog?.close();
     void this.router.navigate([`${prefix}/monitoring/agents/${this.uuid}/telemetry`], {
       queryParams: { resource: this.view().selected?.uuid, hours: this.hours() },

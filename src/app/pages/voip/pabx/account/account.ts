@@ -6,6 +6,8 @@ import {
 import { Component, inject, signal } from '@angular/core';
 
 import { ApiService } from '../../../../services/api.service';
+import { AuthService } from '../../../../services/auth.service';
+import { hasEffectivePermission } from '../../../../core/guards/permission.guard';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudRowAction,
@@ -17,6 +19,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { quickCreateFor } from '../../../../shared/crud/configurable-crud/quick-create';
+import { resaleAccountRowActions } from '../../../../shared/crud/configurable-crud/account-resale-actions';
 import { buildTimezoneOptions } from '../../../../shared/i18n/timezones';
 
 const statuses: ConfigurableCrudOption[] = [
@@ -68,12 +71,17 @@ function config(): ConfigurableCrudConfig {
       routing: 'Routing',
       storage: 'Storage',
       retention: 'Retention',
+      notes: 'Notes',
     },
     initialValues: {
       isActive: 1,
       name: '',
+      notes: '',
       serverUUID: '',
-      customerUUID: '',
+      clusterUUID: '',
+      reservedCalls: null,
+      reservedCps: null,
+      customerUUID: null,
       dialPlanUUID: '',
       blacklistUUID: '',
       techPrefix: '',
@@ -93,6 +101,12 @@ function config(): ConfigurableCrudConfig {
         kind: 'status',
         field: 'DnsPublicationState',
         options: ACCOUNT_PUBLICATION_STATES,
+      },
+      {
+        id: 'publication',
+        label: 'voipPabx.publication',
+        kind: 'status',
+        field: 'VpaPortalEnabled',
       },
       { id: 'name', label: 'Name', kind: 'identity', field: 'VpaName', uuidField: 'VpaUUID' },
       {
@@ -134,8 +148,48 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'serverUUID',
         label: 'Server',
         type: 'search-select',
-        required: true,
+        requiredWhen: ({ values }) => !values['clusterUUID'],
+        disabledWhen: ({ values }) => Boolean(values['clusterUUID']),
         span: 1,
+      },
+      {
+        key: 'clusterUUID',
+        source: 'VoipClusterVclUUID',
+        payloadKey: 'clusterUUID',
+        label: 'voipCluster.title',
+        type: 'search-select',
+        span: 1,
+        remoteLookup: {
+          endpoint: 'voip/pabx/accounts/cluster-options',
+          uuidField: 'VclUUID',
+          labelField: 'VclName',
+          descriptionField: 'VclEngine',
+        },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Clusters are platform infrastructure; tenant accounts select existing clusters and cannot create infrastructure.',
+        disabledWhen: ({ editing }) => editing,
+        help: 'voipCluster.placementHelp',
+      },
+      {
+        key: 'reservedCalls',
+        source: 'VcpReservedCalls',
+        label: 'voipCluster.reservedCalls',
+        type: 'number',
+        span: 1,
+        hiddenWhen: ({ values }) => !values['clusterUUID'],
+        requiredWhen: ({ values }) => Boolean(values['clusterUUID']),
+        disabledWhen: ({ editing }) => editing,
+      },
+      {
+        key: 'reservedCps',
+        source: 'VcpReservedCps',
+        label: 'voipCluster.reservedCps',
+        type: 'number',
+        span: 1,
+        hiddenWhen: ({ values }) => !values['clusterUUID'],
+        requiredWhen: ({ values }) => Boolean(values['clusterUUID']),
+        disabledWhen: ({ editing }) => editing,
       },
       {
         key: 'customerUUID',
@@ -149,7 +203,8 @@ function config(): ConfigurableCrudConfig {
         payloadKey: 'customerUUID',
         label: 'Customer',
         type: 'search-select',
-        required: true,
+        help: 'voipPabx.accountCustomerHelp',
+        disabledWhen: ({ editing }) => editing,
         span: 1,
       },
       {
@@ -273,6 +328,16 @@ function config(): ConfigurableCrudConfig {
         span: 1,
         help: 'Days to keep this PABX call recordings. Empty inherits the Tenant, then the Global default; 0 keeps them forever.',
       },
+      {
+        key: 'notes',
+        source: 'VpaNotes',
+        payloadKey: 'notes',
+        label: 'Notes',
+        type: 'textarea',
+        tab: 'notes',
+        span: 4,
+      },
+      { key: 'revision', source: 'VpaRevision', label: 'documents.revision', hiddenWhen: () => true },
     ],
   };
 }
@@ -285,6 +350,8 @@ function config(): ConfigurableCrudConfig {
   styleUrls: ['../../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly auth = inject(AuthService);
+
   protected override async quickCreateOption(
     response: unknown,
     payload: ConfigurableCrudRecord,
@@ -298,7 +365,30 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
     this.realmRequestKey = crypto.randomUUID();
   }
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return accountRowActions(row, this.canEdit());
+    return [
+      ...accountRowActions(row, this.canEdit()),
+      ...resaleAccountRowActions({
+        module: 'voip/pabx',
+        uuidField: 'VpaUUID',
+        revisionField: 'VpaRevision',
+        portalField: 'VpaPortalEnabled',
+        kindField: 'VpaKind',
+        memberUuidField: 'PamUUID',
+        memberStatusField: 'PamStatus',
+        publicationLabel: 'voipPabx.publication',
+        publicationTitle: 'voipPabx.publication',
+        publicationDescription: 'voipPabx.publicationDescription',
+        portalEnabledLabel: 'voipPabx.portalEnabled',
+        assignLabel: 'voipPabx.assignOperator',
+        assignTitle: 'voipPabx.assignOperator',
+        operatorsLabel: 'voipPabx.operators',
+        operatorsTitle: 'voipPabx.operators',
+        operatorsDescription: 'voipPabx.operatorsDescription',
+        canManage: () =>
+          hasEffectivePermission(this.auth.user()?.permissions ?? [], 'tenant.voip.pabx.accounts.all'),
+        publication: true,
+      }),
+    ];
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
@@ -370,10 +460,22 @@ export class VoipPabxAccountPage extends ConfigurableCrudPageBase<ConfigurableCr
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
+    const outgoing = { ...payload };
+    if (!this.editingRecord() && outgoing['clusterUUID']) {
+      delete outgoing['serverUUID'];
+      outgoing['reservedCalls'] = Number(outgoing['reservedCalls']);
+      outgoing['reservedCps'] = Number(outgoing['reservedCps']);
+    } else {
+      delete outgoing['clusterUUID'];
+      delete outgoing['reservedCalls'];
+      delete outgoing['reservedCps'];
+    }
     return {
-      ...payload,
+      ...outgoing,
       ...(!this.editingRecord() ? { idempotencyKey: this.realmRequestKey } : {}),
       isActive: Number(payload['isActive']) === 1,
+      customerUUID: payload['customerUUID'] || null,
+      notes: payload['notes'] || null,
       blacklistUUID: payload['blacklistUUID'] || null,
       storageBucketUUID:
         payload['recordingStorageMode'] === 'storage' ? payload['storageBucketUUID'] || null : null,

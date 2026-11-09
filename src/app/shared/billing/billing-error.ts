@@ -27,6 +27,8 @@ const messages: Record<string, string> = {
   BILLING_COUPON_LIMIT: 'This coupon reached its redemption limit.',
   BILLING_COUPON_TENANT_LIMIT: 'You reached the redemption limit of this coupon.',
   BILLING_INSUFFICIENT_CREDIT: 'Insufficient prepaid credit.',
+  BILLING_RESOURCE_PRICE_MISSING:
+    'This resource is not for sale yet. Ask the platform to publish its price.',
   BILLING_PACKAGE_ITEM_REQUIREMENT_MISSING:
     'This product requires the {{module}} module. Add {{module}} to the package first.',
   BILLING_PACKAGE_ITEM_REQUIRED_BY_OTHER:

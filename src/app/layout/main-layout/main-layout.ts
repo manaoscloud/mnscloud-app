@@ -1,3 +1,4 @@
+import { visibleNavigation } from '../navigation/nav-visibility';
 import { MatDialog } from '@angular/material/dialog';
 // ==========================================================
 // Layout: main-layout.ts
@@ -11,6 +12,7 @@ import {
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   HostBinding,
   inject,
   signal,
@@ -66,12 +68,14 @@ import { BillingService } from '../../pages/billing/shared/billing.service';
 import { SupportReportService } from '../../services/support-report.service';
 import { HelpVideoService } from '../../services/help-video.service';
 import { HelpVideoButtonComponent } from '../../shared/help-video/help-video-button';
-import { MenuScope, NAV_ITEMS, NavItem } from '../navigation/nav-registry';
+import { NAV_ITEMS, NavItem } from '../navigation/nav-registry';
 import {
   NAV_CATEGORY_ICONS,
-  isNavCategoryGroupId,
+  estimateCompactFlyoutHeight,
+  fitCompactFlyout,
   navCategoryGroupId,
   navCategoryKey,
+  toggleNavSection,
   withCategoryGroups,
   withSectionTitles,
 } from '../navigation/nav-sections';
@@ -180,6 +184,7 @@ export class MainLayout {
   private readonly parameters = inject(SystemParameterService);
   private readonly billing = inject(BillingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly navigationLoadingService = inject(NavigationLoadingService);
   private readonly navigationEvent = toSignal(this.router.events, { initialValue: null });
   readonly asyncOperations = inject(AsyncOperationsService);
@@ -526,21 +531,8 @@ export class MainLayout {
   }
 
   toggleSection(id: string) {
-    const current = new Set(this.expandedSections());
-    if (current.has(id)) current.delete(id);
-    else {
-      // One open category group per parent, so a module never shows all its pages at once.
-      if (isNavCategoryGroupId(id)) {
-        const siblings = `${id.slice(0, id.lastIndexOf('/@'))}/@`;
-        for (const open of [...current]) {
-          if (open.startsWith(siblings) && !open.slice(siblings.length).includes('/')) {
-            current.delete(open);
-          }
-        }
-      }
-      current.add(id);
-    }
-    this.expandedSections.set(current);
+    // Accordion at every level: opening an entry closes its open siblings (app.md → Navigation).
+    this.expandedSections.set(toggleNavSection(this.sidebarNavItems, this.expandedSections(), id));
   }
 
   async navigateTo(item: NavItem) {
@@ -608,10 +600,11 @@ export class MainLayout {
     this.compactHoverRootId.set(item.id);
     this.compactHoverChildId.set(null);
     this.compactHoverGrandId.set(null);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, this.compactFlyoutEntries(item.id));
     this.compactRootFlyoutTop.set(placement.top);
     this.compactFlyoutLeft.set(placement.left);
     this.compactRootFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('root', placement.anchorTop);
   }
 
   onCompactRootLeave() {
@@ -629,10 +622,11 @@ export class MainLayout {
 
     this.compactHoverChildId.set(item.id);
     this.compactHoverGrandId.set(null);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, item.children ?? []);
     this.compactChildFlyoutTop.set(placement.top);
     this.compactChildFlyoutLeft.set(placement.left);
     this.compactChildFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('child', placement.anchorTop);
   }
 
   onCompactGrandEnter(item: NavItem, event?: MouseEvent) {
@@ -644,10 +638,11 @@ export class MainLayout {
     }
 
     this.compactHoverGrandId.set(item.id);
-    const placement = this.computeFlyoutPlacement(event, item.children?.length ?? 0);
+    const placement = this.computeFlyoutPlacement(event, item.children ?? []);
     this.compactGrandFlyoutTop.set(placement.top);
     this.compactGrandFlyoutLeft.set(placement.left);
     this.compactGrandFlyoutMaxHeight.set(placement.maxHeight);
+    this.refitCompactFlyout('grand', placement.anchorTop);
   }
 
   onCompactFlyoutEnter() {
@@ -663,28 +658,32 @@ export class MainLayout {
     this.closeCompactFlyouts();
   }
 
-  private computeFlyoutPlacement(event: MouseEvent | undefined, itemCount: number) {
+  /** Entries of the root flyout as rendered (with category titles), for the height estimate. */
+  private compactFlyoutEntries(rootId: string): NavItem[] {
+    return this.filteredNavItems.find((root) => root.id === rootId)?.children ?? [];
+  }
+
+  private computeFlyoutPlacement(
+    event: MouseEvent | undefined,
+    entries: readonly { id: string; categoryTitle?: string }[],
+  ) {
     const target = event?.currentTarget as HTMLElement | null;
     if (!target || typeof window === 'undefined') {
       return {
         top: this.compactRootFlyoutTop(),
         left: this.compactFlyoutLeft(),
         maxHeight: this.compactRootFlyoutMaxHeight(),
+        anchorTop: this.compactRootFlyoutTop(),
       };
     }
 
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
     const margin = 16;
     const gap = 8;
     const flyoutWidth = 234;
-    const maxFlyoutHeight = Math.min(560, Math.max(112, viewportHeight - margin * 2));
-    const estimatedHeight = Math.min(Math.max(itemCount * 42 + 18, 112), maxFlyoutHeight);
     const targetRect = target.getBoundingClientRect();
     const sidenav = target.closest('mat-sidenav') as HTMLElement | null;
     const sidenavRect = sidenav?.getBoundingClientRect();
-    const preferredTop = targetRect.top;
-    const maxTop = Math.max(margin, viewportHeight - estimatedHeight - margin);
     const preferredLeft =
       target.classList.contains('root-item') && sidenavRect
         ? sidenavRect.right + gap
@@ -693,12 +692,33 @@ export class MainLayout {
     const maxLeft = Math.max(margin, viewportWidth - flyoutWidth - margin);
     const left =
       preferredLeft <= maxLeft ? preferredLeft : Math.max(margin, Math.min(fallbackLeft, maxLeft));
+    const { top, maxHeight } = fitCompactFlyout(
+      targetRect.top,
+      estimateCompactFlyoutHeight(entries),
+      window.innerHeight,
+      margin,
+    );
 
-    return {
-      top: Math.round(Math.max(margin, Math.min(preferredTop, maxTop))),
-      left: Math.round(left),
-      maxHeight: Math.round(maxFlyoutHeight),
-    };
+    return { top, left: Math.round(left), maxHeight, anchorTop: targetRect.top };
+  }
+
+  /**
+   * The estimate places the flyout at once; after it renders, its real height (fonts, badges,
+   * long labels) decides the final top, so it never runs past the bottom of the viewport.
+   */
+  private refitCompactFlyout(level: 'root' | 'child' | 'grand', anchorTop: number) {
+    if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
+    requestAnimationFrame(() => {
+      const panel = this.host.nativeElement.querySelector<HTMLElement>(`.compact-flyout-${level}`);
+      if (!panel) return;
+      const { top } = fitCompactFlyout(anchorTop, panel.scrollHeight, window.innerHeight);
+      const signals = {
+        root: this.compactRootFlyoutTop,
+        child: this.compactChildFlyoutTop,
+        grand: this.compactGrandFlyoutTop,
+      };
+      signals[level].set(top);
+    });
   }
 
   private scheduleCompactClose() {
@@ -881,6 +901,8 @@ export class MainLayout {
   }
 
   private hasPermissions(item: NavItem): boolean {
+    if (item.resourceAccess && this.auth.user()?.resourceAccess?.[item.resourceAccess] !== true)
+      return false;
     if (!item.permissions || item.permissions.length === 0) return true;
     return item.permissions.every((permission) => this.hasPermission(permission));
   }
@@ -899,14 +921,6 @@ export class MainLayout {
       return mode === 'tenant' && (!this.isMasterUser() || this.hasTenantSelected());
     }
     return false;
-  }
-
-  private resolveMenuScope(item: NavItem, inheritedScope?: MenuScope): MenuScope {
-    if (item.scope) return item.scope;
-    if (item.masterRoute && item.route) return 'both';
-    if (item.masterRoute) return 'master';
-    if (item.requiresEnvironment) return 'tenant';
-    return inheritedScope ?? 'public';
   }
 
   private hasCommercialEntitlement(required?: string): boolean {
@@ -935,44 +949,16 @@ export class MainLayout {
     });
   }
 
-  private filterMenu(
-    items: NavItem[],
-    inheritedScope?: MenuScope,
-    inheritedEntitlement?: string,
-  ): NavItem[] {
-    return items
-      .map((i) => {
-        const scope = this.resolveMenuScope(i, inheritedScope);
-        const entitlementCode = i.entitlementCode ?? inheritedEntitlement;
-        const scopedItem = { ...i, scope };
-
-        if (!this.hasPermissions(scopedItem)) return null;
-
-        // 2) Commercial entitlement projection. API remains the source of truth.
-        if (scope === 'tenant' || scope === 'both') {
-          if (!this.hasCommercialEntitlement(entitlementCode)) return null;
-        }
-
-        // 3) Filtra filhos antes do escopo do grupo, porque grupos tenant podem conter filhos both.
-        const children = scopedItem.children
-          ? this.filterMenu(scopedItem.children, scope, entitlementCode)
-          : undefined;
-
-        // Se era grupo e perdeu todos os filhos, remove
-        if (scopedItem.children?.length && (!children || children.length === 0)) return null;
-
-        // 4) Escopo/contexto
-        if (!scopedItem.children?.length && !this.canShowByEnvironment(scopedItem)) return null;
-
-        return { ...scopedItem, children };
-      })
-      .filter(Boolean) as NavItem[];
-  }
-
   // menu final (filtrado)
   readonly localizedNavItems = computed(() => {
     this.i18n.language();
-    return this.localizeMenu(this.filterMenu(this.navItemsRaw));
+    return this.localizeMenu(
+      visibleNavigation(this.navItemsRaw, {
+        permitted: (item) => this.hasPermissions(item),
+        entitled: (code) => this.hasCommercialEntitlement(code),
+        context: (item) => this.canShowByEnvironment(item),
+      }),
+    );
   });
 
   // Getter filtrado por busca (usa o menu filtrado)

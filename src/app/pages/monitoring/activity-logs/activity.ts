@@ -1,10 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudFilters,
-  ConfigurableCrudListFilter,
   ConfigurableCrudListParams,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -15,7 +15,6 @@ import {
   DataViewerTone,
   openDataViewerDialog,
 } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { AuthService } from '../../../services/auth.service';
 
 const LEVEL_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'info', label: 'Info' },
@@ -107,15 +106,6 @@ const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
   rowActions: [VIEW_DETAILS_ACTION],
   listFilters: [
     {
-      key: 'environmentUUID',
-      label: 'Tenant',
-      paramKey: 'environmentUUID',
-      type: 'search-select',
-      options: [],
-      placeholder: 'Search tenant',
-      emptyLabel: 'No tenants found.',
-    },
-    {
       key: 'level',
       label: 'Level',
       type: 'select',
@@ -142,24 +132,14 @@ const ACTIVITY_LOGS_CONFIG: ConfigurableCrudConfig = {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly auth = inject(AuthService);
-  private readonly tenantLookup = signal<readonly ConfigurableCrudOption[]>([
-    { value: '', label: 'All' },
-    { value: 'global', label: 'Global/System', searchText: 'global system' },
-  ]);
-  private readonly loadingTenants = signal(false);
-
-  private readonly isMaster = computed(() =>
-    (this.auth.user()?.permissions ?? []).includes('platform.master.access'),
-  );
+  /**
+   * Each tenant sees only its own logs, the master included: /system lists the platform (global)
+   * logs and a tenant route the selected tenant's. There is no cross-tenant tenant filter.
+   */
+  private readonly platformScope = injectPlatformScope();
 
   constructor() {
     super(ACTIVITY_LOGS_CONFIG);
-    const tenantFilter = ACTIVITY_LOGS_CONFIG.listFilters?.find(
-      (filter) => filter.key === 'environmentUUID',
-    );
-    if (tenantFilter) tenantFilter.hiddenWhen = () => !this.isMaster();
-    if (this.isMaster()) void this.fetchTenantOptions();
   }
 
   override rowActions(_row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
@@ -169,15 +149,6 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     if (action.key !== 'view-details') return;
     this.openDetails(row);
-  }
-
-  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
-    if (key === 'environmentUUID') return this.isMaster() ? this.tenantLookup() : [];
-    return [];
-  }
-
-  override listFilterLoading(filter: ConfigurableCrudListFilter): boolean {
-    return filter.key === 'environmentUUID' ? this.loadingTenants() : false;
   }
 
   protected override async fetchItems(
@@ -190,9 +161,10 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     if (filters.status) params.set('status', String(filters.status));
     for (const [key, value] of Object.entries(filters.extra ?? {})) {
       if (value === null || value === undefined || value === '') continue;
-      if (key === 'environmentUUID' && !this.isMaster()) continue;
+      if (key === 'environmentUUID') continue;
       params.set(key, String(value));
     }
+    if (this.platformScope) params.set('environmentUUID', 'global');
 
     const response = await this.api.get<{
       data?: { items?: ConfigurableCrudRecord[]; total?: number };
@@ -200,54 +172,6 @@ export class MonitoringActivityLogsPage extends ConfigurableCrudPageBase<Configu
     const data = response.data ?? {};
     this.serverTotal.set(Number(data.total ?? 0));
     return (data.items ?? []).map((row) => this.decorateRow(row));
-  }
-
-  private async fetchTenantOptions() {
-    this.loadingTenants.set(true);
-    try {
-      const response = await this.fetchTenantLookup();
-      const tenants: ConfigurableCrudOption[] = [];
-      for (const row of response) {
-        const value = String(row['EnvironmentUUID'] ?? row['environmentUUID'] ?? '').trim();
-        if (!value) continue;
-        const name = String(
-          row['EnvironmentName'] ?? row['environmentName'] ?? row['TenantEmail'] ?? value,
-        ).trim();
-        const email = String(row['TenantEmail'] ?? row['tenantEmail'] ?? '').trim();
-        tenants.push({
-          value,
-          label: name || value,
-          description: email || value,
-          searchText: `${name} ${email} ${value}`,
-        });
-      }
-      this.tenantLookup.set([
-        { value: '', label: 'All' },
-        { value: 'global', label: 'Global/System', searchText: 'global system' },
-        ...tenants,
-      ]);
-    } catch (error) {
-      this.snack.error(this.errorMessage(error) || 'Failed to load tenants.');
-    } finally {
-      this.loadingTenants.set(false);
-    }
-  }
-
-  private async fetchTenantLookup(): Promise<ConfigurableCrudRecord[]> {
-    try {
-      const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-        'system/billing/tenants?search=&limit=50&offset=0',
-      );
-      const items = response.data?.items ?? [];
-      if (items.length) return items;
-    } catch {
-      // The billing lookup is master-only; fall back to the environment access contract below.
-    }
-
-    const accessResponse = await this.api.get<{ data?: { access?: ConfigurableCrudRecord[] } }>(
-      'user/access',
-    );
-    return accessResponse.data?.access ?? [];
   }
 
   private decorateRow(row: ConfigurableCrudRecord): ConfigurableCrudRecord {
