@@ -12,6 +12,16 @@ import {
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../shared/data-viewer-dialog/data-viewer-dialog';
+import { AuthService } from '../../services/auth.service';
+import { hasEffectivePermission } from '../../core/guards/permission.guard';
+import {
+  aiFailureKey,
+  aiLanguage,
+  digestView,
+  explanationView,
+  exposureView,
+  triageView,
+} from './cyber-ai';
 
 type CyberSection =
   | 'servers'
@@ -302,6 +312,13 @@ function vulnerabilityFindings(row: ConfigurableCrudRecord): ConfigurableCrudCon
         run: (finding) => showRemediation(finding),
       },
       {
+        key: 'aiExplain',
+        label: 'cyberSecurity.ai.explain',
+        icon: 'auto_awesome',
+        visible: (finding) => Boolean(finding['agentUUID']),
+        run: (finding) => aiExplainDialog?.(finding),
+      },
+      {
         key: 'acceptRisk',
         label: 'cyberSecurity.vuln.acceptRisk',
         icon: 'verified_user',
@@ -387,6 +404,8 @@ function vulnerabilityFindingsOfAgent(row: ConfigurableCrudRecord): Configurable
 }
 
 let remediationDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
+let aiExplainDialog: ((finding: ConfigurableCrudRecord) => Promise<void>) | null = null;
+let platformMaster: () => boolean = () => false;
 function showRemediation(finding: ConfigurableCrudRecord) {
   remediationDialog?.(finding);
 }
@@ -469,6 +488,20 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         collection: vulnerabilityFindings,
       },
       { key: 'vulnerability', label: 'Details', icon: 'visibility', tooltip: 'Details' },
+      {
+        key: 'platformExposure',
+        label: 'cyberSecurity.ai.platformExposure',
+        icon: 'public',
+        visible: () => platformMaster(),
+      },
+    ],
+    filterActions: [
+      {
+        key: 'aiDigest',
+        label: 'cyberSecurity.ai.digest',
+        icon: 'auto_awesome',
+        tooltip: 'cyberSecurity.ai.digestHelp',
+      },
     ],
   }),
   inventory: defineCrud({
@@ -709,6 +742,14 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     inactiveValue: 'resolved',
     statusOptions: alertStatuses,
     listFilters: [{ key: 'level', label: 'Level', type: 'select', span: 1, options: levels }],
+    filterActions: [
+      {
+        key: 'aiTriage',
+        label: 'cyberSecurity.ai.triage',
+        icon: 'auto_awesome',
+        tooltip: 'cyberSecurity.ai.triageHelp',
+      },
+    ],
     columns: [
       { id: 'message', label: 'Message', field: 'message', uuidField: 'uuid', kind: 'identity' },
       { id: 'server', label: 'Server', field: 'serverName' },
@@ -844,10 +885,97 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const section = (data['section'] as CyberSection | undefined) ?? 'servers';
     const config = CONFIGS[section] ?? CONFIGS.servers;
     super(data['scope'] === 'master' ? config : withCyberAccount(section, config));
+    const auth = inject(AuthService);
     remediationDialog = (finding) => this.showRemediation(finding);
+    aiExplainDialog = (finding) => this.explainFinding(finding);
+    platformMaster = () =>
+      hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
+  }
+
+  private language(): string {
+    return aiLanguage(this.transloco.getActiveLang());
+  }
+
+  private aiError(error: unknown, fallback: string): void {
+    this.snack.error(this.t(aiFailureKey(error) ?? (this.errorMessage(error) || fallback)));
+  }
+
+  /** cyber_security.vuln_explain: plain-language explanation beside the rule-based fix. */
+  async explainFinding(finding: ConfigurableCrudRecord): Promise<void> {
+    try {
+      const response = await this.api.post<{ data?: Record<string, unknown> }>(
+        `cyber-security/vulnerabilities/findings/${encodeURIComponent(String(finding['findingUUID']))}/ai-explain`,
+        { code: finding['code'], agentUUID: finding['agentUUID'], language: this.language() },
+      );
+      openDataViewerDialog(
+        this.dialog,
+        explanationView(finding, response?.data ?? {}, this.t.bind(this)),
+      );
+    } catch (error) {
+      this.aiError(error, 'cyberSecurity.ai.failed');
+    }
+  }
+
+  private async showDigest(): Promise<void> {
+    try {
+      const response = await this.api.post<{ data?: Record<string, unknown> }>(
+        'cyber-security/vulnerabilities/ai-digest',
+        { language: this.language() },
+      );
+      const data = response?.data ?? {};
+      if (!data['digest']) {
+        this.snack.success(this.t('cyberSecurity.ai.nothingOpen'));
+        return;
+      }
+      openDataViewerDialog(this.dialog, digestView(data, this.t.bind(this)));
+    } catch (error) {
+      this.aiError(error, 'cyberSecurity.ai.failed');
+    }
+  }
+
+  private async showTriage(): Promise<void> {
+    const account = this.listFilterValues()['cyberAccountUUID'];
+    try {
+      const response = await this.api.post<{ data?: Record<string, unknown> }>(
+        'cyber-security/alerts/ai-triage',
+        { cyberAccountUUID: account ? String(account) : null, language: this.language() },
+      );
+      const data = response?.data ?? {};
+      if (!((data['groups'] as unknown[] | undefined) ?? []).length) {
+        this.snack.success(this.t('cyberSecurity.ai.nothingToTriage'));
+        return;
+      }
+      openDataViewerDialog(this.dialog, triageView(data, this.t.bind(this)));
+    } catch (error) {
+      this.aiError(error, 'cyberSecurity.ai.failed');
+    }
+  }
+
+  /** cyber_security.platform_watch, with the exposure table alone when AI is unavailable. */
+  private async showPlatformExposure(row: ConfigurableCrudRecord): Promise<void> {
+    const code = String(row['code'] ?? '');
+    const path = `system/cyber-security/vulnerabilities/${encodeURIComponent(code)}/exposure`;
+    try {
+      let data: Record<string, unknown> | undefined;
+      try {
+        data = (
+          await this.api.post<{ data?: Record<string, unknown> }>(`${path}/ai-watch`, {
+            language: this.language(),
+          })
+        )?.data;
+      } catch (error) {
+        if (!aiFailureKey(error)) throw error;
+        data = (await this.api.get<{ data?: Record<string, unknown> }>(path))?.data;
+      }
+      openDataViewerDialog(this.dialog, exposureView(code, data ?? {}, this.t.bind(this)));
+    } catch (error) {
+      this.aiError(error, 'cyberSecurity.ai.failed');
+    }
   }
 
   override async handleFilterAction(action: { key: string }): Promise<void> {
+    if (action.key === 'aiDigest') return this.showDigest();
+    if (action.key === 'aiTriage') return this.showTriage();
     if (action.key !== 'enableAll') return;
     const ok = await this.confirmAction(
       'cyberSecurity.inventory.enableAll',
@@ -1027,6 +1155,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     if (action.key === 'jobs') await this.showJobs(row);
     if (action.key === 'details') this.showDetails(row);
     if (action.key === 'vulnerability') await this.showVulnerability(row);
+    if (action.key === 'platformExposure') await this.showPlatformExposure(row);
   }
 
   private async showJobs(row: ConfigurableCrudRecord): Promise<void> {

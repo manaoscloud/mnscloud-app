@@ -11,6 +11,13 @@ import {
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { reportMonth, vulnerabilityReportView } from './vulnerability-report';
 import {
+  aiFailureKey,
+  aiLanguage,
+  narrativeForm,
+  narrativeMonth,
+  type ReportNarrative,
+} from '../cyber-ai';
+import {
   resaleAccountCrud,
   resaleAccountRowActions,
 } from '../../../shared/crud/configurable-crud/account-resale-actions';
@@ -100,6 +107,18 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
           label: 'cyberSecurity.report.actionPrevious',
           icon: 'history',
         },
+        {
+          key: 'reportText',
+          label: 'cyberSecurity.ai.reportTextAction',
+          icon: 'edit_note',
+          visible: isCustomer,
+        },
+        {
+          key: 'reportTextAi',
+          label: 'cyberSecurity.ai.reportDraftAction',
+          icon: 'auto_awesome',
+          visible: isCustomer,
+        },
       ],
     });
   }
@@ -108,6 +127,10 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'reportText' || action.key === 'reportTextAi') {
+      await this.editReportText(row, action.key === 'reportTextAi');
+      return;
+    }
     if (action.key !== 'vulnerabilityReport' && action.key !== 'vulnerabilityReportPrevious') {
       return;
     }
@@ -122,6 +145,52 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
       );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || 'cyberSecurity.report.loadFailed'));
+    }
+  }
+
+  /**
+   * Reviewed text of the previous month report (shown in the Customer Portal once published). With
+   * AI, cyber_security.monthly_report drafts it and the form opens for review; nothing is saved
+   * or published before the reseller saves.
+   */
+  private async editReportText(row: ConfigurableCrudRecord, withAi: boolean): Promise<void> {
+    const account = String(row['CyaUUID']);
+    const month = narrativeMonth(new Date());
+    const base = `cyber-security/accounts/${encodeURIComponent(account)}/vulnerability-report/narrative`;
+    try {
+      const current =
+        (await this.api.get<{ data?: ReportNarrative }>(`${base}?month=${month}`))?.data ?? null;
+      let draft: string | null = null;
+      if (withAi) {
+        if (
+          current &&
+          !(await this.confirmAction(
+            'cyberSecurity.ai.reportDraftAction',
+            'cyberSecurity.ai.reportDraftReplace',
+            'cyberSecurity.ai.reportDraftAction',
+          ))
+        ) {
+          return;
+        }
+        const response = await this.api.post<{ data?: { text?: string } }>(`${base}/ai-draft`, {
+          month,
+          language: aiLanguage(this.transloco.getActiveLang()),
+        });
+        draft = response?.data?.text ?? '';
+      }
+      await this.runRowAction(
+        {
+          key: 'reportTextForm',
+          label: 'cyberSecurity.ai.reportText',
+          icon: 'edit_note',
+          form: () => narrativeForm(account, month, current, draft),
+        },
+        row,
+      );
+    } catch (error) {
+      this.snack.error(
+        this.t(aiFailureKey(error) ?? (this.errorMessage(error) || 'cyberSecurity.ai.failed')),
+      );
     }
   }
 }
