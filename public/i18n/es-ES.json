@@ -11971,5 +11971,13 @@
   "cyberSecurity.unblockCreated": "Pedido el",
   "cyberSecurity.unblockExpires": "El bloqueo expira el",
   "Every call made by an AI feature: tenant, provider, model, tokens and result, to follow cost and failures.": "Cada llamada hecha por una función de IA: tenant, proveedor, modelo, tokens y resultado, para seguir costos y fallas.",
-  "notifications.cyberUnblockRequest": "Pedido de desbloqueo de la IP {{value}}"
+  "notifications.cyberUnblockRequest": "Pedido de desbloqueo de la IP {{value}}",
+  "Not asked": "No solicitada",
+  "Optional": "Opcional",
+  "Asked at every punch": "Solicitada en cada fichaje",
+  "Photo at punch": "Foto en el fichaje",
+  "Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.": "Pulse toma una foto con la cámara frontal antes de confirmar cada fichaje. Sin foto (cámara rechazada, sin conexión) el fichaje se registra igual y aparece aquí sin foto. Las fotos son privadas, solo se ven con el permiso de fichajes y se eliminan tras 90 días.",
+  "Taken": "Tomada",
+  "Show photo": "Ver foto",
+  "Photo taken with this punch": "Foto tomada en este fichaje"
 }
