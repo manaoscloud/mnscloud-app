@@ -35,9 +35,9 @@ describe('Contracts AI views', () => {
       t,
     );
     expect(dialog.title).toBe('contracts.ai.draftClauseHeader');
-    expect(dialog.sections.length).toBe(4);
-    expect(dialog.sections[0].message).toBe('Objeto do Contrato');
-    expect(dialog.sections[1].code?.value).toContain('Cláusula 1ª');
+    expect(dialog.sections?.length).toBe(4);
+    expect(dialog.sections?.[0].message).toBe('Objeto do Contrato');
+    expect(dialog.sections?.[1].code?.value).toContain('Cláusula 1ª');
   });
 
   it('riskReviewView builds risk score and findings', () => {
@@ -57,8 +57,8 @@ describe('Contracts AI views', () => {
       t,
     );
     expect(dialog.title).toBe('contracts.ai.riskReviewHeader');
-    expect(dialog.sections[0].message).toBe('75 / 100');
-    expect(dialog.sections[2].message).toContain('Abusividade CDC');
+    expect(dialog.sections?.[0].message).toBe('75 / 100');
+    expect(dialog.sections?.[2].message).toContain('Abusividade CDC');
   });
 
   it('metadataExtractionView builds parties, terms and obligations', () => {
@@ -74,9 +74,9 @@ describe('Contracts AI views', () => {
       t,
     );
     expect(dialog.title).toBe('contracts.ai.metadataHeader');
-    expect(dialog.sections[0].message).toContain('Empresa A');
-    expect(dialog.sections[1].message).toContain('IPCA');
-    expect(dialog.sections[2].message).toContain('Entrega de relatório');
+    expect(dialog.sections?.[0].message).toContain('Empresa A');
+    expect(dialog.sections?.[1].message).toContain('IPCA');
+    expect(dialog.sections?.[2].message).toContain('Entrega de relatório');
   });
 
   it('clauseExplanationView builds explanation, key points and highlights', () => {
@@ -89,9 +89,9 @@ describe('Contracts AI views', () => {
       t,
     );
     expect(dialog.title).toBe('contracts.ai.clauseExplanationHeader');
-    expect(dialog.sections[0].message).toContain('condições de cancelamento');
-    expect(dialog.sections[1].message).toContain('Aviso prévio');
-    expect(dialog.sections[2].message).toContain('30 dias');
+    expect(dialog.sections?.[0].message).toContain('condições de cancelamento');
+    expect(dialog.sections?.[1].message).toContain('Aviso prévio');
+    expect(dialog.sections?.[2].message).toContain('30 dias');
   });
 
   it('anomalyInsightView builds operational status and analysis', () => {
@@ -106,7 +106,7 @@ describe('Contracts AI views', () => {
       t,
     );
     expect(dialog.title).toBe('contracts.ai.anomalyInsightHeader');
-    expect(dialog.sections[0].message).toBe('HEALTHY');
-    expect(dialog.sections[4].message).toContain('EnvelopesCompleted7d: 150');
+    expect(dialog.sections?.[0].message).toBe('HEALTHY');
+    expect(dialog.sections?.[4].message).toContain('EnvelopesCompleted7d: 150');
   });
 });
