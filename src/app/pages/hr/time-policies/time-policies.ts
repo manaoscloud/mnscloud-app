@@ -32,6 +32,13 @@ const YES_NO: readonly ConfigurableCrudOption[] = [
   { value: false, label: 'No' },
 ];
 
+/** Photo at punch (PU8): a missing photo flags the mark for HR, it never blocks it. */
+const PHOTO_MODES: readonly ConfigurableCrudOption[] = [
+  { value: 'off', label: 'Not asked' },
+  { value: 'optional', label: 'Optional' },
+  { value: 'required', label: 'Asked at every punch' },
+];
+
 const COMPANY_LOOKUP = {
   endpoint: 'hr/companies',
   uuidField: 'RcoUUID',
@@ -74,6 +81,7 @@ const config = defineCrud({
     overtimeRate: 50,
     restDayRate: 100,
     nightRate: 20,
+    punchPhotoMode: 'off',
     notes: '',
   },
   columns: [
@@ -116,6 +124,12 @@ const config = defineCrud({
       field: 'OvertimeRate',
       value: (row) => `${row['OvertimeRate']}% / ${row['RestDayRate']}% / ${row['NightRate']}%`,
       optional: true,
+    },
+    {
+      id: 'photo',
+      label: 'Photo at punch',
+      field: 'PunchPhotoMode',
+      options: PHOTO_MODES,
     },
   ],
   fields: [
@@ -225,6 +239,16 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'punchPhotoMode',
+      source: 'PunchPhotoMode',
+      label: 'Photo at punch',
+      type: 'select',
+      options: PHOTO_MODES,
+      help: 'Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.',
+      span: 1,
+      breakBefore: true,
+    },
+    {
       key: 'notes',
       source: 'Notes',
       label: 'Notes',
@@ -247,6 +271,9 @@ const config = defineCrud({
     overtimeRate: number(values['overtimeRate'], 50),
     restDayRate: number(values['restDayRate'], 100),
     nightRate: number(values['nightRate'], 20),
+    punchPhotoMode: ['optional', 'required'].includes(String(values['punchPhotoMode']))
+      ? values['punchPhotoMode']
+      : 'off',
     notes: values['notes'] ?? null,
   }),
 });

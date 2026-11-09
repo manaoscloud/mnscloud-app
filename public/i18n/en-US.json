@@ -12016,5 +12016,13 @@
   "Only an open vulnerability finding can be accepted": "Only an open finding can have its risk accepted.",
   "The vulnerability risk is not accepted": "The risk of this finding is not accepted.",
   "P2": "P2",
-  "P3": "P3"
+  "P3": "P3",
+  "Not asked": "Not asked",
+  "Optional": "Optional",
+  "Asked at every punch": "Asked at every punch",
+  "Photo at punch": "Photo at punch",
+  "Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.": "Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.",
+  "Taken": "Taken",
+  "Show photo": "Show photo",
+  "Photo taken with this punch": "Photo taken with this punch"
 }

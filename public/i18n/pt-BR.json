@@ -12017,5 +12017,13 @@
   "Only an open vulnerability finding can be accepted": "Só um achado aberto pode ter o risco aceito.",
   "The vulnerability risk is not accepted": "O risco deste achado não está aceito.",
   "P2": "P2",
-  "P3": "P3"
+  "P3": "P3",
+  "Not asked": "Não pedida",
+  "Optional": "Opcional",
+  "Asked at every punch": "Pedida em toda marcação",
+  "Photo at punch": "Foto na marcação",
+  "Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.": "O Pulse tira uma foto com a câmera frontal antes de cada marcação ser confirmada. Sem foto (câmera recusada, sem conexão) a marcação é registrada mesmo assim e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de batidas e apagadas após 90 dias.",
+  "Taken": "Tirada",
+  "Show photo": "Ver foto",
+  "Photo taken with this punch": "Foto tirada nesta marcação"
 }
