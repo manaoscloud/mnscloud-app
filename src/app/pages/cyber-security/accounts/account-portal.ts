@@ -7,7 +7,8 @@ import { portalGrantCrud } from '../../../shared/crud/configurable-crud/portal-g
 
 // Dialogs opened from the rows of customer Cyber Security accounts (Customer Portal, resale R4).
 
-// Acknowledge and unblock need threats; reveal needs secrets (the database drops them otherwise).
+// Acknowledge and unblock need threats, reveal needs secrets, accepting a vulnerability risk needs
+// vulnerabilities (the database drops them otherwise).
 const GRANTS: readonly [string, string][] = [
   ['CpgDashboard', 'cyberSecurity.grantDashboard'],
   ['CpgServers', 'cyberSecurity.grantServers'],
@@ -16,6 +17,8 @@ const GRANTS: readonly [string, string][] = [
   ['CpgUnblock', 'cyberSecurity.grantUnblock'],
   ['CpgSecrets', 'cyberSecurity.grantSecrets'],
   ['CpgSecretReveal', 'cyberSecurity.grantSecretReveal'],
+  ['CpgVulnerabilities', 'cyberSecurity.grantVulnerabilities'],
+  ['CpgVulnAccept', 'cyberSecurity.grantVulnAccept'],
 ];
 
 const REQUEST_STATUSES: readonly ConfigurableCrudOption[] = [
@@ -53,6 +56,8 @@ export function portalAccessConfig(row: ConfigurableCrudRecord) {
       CpgUnblock: 0,
       CpgSecrets: 0,
       CpgSecretReveal: 0,
+      CpgVulnerabilities: 1,
+      CpgVulnAccept: 0,
     },
   });
 }

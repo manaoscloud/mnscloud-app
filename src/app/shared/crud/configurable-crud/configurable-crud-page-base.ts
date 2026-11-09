@@ -525,7 +525,7 @@ export type ConfigurableCrudRowAction = {
 };
 
 export type ConfigurableCrudRowActionRequest = {
-  method: 'post' | 'put';
+  method: 'post' | 'put' | 'delete';
   endpoint: (row: ConfigurableCrudRecord) => string;
   /** Request body; defaults to `{}`. */
   body?: (row: ConfigurableCrudRecord) => Record<string, unknown>;
@@ -2013,6 +2013,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       const endpoint = request.endpoint(row);
       const body = request.body?.(row) ?? {};
       if (request.method === 'put') await this.api.put(endpoint, body);
+      else if (request.method === 'delete') await this.api.delete(endpoint);
       else await this.api.post(endpoint, body);
       // A row action may replace a loaded secret (e.g. a regenerated password): never show the old one.
       for (const column of this.config.columns) {

@@ -6,7 +6,10 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { reportMonth, vulnerabilityReportView } from './vulnerability-report';
 import {
   resaleAccountCrud,
   resaleAccountRowActions,
@@ -87,7 +90,38 @@ export class CyberSecurityAccountsPage extends ConfigurableCrudPageBase<Configur
           visible: isCustomer,
           collection: unblockRequestsConfig(),
         },
+        {
+          key: 'vulnerabilityReport',
+          label: 'cyberSecurity.report.actionCurrent',
+          icon: 'summarize',
+        },
+        {
+          key: 'vulnerabilityReportPrevious',
+          label: 'cyberSecurity.report.actionPrevious',
+          icon: 'history',
+        },
       ],
     });
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key !== 'vulnerabilityReport' && action.key !== 'vulnerabilityReportPrevious') {
+      return;
+    }
+    const month = reportMonth(new Date(), action.key === 'vulnerabilityReport' ? 0 : 1);
+    try {
+      const response = await this.api.get<{ data?: Record<string, unknown> }>(
+        `cyber-security/accounts/${encodeURIComponent(String(row['CyaUUID']))}/vulnerability-report?month=${month}`,
+      );
+      openDataViewerDialog(
+        this.dialog,
+        vulnerabilityReportView(response?.data ?? {}, this.t.bind(this)),
+      );
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'cyberSecurity.report.loadFailed'));
+    }
   }
 }
