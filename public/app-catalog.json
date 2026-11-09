@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "16de5536c189",
+  "version": "ccf394f653ac",
   "language": "pt-BR",
   "entries": [
     {
@@ -743,6 +743,10 @@
           "help": ""
         },
         {
+          "label": "Provedor de assinatura externa",
+          "help": ""
+        },
+        {
           "label": "Ordem de assinatura",
           "help": ""
         },
@@ -813,6 +817,63 @@
         },
         {
           "label": "Observações do vínculo",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/contracts/providers",
+      "menuPath": "Contratos › Provedores",
+      "scope": "tenant",
+      "title": "Provedores de Assinatura",
+      "description": "Configure integrações externas de assinatura eletrônica (Clicksign, ZapSign, DocuSign) em modo BYO ou atacado.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Nome da integração",
+          "help": ""
+        },
+        {
+          "label": "Provedor",
+          "help": ""
+        },
+        {
+          "label": "Modo de autenticação",
+          "help": ""
+        },
+        {
+          "label": "Ambiente",
+          "help": ""
+        },
+        {
+          "label": "ID da conta externa",
+          "help": ""
+        },
+        {
+          "label": "Chave de API (Token)",
+          "help": ""
+        },
+        {
+          "label": "Segredo de API",
+          "help": ""
+        },
+        {
+          "label": "Segredo do Webhook (HMAC)",
+          "help": ""
+        },
+        {
+          "label": "Token do Webhook (URL pública)",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
