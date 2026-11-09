@@ -4,6 +4,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudColumn,
   ConfigurableCrudConfig,
+  ConfigurableCrudFilterAction,
   ConfigurableCrudListFilter,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -167,6 +168,28 @@ const CYBER_ACCOUNT_COLUMN: ConfigurableCrudColumn = {
   label: 'cyberSecurity.account',
   field: 'cyberAccountName',
 };
+
+/** Read-only server list keyed by Agent, shared by the inventory and patch pages. */
+function agentServerList(
+  endpoint: string,
+  page: { pageTitle: string; pageDescription: string },
+  action: ConfigurableCrudFilterAction,
+) {
+  return {
+    ...readOnly,
+    ...page,
+    endpoint,
+    uuidField: 'agentUUID',
+    serverSidePagination: true,
+    statusFilter: false,
+    filterActions: [action],
+  };
+}
+
+const agentServerColumns: ConfigurableCrudColumn[] = [
+  { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
+  { id: 'os', label: 'cyberSecurity.inventory.os', field: 'osName', translateValue: false },
+];
 
 function assignAccount(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
   return defineCrud({
@@ -519,24 +542,21 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     ],
   }),
   inventory: defineCrud({
-    ...readOnly,
-    endpoint: 'cyber-security/inventory',
-    uuidField: 'agentUUID',
-    pageTitle: 'cyberSecurity.inventory.title',
-    pageDescription: 'cyberSecurity.inventory.pageDescription',
-    serverSidePagination: true,
-    statusFilter: false,
-    filterActions: [
+    ...agentServerList(
+      'cyber-security/inventory',
+      {
+        pageTitle: 'cyberSecurity.inventory.title',
+        pageDescription: 'cyberSecurity.inventory.pageDescription',
+      },
       {
         key: 'enableAll',
         label: 'cyberSecurity.inventory.enableAll',
         icon: 'playlist_add_check',
         tooltip: 'cyberSecurity.inventory.enableAllHelp',
       },
-    ],
+    ),
     columns: [
-      { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
-      { id: 'os', label: 'cyberSecurity.inventory.os', field: 'osName', translateValue: false },
+      ...agentServerColumns,
       {
         id: 'enabled',
         label: 'cyberSecurity.inventory.collection',
@@ -628,24 +648,21 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
   }),
 
   patches: defineCrud({
-    ...readOnly,
-    endpoint: 'cyber-security/patch/servers',
-    uuidField: 'agentUUID',
-    pageTitle: 'cyberSecurity.patch.title',
-    pageDescription: 'cyberSecurity.patch.pageDescription',
-    serverSidePagination: true,
-    statusFilter: false,
-    filterActions: [
+    ...agentServerList(
+      'cyber-security/patch/servers',
+      {
+        pageTitle: 'cyberSecurity.patch.title',
+        pageDescription: 'cyberSecurity.patch.pageDescription',
+      },
       {
         key: 'patchRuns',
         label: 'cyberSecurity.patch.runs',
         icon: 'history',
         tooltip: 'cyberSecurity.patch.runsDescription',
       },
-    ],
+    ),
     columns: [
-      { id: 'agent', label: 'Agent', field: 'agentName', uuidField: 'agentUUID', kind: 'identity' },
-      { id: 'os', label: 'cyberSecurity.inventory.os', field: 'osName', translateValue: false },
+      ...agentServerColumns,
       {
         id: 'enabled',
         label: 'cyberSecurity.patch.managed',
