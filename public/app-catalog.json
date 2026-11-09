@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "7aa9e67f4fcc",
+  "version": "b59e70123344",
   "language": "pt-BR",
   "entries": [
     {
@@ -3780,6 +3780,10 @@
         {
           "label": "Adicional de descanso e feriado (%)",
           "help": "O trabalho em descansos e feriados sem compensação é pago em dobro (100%, Lei 605/1949 art. 9º)."
+        },
+        {
+          "label": "Foto na marcação",
+          "help": "O Pulse tira uma foto com a câmera frontal antes de cada marcação ser confirmada. Sem foto (câmera recusada, sem conexão) a marcação é registrada mesmo assim e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de batidas e apagadas após 90 dias."
         },
         {
           "label": "Anotações",
