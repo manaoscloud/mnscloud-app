@@ -169,6 +169,28 @@ export const OBLIGATION_RECURRENCE_OPTIONS: readonly ConfigurableCrudOption[] = 
   { value: 'annual', label: 'contracts.recurrenceAnnual' },
 ];
 
+export const PROVIDER_KIND_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'clicksign', label: 'contracts.providerClicksign' },
+  { value: 'zapsign', label: 'contracts.providerZapsign' },
+  { value: 'docusign', label: 'contracts.providerDocusign' },
+];
+
+export const AUTH_MODE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'byo', label: 'contracts.authModeByo' },
+  { value: 'wholesale', label: 'contracts.authModeWholesale' },
+];
+
+export const ENVIRONMENT_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'sandbox', label: 'contracts.envSandbox' },
+  { value: 'production', label: 'contracts.envProduction' },
+];
+
+export const PROVIDER_BINDING_LOOKUP = {
+  endpoint: 'contracts/providers/bindings',
+  uuidField: 'CtbUUID',
+  labelField: 'CtbName',
+};
+
 export function createColumns(
   defs: ReadonlyArray<readonly [string, string, string, ConfigurableCrudColumn['kind']?]>,
 ): ConfigurableCrudColumn[] {

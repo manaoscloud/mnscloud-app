@@ -1096,6 +1096,16 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.contracts.accounts.read'],
         requiresEnvironment: true,
       },
+      {
+        id: 'contracts/providers',
+        label: 'nav.contracts.providers',
+        icon: 'verified_user',
+        category: 'integrations',
+        route: '/contracts/providers',
+        entitlementCode: 'module.contracts.*',
+        permissions: ['tenant.contracts.providers.read'],
+        requiresEnvironment: true,
+      },
     ],
   },
   // ✅ InfraGIS (tenant)
