@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a6c2e609c68d",
+  "version": "ccf394f653ac",
   "language": "pt-BR",
   "entries": [
     {
@@ -1873,6 +1873,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/cyber-security/patches",
+      "menuPath": "Cibersegurança › Atualizações",
+      "scope": "tenant",
+      "title": "Atualizações",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/cyber-security/profiles",

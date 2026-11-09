@@ -2928,6 +2928,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'cyber-security/patches',
+        label: 'nav.cyber-security.patches',
+        icon: 'system_update_alt',
+        category: 'protection',
+        route: '/cyber-security/patches',
+        permissions: ['tenant.cyber-security.servers.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'cyber-security/profiles',
         label: 'nav.cyber-security.profiles',
         icon: 'shield',
