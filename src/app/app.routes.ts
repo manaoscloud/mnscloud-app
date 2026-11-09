@@ -759,6 +759,7 @@ export const routes: Routes = [
                 { section: 'security-events', title: 'Security Events' },
                 { section: 'vulnerabilities', title: 'Vulnerabilities' },
                 { section: 'inventory', title: 'Software inventory' },
+                { section: 'patches', title: 'Security updates' },
               ].map(({ section, title }) => ({
                 path: `cyber-security/${section}`,
                 loadComponent: () =>
@@ -1066,6 +1067,14 @@ export const routes: Routes = [
                     (m) => m.ContractsObligationsComponent,
                   ),
                 title: 'Contracts • Obligations | mnscloud',
+              },
+              {
+                path: 'contracts/providers',
+                loadComponent: () =>
+                  import('./pages/contracts/providers/providers').then(
+                    (m) => m.ContractProvidersPage,
+                  ),
+                title: 'Contracts • Signature Providers | mnscloud',
               },
               // Registry (shared by every module)
               {

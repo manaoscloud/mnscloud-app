@@ -5,6 +5,7 @@ const sections: Record<string, { label: string; group?: string }> = {
   vulnerabilities: { label: 'Vulnerabilities', group: 'Threats and Events' },
   servers: { label: 'Servers', group: 'Protection' },
   inventory: { label: 'Software inventory', group: 'Protection' },
+  patches: { label: 'Security updates', group: 'Protection' },
   profiles: { label: 'Security Profiles', group: 'Protection' },
   services: { label: 'Protected Services', group: 'Protection' },
   lists: { label: 'Allowlist / Blocklist', group: 'Protection' },
