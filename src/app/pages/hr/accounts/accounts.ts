@@ -152,6 +152,19 @@ const PAGES: readonly [string, string, string, string][] = [
   ['time-requests', 'nav.hr.time-requests', 'pending_actions', 'tenant.hr.time-requests.read'],
   ['absences', 'nav.hr.absences', 'event_busy', 'tenant.hr.absences.read'],
   [
+    'employee-documents',
+    'nav.hr.employee-documents',
+    'folder_shared',
+    'tenant.hr.employee-documents.read',
+  ],
+  ['notices', 'nav.hr.notices', 'campaign', 'tenant.hr.notices.read'],
+  [
+    'vacation-balances',
+    'nav.hr.vacation-balances',
+    'beach_access',
+    'tenant.hr.vacation-balances.read',
+  ],
+  [
     'time-adjustments',
     'nav.hr.time-adjustments',
     'edit_calendar',

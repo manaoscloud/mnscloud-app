@@ -1040,9 +1040,7 @@ export const routes: Routes = [
               {
                 path: 'contracts/links',
                 loadComponent: () =>
-                  import('./pages/contracts/links/links').then(
-                    (m) => m.ContractsLinksComponent,
-                  ),
+                  import('./pages/contracts/links/links').then((m) => m.ContractsLinksComponent),
                 title: 'Contracts • Links | mnscloud',
               },
               {
@@ -1199,6 +1197,28 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/hr/absences/absences').then((m) => m.HrAbsencesPage),
                 title: 'Human resources • Absences | mnscloud',
+              },
+              {
+                path: 'hr/employee-documents',
+                loadComponent: () =>
+                  import('./pages/hr/employee-documents/employee-documents').then(
+                    (m) => m.HrEmployeeDocumentsPage,
+                  ),
+                title: 'Human resources • Documents | mnscloud',
+              },
+              {
+                path: 'hr/notices',
+                loadComponent: () =>
+                  import('./pages/hr/notices/notices').then((m) => m.HrNoticesPage),
+                title: 'Human resources • Notices | mnscloud',
+              },
+              {
+                path: 'hr/vacation-balances',
+                loadComponent: () =>
+                  import('./pages/hr/vacation-balances/vacation-balances').then(
+                    (m) => m.HrVacationBalancesPage,
+                  ),
+                title: 'Human resources • Vacation | mnscloud',
               },
               {
                 path: 'hr/time-adjustments',

@@ -156,6 +156,7 @@ export const ABSENCE_TYPES: readonly ConfigurableCrudOption[] = [
   { value: 'justified', label: 'Justified absence' },
   { value: 'day_off', label: 'Day off' },
   { value: 'leave', label: 'Leave' },
+  { value: 'vacation', label: 'Vacation' },
 ];
 
 /** `HH:MM` of a UTC instant in the browser time zone (the App user's wall clock). */

@@ -722,6 +722,8 @@ export type ConfigurableCrudConfig = {
     formField: string;
     /** Also send the other scalar payload values as form fields (for example a certificate and its password). */
     includeFields?: boolean;
+    /** Without a selected file the record is created by the JSON create call (the file is optional). */
+    optional?: boolean;
   };
   /** Fixed list query parameters sent with every list request (for example `scope=all`). */
   listQuery?: Readonly<Record<string, string>>;
@@ -2034,6 +2036,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     upload: NonNullable<ConfigurableCrudConfig['createUpload']>,
   ): Promise<unknown> {
     const file = formPayload[upload.fileField];
+    if (!(file instanceof File) && upload.optional) {
+      const { [upload.fileField]: _file, ...rest } = formPayload;
+      return this.api.post(this.createEndpoint(), this.augmentPayload(rest));
+    }
     if (!(file instanceof File)) throw new Error(this.t('Select a file to upload.'));
     const body = new FormData();
     if (upload.includeFields) {

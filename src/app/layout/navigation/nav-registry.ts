@@ -902,6 +902,22 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.time-adjustments.read'],
       },
       {
+        id: 'hr/employee-documents',
+        label: 'nav.hr.employee-documents',
+        icon: 'folder_shared',
+        category: 'operation',
+        route: '/hr/employee-documents',
+        permissions: ['tenant.hr.employee-documents.read'],
+      },
+      {
+        id: 'hr/notices',
+        label: 'nav.hr.notices',
+        icon: 'campaign',
+        category: 'operation',
+        route: '/hr/notices',
+        permissions: ['tenant.hr.notices.read'],
+      },
+      {
         id: 'hr/work-schedules',
         label: 'nav.hr.work-schedules',
         icon: 'calendar_view_week',
@@ -921,6 +937,14 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'celebration',
         category: 'registry',
         route: '/hr/holidays',
+      },
+      {
+        id: 'hr/vacation-balances',
+        label: 'nav.hr.vacation-balances',
+        icon: 'beach_access',
+        category: 'reports',
+        route: '/hr/vacation-balances',
+        permissions: ['tenant.hr.vacation-balances.read'],
       },
       {
         id: 'hr/time-policies',
