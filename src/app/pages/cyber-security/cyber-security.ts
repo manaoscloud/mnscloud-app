@@ -51,6 +51,16 @@ import {
   postureEndpoint,
   postureServerActions,
 } from './cyber-posture';
+import {
+  DEVICE_INITIAL_VALUES,
+  deviceActions,
+  deviceColumns,
+  deviceFields,
+  deviceFindingsCollection,
+  deviceFindingView,
+  devicePayload,
+  devicesEndpoint,
+} from './cyber-network';
 
 type CyberSection =
   | 'servers'
@@ -62,7 +72,8 @@ type CyberSection =
   | 'inventory'
   | 'patches'
   | 'exposure'
-  | 'hardening';
+  | 'hardening'
+  | 'network';
 
 const options = (values: string[]): ConfigurableCrudOption[] =>
   values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
@@ -445,6 +456,8 @@ let exposureFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = 
 const showExposureFinding = (finding: ConfigurableCrudRecord) => exposureFindingDialog?.(finding);
 let hardeningCheckDialog: ((check: ConfigurableCrudRecord) => void) | null = null;
 const showHardeningCheck = (check: ConfigurableCrudRecord) => hardeningCheckDialog?.(check);
+let networkFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
+const showNetworkFinding = (finding: ConfigurableCrudRecord) => networkFindingDialog?.(finding);
 function showRemediation(finding: ConfigurableCrudRecord) {
   remediationDialog?.(finding);
 }
@@ -814,6 +827,32 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     rowActions: postureServerActions(showHardeningCheck),
   }),
 
+  network: defineCrud({
+    ...readOnly,
+    canCreate: true,
+    endpoint: devicesEndpoint,
+    uuidField: 'deviceUUID',
+    pageTitle: 'cyberSecurity.network.title',
+    pageDescription: 'cyberSecurity.network.pageDescription',
+    createTitle: 'cyberSecurity.network.create',
+    savedMessage: 'cyberSecurity.network.saved',
+    serverSidePagination: true,
+    statusFilter: false,
+    filterActions: [
+      {
+        key: 'networkFindings',
+        label: 'cyberSecurity.network.findings',
+        icon: 'report',
+        tooltip: 'cyberSecurity.network.findingsDescription',
+      },
+    ],
+    initialValues: { ...DEVICE_INITIAL_VALUES },
+    payload: (values) => devicePayload(values),
+    fields: deviceFields(false),
+    columns: deviceColumns,
+    rowActions: deviceActions(showNetworkFinding),
+  }),
+
   servers: defineCrud({
     ...readOnly,
     endpoint: 'cyber-security/servers',
@@ -1094,6 +1133,8 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       openDataViewerDialog(this.dialog, exposureFindingView(finding, this.t.bind(this)));
     hardeningCheckDialog = (check) =>
       openDataViewerDialog(this.dialog, hardeningCheckView(check, this.t.bind(this)));
+    networkFindingDialog = (finding) =>
+      openDataViewerDialog(this.dialog, deviceFindingView(finding, this.t.bind(this)));
     platformMaster = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
   }
@@ -1192,6 +1233,17 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override async handleFilterAction(action: { key: string }): Promise<void> {
+    if (action.key === 'networkFindings') {
+      return this.runRowAction(
+        {
+          key: 'networkFindings',
+          label: 'cyberSecurity.network.findings',
+          icon: 'report',
+          collection: () => deviceFindingsCollection(showNetworkFinding),
+        },
+        {},
+      );
+    }
     if (action.key === 'exposureFindings') {
       return this.runRowAction(
         {

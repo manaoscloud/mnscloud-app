@@ -2955,6 +2955,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'cyber-security/network',
+        label: 'nav.cyber-security.network',
+        icon: 'router',
+        category: 'protection',
+        route: '/cyber-security/network',
+        permissions: ['tenant.cyber-security.servers.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'cyber-security/profiles',
         label: 'nav.cyber-security.profiles',
         icon: 'shield',

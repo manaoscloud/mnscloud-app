@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "13e27cad7a59",
+  "version": "3a7466702335",
   "language": "pt-BR",
   "entries": [
     {
@@ -1806,6 +1806,14 @@
       "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "tenant",
       "title": "Listas de acesso",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/network",
+      "menuPath": "Cibersegurança › Rede",
+      "scope": "tenant",
+      "title": "Rede",
       "description": "",
       "fields": []
     },
