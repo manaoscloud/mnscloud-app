@@ -153,8 +153,14 @@ describe('ConversationsInboxPage', () => {
     });
   });
 
-  it('initializes and loads conversations', async () => {
+  function createPage(): ConversationsInboxPage {
     const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    page.ngOnInit();
+    return page;
+  }
+
+  it('initializes and loads conversations', async () => {
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(page.conversations()).toHaveSize(4);
@@ -162,7 +168,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('filters active conversations by default (excluding resolved)', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Default filter is 'active' (excludes resolved C4)
@@ -171,7 +177,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('filters by search query', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     page.searchQuery.set('Maria');
@@ -180,7 +186,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('groups conversations into kanban columns properly', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const cols = page.kanbanColumns();
@@ -196,7 +202,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('selects a conversation, loads messages and marks as read', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const conv = page.conversations()[0]; // C1 with unreadCount = 2
@@ -210,7 +216,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('sends a reply message and refreshes messages', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     await page.selectConversation(page.conversations()[0]);
@@ -227,7 +233,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('takes a conversation assigning to current user', async () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const conv = page.conversations()[0]; // unassigned
@@ -241,7 +247,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   it('switches between cockpit and kanban views', () => {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
+    const page = createPage();
     expect(page.viewMode()).toBe('cockpit');
 
     page.setViewMode('kanban');

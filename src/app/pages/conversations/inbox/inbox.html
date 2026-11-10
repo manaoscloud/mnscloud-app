@@ -123,7 +123,7 @@
   @if (viewMode() === 'cockpit') {
     <div class="cockpit-container">
       <!-- Col 1: Queue / Conversations List -->
-      <aside class="cockpit-queue">
+      <aside class="cockpit-queue" aria-label="Conversations queue">
         <div class="queue-header">
           <span class="queue-title">
             {{ filteredConversations().length }}
@@ -139,59 +139,59 @@
             </li>
           } @else {
             @for (conv of filteredConversations(); track conv.CnvUUID) {
-              <li
-                class="queue-item"
-                tabindex="0"
-                role="button"
-                [class.selected]="selectedConversation()?.CnvUUID === conv.CnvUUID"
-                [class.has-unread]="conv.CnvUnreadCount > 0"
-                (click)="selectConversation(conv)"
-                (keydown.enter)="selectConversation(conv)"
-              >
-                <div class="item-avatar-box">
-                  <div class="item-avatar">
-                    {{ getInitials(conv.ContactName || conv.ContactPhone || conv.ContactExternalId) }}
-                  </div>
-                  <div
-                    class="channel-badge"
-                    [style.background-color]="getChannelColor(conv.ChcKind)"
-                    [matTooltip]="getChannelLabel(conv.ChcKind)"
-                  >
-                    <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  </div>
-                </div>
-
-                <div class="item-info">
-                  <div class="item-top">
-                    <span class="contact-name">
-                      {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-                    </span>
-                    <span class="time-label">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              <li class="queue-item-row">
+                <button
+                  type="button"
+                  class="queue-item"
+                  [class.selected]="selectedConversation()?.CnvUUID === conv.CnvUUID"
+                  [class.has-unread]="conv.CnvUnreadCount > 0"
+                  (click)="selectConversation(conv)"
+                >
+                  <div class="item-avatar-box">
+                    <div class="item-avatar">
+                      {{ getInitials(conv.ContactName || conv.ContactPhone || conv.ContactExternalId) }}
+                    </div>
+                    <div
+                      class="channel-badge"
+                      [style.background-color]="getChannelColor(conv.ChcKind)"
+                      [matTooltip]="getChannelLabel(conv.ChcKind)"
+                    >
+                      <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                    </div>
                   </div>
 
-                  <div class="item-bottom">
-                    <span class="last-snippet">
-                      @if (conv.LastMessage) {
-                        {{ conv.LastMessage }}
-                      } @else {
-                        <em>{{ 'conversations.noMessages' | transloco }}</em>
+                  <div class="item-info">
+                    <div class="item-top">
+                      <span class="contact-name">
+                        {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+                      </span>
+                      <span class="time-label">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+                    </div>
+
+                    <div class="item-bottom">
+                      <span class="last-snippet">
+                        @if (conv.LastMessage) {
+                          {{ conv.LastMessage }}
+                        } @else {
+                          <em>{{ 'conversations.noMessages' | transloco }}</em>
+                        }
+                      </span>
+
+                      @if (conv.CnvUnreadCount > 0) {
+                        <span class="unread-badge">{{ conv.CnvUnreadCount }}</span>
                       }
-                    </span>
+                    </div>
 
-                    @if (conv.CnvUnreadCount > 0) {
-                      <span class="unread-badge">{{ conv.CnvUnreadCount }}</span>
-                    }
+                    <div class="item-meta-tags">
+                      <span class="state-chip" [class]="'state-' + conv.CnvState">
+                        {{ getStateLabel(conv.CnvState) }}
+                      </span>
+                      @if (conv.AssignedName) {
+                        <span class="assignee-tag">{{ conv.AssignedName }}</span>
+                      }
+                    </div>
                   </div>
-
-                  <div class="item-meta-tags">
-                    <span class="state-chip" [class]="'state-' + conv.CnvState">
-                      {{ getStateLabel(conv.CnvState) }}
-                    </span>
-                    @if (conv.AssignedName) {
-                      <span class="assignee-tag">{{ conv.AssignedName }}</span>
-                    }
-                  </div>
-                </div>
+                </button>
               </li>
             }
           }
@@ -505,7 +505,7 @@
 
       <!-- Col 3: 360° Contact Context Panel -->
       @if (showContactDetails() && selectedConversation()) {
-        <aside class="cockpit-details">
+        <aside class="cockpit-details" aria-label="Contact details">
           <header class="details-header">
             <h3>{{ 'conversations.contactDetails' | transloco }}</h3>
             <button type="button" mat-icon-button (click)="toggleContactDetails()" aria-label="Close details">
@@ -648,7 +648,6 @@
               class="kanban-card"
               draggable="true"
               tabindex="0"
-              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
               (keydown.enter)="openFromKanban(conv)"
@@ -706,7 +705,6 @@
               class="kanban-card"
               draggable="true"
               tabindex="0"
-              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
               (keydown.enter)="openFromKanban(conv)"
@@ -760,7 +758,6 @@
               class="kanban-card"
               draggable="true"
               tabindex="0"
-              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
               (keydown.enter)="openFromKanban(conv)"
@@ -813,7 +810,6 @@
               class="kanban-card"
               draggable="true"
               tabindex="0"
-              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
               (keydown.enter)="openFromKanban(conv)"
@@ -863,7 +859,6 @@
               class="kanban-card card-resolved"
               draggable="true"
               tabindex="0"
-              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
               (keydown.enter)="openFromKanban(conv)"

@@ -3,10 +3,10 @@
 .header-main,.workspace-toolbar,.chat-header,.details-header,.column-header,.item-top,.item-bottom,.chat-header-actions,.composer-toolbar,.card-top,.card-footer{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .header-title{display:flex;align-items:center;gap:6px;margin:0;font-size:1.1rem;font-weight:700;.title-icon{color:#0284c7}}
 .header-subtitle{margin:0;font-size:0.75rem;color:#64748b}
-.unread-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:99px;font-size:0.68rem;font-weight:600;mat-icon{font-size:14px;width:14px;height:14px}}
+.unread-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:99px;font-size:0.68rem;font-weight:600;mat-icon{font-size:14px;width:14px;height:14px}}
 .header-controls,.filters-group,.contact-sub-row,.bubble-footer{display:flex;align-items:center;gap:4px}
 .view-toggle{display:inline-flex;background:#f1f5f9;padding:2px;border-radius:6px;
-  .toggle-btn{height:28px;padding:0 6px;font-size:0.75rem;border-radius:4px;&.active{background:#fff;color:#0284c7;box-shadow:0 1px 2px rgba(0,0,0,0.06)}}}
+  .toggle-btn{height:28px;padding:0 6px;font-size:0.75rem;border-radius:4px;&.active{background:#fff;color:#0369a1;box-shadow:0 1px 2px rgba(0,0,0,0.06)}}}
 .spin{animation:spin 1s linear infinite}@media (prefers-reduced-motion:reduce){.spin{animation:none}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .search-field{display:flex;align-items:center;flex:1;max-width:320px;background:#f1f5f9;border-radius:6px;padding:0 6px;
   input{flex:1;border:none;background:transparent;outline:none;font-size:0.75rem;height:28px}.search-icon{font-size:16px;width:16px;height:16px;color:#94a3b8}
@@ -17,23 +17,23 @@
 .queue-header{padding:6px 10px;font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748b;border-bottom:1px solid #f1f5f9}
 .queue-list{flex:1;overflow-y:auto;list-style:none;margin:0;padding:0}
 .chat-timeline,.details-body,.column-body{flex:1;overflow-y:auto}
-.queue-item{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid #f1f5f9;cursor:pointer;&:hover{background:#f8fafc}&.selected{background:#f0f9ff;border-left:3px solid #0284c7}&.has-unread{background:#fefce8}}
+.queue-item{width:100%;text-align:left;background:none;border:none;display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-family:inherit;color:inherit;&:hover{background:#f8fafc}&.selected{background:#f0f9ff;border-left:3px solid #0369a1}&.has-unread{background:#fefce8}}
 .item-avatar-box{position:relative}
-.item-avatar,.chat-avatar,.profile-avatar{width:32px;height:32px;border-radius:50%;background:#0284c7;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem}
+.item-avatar,.chat-avatar,.profile-avatar{width:32px;height:32px;border-radius:50%;background:#0369a1;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem}
 .channel-badge{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;border:1px solid #fff;mat-icon{font-size:9px;width:9px;height:9px}}
 .item-info{flex:1;min-width:0;display:flex;flex-direction:column}
 .contact-name{font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .time-label,.bubble-time,.card-time{font-size:0.6rem;color:#94a3b8;white-space:nowrap}
 .last-snippet,.card-snippet{font-size:0.68rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.unread-badge,.card-unread{background:#ef4444;color:#fff;font-size:0.6rem;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
-.state-chip{font-size:0.56rem;font-weight:600;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#334155}
+.unread-badge,.card-unread{background:#dc2626;color:#fff;font-size:0.6rem;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
+.state-chip{font-size:0.56rem;font-weight:600;padding:1px 4px;border-radius:3px;background:#e2e8f0;color:#0f172a}
 .cockpit-chat{flex:1;display:flex;flex-direction:column;min-width:0;background:#f8fafc;border-right:1px solid #e2e8f0}
 .chat-placeholder,.queue-empty,.timeline-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:2rem;color:#94a3b8;text-align:center}
 .chat-header{padding:6px 12px;background:#fff;border-bottom:1px solid #e2e8f0}
 .chat-header-contact{display:flex;align-items:center;gap:6px;min-width:0}
 .chat-name{font-size:0.9rem;font-weight:700}
 .channel-tag,.card-channel{display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:8px;color:#fff;font-size:0.6rem;font-weight:600;mat-icon{font-size:10px;width:10px;height:10px}}
-.phone-link{color:#0284c7;cursor:pointer;display:inline-flex;align-items:center;gap:2px;font-size:0.68rem;background:none;border:none;padding:0;font:inherit;mat-icon{font-size:12px;width:12px;height:12px}}
+.phone-link{color:#0369a1;cursor:pointer;display:inline-flex;align-items:center;gap:2px;font-size:0.68rem;background:none;border:none;padding:0;font-family:inherit;mat-icon{font-size:12px;width:12px;height:12px}}
 .state-menu-btn{height:26px;font-size:0.68rem;.dot{width:6px;height:6px;border-radius:50%;background:#0284c7;display:inline-block}}
 .active-icon{color:#0284c7}
 .chat-timeline{padding:8px 12px;display:flex;flex-direction:column;gap:6px}
