@@ -8,6 +8,7 @@ const sections: Record<string, { label: string; group?: string }> = {
   patches: { label: 'Security updates', group: 'Protection' },
   exposure: { label: 'External exposure', group: 'Protection' },
   hardening: { label: 'Hardening and antivirus', group: 'Protection' },
+  network: { label: 'Network devices', group: 'Protection' },
   profiles: { label: 'Security Profiles', group: 'Protection' },
   services: { label: 'Protected Services', group: 'Protection' },
   lists: { label: 'Allowlist / Blocklist', group: 'Protection' },
