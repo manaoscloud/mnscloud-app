@@ -305,7 +305,8 @@
   background: var(--mat-sys-color-surface-container-lowest);
 }
 
-.inbox-back {
+// Higher specificity than the Material icon button display rule.
+.inbox .inbox-chat-head .inbox-back {
   display: none;
 }
 
@@ -1092,11 +1093,15 @@
   min-height: 32px !important;
 }
 
-.inbox-fab {
+.inbox .inbox-fab {
   position: absolute;
   right: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 6;
+  height: 56px;
+  padding: 0 20px 0 16px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--mat-sys-color-on-surface) 28%, transparent);
 }
 
 .inbox {
@@ -1174,9 +1179,13 @@
     }
   }
 
-  .inbox-back {
+  .inbox-chat-head .inbox-back {
     display: inline-flex;
     margin-left: -6px;
+  }
+
+  .inbox-chat-actions .inbox-hide-phone {
+    display: none;
   }
 
   .inbox-chat-head {

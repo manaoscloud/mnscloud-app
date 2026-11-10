@@ -8584,6 +8584,7 @@
   "conversations.reopenedToast": "Conversation reopened.",
   "conversations.copied": "Copied.",
   "conversations.visitor": "Visitor",
+  "conversations.typeReplyShort": "Message or / for canned responses",
   "International format with country code.": "International format with country code.",
   "conversations.newAccount": "New conversation account",
   "conversations.editAccount": "Edit conversation account",

@@ -384,6 +384,14 @@ export class ConversationsInboxPage {
     return !Number.isNaN(expiry) && expiry < Date.now();
   });
 
+  /** Short hint on phones, where the full hint would wrap inside the one-line field. */
+  readonly composerPlaceholder = computed(() => {
+    if (this.replyKind() === 'note') return 'conversations.typeNotePlaceholder';
+    return this.layout() === 'phone'
+      ? 'conversations.typeReplyShort'
+      : 'conversations.typeReplyPlaceholder';
+  });
+
   /** Active replies offered in the selected conversation's account (shared ones included). */
   readonly availableQuickReplies = computed(() => {
     const account = this.selectedConversation()?.ConversationAccountCvaUUID ?? null;

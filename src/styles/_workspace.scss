@@ -60,6 +60,7 @@
 
 // Pill search field used in workspace toolbars.
 .app-workspace-search {
+  box-sizing: border-box;
   display: flex;
   flex: 1 1 280px;
   align-items: center;
@@ -106,6 +107,7 @@
 }
 
 .app-workspace-chip {
+  box-sizing: border-box;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;

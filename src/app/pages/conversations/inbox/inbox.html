@@ -541,12 +541,7 @@
                   <textarea
                     #composerInput
                     rows="1"
-                    [placeholder]="
-                      (replyKind() === 'note'
-                        ? 'conversations.typeNotePlaceholder'
-                        : 'conversations.typeReplyPlaceholder'
-                      ) | transloco
-                    "
+                    [placeholder]="composerPlaceholder() | transloco"
                     [value]="replyText()"
                     (input)="onTextInput($event)"
                     (keydown)="onKeyDown($event)"
@@ -813,7 +808,7 @@
   </div>
 
   @if (layout() === 'phone' && mobilePane() === 'list' && viewMode() === 'cockpit') {
-    <button type="button" mat-fab extended class="inbox-fab" (click)="openNewConversation()">
+    <button type="button" mat-flat-button class="inbox-fab" (click)="openNewConversation()">
       <mat-icon>add</mat-icon>
       {{ 'conversations.newShort' | transloco }}
     </button>
