@@ -7,6 +7,7 @@ const sections: Record<string, { label: string; group?: string }> = {
   inventory: { label: 'Software inventory', group: 'Protection' },
   patches: { label: 'Security updates', group: 'Protection' },
   exposure: { label: 'External exposure', group: 'Protection' },
+  hardening: { label: 'Hardening and antivirus', group: 'Protection' },
   profiles: { label: 'Security Profiles', group: 'Protection' },
   services: { label: 'Protected Services', group: 'Protection' },
   lists: { label: 'Allowlist / Blocklist', group: 'Protection' },

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f1a6ce81c3a5",
+  "version": "e3b11ef62c9f",
   "language": "pt-BR",
   "entries": [
     {
@@ -1798,6 +1798,14 @@
       "menuPath": "Cibersegurança › Exposição",
       "scope": "tenant",
       "title": "Exposição",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/hardening",
+      "menuPath": "Cibersegurança › Endurecimento",
+      "scope": "tenant",
+      "title": "Endurecimento",
       "description": "",
       "fields": []
     },

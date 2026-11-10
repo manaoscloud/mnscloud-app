@@ -45,6 +45,12 @@ import {
   targetPayload,
   targetsEndpoint,
 } from './cyber-exposure';
+import {
+  hardeningCheckView,
+  postureColumns,
+  postureEndpoint,
+  postureServerActions,
+} from './cyber-posture';
 
 type CyberSection =
   | 'servers'
@@ -55,7 +61,8 @@ type CyberSection =
   | 'vulnerabilities'
   | 'inventory'
   | 'patches'
-  | 'exposure';
+  | 'exposure'
+  | 'hardening';
 
 const options = (values: string[]): ConfigurableCrudOption[] =>
   values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
@@ -436,6 +443,8 @@ let patchRunDialog: ((run: ConfigurableCrudRecord) => Promise<void>) | null = nu
 const showPatchRun = (run: ConfigurableCrudRecord) => void patchRunDialog?.(run);
 let exposureFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
 const showExposureFinding = (finding: ConfigurableCrudRecord) => exposureFindingDialog?.(finding);
+let hardeningCheckDialog: ((check: ConfigurableCrudRecord) => void) | null = null;
+const showHardeningCheck = (check: ConfigurableCrudRecord) => hardeningCheckDialog?.(check);
 function showRemediation(finding: ConfigurableCrudRecord) {
   remediationDialog?.(finding);
 }
@@ -791,6 +800,20 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     rowActions: exposureTargetActions(showExposureFinding),
   }),
 
+  hardening: defineCrud({
+    ...readOnly,
+    endpoint: postureEndpoint,
+    uuidField: 'agentUUID',
+    pageTitle: 'cyberSecurity.hardening.title',
+    pageDescription: 'cyberSecurity.hardening.pageDescription',
+    serverSidePagination: true,
+    statusFilter: false,
+    columns: [...agentServerColumns, ...postureColumns],
+    fields: [],
+    initialValues: {},
+    rowActions: postureServerActions(showHardeningCheck),
+  }),
+
   servers: defineCrud({
     ...readOnly,
     endpoint: 'cyber-security/servers',
@@ -1069,6 +1092,8 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     patchRunDialog = (run) => this.showPatchRun(run);
     exposureFindingDialog = (finding) =>
       openDataViewerDialog(this.dialog, exposureFindingView(finding, this.t.bind(this)));
+    hardeningCheckDialog = (check) =>
+      openDataViewerDialog(this.dialog, hardeningCheckView(check, this.t.bind(this)));
     platformMaster = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
   }
