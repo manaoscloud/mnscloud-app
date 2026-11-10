@@ -32,7 +32,7 @@ const server = {
 
 describe('Cyber Security hardening and antivirus views', () => {
   it('translates every check code the Agent reports and keeps unknown codes', () => {
-    expect(new Set(HARDENING_CODES).size).toBe(36);
+    expect(new Set(HARDENING_CODES).size).toBe(49);
     for (const code of HARDENING_CODES) {
       expect(checkTitle({ code }, t)).toBe(`t:cyberSecurity.hardening.check.${code}`);
       expect(checkAdvice({ code }, t)).toBe(`t:cyberSecurity.hardening.advice.${code}`);
@@ -97,6 +97,20 @@ describe('Cyber Security hardening and antivirus views', () => {
     expect(scan?.request?.body?.(server)).toEqual({ action: 'full_scan' });
     expect(scan?.request?.endpoint(server)).toBe('cyber-security/posture/servers/A-1/antivirus');
     expect(scan?.request?.confirm?.message).toBe('cyberSecurity.antivirus.fullScanConfirm');
+    // A Mac reports XProtect: macOS updates and runs it, so no antivirus actions.
+    expect(
+      visible({
+        ...server,
+        antivirusEngine: 'xprotect',
+        antivirusRealtime: true,
+        lastActionType: null,
+      }),
+    ).toEqual(['hardeningChecks', 'hardeningCheckNow', 'antivirusThreats']);
+    expect(
+      antivirusLabel({ ...server, antivirusEngine: 'xprotect', antivirusRealtime: true }, t),
+    ).toBe('t:cyberSecurity.antivirus.engine.xprotect: t:cyberSecurity.antivirus.state.realtime');
+    expect(HARDENING_CODES).toContain('mac.filevault');
+    expect(checkTitle({ code: 'mac.sip' }, t)).toBe('t:cyberSecurity.hardening.check.mac.sip');
     const check = actions.find((action) => action.key === 'hardeningCheckNow');
     expect(check?.disabledReason?.({ ...server, supported: false })).toBe(
       'cyberSecurity.hardening.agentOutdated',
