@@ -6,7 +6,6 @@ import {
   DestroyRef,
   ElementRef,
   inject,
-  OnInit,
   signal,
   viewChild,
 } from '@angular/core';
@@ -205,7 +204,7 @@ function newConversationConfig() {
   templateUrl: './inbox.html',
   styleUrls: ['./inbox.scss'],
 })
-export class ConversationsInboxPage implements OnInit {
+export class ConversationsInboxPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -293,14 +292,11 @@ export class ConversationsInboxPage implements OnInit {
   });
 
   constructor() {
+    queueMicrotask(() => void this.loadConversations());
     // Realtime event gateway
     watchConversationChanges(this.api, this.destroyRef, (changes) =>
       this.handleRealtimeChanges(changes),
     );
-  }
-
-  ngOnInit(): void {
-    void this.loadConversations();
   }
 
   setViewMode(mode: 'cockpit' | 'kanban'): void {

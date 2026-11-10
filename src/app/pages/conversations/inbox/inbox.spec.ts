@@ -154,9 +154,7 @@ describe('ConversationsInboxPage', () => {
   });
 
   function createPage(): ConversationsInboxPage {
-    const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
-    page.ngOnInit();
-    return page;
+    return TestBed.createComponent(ConversationsInboxPage).componentInstance;
   }
 
   it('initializes and loads conversations', async () => {
