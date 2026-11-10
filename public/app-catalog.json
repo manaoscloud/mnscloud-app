@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3a7466702335",
+  "version": "9e06869bd4eb",
   "language": "pt-BR",
   "entries": [
     {
@@ -4968,6 +4968,140 @@
       "fields": []
     },
     {
+      "route": "/network/devices",
+      "menuPath": "Rede › Equipamentos",
+      "scope": "tenant",
+      "title": "Equipamentos",
+      "description": "Roteadores, switches, OLTs, servidores e demais equipamentos de rede, com o site onde ficam e as formas de acesso.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Site",
+          "help": "Site onde o equipamento fica; o equipamento pertence ao dono do site."
+        },
+        {
+          "label": "Tipo de equipamento",
+          "help": "Fabricante e sistema do equipamento; definem as formas de acesso aceitas."
+        },
+        {
+          "label": "Classe",
+          "help": ""
+        },
+        {
+          "label": "Modelo",
+          "help": ""
+        },
+        {
+          "label": "Versão do sistema",
+          "help": "Versão instalada, por exemplo 7.16; a versão principal ajusta as formas de acesso (o RouterOS 6 não tem API REST)."
+        },
+        {
+          "label": "Ciclo de vida",
+          "help": ""
+        },
+        {
+          "label": "Fim do suporte",
+          "help": "Data em que o fabricante deixa de dar suporte ao equipamento ou ao sistema."
+        },
+        {
+          "label": "Host de gestão",
+          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento."
+        },
+        {
+          "label": "Caminho de gestão",
+          "help": "Por onde a plataforma chega ao equipamento: pela internet, pela VPN de gestão ou por um conector instalado na rede."
+        },
+        {
+          "label": "URL da API",
+          "help": "Endereço da API do equipamento, quando houver (http:// ou https://)."
+        },
+        {
+          "label": "Verificar certificado TLS",
+          "help": ""
+        },
+        {
+          "label": "Credencial",
+          "help": "A credencial nunca é exibida; aqui aparece só se ela está cadastrada."
+        },
+        {
+          "label": "Impressão digital",
+          "help": "Chave SSH do equipamento fixada no primeiro acesso. Se o equipamento foi trocado ou reinstalado, use Limpar impressão digital nas ações da lista."
+        },
+        {
+          "label": "Fixada em",
+          "help": ""
+        },
+        {
+          "label": "Agent",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/network/sites",
+      "menuPath": "Rede › Sites",
+      "scope": "tenant",
+      "title": "Sites",
+      "description": "Locais onde ficam os seus equipamentos de rede: a sua própria rede, clientes, data centers, POPs e escritórios.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": "Rede própria, cliente (exige o cliente), data center, POP, POP de parceiro ou escritório."
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do Cadastro dono deste site; só sites do tipo Cliente têm cliente."
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": "Código ISO de duas letras, por exemplo BR."
+        },
+        {
+          "label": "Endereço",
+          "help": ""
+        },
+        {
+          "label": "Código da instalação",
+          "help": "Código do data center ou POP, como o código do prédio no provedor."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/point-of-sale/audit",
       "menuPath": "PDV › Auditoria",
       "scope": "tenant",
@@ -9579,6 +9713,140 @@
         },
         {
           "label": "Valores desejados (JSON)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/devices",
+      "menuPath": "Rede › Equipamentos",
+      "scope": "platform",
+      "title": "Equipamentos da plataforma",
+      "description": "Equipamentos de rede da plataforma com as formas de acesso; os que vieram da Hospedagem continuam sendo editados lá.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Site",
+          "help": "Site onde o equipamento fica; o equipamento pertence ao dono do site."
+        },
+        {
+          "label": "Tipo de equipamento",
+          "help": "Fabricante e sistema do equipamento; definem as formas de acesso aceitas."
+        },
+        {
+          "label": "Classe",
+          "help": ""
+        },
+        {
+          "label": "Modelo",
+          "help": ""
+        },
+        {
+          "label": "Versão do sistema",
+          "help": "Versão instalada, por exemplo 7.16; a versão principal ajusta as formas de acesso (o RouterOS 6 não tem API REST)."
+        },
+        {
+          "label": "Ciclo de vida",
+          "help": ""
+        },
+        {
+          "label": "Fim do suporte",
+          "help": "Data em que o fabricante deixa de dar suporte ao equipamento ou ao sistema."
+        },
+        {
+          "label": "Host de gestão",
+          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento."
+        },
+        {
+          "label": "Caminho de gestão",
+          "help": "Por onde a plataforma chega ao equipamento: pela internet, pela VPN de gestão ou por um conector instalado na rede."
+        },
+        {
+          "label": "URL da API",
+          "help": "Endereço da API do equipamento, quando houver (http:// ou https://)."
+        },
+        {
+          "label": "Verificar certificado TLS",
+          "help": ""
+        },
+        {
+          "label": "Credencial",
+          "help": "A credencial nunca é exibida; aqui aparece só se ela está cadastrada."
+        },
+        {
+          "label": "Impressão digital",
+          "help": "Chave SSH do equipamento fixada no primeiro acesso. Se o equipamento foi trocado ou reinstalado, use Limpar impressão digital nas ações da lista."
+        },
+        {
+          "label": "Fixada em",
+          "help": ""
+        },
+        {
+          "label": "Agent",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/sites",
+      "menuPath": "Rede › Sites",
+      "scope": "platform",
+      "title": "Sites da plataforma",
+      "description": "Locais da infraestrutura da plataforma onde ficam os equipamentos de rede dela; não pertencem a nenhum tenant.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": "Data center, POP, POP de parceiro, escritório ou rede própria; sites da plataforma nunca pertencem a um cliente."
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do Cadastro dono deste site; só sites do tipo Cliente têm cliente."
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": "Código ISO de duas letras, por exemplo BR."
+        },
+        {
+          "label": "Endereço",
+          "help": ""
+        },
+        {
+          "label": "Código da instalação",
+          "help": "Código do data center ou POP, como o código do prédio no provedor."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]

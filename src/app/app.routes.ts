@@ -56,6 +56,12 @@ const INFRAGIS_UTILITY_ROUTES: Routes = (
   data: { scope: 'tenant', context: 'infragis', resource },
 }));
 
+// Network (Rede) pages serve the tenant tree and their /system twins; the route scope picks the API.
+const loadNetworkSitePage = () =>
+  import('./pages/network/sites/sites').then((m) => m.NetworkSitesPage);
+const loadNetworkDevicePage = () =>
+  import('./pages/network/devices/devices').then((m) => m.NetworkDevicesPage);
+
 export const routes: Routes = [
   // Raiz → dashboard
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -802,6 +808,19 @@ export const routes: Routes = [
                   import('./pages/logs/sources/sources').then((m) => m.LogsSourcePage),
                 title: 'Logs',
                 data: { scope: 'tenant', breadcrumb: 'logs.sources' },
+              },
+              // Network (Rede): sites and devices of the tenant (module.network.*).
+              {
+                path: 'network/sites',
+                loadComponent: loadNetworkSitePage,
+                title: 'Network',
+                data: { scope: 'tenant', breadcrumb: 'network.sites' },
+              },
+              {
+                path: 'network/devices',
+                loadComponent: loadNetworkDevicePage,
+                title: 'Network',
+                data: { scope: 'tenant', breadcrumb: 'network.devices' },
               },
               {
                 path: 'website/sites',
@@ -3423,6 +3442,19 @@ export const routes: Routes = [
                   import('./pages/logs/servers/servers').then((m) => m.LogsServerPage),
                 title: 'Logs',
                 data: { scope: 'master', breadcrumb: 'logs.servers' },
+              },
+              // Network (Rede): platform sites and devices (the system parent gives the scope).
+              {
+                path: 'network/sites',
+                loadComponent: loadNetworkSitePage,
+                title: 'Network platform',
+                data: { breadcrumb: 'network.platformSites' },
+              },
+              {
+                path: 'network/devices',
+                loadComponent: loadNetworkDevicePage,
+                title: 'Network platform',
+                data: { breadcrumb: 'network.platformDevices' },
               },
               {
                 path: 'dns/clusters',
