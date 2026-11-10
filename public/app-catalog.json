@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6c7d4b5b9922",
+  "version": "3a7466702335",
   "language": "pt-BR",
   "entries": [
     {
@@ -1017,13 +1017,9 @@
       "route": "/conversations/inbox",
       "menuPath": "Conversas › Caixa de entrada",
       "scope": "tenant",
-      "title": "Caixa de entrada",
+      "title": "Iniciar conversa",
       "description": "Conversas com clientes e contatos de todos os canais conectados, em um só lugar: responda, adicione notas internas, atribua e resolva.",
       "fields": [
-        {
-          "label": "Revisão",
-          "help": ""
-        },
         {
           "label": "Canal",
           "help": ""
@@ -1034,7 +1030,7 @@
         },
         {
           "label": "Telefone do contato",
-          "help": "Formato internacional com o código do país."
+          "help": "International format with country code."
         },
         {
           "label": "E-mail do contato",
@@ -1045,20 +1041,8 @@
           "help": ""
         },
         {
-          "label": "Estado",
-          "help": ""
-        },
-        {
           "label": "Prioridade",
           "help": ""
-        },
-        {
-          "label": "Responsável",
-          "help": ""
-        },
-        {
-          "label": "Adiada até",
-          "help": "Obrigatório quando o estado é Adiada; a conversa volta para a caixa de entrada neste horário."
         }
       ]
     },
@@ -3958,7 +3942,7 @@
         },
         {
           "label": "Foto na marcação",
-          "help": "O Pulse tira uma foto com a câmera frontal antes de cada marcação ser confirmada. Sem foto (câmera recusada, sem conexão) a marcação é registrada mesmo assim e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de batidas e apagadas após 90 dias."
+          "help": "Quando a foto é pedida em toda marcação (também o padrão sem política), o Pulse só confirma a marcação depois de uma foto ao vivo com a câmera frontal; quando é opcional, o colaborador pode pular a foto. Uma marcação que ainda chegue sem foto (aparelho offline, falha no envio) é registrada e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de marcações de ponto e removidas após 90 dias."
         },
         {
           "label": "Lembretes de marcação",
