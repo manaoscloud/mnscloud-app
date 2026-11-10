@@ -823,14 +823,16 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
     ];
   }
 
+  /** One command for Linux and macOS (V10a): the installer is chosen by `uname -s`. */
   private tokenCommand(token: string) {
-    const apiBase = window.location.origin;
+    const options = `--api-base ${this.shellQuote(window.location.origin)} --enrollment-token ${this.shellQuote(token)}`;
+    const scripts = '/opt/mnscloud/mnscloud-agent/scripts';
     return [
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
       '[ -d mnscloud-agent/.git ] && sudo git -C mnscloud-agent pull || sudo git clone https://github.com/manaoscloud/mnscloud-agent.git',
-      `sudo bash /opt/mnscloud/mnscloud-agent/scripts/install-agent.sh --api-base ${this.shellQuote(apiBase)} --enrollment-token ${this.shellQuote(token)}`,
-      'sudo systemctl status mnscloud-agent --no-pager -l',
+      `if [ "$(uname -s)" = Darwin ]; then sudo bash ${scripts}/install-agent-macos.sh ${options}; ` +
+        `else sudo bash ${scripts}/install-agent.sh ${options} && sudo systemctl status mnscloud-agent --no-pager -l; fi`,
     ].join(' && ');
   }
 
