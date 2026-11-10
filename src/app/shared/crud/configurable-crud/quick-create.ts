@@ -318,6 +318,12 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/customer-billing/due-days').then((m) => m.CustomerBillingDueDaysPage),
   },
+  // Tenant or platform sites: the page follows the scope of the requesting page.
+  NetworkSiteNwsUUID: {
+    label: 'network.createSite',
+    loadComponent: () =>
+      import('../../../pages/network/sites/sites').then((m) => m.NetworkSitesPage),
+  },
   RegCustomerRcuUUID: {
     label: 'Create customer',
     loadComponent: () =>

@@ -2747,6 +2747,50 @@ export const NAV_ITEMS: NavItem[] = [
       },
     ],
   },
+  // Network (Rede): sites and devices of the tenant (module.network.*) and their platform twins
+  // (master only, Plataforma), each entry keeping its own visibility.
+  {
+    id: 'network',
+    label: 'nav.network',
+    icon: 'lan',
+    area: 'infrastructure',
+    children: [
+      {
+        id: 'network/sites',
+        label: 'nav.network.sites',
+        icon: 'location_city',
+        route: '/network/sites',
+        requiresEnvironment: true,
+        entitlementCode: 'module.network.*',
+        permissions: ['tenant.network.sites.read'],
+      },
+      {
+        id: 'network/devices',
+        label: 'nav.network.devices',
+        icon: 'router',
+        route: '/network/devices',
+        requiresEnvironment: true,
+        entitlementCode: 'module.network.*',
+        permissions: ['tenant.network.devices.read'],
+      },
+      {
+        id: 'network/platform-sites',
+        label: 'nav.network.platform-sites',
+        icon: 'location_city',
+        category: 'platform',
+        masterRoute: '/system/network/sites',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'network/platform-devices',
+        label: 'nav.network.platform-devices',
+        icon: 'router',
+        category: 'platform',
+        masterRoute: '/system/network/devices',
+        permissions: ['platform.master.access'],
+      },
+    ],
+  },
   {
     id: 'monitoring',
     label: 'nav.monitoring',
