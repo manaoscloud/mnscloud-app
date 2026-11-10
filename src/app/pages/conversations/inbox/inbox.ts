@@ -284,6 +284,17 @@ export class ConversationsInboxPage {
     };
   });
 
+  readonly kanbanStages = computed(() => {
+    const cols = this.kanbanColumns();
+    return [
+      { key: 'waiting' as const, title: 'conversations.waitingQueue', dotClass: 'dot-waiting', items: cols.waiting },
+      { key: 'active' as const, title: 'conversations.inProgress', dotClass: 'dot-active', items: cols.active },
+      { key: 'pending' as const, title: 'conversations.waitingCustomer', dotClass: 'dot-pending', items: cols.pending },
+      { key: 'snoozed' as const, title: 'conversations.stageSnoozed', dotClass: 'dot-snoozed', items: cols.snoozed },
+      { key: 'resolved' as const, title: 'conversations.stageResolved', dotClass: 'dot-resolved', items: cols.resolved },
+    ];
+  });
+
   readonly isWindowClosed = computed(() => {
     const sel = this.selectedConversation();
     if (!sel?.CnvServiceWindowEndsAt) return false;

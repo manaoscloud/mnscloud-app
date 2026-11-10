@@ -628,269 +628,89 @@
   <!-- BODY CONTENT: KANBAN MODE -->
   @if (viewMode() === 'kanban') {
     <div class="kanban-board">
-      <!-- 1. Fila de Espera (Open & Unassigned) -->
-      <div
-        class="kanban-column stage-waiting"
-        (dragover)="onDragOver($event)"
-        (drop)="onDrop('waiting')"
-      >
-        <header class="column-header">
-          <div class="column-title-box">
-            <span class="stage-dot dot-waiting"></span>
-            <span class="column-title">{{ 'conversations.waitingQueue' | transloco }}</span>
-          </div>
-          <span class="card-count">{{ kanbanColumns().waiting.length }}</span>
-        </header>
-
-        <div class="column-body">
-          @for (conv of kanbanColumns().waiting; track conv.CnvUUID) {
-            <div
-              class="kanban-card"
-              draggable="true"
-              (dragstart)="onDragStart(conv)"
-              (click)="openFromKanban(conv)"
-              (keydown)="openFromKanban(conv)"
-            >
-              <div class="card-top">
-                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
-                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
-                </span>
-                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
-              </div>
-
-              <h4 class="card-contact">
-                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-              </h4>
-
-              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
-
-              <div class="card-footer">
-                @if (conv.CnvUnreadCount > 0) {
-                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
-                }
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="card-action-btn"
-                  (click)="takeConversation(conv, $event)"
-                >
-                  <mat-icon>person_add</mat-icon>
-                  {{ 'conversations.takeConversation' | transloco }}
-                </button>
-              </div>
+      @for (stage of kanbanStages(); track stage.key) {
+        <div
+          class="kanban-column"
+          [class]="'stage-' + stage.key"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop(stage.key)"
+        >
+          <header class="column-header">
+            <div class="column-title-box">
+              <span class="stage-dot" [class]="stage.dotClass"></span>
+              <span class="column-title">{{ stage.title | transloco }}</span>
             </div>
-          }
-        </div>
-      </div>
+            <span class="card-count">{{ stage.items.length }}</span>
+          </header>
 
-      <!-- 2. Em Atendimento (Open & Assigned) -->
-      <div
-        class="kanban-column stage-active"
-        (dragover)="onDragOver($event)"
-        (drop)="onDrop('active')"
-      >
-        <header class="column-header">
-          <div class="column-title-box">
-            <span class="stage-dot dot-active"></span>
-            <span class="column-title">{{ 'conversations.inProgress' | transloco }}</span>
+          <div class="column-body">
+            @for (conv of stage.items; track conv.CnvUUID) {
+              <div
+                class="kanban-card"
+                [class.card-resolved]="stage.key === 'resolved'"
+                draggable="true"
+                (dragstart)="onDragStart(conv)"
+                (click)="openFromKanban(conv)"
+                (keydown)="openFromKanban(conv)"
+              >
+                <div class="card-top">
+                  <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                    <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                    {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                  </span>
+                  <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+                </div>
+
+                <h4 class="card-contact">
+                  {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+                </h4>
+
+                <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+                <div class="card-footer">
+                  @if (stage.key === 'snoozed' && conv.CnvSnoozedUntil) {
+                    <span class="card-assignee">
+                      <mat-icon>snooze</mat-icon>
+                      {{ formatDateTime(conv.CnvSnoozedUntil) }}
+                    </span>
+                  } @else if (conv.AssignedName) {
+                    <span class="card-assignee">
+                      <mat-icon>{{ stage.key === 'resolved' ? 'done' : 'person' }}</mat-icon>
+                      {{ conv.AssignedName }}
+                    </span>
+                  }
+
+                  @if (conv.CnvUnreadCount > 0) {
+                    <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
+                  }
+
+                  @if (stage.key === 'waiting') {
+                    <button
+                      type="button"
+                      mat-stroked-button
+                      class="card-action-btn"
+                      (click)="takeConversation(conv, $event)"
+                    >
+                      <mat-icon>person_add</mat-icon>
+                      {{ 'conversations.takeConversation' | transloco }}
+                    </button>
+                  } @else if (stage.key === 'resolved') {
+                    <button
+                      type="button"
+                      mat-stroked-button
+                      class="reopen-mini-btn"
+                      (click)="reopenConversation(conv, $event)"
+                    >
+                      <mat-icon>replay</mat-icon>
+                      {{ 'conversations.reopenConversation' | transloco }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           </div>
-          <span class="card-count">{{ kanbanColumns().active.length }}</span>
-        </header>
-
-        <div class="column-body">
-          @for (conv of kanbanColumns().active; track conv.CnvUUID) {
-            <div
-              class="kanban-card"
-              draggable="true"
-              (dragstart)="onDragStart(conv)"
-              (click)="openFromKanban(conv)"
-              (keydown)="openFromKanban(conv)"
-            >
-              <div class="card-top">
-                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
-                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
-                </span>
-                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
-              </div>
-
-              <h4 class="card-contact">
-                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-              </h4>
-
-              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
-
-              <div class="card-footer">
-                <span class="card-assignee">
-                  <mat-icon>person</mat-icon>
-                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
-                </span>
-
-                @if (conv.CnvUnreadCount > 0) {
-                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
-                }
-              </div>
-            </div>
-          }
         </div>
-      </div>
-
-      <!-- 3. Aguardando Cliente (Pending) -->
-      <div
-        class="kanban-column stage-pending"
-        (dragover)="onDragOver($event)"
-        (drop)="onDrop('pending')"
-      >
-        <header class="column-header">
-          <div class="column-title-box">
-            <span class="stage-dot dot-pending"></span>
-            <span class="column-title">{{ 'conversations.waitingCustomer' | transloco }}</span>
-          </div>
-          <span class="card-count">{{ kanbanColumns().pending.length }}</span>
-        </header>
-
-        <div class="column-body">
-          @for (conv of kanbanColumns().pending; track conv.CnvUUID) {
-            <div
-              class="kanban-card"
-              draggable="true"
-              (dragstart)="onDragStart(conv)"
-              (click)="openFromKanban(conv)"
-              (keydown)="openFromKanban(conv)"
-            >
-              <div class="card-top">
-                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
-                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
-                </span>
-                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
-              </div>
-
-              <h4 class="card-contact">
-                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-              </h4>
-
-              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
-
-              <div class="card-footer">
-                <span class="card-assignee">
-                  <mat-icon>person</mat-icon>
-                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
-                </span>
-                @if (conv.CnvUnreadCount > 0) {
-                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- 4. Adiada (Snoozed) -->
-      <div
-        class="kanban-column stage-snoozed"
-        (dragover)="onDragOver($event)"
-        (drop)="onDrop('snoozed')"
-      >
-        <header class="column-header">
-          <div class="column-title-box">
-            <span class="stage-dot dot-snoozed"></span>
-            <span class="column-title">{{ 'conversations.stageSnoozed' | transloco }}</span>
-          </div>
-          <span class="card-count">{{ kanbanColumns().snoozed.length }}</span>
-        </header>
-
-        <div class="column-body">
-          @for (conv of kanbanColumns().snoozed; track conv.CnvUUID) {
-            <div
-              class="kanban-card"
-              draggable="true"
-              (dragstart)="onDragStart(conv)"
-              (click)="openFromKanban(conv)"
-              (keydown)="openFromKanban(conv)"
-            >
-              <div class="card-top">
-                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
-                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
-                </span>
-                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
-              </div>
-
-              <h4 class="card-contact">
-                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-              </h4>
-
-              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
-
-              <div class="card-footer">
-                <span class="card-assignee">
-                  <mat-icon>snooze</mat-icon>
-                  {{ formatDateTime(conv.CnvSnoozedUntil) }}
-                </span>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- 5. Resolvidas (Resolved) -->
-      <div
-        class="kanban-column stage-resolved"
-        (dragover)="onDragOver($event)"
-        (drop)="onDrop('resolved')"
-      >
-        <header class="column-header">
-          <div class="column-title-box">
-            <span class="stage-dot dot-resolved"></span>
-            <span class="column-title">{{ 'conversations.stageResolved' | transloco }}</span>
-          </div>
-          <span class="card-count">{{ kanbanColumns().resolved.length }}</span>
-        </header>
-
-        <div class="column-body">
-          @for (conv of kanbanColumns().resolved; track conv.CnvUUID) {
-            <div
-              class="kanban-card card-resolved"
-              draggable="true"
-              (dragstart)="onDragStart(conv)"
-              (click)="openFromKanban(conv)"
-              (keydown)="openFromKanban(conv)"
-            >
-              <div class="card-top">
-                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
-                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
-                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
-                </span>
-                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
-              </div>
-
-              <h4 class="card-contact">
-                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
-              </h4>
-
-              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
-
-              <div class="card-footer">
-                <span class="card-assignee">
-                  <mat-icon>done</mat-icon>
-                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
-                </span>
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="reopen-mini-btn"
-                  (click)="reopenConversation(conv, $event)"
-                >
-                  <mat-icon>replay</mat-icon>
-                  {{ 'conversations.reopenConversation' | transloco }}
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
+      }
     </div>
   }
 </section>
