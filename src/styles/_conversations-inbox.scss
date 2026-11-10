@@ -305,9 +305,9 @@
   background: var(--mat-sys-color-surface-container-lowest);
 }
 
-// Higher specificity than the Material icon button display rule.
+// Icon buttons are forced visible by a global `display: flex !important` rule (styles.scss).
 .inbox .inbox-chat-head .inbox-back {
-  display: none;
+  display: none !important;
 }
 
 // Channel, name and contact on their own lines; each ends in an ellipsis instead of wrapping.
@@ -1180,12 +1180,12 @@
   }
 
   .inbox-chat-head .inbox-back {
-    display: inline-flex;
+    display: inline-flex !important;
     margin-left: -6px;
   }
 
   .inbox-chat-actions .inbox-hide-phone {
-    display: none;
+    display: none !important;
   }
 
   .inbox-chat-head {
