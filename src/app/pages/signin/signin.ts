@@ -40,6 +40,8 @@ type SigninPolicy = {
   captchaProvider: 'turnstile' | 'hcaptcha' | null;
   captchaSiteKey: string | null;
   rememberMeEnabled: boolean;
+  /** Signup gate: "Create account" is hidden only while signup is closed. */
+  signupClosed: boolean;
 };
 
 @Component({
@@ -122,6 +124,7 @@ export class Signin {
     captchaProvider: null,
     captchaSiteKey: null,
     rememberMeEnabled: true,
+    signupClosed: false,
   };
   private readonly signinPolicyResource = resource({
     defaultValue: this.signinPolicyDefault,
@@ -286,6 +289,7 @@ export class Signin {
             : null,
         captchaSiteKey: typeof data.captchaSiteKey === 'string' ? data.captchaSiteKey : null,
         rememberMeEnabled: data.rememberMeEnabled !== false,
+        signupClosed: data.signupStatus === 'closed',
       };
     } catch {
       return this.signinPolicyDefault;

@@ -17,8 +17,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule } from '@angular/material/dialog';
-import { lastValueFrom } from 'rxjs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { RouterLink } from '@angular/router';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 
 import { ApiService } from '../../../services/api.service';
 import { AppI18nService, isAppLanguage } from '../../../services/app-i18n.service';
@@ -27,6 +28,39 @@ import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { buildTimezoneOptions } from '../../../shared/i18n/timezones';
+import {
+  GlobalTableComponent,
+  defineGlobalTable,
+} from '../../../shared/crud/configurable-crud/global-table';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
+
+export type SignupMode = 'open' | 'closed' | 'invite';
+export type SignupAdmission = SignupMode | 'capacity';
+
+/** Admission label of the master signup gate (System › Parameters › Signup). */
+export const SIGNUP_ADMISSION_LABELS: Record<SignupAdmission, string> = {
+  open: 'Signup open',
+  closed: 'Signup closed',
+  invite: 'Invite only',
+  capacity: 'Tenant limit reached (invite only)',
+};
+
+/** ISO instant → `datetime-local` value in the browser time zone ('' when empty/invalid). */
+export function isoToLocalDateTime(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** `datetime-local` value → ISO instant (null when empty/invalid). */
+export function localDateTimeToIso(value: string | null | undefined): string | null {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
 type SystemParametersItem = {
   sprUUID: string | null;
@@ -53,6 +87,17 @@ type SystemParametersItem = {
   authRememberMeHours: number;
   posSessionIdleHours: number;
   posSessionMaxHours: number;
+  signupMode: SignupMode;
+  signupClosedMessage: string;
+  signupClosedUrl: string;
+  /** Empty = no cap. */
+  signupMaxTenants: string;
+  /** `datetime-local` value; only for closed mode. */
+  signupReopenAt: string;
+  signupAllowPendingVerification: boolean;
+  signupTenantCount: number;
+  signupAdmission: SignupAdmission;
+  signupCapacityReachedAt: string | null;
 };
 
 type BradescoSiadItem = {
@@ -116,7 +161,61 @@ const DEFAULT_ITEM: SystemParametersItem = {
   authRememberMeHours: 720,
   posSessionIdleHours: 12,
   posSessionMaxHours: 168,
+  signupMode: 'open',
+  signupClosedMessage: '',
+  signupClosedUrl: '',
+  signupMaxTenants: '',
+  signupReopenAt: '',
+  signupAllowPendingVerification: true,
+  signupTenantCount: 0,
+  signupAdmission: 'open',
+  signupCapacityReachedAt: null,
 };
+
+const SIGNUP_AUDIT_ACTIONS: Record<string, string> = {
+  policy_saved: 'Policy changed',
+  capacity_reached: 'Tenant limit reached',
+  reopened: 'Reopened automatically',
+  invite_created: 'Invite created',
+  invite_revoked: 'Invite revoked',
+  invite_used: 'Invite used',
+};
+
+/** Short text of a signup audit entry (mode change, cap, invite hint or account). */
+export function signupAuditDetail(
+  row: Record<string, unknown>,
+  t: (key: string) => string,
+): string {
+  const details = (row['details'] ?? {}) as Record<string, any>;
+  switch (row['action']) {
+    case 'policy_saved': {
+      const before = details['before'] ?? {};
+      const after = details['after'] ?? {};
+      const parts: string[] = [];
+      if (before.mode !== after.mode) {
+        parts.push(
+          `${t(SIGNUP_ADMISSION_LABELS[before.mode as SignupMode] ?? String(before.mode ?? ''))} → ${t(SIGNUP_ADMISSION_LABELS[after.mode as SignupMode] ?? String(after.mode ?? ''))}`,
+        );
+      }
+      if ((before.maxTenants ?? null) !== (after.maxTenants ?? null)) {
+        parts.push(`${t('Tenant limit')}: ${after.maxTenants ?? t('No limit')}`);
+      }
+      if ((before.reopenAt ?? null) !== (after.reopenAt ?? null) && after.reopenAt) {
+        parts.push(`${t('Reopen at')}: ${new Date(after.reopenAt).toLocaleString()}`);
+      }
+      return parts.length ? parts.join(' · ') : t('Text, link or verification rule changed');
+    }
+    case 'capacity_reached':
+      return `${t('Tenant limit')}: ${details['maxTenants'] ?? ''}`;
+    case 'invite_used':
+      return `…${String(row['inviteHint'] ?? '')} · ${String(row['targetEmail'] ?? '')}`;
+    case 'invite_created':
+    case 'invite_revoked':
+      return `…${String(row['inviteHint'] ?? '')}`;
+    default:
+      return '';
+  }
+}
 
 @Component({
   selector: 'app-settings-parameters',
@@ -134,6 +233,8 @@ const DEFAULT_ITEM: SystemParametersItem = {
     MatDialogModule,
     FieldHelpComponent,
     MnsSearchSelectFieldComponent,
+    GlobalTableComponent,
+    RouterLink,
   ],
   templateUrl: './parameters.html',
   styleUrls: ['./parameters.scss'],
@@ -144,6 +245,50 @@ export class SettingsParametersPage {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly i18n = inject(AppI18nService);
+  private readonly dialog = inject(MatDialog);
+
+  readonly signupAdmissionLabels = SIGNUP_ADMISSION_LABELS;
+  readonly signupAuditTable = defineGlobalTable({
+    key: 'system/parameters/signup-audit',
+    uuidField: 'auditUUID',
+    emptyLabel: 'No signup changes recorded yet.',
+    columns: [
+      { id: 'dateCreated', label: 'Date', kind: 'datetime', field: 'dateCreated' },
+      {
+        id: 'action',
+        label: 'Event',
+        field: 'action',
+        value: (row, t) =>
+          t(SIGNUP_AUDIT_ACTIONS[String(row['action'] ?? '')] ?? String(row['action'] ?? '')),
+      },
+      {
+        id: 'actorName',
+        label: 'By',
+        field: 'actorName',
+        value: (row, t) => {
+          const actor = String(row['actorName'] ?? '').trim();
+          return actor ? actor : t('Automatic');
+        },
+      },
+      {
+        id: 'detail',
+        label: 'Detail',
+        field: 'detail',
+        value: (row, t) => signupAuditDetail(row, t),
+      },
+    ],
+  });
+  private readonly signupAuditResource = resource({
+    params: () => (this.platformScope() ? true : undefined),
+    defaultValue: [] as Record<string, unknown>[],
+    loader: async () => {
+      const response = await this.api.get<any>('system/signup/audit?limit=50&offset=0');
+      const items = response?.data?.items;
+      return Array.isArray(items) ? items : [];
+    },
+  });
+  readonly signupAudit = computed(() => this.signupAuditResource.value() ?? []);
+  readonly signupAuditLoading = computed(() => this.signupAuditResource.isLoading());
 
   readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   readonly platformScope = computed(() => this.scope() === 'master');
@@ -307,13 +452,18 @@ export class SettingsParametersPage {
 
     try {
       const parameterChanged = this.buildSignature(this.item()) !== this.baselineSignature();
+      if (parameterChanged && !(await this.confirmSignupGate())) return;
       if (parameterChanged) {
-        const payload = this.normalizeForSave(this.item());
+        const payload = {
+          ...this.normalizeForSave(this.item()),
+          ...this.signupGatePayload(this.item()),
+        };
         const result = await this.api.put<any>(this.baseEndpoint(), { item: payload });
         const savedItem = this.readItem(result);
         this.item.set(savedItem);
         this.baselineItem.set({ ...savedItem });
         this.baselineSignature.set(this.buildSignature(savedItem));
+        if (this.platformScope()) this.signupAuditResource.reload();
         if (savedItem.defaultLanguageIsActive && isAppLanguage(savedItem.defaultLanguage)) {
           this.i18n.applyResolvedSystemLanguage(savedItem.defaultLanguage, true);
         }
@@ -398,7 +548,64 @@ export class SettingsParametersPage {
       authRememberMeHours: this.normalizeInteger(raw?.authRememberMeHours, 720),
       posSessionIdleHours: this.normalizeInteger(raw?.posSessionIdleHours, 12),
       posSessionMaxHours: this.normalizeInteger(raw?.posSessionMaxHours, 168),
+      signupMode:
+        raw?.signupMode === 'closed' || raw?.signupMode === 'invite' ? raw.signupMode : 'open',
+      signupClosedMessage: String(raw?.signupClosedMessage ?? ''),
+      signupClosedUrl: String(raw?.signupClosedUrl ?? ''),
+      signupMaxTenants:
+        raw?.signupMaxTenants === null || raw?.signupMaxTenants === undefined
+          ? ''
+          : String(raw.signupMaxTenants),
+      signupReopenAt: isoToLocalDateTime(raw?.signupReopenAt),
+      signupAllowPendingVerification: raw?.signupAllowPendingVerification !== false,
+      signupTenantCount: this.normalizeInteger(raw?.signupTenantCount, 0),
+      signupAdmission: (['open', 'closed', 'invite', 'capacity'] as const).includes(
+        raw?.signupAdmission,
+      )
+        ? raw.signupAdmission
+        : 'open',
+      signupCapacityReachedAt: raw?.signupCapacityReachedAt
+        ? String(raw.signupCapacityReachedAt)
+        : null,
     };
+  }
+
+  /** Master payload of the signup gate; tenant saves never send it (the API keeps the gate). */
+  private signupGatePayload(value: SystemParametersItem): Record<string, unknown> {
+    if (!this.platformScope()) return {};
+    const max = String(value.signupMaxTenants ?? '').trim();
+    return {
+      signupMode: value.signupMode,
+      signupClosedMessage: value.signupClosedMessage.trim(),
+      signupClosedUrl: value.signupClosedUrl.trim(),
+      signupMaxTenants: max === '' ? null : Number(max),
+      signupReopenAt:
+        value.signupMode === 'closed' ? localDateTimeToIso(value.signupReopenAt) : null,
+      signupAllowPendingVerification: value.signupAllowPendingVerification,
+    };
+  }
+
+  /** Asks before a save that stops public signup (open → closed/invite). */
+  private async confirmSignupGate(): Promise<boolean> {
+    if (!this.platformScope()) return true;
+    const before = this.baselineItem().signupMode;
+    const after = this.item().signupMode;
+    if (before === after || after === 'open') return true;
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      width: '420px',
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+      data: {
+        translate: true,
+        title: after === 'closed' ? 'Close new signups?' : 'Allow only invited signups?',
+        message:
+          after === 'closed'
+            ? 'Nobody will be able to create a new account until you open signup again. Existing accounts keep working.'
+            : 'Only people with an invitation code will be able to create a new account. Existing accounts keep working.',
+        confirmLabel: 'Confirm',
+      },
+    });
+    return Boolean(await firstValueFrom(ref.afterClosed()));
   }
 
   private normalizeForSave(value: SystemParametersItem): SystemParametersItem {
@@ -446,6 +653,7 @@ export class SettingsParametersPage {
       authRememberMeHours: value.authRememberMeHours,
       posSessionIdleHours: value.posSessionIdleHours,
       posSessionMaxHours: value.posSessionMaxHours,
+      ...this.signupGatePayload(value),
     });
   }
 

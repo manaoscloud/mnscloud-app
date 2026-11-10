@@ -43,6 +43,10 @@ export function notificationIcon(item: InboxNotification): string {
       return 'swap_vert';
     case 'hr.time_request':
       return item.params['event'] === 'request_message' ? 'chat' : 'pending_actions';
+    case 'platform.signup.capacity':
+      return 'group_off';
+    case 'platform.signup.reopened':
+      return 'how_to_reg';
     default:
       return 'notifications';
   }
@@ -141,6 +145,10 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           : 'notifications.hrTimeRequest',
         { employee: param('employee') },
       );
+    case 'platform.signup.capacity':
+      return t('notifications.signupCapacity', { max: param('maxTenants') });
+    case 'platform.signup.reopened':
+      return t('notifications.signupReopened');
     default:
       return t('notifications.generic');
   }

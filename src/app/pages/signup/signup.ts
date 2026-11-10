@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 
 import { FormField, email, form, minLength, pattern, required } from '@angular/forms/signals';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -33,11 +33,41 @@ import { MnsDateAdapterModule } from '../../shared/date-mask/mns-date-adapter.mo
 import { injectRevealInvalidFields } from '../../shared/forms/reveal-invalid-fields';
 import { FieldErrorKeyPipe } from '../../shared/forms/field-error-key.pipe';
 
+export type SignupStatus = 'open' | 'closed' | 'invite';
+
 type SignupPolicy = {
+  signupStatus: SignupStatus;
+  closedMessage: string | null;
+  closedUrl: string | null;
   captchaEnabled: boolean;
   captchaProvider: 'turnstile' | 'hcaptcha' | null;
   captchaSiteKey: string | null;
 };
+
+/** Texts of the signup gate refusals (`POST /auth/signup` 403 `code`). */
+export const SIGNUP_REFUSAL_MESSAGES: Record<string, string> = {
+  SIGNUP_CLOSED: 'New signups are closed at the moment.',
+  SIGNUP_INVITE_REQUIRED: 'An invitation code is required to create an account.',
+  SIGNUP_INVITE_INVALID: 'The invitation code is invalid, expired or already used.',
+};
+
+/** Public gate status; anything unknown is treated as closed (the API decides anyway). */
+export function signupStatusOf(value: unknown): SignupStatus {
+  return value === 'open' || value === 'invite' || value === undefined || value === null
+    ? ((value ?? 'open') as SignupStatus)
+    : 'closed';
+}
+
+/** Only https links are shown on the closed signup page. */
+export function safeSignupLink(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 @Component({
   selector: 'app-signup',
@@ -67,6 +97,7 @@ export class Signup {
   private readonly router = inject(Router);
   private readonly snack = inject(SnackbarService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
 
   readonly captchaContainer = viewChild<ElementRef<HTMLDivElement>>('captchaContainer');
 
@@ -77,9 +108,11 @@ export class Signup {
     email: '',
     dateBirth: null as Date | null,
     password: '',
+    inviteCode: String(this.route.snapshot.queryParamMap.get('invite') ?? ''),
   });
 
   readonly form = form(this.formModel, (field) => {
+    required(field.inviteCode, { when: () => this.signupPolicy().signupStatus === 'invite' });
     required(field.firstName);
     minLength(field.firstName, 2);
     required(field.lastName);
@@ -104,6 +137,9 @@ export class Signup {
     return '';
   });
   private readonly signupPolicyDefault: SignupPolicy = {
+    signupStatus: 'open',
+    closedMessage: null,
+    closedUrl: null,
     captchaEnabled: false,
     captchaProvider: null,
     captchaSiteKey: null,
@@ -113,6 +149,9 @@ export class Signup {
     loader: () => this.fetchSignupPolicy(),
   });
   readonly signupPolicy = computed(() => this.signupPolicyResource.value());
+  readonly policyLoading = computed(() => this.signupPolicyResource.isLoading());
+  readonly signupClosed = computed(() => this.signupPolicy().signupStatus === 'closed');
+  readonly inviteRequired = computed(() => this.signupPolicy().signupStatus === 'invite');
   readonly captchaToken = signal<string | null>(null);
   private redirectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly captchaPollTimers = new Set<ReturnType<typeof setInterval>>();
@@ -168,6 +207,7 @@ export class Signup {
         password: value.password,
         dateBirth: dateBirthStr,
         captchaToken: this.captchaToken(),
+        inviteCode: this.inviteRequired() ? value.inviteCode.trim() : null,
       });
 
       if (!result?.message) {
@@ -185,12 +225,22 @@ export class Signup {
         email: '',
         dateBirth: null,
         password: '',
+        inviteCode: '',
       });
       this.captchaToken.set(null);
       await this.renderCaptcha(true);
       this.scheduleRedirect();
     } catch (err: any) {
-      const msg = err?.error?.error || err?.message || 'Registration failed.';
+      const code = String(err?.error?.code ?? '');
+      if (code === 'SIGNUP_CLOSED' || code === 'SIGNUP_INVITE_REQUIRED') {
+        // The gate changed since the page loaded: show its current state.
+        this.signupPolicyResource.reload();
+      }
+      const msg =
+        SIGNUP_REFUSAL_MESSAGES[code] ||
+        err?.error?.error ||
+        err?.message ||
+        'Registration failed.';
       this.apiError.set(msg);
       this.snack.error(msg);
     }
@@ -222,6 +272,12 @@ export class Signup {
       const result = await this.api.get<any>('auth/signup/policy');
       const data = result?.data ?? {};
       return {
+        signupStatus: signupStatusOf(data.signupStatus),
+        closedMessage:
+          typeof data.closedMessage === 'string' && data.closedMessage.trim()
+            ? data.closedMessage.trim()
+            : null,
+        closedUrl: safeSignupLink(data.closedUrl),
         captchaEnabled: data.captchaEnabled === true,
         captchaProvider:
           data.captchaProvider === 'turnstile' || data.captchaProvider === 'hcaptcha'
