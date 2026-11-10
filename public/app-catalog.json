@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "8be0e6fecdf5",
+  "version": "13e27cad7a59",
   "language": "pt-BR",
   "entries": [
     {
@@ -1017,13 +1017,9 @@
       "route": "/conversations/inbox",
       "menuPath": "Conversas › Caixa de entrada",
       "scope": "tenant",
-      "title": "Caixa de entrada",
+      "title": "Iniciar conversa",
       "description": "Conversas com clientes e contatos de todos os canais conectados, em um só lugar: responda, adicione notas internas, atribua e resolva.",
       "fields": [
-        {
-          "label": "Revisão",
-          "help": ""
-        },
         {
           "label": "Canal",
           "help": ""
@@ -1034,7 +1030,7 @@
         },
         {
           "label": "Telefone do contato",
-          "help": "Formato internacional com o código do país."
+          "help": "International format with country code."
         },
         {
           "label": "E-mail do contato",
@@ -1045,20 +1041,8 @@
           "help": ""
         },
         {
-          "label": "Estado",
-          "help": ""
-        },
-        {
           "label": "Prioridade",
           "help": ""
-        },
-        {
-          "label": "Responsável",
-          "help": ""
-        },
-        {
-          "label": "Adiada até",
-          "help": "Obrigatório quando o estado é Adiada; a conversa volta para a caixa de entrada neste horário."
         }
       ]
     },
