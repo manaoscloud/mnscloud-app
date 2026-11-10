@@ -8,6 +8,8 @@
 @use './styles/field-validation';
 @use './styles/touch-scroll';
 @use './styles/nav-sections';
+@use './styles/workspace';
+@use './styles/conversations-inbox';
 /* =========================================================
    ANGULAR MATERIAL 20 — CONFIGURAÇÃO DOS TEMAS
    (A REGRA @use DEVE VIR NO TOPO ABSOLUTO!)
@@ -96,6 +98,20 @@ $midnight-theme: mat.define-theme(
   --mns-chart-2: #{if(mat.get-theme-type($theme) == dark, #d95926, #eb6834)};
   // Material 3 has no warning role: one amber per theme type, readable on surface (>= 4.5:1).
   --mns-status-warning: #{if(mat.get-theme-type($theme) == dark, #f2b84b, #8a5a00)};
+  // Positive state (open, connected, delivered): readable on surface in both theme types.
+  --mns-status-success: #{if(mat.get-theme-type($theme) == dark, #7fd8a0, #1b7a43)};
+  // Internal notes: amber container visible only to the team (conversations, tickets).
+  --mns-note-container: #{if(mat.get-theme-type($theme) == dark, #3a2f08, #fff0c2)};
+  --mns-on-note-container: #{if(mat.get-theme-type($theme) == dark, #f6e3a3, #3b2d00)};
+  --mns-note-outline: #{if(mat.get-theme-type($theme) == dark, #6b5714, #d9bb52)};
+  // Conversation channel accents (icons, tags): one tone per theme type, >= 4.5:1 on surface.
+  --mns-channel-webchat: #{if(mat.get-theme-type($theme) == dark, #a9acff, #4f53c4)};
+  --mns-channel-whatsapp: #{if(mat.get-theme-type($theme) == dark, #7fd8a0, #1b7a43)};
+  --mns-channel-email: #{if(mat.get-theme-type($theme) == dark, #ffb68f, #9a4a1e)};
+  --mns-channel-instagram: #{if(mat.get-theme-type($theme) == dark, #ffafd0, #b3266b)};
+  --mns-channel-messenger: #{if(mat.get-theme-type($theme) == dark, #9ecaff, #1d5fb0)};
+  --mns-channel-telegram: #{if(mat.get-theme-type($theme) == dark, #8fd3f5, #0f6a92)};
+  --mns-channel-internal: #{if(mat.get-theme-type($theme) == dark, #d3bbff, #6a3fb5)};
   --mat-sys-color-on-error: #{mat.get-theme-color($theme, on-error)};
   --mat-sys-color-error-container: #{mat.get-theme-color($theme, error-container)};
   --mat-sys-color-on-error-container: #{mat.get-theme-color($theme, on-error-container)};

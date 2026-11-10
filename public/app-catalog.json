@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "349b8bf0fbcb",
+  "version": "0b33b515ac55",
   "language": "pt-BR",
   "entries": [
     {
@@ -1030,7 +1030,7 @@
         },
         {
           "label": "Telefone do contato",
-          "help": "International format with country code."
+          "help": "Formato internacional, com o código do país."
         },
         {
           "label": "E-mail do contato",
@@ -1042,6 +1042,43 @@
         },
         {
           "label": "Prioridade",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/conversations/quick-replies",
+      "menuPath": "Conversas › Respostas rápidas",
+      "scope": "tenant",
+      "title": "Respostas rápidas",
+      "description": "Textos prontos que a equipe insere no chat digitando / e o atalho, para todas as contas ou só para uma.",
+      "fields": [
+        {
+          "label": "Atalho",
+          "help": "Digite / e este atalho no chat. Use letras minúsculas, números ou hífen, sem espaços nem acentos."
+        },
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Conta de conversas",
+          "help": "Deixe vazio para oferecer a resposta em todas as contas de conversas."
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Ordem",
+          "help": ""
+        },
+        {
+          "label": "Texto",
+          "help": "Texto inserido no campo de mensagem. Aceita as variáveis contato.nome, atendente.nome e empresa.nome escritas entre chaves duplas."
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
