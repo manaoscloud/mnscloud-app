@@ -378,7 +378,14 @@ function deviceConfig(
         { id: 'class', label: 'network.deviceClassLabel', field: 'NwdDeviceClass' },
         DEVICE_CLASS_OPTIONS,
       ),
-      { id: 'vendorType', label: 'network.vendorType', field: 'NwdVendorType' },
+      {
+        id: 'vendorType',
+        label: 'network.vendorType',
+        field: 'NwdVendorType',
+        // The catalog label (MikroTik RouterOS), not the stored code; the code until it loads.
+        value: (row: ConfigurableCrudRecord) =>
+          typeOf(row['NwdVendorType'])?.label ?? String(row['NwdVendorType'] ?? ''),
+      },
       { id: 'model', label: 'Model', field: 'NwdModel', optional: true },
       { id: 'osVersion', label: 'network.osVersion', field: 'NwdOsVersion', optional: true },
       { id: 'managementHost', label: 'network.managementHost', field: 'NwdManagementHost' },
