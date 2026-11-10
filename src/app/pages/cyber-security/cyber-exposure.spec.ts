@@ -18,7 +18,7 @@ describe('Cyber Security external exposure views', () => {
     expect(
       targetPayload({
         address: '200.10.20.16/30',
-        label: 'Edge',
+        label: 'Name',
         cyberAccountUUID: '',
         ownerName: 'Owner Ltd',
         frequency: 'monthly',
@@ -26,7 +26,7 @@ describe('Cyber Security external exposure views', () => {
       }),
     ).toEqual({
       address: '200.10.20.16/30',
-      label: 'Edge',
+      label: 'Name',
       cyberAccountUUID: null,
       ownerName: 'Owner Ltd',
       frequency: 'monthly',
@@ -46,7 +46,7 @@ describe('Cyber Security external exposure views', () => {
   it('edits without the address, sends the revision and offers the renewal when expired', () => {
     const form = exposureTargetForm({
       targetUUID: 'a b',
-      label: 'Edge',
+      label: 'Name',
       ownerName: 'Owner',
       revision: 4,
       authorizationValid: false,
@@ -55,12 +55,12 @@ describe('Cyber Security external exposure views', () => {
     expect(form.initialValues?.['authorize']).toEqual(['yes']);
     expect(form.fields.some((field) => field.key === 'address')).toBeFalse();
     const body = form.payload?.(
-      { label: 'Edge', ownerName: 'Owner', authorize: [] },
+      { label: 'Name', ownerName: 'Owner', authorize: [] },
       true,
     ) as Record<string, unknown>;
     expect(body).toEqual({
       revision: 4,
-      label: 'Edge',
+      label: 'Name',
       cyberAccountUUID: null,
       ownerName: 'Owner',
       frequency: 'weekly',
@@ -125,6 +125,6 @@ describe('Cyber Security external exposure views', () => {
     expect(exposureFindingsCollection(() => undefined, { targetUUID: 't1' }).endpoint).toBe(
       'cyber-security/exposure/findings?targetUUID=t1',
     );
-    expect(exposureServicesCollection({ targetUUID: 't1', label: 'Edge' }).pageTitle).toBe('Edge');
+    expect(exposureServicesCollection({ targetUUID: 't1', label: 'Name' }).pageTitle).toBe('Name');
   });
 });
