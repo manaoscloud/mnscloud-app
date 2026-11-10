@@ -33,6 +33,18 @@ import {
   runView,
   windowLabel,
 } from './cyber-patch';
+import { priorities, priorityTone } from './cyber-priority';
+import {
+  exposureFindingsCollection,
+  exposureFindingView,
+  exposureTargetActions,
+  frequencyOptions,
+  scanStatusOptions,
+  scanStatusTone,
+  targetFields,
+  targetPayload,
+  targetsEndpoint,
+} from './cyber-exposure';
 
 type CyberSection =
   | 'servers'
@@ -42,7 +54,8 @@ type CyberSection =
   | 'security-events'
   | 'vulnerabilities'
   | 'inventory'
-  | 'patches';
+  | 'patches'
+  | 'exposure';
 
 const options = (values: string[]): ConfigurableCrudOption[] =>
   values.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }));
@@ -249,13 +262,6 @@ function withCyberAccount(section: CyberSection, config: ConfigurableCrudConfig)
 
 // ----- Vulnerabilities and software inventory (vulnerability management V3) -----
 
-const priorities: ConfigurableCrudOption[] = [
-  { value: 'P0', label: 'cyberSecurity.vuln.priority.P0' },
-  { value: 'P1', label: 'cyberSecurity.vuln.priority.P1' },
-  { value: 'P2', label: 'cyberSecurity.vuln.priority.P2' },
-  { value: 'P3', label: 'cyberSecurity.vuln.priority.P3' },
-  { value: 'info', label: 'cyberSecurity.vuln.priority.info' },
-];
 const findingStatuses: ConfigurableCrudOption[] = [
   { value: 'open', label: 'cyberSecurity.vuln.status.open' },
   { value: 'fixed', label: 'cyberSecurity.vuln.status.fixed' },
@@ -266,21 +272,6 @@ const fixStates: ConfigurableCrudOption[] = [
   { value: 'fixed', label: 'cyberSecurity.vuln.fixState.fixed' },
   { value: 'no_fix', label: 'cyberSecurity.vuln.fixState.no_fix' },
 ];
-
-const priorityTone = (value: unknown) => {
-  switch (String(value ?? '')) {
-    case 'P0':
-      return 'chip-failed';
-    case 'P1':
-      return 'chip-warning';
-    case 'P2':
-      return 'chip-queued';
-    case 'P3':
-      return 'chip-running';
-    default:
-      return 'chip-skipped';
-  }
-};
 
 const decimal = (value: unknown, digits: number) =>
   value === null || value === undefined || value === '' ? '' : Number(value).toFixed(digits);
@@ -443,6 +434,8 @@ let aiExplainDialog: ((finding: ConfigurableCrudRecord) => Promise<void>) | null
 let platformMaster: () => boolean = () => false;
 let patchRunDialog: ((run: ConfigurableCrudRecord) => Promise<void>) | null = null;
 const showPatchRun = (run: ConfigurableCrudRecord) => void patchRunDialog?.(run);
+let exposureFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
+const showExposureFinding = (finding: ConfigurableCrudRecord) => exposureFindingDialog?.(finding);
 function showRemediation(finding: ConfigurableCrudRecord) {
   remediationDialog?.(finding);
 }
@@ -710,6 +703,92 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     fields: [],
     initialValues: {},
     rowActions: patchServerActions(showPatchRun),
+  }),
+
+  exposure: defineCrud({
+    ...readOnly,
+    canCreate: true,
+    endpoint: targetsEndpoint,
+    uuidField: 'targetUUID',
+    pageTitle: 'cyberSecurity.exposure.title',
+    pageDescription: 'cyberSecurity.exposure.pageDescription',
+    createTitle: 'cyberSecurity.exposure.create',
+    savedMessage: 'cyberSecurity.exposure.saved',
+    serverSidePagination: true,
+    statusFilter: false,
+    filterActions: [
+      {
+        key: 'exposureFindings',
+        label: 'cyberSecurity.exposure.findings',
+        icon: 'report',
+        tooltip: 'cyberSecurity.exposure.findingsDescription',
+      },
+    ],
+    initialValues: { frequency: 'weekly', authorize: [] },
+    payload: (values) => targetPayload(values),
+    fields: targetFields(true),
+    columns: [
+      { id: 'label', label: 'Name', field: 'label', uuidField: 'targetUUID', kind: 'identity' },
+      {
+        id: 'address',
+        label: 'cyberSecurity.exposure.address',
+        field: 'address',
+        translateValue: false,
+      },
+      { id: 'account', label: 'cyberSecurity.account', field: 'cyberAccountName' },
+      {
+        id: 'frequency',
+        label: 'cyberSecurity.exposure.frequency',
+        field: 'frequency',
+        kind: 'status',
+        options: frequencyOptions,
+      },
+      {
+        id: 'lastScan',
+        label: 'cyberSecurity.exposure.lastScan',
+        field: 'lastScanAt',
+        kind: 'datetime',
+      },
+      {
+        id: 'lastScanStatus',
+        label: 'cyberSecurity.exposure.lastScanStatus',
+        field: 'lastScanStatus',
+        kind: 'status',
+        options: scanStatusOptions,
+        chipClass: scanStatusTone,
+      },
+      {
+        id: 'services',
+        label: 'cyberSecurity.exposure.openServices',
+        field: 'openServices',
+        kind: 'number',
+      },
+      {
+        id: 'findings',
+        label: 'cyberSecurity.exposure.openFindings',
+        field: 'openFindings',
+        kind: 'number',
+      },
+      {
+        id: 'urgent',
+        label: 'cyberSecurity.exposure.urgentFindings',
+        field: 'urgentFindings',
+        kind: 'number',
+      },
+      {
+        id: 'owner',
+        label: 'cyberSecurity.exposure.ownerName',
+        field: 'ownerName',
+        translateValue: false,
+      },
+      {
+        id: 'authorization',
+        label: 'cyberSecurity.exposure.authorizationExpires',
+        field: 'authorizationExpiresAt',
+        kind: 'date',
+      },
+    ],
+    rowActions: exposureTargetActions(showExposureFinding),
   }),
 
   servers: defineCrud({
@@ -988,6 +1067,8 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     remediationDialog = (finding) => this.showRemediation(finding);
     aiExplainDialog = (finding) => this.explainFinding(finding);
     patchRunDialog = (run) => this.showPatchRun(run);
+    exposureFindingDialog = (finding) =>
+      openDataViewerDialog(this.dialog, exposureFindingView(finding, this.t.bind(this)));
     platformMaster = () =>
       hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
   }
@@ -1086,6 +1167,17 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override async handleFilterAction(action: { key: string }): Promise<void> {
+    if (action.key === 'exposureFindings') {
+      return this.runRowAction(
+        {
+          key: 'exposureFindings',
+          label: 'cyberSecurity.exposure.findings',
+          icon: 'report',
+          collection: () => exposureFindingsCollection(showExposureFinding),
+        },
+        {},
+      );
+    }
     if (action.key === 'patchRuns') {
       return this.runRowAction(
         {

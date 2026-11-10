@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ced907ab5b70",
+  "version": "f1a6ce81c3a5",
   "language": "pt-BR",
   "entries": [
     {
@@ -1790,6 +1790,14 @@
       "menuPath": "Cibersegurança › Decisões",
       "scope": "tenant",
       "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/exposure",
+      "menuPath": "Cibersegurança › Exposição",
+      "scope": "tenant",
+      "title": "Exposição",
       "description": "",
       "fields": []
     },

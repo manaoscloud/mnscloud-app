@@ -760,6 +760,7 @@ export const routes: Routes = [
                 { section: 'vulnerabilities', title: 'Vulnerabilities' },
                 { section: 'inventory', title: 'Software inventory' },
                 { section: 'patches', title: 'Security updates' },
+                { section: 'exposure', title: 'External exposure' },
               ].map(({ section, title }) => ({
                 path: `cyber-security/${section}`,
                 loadComponent: () =>
