@@ -28,7 +28,6 @@
             class="toggle-btn"
             [class.active]="viewMode() === 'cockpit'"
             (click)="setViewMode('cockpit')"
-            aria-label="Cockpit view"
           >
             <mat-icon>splitscreen</mat-icon>
             {{ 'conversations.viewCockpit' | transloco }}
@@ -39,7 +38,6 @@
             class="toggle-btn"
             [class.active]="viewMode() === 'kanban'"
             (click)="setViewMode('kanban')"
-            aria-label="Kanban view"
           >
             <mat-icon>view_kanban</mat-icon>
             {{ 'conversations.viewKanban' | transloco }}
@@ -133,20 +131,22 @@
           </span>
         </div>
 
-        <div class="queue-list" role="list">
+        <ul class="queue-list">
           @if (filteredConversations().length === 0) {
-            <div class="queue-empty">
+            <li class="queue-empty">
               <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
               <p>{{ 'conversations.noConversations' | transloco }}</p>
-            </div>
+            </li>
           } @else {
             @for (conv of filteredConversations(); track conv.CnvUUID) {
-              <div
+              <li
                 class="queue-item"
-                role="listitem"
+                tabindex="0"
+                role="button"
                 [class.selected]="selectedConversation()?.CnvUUID === conv.CnvUUID"
                 [class.has-unread]="conv.CnvUnreadCount > 0"
                 (click)="selectConversation(conv)"
+                (keydown.enter)="selectConversation(conv)"
               >
                 <div class="item-avatar-box">
                   <div class="item-avatar">
@@ -192,10 +192,10 @@
                     }
                   </div>
                 </div>
-              </div>
+              </li>
             }
           }
-        </div>
+        </ul>
       </aside>
 
       <!-- Col 2: Active Chat Timeline & Composer -->
@@ -225,10 +225,10 @@
                 </div>
                 <div class="contact-sub-row">
                   @if (selectedConversation()?.ContactPhone) {
-                    <span class="phone-link" (click)="dialContact(selectedConversation()?.ContactPhone)">
+                    <button type="button" class="phone-link" (click)="dialContact(selectedConversation()?.ContactPhone)">
                       <mat-icon>phone</mat-icon>
                       {{ selectedConversation()?.ContactPhone }}
-                    </span>
+                    </button>
                   }
                   @if (selectedConversation()?.ContactEmail) {
                     <span class="email-item">
@@ -362,7 +362,7 @@
               <!-- Message Bubble -->
               @if (msg.CnmDirection === 'internal' || msg.CnmKind === 'note') {
                 <!-- Internal Note Bubble -->
-                <div class="bubble-row bubble-internal" role="article">
+                <article class="bubble-row bubble-internal">
                   <div class="note-card">
                     <div class="note-header">
                       <mat-icon class="note-icon">lock</mat-icon>
@@ -372,10 +372,10 @@
                     </div>
                     <div class="note-body">{{ msg.CnmBody }}</div>
                   </div>
-                </div>
+                </article>
               } @else if (msg.CnmDirection === 'inbound') {
                 <!-- Inbound (Customer / Visitor) Bubble -->
-                <div class="bubble-row bubble-inbound" role="article">
+                <article class="bubble-row bubble-inbound">
                   <div class="inbound-bubble">
                     <div class="bubble-author">{{ msg.AuthorName || selectedConversation()?.ContactName || ('Contact' | transloco) }}</div>
                     <div class="bubble-content">{{ msg.CnmBody }}</div>
@@ -383,10 +383,10 @@
                       <span class="bubble-time">{{ formatTime(msg.CnmSentAt) }}</span>
                     </div>
                   </div>
-                </div>
+                </article>
               } @else {
                 <!-- Outbound (Agent / Operator) Bubble -->
-                <div class="bubble-row bubble-outbound" role="article">
+                <article class="bubble-row bubble-outbound">
                   <div class="outbound-bubble">
                     <div class="bubble-author">{{ msg.AuthorName || ('conversations.me' | transloco) }}</div>
                     <div class="bubble-content">{{ msg.CnmBody }}</div>
@@ -405,7 +405,7 @@
                       </mat-icon>
                     </div>
                   </div>
-                </div>
+                </article>
               }
             }
           </div>
@@ -647,8 +647,11 @@
             <div
               class="kanban-card"
               draggable="true"
+              tabindex="0"
+              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
+              (keydown.enter)="openFromKanban(conv)"
             >
               <div class="card-top">
                 <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
@@ -702,8 +705,11 @@
             <div
               class="kanban-card"
               draggable="true"
+              tabindex="0"
+              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
+              (keydown.enter)="openFromKanban(conv)"
             >
               <div class="card-top">
                 <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
@@ -753,8 +759,11 @@
             <div
               class="kanban-card"
               draggable="true"
+              tabindex="0"
+              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
+              (keydown.enter)="openFromKanban(conv)"
             >
               <div class="card-top">
                 <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
@@ -803,8 +812,11 @@
             <div
               class="kanban-card"
               draggable="true"
+              tabindex="0"
+              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
+              (keydown.enter)="openFromKanban(conv)"
             >
               <div class="card-top">
                 <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
@@ -850,8 +862,11 @@
             <div
               class="kanban-card card-resolved"
               draggable="true"
+              tabindex="0"
+              role="button"
               (dragstart)="onDragStart(conv)"
               (click)="openFromKanban(conv)"
+              (keydown.enter)="openFromKanban(conv)"
             >
               <div class="card-top">
                 <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">

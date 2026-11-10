@@ -32,7 +32,6 @@ import { watchConversationChanges } from '../conversation-events';
 import {
   CONNECTION_LOOKUP,
   CONVERSATION_PRIORITIES,
-  CONVERSATION_STATES,
   linkContactForm,
 } from '../conversation-options';
 import { ConfigurableCrudCollectionDialog } from '../../../shared/crud/configurable-crud/configurable-crud-collection-dialog';
@@ -287,13 +286,13 @@ export class ConversationsInboxPage {
 
   readonly isWindowClosed = computed(() => {
     const sel = this.selectedConversation();
-    if (!sel || !sel.CnvServiceWindowEndsAt) return false;
+    if (!sel?.CnvServiceWindowEndsAt) return false;
     const expiry = new Date(sel.CnvServiceWindowEndsAt).getTime();
     return !Number.isNaN(expiry) && expiry < Date.now();
   });
 
   constructor() {
-    this.loadConversations();
+    void this.loadConversations();
     // Realtime event gateway
     watchConversationChanges(this.api, this.destroyRef, (changes) =>
       this.handleRealtimeChanges(changes),
@@ -333,7 +332,7 @@ export class ConversationsInboxPage {
   onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      this.sendMessage();
+      void this.sendMessage();
     }
   }
 
@@ -388,7 +387,7 @@ export class ConversationsInboxPage {
 
   openFromKanban(conv: ConversationItem): void {
     this.viewMode.set('cockpit');
-    this.selectConversation(conv);
+    void this.selectConversation(conv);
   }
 
   // Load messages for a conversation
@@ -561,10 +560,10 @@ export class ConversationsInboxPage {
     const hasActiveChange = current && changes.some((c) => c.ConversationCnvUUID === current.CnvUUID);
 
     // Refresh conversations list in background
-    this.loadConversations(true);
+    void this.loadConversations(true);
 
     if (hasActiveChange && current) {
-      this.loadMessages(current.CnvUUID, true);
+      void this.loadMessages(current.CnvUUID, true);
     }
 
     // Play chime on message events
@@ -589,15 +588,15 @@ export class ConversationsInboxPage {
     if (!conv) return;
 
     if (targetStage === 'waiting') {
-      this.changeState(conv, 'open');
+      void this.changeState(conv, 'open');
     } else if (targetStage === 'active') {
-      this.takeConversation(conv);
+      void this.takeConversation(conv);
     } else if (targetStage === 'pending') {
-      this.changeState(conv, 'pending');
+      void this.changeState(conv, 'pending');
     } else if (targetStage === 'snoozed') {
-      this.changeState(conv, 'snoozed');
+      void this.changeState(conv, 'snoozed');
     } else if (targetStage === 'resolved') {
-      this.resolveConversation(conv);
+      void this.resolveConversation(conv);
     }
   }
 

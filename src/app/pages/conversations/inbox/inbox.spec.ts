@@ -157,7 +157,7 @@ describe('ConversationsInboxPage', () => {
     const page = TestBed.createComponent(ConversationsInboxPage).componentInstance;
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(page.conversations().length).toBe(4);
+    expect(page.conversations()).toHaveSize(4);
     expect(page.unreadCount()).toBe(2);
   });
 
@@ -166,7 +166,7 @@ describe('ConversationsInboxPage', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Default filter is 'active' (excludes resolved C4)
-    expect(page.filteredConversations().length).toBe(3);
+    expect(page.filteredConversations()).toHaveSize(3);
     expect(page.filteredConversations().map((c) => c.CnvUUID)).toEqual(['C1', 'C2', 'C3']);
   });
 
@@ -175,7 +175,7 @@ describe('ConversationsInboxPage', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     page.searchQuery.set('Maria');
-    expect(page.filteredConversations().length).toBe(1);
+    expect(page.filteredConversations()).toHaveSize(1);
     expect(page.filteredConversations()[0].ContactName).toBe('Maria Silva');
   });
 
@@ -205,7 +205,7 @@ describe('ConversationsInboxPage', () => {
     expect(page.selectedConversation()).toBe(conv);
     expect(apiMock.get).toHaveBeenCalledWith('conversations/C1/messages?limit=100');
     expect(apiMock.post).toHaveBeenCalledWith('conversations/C1/read', {});
-    expect(page.messages().length).toBe(1);
+    expect(page.messages()).toHaveSize(1);
     expect(page.messages()[0].CnmBody).toBe('Olá, preciso de ajuda com PABX');
   });
 
