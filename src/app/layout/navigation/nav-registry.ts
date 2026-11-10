@@ -3280,6 +3280,14 @@ export const NAV_ITEMS: NavItem[] = [
         category: 'access',
         masterRoute: '/system/governance/users',
       },
+      // Signup gate: invites that admit a new tenant while public signup is not open.
+      {
+        id: 'user/signup-invites',
+        label: 'nav.user.signup-invites',
+        icon: 'mark_email_read',
+        category: 'access',
+        masterRoute: '/system/signup/invites',
+      },
     ],
   },
   {

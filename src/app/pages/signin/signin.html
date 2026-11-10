@@ -111,9 +111,11 @@
       </button>
     </form>
 
-    <p class="link-row">
-      {{ 'signin.noAccount' | transloco }}
-      <a routerLink="/signup">{{ 'signin.createAccount' | transloco }}</a>
-    </p>
+    @if (!signinPolicy().signupClosed) {
+      <p class="link-row">
+        {{ 'signin.noAccount' | transloco }}
+        <a routerLink="/signup">{{ 'signin.createAccount' | transloco }}</a>
+      </p>
+    }
   </div>
 </mns-auth-shell>

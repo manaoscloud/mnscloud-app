@@ -1,115 +1,168 @@
 <mns-auth-shell>
   <div class="auth-card">
-    <h1 class="mat-headline-small title">{{ 'Create Account' | transloco }}</h1>
-    <p class="subtitle mat-body-medium">{{ 'Create your account to get started.' | transloco }}</p>
-
-    <form (submit)="onSubmit($event)" autocomplete="on" novalidate>
-      <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'First Name' | transloco }}</mat-label>
-          <input matInput type="text" [formField]="form.firstName" />
-          <mat-error>{{ form.firstName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'Last Name' | transloco }}</mat-label>
-          <input matInput type="text" [formField]="form.lastName" />
-          <mat-error>{{ form.lastName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Phone' | transloco }}</mat-label>
-          <app-phone-input [formField]="form.phone" />
-          <mat-icon matSuffix>{{ 'phone' | transloco }}</mat-icon>
-          <mat-error>{{ form.phone().errors() | mnsFieldErrorKey | transloco }}</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>{{ 'Email' | transloco }}</mat-label>
-          <input matInput type="email" [formField]="form.email" placeholder="name@example.com" />
-          <mat-icon matSuffix>{{ 'mail' | transloco }}</mat-icon>
-          @if (emailError()) {
-            <mat-error>{{ emailError() || '' | transloco }}</mat-error>
-          }
-        </mat-form-field>
-      </div>
-
-      <!-- Sucesso -->
-      @if (successMessage()) {
-        <p class="api-success">{{ successMessage() || '' | transloco }}</p>
+    @if (signupClosed()) {
+      <h1 class="mat-headline-small title">{{ 'Signups closed' | transloco }}</h1>
+      <p class="subtitle mat-body-medium signup-closed-message">
+        {{
+          signupPolicy().closedMessage ||
+            ('New signups are closed at the moment. If you already have an account, sign in.'
+              | transloco)
+        }}
+      </p>
+      @if (signupPolicy().closedUrl; as closedUrl) {
+        <a
+          mat-flat-button
+          color="primary"
+          class="submit-btn"
+          [href]="closedUrl"
+          rel="noopener noreferrer"
+        >
+          <mat-icon>open_in_new</mat-icon>
+          {{ 'Create an account elsewhere' | transloco }}
+        </a>
+      }
+      <p class="link-row">
+        {{ 'Already have an account?' | transloco }}
+        <a routerLink="/signin">{{ 'Sign in' | transloco }}</a>
+      </p>
+    } @else {
+      <h1 class="mat-headline-small title">{{ 'Create Account' | transloco }}</h1>
+      <p class="subtitle mat-body-medium">
+        {{ 'Create your account to get started.' | transloco }}
+      </p>
+      @if (inviteRequired()) {
+        <p class="subtitle mat-body-medium signup-invite-message">
+          {{
+            signupPolicy().closedMessage ||
+              ('Signup is by invitation only. Enter the code you received.' | transloco)
+          }}
+        </p>
       }
 
-      <!-- API ERROR -->
-      @if (apiError()) {
-        <p class="api-error">{{ apiError() || '' | transloco }}</p>
-      }
-
-      <!-- Date of birth com MatDatepicker -->
-      <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'Date of birth' | transloco }}</mat-label>
-          <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" appDateMask />
-          <mat-datepicker-toggle matSuffix [for]="picker" />
-          <mat-datepicker #picker touchUi />
-          <mat-error>{{ form.dateBirth().errors() | mnsFieldErrorKey | transloco }}</mat-error>
-        </mat-form-field>
-
-        <!-- Password -->
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'Password' | transloco }}</mat-label>
-
-          <input
-            matInput
-            [type]="showPassword() ? 'text' : 'password'"
-            [formField]="form.password"
-            autocomplete="new-password"
-            data-report-mask
-          />
-
-          <button
-            type="button"
-            mat-icon-button
-            matSuffix
-            class="field-icon-btn"
-            (click)="togglePassword($event)"
-            [attr.aria-label]="
-              (showPassword() ? 'signin.hidePassword' : 'signin.showPassword') | transloco
-            "
-            [attr.aria-pressed]="showPassword()"
-          >
-            <mat-icon class="field-icon">
-              {{ showPassword() ? 'visibility_off' : 'visibility' }}
-            </mat-icon>
-          </button>
-          <mat-error>{{ form.password().errors() | mnsFieldErrorKey | transloco }}</mat-error>
-        </mat-form-field>
-      </div>
-
-      @if (signupPolicy().captchaEnabled) {
-        <div class="captcha-row">
-          <div #captchaContainer class="captcha-container"></div>
-        </div>
-      }
-
-      <!-- 🔹 Botão agora usa exatamente a mesma regra do Signin -->
-      <button
-        mat-flat-button
-        color="primary"
-        class="submit-btn"
-        type="submit"
-        [disabled]="!canSubmit"
-      >
-        @if (!isLoading()) {
-          {{ 'Sign Up' | transloco }}
-        } @else {
-          <mat-spinner diameter="22" />
+      <form (submit)="onSubmit($event)" autocomplete="on" novalidate>
+        @if (inviteRequired()) {
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>{{ 'Invitation code' | transloco }}</mat-label>
+              <input
+                matInput
+                type="text"
+                autocomplete="off"
+                placeholder="MNS-XXXX-XXXX-XXXX-XXXX"
+                [formField]="form.inviteCode"
+              />
+              <mat-icon matSuffix>key</mat-icon>
+              <mat-error>{{ form.inviteCode().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+            </mat-form-field>
+          </div>
         }
-      </button>
-    </form>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'First Name' | transloco }}</mat-label>
+            <input matInput type="text" [formField]="form.firstName" />
+            <mat-error>{{ form.firstName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+          </mat-form-field>
 
-    <p class="link-row">
-      {{ 'Already have an account?' | transloco }}
-      <a routerLink="/signin">{{ 'Sign in' | transloco }}</a>
-    </p>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Last Name' | transloco }}</mat-label>
+            <input matInput type="text" [formField]="form.lastName" />
+            <mat-error>{{ form.lastName().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Phone' | transloco }}</mat-label>
+            <app-phone-input [formField]="form.phone" />
+            <mat-icon matSuffix>{{ 'phone' | transloco }}</mat-icon>
+            <mat-error>{{ form.phone().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'Email' | transloco }}</mat-label>
+            <input matInput type="email" [formField]="form.email" placeholder="name@example.com" />
+            <mat-icon matSuffix>{{ 'mail' | transloco }}</mat-icon>
+            @if (emailError()) {
+              <mat-error>{{ emailError() || '' | transloco }}</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Sucesso -->
+        @if (successMessage()) {
+          <p class="api-success">{{ successMessage() || '' | transloco }}</p>
+        }
+
+        <!-- API ERROR -->
+        @if (apiError()) {
+          <p class="api-error">{{ apiError() || '' | transloco }}</p>
+        }
+
+        <!-- Date of birth com MatDatepicker -->
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Date of birth' | transloco }}</mat-label>
+            <input matInput [matDatepicker]="picker" [formField]="form.dateBirth" appDateMask />
+            <mat-datepicker-toggle matSuffix [for]="picker" />
+            <mat-datepicker #picker touchUi />
+            <mat-error>{{ form.dateBirth().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+          </mat-form-field>
+
+          <!-- Password -->
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'Password' | transloco }}</mat-label>
+
+            <input
+              matInput
+              [type]="showPassword() ? 'text' : 'password'"
+              [formField]="form.password"
+              autocomplete="new-password"
+              data-report-mask
+            />
+
+            <button
+              type="button"
+              mat-icon-button
+              matSuffix
+              class="field-icon-btn"
+              (click)="togglePassword($event)"
+              [attr.aria-label]="
+                (showPassword() ? 'signin.hidePassword' : 'signin.showPassword') | transloco
+              "
+              [attr.aria-pressed]="showPassword()"
+            >
+              <mat-icon class="field-icon">
+                {{ showPassword() ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+            </button>
+            <mat-error>{{ form.password().errors() | mnsFieldErrorKey | transloco }}</mat-error>
+          </mat-form-field>
+        </div>
+
+        @if (signupPolicy().captchaEnabled) {
+          <div class="captcha-row">
+            <div #captchaContainer class="captcha-container"></div>
+          </div>
+        }
+
+        <!-- 🔹 Botão agora usa exatamente a mesma regra do Signin -->
+        <button
+          mat-flat-button
+          color="primary"
+          class="submit-btn"
+          type="submit"
+          [disabled]="!canSubmit"
+        >
+          @if (!isLoading()) {
+            {{ 'Sign Up' | transloco }}
+          } @else {
+            <mat-spinner diameter="22" />
+          }
+        </button>
+      </form>
+
+      <p class="link-row">
+        {{ 'Already have an account?' | transloco }}
+        <a routerLink="/signin">{{ 'Sign in' | transloco }}</a>
+      </p>
+    }
   </div>
 </mns-auth-shell>

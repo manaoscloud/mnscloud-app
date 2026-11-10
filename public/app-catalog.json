@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "9e06869bd4eb",
+  "version": "349b8bf0fbcb",
   "language": "pt-BR",
   "entries": [
     {
@@ -6679,6 +6679,38 @@
         {
           "label": "Segredo de CAPTCHA",
           "help": "Private secret key used server-side to verify challenge responses with the provider."
+        },
+        {
+          "label": "Novos cadastros",
+          "help": "Quem pode criar uma conta nova na plataforma. Contas existentes, convites de equipe e portais de clientes nunca são afetados."
+        },
+        {
+          "label": "Situação atual",
+          "help": "O que a página de cadastro faz agora, já considerando a data de reabertura e o limite de tenants."
+        },
+        {
+          "label": "Limite de tenants",
+          "help": "Quando a plataforma atingir esta quantidade de tenants (tenants de teste não contam), novos cadastros passam a exigir código de convite e você é notificado. Vazio significa sem limite."
+        },
+        {
+          "label": "Tenants atuais",
+          "help": "Tenants contados pelo limite (tenants de teste não contam)."
+        },
+        {
+          "label": "Reabrir em",
+          "help": "Opcional. O cadastro reabre sozinho nesta data e hora. Vazio mantém fechado até você mudar."
+        },
+        {
+          "label": "Link na página de cadastro",
+          "help": "Endereço https opcional exibido enquanto o cadastro não está aberto, por exemplo a página de cadastro de produção."
+        },
+        {
+          "label": "Contas pendentes podem concluir",
+          "help": "Contas criadas antes do fechamento ainda podem confirmar o e-mail e começar a usar a plataforma."
+        },
+        {
+          "label": "Mensagem na página de cadastro",
+          "help": "Texto simples exibido enquanto o cadastro não está aberto. Vazio mostra o texto padrão."
         }
       ]
     },
@@ -10099,6 +10131,38 @@
         {
           "label": "Segredo de CAPTCHA",
           "help": "Private secret key used server-side to verify challenge responses with the provider."
+        },
+        {
+          "label": "Novos cadastros",
+          "help": "Quem pode criar uma conta nova na plataforma. Contas existentes, convites de equipe e portais de clientes nunca são afetados."
+        },
+        {
+          "label": "Situação atual",
+          "help": "O que a página de cadastro faz agora, já considerando a data de reabertura e o limite de tenants."
+        },
+        {
+          "label": "Limite de tenants",
+          "help": "Quando a plataforma atingir esta quantidade de tenants (tenants de teste não contam), novos cadastros passam a exigir código de convite e você é notificado. Vazio significa sem limite."
+        },
+        {
+          "label": "Tenants atuais",
+          "help": "Tenants contados pelo limite (tenants de teste não contam)."
+        },
+        {
+          "label": "Reabrir em",
+          "help": "Opcional. O cadastro reabre sozinho nesta data e hora. Vazio mantém fechado até você mudar."
+        },
+        {
+          "label": "Link na página de cadastro",
+          "help": "Endereço https opcional exibido enquanto o cadastro não está aberto, por exemplo a página de cadastro de produção."
+        },
+        {
+          "label": "Contas pendentes podem concluir",
+          "help": "Contas criadas antes do fechamento ainda podem confirmar o e-mail e começar a usar a plataforma."
+        },
+        {
+          "label": "Mensagem na página de cadastro",
+          "help": "Texto simples exibido enquanto o cadastro não está aberto. Vazio mostra o texto padrão."
         }
       ]
     },
@@ -10776,6 +10840,31 @@
         },
         {
           "label": "Período de retenção (dias)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/signup/invites",
+      "menuPath": "Usuário › Convites de cadastro",
+      "scope": "platform",
+      "title": "Convites de cadastro",
+      "description": "Códigos de convite que permitem a um novo cliente criar conta enquanto o cadastro está fechado ao público.",
+      "fields": [
+        {
+          "label": "E-mail",
+          "help": "Opcional. Quando preenchido, só este e-mail pode usar o convite."
+        },
+        {
+          "label": "Usos máximos",
+          "help": "Quantas contas este convite pode criar (1 a 1000)."
+        },
+        {
+          "label": "Expira",
+          "help": "Opcional. O convite deixa de funcionar nesta data e hora."
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]

@@ -650,6 +650,180 @@
           </div>
         </form>
       </mat-tab>
+
+      <mat-tab [label]="'Signup' | transloco">
+        <mat-tab-group class="nested-tabs signup-tabs">
+          <mat-tab [label]="'Policy' | transloco">
+            <form class="tab-content form-grid">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'New signups' | transloco }}</mat-label>
+                <mat-select
+                  [value]="item().signupMode"
+                  (selectionChange)="updateItem({ signupMode: $event.value })"
+                >
+                  <mat-option value="open">{{ 'Open to everyone' | transloco }}</mat-option>
+                  <mat-option value="invite">{{ 'Invite only' | transloco }}</mat-option>
+                  <mat-option value="closed">{{ 'Closed' | transloco }}</mat-option>
+                </mat-select>
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'New signups' | transloco"
+                  [text]="
+                    'Who may create a new account on the platform. Existing accounts, team invitations and customer portals are never affected.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Current state' | transloco }}</mat-label>
+                <input
+                  matInput
+                  readonly
+                  [value]="signupAdmissionLabels[item().signupAdmission] | transloco"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Current state' | transloco"
+                  [text]="
+                    'What the signup page does now, after the reopen date and the tenant limit.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Tenant limit' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="1"
+                  max="1000000"
+                  [placeholder]="'No limit' | transloco"
+                  [value]="item().signupMaxTenants"
+                  (input)="updateItem({ signupMaxTenants: $any($event.target).value })"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Tenant limit' | transloco"
+                  [text]="
+                    'When the platform reaches this many tenants (test tenants not counted), new signups need an invitation code and you are notified. Empty means no limit.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Current tenants' | transloco }}</mat-label>
+                <input matInput readonly [value]="item().signupTenantCount" />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Current tenants' | transloco"
+                  [text]="
+                    'Tenants counted by the limit (test tenants are not counted).' | transloco
+                  "
+                />
+              </mat-form-field>
+
+              @if (item().signupMode === 'closed') {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'Reopen at' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="datetime-local"
+                    [value]="item().signupReopenAt"
+                    (input)="updateItem({ signupReopenAt: $any($event.target).value })"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'Reopen at' | transloco"
+                    [text]="
+                      'Optional. Signup opens again automatically at this time. Empty keeps it closed until you change it.'
+                        | transloco
+                    "
+                  />
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'Link on the signup page' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="url"
+                  maxlength="500"
+                  [placeholder]="'https://' | transloco"
+                  [value]="item().signupClosedUrl"
+                  (input)="updateItem({ signupClosedUrl: $any($event.target).value })"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Link on the signup page' | transloco"
+                  [text]="
+                    'Optional https address shown while signup is not open, for example the production signup page.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
+
+              <div class="span-1 parameter-toggle-cell">
+                <mat-slide-toggle
+                  [checked]="item().signupAllowPendingVerification"
+                  (change)="updateItem({ signupAllowPendingVerification: $event.checked })"
+                >
+                  {{ 'Pending accounts may finish' | transloco }}
+                </mat-slide-toggle>
+                <mns-field-help
+                  [label]="'Pending accounts may finish' | transloco"
+                  [text]="
+                    'Accounts created before signup closed can still confirm their e-mail and start using the platform.'
+                      | transloco
+                  "
+                />
+              </div>
+
+              <div class="span-1 toggle-field-align">
+                <a mat-stroked-button routerLink="/system/signup/invites">
+                  <mat-icon>mark_email_read</mat-icon>
+                  {{ 'Manage invites' | transloco }}
+                </a>
+              </div>
+
+              <mat-form-field appearance="outline" class="span-4">
+                <mat-label>{{ 'Message on the signup page' | transloco }}</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  maxlength="500"
+                  [placeholder]="
+                    'New signups are closed at the moment. If you already have an account, sign in.'
+                      | transloco
+                  "
+                  [value]="item().signupClosedMessage"
+                  (input)="updateItem({ signupClosedMessage: $any($event.target).value })"
+                ></textarea>
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'Message on the signup page' | transloco"
+                  [text]="
+                    'Plain text shown while signup is not open. Empty shows the default text.'
+                      | transloco
+                  "
+                />
+              </mat-form-field>
+            </form>
+          </mat-tab>
+
+          <mat-tab [label]="'History' | transloco">
+            <div class="tab-content">
+              <mns-global-table
+                [config]="signupAuditTable"
+                [rows]="signupAudit()"
+                [loading]="signupAuditLoading()"
+              />
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </mat-tab>
     }
   </mat-tab-group>
 </mns-settings-page>

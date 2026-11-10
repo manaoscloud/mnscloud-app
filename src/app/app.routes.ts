@@ -3657,6 +3657,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'signup/invites',
+                loadComponent: () =>
+                  import('./pages/system/signup-invites/signup-invites').then(
+                    (m) => m.SystemSignupInvitesPage,
+                  ),
+                title: 'System • Signup Invites | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'vps',
                 title: 'System VPS | mnscloud',
                 data: { scope: 'master', context: 'system' },
