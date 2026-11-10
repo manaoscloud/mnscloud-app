@@ -12075,7 +12075,7 @@
   "Optional": "Opcional",
   "Asked at every punch": "Pedida em toda marcação",
   "Photo at punch": "Foto na marcação",
-  "Pulse takes a photo with the front camera before each punch is confirmed. Without a photo (camera refused, no connection) the punch is still recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.": "O Pulse tira uma foto com a câmera frontal antes de cada marcação ser confirmada. Sem foto (câmera recusada, sem conexão) a marcação é registrada mesmo assim e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de batidas e apagadas após 90 dias.",
+  "When the photo is asked at every punch (also the default without a policy), Pulse confirms a mark only after a live photo with the front camera; when it is optional, the employee may skip it. A mark that still arrives without a photo (offline device, failed upload) is recorded and shown here without photo. Photos are private, seen only with the time punches permission and removed after 90 days.": "Quando a foto é pedida em toda marcação (também o padrão sem política), o Pulse só confirma a marcação depois de uma foto ao vivo com a câmera frontal; quando é opcional, o colaborador pode pular a foto. Uma marcação que ainda chegue sem foto (aparelho offline, falha no envio) é registrada e aparece aqui sem foto. As fotos são privadas, vistas só com a permissão de marcações de ponto e removidas após 90 dias.",
   "Taken": "Tirada",
   "Show photo": "Ver foto",
   "Photo taken with this punch": "Foto tirada nesta marcação",
