@@ -1,0 +1,891 @@
+<section class="conversations-workspace">
+  <!-- Top Workspace Header & Filters -->
+  <header class="workspace-header">
+    <div class="header-main">
+      <div class="header-title-box">
+        <h1 class="header-title">
+          <mat-icon class="title-icon">forum</mat-icon>
+          {{ 'conversations.inboxTitle' | transloco }}
+        </h1>
+        <p class="header-subtitle">{{ 'conversations.inboxDescription' | transloco }}</p>
+      </div>
+
+      <div class="header-stats">
+        @if (unreadCount() > 0) {
+          <div class="unread-pill">
+            <mat-icon>notifications_active</mat-icon>
+            <span>{{ unreadCount() }} {{ 'conversations.newMessageAlert' | transloco }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="header-controls">
+        <!-- View Switcher: Cockpit vs Kanban -->
+        <div class="view-toggle" role="tablist">
+          <button
+            type="button"
+            mat-button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'cockpit'"
+            (click)="setViewMode('cockpit')"
+            aria-label="Cockpit view"
+          >
+            <mat-icon>splitscreen</mat-icon>
+            {{ 'conversations.viewCockpit' | transloco }}
+          </button>
+          <button
+            type="button"
+            mat-button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'kanban'"
+            (click)="setViewMode('kanban')"
+            aria-label="Kanban view"
+          >
+            <mat-icon>view_kanban</mat-icon>
+            {{ 'conversations.viewKanban' | transloco }}
+          </button>
+        </div>
+
+        <!-- Refresh Button -->
+        <button
+          type="button"
+          mat-icon-button
+          class="action-icon-btn"
+          (click)="loadConversations()"
+          [matTooltip]="'Refresh' | transloco"
+          aria-label="Refresh conversations"
+        >
+          <mat-icon [class.spin]="loadingConversations()">refresh</mat-icon>
+        </button>
+
+        <!-- New Conversation Button -->
+        <button
+          type="button"
+          mat-flat-button
+          color="primary"
+          class="new-conv-btn"
+          (click)="openNewConversation()"
+        >
+          <mat-icon>add</mat-icon>
+          {{ 'conversations.startConversation' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="workspace-toolbar">
+      <div class="search-field">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          [placeholder]="'conversations.searchPlaceholder' | transloco"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          aria-label="Search conversations"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            mat-icon-button
+            class="clear-search-btn"
+            (click)="clearSearch()"
+            aria-label="Clear search"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+
+      <div class="filters-group">
+        <!-- State filter -->
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact-filter">
+          <mat-select [value]="stateFilter()" (selectionChange)="setStateFilter($event.value)">
+            <mat-option value="active">{{ 'conversations.filterActive' | transloco }}</mat-option>
+            <mat-option value="all">{{ 'conversations.filterAll' | transloco }}</mat-option>
+            <mat-option value="open">{{ 'conversations.filterOpen' | transloco }}</mat-option>
+            <mat-option value="pending">{{ 'conversations.filterPending' | transloco }}</mat-option>
+            <mat-option value="snoozed">{{ 'conversations.filterSnoozed' | transloco }}</mat-option>
+            <mat-option value="resolved">{{ 'conversations.filterResolved' | transloco }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Assignee filter -->
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="compact-filter">
+          <mat-select [value]="assigneeFilter()" (selectionChange)="setAssigneeFilter($event.value)">
+            <mat-option value="all">{{ 'conversations.filterAllAssignees' | transloco }}</mat-option>
+            <mat-option value="me">{{ 'conversations.filterAssignedMe' | transloco }}</mat-option>
+            <mat-option value="unassigned">{{ 'conversations.filterUnassigned' | transloco }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY CONTENT: COCKPIT MODE (3 COLUMNS) -->
+  @if (viewMode() === 'cockpit') {
+    <div class="cockpit-container">
+      <!-- Col 1: Queue / Conversations List -->
+      <aside class="cockpit-queue">
+        <div class="queue-header">
+          <span class="queue-title">
+            {{ filteredConversations().length }}
+            {{ 'conversations.conversations' | transloco }}
+          </span>
+        </div>
+
+        <div class="queue-list" role="list">
+          @if (filteredConversations().length === 0) {
+            <div class="queue-empty">
+              <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+              <p>{{ 'conversations.noConversations' | transloco }}</p>
+            </div>
+          } @else {
+            @for (conv of filteredConversations(); track conv.CnvUUID) {
+              <div
+                class="queue-item"
+                role="listitem"
+                [class.selected]="selectedConversation()?.CnvUUID === conv.CnvUUID"
+                [class.has-unread]="conv.CnvUnreadCount > 0"
+                (click)="selectConversation(conv)"
+              >
+                <div class="item-avatar-box">
+                  <div class="item-avatar">
+                    {{ getInitials(conv.ContactName || conv.ContactPhone || conv.ContactExternalId) }}
+                  </div>
+                  <div
+                    class="channel-badge"
+                    [style.background-color]="getChannelColor(conv.ChcKind)"
+                    [matTooltip]="getChannelLabel(conv.ChcKind)"
+                  >
+                    <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  </div>
+                </div>
+
+                <div class="item-info">
+                  <div class="item-top">
+                    <span class="contact-name">
+                      {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+                    </span>
+                    <span class="time-label">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+                  </div>
+
+                  <div class="item-bottom">
+                    <span class="last-snippet">
+                      @if (conv.LastMessage) {
+                        {{ conv.LastMessage }}
+                      } @else {
+                        <em>{{ 'conversations.noMessages' | transloco }}</em>
+                      }
+                    </span>
+
+                    @if (conv.CnvUnreadCount > 0) {
+                      <span class="unread-badge">{{ conv.CnvUnreadCount }}</span>
+                    }
+                  </div>
+
+                  <div class="item-meta-tags">
+                    <span class="state-chip" [class]="'state-' + conv.CnvState">
+                      {{ getStateLabel(conv.CnvState) }}
+                    </span>
+                    @if (conv.AssignedName) {
+                      <span class="assignee-tag">{{ conv.AssignedName }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </aside>
+
+      <!-- Col 2: Active Chat Timeline & Composer -->
+      <main class="cockpit-chat">
+        @if (!selectedConversation()) {
+          <div class="chat-placeholder">
+            <mat-icon class="placeholder-icon">forum</mat-icon>
+            <h2>{{ 'conversations.selectPrompt' | transloco }}</h2>
+            <p>{{ 'conversations.selectPromptSub' | transloco }}</p>
+          </div>
+        } @else {
+          <!-- Chat Header -->
+          <header class="chat-header">
+            <div class="chat-header-contact">
+              <div class="chat-avatar">
+                {{ getInitials(selectedConversation()?.ContactName || selectedConversation()?.ContactPhone || selectedConversation()?.ContactExternalId) }}
+              </div>
+              <div class="chat-contact-details">
+                <div class="contact-title-row">
+                  <span class="chat-name">
+                    {{ selectedConversation()?.ContactName || selectedConversation()?.ContactPhone || selectedConversation()?.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+                  </span>
+                  <span class="channel-tag" [style.background-color]="getChannelColor(selectedConversation()?.ChcKind)">
+                    <mat-icon>{{ getChannelIcon(selectedConversation()?.ChcKind) }}</mat-icon>
+                    {{ selectedConversation()?.ChannelName || getChannelLabel(selectedConversation()?.ChcKind) }}
+                  </span>
+                </div>
+                <div class="contact-sub-row">
+                  @if (selectedConversation()?.ContactPhone) {
+                    <span class="phone-link" (click)="dialContact(selectedConversation()?.ContactPhone)">
+                      <mat-icon>phone</mat-icon>
+                      {{ selectedConversation()?.ContactPhone }}
+                    </span>
+                  }
+                  @if (selectedConversation()?.ContactEmail) {
+                    <span class="email-item">
+                      <mat-icon>email</mat-icon>
+                      {{ selectedConversation()?.ContactEmail }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-header-actions">
+              <!-- Assignee action / status -->
+              <div class="assignee-box">
+                @if (selectedConversation()?.AssignedUserUsrUUID) {
+                  <span class="assigned-label" [matTooltip]="'Assignee' | transloco">
+                    <mat-icon>person</mat-icon>
+                    {{ selectedConversation()?.AssignedName || ('conversations.me' | transloco) }}
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    mat-stroked-button
+                    class="claim-btn"
+                    (click)="takeConversation(selectedConversation()!)"
+                  >
+                    <mat-icon>person_add</mat-icon>
+                    {{ 'conversations.takeConversation' | transloco }}
+                  </button>
+                }
+              </div>
+
+              <!-- State Menu -->
+              <button
+                type="button"
+                mat-stroked-button
+                [matMenuTriggerFor]="stateMenu"
+                class="state-menu-btn"
+              >
+                <span class="dot" [class]="'dot-' + selectedConversation()?.CnvState"></span>
+                {{ getStateLabel(selectedConversation()?.CnvState) }}
+                <mat-icon>arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #stateMenu="matMenu" class="mns-menu mns-menu-compact">
+                <button mat-menu-item mnsMenuItem (click)="changeState(selectedConversation()!, 'open')">
+                  <mat-icon>play_circle</mat-icon>
+                  <mns-menu-label>{{ 'conversations.filterOpen' | transloco }}</mns-menu-label>
+                </button>
+                <button mat-menu-item mnsMenuItem (click)="changeState(selectedConversation()!, 'pending')">
+                  <mat-icon>hourglass_empty</mat-icon>
+                  <mns-menu-label>{{ 'conversations.filterPending' | transloco }}</mns-menu-label>
+                </button>
+                <button mat-menu-item mnsMenuItem (click)="changeState(selectedConversation()!, 'snoozed')">
+                  <mat-icon>snooze</mat-icon>
+                  <mns-menu-label>{{ 'conversations.filterSnoozed' | transloco }}</mns-menu-label>
+                </button>
+                <button mat-menu-item mnsMenuItem (click)="resolveConversation(selectedConversation()!)">
+                  <mat-icon color="primary">check_circle</mat-icon>
+                  <mns-menu-label>{{ 'conversations.resolveConversation' | transloco }}</mns-menu-label>
+                </button>
+              </mat-menu>
+
+              <!-- Resolve Button -->
+              @if (selectedConversation()?.CnvState !== 'resolved') {
+                <button
+                  type="button"
+                  mat-icon-button
+                  color="primary"
+                  (click)="resolveConversation(selectedConversation()!)"
+                  [matTooltip]="'conversations.resolveConversation' | transloco"
+                  aria-label="Resolve conversation"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+
+              <!-- Mark Read Button -->
+              @if ((selectedConversation()?.CnvUnreadCount || 0) > 0) {
+                <button
+                  type="button"
+                  mat-icon-button
+                  (click)="markAsRead(selectedConversation()!)"
+                  [matTooltip]="'conversations.markAsRead' | transloco"
+                  aria-label="Mark as read"
+                >
+                  <mat-icon>mark_chat_read</mat-icon>
+                </button>
+              }
+
+              <!-- Link Contact Action -->
+              <button
+                type="button"
+                mat-icon-button
+                (click)="openLinkContact(selectedConversation()!)"
+                [matTooltip]="'conversations.linkToCustomer' | transloco"
+                aria-label="Link contact"
+              >
+                <mat-icon>link</mat-icon>
+              </button>
+
+              <!-- Toggle 3rd column -->
+              <button
+                type="button"
+                mat-icon-button
+                (click)="toggleContactDetails()"
+                [class.active-icon]="showContactDetails()"
+                [matTooltip]="'conversations.contactDetails' | transloco"
+                aria-label="Toggle contact details"
+              >
+                <mat-icon>info</mat-icon>
+              </button>
+            </div>
+          </header>
+
+          <!-- Timeline Messages -->
+          <div class="chat-timeline" #timelineContainer>
+            @if (loadingMessages()) {
+              <div class="loading-messages">
+                <mat-icon class="spin">sync</mat-icon>
+              </div>
+            }
+
+            @if (!loadingMessages() && messages().length === 0) {
+              <div class="timeline-empty">
+                <mat-icon>chat</mat-icon>
+                <p>{{ 'conversations.noMessages' | transloco }}</p>
+              </div>
+            }
+
+            @for (msg of messages(); track msg.CnmUUID) {
+              <!-- Message Bubble -->
+              @if (msg.CnmDirection === 'internal' || msg.CnmKind === 'note') {
+                <!-- Internal Note Bubble -->
+                <div class="bubble-row bubble-internal" role="article">
+                  <div class="note-card">
+                    <div class="note-header">
+                      <mat-icon class="note-icon">lock</mat-icon>
+                      <span class="note-author">{{ msg.AuthorName || ('conversations.internalNote' | transloco) }}</span>
+                      <span class="note-notice">{{ 'conversations.internalNoteNotice' | transloco }}</span>
+                      <span class="bubble-time">{{ formatTime(msg.CnmSentAt) }}</span>
+                    </div>
+                    <div class="note-body">{{ msg.CnmBody }}</div>
+                  </div>
+                </div>
+              } @else if (msg.CnmDirection === 'inbound') {
+                <!-- Inbound (Customer / Visitor) Bubble -->
+                <div class="bubble-row bubble-inbound" role="article">
+                  <div class="inbound-bubble">
+                    <div class="bubble-author">{{ msg.AuthorName || selectedConversation()?.ContactName || ('Contact' | transloco) }}</div>
+                    <div class="bubble-content">{{ msg.CnmBody }}</div>
+                    <div class="bubble-footer">
+                      <span class="bubble-time">{{ formatTime(msg.CnmSentAt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <!-- Outbound (Agent / Operator) Bubble -->
+                <div class="bubble-row bubble-outbound" role="article">
+                  <div class="outbound-bubble">
+                    <div class="bubble-author">{{ msg.AuthorName || ('conversations.me' | transloco) }}</div>
+                    <div class="bubble-content">{{ msg.CnmBody }}</div>
+                    <div class="bubble-footer">
+                      <span class="bubble-time">{{ formatTime(msg.CnmSentAt) }}</span>
+                      <mat-icon class="delivery-icon" [matTooltip]="msg.CnmDelivery">
+                        @if (msg.CnmDelivery === 'read') {
+                          done_all
+                        } @else if (msg.CnmDelivery === 'delivered' || msg.CnmDelivery === 'sent') {
+                          done
+                        } @else if (msg.CnmDelivery === 'failed') {
+                          error_outline
+                        } @else {
+                          schedule
+                        }
+                      </mat-icon>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Composer Footer -->
+          <footer class="chat-composer">
+            <!-- Window closed alert -->
+            @if (isWindowClosed()) {
+              <div class="window-closed-alert">
+                <mat-icon>warning</mat-icon>
+                <span>{{ 'conversations.windowClosedAlert' | transloco }}</span>
+              </div>
+            }
+
+            <!-- Mode Switcher & Canned Responses Bar -->
+            <div class="composer-toolbar">
+              <div class="mode-tabs">
+                @if (!isWindowClosed()) {
+                  <button
+                    type="button"
+                    class="mode-tab"
+                    [class.active]="replyKind() === 'text'"
+                    (click)="setReplyKind('text')"
+                  >
+                    <mat-icon>send</mat-icon>
+                    {{ 'conversations.replyToContact' | transloco }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="mode-tab mode-tab-note"
+                  [class.active]="replyKind() === 'note'"
+                  (click)="setReplyKind('note')"
+                >
+                  <mat-icon>lock</mat-icon>
+                  {{ 'conversations.internalNote' | transloco }}
+                </button>
+              </div>
+
+              <!-- Canned Responses Trigger -->
+              <div class="canned-box">
+                <button
+                  type="button"
+                  mat-button
+                  [matMenuTriggerFor]="cannedMenu"
+                  class="canned-btn"
+                >
+                  <mat-icon>flash_on</mat-icon>
+                  {{ 'conversations.cannedResponses' | transloco }}
+                </button>
+                <mat-menu #cannedMenu="matMenu" class="mns-menu">
+                  <mns-menu-title>{{ 'conversations.cannedResponses' | transloco }}</mns-menu-title>
+                  @for (canned of cannedResponses; track canned.label) {
+                    <button mat-menu-item mnsMenuItem (click)="insertCanned(canned.text)">
+                      <mns-menu-label>
+                        <strong>{{ canned.label }}</strong>: {{ canned.text }}
+                      </mns-menu-label>
+                    </button>
+                  }
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Composer Input Area -->
+            <div class="composer-input-box" [class.is-note]="replyKind() === 'note'">
+              <textarea
+                class="composer-textarea"
+                [placeholder]="replyKind() === 'note' ? ('conversations.typeNotePlaceholder' | transloco) : ('conversations.typeReplyPlaceholder' | transloco)"
+                [value]="replyText()"
+                (input)="onTextInput($event)"
+                (keydown)="onKeyDown($event)"
+                rows="3"
+                aria-label="Type message"
+              ></textarea>
+
+              <div class="composer-actions">
+                <button
+                  type="button"
+                  mat-flat-button
+                  [color]="replyKind() === 'note' ? 'accent' : 'primary'"
+                  class="send-btn"
+                  [disabled]="!replyText().trim() || sendingMessage()"
+                  (click)="sendMessage()"
+                >
+                  @if (sendingMessage()) {
+                    <mat-icon class="spin">sync</mat-icon>
+                  } @else {
+                    <mat-icon>{{ replyKind() === 'note' ? 'note_add' : 'send' }}</mat-icon>
+                  }
+                  <span>{{ replyKind() === 'note' ? ('conversations.internalNote' | transloco) : ('Send' | transloco) }}</span>
+                </button>
+              </div>
+            </div>
+          </footer>
+        }
+      </main>
+
+      <!-- Col 3: 360° Contact Context Panel -->
+      @if (showContactDetails() && selectedConversation()) {
+        <aside class="cockpit-details">
+          <header class="details-header">
+            <h3>{{ 'conversations.contactDetails' | transloco }}</h3>
+            <button type="button" mat-icon-button (click)="toggleContactDetails()" aria-label="Close details">
+              <mat-icon>close</mat-icon>
+            </button>
+          </header>
+
+          <div class="details-body">
+            <!-- Profile Card -->
+            <div class="details-profile-card">
+              <div class="profile-avatar">
+                {{ getInitials(selectedConversation()?.ContactName || selectedConversation()?.ContactPhone || selectedConversation()?.ContactExternalId) }}
+              </div>
+              <h4 class="profile-name">
+                {{ selectedConversation()?.ContactName || selectedConversation()?.ContactPhone || selectedConversation()?.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+              <span class="profile-channel" [style.color]="getChannelColor(selectedConversation()?.ChcKind)">
+                <mat-icon>{{ getChannelIcon(selectedConversation()?.ChcKind) }}</mat-icon>
+                {{ selectedConversation()?.ChannelName || getChannelLabel(selectedConversation()?.ChcKind) }}
+              </span>
+            </div>
+
+            <!-- Contact Channels -->
+            <div class="details-section">
+              <div class="detail-row">
+                <span class="detail-label">{{ 'Phone' | transloco }}</span>
+                @if (selectedConversation()?.ContactPhone) {
+                  <div class="phone-action-row">
+                    <span class="detail-val monospace">{{ selectedConversation()?.ContactPhone }}</span>
+                    <button
+                      type="button"
+                      mat-mini-fab
+                      color="primary"
+                      class="mini-call-btn"
+                      (click)="dialContact(selectedConversation()?.ContactPhone)"
+                      [matTooltip]="'conversations.callPhoneWeb' | transloco"
+                      aria-label="Call phone"
+                    >
+                      <mat-icon>call</mat-icon>
+                    </button>
+                  </div>
+                } @else {
+                  <span class="detail-val muted">—</span>
+                }
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">{{ 'Contact e-mail' | transloco }}</span>
+                <span class="detail-val">{{ selectedConversation()?.ContactEmail || '—' }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">{{ 'Account' | transloco }}</span>
+                <span class="detail-val">{{ selectedConversation()?.AccountName || '—' }}</span>
+              </div>
+            </div>
+
+            <!-- CRM & Registry Links -->
+            <div class="details-section">
+              <div class="section-title-row">
+                <span class="section-title">{{ 'Customer' | transloco }} / CRM</span>
+                <button
+                  type="button"
+                  mat-button
+                  class="link-mini-btn"
+                  (click)="openLinkContact(selectedConversation()!)"
+                >
+                  <mat-icon>link</mat-icon>
+                  {{ 'Link contact' | transloco }}
+                </button>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">{{ 'Customer' | transloco }}</span>
+                <span class="detail-val highlight">{{ selectedConversation()?.CustomerName || '—' }}</span>
+              </div>
+
+              @if (selectedConversation()?.CrmContactCcoUUID) {
+                <div class="detail-row">
+                  <span class="detail-label">CRM Contact</span>
+                  <span class="detail-val">{{ selectedConversation()?.CrmContactCcoUUID }}</span>
+                </div>
+              }
+
+              @if (selectedConversation()?.CrmLeadCleUUID) {
+                <div class="detail-row">
+                  <span class="detail-label">CRM Lead</span>
+                  <span class="detail-val">{{ selectedConversation()?.CrmLeadCleUUID }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Conversation Meta -->
+            <div class="details-section">
+              <div class="detail-row">
+                <span class="detail-label">{{ 'conversations.priority' | transloco }}</span>
+                <span class="priority-badge" [class]="'priority-' + selectedConversation()?.CnvPriority">
+                  {{ selectedConversation()?.CnvPriority }}
+                </span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-label">{{ 'conversations.lastActivity' | transloco }}</span>
+                <span class="detail-val">{{ formatDateTime(selectedConversation()?.CnvLastMessageAt) }}</span>
+              </div>
+
+              @if (selectedConversation()?.CnvSubject) {
+                <div class="detail-row">
+                  <span class="detail-label">{{ 'Subject' | transloco }}</span>
+                  <span class="detail-val">{{ selectedConversation()?.CnvSubject }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </aside>
+      }
+    </div>
+  }
+
+  <!-- BODY CONTENT: KANBAN MODE -->
+  @if (viewMode() === 'kanban') {
+    <div class="kanban-board">
+      <!-- 1. Fila de Espera (Open & Unassigned) -->
+      <div
+        class="kanban-column stage-waiting"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop('waiting')"
+      >
+        <header class="column-header">
+          <div class="column-title-box">
+            <span class="stage-dot dot-waiting"></span>
+            <span class="column-title">{{ 'conversations.waitingQueue' | transloco }}</span>
+          </div>
+          <span class="card-count">{{ kanbanColumns().waiting.length }}</span>
+        </header>
+
+        <div class="column-body">
+          @for (conv of kanbanColumns().waiting; track conv.CnvUUID) {
+            <div
+              class="kanban-card"
+              draggable="true"
+              (dragstart)="onDragStart(conv)"
+              (click)="openFromKanban(conv)"
+            >
+              <div class="card-top">
+                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                </span>
+                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              </div>
+
+              <h4 class="card-contact">
+                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+
+              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+              <div class="card-footer">
+                @if (conv.CnvUnreadCount > 0) {
+                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
+                }
+                <button
+                  type="button"
+                  mat-stroked-button
+                  class="card-action-btn"
+                  (click)="takeConversation(conv, $event)"
+                >
+                  <mat-icon>person_add</mat-icon>
+                  {{ 'conversations.takeConversation' | transloco }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 2. Em Atendimento (Open & Assigned) -->
+      <div
+        class="kanban-column stage-active"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop('active')"
+      >
+        <header class="column-header">
+          <div class="column-title-box">
+            <span class="stage-dot dot-active"></span>
+            <span class="column-title">{{ 'conversations.inProgress' | transloco }}</span>
+          </div>
+          <span class="card-count">{{ kanbanColumns().active.length }}</span>
+        </header>
+
+        <div class="column-body">
+          @for (conv of kanbanColumns().active; track conv.CnvUUID) {
+            <div
+              class="kanban-card"
+              draggable="true"
+              (dragstart)="onDragStart(conv)"
+              (click)="openFromKanban(conv)"
+            >
+              <div class="card-top">
+                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                </span>
+                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              </div>
+
+              <h4 class="card-contact">
+                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+
+              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+              <div class="card-footer">
+                <span class="card-assignee">
+                  <mat-icon>person</mat-icon>
+                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
+                </span>
+
+                @if (conv.CnvUnreadCount > 0) {
+                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 3. Aguardando Cliente (Pending) -->
+      <div
+        class="kanban-column stage-pending"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop('pending')"
+      >
+        <header class="column-header">
+          <div class="column-title-box">
+            <span class="stage-dot dot-pending"></span>
+            <span class="column-title">{{ 'conversations.waitingCustomer' | transloco }}</span>
+          </div>
+          <span class="card-count">{{ kanbanColumns().pending.length }}</span>
+        </header>
+
+        <div class="column-body">
+          @for (conv of kanbanColumns().pending; track conv.CnvUUID) {
+            <div
+              class="kanban-card"
+              draggable="true"
+              (dragstart)="onDragStart(conv)"
+              (click)="openFromKanban(conv)"
+            >
+              <div class="card-top">
+                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                </span>
+                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              </div>
+
+              <h4 class="card-contact">
+                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+
+              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+              <div class="card-footer">
+                <span class="card-assignee">
+                  <mat-icon>person</mat-icon>
+                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
+                </span>
+                @if (conv.CnvUnreadCount > 0) {
+                  <span class="card-unread">{{ conv.CnvUnreadCount }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 4. Adiada (Snoozed) -->
+      <div
+        class="kanban-column stage-snoozed"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop('snoozed')"
+      >
+        <header class="column-header">
+          <div class="column-title-box">
+            <span class="stage-dot dot-snoozed"></span>
+            <span class="column-title">{{ 'conversations.stageSnoozed' | transloco }}</span>
+          </div>
+          <span class="card-count">{{ kanbanColumns().snoozed.length }}</span>
+        </header>
+
+        <div class="column-body">
+          @for (conv of kanbanColumns().snoozed; track conv.CnvUUID) {
+            <div
+              class="kanban-card"
+              draggable="true"
+              (dragstart)="onDragStart(conv)"
+              (click)="openFromKanban(conv)"
+            >
+              <div class="card-top">
+                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                </span>
+                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              </div>
+
+              <h4 class="card-contact">
+                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+
+              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+              <div class="card-footer">
+                <span class="card-assignee">
+                  <mat-icon>snooze</mat-icon>
+                  {{ formatDateTime(conv.CnvSnoozedUntil) }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- 5. Resolvidas (Resolved) -->
+      <div
+        class="kanban-column stage-resolved"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop('resolved')"
+      >
+        <header class="column-header">
+          <div class="column-title-box">
+            <span class="stage-dot dot-resolved"></span>
+            <span class="column-title">{{ 'conversations.stageResolved' | transloco }}</span>
+          </div>
+          <span class="card-count">{{ kanbanColumns().resolved.length }}</span>
+        </header>
+
+        <div class="column-body">
+          @for (conv of kanbanColumns().resolved; track conv.CnvUUID) {
+            <div
+              class="kanban-card card-resolved"
+              draggable="true"
+              (dragstart)="onDragStart(conv)"
+              (click)="openFromKanban(conv)"
+            >
+              <div class="card-top">
+                <span class="card-channel" [style.background-color]="getChannelColor(conv.ChcKind)">
+                  <mat-icon>{{ getChannelIcon(conv.ChcKind) }}</mat-icon>
+                  {{ conv.ChannelName || getChannelLabel(conv.ChcKind) }}
+                </span>
+                <span class="card-time">{{ formatTime(conv.CnvLastMessageAt) }}</span>
+              </div>
+
+              <h4 class="card-contact">
+                {{ conv.ContactName || conv.ContactPhone || conv.ContactExternalId || ('conversations.channelWebchat' | transloco) }}
+              </h4>
+
+              <p class="card-snippet">{{ conv.LastMessage || ('conversations.noMessages' | transloco) }}</p>
+
+              <div class="card-footer">
+                <span class="card-assignee">
+                  <mat-icon>done</mat-icon>
+                  {{ conv.AssignedName || ('conversations.me' | transloco) }}
+                </span>
+                <button
+                  type="button"
+                  mat-stroked-button
+                  class="reopen-mini-btn"
+                  (click)="reopenConversation(conv, $event)"
+                >
+                  <mat-icon>replay</mat-icon>
+                  {{ 'conversations.reopenConversation' | transloco }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>
