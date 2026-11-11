@@ -13116,7 +13116,6 @@
   "Support e-mail address": "Support e-mail address",
   "Identifier of this number, page or account at the provider. Incoming messages are routed by it.": "Identifier of this number, page or account at the provider. Incoming messages are routed by it.",
   "Allow subdomains": "Allow subdomains",
-  "Also open the chat on subdomains of the allowed websites, such as shop.example.com. Subdomains are not verified as installed.": "Also open the chat on subdomains of the allowed websites, such as shop.example.com. Subdomains are not verified as installed.",
   "Connection identifier": "Connection identifier",
   "Allowed websites": "Allowed websites",
   "Example: Website chat": "Example: Website chat",
@@ -13125,5 +13124,6 @@
   "conversations.websiteLineInvalid": "Invalid website address: {{value}}. Use one per line, with HTTPS.",
   "conversations.websiteTooMany": "Enter at most {{max}} websites.",
   "https://www.example.com": "https://www.example.com",
-  "https://shop.example.com": "https://shop.example.com"
+  "https://shop.example.com": "https://shop.example.com",
+  "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.": "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed."
 }

@@ -57,7 +57,7 @@ export function websiteOrigin(raw: unknown): string {
   try {
     const url = new URL(candidate);
     if (url.protocol !== 'https:' || !url.hostname || /[*\s]/.test(text)) return 'invalid';
-    if (url.username || url.password) return 'invalid';
+    if (url.username || url.password || !url.hostname.includes('.')) return 'invalid';
     return url.origin;
   } catch {
     return 'invalid';
@@ -264,7 +264,7 @@ const config = defineCrud({
       tab: 'advanced',
       options: YES_NO,
       translateOptions: true,
-      help: 'Also open the chat on subdomains of the allowed websites, such as shop.example.com. Subdomains are not verified as installed.',
+      help: 'Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.',
       hiddenWhen: ({ values }) => !isWebchat(values),
       fromRecord: (value) => {
         const object = parseObject(value);

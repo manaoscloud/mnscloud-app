@@ -14,6 +14,7 @@ describe('conversation connections form', () => {
     expect(websiteOrigin('http://example.com')).toBe('invalid');
     expect(websiteOrigin('*.example.com')).toBe('invalid');
     expect(websiteOrigin('https://user:pass@example.com')).toBe('invalid');
+    expect(websiteOrigin('https://com')).toBe('invalid');
   });
 
   it('reads stored origins in every legacy shape', () => {

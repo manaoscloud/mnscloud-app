@@ -13116,7 +13116,6 @@
   "Support e-mail address": "Correo de atención",
   "Identifier of this number, page or account at the provider. Incoming messages are routed by it.": "Identificador de este número, página o cuenta en el proveedor. Los mensajes recibidos se enrutan por él.",
   "Allow subdomains": "Permitir subdominios",
-  "Also open the chat on subdomains of the allowed websites, such as shop.example.com. Subdomains are not verified as installed.": "Abre el chat también en subdominios de los sitios permitidos, como tienda.ejemplo.com. Los subdominios no se verifican como instalados.",
   "Connection identifier": "Identificador de la conexión",
   "Allowed websites": "Sitios permitidos",
   "Example: Website chat": "Ejemplo: Chat del sitio",
@@ -13125,5 +13124,6 @@
   "conversations.websiteLineInvalid": "Dirección de sitio no válida: {{value}}. Use una por línea, con HTTPS.",
   "conversations.websiteTooMany": "Indique como máximo {{max}} sitios.",
   "https://www.example.com": "https://www.ejemplo.com",
-  "https://shop.example.com": "https://tienda.ejemplo.com"
+  "https://shop.example.com": "https://tienda.ejemplo.com",
+  "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.": "Abre el chat también en subdominios de cada sitio permitido: con https://ejemplo.com permitido, tienda.ejemplo.com también funciona. Los subdominios no se verifican como instalados."
 }
