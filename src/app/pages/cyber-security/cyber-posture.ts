@@ -12,7 +12,7 @@ import { patchPolicyForm } from './cyber-patch';
 /**
  * Cyber Security hardening baseline and native antivirus (V8): part of the Advanced plan of a
  * server (the same unit as managed patching). The Agent checks a fixed list of CIS-based settings
- * once a day without changing the host and manages Microsoft Defender (Windows) or ClamAV (Linux).
+ * once a day without changing the host and manages Microsoft Defender (Windows) or ClamAV (Linux); on a Mac (V10a) it reports XProtect.
  */
 
 export const postureEndpoint = 'cyber-security/posture/servers';
@@ -58,6 +58,19 @@ export const HARDENING_CODES = [
   'win.tls10_disabled',
   'win.lsa_protection',
   'win.wdigest_disabled',
+  'mac.filevault',
+  'mac.firewall',
+  'mac.firewall_stealth',
+  'mac.gatekeeper',
+  'mac.sip',
+  'mac.update_check',
+  'mac.security_updates',
+  'mac.auto_install',
+  'mac.updates_pending',
+  'mac.ssh_password_auth',
+  'mac.screen_sharing',
+  'mac.guest_account',
+  'mac.auto_login',
 ] as const;
 
 const known = (code: unknown) =>
@@ -91,6 +104,7 @@ export const severityOptions: ConfigurableCrudOption[] = [
 export const engineOptions: ConfigurableCrudOption[] = [
   { value: 'defender', label: 'Microsoft Defender' },
   { value: 'clamav', label: 'ClamAV' },
+  { value: 'xprotect', label: 'cyberSecurity.antivirus.engine.xprotect' },
   { value: 'none', label: 'cyberSecurity.antivirus.engine.none' },
 ];
 
@@ -141,6 +155,12 @@ export function scoreTone(value: unknown) {
   return score >= 70 ? 'chip-warning' : 'chip-failed';
 }
 
+const ANTIVIRUS_NAMES: Record<string, (t: (key: string) => string) => string> = {
+  defender: () => 'Microsoft Defender',
+  clamav: () => 'ClamAV',
+  xprotect: (t) => t('cyberSecurity.antivirus.engine.xprotect'),
+};
+
 /** Antivirus state of a server row in one short label. */
 export function antivirusLabel(row: ConfigurableCrudRecord, t: (key: string) => string): string {
   if (!row['advanced'] || !row['antivirusEngine']) return '';
@@ -151,7 +171,7 @@ export function antivirusLabel(row: ConfigurableCrudRecord, t: (key: string) => 
         : 'cyberSecurity.antivirus.state.missing',
     );
   }
-  const engine = row['antivirusEngine'] === 'defender' ? 'Microsoft Defender' : 'ClamAV';
+  const engine = ANTIVIRUS_NAMES[String(row['antivirusEngine'])]?.(t) ?? 'ClamAV';
   if (!row['antivirusRunning']) return `${engine}: ${t('cyberSecurity.antivirus.state.stopped')}`;
   const realtime = row['antivirusRealtime']
     ? t('cyberSecurity.antivirus.state.realtime')
@@ -416,7 +436,9 @@ function antivirusAction(
 export function postureServerActions(
   showCheck: (check: ConfigurableCrudRecord) => void = () => undefined,
 ): ConfigurableCrudRowAction[] {
-  const installed = (row: ConfigurableCrudRecord) => Boolean(row['antivirusInstalled']);
+  // macOS runs XProtect by itself: no update or scan actions on a Mac.
+  const installed = (row: ConfigurableCrudRecord) =>
+    Boolean(row['antivirusInstalled']) && row['antivirusEngine'] !== 'xprotect';
   return [
     {
       key: 'hardeningChecks',
