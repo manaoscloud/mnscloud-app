@@ -56,8 +56,9 @@ describe('platform network payload', () => {
   });
 
   it('validates the fields only when enabled', () => {
-    expect(platformNetworkError({ ...FILLED, platformNetworkEnabled: 0, platformNetworkCidr: 'x' }))
-      .toBeNull();
+    expect(
+      platformNetworkError({ ...FILLED, platformNetworkEnabled: 0, platformNetworkCidr: 'x' }),
+    ).toBeNull();
     expect(platformNetworkError(FILLED)).toBeNull();
     expect(platformNetworkError({ ...FILLED, platformNetworkVlan: '5000' })?.key).toBe(
       'platformNetworkVlan',
@@ -69,8 +70,10 @@ describe('platform network payload', () => {
       'platformNetworkGateway',
     );
     expect(
-      platformNetworkError({ ...FILLED, platformNetworkNameservers: '1.1.1.1 1.0.0.1 8.8.8.8 9.9.9.9' })
-        ?.key,
+      platformNetworkError({
+        ...FILLED,
+        platformNetworkNameservers: '1.1.1.1 1.0.0.1 8.8.8.8 9.9.9.9',
+      })?.key,
     ).toBe('platformNetworkNameservers');
   });
 });

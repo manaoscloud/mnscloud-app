@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e1269fb410ca",
+  "version": "c73891396207",
   "language": "pt-BR",
   "entries": [
     {
@@ -3340,6 +3340,10 @@
         {
           "label": "Grupo de posicionamento",
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
         },
         {
           "label": "Rede privada",
@@ -11451,6 +11455,10 @@
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
         },
         {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
+        },
+        {
           "label": "Rede privada",
           "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
@@ -11709,6 +11717,10 @@
           "help": "Cada cliente recebe a própria zona EVPN e o próprio gateway. Ao ligar, os campos vazios são preenchidos com os valores recomendados deste ambiente; revise antes de salvar."
         },
         {
+          "label": "Rede da plataforma",
+          "help": "Rede dos servidores da plataforma (DNS, API, banco de dados...) criados pelo master. Os clientes nunca a veem. Escolha Não para removê-la."
+        },
+        {
           "label": "ID do token",
           "help": ""
         },
@@ -11782,10 +11794,6 @@
         },
         {
           "label": "ID da rede",
-          "help": ""
-        },
-        {
-          "label": "ID do datastore",
           "help": ""
         }
       ]
