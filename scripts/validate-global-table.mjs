@@ -74,6 +74,10 @@ function main() {
       failures.push(`${path}:${line} ${rule}`);
     }
   }
+  // The analytical log surface must continue to render the global table, not a parallel list.
+  const logViewer = readFileSync(join(root, 'src/app/shared/log-viewer/log-viewer.html'), 'utf8');
+  if (!logViewer.includes('<mns-global-table'))
+    failures.push('The shared log viewer must use mns-global-table.');
   if (!files) {
     console.error('Global table check found no sources; the scan is broken.');
     process.exit(1);

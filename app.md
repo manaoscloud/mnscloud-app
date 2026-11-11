@@ -695,6 +695,8 @@ the page must use the shared base named here.
 
 ## Global Table Component Baseline (Mandatory)
 
+The shared log viewer (`mns-log-viewer`, `shared/log-viewer`) is the analytical Logs surface: it wraps `mns-global-table` for cursor pages and adds a time histogram, bounded live refresh, masked shared detail viewer and account-scoped saved searches. It owns no table primitives. Its routed host is exempt from CRUD scaffolding because it delegates entirely to this shared surface. No log payload is persisted in browser storage.
+
 There is exactly one table in the App: `ConfigurableCrudPageBase` with its shared
 `configurable-crud-page.html/.scss`. Every list of rows, in a page, tab, dialog, dashboard panel or
 result panel, is rendered by it. Pick the surface by where the rows live:

@@ -1,0 +1,159 @@
+<mns-page-shell
+  title="logs.search.title"
+  description="logs.search.description"
+  [loading]="loading()"
+  (refresh)="search()"
+>
+  <div class="filter-grid">
+    <mns-search-select-field
+      fieldClass="span-1"
+      [label]="t('logs.search.dataset')"
+      [options]="datasetOptions"
+      [value]="dataset()"
+      (valueChange)="dataset.set($any($event))"
+      [translateOptions]="true"
+    />
+    <mns-search-select-field
+      data-field="account"
+      fieldClass="span-1"
+      [label]="t('logs.search.account')"
+      [options]="accountOptions()"
+      [value]="account()"
+      (valueChange)="chooseAccount($event)"
+      [remoteSearch]="true"
+      (searchChange)="loadAccounts($event)"
+      [invalid]="invalid().includes('account')"
+      [errorMessage]="t('logs.search.invalid')"
+    />
+    <mns-search-select-field
+      fieldClass="span-1"
+      [label]="t('logs.search.source')"
+      [options]="sourceOptions()"
+      [remoteSearch]="true"
+      (searchChange)="loadSources($event)"
+      [value]="source()"
+      (valueChange)="source.set($any($event) || '')"
+      [clearable]="true"
+    />
+    <mns-search-select-field
+      fieldClass="span-1"
+      [label]="t('logs.search.level')"
+      [options]="levelOptions"
+      [value]="severity()"
+      (valueChange)="severity.set($any($event) ?? '')"
+      [translateOptions]="true"
+      [clearable]="true"
+    />
+    <mat-form-field appearance="outline" class="span-1"
+      ><mat-label>{{ 'logs.search.terms' | transloco }}</mat-label
+      ><input matInput maxlength="128" [ngModel]="terms()" (ngModelChange)="changeTerms($event)"
+    /></mat-form-field>
+    <mat-form-field
+      data-field="from"
+      appearance="outline"
+      class="span-1"
+      [class.mat-form-field-invalid]="invalid().includes('from')"
+      ><mat-label>{{ 'logs.search.from' | transloco }}</mat-label
+      ><input
+        matInput
+        type="datetime-local"
+        step="1"
+        [mnsInvalid]="invalid().includes('from')"
+        [ngModel]="from()"
+        (ngModelChange)="from.set($event)"
+        [attr.aria-invalid]="invalid().includes('from')"
+      /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+    >
+    <mat-form-field
+      data-field="to"
+      appearance="outline"
+      class="span-1"
+      [class.mat-form-field-invalid]="invalid().includes('to')"
+      ><mat-label>{{ 'logs.search.to' | transloco }}</mat-label
+      ><input
+        matInput
+        type="datetime-local"
+        step="1"
+        [mnsInvalid]="invalid().includes('to')"
+        [ngModel]="to()"
+        (ngModelChange)="to.set($event)"
+        [attr.aria-invalid]="invalid().includes('to')"
+      /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+    >
+  </div>
+  <div class="header-actions">
+    <button mat-flat-button (click)="search()" [disabled]="loading()">
+      {{ 'logs.search.search' | transloco }}
+    </button>
+    <button mat-stroked-button (click)="toggleLive()" [attr.aria-pressed]="live()">
+      {{ (live() ? 'logs.search.stopLive' : 'logs.search.live') | transloco }}
+    </button>
+    <mns-report-problem-button />
+  </div>
+  @if (error()) {
+    <p role="alert">{{ error() | transloco }}</p>
+  }
+  <p>{{ 'logs.search.summary' | transloco: { total: total() } }}</p>
+  <svg
+    class="log-histogram"
+    viewBox="0 0 600 100"
+    role="img"
+    [attr.aria-label]="t('logs.search.histogram')"
+  >
+    @for (bucket of buckets(); track bucket.time; let index = $index) {
+      <rect
+        [attr.x]="index * 10"
+        [attr.y]="100 - (bucket.count / maximum()) * 100"
+        width="8"
+        [attr.height]="(bucket.count / maximum()) * 100"
+      >
+        <title>{{ bucket.time }}: {{ bucket.count }}</title>
+      </rect>
+    }
+  </svg>
+  <div data-report-mask>
+    <mns-global-table [config]="table" [rows]="rows()" [loading]="loading()" />
+  </div>
+  <div class="header-actions">
+    <button mat-button (click)="page(false)" [disabled]="loading() || live() || !previous().length">
+      {{ 'logs.search.previous' | transloco }}
+    </button>
+    <button mat-button (click)="page(true)" [disabled]="loading() || live() || !nextCursor()">
+      {{ 'logs.search.next' | transloco }}
+    </button>
+  </div>
+  <div class="filter-grid">
+    <mns-search-select-field
+      fieldClass="span-1"
+      [label]="t('logs.search.views')"
+      [options]="viewOptions()"
+      [value]="selectedView()"
+      (valueChange)="chooseView($event)"
+      [clearable]="true"
+    />
+    @if (canSave()) {
+      <mat-form-field
+        data-field="viewName"
+        appearance="outline"
+        class="span-1"
+        [class.mat-form-field-invalid]="invalid().includes('viewName')"
+        ><mat-label>{{ 'logs.search.viewName' | transloco }}</mat-label
+        ><input
+          matInput
+          maxlength="120"
+          [mnsInvalid]="invalid().includes('viewName')"
+          [ngModel]="viewName()"
+          (ngModelChange)="viewName.set($event)"
+        /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+      >
+    }
+  </div>
+  @if (canSave()) {
+    <div class="header-actions">
+      <button mat-button (click)="saveView()">{{ 'logs.search.saveView' | transloco }}</button
+      ><button mat-button (click)="deleteView()" [disabled]="!selectedView()">
+        {{ 'logs.search.deleteView' | transloco }}
+      </button>
+    </div>
+  }
+</mns-page-shell>

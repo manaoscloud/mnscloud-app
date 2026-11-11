@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6b8d498774fb",
+  "version": "20fb4687fcb7",
   "language": "pt-BR",
   "entries": [
     {
@@ -4922,6 +4922,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/logs/searches",
+      "menuPath": "Logs › Consultas",
+      "scope": "tenant",
+      "title": "Consultas",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/logs/sources",
