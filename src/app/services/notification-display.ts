@@ -56,6 +56,12 @@ export function notificationIcon(item: InboxNotification): string {
       return 'swap_vert';
     case 'hr.time_request':
       return item.params['event'] === 'request_message' ? 'chat' : 'pending_actions';
+    case 'hr.time_clock_kiosk.offline':
+      return 'signal_wifi_off';
+    case 'hr.time_clock_kiosk.pin_locked':
+      return 'lock_clock';
+    case 'hr.time_clock_kiosk.rejected':
+      return 'running_with_errors';
     case 'platform.signup.capacity':
       return 'group_off';
     case 'platform.signup.reopened':
@@ -173,6 +179,15 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           : 'notifications.hrTimeRequest',
         { employee: param('employee') },
       );
+    case 'hr.time_clock_kiosk.offline':
+      return t('notifications.hrKioskOffline', { kiosk: param('kiosk') });
+    case 'hr.time_clock_kiosk.pin_locked':
+      return t('notifications.hrKioskPinLocked', {
+        kiosk: param('kiosk'),
+        employee: param('employee'),
+      });
+    case 'hr.time_clock_kiosk.rejected':
+      return t('notifications.hrKioskRejected', { kiosk: param('kiosk'), count: param('count') });
     case 'platform.signup.capacity':
       return t('notifications.signupCapacity', { max: param('maxTenants') });
     case 'platform.signup.reopened':

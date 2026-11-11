@@ -30,6 +30,9 @@ export type NotificationType =
   | 'security.threat'
   | 'security.hardening'
   | 'hr.time_request'
+  | 'hr.time_clock_kiosk.offline'
+  | 'hr.time_clock_kiosk.pin_locked'
+  | 'hr.time_clock_kiosk.rejected'
   | 'platform.signup.capacity'
   | 'platform.signup.reopened';
 
