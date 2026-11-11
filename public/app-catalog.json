@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "83735d7b5f82",
+  "version": "d5ce889d8152",
   "language": "pt-BR",
   "entries": [
     {
@@ -3828,7 +3828,7 @@
         },
         {
           "label": "Empresa",
-          "help": "Vazio: todos os colaboradores da conta."
+          "help": ""
         },
         {
           "label": "Pedir ciência",
@@ -3927,7 +3927,7 @@
         },
         {
           "label": "Empresa",
-          "help": "Vazio: todos os colaboradores da conta podem bater o ponto neste relógio."
+          "help": ""
         },
         {
           "label": "Foto na marcação",

@@ -8,6 +8,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatMinutes, hhmm } from '../hr-time';
+import { HR_COMPANY_LOOKUP, HR_YES_NO } from '../hr-crud-shared';
 
 /** IANA time zones of Brazil (the API accepts any valid IANA zone). */
 const TIMEZONES: readonly ConfigurableCrudOption[] = [
@@ -27,24 +28,12 @@ const TIMEZONES: readonly ConfigurableCrudOption[] = [
   'America/Noronha',
 ].map((zone) => ({ value: zone, label: zone }));
 
-const YES_NO: readonly ConfigurableCrudOption[] = [
-  { value: true, label: 'Yes' },
-  { value: false, label: 'No' },
-];
-
 /** Photo at punch (PU8): a missing photo flags the mark for HR, it never blocks it. */
 const PHOTO_MODES: readonly ConfigurableCrudOption[] = [
   { value: 'off', label: 'Not asked' },
   { value: 'optional', label: 'Optional' },
   { value: 'required', label: 'Asked at every punch' },
 ];
-
-const COMPANY_LOOKUP = {
-  endpoint: 'hr/companies',
-  uuidField: 'RcoUUID',
-  labelField: 'RcoName',
-  selectedLabelField: 'CompanyName',
-};
 
 const number = (value: unknown, fallback: number) => {
   const parsed = Number(value);
@@ -139,7 +128,7 @@ const config = defineCrud({
       source: 'CompanyUUID',
       label: 'Company',
       type: 'search-select',
-      remoteLookup: COMPANY_LOOKUP,
+      remoteLookup: HR_COMPANY_LOOKUP,
       quickCreate: quickCreateFor('RegCompanyRcoUUID'),
       disabledWhen: ({ editing }) => editing,
       help: 'Empty creates the tenant default policy, used by every company without its own policy. The company cannot be changed after saving.',
@@ -210,7 +199,7 @@ const config = defineCrud({
       source: 'NightReducedHour',
       label: 'Reduced night hour',
       type: 'select',
-      options: YES_NO,
+      options: HR_YES_NO,
       help: 'CLT art. 73 §1: each night hour counts as 52 minutes and 30 seconds.',
       span: 1,
     },
@@ -254,7 +243,7 @@ const config = defineCrud({
       source: 'MarkReminders',
       label: 'Mark reminders',
       type: 'select',
-      options: YES_NO,
+      options: HR_YES_NO,
       help: 'Employees may turn on clock-in and clock-out reminders by push notification in Pulse.',
       span: 1,
     },

@@ -288,21 +288,15 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
       }
       const pin = randomKioskPin();
       await this.api.put(path, { pin });
-      openDataViewerDialog(this.dialog, {
-        title: 'Time clock PIN',
-        description:
-          'Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.',
-        details: [
+      this.showSecret(
+        'Time clock PIN',
+        'Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.',
+        [
           { label: 'Employee', value: String(row['EmployeeName'] ?? ''), translate: false },
-          {
-            label: 'Login code',
-            value: String(row['LoginCode'] ?? ''),
-            monospace: true,
-            translate: false,
-          },
+          this.loginCodeDetail(String(row['LoginCode'] ?? '')),
         ],
-        sections: [{ title: 'Time clock PIN', code: { value: pin, format: 'text', copy: true } }],
-      });
+        pin,
+      );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || 'Failed to save the time clock PIN.'));
     }
@@ -317,29 +311,40 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
         translate: false,
       });
     }
-    openDataViewerDialog(this.dialog, {
-      title: 'Temporary credentials',
-      description: credentialEmailNote(credential),
-      details: [
+    this.showSecret(
+      'Temporary credentials',
+      credentialEmailNote(credential),
+      [
         ...details,
-        {
-          label: 'Login code',
-          value: credential.LoginCode ?? '',
-          monospace: true,
-          translate: false,
-        },
+        this.loginCodeDetail(credential.LoginCode ?? ''),
         {
           label: 'Expires at',
           value: credential.TemporaryPasswordExpiresAt ?? '',
           kind: 'datetime',
         },
       ],
-      sections: [
-        {
-          title: 'Temporary password',
-          code: { value: credential.TemporaryPassword ?? '', format: 'text', copy: true },
-        },
-      ],
+      credential.TemporaryPassword ?? '',
+      'Temporary password',
+    );
+  }
+
+  private loginCodeDetail(value: string): DataViewerDetail {
+    return { label: 'Login code', value, monospace: true, translate: false };
+  }
+
+  /** A secret shown once (temporary password, time clock PIN) with copy. */
+  private showSecret(
+    title: string,
+    description: string,
+    details: DataViewerDetail[],
+    value: string,
+    sectionTitle = title,
+  ): void {
+    openDataViewerDialog(this.dialog, {
+      title,
+      description,
+      details,
+      sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
     });
   }
 }

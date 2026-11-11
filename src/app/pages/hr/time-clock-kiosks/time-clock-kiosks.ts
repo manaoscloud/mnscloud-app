@@ -7,22 +7,10 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { HR_COMPANY_COLUMN, HR_REVISION_FIELD, HR_YES_NO, hrCompanyField } from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/time-clock-kiosks';
-
-const COMPANY_LOOKUP = {
-  endpoint: 'hr/companies',
-  uuidField: 'RcoUUID',
-  labelField: 'RcoName',
-  selectedLabelField: 'CompanyName',
-};
-
-const YES_NO: readonly ConfigurableCrudOption[] = [
-  { value: '1', label: 'Yes' },
-  { value: '0', label: 'No' },
-];
 
 const STATUSES: readonly ConfigurableCrudOption[] = [
   { value: 'pending', label: 'Waiting for a device' },
@@ -68,8 +56,8 @@ const config = defineCrud({
   initialValues: {
     name: '',
     companyUUID: '',
-    photoRequired: '1',
-    emailReceipt: '1',
+    photoRequired: true,
+    emailReceipt: true,
     notes: '',
     revision: null,
   },
@@ -84,11 +72,7 @@ const config = defineCrud({
       translateValue: false,
     },
     { id: 'status', label: 'Status', field: 'Status', options: STATUSES },
-    {
-      id: 'company',
-      label: 'Company',
-      value: (row, t) => (row['CompanyName'] ? String(row['CompanyName']) : t('All')),
-    },
+    HR_COMPANY_COLUMN,
     {
       id: 'photo',
       label: 'Photo at punch',
@@ -107,35 +91,24 @@ const config = defineCrud({
       span: 1,
       help: 'Where the device stands, for example Main reception.',
     },
-    {
-      key: 'companyUUID',
-      source: 'CompanyUUID',
-      label: 'Company',
-      type: 'search-select',
-      remoteLookup: COMPANY_LOOKUP,
-      quickCreate: quickCreateFor('RegCompanyRcoUUID'),
-      span: 1,
-      help: 'Empty: every employee of the account can punch on this time clock.',
-    },
+    hrCompanyField('Empty: every employee of the account can punch on this time clock.'),
     {
       key: 'photoRequired',
       source: 'PhotoRequired',
       label: 'Photo at punch',
       type: 'select',
-      options: YES_NO,
+      options: HR_YES_NO,
       span: 1,
       help: 'Yes: each punch on this time clock is confirmed only with a live photo from the front camera.',
-      fromRecord: (value) => (value === false ? '0' : '1'),
     },
     {
       key: 'emailReceipt',
       source: 'EmailReceipt',
       label: 'Receipt by e-mail',
       type: 'select',
-      options: YES_NO,
+      options: HR_YES_NO,
       span: 1,
       help: 'Offer to send the punch receipt to the e-mail of the employee in the registry.',
-      fromRecord: (value) => (value === false ? '0' : '1'),
     },
     {
       key: 'notes',
@@ -146,13 +119,13 @@ const config = defineCrud({
       span: 4,
       rows: 4,
     },
-    { key: 'revision', source: 'Revision', label: 'documents.revision', hiddenWhen: () => true },
+    HR_REVISION_FIELD,
   ],
   payload: (values) => ({
     name: values['name'],
     companyUUID: values['companyUUID'] || null,
-    photoRequired: values['photoRequired'] !== '0',
-    emailReceipt: values['emailReceipt'] !== '0',
+    photoRequired: values['photoRequired'] !== false,
+    emailReceipt: values['emailReceipt'] !== false,
     notes: values['notes'] || null,
     revision: values['revision'] ?? null,
   }),
