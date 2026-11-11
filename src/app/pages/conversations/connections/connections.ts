@@ -12,6 +12,9 @@ import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-vi
 import { CHANNEL_KINDS, CHANNEL_STATES } from '../conversation-options';
 
 function parseObject(value: unknown): Record<string, unknown> | null | 'invalid' {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
   const text = String(value ?? '').trim();
   if (!text) return null;
   try {
@@ -22,6 +25,89 @@ function parseObject(value: unknown): Record<string, unknown> | null | 'invalid'
   }
 }
 
+/** Kinds offered when creating: only channels with a working driver (decision D2). */
+export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter(
+  (kind) => kind.value === 'internal' || kind.value === 'webchat',
+);
+
+/** Provider routing key (`ChcExternalId`) label per channel type. */
+const EXTERNAL_ID_LABELS: Record<string, string> = {
+  'whatsapp-cloud': 'Phone number ID',
+  'whatsapp-twilio': 'Sender number',
+  instagram: 'Instagram account ID',
+  messenger: 'Facebook page ID',
+  telegram: 'Bot username',
+  email: 'Support e-mail address',
+};
+
+const MAX_ORIGINS = 20;
+
+const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
+const isProvider = (values: ConfigurableCrudRecord) =>
+  values['kind'] !== 'internal' && values['kind'] !== 'webchat';
+
+/**
+ * Exact HTTPS origin of a website address typed by a person ("www.site.com",
+ * "https://site.com/contact"); '' when empty, 'invalid' when it cannot be one.
+ */
+export function websiteOrigin(raw: unknown): string {
+  const text = String(raw ?? '').trim();
+  if (!text) return '';
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `https://${text}`;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== 'https:' || !url.hostname || /[*\s]/.test(text)) return 'invalid';
+    if (url.username || url.password) return 'invalid';
+    return url.origin;
+  } catch {
+    return 'invalid';
+  }
+}
+
+/** Allowed origins stored in a connection config (array, legacy comma text or `origins`). */
+export function storedOrigins(config: unknown): string[] {
+  const object = parseObject(config);
+  if (!object || object === 'invalid') return [];
+  const raw = object['allowedOrigins'] ?? object['origins'];
+  const entries = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string'
+      ? raw.split(',')
+      : [];
+  return entries.map((entry) => String(entry ?? '').trim()).filter(Boolean);
+}
+
+function originLines(value: unknown): string[] {
+  return String(value ?? '')
+    .split(/[\n,]/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** Website chat config from the form fields, keeping stored keys the form does not edit. */
+export function webchatConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const stored = parseObject(values['storedConfig']);
+  const {
+    origins: _legacy,
+    allowedOrigins: _origins,
+    allowSubdomains: _subdomains,
+    ...rest
+  } = stored && stored !== 'invalid' ? stored : {};
+  const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
+    .map(websiteOrigin)
+    .filter((origin) => origin && origin !== 'invalid');
+  return {
+    ...rest,
+    allowedOrigins: [...new Set(origins)],
+    allowSubdomains: Number(values['allowSubdomains']) === 1,
+  };
+}
+
+const YES_NO = [
+  { value: 0, label: 'No' },
+  { value: 1, label: 'Yes' },
+] as const;
+
 const config = defineCrud({
   endpoint: 'conversations/connections',
   uuidField: 'ChcUUID',
@@ -31,7 +117,7 @@ const config = defineCrud({
   createTitle: 'New channel connection',
   editTitle: 'Edit channel connection',
   dialogDescription:
-    'Website chat connects after the widget confirms an authorized HTTPS origin. Configure allowedOrigins, embed the widget and reload the website. Provider credentials are not required for website chat.',
+    'For website chat, enter the website address, save, add the widget code to the website and reload it: the connection is verified automatically.',
   emptyLabel:
     'No channel connections. Create an internal or website chat channel to start conversations.',
   deleteTitle: 'Remove channel connection',
@@ -47,8 +133,11 @@ const config = defineCrud({
     kind: 'internal',
     name: '',
     ConversationAccountCvaUUID: null,
-    externalId: '',
-    config: '',
+    storedConfig: '{}',
+    allowedOrigins: '',
+    otherOrigins: '',
+    allowSubdomains: 0,
+    ChcExternalId: '',
     secret: '',
     clearSecret: 0,
     revision: '',
@@ -69,7 +158,7 @@ const config = defineCrud({
     },
     { id: 'open', label: 'Open conversations', field: 'OpenConversations', kind: 'number' },
     { id: 'secret', label: 'Credentials stored', field: 'HasSecret', kind: 'boolean' },
-    { id: 'external', label: 'Channel ID', field: 'ChcExternalId', optional: true },
+    { id: 'external', label: 'Provider identifier', field: 'ChcExternalId', optional: true },
     { id: 'verifiedOrigin', label: 'Verified origin', field: 'ChcVerifiedOrigin', optional: true },
     {
       id: 'sync',
@@ -90,6 +179,7 @@ const config = defineCrud({
       type: 'search-select',
       required: true,
       options: CHANNEL_KINDS,
+      optionsWhen: ({ editing }) => (editing ? CHANNEL_KINDS : CREATABLE_CHANNEL_KINDS),
       translateOptions: true,
       disabledWhen: ({ editing }) => editing,
       span: 1,
@@ -99,7 +189,7 @@ const config = defineCrud({
       source: 'ChcName',
       label: 'Name',
       required: true,
-      placeholder: 'Example: Sales WhatsApp',
+      placeholder: 'Example: Website chat',
     },
     {
       key: 'ConversationAccountCvaUUID',
@@ -111,46 +201,82 @@ const config = defineCrud({
       remoteLookup: CONVERSATION_ACCOUNT_LOOKUP,
     },
     {
-      key: 'externalId',
-      source: 'ChcExternalId',
-      label: 'Channel ID',
-      help: 'Provider identifier that routes incoming messages here (for WhatsApp, the phone number ID).',
-      hiddenWhen: ({ values }) => values['kind'] === 'internal',
+      key: 'storedConfig',
+      source: 'ChcConfig',
+      label: 'Settings',
+      hidden: true,
+      fromRecord: (value) => {
+        const object = parseObject(value);
+        return JSON.stringify(object && object !== 'invalid' ? object : {});
+      },
     },
     {
-      key: 'config',
+      key: 'allowedOrigins',
       source: 'ChcConfig',
-      label: 'Settings (JSON)',
+      label: 'Website address',
+      placeholder: 'https://www.example.com',
+      help: 'Address of the website where the chat appears. Only this website and the other allowed websites can open the chat.',
+      requiredWhen: ({ values }) => isWebchat(values),
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedOrigins(value)[0] ?? '',
+    },
+    {
+      key: 'otherOrigins',
+      source: 'ChcConfig',
+      label: 'Other allowed websites',
       type: 'textarea',
-      format: 'json',
-      help: 'For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.',
-      hiddenWhen: ({ values }) => values['kind'] === 'internal',
+      placeholder: 'https://shop.example.com',
+      help: 'Optional. One website address per line.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedOrigins(value).slice(1).join('\n'),
       span: 4,
+    },
+    {
+      key: 'ChcExternalId',
+      source: 'ChcExternalId',
+      label: 'Provider identifier',
+      labelWhen: ({ values }) => EXTERNAL_ID_LABELS[String(values['kind'])] ?? 'Provider identifier',
+      help: 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
+      hiddenWhen: ({ values }) => !isProvider(values),
     },
     {
       key: 'secret',
       label: 'Credentials (JSON or token)',
       type: 'password',
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
-      hiddenWhen: ({ values }) => values['kind'] === 'internal',
+      hiddenWhen: ({ values }) => !isProvider(values),
     },
     {
       key: 'clearSecret',
       label: 'Erase stored credentials',
       type: 'search-select',
-      options: [
-        { value: 0, label: 'No' },
-        { value: 1, label: 'Yes' },
-      ],
+      tab: 'advanced',
+      options: YES_NO,
       translateOptions: true,
-      hiddenWhen: ({ editing, values }) => !editing || values['kind'] === 'internal',
+      hiddenWhen: ({ editing, values }) => !editing || !isProvider(values),
+      span: 1,
+    },
+    {
+      key: 'allowSubdomains',
+      source: 'ChcConfig',
+      label: 'Allow subdomains',
+      type: 'search-select',
+      tab: 'advanced',
+      options: YES_NO,
+      translateOptions: true,
+      help: 'Also open the chat on subdomains of the allowed websites, such as shop.example.com. Subdomains are not verified as installed.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => {
+        const object = parseObject(value);
+        return object && object !== 'invalid' && object['allowSubdomains'] === true ? 1 : 0;
+      },
       span: 1,
     },
   ],
   payload: (values, editing) => {
     const secretText = String(values['secret'] ?? '').trim();
     const secretJson = parseObject(secretText);
-    const configJson = parseObject(values['config']);
+    const provider = isProvider(values);
     return {
       ...(editing
         ? { ChcRevision: Number(values['revision']) }
@@ -161,12 +287,14 @@ const config = defineCrud({
               : {}),
           }),
       ChcName: values['name'],
-      ChcExternalId: values['externalId'] || null,
-      ...(configJson && configJson !== 'invalid' ? { ChcConfig: configJson } : {}),
-      ...(secretText
+      ChcExternalId: provider ? String(values['ChcExternalId'] ?? '').trim() || null : null,
+      ...(isWebchat(values) ? { ChcConfig: webchatConfig(values) } : {}),
+      ...(provider && secretText
         ? { ChcSecret: secretJson && secretJson !== 'invalid' ? secretJson : secretText }
         : {}),
-      ...(editing && Number(values['clearSecret']) === 1 ? { ChcSecretClear: true } : {}),
+      ...(editing && provider && Number(values['clearSecret']) === 1
+        ? { ChcSecretClear: true }
+        : {}),
       ChcStatus: Number(values['status']),
     };
   },
@@ -185,17 +313,14 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
           : 'https://portal.example.com';
       const channelUUID = String(row['ChcUUID'] ?? '');
       const snippet = `<script src="${origin}/api/v1/conversations/webchat/widget.js" data-channel="${channelUUID}" async></script>`;
-      const originsExample = JSON.stringify(
-        { allowedOrigins: ['https://www.example.com'] },
-        null,
-        2,
-      );
+      const websites = storedOrigins(row['ChcConfig']);
       openDataViewerDialog(dialog(), {
         title: 'conversations.embedWidgetTitle',
         description: String(row['ChcName'] ?? ''),
         details: [
-          { label: 'Channel ID', value: channelUUID, monospace: true },
+          { label: 'Connection identifier', value: channelUUID, monospace: true },
           { label: 'Account', value: row['AccountName'] || '—' },
+          { label: 'Allowed websites', value: websites.join(', ') || '—' },
         ],
         sections: [
           {
@@ -204,15 +329,6 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
               title: 'HTML',
               value: snippet,
               format: 'text',
-              copy: true,
-            },
-          },
-          {
-            title: 'conversations.embedWidgetOriginsTitle',
-            code: {
-              title: 'Settings (JSON)',
-              value: originsExample,
-              format: 'json',
               copy: true,
             },
           },
@@ -236,5 +352,26 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
       ...config,
       rowActions: [webchatEmbedAction(() => dialog)],
     });
+  }
+
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (!super.validatePayload(payload)) return false;
+    if (payload['kind'] !== 'webchat') return true;
+    if (websiteOrigin(payload['allowedOrigins']) === 'invalid') {
+      return this.rejectField('allowedOrigins', 'conversations.websiteInvalid');
+    }
+    const lines = originLines(payload['otherOrigins']);
+    const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
+    if (invalid) {
+      return this.rejectField('otherOrigins', 'conversations.websiteLineInvalid', {
+        value: invalid,
+      });
+    }
+    if (lines.length + 1 > MAX_ORIGINS) {
+      return this.rejectField('otherOrigins', 'conversations.websiteTooMany', {
+        max: MAX_ORIGINS,
+      });
+    }
+    return true;
   }
 }
