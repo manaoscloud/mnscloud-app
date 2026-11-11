@@ -27,12 +27,13 @@ const config = defineCrud({
   uuidField: 'ChcUUID',
   pageTitle: 'Channel connections',
   pageDescription:
-    'Channels that feed the inbox: the internal channel of the team now, and WhatsApp, website chat and other channels as they are connected. Credentials are stored sealed and never shown again.',
+    'Manage the channels that send messages to the inbox, including internal conversations, website chat and provider integrations.',
   createTitle: 'New channel connection',
   editTitle: 'Edit channel connection',
   dialogDescription:
-    'Leave the credentials empty to keep the stored ones. Connecting WhatsApp and the website chat comes in the next releases.',
-  emptyLabel: 'No channel connections. Create an internal channel to start conversations now.',
+    'Website chat is ready when active and does not require provider credentials. Use the embed action to install the widget. Leave credentials empty to keep stored values for other channels.',
+  emptyLabel:
+    'No channel connections. Create an internal or website chat channel to start conversations.',
   deleteTitle: 'Remove channel connection',
   deleteMessage:
     'Remove this connection? It stops receiving and sending, its credentials are erased and its conversations keep their history.',
