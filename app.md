@@ -727,6 +727,12 @@ result panel, is rendered by it. Pick the surface by where the rows live:
   form, `relatedCollectionFieldChange` for dependent child values, `relatedCollectionColumnValue`
   for cell text, `afterRelatedCollectionRowAdded` and `reloadRelatedCollection`. Never render a
   plain `<table>` or an inline add form for child records again.
+- A related collection whose dialog flow needs more than declared fields (values written to a
+  vault through queued operations, such as Rede › Equipamentos › Credenciais) declares
+  `config: (parentUUID) => ConfigurableCrudConfig` plus `component: () => import(...)` of a class
+  that extends `ConfigurableCrudEmbeddedCollection` with the shared template: the tab still renders
+  the global table, and the class overrides only hooks (`saveRequestOptions` for a per-dialog
+  idempotency key, `deleteItem`, `handleRowAction`, `errorMessage`).
 - Read-only tables (`mns-global-table`, `src/app/shared/crud/configurable-crud/global-table.ts`)
   take a constant `defineGlobalTable({ key, uuidField, columns, emptyLabel, rowActions? })`: `key`
   names the table for the per-user column preferences, `uuidField` must be unique per row (add a

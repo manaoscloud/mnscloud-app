@@ -580,6 +580,12 @@ export type ConfigurableCrudRelatedCollection = {
   payload?: (values: ConfigurableCrudRecord) => ConfigurableCrudRecord;
   /** Declarative per-row API actions rendered before delete; the collection reloads on success. */
   rowActions?: readonly ConfigurableCrudRelatedRowAction[];
+  /**
+   * Table component of this collection, when its dialog flow needs more than declared fields (for
+   * example values written to a vault through queued operations). It must extend
+   * `ConfigurableCrudEmbeddedCollection`, so the tab still renders the global table.
+   */
+  component?: () => Promise<Type<unknown>>;
 };
 
 export type ConfigurableCrudRelatedRowAction = {
@@ -819,6 +825,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   private fileUploadExecution: FileUploadExecution | null = null;
   /** Global table component of related collection tabs, loaded on the first edit. */
   readonly embeddedCollectionComponent = signal<Type<unknown> | null>(null);
+  /** Own table components of related collections (`collection.component`), by collection key. */
+  private readonly ownCollectionComponents = signal<Readonly<Record<string, Type<unknown>>>>({});
   private readonly embeddedInjectors = new Map<string, Injector>();
   private readonly embeddedReloads = new Map<string, () => void>();
   private readonly pageInjector = inject(Injector);
@@ -1474,11 +1482,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         response = await this.api.put(
           `${this.updateEndpoint()}/${this.recordUUID(current)}`,
           payload,
+          this.saveRequestOptions(),
         );
       } else if (this.config.createUpload) {
         response = await this.uploadCreate(formPayload, this.config.createUpload);
       } else {
-        response = await this.api.post(this.createEndpoint(), payload);
+        response = await this.api.post(this.createEndpoint(), payload, this.saveRequestOptions());
       }
       const asynchronous = this.trackOperation(response);
       if (!asynchronous) this.snack.success(this.t(this.config.savedMessage));
@@ -1710,8 +1719,24 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return injector;
   }
 
+  /** Table component of a related collection tab (its own one, or the embedded global table). */
+  relatedCollectionComponent(collection: ConfigurableCrudRelatedCollection): Type<unknown> | null {
+    return collection.component
+      ? (this.ownCollectionComponents()[collection.key] ?? null)
+      : this.embeddedCollectionComponent();
+  }
+
   private prepareRelatedCollections(): void {
     this.embeddedInjectors.clear();
+    for (const collection of this.relatedCollections()) {
+      if (!collection.component || this.ownCollectionComponents()[collection.key]) continue;
+      void collection.component().then((component) =>
+        this.ownCollectionComponents.update((current) => ({
+          ...current,
+          [collection.key]: component,
+        })),
+      );
+    }
     if (!this.relatedCollections().length || this.embeddedCollectionComponent()) return;
     void import('./configurable-crud-embedded-collection').then(
       ({ ConfigurableCrudEmbeddedCollection }) =>
@@ -1957,6 +1982,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   handleFilterAction(_action: ConfigurableCrudFilterAction): void | Promise<void> {}
 
   protected afterSave(_context: ConfigurableCrudSaveContext<T>): void | Promise<void> {}
+
+  /**
+   * Request options of the create/update call. Pages whose dialog owns an idempotency key (one per
+   * dialog, kept across a retry of unchanged values) return it here; by default `ApiService`
+   * derives the key from the request intent.
+   */
+  protected saveRequestOptions(): { idempotencyKey?: string } | undefined {
+    return undefined;
+  }
 
   /**
    * Override and return true when `afterSave` still needs the dialog open, e.g. to run a
