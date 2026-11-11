@@ -1384,7 +1384,7 @@
               @if (editingRecord()) {
                 @for (collection of relatedCollections(); track collection.key) {
                   @if (collection.key === 'contacts') {
-                    @if (embeddedCollectionComponent(); as embeddedTable) {
+                    @if (relatedCollectionComponent(collection); as embeddedTable) {
                       <ng-container
                         *ngComponentOutlet="
                           embeddedTable;
@@ -3145,7 +3145,7 @@
               @if (editingRecord()) {
                 @for (collection of tabCollections(simpleTab.key); track collection.key) {
                   <div class="tab-content related-collection-tab">
-                    @if (embeddedCollectionComponent(); as embeddedTable) {
+                    @if (relatedCollectionComponent(collection); as embeddedTable) {
                       <ng-container
                         *ngComponentOutlet="
                           embeddedTable;
@@ -3441,7 +3441,7 @@
                 [labelClass]="relatedTabLabelClass(collection)"
               >
                 <div class="tab-content related-collection-tab">
-                  @if (embeddedCollectionComponent(); as embeddedTable) {
+                  @if (relatedCollectionComponent(collection); as embeddedTable) {
                     <ng-container
                       *ngComponentOutlet="
                         embeddedTable;

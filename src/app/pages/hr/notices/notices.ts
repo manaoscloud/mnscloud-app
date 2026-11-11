@@ -7,15 +7,8 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-
-const COMPANY_LOOKUP = {
-  endpoint: 'hr/companies',
-  uuidField: 'RcoUUID',
-  labelField: 'RcoName',
-  selectedLabelField: 'CompanyName',
-};
+import { HR_COMPANY_COLUMN, HR_REVISION_FIELD, hrCompanyField } from '../hr-crud-shared';
 
 const STATES: readonly ConfigurableCrudOption[] = [
   { value: 'published', label: 'Published' },
@@ -85,11 +78,7 @@ const config = defineCrud({
       translateValue: false,
     },
     { id: 'state', label: 'Status', field: 'State', options: STATES },
-    {
-      id: 'company',
-      label: 'Company',
-      value: (row, t) => (row['CompanyName'] ? String(row['CompanyName']) : t('All')),
-    },
+    HR_COMPANY_COLUMN,
     { id: 'publish', label: 'Published at', field: 'PublishAt', kind: 'datetime' },
     { id: 'expires', label: 'Expires at', field: 'ExpiresAt', kind: 'datetime' },
     {
@@ -109,16 +98,7 @@ const config = defineCrud({
       required: true,
       span: 1,
     },
-    {
-      key: 'companyUUID',
-      source: 'CompanyUUID',
-      label: 'Company',
-      type: 'search-select',
-      remoteLookup: COMPANY_LOOKUP,
-      quickCreate: quickCreateFor('RegCompanyRcoUUID'),
-      span: 1,
-      help: 'Empty: every employee of the account.',
-    },
+    hrCompanyField('Empty: every employee of the account.'),
     {
       key: 'requiresAck',
       source: 'RequiresAck',
@@ -156,7 +136,7 @@ const config = defineCrud({
       span: 4,
       rows: 4,
     },
-    { key: 'revision', source: 'Revision', label: 'documents.revision', hiddenWhen: () => true },
+    HR_REVISION_FIELD,
   ],
   payload: (values) => ({
     title: values['title'],

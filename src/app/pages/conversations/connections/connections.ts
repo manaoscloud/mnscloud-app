@@ -27,12 +27,13 @@ const config = defineCrud({
   uuidField: 'ChcUUID',
   pageTitle: 'Channel connections',
   pageDescription:
-    'Channels that feed the inbox: the internal channel of the team now, and WhatsApp, website chat and other channels as they are connected. Credentials are stored sealed and never shown again.',
+    'Manage the channels that send messages to the inbox, including internal conversations, website chat and provider integrations.',
   createTitle: 'New channel connection',
   editTitle: 'Edit channel connection',
   dialogDescription:
-    'Leave the credentials empty to keep the stored ones. Connecting WhatsApp and the website chat comes in the next releases.',
-  emptyLabel: 'No channel connections. Create an internal channel to start conversations now.',
+    'Website chat connects after the widget confirms an authorized HTTPS origin. Configure allowedOrigins, embed the widget and reload the website. Provider credentials are not required for website chat.',
+  emptyLabel:
+    'No channel connections. Create an internal or website chat channel to start conversations.',
   deleteTitle: 'Remove channel connection',
   deleteMessage:
     'Remove this connection? It stops receiving and sending, its credentials are erased and its conversations keep their history.',
@@ -69,7 +70,14 @@ const config = defineCrud({
     { id: 'open', label: 'Open conversations', field: 'OpenConversations', kind: 'number' },
     { id: 'secret', label: 'Credentials stored', field: 'HasSecret', kind: 'boolean' },
     { id: 'external', label: 'Channel ID', field: 'ChcExternalId', optional: true },
-    { id: 'sync', label: 'Last sync', field: 'ChcLastSyncAt', kind: 'datetime', optional: true },
+    { id: 'verifiedOrigin', label: 'Verified origin', field: 'ChcVerifiedOrigin', optional: true },
+    {
+      id: 'sync',
+      label: 'Last verification or sync',
+      field: 'ChcLastSyncAt',
+      kind: 'datetime',
+      optional: true,
+    },
     { id: 'status', label: 'Status', field: 'ChcStatus', kind: 'status' },
   ],
   fields: [
@@ -115,7 +123,7 @@ const config = defineCrud({
       label: 'Settings (JSON)',
       type: 'textarea',
       format: 'json',
-      help: 'Optional non-secret settings as a JSON object.',
+      help: 'For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.',
       hiddenWhen: ({ values }) => values['kind'] === 'internal',
       span: 4,
     },
@@ -177,7 +185,11 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
           : 'https://portal.example.com';
       const channelUUID = String(row['ChcUUID'] ?? '');
       const snippet = `<script src="${origin}/api/v1/conversations/webchat/widget.js" data-channel="${channelUUID}" async></script>`;
-      const originsExample = JSON.stringify({ allowedOrigins: [origin] }, null, 2);
+      const originsExample = JSON.stringify(
+        { allowedOrigins: ['https://www.example.com'] },
+        null,
+        2,
+      );
       openDataViewerDialog(dialog(), {
         title: 'conversations.embedWidgetTitle',
         description: String(row['ChcName'] ?? ''),

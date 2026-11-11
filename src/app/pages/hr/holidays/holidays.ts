@@ -11,24 +11,13 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { formatDay } from '../hr-time';
+import { HR_COMPANY_LOOKUP, HR_YES_NO } from '../hr-crud-shared';
 
 const SCOPES: readonly ConfigurableCrudOption[] = [
   { value: 'state', label: 'State' },
   { value: 'city', label: 'City' },
   { value: 'company', label: 'Company' },
 ];
-
-const YES_NO: readonly ConfigurableCrudOption[] = [
-  { value: true, label: 'Yes' },
-  { value: false, label: 'No' },
-];
-
-const COMPANY_LOOKUP = {
-  endpoint: 'hr/companies',
-  uuidField: 'RcoUUID',
-  labelField: 'RcoName',
-  selectedLabelField: 'CompanyName',
-};
 
 const THIS_YEAR = new Date().getFullYear();
 const YEARS: readonly ConfigurableCrudOption[] = [-1, 0, 1, 2].map((delta) => ({
@@ -117,7 +106,7 @@ const config = defineCrud({
       type: 'search-select',
       span: 1,
       emptyLabel: 'All',
-      remoteLookup: COMPANY_LOOKUP,
+      remoteLookup: HR_COMPANY_LOOKUP,
     },
   ],
   filterActions: [NATIONAL],
@@ -158,7 +147,7 @@ const config = defineCrud({
       source: 'Recurring',
       label: 'Every year',
       type: 'select',
-      options: YES_NO,
+      options: HR_YES_NO,
       help: 'Yes: the holiday repeats every year on the same day and month. No: only on this date (movable holidays such as Corpus Christi are registered each year).',
       span: 1,
     },
@@ -167,7 +156,7 @@ const config = defineCrud({
       source: 'CompanyUUID',
       label: 'Company',
       type: 'search-select',
-      remoteLookup: COMPANY_LOOKUP,
+      remoteLookup: HR_COMPANY_LOOKUP,
       quickCreate: quickCreateFor('RegCompanyRcoUUID'),
       help: 'Empty applies the holiday to every company of the tenant.',
     },
