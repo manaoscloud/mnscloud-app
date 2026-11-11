@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, afterNextRender, inject, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -17,10 +17,10 @@ export type WebchatPreviewData = {
 
 function attribute(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }
 
 /**
@@ -90,14 +90,16 @@ export function webchatPreviewDocument(data: WebchatPreviewData): string {
     }
   `,
 })
-export class WebchatPreviewDialogComponent implements AfterViewInit {
+export class WebchatPreviewDialogComponent {
   readonly data = inject<WebchatPreviewData>(MAT_DIALOG_DATA);
   private readonly frame = viewChild.required<ElementRef<HTMLIFrameElement>>('frame');
 
-  ngAfterViewInit(): void {
+  constructor() {
     // A sandboxed frame without allow-same-origin: the page (escaped attribute values and the
     // App's own widget script) runs in an opaque origin and cannot reach the App.
-    this.frame().nativeElement.srcdoc = webchatPreviewDocument(this.data);
+    afterNextRender(() => {
+      this.frame().nativeElement.srcdoc = webchatPreviewDocument(this.data);
+    });
   }
 }
 
