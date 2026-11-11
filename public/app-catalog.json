@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0027354ecf81",
+  "version": "9fba4299444c",
   "language": "pt-BR",
   "entries": [
     {
@@ -3304,6 +3304,10 @@
         {
           "label": "Cliente",
           "help": ""
+        },
+        {
+          "label": "Disponível no Portal do Cliente",
+          "help": "O cliente vê este servidor no Portal do Cliente e, conforme as permissões do portal, liga, desliga, reinicia e abre o console."
         },
         {
           "label": "Nome",
@@ -11413,6 +11417,10 @@
         {
           "label": "Cliente",
           "help": ""
+        },
+        {
+          "label": "Disponível no Portal do Cliente",
+          "help": "O cliente vê este servidor no Portal do Cliente e, conforme as permissões do portal, liga, desliga, reinicia e abre o console."
         },
         {
           "label": "Nome",

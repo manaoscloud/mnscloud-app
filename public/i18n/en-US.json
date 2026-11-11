@@ -13125,5 +13125,14 @@
   "conversations.websiteTooMany": "Enter at most {{max}} websites.",
   "https://www.example.com": "https://www.example.com",
   "https://shop.example.com": "https://shop.example.com",
-  "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.": "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed."
+  "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.": "Also open the chat on subdomains of each allowed website: with https://example.com allowed, shop.example.com works too. Subdomains are not verified as installed.",
+  "hostingVps.portalColumn": "Portal",
+  "hostingVps.portalEnabled": "Available in the customer portal",
+  "hostingVps.portalEnabledHelp": "The customer sees this server in the customer portal and, according to the portal permissions, starts, shuts down, reboots and opens the console.",
+  "hostingVps.portalPublish": "Publish in the portal",
+  "hostingVps.portalPublishConfirm": "The customer will see this server in the customer portal and may use it according to the permissions of each portal user (Customers › Portal).",
+  "hostingVps.portalPublished": "Server published in the customer portal.",
+  "hostingVps.portalHide": "Remove from the portal",
+  "hostingVps.portalHideConfirm": "The customer will no longer see or manage this server in the customer portal. The server keeps running.",
+  "hostingVps.portalHidden": "Server removed from the customer portal."
 }
