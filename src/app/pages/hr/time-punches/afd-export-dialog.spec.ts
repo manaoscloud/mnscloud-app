@@ -20,6 +20,7 @@ describe('AFD export (K5a)', () => {
     expect(validInpi('123456789012345678')).toBeFalse();
     expect(validDeveloperDocument('12.345.678/0001-90')).toBeTrue();
     expect(validDeveloperDocument('123.456.789-09')).toBeTrue();
+    expect(validDeveloperDocument('12.ABC.345/01DE-35')).toBeTrue();
     expect(validDeveloperDocument('1234')).toBeFalse();
   });
 });

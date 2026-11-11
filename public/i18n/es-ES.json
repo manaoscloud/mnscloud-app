@@ -13020,6 +13020,7 @@
   "nav.hr.time-clock-kiosks": "Relojes",
   "nav.hr.rep-p": "REP-P",
   "Export AFD": "Exportar AFD",
+  "{{count}} gaps in the NSR sequence of the period.": "{{count}} huecos en la secuencia de NSR del período.",
   "Source data file (AFD) of one establishment": "Archivo Fuente de Datos (AFD) de un establecimiento",
   "Source data file (AFD, Portaria 671) of one establishment with the marks recorded in the period.": "Archivo Fuente de Datos (AFD, Portaria 671) de un establecimiento con las marcaciones registradas en el período.",
   "Establishment": "Establecimiento",

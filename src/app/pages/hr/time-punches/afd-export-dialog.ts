@@ -150,6 +150,13 @@ export class AfdExportDialogComponent {
       if (headers.get('X-Afd-Provisional') === '1') {
         parts.push(t('Provisional file: the program has no INPI registration number yet.'));
       }
+      if (Number(headers.get('X-Afd-Nsr-Gaps') ?? 0) > 0) {
+        parts.push(
+          t('{{count}} gaps in the NSR sequence of the period.', {
+            count: headers.get('X-Afd-Nsr-Gaps') ?? '0',
+          }),
+        );
+      }
       if (Number(headers.get('X-Afd-Missing-Documents') ?? 0) > 0) {
         parts.push(
           t('{{count}} marks of employees without CPF.', {

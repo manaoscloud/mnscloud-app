@@ -31,10 +31,10 @@ export function validInpi(value: string): boolean {
   return !value.trim() || (text.length >= 1 && text.length <= 17);
 }
 
-/** Developer document: empty, CPF (11 digits) or CNPJ (14 digits). */
+/** Developer document: empty, CPF (11 digits) or CNPJ (14, alphanumeric since July 2026). */
 export function validDeveloperDocument(value: string): boolean {
-  const text = digits(value);
-  return !value.trim() || text.length === 11 || text.length === 14;
+  const text = value.toUpperCase().replace(/[^0-9A-Z]/g, '');
+  return !value.trim() || /^\d{11}$/.test(text) || /^[0-9A-Z]{12}\d{2}$/.test(text);
 }
 
 /**
@@ -186,7 +186,7 @@ export class HrRepParametersPage {
       const form = this.form();
       const result = await this.api.put<any>(ENDPOINT, {
         inpiNumber: digits(form.inpiNumber) || null,
-        developerDocument: digits(form.developerDocument) || null,
+        developerDocument: form.developerDocument.toUpperCase().replace(/[^0-9A-Z]/g, '') || null,
       });
       this.apply(result?.data?.item ?? {});
       this.rules.reset();
