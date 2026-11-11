@@ -35,6 +35,7 @@ import type {
   VpsProviderConfig,
 } from '../vps.types';
 import { isAccountDefaultNetwork } from '../vps.types';
+import { planHardwareSummary, planNetworkSpecs } from '../../shared/plan-specs';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -498,6 +499,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         value: plan.HvpUUID,
         label: this.planOptionLabel(plan),
         description: [
+          ...planNetworkSpecs(plan.HvpConfig, (key, params) => this.t(key, params)),
           this.providerNameById(plan.HostingVpsProviderHvrUUID, plan.HvpProvider),
           plan.HvpRegion,
           plan.HvpSize,
@@ -506,6 +508,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           .join(' · '),
         searchText: [
           plan.HvpName,
+          planHardwareSummary(plan.HvpConfig, (key, params) => this.t(key, params)),
           this.providerNameById(plan.HostingVpsProviderHvrUUID, plan.HvpProvider),
           plan.HvpProvider,
           plan.HvpRegion,
@@ -1471,7 +1474,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
   private planOptionLabel(plan: HostingVpsPlan): string {
     const price = formatMoney(plan.HvpPrice, plan.HvpCurrency);
     const setupFee = formatMoney(plan.HvpSetupFee ?? 0, plan.HvpCurrency);
-    return `${plan.HvpName} · ${price} · ${this.t('Setup fee')} ${setupFee}`;
+    const hardware = planHardwareSummary(plan.HvpConfig, (key, params) => this.t(key, params));
+    return [plan.HvpName, hardware, price, `${this.t('Setup fee')} ${setupFee}`]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   private providerNameById(
@@ -1557,7 +1563,9 @@ function lightsailPlatformFromPlan(plan: HostingVpsPlan): string | null {
   return null;
 }
 
-function isImageCompatibleWithPlan(
+const AUTO_PLACEMENT_REGION = 'auto';
+
+export function isImageCompatibleWithPlan(
   option: VpsCatalogOption,
   context: {
     region: string;
@@ -1569,7 +1577,10 @@ function isImageCompatibleWithPlan(
   },
 ): boolean {
   const region = context.region;
-  if (region && Array.isArray(option.regions) && option.regions.length > 0) {
+  // Region `auto` (Proxmox automatic placement, PL3) is not a node: the placement picks the node
+  // and the API clones the image replica there (PL2), so any node's template is offered.
+  const automaticPlacement = region.trim().toLowerCase() === AUTO_PLACEMENT_REGION;
+  if (region && !automaticPlacement && Array.isArray(option.regions) && option.regions.length > 0) {
     const regionLc = region.toLowerCase();
     const parent = lightsailParentRegion(region);
     const parentLc = parent?.toLowerCase() ?? null;

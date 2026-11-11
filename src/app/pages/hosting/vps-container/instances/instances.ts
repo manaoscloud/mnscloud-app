@@ -27,6 +27,7 @@ import type {
   VpsContainerProviderCatalog,
   VpsContainerProviderConfig,
 } from '../vps-container.types';
+import { planHardwareSummary, planNetworkSpecs } from '../../shared/plan-specs';
 
 type CustomerOption = {
   CustomerUUID: string;
@@ -255,6 +256,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
         value: plan.HcnUUID,
         label: this.planOptionLabel(plan),
         description: [
+          ...planNetworkSpecs(plan.HcnConfig, (key, params) => this.t(key, params)),
           this.providerNameById(plan.HostingVpsContainerProviderHcpUUID),
           plan.HcnRegion,
           plan.HcnSize,
@@ -263,6 +265,7 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
           .join(' · '),
         searchText: [
           plan.HcnName,
+          planHardwareSummary(plan.HcnConfig, (key, params) => this.t(key, params)),
           this.providerNameById(plan.HostingVpsContainerProviderHcpUUID),
           plan.HcnProvider,
           plan.HcnRegion,
@@ -790,7 +793,10 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
   private planOptionLabel(plan: HostingVpsContainerPlan): string {
     const price = formatMoney(plan.HcnPrice, plan.HcnCurrency);
     const setupFee = formatMoney(plan.HcnSetupFee ?? 0, plan.HcnCurrency);
-    return `${plan.HcnName} · ${price} · ${this.t('Setup fee')} ${setupFee}`;
+    const hardware = planHardwareSummary(plan.HcnConfig, (key, params) => this.t(key, params));
+    return [plan.HcnName, hardware, price, `${this.t('Setup fee')} ${setupFee}`]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   private providerNameById(uuid: string | null | undefined) {
