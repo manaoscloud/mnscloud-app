@@ -8,7 +8,6 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { optionLabel, PUNCH_TYPES } from '../hr-time';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
   HR_COMPANY_COLUMN,
   HR_REVISION_FIELD,
@@ -16,6 +15,7 @@ import {
   HrPageOps,
   confirmedPost,
   showHrSecret,
+  showHrTable,
   hrCompanyField,
 } from '../hr-crud-shared';
 
@@ -229,27 +229,20 @@ export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<Configurable
         EmployeeName: item['EmployeeName'] ?? this.t('Unknown code'),
         Type: this.t(optionLabel(PUNCH_TYPES, item['Type'])),
       }));
-      openDataViewerDialog(this.dialog, {
+      showHrTable(this.dialog, {
         title: 'Refused offline marks',
         description:
           'Marks taken on this time clock without connection that the server refused at delivery. They are not in the time punches: check with the employee and, if the mark is due, use a missing mark request or a time adjustment.',
         details: [{ label: 'Time clock', value: String(row['Name'] ?? ''), translate: false }],
-        sections: [
-          {
-            title: 'Refused offline marks',
-            table: {
-              columns: [
-                { key: 'OccurredAt', label: 'Mark time', kind: 'datetime' },
-                { key: 'LoginCode', label: 'Login code', translate: false },
-                { key: 'EmployeeName', label: 'Employee', translate: false },
-                { key: 'Type', label: 'Mark', translate: false },
-                { key: 'Reason', label: 'Reason', translate: false },
-              ],
-              rows,
-              emptyLabel: 'No refused offline marks.',
-            },
-          },
+        columns: [
+          { key: 'OccurredAt', label: 'Mark time', kind: 'datetime' },
+          { key: 'LoginCode', label: 'Login code', translate: false },
+          { key: 'EmployeeName', label: 'Employee', translate: false },
+          { key: 'Type', label: 'Mark', translate: false },
+          { key: 'Reason', label: 'Reason', translate: false },
         ],
+        rows,
+        emptyLabel: 'No refused offline marks.',
       });
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));

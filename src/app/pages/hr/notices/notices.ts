@@ -7,8 +7,12 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { HR_COMPANY_COLUMN, HR_REVISION_FIELD, hrCompanyField } from '../hr-crud-shared';
+import {
+  HR_COMPANY_COLUMN,
+  HR_REVISION_FIELD,
+  hrCompanyField,
+  showHrTable,
+} from '../hr-crud-shared';
 
 const STATES: readonly ConfigurableCrudOption[] = [
   { value: 'published', label: 'Published' },
@@ -170,7 +174,7 @@ export class HrNoticesPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
       const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
         `hr/notices/${uuid}/reads?limit=500`,
       );
-      openDataViewerDialog(this.dialog, {
+      showHrTable(this.dialog, {
         title: 'Who read it',
         description: 'Employees who opened the notice in Pulse and when they acknowledged it.',
         details: [
@@ -182,20 +186,14 @@ export class HrNoticesPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
             translate: false,
           },
         ],
-        sections: [
-          {
-            title: 'Employees',
-            table: {
-              columns: [
-                { key: 'EmployeeName', label: 'Employee', translate: false },
-                { key: 'ReadAt', label: 'Read at', kind: 'datetime' },
-                { key: 'AcknowledgedAt', label: 'Acknowledged at', kind: 'datetime' },
-              ],
-              rows: response?.data?.items ?? [],
-              emptyLabel: 'Nobody read this notice yet.',
-            },
-          },
+        tableTitle: 'Employees',
+        columns: [
+          { key: 'EmployeeName', label: 'Employee', translate: false },
+          { key: 'ReadAt', label: 'Read at', kind: 'datetime' },
+          { key: 'AcknowledgedAt', label: 'Acknowledged at', kind: 'datetime' },
         ],
+        rows: response?.data?.items ?? [],
+        emptyLabel: 'Nobody read this notice yet.',
       });
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error)));
