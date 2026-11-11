@@ -8628,7 +8628,7 @@
   "Internal (team only)": "Interno (solo equipo)",
   "Internal notes are never sent to the contact.": "Las notas internas nunca se envían al contacto.",
   "International format with the country code.": "Formato internacional con el código del país.",
-  "Website chat is ready when active and does not require provider credentials. Use the embed action to install the widget. Leave credentials empty to keep stored values for other channels.": "El chat del sitio está disponible cuando está activo y no requiere credenciales de proveedor. Use la acción de insertar para instalar el widget. Deje las credenciales vacías para conservar los valores guardados de otros canales.",
+  "Website chat connects after the widget confirms an authorized HTTPS origin. Configure allowedOrigins, embed the widget and reload the website. Provider credentials are not required for website chat.": "El chat del sitio se conecta después de que el widget confirme un origen HTTPS autorizado. Configure allowedOrigins, inserte el widget y recargue el sitio. No requiere credenciales de proveedor.",
   "Mark as read": "Marcar como leída",
   "Message type": "Tipo de mensaje",
   "Messages": "Mensajes",
@@ -12970,5 +12970,8 @@
   "Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.": "Entrega este PIN al empleado de forma segura. Se usa con el código de acceso en los relojes de la empresa y no se vuelve a mostrar; el empleado puede cambiarlo en Pulse.",
   "Failed to save the time clock PIN.": "No se pudo guardar el PIN del reloj.",
   "Human resources • Time clocks | mnscloud": "Recursos humanos • Relojes | mnscloud",
-  "Time Clock Kiosks": "Relojes"
+  "Time Clock Kiosks": "Relojes",
+  "Verified origin": "Origen validado",
+  "Last verification or sync": "Última validación o sincronización",
+  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "Para el chat del sitio, defina allowedOrigins como una lista de los orígenes HTTPS exactos del sitio. Los comodines no validan la instalación. Otras opciones no secretas son opcionales."
 }

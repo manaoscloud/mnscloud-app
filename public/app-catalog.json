@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "cf167e496a0d",
+  "version": "302c80eef088",
   "language": "pt-BR",
   "entries": [
     {
@@ -1001,7 +1001,7 @@
         },
         {
           "label": "Configurações (JSON)",
-          "help": "Configurações opcionais, não sigilosas, como objeto JSON."
+          "help": "Para o chat do site, defina allowedOrigins como uma lista das origens HTTPS exatas do site. Curingas não validam a instalação. Outras configurações não secretas são opcionais."
         },
         {
           "label": "Credenciais (JSON ou token)",

@@ -31,7 +31,7 @@ const config = defineCrud({
   createTitle: 'New channel connection',
   editTitle: 'Edit channel connection',
   dialogDescription:
-    'Website chat is ready when active and does not require provider credentials. Use the embed action to install the widget. Leave credentials empty to keep stored values for other channels.',
+    'Website chat connects after the widget confirms an authorized HTTPS origin. Configure allowedOrigins, embed the widget and reload the website. Provider credentials are not required for website chat.',
   emptyLabel:
     'No channel connections. Create an internal or website chat channel to start conversations.',
   deleteTitle: 'Remove channel connection',
@@ -70,7 +70,14 @@ const config = defineCrud({
     { id: 'open', label: 'Open conversations', field: 'OpenConversations', kind: 'number' },
     { id: 'secret', label: 'Credentials stored', field: 'HasSecret', kind: 'boolean' },
     { id: 'external', label: 'Channel ID', field: 'ChcExternalId', optional: true },
-    { id: 'sync', label: 'Last sync', field: 'ChcLastSyncAt', kind: 'datetime', optional: true },
+    { id: 'verifiedOrigin', label: 'Verified origin', field: 'ChcVerifiedOrigin', optional: true },
+    {
+      id: 'sync',
+      label: 'Last verification or sync',
+      field: 'ChcLastSyncAt',
+      kind: 'datetime',
+      optional: true,
+    },
     { id: 'status', label: 'Status', field: 'ChcStatus', kind: 'status' },
   ],
   fields: [
@@ -116,7 +123,7 @@ const config = defineCrud({
       label: 'Settings (JSON)',
       type: 'textarea',
       format: 'json',
-      help: 'Optional non-secret settings as a JSON object.',
+      help: 'For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.',
       hiddenWhen: ({ values }) => values['kind'] === 'internal',
       span: 4,
     },
@@ -178,7 +185,11 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
           : 'https://portal.example.com';
       const channelUUID = String(row['ChcUUID'] ?? '');
       const snippet = `<script src="${origin}/api/v1/conversations/webchat/widget.js" data-channel="${channelUUID}" async></script>`;
-      const originsExample = JSON.stringify({ allowedOrigins: [origin] }, null, 2);
+      const originsExample = JSON.stringify(
+        { allowedOrigins: ['https://www.example.com'] },
+        null,
+        2,
+      );
       openDataViewerDialog(dialog(), {
         title: 'conversations.embedWidgetTitle',
         description: String(row['ChcName'] ?? ''),

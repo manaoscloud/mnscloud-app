@@ -8629,7 +8629,7 @@
   "Internal (team only)": "Interno (somente equipe)",
   "Internal notes are never sent to the contact.": "Notas internas nunca são enviadas ao contato.",
   "International format with the country code.": "Formato internacional com o código do país.",
-  "Website chat is ready when active and does not require provider credentials. Use the embed action to install the widget. Leave credentials empty to keep stored values for other channels.": "O chat do site fica disponível quando ativo e não exige credenciais de provedor. Use a ação de incorporar para instalar o widget. Deixe as credenciais em branco para manter os valores salvos dos outros canais.",
+  "Website chat connects after the widget confirms an authorized HTTPS origin. Configure allowedOrigins, embed the widget and reload the website. Provider credentials are not required for website chat.": "O chat do site conecta após o widget confirmar uma origem HTTPS autorizada. Configure allowedOrigins, incorpore o widget e recarregue o site. O chat do site não exige credenciais de provedor.",
   "Mark as read": "Marcar como lida",
   "Message type": "Tipo de mensagem",
   "Messages": "Mensagens",
@@ -12971,5 +12971,8 @@
   "Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.": "Entregue este PIN ao colaborador com segurança. Ele é usado com o código de acesso nos relógios da empresa e não é mostrado de novo; o colaborador pode trocá-lo no Pulse.",
   "Failed to save the time clock PIN.": "Não foi possível salvar o PIN do relógio.",
   "Human resources • Time clocks | mnscloud": "Recursos humanos • Relógios | mnscloud",
-  "Time Clock Kiosks": "Relógios"
+  "Time Clock Kiosks": "Relógios",
+  "Verified origin": "Origem validada",
+  "Last verification or sync": "Última validação ou sincronização",
+  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "Para o chat do site, defina allowedOrigins como uma lista das origens HTTPS exatas do site. Curingas não validam a instalação. Outras configurações não secretas são opcionais."
 }
