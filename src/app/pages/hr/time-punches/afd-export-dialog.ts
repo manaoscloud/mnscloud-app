@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -110,28 +110,22 @@ export class AfdExportDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<AfdExportDialogComponent>);
   private readonly transloco = inject(TranslocoService);
 
-  readonly companies = signal<Company[]>([]);
+  private readonly companyList = resource({
+    loader: async () => {
+      const response = await this.api.get<any>('hr/companies?limit=500', { silent: true });
+      const items = response?.data?.items ?? response?.data ?? [];
+      return (Array.isArray(items) ? items : []) as Company[];
+    },
+  });
+  readonly companies = computed(() =>
+    this.companyList.hasValue() ? this.companyList.value() : ([] as Company[]),
+  );
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
   company = '';
   from = previousMonth().from;
   to = previousMonth().to;
-
-  constructor() {
-    void this.loadCompanies();
-  }
-
-  private async loadCompanies() {
-    try {
-      const response = await this.api.get<any>('hr/companies?limit=500', { silent: true });
-      const items = response?.data?.items ?? response?.data ?? [];
-      this.companies.set(Array.isArray(items) ? items : []);
-      if (this.companies().length === 1) this.company = this.companies()[0].RcoUUID;
-    } catch {
-      this.companies.set([]);
-    }
-  }
 
   async export() {
     if (this.busy() || !this.from || !this.to) return;
