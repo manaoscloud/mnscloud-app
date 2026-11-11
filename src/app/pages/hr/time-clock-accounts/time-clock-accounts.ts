@@ -2,17 +2,14 @@ import { afterNextRender, Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
-  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-import {
-  DataViewerDetail,
-  openDataViewerDialog,
-} from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { DataViewerDetail } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { HrCrudPage } from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/time-clock-accounts';
 
@@ -168,7 +165,7 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class HrTimeClockAccountsPage extends HrCrudPage {
   private readonly route = inject(ActivatedRoute);
 
   constructor() {
@@ -251,19 +248,14 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async endSessions(row: ConfigurableCrudRecord): Promise<void> {
-    const confirmed = await this.confirmAction(
+    await this.confirmedPost(
       'End sessions',
       'Sign the employee out of Pulse on every device? They must sign in again to punch.',
-      'End sessions',
+      `${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`,
+      {},
+      'Pulse sessions ended.',
+      'Failed to end the sessions.',
     );
-    if (!confirmed) return;
-    try {
-      await this.api.post(`${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`, {});
-      this.snack.success(this.t('Pulse sessions ended.'));
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error) || 'Failed to end the sessions.'));
-    }
   }
 
   /**
@@ -330,21 +322,5 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
 
   private loginCodeDetail(value: string): DataViewerDetail {
     return { label: 'Login code', value, monospace: true, translate: false };
-  }
-
-  /** A secret shown once (temporary password, time clock PIN) with copy. */
-  private showSecret(
-    title: string,
-    description: string,
-    details: DataViewerDetail[],
-    value: string,
-    sectionTitle = title,
-  ): void {
-    openDataViewerDialog(this.dialog, {
-      title,
-      description,
-      details,
-      sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
-    });
   }
 }

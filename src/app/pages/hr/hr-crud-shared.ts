@@ -1,4 +1,12 @@
-import { ConfigurableCrudOption } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  DataViewerDetail,
+  openDataViewerDialog,
+} from '../../shared/data-viewer-dialog/data-viewer-dialog';
 import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
 
 /** Companies of the HR account in context (lookups of the HR pages). */
@@ -43,3 +51,46 @@ export const HR_REVISION_FIELD = {
   label: 'documents.revision',
   hiddenWhen: () => true,
 };
+
+/**
+ * HR CRUD pages with confirmed row operations and one-time secrets (temporary password, time clock
+ * PIN, activation code).
+ */
+export abstract class HrCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  /** Asks, posts, tells and refreshes; false when cancelled or refused. */
+  protected async confirmedPost(
+    action: string,
+    question: string,
+    path: string,
+    body: unknown,
+    success: string,
+    failure: string,
+  ): Promise<boolean> {
+    if (!(await this.confirmAction(action, question, action))) return false;
+    try {
+      await this.api.post(path, body);
+      this.snack.success(this.t(success));
+      this.refreshList();
+      return true;
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || failure));
+      return false;
+    }
+  }
+
+  /** A secret shown once, with copy. */
+  protected showSecret(
+    title: string,
+    description: string,
+    details: DataViewerDetail[],
+    value: string,
+    sectionTitle = title,
+  ): void {
+    openDataViewerDialog(this.dialog, {
+      title,
+      description,
+      details,
+      sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
+    });
+  }
+}

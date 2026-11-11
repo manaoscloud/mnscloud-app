@@ -2,13 +2,17 @@ import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
-  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { HR_COMPANY_COLUMN, HR_REVISION_FIELD, HR_YES_NO, hrCompanyField } from '../hr-crud-shared';
+import {
+  HR_COMPANY_COLUMN,
+  HR_REVISION_FIELD,
+  HR_YES_NO,
+  HrCrudPage,
+  hrCompanyField,
+} from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/time-clock-kiosks';
 
@@ -138,7 +142,7 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+export class HrTimeClockKiosksPage extends HrCrudPage {
   constructor() {
     super(config);
   }
@@ -154,19 +158,14 @@ export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<Configurable
       return;
     }
     if (action.key !== REVOKE.key) return;
-    const confirmed = await this.confirmAction(
+    await this.confirmedPost(
       'Revoke',
       'Revoke this time clock? The device stops recording punches at once. Recorded punches stay.',
-      'Revoke',
+      `${ENDPOINT}/${uuid}/revoke`,
+      { revision: row['Revision'] ?? null },
+      'Time clock revoked.',
+      'Failed to revoke the time clock.',
     );
-    if (!confirmed) return;
-    try {
-      await this.api.post(`${ENDPOINT}/${uuid}/revoke`, { revision: row['Revision'] ?? null });
-      this.snack.success(this.t('Time clock revoked.'));
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error) || 'Failed to revoke the time clock.'));
-    }
   }
 
   private async activationCode(uuid: string, row: ConfigurableCrudRecord): Promise<void> {
@@ -177,21 +176,15 @@ export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<Configurable
       );
       const item = response?.data?.item ?? {};
       this.refreshList();
-      openDataViewerDialog(this.dialog, {
-        title: 'Activation code',
-        description:
-          'On the device, open Pulse, tap "Use this device as the company time clock" and type this code. It works once and expires in 15 minutes; a new code replaces it.',
-        details: [
+      this.showSecret(
+        'Activation code',
+        'On the device, open Pulse, tap "Use this device as the company time clock" and type this code. It works once and expires in 15 minutes; a new code replaces it.',
+        [
           { label: 'Time clock', value: String(row['Name'] ?? ''), translate: false },
           { label: 'Expires at', value: item.ActivationExpiresAt ?? '', kind: 'datetime' },
         ],
-        sections: [
-          {
-            title: 'Activation code',
-            code: { value: item.ActivationCode ?? '', format: 'text', copy: true },
-          },
-        ],
-      });
+        item.ActivationCode ?? '',
+      );
     } catch (error) {
       this.snack.error(this.t(this.errorMessage(error) || 'Failed to create the activation code.'));
     }
