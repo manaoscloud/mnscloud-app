@@ -2735,6 +2735,16 @@ export const NAV_ITEMS: NavItem[] = [
         entitlementCode: 'module.logs.source',
       },
       {
+        id: 'logs/searches',
+        label: 'nav.logs.searches',
+        icon: 'search',
+        category: 'reports',
+        requiresEnvironment: true,
+        route: '/logs/searches',
+        entitlementCode: 'module.logs.account',
+        permissions: ['tenant.logs.read'],
+      },
+      {
         id: 'logs/accounts',
         label: 'nav.logs.accounts',
         icon: 'inventory_2',

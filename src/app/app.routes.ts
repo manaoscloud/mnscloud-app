@@ -796,6 +796,18 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'authentication.sessions' },
               },
               {
+                path: 'logs/searches',
+                loadComponent: () =>
+                  import('./pages/logs/search/search').then((m) => m.LogsSearchPage),
+                canActivate: [permissionGuard],
+                title: 'Logs',
+                data: {
+                  scope: 'tenant',
+                  permission: 'tenant.logs.read',
+                  breadcrumb: 'logs.search.title',
+                },
+              },
+              {
                 path: 'logs/accounts',
                 loadComponent: () =>
                   import('./pages/logs/accounts/accounts').then((m) => m.LogsAccountPage),
