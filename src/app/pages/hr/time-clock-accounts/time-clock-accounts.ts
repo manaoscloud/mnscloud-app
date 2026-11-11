@@ -2,6 +2,7 @@ import { afterNextRender, Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
   ConfigurableCrudSaveContext,
@@ -9,7 +10,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { DataViewerDetail } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { HrCrudPage } from '../hr-crud-shared';
+import { confirmedPost, HrPageOps, showHrSecret } from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/time-clock-accounts';
 
@@ -165,7 +166,15 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimeClockAccountsPage extends HrCrudPage {
+export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly ops: HrPageOps = {
+    confirm: (title, message, label) => this.confirmAction(title, message, label),
+    post: (path, body) => this.api.post(path, body),
+    success: (message) => this.snack.success(this.t(message)),
+    failure: (error, fallback) => this.snack.error(this.t(this.errorMessage(error) || fallback)),
+    refresh: () => this.refreshList(),
+  };
+
   private readonly route = inject(ActivatedRoute);
 
   constructor() {
@@ -248,7 +257,8 @@ export class HrTimeClockAccountsPage extends HrCrudPage {
   }
 
   private async endSessions(row: ConfigurableCrudRecord): Promise<void> {
-    await this.confirmedPost(
+    await confirmedPost(
+      this.ops,
       'End sessions',
       'Sign the employee out of Pulse on every device? They must sign in again to punch.',
       `${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`,
@@ -280,7 +290,8 @@ export class HrTimeClockAccountsPage extends HrCrudPage {
       }
       const pin = randomKioskPin();
       await this.api.put(path, { pin });
-      this.showSecret(
+      showHrSecret(
+        this.dialog,
         'Time clock PIN',
         'Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.',
         [
@@ -303,7 +314,8 @@ export class HrTimeClockAccountsPage extends HrCrudPage {
         translate: false,
       });
     }
-    this.showSecret(
+    showHrSecret(
+      this.dialog,
       'Temporary credentials',
       credentialEmailNote(credential),
       [

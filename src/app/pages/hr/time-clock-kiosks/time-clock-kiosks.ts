@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudPageBase,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -10,7 +11,9 @@ import {
   HR_COMPANY_COLUMN,
   HR_REVISION_FIELD,
   HR_YES_NO,
-  HrCrudPage,
+  HrPageOps,
+  confirmedPost,
+  showHrSecret,
   hrCompanyField,
 } from '../hr-crud-shared';
 
@@ -142,7 +145,15 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimeClockKiosksPage extends HrCrudPage {
+export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly ops: HrPageOps = {
+    confirm: (title, message, label) => this.confirmAction(title, message, label),
+    post: (path, body) => this.api.post(path, body),
+    success: (message) => this.snack.success(this.t(message)),
+    failure: (error, fallback) => this.snack.error(this.t(this.errorMessage(error) || fallback)),
+    refresh: () => this.refreshList(),
+  };
+
   constructor() {
     super(config);
   }
@@ -158,7 +169,8 @@ export class HrTimeClockKiosksPage extends HrCrudPage {
       return;
     }
     if (action.key !== REVOKE.key) return;
-    await this.confirmedPost(
+    await confirmedPost(
+      this.ops,
       'Revoke',
       'Revoke this time clock? The device stops recording punches at once. Recorded punches stay.',
       `${ENDPOINT}/${uuid}/revoke`,
@@ -176,7 +188,8 @@ export class HrTimeClockKiosksPage extends HrCrudPage {
       );
       const item = response?.data?.item ?? {};
       this.refreshList();
-      this.showSecret(
+      showHrSecret(
+        this.dialog,
         'Activation code',
         'On the device, open Pulse, tap "Use this device as the company time clock" and type this code. It works once and expires in 15 minutes; a new code replaces it.',
         [

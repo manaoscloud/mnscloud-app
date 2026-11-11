@@ -1,8 +1,5 @@
-import {
-  ConfigurableCrudOption,
-  ConfigurableCrudPageBase,
-  ConfigurableCrudRecord,
-} from '../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfigurableCrudOption } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import {
   DataViewerDetail,
   openDataViewerDialog,
@@ -52,45 +49,50 @@ export const HR_REVISION_FIELD = {
   hiddenWhen: () => true,
 };
 
-/**
- * HR CRUD pages with confirmed row operations and one-time secrets (temporary password, time clock
- * PIN, activation code).
- */
-export abstract class HrCrudPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  /** Asks, posts, tells and refreshes; false when cancelled or refused. */
-  protected async confirmedPost(
-    action: string,
-    question: string,
-    path: string,
-    body: unknown,
-    success: string,
-    failure: string,
-  ): Promise<boolean> {
-    if (!(await this.confirmAction(action, question, action))) return false;
-    try {
-      await this.api.post(path, body);
-      this.snack.success(this.t(success));
-      this.refreshList();
-      return true;
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error) || failure));
-      return false;
-    }
-  }
+/** What a page lends to the shared HR row operations (its own protected helpers, bound). */
+export type HrPageOps = {
+  confirm: (title: string, message: string, confirmLabel: string) => Promise<boolean>;
+  post: (path: string, body: unknown) => Promise<unknown>;
+  success: (message: string) => void;
+  failure: (error: unknown, fallback: string) => void;
+  refresh: () => void;
+};
 
-  /** A secret shown once, with copy. */
-  protected showSecret(
-    title: string,
-    description: string,
-    details: DataViewerDetail[],
-    value: string,
-    sectionTitle = title,
-  ): void {
-    openDataViewerDialog(this.dialog, {
-      title,
-      description,
-      details,
-      sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
-    });
+/** Asks, posts, tells and refreshes; false when cancelled or refused. */
+export async function confirmedPost(
+  ops: HrPageOps,
+  action: string,
+  question: string,
+  path: string,
+  body: unknown,
+  success: string,
+  failure: string,
+): Promise<boolean> {
+  if (!(await ops.confirm(action, question, action))) return false;
+  try {
+    await ops.post(path, body);
+    ops.success(success);
+    ops.refresh();
+    return true;
+  } catch (error) {
+    ops.failure(error, failure);
+    return false;
   }
+}
+
+/** A secret shown once (temporary password, time clock PIN, activation code), with copy. */
+export function showHrSecret(
+  dialog: MatDialog,
+  title: string,
+  description: string,
+  details: DataViewerDetail[],
+  value: string,
+  sectionTitle = title,
+): void {
+  openDataViewerDialog(dialog, {
+    title,
+    description,
+    details,
+    sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
+  });
 }
