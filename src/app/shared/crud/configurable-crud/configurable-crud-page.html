@@ -801,7 +801,11 @@
               [fieldClass]="fieldClass(field)"
               [label]="translatedFieldLabel(field) + (isFieldRequired(field) ? '*' : '')"
               [placeholder]="field.placeholder ?? 'Search' | transloco"
-              [options]="fieldOptions(field)"
+              [options]="
+                field.translateOptions
+                  ? translatedSelectOptions(field, fieldOptions(field))
+                  : fieldOptions(field)
+              "
               [clearable]="isFieldClearable(field)"
               [remoteSearch]="!!field.remoteLookup"
               [hasNext]="remoteHasNext(field)"
