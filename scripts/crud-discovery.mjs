@@ -9,8 +9,14 @@ export const CRUD_EXEMPT_MARKER = /\/\/\s*crud-template-exempt:[ \t]*(\S[^\n]{9,
 export function classifyCrud(ts, html = '') {
   if (!ts.includes('@Component')) return null;
   // RuntimeServerCrudPage (shared/runtime-server) is the generic base plus the Agent installation
-  // actions of the runtime modules; it renders the same shared template.
-  if (/extends\s+(?:ConfigurableCrudPageBase|RuntimeServerCrudPage)\b/.test(ts)) return 'generic';
+  // actions of the runtime modules; it renders the same shared template. A related collection with
+  // its own table component (`collection.component`) extends ConfigurableCrudEmbeddedCollection.
+  if (
+    /extends\s+(?:ConfigurableCrudPageBase|RuntimeServerCrudPage|ConfigurableCrudEmbeddedCollection)\b/.test(
+      ts,
+    )
+  )
+    return 'generic';
   if (CRUD_EXEMPT_MARKER.test(ts)) return null;
   if (
     /MatTableDataSource/.test(ts) ||

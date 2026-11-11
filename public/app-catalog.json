@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "302c80eef088",
+  "version": "6b8d498774fb",
   "language": "pt-BR",
   "entries": [
     {
@@ -5097,10 +5097,6 @@
           "help": ""
         },
         {
-          "label": "Credencial",
-          "help": "A credencial nunca é exibida; aqui aparece só se ela está cadastrada."
-        },
-        {
           "label": "Impressão digital",
           "help": "Chave SSH do equipamento fixada no primeiro acesso. Se o equipamento foi trocado ou reinstalado, use Limpar impressão digital nas ações da lista."
         },
@@ -9877,10 +9873,6 @@
         {
           "label": "Verificar certificado TLS",
           "help": ""
-        },
-        {
-          "label": "Credencial",
-          "help": "A credencial nunca é exibida; aqui aparece só se ela está cadastrada."
         },
         {
           "label": "Impressão digital",

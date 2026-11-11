@@ -37,6 +37,7 @@ import {
   stateFields,
   statusField,
 } from '../network-options';
+import { credentialCollectionConfig } from '../network-credentials';
 
 type Translate = (key: string) => string;
 
@@ -52,12 +53,7 @@ function hostKeyText(row: ConfigurableCrudRecord, translate: Translate): string 
   return algorithm ? `${algorithm} ${fingerprint}` : fingerprint;
 }
 
-function credentialText(row: ConfigurableCrudRecord, translate: Translate): string {
-  const stored = row['HasCredentials'] === true || Number(row['HasCredentials'] ?? 0) === 1;
-  return translate(stored ? 'network.credentialStored' : 'network.credentialMissing');
-}
-
-/** Record, network path and the read-only access state (credential and pinned host key). */
+/** Record, network path and the read-only pinned host key (credentials are their own tab). */
 function deviceFields(platform: boolean, translate: Translate): ConfigurableCrudField[] {
   const sites = `${networkBase(platform)}/sites?status=1`;
   return [
@@ -170,16 +166,6 @@ function deviceFields(platform: boolean, translate: Translate): ConfigurableCrud
       span: 1,
     },
     {
-      key: 'credential',
-      label: 'network.credential',
-      tab: 'authentication',
-      span: 1,
-      fromRecord: (_value, row) => credentialText(row, translate),
-      hiddenWhen: ({ editing }) => !editing,
-      disabledWhen: () => true,
-      help: 'network.credentialHelp',
-    },
-    {
       key: 'hostKey',
       label: 'network.hostKey',
       tab: 'authentication',
@@ -223,6 +209,29 @@ function devicePayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
     ]),
     verifyTls: formFlag(values['verifyTls'], 1),
     ...recordState(values),
+  };
+}
+
+/**
+ * Credentials of the device (stored in the vault, never shown): their own table component owns
+ * the queued value flow (`device-credentials.ts`).
+ */
+function credentialCollection(base: string, canWrite: boolean): ConfigurableCrudRelatedCollection {
+  const endpoint = (device: string) => `${base}/devices/${device}/credentials`;
+  return {
+    key: 'credentials',
+    label: 'network.credentials',
+    emptyLabel: 'network.noCredentials',
+    endpoint,
+    deleteEndpoint: (device, row) =>
+      `${endpoint(device)}/${row['NwcUUID']}?revision=${encodeURIComponent(String(row['NwcRevision'] ?? ''))}`,
+    uuidField: 'NwcUUID',
+    initialValues: {},
+    fields: [],
+    columns: [],
+    config: (device) => credentialCollectionConfig(endpoint(device), canWrite),
+    component: () =>
+      import('./device-credentials').then((module) => module.NetworkDeviceCredentialsCollection),
   };
 }
 
@@ -347,7 +356,6 @@ function deviceConfig(
       networkPath: 'public',
       apiUrl: '',
       verifyTls: 1,
-      credential: '',
       hostKey: '',
       hostKeyPinnedAt: '',
       monitoringAgentUUID: '',
@@ -398,7 +406,7 @@ function deviceConfig(
         LIFECYCLE_OPTIONS,
       ),
       { id: 'access', label: 'network.accessMethods', field: 'AccessCount', kind: 'number' },
-      { id: 'credential', label: 'network.credential', field: 'HasCredentials', kind: 'boolean' },
+      { id: 'credentials', label: 'network.credentials', field: 'CredentialCount', kind: 'number' },
       {
         id: 'hostKey',
         label: 'network.hostKey',
@@ -409,7 +417,10 @@ function deviceConfig(
       { id: 'status', label: 'Status', field: 'NwdStatus', kind: 'status' },
     ],
     payload: (values) => devicePayload(values),
-    relatedCollections: [accessCollection(base)],
+    relatedCollections: [
+      accessCollection(base),
+      credentialCollection(base, can('tenant.network.devices.credentials')),
+    ],
     rowActions: [
       {
         key: 'managed-access',
