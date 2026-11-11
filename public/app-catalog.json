@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0b33b515ac55",
+  "version": "83735d7b5f82",
   "language": "pt-BR",
   "entries": [
     {
@@ -3910,6 +3910,39 @@
         },
         {
           "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/time-clock-kiosks",
+      "menuPath": "Recursos humanos › Relógios",
+      "scope": "tenant",
+      "title": "Relógios",
+      "description": "Aparelhos compartilhados em que vários colaboradores batem o ponto no Pulse com o código de acesso, o PIN e uma foto ao vivo.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": "Onde o aparelho fica, por exemplo Recepção matriz."
+        },
+        {
+          "label": "Empresa",
+          "help": "Vazio: todos os colaboradores da conta podem bater o ponto neste relógio."
+        },
+        {
+          "label": "Foto na marcação",
+          "help": "Sim: cada batida neste relógio só é confirmada com uma foto ao vivo da câmera frontal."
+        },
+        {
+          "label": "Comprovante por e-mail",
+          "help": "Oferece enviar o comprovante da batida para o e-mail do colaborador no cadastro."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
