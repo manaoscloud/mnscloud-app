@@ -10,6 +10,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { CHANNEL_KINDS, CHANNEL_STATES } from '../conversation-options';
+import { openWebchatPreviewDialog } from './webchat-preview-dialog';
 
 function parseObject(value: unknown): Record<string, unknown> | null | 'invalid' {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -41,6 +42,28 @@ const EXTERNAL_ID_LABELS: Record<string, string> = {
 };
 
 const MAX_ORIGINS = 20;
+
+/** Website chat appearance keys stored in `ChcConfig` (also the form field keys). */
+export const WIDGET_LOOK_KEYS = [
+  'widgetTitle',
+  'widgetSubtitle',
+  'widgetGreeting',
+  'widgetColor',
+  'widgetPosition',
+] as const;
+
+const COLOR_RE = /^#[0-9a-f]{6}$/i;
+
+const WIDGET_POSITIONS = [
+  { value: 'right', label: 'Bottom right' },
+  { value: 'left', label: 'Bottom left' },
+] as const;
+
+function storedLook(value: unknown, key: string): string {
+  const object = parseObject(value);
+  const raw = object && object !== 'invalid' ? object[key] : '';
+  return typeof raw === 'string' ? raw : '';
+}
 
 const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
 const isProvider = (values: ConfigurableCrudRecord) =>
@@ -91,8 +114,14 @@ export function webchatConfig(values: ConfigurableCrudRecord): Record<string, un
     origins: _legacy,
     allowedOrigins: _origins,
     allowSubdomains: _subdomains,
-    ...rest
+    ...kept
   } = stored && stored !== 'invalid' ? stored : {};
+  const rest: Record<string, unknown> = { ...kept };
+  for (const key of WIDGET_LOOK_KEYS) {
+    delete rest[key];
+    const value = String(values[key] ?? '').trim();
+    if (value) rest[key] = key === 'widgetColor' ? value.toUpperCase() : value;
+  }
   const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
     .map(websiteOrigin)
     .filter((origin) => origin && origin !== 'invalid');
@@ -137,6 +166,11 @@ const config = defineCrud({
     allowedOrigins: '',
     otherOrigins: '',
     allowSubdomains: 0,
+    widgetTitle: '',
+    widgetSubtitle: '',
+    widgetGreeting: '',
+    widgetColor: '',
+    widgetPosition: 'right',
     ChcExternalId: '',
     secret: '',
     clearSecret: 0,
@@ -232,6 +266,46 @@ const config = defineCrud({
       span: 4,
     },
     {
+      key: 'widgetTitle',
+      source: 'ChcConfig',
+      label: 'Chat title',
+      placeholder: 'Atendimento',
+      help: 'Shown at the top of the chat window. Empty uses the default title, Atendimento.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedLook(value, 'widgetTitle'),
+    },
+    {
+      key: 'widgetColor',
+      source: 'ChcConfig',
+      label: 'Chat color',
+      placeholder: '#2563EB',
+      help: 'Color of the chat button and header (#RRGGBB). Empty uses blue.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedLook(value, 'widgetColor'),
+    },
+    {
+      key: 'widgetPosition',
+      source: 'ChcConfig',
+      label: 'Chat position',
+      type: 'search-select',
+      options: WIDGET_POSITIONS,
+      translateOptions: true,
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedLook(value, 'widgetPosition') || 'right',
+      span: 1,
+    },
+    {
+      key: 'widgetGreeting',
+      source: 'ChcConfig',
+      label: 'Welcome message',
+      type: 'textarea',
+      placeholder: 'Olá! Como podemos ajudar?',
+      help: 'Shown to the visitor before the first message. Empty shows the subtitle.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedLook(value, 'widgetGreeting'),
+      span: 4,
+    },
+    {
       key: 'ChcExternalId',
       source: 'ChcExternalId',
       label: 'Provider identifier',
@@ -255,6 +329,16 @@ const config = defineCrud({
       translateOptions: true,
       hiddenWhen: ({ editing, values }) => !editing || !isProvider(values),
       span: 1,
+    },
+    {
+      key: 'widgetSubtitle',
+      source: 'ChcConfig',
+      label: 'Chat subtitle',
+      tab: 'advanced',
+      placeholder: 'Envie sua mensagem para nossa equipe',
+      help: 'Shown under the chat title. Empty uses the default subtitle.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => storedLook(value, 'widgetSubtitle'),
     },
     {
       key: 'allowSubdomains',
@@ -300,6 +384,37 @@ const config = defineCrud({
   },
 });
 
+function appOrigin(): string {
+  return typeof globalThis.location?.origin === 'string' && globalThis.location.origin
+    ? globalThis.location.origin
+    : 'https://portal.example.com';
+}
+
+function webchatPreviewAction(dialog: () => MatDialog): ConfigurableCrudRowAction {
+  return {
+    key: 'webchat-preview',
+    label: 'conversations.widgetPreview',
+    icon: 'visibility',
+    visible: (row) => row['ChcKind'] === 'webchat',
+    run: (row) => {
+      const look = (key: string) => storedLook(row['ChcConfig'], key);
+      openWebchatPreviewDialog(dialog(), {
+        name: String(row['ChcName'] ?? ''),
+        scriptUrl: `${appOrigin()}/api/v1/conversations/webchat/widget.js`,
+        channelUUID: String(row['ChcUUID'] ?? ''),
+        // Same rules as the public appearance: an invalid stored value never shows here.
+        look: {
+          title: look('widgetTitle').slice(0, 60),
+          subtitle: look('widgetSubtitle').slice(0, 120),
+          greeting: look('widgetGreeting').slice(0, 500),
+          color: COLOR_RE.test(look('widgetColor')) ? look('widgetColor') : '',
+          position: look('widgetPosition') === 'left' ? 'left' : '',
+        },
+      });
+    },
+  };
+}
+
 function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction {
   return {
     key: 'webchat-embed',
@@ -307,10 +422,7 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
     icon: 'code',
     visible: (row) => row['ChcKind'] === 'webchat',
     run: (row) => {
-      const origin =
-        typeof globalThis.location?.origin === 'string' && globalThis.location.origin
-          ? globalThis.location.origin
-          : 'https://portal.example.com';
+      const origin = appOrigin();
       const channelUUID = String(row['ChcUUID'] ?? '');
       const snippet = `<script src="${origin}/api/v1/conversations/webchat/widget.js" data-channel="${channelUUID}" async></script>`;
       const websites = storedOrigins(row['ChcConfig']);
@@ -350,7 +462,7 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
     const dialog = inject(MatDialog);
     super({
       ...config,
-      rowActions: [webchatEmbedAction(() => dialog)],
+      rowActions: [webchatEmbedAction(() => dialog), webchatPreviewAction(() => dialog)],
     });
   }
 
@@ -366,6 +478,16 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
       return this.rejectField('otherOrigins', 'conversations.websiteLineInvalid', {
         value: invalid,
       });
+    }
+    const color = String(payload['widgetColor'] ?? '').trim();
+    if (color && !COLOR_RE.test(color)) {
+      return this.rejectField('widgetColor', 'conversations.widgetColorInvalid');
+    }
+    const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
+    for (const [key, max] of Object.entries(limits)) {
+      if (String(payload[key] ?? '').trim().length > max) {
+        return this.rejectField(key, 'conversations.widgetTextTooLong', { max });
+      }
     }
     if (lines.length + 1 > MAX_ORIGINS) {
       return this.rejectField('otherOrigins', 'conversations.websiteTooMany', {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0027354ecf81",
+  "version": "e1269fb410ca",
   "language": "pt-BR",
   "entries": [
     {
@@ -1008,6 +1008,22 @@
           "help": "Opcional. Um endereço de site por linha."
         },
         {
+          "label": "Título do chat",
+          "help": "Aparece no topo da janela do chat. Vazio usa o título padrão, Atendimento."
+        },
+        {
+          "label": "Cor do chat",
+          "help": "Cor do botão e do topo do chat (#RRGGBB). Vazio usa azul."
+        },
+        {
+          "label": "Posição do chat",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de boas-vindas",
+          "help": "Mostrada ao visitante antes da primeira mensagem. Vazio mostra o subtítulo."
+        },
+        {
           "label": "Identificador no provedor",
           "help": "Identificador deste número, página ou conta no provedor. As mensagens recebidas são encaminhadas por ele."
         },
@@ -1018,6 +1034,10 @@
         {
           "label": "Apagar credenciais salvas",
           "help": ""
+        },
+        {
+          "label": "Subtítulo do chat",
+          "help": "Aparece abaixo do título do chat. Vazio usa o subtítulo padrão."
         },
         {
           "label": "Permitir subdomínios",
