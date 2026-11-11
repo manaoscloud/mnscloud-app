@@ -1,4 +1,5 @@
 import { Component, DestroyRef, ElementRef, computed, effect, inject, signal } from '@angular/core';
+import { FieldInvalidDirective } from '../forms/field-invalid.directive';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -29,6 +30,7 @@ const localTime = (time: number) => {
   standalone: true,
   imports: [
     FormsModule,
+    FieldInvalidDirective,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
@@ -78,6 +80,7 @@ export class LogViewerComponent {
   private currentCursor = '0';
   private searchUUID = '';
   private generation = 0;
+  private environment: string | null | undefined;
   private destroyed = false;
   private timer?: ReturnType<typeof setTimeout>;
   readonly canSave = computed(() =>
@@ -129,7 +132,9 @@ export class LogViewerComponent {
   });
   constructor() {
     effect(() => {
-      this.auth.user()?.EnvironmentUUID;
+      const environment = this.auth.user()?.EnvironmentUUID;
+      if (environment === this.environment) return;
+      this.environment = environment;
       this.reset();
       this.account.set('');
       this.source.set('');
@@ -182,7 +187,7 @@ export class LogViewerComponent {
   }
   async chooseAccount(value: unknown) {
     this.reset();
-    this.account.set(String(value || ''));
+    this.account.set(typeof value === 'string' ? value : '');
     this.source.set('');
     this.selectedView.set('');
     this.views.set([]);
@@ -222,6 +227,7 @@ export class LogViewerComponent {
     }
   }
   private payload() {
+    const enteredTerms = this.terms().trim() ? [this.terms().trim()] : [];
     return {
       dataset: this.dataset(),
       accountUUID: this.account(),
@@ -229,11 +235,7 @@ export class LogViewerComponent {
       severity: this.severity() === '' ? null : Number(this.severity()),
       from: new Date(this.from()).toISOString(),
       to: new Date(this.to()).toISOString(),
-      terms: this.savedTerms.length
-        ? this.savedTerms
-        : this.terms().trim()
-          ? [this.terms().trim()]
-          : [],
+      terms: this.savedTerms.length ? this.savedTerms : enteredTerms,
       fields: this.savedFields,
       pageSize: 100,
     };
@@ -278,13 +280,7 @@ export class LogViewerComponent {
       const result = await this.api.post<Envelope<Row>>('logs/searches', this.payload());
       if (generation !== this.generation || this.destroyed) return;
       this.searchUUID = result.data['uuid'];
-      for (let attempt = 0; attempt < 60; attempt++) {
-        if (generation !== this.generation || this.destroyed) return;
-        const complete = await this.loadPage('0', generation);
-        if (complete) break;
-        if (attempt === 59) throw new Error();
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      await this.waitPage(generation);
     } catch {
       if (generation === this.generation) {
         this.error.set('logs.search.unavailable');
@@ -298,13 +294,21 @@ export class LogViewerComponent {
       }
     }
   }
+  private async waitPage(generation: number, attempt = 0): Promise<void> {
+    if (generation !== this.generation || this.destroyed) return;
+    if (await this.loadPage('0', generation)) return;
+    if (attempt >= 59) throw new Error('Search did not complete within 60 seconds.');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await this.waitPage(generation, attempt + 1);
+  }
   private async loadPage(cursor: string, generation: number) {
     const response = await this.api.get<Envelope<Row>>(
       `logs/searches/${encodeURIComponent(this.searchUUID)}?cursor=${cursor}`,
     );
     if (generation !== this.generation || this.destroyed) return true;
     const page = response.data;
-    if (page['state'] === 'failed' || page['state'] === 'expired') throw new Error();
+    if (page['state'] === 'failed' || page['state'] === 'expired')
+      throw new Error('Search failed or expired.');
     if (page['state'] !== 'complete') return false;
     this.rows.set(page['items']);
     this.total.set(page['total']);
@@ -354,7 +358,7 @@ export class LogViewerComponent {
     }
   }
   chooseView(value: unknown) {
-    this.selectedView.set(String(value || ''));
+    this.selectedView.set(typeof value === 'string' ? value : '');
     const view = this.views().find((row) => row['uuid'] === value);
     if (!view) return;
     const query = view['query'];
@@ -365,7 +369,7 @@ export class LogViewerComponent {
     this.source.set(query.sourceUUID || '');
     this.severity.set(query.severity == null ? '' : String(query.severity));
     this.savedTerms = [...(query.terms || [])];
-    this.savedFields = { ...(query.fields || {}) };
+    this.savedFields = { ...query.fields };
     this.terms.set(this.savedTerms.join(' · '));
   }
   async deleteView() {

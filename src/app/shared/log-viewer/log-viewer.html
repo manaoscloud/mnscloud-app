@@ -58,10 +58,12 @@
         matInput
         type="datetime-local"
         step="1"
+        [mnsInvalid]="invalid().includes('from')"
         [ngModel]="from()"
         (ngModelChange)="from.set($event)"
         [attr.aria-invalid]="invalid().includes('from')"
-    /></mat-form-field>
+      /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+    >
     <mat-form-field
       data-field="to"
       appearance="outline"
@@ -72,10 +74,12 @@
         matInput
         type="datetime-local"
         step="1"
+        [mnsInvalid]="invalid().includes('to')"
         [ngModel]="to()"
         (ngModelChange)="to.set($event)"
         [attr.aria-invalid]="invalid().includes('to')"
-    /></mat-form-field>
+      /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+    >
   </div>
   <div class="header-actions">
     <button mat-flat-button (click)="search()" [disabled]="loading()">
@@ -137,9 +141,11 @@
         ><input
           matInput
           maxlength="120"
+          [mnsInvalid]="invalid().includes('viewName')"
           [ngModel]="viewName()"
           (ngModelChange)="viewName.set($event)"
-      /></mat-form-field>
+        /><mat-error>{{ 'logs.search.invalid' | transloco }}</mat-error></mat-form-field
+      >
     }
   </div>
   @if (canSave()) {
