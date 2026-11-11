@@ -106,7 +106,7 @@ export class ApiService {
   }
 
   static isHrAccountEndpoint(endpoint: string): boolean {
-    return /^\/?hr\/(time-clock-accounts|time-punches|work-schedules|work-schedule-assignments|holidays|time-policies|timesheets|time-issues|dashboard|employees|companies|department-approvers|time-requests|time-adjustments|absences|employee-documents|notices|vacation-balances)([/?]|$)/.test(
+    return /^\/?hr\/(time-clock-accounts|time-clock-kiosks|time-punches|work-schedules|work-schedule-assignments|holidays|time-policies|timesheets|time-issues|dashboard|employees|companies|department-approvers|time-requests|time-adjustments|absences|employee-documents|notices|vacation-balances)([/?]|$)/.test(
       endpoint,
     );
   }

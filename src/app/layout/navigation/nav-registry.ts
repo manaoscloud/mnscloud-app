@@ -967,6 +967,14 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/hr/time-clock-accounts',
       },
       {
+        id: 'hr/time-clock-kiosks',
+        label: 'nav.hr.time-clock-kiosks',
+        icon: 'tablet_android',
+        category: 'settings',
+        route: '/hr/time-clock-kiosks',
+        permissions: ['tenant.hr.time-clock-kiosks.read'],
+      },
+      {
         id: 'hr/department-approvers',
         label: 'nav.hr.department-approvers',
         icon: 'how_to_reg',

@@ -1306,6 +1306,14 @@ export const routes: Routes = [
                 title: 'Human resources • Time clock accounts | mnscloud',
               },
               {
+                path: 'hr/time-clock-kiosks',
+                loadComponent: () =>
+                  import('./pages/hr/time-clock-kiosks/time-clock-kiosks').then(
+                    (m) => m.HrTimeClockKiosksPage,
+                  ),
+                title: 'Human resources • Time clocks | mnscloud',
+              },
+              {
                 path: 'hr/time-punches',
                 loadComponent: () =>
                   import('./pages/hr/time-punches/time-punches').then((m) => m.HrTimePunchesPage),

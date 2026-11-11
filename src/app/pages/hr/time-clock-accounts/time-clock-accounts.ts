@@ -9,10 +9,8 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
-import {
-  DataViewerDetail,
-  openDataViewerDialog,
-} from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { DataViewerDetail } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import { confirmedPost, HrPageOps, showHrSecret } from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/time-clock-accounts';
 
@@ -42,6 +40,27 @@ export function credentialEmailNote(credential: TemporaryCredential): string {
       return 'The access e-mail could not be sent. Hand these credentials over securely, or check the SMTP route and reset the password.';
     default:
       return 'Show these credentials to the employee securely. The password is not stored here.';
+  }
+}
+
+/** A random time clock PIN the API accepts: 6 digits, no repeated digit and no sequence. */
+export function randomKioskPin(random: (n: number) => number = secureDigit): string {
+  for (;;) {
+    const pin = Array.from({ length: 6 }, () => String(random(10))).join('');
+    const digits = [...pin].map(Number);
+    const repeated = digits.every((d) => d === digits[0]);
+    const step = digits[1] - digits[0];
+    const run =
+      (step === 1 || step === -1) && digits.every((d, i) => i === 0 || d - digits[i - 1] === step);
+    if (!repeated && !run) return pin;
+  }
+}
+
+function secureDigit(n: number): number {
+  const value = new Uint32Array(1);
+  for (;;) {
+    crypto.getRandomValues(value);
+    if (value[0] < Math.floor(0x100000000 / n) * n) return value[0] % n;
   }
 }
 
@@ -119,6 +138,18 @@ const config = defineCrud({
   rowActions: [
     { key: 'resetPassword', label: 'Reset password', icon: 'key', tooltip: 'Reset password' },
     {
+      key: 'kioskPin',
+      label: 'Generate time clock PIN',
+      icon: 'pin',
+      tooltip: 'Generate time clock PIN',
+    },
+    {
+      key: 'clearKioskPin',
+      label: 'Clear time clock PIN',
+      icon: 'backspace',
+      tooltip: 'Clear time clock PIN',
+    },
+    {
       key: 'endSessions',
       label: 'End sessions',
       icon: 'logout',
@@ -136,6 +167,14 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly ops: HrPageOps = {
+    confirm: (title, message, label) => this.confirmAction(title, message, label),
+    post: (path, body) => this.api.post(path, body),
+    success: (message) => this.snack.success(this.t(message)),
+    failure: (error, fallback) => this.snack.error(this.t(this.errorMessage(error) || fallback)),
+    refresh: () => this.refreshList(),
+  };
+
   private readonly route = inject(ActivatedRoute);
 
   constructor() {
@@ -193,6 +232,10 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
       await this.endSessions(row);
       return;
     }
+    if (action.key === 'kioskPin' || action.key === 'clearKioskPin') {
+      await this.kioskPin(row, action.key === 'clearKioskPin');
+      return;
+    }
     if (action.key !== 'resetPassword') return;
     const confirmed = await this.confirmAction(
       'Reset password',
@@ -214,18 +257,51 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   private async endSessions(row: ConfigurableCrudRecord): Promise<void> {
-    const confirmed = await this.confirmAction(
+    await confirmedPost(
+      this.ops,
       'End sessions',
       'Sign the employee out of Pulse on every device? They must sign in again to punch.',
-      'End sessions',
+      `${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`,
+      {},
+      'Pulse sessions ended.',
+      'Failed to end the sessions.',
+    );
+  }
+
+  /**
+   * Time clock PIN (company time clocks of the Pulse kiosk mode): a new random PIN shown once, or
+   * cleared so the employee sets a new one in Pulse.
+   */
+  private async kioskPin(row: ConfigurableCrudRecord, clear: boolean): Promise<void> {
+    const confirmed = await this.confirmAction(
+      clear ? 'Clear time clock PIN' : 'Generate time clock PIN',
+      clear
+        ? 'Clear the time clock PIN? The employee can no longer punch on the company time clocks until a new PIN is set in Pulse or generated here.'
+        : 'Generate a new time clock PIN? The previous PIN stops working immediately.',
+      clear ? 'Clear time clock PIN' : 'Generate time clock PIN',
     );
     if (!confirmed) return;
+    const path = `${ENDPOINT}/${row['TimeClockAccountUUID']}/kiosk-pin`;
     try {
-      await this.api.post(`${ENDPOINT}/${row['TimeClockAccountUUID']}/sessions/revoke`, {});
-      this.snack.success(this.t('Pulse sessions ended.'));
-      this.refreshList();
+      if (clear) {
+        await this.api.delete(path);
+        this.snack.success(this.t('Time clock PIN cleared.'));
+        return;
+      }
+      const pin = randomKioskPin();
+      await this.api.put(path, { pin });
+      showHrSecret(
+        this.dialog,
+        'Time clock PIN',
+        'Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.',
+        [
+          { label: 'Employee', value: String(row['EmployeeName'] ?? ''), translate: false },
+          this.loginCodeDetail(String(row['LoginCode'] ?? '')),
+        ],
+        pin,
+      );
     } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error) || 'Failed to end the sessions.'));
+      this.snack.error(this.t(this.errorMessage(error) || 'Failed to save the time clock PIN.'));
     }
   }
 
@@ -238,29 +314,25 @@ export class HrTimeClockAccountsPage extends ConfigurableCrudPageBase<Configurab
         translate: false,
       });
     }
-    openDataViewerDialog(this.dialog, {
-      title: 'Temporary credentials',
-      description: credentialEmailNote(credential),
-      details: [
+    showHrSecret(
+      this.dialog,
+      'Temporary credentials',
+      credentialEmailNote(credential),
+      [
         ...details,
-        {
-          label: 'Login code',
-          value: credential.LoginCode ?? '',
-          monospace: true,
-          translate: false,
-        },
+        this.loginCodeDetail(credential.LoginCode ?? ''),
         {
           label: 'Expires at',
           value: credential.TemporaryPasswordExpiresAt ?? '',
           kind: 'datetime',
         },
       ],
-      sections: [
-        {
-          title: 'Temporary password',
-          code: { value: credential.TemporaryPassword ?? '', format: 'text', copy: true },
-        },
-      ],
-    });
+      credential.TemporaryPassword ?? '',
+      'Temporary password',
+    );
+  }
+
+  private loginCodeDetail(value: string): DataViewerDetail {
+    return { label: 'Login code', value, monospace: true, translate: false };
   }
 }
