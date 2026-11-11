@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 
@@ -64,7 +63,7 @@ export function webchatPreviewDocument(data: WebchatPreviewData): string {
           class="webchat-preview-frame"
           sandbox="allow-scripts"
           [attr.title]="'conversations.widgetPreviewTitle' | transloco"
-          [srcdoc]="document"
+          #frame
         ></iframe>
       </div>
       <div class="form-actions">
@@ -91,12 +90,15 @@ export function webchatPreviewDocument(data: WebchatPreviewData): string {
     }
   `,
 })
-export class WebchatPreviewDialogComponent {
+export class WebchatPreviewDialogComponent implements AfterViewInit {
   readonly data = inject<WebchatPreviewData>(MAT_DIALOG_DATA);
-  // The document only embeds escaped attribute values and the App's own widget script.
-  readonly document: SafeHtml = inject(DomSanitizer).bypassSecurityTrustHtml(
-    webchatPreviewDocument(this.data),
-  );
+  private readonly frame = viewChild.required<ElementRef<HTMLIFrameElement>>('frame');
+
+  ngAfterViewInit(): void {
+    // A sandboxed frame without allow-same-origin: the page (escaped attribute values and the
+    // App's own widget script) runs in an opaque origin and cannot reach the App.
+    this.frame().nativeElement.srcdoc = webchatPreviewDocument(this.data);
+  }
 }
 
 export function openWebchatPreviewDialog(
