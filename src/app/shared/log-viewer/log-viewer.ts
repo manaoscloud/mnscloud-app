@@ -80,6 +80,7 @@ export class LogViewerComponent {
   private currentCursor = '0';
   private searchUUID = '';
   private generation = 0;
+  private scopeGeneration = 0;
   private environment: string | null | undefined;
   private destroyed = false;
   private timer?: ReturnType<typeof setTimeout>;
@@ -162,6 +163,7 @@ export class LogViewerComponent {
   }
   private reset() {
     this.generation++;
+    this.scopeGeneration++;
     clearTimeout(this.timer);
     this.live.set(false);
     this.loading.set(false);
@@ -175,14 +177,14 @@ export class LogViewerComponent {
     this.invalid.set([]);
   }
   async loadAccounts(search = '') {
-    const generation = this.generation;
+    const generation = this.scopeGeneration;
     try {
       const result = await this.api.get<Envelope<{ items: Row[] }>>(
         `logs/accounts?limit=100&status=1&search=${encodeURIComponent(search)}`,
       );
-      if (generation === this.generation && !this.destroyed) this.accounts.set(result.data.items);
+      if (generation === this.scopeGeneration && !this.destroyed) this.accounts.set(result.data.items);
     } catch {
-      if (generation === this.generation) this.error.set('logs.search.unavailable');
+      if (generation === this.scopeGeneration) this.error.set('logs.search.unavailable');
     }
   }
   async chooseAccount(value: unknown) {
@@ -193,7 +195,7 @@ export class LogViewerComponent {
     this.views.set([]);
     this.sources.set([]);
     if (!this.account()) return;
-    const generation = this.generation;
+    const generation = this.scopeGeneration;
     try {
       const [sources, views] = await Promise.all([
         this.api.get<Envelope<{ items: Row[] }>>(
@@ -203,11 +205,11 @@ export class LogViewerComponent {
           `logs/views?accountUUID=${encodeURIComponent(this.account())}`,
         ),
       ]);
-      if (generation !== this.generation || this.destroyed) return;
+      if (generation !== this.scopeGeneration || this.destroyed) return;
       this.sources.set(sources.data.items);
       this.views.set(views.data.items);
     } catch {
-      if (generation === this.generation) this.error.set('logs.search.unavailable');
+      if (generation === this.scopeGeneration) this.error.set('logs.search.unavailable');
     }
   }
   changeTerms(value: string) {
@@ -215,15 +217,15 @@ export class LogViewerComponent {
     this.savedTerms = [];
   }
   async loadSources(search = '') {
-    const generation = this.generation;
+    const generation = this.scopeGeneration;
     if (!this.account()) return;
     try {
       const result = await this.api.get<Envelope<{ items: Row[] }>>(
         `logs/sources?accountUUID=${encodeURIComponent(this.account())}&limit=100&search=${encodeURIComponent(search)}`,
       );
-      if (generation === this.generation && !this.destroyed) this.sources.set(result.data.items);
+      if (generation === this.scopeGeneration && !this.destroyed) this.sources.set(result.data.items);
     } catch {
-      if (generation === this.generation) this.error.set('logs.search.unavailable');
+      if (generation === this.scopeGeneration) this.error.set('logs.search.unavailable');
     }
   }
   private payload() {
