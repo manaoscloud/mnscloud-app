@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d5ce889d8152",
+  "version": "302c80eef088",
   "language": "pt-BR",
   "entries": [
     {
@@ -973,7 +973,7 @@
       "menuPath": "Conversas › Conexões",
       "scope": "tenant",
       "title": "Conexões de canal",
-      "description": "Canais que alimentam a caixa de entrada: o canal interno da equipe agora, e WhatsApp, chat do site e outros canais conforme forem conectados. As credenciais ficam seladas e nunca são exibidas de novo.",
+      "description": "Gerencie os canais que enviam mensagens à caixa de entrada, incluindo conversas internas, chat do site e integrações com provedores.",
       "fields": [
         {
           "label": "Revisão",
@@ -1001,7 +1001,7 @@
         },
         {
           "label": "Configurações (JSON)",
-          "help": "Configurações opcionais, não sigilosas, como objeto JSON."
+          "help": "Para o chat do site, defina allowedOrigins como uma lista das origens HTTPS exatas do site. Curingas não validam a instalação. Outras configurações não secretas são opcionais."
         },
         {
           "label": "Credenciais (JSON ou token)",
