@@ -182,7 +182,8 @@ export class LogViewerComponent {
       const result = await this.api.get<Envelope<{ items: Row[] }>>(
         `logs/accounts?limit=100&status=1&search=${encodeURIComponent(search)}`,
       );
-      if (generation === this.scopeGeneration && !this.destroyed) this.accounts.set(result.data.items);
+      if (generation === this.scopeGeneration && !this.destroyed)
+        this.accounts.set(result.data.items);
     } catch {
       if (generation === this.scopeGeneration) this.error.set('logs.search.unavailable');
     }
@@ -223,7 +224,8 @@ export class LogViewerComponent {
       const result = await this.api.get<Envelope<{ items: Row[] }>>(
         `logs/sources?accountUUID=${encodeURIComponent(this.account())}&limit=100&search=${encodeURIComponent(search)}`,
       );
-      if (generation === this.scopeGeneration && !this.destroyed) this.sources.set(result.data.items);
+      if (generation === this.scopeGeneration && !this.destroyed)
+        this.sources.set(result.data.items);
     } catch {
       if (generation === this.scopeGeneration) this.error.set('logs.search.unavailable');
     }
