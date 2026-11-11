@@ -5,9 +5,46 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { PhoneDialer } from '../../../shared/phone-dock/phone-dialer';
-import { ConversationsInboxPage, ConversationItem } from './inbox';
+import { TenantService } from '../../../services/tenant.service';
+import {
+  ConversationsInboxPage,
+  ConversationItem,
+  fillQuickReply,
+  firstName,
+  inboxLayoutFor,
+  slashTokenAt,
+} from './inbox';
 import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
+
+const QUICK_REPLIES = [
+  {
+    CqrUUID: 'Q1',
+    CqrShortcut: 'saudacao',
+    CqrTitle: 'SAUDAÇÃO INICIAL',
+    CqrBody: 'Olá, {{contato.nome}}! Sou {{atendente.nome}}, da {{empresa.nome}}.',
+    CqrStatus: 1,
+    ConversationAccountCvaUUID: null,
+  },
+  {
+    CqrUUID: 'Q2',
+    CqrShortcut: 'encerrar',
+    CqrTitle: 'ENCERRAMENTO CORDIAL',
+    CqrBody: 'Foi um prazer!',
+    CqrStatus: 1,
+    ConversationAccountCvaUUID: null,
+  },
+  {
+    CqrUUID: 'Q3',
+    CqrShortcut: 'pix',
+    CqrTitle: 'CHAVE PIX',
+    CqrBody: 'Chave PIX da conta B',
+    CqrStatus: 1,
+    ConversationAccountCvaUUID: 'ACC-B',
+  },
+];
 
 class FakeDestroyRef implements DestroyRef {
   private callbacks: (() => void)[] = [];
@@ -43,7 +80,7 @@ describe('ConversationsInboxPage', () => {
       CnvUUID: 'C1',
       ContactName: 'Maria Silva',
       ContactPhone: '+5511999991111',
-      ChcKind: 'webchat',
+      ChannelKind: 'webchat',
       ChannelName: 'Chat do Site',
       CnvState: 'open',
       CnvPriority: 'normal',
@@ -57,7 +94,7 @@ describe('ConversationsInboxPage', () => {
       CnvUUID: 'C2',
       ContactName: 'João Santos',
       ContactPhone: '+5511999992222',
-      ChcKind: 'whatsapp-cloud',
+      ChannelKind: 'whatsapp-cloud',
       ChannelName: 'WhatsApp Vendas',
       CnvState: 'open',
       CnvPriority: 'high',
@@ -70,7 +107,7 @@ describe('ConversationsInboxPage', () => {
     {
       CnvUUID: 'C3',
       ContactName: 'Carlos Lima',
-      ChcKind: 'webchat',
+      ChannelKind: 'webchat',
       CnvState: 'pending',
       CnvPriority: 'low',
       CnvUnreadCount: 0,
@@ -82,7 +119,7 @@ describe('ConversationsInboxPage', () => {
     {
       CnvUUID: 'C4',
       ContactName: 'Ana Souza',
-      ChcKind: 'webchat',
+      ChannelKind: 'webchat',
       CnvState: 'resolved',
       CnvPriority: 'normal',
       CnvUnreadCount: 0,
@@ -97,7 +134,12 @@ describe('ConversationsInboxPage', () => {
     apiMock = {
       get: jasmine.createSpy('get').and.callFake((endpoint: string) => {
         if (endpoint.startsWith('conversations?')) {
-          return Promise.resolve({ data: { items: sampleConversations, total: sampleConversations.length } });
+          return Promise.resolve({
+            data: {
+              items: structuredClone(sampleConversations),
+              total: sampleConversations.length,
+            },
+          });
         }
         if (endpoint.includes('/messages')) {
           return Promise.resolve({
@@ -115,8 +157,12 @@ describe('ConversationsInboxPage', () => {
             },
           });
         }
+        if (endpoint.startsWith('conversations/quick-replies')) {
+          return Promise.resolve({ data: { items: QUICK_REPLIES } });
+        }
         if (endpoint.startsWith('conversations/events')) {
-          return Promise.resolve({ data: { cursor: '1', items: [] } });
+          // A real long-poll waits; an instantly resolved one would spin the watcher forever.
+          return new Promise(() => undefined);
         }
         return Promise.resolve({ data: {} });
       }),
@@ -125,7 +171,9 @@ describe('ConversationsInboxPage', () => {
     };
 
     authMock = {
-      user: jasmine.createSpy('user').and.returnValue({ uuid: 'user-123', name: 'Elton Bahia' }),
+      user: jasmine
+        .createSpy('user')
+        .and.returnValue({ uuid: 'user-123', firstName: 'ELTON', lastName: 'BAHIA' }),
     };
 
     phoneDialerMock = {
@@ -142,7 +190,18 @@ describe('ConversationsInboxPage', () => {
     };
 
     TestBed.configureTestingModule({
+      imports: [
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+        }),
+      ],
       providers: [
+        provideRouter([]),
+        {
+          provide: TenantService,
+          useValue: { selectedTenant: signal({ EnvironmentName: 'Manaos Telecom' }) },
+        },
         { provide: ApiService, useValue: apiMock },
         { provide: AuthService, useValue: authMock },
         { provide: PhoneDialer, useValue: phoneDialerMock },
@@ -253,5 +312,104 @@ describe('ConversationsInboxPage', () => {
 
     page.setViewMode('cockpit');
     expect(page.viewMode()).toBe('cockpit');
+  });
+  it('rearranges the panes by workspace width', () => {
+    expect(inboxLayoutFor(1400)).toBe('wide');
+    expect(inboxLayoutFor(1180)).toBe('medium');
+    expect(inboxLayoutFor(761)).toBe('medium');
+    expect(inboxLayoutFor(760)).toBe('phone');
+    expect(inboxLayoutFor(360)).toBe('phone');
+  });
+
+  it('finds the slash token only right before the caret', () => {
+    expect(slashTokenAt('/enc', 4)).toEqual({ start: 0, query: 'enc' });
+    expect(slashTokenAt('Olá /', 5)).toEqual({ start: 4, query: '' });
+    expect(slashTokenAt('ver http://x', 12)).toBeNull();
+    expect(slashTokenAt('a/b', 3)).toBeNull();
+    expect(slashTokenAt('/enc texto', 10)).toBeNull();
+  });
+
+  it('fills quick reply variables and keeps the text readable without values', () => {
+    expect(firstName('ELTON BAHIA')).toBe('Elton');
+    expect(
+      fillQuickReply('Olá, {{contato.nome}}! Sou {{atendente.nome}}.', {
+        contact: 'Maria',
+        agent: 'Elton',
+      }),
+    ).toBe('Olá, Maria! Sou Elton.');
+    expect(fillQuickReply('Olá, {{contato.nome}}! Tudo bem?', {})).toBe('Olá! Tudo bem?');
+  });
+
+  it('loads quick replies from the API and offers only those of the conversation account', async () => {
+    const page = createPage();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(apiMock.get).toHaveBeenCalledWith('conversations/quick-replies?status=1&limit=500');
+    page.selectedConversation.set({
+      ...sampleConversations[0],
+      ConversationAccountCvaUUID: 'ACC-A',
+    });
+    expect(page.availableQuickReplies().map((r) => r.CqrUUID)).toEqual(['Q1', 'Q2']);
+    page.selectedConversation.set({
+      ...sampleConversations[0],
+      ConversationAccountCvaUUID: 'ACC-B',
+    });
+    expect(page.availableQuickReplies().map((r) => r.CqrUUID)).toEqual(['Q1', 'Q2', 'Q3']);
+  });
+
+  it('typing /enc filters the quick replies and Enter inserts the filled text', async () => {
+    const page = createPage();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    page.selectedConversation.set(sampleConversations[0]);
+
+    const input = document.createElement('textarea');
+    input.value = '/enc';
+    input.setSelectionRange(4, 4);
+    page.onTextInput({ target: input } as unknown as Event);
+    expect(page.quickRepliesOpen()).toBeTrue();
+    expect(page.quickReplyMatches().map((r) => r.CqrShortcut)).toEqual(['encerrar']);
+
+    page.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(page.replyText()).toBe('Foi um prazer!');
+    expect(page.quickRepliesOpen()).toBeFalse();
+    expect(apiMock.post).not.toHaveBeenCalledWith('conversations/C1/messages', jasmine.anything());
+  });
+
+  it('the quick replies button appends the filled reply to the typed text', async () => {
+    const page = createPage();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    page.selectedConversation.set(sampleConversations[0]);
+    page.replyText.set('Bom dia.');
+
+    page.toggleQuickReplies();
+    expect(page.quickRepliesOpen()).toBeTrue();
+    page.insertQuickReply(page.quickReplyMatches()[0]);
+    expect(page.replyText()).toBe('Bom dia. Olá, Maria! Sou Elton, da Manaos Telecom.');
+  });
+
+  it('shows the delivery state of each reply (read is not queued)', () => {
+    const page = createPage();
+    expect(page.deliveryIcon('queued')).toBe('schedule');
+    expect(page.deliveryIcon('sent')).toBe('check');
+    expect(page.deliveryIcon('delivered')).toBe('done_all');
+    expect(page.deliveryIcon('read')).toBe('done_all');
+    expect(page.deliveryIcon('failed')).toBe('error');
+  });
+
+  it('uses the channel kind the API returns for icon, family and theme color', () => {
+    const page = createPage();
+    expect(page.getChannelIcon('whatsapp-cloud')).toBe('chat');
+    expect(page.channelGroup('whatsapp-twilio')).toBe('whatsapp');
+    expect(page.getChannelColor('webchat')).toBe('var(--mns-channel-webchat)');
+    expect(page.getChannelColor(undefined)).toBe('var(--mat-sys-color-primary)');
+  });
+
+  it('opens the chat pane on phones when a conversation is selected and goes back to the list', async () => {
+    const page = createPage();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await page.selectConversation(page.conversations()[1]);
+    expect(page.mobilePane()).toBe('chat');
+    page.backToList();
+    expect(page.mobilePane()).toBe('list');
   });
 });

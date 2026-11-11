@@ -1,6 +1,8 @@
 // crud-template-exempt: Dedicated omnichannel cockpit and kanban board workspace for live conversations.
+// Full-height workspace (src/styles/_workspace.scss): only the panes scroll, never the page.
 
 import {
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
@@ -9,24 +11,21 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
+import { TenantService } from '../../../services/tenant.service';
 import { PhoneDialer } from '../../../shared/phone-dock/phone-dialer';
 import { watchConversationChanges } from '../conversation-events';
 import {
@@ -38,12 +37,14 @@ import { ConfigurableCrudCollectionDialog } from '../../../shared/crud/configura
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { ConfigurableCrudRecord } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { MNS_MENU } from '../../../shared/menu/mns-menu';
+import { CONVERSATION_QUICK_REPLIES_CONFIG, QuickReply } from '../quick-replies/quick-replies';
 
 export interface ConversationItem {
   CnvUUID: string;
   ChannelConnectionChcUUID?: string;
   ChannelName?: string;
-  ChcKind?: string;
+  ChannelKind?: string;
+  ConversationAccountCvaUUID?: string | null;
   AccountName?: string;
   ContactName?: string;
   ContactPhone?: string;
@@ -63,7 +64,9 @@ export interface ConversationItem {
   RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   CrmContactCcoUUID?: string | null;
+  CrmContactName?: string | null;
   CrmLeadCleUUID?: string | null;
+  CrmLeadName?: string | null;
 }
 
 export interface MessageItem {
@@ -74,16 +77,57 @@ export interface MessageItem {
   CnmDirection: 'inbound' | 'outbound' | 'internal';
   CnmBody: string;
   CnmKind: 'text' | 'note' | 'image' | 'audio' | 'video' | 'document' | 'template';
-  CnmDelivery: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
+  CnmDelivery: 'received' | 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
 }
 
-export const CANNED_RESPONSES = [
-  { label: 'Saudação inicial', text: 'Olá! Como posso ajudar você hoje?' },
-  { label: 'Aguardar um momento', text: 'Um momento, por favor. Estou verificando suas informações em nosso sistema.' },
-  { label: 'Solicitar CPF/CNPJ', text: 'Por gentileza, poderia me confirmar seu CPF ou CNPJ para localizar seu cadastro?' },
-  { label: 'Chave PIX', text: 'Para pagamento via PIX, utilize nossa chave cadastrada e nos envie o comprovante.' },
-  { label: 'Encerramento cordial', text: 'Foi um prazer atendê-lo(a)! Caso precise de algo mais, estamos à disposição. Tenha um ótimo dia!' },
-];
+export type InboxLayout = 'wide' | 'medium' | 'phone';
+
+/** Width of the workspace (not of the window) at which the panes rearrange. */
+export function inboxLayoutFor(width: number): InboxLayout {
+  if (width <= 760) return 'phone';
+  if (width <= 1180) return 'medium';
+  return 'wide';
+}
+
+const DELIVERY_ICONS: Record<string, string> = {
+  queued: 'schedule',
+  sent: 'check',
+  delivered: 'done_all',
+  read: 'done_all',
+  failed: 'error',
+};
+
+/** First word of a name in title case ("ELTON BAHIA" -> "Elton"). */
+export function firstName(name?: string | null): string {
+  const first =
+    String(name || '')
+      .trim()
+      .split(/\s+/)[0] || '';
+  return first ? first.charAt(0).toUpperCase() + first.slice(1).toLowerCase() : '';
+}
+
+/** Fills the quick reply variables; an unknown value leaves the text readable (no braces). */
+export function fillQuickReply(
+  body: string,
+  values: { contact?: string; agent?: string; company?: string },
+): string {
+  return body
+    .replace(/\{\{\s*contato\.nome\s*\}\}/gi, values.contact || '')
+    .replace(/\{\{\s*atendente\.nome\s*\}\}/gi, values.agent || '')
+    .replace(/\{\{\s*empresa\.nome\s*\}\}/gi, values.company || '')
+    .replace(/ +([,.!?])/g, '$1')
+    .replace(/,([!?.])/g, '$1')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
+/** The `/query` token right before the caret, or null when the caret is not on one. */
+export function slashTokenAt(text: string, caret: number): { start: number; query: string } | null {
+  const before = text.slice(0, caret);
+  const match = /(^|\s)\/([^\s/]*)$/.exec(before);
+  if (!match) return null;
+  return { start: before.length - match[2].length - 1, query: match[2] };
+}
 
 function playNotificationChime(): void {
   try {
@@ -190,11 +234,6 @@ function newConversationConfig() {
     FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatBadgeModule,
     MatTooltipModule,
     MatMenuModule,
     MatDialogModule,
@@ -207,13 +246,18 @@ function newConversationConfig() {
 export class ConversationsInboxPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly tenants = inject(TenantService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly phoneDialer = inject(PhoneDialer);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
+  private readonly host = inject(ElementRef<HTMLElement>);
   private readonly datePipe = new DatePipe('en-US');
 
   readonly timelineContainer = viewChild<ElementRef<HTMLDivElement>>('timelineContainer');
+  readonly composerInput = viewChild<ElementRef<HTMLTextAreaElement>>('composerInput');
 
   // State Signals
   readonly viewMode = signal<'cockpit' | 'kanban'>('cockpit');
@@ -224,46 +268,84 @@ export class ConversationsInboxPage {
   readonly loadingMessages = signal(false);
   readonly sendingMessage = signal(false);
 
+  // Layout: the panes follow the workspace width; on phones one pane is shown at a time.
+  readonly layout = signal<InboxLayout>('wide');
+  readonly mobilePane = signal<'list' | 'chat'>('list');
+
   // Filters & Composer
   readonly searchQuery = signal('');
   readonly stateFilter = signal<string>('active');
   readonly assigneeFilter = signal<string>('all');
+  readonly channelFilter = signal<string>('all');
   readonly replyKind = signal<'text' | 'note'>('text');
   readonly replyText = signal('');
   readonly showContactDetails = signal(true);
   readonly draggedConversation = signal<ConversationItem | null>(null);
 
-  readonly cannedResponses = CANNED_RESPONSES;
+  // Quick replies (tenant records; `/shortcut` in the composer)
+  readonly quickReplies = signal<QuickReply[]>([]);
+  readonly quickRepliesOpen = signal(false);
+  readonly quickReplyQuery = signal('');
+  readonly quickReplyIndex = signal(0);
+  private quickReplyStart = -1;
 
   // Computed signals
   readonly currentUser = computed(() => this.auth.user());
+
+  readonly stateFilters = [
+    { value: 'active', label: 'conversations.filterActive' },
+    { value: 'all', label: 'conversations.filterAll' },
+    { value: 'open', label: 'conversations.filterOpen' },
+    { value: 'pending', label: 'conversations.filterPending' },
+    { value: 'snoozed', label: 'conversations.filterSnoozed' },
+    { value: 'resolved', label: 'conversations.filterResolved' },
+  ];
+
+  readonly assigneeFilters = [
+    { value: 'all', label: 'conversations.filterAllAssignees' },
+    { value: 'me', label: 'conversations.filterAssignedMe' },
+    { value: 'unassigned', label: 'conversations.filterUnassigned' },
+  ];
+
+  readonly stateFilterLabel = computed(
+    () => this.stateFilters.find((f) => f.value === this.stateFilter())?.label ?? '',
+  );
+  readonly assigneeFilterLabel = computed(
+    () => this.assigneeFilters.find((f) => f.value === this.assigneeFilter())?.label ?? '',
+  );
+
+  /** Channel kinds present in the loaded conversations, for the channel filter. */
+  readonly channelKinds = computed(() => [
+    ...new Set(this.conversations().map((c) => this.channelGroup(c.ChannelKind))),
+  ]);
 
   readonly filteredConversations = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const st = this.stateFilter();
     const as = this.assigneeFilter();
+    const ch = this.channelFilter();
     const myUuid = this.currentUser()?.uuid;
 
     return this.conversations().filter((c) => {
-      // Search
       if (q) {
-        const text = `${c.ContactName || ''} ${c.ContactPhone || ''} ${c.ContactEmail || ''} ${c.ContactExternalId || ''} ${c.CnvSubject || ''} ${c.LastMessage || ''}`.toLowerCase();
+        const text =
+          `${c.ContactName || ''} ${c.ContactPhone || ''} ${c.ContactEmail || ''} ${c.ContactExternalId || ''} ${c.CnvSubject || ''} ${c.LastMessage || ''}`.toLowerCase();
         if (!text.includes(q)) return false;
       }
 
-      // State filter
       if (st === 'active') {
         if (c.CnvState === 'resolved') return false;
       } else if (st !== 'all' && c.CnvState !== st) {
         return false;
       }
 
-      // Assignee filter
       if (as === 'me') {
         if (!myUuid || c.AssignedUserUsrUUID !== myUuid) return false;
       } else if (as === 'unassigned') {
         if (c.AssignedUserUsrUUID) return false;
       }
+
+      if (ch !== 'all' && this.channelGroup(c.ChannelKind) !== ch) return false;
 
       return true;
     });
@@ -287,11 +369,11 @@ export class ConversationsInboxPage {
   readonly kanbanStages = computed(() => {
     const cols = this.kanbanColumns();
     return [
-      { key: 'waiting' as const, title: 'conversations.waitingQueue', dotClass: 'dot-waiting', items: cols.waiting },
-      { key: 'active' as const, title: 'conversations.inProgress', dotClass: 'dot-active', items: cols.active },
-      { key: 'pending' as const, title: 'conversations.waitingCustomer', dotClass: 'dot-pending', items: cols.pending },
-      { key: 'snoozed' as const, title: 'conversations.stageSnoozed', dotClass: 'dot-snoozed', items: cols.snoozed },
-      { key: 'resolved' as const, title: 'conversations.stageResolved', dotClass: 'dot-resolved', items: cols.resolved },
+      { key: 'waiting' as const, title: 'conversations.waitingQueue', items: cols.waiting },
+      { key: 'active' as const, title: 'conversations.inProgress', items: cols.active },
+      { key: 'pending' as const, title: 'conversations.waitingCustomer', items: cols.pending },
+      { key: 'snoozed' as const, title: 'conversations.stageSnoozed', items: cols.snoozed },
+      { key: 'resolved' as const, title: 'conversations.stageResolved', items: cols.resolved },
     ];
   });
 
@@ -302,16 +384,66 @@ export class ConversationsInboxPage {
     return !Number.isNaN(expiry) && expiry < Date.now();
   });
 
+  /** Short hint on phones, where the full hint would wrap inside the one-line field. */
+  readonly composerPlaceholder = computed(() => {
+    if (this.replyKind() === 'note') return 'conversations.typeNotePlaceholder';
+    return this.layout() === 'phone'
+      ? 'conversations.typeReplyShort'
+      : 'conversations.typeReplyPlaceholder';
+  });
+
+  /** Active replies offered in the selected conversation's account (shared ones included). */
+  readonly availableQuickReplies = computed(() => {
+    const account = this.selectedConversation()?.ConversationAccountCvaUUID ?? null;
+    return this.quickReplies().filter(
+      (r) =>
+        Number(r.CqrStatus) === 1 &&
+        (!r.ConversationAccountCvaUUID || r.ConversationAccountCvaUUID === account),
+    );
+  });
+
+  readonly quickReplyMatches = computed(() => {
+    const q = this.quickReplyQuery().toLowerCase();
+    if (!q) return this.availableQuickReplies();
+    return this.availableQuickReplies().filter(
+      (r) =>
+        r.CqrShortcut.toLowerCase().startsWith(q) ||
+        r.CqrTitle.toLowerCase().includes(q) ||
+        r.CqrBody.toLowerCase().includes(q),
+    );
+  });
+
   constructor() {
-    queueMicrotask(() => void this.loadConversations());
-    // Realtime event gateway
+    queueMicrotask(() => {
+      void this.loadConversations();
+      void this.loadQuickReplies();
+    });
     watchConversationChanges(this.api, this.destroyRef, (changes) =>
       this.handleRealtimeChanges(changes),
     );
+    afterNextRender(() => this.observeWidth());
+  }
+
+  /** Follows the workspace width (sidebar open or compact included) with a ResizeObserver. */
+  private observeWidth(): void {
+    const element = this.host.nativeElement as HTMLElement;
+    if (typeof ResizeObserver === 'undefined' || !element) return;
+    const apply = (width: number) => {
+      const next = inboxLayoutFor(width);
+      if (next === this.layout()) return;
+      this.layout.set(next);
+      // The contact panel is a column only on wide screens; elsewhere it opens on demand.
+      this.showContactDetails.set(next === 'wide');
+    };
+    apply(element.getBoundingClientRect().width);
+    const observer = new ResizeObserver((entries) => apply(entries[0].contentRect.width));
+    observer.observe(element);
+    this.destroyRef.onDestroy(() => observer.disconnect());
   }
 
   setViewMode(mode: 'cockpit' | 'kanban'): void {
     this.viewMode.set(mode);
+    if (mode === 'kanban') this.mobilePane.set('list');
   }
 
   setStateFilter(val: string): void {
@@ -320,6 +452,10 @@ export class ConversationsInboxPage {
 
   setAssigneeFilter(val: string): void {
     this.assigneeFilter.set(val);
+  }
+
+  setChannelFilter(val: string): void {
+    this.channelFilter.set(val);
   }
 
   onSearchInput(event: Event): void {
@@ -335,28 +471,163 @@ export class ConversationsInboxPage {
     this.replyKind.set(kind);
   }
 
+  backToList(): void {
+    this.mobilePane.set('list');
+    if (this.layout() !== 'wide') this.showContactDetails.set(false);
+  }
+
   onTextInput(event: Event): void {
     const target = event.target as HTMLTextAreaElement;
     this.replyText.set(target.value);
+    this.autoGrow(target);
+    const token = slashTokenAt(target.value, target.selectionStart ?? target.value.length);
+    if (token) {
+      this.quickReplyStart = token.start;
+      this.openQuickReplies(token.query);
+    } else if (this.quickReplyStart >= 0) {
+      this.closeQuickReplies();
+    }
   }
 
   onKeyDown(event: KeyboardEvent): void {
+    if (this.quickRepliesOpen()) {
+      const items = this.quickReplyMatches();
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (items.length) {
+          const step = event.key === 'ArrowDown' ? 1 : items.length - 1;
+          this.quickReplyIndex.set((this.quickReplyIndex() + step) % items.length);
+          this.scrollActiveQuickReply();
+        }
+        return;
+      }
+      if ((event.key === 'Enter' || event.key === 'Tab') && items.length) {
+        event.preventDefault();
+        this.insertQuickReply(items[Math.min(this.quickReplyIndex(), items.length - 1)]);
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeQuickReplies();
+        return;
+      }
+    }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       void this.sendMessage();
     }
   }
 
-  insertCanned(text: string): void {
+  /** Opens the list from the toolbar button (no `/` token: the reply is appended). */
+  toggleQuickReplies(): void {
+    if (this.quickRepliesOpen()) {
+      this.closeQuickReplies();
+      return;
+    }
+    this.quickReplyStart = -1;
+    this.openQuickReplies('');
+  }
+
+  private openQuickReplies(query: string): void {
+    if (query !== this.quickReplyQuery() || !this.quickRepliesOpen()) this.quickReplyIndex.set(0);
+    this.quickReplyQuery.set(query);
+    this.quickRepliesOpen.set(true);
+  }
+
+  closeQuickReplies(): void {
+    this.quickRepliesOpen.set(false);
+    this.quickReplyQuery.set('');
+    this.quickReplyStart = -1;
+  }
+
+  quickReplyText(reply: QuickReply): string {
+    const conv = this.selectedConversation();
+    return fillQuickReply(reply.CqrBody, {
+      contact: firstName(conv?.ContactName),
+      agent: firstName(this.currentUser()?.firstName),
+      company: this.tenants.selectedTenant()?.EnvironmentName || '',
+    });
+  }
+
+  insertQuickReply(reply: QuickReply): void {
+    const text = this.quickReplyText(reply);
+    const input = this.composerInput()?.nativeElement;
     const current = this.replyText();
-    this.replyText.set(current ? `${current} ${text}` : text);
+    let next: string;
+    let caret: number;
+    if (this.quickReplyStart >= 0) {
+      const end = input?.selectionStart ?? current.length;
+      next = current.slice(0, this.quickReplyStart) + text + current.slice(end);
+      caret = this.quickReplyStart + text.length;
+    } else {
+      next = current.trim() ? `${current.replace(/\s*$/, '')} ${text}` : text;
+      caret = next.length;
+    }
+    this.replyText.set(next);
+    this.closeQuickReplies();
+    if (input) {
+      input.value = next;
+      this.autoGrow(input);
+      setTimeout(() => {
+        input.focus();
+        input.setSelectionRange(caret, caret);
+      });
+    }
+  }
+
+  private scrollActiveQuickReply(): void {
+    setTimeout(() =>
+      this.host.nativeElement
+        .querySelector('.quick-reply-item.is-active')
+        ?.scrollIntoView({ block: 'nearest' }),
+    );
+  }
+
+  private autoGrow(input: HTMLTextAreaElement): void {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+  }
+
+  async loadQuickReplies(): Promise<void> {
+    try {
+      const resp = await this.api.get<{ data: { items: QuickReply[] } }>(
+        'conversations/quick-replies?status=1&limit=500',
+      );
+      this.quickReplies.set(resp.data?.items ?? []);
+    } catch {
+      // Without quick replies the composer still works; the list shows its empty state.
+      this.quickReplies.set([]);
+    }
+  }
+
+  async openNewQuickReply(): Promise<void> {
+    const shortcut = this.quickReplyQuery();
+    this.closeQuickReplies();
+    const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
+      data: {
+        ...CONVERSATION_QUICK_REPLIES_CONFIG,
+        initialValues: { ...CONVERSATION_QUICK_REPLIES_CONFIG.initialValues, shortcut },
+        formOnly: true,
+      },
+      width: '720px',
+    });
+    await firstValueFrom(ref.afterClosed());
+    await this.loadQuickReplies();
+  }
+
+  manageQuickReplies(): void {
+    this.closeQuickReplies();
+    void this.router.navigate(['/conversations/quick-replies']);
   }
 
   toggleContactDetails(): void {
     this.showContactDetails.set(!this.showContactDetails());
   }
 
-  // Load conversations from API
+  private t(key: string): string {
+    return this.transloco.translate(key);
+  }
+
   async loadConversations(silent = false): Promise<void> {
     if (!silent) this.loadingConversations.set(true);
     try {
@@ -366,7 +637,6 @@ export class ConversationsInboxPage {
       const items = resp.data?.items ?? [];
       this.conversations.set(items);
 
-      // If a conversation was selected, refresh reference
       const sel = this.selectedConversation();
       if (sel) {
         const updated = items.find((c) => c.CnvUUID === sel.CnvUUID);
@@ -376,21 +646,23 @@ export class ConversationsInboxPage {
       }
     } catch {
       if (!silent) {
-        this.snackBar.open('Falha ao carregar conversas.', 'OK', { duration: 3000 });
+        this.snackBar.open(this.t('conversations.loadConversationsFailed'), 'OK', {
+          duration: 3000,
+        });
       }
     } finally {
       if (!silent) this.loadingConversations.set(false);
     }
   }
 
-  // Select a conversation and load its messages
   async selectConversation(conv: ConversationItem): Promise<void> {
     this.selectedConversation.set(conv);
+    this.mobilePane.set('chat');
     this.replyText.set('');
+    this.closeQuickReplies();
     this.replyKind.set(this.isWindowClosed() ? 'note' : 'text');
     await this.loadMessages(conv.CnvUUID);
 
-    // Auto mark as read if unread
     if (conv.CnvUnreadCount > 0) {
       await this.markAsRead(conv);
     }
@@ -401,20 +673,20 @@ export class ConversationsInboxPage {
     void this.selectConversation(conv);
   }
 
-  // Load messages for a conversation
   async loadMessages(conversationUUID: string, silent = false): Promise<void> {
     if (!silent) this.loadingMessages.set(true);
     try {
       const resp = await this.api.get<{
         data: { items: MessageItem[] };
       }>(`conversations/${conversationUUID}/messages?limit=100`);
-      // Server returns newest first, we reverse for natural chat timeline (oldest to newest)
+      // Server returns newest first; the timeline reads oldest to newest.
       const list = [...(resp.data?.items ?? [])].reverse();
+      const grew = list.length !== this.messages().length;
       this.messages.set(list);
-      this.scrollToBottom();
+      if (!silent || grew) this.scrollToBottom();
     } catch {
       if (!silent) {
-        this.snackBar.open('Falha ao carregar mensagens.', 'OK', { duration: 3000 });
+        this.snackBar.open(this.t('conversations.loadMessagesFailed'), 'OK', { duration: 3000 });
       }
     } finally {
       if (!silent) this.loadingMessages.set(false);
@@ -430,7 +702,6 @@ export class ConversationsInboxPage {
     }, 50);
   }
 
-  // Send a message or internal note
   async sendMessage(): Promise<void> {
     const sel = this.selectedConversation();
     const text = this.replyText().trim();
@@ -445,22 +716,24 @@ export class ConversationsInboxPage {
         body: text,
       });
       this.replyText.set('');
-      // Refresh messages
+      const input = this.composerInput()?.nativeElement;
+      if (input) {
+        input.value = '';
+        this.autoGrow(input);
+      }
       await this.loadMessages(sel.CnvUUID, true);
-      // Refresh conversations list to update LastMessage
       await this.loadConversations(true);
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: unknown }).message)
-          : 'Falha ao enviar mensagem.';
+          : this.t('conversations.sendFailed');
       this.snackBar.open(message, 'OK', { duration: 3500 });
     } finally {
       this.sendingMessage.set(false);
     }
   }
 
-  // Assign conversation to current user
   async takeConversation(conv: ConversationItem, event?: Event): Promise<void> {
     if (event) event.stopPropagation();
     const myUuid = this.currentUser()?.uuid;
@@ -472,18 +745,17 @@ export class ConversationsInboxPage {
         AssignedUserUsrUUID: myUuid,
         CnvState: 'open',
       });
-      this.snackBar.open('Atendimento assumido com sucesso.', 'OK', { duration: 2500 });
+      this.snackBar.open(this.t('conversations.takeSuccess'), 'OK', { duration: 2500 });
       await this.loadConversations(true);
       if (this.selectedConversation()?.CnvUUID === conv.CnvUUID) {
         const updated = this.conversations().find((c) => c.CnvUUID === conv.CnvUUID);
         if (updated) this.selectedConversation.set(updated);
       }
     } catch {
-      this.snackBar.open('Falha ao assumir atendimento.', 'OK', { duration: 3000 });
+      this.snackBar.open(this.t('conversations.takeFailed'), 'OK', { duration: 3000 });
     }
   }
 
-  // Change conversation state
   async changeState(
     conv: ConversationItem,
     newState: 'open' | 'pending' | 'snoozed' | 'resolved',
@@ -499,20 +771,20 @@ export class ConversationsInboxPage {
         if (updated) this.selectedConversation.set(updated);
       }
     } catch {
-      this.snackBar.open('Falha ao atualizar status.', 'OK', { duration: 3000 });
+      this.snackBar.open(this.t('conversations.stateFailed'), 'OK', { duration: 3000 });
     }
   }
 
   async resolveConversation(conv: ConversationItem, event?: Event): Promise<void> {
     if (event) event.stopPropagation();
     await this.changeState(conv, 'resolved');
-    this.snackBar.open('Conversa resolvida.', 'OK', { duration: 2500 });
+    this.snackBar.open(this.t('conversations.resolvedToast'), 'OK', { duration: 2500 });
   }
 
   async reopenConversation(conv: ConversationItem, event?: Event): Promise<void> {
     if (event) event.stopPropagation();
     await this.changeState(conv, 'open');
-    this.snackBar.open('Conversa reaberta.', 'OK', { duration: 2500 });
+    this.snackBar.open(this.t('conversations.reopenedToast'), 'OK', { duration: 2500 });
   }
 
   async markAsRead(conv: ConversationItem, event?: Event): Promise<void> {
@@ -528,7 +800,6 @@ export class ConversationsInboxPage {
     }
   }
 
-  // PhoneWeb dialer integration
   dialContact(phone?: string | null): void {
     if (!phone) return;
     if (this.phoneDialer.canDial(phone)) {
@@ -538,7 +809,16 @@ export class ConversationsInboxPage {
     }
   }
 
-  // Dialog actions
+  async copyText(value?: string | null): Promise<void> {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      this.snackBar.open(this.t('conversations.copied'), 'OK', { duration: 2000 });
+    } catch {
+      // Clipboard may be unavailable; the value stays selectable on screen.
+    }
+  }
+
   async openLinkContact(conv: ConversationItem): Promise<void> {
     const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
       data: {
@@ -563,28 +843,25 @@ export class ConversationsInboxPage {
     await this.loadConversations();
   }
 
-  // Real-time Event handling
   private handleRealtimeChanges(
     changes: Array<{ ConversationCnvUUID: string; kind: 'conversation' | 'message' }>,
   ): void {
     const current = this.selectedConversation();
-    const hasActiveChange = current && changes.some((c) => c.ConversationCnvUUID === current.CnvUUID);
+    const hasActiveChange =
+      current && changes.some((c) => c.ConversationCnvUUID === current.CnvUUID);
 
-    // Refresh conversations list in background
     void this.loadConversations(true);
 
     if (hasActiveChange && current) {
       void this.loadMessages(current.CnvUUID, true);
     }
 
-    // Play chime on message events
     const hasMessage = changes.some((c) => c.kind === 'message');
     if (hasMessage) {
       playNotificationChime();
     }
   }
 
-  // HTML5 Drag and Drop for Kanban
   onDragStart(conv: ConversationItem): void {
     this.draggedConversation.set(conv);
   }
@@ -612,6 +889,16 @@ export class ConversationsInboxPage {
   }
 
   // Helpers
+  contactLabel(conv?: ConversationItem | null): string {
+    return (
+      conv?.ContactName ||
+      conv?.ContactPhone ||
+      conv?.ContactEmail ||
+      conv?.ContactExternalId ||
+      this.t('conversations.visitor')
+    );
+  }
+
   getInitials(name?: string | null): string {
     const clean = String(name || '').trim();
     if (!clean) return 'C';
@@ -622,12 +909,29 @@ export class ConversationsInboxPage {
     return clean.slice(0, 2).toUpperCase();
   }
 
-  getChannelIcon(kind?: string): string {
+  /** Channel family of a connection kind (WhatsApp Cloud and Twilio are one family). */
+  channelGroup(kind?: string): string {
     switch (kind) {
-      case 'webchat':
-        return 'language';
       case 'whatsapp-cloud':
       case 'whatsapp-twilio':
+      case 'whatsapp':
+        return 'whatsapp';
+      case 'webchat':
+      case 'instagram':
+      case 'messenger':
+      case 'telegram':
+      case 'email':
+      case 'internal':
+        return kind;
+      default:
+        return 'other';
+    }
+  }
+
+  getChannelIcon(kind?: string): string {
+    switch (this.channelGroup(kind)) {
+      case 'webchat':
+        return 'language';
       case 'whatsapp':
         return 'chat';
       case 'instagram':
@@ -637,7 +941,7 @@ export class ConversationsInboxPage {
       case 'telegram':
         return 'send';
       case 'email':
-        return 'email';
+        return 'mail';
       case 'internal':
         return 'group';
       default:
@@ -645,65 +949,32 @@ export class ConversationsInboxPage {
     }
   }
 
+  /** Theme token of the channel accent (`--mns-channel-*`), readable in light and dark. */
   getChannelColor(kind?: string): string {
-    switch (kind) {
-      case 'webchat':
-        return '#0284c7';
-      case 'whatsapp-cloud':
-      case 'whatsapp-twilio':
-      case 'whatsapp':
-        return '#16a34a';
-      case 'instagram':
-        return '#e1306c';
-      case 'messenger':
-        return '#0084ff';
-      case 'telegram':
-        return '#229ed9';
-      case 'email':
-        return '#ea580c';
-      case 'internal':
-        return '#7c3aed';
-      default:
-        return '#475569';
-    }
+    const group = this.channelGroup(kind);
+    return group === 'other' ? 'var(--mat-sys-color-primary)' : `var(--mns-channel-${group})`;
   }
 
   getChannelLabel(kind?: string): string {
-    switch (kind) {
-      case 'webchat':
-        return 'Chat do Site';
-      case 'whatsapp-cloud':
-      case 'whatsapp-twilio':
-      case 'whatsapp':
-        return 'WhatsApp';
-      case 'instagram':
-        return 'Instagram';
-      case 'messenger':
-        return 'Messenger';
-      case 'telegram':
-        return 'Telegram';
-      case 'email':
-        return 'E-mail';
-      case 'internal':
-        return 'Interno';
-      default:
-        return 'Canal';
-    }
+    return this.t(`conversations.channelKind.${this.channelGroup(kind)}`);
+  }
+
+  channelText(conv?: ConversationItem | null): string {
+    return conv?.ChannelName || this.getChannelLabel(conv?.ChannelKind);
   }
 
   getStateLabel(state?: string): string {
-    switch (state) {
-      case 'open':
-        return 'Aberta';
-      case 'pending':
-        return 'Aguardando cliente';
-      case 'snoozed':
-        return 'Adiada';
-      case 'resolved':
-        return 'Resolvida';
-      default:
-        return state || '—';
-    }
+    return state ? this.t(`conversations.state.${state}`) : '—';
+  }
+
+  deliveryIcon(delivery?: string): string {
+    return DELIVERY_ICONS[delivery || ''] ?? 'schedule';
+  }
+
+  deliveryLabel(delivery?: string): string {
+    return this.t(
+      `conversations.delivery.${delivery && DELIVERY_ICONS[delivery] ? delivery : 'queued'}`,
+    );
   }
 
   formatTime(iso?: string | null): string {

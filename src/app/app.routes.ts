@@ -2591,6 +2591,14 @@ export const routes: Routes = [
                 title: 'Conversations • Accounts | mnscloud',
               },
               {
+                path: 'conversations/quick-replies',
+                loadComponent: () =>
+                  import('./pages/conversations/quick-replies/quick-replies').then(
+                    (m) => m.ConversationsQuickRepliesPage,
+                  ),
+                title: 'Conversations • Quick replies | mnscloud',
+              },
+              {
                 path: 'voip/phone/users',
                 loadComponent: () =>
                   import('./pages/voip/phone/users/users').then((m) => m.VoipPhoneUsersPage),

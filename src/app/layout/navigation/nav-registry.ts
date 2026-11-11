@@ -319,6 +319,12 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/conversations/connections',
       },
       {
+        id: 'conversations/quick-replies',
+        label: 'nav.conversations.quick-replies',
+        icon: 'bolt',
+        route: '/conversations/quick-replies',
+      },
+      {
         id: 'conversations/accounts',
         label: 'nav.conversations.accounts',
         icon: 'manage_accounts',
