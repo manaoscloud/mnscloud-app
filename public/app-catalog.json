@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "20fb4687fcb7",
+  "version": "0027354ecf81",
   "language": "pt-BR",
   "entries": [
     {
@@ -996,12 +996,20 @@
           "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
         },
         {
-          "label": "ID do canal",
-          "help": "Identificador do provedor que encaminha as mensagens recebidas para cá (no WhatsApp, o ID do número de telefone)."
+          "label": "Configurações",
+          "help": ""
         },
         {
-          "label": "Configurações (JSON)",
-          "help": "Para o chat do site, defina allowedOrigins como uma lista das origens HTTPS exatas do site. Curingas não validam a instalação. Outras configurações não secretas são opcionais."
+          "label": "Endereço do site",
+          "help": "Endereço do site onde o chat aparece. Só este site e os outros sites permitidos podem abrir o chat."
+        },
+        {
+          "label": "Outros sites permitidos",
+          "help": "Opcional. Um endereço de site por linha."
+        },
+        {
+          "label": "Identificador no provedor",
+          "help": "Identificador deste número, página ou conta no provedor. As mensagens recebidas são encaminhadas por ele."
         },
         {
           "label": "Credenciais (JSON ou token)",
@@ -1010,6 +1018,10 @@
         {
           "label": "Apagar credenciais salvas",
           "help": ""
+        },
+        {
+          "label": "Permitir subdomínios",
+          "help": "Abre o chat também em subdomínios de cada site permitido: com https://exemplo.com permitido, loja.exemplo.com também funciona. Subdomínios não são verificados como instalados."
         }
       ]
     },

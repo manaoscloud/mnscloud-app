@@ -3419,6 +3419,18 @@
           </mat-tab>
         }
 
+        @if (advancedFields().length) {
+          <mat-tab
+            [label]="tabLabel('advanced', 'Advanced') | transloco"
+            [labelClass]="tabLabelClass('advanced')"
+          >
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: advancedFields() }"
+            />
+          </mat-tab>
+        }
+
         @for (action of collectionActions(); track action.key) {
           <mat-tab [label]="action.label | transloco">
             <div class="tab-content">

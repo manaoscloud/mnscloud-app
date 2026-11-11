@@ -293,6 +293,8 @@ export type ConfigurableCrudField = {
     | 'diagnostics'
     | 'codecs'
     | 'retention'
+    /** Expert settings with safe defaults: never needed for the record to work. */
+    | 'advanced'
     | 'notes'
     /** Brand per client (Settings › Themes): App, POS, Pulse, PhoneWeb and InfraGIS. */
     | 'brandApp'
@@ -1101,6 +1103,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly retentionFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'retention'),
+  );
+  readonly advancedFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'advanced'),
   );
   /** Brand tabs rendered with the generic field template, in this order. */
   readonly brandTabs = computed(() =>
