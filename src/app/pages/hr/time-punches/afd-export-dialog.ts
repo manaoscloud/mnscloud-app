@@ -61,7 +61,7 @@ export function afdQuery(company: string, from: string, to: string): string {
       <div class="dialog-content">
         <div class="dialog-scroll">
           <form class="form-grid" (ngSubmit)="export()">
-            <mat-form-field appearance="outline" class="span-2">
+            <mat-form-field appearance="outline" class="span-1">
               <mat-label>{{ 'Establishment' | transloco }}</mat-label>
               <mat-select name="company" [(ngModel)]="company">
                 <mat-option value="">{{ 'Tenant (marks without company)' | transloco }}</mat-option>
