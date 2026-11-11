@@ -96,3 +96,29 @@ export function showHrSecret(
     sections: [{ title: sectionTitle, code: { value, format: 'text', copy: true } }],
   });
 }
+
+/** One table of rows in the shared data viewer (who read a notice, refused offline marks). */
+export function showHrTable(
+  dialog: MatDialog,
+  view: {
+    title: string;
+    description: string;
+    details: DataViewerDetail[];
+    columns: { key: string; label: string; kind?: 'datetime'; translate?: boolean }[];
+    rows: Record<string, unknown>[];
+    emptyLabel: string;
+    tableTitle?: string;
+  },
+): void {
+  openDataViewerDialog(dialog, {
+    title: view.title,
+    description: view.description,
+    details: view.details,
+    sections: [
+      {
+        title: view.tableTitle ?? view.title,
+        table: { columns: view.columns, rows: view.rows, emptyLabel: view.emptyLabel },
+      },
+    ],
+  });
+}
