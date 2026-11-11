@@ -112,3 +112,20 @@ describe('cyber security notifications', () => {
     expect(notificationDescription(hardening, 'pt-BR')).toBe('mac.sip');
   });
 });
+
+describe('time clock kiosk notifications (K4b)', () => {
+  const named = (key: string, params?: Record<string, string>) =>
+    [key, params?.['kiosk'], params?.['employee'] ?? params?.['count'] ?? ''].join(':');
+
+  it('shows the offline, PIN locked and refused mark notices of a time clock', () => {
+    const offline = item('hr.time_clock_kiosk.offline', { kiosk: 'Recepcao' });
+    expect(notificationIcon(offline)).toBe('signal_wifi_off');
+    expect(notificationTitle(offline, named)).toBe('notifications.hrKioskOffline:Recepcao:');
+    const locked = item('hr.time_clock_kiosk.pin_locked', { kiosk: 'Recepcao', employee: 'Ana' });
+    expect(notificationIcon(locked)).toBe('lock_clock');
+    expect(notificationTitle(locked, named)).toBe('notifications.hrKioskPinLocked:Recepcao:Ana');
+    const refused = item('hr.time_clock_kiosk.rejected', { kiosk: 'Recepcao', count: '3' });
+    expect(notificationIcon(refused)).toBe('running_with_errors');
+    expect(notificationTitle(refused, named)).toBe('notifications.hrKioskRejected:Recepcao:3');
+  });
+});
