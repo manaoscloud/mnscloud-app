@@ -13041,5 +13041,16 @@
   "Time Clock Kiosks": "Relojes",
   "Verified origin": "Origen validado",
   "Last verification or sync": "Última validación o sincronización",
-  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "Para el chat del sitio, defina allowedOrigins como una lista de los orígenes HTTPS exactos del sitio. Los comodines no validan la instalación. Otras opciones no secretas son opcionales."
+  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "Para el chat del sitio, defina allowedOrigins como una lista de los orígenes HTTPS exactos del sitio. Los comodines no validan la instalación. Otras opciones no secretas son opcionales.",
+  "Refused offline marks": "Fichajes rechazados",
+  "Wrong code or PIN": "Código o PIN incorrecto",
+  "PIN locked": "PIN bloqueado",
+  "No time clock PIN": "Sin PIN del reloj",
+  "Access blocked": "Acceso bloqueado",
+  "No connection": "Sin conexión",
+  "Refused in 7 days": "Rechazados en 7 días",
+  "Unknown code": "Código desconocido",
+  "Marks taken on this time clock without connection that the server refused at delivery. They are not in the time punches: check with the employee and, if the mark is due, use a missing mark request or a time adjustment.": "Fichajes hechos en este reloj sin conexión que el servidor rechazó en el envío. No están en los fichajes: confírmalo con el empleado y, si el fichaje corresponde, usa una solicitud de fichaje olvidado o un ajuste.",
+  "Mark time": "Hora del fichaje",
+  "No refused offline marks.": "Ningún fichaje rechazado."
 }

@@ -13041,5 +13041,16 @@
   "Time Clock Kiosks": "Time clocks",
   "Verified origin": "Verified origin",
   "Last verification or sync": "Last verification or sync",
-  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional."
+  "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.": "For website chat, set allowedOrigins to an array of exact HTTPS website origins. Wildcards do not verify installation. Other non-secret settings are optional.",
+  "Refused offline marks": "Refused offline marks",
+  "Wrong code or PIN": "Wrong code or PIN",
+  "PIN locked": "PIN locked",
+  "No time clock PIN": "No time clock PIN",
+  "Access blocked": "Access blocked",
+  "No connection": "No connection",
+  "Refused in 7 days": "Refused in 7 days",
+  "Unknown code": "Unknown code",
+  "Marks taken on this time clock without connection that the server refused at delivery. They are not in the time punches: check with the employee and, if the mark is due, use a missing mark request or a time adjustment.": "Marks taken on this time clock without connection that the server refused at delivery. They are not in the time punches: check with the employee and, if the mark is due, use a missing mark request or a time adjustment.",
+  "Mark time": "Mark time",
+  "No refused offline marks.": "No refused offline marks."
 }

@@ -7,6 +7,8 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { optionLabel, PUNCH_TYPES } from '../hr-time';
+import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import {
   HR_COMPANY_COLUMN,
   HR_REVISION_FIELD,
@@ -33,6 +35,28 @@ const ACTIVATE: ConfigurableCrudRowAction = {
   tooltip: 'Activation code',
   visible: (row) => ['pending', 'awaiting_activation'].includes(String(row['Status'] ?? '')),
 };
+
+const REJECTIONS: ConfigurableCrudRowAction = {
+  key: 'rejections',
+  label: 'Refused offline marks',
+  icon: 'report_gmailerrorred',
+  tooltip: 'Refused offline marks',
+  visible: (row) => Number(row['RejectionsLastWeek'] ?? 0) > 0,
+};
+
+const REJECTION_REASONS: Record<string, string> = {
+  INVALID_PIN: 'Wrong code or PIN',
+  PIN_LOCKED: 'PIN locked',
+  PIN_NOT_SET: 'No time clock PIN',
+  ACCESS_DENIED: 'Access blocked',
+};
+
+/** The device checks in every 5 minutes; 10 minutes without it means no connection. */
+export function kioskConnection(row: ConfigurableCrudRecord, now = Date.now()): string {
+  if (String(row['Status'] ?? '') !== 'active') return '—';
+  const last = Date.parse(String(row['LastUsedAt'] ?? ''));
+  return Number.isFinite(last) && now - last <= 10 * 60 * 1000 ? 'Online' : 'No connection';
+}
 
 const REVOKE: ConfigurableCrudRowAction = {
   key: 'revoke',
@@ -68,7 +92,7 @@ const config = defineCrud({
     notes: '',
     revision: null,
   },
-  rowActions: [ACTIVATE, REVOKE],
+  rowActions: [ACTIVATE, REJECTIONS, REVOKE],
   columns: [
     {
       id: 'name',
@@ -79,7 +103,14 @@ const config = defineCrud({
       translateValue: false,
     },
     { id: 'status', label: 'Status', field: 'Status', options: STATUSES },
+    { id: 'connection', label: 'Connection', value: (row, t) => t(kioskConnection(row)) },
     { id: 'lastUsed', label: 'Last used', field: 'LastUsedAt', kind: 'datetime' },
+    {
+      id: 'rejections',
+      label: 'Refused in 7 days',
+      field: 'RejectionsLastWeek',
+      kind: 'number',
+    },
     { id: 'punches', label: 'Punches in 24 h', field: 'PunchesLastDay', kind: 'number' },
     {
       id: 'photo',
@@ -168,6 +199,10 @@ export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<Configurable
       await this.activationCode(uuid, row);
       return;
     }
+    if (action.key === REJECTIONS.key) {
+      await this.rejections(uuid, row);
+      return;
+    }
     if (action.key !== REVOKE.key) return;
     await confirmedPost(
       this.ops,
@@ -178,6 +213,47 @@ export class HrTimeClockKiosksPage extends ConfigurableCrudPageBase<Configurable
       'Time clock revoked.',
       'Failed to revoke the time clock.',
     );
+  }
+
+  /** Offline marks refused at delivery: HR checks with the employee and records the mark if due. */
+  private async rejections(uuid: string, row: ConfigurableCrudRecord): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
+        `${ENDPOINT}/${uuid}/rejections?limit=200`,
+      );
+      const rows = (response?.data?.items ?? []).map((item) => ({
+        ...item,
+        Reason: this.t(
+          REJECTION_REASONS[String(item['Reason'] ?? '')] ?? String(item['Reason'] ?? ''),
+        ),
+        EmployeeName: item['EmployeeName'] ?? this.t('Unknown code'),
+        Type: this.t(optionLabel(PUNCH_TYPES, item['Type'])),
+      }));
+      openDataViewerDialog(this.dialog, {
+        title: 'Refused offline marks',
+        description:
+          'Marks taken on this time clock without connection that the server refused at delivery. They are not in the time punches: check with the employee and, if the mark is due, use a missing mark request or a time adjustment.',
+        details: [{ label: 'Time clock', value: String(row['Name'] ?? ''), translate: false }],
+        sections: [
+          {
+            title: 'Refused offline marks',
+            table: {
+              columns: [
+                { key: 'OccurredAt', label: 'Mark time', kind: 'datetime' },
+                { key: 'LoginCode', label: 'Login code', translate: false },
+                { key: 'EmployeeName', label: 'Employee', translate: false },
+                { key: 'Type', label: 'Mark', translate: false },
+                { key: 'Reason', label: 'Reason', translate: false },
+              ],
+              rows,
+              emptyLabel: 'No refused offline marks.',
+            },
+          },
+        ],
+      });
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 
   private async activationCode(uuid: string, row: ConfigurableCrudRecord): Promise<void> {
