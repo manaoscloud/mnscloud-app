@@ -12969,5 +12969,6 @@
   "Time clock PIN": "PIN del reloj",
   "Give this PIN to the employee securely. It is used with the login code on the company time clocks and is not shown again; the employee can change it in Pulse.": "Entrega este PIN al empleado de forma segura. Se usa con el código de acceso en los relojes de la empresa y no se vuelve a mostrar; el empleado puede cambiarlo en Pulse.",
   "Failed to save the time clock PIN.": "No se pudo guardar el PIN del reloj.",
-  "Human resources • Time clocks | mnscloud": "Recursos humanos • Relojes | mnscloud"
+  "Human resources • Time clocks | mnscloud": "Recursos humanos • Relojes | mnscloud",
+  "Time Clock Kiosks": "Relojes"
 }
