@@ -975,6 +975,14 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.time-clock-kiosks.read'],
       },
       {
+        id: 'hr/rep-p',
+        label: 'nav.hr.rep-p',
+        icon: 'verified',
+        category: 'platform',
+        masterRoute: '/system/hr/rep-p',
+        permissions: ['platform.master.access'],
+      },
+      {
         id: 'hr/department-approvers',
         label: 'nav.hr.department-approvers',
         icon: 'how_to_reg',

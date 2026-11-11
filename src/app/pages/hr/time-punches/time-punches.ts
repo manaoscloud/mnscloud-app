@@ -12,6 +12,7 @@ import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-vi
 import { openPrivateFile } from '../../../shared/file-preview-dialog/private-file';
 import { PUNCH_FLAGS, PUNCH_TYPES } from '../hr-time';
 import { openPunchMapDialog, punchLocations } from './punch-map-dialog';
+import { openAfdExportDialog } from './afd-export-dialog';
 
 const SOURCES: readonly ConfigurableCrudOption[] = [
   { value: 'mobile', label: 'Mobile' },
@@ -38,6 +39,14 @@ const MAP_ACTION: ConfigurableCrudFilterAction = {
   label: 'Map',
   icon: 'map',
   tooltip: 'Locations of the punches on this page',
+};
+
+/** AFD (REP-P source data file) of one establishment and period. */
+const AFD_ACTION: ConfigurableCrudFilterAction = {
+  key: 'afd',
+  label: 'Export AFD',
+  icon: 'download',
+  tooltip: 'Source data file (AFD) of one establishment',
 };
 
 function flags(row: ConfigurableCrudRecord): string[] {
@@ -159,7 +168,7 @@ const config = defineCrud({
     },
   ],
   fields: [],
-  filterActions: [MAP_ACTION],
+  filterActions: [MAP_ACTION, AFD_ACTION],
   rowActions: [
     { key: 'details', label: 'Details', icon: 'receipt_long', tooltip: 'Details' },
     {
@@ -192,6 +201,10 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {
+    if (action.key === AFD_ACTION.key) {
+      await openAfdExportDialog(this.dialog);
+      return;
+    }
     if (action.key !== MAP_ACTION.key) return;
     const punches = punchLocations(this.visibleRows(), (type) => this.punchType(type));
     if (!punches.length) {
