@@ -35,6 +35,12 @@ import type {
   VpsProviderConfig,
 } from '../vps.types';
 import { isAccountDefaultNetwork } from '../vps.types';
+import {
+  NETWORK_PROFILE_HELP,
+  NETWORK_PROFILE_OPTIONS,
+  buildNetworkProfile,
+  vpsNetworkErrorMessage,
+} from '../platform-network';
 import { planHardwareSummary, planNetworkSpecs } from '../../shared/plan-specs';
 
 type CustomerOption = {
@@ -208,6 +214,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     password: '',
     sshKey: '',
     planProvider: '',
+    networkProfile: 'infrastructure',
     notes: '',
   },
   columns: [
@@ -303,6 +310,19 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     PLACEMENT_GROUP_FIELD,
+    {
+      // Internal (platform) servers only: hidden for tenant/customer servers (see the constructor).
+      key: 'networkProfile',
+      source: 'HviConfig',
+      payloadKey: 'networkProfile',
+      label: 'Network',
+      type: 'select',
+      options: [...NETWORK_PROFILE_OPTIONS],
+      span: 1,
+      tab: 'network',
+      help: NETWORK_PROFILE_HELP,
+      fromRecord: (value) => configString(value, 'networkProfile') || 'infrastructure',
+    },
     {
       key: 'networkUUID',
       source: 'HostingVpsNetworkHvnUUID',
@@ -568,6 +588,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
 
+    const profileField = this.config.fields.find((field) => field.key === 'networkProfile');
+    if (profileField) {
+      profileField.hiddenWhen = ({ editing, values }) =>
+        editing ||
+        !this.platformScope() ||
+        !values['planUUID'] ||
+        String(values['customerUUID'] ?? '').trim().length > 0;
+    }
+
     const provisionedLockKeys = [
       'isActive',
       'customerUUID',
@@ -793,10 +822,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       ...(editing
         ? {}
         : {
+            ...buildNetworkProfile(payload, this.platformScope()),
             networkUUID: normalizeString(payload['networkUUID']),
             firewallUUIDs: Array.isArray(payload['firewallUUIDs']) ? payload['firewallUUIDs'] : [],
           }),
     };
+  }
+
+  protected override errorMessage(error: unknown): string {
+    const networkMessage = vpsNetworkErrorMessage(error);
+    return networkMessage ? this.t(networkMessage) : super.errorMessage(error);
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
@@ -1385,6 +1420,17 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         { label: 'Provider', value: providerName },
         { label: 'Plan', value: plan?.HvpName ?? item.HostingVpsPlanHvpUUID },
         { label: 'External ID', value: item.HviExternalId, monospace: true },
+        ...(this.platformScope() && config.networkProfile
+          ? [
+              {
+                label: 'Network',
+                value: this.t(
+                  NETWORK_PROFILE_OPTIONS.find((option) => option.value === config.networkProfile)
+                    ?.label ?? String(config.networkProfile),
+                ),
+              },
+            ]
+          : []),
         {
           label: 'Public IPv4',
           value: runtime?.['publicIpv4'] ?? config.publicIpv4 ?? '-',
