@@ -59,6 +59,75 @@ const WIDGET_POSITIONS = [
   { value: 'left', label: 'Bottom left' },
 ] as const;
 
+/** Pre-chat form and business hours keys stored in `ChcConfig` (also the form field keys). */
+export const WEBCHAT_RULE_KEYS = [
+  'preChatMode',
+  'hoursEnabled',
+  'hoursTimezone',
+  'hoursDays',
+  'hoursStart',
+  'hoursEnd',
+  'offlineMessage',
+  'offlineBehavior',
+] as const;
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
+const DEFAULT_DAYS = [1, 2, 3, 4, 5];
+
+const PRE_CHAT_MODES = [
+  { value: 'optional', label: 'Optional' },
+  { value: 'required', label: 'Required' },
+  { value: 'hidden', label: 'Do not ask' },
+] as const;
+
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+] as const;
+
+const OFFLINE_BEHAVIORS = [
+  { value: 'message', label: 'Show the message and accept messages' },
+  { value: 'hide', label: 'Hide the chat' },
+] as const;
+
+/** IANA time zones of this browser, with the Brazilian ones first. */
+function timezoneOptions(): { value: string; label: string }[] {
+  const supported = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+  const zones = supported ? supported('timeZone') : [DEFAULT_TIMEZONE, 'America/Manaus', 'UTC'];
+  const brazil = [
+    'America/Sao_Paulo',
+    'America/Manaus',
+    'America/Belem',
+    'America/Fortaleza',
+    'America/Recife',
+    'America/Bahia',
+    'America/Cuiaba',
+    'America/Campo_Grande',
+    'America/Porto_Velho',
+    'America/Boa_Vista',
+    'America/Rio_Branco',
+    'America/Noronha',
+  ].filter((zone) => zones.includes(zone));
+  return [...brazil, ...zones.filter((zone) => !brazil.includes(zone))].map((zone) => ({
+    value: zone,
+    label: zone.replaceAll('_', ' '),
+  }));
+}
+
+const isWebchatHours = (values: ConfigurableCrudRecord) =>
+  isWebchat(values) && Number(values['hoursEnabled']) === 1;
+
+function storedRule(value: unknown, key: string): unknown {
+  const object = parseObject(value);
+  return object && object !== 'invalid' ? object[key] : undefined;
+}
+
 function storedLook(value: unknown, key: string): string {
   const object = parseObject(value);
   const raw = object && object !== 'invalid' ? object[key] : '';
@@ -122,6 +191,22 @@ export function webchatConfig(values: ConfigurableCrudRecord): Record<string, un
     const value = String(values[key] ?? '').trim();
     if (value) rest[key] = key === 'widgetColor' ? value.toUpperCase() : value;
   }
+  for (const key of WEBCHAT_RULE_KEYS) delete rest[key];
+  const mode = String(values['preChatMode'] ?? '');
+  if (mode === 'required' || mode === 'hidden') rest['preChatMode'] = mode;
+  if (Number(values['hoursEnabled']) === 1) {
+    const days = Array.isArray(values['hoursDays']) ? values['hoursDays'] : [];
+    const message = String(values['offlineMessage'] ?? '').trim();
+    Object.assign(rest, {
+      hoursEnabled: true,
+      hoursTimezone: String(values['hoursTimezone'] ?? '') || DEFAULT_TIMEZONE,
+      hoursDays: [...new Set(days.map(Number))].sort((a, b) => a - b),
+      hoursStart: String(values['hoursStart'] ?? ''),
+      hoursEnd: String(values['hoursEnd'] ?? ''),
+      ...(message ? { offlineMessage: message } : {}),
+      offlineBehavior: values['offlineBehavior'] === 'hide' ? 'hide' : 'message',
+    });
+  }
   const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
     .map(websiteOrigin)
     .filter((origin) => origin && origin !== 'invalid');
@@ -171,6 +256,14 @@ const config = defineCrud({
     widgetGreeting: '',
     widgetColor: '',
     widgetPosition: 'right',
+    preChatMode: 'optional',
+    hoursEnabled: 0,
+    hoursTimezone: DEFAULT_TIMEZONE,
+    hoursDays: DEFAULT_DAYS,
+    hoursStart: '08:00',
+    hoursEnd: '18:00',
+    offlineBehavior: 'message',
+    offlineMessage: '',
     ChcExternalId: '',
     secret: '',
     clearSecret: 0,
@@ -341,6 +434,123 @@ const config = defineCrud({
       fromRecord: (value) => storedLook(value, 'widgetSubtitle'),
     },
     {
+      key: 'preChatMode',
+      source: 'ChcConfig',
+      label: 'Ask name and e-mail before the chat',
+      type: 'search-select',
+      tab: 'advanced',
+      options: PRE_CHAT_MODES,
+      translateOptions: true,
+      help: 'Required: the visitor must enter a name and a valid e-mail before the first message.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => {
+        const mode = storedRule(value, 'preChatMode');
+        return mode === 'required' || mode === 'hidden' ? mode : 'optional';
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursEnabled',
+      source: 'ChcConfig',
+      label: 'Business hours',
+      type: 'search-select',
+      tab: 'advanced',
+      options: YES_NO,
+      translateOptions: true,
+      help: 'Outside these hours the chat shows the offline message or is hidden.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => (storedRule(value, 'hoursEnabled') === true ? 1 : 0),
+      span: 1,
+    },
+    {
+      key: 'hoursTimezone',
+      source: 'ChcConfig',
+      label: 'Time zone',
+      type: 'search-select',
+      tab: 'advanced',
+      options: timezoneOptions(),
+      translateOptions: false,
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const zone = storedRule(value, 'hoursTimezone');
+        return typeof zone === 'string' && zone ? zone : DEFAULT_TIMEZONE;
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursDays',
+      source: 'ChcConfig',
+      label: 'Days',
+      type: 'search-select',
+      multiple: true,
+      tab: 'advanced',
+      options: WEEKDAY_OPTIONS,
+      translateOptions: true,
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const days = storedRule(value, 'hoursDays');
+        return Array.isArray(days) && days.length ? days.map(Number) : DEFAULT_DAYS;
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursStart',
+      source: 'ChcConfig',
+      label: 'Opens at',
+      type: 'time',
+      tab: 'advanced',
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const time = storedRule(value, 'hoursStart');
+        return typeof time === 'string' && time ? time : '08:00';
+      },
+    },
+    {
+      key: 'hoursEnd',
+      source: 'ChcConfig',
+      label: 'Closes at',
+      type: 'time',
+      tab: 'advanced',
+      help: 'A closing time before the opening time ends after midnight.',
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const time = storedRule(value, 'hoursEnd');
+        return typeof time === 'string' && time ? time : '18:00';
+      },
+    },
+    {
+      key: 'offlineBehavior',
+      source: 'ChcConfig',
+      label: 'Outside business hours',
+      type: 'search-select',
+      tab: 'advanced',
+      options: OFFLINE_BEHAVIORS,
+      translateOptions: true,
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => (storedRule(value, 'offlineBehavior') === 'hide' ? 'hide' : 'message'),
+      span: 1,
+    },
+    {
+      key: 'offlineMessage',
+      source: 'ChcConfig',
+      label: 'Offline message',
+      type: 'textarea',
+      tab: 'advanced',
+      placeholder:
+        'Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.',
+      help: 'Shown in the chat outside business hours. Empty uses the default text.',
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const message = storedRule(value, 'offlineMessage');
+        return typeof message === 'string' ? message : '';
+      },
+      span: 4,
+    },
+    {
       key: 'allowSubdomains',
       source: 'ChcConfig',
       label: 'Allow subdomains',
@@ -487,6 +697,19 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
     for (const [key, max] of Object.entries(limits)) {
       if (String(payload[key] ?? '').trim().length > max) {
         return this.rejectField(key, 'conversations.widgetTextTooLong', { max });
+      }
+    }
+    if (Number(payload['hoursEnabled']) === 1) {
+      for (const key of ['hoursStart', 'hoursEnd']) {
+        if (!TIME_RE.test(String(payload[key] ?? ''))) {
+          return this.rejectField(key, 'conversations.hoursTimeInvalid');
+        }
+      }
+      if (payload['hoursStart'] === payload['hoursEnd']) {
+        return this.rejectField('hoursEnd', 'conversations.hoursSameTime');
+      }
+      if (String(payload['offlineMessage'] ?? '').trim().length > 500) {
+        return this.rejectField('offlineMessage', 'conversations.widgetTextTooLong', { max: 500 });
       }
     }
     if (lines.length + 1 > MAX_ORIGINS) {

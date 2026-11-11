@@ -82,4 +82,37 @@ describe('conversation connections form', () => {
     expect(html).toContain('data-title="&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"');
     expect(html.match(/<script/g)?.length).toBe(1);
   });
+
+  it('stores pre-chat and business hours only when enabled', () => {
+    const off = webchatConfig({
+      storedConfig: JSON.stringify({ hoursEnabled: true, hoursDays: [1], preChatMode: 'required' }),
+      allowedOrigins: 'example.com',
+      preChatMode: 'optional',
+      hoursEnabled: 0,
+      hoursDays: [1, 2],
+    });
+    expect(off).toEqual({ allowedOrigins: ['https://example.com'], allowSubdomains: false });
+    const on = webchatConfig({
+      allowedOrigins: 'example.com',
+      preChatMode: 'required',
+      hoursEnabled: 1,
+      hoursTimezone: 'America/Manaus',
+      hoursDays: [5, 1, '3'],
+      hoursStart: '08:00',
+      hoursEnd: '18:00',
+      offlineBehavior: 'hide',
+      offlineMessage: '  ',
+    });
+    expect(on).toEqual({
+      preChatMode: 'required',
+      hoursEnabled: true,
+      hoursTimezone: 'America/Manaus',
+      hoursDays: [1, 3, 5],
+      hoursStart: '08:00',
+      hoursEnd: '18:00',
+      offlineBehavior: 'hide',
+      allowedOrigins: ['https://example.com'],
+      allowSubdomains: false,
+    });
+  });
 });

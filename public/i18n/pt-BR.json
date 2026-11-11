@@ -13165,5 +13165,21 @@
   "Enter an IPv4 address.": "Informe um endereço IPv4.",
   "Enter up to 3 DNS resolvers.": "Informe até 3 resolvedores DNS.",
   "Only a server of the platform can choose the network profile.": "Somente um servidor da plataforma pode escolher o perfil de rede.",
-  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "O provedor não tem rede da plataforma. Configure-a no provedor ou escolha a rede Isolada."
+  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "O provedor não tem rede da plataforma. Configure-a no provedor ou escolha a rede Isolada.",
+  "Ask name and e-mail before the chat": "Pedir nome e e-mail antes do chat",
+  "Do not ask": "Não pedir",
+  "Required: the visitor must enter a name and a valid e-mail before the first message.": "Obrigatório: o visitante precisa informar nome e um e-mail válido antes da primeira mensagem.",
+  "Business hours": "Horário de atendimento",
+  "Outside these hours the chat shows the offline message or is hidden.": "Fora deste horário o chat mostra a mensagem de ausência ou fica oculto.",
+  "Opens at": "Abre às",
+  "Closes at": "Fecha às",
+  "A closing time before the opening time ends after midnight.": "Um horário de fechamento antes do de abertura termina depois da meia-noite.",
+  "Outside business hours": "Fora do horário",
+  "Show the message and accept messages": "Mostrar a mensagem e aceitar mensagens",
+  "Hide the chat": "Ocultar o chat",
+  "Offline message": "Mensagem de ausência",
+  "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.": "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.",
+  "Shown in the chat outside business hours. Empty uses the default text.": "Aparece no chat fora do horário de atendimento. Vazio usa o texto padrão.",
+  "conversations.hoursTimeInvalid": "Informe o horário no formato HH:MM.",
+  "conversations.hoursSameTime": "O horário de fechamento deve ser diferente do de abertura."
 }

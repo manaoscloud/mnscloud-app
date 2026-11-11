@@ -13164,5 +13164,21 @@
   "Enter an IPv4 address.": "Indique una dirección IPv4.",
   "Enter up to 3 DNS resolvers.": "Indique hasta 3 resolutores DNS.",
   "Only a server of the platform can choose the network profile.": "Solo un servidor de la plataforma puede elegir el perfil de red.",
-  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "El proveedor no tiene red de la plataforma. Configúrela en el proveedor o elija la red Aislada."
+  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "El proveedor no tiene red de la plataforma. Configúrela en el proveedor o elija la red Aislada.",
+  "Ask name and e-mail before the chat": "Pedir nombre y correo antes del chat",
+  "Do not ask": "No pedir",
+  "Required: the visitor must enter a name and a valid e-mail before the first message.": "Obligatorio: el visitante debe indicar nombre y un correo válido antes del primer mensaje.",
+  "Business hours": "Horario de atención",
+  "Outside these hours the chat shows the offline message or is hidden.": "Fuera de este horario el chat muestra el mensaje de ausencia o se oculta.",
+  "Opens at": "Abre a las",
+  "Closes at": "Cierra a las",
+  "A closing time before the opening time ends after midnight.": "Una hora de cierre anterior a la de apertura termina después de la medianoche.",
+  "Outside business hours": "Fuera del horario",
+  "Show the message and accept messages": "Mostrar el mensaje y aceptar mensajes",
+  "Hide the chat": "Ocultar el chat",
+  "Offline message": "Mensaje de ausencia",
+  "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.": "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.",
+  "Shown in the chat outside business hours. Empty uses the default text.": "Aparece en el chat fuera del horario de atención. Vacío usa el texto predeterminado.",
+  "conversations.hoursTimeInvalid": "Indique la hora en el formato HH:MM.",
+  "conversations.hoursSameTime": "La hora de cierre debe ser distinta de la de apertura."
 }

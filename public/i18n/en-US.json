@@ -13164,5 +13164,21 @@
   "Enter an IPv4 address.": "Enter an IPv4 address.",
   "Enter up to 3 DNS resolvers.": "Enter up to 3 DNS resolvers.",
   "Only a server of the platform can choose the network profile.": "Only a server of the platform can choose the network profile.",
-  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "The provider has no platform network. Configure it in the provider or choose the Isolated network."
+  "The provider has no platform network. Configure it in the provider or choose the Isolated network.": "The provider has no platform network. Configure it in the provider or choose the Isolated network.",
+  "Ask name and e-mail before the chat": "Ask name and e-mail before the chat",
+  "Do not ask": "Do not ask",
+  "Required: the visitor must enter a name and a valid e-mail before the first message.": "Required: the visitor must enter a name and a valid e-mail before the first message.",
+  "Business hours": "Business hours",
+  "Outside these hours the chat shows the offline message or is hidden.": "Outside these hours the chat shows the offline message or is hidden.",
+  "Opens at": "Opens at",
+  "Closes at": "Closes at",
+  "A closing time before the opening time ends after midnight.": "A closing time before the opening time ends after midnight.",
+  "Outside business hours": "Outside business hours",
+  "Show the message and accept messages": "Show the message and accept messages",
+  "Hide the chat": "Hide the chat",
+  "Offline message": "Offline message",
+  "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.": "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.",
+  "Shown in the chat outside business hours. Empty uses the default text.": "Shown in the chat outside business hours. Empty uses the default text.",
+  "conversations.hoursTimeInvalid": "Enter the time as HH:MM.",
+  "conversations.hoursSameTime": "The closing time must differ from the opening time."
 }
