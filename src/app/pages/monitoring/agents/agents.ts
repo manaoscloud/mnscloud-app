@@ -827,7 +827,17 @@ export class MonitoringAgentsPage extends ConfigurableCrudPageBase<MonitoringAge
   private tokenCommand(token: string) {
     const options = `--api-base ${this.shellQuote(window.location.origin)} --enrollment-token ${this.shellQuote(token)}`;
     const scripts = '/opt/mnscloud/mnscloud-agent/scripts';
+    // The clone below runs before install-agent.sh, so a host without git gets it here (Linux
+    // only: on macOS git comes with the Command Line Tools, which the macOS installer checks).
+    const ensureGit =
+      '{ command -v git >/dev/null 2>&1 || [ "$(uname -s)" = Darwin ] || ' +
+      '{ if command -v apt-get >/dev/null 2>&1; then sudo apt-get update -y && ' +
+      'sudo apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends git ca-certificates; ' +
+      'elif command -v dnf >/dev/null 2>&1; then sudo dnf -y install git ca-certificates; ' +
+      'elif command -v yum >/dev/null 2>&1; then sudo yum -y install git ca-certificates; ' +
+      'else echo "git not found and no apt-get/dnf/yum to install it" >&2; false; fi; }; }';
     return [
+      ensureGit,
       'sudo install -d -m 0755 /opt/mnscloud',
       'cd /opt/mnscloud',
       '[ -d mnscloud-agent/.git ] && sudo git -C mnscloud-agent pull || sudo git clone https://github.com/manaoscloud/mnscloud-agent.git',
