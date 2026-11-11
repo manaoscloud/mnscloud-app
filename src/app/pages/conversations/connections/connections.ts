@@ -402,12 +402,13 @@ function webchatPreviewAction(dialog: () => MatDialog): ConfigurableCrudRowActio
         name: String(row['ChcName'] ?? ''),
         scriptUrl: `${appOrigin()}/api/v1/conversations/webchat/widget.js`,
         channelUUID: String(row['ChcUUID'] ?? ''),
+        // Same rules as the public appearance: an invalid stored value never shows here.
         look: {
-          title: look('widgetTitle'),
-          subtitle: look('widgetSubtitle'),
-          greeting: look('widgetGreeting'),
-          color: look('widgetColor'),
-          position: look('widgetPosition'),
+          title: look('widgetTitle').slice(0, 60),
+          subtitle: look('widgetSubtitle').slice(0, 120),
+          greeting: look('widgetGreeting').slice(0, 500),
+          color: COLOR_RE.test(look('widgetColor')) ? look('widgetColor') : '',
+          position: look('widgetPosition') === 'left' ? 'left' : '',
         },
       });
     },
