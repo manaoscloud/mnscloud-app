@@ -80,4 +80,35 @@ describe('cyber security notifications', () => {
     );
     expect(notificationDescription(urgent, 'pt-BR')).toBe('agent-web-1, agent-api-1');
   });
+
+  it('shows the V12 firmware, threat and hardening notices with their details', () => {
+    const titled = (key: string, params?: Record<string, string>) =>
+      `${key}:${params?.['device'] ?? params?.['server']}:${params?.['count']}`;
+    const firmware = item('security.network_device', {
+      device: 'edge firewall',
+      count: '2',
+      codes: 'CVE-2024-21762, CVE-2023-27997',
+    });
+    expect(notificationIcon(firmware)).toBe('router');
+    expect(notificationTitle(firmware, titled)).toBe(
+      'notifications.securityNetworkDevice:edge firewall:2',
+    );
+    expect(notificationDescription(firmware, 'pt-BR')).toBe('CVE-2024-21762, CVE-2023-27997');
+    const threat = item('security.threat', {
+      server: 'web-1',
+      count: '1',
+      threats: 'Eicar-Signature',
+    });
+    expect(notificationIcon(threat)).toBe('pest_control');
+    expect(notificationTitle(threat, titled)).toBe('notifications.securityThreat:web-1:1');
+    expect(notificationDescription(threat, 'pt-BR')).toBe('Eicar-Signature');
+    const hardening = item('security.hardening', {
+      server: 'web-1',
+      count: '1',
+      checks: 'mac.sip',
+    });
+    expect(notificationIcon(hardening)).toBe('rule');
+    expect(notificationTitle(hardening, titled)).toBe('notifications.securityHardening:web-1:1');
+    expect(notificationDescription(hardening, 'pt-BR')).toBe('mac.sip');
+  });
 });

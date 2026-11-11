@@ -26,6 +26,9 @@ export type NotificationType =
   | 'security.protection'
   | 'security.agent'
   | 'security.vulnerability'
+  | 'security.network_device'
+  | 'security.threat'
+  | 'security.hardening'
   | 'hr.time_request'
   | 'platform.signup.capacity'
   | 'platform.signup.reopened';

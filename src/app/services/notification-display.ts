@@ -3,6 +3,13 @@ import type { InboxNotification } from './notification-inbox.service';
 
 type Translate = (key: string, params?: Record<string, string>) => string;
 
+/** Description field of the V12 Cyber Security notices (firmware codes, threat names, check codes). */
+const SECURITY_DETAIL: Record<string, string> = {
+  'security.network_device': 'codes',
+  'security.threat': 'threats',
+  'security.hardening': 'checks',
+};
+
 /** Icon by notification type (never by read state; the row style carries the state). */
 export function notificationIcon(item: InboxNotification): string {
   switch (item.type) {
@@ -35,6 +42,12 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['kind'] === 'restored' ? 'lan' : 'portable_wifi_off';
     case 'security.vulnerability':
       return 'bug_report';
+    case 'security.network_device':
+      return 'router';
+    case 'security.threat':
+      return 'pest_control';
+    case 'security.hardening':
+      return 'rule';
     case 'website.order.activation':
       return 'storefront';
     case 'website.order.cancelled':
@@ -113,6 +126,21 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
         code: param('code'),
         count: param('serverCount') || '1',
       });
+    case 'security.network_device':
+      return t('notifications.securityNetworkDevice', {
+        device: param('device'),
+        count: param('count') || '1',
+      });
+    case 'security.threat':
+      return t('notifications.securityThreat', {
+        server: param('server'),
+        count: param('count') || '1',
+      });
+    case 'security.hardening':
+      return t('notifications.securityHardening', {
+        server: param('server'),
+        count: param('count') || '1',
+      });
     case 'website.order.activation':
       return t(
         param('step') === 'manual'
@@ -183,15 +211,17 @@ export function notificationDescription(item: InboxNotification, language: strin
                   ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
                   : item.type === 'security.vulnerability'
                     ? item.params['servers']
-                    : item.type === 'security.protection' && item.params['kind'] === 'lost'
-                      ? item.params['services']
-                      : item.type.startsWith('security.')
-                        ? item.params['hostname']
-                        : item.type === 'hr.time_request'
-                          ? `#${String(item.params['id'] ?? '')}`
-                          : item.type.startsWith('release_note.')
-                            ? releaseNoteTitle(item, language)
-                            : item.params['subject'];
+                    : SECURITY_DETAIL[item.type]
+                      ? item.params[SECURITY_DETAIL[item.type]]
+                      : item.type === 'security.protection' && item.params['kind'] === 'lost'
+                        ? item.params['services']
+                        : item.type.startsWith('security.')
+                          ? item.params['hostname']
+                          : item.type === 'hr.time_request'
+                            ? `#${String(item.params['id'] ?? '')}`
+                            : item.type.startsWith('release_note.')
+                              ? releaseNoteTitle(item, language)
+                              : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())
