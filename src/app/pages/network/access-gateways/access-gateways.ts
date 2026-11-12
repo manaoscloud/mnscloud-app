@@ -255,6 +255,12 @@ const config = defineCrud({
       field: 'OpenConnections',
       value: (row) => `${Number(row['OpenConnections'] ?? 0)} / ${Number(row['AgwCapacity'] ?? 0)}`,
     },
+    {
+      id: 'connectors',
+      label: 'network.accessGateways.connectors',
+      field: 'AttachedConnectors',
+      kind: 'number',
+    },
     { id: 'version', label: 'Version', field: 'AgwRuntimeVersion', optional: true },
     {
       id: 'heartbeat',

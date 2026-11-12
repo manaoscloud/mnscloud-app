@@ -13509,6 +13509,7 @@
   "network.accessGateways.onlineYes": "Online",
   "network.accessGateways.onlineNo": "Sem sinal",
   "network.accessGateways.connections": "Conexões",
+  "network.accessGateways.connectors": "Conectores",
   "network.accessGateways.heartbeat": "Último sinal",
   "network.accessGateways.lastError": "Último erro",
   "network.accessGateways.status.active": "Ativo",

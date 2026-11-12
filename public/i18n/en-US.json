@@ -13508,6 +13508,7 @@
   "network.accessGateways.onlineYes": "Online",
   "network.accessGateways.onlineNo": "No heartbeat",
   "network.accessGateways.connections": "Connections",
+  "network.accessGateways.connectors": "Connectors",
   "network.accessGateways.heartbeat": "Last heartbeat",
   "network.accessGateways.lastError": "Last error",
   "network.accessGateways.status.active": "Active",
