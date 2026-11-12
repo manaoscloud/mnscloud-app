@@ -9,11 +9,13 @@ import {
   ViewEncapsulation,
   afterNextRender,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BreadcrumbLabelsService } from '../../../shared/breadcrumb/breadcrumb-labels.service';
 import {
   FCanvasComponent,
   FCreateConnectionEvent,
@@ -130,6 +132,7 @@ export class AutomationEditorPage {
   private readonly transloco = inject(TranslocoService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly breadcrumbLabels = inject(BreadcrumbLabelsService);
 
   readonly uuid = this.route.snapshot.paramMap.get('uuid') ?? '';
   readonly canvas = viewChild(FCanvasComponent);
@@ -224,6 +227,12 @@ export class AutomationEditorPage {
 
   constructor() {
     afterNextRender(() => this.observeWidth());
+    // The flow segment of the breadcrumb shows the flow name instead of its UUID.
+    effect((onCleanup) => {
+      const name = this.flow()?.name?.trim();
+      if (!name || !this.uuid) return;
+      onCleanup(this.breadcrumbLabels.register(`/automation/flows/${this.uuid}`, name));
+    });
     this.destroyRef.onDestroy(() => {
       if (this.saveTimer) clearTimeout(this.saveTimer);
       if (this.validateTimer) clearTimeout(this.validateTimer);
