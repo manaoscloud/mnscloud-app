@@ -2,6 +2,7 @@ import {
   CREATABLE_CHANNEL_KINDS,
   storedOrigins,
   webchatConfig,
+  webchatFieldError,
   websiteOrigin,
 } from './connections';
 import { webchatPreviewDocument } from './webchat-preview-dialog';
@@ -114,5 +115,22 @@ describe('conversation connections form', () => {
       allowedOrigins: ['https://example.com'],
       allowSubdomains: false,
     });
+  });
+
+  it('reports the first invalid website chat field in form order', () => {
+    const ok = { kind: 'webchat', allowedOrigins: 'example.com' };
+    expect(webchatFieldError({ kind: 'internal', allowedOrigins: 'http://x' })).toBeNull();
+    expect(webchatFieldError(ok)).toBeNull();
+    expect(webchatFieldError({ ...ok, allowedOrigins: 'http://x.com' })?.key).toBe('allowedOrigins');
+    expect(webchatFieldError({ ...ok, otherOrigins: 'ok.com\n*.bad.com' })?.params).toEqual({
+      value: '*.bad.com',
+    });
+    expect(webchatFieldError({ ...ok, widgetColor: 'blue' })?.key).toBe('widgetColor');
+    expect(webchatFieldError({ ...ok, widgetTitle: 'x'.repeat(61) })?.key).toBe('widgetTitle');
+    const hours = { ...ok, hoursEnabled: 1, hoursStart: '08:00', hoursEnd: '18:00' };
+    expect(webchatFieldError(hours)).toBeNull();
+    expect(webchatFieldError({ ...hours, hoursStart: '8h' })?.key).toBe('hoursStart');
+    expect(webchatFieldError({ ...hours, hoursEnd: '08:00' })?.message).toBe('conversations.hoursSameTime');
+    expect(webchatFieldError({ ...hours, hoursEnabled: 0, hoursStart: 'x' })).toBeNull();
   });
 });

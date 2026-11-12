@@ -177,44 +177,109 @@ function originLines(value: unknown): string[] {
 }
 
 /** Website chat config from the form fields, keeping stored keys the form does not edit. */
+/** Text of a form value; objects never stringify to "[object Object]". */
+function text(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  return typeof value === 'number' ? String(value) : '';
+}
+
+function lookConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const look: Record<string, unknown> = {};
+  for (const key of WIDGET_LOOK_KEYS) {
+    const value = text(values[key]);
+    if (value) look[key] = key === 'widgetColor' ? value.toUpperCase() : value;
+  }
+  return look;
+}
+
+function rulesConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const rules: Record<string, unknown> = {};
+  const mode = text(values['preChatMode']);
+  if (mode === 'required' || mode === 'hidden') rules['preChatMode'] = mode;
+  if (Number(values['hoursEnabled']) !== 1) return rules;
+  const days = Array.isArray(values['hoursDays']) ? values['hoursDays'] : [];
+  const message = text(values['offlineMessage']);
+  return {
+    ...rules,
+    hoursEnabled: true,
+    hoursTimezone: text(values['hoursTimezone']) || DEFAULT_TIMEZONE,
+    hoursDays: [...new Set(days.map(Number))].sort((a, b) => a - b),
+    hoursStart: text(values['hoursStart']),
+    hoursEnd: text(values['hoursEnd']),
+    ...(message ? { offlineMessage: message } : {}),
+    offlineBehavior: values['offlineBehavior'] === 'hide' ? 'hide' : 'message',
+  };
+}
+
+/** Website chat config from the form fields, keeping stored keys the form does not edit. */
 export function webchatConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
   const stored = parseObject(values['storedConfig']);
-  const {
-    origins: _legacy,
-    allowedOrigins: _origins,
-    allowSubdomains: _subdomains,
-    ...kept
-  } = stored && stored !== 'invalid' ? stored : {};
-  const rest: Record<string, unknown> = { ...kept };
-  for (const key of WIDGET_LOOK_KEYS) {
+  const rest: Record<string, unknown> = { ...(stored && stored !== 'invalid' ? stored : {}) };
+  for (const key of ['origins', 'allowedOrigins', 'allowSubdomains', ...WIDGET_LOOK_KEYS, ...WEBCHAT_RULE_KEYS]) {
     delete rest[key];
-    const value = String(values[key] ?? '').trim();
-    if (value) rest[key] = key === 'widgetColor' ? value.toUpperCase() : value;
-  }
-  for (const key of WEBCHAT_RULE_KEYS) delete rest[key];
-  const mode = String(values['preChatMode'] ?? '');
-  if (mode === 'required' || mode === 'hidden') rest['preChatMode'] = mode;
-  if (Number(values['hoursEnabled']) === 1) {
-    const days = Array.isArray(values['hoursDays']) ? values['hoursDays'] : [];
-    const message = String(values['offlineMessage'] ?? '').trim();
-    Object.assign(rest, {
-      hoursEnabled: true,
-      hoursTimezone: String(values['hoursTimezone'] ?? '') || DEFAULT_TIMEZONE,
-      hoursDays: [...new Set(days.map(Number))].sort((a, b) => a - b),
-      hoursStart: String(values['hoursStart'] ?? ''),
-      hoursEnd: String(values['hoursEnd'] ?? ''),
-      ...(message ? { offlineMessage: message } : {}),
-      offlineBehavior: values['offlineBehavior'] === 'hide' ? 'hide' : 'message',
-    });
   }
   const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
     .map(websiteOrigin)
     .filter((origin) => origin && origin !== 'invalid');
   return {
     ...rest,
+    ...lookConfig(values),
+    ...rulesConfig(values),
     allowedOrigins: [...new Set(origins)],
     allowSubdomains: Number(values['allowSubdomains']) === 1,
   };
+}
+
+export type WebchatFieldError = {
+  key: string;
+  message: string;
+  params?: Record<string, string | number>;
+};
+
+function originError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (websiteOrigin(payload['allowedOrigins']) === 'invalid') {
+    return { key: 'allowedOrigins', message: 'conversations.websiteInvalid' };
+  }
+  const lines = originLines(payload['otherOrigins']);
+  const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
+  if (invalid) {
+    return { key: 'otherOrigins', message: 'conversations.websiteLineInvalid', params: { value: invalid } };
+  }
+  if (lines.length + 1 > MAX_ORIGINS) {
+    return { key: 'otherOrigins', message: 'conversations.websiteTooMany', params: { max: MAX_ORIGINS } };
+  }
+  return null;
+}
+
+function lookError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  const color = text(payload['widgetColor']);
+  if (color && !COLOR_RE.test(color)) {
+    return { key: 'widgetColor', message: 'conversations.widgetColorInvalid' };
+  }
+  const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
+  const tooLong = Object.entries(limits).find(([key, max]) => text(payload[key]).length > max);
+  return tooLong
+    ? { key: tooLong[0], message: 'conversations.widgetTextTooLong', params: { max: tooLong[1] } }
+    : null;
+}
+
+function hoursError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (Number(payload['hoursEnabled']) !== 1) return null;
+  const badTime = ['hoursStart', 'hoursEnd'].find((key) => !TIME_RE.test(text(payload[key])));
+  if (badTime) return { key: badTime, message: 'conversations.hoursTimeInvalid' };
+  if (payload['hoursStart'] === payload['hoursEnd']) {
+    return { key: 'hoursEnd', message: 'conversations.hoursSameTime' };
+  }
+  if (text(payload['offlineMessage']).length > 500) {
+    return { key: 'offlineMessage', message: 'conversations.widgetTextTooLong', params: { max: 500 } };
+  }
+  return null;
+}
+
+/** First invalid website chat field of the flat form payload, in form order. */
+export function webchatFieldError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (payload['kind'] !== 'webchat') return null;
+  return originError(payload) ?? lookError(payload) ?? hoursError(payload);
 }
 
 const YES_NO = [
@@ -678,45 +743,7 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
-    if (payload['kind'] !== 'webchat') return true;
-    if (websiteOrigin(payload['allowedOrigins']) === 'invalid') {
-      return this.rejectField('allowedOrigins', 'conversations.websiteInvalid');
-    }
-    const lines = originLines(payload['otherOrigins']);
-    const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
-    if (invalid) {
-      return this.rejectField('otherOrigins', 'conversations.websiteLineInvalid', {
-        value: invalid,
-      });
-    }
-    const color = String(payload['widgetColor'] ?? '').trim();
-    if (color && !COLOR_RE.test(color)) {
-      return this.rejectField('widgetColor', 'conversations.widgetColorInvalid');
-    }
-    const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
-    for (const [key, max] of Object.entries(limits)) {
-      if (String(payload[key] ?? '').trim().length > max) {
-        return this.rejectField(key, 'conversations.widgetTextTooLong', { max });
-      }
-    }
-    if (Number(payload['hoursEnabled']) === 1) {
-      for (const key of ['hoursStart', 'hoursEnd']) {
-        if (!TIME_RE.test(String(payload[key] ?? ''))) {
-          return this.rejectField(key, 'conversations.hoursTimeInvalid');
-        }
-      }
-      if (payload['hoursStart'] === payload['hoursEnd']) {
-        return this.rejectField('hoursEnd', 'conversations.hoursSameTime');
-      }
-      if (String(payload['offlineMessage'] ?? '').trim().length > 500) {
-        return this.rejectField('offlineMessage', 'conversations.widgetTextTooLong', { max: 500 });
-      }
-    }
-    if (lines.length + 1 > MAX_ORIGINS) {
-      return this.rejectField('otherOrigins', 'conversations.websiteTooMany', {
-        max: MAX_ORIGINS,
-      });
-    }
-    return true;
+    const error = webchatFieldError(payload);
+    return error ? this.rejectField(error.key, error.message, error.params) : true;
   }
 }
