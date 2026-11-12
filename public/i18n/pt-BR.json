@@ -13397,5 +13397,8 @@
   "network.accessGateways.resumeCommand": "Comando para retomar",
   "network.accessGateways.resumeWarning": "Execute no mesmo servidor do gateway. Este comando não leva autorização nova.",
   "network.accessGateways.egressPlaceholder": "Ex.: 198.51.100.10",
-  "network.accessTest.facts": "Dados lidos do equipamento"
+  "network.accessTest.facts": "Dados lidos do equipamento",
+  "Read from Telegram when the bot token is saved.": "Lido do Telegram quando o token do bot é salvo.",
+  "Leave empty to keep the current bot. A new token connects another bot.": "Deixe vazio para manter o bot atual. Um token novo conecta outro bot.",
+  "In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically.": "No Telegram, abra o @BotFather, envie /newbot e cole o token aqui. O nome do bot, o webhook e o status são configurados automaticamente."
 }

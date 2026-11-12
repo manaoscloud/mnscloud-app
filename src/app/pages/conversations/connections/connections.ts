@@ -27,8 +27,8 @@ function parseObject(value: unknown): Record<string, unknown> | null | 'invalid'
 }
 
 /** Kinds offered when creating: only channels with a working driver (decision D2). */
-export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter(
-  (kind) => kind.value === 'internal' || kind.value === 'webchat',
+export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter((kind) =>
+  ['internal', 'webchat', 'telegram'].includes(String(kind.value)),
 );
 
 /** Provider routing key (`ChcExternalId`) label per channel type. */
@@ -135,6 +135,7 @@ function storedLook(value: unknown, key: string): string {
 }
 
 const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
+const isTelegram = (values: ConfigurableCrudRecord) => values['kind'] === 'telegram';
 const isProvider = (values: ConfigurableCrudRecord) =>
   values['kind'] !== 'internal' && values['kind'] !== 'webchat';
 
@@ -469,13 +470,27 @@ const config = defineCrud({
       label: 'Provider identifier',
       labelWhen: ({ values }) => EXTERNAL_ID_LABELS[String(values['kind'])] ?? 'Provider identifier',
       help: 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
-      hiddenWhen: ({ values }) => !isProvider(values),
+      helpWhen: ({ values }) =>
+        isTelegram(values)
+          ? 'Read from Telegram when the bot token is saved.'
+          : 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
+      // Telegram: read from the bot token by the API, shown only after saving.
+      disabledWhen: ({ values }) => isTelegram(values),
+      hiddenWhen: ({ editing, values }) => !isProvider(values) || (isTelegram(values) && !editing),
     },
     {
       key: 'secret',
       label: 'Credentials (JSON or token)',
+      labelWhen: ({ values }) => (isTelegram(values) ? 'Bot token' : 'Credentials (JSON or token)'),
       type: 'password',
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
+      helpWhen: ({ editing, values }) =>
+        isTelegram(values)
+          ? editing
+            ? 'Leave empty to keep the current bot. A new token connects another bot.'
+            : 'In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically.'
+          : 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
+      requiredWhen: ({ editing, values }) => isTelegram(values) && !editing,
       hiddenWhen: ({ values }) => !isProvider(values),
     },
     {
@@ -646,10 +661,16 @@ const config = defineCrud({
               : {}),
           }),
       ChcName: values['name'],
-      ChcExternalId: provider ? String(values['ChcExternalId'] ?? '').trim() || null : null,
+      // Telegram's bot username comes from the API; other providers keep their routing key.
+      ...(isTelegram(values)
+        ? {}
+        : { ChcExternalId: provider ? String(values['ChcExternalId'] ?? '').trim() || null : null }),
       ...(isWebchat(values) ? { ChcConfig: webchatConfig(values) } : {}),
       ...(provider && secretText
-        ? { ChcSecret: secretJson && secretJson !== 'invalid' ? secretJson : secretText }
+        ? {
+            ChcSecret:
+              !isTelegram(values) && secretJson && secretJson !== 'invalid' ? secretJson : secretText,
+          }
         : {}),
       ...(editing && provider && Number(values['clearSecret']) === 1
         ? { ChcSecretClear: true }
