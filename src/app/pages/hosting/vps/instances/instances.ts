@@ -121,6 +121,49 @@ const DETAILS_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Details',
 };
 
+/** A customer server the tenant may publish in (or hide from) the customer portal. */
+function isCustomerServer(row: ConfigurableCrudRecord): boolean {
+  return String(row['RegCustomerRcuUUID'] ?? '').trim().length > 0;
+}
+
+const PORTAL_PUBLISH_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-publish',
+  label: 'hostingVps.portalPublish',
+  icon: 'public',
+  tooltip: 'hostingVps.portalPublish',
+  visible: (row) => isCustomerServer(row) && Number(row['HviPortalEnabled'] ?? 0) !== 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal`,
+    body: () => ({ enabled: true }),
+    successMessage: 'hostingVps.portalPublished',
+    confirm: {
+      title: 'hostingVps.portalPublish',
+      message: 'hostingVps.portalPublishConfirm',
+      confirmLabel: 'hostingVps.portalPublish',
+    },
+  },
+};
+
+const PORTAL_HIDE_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-hide',
+  label: 'hostingVps.portalHide',
+  icon: 'public_off',
+  tooltip: 'hostingVps.portalHide',
+  visible: (row) => isCustomerServer(row) && Number(row['HviPortalEnabled'] ?? 0) === 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal`,
+    body: () => ({ enabled: false }),
+    successMessage: 'hostingVps.portalHidden',
+    confirm: {
+      title: 'hostingVps.portalHide',
+      message: 'hostingVps.portalHideConfirm',
+      confirmLabel: 'hostingVps.portalHide',
+    },
+  },
+};
+
 const PLACEMENT_GROUP_HELP =
   'Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.';
 
@@ -191,6 +234,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     RETRY_PROVISION_ACTION,
     UPGRADE_ACTION,
     MIGRATE_INSTANCE_ACTION,
+    PORTAL_PUBLISH_ACTION,
+    PORTAL_HIDE_ACTION,
   ],
   listFilters: [
     {
@@ -216,6 +261,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     planProvider: '',
     networkProfile: 'infrastructure',
     notes: '',
+    portalEnabled: 1,
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HviName', uuidField: 'HviUUID' },
@@ -258,6 +304,12 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       },
     },
     {
+      id: 'portal',
+      label: 'hostingVps.portalColumn',
+      kind: 'status',
+      field: 'HviPortalEnabled',
+    },
+    {
       id: 'status',
       label: 'Status',
       kind: 'status',
@@ -282,6 +334,20 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'search-select',
       required: true,
       span: 1,
+    },
+    {
+      key: 'portalEnabled',
+      payloadKey: 'portalEnabled',
+      label: 'hostingVps.portalEnabled',
+      help: 'hostingVps.portalEnabledHelp',
+      type: 'select',
+      options: [
+        { value: 1, label: 'Yes' },
+        { value: 0, label: 'No' },
+      ],
+      span: 1,
+      // Create only: later changes use the row actions (Publish / Hide in the customer portal).
+      hiddenWhen: ({ editing }) => editing,
     },
     {
       key: 'name',
@@ -578,6 +644,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
     if (customerFilter) customerFilter.hiddenWhen = () => !this.hasCustomerScope();
 
+    const portalField = this.config.fields.find((field) => field.key === 'portalEnabled');
+    if (portalField) {
+      portalField.hiddenWhen = ({ editing }) =>
+        editing || this.platformScope() || !this.hasCustomerScope();
+    }
+
     const customerField = this.config.fields.find((field) => field.key === 'customerUUID');
     if (customerField) {
       customerField.hiddenWhen = () => !this.hasCustomerScope();
@@ -831,6 +903,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       ...(editing
         ? {}
         : {
+            portalEnabled: !this.platformScope() && Number(payload['portalEnabled']) === 1,
             ...buildNetworkProfile(payload, this.platformScope()),
             networkUUID: normalizeString(payload['networkUUID']),
             firewallUUIDs: Array.isArray(payload['firewallUUIDs']) ? payload['firewallUUIDs'] : [],
