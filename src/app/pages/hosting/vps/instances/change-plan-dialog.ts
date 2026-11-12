@@ -15,13 +15,18 @@ import { FieldInvalidDirective } from '../../../../shared/forms/field-invalid.di
 export type ChangePlanDialogData = {
   instance: HostingVpsInstance;
   plans: HostingVpsPlan[];
+  /** Provider family of the server, used when its current plan is not in `plans`. */
+  provider?: string | null;
 };
+
+/** CPU, memory and disk the VM has now (runtime refresh), used as the baseline of an adopted VM. */
+export type VmSize = { cpu: number; memoryMb: number; diskGb: number };
 
 export type ChangePlanDialogResult = {
   targetPlanUUID: string;
 };
 
-type UpgradePlanOption = {
+export type UpgradePlanOption = {
   plan: HostingVpsPlan;
   diskChange: number;
 };
@@ -58,7 +63,28 @@ export class ChangePlanDialogComponent {
 
   readonly currentGrouping = computed(() => planSizeGrouping(this.currentPlan()));
 
+  readonly provider = computed(() =>
+    String(this.currentPlan()?.HvpProvider ?? this.data.provider ?? '').toLowerCase(),
+  );
+
+  readonly isProxmoxUpgrade = computed(() => this.provider() === 'proxmox');
+
+  /** FA3: an adopted VM sits on the adoption plan, which has no size; the VM is the baseline. */
+  readonly isAdopted = !!String(this.instance.HviAdoptedAt ?? '').trim();
+
+  readonly vmSize = computed<VmSize | null>(() => {
+    const runtime = this.instance.HviConfig?.runtime;
+    if (!runtime) return null;
+    const size = {
+      cpu: positive(runtime.vcpus),
+      memoryMb: positive(runtime.memoryMb),
+      diskGb: positive(runtime.diskGb),
+    };
+    return size.cpu || size.memoryMb || size.diskGb ? size : null;
+  });
+
   readonly upgradePlanOptions = computed<UpgradePlanOption[]>(() => {
+    if (this.isProxmoxUpgrade()) return this.proxmoxPlanOptions();
     const current = this.currentPlan();
     if (!current) return [];
     const currentDisk = this.planDiskGb(current);
@@ -117,6 +143,10 @@ export class ChangePlanDialogComponent {
       });
   });
 
+  private proxmoxPlanOptions(): UpgradePlanOption[] {
+    return proxmoxUpgradePlans(this.instance, this.data.plans, this.currentPlan());
+  }
+
   readonly isLightsailUpgrade = computed(
     () => String(this.currentPlan()?.HvpProvider ?? '') === 'lightsail',
   );
@@ -145,7 +175,7 @@ export class ChangePlanDialogComponent {
     const price = formatPlanMoney(plan.HvpPrice, plan.HvpCurrency);
     const setupFee = formatPlanMoney(plan.HvpSetupFee ?? 0, plan.HvpCurrency);
     return [
-      `${grouping.family} / ${grouping.category}`,
+      plan.HvpProvider === 'proxmox' ? null : `${grouping.family} / ${grouping.category}`,
       config.cpu ? `${config.cpu} CPU` : null,
       config.memoryMb ? `${config.memoryMb} MB` : null,
       config.diskGb ? `${config.diskGb} GB` : null,
@@ -166,6 +196,70 @@ export class ChangePlanDialogComponent {
     if (!this.rules.check()) return this.revealInvalid();
     this.dialogRef.close({ targetPlanUUID });
   }
+}
+
+/**
+ * Proxmox rules of the API (services/proxmoxChangePlan.ts): same provider account, a target in
+ * region `auto` or on the node the plan starts from (the VM's node for an adopted VM), the disk
+ * never shrinks; an adopted VM (FA3, adoption plan without size) also never loses CPU or memory
+ * against the size the runtime refresh read from the VM.
+ */
+export function proxmoxUpgradePlans(
+  instance: HostingVpsInstance,
+  plans: HostingVpsPlan[],
+  current: HostingVpsPlan | null,
+): UpgradePlanOption[] {
+  const adopted = !!String(instance.HviAdoptedAt ?? '').trim();
+  const providerUUID = current?.HostingVpsProviderHvrUUID ?? instance.HostingVpsProviderHvrUUID;
+  const config = instance.HviConfig ?? {};
+  const sourceRegion = (
+    (adopted ? (config.proxmoxNode ?? config.runtime?.region) : null) ??
+    current?.HvpRegion ??
+    ''
+  )
+    .trim()
+    .toLowerCase();
+  const runtime = config.runtime ?? {};
+  const baseline = adopted
+    ? {
+        cpu: positive(runtime.vcpus),
+        memoryMb: positive(runtime.memoryMb),
+        diskGb: positive(runtime.diskGb),
+      }
+    : { cpu: 0, memoryMb: 0, diskGb: positive(current?.HvpConfig?.diskGb) };
+  return plans
+    .filter((plan) => {
+      if (plan.HvpIsActive !== 1 || plan.HvpUUID === current?.HvpUUID) return false;
+      if (plan.HostingVpsProviderHvrUUID !== providerUUID) return false;
+      if (String(plan.HvpProvider ?? '').toLowerCase() !== 'proxmox') return false;
+      const region = String(plan.HvpRegion ?? '')
+        .trim()
+        .toLowerCase();
+      if (region && region !== 'auto' && region !== sourceRegion) return false;
+      const target = plan.HvpConfig ?? {};
+      if (smaller(positive(target.cpu), baseline.cpu)) return false;
+      if (smaller(positive(target.memoryMb), baseline.memoryMb)) return false;
+      return !smaller(positive(target.diskGb), baseline.diskGb);
+    })
+    .map((plan) => ({ plan, diskChange: positive(plan.HvpConfig?.diskGb) - baseline.diskGb }))
+    .sort(
+      (left, right) =>
+        positive(left.plan.HvpConfig?.memoryMb) - positive(right.plan.HvpConfig?.memoryMb) ||
+        left.diskChange - right.diskChange ||
+        String(left.plan.HvpName).localeCompare(String(right.plan.HvpName), undefined, {
+          sensitivity: 'base',
+        }),
+    );
+}
+
+function positive(value: unknown): number {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/** Whether a known target value is below a known baseline (0 = unknown, not compared). */
+function smaller(target: number, baseline: number): boolean {
+  return target > 0 && baseline > 0 && target < baseline;
 }
 
 function formatPlanMoney(
