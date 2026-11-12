@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "787176fd74e9",
+  "version": "d4a3c422ca1a",
   "language": "pt-BR",
   "entries": [
     {
@@ -9570,6 +9570,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/hr/rep-p",
+      "menuPath": "Recursos humanos › REP-P",
+      "scope": "platform",
+      "title": "REP-P",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/system/infragis/provider-settings",

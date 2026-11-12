@@ -990,6 +990,14 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/hr/accounts',
         permissions: ['tenant.hr.accounts.read'],
       },
+      {
+        id: 'hr/rep-p',
+        label: 'nav.hr.rep-p',
+        icon: 'verified',
+        category: 'platform',
+        masterRoute: '/system/hr/rep-p',
+        permissions: ['platform.master.access'],
+      },
     ],
   },
   {

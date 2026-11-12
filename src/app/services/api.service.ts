@@ -269,6 +269,20 @@ export class ApiService {
     );
   }
 
+  /** Blob with the response headers (file name and API metadata of a generated file). */
+  async getBlobResponse(endpoint: string): Promise<{ blob: Blob; headers: HttpHeaders }> {
+    this.assertEnvironment(endpoint);
+    const response = await firstValueFrom(
+      this.http.get(this.url(endpoint), {
+        headers: this.getHeaders(endpoint),
+        responseType: 'blob',
+        observe: 'response',
+        withCredentials: true,
+      }),
+    );
+    return { blob: response.body ?? new Blob(), headers: response.headers };
+  }
+
   private readonly pendingMutationKeys = new Map<string, string>();
 
   private async mutation<T>(
