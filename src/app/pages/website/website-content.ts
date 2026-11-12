@@ -55,6 +55,18 @@ export type WebsiteSection = {
   text: string;
   items: WebsiteSectionItem[];
 };
+export const WEBSITE_PAGE_KEYS = ['services', 'fleet', 'about', 'contact', 'ethics'] as const;
+export type WebsitePageKey = (typeof WEBSITE_PAGE_KEYS)[number];
+export const WEBSITE_MAX_PROMOTIONS = 12;
+export type WebsiteLocationsBlock = { enabled: boolean; title: string; intro: string };
+export type WebsitePageBlock = { enabled: boolean; title: string; text: string };
+export type WebsitePromotion = {
+  id: string;
+  title: string;
+  text: string;
+  validFrom?: string;
+  validUntil?: string;
+};
 export type WebsiteLocaleContent = {
   seo: { title: string; description: string };
   hero: {
@@ -67,6 +79,10 @@ export type WebsiteLocaleContent = {
   sections: WebsiteSection[];
   footer: { text: string };
   legal: { privacy: string; terms: string };
+  /** Optional keys: absent in v1 documents and while the editor never touched them. */
+  locations?: WebsiteLocationsBlock;
+  pages?: Partial<Record<WebsitePageKey, WebsitePageBlock>>;
+  promotions?: WebsitePromotion[];
 };
 export type WebsiteContent = {
   version: 1;
@@ -144,6 +160,38 @@ function section(value: unknown, index: number): WebsiteSection {
   };
 }
 
+const bool = (value: unknown): boolean => value === true;
+
+function locationsBlock(value: unknown): WebsiteLocationsBlock {
+  const source = record(value);
+  return {
+    enabled: bool(source['enabled']),
+    title: text(source['title']),
+    intro: text(source['intro']),
+  };
+}
+
+function pageBlock(value: unknown): WebsitePageBlock {
+  const source = record(value);
+  return {
+    enabled: bool(source['enabled']),
+    title: text(source['title']),
+    text: text(source['text']),
+  };
+}
+
+function promotion(value: unknown, index: number): WebsitePromotion {
+  const source = record(value);
+  const result: WebsitePromotion = {
+    id: text(source['id']) || `p${index + 1}`,
+    title: text(source['title']),
+    text: text(source['text']),
+  };
+  if (text(source['validFrom'])) result.validFrom = text(source['validFrom']);
+  if (text(source['validUntil'])) result.validUntil = text(source['validUntil']);
+  return result;
+}
+
 function localeContent(value: unknown): WebsiteLocaleContent {
   const source = record(value);
   const seo = record(source['seo']);
@@ -151,7 +199,7 @@ function localeContent(value: unknown): WebsiteLocaleContent {
   const footer = record(source['footer']);
   const legal = record(source['legal']);
   const sections = Array.isArray(source['sections']) ? source['sections'] : [];
-  return {
+  const result: WebsiteLocaleContent = {
     seo: { title: text(seo['title']), description: text(seo['description']) },
     hero: {
       eyebrow: text(hero['eyebrow']),
@@ -164,6 +212,19 @@ function localeContent(value: unknown): WebsiteLocaleContent {
     footer: { text: text(footer['text']) },
     legal: { privacy: text(legal['privacy']), terms: text(legal['terms']) },
   };
+  if (source['locations'] !== undefined) result.locations = locationsBlock(source['locations']);
+  if (source['pages'] !== undefined) {
+    const stored = record(source['pages']);
+    const pages: Partial<Record<WebsitePageKey, WebsitePageBlock>> = {};
+    for (const key of WEBSITE_PAGE_KEYS) {
+      if (stored[key] !== undefined) pages[key] = pageBlock(stored[key]);
+    }
+    result.pages = pages;
+  }
+  if (Array.isArray(source['promotions'])) {
+    result.promotions = source['promotions'].map((item, index) => promotion(item, index));
+  }
+  return result;
 }
 
 /**
@@ -242,6 +303,24 @@ export function moveEntry<T>(list: readonly T[], index: number, delta: number): 
   return next;
 }
 
+/** Locations block with defaults when the document has none. */
+export function localeLocations(block: WebsiteLocaleContent): WebsiteLocationsBlock {
+  return block.locations ?? { enabled: false, title: '', intro: '' };
+}
+
+/** Page block with defaults when the document has none. */
+export function localePage(block: WebsiteLocaleContent, key: WebsitePageKey): WebsitePageBlock {
+  return block.pages?.[key] ?? { enabled: false, title: '', text: '' };
+}
+
+/** Next free promotion id (`p<n>`), stable across reorders. */
+export function nextPromotionId(promotions: readonly WebsitePromotion[]): string {
+  const used = new Set(promotions.map((entry) => entry.id));
+  let index = promotions.length + 1;
+  while (used.has(`p${index}`)) index += 1;
+  return `p${index}`;
+}
+
 /** `https://`, site-relative (`/`, `#`), `mailto:` and `tel:` links, as the API accepts. */
 export function isWebsiteHref(value: string): boolean {
   const href = value.trim();
@@ -269,6 +348,21 @@ const LINK_MESSAGE = 'website.validation.link';
 const URL_MESSAGE = 'website.validation.httpsUrl';
 const COLOR_MESSAGE = 'website.validation.color';
 const EMAIL_MESSAGE = 'website.validation.email';
+const DATE_MESSAGE = 'website.validation.date';
+const DATE_ORDER_MESSAGE = 'website.validation.dateOrder';
+const PROMOTIONS_MAX_MESSAGE = 'website.validation.promotionsMax';
+
+/** `YYYY-MM-DD` that is a real calendar date. */
+export function isWebsiteDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return false;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  return (
+    date.getUTCFullYear() === Number(match[1]) &&
+    date.getUTCMonth() === Number(match[2]) - 1 &&
+    date.getUTCDate() === Number(match[3])
+  );
+}
 
 /**
  * Obvious form errors, in the editor's visual order (shared panel, then each locale tab).
@@ -308,8 +402,53 @@ export function validateWebsiteContent(
         }
       });
     });
+    const promotions = block.promotions ?? [];
+    if (promotions.length > WEBSITE_MAX_PROMOTIONS) add(at('promotions'), PROMOTIONS_MAX_MESSAGE);
+    promotions.forEach((entry, index) => {
+      const from = (entry.validFrom ?? '').trim();
+      const until = (entry.validUntil ?? '').trim();
+      if (!entry.title.trim()) add(at(`promotions.${index}.title`), REQUIRED_MESSAGE);
+      if (from && !isWebsiteDate(from)) add(at(`promotions.${index}.validFrom`), DATE_MESSAGE);
+      if (until && !isWebsiteDate(until)) add(at(`promotions.${index}.validUntil`), DATE_MESSAGE);
+      if (from && until && isWebsiteDate(from) && isWebsiteDate(until) && from > until) {
+        add(at(`promotions.${index}.validUntil`), DATE_ORDER_MESSAGE);
+      }
+    });
   }
   return errors;
+}
+
+/** Optional blocks (locations, pages, promotions) go out only when they carry something. */
+function addOptionalBlocks(payload: WebsiteLocaleContent, block: WebsiteLocaleContent): void {
+  const trim = (value: string) => value.trim();
+  if (block.locations) {
+    const entry = {
+      enabled: block.locations.enabled,
+      title: trim(block.locations.title),
+      intro: trim(block.locations.intro),
+    };
+    if (entry.enabled || entry.title || entry.intro) payload.locations = entry;
+  }
+  const pages: Partial<Record<WebsitePageKey, WebsitePageBlock>> = {};
+  for (const key of WEBSITE_PAGE_KEYS) {
+    const page = block.pages?.[key];
+    if (!page) continue;
+    const entry = { enabled: page.enabled, title: trim(page.title), text: trim(page.text) };
+    if (entry.enabled || entry.title || entry.text) pages[key] = entry;
+  }
+  if (Object.keys(pages).length) payload.pages = pages;
+  if (block.promotions?.length) {
+    payload.promotions = block.promotions.map((entry) => {
+      const result: WebsitePromotion = {
+        id: entry.id,
+        title: trim(entry.title),
+        text: trim(entry.text),
+      };
+      if (trim(entry.validFrom ?? '')) result.validFrom = trim(entry.validFrom ?? '');
+      if (trim(entry.validUntil ?? '')) result.validUntil = trim(entry.validUntil ?? '');
+      return result;
+    });
+  }
 }
 
 /** Content sent to the API: trimmed text, only the enabled locales. */
@@ -321,7 +460,7 @@ export function websiteContentPayload(
   const localesPayload: WebsiteContent['locales'] = {};
   for (const locale of locales) {
     const block = content.locales[locale] ?? emptyLocaleContent();
-    localesPayload[locale] = {
+    const payload: WebsiteLocaleContent = {
       seo: { title: trim(block.seo.title), description: trim(block.seo.description) },
       hero: {
         eyebrow: trim(block.hero.eyebrow),
@@ -348,6 +487,8 @@ export function websiteContentPayload(
       footer: { text: trim(block.footer.text) },
       legal: { privacy: trim(block.legal.privacy), terms: trim(block.legal.terms) },
     };
+    addOptionalBlocks(payload, block);
+    localesPayload[locale] = payload;
   }
   return {
     version: 1,

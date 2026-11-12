@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -30,6 +31,8 @@ import { PageShellComponent } from '../../../shared/pages/page-shell';
 import {
   REQUIRED_MESSAGE,
   WEBSITE_LOCALE_OPTIONS,
+  WEBSITE_MAX_PROMOTIONS,
+  WEBSITE_PAGE_KEYS,
   WEBSITE_SECTION_TYPES_WITH_ITEMS,
   WEBSITE_SECTION_TYPE_OPTIONS,
   WEBSITE_SOCIAL_OPTIONS,
@@ -37,11 +40,18 @@ import {
   WebsiteContentError,
   WebsiteLocale,
   WebsiteLocaleContent,
+  WebsiteLocationsBlock,
+  WebsitePageBlock,
+  WebsitePageKey,
+  WebsitePromotion,
   WebsiteSectionType,
   contentPathLocale,
   emptyLocaleContent,
+  localeLocations,
+  localePage,
   moveEntry,
   newSection,
+  nextPromotionId,
   normalizeWebsiteContent,
   orderedLocales,
   setContentValue,
@@ -86,6 +96,7 @@ type Busy = 'loading' | 'saving' | 'publishing' | 'unpublishing' | null;
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatSlideToggleModule,
     MatTabsModule,
     MatTooltipModule,
     RouterLink,
@@ -108,6 +119,8 @@ export class WebsiteEditorPage {
 
   readonly sectionTypeOptions = WEBSITE_SECTION_TYPE_OPTIONS;
   readonly socialOptions = WEBSITE_SOCIAL_OPTIONS;
+  readonly pageKeys = WEBSITE_PAGE_KEYS;
+  readonly maxPromotions = WEBSITE_MAX_PROMOTIONS;
   readonly statusOptions = WEBSITE_SITE_STATUS_OPTIONS;
 
   readonly site = signal<WebsiteSite | null>(null);
@@ -193,6 +206,14 @@ export class WebsiteEditorPage {
     return WEBSITE_DNS_STATE_OPTIONS.find((option) => option.value === state)?.label ?? state;
   }
 
+  locations(locale: WebsiteLocale): WebsiteLocationsBlock {
+    return localeLocations(this.block(locale));
+  }
+
+  page(locale: WebsiteLocale, key: WebsitePageKey): WebsitePageBlock {
+    return localePage(this.block(locale), key);
+  }
+
   hasItems(type: WebsiteSectionType): boolean {
     return WEBSITE_SECTION_TYPES_WITH_ITEMS.includes(type);
   }
@@ -226,6 +247,48 @@ export class WebsiteEditorPage {
 
   setText(path: string, event: Event): void {
     this.set(path, (event.target as HTMLInputElement | HTMLTextAreaElement).value);
+  }
+
+  /** Edits one field of the locations block (created on the first edit). */
+  setLocations(locale: WebsiteLocale, patch: Partial<WebsiteLocationsBlock>): void {
+    this.content.update((content) =>
+      updateLocaleContent(content, locale, (block) => ({
+        ...block,
+        locations: { ...localeLocations(block), ...patch },
+      })),
+    );
+  }
+
+  /** Edits one field of a page block (created on the first edit). */
+  setPage(locale: WebsiteLocale, key: WebsitePageKey, patch: Partial<WebsitePageBlock>): void {
+    this.content.update((content) =>
+      updateLocaleContent(content, locale, (block) => ({
+        ...block,
+        pages: { ...block.pages, [key]: { ...localePage(block, key), ...patch } },
+      })),
+    );
+  }
+
+  addPromotion(locale: WebsiteLocale): void {
+    this.changePromotions(locale, (list) =>
+      list.length >= WEBSITE_MAX_PROMOTIONS
+        ? list
+        : [...list, { id: nextPromotionId(list), title: '', text: '' }],
+    );
+  }
+
+  movePromotion(locale: WebsiteLocale, index: number, delta: number): void {
+    this.changePromotions(locale, (list) => moveEntry(list, index, delta));
+  }
+
+  removePromotion(locale: WebsiteLocale, index: number): void {
+    this.changePromotions(locale, (list) => list.filter((_, position) => position !== index));
+  }
+
+  setPromotion(locale: WebsiteLocale, index: number, patch: Partial<WebsitePromotion>): void {
+    this.changePromotions(locale, (list) =>
+      list.map((entry, position) => (position === index ? { ...entry, ...patch } : entry)),
+    );
   }
 
   addSection(locale: WebsiteLocale): void {
@@ -482,6 +545,18 @@ export class WebsiteEditorPage {
     const locale = contentPathLocale(path);
     const index = locale ? this.locales().indexOf(locale) + 1 : 0;
     this.selectedTab.set(Math.max(0, index));
+  }
+
+  private changePromotions(
+    locale: WebsiteLocale,
+    change: (list: WebsitePromotion[]) => WebsitePromotion[],
+  ): void {
+    this.content.update((content) =>
+      updateLocaleContent(content, locale, (block) => ({
+        ...block,
+        promotions: change(block.promotions ?? []),
+      })),
+    );
   }
 
   private changeItems(

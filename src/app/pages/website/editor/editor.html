@@ -644,6 +644,250 @@
                 <p class="settings-page-note">{{ 'website.noSections' | transloco }}</p>
               }
 
+              <h2 class="website-editor-heading">{{ 'website.locationsHeading' | transloco }}</h2>
+              <div class="form-grid">
+                <div class="span-4 settings-page-toggle">
+                  <mat-slide-toggle
+                    [attr.data-field-key]="locale + '.locations.enabled'"
+                    [checked]="locations(locale).enabled"
+                    (change)="setLocations(locale, { enabled: $event.checked })"
+                  >
+                    {{ 'website.locationsEnabled' | transloco }}
+                  </mat-slide-toggle>
+                </div>
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'website.pageTitle' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    [attr.data-field-key]="locale + '.locations.title'"
+                    [value]="locations(locale).title"
+                    [mnsInvalid]="invalid(locale + '.locations.title')"
+                    (input)="setLocations(locale, { title: $any($event.target).value })"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.pageTitle' | transloco"
+                    [text]="'website.locationsTitleHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.locations.title') | transloco }}</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="span-4">
+                  <mat-label>{{ 'website.locationsIntro' | transloco }}</mat-label>
+                  <textarea
+                    matInput
+                    rows="4"
+                    [attr.data-field-key]="locale + '.locations.intro'"
+                    [value]="locations(locale).intro"
+                    [mnsInvalid]="invalid(locale + '.locations.intro')"
+                    (input)="setLocations(locale, { intro: $any($event.target).value })"
+                  ></textarea>
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.locationsIntro' | transloco"
+                    [text]="'website.locationsIntroHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText(locale + '.locations.intro') | transloco }}</mat-error>
+                </mat-form-field>
+              </div>
+
+              <h2 class="website-editor-heading">{{ 'website.pagesHeading' | transloco }}</h2>
+              @for (key of pageKeys; track key) {
+                <section class="website-editor-section">
+                  <header class="website-editor-section-header">
+                    <span class="website-editor-section-title">
+                      {{ 'website.page.' + key | transloco }}
+                    </span>
+                  </header>
+                  <div class="form-grid">
+                    <div class="span-4 settings-page-toggle">
+                      <mat-slide-toggle
+                        [attr.data-field-key]="locale + '.pages.' + key + '.enabled'"
+                        [checked]="page(locale, key).enabled"
+                        (change)="setPage(locale, key, { enabled: $event.checked })"
+                      >
+                        {{ 'website.pageEnabled' | transloco }}
+                      </mat-slide-toggle>
+                    </div>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'website.pageTitle' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [attr.data-field-key]="locale + '.pages.' + key + '.title'"
+                        [value]="page(locale, key).title"
+                        [mnsInvalid]="invalid(locale + '.pages.' + key + '.title')"
+                        (input)="setPage(locale, key, { title: $any($event.target).value })"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.pageTitle' | transloco"
+                        [text]="'website.pageTitleHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.pages.' + key + '.title') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'website.pageText' | transloco }}</mat-label>
+                      <textarea
+                        matInput
+                        rows="4"
+                        [attr.data-field-key]="locale + '.pages.' + key + '.text'"
+                        [value]="page(locale, key).text"
+                        [mnsInvalid]="invalid(locale + '.pages.' + key + '.text')"
+                        (input)="setPage(locale, key, { text: $any($event.target).value })"
+                      ></textarea>
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.pageText' | transloco"
+                        [text]="'website.pageTextHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.pages.' + key + '.text') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                  </div>
+                </section>
+              }
+
+              <div class="website-editor-row-heading">
+                <h2 class="website-editor-heading">
+                  {{ 'website.promotionsHeading' | transloco }}
+                </h2>
+                <div class="website-editor-add">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="(block(locale).promotions?.length ?? 0) >= maxPromotions"
+                    (click)="addPromotion(locale)"
+                  >
+                    <mat-icon>add</mat-icon>{{ 'website.addPromotion' | transloco }}
+                  </button>
+                </div>
+              </div>
+              @for (
+                promotion of block(locale).promotions ?? [];
+                track promotion.id;
+                let p = $index, first = $first, last = $last
+              ) {
+                <section class="website-editor-section">
+                  <header class="website-editor-section-header">
+                    <span class="website-editor-section-title">
+                      {{ p + 1 }}. {{ promotion.title || ('website.promotion' | transloco) }}
+                    </span>
+                    <span class="website-editor-entry-actions">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="first"
+                        [matTooltip]="'website.moveUp' | transloco"
+                        [attr.aria-label]="'website.moveUp' | transloco"
+                        (click)="movePromotion(locale, p, -1)"
+                      >
+                        <mat-icon>arrow_upward</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [disabled]="last"
+                        [matTooltip]="'website.moveDown' | transloco"
+                        [attr.aria-label]="'website.moveDown' | transloco"
+                        (click)="movePromotion(locale, p, 1)"
+                      >
+                        <mat-icon>arrow_downward</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        [matTooltip]="'website.removePromotion' | transloco"
+                        [attr.aria-label]="'website.removePromotion' | transloco"
+                        (click)="removePromotion(locale, p)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </span>
+                  </header>
+                  <div class="form-grid">
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'website.promotionTitle' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        [attr.data-field-key]="locale + '.promotions.' + p + '.title'"
+                        [value]="promotion.title"
+                        [mnsInvalid]="invalid(locale + '.promotions.' + p + '.title')"
+                        (input)="setPromotion(locale, p, { title: $any($event.target).value })"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.promotionTitle' | transloco"
+                        [text]="'website.promotionTitleHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.promotions.' + p + '.title') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'website.promotionValidFrom' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="date"
+                        [attr.data-field-key]="locale + '.promotions.' + p + '.validFrom'"
+                        [value]="promotion.validFrom ?? ''"
+                        [mnsInvalid]="invalid(locale + '.promotions.' + p + '.validFrom')"
+                        (input)="setPromotion(locale, p, { validFrom: $any($event.target).value })"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.promotionValidFrom' | transloco"
+                        [text]="'website.promotionValidFromHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.promotions.' + p + '.validFrom') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-1">
+                      <mat-label>{{ 'website.promotionValidUntil' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="date"
+                        [attr.data-field-key]="locale + '.promotions.' + p + '.validUntil'"
+                        [value]="promotion.validUntil ?? ''"
+                        [mnsInvalid]="invalid(locale + '.promotions.' + p + '.validUntil')"
+                        (input)="setPromotion(locale, p, { validUntil: $any($event.target).value })"
+                      />
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.promotionValidUntil' | transloco"
+                        [text]="'website.promotionValidUntilHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.promotions.' + p + '.validUntil') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="span-4">
+                      <mat-label>{{ 'website.promotionText' | transloco }}</mat-label>
+                      <textarea
+                        matInput
+                        rows="4"
+                        [attr.data-field-key]="locale + '.promotions.' + p + '.text'"
+                        [value]="promotion.text"
+                        [mnsInvalid]="invalid(locale + '.promotions.' + p + '.text')"
+                        (input)="setPromotion(locale, p, { text: $any($event.target).value })"
+                      ></textarea>
+                      <mns-field-help
+                        matIconSuffix
+                        [label]="'website.promotionText' | transloco"
+                        [text]="'website.promotionTextHelp' | transloco"
+                      />
+                      <mat-error>{{
+                        errorText(locale + '.promotions.' + p + '.text') | transloco
+                      }}</mat-error>
+                    </mat-form-field>
+                  </div>
+                </section>
+              } @empty {
+                <p class="settings-page-note">{{ 'website.noPromotions' | transloco }}</p>
+              }
+
               <h2 class="website-editor-heading">{{ 'website.footerHeading' | transloco }}</h2>
               <div class="form-grid">
                 <mat-form-field appearance="outline" class="span-4">

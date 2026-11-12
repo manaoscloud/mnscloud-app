@@ -21,6 +21,11 @@ export const WEBSITE_SITE_STATUS_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'suspended', label: 'website.status.suspended' },
 ];
 
+export const WEBSITE_SEGMENT_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'generic', label: 'website.segment.generic' },
+  { value: 'gasstation', label: 'website.segment.gasstation' },
+];
+
 /** Managed DNS publication of the automatic domain; `external` when the platform does not publish. */
 export const WEBSITE_DNS_STATE_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'external', label: 'External' },
@@ -68,6 +73,7 @@ export function websiteSitePayload(
     name: String(values['name'] ?? '').trim(),
     defaultLocale,
     locales,
+    segment: String(values['segment'] ?? '') || 'generic',
     themeDomainUUID: String(values['themeDomainUUID'] ?? '') || null,
     ...(editing ? { revision: Number(values['revision']) } : {}),
   };
@@ -103,6 +109,7 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
       name: '',
       defaultLocale: 'pt-BR',
       locales: ['pt-BR'],
+      segment: 'generic',
       themeDomainUUID: '',
       revision: 1,
     },
@@ -137,6 +144,17 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
         required: true,
         span: 1,
         help: 'website.localesHelp',
+      },
+      {
+        key: 'segment',
+        source: 'segment',
+        label: 'website.segment',
+        type: 'select',
+        options: WEBSITE_SEGMENT_OPTIONS,
+        translateOptions: true,
+        required: true,
+        span: 1,
+        help: 'website.segmentHelp',
       },
       {
         key: 'themeDomainUUID',
@@ -179,6 +197,19 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
         value: (row, translate) => {
           const option = WEBSITE_LOCALE_OPTIONS.find((o) => o.value === row['defaultLocale']);
           return option ? translate(option.label) : String(row['defaultLocale'] ?? '');
+        },
+      },
+      {
+        id: 'segment',
+        field: 'segment',
+        label: 'website.segment',
+        kind: 'text',
+        width: 'sm',
+        value: (row, translate) => {
+          const option = WEBSITE_SEGMENT_OPTIONS.find(
+            (o) => o.value === (row['segment'] || 'generic'),
+          );
+          return option ? translate(option.label) : String(row['segment'] ?? '');
         },
       },
       {

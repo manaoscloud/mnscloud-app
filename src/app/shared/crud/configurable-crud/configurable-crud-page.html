@@ -1380,8 +1380,7 @@
                   [disabled]="action.disabled?.()"
                   (click)="action.run(this)"
                 >
-                  <mat-icon>{{ action.icon }}</mat-icon
-                  >{{ action.label | transloco }}
+                  <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
                 </button>
               }
               <p>{{ 'registry.contactSaveHelp' | transloco }}</p>
@@ -3141,8 +3140,7 @@
                     [disabled]="!editingRecord() || action.disabled?.()"
                     (click)="action.run(this)"
                   >
-                    <mat-icon>{{ action.icon }}</mat-icon
-                    >{{ action.label | transloco }}
+                    <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
                   </button>
                 </div>
               }
@@ -3411,6 +3409,18 @@
           </mat-tab>
         }
 
+        @if (hoursFields().length) {
+          <mat-tab
+            [label]="tabLabel('hours', 'Hours') | transloco"
+            [labelClass]="tabLabelClass('hours')"
+          >
+            <ng-container
+              [ngTemplateOutlet]="simpleFieldTab"
+              [ngTemplateOutletContext]="{ $implicit: hoursFields() }"
+            />
+          </mat-tab>
+        }
+
         @if (retentionFields().length) {
           <mat-tab
             [label]="tabLabel('retention', 'Retention') | transloco"
@@ -3443,8 +3453,7 @@
                 type="button"
                 (click)="runRowAction(action, editingRecord()!)"
               >
-                <mat-icon>{{ action.icon }}</mat-icon
-                >{{ action.label | transloco }}
+                <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
               </button>
             </div>
           </mat-tab>

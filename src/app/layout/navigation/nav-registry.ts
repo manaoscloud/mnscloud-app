@@ -565,6 +565,13 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/registry/companies',
       },
       {
+        id: 'registry/locations',
+        label: 'nav.registry.locations',
+        icon: 'location_on',
+        category: 'organization',
+        route: '/registry/locations',
+      },
+      {
         id: 'registry/employees',
         label: 'nav.registry.employees',
         icon: 'badge',

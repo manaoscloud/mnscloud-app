@@ -1162,6 +1162,12 @@ export const routes: Routes = [
                 title: 'Registry • Companies | mnscloud',
               },
               {
+                path: 'registry/locations',
+                loadComponent: () =>
+                  import('./pages/registry/locations/locations').then((m) => m.RegLocationPage),
+                title: 'Registry • Locations | mnscloud',
+              },
+              {
                 path: 'registry/suppliers',
                 loadComponent: () =>
                   import('./pages/registry/suppliers/suppliers').then((m) => m.RegSupplierPage),
