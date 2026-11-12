@@ -109,10 +109,16 @@ export class AutomationService {
   async options(widget: string): Promise<PickerOption[]> {
     const spec = PICKERS[widget];
     if (!spec) return [];
-    const body = unwrap(
-      await this.api.get(`${spec.endpoint}?limit=${PICKER_LIMIT}`, { silent: true }),
-    );
-    const items = Array.isArray(body['items']) ? (body['items'] as Dict[]) : [];
+    const response = await this.api.get(`${spec.endpoint}?limit=${PICKER_LIMIT}`, {
+      silent: true,
+    });
+    const data = (response as { data?: unknown } | null)?.data ?? response;
+    const body = unwrap(response);
+    const items = Array.isArray(data)
+      ? (data as Dict[])
+      : Array.isArray(body['items'])
+        ? (body['items'] as Dict[])
+        : [];
     return items
       .map((item) => ({
         value: String(item[spec.value] ?? ''),

@@ -229,7 +229,10 @@ export function toFlowDetail(response: unknown): FlowDetail {
       ? {
           userUUID: lockUser,
           userName: asText(
-            item['DraftEditorName'] ?? item['draftEditorName'] ?? item['EditorName'],
+            item['AflDraftEditorName'] ??
+              item['DraftEditorName'] ??
+              item['draftEditorName'] ??
+              item['EditorName'],
           ),
           editedAt: asText(item['AflDraftEditedAt'] ?? item['draftEditedAt']),
         }
@@ -326,7 +329,7 @@ export function toTestContacts(response: unknown): TestContact[] {
     const item = asDict(raw);
     return {
       uuid: asText(item['CntUUID'] ?? item['uuid']),
-      name: asText(item['CntName'] ?? item['name']),
+      name: asText(item['CntDisplayName'] ?? item['CntName'] ?? item['name']),
       detail: [item['CntPhone'] ?? item['phone'], item['CntExternalId'] ?? item['externalId']]
         .map(asText)
         .filter(Boolean)
