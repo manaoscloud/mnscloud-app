@@ -12,6 +12,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { CHANNEL_KINDS, CHANNEL_STATES } from '../conversation-options';
 import { openWebchatPreviewDialog } from './webchat-preview-dialog';
+import { ApiService } from '../../../services/api.service';
 
 function parseObject(value: unknown): Record<string, unknown> | null | 'invalid' {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -29,7 +30,9 @@ function parseObject(value: unknown): Record<string, unknown> | null | 'invalid'
 
 /** Kinds offered when creating: only channels with a working driver (decision D2). */
 export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter((kind) =>
-  ['internal', 'webchat', 'telegram', 'email'].includes(String(kind.value)),
+  ['internal', 'webchat', 'whatsapp-cloud', 'instagram', 'messenger', 'telegram', 'email'].includes(
+    String(kind.value),
+  ),
 );
 
 /** Provider routing key (`ChcExternalId`) label per channel type. */
@@ -37,7 +40,7 @@ const EXTERNAL_ID_LABELS: Record<string, string> = {
   'whatsapp-cloud': 'Phone number ID',
   'whatsapp-twilio': 'Sender number',
   instagram: 'Instagram account ID',
-  messenger: 'Facebook page ID',
+  messenger: 'Facebook Page ID',
   telegram: 'Bot username',
   email: 'Support e-mail address',
 };
@@ -138,6 +141,11 @@ function storedLook(value: unknown, key: string): string {
 const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
 const isTelegram = (values: ConfigurableCrudRecord) => values['kind'] === 'telegram';
 const isEmail = (values: ConfigurableCrudRecord) => values['kind'] === 'email';
+const isWhatsApp = (values: ConfigurableCrudRecord) => values['kind'] === 'whatsapp-cloud';
+/** Messenger and Instagram: the Page and the Meta app credentials (Instagram via its Page). */
+const isMeta = (values: ConfigurableCrudRecord) =>
+  values['kind'] === 'messenger' || values['kind'] === 'instagram';
+const usesMetaApp = (values: ConfigurableCrudRecord) => isWhatsApp(values) || isMeta(values);
 
 /** Mail server settings stored in `ChcConfig` for e-mail connections (also the form field keys). */
 export const EMAIL_CONFIG_KEYS = [
@@ -417,6 +425,9 @@ const config = defineCrud({
     offlineMessage: '',
     ChcExternalId: '',
     ChcSecret: '',
+    wabaId: '',
+    token: '',
+    appSecret: '',
     clearSecret: 0,
     revision: '',
   },
@@ -558,15 +569,20 @@ const config = defineCrud({
       help: 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
       helpWhen: ({ values }) => {
         if (isTelegram(values)) return 'Read from Telegram when the bot token is saved.';
+        if (isMeta(values)) return 'Read from Meta when the Page is saved.';
         if (isEmail(values)) {
           return 'Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.';
         }
+        if (isWhatsApp(values)) {
+          return 'In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).';
+        }
         return 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.';
       },
-      requiredWhen: ({ editing, values }) => isEmail(values) && !editing,
+      requiredWhen: ({ editing, values }) => (isEmail(values) || isWhatsApp(values)) && !editing,
       // Telegram: read from the bot token by the API, shown only after saving.
-      disabledWhen: ({ values }) => isTelegram(values),
-      hiddenWhen: ({ editing, values }) => !isProvider(values) || (isTelegram(values) && !editing),
+      disabledWhen: ({ values }) => isTelegram(values) || isMeta(values),
+      hiddenWhen: ({ editing, values }) =>
+        !isProvider(values) || ((isTelegram(values) || isMeta(values)) && !editing),
     },
     {
       key: 'ChcSecret',
@@ -579,7 +595,55 @@ const config = defineCrud({
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
       helpWhen: ({ editing, values }) => secretHelp(editing, values),
       requiredWhen: ({ editing, values }) => (isTelegram(values) || isEmail(values)) && !editing,
-      hiddenWhen: ({ values }) => !isProvider(values),
+      hiddenWhen: ({ values }) => !isProvider(values) || usesMetaApp(values),
+    },
+    {
+      key: 'pageId',
+      source: 'ChcConfig',
+      label: 'Facebook Page ID',
+      help: 'Page that receives the messages (Page settings › About › Page ID). For Instagram, the Page linked to the Instagram professional account.',
+      requiredWhen: ({ editing, values }) => isMeta(values) && !editing,
+      disabledWhen: ({ editing }) => editing,
+      hiddenWhen: ({ values }) => !isMeta(values),
+      fromRecord: (value) => storedEmail(value, 'pageId'),
+      span: 1,
+    },
+    {
+      key: 'wabaId',
+      source: 'ChcConfig',
+      label: 'WhatsApp Business Account ID',
+      help: 'In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).',
+      requiredWhen: ({ editing, values }) => isWhatsApp(values) && !editing,
+      hiddenWhen: ({ values }) => !isWhatsApp(values),
+      fromRecord: (value) => storedEmail(value, 'wabaId'),
+      span: 1,
+    },
+    {
+      key: 'token',
+      label: 'Access token',
+      type: 'password',
+      help: 'Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.',
+      helpWhen: ({ editing, values }) => {
+        if (editing) return 'Leave empty to keep the stored token.';
+        if (isMeta(values)) {
+          return 'Page access token of a system user with the pages_messaging (and, for Instagram, instagram_manage_messages) permissions. Temporary tokens expire.';
+        }
+        return 'Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.';
+      },
+      requiredWhen: ({ editing, values }) => usesMetaApp(values) && !editing,
+      hiddenWhen: ({ values }) => !usesMetaApp(values),
+    },
+    {
+      key: 'appSecret',
+      label: 'App secret',
+      type: 'password',
+      help: 'In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.',
+      helpWhen: ({ editing }) =>
+        editing
+          ? 'Leave empty to keep the stored app secret.'
+          : 'In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.',
+      requiredWhen: ({ editing, values }) => usesMetaApp(values) && !editing,
+      hiddenWhen: ({ values }) => !usesMetaApp(values),
     },
     {
       key: 'clearSecret',
@@ -791,12 +855,16 @@ const config = defineCrud({
               : {}),
           }),
       ChcName: values['name'],
-      // Telegram's bot username comes from the API; other providers keep their routing key.
-      ...(isTelegram(values) ? {} : { ChcExternalId: externalId(values, provider) }),
+      // Telegram's bot and the Meta Page's account come from the API; others keep their key.
+      ...(isTelegram(values) || isMeta(values)
+        ? {}
+        : { ChcExternalId: externalId(values, provider) }),
       ...(isWebchat(values) ? { ChcConfig: webchatConfig(values) } : {}),
       ...(isEmail(values) ? { ChcConfig: emailConfig(values) } : {}),
+      ...(isWhatsApp(values) ? whatsappPayload(values) : {}),
+      ...(isMeta(values) ? metaPayload(values, editing) : {}),
       // Tokens and mailbox passwords are text; other providers may store a JSON credential.
-      ...(provider && secretText
+      ...(provider && secretText && !usesMetaApp(values)
         ? {
             ChcSecret:
               !isTelegram(values) && !isEmail(values) && secretJson && secretJson !== 'invalid'
@@ -811,6 +879,31 @@ const config = defineCrud({
     };
   },
 });
+
+/** WhatsApp settings: the WABA in `ChcConfig`, the token and app secret sealed together. */
+export function whatsappPayload(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const secret: Record<string, string> = {};
+  for (const key of ['token', 'appSecret'] as const) {
+    const value = String(values[key] ?? '').trim();
+    if (value) secret[key] = value;
+  }
+  return {
+    ChcConfig: { wabaId: String(values['wabaId'] ?? '').trim() },
+    ...(Object.keys(secret).length ? { ChcSecret: secret } : {}),
+  };
+}
+
+/** Messenger/Instagram settings: the Page (create only), the token and app secret together. */
+export function metaPayload(
+  values: ConfigurableCrudRecord,
+  editing: boolean,
+): Record<string, unknown> {
+  const { ChcSecret } = whatsappPayload(values);
+  return {
+    ...(editing ? {} : { ChcConfig: { pageId: String(values['pageId'] ?? '').trim() } }),
+    ...(ChcSecret ? { ChcSecret } : {}),
+  };
+}
 
 function externalId(values: ConfigurableCrudRecord, provider: boolean): string | null {
   const value = provider ? String(values['ChcExternalId'] ?? '').trim() : '';
@@ -897,6 +990,79 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
   };
 }
 
+function whatsappWebhookAction(
+  dialog: () => MatDialog,
+  api: () => ApiService,
+): ConfigurableCrudRowAction {
+  return {
+    key: 'whatsapp-webhook',
+    label: 'conversations.whatsappWebhook',
+    icon: 'webhook',
+    visible: (row) => row['ChcKind'] === 'whatsapp-cloud',
+    run: (row) => openMetaWebhook(dialog, api, row),
+  };
+}
+
+function metaWebhookAction(
+  dialog: () => MatDialog,
+  api: () => ApiService,
+): ConfigurableCrudRowAction {
+  return {
+    key: 'meta-webhook',
+    label: 'conversations.metaWebhook',
+    icon: 'webhook',
+    visible: (row) => row['ChcKind'] === 'messenger' || row['ChcKind'] === 'instagram',
+    run: (row) => openMetaWebhook(dialog, api, row),
+  };
+}
+
+async function openMetaWebhook(
+  dialog: () => MatDialog,
+  api: () => ApiService,
+  row: ConfigurableCrudRecord,
+): Promise<void> {
+  const uuid = String(row['ChcUUID'] ?? '');
+  const response = await api().get<{ data: ConfigurableCrudRecord }>(
+    `conversations/connections/${uuid}`,
+  );
+  const item = response.data ?? {};
+  const whatsapp = row['ChcKind'] === 'whatsapp-cloud';
+  const config = item['ChcConfig'];
+  openDataViewerDialog(dialog(), {
+    title: whatsapp ? 'conversations.whatsappWebhookTitle' : 'conversations.metaWebhookTitle',
+    description: String(row['ChcName'] ?? ''),
+    details: whatsapp
+      ? [
+          { label: 'Number', value: storedEmail(config, 'displayPhoneNumber') || '—' },
+          { label: 'Verified name', value: storedEmail(config, 'verifiedName') || '—' },
+        ]
+      : [
+          { label: 'Page', value: storedEmail(config, 'pageName') || '—' },
+          { label: 'Instagram account', value: storedEmail(config, 'instagramUsername') || '—' },
+        ],
+    sections: [
+      {
+        title: whatsapp ? 'conversations.whatsappWebhookSteps' : 'conversations.metaWebhookSteps',
+        code: {
+          title: 'Callback URL',
+          value: String(item['ChcWebhookUrl'] ?? ''),
+          format: 'text',
+          copy: true,
+        },
+      },
+      {
+        title: 'conversations.whatsappWebhookVerifyToken',
+        code: {
+          title: 'Verify token',
+          value: String(item['ChcWebhookVerifyToken'] ?? ''),
+          format: 'text',
+          copy: true,
+        },
+      },
+    ],
+  });
+}
+
 @Component({
   selector: 'app-conversation-connections',
   standalone: true,
@@ -907,9 +1073,21 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
 export class ConversationConnectionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     const dialog = inject(MatDialog);
+    const api = inject(ApiService);
     super({
       ...config,
-      rowActions: [webchatEmbedAction(() => dialog), webchatPreviewAction(() => dialog)],
+      rowActions: [
+        webchatEmbedAction(() => dialog),
+        webchatPreviewAction(() => dialog),
+        whatsappWebhookAction(
+          () => dialog,
+          () => api,
+        ),
+        metaWebhookAction(
+          () => dialog,
+          () => api,
+        ),
+      ],
     });
   }
 

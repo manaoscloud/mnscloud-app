@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a4f128ab5ccb",
+  "version": "f2614335716b",
   "language": "pt-BR",
   "entries": [
     {
@@ -1030,6 +1030,22 @@
         {
           "label": "Credenciais (JSON ou token)",
           "help": "Selado ao salvar e nunca exibido de novo. Deixe em branco para manter as credenciais salvas."
+        },
+        {
+          "label": "ID da Página do Facebook",
+          "help": "Página que recebe as mensagens (Configurações da Página › Sobre › ID da Página). Para o Instagram, a Página vinculada à conta profissional do Instagram."
+        },
+        {
+          "label": "ID da conta do WhatsApp Business",
+          "help": "No app da Meta, em WhatsApp › Configuração da API, abaixo do número: o ID da conta do WhatsApp Business (dígitos)."
+        },
+        {
+          "label": "Token de acesso",
+          "help": "Token permanente de um usuário do sistema com as permissões whatsapp_business_messaging e whatsapp_business_management (Meta Business Suite › Configurações › Usuários do sistema). Tokens temporários expiram em 24 horas."
+        },
+        {
+          "label": "Segredo do aplicativo",
+          "help": "No app da Meta, Configurações do app › Básico › Chave secreta do app. Ela confirma que as chamadas do webhook vêm da Meta."
         },
         {
           "label": "Apagar credenciais salvas",

@@ -179,6 +179,13 @@ export type HostingVpsInstanceConfig = {
   } | null;
   agentName?: string | null;
   agentUUID?: string | null;
+  /** FA4: automatic Agent install of a platform server. */
+  agentEnrollment?: {
+    status?: 'installing' | 'enrolled' | 'failed' | string | null;
+    at?: string | null;
+    agentName?: string | null;
+    message?: string | null;
+  } | null;
   providerImageId?: string | null;
   /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
   placementGroup?: string | null;
