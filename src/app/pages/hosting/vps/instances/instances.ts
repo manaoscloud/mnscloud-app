@@ -101,7 +101,7 @@ const INSTALL_AGENT_ACTION: ConfigurableCrudRowAction = {
 };
 
 /** FA4: an install still running after this long is treated as lost (the API shows the same). */
-const AGENT_INSTALL_STALE_MS = 45 * 60_000;
+const AGENT_INSTALL_STALE_MS = 60 * 60_000;
 
 const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
   installing: 'Installing',
