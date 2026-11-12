@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d4a3c422ca1a",
+  "version": "e5dd5d6bb75a",
   "language": "pt-BR",
   "entries": [
     {
@@ -9895,6 +9895,47 @@
         },
         {
           "label": "Valores desejados (JSON)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/access-gateways",
+      "menuPath": "Rede › Gateways",
+      "scope": "platform",
+      "title": "Gateways de acesso",
+      "description": "Servidores dedicados que abrem os consoles e testes de acesso dos equipamentos de Rede, isolados da plataforma, com IP de saída fixo por ambiente.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Chave",
+          "help": "Identifica o gateway no endereço do relay (/access-gateway/<chave>/ws): letras minúsculas, números e hífens. Não muda depois de criado."
+        },
+        {
+          "label": "Ambiente",
+          "help": "Ambiente da plataforma atendido por este gateway. Não muda depois de criado."
+        },
+        {
+          "label": "IP de saída",
+          "help": "IPv4 público fixo com que o gateway chega aos equipamentos; os clientes liberam este IP no firewall. Obrigatório para ativar."
+        },
+        {
+          "label": "Porta do relay",
+          "help": "Porta privada em que o gateway recebe o WebSocket do edge (padrão 7443)."
+        },
+        {
+          "label": "Capacidade",
+          "help": "Conexões simultâneas que este gateway aceita; a plataforma escolhe o gateway menos ocupado."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]
