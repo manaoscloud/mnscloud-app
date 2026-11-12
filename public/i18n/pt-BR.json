@@ -13593,13 +13593,11 @@
   "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Senha desta caixa de e-mail. Gmail, Outlook, Yahoo e iCloud pedem uma senha de app (criada nas configurações de segurança da conta). A conexão é testada ao salvar.",
   "imap.example.com": "imap.example.com",
   "Adopt existing VMs": "Adotar VMs existentes",
-  "Platform VMs created outside the platform (names mns-...). Adoption only links them: the platform never changes, powers off or deletes an adopted VM, and removing the server only unlinks it.": "VMs da plataforma criadas fora dela (nomes mns-...). A adoção apenas as vincula: a plataforma nunca altera, desliga ou exclui uma VM adotada, e remover o servidor apenas desfaz o vínculo.",
   "No VM to adopt.": "Nenhuma VM para adotar.",
   "No Agent": "Sem Agent",
   "{n} VM(s) adopted": "{n} VM(s) adotada(s)",
   "Adopt selected ({n})": "Adotar selecionadas ({n})",
   "Adopted": "Adotada",
-  "Created outside the platform; the platform does not change it": "Criada fora da plataforma; a plataforma não a altera",
   "Verified name": "Nome verificado",
   "Callback URL": "URL de callback",
   "WhatsApp Business Account ID": "ID da conta do WhatsApp Business",
@@ -13960,5 +13958,10 @@
   "automation.enum.text": "Texto",
   "automation.editor.leaveUnsaved": "Há alterações não salvas. Sair mesmo assim?",
   "automation.banner.overwrite": "Sobrescrever",
-  "automation.test.contactsFailed": "Não foi possível salvar os contatos de teste."
+  "automation.test.contactsFailed": "Não foi possível salvar os contatos de teste.",
+  "Proxmox applies the new CPU and memory with a reboot when the server cannot take them live; the disk only grows.": "O Proxmox aplica a nova CPU e memória com reinício quando o servidor não as aceita em funcionamento; o disco só aumenta.",
+  "Adopted server: only plans with at least the CPU, memory and disk the VM has now are accepted.": "Servidor adotado: só são aceitos planos com pelo menos a CPU, a memória e o disco que a VM tem hoje.",
+  "Created outside the platform and adopted; managed by the platform (never reprovisioned; deleting only unlinks it)": "Criada fora da plataforma e adotada; gerenciada pela plataforma (nunca reprovisionada; excluir só desvincula)",
+  "Platform VMs created outside the platform (names mns-...). Adopting links them without changing the VM; afterwards they are managed like the servers the platform created (power, plan, migration, snapshots). The platform never deletes an adopted VM: removing the server only unlinks it.": "VMs da plataforma criadas fora dela (nomes mns-...). A adoção vincula sem alterar a VM; depois ela é gerenciada como os servidores criados pela plataforma (energia, plano, migração, snapshots). A plataforma nunca exclui uma VM adotada: remover o servidor apenas desfaz o vínculo.",
+  "Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.": "Trocar {name} para o plano {plan}? CPU e memória são aplicadas com reinício quando o servidor não as aceita em funcionamento; o disco só aumenta."
 }
