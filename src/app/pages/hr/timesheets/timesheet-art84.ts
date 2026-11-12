@@ -45,6 +45,7 @@ export type TimesheetHeader = {
   }[];
   period?: { From?: string; To?: string } | null;
   IssuedAt?: string;
+  IssuedAtLocal?: string;
   Timezone?: string;
 };
 
@@ -61,18 +62,18 @@ function rowsOf(value: unknown): Row[] {
   return Array.isArray(value) ? (value as Row[]) : [];
 }
 
-export function formatDocument(value: unknown, kind?: unknown): string {
+export function formatDocument(value: unknown): string {
   const text = String(value ?? '').trim();
   const digits = text.replace(/\D/g, '');
   if (text !== digits) return text;
   if (digits.length === 14)
     return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
   if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  return text || (kind ? '' : '');
+  return text;
 }
 
 function punchId(punch: Row): string {
-  return String(punch['PunchUUID'] ?? punch['TimePunchUUID'] ?? '');
+  return String(punch['TimePunchUUID'] ?? '');
 }
 
 /** Treatment marks of one day: `(I)` included marks and `(D)` disregarded punches. */
@@ -275,7 +276,7 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
     (legend.length
       ? printTableHtml({ headers: [t('Date'), t('Treatment mark'), t('Reason')], rows: legend })
       : `<p>${escapeHtml(t('No treatments in the period.'))}</p>`) +
-    `<p class="footer">${escapeHtml(t('Issued at'))} ${escapeHtml(dateTimeInZone(header.IssuedAt, timezone, locale))} (${escapeHtml(timezone)})</p>`;
+    `<p class="footer">${escapeHtml(t('Issued at'))} ${escapeHtml(header.IssuedAtLocal || dateTimeInZone(header.IssuedAt, timezone, locale))} (${escapeHtml(timezone)})</p>`;
 
   return printDocumentHtml(`${t('Timesheet')} - ${name}`, body, locale);
 }

@@ -1393,7 +1393,13 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (this.listExporting()) return null;
     this.listExporting.set(true);
     try {
-      if (!this.serverSidePagination()) return this.sortedRows();
+      if (!this.serverSidePagination()) {
+        // Client-side lists load at most `listLimit` rows: reaching it means the list is cut.
+        if (this.rows().length >= this.listLimit) {
+          this.snack.warning('Export limited to {count} rows.', 8000, { count: this.listLimit });
+        }
+        return this.sortedRows();
+      }
       const params = this.listResourceParams() as ConfigurableCrudListParams;
       const total = this.serverTotal();
       try {

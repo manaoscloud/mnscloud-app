@@ -7,8 +7,8 @@ describe('timesheet art. 84', () => {
     Date: '2026-11-03',
     DayKind: 'work',
     punches: [
-      { LocalTime: '08:00', NSR: 10, PunchUUID: 'p1', Disregarded: true },
-      { LocalTime: '08:05', NSR: 11, PunchUUID: 'p2' },
+      { LocalTime: '08:00', NSR: 10, TimePunchUUID: 'p1', Disregarded: true },
+      { LocalTime: '08:05', NSR: 11, TimePunchUUID: 'p2' },
     ],
     adjustments: [
       { Kind: 'include', PunchType: 'clock_out', LocalTime: '17:00', Reason: '<b>forgot</b>' },

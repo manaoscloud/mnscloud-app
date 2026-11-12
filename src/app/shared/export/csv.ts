@@ -5,7 +5,7 @@ export const CSV_BOM = '﻿';
 export function csvCell(value: unknown): string {
   let text = String(value ?? '');
   // Neutralise spreadsheet formulas typed by users (CSV injection).
-  if (/^[=+@]/.test(text) || /^-(?![\d.,]*$)/.test(text)) text = `'${text}`;
+  if (/^[=+@\t\r]/.test(text) || /^-(?![\d.,]*$)/.test(text)) text = `'${text}`;
   return /[;"\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

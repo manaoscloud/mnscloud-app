@@ -11,6 +11,8 @@ describe('csv', () => {
 
   it('neutralises formulas but keeps negative numbers', () => {
     expect(csvCell('=1+1')).toBe("'=1+1");
+    expect(csvCell('\tx')).toBe("'\tx");
+    expect(csvCell('\rx')).toBe('"\'\rx"');
     expect(csvCell('-02:30')).toBe("'-02:30");
     expect(csvCell('-150')).toBe('-150');
   });
