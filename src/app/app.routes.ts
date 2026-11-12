@@ -2640,6 +2640,38 @@ export const routes: Routes = [
                 title: 'Conversations • Inbox | mnscloud',
               },
               {
+                path: 'automation/flows',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/automation/flows/flows').then((m) => m.AutomationFlowsPage),
+                title: 'Automations • Flows | mnscloud',
+                data: { permission: 'tenant.automation.flows.read' },
+              },
+              {
+                path: 'automation/flows/:uuid/editor',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/automation/editor/editor').then((m) => m.AutomationEditorPage),
+                title: 'Automations • Flow editor | mnscloud',
+                data: { permission: 'tenant.automation.flows.read' },
+              },
+              {
+                path: 'automation/runs',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/automation/runs/runs').then((m) => m.AutomationRunsPage),
+                title: 'Automations • Runs | mnscloud',
+                data: { permission: 'tenant.automation.runs.read' },
+              },
+              {
+                path: 'automation/secrets',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/automation/secrets/secrets').then((m) => m.AutomationSecretsPage),
+                title: 'Automations • Secrets | mnscloud',
+                data: { permission: 'tenant.automation.secrets.read' },
+              },
+              {
                 path: 'conversations/connections',
                 loadComponent: () =>
                   import('./pages/conversations/connections/connections').then(
