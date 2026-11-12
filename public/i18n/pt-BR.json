@@ -13565,6 +13565,6 @@
   "Leave empty to keep the stored app secret.": "Deixe vazio para manter a chave secreta salva.",
   "conversations.whatsappWebhook": "Webhook do WhatsApp",
   "conversations.whatsappWebhookTitle": "Webhook do WhatsApp na Meta",
-  "conversations.whatsappWebhookSteps": "No app da Meta, abra WhatsApp › Configuração, cole a URL de callback e o token de verificação, confirme e assine o campo messages.",
+  "conversations.whatsappWebhookSteps": "O webhook é configurado automaticamente ao salvar. Só se a Meta não entregar as mensagens: no app da Meta, abra WhatsApp › Configuração, cole a URL de callback e o token de verificação, confirme e assine o campo messages.",
   "conversations.whatsappWebhookVerifyToken": "Token de verificação (gerado para esta conexão)"
 }
