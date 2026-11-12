@@ -1436,7 +1436,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       'Upgrade VPS plan',
       target.HvpProvider === 'proxmox'
         ? this.t(
-            'Change "{name}" to plan "{plan}"? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.',
+            'Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.',
           )
             .replace('{name}', instance.HviName)
             .replace('{plan}', String(target.HvpName ?? ''))
