@@ -7,12 +7,12 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
-  WEBSITE_INBOX_INITIAL_VALUES,
-  WEBSITE_INBOX_ROW_ACTIONS,
   inboxOptionLabel,
   openInboxViewer,
   text,
+  websiteInboxCrudDefaults,
   websiteInboxFields,
+  websiteInboxSelectFilter,
   websiteInboxPayload,
   websiteInboxStatusColumn,
 } from '../shared/website-inbox';
@@ -48,27 +48,9 @@ const config = defineCrud({
   savedMessage: 'Lead saved.',
   deletedMessage: 'Lead deleted.',
   deleteFailedMessage: 'Failed to delete lead.',
-  canCreate: false,
-  bulkDelete: true,
-  serverSidePagination: true,
-  initialPageSize: 25,
-  statusMode: 'string',
-  activeValue: 'new',
-  inactiveValue: 'closed',
+  ...websiteInboxCrudDefaults(),
   statusOptions: WEBSITE_LEAD_STATUS_OPTIONS,
-  rowActions: WEBSITE_INBOX_ROW_ACTIONS,
-  listFilters: [
-    {
-      key: 'kind',
-      label: 'Kind',
-      paramKey: 'kind',
-      type: 'select',
-      span: 1,
-      options: WEBSITE_LEAD_KIND_OPTIONS,
-    },
-  ],
-  initialValues: WEBSITE_INBOX_INITIAL_VALUES,
-  payload: (values) => websiteInboxPayload(values),
+  listFilters: websiteInboxSelectFilter('kind', 'Kind', WEBSITE_LEAD_KIND_OPTIONS),
   columns: [
     {
       id: 'name',

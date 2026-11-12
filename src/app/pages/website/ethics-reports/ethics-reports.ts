@@ -7,12 +7,12 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
-  WEBSITE_INBOX_INITIAL_VALUES,
-  WEBSITE_INBOX_ROW_ACTIONS,
   inboxOptionLabel,
   openInboxViewer,
   text,
+  websiteInboxCrudDefaults,
   websiteInboxFields,
+  websiteInboxSelectFilter,
   websiteInboxPayload,
   websiteInboxStatusColumn,
 } from '../shared/website-inbox';
@@ -50,27 +50,9 @@ const config = defineCrud({
   savedMessage: 'Report saved.',
   deletedMessage: 'Report deleted.',
   deleteFailedMessage: 'Failed to delete report.',
-  canCreate: false,
-  bulkDelete: true,
-  serverSidePagination: true,
-  initialPageSize: 25,
-  statusMode: 'string',
-  activeValue: 'new',
-  inactiveValue: 'closed',
+  ...websiteInboxCrudDefaults(),
   statusOptions: WEBSITE_ETHICS_STATUS_OPTIONS,
-  rowActions: WEBSITE_INBOX_ROW_ACTIONS,
-  listFilters: [
-    {
-      key: 'category',
-      label: 'Category',
-      paramKey: 'category',
-      type: 'select',
-      span: 1,
-      options: WEBSITE_ETHICS_CATEGORY_OPTIONS,
-    },
-  ],
-  initialValues: WEBSITE_INBOX_INITIAL_VALUES,
-  payload: (values) => websiteInboxPayload(values),
+  listFilters: websiteInboxSelectFilter('category', 'Category', WEBSITE_ETHICS_CATEGORY_OPTIONS),
   columns: [
     {
       id: 'protocol',

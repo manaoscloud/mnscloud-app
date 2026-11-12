@@ -87,3 +87,28 @@ type ViewerOptions = Parameters<typeof openDataViewerDialog>[1];
 export function openInboxViewer(dialog: MatDialog, options: ViewerOptions): void {
   openDataViewerDialog(dialog, options);
 }
+
+/** Settings shared by the website inboxes: moderation only, server paging, status new..closed. */
+export function websiteInboxCrudDefaults() {
+  return {
+    canCreate: false,
+    bulkDelete: true,
+    serverSidePagination: true,
+    initialPageSize: 25,
+    statusMode: 'string' as const,
+    activeValue: 'new',
+    inactiveValue: 'closed',
+    rowActions: WEBSITE_INBOX_ROW_ACTIONS,
+    initialValues: WEBSITE_INBOX_INITIAL_VALUES,
+    payload: (values: Record<string, unknown>) => websiteInboxPayload(values),
+  };
+}
+
+/** One select filter of an inbox list. */
+export function websiteInboxSelectFilter(
+  key: string,
+  label: string,
+  options: readonly ConfigurableCrudOption[],
+) {
+  return [{ key, label, paramKey: key, type: 'select' as const, span: 1 as const, options }];
+}
