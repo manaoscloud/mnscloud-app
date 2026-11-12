@@ -3595,6 +3595,15 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'dns.monitorAgents' },
               },
               {
+                path: 'hr/rep-p',
+                loadComponent: () =>
+                  import('./pages/hr/rep-p-parameters/rep-p-parameters').then(
+                    (m) => m.HrRepParametersPage,
+                  ),
+                title: 'HR',
+                data: { scope: 'master', breadcrumb: 'nav.hr.rep-p' },
+              },
+              {
                 path: 'website/parameters',
                 loadComponent: () =>
                   import('./pages/website/parameters/parameters').then(
