@@ -180,6 +180,68 @@ const PORTAL_HIDE_ACTION: ConfigurableCrudRowAction = {
   },
 };
 
+/** V2: the customer manages snapshots of a published server (each snapshot is billed to the tenant). */
+const PORTAL_SNAPSHOTS_ALLOW_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-snapshots-allow',
+  label: 'hostingVps.portalSnapshotsAllow',
+  icon: 'photo_camera',
+  tooltip: 'hostingVps.portalSnapshotsAllow',
+  visible: (row) =>
+    isCustomerServer(row) &&
+    Number(row['HviPortalEnabled'] ?? 0) === 1 &&
+    Number(row['HviPortalSnapshots'] ?? 0) !== 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal-snapshots`,
+    body: () => ({ enabled: true }),
+    successMessage: 'hostingVps.portalSnapshotsAllowed',
+    confirm: {
+      title: 'hostingVps.portalSnapshotsAllow',
+      message: 'hostingVps.portalSnapshotsAllowConfirm',
+      confirmLabel: 'hostingVps.portalSnapshotsAllow',
+    },
+  },
+};
+
+const PORTAL_SNAPSHOTS_BLOCK_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-snapshots-block',
+  label: 'hostingVps.portalSnapshotsBlock',
+  icon: 'no_photography',
+  tooltip: 'hostingVps.portalSnapshotsBlock',
+  visible: (row) => isCustomerServer(row) && Number(row['HviPortalSnapshots'] ?? 0) === 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal-snapshots`,
+    body: () => ({ enabled: false }),
+    successMessage: 'hostingVps.portalSnapshotsBlocked',
+    confirm: {
+      title: 'hostingVps.portalSnapshotsBlock',
+      message: 'hostingVps.portalSnapshotsBlockConfirm',
+      confirmLabel: 'hostingVps.portalSnapshotsBlock',
+    },
+  },
+};
+
+/** Portal row actions, in menu order; each one's `visible` decides for the row. */
+const PORTAL_ACTIONS: readonly ConfigurableCrudRowAction[] = [
+  PORTAL_PUBLISH_ACTION,
+  PORTAL_HIDE_ACTION,
+  PORTAL_SNAPSHOTS_ALLOW_ACTION,
+  PORTAL_SNAPSHOTS_BLOCK_ACTION,
+];
+
+/**
+ * Customer portal publication and portal snapshot actions of a tenant's customer server (the menu is
+ * built by the page, so config `rowActions` alone does not show them). None in platform scope.
+ */
+export function portalRowActions(
+  row: ConfigurableCrudRecord,
+  platformScope: boolean,
+): ConfigurableCrudRowAction[] {
+  if (platformScope) return [];
+  return PORTAL_ACTIONS.filter((action) => action.visible?.(row) !== false);
+}
+
 const PLACEMENT_GROUP_HELP =
   'Optional. Servers of the same customer with the same group run on different server nodes (one per node), so a node failure stops only one of them. Applies to plans with automatic node.';
 
@@ -252,6 +314,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     MIGRATE_INSTANCE_ACTION,
     PORTAL_PUBLISH_ACTION,
     PORTAL_HIDE_ACTION,
+    PORTAL_SNAPSHOTS_ALLOW_ACTION,
+    PORTAL_SNAPSHOTS_BLOCK_ACTION,
   ],
   listFilters: [
     {
@@ -1015,6 +1079,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       });
     }
     if (this.canUpgrade(row)) actions.push(UPGRADE_ACTION);
+    actions.push(...portalRowActions(row, this.platformScope()));
     return actions;
   }
 
