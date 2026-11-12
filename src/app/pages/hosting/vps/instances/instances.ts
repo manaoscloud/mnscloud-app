@@ -974,6 +974,13 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
+    if (row['HviAdoptedAt']) {
+      // Adopted VMs are only linked (FA3): no power, migration, retry or upgrade.
+      actions.push(MONITOR_ACTION);
+      if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
+      actions.push(DETAILS_ACTION);
+      return actions;
+    }
     if (row['HviExternalId']) {
       actions.push(MONITOR_ACTION);
       if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
@@ -1502,6 +1509,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         { label: 'Provider', value: providerName },
         { label: 'Plan', value: plan?.HvpName ?? item.HostingVpsPlanHvpUUID },
         { label: 'External ID', value: item.HviExternalId, monospace: true },
+        ...(item.HviAdoptedAt
+          ? [
+              {
+                label: 'Adopted',
+                value: `${this.t('Created outside the platform; the platform does not change it')} · ${item.HviAdoptedAt}`,
+              },
+            ]
+          : []),
+        ...(config.agentName ? [{ label: 'Agent', value: config.agentName }] : []),
         ...(this.platformScope() && config.networkProfile
           ? [
               {
