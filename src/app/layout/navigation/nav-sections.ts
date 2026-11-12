@@ -75,6 +75,7 @@ export const NAV_CATEGORY_ICONS: Record<string, string> = {
   services: 'apps',
   'call-center': 'support_agent',
   'call-flow': 'call_split',
+  recruiting: 'person_search',
   threats: 'gpp_maybe',
   protection: 'shield',
   'web-filter': 'filter_list',

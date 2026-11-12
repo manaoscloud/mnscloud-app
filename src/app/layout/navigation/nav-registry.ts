@@ -953,6 +953,22 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.notices.read'],
       },
       {
+        id: 'hr/recruiting-openings',
+        label: 'nav.hr.recruiting-openings',
+        icon: 'work',
+        category: 'recruiting',
+        route: '/hr/recruiting/openings',
+        permissions: ['tenant.hr.recruiting.read'],
+      },
+      {
+        id: 'hr/recruiting-applications',
+        label: 'nav.hr.recruiting-applications',
+        icon: 'contact_page',
+        category: 'recruiting',
+        route: '/hr/recruiting/applications',
+        permissions: ['tenant.hr.applications.read'],
+      },
+      {
         id: 'hr/work-schedules',
         label: 'nav.hr.work-schedules',
         icon: 'calendar_view_week',

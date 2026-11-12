@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f2614335716b",
+  "version": "9839d2bf0c72",
   "language": "pt-BR",
   "entries": [
     {
@@ -3936,6 +3936,108 @@
         },
         {
           "label": "Texto",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/recruiting/applications",
+      "menuPath": "Recursos humanos › Candidaturas",
+      "scope": "tenant",
+      "title": "Candidaturas",
+      "description": "Candidatos que se inscreveram pela página Trabalhe conosco ou foram adicionados pelo RH. Acompanhe cada um pelas etapas da seleção e baixe o currículo.",
+      "fields": [
+        {
+          "label": "Etapa",
+          "help": ""
+        },
+        {
+          "label": "Avaliação",
+          "help": ""
+        },
+        {
+          "label": "Vaga",
+          "help": "Vazio coloca o candidato no banco de talentos."
+        },
+        {
+          "label": "Currículo",
+          "help": "PDF, DOC ou DOCX de até 5 MB."
+        },
+        {
+          "label": "Mensagem",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/recruiting/openings",
+      "menuPath": "Recursos humanos › Vagas",
+      "scope": "tenant",
+      "title": "Vagas",
+      "description": "Vagas da sua organização, publicadas na página Trabalhe conosco do seu site, onde os candidatos enviam suas candidaturas.",
+      "fields": [
+        {
+          "label": "Título",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Localização",
+          "help": "Local onde o trabalho acontece. Vazio significa qualquer local ou trabalho remoto."
+        },
+        {
+          "label": "Slug",
+          "help": "Parte do endereço público da vaga no site: minúsculas, números e hífens. Único entre as vagas ativas."
+        },
+        {
+          "label": "Departamento",
+          "help": ""
+        },
+        {
+          "label": "Tipo de contratação",
+          "help": ""
+        },
+        {
+          "label": "Jornada",
+          "help": "Por exemplo, 12x36 noturno ou segunda a sexta, das 8h às 17h."
+        },
+        {
+          "label": "Cargos",
+          "help": ""
+        },
+        {
+          "label": "Salário",
+          "help": "Texto livre exibido no site, por exemplo, A combinar. Deixe vazio para omitir."
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Publicada",
+          "help": "Só as vagas abertas, publicadas e não expiradas aparecem no site."
+        },
+        {
+          "label": "Encerra em",
+          "help": "Último dia para se candidatar. Depois dele a vaga sai do site sozinha."
+        },
+        {
+          "label": "Anotações",
           "help": ""
         },
         {

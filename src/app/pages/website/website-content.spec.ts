@@ -7,6 +7,7 @@ import {
   setContentValue,
   validateWebsiteContent,
   websiteContentPayload,
+  WEBSITE_PAGE_KEYS,
   websiteSiteUrl,
 } from './website-content';
 import { websiteSitePayload, websiteSiteRow } from './sites/sites';
@@ -256,5 +257,22 @@ describe('Website content v1', () => {
     expect(row['dnsCanRetry']).toBeTrue();
     expect(row['publishedVersion']).toBeNull();
     expect(websiteSiteRow({ dns: { status: null } })['dnsState']).toBe('external');
+  });
+});
+
+describe('careers page key', () => {
+  it('is part of the editable pages and kept by normalization', () => {
+    expect(WEBSITE_PAGE_KEYS).toContain('careers');
+    const content = normalizeWebsiteContent(
+      {
+        locales: { 'pt-BR': { pages: { careers: { enabled: true, title: 'Vagas', text: 'x' } } } },
+      },
+      ['pt-BR'],
+    );
+    expect(content.locales['pt-BR']?.pages?.['careers']).toEqual({
+      enabled: true,
+      title: 'Vagas',
+      text: 'x',
+    });
   });
 });

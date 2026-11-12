@@ -15,7 +15,7 @@ import {
 } from '../registry-fields';
 import { plainText } from '../../website/shared/website-inbox';
 
-const COMPANY_LOOKUP = {
+export const COMPANY_LOOKUP = {
   endpoint: 'registry/companies?status=1',
   uuidField: 'CompanyUUID',
   labelField: 'Name',
