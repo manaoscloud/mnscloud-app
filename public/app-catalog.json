@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4c6193018ab7",
+  "version": "d4a3c422ca1a",
   "language": "pt-BR",
   "entries": [
     {
@@ -996,12 +996,36 @@
           "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
         },
         {
-          "label": "ID do canal",
-          "help": "Identificador do provedor que encaminha as mensagens recebidas para cá (no WhatsApp, o ID do número de telefone)."
+          "label": "Configurações",
+          "help": ""
         },
         {
-          "label": "Configurações (JSON)",
-          "help": "Para o chat do site, defina allowedOrigins como uma lista das origens HTTPS exatas do site. Curingas não validam a instalação. Outras configurações não secretas são opcionais."
+          "label": "Endereço do site",
+          "help": "Endereço do site onde o chat aparece. Só este site e os outros sites permitidos podem abrir o chat."
+        },
+        {
+          "label": "Outros sites permitidos",
+          "help": "Opcional. Um endereço de site por linha."
+        },
+        {
+          "label": "Título do chat",
+          "help": "Aparece no topo da janela do chat. Vazio usa o título padrão, Atendimento."
+        },
+        {
+          "label": "Cor do chat",
+          "help": "Cor do botão e do topo do chat (#RRGGBB). Vazio usa azul."
+        },
+        {
+          "label": "Posição do chat",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de boas-vindas",
+          "help": "Mostrada ao visitante antes da primeira mensagem. Vazio mostra o subtítulo."
+        },
+        {
+          "label": "Identificador no provedor",
+          "help": "Identificador deste número, página ou conta no provedor. As mensagens recebidas são encaminhadas por ele."
         },
         {
           "label": "Credenciais (JSON ou token)",
@@ -1010,6 +1034,46 @@
         {
           "label": "Apagar credenciais salvas",
           "help": ""
+        },
+        {
+          "label": "Subtítulo do chat",
+          "help": "Aparece abaixo do título do chat. Vazio usa o subtítulo padrão."
+        },
+        {
+          "label": "Pedir nome e e-mail antes do chat",
+          "help": "Obrigatório: o visitante precisa informar nome e um e-mail válido antes da primeira mensagem."
+        },
+        {
+          "label": "Horário de atendimento",
+          "help": "Fora deste horário o chat mostra a mensagem de ausência ou fica oculto."
+        },
+        {
+          "label": "Fuso horário",
+          "help": ""
+        },
+        {
+          "label": "Dias",
+          "help": ""
+        },
+        {
+          "label": "Abre às",
+          "help": ""
+        },
+        {
+          "label": "Fecha às",
+          "help": "Um horário de fechamento antes do de abertura termina depois da meia-noite."
+        },
+        {
+          "label": "Fora do horário",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de ausência",
+          "help": "Aparece no chat fora do horário de atendimento. Vazio usa o texto padrão."
+        },
+        {
+          "label": "Permitir subdomínios",
+          "help": "Abre o chat também em subdomínios de cada site permitido: com https://exemplo.com permitido, loja.exemplo.com também funciona. Subdomínios não são verificados como instalados."
         }
       ]
     },
@@ -3308,6 +3372,10 @@
         {
           "label": "Grupo de posicionamento",
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
         },
         {
           "label": "Rede privada",
@@ -11427,6 +11495,10 @@
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
         },
         {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
+        },
+        {
           "label": "Rede privada",
           "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
@@ -11685,6 +11757,10 @@
           "help": "Cada cliente recebe a própria zona EVPN e o próprio gateway. Ao ligar, os campos vazios são preenchidos com os valores recomendados deste ambiente; revise antes de salvar."
         },
         {
+          "label": "Rede da plataforma",
+          "help": "Rede dos servidores da plataforma (DNS, API, banco de dados...) criados pelo master. Os clientes nunca a veem. Escolha Não para removê-la."
+        },
+        {
           "label": "ID do token",
           "help": ""
         },
@@ -11758,10 +11834,6 @@
         },
         {
           "label": "ID da rede",
-          "help": ""
-        },
-        {
-          "label": "ID do datastore",
           "help": ""
         }
       ]

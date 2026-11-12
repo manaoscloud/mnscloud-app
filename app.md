@@ -1340,6 +1340,13 @@ or cancelling the form they are filling.
     `Codecs`, `Financial`, `Address`, and `Notes`; use `Match` for routing/selection criteria such
     as source IP, destination pattern, DID/prefix, From/To pattern, auth username, domain, priority,
     or equivalent match rules.
+  - `Advanced` (tab key `advanced`) holds expert settings that all have safe defaults: the record
+    must work without the user ever opening it. Keep the essential fields of the chosen type on
+    `Record`.
+  - never ask a user to type JSON to configure a record (channel settings, provider options,
+    allowlists): every setting is a typed field (text, select, number, time, one value per line
+    in a text area), and the page builds the stored object and keeps keys it does not edit.
+    Raw JSON stays only in read-only viewers and developer snippets.
   - footer (`.form-actions`) with `Cancel`, `Save`, and create-only `Save/New` in the save split menu
   - footer must stay fixed at the bottom of dialog (`mat-dialog-actions` cannot move with content length)
 - Dialog form submission:

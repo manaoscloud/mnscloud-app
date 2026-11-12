@@ -1,7 +1,22 @@
 export type VpsProvider =
   'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter' | 'sangfor_scp';
 
+export type VpsPlatformNetwork = {
+  bridge: string;
+  vlanTag?: number;
+  cidr: string;
+  gateway: string;
+  allocationStart: string;
+  allocationEnd: string;
+  nameservers: string[];
+  ipv6: 'auto' | 'none';
+};
+
+export type VpsNetworkProfile = 'infrastructure' | 'isolated';
+
 export type VpsProviderConfig = {
+  /** Network of the platform's own servers (master only); customers never see it. */
+  platformNetwork?: VpsPlatformNetwork | null;
   sdn?: {
     zone: string;
     cidrPool: string[];
@@ -157,6 +172,8 @@ export type HostingVpsInstanceConfig = {
   providerImageId?: string | null;
   /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
   placementGroup?: string | null;
+  /** Network profile of an internal (platform) VPS. */
+  networkProfile?: VpsNetworkProfile | null;
   authMethod?: 'ssh_key' | 'password' | string | null;
   username?: string | null;
   password?: string | null;
