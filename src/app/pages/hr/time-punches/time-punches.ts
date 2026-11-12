@@ -49,6 +49,14 @@ const AFD_ACTION: ConfigurableCrudFilterAction = {
   tooltip: 'Source data file (AFD) of one establishment',
 };
 
+/** AEJ (electronic journey file of the treated marks) of one establishment and period. */
+const AEJ_ACTION: ConfigurableCrudFilterAction = {
+  key: 'aej',
+  label: 'Export AEJ',
+  icon: 'event_note',
+  tooltip: 'Electronic journey file (AEJ) of one establishment',
+};
+
 function flags(row: ConfigurableCrudRecord): string[] {
   return Array.isArray(row['Flags']) ? (row['Flags'] as string[]) : [];
 }
@@ -168,7 +176,7 @@ const config = defineCrud({
     },
   ],
   fields: [],
-  filterActions: [MAP_ACTION, AFD_ACTION],
+  filterActions: [MAP_ACTION, AFD_ACTION, AEJ_ACTION],
   rowActions: [
     { key: 'details', label: 'Details', icon: 'receipt_long', tooltip: 'Details' },
     {
@@ -201,8 +209,8 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {
-    if (action.key === AFD_ACTION.key) {
-      await openAfdExportDialog(this.dialog);
+    if (action.key === AFD_ACTION.key || action.key === AEJ_ACTION.key) {
+      await openAfdExportDialog(this.dialog, action.key === AEJ_ACTION.key ? 'aej' : 'afd');
       return;
     }
     if (action.key !== MAP_ACTION.key) return;
