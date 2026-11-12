@@ -34,25 +34,25 @@ export const WEBSITE_ETHICS_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = 
 
 /** Reports sent through the ethics channel of the tenant websites; anonymous ones hold no identity. */
 const config = defineCrud({
+  ...websiteInboxCrudDefaults(),
+  statusOptions: WEBSITE_ETHICS_STATUS_OPTIONS,
+  listFilters: websiteInboxSelectFilter('category', 'Category', WEBSITE_ETHICS_CATEGORY_OPTIONS),
   endpoint: 'website/ethics-reports',
   uuidField: 'ReportUUID',
   pageTitle: 'Ethics',
   pageDescription:
     'Reports received through the ethics channel of your websites. Anonymous reports keep no identification; review each one and record the outcome in the notes.',
-  editTitle: 'Review report',
-  dialogDescription: 'Update the status of the report and keep internal notes.',
-  searchPlaceholder: 'Protocol, place or message',
-  emptyLabel: 'No reports found',
-  deleteTitle: 'Delete report',
-  deleteMessage: 'Delete this report?',
-  deleteSelectedTitle: 'Delete reports',
-  deleteSelectedMessage: 'Delete {count} selected reports?',
   savedMessage: 'Report saved.',
   deletedMessage: 'Report deleted.',
   deleteFailedMessage: 'Failed to delete report.',
-  ...websiteInboxCrudDefaults(),
-  statusOptions: WEBSITE_ETHICS_STATUS_OPTIONS,
-  listFilters: websiteInboxSelectFilter('category', 'Category', WEBSITE_ETHICS_CATEGORY_OPTIONS),
+  emptyLabel: 'No reports found',
+  searchPlaceholder: 'Protocol, place or message',
+  deleteMessage: 'Delete this report?',
+  deleteTitle: 'Delete report',
+  deleteSelectedMessage: 'Delete {count} selected reports?',
+  deleteSelectedTitle: 'Delete reports',
+  dialogDescription: 'Update the status of the report and keep internal notes.',
+  editTitle: 'Review report',
   columns: [
     {
       id: 'protocol',
