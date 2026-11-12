@@ -186,6 +186,14 @@ export type HostingVpsInstanceConfig = {
     agentName?: string | null;
     message?: string | null;
   } | null;
+  /** FA5: runtime of the server role (DNS) installed by the platform after the Agent. */
+  runtimeInstall?: {
+    runtime?: string | null;
+    status?: 'installing' | 'operational' | 'failed' | string | null;
+    at?: string | null;
+    serverUUID?: string | null;
+    message?: string | null;
+  } | null;
   providerImageId?: string | null;
   /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
   placementGroup?: string | null;

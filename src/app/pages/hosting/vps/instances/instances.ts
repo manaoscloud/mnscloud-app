@@ -103,6 +103,22 @@ const INSTALL_AGENT_ACTION: ConfigurableCrudRowAction = {
 /** FA4: an install still running after this long is treated as lost (the API shows the same). */
 const AGENT_INSTALL_STALE_MS = 60 * 60_000;
 
+const INSTALL_RUNTIME_ACTION: ConfigurableCrudRowAction = {
+  key: 'install-runtime',
+  label: 'Install runtime',
+  icon: 'dns',
+  tooltip: 'Install the runtime of this platform server role (DNS)',
+};
+
+const RUNTIME_INSTALL_LABELS: Record<string, string> = {
+  installing: 'Installing',
+  operational: 'In operation',
+  failed: 'Install failed',
+};
+
+/** FA5: roles whose runtime the platform installs (the API decides again). */
+const PLATFORM_RUNTIME_NAME = /^mns-dns-(dev|prod)\d+$/i;
+
 const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
   installing: 'Installing',
   enrolled: 'Installed',
@@ -1071,6 +1087,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       if (this.isPlatformMasterUser() && this.providerOf(row) === 'proxmox')
         actions.push(MIGRATE_INSTANCE_ACTION);
       if (this.canInstallAgent(row)) actions.push(INSTALL_AGENT_ACTION);
+      if (this.canInstallRuntime(row)) actions.push(INSTALL_RUNTIME_ACTION);
     }
     if (this.canRetryProvision(row)) {
       actions.push({
@@ -1106,6 +1123,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
     if (action.key === 'install-agent') {
       await this.installAgent(row);
+      return;
+    }
+    if (action.key === 'install-runtime') {
+      await this.installRuntime(row);
       return;
     }
     if (action.key === 'power-start') {
@@ -1245,6 +1266,51 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       this.refreshList();
     } catch (error) {
       this.snack.error(this.errorMessage(error) || this.t('Failed to start the Agent install.'));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  /**
+   * FA5: a platform server whose Agent is enrolled and whose role has an automatic runtime (DNS),
+   * not yet operational; the platform installs it by itself after the Agent, this runs it again.
+   */
+  private canInstallRuntime(row: ConfigurableCrudRecord): boolean {
+    if (!this.platformScope() || !this.isPlatformMasterUser()) return false;
+    if (this.providerOf(row) !== 'proxmox' || row['HviAdoptedAt'] || !row['HviExternalId'])
+      return false;
+    if (row['RegCustomerRcuUUID'] || row['UserUsrUUID']) return false;
+    if (!PLATFORM_RUNTIME_NAME.test(String(row['HviName'] ?? ''))) return false;
+    const status = String(row['HviStatus'] ?? '').toLowerCase();
+    if (status !== 'running' && status !== 'active') return false;
+    const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']) ?? {};
+    if (config.networkProfile !== 'infrastructure') return false;
+    if (config.agentEnrollment?.status !== 'enrolled') return false;
+    const runtime = config.runtimeInstall;
+    if (runtime?.status === 'operational') return false;
+    if (runtime?.status === 'installing') {
+      const started = Date.parse(String(runtime.at ?? ''));
+      if (Number.isFinite(started) && Date.now() - started < AGENT_INSTALL_STALE_MS) return false;
+    }
+    return true;
+  }
+
+  private async installRuntime(row: ConfigurableCrudRecord) {
+    const uuid = this.recordUUID(row);
+    if (!this.canInstallRuntime(row)) return;
+    const confirmed = await this.confirmAction(
+      'Install runtime',
+      `${this.t('Install the DNS runtime on {name}? The server joins the DNS cluster of this environment and is admitted only after it reports operational.').replace('{name}', String(row['HviName'] ?? ''))}`,
+      'Install runtime',
+    );
+    if (!confirmed) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.instanceEndpoint()}/${uuid}/runtime`, {});
+      this.snack.success(this.t('Runtime install started. It takes a few minutes.'));
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to start the runtime install.'));
     } finally {
       this.mutating.set(false);
     }
@@ -1644,6 +1710,23 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
               {
                 label: 'Adopted',
                 value: `${this.t('Created outside the platform; the platform does not change it')} · ${item.HviAdoptedAt}`,
+              },
+            ]
+          : []),
+        ...(config.runtimeInstall
+          ? [
+              {
+                label: 'Runtime',
+                value: [
+                  String(config.runtimeInstall.runtime ?? '').toUpperCase(),
+                  this.t(
+                    RUNTIME_INSTALL_LABELS[String(config.runtimeInstall.status ?? '')] ??
+                      String(config.runtimeInstall.status ?? ''),
+                  ),
+                  config.runtimeInstall.status === 'failed' ? config.runtimeInstall.message : null,
+                ]
+                  .filter((part) => !!part)
+                  .join(' · '),
               },
             ]
           : []),
