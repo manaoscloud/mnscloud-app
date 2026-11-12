@@ -47,7 +47,7 @@ describe('conversation connections form', () => {
   });
 
   it('offers only channels with a working driver when creating', () => {
-    expect(CREATABLE_CHANNEL_KINDS.map((kind) => kind.value)).toEqual(['internal', 'webchat']);
+    expect(CREATABLE_CHANNEL_KINDS.map((kind) => kind.value)).toEqual(['internal', 'webchat', 'telegram']);
   });
 
   it('stores the widget appearance and drops empty values', () => {

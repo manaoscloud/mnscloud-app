@@ -13396,5 +13396,8 @@
   "network.accessGateways.resumeCommand": "Resume command",
   "network.accessGateways.resumeWarning": "Run it on the same gateway server. This command carries no new authorization.",
   "network.accessGateways.egressPlaceholder": "E.g. 198.51.100.10",
-  "network.accessTest.facts": "Facts read from the device"
+  "network.accessTest.facts": "Facts read from the device",
+  "Read from Telegram when the bot token is saved.": "Read from Telegram when the bot token is saved.",
+  "Leave empty to keep the current bot. A new token connects another bot.": "Leave empty to keep the current bot. A new token connects another bot.",
+  "In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically.": "In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically."
 }
