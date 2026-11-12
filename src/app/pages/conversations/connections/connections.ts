@@ -331,7 +331,7 @@ const config = defineCrud({
     offlineBehavior: 'message',
     offlineMessage: '',
     ChcExternalId: '',
-    secret: '',
+    ChcSecret: '',
     clearSecret: 0,
     revision: '',
   },
@@ -479,7 +479,7 @@ const config = defineCrud({
       hiddenWhen: ({ editing, values }) => !isProvider(values) || (isTelegram(values) && !editing),
     },
     {
-      key: 'secret',
+      key: 'ChcSecret',
       label: 'Credentials (JSON or token)',
       labelWhen: ({ values }) => (isTelegram(values) ? 'Bot token' : 'Credentials (JSON or token)'),
       type: 'password',
@@ -648,7 +648,7 @@ const config = defineCrud({
     },
   ],
   payload: (values, editing) => {
-    const secretText = String(values['secret'] ?? '').trim();
+    const secretText = String(values['ChcSecret'] ?? '').trim();
     const secretJson = parseObject(secretText);
     const provider = isProvider(values);
     return {
