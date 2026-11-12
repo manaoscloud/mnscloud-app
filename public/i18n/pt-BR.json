@@ -13545,5 +13545,13 @@
   "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.": "Endereço para onde seus clientes escrevem. Os e-mails que chegam na caixa de entrada viram conversas, e as respostas saem dele.",
   "Leave empty to keep the stored password.": "Deixe vazio para manter a senha salva.",
   "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Senha desta caixa de e-mail. Gmail, Outlook, Yahoo e iCloud pedem uma senha de app (criada nas configurações de segurança da conta). A conexão é testada ao salvar.",
-  "imap.example.com": "imap.example.com"
+  "imap.example.com": "imap.example.com",
+  "Adopt existing VMs": "Adotar VMs existentes",
+  "Platform VMs created outside the platform (names mns-...). Adoption only links them: the platform never changes, powers off or deletes an adopted VM, and removing the server only unlinks it.": "VMs da plataforma criadas fora dela (nomes mns-...). A adoção apenas as vincula: a plataforma nunca altera, desliga ou exclui uma VM adotada, e remover o servidor apenas desfaz o vínculo.",
+  "No VM to adopt.": "Nenhuma VM para adotar.",
+  "No Agent": "Sem Agent",
+  "{n} VM(s) adopted": "{n} VM(s) adotada(s)",
+  "Adopt selected ({n})": "Adotar selecionadas ({n})",
+  "Adopted": "Adotada",
+  "Created outside the platform; the platform does not change it": "Criada fora da plataforma; a plataforma não a altera"
 }

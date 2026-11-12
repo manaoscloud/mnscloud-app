@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -18,6 +19,7 @@ import type {
   VpsProviderConfig,
   VpsProviderCredentials,
 } from '../vps.types';
+import { AdoptVmsDialogComponent, type AdoptVmsDialogData } from './adopt-vms-dialog';
 import {
   PLATFORM_NETWORK_DEFAULT_VALUES,
   PLATFORM_NETWORK_HELP,
@@ -410,6 +412,15 @@ const PROVIDER_GATEWAYS_ACTION = providerCollectionAction(
   'router',
   providerGateways,
 );
+
+// FA3: link platform VMs created directly on Proxmox to platform servers (the VM is never touched).
+const ADOPT_VMS_ACTION: ConfigurableCrudRowAction = {
+  key: 'adopt',
+  label: 'Adopt existing VMs',
+  icon: 'move_to_inbox',
+  tooltip: 'Adopt existing VMs',
+  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+};
 
 const CONFIG_FIELD_KEYS = [
   'region',
@@ -1157,7 +1168,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       canEdit: masterScope,
       canDelete: masterScope,
       rowActions: masterScope
-        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION, PROVIDER_GATEWAYS_ACTION]
+        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION, PROVIDER_GATEWAYS_ACTION, ADOPT_VMS_ACTION]
         : [TEST_PROVIDER_ACTION],
     });
   }
@@ -1448,8 +1459,12 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
-    if (action.key !== 'test') return;
     const uuid = String(row['HvrUUID'] ?? '');
+    if (action.key === 'adopt') {
+      if (uuid) await this.openAdoptVms(uuid);
+      return;
+    }
+    if (action.key !== 'test') return;
     if (!uuid) return;
 
     this.mutating.set(true);
@@ -1463,6 +1478,22 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
     } finally {
       this.mutating.set(false);
     }
+  }
+
+  private async openAdoptVms(providerUUID: string): Promise<void> {
+    const ref = this.dialog.open<AdoptVmsDialogComponent, AdoptVmsDialogData, boolean>(
+      AdoptVmsDialogComponent,
+      {
+        width: 'min(720px, calc(100vw - 24px))',
+        maxWidth: 'calc(100vw - 24px)',
+        maxHeight: 'calc(100dvh - 24px)',
+        disableClose: true,
+        autoFocus: false,
+        restoreFocus: true,
+        data: { providerUUID },
+      },
+    );
+    if (await firstValueFrom(ref.afterClosed())) this.refreshList();
   }
 
   private async startEditWithCredentials(row: ConfigurableCrudRecord): Promise<void> {

@@ -13544,5 +13544,13 @@
   "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.": "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.",
   "Leave empty to keep the stored password.": "Leave empty to keep the stored password.",
   "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.",
-  "imap.example.com": "imap.example.com"
+  "imap.example.com": "imap.example.com",
+  "Adopt existing VMs": "Adopt existing VMs",
+  "Platform VMs created outside the platform (names mns-...). Adoption only links them: the platform never changes, powers off or deletes an adopted VM, and removing the server only unlinks it.": "Platform VMs created outside the platform (names mns-...). Adoption only links them: the platform never changes, powers off or deletes an adopted VM, and removing the server only unlinks it.",
+  "No VM to adopt.": "No VM to adopt.",
+  "No Agent": "No Agent",
+  "{n} VM(s) adopted": "{n} VM(s) adopted",
+  "Adopt selected ({n})": "Adopt selected ({n})",
+  "Adopted": "Adopted",
+  "Created outside the platform; the platform does not change it": "Created outside the platform; the platform does not change it"
 }

@@ -169,6 +169,16 @@ export type HostingVpsPlan = {
 };
 
 export type HostingVpsInstanceConfig = {
+  /** FA3: set when the VM was created outside the platform and only linked. */
+  adopted?: {
+    at?: string | null;
+    node?: string | null;
+    source?: string | null;
+    bridge?: string | null;
+    vlanTag?: number | null;
+  } | null;
+  agentName?: string | null;
+  agentUUID?: string | null;
   providerImageId?: string | null;
   /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
   placementGroup?: string | null;
@@ -256,6 +266,8 @@ export type HostingVpsInstance = {
   HviUUID: string;
   HviName: string;
   HviConfig?: HostingVpsInstanceConfig | null;
+  /** FA3: when the VM was adopted (created outside the platform); null otherwise. */
+  HviAdoptedAt?: string | null;
   RegCustomerRcuUUID?: string | null;
   CustomerName?: string | null;
   HviExternalId?: string | null;
