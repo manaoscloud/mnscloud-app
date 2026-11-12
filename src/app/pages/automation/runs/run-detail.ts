@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -142,7 +142,7 @@ export function stepIcon(result: string): string {
     </div>
   `,
 })
-export class AutomationRunDetailDialog implements OnInit {
+export class AutomationRunDetailDialog {
   private readonly data = inject<RunDetailData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<AutomationRunDetailDialog, boolean>);
   private readonly service = inject(AutomationService);
@@ -156,7 +156,11 @@ export class AutomationRunDetailDialog implements OnInit {
     return RUN_LIVE_STATES.includes(this.run()?.state ?? '');
   }
 
-  async ngOnInit(): Promise<void> {
+  constructor() {
+    void this.load();
+  }
+
+  private async load(): Promise<void> {
     try {
       this.run.set(await this.service.run(this.data.uuid));
     } finally {

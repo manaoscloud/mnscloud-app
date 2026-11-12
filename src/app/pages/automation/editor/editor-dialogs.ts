@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -169,7 +169,7 @@ export interface VersionsDialogData {
     </div>
   `,
 })
-export class AutomationVersionsDialog implements OnInit {
+export class AutomationVersionsDialog {
   readonly data = inject<VersionsDialogData>(MAT_DIALOG_DATA);
   readonly ref = inject(MatDialogRef<AutomationVersionsDialog, boolean>);
   private readonly service = inject(AutomationService);
@@ -177,7 +177,11 @@ export class AutomationVersionsDialog implements OnInit {
   readonly versions = signal<FlowVersion[]>([]);
   readonly loading = signal(true);
 
-  async ngOnInit(): Promise<void> {
+  constructor() {
+    void this.load();
+  }
+
+  private async load(): Promise<void> {
     try {
       this.versions.set(await this.service.versions(this.data.flowUUID));
     } finally {
