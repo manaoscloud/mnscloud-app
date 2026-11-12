@@ -13204,5 +13204,19 @@
   "conversations.hoursSameTime": "O horário de fechamento deve ser diferente do de abertura.",
   "hostingVps.platformPlacementGroupHelp": "Opcional. Vazio = automático pelo nome do servidor: mns-<papel>-<ambiente>N entra no grupo <papel>-<ambiente> (mns-dns-prod2 → dns-prod). Servidores do mesmo grupo ficam em nós diferentes; sem nó livre, o novo vai para o nó com menos membros.",
   "automatic from the name": "automático pelo nome",
-  "shares a node with another member (no free node)": "divide o nó com outro membro (sem nó livre)"
+  "shares a node with another member (no free node)": "divide o nó com outro membro (sem nó livre)",
+  "Export AEJ": "Exportar AEJ",
+  "Electronic journey file (AEJ) of one establishment": "Arquivo eletrônico de jornada (AEJ) de um estabelecimento",
+  "Electronic journey file (AEJ, Portaria 671) of one establishment with the treated marks, schedules and absences of the period.": "Arquivo eletrônico de jornada (AEJ, Portaria 671) de um estabelecimento, com as marcações tratadas, os horários e as ausências do período.",
+  "Failed to generate the AEJ.": "Não foi possível gerar o AEJ.",
+  "AEJ generated with {{employees}} employees and {{count}} marks.": "AEJ gerado com {{employees}} colaboradores e {{count}} marcações.",
+  "Provisional file: the program has no INPI registration number or developer data yet.": "Arquivo provisório: o programa ainda não tem número de registro no INPI ou dados do desenvolvedor.",
+  "{{count}} employees without CPF were left out.": "{{count}} colaboradores sem CPF ficaram de fora.",
+  "{{count}} days without a contractual schedule.": "{{count}} dias sem horário contratual.",
+  "Developer name": "Nome do desenvolvedor",
+  "Legal name of the developer of the program (AEJ record 08).": "Razão social do desenvolvedor do programa (registro 08 do AEJ).",
+  "Developer e-mail": "E-mail do desenvolvedor",
+  "Contact e-mail of the developer of the program (AEJ record 08).": "E-mail de contato do desenvolvedor do programa (registro 08 do AEJ).",
+  "Use a valid e-mail of at most 50 characters.": "Use um e-mail válido de até 50 caracteres.",
+  "Identification of the Pulse time recording program (REP-P) written in every AFD and AEJ. Without the INPI registration number the files are provisional.": "Identificação do programa de registro de ponto do Pulse (REP-P) gravada em todo AFD e AEJ. Sem o número de registro no INPI, os arquivos são provisórios."
 }
