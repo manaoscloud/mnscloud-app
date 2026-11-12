@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudField,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -28,7 +29,7 @@ function parseObject(value: unknown): Record<string, unknown> | null | 'invalid'
 
 /** Kinds offered when creating: only channels with a working driver (decision D2). */
 export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter((kind) =>
-  ['internal', 'webchat', 'telegram'].includes(String(kind.value)),
+  ['internal', 'webchat', 'telegram', 'email'].includes(String(kind.value)),
 );
 
 /** Provider routing key (`ChcExternalId`) label per channel type. */
@@ -136,6 +137,72 @@ function storedLook(value: unknown, key: string): string {
 
 const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
 const isTelegram = (values: ConfigurableCrudRecord) => values['kind'] === 'telegram';
+const isEmail = (values: ConfigurableCrudRecord) => values['kind'] === 'email';
+
+/** Mail server settings stored in `ChcConfig` for e-mail connections (also the form field keys). */
+export const EMAIL_CONFIG_KEYS = [
+  'imapHost',
+  'imapPort',
+  'imapSecurity',
+  'smtpHost',
+  'smtpPort',
+  'smtpSecurity',
+  'username',
+  'fromName',
+] as const;
+const EMAIL_PORT_KEYS = new Set(['imapPort', 'smtpPort']);
+const IMAP_PORTS = [
+  { value: '', label: 'Automatic' },
+  { value: '993', label: '993 (SSL)' },
+  { value: '143', label: '143 (STARTTLS)' },
+] as const;
+const SMTP_PORTS = [
+  { value: '', label: 'Automatic' },
+  { value: '587', label: '587 (STARTTLS)' },
+  { value: '465', label: '465 (SSL)' },
+  { value: '2525', label: '2525 (STARTTLS)' },
+  { value: '25', label: '25 (STARTTLS)' },
+] as const;
+const MAIL_SECURITY = [
+  { value: '', label: 'Automatic' },
+  { value: 'ssl', label: 'SSL' },
+  { value: 'starttls', label: 'STARTTLS' },
+] as const;
+
+/** E-mail settings of the form: only the filled ones (the API completes the rest from the address). */
+export function emailConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const config: Record<string, unknown> = {};
+  for (const key of EMAIL_CONFIG_KEYS) {
+    const value = String(values[key] ?? '').trim();
+    if (value) config[key] = EMAIL_PORT_KEYS.has(key) ? Number(value) : value;
+  }
+  return config;
+}
+
+function storedEmail(value: unknown, key: string): string {
+  const object = parseObject(value);
+  const raw = object && object !== 'invalid' ? object[key] : '';
+  return typeof raw === 'string' || typeof raw === 'number' ? String(raw) : '';
+}
+
+function emailField(
+  key: (typeof EMAIL_CONFIG_KEYS)[number],
+  label: string,
+  help: string,
+  extra: Partial<ConfigurableCrudField> = {},
+): ConfigurableCrudField {
+  return {
+    key,
+    source: 'ChcConfig',
+    label,
+    help,
+    tab: 'advanced',
+    hiddenWhen: ({ values }) => !isEmail(values),
+    fromRecord: (value) => storedEmail(value, key),
+    span: 1,
+    ...extra,
+  };
+}
 const isProvider = (values: ConfigurableCrudRecord) =>
   values['kind'] !== 'internal' && values['kind'] !== 'webchat';
 
@@ -162,11 +229,7 @@ export function storedOrigins(config: unknown): string[] {
   const object = parseObject(config);
   if (!object || object === 'invalid') return [];
   const raw = object['allowedOrigins'] ?? object['origins'];
-  const entries = Array.isArray(raw)
-    ? raw
-    : typeof raw === 'string'
-      ? raw.split(',')
-      : [];
+  const entries = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
   return entries.map((entry) => String(entry ?? '').trim()).filter(Boolean);
 }
 
@@ -216,7 +279,13 @@ function rulesConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
 export function webchatConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
   const stored = parseObject(values['storedConfig']);
   const rest: Record<string, unknown> = { ...(stored && stored !== 'invalid' ? stored : {}) };
-  for (const key of ['origins', 'allowedOrigins', 'allowSubdomains', ...WIDGET_LOOK_KEYS, ...WEBCHAT_RULE_KEYS]) {
+  for (const key of [
+    'origins',
+    'allowedOrigins',
+    'allowSubdomains',
+    ...WIDGET_LOOK_KEYS,
+    ...WEBCHAT_RULE_KEYS,
+  ]) {
     delete rest[key];
   }
   const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
@@ -244,10 +313,18 @@ function originError(payload: ConfigurableCrudRecord): WebchatFieldError | null 
   const lines = originLines(payload['otherOrigins']);
   const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
   if (invalid) {
-    return { key: 'otherOrigins', message: 'conversations.websiteLineInvalid', params: { value: invalid } };
+    return {
+      key: 'otherOrigins',
+      message: 'conversations.websiteLineInvalid',
+      params: { value: invalid },
+    };
   }
   if (lines.length + 1 > MAX_ORIGINS) {
-    return { key: 'otherOrigins', message: 'conversations.websiteTooMany', params: { max: MAX_ORIGINS } };
+    return {
+      key: 'otherOrigins',
+      message: 'conversations.websiteTooMany',
+      params: { max: MAX_ORIGINS },
+    };
   }
   return null;
 }
@@ -257,7 +334,11 @@ function lookError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
   if (color && !COLOR_RE.test(color)) {
     return { key: 'widgetColor', message: 'conversations.widgetColorInvalid' };
   }
-  const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
+  const limits: Record<string, number> = {
+    widgetTitle: 60,
+    widgetSubtitle: 120,
+    widgetGreeting: 500,
+  };
   const tooLong = Object.entries(limits).find(([key, max]) => text(payload[key]).length > max);
   return tooLong
     ? { key: tooLong[0], message: 'conversations.widgetTextTooLong', params: { max: tooLong[1] } }
@@ -272,7 +353,11 @@ function hoursError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
     return { key: 'hoursEnd', message: 'conversations.hoursSameTime' };
   }
   if (text(payload['offlineMessage']).length > 500) {
-    return { key: 'offlineMessage', message: 'conversations.widgetTextTooLong', params: { max: 500 } };
+    return {
+      key: 'offlineMessage',
+      message: 'conversations.widgetTextTooLong',
+      params: { max: 500 },
+    };
   }
   return null;
 }
@@ -468,12 +553,17 @@ const config = defineCrud({
       key: 'ChcExternalId',
       source: 'ChcExternalId',
       label: 'Provider identifier',
-      labelWhen: ({ values }) => EXTERNAL_ID_LABELS[String(values['kind'])] ?? 'Provider identifier',
+      labelWhen: ({ values }) =>
+        EXTERNAL_ID_LABELS[String(values['kind'])] ?? 'Provider identifier',
       help: 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
-      helpWhen: ({ values }) =>
-        isTelegram(values)
-          ? 'Read from Telegram when the bot token is saved.'
-          : 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.',
+      helpWhen: ({ values }) => {
+        if (isTelegram(values)) return 'Read from Telegram when the bot token is saved.';
+        if (isEmail(values)) {
+          return 'Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.';
+        }
+        return 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.';
+      },
+      requiredWhen: ({ editing, values }) => isEmail(values) && !editing,
       // Telegram: read from the bot token by the API, shown only after saving.
       disabledWhen: ({ values }) => isTelegram(values),
       hiddenWhen: ({ editing, values }) => !isProvider(values) || (isTelegram(values) && !editing),
@@ -481,16 +571,14 @@ const config = defineCrud({
     {
       key: 'ChcSecret',
       label: 'Credentials (JSON or token)',
-      labelWhen: ({ values }) => (isTelegram(values) ? 'Bot token' : 'Credentials (JSON or token)'),
+      labelWhen: ({ values }) => {
+        if (isTelegram(values)) return 'Bot token';
+        return isEmail(values) ? 'Mailbox password' : 'Credentials (JSON or token)';
+      },
       type: 'password',
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
-      helpWhen: ({ editing, values }) =>
-        isTelegram(values)
-          ? editing
-            ? 'Leave empty to keep the current bot. A new token connects another bot.'
-            : 'In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically.'
-          : 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
-      requiredWhen: ({ editing, values }) => isTelegram(values) && !editing,
+      helpWhen: ({ editing, values }) => secretHelp(editing, values),
+      requiredWhen: ({ editing, values }) => (isTelegram(values) || isEmail(values)) && !editing,
       hiddenWhen: ({ values }) => !isProvider(values),
     },
     {
@@ -646,6 +734,48 @@ const config = defineCrud({
       },
       span: 1,
     },
+    emailField(
+      'imapHost',
+      'IMAP server',
+      'Server that receives the e-mails. Empty fills it from the address (e.g. imap.example.com).',
+      {
+        placeholder: 'imap.example.com',
+      },
+    ),
+    emailField('imapPort', 'IMAP port', 'Empty uses 993 (SSL).', {
+      type: 'search-select',
+      options: IMAP_PORTS,
+      translateOptions: true,
+    }),
+    emailField('imapSecurity', 'IMAP security', 'Empty follows the port.', {
+      type: 'search-select',
+      options: MAIL_SECURITY,
+      translateOptions: true,
+    }),
+    emailField(
+      'smtpHost',
+      'SMTP server',
+      'Server that sends the replies. Empty fills it from the address (e.g. smtp.example.com).',
+      {
+        placeholder: 'smtp.example.com',
+      },
+    ),
+    emailField('smtpPort', 'SMTP port', 'Empty uses 587 (STARTTLS).', {
+      type: 'search-select',
+      options: SMTP_PORTS,
+      translateOptions: true,
+    }),
+    emailField('smtpSecurity', 'SMTP security', 'Empty follows the port.', {
+      type: 'search-select',
+      options: MAIL_SECURITY,
+      translateOptions: true,
+    }),
+    emailField('username', 'Login user', 'Only when the login is not the e-mail address itself.'),
+    emailField(
+      'fromName',
+      'Sender name',
+      'Name the customer sees on the replies, e.g. Support Example. Empty shows only the address.',
+    ),
   ],
   payload: (values, editing) => {
     const secretText = String(values['ChcSecret'] ?? '').trim();
@@ -662,14 +792,16 @@ const config = defineCrud({
           }),
       ChcName: values['name'],
       // Telegram's bot username comes from the API; other providers keep their routing key.
-      ...(isTelegram(values)
-        ? {}
-        : { ChcExternalId: provider ? String(values['ChcExternalId'] ?? '').trim() || null : null }),
+      ...(isTelegram(values) ? {} : { ChcExternalId: externalId(values, provider) }),
       ...(isWebchat(values) ? { ChcConfig: webchatConfig(values) } : {}),
+      ...(isEmail(values) ? { ChcConfig: emailConfig(values) } : {}),
+      // Tokens and mailbox passwords are text; other providers may store a JSON credential.
       ...(provider && secretText
         ? {
             ChcSecret:
-              !isTelegram(values) && secretJson && secretJson !== 'invalid' ? secretJson : secretText,
+              !isTelegram(values) && !isEmail(values) && secretJson && secretJson !== 'invalid'
+                ? secretJson
+                : secretText,
           }
         : {}),
       ...(editing && provider && Number(values['clearSecret']) === 1
@@ -679,6 +811,25 @@ const config = defineCrud({
     };
   },
 });
+
+function externalId(values: ConfigurableCrudRecord, provider: boolean): string | null {
+  const value = provider ? String(values['ChcExternalId'] ?? '').trim() : '';
+  return (isEmail(values) ? value.toLowerCase() : value) || null;
+}
+
+function secretHelp(editing: boolean, values: ConfigurableCrudRecord): string {
+  if (isTelegram(values)) {
+    return editing
+      ? 'Leave empty to keep the current bot. A new token connects another bot.'
+      : 'In Telegram, open @BotFather, send /newbot and paste the token here. The bot name, the webhook and the status are set automatically.';
+  }
+  if (isEmail(values)) {
+    return editing
+      ? 'Leave empty to keep the stored password.'
+      : 'Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.';
+  }
+  return 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.';
+}
 
 function appOrigin(): string {
   return typeof globalThis.location?.origin === 'string' && globalThis.location.origin

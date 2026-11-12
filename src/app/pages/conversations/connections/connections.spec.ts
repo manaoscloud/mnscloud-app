@@ -1,4 +1,5 @@
 import {
+  emailConfig,
   CREATABLE_CHANNEL_KINDS,
   storedOrigins,
   webchatConfig,
@@ -47,7 +48,28 @@ describe('conversation connections form', () => {
   });
 
   it('offers only channels with a working driver when creating', () => {
-    expect(CREATABLE_CHANNEL_KINDS.map((kind) => kind.value)).toEqual(['internal', 'webchat', 'telegram']);
+    expect(CREATABLE_CHANNEL_KINDS.map((kind) => kind.value)).toEqual([
+      'internal',
+      'webchat',
+      'telegram',
+      'email',
+    ]);
+  });
+
+  it('stores only the filled e-mail settings, ports as numbers', () => {
+    expect(
+      emailConfig({
+        imapHost: ' imap.example.com ',
+        imapPort: '993',
+        smtpPort: '',
+        fromName: 'Suporte',
+      }),
+    ).toEqual({
+      imapHost: 'imap.example.com',
+      imapPort: 993,
+      fromName: 'Suporte',
+    });
+    expect(emailConfig({})).toEqual({});
   });
 
   it('stores the widget appearance and drops empty values', () => {
@@ -121,7 +143,9 @@ describe('conversation connections form', () => {
     const ok = { kind: 'webchat', allowedOrigins: 'example.com' };
     expect(webchatFieldError({ kind: 'internal', allowedOrigins: 'http://x' })).toBeNull();
     expect(webchatFieldError(ok)).toBeNull();
-    expect(webchatFieldError({ ...ok, allowedOrigins: 'http://x.com' })?.key).toBe('allowedOrigins');
+    expect(webchatFieldError({ ...ok, allowedOrigins: 'http://x.com' })?.key).toBe(
+      'allowedOrigins',
+    );
     expect(webchatFieldError({ ...ok, otherOrigins: 'ok.com\n*.bad.com' })?.params).toEqual({
       value: '*.bad.com',
     });
@@ -130,7 +154,9 @@ describe('conversation connections form', () => {
     const hours = { ...ok, hoursEnabled: 1, hoursStart: '08:00', hoursEnd: '18:00' };
     expect(webchatFieldError(hours)).toBeNull();
     expect(webchatFieldError({ ...hours, hoursStart: '8h' })?.key).toBe('hoursStart');
-    expect(webchatFieldError({ ...hours, hoursEnd: '08:00' })?.message).toBe('conversations.hoursSameTime');
+    expect(webchatFieldError({ ...hours, hoursEnd: '08:00' })?.message).toBe(
+      'conversations.hoursSameTime',
+    );
     expect(webchatFieldError({ ...hours, hoursEnabled: 0, hoursStart: 'x' })).toBeNull();
   });
 });
