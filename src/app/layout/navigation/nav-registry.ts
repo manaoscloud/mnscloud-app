@@ -2821,6 +2821,14 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/network/devices',
         permissions: ['platform.master.access'],
       },
+      {
+        id: 'network/access-gateways',
+        label: 'nav.network.access-gateways',
+        icon: 'vpn_lock',
+        category: 'platform',
+        masterRoute: '/system/network/access-gateways',
+        permissions: ['platform.access.gateways.manage'],
+      },
     ],
   },
   {
