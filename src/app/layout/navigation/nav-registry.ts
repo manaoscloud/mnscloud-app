@@ -2882,6 +2882,15 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.network.devices.read'],
       },
       {
+        id: 'network/connectors',
+        label: 'nav.network.connectors',
+        icon: 'settings_ethernet',
+        route: '/network/connectors',
+        requiresEnvironment: true,
+        entitlementCode: 'module.network.*',
+        permissions: ['tenant.network.connectors.read'],
+      },
+      {
         id: 'network/platform-sites',
         label: 'nav.network.platform-sites',
         icon: 'location_city',

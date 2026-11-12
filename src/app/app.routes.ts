@@ -59,6 +59,8 @@ const INFRAGIS_UTILITY_ROUTES: Routes = (
 // Network (Rede) pages serve the tenant tree and their /system twins; the route scope picks the API.
 const loadNetworkSitePage = () =>
   import('./pages/network/sites/sites').then((m) => m.NetworkSitesPage);
+const loadNetworkConnectorPage = () =>
+  import('./pages/network/connectors/connectors').then((m) => m.NetworkConnectorsPage);
 const loadNetworkDevicePage = () =>
   import('./pages/network/devices/devices').then((m) => m.NetworkDevicesPage);
 
@@ -833,6 +835,12 @@ export const routes: Routes = [
                 loadComponent: loadNetworkDevicePage,
                 title: 'Network',
                 data: { scope: 'tenant', breadcrumb: 'network.devices' },
+              },
+              {
+                path: 'network/connectors',
+                loadComponent: loadNetworkConnectorPage,
+                title: 'Network',
+                data: { scope: 'tenant', breadcrumb: 'network.connectors' },
               },
               {
                 path: 'website/sites',
