@@ -13649,5 +13649,11 @@
   "nav.hr.recruiting-openings": "Vagas",
   "nav.hr.recruiting-applications": "Candidaturas",
   "nav.category.recruiting": "Recrutamento",
-  "website.page.careers": "Trabalhe conosco"
+  "website.page.careers": "Trabalhe conosco",
+  "Install runtime": "Instalar runtime",
+  "Install the runtime of this platform server role (DNS)": "Instalar o runtime do papel deste servidor da plataforma (DNS)",
+  "In operation": "Em operação",
+  "Install the DNS runtime on {name}? The server joins the DNS cluster of this environment and is admitted only after it reports operational.": "Instalar o runtime de DNS em {name}? O servidor entra no cluster DNS deste ambiente e só é admitido depois de se reportar em operação.",
+  "Runtime install started. It takes a few minutes.": "Instalação do runtime iniciada. Leva alguns minutos.",
+  "Failed to start the runtime install.": "Não foi possível iniciar a instalação do runtime."
 }
