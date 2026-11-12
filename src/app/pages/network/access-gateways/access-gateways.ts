@@ -15,6 +15,14 @@ import {
   requestRuntimeInstallCommand,
 } from '../../../shared/install-command-dialog/runtime-install-token';
 import { optionColumn } from '../network-options';
+import {
+  asText,
+  heartbeatColumns,
+  onlineColumn,
+  prefixedOptions,
+  showInstallCommand,
+  textOrNull,
+} from '../network-runtime-install';
 
 /**
  * Rede › Gateways (master, `/system/network/access-gateways`): platform inventory of the
@@ -24,30 +32,21 @@ import { optionColumn } from '../network-options';
 
 const ENDPOINT = 'system/access-gateways';
 
-function enumOptions(prefix: string, values: readonly string[]): readonly ConfigurableCrudOption[] {
-  return values.map((value) => ({ value, label: `${prefix}.${value}` }));
-}
-
-export const GATEWAY_STATUS_OPTIONS = enumOptions('network.accessGateways.status', [
+export const GATEWAY_STATUS_OPTIONS = prefixedOptions('network.accessGateways.status', [
   'active',
   'draining',
   'disabled',
 ]);
-export const GATEWAY_ENVIRONMENT_OPTIONS = enumOptions('network.accessGateways.environment', [
+export const GATEWAY_ENVIRONMENT_OPTIONS = prefixedOptions('network.accessGateways.environment', [
   'development',
   'production',
 ]);
-export const GATEWAY_PROVISIONING_OPTIONS = enumOptions('network.accessGateways.provisioning', [
+export const GATEWAY_PROVISIONING_OPTIONS = prefixedOptions('network.accessGateways.provisioning', [
   'awaiting_installation',
   'installing',
   'operational',
   'failed',
 ]);
-
-function text(value: unknown): string | null {
-  const normalized = String(value ?? '').trim();
-  return normalized ? normalized : null;
-}
 
 function integer(value: unknown): number | null {
   const normalized = String(value ?? '').trim();
@@ -60,14 +59,18 @@ export function accessGatewayPayload(
   editing: boolean,
 ): ConfigurableCrudRecord {
   const common = {
-    name: text(values['name']),
-    egressIpv4: text(values['egressIpv4']),
+    name: textOrNull(values['name']),
+    egressIpv4: textOrNull(values['egressIpv4']),
     relayPort: integer(values['relayPort']),
     capacity: integer(values['capacity']),
-    notes: text(values['notes']),
+    notes: textOrNull(values['notes']),
   };
   if (editing) return { revision: String(values['revision'] ?? ''), ...common };
-  return { key: text(values['key']), environment: text(values['environment']), ...common };
+  return {
+    key: textOrNull(values['key']),
+    environment: textOrNull(values['environment']),
+    ...common,
+  };
 }
 
 function statusAction(
@@ -238,37 +241,21 @@ const config = defineCrud({
           ? `${String(row['AgwRelayAddress'])}:${String(row['AgwRelayPort'] ?? '')}`
           : '',
     },
-    {
-      id: 'online',
-      label: 'network.accessGateways.online',
-      field: 'Online',
-      kind: 'status',
-      options: [
-        { value: 1, label: 'network.accessGateways.onlineYes' },
-        { value: 0, label: 'network.accessGateways.onlineNo' },
-      ],
-      chipClass: (value) => (Number(value) === 1 ? 'chip-success' : 'chip-failed'),
-    },
+    onlineColumn('network.accessGateways'),
     {
       id: 'connections',
       label: 'network.accessGateways.connections',
       field: 'OpenConnections',
       value: (row) => `${Number(row['OpenConnections'] ?? 0)} / ${Number(row['AgwCapacity'] ?? 0)}`,
     },
+    {
+      id: 'connectors',
+      label: 'network.accessGateways.connectors',
+      field: 'AttachedConnectors',
+      kind: 'number',
+    },
     { id: 'version', label: 'Version', field: 'AgwRuntimeVersion', optional: true },
-    {
-      id: 'heartbeat',
-      label: 'network.accessGateways.heartbeat',
-      field: 'AgwHeartbeatAt',
-      kind: 'datetime',
-      optional: true,
-    },
-    {
-      id: 'error',
-      label: 'network.accessGateways.lastError',
-      field: 'AgwLastErrorCode',
-      optional: true,
-    },
+    ...heartbeatColumns('network.accessGateways', 'Agw'),
     {
       id: 'status',
       label: 'Status',
@@ -338,33 +325,34 @@ export class NetworkAccessGatewaysPage extends ConfigurableCrudPageBase<Configur
     if (created?.['AgwUUID']) await this.showInstaller(created);
   }
 
-  private async showInstaller(row: ConfigurableCrudRecord): Promise<void> {
+  private showInstaller(row: ConfigurableCrudRecord): Promise<void> {
     const uuid = String(row['AgwUUID']);
-    try {
-      const response = await requestRuntimeInstallCommand(this.dialog, (body) =>
-        this.api.post<{ data: Record<string, unknown> }>(`${ENDPOINT}/${uuid}/installation`, body),
-      );
-      if (!response) return;
-      const data = response.data;
-      openInstallCommandDialog(
-        this.dialog,
-        {
-          title: 'network.accessGateways.install',
-          description: 'network.accessGateways.installDescription',
-          warning: 'network.accessGateways.installWarning',
-          details: [
-            { label: 'network.accessGateways.key', value: row['AgwKey'], monospace: true },
-            { label: 'Version', value: data['ref'], monospace: true },
-            { label: 'Expires at', value: data['expiresAt'], monospace: true },
-          ],
-          command: String(data['command'] ?? ''),
-        },
-        this.destroyRef,
-      );
-      this.refreshList();
-    } catch (error) {
-      this.snack.error(this.t(this.errorMessage(error)));
-    }
+    return showInstallCommand(
+      {
+        dialog: this.dialog,
+        destroyRef: this.destroyRef,
+        onError: (error) => this.snack.error(this.t(this.errorMessage(error))),
+        onShown: () => this.refreshList(),
+      },
+      () =>
+        requestRuntimeInstallCommand(this.dialog, (body) =>
+          this.api.post<{ data: Record<string, unknown> }>(
+            `${ENDPOINT}/${uuid}/installation`,
+            body,
+          ),
+        ),
+      (data) => ({
+        title: 'network.accessGateways.install',
+        description: 'network.accessGateways.installDescription',
+        warning: 'network.accessGateways.installWarning',
+        details: [
+          { label: 'network.accessGateways.key', value: row['AgwKey'], monospace: true },
+          { label: 'Version', value: data['ref'], monospace: true },
+          { label: 'Expires at', value: data['expiresAt'], monospace: true },
+        ],
+        command: asText(data['command']),
+      }),
+    );
   }
 
   /** Resumes a failed installation on the latest approved release (no new token). */
