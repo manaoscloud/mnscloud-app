@@ -13552,5 +13552,18 @@
   "{n} VM(s) adopted": "{n} VM(s) adoptada(s)",
   "Adopt selected ({n})": "Adoptar seleccionadas ({n})",
   "Adopted": "Adoptada",
-  "Created outside the platform; the platform does not change it": "Creada fuera de la plataforma; la plataforma no la modifica"
+  "Created outside the platform; the platform does not change it": "Creada fuera de la plataforma; la plataforma no la modifica",
+  "Verified name": "Nombre verificado",
+  "Callback URL": "URL de devolución de llamada",
+  "WhatsApp Business Account ID": "ID de la cuenta de WhatsApp Business",
+  "In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).": "En la app de Meta, abra WhatsApp › Configuración de la API y copie el Phone number ID del número (solo dígitos, no es el teléfono).",
+  "In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).": "En la app de Meta, en WhatsApp › Configuración de la API, debajo del número: el ID de la cuenta de WhatsApp Business (dígitos).",
+  "Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.": "Token permanente de un usuario del sistema con los permisos whatsapp_business_messaging y whatsapp_business_management (Meta Business Suite › Configuración › Usuarios del sistema). Los tokens temporales caducan en 24 horas.",
+  "Leave empty to keep the stored token.": "Déjelo vacío para mantener el token guardado.",
+  "In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.": "En la app de Meta, Configuración de la app › Básica › Clave secreta de la app. Confirma que las llamadas del webhook vienen de Meta.",
+  "Leave empty to keep the stored app secret.": "Déjelo vacío para mantener la clave secreta guardada.",
+  "conversations.whatsappWebhook": "Webhook de WhatsApp",
+  "conversations.whatsappWebhookTitle": "Webhook de WhatsApp en Meta",
+  "conversations.whatsappWebhookSteps": "En la app de Meta, abra WhatsApp › Configuración, pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba el campo messages.",
+  "conversations.whatsappWebhookVerifyToken": "Token de verificación (generado para esta conexión)"
 }
