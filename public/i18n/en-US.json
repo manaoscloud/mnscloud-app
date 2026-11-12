@@ -13574,5 +13574,5 @@
   "Instagram account": "Instagram account",
   "conversations.metaWebhook": "Meta webhook",
   "conversations.metaWebhookTitle": "Messenger and Instagram webhook at Meta",
-  "conversations.metaWebhookSteps": "In the Meta app, under Messenger › Settings (and Instagram › Settings, for Instagram), paste the callback URL and the verify token, confirm and subscribe the messages field. Without this step no messages arrive."
+  "conversations.metaWebhookSteps": "In the Meta app, under Messenger › Settings (and Instagram › Settings, for Instagram), paste the callback URL and the verify token, confirm and subscribe the fields: for Messenger messages, messaging_postbacks and message_deliveries; for Instagram messages, messaging_postbacks and messaging_seen. Without this step no messages arrive."
 }

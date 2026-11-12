@@ -13574,5 +13574,5 @@
   "Instagram account": "Cuenta de Instagram",
   "conversations.metaWebhook": "Webhook de Meta",
   "conversations.metaWebhookTitle": "Webhook de Messenger e Instagram en Meta",
-  "conversations.metaWebhookSteps": "En la app de Meta, en Messenger › Configuración (e Instagram › Configuración, para Instagram), pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba el campo messages. Sin este paso los mensajes no llegan."
+  "conversations.metaWebhookSteps": "En la app de Meta, en Messenger › Configuración (e Instagram › Configuración, para Instagram), pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba los campos: en Messenger messages, messaging_postbacks y message_deliveries; en Instagram messages, messaging_postbacks y messaging_seen. Sin este paso los mensajes no llegan."
 }
