@@ -13566,5 +13566,14 @@
   "conversations.whatsappWebhook": "Webhook do WhatsApp",
   "conversations.whatsappWebhookTitle": "Webhook do WhatsApp na Meta",
   "conversations.whatsappWebhookSteps": "O webhook é configurado automaticamente ao salvar. Só se a Meta não entregar as mensagens: no app da Meta, abra WhatsApp › Configuração, cole a URL de callback e o token de verificação, confirme e assine o campo messages.",
-  "conversations.whatsappWebhookVerifyToken": "Token de verificação (gerado para esta conexão)"
+  "conversations.whatsappWebhookVerifyToken": "Token de verificação (gerado para esta conexão)",
+  "Facebook Page ID": "ID da Página do Facebook",
+  "Read from Meta when the Page is saved.": "Lido da Meta quando a Página é salva.",
+  "Page that receives the messages (Page settings › About › Page ID). For Instagram, the Page linked to the Instagram professional account.": "Página que recebe as mensagens (Configurações da Página › Sobre › ID da Página). Para o Instagram, a Página vinculada à conta profissional do Instagram.",
+  "Page access token of a system user with the pages_messaging (and, for Instagram, instagram_manage_messages) permissions. Temporary tokens expire.": "Token de acesso da Página de um usuário do sistema com as permissões pages_messaging (e, para o Instagram, instagram_manage_messages). Tokens temporários expiram.",
+  "Page": "Página",
+  "Instagram account": "Conta do Instagram",
+  "conversations.metaWebhook": "Webhook da Meta",
+  "conversations.metaWebhookTitle": "Webhook do Messenger e Instagram na Meta",
+  "conversations.metaWebhookSteps": "No app da Meta, em Messenger › Configurações (e Instagram › Configurações, para o Instagram), cole a URL de callback e o token de verificação, confirme e assine os campos: no Messenger messages, messaging_postbacks e message_deliveries; no Instagram messages, messaging_postbacks e messaging_seen. Sem este passo as mensagens não chegam."
 }

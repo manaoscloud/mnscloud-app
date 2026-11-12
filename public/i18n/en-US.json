@@ -13565,5 +13565,14 @@
   "conversations.whatsappWebhook": "WhatsApp webhook",
   "conversations.whatsappWebhookTitle": "WhatsApp webhook at Meta",
   "conversations.whatsappWebhookSteps": "The webhook is set up automatically when you save. Only if Meta does not deliver the messages: in the Meta app, open WhatsApp › Configuration, paste the callback URL and the verify token, confirm and subscribe the messages field.",
-  "conversations.whatsappWebhookVerifyToken": "Verify token (generated for this connection)"
+  "conversations.whatsappWebhookVerifyToken": "Verify token (generated for this connection)",
+  "Facebook Page ID": "Facebook Page ID",
+  "Read from Meta when the Page is saved.": "Read from Meta when the Page is saved.",
+  "Page that receives the messages (Page settings › About › Page ID). For Instagram, the Page linked to the Instagram professional account.": "Page that receives the messages (Page settings › About › Page ID). For Instagram, the Page linked to the Instagram professional account.",
+  "Page access token of a system user with the pages_messaging (and, for Instagram, instagram_manage_messages) permissions. Temporary tokens expire.": "Page access token of a system user with the pages_messaging (and, for Instagram, instagram_manage_messages) permissions. Temporary tokens expire.",
+  "Page": "Page",
+  "Instagram account": "Instagram account",
+  "conversations.metaWebhook": "Meta webhook",
+  "conversations.metaWebhookTitle": "Messenger and Instagram webhook at Meta",
+  "conversations.metaWebhookSteps": "In the Meta app, under Messenger › Settings (and Instagram › Settings, for Instagram), paste the callback URL and the verify token, confirm and subscribe the fields: for Messenger messages, messaging_postbacks and message_deliveries; for Instagram messages, messaging_postbacks and messaging_seen. Without this step no messages arrive."
 }

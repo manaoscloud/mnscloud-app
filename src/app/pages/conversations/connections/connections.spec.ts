@@ -1,6 +1,7 @@
 import {
   emailConfig,
   whatsappPayload,
+  metaPayload,
   CREATABLE_CHANNEL_KINDS,
   storedOrigins,
   webchatConfig,
@@ -53,6 +54,8 @@ describe('conversation connections form', () => {
       'internal',
       'webchat',
       'whatsapp-cloud',
+      'instagram',
+      'messenger',
       'telegram',
       'email',
     ]);
@@ -80,6 +83,14 @@ describe('conversation connections form', () => {
       ChcSecret: { token: 'EAAG' },
     });
     expect(whatsappPayload({ wabaId: '1022' })).toEqual({ ChcConfig: { wabaId: '1022' } });
+  });
+
+  it('sends the Page only on create and the Meta secrets together', () => {
+    expect(metaPayload({ pageId: ' 1045 ', token: 'EAAG', appSecret: 'abc' }, false)).toEqual({
+      ChcConfig: { pageId: '1045' },
+      ChcSecret: { token: 'EAAG', appSecret: 'abc' },
+    });
+    expect(metaPayload({ pageId: '1045' }, true)).toEqual({});
   });
 
   it('stores the widget appearance and drops empty values', () => {
