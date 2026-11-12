@@ -1,23 +1,12 @@
-import {
-  Component,
-  ViewEncapsulation,
-  computed,
-  effect,
-  inject,
-  resource,
-  signal,
-} from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-import { ApiService } from '../../../services/api.service';
-import { apiErrorFields } from '../../../services/api-error-fields';
+import { injectSettingsForm } from '../../../shared/pages/settings-form';
 import { SettingsPageComponent } from '../../../shared/pages/settings-page';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { FieldInvalidDirective } from '../../../shared/forms/field-invalid.directive';
-import { FieldRules } from '../../../shared/forms/field-validation';
-import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
 
 type RepForm = { inpiNumber: string; developerDocument: string };
 type FieldKey = 'inpiNumber' | 'developerDocument';
@@ -114,109 +103,51 @@ export function validDeveloperDocument(value: string): boolean {
   host: { class: 'app-fade-in-host' },
 })
 export class HrRepParametersPage {
-  private readonly api = inject(ApiService);
-  private readonly revealInvalid = injectRevealInvalidFields();
-
-  readonly form = signal<RepForm>({ inpiNumber: '', developerDocument: '' });
-  readonly baseline = signal('');
-  readonly saving = signal(false);
-  readonly feedback = signal<string | null>(null);
-  readonly success = signal<string | null>(null);
-  readonly serverInvalid = signal<ReadonlySet<string>>(new Set());
-  readonly hasChanges = computed(() => JSON.stringify(this.form()) !== this.baseline());
-
-  private readonly parameters = resource({
-    loader: async () => (await this.api.get<any>(ENDPOINT))?.data?.item ?? {},
-  });
-  readonly loading = computed(() => this.parameters.isLoading());
-
-  readonly rules = new FieldRules<FieldKey>({
-    inpiNumber: () => validInpi(this.form().inpiNumber),
-    developerDocument: () => validDeveloperDocument(this.form().developerDocument),
+  private readonly settings = injectSettingsForm<RepForm, FieldKey>({
+    endpoint: ENDPOINT,
+    initial: { inpiNumber: '', developerDocument: '' },
+    read: (item) => ({
+      inpiNumber: String(item['inpiNumber'] ?? ''),
+      developerDocument: String(item['developerDocument'] ?? ''),
+    }),
+    payload: (form) => ({
+      inpiNumber: digits(form.inpiNumber) || null,
+      developerDocument: form.developerDocument.toUpperCase().replace(/[^0-9A-Z]/g, '') || null,
+    }),
+    rules: (form) => ({
+      inpiNumber: () => validInpi(form().inpiNumber),
+      developerDocument: () => validDeveloperDocument(form().developerDocument),
+    }),
   });
 
-  constructor() {
-    effect(() => {
-      if (this.parameters.hasValue()) this.apply(this.parameters.value());
-    });
-    effect(() => {
-      const error = this.parameters.error();
-      if (error) this.feedback.set(this.message(error, 'Failed to load parameters.'));
-    });
-  }
+  readonly form = this.settings.form;
+  readonly loading = this.settings.loading;
+  readonly saving = this.settings.saving;
+  readonly feedback = this.settings.feedback;
+  readonly success = this.settings.success;
+  readonly hasChanges = this.settings.hasChanges;
 
   value(event: Event): string {
     return (event.target as HTMLInputElement).value;
   }
 
   update(patch: Partial<RepForm>) {
-    this.form.update((current) => ({ ...current, ...patch }));
-    const keys = Object.keys(patch);
-    if (keys.some((key) => this.serverInvalid().has(key))) {
-      this.serverInvalid.update((set) => new Set([...set].filter((key) => !keys.includes(key))));
-    }
+    this.settings.update(patch);
   }
 
   invalid(key: FieldKey): boolean {
-    return this.rules.invalid(key) || this.serverInvalid().has(key);
+    return this.settings.invalid(key);
   }
 
   refresh() {
-    if (this.saving()) return;
-    this.feedback.set(null);
-    this.success.set(null);
-    this.parameters.reload();
+    this.settings.refresh();
   }
 
   cancel() {
-    this.form.set(JSON.parse(this.baseline()));
-    this.rules.reset();
-    this.serverInvalid.set(new Set());
-    this.feedback.set(null);
-    this.success.set(null);
+    this.settings.cancel();
   }
 
-  async save() {
-    if (this.saving() || this.loading()) return;
-    this.feedback.set(null);
-    this.success.set(null);
-    if (!this.rules.check()) return this.revealInvalid();
-    this.saving.set(true);
-    try {
-      const form = this.form();
-      const result = await this.api.put<any>(ENDPOINT, {
-        inpiNumber: digits(form.inpiNumber) || null,
-        developerDocument: form.developerDocument.toUpperCase().replace(/[^0-9A-Z]/g, '') || null,
-      });
-      this.apply(result?.data?.item ?? {});
-      this.rules.reset();
-      this.success.set('Parameters saved successfully.');
-    } catch (error) {
-      const fields = apiErrorFields(error);
-      if (fields.length) {
-        this.serverInvalid.set(new Set(fields));
-        this.revealInvalid();
-      }
-      this.feedback.set(this.message(error, 'Failed to save parameters.'));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  private apply(item: Record<string, any>) {
-    const form: RepForm = {
-      inpiNumber: String(item['inpiNumber'] ?? ''),
-      developerDocument: String(item['developerDocument'] ?? ''),
-    };
-    this.form.set(form);
-    this.baseline.set(JSON.stringify(form));
-    this.serverInvalid.set(new Set());
-  }
-
-  private message(error: unknown, fallback: string): string {
-    const body = (error as any)?.error?.error;
-    if (typeof body === 'string' && body.trim()) return body;
-    const raw = (error as any)?.message;
-    return typeof raw === 'string' && raw.trim() ? raw : fallback;
+  save() {
+    return this.settings.save();
   }
 }
