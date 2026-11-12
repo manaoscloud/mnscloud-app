@@ -13180,5 +13180,8 @@
   "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.": "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.",
   "Shown in the chat outside business hours. Empty uses the default text.": "Shown in the chat outside business hours. Empty uses the default text.",
   "conversations.hoursTimeInvalid": "Enter the time as HH:MM.",
-  "conversations.hoursSameTime": "The closing time must differ from the opening time."
+  "conversations.hoursSameTime": "The closing time must differ from the opening time.",
+  "hostingVps.platformPlacementGroupHelp": "Optional. Empty = automatic from the server name: mns-<role>-<env>N joins the group <role>-<env> (mns-dns-prod2 → dns-prod). Servers of the same group run on different nodes; with no free node, the new one goes to the node with the fewest members.",
+  "automatic from the name": "automatic from the name",
+  "shares a node with another member (no free node)": "shares a node with another member (no free node)"
 }

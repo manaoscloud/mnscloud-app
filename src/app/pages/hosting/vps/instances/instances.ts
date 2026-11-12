@@ -588,6 +588,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
 
+    // FA2: on a platform server an empty group is automatic (from the name mns-<role>-<env><n>).
+    const groupField = this.config.fields.find((field) => field.key === 'placementGroup');
+    if (groupField) {
+      groupField.helpWhen = ({ values }) =>
+        this.platformScope() && !String(values['customerUUID'] ?? '').trim()
+          ? 'hostingVps.platformPlacementGroupHelp'
+          : '';
+    }
+
     const profileField = this.config.fields.find((field) => field.key === 'networkProfile');
     if (profileField) {
       profileField.hiddenWhen = ({ editing, values }) =>
@@ -1428,6 +1437,22 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
                   NETWORK_PROFILE_OPTIONS.find((option) => option.value === config.networkProfile)
                     ?.label ?? String(config.networkProfile),
                 ),
+              },
+            ]
+          : []),
+        ...(config.placementGroup
+          ? [
+              {
+                label: 'Placement group',
+                value: [
+                  config.placementGroup,
+                  config.placementGroupSource === 'name' ? this.t('automatic from the name') : '',
+                  config.placement?.groupSoftened
+                    ? this.t('shares a node with another member (no free node)')
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
               },
             ]
           : []),
