@@ -57,10 +57,10 @@ export function applicationPayload(
 ): Record<string, unknown> {
   if (editing) {
     return {
-      revision: Number(values['revision']),
-      stage: text(values['stage']),
-      rating: ratingOf(values['rating']),
-      notes: text(values['notes']),
+      Revision: Number(values['revision']),
+      Stage: text(values['stage']),
+      Rating: ratingOf(values['rating']),
+      Notes: text(values['notes']),
     };
   }
   return {

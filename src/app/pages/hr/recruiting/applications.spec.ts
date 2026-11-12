@@ -15,10 +15,10 @@ describe('applicationPayload', () => {
 
   it('update sends only revision, stage, rating and notes', () => {
     expect(applicationPayload(values, true)).toEqual({
-      revision: 2,
-      stage: 'interview',
-      rating: 4,
-      notes: 'good',
+      Revision: 2,
+      Stage: 'interview',
+      Rating: 4,
+      Notes: 'good',
     });
   });
 

@@ -14,23 +14,23 @@ describe('openingPayload', () => {
     revision: '5',
   };
 
-  it('sends camelCase keys and the revision only when editing', () => {
+  it('sends PascalCase keys and the revision only when editing', () => {
     const create = openingPayload(values, false);
-    expect(Object.keys(create).every((key) => /^[a-z]/.test(key))).toBeTrue();
-    expect('revision' in create).toBeFalse();
-    expect(openingPayload(values, true)['revision']).toBe(5);
+    expect(Object.keys(create).every((key) => /^[A-Z]/.test(key))).toBeTrue();
+    expect('Revision' in create).toBeFalse();
+    expect(openingPayload(values, true)['Revision']).toBe(5);
   });
 
   it('normalizes text, defaults and the optional location and date', () => {
     const payload = openingPayload(values, false);
-    expect(payload['title']).toBe('Frentista noturno');
-    expect(payload['locationUUID']).toBeNull();
-    expect(payload['employmentType']).toBe('clt');
-    expect(payload['status']).toBe('draft');
-    expect(payload['openings']).toBe(1);
-    expect(payload['published']).toBeTrue();
-    expect(payload['closesOn']).toBe('2026-12-31');
-    expect(openingPayload({ ...values, closesOn: '' }, false)['closesOn']).toBeNull();
+    expect(payload['Title']).toBe('Frentista noturno');
+    expect(payload['LocationUUID']).toBeNull();
+    expect(payload['EmploymentType']).toBe('clt');
+    expect(payload['Status']).toBe('draft');
+    expect(payload['Openings']).toBe(1);
+    expect(payload['Published']).toBeTrue();
+    expect(payload['ClosesOn']).toBe('2026-12-31');
+    expect(openingPayload({ ...values, closesOn: '' }, false)['ClosesOn']).toBeNull();
   });
 
   it('reads a day from a date or an instant', () => {

@@ -42,30 +42,30 @@ export function dayOf(value: unknown): string {
   return text(value).slice(0, 10);
 }
 
-/** API body: camelCase `pData` keys; `revision` only when updating. */
+/** API body: PascalCase keys (like Registry › Locations); `Revision` only when updating. */
 export function openingPayload(
   values: Record<string, unknown>,
   editing: boolean,
 ): Record<string, unknown> {
   const openings = Number(values['openings']);
   return {
-    ...(editing ? { revision: Number(values['revision']) } : {}),
-    title: text(values['title']),
-    companyUUID: values['companyUUID'] || null,
-    locationUUID: values['locationUUID'] || null,
-    slug: text(values['slug']),
-    department: text(values['department']),
-    employmentType: text(values['employmentType']) || 'clt',
-    workSchedule: text(values['workSchedule']),
-    openings: Number.isFinite(openings) && openings > 0 ? Math.trunc(openings) : 1,
-    salaryText: text(values['salaryText']),
-    description: text(values['description']),
-    requirements: text(values['requirements']),
-    benefits: text(values['benefits']),
-    status: text(values['status']) || 'draft',
-    published: values['published'] === true,
-    closesOn: dayOf(values['closesOn']) || null,
-    notes: text(values['notes']),
+    ...(editing ? { Revision: Number(values['revision']) } : {}),
+    Title: text(values['title']),
+    CompanyUUID: values['companyUUID'] || null,
+    LocationUUID: values['locationUUID'] || null,
+    Slug: text(values['slug']),
+    Department: text(values['department']),
+    EmploymentType: text(values['employmentType']) || 'clt',
+    WorkSchedule: text(values['workSchedule']),
+    Openings: Number.isFinite(openings) && openings > 0 ? Math.trunc(openings) : 1,
+    SalaryText: text(values['salaryText']),
+    Description: text(values['description']),
+    Requirements: text(values['requirements']),
+    Benefits: text(values['benefits']),
+    Status: text(values['status']) || 'draft',
+    Published: values['published'] === true,
+    ClosesOn: dayOf(values['closesOn']) || null,
+    Notes: text(values['notes']),
   };
 }
 
