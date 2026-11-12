@@ -436,7 +436,11 @@ export class ApiService {
       );
   }
 
-  async put<T>(endpoint: string, body: any, options?: { idempotencyKey?: string }): Promise<T> {
+  async put<T>(
+    endpoint: string,
+    body: any,
+    options?: { idempotencyKey?: string; silent?: boolean },
+  ): Promise<T> {
     return await this.mutation<T>('PUT', endpoint, body, options);
   }
 

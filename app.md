@@ -2567,3 +2567,20 @@ CRM root forms (pipelines, accounts, products, leads and opportunities) explicit
 `CrmWorkspaceCwsUUID` with the shared searchable FK and canonical quick-create. Ownership is
 read-only on edit. The workspace filter queries the API before pagination; related account,
 product and stage lookups bind the selected workspace. API/DB validate visibility and relationships.
+
+## Automations (flow builder)
+
+- Menu **Automações** (`/automation/flows`, `/automation/runs`, `/automation/secrets`); no entitlement
+  (not commercial), permissions `tenant.automation.*`. Flows, runs and secrets are `defineCrud` pages;
+  the runs detail is a dialog with the step timeline.
+- Editor `/automation/flows/:uuid/editor` (`pages/automation/editor`): Foblex Flow canvas
+  (`@foblex/flow`, exact version in `package.json`), palette from `GET /automation/node-types`
+  grouped by module (locked groups show the reason), inspector generated from the node `configSchema`
+  (`schema-field.ts`), simulator panel over `POST .../simulate`, versions and publish dialogs, and a
+  **Lista** view of the same graph used on phones (the canvas is not offered under 760 px).
+- Every API field name the pages read or send is in `pages/automation/automation-adapter.ts`; graph
+  edits are pure functions in `automation-graph.ts`. Only the Foblex domains the editor uses are
+  included in `editor.scss`; the full theme exceeds the component style budget. Colors come from
+  theme tokens (module accent = `--mns-channel-*`/`--mns-chart-*`/`--mat-sys-color-primary`).
+- The draft autosaves (debounce, revision) and holds a lock: when another user edited it less than
+  ten minutes ago the editor is read-only until "Edit anyway".

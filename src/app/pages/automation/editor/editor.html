@@ -1,0 +1,518 @@
+<app-automation-editor-styles />
+<section class="app-workspace auto-editor" [attr.data-layout]="layout()">
+  <div class="app-workspace-card">
+    <div class="app-workspace-head">
+      <header class="app-header">
+        <div class="auto-title">
+          <h1>
+            <a
+              mat-icon-button
+              routerLink="/automation/flows"
+              [matTooltip]="'automation.editor.back' | transloco"
+              [attr.aria-label]="'automation.editor.back' | transloco"
+              ><mat-icon>arrow_back</mat-icon></a
+            >
+            <span class="auto-name">{{
+              flow()?.name || ('automation.editor.title' | transloco)
+            }}</span>
+            @if (flow(); as current) {
+              <span class="auto-chip auto-chip-draft">{{
+                'automation.editor.draft' | transloco: { version: nextVersion() }
+              }}</span>
+              @if (current.publishedVersion) {
+                <span class="auto-chip auto-chip-published">{{
+                  'automation.editor.published' | transloco: { version: current.publishedVersion }
+                }}</span>
+              }
+              <span class="auto-chip auto-save" [attr.data-state]="saveState()">{{
+                'automation.save.' + saveState() | transloco
+              }}</span>
+            }
+          </h1>
+          <p>{{ flow()?.description || ('automation.editor.description' | transloco) }}</p>
+        </div>
+
+        <div class="app-workspace-actions">
+          <button mat-stroked-button type="button" (click)="versions()">
+            <mat-icon>history</mat-icon>{{ 'automation.editor.versions' | transloco }}
+          </button>
+          <button mat-stroked-button type="button" [disabled]="validating()" (click)="validate()">
+            <mat-icon>rule</mat-icon>{{ 'automation.editor.validate' | transloco }}
+            @if (issueCount()) {
+              <span class="auto-count" [class.has-errors]="validation().errors.length">{{
+                issueCount()
+              }}</span>
+            }
+          </button>
+          <button mat-stroked-button type="button" (click)="openRight('test')">
+            <mat-icon>science</mat-icon>{{ 'automation.editor.test' | transloco }}
+          </button>
+          @if (canPublish()) {
+            <button mat-flat-button type="button" (click)="publish()">
+              <mat-icon>rocket_launch</mat-icon>{{ 'automation.editor.publish' | transloco }}
+            </button>
+          }
+        </div>
+      </header>
+    </div>
+
+    @if (locked()) {
+      <div class="auto-banner" role="alert">
+        <mat-icon>lock</mat-icon>
+        <span>
+          @if (flow()?.lock?.userName) {
+            {{
+              'automation.banner.lockedBy'
+                | transloco
+                  : {
+                      name: flow()?.lock?.userName,
+                      time: (flow()?.lock?.editedAt | date: 'shortTime'),
+                    }
+            }}
+          } @else {
+            {{ 'automation.banner.locked' | transloco }}
+          }
+        </span>
+        @if (canWrite()) {
+          <button mat-stroked-button type="button" (click)="editAnyway()">
+            {{ 'automation.banner.editAnyway' | transloco }}
+          </button>
+        }
+        <button mat-button type="button" (click)="reload()">
+          {{ 'automation.banner.reload' | transloco }}
+        </button>
+      </div>
+    }
+    @if (saveState() === 'conflict') {
+      <div class="auto-banner" role="alert">
+        <mat-icon>sync_problem</mat-icon>
+        <span>{{ 'automation.banner.conflict' | transloco }}</span>
+        @if (canWrite()) {
+          <button mat-stroked-button type="button" (click)="overwrite()">
+            {{ 'automation.banner.overwrite' | transloco }}
+          </button>
+        }
+        <button mat-button type="button" (click)="reload()">
+          {{ 'automation.banner.reload' | transloco }}
+        </button>
+      </div>
+    }
+    @if (saveState() === 'error') {
+      <div class="auto-banner" role="alert">
+        <mat-icon>cloud_off</mat-icon>
+        <span>{{ 'automation.banner.saveFailed' | transloco }}</span>
+        <button mat-stroked-button type="button" (click)="retrySave()">
+          {{ 'automation.banner.retry' | transloco }}
+        </button>
+      </div>
+    }
+    @if (!canWrite() && flow()) {
+      <div class="auto-banner auto-banner-info">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ 'automation.banner.readOnly' | transloco }}</span>
+      </div>
+    }
+
+    <div class="app-workspace-toolbar auto-toolbar">
+      @if (layout() === 'phone') {
+        <div
+          class="app-workspace-segmented"
+          role="group"
+          [attr.aria-label]="'automation.editor.panes' | transloco"
+        >
+          @for (pane of ['steps', 'palette', 'inspector', 'test']; track pane) {
+            <button
+              type="button"
+              [attr.aria-pressed]="phonePane() === pane"
+              (click)="phonePane.set($any(pane)); pane === 'test' && right.set('test')"
+            >
+              {{ 'automation.pane.' + pane | transloco }}
+            </button>
+          }
+        </div>
+      } @else {
+        <div
+          class="app-workspace-segmented"
+          role="group"
+          [attr.aria-label]="'automation.editor.view' | transloco"
+        >
+          <button
+            type="button"
+            [attr.aria-pressed]="view() === 'canvas'"
+            (click)="view.set('canvas')"
+          >
+            <mat-icon>account_tree</mat-icon>{{ 'automation.editor.canvas' | transloco }}
+          </button>
+          <button type="button" [attr.aria-pressed]="view() === 'list'" (click)="view.set('list')">
+            <mat-icon>format_list_bulleted</mat-icon>{{ 'automation.editor.list' | transloco }}
+          </button>
+        </div>
+        @if (layout() === 'medium') {
+          <button mat-stroked-button type="button" (click)="paletteOpen.set(!paletteOpen())">
+            <mat-icon>add_box</mat-icon>{{ 'automation.pane.palette' | transloco }}
+          </button>
+        }
+        @if (view() === 'canvas') {
+          <button
+            mat-icon-button
+            type="button"
+            [matTooltip]="'automation.editor.fit' | transloco"
+            [attr.aria-label]="'automation.editor.fit' | transloco"
+            (click)="fit()"
+          >
+            <mat-icon>fit_screen</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [disabled]="readOnly()"
+            [matTooltip]="'automation.editor.autoLayout' | transloco"
+            [attr.aria-label]="'automation.editor.autoLayout' | transloco"
+            (click)="layoutNodes()"
+          >
+            <mat-icon>auto_fix_high</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [disabled]="readOnly() || (!selectedId() && !selectedEdges().length)"
+            [matTooltip]="'automation.editor.deleteSelected' | transloco"
+            [attr.aria-label]="'automation.editor.deleteSelected' | transloco"
+            (click)="removeSelection()"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      }
+    </div>
+
+    <div class="app-workspace-body auto-body">
+      @if (loading()) {
+        <p class="auto-empty">{{ 'Loading...' | transloco }}</p>
+      } @else if (loadFailed()) {
+        <div class="auto-empty">
+          <p>{{ 'automation.editor.loadFailed' | transloco }}</p>
+          <button mat-stroked-button type="button" (click)="reload()">
+            {{ 'automation.banner.retry' | transloco }}
+          </button>
+        </div>
+      } @else {
+        @if (showPalette()) {
+          <aside class="auto-palette" [attr.aria-label]="'automation.pane.palette' | transloco">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'automation.palette.search' | transloco }}</mat-label>
+              <input matInput [value]="filter()" (input)="filter.set($any($event.target).value)" />
+            </mat-form-field>
+            @for (group of groups(); track group.module) {
+              <section
+                class="auto-group"
+                [class.is-locked]="group.locked"
+                [style.--auto-accent]="'var(' + accentOf(group.module) + ')'"
+              >
+                <h3>
+                  <span class="auto-dot"></span>{{ moduleLabel(group.module) }}
+                  @if (group.locked) {
+                    <mat-icon class="auto-lock" [matTooltip]="lockText(group.reason)"
+                      >lock</mat-icon
+                    >
+                  }
+                </h3>
+                @if (group.locked) {
+                  <p class="auto-lock-reason">{{ lockText(group.reason) }}</p>
+                }
+                @for (def of group.items; track def.type) {
+                  <button
+                    type="button"
+                    class="auto-item"
+                    [disabled]="def.locked || readOnly()"
+                    [matTooltip]="nodeHelp(def.type)"
+                    (click)="add(def)"
+                  >
+                    <mat-icon>{{ def.icon }}</mat-icon>
+                    <span>{{ nodeLabel(def.type) }}</span>
+                    @if (
+                      def.effect === 'write' ||
+                      def.effect === 'external' ||
+                      def.effect === 'message'
+                    ) {
+                      <span
+                        class="auto-effect"
+                        [matTooltip]="'automation.effect.' + def.effect | transloco"
+                      >
+                        <mat-icon>bolt</mat-icon>
+                      </span>
+                    }
+                  </button>
+                }
+              </section>
+            }
+          </aside>
+        }
+
+        @if (showCenter()) {
+          <main class="auto-center">
+            @if (view() === 'canvas' && layout() !== 'phone') {
+              <f-flow
+                fDraggable
+                class="auto-flow"
+                (fSelectionChange)="onSelection($event)"
+                (fMoveNodes)="onMove($event)"
+                (fCreateConnection)="onCreate($event)"
+                (fReassignConnection)="onReassign($event)"
+                (fLoaded)="fit()"
+              >
+                <f-background>
+                  <f-circle-pattern />
+                </f-background>
+                <f-canvas fZoom>
+                  <f-connection-for-create fType="bezier" fBehavior="fixed" />
+                  <ng-container ngProjectAs="[fConnections]">
+                    @for (item of edgeKeys(); track item.id) {
+                      <f-connection
+                        [fConnectionId]="item.id"
+                        [fSourceId]="item.id"
+                        [fTargetId]="inputId(item.edge.to)"
+                        fType="bezier"
+                        fBehavior="fixed"
+                      />
+                    }
+                  </ng-container>
+                  <ng-container ngProjectAs="[fNodes]">
+                    @for (node of graph().nodes; track node.id) {
+                      <div
+                        fNode
+                        fDragHandle
+                        class="auto-node"
+                        [fNodeId]="node.id"
+                        [fNodePosition]="node.position"
+                        [fNodeDraggingDisabled]="readOnly()"
+                        [class.is-selected]="selectedId() === node.id"
+                        [class.is-visited]="visited().has(node.id)"
+                        [class.has-error]="issuesByNode().get(node.id)?.errors"
+                        [style.--auto-accent]="accent(node.type)"
+                      >
+                        @if (hasInput(node)) {
+                          <div
+                            fConnector
+                            fConnectorType="target"
+                            [fConnectorId]="inputId(node.id)"
+                            fConnectorConnectableSide="left"
+                            class="auto-in"
+                          ></div>
+                        }
+                        <div class="auto-node-head">
+                          <mat-icon>{{ iconOf(node.type) }}</mat-icon>
+                          <span class="auto-node-title">{{ nodeLabel(node.type) }}</span>
+                          @if (issuesByNode().get(node.id); as issue) {
+                            <mat-icon
+                              class="auto-issue"
+                              [class.is-error]="issue.errors"
+                              [matTooltip]="issue.text.join('\n')"
+                              >{{ issue.errors ? 'error' : 'warning' }}</mat-icon
+                            >
+                          }
+                        </div>
+                        @if (summaryOf(node)) {
+                          <div class="auto-node-summary">{{ summaryOf(node) }}</div>
+                        }
+                        <ul class="auto-ports">
+                          @for (port of portsFor(node); track port.id) {
+                            <li [class.is-optional]="portOptional(port)">
+                              <span>{{ portLabel(port) }}</span>
+                              <div
+                                fConnector
+                                fConnectorType="source"
+                                [fConnectorId]="outputId(node.id, port.id)"
+                                fConnectorConnectableSide="right"
+                                class="auto-out"
+                                [class.is-connected]="portConnected(node, port)"
+                              ></div>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </ng-container>
+                </f-canvas>
+              </f-flow>
+            } @else {
+              <ol class="auto-list" [attr.aria-label]="'automation.editor.list' | transloco">
+                @for (entry of entries(); track $index) {
+                  @let node = nodeById(entry.nodeId);
+                  @if (node) {
+                    <li [style.padding-inline-start.rem]="entry.depth * 1.25">
+                      @if (entry.viaPort) {
+                        <span class="auto-via">{{
+                          portLabel({ id: entry.viaPort, label: entry.viaPort })
+                        }}</span>
+                      }
+                      <button
+                        type="button"
+                        class="auto-step"
+                        [class.is-selected]="selectedId() === node.id"
+                        [class.is-repeat]="entry.repeat"
+                        [style.--auto-accent]="accent(node.type)"
+                        (click)="selectNode(node.id)"
+                      >
+                        <mat-icon>{{ iconOf(node.type) }}</mat-icon>
+                        <span class="auto-step-text">
+                          <strong>{{ nodeLabel(node.type) }}</strong>
+                          @if (entry.repeat) {
+                            <em>{{ 'automation.editor.repeat' | transloco }}</em>
+                          } @else if (summaryOf(node)) {
+                            <small>{{ summaryOf(node) }}</small>
+                          }
+                        </span>
+                        @if (issuesByNode().get(node.id); as issue) {
+                          <mat-icon
+                            class="auto-issue"
+                            [class.is-error]="issue.errors"
+                            [matTooltip]="issue.text.join('\n')"
+                            >{{ issue.errors ? 'error' : 'warning' }}</mat-icon
+                          >
+                        }
+                      </button>
+                    </li>
+                  }
+                }
+              </ol>
+            }
+          </main>
+        }
+
+        @if (showRightPane()) {
+          <aside class="auto-right">
+            @if (layout() !== 'phone') {
+              <div class="app-workspace-segmented auto-right-tabs" role="group">
+                @for (pane of ['inspector', 'test', 'issues']; track pane) {
+                  <button
+                    type="button"
+                    [attr.aria-pressed]="right() === pane"
+                    (click)="right.set($any(pane))"
+                  >
+                    {{ 'automation.pane.' + pane | transloco }}
+                  </button>
+                }
+              </div>
+            }
+
+            @switch (layout() === 'phone' ? phonePane() : right()) {
+              @case ('test') {
+                <app-automation-test-panel
+                  [flowUUID]="uuid"
+                  [graph]="graph()"
+                  [testContacts]="flow()?.testContacts ?? []"
+                  [canEdit]="canWrite()"
+                  (contactsChange)="setTestContacts($event)"
+                  (visited)="onVisited($event)"
+                />
+              }
+              @case ('issues') {
+                <div class="auto-issues">
+                  @for (issue of validation().errors; track $index) {
+                    <button
+                      type="button"
+                      class="auto-issue-row is-error"
+                      (click)="focusIssue(issue)"
+                    >
+                      <mat-icon>error</mat-icon>
+                      <span
+                        >{{ issue.message || issue.code }}
+                        @if (issue.nodeId) {
+                          <small>{{ nodeTitle(issue.nodeId) }}</small>
+                        }
+                      </span>
+                    </button>
+                  }
+                  @for (issue of validation().warnings; track $index) {
+                    <button type="button" class="auto-issue-row" (click)="focusIssue(issue)">
+                      <mat-icon>warning</mat-icon>
+                      <span
+                        >{{ issue.message || issue.code }}
+                        @if (issue.nodeId) {
+                          <small>{{ nodeTitle(issue.nodeId) }}</small>
+                        }
+                      </span>
+                    </button>
+                  }
+                  @if (!issueCount()) {
+                    <p class="auto-empty">{{ 'automation.editor.noIssues' | transloco }}</p>
+                  }
+                </div>
+              }
+              @default {
+                @if (selected(); as node) {
+                  <div class="auto-inspector">
+                    <div class="auto-inspector-head" [style.--auto-accent]="accent(node.type)">
+                      <mat-icon>{{ iconOf(node.type) }}</mat-icon>
+                      <div>
+                        <strong>{{ nodeLabel(node.type) }}</strong>
+                        <small>{{ node.id }}</small>
+                      </div>
+                      @if (node.id !== graph().start) {
+                        <button
+                          mat-icon-button
+                          type="button"
+                          [disabled]="readOnly()"
+                          [matTooltip]="'automation.inspector.remove' | transloco"
+                          [attr.aria-label]="'automation.inspector.remove' | transloco"
+                          (click)="removeNode(node.id)"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </div>
+                    @if (nodeHelp(node.type)) {
+                      <p class="auto-help">{{ nodeHelp(node.type) }}</p>
+                    }
+                    @for (field of selectedFields(); track field.name) {
+                      <app-automation-schema-field
+                        [name]="field.name"
+                        [schema]="field.schema"
+                        [value]="node.config[field.name]"
+                        [required]="
+                          selectedDef()?.configSchema?.required?.includes(field.name) ?? false
+                        "
+                        [pickers]="pickers()"
+                        [disabled]="readOnly()"
+                        (valueChange)="onConfig(field.name, $event)"
+                      />
+                    } @empty {
+                      <p class="auto-help">{{ 'automation.inspector.noConfig' | transloco }}</p>
+                    }
+                    @if (portsFor(node).length) {
+                      <h4>{{ 'automation.inspector.connections' | transloco }}</h4>
+                      <div class="auto-conn">
+                        @for (port of portsFor(node); track port.id) {
+                          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                            <mat-label>{{ portLabel(port) }}</mat-label>
+                            <mat-select
+                              [value]="targetOf(node.id, port.id)"
+                              [disabled]="readOnly()"
+                              (selectionChange)="setTarget(node.id, port.id, $event.value)"
+                            >
+                              <mat-option value="">{{
+                                'automation.inspector.none' | transloco
+                              }}</mat-option>
+                              @for (target of targets(); track target.id) {
+                                <mat-option [value]="target.id"
+                                  >{{ nodeLabel(target.type) }} · {{ target.id }}</mat-option
+                                >
+                              }
+                            </mat-select>
+                          </mat-form-field>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="auto-empty">{{ 'automation.inspector.select' | transloco }}</p>
+                }
+              }
+            }
+          </aside>
+        }
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,199 @@
+// Foblex Flow theme (structure only); the colors below map it to the App theme tokens.
+@use '@foblex/flow/styles' as ff;
+@use '@foblex/flow/styles/domains/connection' as ff-connection;
+@use '@foblex/flow/styles/domains/plugins' as ff-plugins;
+
+// Only the domains the editor uses (the full theme exceeds the component style budget); the
+// sockets of the nodes are styled below with the App tokens.
+@include ff.flow-canvas();
+@include ff-connection.connection-all();
+@include ff-plugins.background();
+@include ff-plugins.selection-area();
+
+.auto-editor {
+  --ff-flow-font-family: inherit;
+  --ff-flow-font-size: 0.875rem;
+  --ff-connection-hit-width: 14px;
+  --ff-snap-connection-color: var(--mat-sys-color-outline);
+  --ff-connection-hover-color: color-mix(in srgb, var(--mat-sys-color-primary) 20%, transparent);
+  --ff-connection-drag-handle-stroke: var(--mat-sys-color-primary);
+  --ff-connection-content-color: var(--mat-sys-color-on-surface);
+  --ff-connection-content-font-size: 0.75rem;
+  --ff-connection-content-padding-y: 2px;
+  --ff-connection-content-padding-x: 8px;
+  --ff-connection-content-background-color: var(--mat-sys-color-surface-container-high);
+  --ff-connection-content-border-color: var(--mat-sys-color-outline-variant);
+  --ff-connection-content-border-color-selected: var(--mat-sys-color-primary);
+  --ff-connection-content-border-radius: 8px;
+  --ff-waypoint-fill: var(--mat-sys-color-surface);
+  --ff-waypoint-stroke: var(--mat-sys-color-primary);
+  --ff-waypoint-candidate-fill: var(--mat-sys-color-surface);
+  --ff-waypoint-candidate-stroke: var(--mns-status-success);
+  --ff-flow-background-color: var(--mat-sys-color-surface-container-low);
+  --ff-flow-text-color: var(--mat-sys-color-on-surface);
+  --ff-canvas-background-color: var(--mat-sys-color-surface-container-low);
+  --ff-node-background-color: var(--mat-sys-color-surface-container-high);
+  --ff-node-border-color: var(--mat-sys-color-outline-variant);
+  --ff-node-border-color-selected: var(--mat-sys-color-primary);
+  --ff-node-color: var(--mat-sys-color-on-surface);
+  --ff-node-width: 240px;
+  --ff-node-padding: 0;
+  --ff-node-border-radius: 12px;
+  --ff-node-shadow: none;
+  --ff-node-shadow-selected: 0 2px 10px
+    color-mix(in srgb, var(--mat-sys-color-shadow) 25%, transparent);
+  --ff-connector-background-color: var(--mat-sys-color-surface);
+  --ff-connector-border-color: var(--mat-sys-color-outline);
+  --ff-connector-connected-color: var(--mat-sys-color-primary);
+  --ff-connector-accent-color: var(--mat-sys-color-primary);
+  --ff-connector-node-ring-color: var(--mat-sys-color-surface-container-high);
+  --ff-connection-color: var(--mat-sys-color-on-surface-variant);
+  --ff-connection-selected-color: var(--mat-sys-color-primary);
+  --ff-connection-width: 2px;
+  --ff-marker-color: var(--mat-sys-color-on-surface-variant);
+  --ff-background-line-color: var(--mat-sys-color-outline-variant);
+  --ff-background-dot-color: var(--mat-sys-color-outline-variant);
+  --ff-selection-area-color: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+  --ff-selection-area-border-color: var(--mat-sys-color-primary);
+
+  .auto-title {
+    min-width: 0;
+
+    h1 {
+      flex-wrap: wrap;
+    }
+
+    .auto-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .auto-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--mat-sys-color-secondary-container);
+    color: var(--mat-sys-color-on-secondary-container);
+  }
+
+  .auto-chip-published {
+    background: color-mix(in srgb, var(--mns-status-success) 18%, transparent);
+    color: var(--mns-status-success);
+  }
+
+  .auto-save {
+    background: transparent;
+    border: 1px solid var(--mat-sys-color-outline-variant);
+    color: var(--mat-sys-color-on-surface-variant);
+
+    &[data-state='error'],
+    &[data-state='conflict'],
+    &[data-state='locked'] {
+      border-color: var(--mat-sys-color-error);
+      color: var(--mat-sys-color-error);
+    }
+  }
+
+  .auto-count {
+    margin-inline-start: 0.5rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    background: var(--mns-status-warning);
+    color: var(--mat-sys-color-surface);
+
+    &.has-errors {
+      background: var(--mat-sys-color-error);
+      color: var(--mat-sys-color-on-error);
+    }
+  }
+
+  .auto-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 1.25rem 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    background: var(--mat-sys-color-error-container);
+    color: var(--mat-sys-color-on-error-container);
+
+    > span {
+      flex: 1;
+      min-width: 12rem;
+    }
+  }
+
+  .auto-banner-info {
+    background: var(--mat-sys-color-secondary-container);
+    color: var(--mat-sys-color-on-secondary-container);
+  }
+
+  .auto-toolbar {
+    gap: 0.5rem;
+  }
+
+  .auto-body {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 340px;
+    overflow: hidden;
+  }
+
+  &[data-layout='medium'] .auto-body {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  &[data-layout='medium'] .auto-palette {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 5;
+    width: 260px;
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--mat-sys-color-shadow) 30%, transparent);
+  }
+
+  &[data-layout='phone'] .auto-body {
+    display: block;
+    overflow: auto;
+  }
+
+  .auto-center {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .auto-flow {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+  }
+
+  .f-connector {
+    z-index: 2;
+    box-sizing: border-box;
+    border: 2px solid var(--ff-connector-border-color);
+    border-radius: 50%;
+    background: var(--ff-connector-background-color);
+    cursor: crosshair;
+
+    &.f-connector-connected {
+      border-color: var(--ff-connector-connected-color);
+      background: var(--ff-connector-connected-color);
+    }
+
+    &.f-connector-connectable {
+      border-color: var(--ff-connector-accent-color);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--ff-connector-accent-color) 22%, transparent);
+    }
+  }
+}

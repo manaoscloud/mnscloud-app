@@ -355,6 +355,37 @@ export const NAV_ITEMS: NavItem[] = [
       },
     ],
   },
+  // Automations: tenant flow builder (not commercial, no entitlement: assessment D2).
+  {
+    id: 'automation',
+    label: 'nav.automation',
+    icon: 'account_tree',
+    area: 'service',
+    requiresEnvironment: true,
+    children: [
+      {
+        id: 'automation/flows',
+        label: 'nav.automation.flows',
+        icon: 'schema',
+        route: '/automation/flows',
+        permissions: ['tenant.automation.flows.read'],
+      },
+      {
+        id: 'automation/runs',
+        label: 'nav.automation.runs',
+        icon: 'history',
+        route: '/automation/runs',
+        permissions: ['tenant.automation.runs.read'],
+      },
+      {
+        id: 'automation/secrets',
+        label: 'nav.automation.secrets',
+        icon: 'key',
+        route: '/automation/secrets',
+        permissions: ['tenant.automation.secrets.read'],
+      },
+    ],
+  },
   // One Support product; commercial access belongs only to customer operations.
   {
     id: 'support',
