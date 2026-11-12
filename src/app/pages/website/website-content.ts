@@ -55,7 +55,14 @@ export type WebsiteSection = {
   text: string;
   items: WebsiteSectionItem[];
 };
-export const WEBSITE_PAGE_KEYS = ['services', 'fleet', 'about', 'contact', 'ethics'] as const;
+export const WEBSITE_PAGE_KEYS = [
+  'services',
+  'fleet',
+  'about',
+  'contact',
+  'ethics',
+  'careers',
+] as const;
 export type WebsitePageKey = (typeof WEBSITE_PAGE_KEYS)[number];
 export const WEBSITE_MAX_PROMOTIONS = 12;
 export type WebsiteLocationsBlock = { enabled: boolean; title: string; intro: string };

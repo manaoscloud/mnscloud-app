@@ -1283,6 +1283,24 @@ export const routes: Routes = [
                 title: 'Human resources • Notices | mnscloud',
               },
               {
+                path: 'hr/recruiting/openings',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/hr/recruiting/openings').then((m) => m.HrRecruitingOpeningsPage),
+                title: 'Human resources • Job openings | mnscloud',
+                data: { permission: 'tenant.hr.recruiting.read' },
+              },
+              {
+                path: 'hr/recruiting/applications',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/hr/recruiting/applications').then(
+                    (m) => m.HrRecruitingApplicationsPage,
+                  ),
+                title: 'Human resources • Applications | mnscloud',
+                data: { permission: 'tenant.hr.applications.read' },
+              },
+              {
                 path: 'hr/vacation-balances',
                 loadComponent: () =>
                   import('./pages/hr/vacation-balances/vacation-balances').then(
