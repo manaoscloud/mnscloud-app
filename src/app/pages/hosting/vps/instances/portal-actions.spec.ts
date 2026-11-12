@@ -15,10 +15,21 @@ describe('VPS instance portal actions', () => {
   it('offers hide and the snapshot switch for a published server', () => {
     expect(
       keys({ RegCustomerRcuUUID: CUSTOMER, HviPortalEnabled: 1, HviPortalSnapshots: 0 }),
-    ).toEqual(['portal-hide', 'portal-snapshots-allow']);
+    ).toEqual(['portal-hide', 'portal-snapshots-allow', 'portal-firewall-allow']);
     expect(
       keys({ RegCustomerRcuUUID: CUSTOMER, HviPortalEnabled: 1, HviPortalSnapshots: 1 }),
-    ).toEqual(['portal-hide', 'portal-snapshots-block']);
+    ).toEqual(['portal-hide', 'portal-snapshots-block', 'portal-firewall-allow']);
+  });
+
+  it('offers blocking the portal firewall once it is allowed', () => {
+    expect(
+      keys({
+        RegCustomerRcuUUID: CUSTOMER,
+        HviPortalEnabled: 1,
+        HviPortalSnapshots: 0,
+        HviPortalFirewall: 1,
+      }),
+    ).toEqual(['portal-hide', 'portal-snapshots-allow', 'portal-firewall-block']);
   });
 
   it('shows no portal action in platform scope', () => {

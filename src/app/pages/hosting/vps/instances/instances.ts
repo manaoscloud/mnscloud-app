@@ -238,12 +238,56 @@ const PORTAL_SNAPSHOTS_BLOCK_ACTION: ConfigurableCrudRowAction = {
   },
 };
 
+/** V3: the customer edits the firewall profile dedicated to a published server (created on allow). */
+const PORTAL_FIREWALL_ALLOW_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-firewall-allow',
+  label: 'hostingVps.portalFirewallAllow',
+  icon: 'security',
+  tooltip: 'hostingVps.portalFirewallAllow',
+  visible: (row) =>
+    isCustomerServer(row) &&
+    Number(row['HviPortalEnabled'] ?? 0) === 1 &&
+    Number(row['HviPortalFirewall'] ?? 0) !== 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal-firewall`,
+    body: () => ({ enabled: true }),
+    successMessage: 'hostingVps.portalFirewallAllowed',
+    confirm: {
+      title: 'hostingVps.portalFirewallAllow',
+      message: 'hostingVps.portalFirewallAllowConfirm',
+      confirmLabel: 'hostingVps.portalFirewallAllow',
+    },
+  },
+};
+
+const PORTAL_FIREWALL_BLOCK_ACTION: ConfigurableCrudRowAction = {
+  key: 'portal-firewall-block',
+  label: 'hostingVps.portalFirewallBlock',
+  icon: 'gpp_bad',
+  tooltip: 'hostingVps.portalFirewallBlock',
+  visible: (row) => isCustomerServer(row) && Number(row['HviPortalFirewall'] ?? 0) === 1,
+  request: {
+    method: 'put',
+    endpoint: (row) => `hosting/vps/instances/${row['HviUUID']}/portal-firewall`,
+    body: () => ({ enabled: false }),
+    successMessage: 'hostingVps.portalFirewallBlocked',
+    confirm: {
+      title: 'hostingVps.portalFirewallBlock',
+      message: 'hostingVps.portalFirewallBlockConfirm',
+      confirmLabel: 'hostingVps.portalFirewallBlock',
+    },
+  },
+};
+
 /** Portal row actions, in menu order; each one's `visible` decides for the row. */
 const PORTAL_ACTIONS: readonly ConfigurableCrudRowAction[] = [
   PORTAL_PUBLISH_ACTION,
   PORTAL_HIDE_ACTION,
   PORTAL_SNAPSHOTS_ALLOW_ACTION,
   PORTAL_SNAPSHOTS_BLOCK_ACTION,
+  PORTAL_FIREWALL_ALLOW_ACTION,
+  PORTAL_FIREWALL_BLOCK_ACTION,
 ];
 
 /**
