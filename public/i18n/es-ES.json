@@ -13969,5 +13969,8 @@
   "automation.field.maxOpen": "Máximo de conversaciones abiertas por agente",
   "automation.field.level": "Nivel de verificación",
   "automation.field.codeTtlMinutes": "Validez del código (minutos)",
-  "automation.field.validMinutes": "Identificación válida por (minutos)"
+  "automation.field.validMinutes": "Identificación válida por (minutos)",
+  "automation.enum.round_robin": "Rotación",
+  "automation.enum.least_busy": "Menos ocupado",
+  "automation.manual.error.notPublished": "Este flujo no está publicado."
 }

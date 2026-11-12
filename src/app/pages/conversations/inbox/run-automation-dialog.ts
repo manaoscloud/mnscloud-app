@@ -19,7 +19,12 @@ export interface RunAutomationDialogData {
 export function manualStartErrorKey(error: unknown): string {
   const failure = error as Partial<HttpErrorResponse> | null;
   const code = String((failure?.error as { code?: unknown } | null)?.code ?? '');
-  if (code === 'AUTOMATION_CHAIN_INVALID') return 'automation.manual.error.chain';
+  if (code === 'automation.chain.invalid') return 'automation.manual.error.chain';
+  if (code === 'automation.run.already_live') return 'automation.manual.error.conflict';
+  if (code === 'automation.flow.not_published') return 'automation.manual.error.notPublished';
+  if (code === 'automation.forbidden') return 'automation.manual.error.permission';
+  if (code === 'automation.not_found' || code === 'automation.flow.not_found')
+    return 'automation.manual.error.notFound';
   if (failure?.status === 403) return 'automation.manual.error.permission';
   if (failure?.status === 404) return 'automation.manual.error.notFound';
   if (failure?.status === 409) return 'automation.manual.error.conflict';

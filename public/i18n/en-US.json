@@ -13969,5 +13969,8 @@
   "automation.field.maxOpen": "Maximum open conversations per agent",
   "automation.field.level": "Verification level",
   "automation.field.codeTtlMinutes": "Code validity (minutes)",
-  "automation.field.validMinutes": "Identification valid for (minutes)"
+  "automation.field.validMinutes": "Identification valid for (minutes)",
+  "automation.enum.round_robin": "Round robin",
+  "automation.enum.least_busy": "Least busy",
+  "automation.manual.error.notPublished": "This flow is not published."
 }
