@@ -1306,7 +1306,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (!confirmed) return;
     this.mutating.set(true);
     try {
-      await this.api.post(`${this.instanceEndpoint()}/${uuid}/runtime`, {});
+      await this.api.post(`${this.instanceEndpoint()}/${uuid}/runtime-install`, {});
       this.snack.success(this.t('Runtime install started. It takes a few minutes.'));
       this.refreshList();
     } catch (error) {
