@@ -2584,3 +2584,13 @@ product and stage lookups bind the selected workspace. API/DB validate visibilit
   theme tokens (module accent = `--mns-channel-*`/`--mns-chart-*`/`--mat-sys-color-primary`).
 - The draft autosaves (debounce, revision) and holds a lock: when another user edited it less than
   ten minutes ago the editor is read-only until "Edit anyway".
+- FL2: inspector widgets are picked by `x-widget` (or the property name): `connection`, `team`, `user`
+  and `flow` (`widgetOf` in `automation.service.ts`; the `flow` picker lists published flows and leaves
+  out the flow being edited). New node types need only API schema plus pt-BR/en-US/es-ES labels
+  (`automation.node.*`, `automation.nodeHelp.*`, `automation.port.*`, `automation.field.*`).
+- Templates ("Novo a partir de modelo" in the flows list filter-action menu, write permission only) are
+  client-side graph builders in `automation-templates.ts`: create the flow, save the draft graph, open
+  the editor; team pickers stay empty and the validation panel lists what is missing.
+- Conversations inbox action "Executar automação" (`tenant.automation.runs.start`, open conversations)
+  opens `run-automation-dialog.ts`: `GET /automation/manual-flows?conversationUUID=` then
+  `POST /automation/runs/manual`; failures map to `automation.manual.error.*`.

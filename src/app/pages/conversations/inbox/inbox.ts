@@ -37,6 +37,9 @@ import { ConfigurableCrudCollectionDialog } from '../../../shared/crud/configura
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { ConfigurableCrudRecord } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { MNS_MENU } from '../../../shared/menu/mns-menu';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AUTOMATION_PERMISSIONS } from '../../automation/automation-adapter';
+import { openRunAutomation } from './run-automation-dialog';
 import { CONVERSATION_QUICK_REPLIES_CONFIG, QuickReply } from '../quick-replies/quick-replies';
 
 export interface ConversationItem {
@@ -817,6 +820,14 @@ export class ConversationsInboxPage {
     } catch {
       // Clipboard may be unavailable; the value stays selectable on screen.
     }
+  }
+
+  readonly canRunAutomation = computed(() =>
+    hasEffectivePermission(this.currentUser()?.permissions ?? [], AUTOMATION_PERMISSIONS.runsStart),
+  );
+
+  async runAutomation(conv: ConversationItem): Promise<void> {
+    await openRunAutomation(this.dialog, { conversationUUID: conv.CnvUUID });
   }
 
   async openLinkContact(conv: ConversationItem): Promise<void> {

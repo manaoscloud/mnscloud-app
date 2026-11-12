@@ -24,6 +24,12 @@ import {
   unwrap,
 } from './automation-adapter';
 
+export interface ManualFlow {
+  uuid: string;
+  name: string;
+  description: string;
+}
+
 export interface PickerOption {
   value: string;
   label: string;
@@ -113,8 +119,47 @@ export class AutomationService {
     await this.api.post(`automation/runs/${uuid}/cancel`, {});
   }
 
-  /** Options of an entity picker of the inspector (`connection`, `team`, `user`). */
-  async options(widget: string): Promise<PickerOption[]> {
+  /** Creates a draft flow and returns its UUID. */
+  async create(body: {
+    name: string;
+    description: string;
+    surface: string;
+    priority: number;
+  }): Promise<string> {
+    return toFlowDetail(await this.api.post('automation/flows', body)).uuid;
+  }
+
+  /** Manual flows the user can start on a conversation (published, trigger `conversation.manual`). */
+  async manualFlows(conversationUUID: string): Promise<ManualFlow[]> {
+    const response = await this.api.get(
+      `automation/manual-flows?conversationUUID=${encodeURIComponent(conversationUUID)}`,
+      { silent: true },
+    );
+    const body = unwrap(response);
+    const items = Array.isArray(body['items'])
+      ? (body['items'] as Dict[])
+      : Array.isArray((response as { data?: unknown } | null)?.data)
+        ? ((response as { data: Dict[] }).data as Dict[])
+        : [];
+    return items
+      .map((item) => ({
+        uuid: String(item['AflUUID'] ?? item['flowUUID'] ?? item['uuid'] ?? ''),
+        name: String(item['AflName'] ?? item['name'] ?? ''),
+        description: String(item['AflDescription'] ?? item['description'] ?? ''),
+      }))
+      .filter((flow) => flow.uuid);
+  }
+
+  /** Starts a manual flow on a conversation; errors are shown by the caller. */
+  async startManual(flowUUID: string, conversationUUID: string): Promise<void> {
+    await this.api.post('automation/runs/manual', { flowUUID, conversationUUID }, { silent: true });
+  }
+
+  /**
+   * Options of an entity picker of the inspector (`connection`, `team`, `user`, `flow`); the
+   * `flow` picker lists published flows only and leaves out `excludeUUID` (the flow being edited).
+   */
+  async options(widget: string, excludeUUID = ''): Promise<PickerOption[]> {
     const spec = PICKERS[widget];
     if (!spec) return [];
     const response = await this.api.get(`${spec.endpoint}?limit=${PICKER_LIMIT}`, {
@@ -128,18 +173,28 @@ export class AutomationService {
         ? (body['items'] as Dict[])
         : [];
     return items
+      .filter((item) => !spec.publishedOnly || Number(item['AflPublishedVersion'] ?? 0) > 0)
       .map((item) => ({
         value: String(item[spec.value] ?? ''),
         label: String(item[spec.label] ?? ''),
       }))
-      .filter((option) => option.value);
+      .filter((option) => option.value && option.value !== excludeUUID);
   }
 }
 
-const PICKERS: Record<string, { endpoint: string; value: string; label: string }> = {
+const PICKERS: Record<
+  string,
+  { endpoint: string; value: string; label: string; publishedOnly?: boolean }
+> = {
   connection: { endpoint: 'conversations/connections', value: 'ChcUUID', label: 'ChcName' },
   team: { endpoint: 'support/teams', value: 'SupportTeamUUID', label: 'Name' },
   user: { endpoint: 'conversations/members', value: 'UsrUUID', label: 'UsrName' },
+  flow: {
+    endpoint: 'automation/flows',
+    value: 'AflUUID',
+    label: 'AflName',
+    publishedOnly: true,
+  },
 };
 
 /** Widget of a config property: explicit `x-widget`, otherwise inferred from its name. */
@@ -148,5 +203,6 @@ export function widgetOf(name: string, hint: string | undefined): string {
   if (name === 'connectionUUIDs') return 'connection';
   if (name === 'teamUUID') return 'team';
   if (name === 'userUUID') return 'user';
+  if (name === 'flowUUID') return 'flow';
   return '';
 }
