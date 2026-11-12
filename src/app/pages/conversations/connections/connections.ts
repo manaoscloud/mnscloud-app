@@ -12,6 +12,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { CHANNEL_KINDS, CHANNEL_STATES } from '../conversation-options';
 import { openWebchatPreviewDialog } from './webchat-preview-dialog';
+import { ApiService } from '../../../services/api.service';
 
 function parseObject(value: unknown): Record<string, unknown> | null | 'invalid' {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -29,7 +30,7 @@ function parseObject(value: unknown): Record<string, unknown> | null | 'invalid'
 
 /** Kinds offered when creating: only channels with a working driver (decision D2). */
 export const CREATABLE_CHANNEL_KINDS = CHANNEL_KINDS.filter((kind) =>
-  ['internal', 'webchat', 'telegram', 'email'].includes(String(kind.value)),
+  ['internal', 'webchat', 'telegram', 'email', 'whatsapp-cloud'].includes(String(kind.value)),
 );
 
 /** Provider routing key (`ChcExternalId`) label per channel type. */
@@ -138,6 +139,7 @@ function storedLook(value: unknown, key: string): string {
 const isWebchat = (values: ConfigurableCrudRecord) => values['kind'] === 'webchat';
 const isTelegram = (values: ConfigurableCrudRecord) => values['kind'] === 'telegram';
 const isEmail = (values: ConfigurableCrudRecord) => values['kind'] === 'email';
+const isWhatsApp = (values: ConfigurableCrudRecord) => values['kind'] === 'whatsapp-cloud';
 
 /** Mail server settings stored in `ChcConfig` for e-mail connections (also the form field keys). */
 export const EMAIL_CONFIG_KEYS = [
@@ -417,6 +419,9 @@ const config = defineCrud({
     offlineMessage: '',
     ChcExternalId: '',
     ChcSecret: '',
+    wabaId: '',
+    token: '',
+    appSecret: '',
     clearSecret: 0,
     revision: '',
   },
@@ -561,9 +566,12 @@ const config = defineCrud({
         if (isEmail(values)) {
           return 'Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.';
         }
+        if (isWhatsApp(values)) {
+          return 'In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).';
+        }
         return 'Identifier of this number, page or account at the provider. Incoming messages are routed by it.';
       },
-      requiredWhen: ({ editing, values }) => isEmail(values) && !editing,
+      requiredWhen: ({ editing, values }) => (isEmail(values) || isWhatsApp(values)) && !editing,
       // Telegram: read from the bot token by the API, shown only after saving.
       disabledWhen: ({ values }) => isTelegram(values),
       hiddenWhen: ({ editing, values }) => !isProvider(values) || (isTelegram(values) && !editing),
@@ -579,7 +587,41 @@ const config = defineCrud({
       help: 'Sealed when saved and never shown again. Leave empty to keep the stored credentials.',
       helpWhen: ({ editing, values }) => secretHelp(editing, values),
       requiredWhen: ({ editing, values }) => (isTelegram(values) || isEmail(values)) && !editing,
-      hiddenWhen: ({ values }) => !isProvider(values),
+      hiddenWhen: ({ values }) => !isProvider(values) || isWhatsApp(values),
+    },
+    {
+      key: 'wabaId',
+      source: 'ChcConfig',
+      label: 'WhatsApp Business Account ID',
+      help: 'In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).',
+      requiredWhen: ({ editing, values }) => isWhatsApp(values) && !editing,
+      hiddenWhen: ({ values }) => !isWhatsApp(values),
+      fromRecord: (value) => storedEmail(value, 'wabaId'),
+      span: 1,
+    },
+    {
+      key: 'token',
+      label: 'Access token',
+      type: 'password',
+      help: 'Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.',
+      helpWhen: ({ editing }) =>
+        editing
+          ? 'Leave empty to keep the stored token.'
+          : 'Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.',
+      requiredWhen: ({ editing, values }) => isWhatsApp(values) && !editing,
+      hiddenWhen: ({ values }) => !isWhatsApp(values),
+    },
+    {
+      key: 'appSecret',
+      label: 'App secret',
+      type: 'password',
+      help: 'In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.',
+      helpWhen: ({ editing }) =>
+        editing
+          ? 'Leave empty to keep the stored app secret.'
+          : 'In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.',
+      requiredWhen: ({ editing, values }) => isWhatsApp(values) && !editing,
+      hiddenWhen: ({ values }) => !isWhatsApp(values),
     },
     {
       key: 'clearSecret',
@@ -795,8 +837,9 @@ const config = defineCrud({
       ...(isTelegram(values) ? {} : { ChcExternalId: externalId(values, provider) }),
       ...(isWebchat(values) ? { ChcConfig: webchatConfig(values) } : {}),
       ...(isEmail(values) ? { ChcConfig: emailConfig(values) } : {}),
+      ...(isWhatsApp(values) ? whatsappPayload(values) : {}),
       // Tokens and mailbox passwords are text; other providers may store a JSON credential.
-      ...(provider && secretText
+      ...(provider && secretText && !isWhatsApp(values)
         ? {
             ChcSecret:
               !isTelegram(values) && !isEmail(values) && secretJson && secretJson !== 'invalid'
@@ -811,6 +854,19 @@ const config = defineCrud({
     };
   },
 });
+
+/** WhatsApp settings: the WABA in `ChcConfig`, the token and app secret sealed together. */
+export function whatsappPayload(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const secret: Record<string, string> = {};
+  for (const key of ['token', 'appSecret'] as const) {
+    const value = String(values[key] ?? '').trim();
+    if (value) secret[key] = value;
+  }
+  return {
+    ChcConfig: { wabaId: String(values['wabaId'] ?? '').trim() },
+    ...(Object.keys(secret).length ? { ChcSecret: secret } : {}),
+  };
+}
 
 function externalId(values: ConfigurableCrudRecord, provider: boolean): string | null {
   const value = provider ? String(values['ChcExternalId'] ?? '').trim() : '';
@@ -897,6 +953,53 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
   };
 }
 
+function whatsappWebhookAction(
+  dialog: () => MatDialog,
+  api: () => ApiService,
+): ConfigurableCrudRowAction {
+  return {
+    key: 'whatsapp-webhook',
+    label: 'conversations.whatsappWebhook',
+    icon: 'webhook',
+    visible: (row) => row['ChcKind'] === 'whatsapp-cloud',
+    run: async (row) => {
+      const uuid = String(row['ChcUUID'] ?? '');
+      const response = await api().get<{ data: ConfigurableCrudRecord }>(
+        `conversations/connections/${uuid}`,
+      );
+      const item = response.data ?? {};
+      openDataViewerDialog(dialog(), {
+        title: 'conversations.whatsappWebhookTitle',
+        description: String(row['ChcName'] ?? ''),
+        details: [
+          { label: 'Number', value: storedEmail(item['ChcConfig'], 'displayPhoneNumber') || '—' },
+          { label: 'Verified name', value: storedEmail(item['ChcConfig'], 'verifiedName') || '—' },
+        ],
+        sections: [
+          {
+            title: 'conversations.whatsappWebhookSteps',
+            code: {
+              title: 'Callback URL',
+              value: String(item['ChcWebhookUrl'] ?? ''),
+              format: 'text',
+              copy: true,
+            },
+          },
+          {
+            title: 'conversations.whatsappWebhookVerifyToken',
+            code: {
+              title: 'Verify token',
+              value: String(item['ChcWebhookVerifyToken'] ?? ''),
+              format: 'text',
+              copy: true,
+            },
+          },
+        ],
+      });
+    },
+  };
+}
+
 @Component({
   selector: 'app-conversation-connections',
   standalone: true,
@@ -907,9 +1010,17 @@ function webchatEmbedAction(dialog: () => MatDialog): ConfigurableCrudRowAction 
 export class ConversationConnectionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     const dialog = inject(MatDialog);
+    const api = inject(ApiService);
     super({
       ...config,
-      rowActions: [webchatEmbedAction(() => dialog), webchatPreviewAction(() => dialog)],
+      rowActions: [
+        webchatEmbedAction(() => dialog),
+        webchatPreviewAction(() => dialog),
+        whatsappWebhookAction(
+          () => dialog,
+          () => api,
+        ),
+      ],
     });
   }
 

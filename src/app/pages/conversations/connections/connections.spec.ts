@@ -1,5 +1,6 @@
 import {
   emailConfig,
+  whatsappPayload,
   CREATABLE_CHANNEL_KINDS,
   storedOrigins,
   webchatConfig,
@@ -51,6 +52,7 @@ describe('conversation connections form', () => {
     expect(CREATABLE_CHANNEL_KINDS.map((kind) => kind.value)).toEqual([
       'internal',
       'webchat',
+      'whatsapp-cloud',
       'telegram',
       'email',
     ]);
@@ -70,6 +72,14 @@ describe('conversation connections form', () => {
       fromName: 'Suporte',
     });
     expect(emailConfig({})).toEqual({});
+  });
+
+  it('sends the WABA in the settings and only the typed WhatsApp secrets', () => {
+    expect(whatsappPayload({ wabaId: ' 1022 ', token: ' EAAG ', appSecret: '' })).toEqual({
+      ChcConfig: { wabaId: '1022' },
+      ChcSecret: { token: 'EAAG' },
+    });
+    expect(whatsappPayload({ wabaId: '1022' })).toEqual({ ChcConfig: { wabaId: '1022' } });
   });
 
   it('stores the widget appearance and drops empty values', () => {

@@ -13553,5 +13553,18 @@
   "{n} VM(s) adopted": "{n} VM(s) adotada(s)",
   "Adopt selected ({n})": "Adotar selecionadas ({n})",
   "Adopted": "Adotada",
-  "Created outside the platform; the platform does not change it": "Criada fora da plataforma; a plataforma não a altera"
+  "Created outside the platform; the platform does not change it": "Criada fora da plataforma; a plataforma não a altera",
+  "Verified name": "Nome verificado",
+  "Callback URL": "URL de callback",
+  "WhatsApp Business Account ID": "ID da conta do WhatsApp Business",
+  "In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).": "No app da Meta, abra WhatsApp › Configuração da API e copie o Phone number ID do número (só dígitos, não é o telefone).",
+  "In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).": "No app da Meta, em WhatsApp › Configuração da API, abaixo do número: o ID da conta do WhatsApp Business (dígitos).",
+  "Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.": "Token permanente de um usuário do sistema com as permissões whatsapp_business_messaging e whatsapp_business_management (Meta Business Suite › Configurações › Usuários do sistema). Tokens temporários expiram em 24 horas.",
+  "Leave empty to keep the stored token.": "Deixe vazio para manter o token salvo.",
+  "In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.": "No app da Meta, Configurações do app › Básico › Chave secreta do app. Ela confirma que as chamadas do webhook vêm da Meta.",
+  "Leave empty to keep the stored app secret.": "Deixe vazio para manter a chave secreta salva.",
+  "conversations.whatsappWebhook": "Webhook do WhatsApp",
+  "conversations.whatsappWebhookTitle": "Webhook do WhatsApp na Meta",
+  "conversations.whatsappWebhookSteps": "O webhook é configurado automaticamente ao salvar. Só se a Meta não entregar as mensagens: no app da Meta, abra WhatsApp › Configuração, cole a URL de callback e o token de verificação, confirme e assine o campo messages.",
+  "conversations.whatsappWebhookVerifyToken": "Token de verificação (gerado para esta conexão)"
 }

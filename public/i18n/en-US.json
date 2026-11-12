@@ -13552,5 +13552,18 @@
   "{n} VM(s) adopted": "{n} VM(s) adopted",
   "Adopt selected ({n})": "Adopt selected ({n})",
   "Adopted": "Adopted",
-  "Created outside the platform; the platform does not change it": "Created outside the platform; the platform does not change it"
+  "Created outside the platform; the platform does not change it": "Created outside the platform; the platform does not change it",
+  "Verified name": "Verified name",
+  "Callback URL": "Callback URL",
+  "WhatsApp Business Account ID": "WhatsApp Business Account ID",
+  "In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).": "In the Meta app, open WhatsApp › API Setup and copy the Phone number ID of the number (digits only, not the phone number).",
+  "In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).": "In the Meta app, WhatsApp › API Setup, under the number: the WhatsApp Business Account ID (digits).",
+  "Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.": "Permanent token of a system user with the whatsapp_business_messaging and whatsapp_business_management permissions (Meta Business Suite › Settings › System users). Temporary tokens expire in 24 hours.",
+  "Leave empty to keep the stored token.": "Leave empty to keep the stored token.",
+  "In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.": "In the Meta app, App settings › Basic › App secret. It confirms that webhook calls come from Meta.",
+  "Leave empty to keep the stored app secret.": "Leave empty to keep the stored app secret.",
+  "conversations.whatsappWebhook": "WhatsApp webhook",
+  "conversations.whatsappWebhookTitle": "WhatsApp webhook at Meta",
+  "conversations.whatsappWebhookSteps": "The webhook is set up automatically when you save. Only if Meta does not deliver the messages: in the Meta app, open WhatsApp › Configuration, paste the callback URL and the verify token, confirm and subscribe the messages field.",
+  "conversations.whatsappWebhookVerifyToken": "Verify token (generated for this connection)"
 }
