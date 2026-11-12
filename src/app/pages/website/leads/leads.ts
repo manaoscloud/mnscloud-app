@@ -6,7 +6,18 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
+import {
+  WEBSITE_INBOX_INITIAL_VALUES,
+  WEBSITE_INBOX_ROW_ACTIONS,
+  inboxOptionLabel,
+  openInboxViewer,
+  text,
+  websiteInboxFields,
+  websiteInboxPayload,
+  websiteInboxStatusColumn,
+} from '../shared/website-inbox';
+
+export { websiteInboxPayload };
 
 export const WEBSITE_LEAD_KIND_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'contact', label: 'Contact' },
@@ -18,19 +29,6 @@ export const WEBSITE_LEAD_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'contacted', label: 'Contacted' },
   { value: 'closed', label: 'Closed' },
 ];
-
-/** Moderation body: the API accepts only the revision, the status and the notes. */
-export function websiteInboxPayload(values: Record<string, unknown>): Record<string, unknown> {
-  return {
-    revision: Number(values['revision']),
-    status: String(values['status'] ?? '').trim(),
-    notes: String(values['notes'] ?? '').trim(),
-  };
-}
-
-function text(value: unknown): string {
-  return String(value ?? '').trim();
-}
 
 /** Contact and fleet requests sent by the forms of the tenant websites. */
 const config = defineCrud({
@@ -58,7 +56,7 @@ const config = defineCrud({
   activeValue: 'new',
   inactiveValue: 'closed',
   statusOptions: WEBSITE_LEAD_STATUS_OPTIONS,
-  rowActions: [{ key: 'view', label: 'View details', icon: 'visibility' }],
+  rowActions: WEBSITE_INBOX_ROW_ACTIONS,
   listFilters: [
     {
       key: 'kind',
@@ -69,7 +67,7 @@ const config = defineCrud({
       options: WEBSITE_LEAD_KIND_OPTIONS,
     },
   ],
-  initialValues: { status: 'new', notes: '', revision: null },
+  initialValues: WEBSITE_INBOX_INITIAL_VALUES,
   payload: (values) => websiteInboxPayload(values),
   columns: [
     {
@@ -96,36 +94,9 @@ const config = defineCrud({
     },
     { id: 'site', field: 'SiteName', label: 'Site' },
     { id: 'dateCreated', field: 'DateCreated', label: 'Created at', kind: 'datetime' },
-    {
-      id: 'status',
-      field: 'Status',
-      label: 'Status',
-      kind: 'status',
-      options: WEBSITE_LEAD_STATUS_OPTIONS,
-      className: 'status-col',
-    },
+    websiteInboxStatusColumn(WEBSITE_LEAD_STATUS_OPTIONS),
   ],
-  fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      label: 'Status',
-      type: 'select',
-      options: WEBSITE_LEAD_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'notes',
-      source: 'Notes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-    { key: 'revision', source: 'Revision', label: 'Revision', hidden: true },
-  ],
+  fields: websiteInboxFields(WEBSITE_LEAD_STATUS_OPTIONS),
 });
 
 @Component({
@@ -140,11 +111,10 @@ export class WebsiteLeadsPage extends ConfigurableCrudPageBase<ConfigurableCrudR
     super(config);
   }
 
-  override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+  override handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
     if (action.key !== 'view') return;
-    const option = (options: readonly ConfigurableCrudOption[], value: unknown) =>
-      options.find((o) => o.value === value)?.label ?? text(value);
-    openDataViewerDialog(this.dialog, {
+    const option = inboxOptionLabel;
+    openInboxViewer(this.dialog, {
       title: text(row['Name']) || 'Leads',
       status: { value: option(WEBSITE_LEAD_STATUS_OPTIONS, row['Status']) },
       details: [

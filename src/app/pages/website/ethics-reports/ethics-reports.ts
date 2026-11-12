@@ -6,8 +6,16 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
-import { websiteInboxPayload } from '../leads/leads';
+import {
+  WEBSITE_INBOX_INITIAL_VALUES,
+  WEBSITE_INBOX_ROW_ACTIONS,
+  inboxOptionLabel,
+  openInboxViewer,
+  text,
+  websiteInboxFields,
+  websiteInboxPayload,
+  websiteInboxStatusColumn,
+} from '../shared/website-inbox';
 
 export const WEBSITE_ETHICS_CATEGORY_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'harassment', label: 'Harassment' },
@@ -23,10 +31,6 @@ export const WEBSITE_ETHICS_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = 
   { value: 'in_review', label: 'In review' },
   { value: 'closed', label: 'Closed' },
 ];
-
-function text(value: unknown): string {
-  return String(value ?? '').trim();
-}
 
 /** Reports sent through the ethics channel of the tenant websites; anonymous ones hold no identity. */
 const config = defineCrud({
@@ -54,7 +58,7 @@ const config = defineCrud({
   activeValue: 'new',
   inactiveValue: 'closed',
   statusOptions: WEBSITE_ETHICS_STATUS_OPTIONS,
-  rowActions: [{ key: 'view', label: 'View details', icon: 'visibility' }],
+  rowActions: WEBSITE_INBOX_ROW_ACTIONS,
   listFilters: [
     {
       key: 'category',
@@ -65,7 +69,7 @@ const config = defineCrud({
       options: WEBSITE_ETHICS_CATEGORY_OPTIONS,
     },
   ],
-  initialValues: { status: 'new', notes: '', revision: null },
+  initialValues: WEBSITE_INBOX_INITIAL_VALUES,
   payload: (values) => websiteInboxPayload(values),
   columns: [
     {
@@ -86,36 +90,9 @@ const config = defineCrud({
     { id: 'anonymous', field: 'Anonymous', label: 'Anonymous', kind: 'boolean', width: 'xs' },
     { id: 'site', field: 'SiteName', label: 'Site' },
     { id: 'dateCreated', field: 'DateCreated', label: 'Created at', kind: 'datetime' },
-    {
-      id: 'status',
-      field: 'Status',
-      label: 'Status',
-      kind: 'status',
-      options: WEBSITE_ETHICS_STATUS_OPTIONS,
-      className: 'status-col',
-    },
+    websiteInboxStatusColumn(WEBSITE_ETHICS_STATUS_OPTIONS),
   ],
-  fields: [
-    {
-      key: 'status',
-      source: 'Status',
-      label: 'Status',
-      type: 'select',
-      options: WEBSITE_ETHICS_STATUS_OPTIONS,
-      required: true,
-      span: 1,
-    },
-    {
-      key: 'notes',
-      source: 'Notes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
-    { key: 'revision', source: 'Revision', label: 'Revision', hidden: true },
-  ],
+  fields: websiteInboxFields(WEBSITE_ETHICS_STATUS_OPTIONS),
 });
 
 @Component({
@@ -130,13 +107,12 @@ export class WebsiteEthicsReportsPage extends ConfigurableCrudPageBase<Configura
     super(config);
   }
 
-  override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+  override handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
     if (action.key !== 'view') return;
-    const option = (options: readonly ConfigurableCrudOption[], value: unknown) =>
-      options.find((o) => o.value === value)?.label ?? text(value);
+    const option = inboxOptionLabel;
     const anonymous = row['Anonymous'] === true;
     const identity = (value: unknown) => (anonymous ? 'Anonymous' : value);
-    openDataViewerDialog(this.dialog, {
+    openInboxViewer(this.dialog, {
       title: text(row['Protocol']) || 'Ethics',
       status: { value: option(WEBSITE_ETHICS_STATUS_OPTIONS, row['Status']) },
       details: [

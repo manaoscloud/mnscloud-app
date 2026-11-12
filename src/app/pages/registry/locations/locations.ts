@@ -13,6 +13,7 @@ import {
   registryAddressFields,
   registryAddressValues,
 } from '../registry-fields';
+import { plainText } from '../../website/shared/website-inbox';
 
 const COMPANY_LOOKUP = {
   endpoint: 'registry/companies?status=1',
@@ -70,7 +71,7 @@ const HOURS_FIELDS: ConfigurableCrudField[] = HOURS_KEYS.map((key) => ({
 }));
 
 function text(value: unknown): string {
-  return String(value ?? '').trim();
+  return plainText(value).trim();
 }
 
 function timeOrNull(value: unknown): string | null {
@@ -116,7 +117,7 @@ export function locationPayload(
     SaturdayCloses: timeOrNull(values['saturdayCloses']),
     SundayOpens: timeOrNull(values['sundayOpens']),
     SundayCloses: timeOrNull(values['sundayCloses']),
-    Services: String(values['services'] ?? '').trim(),
+    Services: plainText(values['services']).trim(),
     Published: values['published'] === true,
     Status: text(values['status']) || 'active',
     Notes: text(values['notes']),
