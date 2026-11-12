@@ -59,6 +59,75 @@ const WIDGET_POSITIONS = [
   { value: 'left', label: 'Bottom left' },
 ] as const;
 
+/** Pre-chat form and business hours keys stored in `ChcConfig` (also the form field keys). */
+export const WEBCHAT_RULE_KEYS = [
+  'preChatMode',
+  'hoursEnabled',
+  'hoursTimezone',
+  'hoursDays',
+  'hoursStart',
+  'hoursEnd',
+  'offlineMessage',
+  'offlineBehavior',
+] as const;
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
+const DEFAULT_DAYS = [1, 2, 3, 4, 5];
+
+const PRE_CHAT_MODES = [
+  { value: 'optional', label: 'Optional' },
+  { value: 'required', label: 'Required' },
+  { value: 'hidden', label: 'Do not ask' },
+] as const;
+
+const WEEKDAY_OPTIONS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+] as const;
+
+const OFFLINE_BEHAVIORS = [
+  { value: 'message', label: 'Show the message and accept messages' },
+  { value: 'hide', label: 'Hide the chat' },
+] as const;
+
+/** IANA time zones of this browser, with the Brazilian ones first. */
+function timezoneOptions(): { value: string; label: string }[] {
+  const supported = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+  const zones = supported ? supported('timeZone') : [DEFAULT_TIMEZONE, 'America/Manaus', 'UTC'];
+  const brazil = [
+    'America/Sao_Paulo',
+    'America/Manaus',
+    'America/Belem',
+    'America/Fortaleza',
+    'America/Recife',
+    'America/Bahia',
+    'America/Cuiaba',
+    'America/Campo_Grande',
+    'America/Porto_Velho',
+    'America/Boa_Vista',
+    'America/Rio_Branco',
+    'America/Noronha',
+  ].filter((zone) => zones.includes(zone));
+  return [...brazil, ...zones.filter((zone) => !brazil.includes(zone))].map((zone) => ({
+    value: zone,
+    label: zone.replaceAll('_', ' '),
+  }));
+}
+
+const isWebchatHours = (values: ConfigurableCrudRecord) =>
+  isWebchat(values) && Number(values['hoursEnabled']) === 1;
+
+function storedRule(value: unknown, key: string): unknown {
+  const object = parseObject(value);
+  return object && object !== 'invalid' ? object[key] : undefined;
+}
+
 function storedLook(value: unknown, key: string): string {
   const object = parseObject(value);
   const raw = object && object !== 'invalid' ? object[key] : '';
@@ -108,28 +177,109 @@ function originLines(value: unknown): string[] {
 }
 
 /** Website chat config from the form fields, keeping stored keys the form does not edit. */
+/** Text of a form value; objects never stringify to "[object Object]". */
+function text(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  return typeof value === 'number' ? String(value) : '';
+}
+
+function lookConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const look: Record<string, unknown> = {};
+  for (const key of WIDGET_LOOK_KEYS) {
+    const value = text(values[key]);
+    if (value) look[key] = key === 'widgetColor' ? value.toUpperCase() : value;
+  }
+  return look;
+}
+
+function rulesConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
+  const rules: Record<string, unknown> = {};
+  const mode = text(values['preChatMode']);
+  if (mode === 'required' || mode === 'hidden') rules['preChatMode'] = mode;
+  if (Number(values['hoursEnabled']) !== 1) return rules;
+  const days = Array.isArray(values['hoursDays']) ? values['hoursDays'] : [];
+  const message = text(values['offlineMessage']);
+  return {
+    ...rules,
+    hoursEnabled: true,
+    hoursTimezone: text(values['hoursTimezone']) || DEFAULT_TIMEZONE,
+    hoursDays: [...new Set(days.map(Number))].sort((a, b) => a - b),
+    hoursStart: text(values['hoursStart']),
+    hoursEnd: text(values['hoursEnd']),
+    ...(message ? { offlineMessage: message } : {}),
+    offlineBehavior: values['offlineBehavior'] === 'hide' ? 'hide' : 'message',
+  };
+}
+
+/** Website chat config from the form fields, keeping stored keys the form does not edit. */
 export function webchatConfig(values: ConfigurableCrudRecord): Record<string, unknown> {
   const stored = parseObject(values['storedConfig']);
-  const {
-    origins: _legacy,
-    allowedOrigins: _origins,
-    allowSubdomains: _subdomains,
-    ...kept
-  } = stored && stored !== 'invalid' ? stored : {};
-  const rest: Record<string, unknown> = { ...kept };
-  for (const key of WIDGET_LOOK_KEYS) {
+  const rest: Record<string, unknown> = { ...(stored && stored !== 'invalid' ? stored : {}) };
+  for (const key of ['origins', 'allowedOrigins', 'allowSubdomains', ...WIDGET_LOOK_KEYS, ...WEBCHAT_RULE_KEYS]) {
     delete rest[key];
-    const value = String(values[key] ?? '').trim();
-    if (value) rest[key] = key === 'widgetColor' ? value.toUpperCase() : value;
   }
   const origins = [values['allowedOrigins'], ...originLines(values['otherOrigins'])]
     .map(websiteOrigin)
     .filter((origin) => origin && origin !== 'invalid');
   return {
     ...rest,
+    ...lookConfig(values),
+    ...rulesConfig(values),
     allowedOrigins: [...new Set(origins)],
     allowSubdomains: Number(values['allowSubdomains']) === 1,
   };
+}
+
+export type WebchatFieldError = {
+  key: string;
+  message: string;
+  params?: Record<string, string | number>;
+};
+
+function originError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (websiteOrigin(payload['allowedOrigins']) === 'invalid') {
+    return { key: 'allowedOrigins', message: 'conversations.websiteInvalid' };
+  }
+  const lines = originLines(payload['otherOrigins']);
+  const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
+  if (invalid) {
+    return { key: 'otherOrigins', message: 'conversations.websiteLineInvalid', params: { value: invalid } };
+  }
+  if (lines.length + 1 > MAX_ORIGINS) {
+    return { key: 'otherOrigins', message: 'conversations.websiteTooMany', params: { max: MAX_ORIGINS } };
+  }
+  return null;
+}
+
+function lookError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  const color = text(payload['widgetColor']);
+  if (color && !COLOR_RE.test(color)) {
+    return { key: 'widgetColor', message: 'conversations.widgetColorInvalid' };
+  }
+  const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
+  const tooLong = Object.entries(limits).find(([key, max]) => text(payload[key]).length > max);
+  return tooLong
+    ? { key: tooLong[0], message: 'conversations.widgetTextTooLong', params: { max: tooLong[1] } }
+    : null;
+}
+
+function hoursError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (Number(payload['hoursEnabled']) !== 1) return null;
+  const badTime = ['hoursStart', 'hoursEnd'].find((key) => !TIME_RE.test(text(payload[key])));
+  if (badTime) return { key: badTime, message: 'conversations.hoursTimeInvalid' };
+  if (payload['hoursStart'] === payload['hoursEnd']) {
+    return { key: 'hoursEnd', message: 'conversations.hoursSameTime' };
+  }
+  if (text(payload['offlineMessage']).length > 500) {
+    return { key: 'offlineMessage', message: 'conversations.widgetTextTooLong', params: { max: 500 } };
+  }
+  return null;
+}
+
+/** First invalid website chat field of the flat form payload, in form order. */
+export function webchatFieldError(payload: ConfigurableCrudRecord): WebchatFieldError | null {
+  if (payload['kind'] !== 'webchat') return null;
+  return originError(payload) ?? lookError(payload) ?? hoursError(payload);
 }
 
 const YES_NO = [
@@ -171,6 +321,14 @@ const config = defineCrud({
     widgetGreeting: '',
     widgetColor: '',
     widgetPosition: 'right',
+    preChatMode: 'optional',
+    hoursEnabled: 0,
+    hoursTimezone: DEFAULT_TIMEZONE,
+    hoursDays: DEFAULT_DAYS,
+    hoursStart: '08:00',
+    hoursEnd: '18:00',
+    offlineBehavior: 'message',
+    offlineMessage: '',
     ChcExternalId: '',
     secret: '',
     clearSecret: 0,
@@ -341,6 +499,123 @@ const config = defineCrud({
       fromRecord: (value) => storedLook(value, 'widgetSubtitle'),
     },
     {
+      key: 'preChatMode',
+      source: 'ChcConfig',
+      label: 'Ask name and e-mail before the chat',
+      type: 'search-select',
+      tab: 'advanced',
+      options: PRE_CHAT_MODES,
+      translateOptions: true,
+      help: 'Required: the visitor must enter a name and a valid e-mail before the first message.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => {
+        const mode = storedRule(value, 'preChatMode');
+        return mode === 'required' || mode === 'hidden' ? mode : 'optional';
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursEnabled',
+      source: 'ChcConfig',
+      label: 'Business hours',
+      type: 'search-select',
+      tab: 'advanced',
+      options: YES_NO,
+      translateOptions: true,
+      help: 'Outside these hours the chat shows the offline message or is hidden.',
+      hiddenWhen: ({ values }) => !isWebchat(values),
+      fromRecord: (value) => (storedRule(value, 'hoursEnabled') === true ? 1 : 0),
+      span: 1,
+    },
+    {
+      key: 'hoursTimezone',
+      source: 'ChcConfig',
+      label: 'Time zone',
+      type: 'search-select',
+      tab: 'advanced',
+      options: timezoneOptions(),
+      translateOptions: false,
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const zone = storedRule(value, 'hoursTimezone');
+        return typeof zone === 'string' && zone ? zone : DEFAULT_TIMEZONE;
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursDays',
+      source: 'ChcConfig',
+      label: 'Days',
+      type: 'search-select',
+      multiple: true,
+      tab: 'advanced',
+      options: WEEKDAY_OPTIONS,
+      translateOptions: true,
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const days = storedRule(value, 'hoursDays');
+        return Array.isArray(days) && days.length ? days.map(Number) : DEFAULT_DAYS;
+      },
+      span: 1,
+    },
+    {
+      key: 'hoursStart',
+      source: 'ChcConfig',
+      label: 'Opens at',
+      type: 'time',
+      tab: 'advanced',
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const time = storedRule(value, 'hoursStart');
+        return typeof time === 'string' && time ? time : '08:00';
+      },
+    },
+    {
+      key: 'hoursEnd',
+      source: 'ChcConfig',
+      label: 'Closes at',
+      type: 'time',
+      tab: 'advanced',
+      help: 'A closing time before the opening time ends after midnight.',
+      requiredWhen: ({ values }) => isWebchatHours(values),
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const time = storedRule(value, 'hoursEnd');
+        return typeof time === 'string' && time ? time : '18:00';
+      },
+    },
+    {
+      key: 'offlineBehavior',
+      source: 'ChcConfig',
+      label: 'Outside business hours',
+      type: 'search-select',
+      tab: 'advanced',
+      options: OFFLINE_BEHAVIORS,
+      translateOptions: true,
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => (storedRule(value, 'offlineBehavior') === 'hide' ? 'hide' : 'message'),
+      span: 1,
+    },
+    {
+      key: 'offlineMessage',
+      source: 'ChcConfig',
+      label: 'Offline message',
+      type: 'textarea',
+      tab: 'advanced',
+      placeholder:
+        'Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.',
+      help: 'Shown in the chat outside business hours. Empty uses the default text.',
+      hiddenWhen: ({ values }) => !isWebchatHours(values),
+      fromRecord: (value) => {
+        const message = storedRule(value, 'offlineMessage');
+        return typeof message === 'string' ? message : '';
+      },
+      span: 4,
+    },
+    {
       key: 'allowSubdomains',
       source: 'ChcConfig',
       label: 'Allow subdomains',
@@ -468,32 +743,7 @@ export class ConversationConnectionsPage extends ConfigurableCrudPageBase<Config
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
     if (!super.validatePayload(payload)) return false;
-    if (payload['kind'] !== 'webchat') return true;
-    if (websiteOrigin(payload['allowedOrigins']) === 'invalid') {
-      return this.rejectField('allowedOrigins', 'conversations.websiteInvalid');
-    }
-    const lines = originLines(payload['otherOrigins']);
-    const invalid = lines.find((line) => websiteOrigin(line) === 'invalid');
-    if (invalid) {
-      return this.rejectField('otherOrigins', 'conversations.websiteLineInvalid', {
-        value: invalid,
-      });
-    }
-    const color = String(payload['widgetColor'] ?? '').trim();
-    if (color && !COLOR_RE.test(color)) {
-      return this.rejectField('widgetColor', 'conversations.widgetColorInvalid');
-    }
-    const limits: Record<string, number> = { widgetTitle: 60, widgetSubtitle: 120, widgetGreeting: 500 };
-    for (const [key, max] of Object.entries(limits)) {
-      if (String(payload[key] ?? '').trim().length > max) {
-        return this.rejectField(key, 'conversations.widgetTextTooLong', { max });
-      }
-    }
-    if (lines.length + 1 > MAX_ORIGINS) {
-      return this.rejectField('otherOrigins', 'conversations.websiteTooMany', {
-        max: MAX_ORIGINS,
-      });
-    }
-    return true;
+    const error = webchatFieldError(payload);
+    return error ? this.rejectField(error.key, error.message, error.params) : true;
   }
 }

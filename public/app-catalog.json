@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c73891396207",
+  "version": "787176fd74e9",
   "language": "pt-BR",
   "entries": [
     {
@@ -1038,6 +1038,38 @@
         {
           "label": "Subtítulo do chat",
           "help": "Aparece abaixo do título do chat. Vazio usa o subtítulo padrão."
+        },
+        {
+          "label": "Pedir nome e e-mail antes do chat",
+          "help": "Obrigatório: o visitante precisa informar nome e um e-mail válido antes da primeira mensagem."
+        },
+        {
+          "label": "Horário de atendimento",
+          "help": "Fora deste horário o chat mostra a mensagem de ausência ou fica oculto."
+        },
+        {
+          "label": "Fuso horário",
+          "help": ""
+        },
+        {
+          "label": "Dias",
+          "help": ""
+        },
+        {
+          "label": "Abre às",
+          "help": ""
+        },
+        {
+          "label": "Fecha às",
+          "help": "Um horário de fechamento antes do de abertura termina depois da meia-noite."
+        },
+        {
+          "label": "Fora do horário",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de ausência",
+          "help": "Aparece no chat fora do horário de atendimento. Vazio usa o texto padrão."
         },
         {
           "label": "Permitir subdomínios",
