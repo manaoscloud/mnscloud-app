@@ -746,7 +746,8 @@ result panel, is rendered by it. Pick the surface by where the rows live:
 - Not tables (allowed): `DataViewerDialogComponent` sections (read-only key/value payload viewer,
   see `Read-Only Data Viewer Dialog Baseline`), `DashboardRecordListComponent` (dashboard record
   cards) and the server paginator shared by the Cards/List/Compact modes of the Metrics fleet
-  explorer.
+  explorer, and the printable HTML document built by `src/app/shared/print/print-html.ts` (a print
+  page rendered in a hidden iframe, never a screen).
 - Enforced in CI (`verify:changed`) by `npm run check:tables`
   (`scripts/validate-global-table.mjs`): any `<table>`, `mat-table`/`matColumnDef`,
   `MatTableModule`/`MatTableDataSource`, `<mat-paginator>` or `MatPaginatorModule` outside the

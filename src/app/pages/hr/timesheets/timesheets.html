@@ -62,6 +62,17 @@
     >
       <mat-icon>calculate</mat-icon>{{ 'Recalculate' | transloco }}
     </button>
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      class="hr-timesheet-print"
+      [disabled]="!timesheet()"
+      [matTooltip]="'Print the timesheet or save it as PDF' | transloco"
+      (click)="printTimesheet()"
+    >
+      <mat-icon>print</mat-icon>{{ 'Print / PDF' | transloco }}
+    </button>
   </section>
 
   @if (!employeeUUID()) {
@@ -83,6 +94,38 @@
         {{ 'Time zone' | transloco }}: {{ data.timezone }}
       </p>
     </header>
+
+    @if (header(); as art84) {
+      <section class="hr-timesheet-art84" [attr.aria-label]="'Timesheet header' | transloco">
+        <dl>
+          <dt>{{ 'Employer' | transloco }}</dt>
+          <dd>
+            {{ art84.employerName || '—' }} · {{ art84.employerDocumentLabel }}
+            {{ art84.employerDocument || '—' }}
+          </dd>
+          <dt>{{ 'Employee' | transloco }}</dt>
+          <dd>
+            {{ data.employee.Name }} · CPF {{ art84.employeeDocument || '—' }} ·
+            {{ 'Admission date' | transloco }} {{ art84.hireDate || '—' }}
+            @if (art84.position) {
+              · {{ art84.position }}
+            }
+          </dd>
+          @if (art84.schedules.length) {
+            <dt>{{ 'Contractual schedules' | transloco }}</dt>
+            <dd>
+              @for (schedule of art84.schedules; track $index) {
+                <strong>{{ schedule.name }}</strong>
+                <span class="hr-timesheet-schedule">{{ schedule.lines.join(' · ') }}</span>
+              }
+            </dd>
+          }
+        </dl>
+        <p class="hr-timesheet-legend">
+          (I) {{ 'Included mark' | transloco }} · (D) {{ 'Disregarded punch' | transloco }}
+        </p>
+      </section>
+    }
 
     <div class="dashboard-grid">
       @for (metric of totals(); track metric.label) {

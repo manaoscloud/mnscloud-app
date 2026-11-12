@@ -1,3 +1,6 @@
+import { buildCsv, csvFilename, downloadCsv } from '../../export/csv';
+import { printHtml, printListHtml } from '../../print/print-html';
+import { LIST_EXPORT_CAP, fetchAllListPages } from './crud-list-export';
 import { registryWorkspaceErrorMessage } from '../../registry/registry-workspace-error';
 import { registryWorkspaceApi } from './registry-workspace-api';
 import { commerceAccountApi } from './commerce-account-api';
@@ -739,6 +742,8 @@ export type ConfigurableCrudConfig = {
   listQuery?: Readonly<Record<string, string>>;
   /** Captured request scope inherited by embedded collections and canonical quick-create. */
   requestApi?: ApiService;
+  /** Opt-in list toolbar actions "Export CSV" and "Print" of the filtered list. */
+  listExport?: boolean;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
   /** Send canonical column fields to APIs supporting global ordering. */
@@ -818,6 +823,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);
   readonly serverTotal = signal(0);
+  readonly listExporting = signal(false);
   readonly saving = signal(false);
   readonly mutating = signal(false);
   /** Generic file-upload-progress state (app.md "File Upload Progress Baseline"). */
@@ -1371,6 +1377,81 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.sortActive.set(sort.active);
     this.sortDirection.set(sort.direction);
     this.pageIndex.set(0);
+  }
+
+  listExportEnabled(): boolean {
+    return (
+      this.config.listExport === true &&
+      !this.config.embedded &&
+      !this.config.collectionDialog &&
+      !this.config.formOnly
+    );
+  }
+
+  /** Every row of the current filters (all pages of the endpoint, capped), null on failure. */
+  private async listExportRows(): Promise<T[] | null> {
+    if (this.listExporting()) return null;
+    this.listExporting.set(true);
+    try {
+      if (!this.serverSidePagination()) return this.sortedRows();
+      const params = this.listResourceParams() as ConfigurableCrudListParams;
+      const total = this.serverTotal();
+      try {
+        const result = await fetchAllListPages<T>(async (limit, offset) => {
+          const items = await this.fetchItems({ ...params, limit, offset });
+          return { items, total: this.serverTotal() };
+        });
+        if (result.capped) {
+          this.snack.warning('Export limited to {count} rows.', 8000, {
+            count: LIST_EXPORT_CAP,
+          });
+        }
+        return result.rows;
+      } finally {
+        // Fetching pages moves the table total; put the visible page's total back.
+        this.serverTotal.set(total);
+      }
+    } catch {
+      this.snack.error(this.t('Failed to load the list for export.'));
+      return null;
+    } finally {
+      this.listExporting.set(false);
+    }
+  }
+
+  private listExportTable(rows: readonly T[]): { headers: string[]; rows: string[][] } {
+    const columns = this.tableColumns();
+    return {
+      headers: columns.map((column) => this.t(column.label)),
+      rows: rows.map((row) => columns.map((column) => this.columnText(row, column))),
+    };
+  }
+
+  async exportCsv(): Promise<void> {
+    const rows = await this.listExportRows();
+    if (!rows) return;
+    const table = this.listExportTable(rows);
+    downloadCsv(csvFilename(this.t(this.config.pageTitle)), buildCsv(table.headers, table.rows));
+  }
+
+  async printList(): Promise<void> {
+    const rows = await this.listExportRows();
+    if (!rows) return;
+    const filters = this.appliedFilters();
+    const search = filters.search?.trim();
+    try {
+      await printHtml(
+        printListHtml({
+          title: this.t(this.config.pageTitle),
+          subtitle: search ? `${this.t('Search')}: ${search}` : undefined,
+          table: this.listExportTable(rows),
+          footer: `${this.t('Issued at')}: ${this.dateTime.formatDateTime(new Date())}`,
+          lang: this.appI18n.language(),
+        }),
+      );
+    } catch {
+      this.snack.error(this.t('Failed to open the print dialog.'));
+    }
   }
 
   setPage(event: PageEvent): void {

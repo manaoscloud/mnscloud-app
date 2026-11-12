@@ -13963,5 +13963,22 @@
   "Adopted server: only plans with at least the CPU, memory and disk the VM has now are accepted.": "Servidor adotado: só são aceitos planos com pelo menos a CPU, a memória e o disco que a VM tem hoje.",
   "Created outside the platform and adopted; managed by the platform (never reprovisioned; deleting only unlinks it)": "Criada fora da plataforma e adotada; gerenciada pela plataforma (nunca reprovisionada; excluir só desvincula)",
   "Platform VMs created outside the platform (names mns-...). Adopting links them without changing the VM; afterwards they are managed like the servers the platform created (power, plan, migration, snapshots). The platform never deletes an adopted VM: removing the server only unlinks it.": "VMs da plataforma criadas fora dela (nomes mns-...). A adoção vincula sem alterar a VM; depois ela é gerenciada como os servidores criados pela plataforma (energia, plano, migração, snapshots). A plataforma nunca exclui uma VM adotada: remover o servidor apenas desfaz o vínculo.",
-  "Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.": "Trocar {name} para o plano {plan}? CPU e memória são aplicadas com reinício quando o servidor não as aceita em funcionamento; o disco só aumenta."
+  "Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.": "Trocar {name} para o plano {plan}? CPU e memória são aplicadas com reinício quando o servidor não as aceita em funcionamento; o disco só aumenta.",
+  "Export CSV": "Exportar CSV",
+  "Print": "Imprimir",
+  "Issued at": "Emitido em",
+  "Export limited to {count} rows.": "Exportação limitada a {count} linhas.",
+  "Failed to load the list for export.": "Não foi possível carregar a lista para exportar.",
+  "Failed to open the print dialog.": "Não foi possível abrir a impressão.",
+  "Print / PDF": "Imprimir / PDF",
+  "Print the timesheet or save it as PDF": "Imprimir o espelho ou salvá-lo em PDF",
+  "Timesheet header": "Cabeçalho do espelho de ponto",
+  "Employer": "Empregador",
+  "Admission date": "Admissão",
+  "Contractual schedules": "Jornadas contratuais",
+  "Treatments": "Tratamentos",
+  "Schedule hours": "Horários",
+  "Treatment mark": "Marcador",
+  "No treatments in the period.": "Nenhum tratamento no período.",
+  "Totals": "Totais"
 }

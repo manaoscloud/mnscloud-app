@@ -13962,5 +13962,22 @@
   "Adopted server: only plans with at least the CPU, memory and disk the VM has now are accepted.": "Servidor adoptado: solo se aceptan planes con al menos la CPU, la memoria y el disco que la VM tiene ahora.",
   "Created outside the platform and adopted; managed by the platform (never reprovisioned; deleting only unlinks it)": "Creada fuera de la plataforma y adoptada; gestionada por la plataforma (nunca se reaprovisiona; eliminar solo la desvincula)",
   "Platform VMs created outside the platform (names mns-...). Adopting links them without changing the VM; afterwards they are managed like the servers the platform created (power, plan, migration, snapshots). The platform never deletes an adopted VM: removing the server only unlinks it.": "VMs de la plataforma creadas fuera de ella (nombres mns-...). La adopción las vincula sin modificar la VM; después se gestionan como los servidores creados por la plataforma (energía, plan, migración, snapshots). La plataforma nunca elimina una VM adoptada: quitar el servidor solo deshace el vínculo.",
-  "Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.": "¿Cambiar {name} al plan {plan}? La CPU y la memoria se aplican con un reinicio cuando el servidor no las acepta en funcionamiento; el disco solo crece."
+  "Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.": "¿Cambiar {name} al plan {plan}? La CPU y la memoria se aplican con un reinicio cuando el servidor no las acepta en funcionamiento; el disco solo crece.",
+  "Export CSV": "Exportar CSV",
+  "Print": "Imprimir",
+  "Issued at": "Emitido el",
+  "Export limited to {count} rows.": "Exportación limitada a {count} filas.",
+  "Failed to load the list for export.": "No se pudo cargar la lista para exportar.",
+  "Failed to open the print dialog.": "No se pudo abrir la impresión.",
+  "Print / PDF": "Imprimir / PDF",
+  "Print the timesheet or save it as PDF": "Imprimir la hoja o guardarla como PDF",
+  "Timesheet header": "Encabezado de la hoja de tiempo",
+  "Employer": "Empleador",
+  "Admission date": "Admisión",
+  "Contractual schedules": "Jornadas contractuales",
+  "Treatments": "Tratamientos",
+  "Schedule hours": "Horarios",
+  "Treatment mark": "Marcador",
+  "No treatments in the period.": "Ningún tratamiento en el período.",
+  "Totals": "Totales"
 }
