@@ -13200,5 +13200,8 @@
   "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.": "Estamos fora do horário de atendimento. Deixe sua mensagem e responderemos assim que possível.",
   "Shown in the chat outside business hours. Empty uses the default text.": "Aparece en el chat fuera del horario de atención. Vacío usa el texto predeterminado.",
   "conversations.hoursTimeInvalid": "Indique la hora en el formato HH:MM.",
-  "conversations.hoursSameTime": "La hora de cierre debe ser distinta de la de apertura."
+  "conversations.hoursSameTime": "La hora de cierre debe ser distinta de la de apertura.",
+  "hostingVps.platformPlacementGroupHelp": "Opcional. Vacío = automático por el nombre del servidor: mns-<rol>-<entorno>N entra en el grupo <rol>-<entorno> (mns-dns-prod2 → dns-prod). Los servidores del mismo grupo quedan en nodos distintos; sin nodo libre, el nuevo va al nodo con menos miembros.",
+  "automatic from the name": "automático por el nombre",
+  "shares a node with another member (no free node)": "comparte el nodo con otro miembro (sin nodo libre)"
 }
