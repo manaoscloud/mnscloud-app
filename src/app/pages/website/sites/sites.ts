@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { plainText } from '../shared/website-inbox';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -21,6 +22,11 @@ export const WEBSITE_SITE_STATUS_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'suspended', label: 'website.status.suspended' },
 ];
 
+export const WEBSITE_SEGMENT_OPTIONS: ConfigurableCrudOption[] = [
+  { value: 'generic', label: 'website.segment.generic' },
+  { value: 'gasstation', label: 'website.segment.gasstation' },
+];
+
 /** Managed DNS publication of the automatic domain; `external` when the platform does not publish. */
 export const WEBSITE_DNS_STATE_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'external', label: 'External' },
@@ -34,7 +40,7 @@ export const WEBSITE_DNS_STATE_OPTIONS: ConfigurableCrudOption[] = [
 ];
 
 function statusChip(value: unknown): string {
-  const status = String(value ?? '');
+  const status = plainText(value);
   if (status === 'published') return 'chip-success';
   if (status === 'suspended' || status === 'failed' || status === 'conflict') return 'chip-failed';
   if (status === 'pending' || status === 'queued') return 'chip-queued';
@@ -49,7 +55,7 @@ export function websiteSiteRow(item: ConfigurableCrudRecord): ConfigurableCrudRe
   const dns = item['dns'] as SiteDns;
   return {
     ...item,
-    dnsState: String(dns?.status ?? '') || 'external',
+    dnsState: plainText(dns?.status) || 'external',
     dnsError: dns?.error ? String(dns.error) : '',
     dnsCanRetry: dns?.canRetry === true,
     publishedVersion: Number(item['publishedVersion'] ?? 0) || null,
@@ -61,14 +67,15 @@ export function websiteSitePayload(
   values: ConfigurableCrudRecord,
   editing: boolean,
 ): ConfigurableCrudRecord {
-  const defaultLocale = String(values['defaultLocale'] ?? '');
+  const defaultLocale = plainText(values['defaultLocale']);
   const selected = Array.isArray(values['locales']) ? values['locales'].map(String) : [];
   const locales = [...new Set([defaultLocale, ...selected])].filter(isWebsiteLocale);
   return {
-    name: String(values['name'] ?? '').trim(),
+    name: plainText(values['name']).trim(),
     defaultLocale,
     locales,
-    themeDomainUUID: String(values['themeDomainUUID'] ?? '') || null,
+    segment: plainText(values['segment']) || 'generic',
+    themeDomainUUID: plainText(values['themeDomainUUID']) || null,
     ...(editing ? { revision: Number(values['revision']) } : {}),
   };
 }
@@ -103,6 +110,7 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
       name: '',
       defaultLocale: 'pt-BR',
       locales: ['pt-BR'],
+      segment: 'generic',
       themeDomainUUID: '',
       revision: 1,
     },
@@ -137,6 +145,17 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
         required: true,
         span: 1,
         help: 'website.localesHelp',
+      },
+      {
+        key: 'segment',
+        source: 'segment',
+        label: 'website.segment',
+        type: 'select',
+        options: WEBSITE_SEGMENT_OPTIONS,
+        translateOptions: true,
+        required: true,
+        span: 1,
+        help: 'website.segmentHelp',
       },
       {
         key: 'themeDomainUUID',
@@ -178,7 +197,20 @@ function websiteSitesConfig(): ConfigurableCrudConfig {
         width: 'sm',
         value: (row, translate) => {
           const option = WEBSITE_LOCALE_OPTIONS.find((o) => o.value === row['defaultLocale']);
-          return option ? translate(option.label) : String(row['defaultLocale'] ?? '');
+          return option ? translate(option.label) : plainText(row['defaultLocale']);
+        },
+      },
+      {
+        id: 'segment',
+        field: 'segment',
+        label: 'website.segment',
+        kind: 'text',
+        width: 'sm',
+        value: (row, translate) => {
+          const option = WEBSITE_SEGMENT_OPTIONS.find(
+            (o) => o.value === (row['segment'] || 'generic'),
+          );
+          return option ? translate(option.label) : plainText(row['segment']);
         },
       },
       {
@@ -272,7 +304,7 @@ export class WebsiteSitesPage extends ConfigurableCrudPageBase<ConfigurableCrudR
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    const status = String(row['status'] ?? '');
+    const status = plainText(row['status']);
     return [
       EDIT_CONTENT_ACTION,
       ...(status !== 'suspended' ? [PUBLISH_ACTION] : []),

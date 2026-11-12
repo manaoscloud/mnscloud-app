@@ -27,6 +27,8 @@ Official business/UI glossary used by the app translation layer.
 | Notes | Observações | Notas |
 | Actions | Ações | Acciones |
 | Company | Empresa | Empresa |
+| Location | Local | Ubicación |
+| Locations | Locais | Ubicaciones |
 | Customer | Cliente | Cliente |
 | Supplier | Fornecedor | Proveedor |
 | Carrier | Transportadora | Transportista |

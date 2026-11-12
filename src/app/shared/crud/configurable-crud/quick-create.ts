@@ -414,6 +414,11 @@ export const QUICK_CREATE_REGISTRY = {
     loadComponent: () =>
       import('../../../pages/registry/cost-centers/cost-centers').then((m) => m.RegCostCenterPage),
   },
+  RegLocationRlcUUID: {
+    label: 'Create location',
+    loadComponent: () =>
+      import('../../../pages/registry/locations/locations').then((m) => m.RegLocationPage),
+  },
   RegDepartmentRdeUUID: {
     label: 'Create department',
     loadComponent: () =>

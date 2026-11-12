@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e5dd5d6bb75a",
+  "version": "2b1e21b6096b",
   "language": "pt-BR",
   "entries": [
     {
@@ -6018,6 +6018,107 @@
         },
         {
           "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/locations",
+      "menuPath": "Cadastros › Locais",
+      "scope": "tenant",
+      "title": "Locais",
+      "description": "Locais da sua organização, como postos, filiais ou lojas, com endereço, horário de funcionamento e serviços, publicados no site público.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Slug",
+          "help": "Parte do endereço público do local no site: minúsculas, números e hífens (por exemplo, centro-norte). Único entre os locais ativos."
+        },
+        {
+          "label": "Publicada",
+          "help": "Só os locais publicados e ativos aparecem no site público."
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "WhatsApp",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Serviços",
+          "help": "Um serviço por linha; o texto é publicado como você escrever."
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Latitude",
+          "help": ""
+        },
+        {
+          "label": "Longitude",
+          "help": ""
+        },
+        {
+          "label": "Aberto 24 horas",
+          "help": "Quando ativo, os horários por dia da semana são ignorados."
+        },
+        {
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -14121,6 +14222,48 @@
       ]
     },
     {
+      "route": "/website/ethics-reports",
+      "menuPath": "Website › Ética",
+      "scope": "tenant",
+      "title": "Ética",
+      "description": "Denúncias recebidas pelo canal de ética dos seus sites. Denúncias anônimas não guardam identificação; analise cada uma e registre o resultado nas observações.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/leads",
+      "menuPath": "Website › Leads",
+      "scope": "tenant",
+      "title": "Leads",
+      "description": "Solicitações de contato e de frota enviadas pelos seus sites. Acompanhe cada uma e marque como contatada ou encerrada.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/website/offers",
       "menuPath": "Website › Ofertas",
       "scope": "tenant",
@@ -14212,6 +14355,10 @@
         {
           "label": "Idiomas",
           "help": "Idiomas em que o site é publicado; cada um tem sua própria aba de conteúdo no editor."
+        },
+        {
+          "label": "Segmento",
+          "help": "Define o conteúdo inicial e o tipo de negócio publicado no site. Altere com cuidado em sites já publicados."
         },
         {
           "label": "Domínio próprio",

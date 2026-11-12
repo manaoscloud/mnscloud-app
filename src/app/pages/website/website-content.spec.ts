@@ -139,8 +139,15 @@ describe('Website content v1', () => {
       name: 'Shop',
       defaultLocale: 'en-US',
       locales: ['en-US', 'pt-BR'],
+      segment: 'generic',
       themeDomainUUID: null,
     });
+    expect(
+      websiteSitePayload(
+        { name: 'S', defaultLocale: 'pt-BR', locales: ['pt-BR'], segment: 'gasstation' },
+        false,
+      )['segment'],
+    ).toBe('gasstation');
     expect(
       websiteSitePayload(
         {
@@ -153,6 +160,90 @@ describe('Website content v1', () => {
         true,
       )['revision'],
     ).toBe(3);
+  });
+
+  it('keeps v1 documents identical: optional blocks stay absent until used', () => {
+    const content = normalizeWebsiteContent(null, ['pt-BR']);
+    const block = content.locales['pt-BR'];
+    expect(block?.locations).toBeUndefined();
+    expect(block?.pages).toBeUndefined();
+    expect(block?.promotions).toBeUndefined();
+    const payload = websiteContentPayload(content, ['pt-BR']).locales['pt-BR'];
+    expect(Object.keys(payload ?? {})).toEqual(['seo', 'hero', 'sections', 'footer', 'legal']);
+  });
+
+  it('normalizes and sends locations, pages and promotions when present', () => {
+    const content = normalizeWebsiteContent(
+      {
+        locales: {
+          'pt-BR': {
+            locations: { enabled: true, title: ' Postos ', intro: '' },
+            pages: { services: { enabled: true, title: 'S', text: 'T' }, bogus: { enabled: true } },
+            promotions: [{ title: 'Oferta', text: 'x', validFrom: '2026-01-01', validUntil: '' }],
+          },
+        },
+      },
+      ['pt-BR'],
+    );
+    const block = content.locales['pt-BR'];
+    expect(block?.pages && Object.keys(block.pages)).toEqual(['services']);
+    expect(block?.promotions?.[0]).toEqual({
+      id: 'p1',
+      title: 'Oferta',
+      text: 'x',
+      validFrom: '2026-01-01',
+    });
+    const payload = websiteContentPayload(content, ['pt-BR']).locales['pt-BR'];
+    expect(payload?.locations).toEqual({ enabled: true, title: 'Postos', intro: '' });
+    expect(payload?.pages?.services).toEqual({ enabled: true, title: 'S', text: 'T' });
+    expect(payload?.promotions).toEqual([
+      { id: 'p1', title: 'Oferta', text: 'x', validFrom: '2026-01-01' },
+    ]);
+  });
+
+  it('omits empty optional blocks from the payload', () => {
+    const content = normalizeWebsiteContent(
+      {
+        locales: {
+          'pt-BR': {
+            locations: { enabled: false, title: ' ', intro: '' },
+            pages: { about: { enabled: false, title: '', text: '' } },
+            promotions: [],
+          },
+        },
+      },
+      ['pt-BR'],
+    );
+    const payload = websiteContentPayload(content, ['pt-BR']).locales['pt-BR'];
+    expect(payload?.locations).toBeUndefined();
+    expect(payload?.pages).toBeUndefined();
+    expect(payload?.promotions).toBeUndefined();
+  });
+
+  it('validates promotion title, dates, order and the maximum of 12', () => {
+    const content = normalizeWebsiteContent(null, ['pt-BR']);
+    const block = content.locales['pt-BR']!;
+    block.promotions = [
+      { id: 'p1', title: '', text: '' },
+      { id: 'p2', title: 'A', text: '', validFrom: '2026-13-01', validUntil: '2026-02-30' },
+      { id: 'p3', title: 'B', text: '', validFrom: '2026-05-02', validUntil: '2026-05-01' },
+      { id: 'p4', title: 'C', text: '', validFrom: '2026-05-01', validUntil: '2026-05-01' },
+    ];
+    const errors = validateWebsiteContent(content, ['pt-BR'], false);
+    expect(errors.map((e) => [e.path, e.message])).toEqual([
+      ['pt-BR.promotions.0.title', 'form.validation.required'],
+      ['pt-BR.promotions.1.validFrom', 'website.validation.date'],
+      ['pt-BR.promotions.1.validUntil', 'website.validation.date'],
+      ['pt-BR.promotions.2.validUntil', 'website.validation.dateOrder'],
+    ]);
+    block.promotions = Array.from({ length: 13 }, (_, i) => ({
+      id: `p${i + 1}`,
+      title: 'T',
+      text: '',
+    }));
+    expect(validateWebsiteContent(content, ['pt-BR'], false).map((e) => e.message)).toEqual([
+      'website.validation.promotionsMax',
+    ]);
   });
 
   it('flattens the nested DNS state of a list row', () => {
