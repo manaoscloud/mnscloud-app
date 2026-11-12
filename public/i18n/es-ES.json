@@ -13748,7 +13748,7 @@
   "automation.banner.editAnyway": "Editar de todos modos",
   "automation.banner.reload": "Recargar",
   "automation.banner.retry": "Reintentar",
-  "automation.banner.conflict": "El flujo cambió en otro lugar. Recargue para continuar desde el borrador más reciente.",
+  "automation.banner.conflict": "El borrador cambió en otro lugar. Recárguelo o sobrescríbalo con su versión.",
   "automation.banner.saveFailed": "No se pudo guardar el borrador.",
   "automation.banner.readOnly": "Puede ver este flujo pero no modificarlo.",
   "automation.pane.steps": "Pasos",
@@ -13915,5 +13915,8 @@
   "automation.enum.resolved": "Resuelta",
   "automation.enum.pending": "Esperando al contacto",
   "automation.enum.snoozed": "Pospuesta",
-  "automation.enum.text": "Texto"
+  "automation.enum.text": "Texto",
+  "automation.editor.leaveUnsaved": "Hay cambios sin guardar. ¿Salir de todos modos?",
+  "automation.banner.overwrite": "Sobrescribir",
+  "automation.test.contactsFailed": "No se pudieron guardar los contactos de prueba."
 }

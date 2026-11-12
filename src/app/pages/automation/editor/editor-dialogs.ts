@@ -88,6 +88,8 @@ export class AutomationPublishDialog {
 export interface VersionsDialogData {
   flowUUID: string;
   canRestore: boolean;
+  revision: number;
+  force: boolean;
 }
 
 /** Published versions of the flow; restoring copies one into the draft. */
@@ -190,7 +192,12 @@ export class AutomationVersionsDialog {
   }
 
   async restore(version: FlowVersion): Promise<void> {
-    await this.service.restore(this.data.flowUUID, version.uuid);
+    await this.service.restore(
+      this.data.flowUUID,
+      version.uuid,
+      this.data.revision,
+      this.data.force,
+    );
     this.ref.close(true);
   }
 }

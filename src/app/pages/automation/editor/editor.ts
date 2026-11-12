@@ -119,7 +119,7 @@ const VALIDATE_DELAY_MS = 1500;
   templateUrl: './editor.html',
   styleUrl: './editor.scss',
   encapsulation: ViewEncapsulation.None,
-  host: { '(keydown)': 'onKey($event)' },
+  host: { '(keydown)': 'onKey($event)', '(window:beforeunload)': 'onUnload($event)' },
 })
 export class AutomationEditorPage {
   private readonly route = inject(ActivatedRoute);
@@ -166,7 +166,9 @@ export class AutomationEditorPage {
     ),
   );
   readonly locked = computed(() => this.saveState() === 'locked');
-  readonly readOnly = computed(() => !this.canWrite() || this.locked());
+  readonly readOnly = computed(
+    () => !this.canWrite() || this.locked() || this.saveState() === 'conflict',
+  );
   readonly selected = computed(
     () => this.graph().nodes.find((node) => node.id === this.selectedId()) ?? null,
   );
@@ -213,9 +215,11 @@ export class AutomationEditorPage {
 
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private validateTimer: ReturnType<typeof setTimeout> | null = null;
-  private inflight: Promise<void> | null = null;
+  private running: Promise<void> | null = null;
   private again = false;
   private force = false;
+  private tookLock = false;
+  private pendingContacts: string[] | null = null;
   private baseline = '';
 
   constructor() {
@@ -223,6 +227,8 @@ export class AutomationEditorPage {
     this.destroyRef.onDestroy(() => {
       if (this.saveTimer) clearTimeout(this.saveTimer);
       if (this.validateTimer) clearTimeout(this.validateTimer);
+      // Leaving with a pending change still saves it (the service outlives the page).
+      if (this.dirty()) void this.save();
     });
     void this.load();
   }
@@ -516,25 +522,52 @@ export class AutomationEditorPage {
     this.saveTimer = setTimeout(() => void this.save(), SAVE_DELAY_MS);
   }
 
-  /** Saves the draft now, waiting for a save already in flight. */
+  /** Pending changes the user would lose by leaving. */
+  dirty(): boolean {
+    return (
+      ['dirty', 'saving'].includes(this.saveState()) ||
+      this.pendingContacts !== null ||
+      this.running !== null
+    );
+  }
+
+  onUnload(event: Event): void {
+    if (this.dirty()) event.preventDefault();
+  }
+
+  /** Route guard: saves first; when it cannot, asks before discarding. */
+  async canLeave(): Promise<boolean> {
+    if (!this.dirty()) return true;
+    await this.save();
+    if (!this.dirty() && this.saveState() === 'saved') return true;
+    return window.confirm(this.transloco.translate('automation.editor.leaveUnsaved'));
+  }
+
+  /**
+   * Saves the draft (and pending test contacts) now. Every caller gets the whole queue: a request
+   * that arrives while a save runs makes the loop go once more, and all of them wait for it.
+   */
   async save(force = false): Promise<void> {
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
       this.saveTimer = null;
     }
     if (force) this.force = true;
-    if (this.inflight) {
-      this.again = true;
-      return this.inflight;
-    }
-    this.inflight = this.persist().finally(() => {
-      this.inflight = null;
-      if (this.again) {
+    this.again = true;
+    this.running ??= this.drain();
+    return this.running;
+  }
+
+  private async drain(): Promise<void> {
+    try {
+      while (this.again) {
         this.again = false;
-        void this.save();
+        await this.persist();
+        await this.persistContacts();
       }
-    });
-    return this.inflight;
+    } finally {
+      this.running = null;
+    }
   }
 
   private async persist(): Promise<void> {
@@ -550,6 +583,7 @@ export class AutomationEditorPage {
     const force = this.force;
     try {
       const saved = await this.service.saveDraft(this.uuid, flow.revision, graph, force);
+      this.tookLock = this.tookLock || force;
       this.force = false;
       this.baseline = serialized;
       this.flow.update((current) =>
@@ -576,7 +610,57 @@ export class AutomationEditorPage {
       }
       return;
     }
-    this.saveState.set(failure.status === 409 ? 'conflict' : 'error');
+    if (failure.status === 409) {
+      await this.markConflict();
+      return;
+    }
+    this.saveState.set('error');
+  }
+
+  /** The draft changed elsewhere: take its revision, keep the local graph, wait for the choice. */
+  private async markConflict(): Promise<void> {
+    this.saveState.set('conflict');
+    try {
+      const current = await this.service.flow(this.uuid);
+      this.flow.update((flow) =>
+        flow ? { ...flow, revision: current.revision, lock: current.lock } : flow,
+      );
+    } catch {
+      // Reload stays available.
+    }
+  }
+
+  /** "Overwrite": saves the local graph over the newer draft, with its fresh revision. */
+  async overwrite(): Promise<void> {
+    this.saveState.set('dirty');
+    await this.save(true);
+  }
+
+  private async persistContacts(): Promise<void> {
+    const contacts = this.pendingContacts;
+    const flow = this.flow();
+    if (contacts === null || !flow || !this.canWrite() || this.saveState() === 'conflict') return;
+    this.pendingContacts = null;
+    try {
+      const saved = await this.service.saveTestContacts(this.uuid, flow.revision, contacts);
+      this.flow.update((current) =>
+        current ? { ...current, revision: saved.revision || current.revision } : current,
+      );
+    } catch (error) {
+      this.snack.error('automation.test.contactsFailed');
+      const status = (error as { status?: number }).status;
+      if (status === 409) await this.markConflict();
+      else if (this.saveState() === 'saved' || this.saveState() === 'dirty') {
+        try {
+          const current = await this.service.flow(this.uuid);
+          this.flow.update((f) =>
+            f ? { ...f, revision: current.revision, testContacts: current.testContacts } : f,
+          );
+        } catch {
+          // Keep the optimistic list; the next save retries nothing.
+        }
+      }
+    }
   }
 
   /** "Edit anyway": takes the draft lock from the other editor and saves the current graph. */
@@ -628,7 +712,7 @@ export class AutomationEditorPage {
   async publish(): Promise<void> {
     await this.save();
     const flow = this.flow();
-    if (!flow || this.saveState() !== 'saved') return;
+    if (!flow || this.saveState() !== 'saved' || this.dirty()) return;
     const result = await this.validate(false);
     if (!result) return;
     if (result.errors.length) {
@@ -658,7 +742,9 @@ export class AutomationEditorPage {
     await this.save();
     const restored = await openVersions(this.dialog, {
       flowUUID: this.uuid,
-      canRestore: this.canWrite(),
+      canRestore: this.canWrite() && !this.readOnly(),
+      revision: this.flow()?.revision ?? 0,
+      force: this.tookLock,
     });
     if (restored) {
       this.snack.success('automation.versions.restored');
@@ -668,15 +754,12 @@ export class AutomationEditorPage {
 
   // ---- test panel ----------------------------------------------------------------------------
 
-  async setTestContacts(contacts: string[]): Promise<void> {
-    const flow = this.flow();
-    if (!flow) return;
-    const saved = await this.service.saveTestContacts(this.uuid, flow.revision, contacts);
-    this.flow.update((current) =>
-      current
-        ? { ...current, revision: saved.revision || current.revision, testContacts: contacts }
-        : current,
-    );
+  /** Optimistic update; the save queue sends it after any draft save, with the latest revision. */
+  setTestContacts(contacts: string[]): void {
+    if (!this.flow()) return;
+    this.flow.update((current) => (current ? { ...current, testContacts: contacts } : current));
+    this.pendingContacts = contacts;
+    void this.save();
   }
 
   onVisited(ids: string[]): void {

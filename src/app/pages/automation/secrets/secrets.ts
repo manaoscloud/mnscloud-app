@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AuthService } from '../../../services/auth.service';
+import { AUTOMATION_PERMISSIONS } from '../automation-adapter';
+import { gateWrite } from '../automation-access';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -10,7 +14,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 /** Secret names are upper case with digits and underscores (`{{secret.NAME}}` in HTTP nodes). */
 export const SECRET_NAME_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/;
 
-/** Body for create/update: the value is write-only and sent only when typed. */
+/** Body for create/update (the name is set on create only): the value is write-only and sent only when typed. */
 export function secretPayload(
   values: Record<string, unknown>,
   editing: boolean,
@@ -18,10 +22,13 @@ export function secretPayload(
   const value = String(values['value'] ?? '');
   const description = String(values['description'] ?? '').trim();
   return {
-    ...(editing ? { revision: Number(values['revision']) } : {}),
-    name: String(values['name'] ?? '')
-      .trim()
-      .toUpperCase(),
+    ...(editing
+      ? { revision: Number(values['revision']) }
+      : {
+          name: String(values['name'] ?? '')
+            .trim()
+            .toUpperCase(),
+        }),
     description,
     ...(value ? { value } : {}),
   };
@@ -54,6 +61,7 @@ export const AUTOMATION_SECRETS_CONFIG = defineCrud({
       label: 'Name',
       required: true,
       span: 1,
+      disabledWhen: ({ editing }) => editing,
       help: 'automation.secrets.nameHelp',
     },
     // business-description: what the secret is for, shown in the list.
@@ -88,7 +96,15 @@ export const AUTOMATION_SECRETS_CONFIG = defineCrud({
 })
 export class AutomationSecretsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
-    super(AUTOMATION_SECRETS_CONFIG);
+    super(
+      gateWrite(
+        AUTOMATION_SECRETS_CONFIG,
+        hasEffectivePermission(
+          inject(AuthService).user()?.permissions ?? [],
+          AUTOMATION_PERMISSIONS.secretsWrite,
+        ),
+      ),
+    );
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {

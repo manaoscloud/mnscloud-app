@@ -13748,7 +13748,7 @@
   "automation.banner.editAnyway": "Edit anyway",
   "automation.banner.reload": "Reload",
   "automation.banner.retry": "Try again",
-  "automation.banner.conflict": "The flow changed elsewhere. Reload to continue from the latest draft.",
+  "automation.banner.conflict": "The draft changed elsewhere. Reload it, or overwrite it with your version.",
   "automation.banner.saveFailed": "The draft could not be saved.",
   "automation.banner.readOnly": "You can view this flow but not change it.",
   "automation.pane.steps": "Steps",
@@ -13915,5 +13915,8 @@
   "automation.enum.resolved": "Resolved",
   "automation.enum.pending": "Waiting for the contact",
   "automation.enum.snoozed": "Snoozed",
-  "automation.enum.text": "Text"
+  "automation.enum.text": "Text",
+  "automation.editor.leaveUnsaved": "There are changes that were not saved. Leave anyway?",
+  "automation.banner.overwrite": "Overwrite",
+  "automation.test.contactsFailed": "Could not save the test contacts."
 }

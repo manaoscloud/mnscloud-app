@@ -13749,7 +13749,7 @@
   "automation.banner.editAnyway": "Editar mesmo assim",
   "automation.banner.reload": "Recarregar",
   "automation.banner.retry": "Tentar de novo",
-  "automation.banner.conflict": "O fluxo foi alterado em outro lugar. Recarregue para continuar do rascunho mais recente.",
+  "automation.banner.conflict": "O rascunho mudou em outro lugar. Recarregue ou sobrescreva com a sua versão.",
   "automation.banner.saveFailed": "Não foi possível salvar o rascunho.",
   "automation.banner.readOnly": "Você pode ver este fluxo, mas não alterá-lo.",
   "automation.pane.steps": "Etapas",
@@ -13916,5 +13916,8 @@
   "automation.enum.resolved": "Resolvida",
   "automation.enum.pending": "Aguardando o contato",
   "automation.enum.snoozed": "Adiada",
-  "automation.enum.text": "Texto"
+  "automation.enum.text": "Texto",
+  "automation.editor.leaveUnsaved": "Há alterações não salvas. Sair mesmo assim?",
+  "automation.banner.overwrite": "Sobrescrever",
+  "automation.test.contactsFailed": "Não foi possível salvar os contatos de teste."
 }

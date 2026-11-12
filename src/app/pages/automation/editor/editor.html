@@ -87,7 +87,12 @@
       <div class="auto-banner" role="alert">
         <mat-icon>sync_problem</mat-icon>
         <span>{{ 'automation.banner.conflict' | transloco }}</span>
-        <button mat-stroked-button type="button" (click)="reload()">
+        @if (canWrite()) {
+          <button mat-stroked-button type="button" (click)="overwrite()">
+            {{ 'automation.banner.overwrite' | transloco }}
+          </button>
+        }
+        <button mat-button type="button" (click)="reload()">
           {{ 'automation.banner.reload' | transloco }}
         </button>
       </div>

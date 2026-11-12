@@ -312,7 +312,7 @@ export function toVersions(response: unknown): FlowVersion[] {
       state: asText(item['AfvState'] ?? item['state']),
       note: asText(item['AfvNote'] ?? item['note']),
       publishedAt: asText(item['AfvPublishedAt'] ?? item['publishedAt']),
-      publishedBy: asText(item['PublishedByName'] ?? item['publishedByName']),
+      publishedBy: asText(item['AfvPublishedByName'] ?? item['publishedByName']),
     };
   });
 }

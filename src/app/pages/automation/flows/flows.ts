@@ -1,5 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AuthService } from '../../../services/auth.service';
+import { AUTOMATION_PERMISSIONS } from '../automation-adapter';
+import { gateWrite } from '../automation-access';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -142,7 +146,15 @@ export class AutomationFlowsPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly router = inject(Router);
 
   constructor() {
-    super(AUTOMATION_FLOWS_CONFIG);
+    super(
+      gateWrite(
+        AUTOMATION_FLOWS_CONFIG,
+        hasEffectivePermission(
+          inject(AuthService).user()?.permissions ?? [],
+          AUTOMATION_PERMISSIONS.flowsWrite,
+        ),
+      ),
+    );
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {

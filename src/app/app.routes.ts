@@ -2650,6 +2650,10 @@ export const routes: Routes = [
               {
                 path: 'automation/flows/:uuid/editor',
                 canActivate: [permissionGuard],
+                canDeactivate: [
+                  (component: { canLeave?: () => Promise<boolean> }) =>
+                    component.canLeave?.() ?? true,
+                ],
                 loadComponent: () =>
                   import('./pages/automation/editor/editor').then((m) => m.AutomationEditorPage),
                 title: 'Automations • Flow editor | mnscloud',

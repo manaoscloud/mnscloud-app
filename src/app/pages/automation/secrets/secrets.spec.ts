@@ -9,7 +9,6 @@ describe('secretPayload', () => {
     });
     expect(secretPayload({ name: 'A_B', revision: '3', value: '' }, true)).toEqual({
       revision: 3,
-      name: 'A_B',
       description: '',
     });
   });

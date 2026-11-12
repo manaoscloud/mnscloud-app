@@ -72,8 +72,16 @@ export class AutomationService {
     );
   }
 
-  async restore(uuid: string, versionUUID: string): Promise<void> {
-    await this.api.post(`automation/flows/${uuid}/versions/${versionUUID}/restore`, {});
+  async restore(
+    uuid: string,
+    versionUUID: string,
+    revision: number,
+    force: boolean,
+  ): Promise<void> {
+    await this.api.post(`automation/flows/${uuid}/versions/${versionUUID}/restore`, {
+      revision,
+      ...(force ? { force: true } : {}),
+    });
   }
 
   async simulate(

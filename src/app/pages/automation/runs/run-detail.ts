@@ -5,10 +5,12 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { ReportProblemButtonComponent } from '../../../shared/support-report-dialog/report-problem-button';
-import { RUN_LIVE_STATES, RunDetail } from '../automation-adapter';
+import { AUTOMATION_PERMISSIONS, RUN_LIVE_STATES, RunDetail } from '../automation-adapter';
 import { AutomationService } from '../automation.service';
 
 export interface RunDetailData {
@@ -147,13 +149,17 @@ export class AutomationRunDetailDialog {
   private readonly ref = inject(MatDialogRef<AutomationRunDetailDialog, boolean>);
   private readonly service = inject(AutomationService);
   private readonly snack = inject(SnackbarService);
+  private readonly auth = inject(AuthService);
 
   readonly run = signal<RunDetail | null>(null);
   readonly loading = signal(true);
   readonly icon = stepIcon;
 
   live(): boolean {
-    return RUN_LIVE_STATES.includes(this.run()?.state ?? '');
+    return (
+      RUN_LIVE_STATES.includes(this.run()?.state ?? '') &&
+      hasEffectivePermission(this.auth.user()?.permissions ?? [], AUTOMATION_PERMISSIONS.runsCancel)
+    );
   }
 
   constructor() {

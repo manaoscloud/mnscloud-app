@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { hasEffectivePermission } from '../../../core/guards/permission.guard';
+import { AuthService } from '../../../services/auth.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudOption,
@@ -8,7 +10,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { RUN_LIVE_STATES } from '../automation-adapter';
+import { AUTOMATION_PERMISSIONS, RUN_LIVE_STATES } from '../automation-adapter';
 import { openRunDetail } from './run-detail';
 
 export const AUTOMATION_RUN_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -129,9 +131,20 @@ export const AUTOMATION_RUNS_CONFIG = defineCrud({
 })
 export class AutomationRunsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly matDialog = inject(MatDialog);
+  private readonly auth = inject(AuthService);
 
   constructor() {
     super(AUTOMATION_RUNS_CONFIG);
+  }
+
+  /** Cancelling needs its own permission; without it the action is not offered. */
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    return hasEffectivePermission(
+      this.auth.user()?.permissions ?? [],
+      AUTOMATION_PERMISSIONS.runsCancel,
+    )
+      ? [DETAILS, CANCEL]
+      : [DETAILS];
   }
 
   override handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
