@@ -13714,6 +13714,7 @@
   "automation.secrets.nameHelp": "Upper case letters, digits and underscores, starting with a letter (for example CRM_TOKEN).",
   "automation.secrets.nameInvalid": "Use upper case letters, digits and underscores, starting with a letter.",
   "Flows": "Flows",
+  "Automation": "Automations",
   "Conversations": "Conversations",
   "Archived": "Archived",
   "Handed off to the team": "Handed off to the team",

@@ -13715,6 +13715,7 @@
   "automation.secrets.nameHelp": "Letras maiúsculas, números e sublinhados, começando por letra (por exemplo CRM_TOKEN).",
   "automation.secrets.nameInvalid": "Use letras maiúsculas, números e sublinhados, começando por letra.",
   "Flows": "Fluxos",
+  "Automation": "Automações",
   "Conversations": "Conversas",
   "Archived": "Arquivado",
   "Handed off to the team": "Passada para a equipe",

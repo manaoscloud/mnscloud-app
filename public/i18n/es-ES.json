@@ -13714,6 +13714,7 @@
   "automation.secrets.nameHelp": "Letras mayúsculas, dígitos y guiones bajos, empezando por una letra (por ejemplo CRM_TOKEN).",
   "automation.secrets.nameInvalid": "Use letras mayúsculas, dígitos y guiones bajos, empezando por una letra.",
   "Flows": "Flujos",
+  "Automation": "Automatizaciones",
   "Conversations": "Conversaciones",
   "Archived": "Archivado",
   "Handed off to the team": "Derivada al equipo",
