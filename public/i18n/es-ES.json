@@ -13565,5 +13565,14 @@
   "conversations.whatsappWebhook": "Webhook de WhatsApp",
   "conversations.whatsappWebhookTitle": "Webhook de WhatsApp en Meta",
   "conversations.whatsappWebhookSteps": "El webhook se configura automáticamente al guardar. Solo si Meta no entrega los mensajes: en la app de Meta, abra WhatsApp › Configuración, pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba el campo messages.",
-  "conversations.whatsappWebhookVerifyToken": "Token de verificación (generado para esta conexión)"
+  "conversations.whatsappWebhookVerifyToken": "Token de verificación (generado para esta conexión)",
+  "Facebook Page ID": "ID de la página de Facebook",
+  "Read from Meta when the Page is saved.": "Se lee de Meta al guardar la página.",
+  "Page that receives the messages (Page settings › About › Page ID). For Instagram, the Page linked to the Instagram professional account.": "Página que recibe los mensajes (Configuración de la página › Información › ID de la página). Para Instagram, la página vinculada a la cuenta profesional de Instagram.",
+  "Page access token of a system user with the pages_messaging (and, for Instagram, instagram_manage_messages) permissions. Temporary tokens expire.": "Token de acceso de la página de un usuario del sistema con los permisos pages_messaging (y, para Instagram, instagram_manage_messages). Los tokens temporales caducan.",
+  "Page": "Página",
+  "Instagram account": "Cuenta de Instagram",
+  "conversations.metaWebhook": "Webhook de Meta",
+  "conversations.metaWebhookTitle": "Webhook de Messenger e Instagram en Meta",
+  "conversations.metaWebhookSteps": "En la app de Meta, en Messenger › Configuración (e Instagram › Configuración, para Instagram), pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba el campo messages. Sin este paso los mensajes no llegan."
 }
