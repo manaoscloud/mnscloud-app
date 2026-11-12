@@ -13574,5 +13574,13 @@
   "Instagram account": "Cuenta de Instagram",
   "conversations.metaWebhook": "Webhook de Meta",
   "conversations.metaWebhookTitle": "Webhook de Messenger e Instagram en Meta",
-  "conversations.metaWebhookSteps": "En la app de Meta, en Messenger › Configuración (e Instagram › Configuración, para Instagram), pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba los campos: en Messenger messages, messaging_postbacks y message_deliveries; en Instagram messages, messaging_postbacks y messaging_seen. Sin este paso los mensajes no llegan."
+  "conversations.metaWebhookSteps": "En la app de Meta, en Messenger › Configuración (e Instagram › Configuración, para Instagram), pegue la URL de devolución de llamada y el token de verificación, confirme y suscriba los campos: en Messenger messages, messaging_postbacks y message_deliveries; en Instagram messages, messaging_postbacks y messaging_seen. Sin este paso los mensajes no llegan.",
+  "Install Agent": "Instalar Agent",
+  "Install the MNSCloud Agent of this platform server": "Instalar el Agent MNSCloud de este servidor de la plataforma",
+  "Installing": "Instalando",
+  "Installed": "Instalado",
+  "Install failed": "Falló la instalación",
+  "Agent install started. It takes a few minutes.": "Instalación del Agent iniciada. Tarda unos minutos.",
+  "Failed to start the Agent install.": "No se pudo iniciar la instalación del Agent.",
+  "Install and enroll the MNSCloud Agent on {name}? The platform creates a single-use token and runs the installer inside the server; nothing is copied by hand.": "¿Instalar e inscribir el Agent MNSCloud en {name}? La plataforma crea un token de un solo uso y ejecuta el instalador dentro del servidor; nada se copia a mano."
 }

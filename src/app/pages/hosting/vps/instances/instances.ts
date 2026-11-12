@@ -93,6 +93,22 @@ const RETRY_PROVISION_ACTION: ConfigurableCrudRowAction = {
   tooltip: 'Retry provisioning',
 };
 
+const INSTALL_AGENT_ACTION: ConfigurableCrudRowAction = {
+  key: 'install-agent',
+  label: 'Install Agent',
+  icon: 'downloading',
+  tooltip: 'Install the MNSCloud Agent of this platform server',
+};
+
+/** FA4: an install still running after this long is treated as lost (the API shows the same). */
+const AGENT_INSTALL_STALE_MS = 60 * 60_000;
+
+const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
+  installing: 'Installing',
+  enrolled: 'Installed',
+  failed: 'Install failed',
+};
+
 const UPGRADE_ACTION: ConfigurableCrudRowAction = {
   key: 'upgrade',
   label: 'Upgrade',
@@ -990,6 +1006,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       // on a tenant's servers with that tenant selected (tenant scope T6).
       if (this.isPlatformMasterUser() && this.providerOf(row) === 'proxmox')
         actions.push(MIGRATE_INSTANCE_ACTION);
+      if (this.canInstallAgent(row)) actions.push(INSTALL_AGENT_ACTION);
     }
     if (this.canRetryProvision(row)) {
       actions.push({
@@ -1020,6 +1037,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
     if (action.key === 'retry-provision') {
       await this.retryProvision(row);
+      return;
+    }
+    if (action.key === 'install-agent') {
+      await this.installAgent(row);
       return;
     }
     if (action.key === 'power-start') {
@@ -1118,6 +1139,50 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       !['resize_queued', 'resizing', 'powering_on'].includes(String(row['HviStatus'] ?? '')) &&
       !['queued', 'resizing', 'powering_on'].includes(resizeStatus)
     );
+  }
+
+  /**
+   * FA4: a running platform server created by the platform (infrastructure network, no customer,
+   * not adopted) whose Agent is not installed or failed; the platform installs it by itself after
+   * provisioning, this runs it again.
+   */
+  private canInstallAgent(row: ConfigurableCrudRecord): boolean {
+    if (!this.platformScope() || !this.isPlatformMasterUser()) return false;
+    if (this.providerOf(row) !== 'proxmox' || row['HviAdoptedAt'] || !row['HviExternalId'])
+      return false;
+    if (row['RegCustomerRcuUUID'] || row['UserUsrUUID']) return false;
+    const status = String(row['HviStatus'] ?? '').toLowerCase();
+    if (status !== 'running' && status !== 'active') return false;
+    const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']) ?? {};
+    if (config.networkProfile !== 'infrastructure') return false;
+    const enrollment = config.agentEnrollment;
+    if (enrollment?.status === 'enrolled') return false;
+    if (enrollment?.status === 'installing') {
+      const started = Date.parse(String(enrollment.at ?? ''));
+      if (Number.isFinite(started) && Date.now() - started < AGENT_INSTALL_STALE_MS) return false;
+    }
+    return true;
+  }
+
+  private async installAgent(row: ConfigurableCrudRecord) {
+    const uuid = this.recordUUID(row);
+    if (!this.canInstallAgent(row)) return;
+    const confirmed = await this.confirmAction(
+      'Install Agent',
+      `${this.t('Install and enroll the MNSCloud Agent on {name}? The platform creates a single-use token and runs the installer inside the server; nothing is copied by hand.').replace('{name}', String(row['HviName'] ?? ''))}`,
+      'Install Agent',
+    );
+    if (!confirmed) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.instanceEndpoint()}/${uuid}/agent`, {});
+      this.snack.success(this.t('Agent install started. It takes a few minutes.'));
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.errorMessage(error) || this.t('Failed to start the Agent install.'));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   private async retryProvision(row: ConfigurableCrudRecord) {
@@ -1517,7 +1582,28 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
               },
             ]
           : []),
-        ...(config.agentName ? [{ label: 'Agent', value: config.agentName }] : []),
+        ...(config.agentName && !config.agentEnrollment
+          ? [{ label: 'Agent', value: config.agentName }]
+          : []),
+        ...(config.agentEnrollment
+          ? [
+              {
+                label: 'Agent',
+                value: [
+                  config.agentEnrollment.agentName ?? config.agentName,
+                  this.t(
+                    AGENT_ENROLLMENT_LABELS[String(config.agentEnrollment.status ?? '')] ??
+                      String(config.agentEnrollment.status ?? ''),
+                  ),
+                  config.agentEnrollment.status === 'failed'
+                    ? config.agentEnrollment.message
+                    : null,
+                ]
+                  .filter((part) => !!part)
+                  .join(' · '),
+              },
+            ]
+          : []),
         ...(this.platformScope() && config.networkProfile
           ? [
               {
