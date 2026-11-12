@@ -3484,6 +3484,20 @@ export const routes: Routes = [
                 title: 'Network platform',
                 data: { breadcrumb: 'network.platformDevices' },
               },
+              // Access gateways (mnscloud-access-gateway runtime) that open the device consoles.
+              {
+                path: 'network/access-gateways',
+                loadComponent: () =>
+                  import('./pages/network/access-gateways/access-gateways').then(
+                    (m) => m.NetworkAccessGatewaysPage,
+                  ),
+                canActivate: [permissionGuard],
+                title: 'Network platform',
+                data: {
+                  permission: 'platform.access.gateways.manage',
+                  breadcrumb: 'network.accessGateways.title',
+                },
+              },
               {
                 path: 'dns/clusters',
                 loadComponent: () =>

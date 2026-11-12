@@ -1531,6 +1531,36 @@ onClosed?)` (`src/app/shared/install-command-dialog/open-install-command-dialog.
 - Visible labels, warnings, context fields, and copy/close actions must be present in every runtime
   Transloco dictionary.
 
+## Terminal consoles (VPS and Network devices)
+
+- Every browser terminal uses the shared `mns-terminal` (`src/app/shared/terminal/terminal.ts`,
+  xterm.js + fit addon) and the framing helpers of `terminal-protocol.ts`; pages never create an
+  xterm `Terminal` themselves. The component owns the screen only; the caller owns the socket.
+- Size: the grid always fits the visible area; `ready` and `resized` carry the real columns and
+  rows, and the caller sends `1:<cols>:<rows>:` on the handshake (`OK`) and on every resize, so
+  full-screen programs and progress bars redraw correctly.
+- Text: input frames carry the UTF-8 byte length (`0:<len>:<data>`). Binary output goes through
+  one streaming decoder per connection (`TerminalOutputDecoder`, `GatewayFrameReader`), so a
+  multibyte character split between two WebSocket messages is written whole.
+- Paste: Ctrl+Shift+V, Shift+Insert, Cmd+V, the browser paste event and right click (paste, or
+  copy when text is selected) all go through `Terminal.paste` and leave by the same `terminalInput`
+  output as typed keys (bracketed paste when the remote enabled it). Control characters are
+  removed and a paste above 64 KiB is refused with a notice, never truncated. Plain Ctrl+V and
+  Ctrl+C stay control keys for the remote; Ctrl+Shift+C / Cmd+C copy the selection.
+- Network device console (Rede › Equipamentos › Abrir console, `tenant.network.devices.console`):
+  `POST <network base>/devices/{uuid}/console` returns the relay URL and a single-use ticket; the
+  browser connects to `relayUrl?ticket=` (mnscloud-access-gateway `docs/runtime-api.md`). Output is
+  always a `0:` frame and control is `3:<json>`, so device text never reaches the screen as
+  control. A `verdict` opens the write confirmation dialog with the line as the gateway rebuilt it;
+  `double_confirm` asks again at step 2 (delayed button) and each answer is
+  `4:{"type":"confirm","id","step"}` or `4:{"type":"deny","id"}`. The App never classifies
+  commands. A device without a pinned host key asks the user to trust the first key (only with
+  `tenant.network.devices.hostkey`); a changed key is shown as blocked, cleared with Limpar chave.
+  Closing the dialog closes the socket and `DELETE`s the connection. Escape belongs to the terminal.
+- History (`Histórico de conexões`, collection of `connections?deviceUUID=`), timeline and signed
+  recording parts (`tenant.network.recordings.read`) use the shared collection and data viewer
+  dialogs; the recording URLs are used as the API returned them.
+
 ## Template Picker Dialog Baseline (Current)
 
 - Any modal that lets the user start a record from a predefined template must use
