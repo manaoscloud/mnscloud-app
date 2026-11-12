@@ -83,6 +83,46 @@ function coordinate(value: unknown): number | null {
   return v === '' ? null : Number(v);
 }
 
+/** API body: the same PascalCase keys as the response; unknown keys are rejected with 400. */
+export function locationPayload(
+  values: Record<string, unknown>,
+  editing: boolean,
+): Record<string, unknown> {
+  const latitude = coordinate(values['latitude']);
+  const longitude = coordinate(values['longitude']);
+  const pair = latitude !== null && longitude !== null;
+  return {
+    ...(editing ? { Revision: Number(values['revision']) } : {}),
+    Name: text(values['name']),
+    CompanyUUID: values['companyUUID'] || null,
+    Slug: text(values['slug']),
+    Street: text(values['street']),
+    Number: text(values['number']),
+    Complement: text(values['complement']),
+    District: text(values['district']),
+    City: text(values['city']),
+    State: text(values['state']).toUpperCase(),
+    Zip: text(values['zip']),
+    Country: text(values['country']).toUpperCase() || 'BR',
+    Latitude: pair ? latitude : null,
+    Longitude: pair ? longitude : null,
+    Phone: text(values['phone']),
+    Whatsapp: text(values['whatsapp']),
+    Email: text(values['email']),
+    Open24h: values['open24h'] === true,
+    WeekdayOpens: timeOrNull(values['weekdayOpens']),
+    WeekdayCloses: timeOrNull(values['weekdayCloses']),
+    SaturdayOpens: timeOrNull(values['saturdayOpens']),
+    SaturdayCloses: timeOrNull(values['saturdayCloses']),
+    SundayOpens: timeOrNull(values['sundayOpens']),
+    SundayCloses: timeOrNull(values['sundayCloses']),
+    Services: String(values['services'] ?? '').trim(),
+    Published: values['published'] === true,
+    Status: text(values['status']) || 'active',
+    Notes: text(values['notes']),
+  };
+}
+
 /** Places of the organization (stations, branches, stores) listed on the public website. */
 const config = defineCrud({
   endpoint: 'registry/locations',
@@ -92,7 +132,7 @@ const config = defineCrud({
     'Places of your organization, such as stations, branches or stores, with address, opening hours and services, published on the public website.',
   createTitle: 'New location',
   editTitle: 'Edit location',
-  bulkDelete: false,
+  bulkDelete: true,
   serverSidePagination: true,
   statusMode: 'string',
   activeValue: 'active',
@@ -232,36 +272,7 @@ const config = defineCrud({
     REGISTRY_NOTES_FIELD,
     { key: 'revision', source: 'Revision', label: 'Revision', hidden: true },
   ],
-  payload: (values, editing) => ({
-    ...(editing ? { revision: Number(values['revision']) } : {}),
-    name: text(values['name']),
-    companyUUID: values['companyUUID'] || null,
-    slug: text(values['slug']),
-    street: text(values['street']),
-    number: text(values['number']),
-    complement: text(values['complement']),
-    district: text(values['district']),
-    city: text(values['city']),
-    state: text(values['state']).toUpperCase(),
-    zip: text(values['zip']),
-    country: text(values['country']).toUpperCase() || 'BR',
-    latitude: coordinate(values['latitude']),
-    longitude: coordinate(values['longitude']),
-    phone: text(values['phone']),
-    whatsapp: text(values['whatsapp']),
-    email: text(values['email']),
-    open24h: values['open24h'] === true,
-    weekdayOpens: timeOrNull(values['weekdayOpens']),
-    weekdayCloses: timeOrNull(values['weekdayCloses']),
-    saturdayOpens: timeOrNull(values['saturdayOpens']),
-    saturdayCloses: timeOrNull(values['saturdayCloses']),
-    sundayOpens: timeOrNull(values['sundayOpens']),
-    sundayCloses: timeOrNull(values['sundayCloses']),
-    services: String(values['services'] ?? '').trim(),
-    published: values['published'] === true,
-    status: text(values['status']) || 'active',
-    notes: text(values['notes']),
-  }),
+  payload: (values, editing) => locationPayload(values, editing),
 });
 
 @Component({

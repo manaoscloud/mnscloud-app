@@ -849,6 +849,27 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'website.orders' },
               },
               {
+                path: 'website/leads',
+                loadComponent: () =>
+                  import('./pages/website/leads/leads').then((m) => m.WebsiteLeadsPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.leads' },
+              },
+              {
+                path: 'website/ethics-reports',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/website/ethics-reports/ethics-reports').then(
+                    (m) => m.WebsiteEthicsReportsPage,
+                  ),
+                title: 'Website',
+                data: {
+                  scope: 'tenant',
+                  breadcrumb: 'website.ethics',
+                  permission: 'tenant.website.ethics-reports.read',
+                },
+              },
+              {
                 path: 'website/offers',
                 loadComponent: () =>
                   import('./pages/website/offers/offers').then((m) => m.WebsiteOffersPage),

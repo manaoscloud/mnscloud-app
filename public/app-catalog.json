@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "8d97334eb1c0",
+  "version": "2b1e21b6096b",
   "language": "pt-BR",
   "entries": [
     {
@@ -14217,6 +14217,48 @@
         },
         {
           "label": "Codecs",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/ethics-reports",
+      "menuPath": "Website › Ética",
+      "scope": "tenant",
+      "title": "Ética",
+      "description": "Denúncias recebidas pelo canal de ética dos seus sites. Denúncias anônimas não guardam identificação; analise cada uma e registre o resultado nas observações.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/leads",
+      "menuPath": "Website › Leads",
+      "scope": "tenant",
+      "title": "Leads",
+      "description": "Solicitações de contato e de frota enviadas pelos seus sites. Acompanhe cada uma e marque como contatada ou encerrada.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
           "help": ""
         }
       ]
