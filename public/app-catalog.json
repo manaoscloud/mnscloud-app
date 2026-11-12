@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "9839d2bf0c72",
+  "version": "580234cc3338",
   "language": "pt-BR",
   "entries": [
     {
@@ -347,6 +347,68 @@
       "title": "Sessões",
       "description": "Sessões observadas pelo accounting dos equipamentos: tempo e tráfego por acesso. São observações, não a conexão ao vivo.",
       "fields": []
+    },
+    {
+      "route": "/automation/flows",
+      "menuPath": "Automações › Fluxos",
+      "scope": "tenant",
+      "title": "Fluxos de automação",
+      "description": "Fluxos respondem e encaminham conversas sozinhos. Crie o fluxo aqui e monte as etapas no editor visual.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Superfície",
+          "help": "Onde o fluxo roda: conversas, chamadas de voz ou eventos do sistema."
+        },
+        {
+          "label": "Prioridade",
+          "help": "Quando dois fluxos atendem a mesma mensagem, o menor número roda primeiro."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/automation/runs",
+      "menuPath": "Automações › Execuções",
+      "scope": "tenant",
+      "title": "Execuções",
+      "description": "Cada vez que um fluxo rodou: o estado, as etapas percorridas e, nas execuções ativas, a opção de cancelar.",
+      "fields": []
+    },
+    {
+      "route": "/automation/secrets",
+      "menuPath": "Automações › Segredos",
+      "scope": "tenant",
+      "title": "Segredos",
+      "description": "Credenciais que as etapas HTTP leem como {{secret.NOME}}. O valor é guardado selado e nunca mais é exibido.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": "Letras maiúsculas, números e sublinhados, começando por letra (por exemplo CRM_TOKEN)."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Valor",
+          "help": "Somente escrita. Deixe vazio ao editar para manter o valor atual."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/billing",
