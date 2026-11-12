@@ -160,6 +160,27 @@ function deviceFields(platform: boolean, translate: Translate): ConfigurableCrud
       help: 'network.pathHelp',
     },
     {
+      key: 'connectorUuid',
+      source: 'AccessConnectorAcnUUID',
+      label: 'network.connector',
+      type: 'search-select',
+      tab: 'network',
+      span: 1,
+      help: 'network.connectorHelp',
+      // Only tenant connectors: the platform twin never uses connectors.
+      hiddenWhen: ({ values }) => platform || values['networkPath'] !== 'connector',
+      requiredWhen: ({ values }) => !platform && values['networkPath'] === 'connector',
+      remoteLookup: {
+        endpoint: 'network/connectors',
+        uuidField: 'AcnUUID',
+        labelField: 'AcnName',
+        selectedLabelField: 'AccessConnectorName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'The connector is installed on the tenant host; create it in Network > Connectors.',
+    },
+    {
       key: 'apiUrl',
       source: 'NwdApiUrl',
       label: 'network.apiUrl',
@@ -218,6 +239,9 @@ function devicePayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
       'supportEndDate',
       'monitoringAgentUUID',
     ]),
+    // Only the connector path carries a connector: any other path clears it (API trigger rule).
+    connectorUuid:
+      formText(values['networkPath']) === 'connector' ? formText(values['connectorUuid']) : null,
     verifyTls: formFlag(values['verifyTls'], 1),
     ...recordState(values),
   };
@@ -367,6 +391,7 @@ function deviceConfig(
       supportEndDate: '',
       managementHost: '',
       networkPath: 'public',
+      connectorUuid: '',
       apiUrl: '',
       verifyTls: 1,
       hostKey: '',
@@ -414,6 +439,12 @@ function deviceConfig(
         { id: 'path', label: 'network.pathLabel', field: 'NwdNetworkPath', optional: true },
         NETWORK_PATH_OPTIONS,
       ),
+      {
+        id: 'connector',
+        label: 'network.connector',
+        field: 'AccessConnectorName',
+        optional: true,
+      },
       optionColumn(
         { id: 'lifecycle', label: 'network.lifecycleLabel', field: 'NwdLifecycle', optional: true },
         LIFECYCLE_OPTIONS,
