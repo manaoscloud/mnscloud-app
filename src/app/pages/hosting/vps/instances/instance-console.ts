@@ -15,6 +15,15 @@ import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../../services/api.service';
 import { resolveApiBaseUrl } from '../../../../shared/runtime/app-runtime-config';
 import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
+import { TerminalComponent, terminalNoticeMessage } from '../../../../shared/terminal/terminal';
+import {
+  encodeTerminalInput,
+  encodeTerminalResize,
+  TERMINAL_PING,
+  TERMINAL_PING_SECONDS,
+  TerminalOutputDecoder,
+  TerminalSize,
+} from '../../../../shared/terminal/terminal-protocol';
 
 export type VpsInstanceConsoleData = {
   uuid: string;
@@ -72,18 +81,25 @@ export const VPS_CONSOLE_HANDSHAKE_SECONDS = 15;
 
 /** Proxmox termproxy input frame ("0:<bytes>:<data>"). */
 export function termproxyInput(data: string): string {
-  return `0:${new TextEncoder().encode(data).length}:${data}`;
+  return encodeTerminalInput(data);
 }
 
 /** Proxmox termproxy resize frame. */
 export function termproxyResize(cols: number, rows: number): string {
-  return `1:${cols}:${rows}:`;
+  return encodeTerminalResize({ cols, rows });
 }
 
 @Component({
   selector: 'mns-vps-instance-console',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslocoPipe],
+  imports: [
+    MatDialogModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+    TerminalComponent,
+    TranslocoPipe,
+  ],
   styles: [
     `
       :host {
@@ -152,6 +168,9 @@ export function termproxyResize(cols: number, rows: number): string {
       <div>
         <div class="title">{{ 'VPS console' | transloco }} · {{ data.name }}</div>
         <div class="status" [class.error]="failed()">{{ status() | transloco }}</div>
+        @if (notice(); as message) {
+          <div class="status">{{ message | transloco }}</div>
+        }
       </div>
       <div class="header-actions">
         @if (passwordAvailable()) {
@@ -187,6 +206,17 @@ export function termproxyResize(cols: number, rows: number): string {
             </button>
           }
         }
+        @if (type() === 'serial') {
+          <button
+            mat-icon-button
+            type="button"
+            (click)="terminal()?.pasteFromClipboard()"
+            [matTooltip]="'Paste (Ctrl+Shift+V)' | transloco"
+            [attr.aria-label]="'Paste (Ctrl+Shift+V)' | transloco"
+          >
+            <mat-icon>content_paste</mat-icon>
+          </button>
+        }
         @if (type() === 'vnc') {
           <button mat-stroked-button type="button" (click)="sendCtrlAltDel()">
             <mat-icon>keyboard</mat-icon>
@@ -206,7 +236,16 @@ export function termproxyResize(cols: number, rows: number): string {
         }
       </div>
     </div>
-    <div class="screen" #screen></div>
+    @if (type() === 'serial') {
+      <mns-terminal
+        (ready)="terminalReady($event)"
+        (terminalInput)="sendInput($event)"
+        (resized)="sendResize($event)"
+        (notice)="notice.set(terminalNoticeMessage($event))"
+      />
+    } @else {
+      <div class="screen" #screen></div>
+    }
     <div class="actions">
       <button mat-stroked-button type="button" (click)="reconnect()">
         <mat-icon>refresh</mat-icon>
@@ -224,7 +263,10 @@ export class VpsInstanceConsoleComponent {
     inject<VpsInstanceConsoleData | null>(MAT_DIALOG_DATA, { optional: true }) ??
     consoleDataFromRoute(inject(ActivatedRoute, { optional: true }));
   private readonly api = inject(ApiService);
-  private readonly screen = viewChild.required<ElementRef<HTMLDivElement>>('screen');
+  private readonly screen = viewChild<ElementRef<HTMLDivElement>>('screen');
+  readonly terminal = viewChild(TerminalComponent);
+  readonly notice = signal<string | null>(null);
+  readonly terminalNoticeMessage = terminalNoticeMessage;
   readonly status = signal('Connecting...');
   readonly failed = signal(false);
   readonly type = signal<'serial' | 'vnc' | null>(null);
@@ -232,6 +274,11 @@ export class VpsInstanceConsoleComponent {
   readonly credential = signal<{ username: string; password: string } | null>(null);
   private teardown: (() => void) | null = null;
   private typeInput: ((data: string) => void) | null = null;
+  /** Serial session waiting for the terminal to open. */
+  private serialUrl: string | null = null;
+  private terminalOpen = false;
+  private socket: WebSocket | null = null;
+  private socketReady = false;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.close());
@@ -245,8 +292,28 @@ export class VpsInstanceConsoleComponent {
 
   async reconnect() {
     this.close();
-    this.screen().nativeElement.replaceChildren();
+    this.screen()?.nativeElement.replaceChildren();
+    this.terminal()?.reset();
     await this.connect();
+  }
+
+  /** The shared terminal opened: start the pending serial session. */
+  terminalReady(_size: TerminalSize) {
+    this.terminalOpen = true;
+    if (this.serialUrl) this.connectSerial(this.serialUrl);
+  }
+
+  sendInput(data: string) {
+    if (this.socketReady && this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(encodeTerminalInput(data));
+    }
+  }
+
+  /** Every fitted size reaches the remote PTY (full-screen apps and progress bars redraw right). */
+  sendResize(size: TerminalSize) {
+    if (this.socketReady && this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(encodeTerminalResize(size));
+    }
   }
 
   /** The console in its own browser window, so the customer keeps working in the App. */
@@ -321,62 +388,56 @@ export class VpsInstanceConsoleComponent {
     this.type.set(session.type);
     this.passwordAvailable.set(session.consolePasswordAvailable === true);
     const url = vpsConsoleSocketUrl(resolveApiBaseUrl(), session);
-    if (session.type === 'vnc') await this.connectVnc(url, session.vncPassword ?? '');
-    else await this.connectSerial(url);
+    if (session.type === 'vnc') {
+      await this.connectVnc(url, session.vncPassword ?? '');
+      return;
+    }
+    this.serialUrl = url;
+    if (this.terminalOpen) this.connectSerial(url);
   }
 
-  private async connectSerial(url: string) {
-    const { Terminal } = await import('@xterm/xterm');
-    const host = this.screen().nativeElement;
-    const terminal = new Terminal({
-      cursorBlink: true,
-      fontSize: 14,
-      convertEol: false,
-      theme: { background: '#000000' },
-    });
-    terminal.open(host);
-    const fit = () => {
-      const cell = 9;
-      const line = 17;
-      const cols = Math.max(40, Math.floor(host.clientWidth / cell));
-      const rows = Math.max(10, Math.floor(host.clientHeight / line));
-      terminal.resize(cols, rows);
-    };
-    fit();
+  private connectSerial(url: string) {
+    this.serialUrl = null;
+    this.notice.set(null);
     const socket = new WebSocket(url, ['binary']);
     socket.binaryType = 'arraybuffer';
-    let ready = false;
+    this.socket = socket;
+    this.socketReady = false;
     let guestSpoke = false;
     let wake: ReturnType<typeof setTimeout> | undefined;
-    const decoder = new TextDecoder();
+    // One UTF-8 stream per connection: a character split between two frames is written whole.
+    const output = new TerminalOutputDecoder();
+    const write = (text: string) => this.terminal()?.write(text);
     const ping = setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) socket.send('2');
-    }, 30_000);
+      if (socket.readyState === WebSocket.OPEN) socket.send(TERMINAL_PING);
+    }, TERMINAL_PING_SECONDS * 1000);
     // Without the handshake the terminal would wait forever and swallow every key.
     const handshake = setTimeout(() => {
-      if (ready) return;
+      if (this.socketReady) return;
       this.fail('The console did not answer. Try Reconnect.');
       socket.close();
     }, VPS_CONSOLE_HANDSHAKE_SECONDS * 1000);
     socket.onmessage = (event) => {
-      const text = typeof event.data === 'string' ? event.data : decoder.decode(event.data);
-      if (!ready) {
+      const text = output.decode(event.data as string | ArrayBuffer);
+      if (!this.socketReady) {
         if (text.startsWith('OK')) {
-          ready = true;
+          this.socketReady = true;
           clearTimeout(handshake);
           this.status.set('Connected');
-          socket.send(termproxyResize(terminal.cols, terminal.rows));
-          terminal.focus();
+          // The real grid of the screen, not a default 80x24.
+          const size = this.terminal()?.size();
+          if (size) socket.send(encodeTerminalResize(size));
+          this.terminal()?.focus();
           const rest = text.slice(2);
           if (rest) {
-            terminal.write(rest);
+            write(rest);
             if (!isSerialBanner(rest)) guestSpoke = true;
           }
           // The login prompt was printed at boot and a serial port does not replay it: when the
           // VM stays silent, one Enter makes the getty show the login (an SSH shell already did).
           wake = setTimeout(() => {
             if (!guestSpoke && socket.readyState === WebSocket.OPEN) {
-              socket.send(termproxyInput('\r'));
+              socket.send(encodeTerminalInput('\r'));
             }
           }, SERIAL_WAKE_DELAY_MS);
           return;
@@ -387,45 +448,36 @@ export class VpsInstanceConsoleComponent {
         return;
       }
       if (!isSerialBanner(text)) guestSpoke = true;
-      terminal.write(text);
+      write(text);
     };
     socket.onclose = () => {
       clearTimeout(handshake);
-      if (ready) this.status.set('Disconnected');
+      if (this.socket !== socket) return;
+      write(output.flush());
+      if (this.socketReady) this.status.set('Disconnected');
       else if (!this.failed()) this.fail('The console connection was closed. Try Reconnect.');
     };
-    const input = terminal.onData((data) => {
-      if (ready && socket.readyState === WebSocket.OPEN) socket.send(termproxyInput(data));
-    });
     this.typeInput = (data) => {
-      if (ready && socket.readyState === WebSocket.OPEN) {
-        socket.send(termproxyInput(data));
-        terminal.focus();
-      }
+      this.sendInput(data);
+      this.terminal()?.focus();
     };
-    const resize = terminal.onResize(({ cols, rows }) => {
-      if (ready && socket.readyState === WebSocket.OPEN) {
-        socket.send(termproxyResize(cols, rows));
-      }
-    });
-    const observer = new ResizeObserver(() => fit());
-    observer.observe(host);
     this.teardown = () => {
       this.typeInput = null;
       clearInterval(ping);
       clearTimeout(handshake);
       clearTimeout(wake);
-      observer.disconnect();
-      input.dispose();
-      resize.dispose();
+      if (this.socket === socket) {
+        this.socket = null;
+        this.socketReady = false;
+      }
       socket.close();
-      terminal.dispose();
     };
   }
 
   private async connectVnc(url: string, password: string) {
     const { default: RFB } = await import('@novnc/novnc/core/rfb.js');
-    const host = this.screen().nativeElement;
+    const host = this.screen()?.nativeElement;
+    if (!host) return;
     const rfb = new RFB(host, url, { credentials: { password }, wsProtocols: ['binary'] });
     rfb.scaleViewport = true;
     rfb.resizeSession = false;

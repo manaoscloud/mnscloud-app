@@ -293,6 +293,8 @@ export type ConfigurableCrudField = {
     | 'diagnostics'
     | 'codecs'
     | 'retention'
+    /** Opening hours of a place (Registry › Locations). */
+    | 'hours'
     /** Expert settings with safe defaults: never needed for the record to work. */
     | 'advanced'
     | 'notes'
@@ -1100,6 +1102,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   );
   readonly diagnosticsFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'diagnostics'),
+  );
+  readonly hoursFields = computed(() =>
+    this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'hours'),
   );
   readonly retentionFields = computed(() =>
     this.config.fields.filter((field) => this.isFieldVisible(field) && field.tab === 'retention'),

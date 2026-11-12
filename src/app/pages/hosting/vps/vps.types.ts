@@ -1,7 +1,22 @@
 export type VpsProvider =
   'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter' | 'sangfor_scp';
 
+export type VpsPlatformNetwork = {
+  bridge: string;
+  vlanTag?: number;
+  cidr: string;
+  gateway: string;
+  allocationStart: string;
+  allocationEnd: string;
+  nameservers: string[];
+  ipv6: 'auto' | 'none';
+};
+
+export type VpsNetworkProfile = 'infrastructure' | 'isolated';
+
 export type VpsProviderConfig = {
+  /** Network of the platform's own servers (master only); customers never see it. */
+  platformNetwork?: VpsPlatformNetwork | null;
   sdn?: {
     zone: string;
     cidrPool: string[];
@@ -157,6 +172,10 @@ export type HostingVpsInstanceConfig = {
   providerImageId?: string | null;
   /** Placement group `spread` (Proxmox automatic placement): same group = different nodes. */
   placementGroup?: string | null;
+  /** FA2: `name` = automatic from the platform name convention, `manual` = chosen. */
+  placementGroupSource?: 'name' | 'manual' | null;
+  /** Network profile of an internal (platform) VPS. */
+  networkProfile?: VpsNetworkProfile | null;
   authMethod?: 'ssh_key' | 'password' | string | null;
   username?: string | null;
   password?: string | null;
@@ -188,6 +207,15 @@ export type HostingVpsInstanceConfig = {
     requestedAt?: string | null;
     completedAt?: string | null;
     error?: string | null;
+  } | null;
+  /** Automatic placement record (API): node, policy and, for a group, whether it was softened. */
+  placement?: {
+    mode?: string;
+    node?: string;
+    policy?: string | null;
+    at?: string;
+    group?: string | null;
+    groupSoftened?: boolean;
   } | null;
 };
 

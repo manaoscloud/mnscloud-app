@@ -18,6 +18,17 @@ import type {
   VpsProviderConfig,
   VpsProviderCredentials,
 } from '../vps.types';
+import {
+  PLATFORM_NETWORK_DEFAULT_VALUES,
+  PLATFORM_NETWORK_HELP,
+  PLATFORM_NETWORK_IPV6_OPTIONS,
+  PLATFORM_NETWORK_NAMESERVERS_HELP,
+  PLATFORM_NETWORK_RANGE_HELP,
+  buildPlatformNetworkPayload,
+  platformNetworkEnabled,
+  platformNetworkError,
+  platformNetworkFormValues,
+} from '../platform-network';
 
 const YES_NO_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 1, label: 'Yes' },
@@ -86,6 +97,50 @@ function placementField(
     span: 1,
     hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
       providerOf(values) !== 'proxmox',
+    ...extra,
+  };
+}
+
+function platformNetworkToggle(): ConfigurableCrudField {
+  return {
+    key: 'platformNetworkEnabled',
+    payloadKey: 'platformNetworkEnabled',
+    label: 'Platform network',
+    type: 'select',
+    options: [...YES_NO_OPTIONS],
+    tab: 'storage',
+    span: 1,
+    help: PLATFORM_NETWORK_HELP,
+    hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
+      providerOf(values) !== 'proxmox',
+  };
+}
+
+const PLATFORM_NETWORK_OPTIONAL_KEYS = [
+  'platformNetworkVlan',
+  'platformNetworkNameservers',
+  'platformNetworkIpv6',
+];
+
+function platformNetworkField(
+  key: string,
+  label: string,
+  extra: Partial<ConfigurableCrudField> = {},
+): ConfigurableCrudField {
+  return {
+    key,
+    payloadKey: key,
+    label,
+    tab: 'storage',
+    span: 1,
+    hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
+      providerOf(values) !== 'proxmox' || !platformNetworkEnabled(values),
+    ...(PLATFORM_NETWORK_OPTIONAL_KEYS.includes(key)
+      ? {}
+      : {
+          requiredWhen: ({ values }: { values: ConfigurableCrudRecord }) =>
+            providerOf(values) === 'proxmox' && platformNetworkEnabled(values),
+        }),
     ...extra,
   };
 }
@@ -426,6 +481,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     network: 'Server network',
     routing: 'Customer network',
     limits: 'Placement',
+    storage: 'Platform network',
   },
   initialValues: {
     name: '',
@@ -464,6 +520,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     vlanTag: '',
     customerProvisioning: 0,
     ...PLACEMENT_DEFAULT_VALUES,
+    ...PLATFORM_NETWORK_DEFAULT_VALUES,
     vcenterUrl: '',
     datacenter: '',
     cluster: '',
@@ -745,6 +802,22 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     tenantZoneField('sdnTenantNameservers', 'Customer DNS resolvers (comma separated)'),
     tenantZoneField('sdnTenantMtu', 'Customer network MTU', { number: true }),
     tenantZoneField('sdnTenantDefaultCidr', 'Default customer network CIDR'),
+    platformNetworkToggle(),
+    platformNetworkField('platformNetworkBridge', 'Bridge'),
+    platformNetworkField('platformNetworkVlan', 'VLAN tag', { type: 'number' }),
+    platformNetworkField('platformNetworkCidr', 'Network CIDR'),
+    platformNetworkField('platformNetworkGateway', 'Gateway'),
+    platformNetworkField('platformNetworkRangeStart', 'First address of the reserved range', {
+      help: PLATFORM_NETWORK_RANGE_HELP,
+    }),
+    platformNetworkField('platformNetworkRangeEnd', 'Last address of the reserved range'),
+    platformNetworkField('platformNetworkNameservers', 'DNS resolvers (comma separated)', {
+      help: PLATFORM_NETWORK_NAMESERVERS_HELP,
+    }),
+    platformNetworkField('platformNetworkIpv6', 'IPv6', {
+      type: 'select',
+      options: [...PLATFORM_NETWORK_IPV6_OPTIONS],
+    }),
     placementField('placementPolicy', 'Placement policy', {
       type: 'select',
       options: [...PLACEMENT_POLICY_OPTIONS],
@@ -1177,6 +1250,7 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       ...tenantZoneFormValues(config.sdn?.tenantZones),
       vlanTag: config.vlanTag ?? '',
       ...placementFormValues(config.placement),
+      ...platformNetworkFormValues(config.platformNetwork),
       // Never set: Proxmox stays closed and the other providers open (the API rule).
       customerProvisioning:
         config.customerProvisioning === undefined || config.customerProvisioning === null
@@ -1327,6 +1401,8 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
           return this.rejectField(key, message);
         }
       }
+      const networkError = platformNetworkError(payload);
+      if (networkError) return this.rejectField(networkError.key, networkError.message);
       for (const key of ['placementNodes', 'placementDrainNodes']) {
         if (
           nodeNames(payload[key]).some((name) => !/^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/.test(name))
@@ -1501,6 +1577,8 @@ function buildConfigPayload(values: ConfigurableCrudRecord): VpsProviderConfig {
       diskFullRatio: Number(values['placementDiskFullRatio'] ?? 0.8),
       imageFallback: truthyNumber(values['placementImageFallback']) === 1,
     };
+    // null removes the platform network (master only; the API refuses it for tenants).
+    config.platformNetwork = buildPlatformNetworkPayload(values);
   }
   config.customerProvisioning = truthyNumber(values['customerProvisioning']) === 1;
   if (['proxmox', 'vmware_vcenter', 'sangfor_scp'].includes(provider)) {

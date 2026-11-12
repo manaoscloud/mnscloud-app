@@ -2,6 +2,7 @@ import { Component, computed, inject, resource } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
 import { injectPlatformScope } from '../../../core/scope/route-scope';
+import { AuthService } from '../../../services/auth.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -10,6 +11,7 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRelatedCollection,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
@@ -38,6 +40,15 @@ import {
   statusField,
 } from '../network-options';
 import { credentialCollectionConfig } from '../network-credentials';
+import {
+  ConnectionActions,
+  accessGatewayErrorMessage,
+  connectionHistoryConfig,
+  runAccessTest,
+  showAccessTestResult,
+  showConnection,
+  showRecording,
+} from './device-connections';
 
 type Translate = (key: string) => string;
 
@@ -300,10 +311,12 @@ function deviceConfig(
   can: (permission: string) => boolean,
   translate: Translate,
   typeOf: (code: unknown) => NetworkDeviceType | undefined,
+  connections: ConnectionActions,
 ): ConfigurableCrudConfig {
   const base = networkBase(platform);
   const canWrite = can('tenant.network.devices.write');
   const canClearHostKey = can('tenant.network.devices.hostkey');
+  const canConsole = can('tenant.network.devices.console');
   return defineCrud({
     endpoint: `${base}/devices`,
     uuidField: 'NwdUUID',
@@ -423,6 +436,26 @@ function deviceConfig(
     ],
     rowActions: [
       {
+        key: 'console',
+        label: 'network.console.open',
+        icon: 'terminal',
+        tooltip: 'network.console.openTooltip',
+        visible: () => canConsole,
+      },
+      {
+        key: 'access-test',
+        label: 'network.accessTest.run',
+        icon: 'network_check',
+        tooltip: 'network.accessTest.tooltip',
+        visible: () => canConsole,
+      },
+      {
+        key: 'connections',
+        label: 'network.connection.history',
+        icon: 'history',
+        collection: (row) => connectionHistoryConfig(base, String(row['NwdUUID']), connections),
+      },
+      {
         key: 'managed-access',
         label: 'network.accessMethods',
         icon: 'settings_ethernet',
@@ -492,19 +525,98 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
   constructor() {
     const platform = injectPlatformScope();
     const transloco = inject(TranslocoService);
+    const can = injectNetworkPermission(platform);
+    const auth = inject(AuthService);
     // Row actions are built before the catalog exists: they read it through this page.
     let page: NetworkDevicesPage | undefined;
     const typeOf = (code: unknown) => page?.typeOf(code);
-    super(
-      deviceConfig(
-        platform,
-        injectNetworkPermission(platform),
-        (key) => transloco.translate(key),
-        typeOf,
-      ),
-    );
+    const connections: ConnectionActions = {
+      currentUserUUID: () => auth.user()?.uuid ?? '',
+      canConsole: can('tenant.network.devices.console'),
+      canReadRecordings: can('tenant.network.recordings.read'),
+      showConnection: async (row) => page?.viewer((deps) => showConnection(deps, row)),
+      showRecording: async (row) => page?.viewer((deps) => showRecording(deps, row)),
+    };
+    super(deviceConfig(platform, can, (key) => transloco.translate(key), typeOf, connections));
     this.base = networkBase(platform);
+    this.can = can;
     page = this;
+  }
+
+  private readonly can: (permission: string) => boolean;
+
+  private viewerDeps() {
+    return {
+      api: this.api,
+      dialog: this.dialog,
+      base: this.base,
+      canReadRecordings: this.can('tenant.network.recordings.read'),
+    };
+  }
+
+  /** Runs a connection viewer with the API error shown as a toast. */
+  async viewer(
+    run: (deps: ReturnType<NetworkDevicesPage['viewerDeps']>) => Promise<void>,
+  ): Promise<void> {
+    try {
+      await run(this.viewerDeps());
+    } catch (error) {
+      this.snack.error(this.t(accessGatewayErrorMessage(error)));
+    }
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key === 'console') return this.openConsole(row);
+    if (action.key === 'access-test') return this.testAccess(row);
+    return super.handleRowAction(action, row);
+  }
+
+  /**
+   * Host key trust: a device without a pinned key is pinned on this first connection with the key
+   * the gateway sees (only with tenant.network.devices.hostkey; the API decides and blocks
+   * otherwise). A changed key always blocks until it is cleared here.
+   */
+  private async openConsole(row: ConfigurableCrudRecord): Promise<void> {
+    const name = String(row['NwdName'] ?? '');
+    if (!formText(row['NwdHostKeyFingerprint'])) {
+      if (!this.can('tenant.network.devices.hostkey')) {
+        this.snack.error(this.t('network.console.hostKeyPinNotAllowed'));
+        return;
+      }
+      const trusted = await this.confirmAction(
+        'network.console.trustTitle',
+        'network.console.trustMessage',
+        'network.console.trustConfirm',
+      );
+      if (!trusted) return;
+    }
+    const { openNetworkDeviceConsole } = await import('./device-console');
+    await openNetworkDeviceConsole(this.dialog, {
+      base: this.base,
+      deviceUUID: String(row['NwdUUID'] ?? ''),
+      deviceName: name,
+    });
+    // A first connection pins the host key: show it in the list.
+    this.refreshList();
+  }
+
+  private async testAccess(row: ConfigurableCrudRecord): Promise<void> {
+    const deps = this.viewerDeps();
+    this.snack.info(this.t('network.accessTest.started'));
+    try {
+      const result = await runAccessTest(deps, String(row['NwdUUID'] ?? ''));
+      if (!result) {
+        this.snack.error(this.t('network.console.openFailed'));
+        return;
+      }
+      await showAccessTestResult(deps, result, (key) => this.t(key));
+    } catch (error) {
+      this.snack.error(this.t(accessGatewayErrorMessage(error)));
+    }
+    this.refreshList();
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {

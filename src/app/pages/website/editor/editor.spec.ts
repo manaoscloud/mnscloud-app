@@ -154,4 +154,47 @@ describe('WebsiteEditorPage', () => {
     expect(page.block('pt-BR').sections.map((s) => s.type)).toEqual(['faq']);
     expect(page.block('en-US').sections).toEqual([]);
   });
+
+  it('edits locations and pages of one locale, created on the first edit', () => {
+    expect(page.block('pt-BR').locations).toBeUndefined();
+    expect(page.locations('pt-BR').enabled).toBeFalse();
+    page.setLocations('pt-BR', { enabled: true });
+    page.setLocations('pt-BR', { title: 'Postos' });
+    page.setPage('pt-BR', 'fleet', { text: 'Frotas' });
+    expect(page.locations('pt-BR')).toEqual({ enabled: true, title: 'Postos', intro: '' });
+    expect(page.page('pt-BR', 'fleet')).toEqual({ enabled: false, title: '', text: 'Frotas' });
+    expect(page.block('en-US').locations).toBeUndefined();
+    expect(page.block('en-US').pages).toBeUndefined();
+  });
+
+  it('adds, edits, moves and removes promotions, capped at 12', () => {
+    page.addPromotion('pt-BR');
+    page.addPromotion('pt-BR');
+    page.setPromotion('pt-BR', 0, { title: 'A', validFrom: '2026-01-01' });
+    page.setPromotion('pt-BR', 1, { title: 'B' });
+    page.movePromotion('pt-BR', 1, -1);
+    expect(page.block('pt-BR').promotions?.map((p) => p.title)).toEqual(['B', 'A']);
+    page.removePromotion('pt-BR', 0);
+    expect(page.block('pt-BR').promotions?.map((p) => p.id)).toEqual(['p1']);
+    for (let i = 0; i < 20; i += 1) page.addPromotion('pt-BR');
+    expect(page.block('pt-BR').promotions?.length).toBe(12);
+    expect(new Set(page.block('pt-BR').promotions?.map((p) => p.id)).size).toBe(12);
+  });
+
+  it('marks an invalid promotion date on the locale tab', async () => {
+    for (const locale of ['pt-BR', 'en-US']) {
+      page.set(`${locale}.seo.title`, 'Shop');
+      page.set(`${locale}.hero.title`, 'Welcome');
+    }
+    page.addPromotion('en-US');
+    page.setPromotion('en-US', 0, {
+      title: 'A',
+      validFrom: '2026-05-02',
+      validUntil: '2026-05-01',
+    });
+    await page.publish();
+    expect(website.publish).not.toHaveBeenCalled();
+    expect(page.invalid('en-US.promotions.0.validUntil')).toBeTrue();
+    expect(page.selectedTab()).toBe(2);
+  });
 });

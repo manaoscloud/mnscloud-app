@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "9fba4299444c",
+  "version": "a4f128ab5ccb",
   "language": "pt-BR",
   "entries": [
     {
@@ -1008,6 +1008,22 @@
           "help": "Opcional. Um endereço de site por linha."
         },
         {
+          "label": "Título do chat",
+          "help": "Aparece no topo da janela do chat. Vazio usa o título padrão, Atendimento."
+        },
+        {
+          "label": "Cor do chat",
+          "help": "Cor do botão e do topo do chat (#RRGGBB). Vazio usa azul."
+        },
+        {
+          "label": "Posição do chat",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de boas-vindas",
+          "help": "Mostrada ao visitante antes da primeira mensagem. Vazio mostra o subtítulo."
+        },
+        {
           "label": "Identificador no provedor",
           "help": "Identificador deste número, página ou conta no provedor. As mensagens recebidas são encaminhadas por ele."
         },
@@ -1018,6 +1034,42 @@
         {
           "label": "Apagar credenciais salvas",
           "help": ""
+        },
+        {
+          "label": "Subtítulo do chat",
+          "help": "Aparece abaixo do título do chat. Vazio usa o subtítulo padrão."
+        },
+        {
+          "label": "Pedir nome e e-mail antes do chat",
+          "help": "Obrigatório: o visitante precisa informar nome e um e-mail válido antes da primeira mensagem."
+        },
+        {
+          "label": "Horário de atendimento",
+          "help": "Fora deste horário o chat mostra a mensagem de ausência ou fica oculto."
+        },
+        {
+          "label": "Fuso horário",
+          "help": ""
+        },
+        {
+          "label": "Dias",
+          "help": ""
+        },
+        {
+          "label": "Abre às",
+          "help": ""
+        },
+        {
+          "label": "Fecha às",
+          "help": "Um horário de fechamento antes do de abertura termina depois da meia-noite."
+        },
+        {
+          "label": "Fora do horário",
+          "help": ""
+        },
+        {
+          "label": "Mensagem de ausência",
+          "help": "Aparece no chat fora do horário de atendimento. Vazio usa o texto padrão."
         },
         {
           "label": "Permitir subdomínios",
@@ -3324,6 +3376,10 @@
         {
           "label": "Grupo de posicionamento",
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
         },
         {
           "label": "Rede privada",
@@ -5966,6 +6022,107 @@
         },
         {
           "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/registry/locations",
+      "menuPath": "Cadastros › Locais",
+      "scope": "tenant",
+      "title": "Locais",
+      "description": "Locais da sua organização, como postos, filiais ou lojas, com endereço, horário de funcionamento e serviços, publicados no site público.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Empresa",
+          "help": ""
+        },
+        {
+          "label": "Slug",
+          "help": "Parte do endereço público do local no site: minúsculas, números e hífens (por exemplo, centro-norte). Único entre os locais ativos."
+        },
+        {
+          "label": "Publicada",
+          "help": "Só os locais publicados e ativos aparecem no site público."
+        },
+        {
+          "label": "Telefone",
+          "help": ""
+        },
+        {
+          "label": "WhatsApp",
+          "help": ""
+        },
+        {
+          "label": "E-mail",
+          "help": ""
+        },
+        {
+          "label": "Serviços",
+          "help": "Um serviço por linha; o texto é publicado como você escrever."
+        },
+        {
+          "label": "CEP",
+          "help": ""
+        },
+        {
+          "label": "Rua",
+          "help": ""
+        },
+        {
+          "label": "Número",
+          "help": ""
+        },
+        {
+          "label": "Complemento",
+          "help": ""
+        },
+        {
+          "label": "Bairro",
+          "help": ""
+        },
+        {
+          "label": "Cidade",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "País",
+          "help": ""
+        },
+        {
+          "label": "Código IBGE do município",
+          "help": "Preenchido pela busca de CEP; obrigatório nos documentos fiscais."
+        },
+        {
+          "label": "Latitude",
+          "help": ""
+        },
+        {
+          "label": "Longitude",
+          "help": ""
+        },
+        {
+          "label": "Aberto 24 horas",
+          "help": "Quando ativo, os horários por dia da semana são ignorados."
+        },
+        {
+          "label": "Anotações",
           "help": ""
         },
         {
@@ -9520,6 +9677,14 @@
       ]
     },
     {
+      "route": "/system/hr/rep-p",
+      "menuPath": "Recursos humanos › REP-P",
+      "scope": "platform",
+      "title": "REP-P",
+      "description": "",
+      "fields": []
+    },
+    {
       "route": "/system/infragis/provider-settings",
       "menuPath": "InfraGIS › Mapa de fundo",
       "scope": "platform",
@@ -9835,6 +10000,47 @@
         },
         {
           "label": "Valores desejados (JSON)",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/access-gateways",
+      "menuPath": "Rede › Gateways",
+      "scope": "platform",
+      "title": "Gateways de acesso",
+      "description": "Servidores dedicados que abrem os consoles e testes de acesso dos equipamentos de Rede, isolados da plataforma, com IP de saída fixo por ambiente.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Chave",
+          "help": "Identifica o gateway no endereço do relay (/access-gateway/<chave>/ws): letras minúsculas, números e hífens. Não muda depois de criado."
+        },
+        {
+          "label": "Ambiente",
+          "help": "Ambiente da plataforma atendido por este gateway. Não muda depois de criado."
+        },
+        {
+          "label": "IP de saída",
+          "help": "IPv4 público fixo com que o gateway chega aos equipamentos; os clientes liberam este IP no firewall. Obrigatório para ativar."
+        },
+        {
+          "label": "Porta do relay",
+          "help": "Porta privada em que o gateway recebe o WebSocket do edge (padrão 7443)."
+        },
+        {
+          "label": "Capacidade",
+          "help": "Conexões simultâneas que este gateway aceita; a plataforma escolhe o gateway menos ocupado."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]
@@ -11439,6 +11645,10 @@
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
         },
         {
+          "label": "Rede",
+          "help": "Infraestrutura da plataforma: o servidor entra na rede da plataforma do provedor. Isolada: recebe uma rede privada própria."
+        },
+        {
           "label": "Rede privada",
           "help": "Opcional. Em branco, a VPS usa a rede padrão da sua conta. Escolha uma rede só para ligar uma rede privada adicional."
         },
@@ -11697,6 +11907,10 @@
           "help": "Cada cliente recebe a própria zona EVPN e o próprio gateway. Ao ligar, os campos vazios são preenchidos com os valores recomendados deste ambiente; revise antes de salvar."
         },
         {
+          "label": "Rede da plataforma",
+          "help": "Rede dos servidores da plataforma (DNS, API, banco de dados...) criados pelo master. Os clientes nunca a veem. Escolha Não para removê-la."
+        },
+        {
           "label": "ID do token",
           "help": ""
         },
@@ -11770,10 +11984,6 @@
         },
         {
           "label": "ID da rede",
-          "help": ""
-        },
-        {
-          "label": "ID do datastore",
           "help": ""
         }
       ]
@@ -14020,6 +14230,48 @@
       ]
     },
     {
+      "route": "/website/ethics-reports",
+      "menuPath": "Website › Ética",
+      "scope": "tenant",
+      "title": "Ética",
+      "description": "Denúncias recebidas pelo canal de ética dos seus sites. Denúncias anônimas não guardam identificação; analise cada uma e registre o resultado nas observações.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/website/leads",
+      "menuPath": "Website › Leads",
+      "scope": "tenant",
+      "title": "Leads",
+      "description": "Solicitações de contato e de frota enviadas pelos seus sites. Acompanhe cada uma e marque como contatada ou encerrada.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/website/offers",
       "menuPath": "Website › Ofertas",
       "scope": "tenant",
@@ -14111,6 +14363,10 @@
         {
           "label": "Idiomas",
           "help": "Idiomas em que o site é publicado; cada um tem sua própria aba de conteúdo no editor."
+        },
+        {
+          "label": "Segmento",
+          "help": "Define o conteúdo inicial e o tipo de negócio publicado no site. Altere com cuidado em sites já publicados."
         },
         {
           "label": "Domínio próprio",

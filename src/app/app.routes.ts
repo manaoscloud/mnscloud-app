@@ -849,6 +849,27 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'website.orders' },
               },
               {
+                path: 'website/leads',
+                loadComponent: () =>
+                  import('./pages/website/leads/leads').then((m) => m.WebsiteLeadsPage),
+                title: 'Website',
+                data: { scope: 'tenant', breadcrumb: 'website.leads' },
+              },
+              {
+                path: 'website/ethics-reports',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/website/ethics-reports/ethics-reports').then(
+                    (m) => m.WebsiteEthicsReportsPage,
+                  ),
+                title: 'Website',
+                data: {
+                  scope: 'tenant',
+                  breadcrumb: 'website.ethics',
+                  permission: 'tenant.website.ethics-reports.read',
+                },
+              },
+              {
                 path: 'website/offers',
                 loadComponent: () =>
                   import('./pages/website/offers/offers').then((m) => m.WebsiteOffersPage),
@@ -1160,6 +1181,12 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./pages/registry/companies/companies').then((m) => m.RegCompanyPage),
                 title: 'Registry • Companies | mnscloud',
+              },
+              {
+                path: 'registry/locations',
+                loadComponent: () =>
+                  import('./pages/registry/locations/locations').then((m) => m.RegLocationPage),
+                title: 'Registry • Locations | mnscloud',
               },
               {
                 path: 'registry/suppliers',
@@ -3484,6 +3511,20 @@ export const routes: Routes = [
                 title: 'Network platform',
                 data: { breadcrumb: 'network.platformDevices' },
               },
+              // Access gateways (mnscloud-access-gateway runtime) that open the device consoles.
+              {
+                path: 'network/access-gateways',
+                loadComponent: () =>
+                  import('./pages/network/access-gateways/access-gateways').then(
+                    (m) => m.NetworkAccessGatewaysPage,
+                  ),
+                canActivate: [permissionGuard],
+                title: 'Network platform',
+                data: {
+                  permission: 'platform.access.gateways.manage',
+                  breadcrumb: 'network.accessGateways.title',
+                },
+              },
               {
                 path: 'dns/clusters',
                 loadComponent: () =>
@@ -3593,6 +3634,15 @@ export const routes: Routes = [
                   ),
                 title: 'DNS',
                 data: { scope: 'master', breadcrumb: 'dns.monitorAgents' },
+              },
+              {
+                path: 'hr/rep-p',
+                loadComponent: () =>
+                  import('./pages/hr/rep-p-parameters/rep-p-parameters').then(
+                    (m) => m.HrRepParametersPage,
+                  ),
+                title: 'HR',
+                data: { scope: 'master', breadcrumb: 'nav.hr.rep-p' },
               },
               {
                 path: 'website/parameters',
