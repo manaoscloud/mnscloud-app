@@ -13535,5 +13535,6 @@
   "Name the customer sees on the replies, e.g. Support Example. Empty shows only the address.": "Nome que o cliente vê nas respostas, ex.: Suporte Exemplo. Vazio mostra só o endereço.",
   "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.": "Endereço para onde seus clientes escrevem. Os e-mails que chegam na caixa de entrada viram conversas, e as respostas saem dele.",
   "Leave empty to keep the stored password.": "Deixe vazio para manter a senha salva.",
-  "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Senha desta caixa de e-mail. Gmail, Outlook, Yahoo e iCloud pedem uma senha de app (criada nas configurações de segurança da conta). A conexão é testada ao salvar."
+  "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Senha desta caixa de e-mail. Gmail, Outlook, Yahoo e iCloud pedem uma senha de app (criada nas configurações de segurança da conta). A conexão é testada ao salvar.",
+  "imap.example.com": "imap.example.com"
 }

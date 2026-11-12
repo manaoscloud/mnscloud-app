@@ -13534,5 +13534,6 @@
   "Name the customer sees on the replies, e.g. Support Example. Empty shows only the address.": "Name the customer sees on the replies, e.g. Support Example. Empty shows only the address.",
   "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.": "Address your customers write to. E-mails that arrive in its inbox become conversations, and replies are sent from it.",
   "Leave empty to keep the stored password.": "Leave empty to keep the stored password.",
-  "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save."
+  "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.": "Password of this mailbox. Gmail, Outlook, Yahoo and iCloud ask for an app password (created in the account security settings). The connection is checked when you save.",
+  "imap.example.com": "imap.example.com"
 }
