@@ -49,6 +49,7 @@ import {
   showConnection,
   showRecording,
 } from './device-connections';
+import { deviceSupportSessionsConfig } from '../../support/remote/remote-sessions';
 
 type Translate = (key: string) => string;
 
@@ -543,6 +544,14 @@ function deviceConfig(
         label: 'network.connection.history',
         icon: 'history',
         collection: (row) => connectionHistoryConfig(base, String(row['NwdUUID']), connections),
+      },
+      {
+        key: 'support-sessions',
+        label: 'support.remote.deviceSessions.title',
+        icon: 'support_agent',
+        // Tenant devices only: the sessions belong to the tenant that opened them.
+        visible: () => !platform && can('tenant.support.remote.sessions.read'),
+        collection: (row) => deviceSupportSessionsConfig(String(row['NwdUUID'])),
       },
       {
         key: 'managed-access',
