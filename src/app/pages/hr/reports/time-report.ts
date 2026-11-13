@@ -28,11 +28,11 @@ const minutes = (field: string, signed = false) => ({
 const config = defineCrud({
   listExport: true,
   endpoint: 'hr/reports/time',
-  uuidField: 'EmploymentUUID',
+  uuidField: 'RowKey',
   pageTitle: 'Time by location',
   pageDescription:
     'Month totals of the timesheets per employee and location: expected and worked hours, overtime at 50% and 100%, lateness, early leaves, absences and balance. Order by overtime, absences or lateness to see the rankings.',
-  searchPlaceholder: 'Employee',
+  searchPlaceholder: 'Employee or registration number',
   emptyLabel: 'No time records found in the month.',
   canCreate: false,
   canEdit: false,

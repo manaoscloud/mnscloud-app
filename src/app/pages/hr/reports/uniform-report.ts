@@ -21,11 +21,11 @@ import {
 const config = defineCrud({
   listExport: true,
   endpoint: 'hr/reports/uniform-punches',
-  uuidField: 'EmploymentUUID',
+  uuidField: 'RowKey',
   pageTitle: 'British schedule',
   pageDescription:
     'Flags months with uniform punch times (Súmula 338, III of the TST) for HR review: at least 10 days with entry and exit varying up to 3 minutes, or 80% or more of the punches on a minute multiple of 5. Punches are never changed.',
-  searchPlaceholder: 'Employee',
+  searchPlaceholder: 'Employee or registration number',
   emptyLabel: 'No employees found in the month.',
   canCreate: false,
   canEdit: false,
@@ -96,10 +96,8 @@ const config = defineCrud({
       id: 'uniform',
       label: 'Uniform',
       field: 'Uniform',
-      kind: 'status',
       value: (row, t) =>
-        row['Uniform'] === true || Number(row['Uniform']) === 1 ? t('Uniform') : '',
-      chipClass: () => 'chip-warning',
+        row['Uniform'] === true || Number(row['Uniform']) === 1 ? t('Uniform') : '—',
     },
   ],
   fields: [],
