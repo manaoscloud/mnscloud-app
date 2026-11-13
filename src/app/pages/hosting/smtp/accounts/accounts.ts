@@ -10,6 +10,16 @@ import {
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openInstallCommandDialog } from '../../../../shared/install-command-dialog/open-install-command-dialog';
+import {
+  SMTP_RESALE_LINK_KEY,
+  SMTP_RESALE_SEND_KEY_GENERATE_KEY,
+  smtpResaleActions,
+  smtpResaleBody,
+  smtpResaleChanged,
+  smtpSendKeyFromResponse,
+  smtpSendKeyLabel,
+} from './resale-actions';
 
 type HostingSmtpProvider = {
   HspUUID: string;
@@ -83,11 +93,47 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       uuidField: 'HostingSmtpProviderHspUUID',
     },
     { id: 'from', label: 'From', field: 'HsaDefaultFromEmail' },
-    { id: 'default', label: 'Default', kind: 'boolean', field: 'HsaIsDefault', className: 'status-col' },
-    { id: 'status', label: 'Status', kind: 'status', field: 'HsaIsActive', className: 'status-col' },
+    {
+      id: 'default',
+      label: 'Default',
+      kind: 'boolean',
+      field: 'HsaIsDefault',
+      className: 'status-col',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      kind: 'status',
+      field: 'HsaIsActive',
+      className: 'status-col',
+    },
+    { id: 'customer', label: 'hostingSmtp.resale.customerColumn', field: 'CustomerName' },
+    {
+      id: 'portal',
+      label: 'hostingSmtp.resale.portalColumn',
+      value: (item, translate) =>
+        translate(
+          Number(item['HsaPortalEnabled'] ?? 0) === 1
+            ? 'hostingSmtp.resale.portalYes'
+            : 'hostingSmtp.resale.portalNo',
+        ),
+    },
+    { id: 'dailyLimit', label: 'hostingSmtp.resale.dailyLimitColumn', field: 'HsaDailyLimit' },
+    {
+      id: 'sendKey',
+      label: 'hostingSmtp.resale.keyColumn',
+      value: (item) => smtpSendKeyLabel(item),
+    },
   ],
   fields: [
-    { key: 'status', source: 'HsaIsActive', payloadKey: 'status', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'status',
+      source: 'HsaIsActive',
+      payloadKey: 'status',
+      label: 'Status',
+      type: 'status',
+      span: 1,
+    },
     {
       key: 'providerUuid',
       source: 'HostingSmtpProviderHspUUID',
@@ -122,8 +168,37 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       type: 'email',
       tab: 'authentication',
     },
+    {
+      key: 'customerUuid',
+      source: 'RegCustomerRcuUUID',
+      label: 'hostingSmtp.resale.customer',
+      type: 'search-select',
+      span: 1,
+      help: 'hostingSmtp.resale.customerHelp',
+      hiddenWhen: ({ editing }) => !editing,
+      remoteLookup: {
+        endpoint: 'registry/customers?status=1',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+    },
+    {
+      key: 'dailyLimit',
+      source: 'HsaDailyLimit',
+      label: 'hostingSmtp.resale.dailyLimit',
+      type: 'number',
+      positive: true,
+      span: 1,
+      help: 'hostingSmtp.resale.dailyLimitHelp',
+      hiddenWhen: ({ editing }) => !editing,
+      requiredWhen: ({ editing }) => editing,
+    },
   ],
 };
+
+const RESALE_FIELD_KEYS = ['customerUuid', 'dailyLimit'];
+const RESALE_COLUMN_IDS = ['customer', 'portal', 'dailyLimit', 'sendKey'];
 
 @Component({
   selector: 'app-hosting-smtp-accounts',
@@ -151,7 +226,21 @@ export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<Configurab
   );
 
   constructor() {
-    super(ACCOUNT_CONFIG);
+    super(
+      (() => {
+        const master = inject(ActivatedRoute).snapshot.data?.['scope'] === 'master';
+        return {
+          ...ACCOUNT_CONFIG,
+          rowActions: [VALIDATE_ACTION, ...smtpResaleActions(master)],
+          fields: ACCOUNT_CONFIG.fields.filter(
+            (field) => !master || !RESALE_FIELD_KEYS.includes(field.key),
+          ),
+          columns: ACCOUNT_CONFIG.columns.filter(
+            (column) => !master || !RESALE_COLUMN_IDS.includes(column.id),
+          ),
+        };
+      })(),
+    );
     void this.fetchProviders();
   }
 
@@ -186,7 +275,69 @@ export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
-    return String(row['HspProvider'] ?? '') === 'smtp' ? [VALIDATE_ACTION] : [];
+    const validate = String(row['HspProvider'] ?? '') === 'smtp' ? [VALIDATE_ACTION] : [];
+    return [...validate, ...smtpResaleActions(this.platformScope())];
+  }
+
+  /** Customer and daily limit have their own route: send it before the account update. */
+  override async saveItem(saveAndNew = false): Promise<void> {
+    const current = this.editingRecord();
+    if (current && !this.platformScope()) {
+      const values = this.formValues();
+      const dailyLimit = Number(values['dailyLimit']);
+      if (Number.isInteger(dailyLimit) && dailyLimit >= 1 && smtpResaleChanged(current, values)) {
+        try {
+          await this.api.put(
+            `${this.endpoint()}/${current['HsaUUID']}/resale`,
+            smtpResaleBody(values),
+          );
+        } catch (error) {
+          this.snack.error(this.resaleErrorMessage(error));
+          return;
+        }
+        this.itemsResource.reload();
+      }
+    }
+    await super.saveItem(saveAndNew);
+  }
+
+  private resaleErrorMessage(error: unknown): string {
+    const code = (error as { error?: { code?: string } } | null)?.error?.code;
+    if (code === 'SMTP_ACCOUNT_CONTRACT_OPEN') return this.t('hostingSmtp.resale.contractOpen');
+    return this.t(this.errorMessage(error));
+  }
+
+  private async generateSendKey(row: ConfigurableCrudRecord): Promise<void> {
+    const confirmed = await this.confirmAction(
+      'hostingSmtp.resale.keyGenerate',
+      'hostingSmtp.resale.keyGenerateConfirm',
+      'hostingSmtp.resale.keyGenerate',
+    );
+    if (!confirmed) return;
+    this.mutating.set(true);
+    try {
+      const response = await this.api.post(`${this.endpoint()}/${row['HsaUUID']}/send-key`, {});
+      let sendKey = smtpSendKeyFromResponse(response);
+      if (!sendKey) throw new Error('Operation failed.');
+      this.itemsResource.reload();
+      openInstallCommandDialog(
+        this.dialog,
+        {
+          title: 'hostingSmtp.resale.keyDialogTitle',
+          description: 'hostingSmtp.resale.keyDialogDescription',
+          warning: 'hostingSmtp.resale.keyDialogWarning',
+          command: sendKey,
+        },
+        this.destroyRef,
+        () => {
+          sendKey = '';
+        },
+      );
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -201,6 +352,14 @@ export class HostingSmtpAccountsPage extends ConfigurableCrudPageBase<Configurab
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === SMTP_RESALE_LINK_KEY) {
+      this.startEdit(row);
+      return;
+    }
+    if (action.key === SMTP_RESALE_SEND_KEY_GENERATE_KEY) {
+      await this.generateSendKey(row);
+      return;
+    }
     if (action.key !== 'validate') return;
     const uuid = String(row['HsaUUID'] ?? '');
     if (!uuid) return;
