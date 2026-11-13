@@ -5,6 +5,8 @@ import { TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../services/auth.service';
 import { AutomationService } from '../automation.service';
 import { FLOW_TEMPLATES } from '../automation-templates';
+import { askAiDraft } from '../ai-dialogs';
+import { MatDialog } from '@angular/material/dialog';
 import { AUTOMATION_PERMISSIONS } from '../automation-adapter';
 import { gateWrite } from '../automation-access';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
@@ -60,11 +62,14 @@ export const AUTOMATION_FLOWS_CONFIG = defineCrud({
     label: 'automation.templates.menu',
     icon: 'dashboard_customize',
     tooltip: 'automation.templates.menuHelp',
-    actions: FLOW_TEMPLATES.map((template) => ({
-      key: `template:${template.key}`,
-      label: template.labelKey,
-      icon: 'account_tree',
-    })),
+    actions: [
+      { key: 'ai:draft', label: 'automation.ai.draftMenu', icon: 'auto_awesome' },
+      ...FLOW_TEMPLATES.map((template) => ({
+        key: `template:${template.key}`,
+        label: template.labelKey,
+        icon: 'account_tree',
+      })),
+    ],
   },
   ...revisionDeletePayloads('AflUUID', 'AflRevision'),
   initialValues: {
@@ -160,6 +165,7 @@ export class AutomationFlowsPage extends ConfigurableCrudPageBase<ConfigurableCr
   private readonly router = inject(Router);
   private readonly service = inject(AutomationService);
   private readonly i18n = inject(TranslocoService);
+  private readonly matDialog = inject(MatDialog);
 
   constructor() {
     const canWrite = hasEffectivePermission(
@@ -175,6 +181,7 @@ export class AutomationFlowsPage extends ConfigurableCrudPageBase<ConfigurableCr
 
   /** "Novo a partir de modelo": creates the flow, saves the template draft, opens the editor. */
   override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {
+    if (action.key === 'ai:draft') return await this.createWithAi();
     const template = FLOW_TEMPLATES.find((item) => `template:${item.key}` === action.key);
     if (!template) return;
     const t = (key: string) => this.i18n.translate(key);
@@ -190,6 +197,26 @@ export class AutomationFlowsPage extends ConfigurableCrudPageBase<ConfigurableCr
       void this.router.navigate(editorRoute(uuid));
     } catch {
       this.snack.error('automation.templates.failed');
+      await this.refreshList();
+    }
+  }
+
+  /** "Criar com IA": the AI draft (only blocks the tenant can use) becomes a new flow's draft. */
+  private async createWithAi(): Promise<void> {
+    const result = await askAiDraft(this.matDialog);
+    if (!result) return;
+    try {
+      const uuid = await this.service.create({
+        name: result.description.split(/[.\n]/)[0].slice(0, 80) || 'Fluxo criado com IA',
+        description: result.description.slice(0, 500),
+        surface: 'conversation',
+        priority: 100,
+      });
+      const flow = await this.service.flow(uuid);
+      await this.service.saveDraft(uuid, flow.revision, result.graph, false);
+      void this.router.navigate(editorRoute(uuid));
+    } catch {
+      this.snack.error('automation.ai.error.save');
       await this.refreshList();
     }
   }

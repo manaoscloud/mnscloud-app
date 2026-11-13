@@ -16,6 +16,12 @@ export const AI_FEATURE_OPTIONS = [
   { value: 'support.triage', label: 'Support ticket triage' },
   { value: 'help.tutorial.script', label: 'Tutorial video script' },
   { value: 'help.tutorial.narration', label: 'Tutorial video narration' },
+  { value: 'automation.intent.classify', label: 'Automation intent classification' },
+  { value: 'automation.extract', label: 'Automation data extraction' },
+  { value: 'automation.agent.answer', label: 'Automation knowledge answer' },
+  { value: 'automation.handoff.summary', label: 'Automation handoff summary' },
+  { value: 'automation.flow.draft', label: 'Automation flow draft' },
+  { value: 'automation.flow.review', label: 'Automation flow review' },
 ];
 
 /** Features that turn text into audio (speech model + voice) instead of answering text. */
