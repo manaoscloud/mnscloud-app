@@ -64,6 +64,7 @@ function flags(row: ConfigurableCrudRecord): string[] {
 // Read-only view of the immutable Pulse ledger: marks are never edited or deleted here; flags
 // point the manager to marks worth checking (treatment arrives with the timesheet phase).
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/time-punches',
   uuidField: 'TimePunchUUID',
   pageTitle: 'Time Punches',

@@ -23,6 +23,7 @@ const TIMESHEET_ACTION = 'timesheet';
 // Days with inconsistencies (flags) computed by the timesheet engine, newest first. Read-only:
 // treatment happens on the employee timesheet, opened from each row.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/time-issues',
   uuidField: 'IssueKey',
   pageTitle: 'Timesheet issues',

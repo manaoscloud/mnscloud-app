@@ -103,6 +103,7 @@ function requestDetail(row: ConfigurableCrudRecord, translate: (key: string) => 
 // App responsible of a department only those of its department (checked by the API). Approving
 // records the treated mark, the disregarded punch or the absence; the original punch never changes.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/time-requests',
   uuidField: 'RequestUUID',
   pageTitle: 'Requests',

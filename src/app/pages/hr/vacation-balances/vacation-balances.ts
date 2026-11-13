@@ -28,6 +28,7 @@ const PERIODS: ConfigurableCrudRowAction = {
 // of type Vacation) and days in pending vacation requests. Employees request vacation in Pulse
 // within this balance; HR decides in Requests.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/vacation-balances',
   uuidField: 'EmployeeUUID',
   pageTitle: 'Vacation',

@@ -25,6 +25,7 @@ const SCHEDULE_LOOKUP = {
 // Which work schedule each employee follows and since when; the timesheet uses the assignment
 // valid on each day. Cycle schedules (12x36) count their days from the cycle anchor date.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/work-schedule-assignments',
   uuidField: 'AssignmentUUID',
   pageTitle: 'Schedule assignments',

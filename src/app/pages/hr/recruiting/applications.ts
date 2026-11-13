@@ -101,6 +101,7 @@ const CANDIDATE_TEXT = (key: string, label: string, extra: object = {}) => ({
 
 /** Applications sent from the careers page or typed by HR, followed through the hiring stages. */
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/recruiting/applications',
   uuidField: 'ApplicationUUID',
   pageTitle: 'Applications',
