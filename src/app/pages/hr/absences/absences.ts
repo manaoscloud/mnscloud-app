@@ -37,6 +37,7 @@ const CERTIFICATE: ConfigurableCrudRowAction = {
 // leave). A covered workday has no absence, lateness or early leave in the timesheet; extra work on
 // that day still counts. The certificate is a private file; no CID is recorded.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/absences',
   uuidField: 'AbsenceUUID',
   pageTitle: 'Absences',

@@ -59,6 +59,7 @@ const kindOf = (values: ConfigurableCrudRecord) => String(values['kind'] ?? '');
 // recorded with the time, the device and a checksum of what was seen. Employees also send
 // documents to HR here. An acknowledged document is final and cannot be withdrawn.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/employee-documents',
   uuidField: 'DocumentUUID',
   pageTitle: 'Employee documents',

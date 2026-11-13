@@ -44,6 +44,7 @@ function markOf(row: ConfigurableCrudRecord, translate: (key: string) => string)
 // or a punch disregarded after a contest. The original punch is never changed; a treatment is not
 // edited, it is revoked with a reason and stays as trail.
 const config = defineCrud({
+  listExport: true,
   endpoint: 'hr/time-adjustments',
   uuidField: 'AdjustmentUUID',
   pageTitle: 'Treated marks',

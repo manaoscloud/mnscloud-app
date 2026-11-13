@@ -66,6 +66,28 @@
             </a>
           }
           <app-refresh-button [loading]="loading()" (refresh)="refreshList()" />
+          @if (listExportEnabled()) {
+            <button
+              mat-stroked-button
+              color="primary"
+              type="button"
+              [disabled]="listExporting()"
+              (click)="exportCsv()"
+            >
+              <mat-icon>download</mat-icon>
+              {{ 'Export CSV' | transloco }}
+            </button>
+            <button
+              mat-stroked-button
+              color="primary"
+              type="button"
+              [disabled]="listExporting()"
+              (click)="printList()"
+            >
+              <mat-icon>print</mat-icon>
+              {{ 'Print' | transloco }}
+            </button>
+          }
           @if (canCreate()) {
             <button mat-stroked-button color="primary" type="button" (click)="startCreate()">
               <mat-icon>add</mat-icon>

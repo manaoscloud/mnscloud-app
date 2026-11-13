@@ -22,6 +22,7 @@ export const RULES = [
 export const NOT_TABLE_SURFACES = {
   'src/app/shared/crud/configurable-crud/configurable-crud-page.html': 'the global table',
   'src/app/shared/crud/configurable-crud/configurable-crud-page-base.ts': 'the global table',
+  'src/app/shared/print/print-html.ts': 'printable HTML document of the print helper, not a screen',
   'src/app/shared/data-viewer-dialog/data-viewer-dialog.html': 'read-only payload viewer',
   'src/app/shared/dashboard/dashboard-record-list.ts': 'dashboard record cards',
   'src/app/pages/monitoring/telemetry/overview.html':

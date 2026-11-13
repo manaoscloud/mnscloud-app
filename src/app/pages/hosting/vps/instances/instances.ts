@@ -1114,13 +1114,9 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions: ConfigurableCrudRowAction[] = [];
-    if (row['HviAdoptedAt']) {
-      // Adopted VMs are only linked (FA3): no power, migration, retry or upgrade.
-      actions.push(MONITOR_ACTION);
-      if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
-      actions.push(DETAILS_ACTION);
-      return actions;
-    }
+    // Adopted VMs (FA3) are managed like the servers the platform created (follow-up
+    // adopted-vm-management): only reprovision stays out (the VM already exists), and the Agent and
+    // runtime installs are for servers the platform created.
     if (row['HviExternalId']) {
       actions.push(MONITOR_ACTION);
       if (this.hasWebConsole(row)) actions.push(CONSOLE_ACTION);
@@ -1133,7 +1129,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       if (this.canInstallAgent(row)) actions.push(INSTALL_AGENT_ACTION);
       if (this.canInstallRuntime(row)) actions.push(INSTALL_RUNTIME_ACTION);
     }
-    if (this.canRetryProvision(row)) {
+    if (!row['HviAdoptedAt'] && this.canRetryProvision(row)) {
       actions.push({
         ...RETRY_PROVISION_ACTION,
         icon: this.retryingInstanceUUIDs().has(this.recordUUID(row)) ? 'hourglass_top' : 'replay',
@@ -1260,11 +1256,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const config = parseConfig<HostingVpsInstanceConfig>(row['HviConfig']);
     const resizeStatus = config?.resize?.status ?? '';
     const grouping = planSizeGrouping(plan);
-    const provider = plan?.HvpProvider;
+    const provider = plan?.HvpProvider ?? this.providerOf(row);
     return (
       Number(row['HviIsActive']) === 1 &&
       !!row['HviExternalId'] &&
-      (provider === 'digitalocean' || provider === 'lightsail') &&
+      (provider === 'digitalocean' || provider === 'lightsail' || provider === 'proxmox') &&
       !isGpuSizeGrouping(grouping) &&
       !['resize_queued', 'resizing', 'powering_on'].includes(String(row['HviStatus'] ?? '')) &&
       !['queued', 'resizing', 'powering_on'].includes(resizeStatus)
@@ -1423,6 +1419,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       data: {
         instance,
         plans: this.plans(),
+        provider: this.providerOf(row),
       },
     });
 
@@ -1437,9 +1434,15 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
     const confirmed = await this.confirmAction(
       'Upgrade VPS plan',
-      target.HvpProvider === 'lightsail'
-        ? `Queue Lightsail upgrade for "${instance.HviName}" to "${target.HvpName}"? The instance will be recreated from a snapshot (downtime). Dynamic public IP may change; an existing Static IP is preserved.`
-        : `Queue upgrade for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
+      target.HvpProvider === 'proxmox'
+        ? this.t(
+            'Change {name} to plan {plan}? CPU and memory apply with a reboot when the server cannot take them live; the disk only grows.',
+          )
+            .replace('{name}', instance.HviName)
+            .replace('{plan}', String(target.HvpName ?? ''))
+        : target.HvpProvider === 'lightsail'
+          ? `Queue Lightsail upgrade for "${instance.HviName}" to "${target.HvpName}"? The instance will be recreated from a snapshot (downtime). Dynamic public IP may change; an existing Static IP is preserved.`
+          : `Queue upgrade for "${instance.HviName}" to "${target.HvpName}"? Provider billing and resize rules apply.`,
       'Upgrade',
     );
     if (!confirmed) return;
@@ -1753,7 +1756,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
           ? [
               {
                 label: 'Adopted',
-                value: `${this.t('Created outside the platform; the platform does not change it')} · ${item.HviAdoptedAt}`,
+                value: `${this.t('Created outside the platform and adopted; managed by the platform (never reprovisioned; deleting only unlinks it)')} · ${item.HviAdoptedAt}`,
               },
             ]
           : []),
@@ -1894,6 +1897,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       HviUUID: String(row['HviUUID'] ?? ''),
       HviName: String(row['HviName'] ?? ''),
       HviConfig: parseConfig<HostingVpsInstanceConfig>(row['HviConfig']),
+      HviAdoptedAt: (row['HviAdoptedAt'] as string | null | undefined) ?? null,
       RegCustomerRcuUUID: (row['RegCustomerRcuUUID'] as string | null | undefined) ?? null,
       CustomerName: (row['CustomerName'] as string | null | undefined) ?? null,
       HviExternalId: (row['HviExternalId'] as string | null | undefined) ?? null,
