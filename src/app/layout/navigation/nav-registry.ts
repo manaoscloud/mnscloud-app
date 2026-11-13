@@ -2383,6 +2383,15 @@ export const NAV_ITEMS: NavItem[] = [
             scope: 'master',
             permissions: ['platform.master.access'],
           },
+          {
+            id: 'hosting/vps/platform-pools',
+            label: 'nav.hosting.vps.platform-pools',
+            icon: 'dynamic_feed',
+            category: 'platform',
+            masterRoute: '/system/vps/platform-pools',
+            scope: 'master',
+            permissions: ['platform.master.access'],
+          },
         ],
       },
       {
