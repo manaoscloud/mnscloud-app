@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -205,7 +205,7 @@ export async function askAiDraft(dialog: MatDialog): Promise<AiDraftResult | und
     </div>
   `,
 })
-export class AutomationAiReviewDialog implements OnInit {
+export class AutomationAiReviewDialog {
   readonly data = inject<{ flowUUID: string }>(MAT_DIALOG_DATA);
   readonly ref = inject(MatDialogRef<AutomationAiReviewDialog>);
   private readonly service = inject(AutomationService);
@@ -214,7 +214,11 @@ export class AutomationAiReviewDialog implements OnInit {
   readonly summary = signal('');
   readonly issues = signal<Array<{ nodeId: string | null; severity: string; message: string }>>([]);
 
-  async ngOnInit(): Promise<void> {
+  constructor() {
+    void this.review();
+  }
+
+  private async review(): Promise<void> {
     try {
       const result = await this.service.aiReview(this.data.flowUUID);
       this.summary.set(result.summary);
