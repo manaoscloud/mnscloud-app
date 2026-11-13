@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5f56fcda258d",
+  "version": "f194796f4508",
   "language": "pt-BR",
   "entries": [
     {
@@ -3143,6 +3143,14 @@
         {
           "label": "E-mail de remetente padrão",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do cadastro que usa esta conta SMTP. Vazio = uso próprio. Não é possível trocar o cliente enquanto houver item de contrato aberto."
+        },
+        {
+          "label": "Limite diário de envios",
+          "help": "Quantidade máxima de e-mails por dia, de 1 a 100000."
         }
       ]
     },
@@ -9434,6 +9442,14 @@
         {
           "label": "E-mail de remetente padrão",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do cadastro que usa esta conta SMTP. Vazio = uso próprio. Não é possível trocar o cliente enquanto houver item de contrato aberto."
+        },
+        {
+          "label": "Limite diário de envios",
+          "help": "Quantidade máxima de e-mails por dia, de 1 a 100000."
         }
       ]
     },
