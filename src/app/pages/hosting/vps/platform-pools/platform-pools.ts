@@ -426,7 +426,6 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
       },
       details: [
         { label: 'Group', value: row['HpoGroup'] },
-        ...(state?.message ? [{ label: 'Message', value: state.message }] : []),
         {
           label: 'Members',
           value: `${Number(row['liveCount'] ?? 0)}/${Number(row['HpoDesiredCount'] ?? 0)}`,
