@@ -97,6 +97,7 @@ const ERROR_KEYS: Record<string, string> = {
   ACCESS_GATEWAY_STORAGE_UNAVAILABLE: 'network.console.error.storageUnavailable',
   ACCESS_GATEWAY_RECORDING_NOT_FOUND: 'network.console.error.recordingNotFound',
   NETWORK_FORBIDDEN: 'network.console.error.forbidden',
+  SUPPORT_REMOTE_NO_LIVE_CONNECTION: 'support.remote.error.noLive',
 };
 
 export function accessGatewayErrorMessage(error: unknown): string {
