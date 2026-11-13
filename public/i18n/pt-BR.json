@@ -14276,5 +14276,11 @@
   "automation.ai.error.rate_limit": "Muitas chamadas de IA agora; tente de novo em instantes.",
   "automation.ai.error.failed": "A IA não conseguiu responder; tente de novo.",
   "automation.ai.error.empty": "A IA não gerou um rascunho válido; detalhe melhor o atendimento.",
-  "automation.ai.error.save": "Não foi possível criar o fluxo com o rascunho."
+  "automation.ai.error.save": "Não foi possível criar o fluxo com o rascunho.",
+  "Automation intent classification": "Automação: classificar intenção",
+  "Automation data extraction": "Automação: extrair dados",
+  "Automation knowledge answer": "Automação: responder com base no conteúdo",
+  "Automation handoff summary": "Automação: resumo para o atendente",
+  "Automation flow draft": "Automação: criar fluxo com IA",
+  "Automation flow review": "Automação: revisar fluxo com IA"
 }

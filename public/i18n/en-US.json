@@ -14275,5 +14275,11 @@
   "automation.ai.error.rate_limit": "Too many AI calls now; try again soon.",
   "automation.ai.error.failed": "The AI could not answer; try again.",
   "automation.ai.error.empty": "The AI did not produce a valid draft; describe the service in more detail.",
-  "automation.ai.error.save": "Could not create the flow with the draft."
+  "automation.ai.error.save": "Could not create the flow with the draft.",
+  "Automation intent classification": "Automation intent classification",
+  "Automation data extraction": "Automation data extraction",
+  "Automation knowledge answer": "Automation knowledge answer",
+  "Automation handoff summary": "Automation handoff summary",
+  "Automation flow draft": "Automation flow draft",
+  "Automation flow review": "Automation flow review"
 }

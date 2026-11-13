@@ -14275,5 +14275,11 @@
   "automation.ai.error.rate_limit": "Demasiadas llamadas de IA; intente de nuevo pronto.",
   "automation.ai.error.failed": "La IA no pudo responder; intente de nuevo.",
   "automation.ai.error.empty": "La IA no generó un borrador válido; detalle mejor la atención.",
-  "automation.ai.error.save": "No se pudo crear el flujo con el borrador."
+  "automation.ai.error.save": "No se pudo crear el flujo con el borrador.",
+  "Automation intent classification": "Automatización: clasificar intención",
+  "Automation data extraction": "Automatización: extraer datos",
+  "Automation knowledge answer": "Automatización: responder con base en el contenido",
+  "Automation handoff summary": "Automatización: resumen para el agente",
+  "Automation flow draft": "Automatización: crear flujo con IA",
+  "Automation flow review": "Automatización: revisar flujo con IA"
 }
