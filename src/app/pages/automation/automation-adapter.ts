@@ -10,6 +10,7 @@ export const AUTOMATION_PERMISSIONS = {
   flowsWrite: 'tenant.automation.flows.write',
   flowsPublish: 'tenant.automation.flows.publish',
   runsCancel: 'tenant.automation.runs.cancel',
+  runsStart: 'tenant.automation.runs.start',
   secretsWrite: 'tenant.automation.secrets.write',
 } as const;
 

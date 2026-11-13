@@ -56,6 +56,19 @@ export function portsOf(node: GraphNode, def: NodeTypeDef | undefined): PortDef[
       { id: 'default', label: 'default' },
     ];
   }
+  if (node.type === 'ai.classify_intent') {
+    const options = Array.isArray(config['options']) ? (config['options'] as Dict[]) : [];
+    return [
+      ...options
+        .filter((item) => textOf(item['id']))
+        .map((item) => ({
+          id: `option:${textOf(item['id'])}`,
+          label: textOf(item['label']) || textOf(item['id']),
+        })),
+      { id: 'unknown', label: 'unknown' },
+      { id: 'error', label: 'error' },
+    ];
+  }
   if (node.type === 'conversations.ask') {
     const options = Array.isArray(config['options']) ? (config['options'] as Dict[]) : [];
     const answers: PortDef[] = options.length

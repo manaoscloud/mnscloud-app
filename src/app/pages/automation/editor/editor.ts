@@ -68,8 +68,9 @@ import {
   removeNodes,
   updateConfig,
 } from '../automation-graph';
-import { AutomationService, PickerOption } from '../automation.service';
+import { AutomationService, PickerOption, usedWidgets } from '../automation.service';
 import { askPublish, openVersions } from './editor-dialogs';
+import { openAiReview } from '../ai-dialogs';
 import {
   EditorLayout,
   PhonePane,
@@ -273,10 +274,14 @@ export class AutomationEditorPage {
   }
 
   private async loadPickers(): Promise<void> {
-    const [connection, team, user] = await Promise.all(
-      ['connection', 'team', 'user'].map((widget) => this.service.options(widget).catch(() => [])),
+    // Only the pickers the tenant can use: a module that is not contracted is never called.
+    const widgets = [
+      ...new Set(['connection', 'team', 'user', 'flow', ...usedWidgets(this.defs())]),
+    ];
+    const options = await Promise.all(
+      widgets.map((widget) => this.service.options(widget, this.uuid).catch(() => [])),
     );
-    this.pickers.set({ connection, team, user });
+    this.pickers.set(Object.fromEntries(widgets.map((widget, index) => [widget, options[index]])));
   }
 
   async reload(): Promise<void> {
@@ -759,6 +764,12 @@ export class AutomationEditorPage {
       this.snack.success('automation.versions.restored');
       await this.reload();
     }
+  }
+
+  /** "Revisar com IA": saves the draft first so the review sees what is on the screen. */
+  async aiReview(): Promise<void> {
+    await this.save();
+    await openAiReview(this.dialog, this.uuid);
   }
 
   // ---- test panel ----------------------------------------------------------------------------

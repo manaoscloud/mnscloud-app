@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "295a07cab4ef",
+  "version": "3c8912ec5a2a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3143,6 +3143,14 @@
         {
           "label": "E-mail de remetente padrão",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do cadastro que usa esta conta SMTP. Vazio = uso próprio. Não é possível trocar o cliente enquanto houver item de contrato aberto."
+        },
+        {
+          "label": "Limite diário de envios",
+          "help": "Quantidade máxima de e-mails por dia, de 1 a 100000."
         }
       ]
     },
@@ -9511,6 +9519,14 @@
         {
           "label": "E-mail de remetente padrão",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente do cadastro que usa esta conta SMTP. Vazio = uso próprio. Não é possível trocar o cliente enquanto houver item de contrato aberto."
+        },
+        {
+          "label": "Limite diário de envios",
+          "help": "Quantidade máxima de e-mails por dia, de 1 a 100000."
         }
       ]
     },
@@ -10405,6 +10421,80 @@
         {
           "label": "Agent",
           "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/mgmt-vpn",
+      "menuPath": "Rede › VPN de gestão",
+      "scope": "platform",
+      "title": "VPN de gestão",
+      "description": "Concentradores WireGuard da rede de gestão. Os equipamentos dos clientes são alcançados por eles, cada cliente só pelos próprios endereços.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endpoint",
+          "help": "Host e porta UDP do concentrador (host:porta)."
+        },
+        {
+          "label": "Chave pública do concentrador",
+          "help": "Chave pública WireGuard (44 caracteres). Pode ficar vazia até o concentrador existir."
+        },
+        {
+          "label": "Faixa de gestão",
+          "help": "Rede IPv4 de onde saem os endereços /32 atribuídos aos clientes."
+        },
+        {
+          "label": "Faixa dos gateways",
+          "help": "Rede IPv4 das origens do gateway de acesso, uma por cliente."
+        },
+        {
+          "label": "Gateway de acesso",
+          "help": "Gateway que entra no concentrador e abre os consoles."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/mgmt-vpn-addresses",
+      "menuPath": "Rede › Endereços de gestão",
+      "scope": "platform",
+      "title": "Endereços de gestão",
+      "description": "Endereços /32 da VPN de gestão atribuídos a cada cliente (ou à plataforma) e, se quiser, a um equipamento. A origem do gateway de cada cliente é criada pelo sistema e aparece só para leitura.",
+      "fields": [
+        {
+          "label": "Concentrador",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Vazio mantém o endereço com a plataforma."
+        },
+        {
+          "label": "Endereço",
+          "help": "IPv4 /32 dentro da faixa de gestão do concentrador."
+        },
+        {
+          "label": "Equipamento",
+          "help": "Opcional. O cliente também escolhe o endereço no cadastro do equipamento."
         },
         {
           "label": "Revisão",
@@ -12108,6 +12198,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/vps/platform-pools",
+      "menuPath": "Hospedagem › VPS › Grupos",
+      "scope": "platform",
+      "title": "Grupos de servidores da plataforma",
+      "description": "Quantidade desejada de servidores da plataforma por grupo. A plataforma cria os servidores que faltam automaticamente.",
+      "fields": []
     },
     {
       "route": "/system/vps/provider",
