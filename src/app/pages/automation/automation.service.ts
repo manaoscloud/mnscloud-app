@@ -176,7 +176,11 @@ export class AutomationService {
       .filter((item) => !spec.publishedOnly || Number(item['AflPublishedVersion'] ?? 0) > 0)
       .map((item) => ({
         value: String(item[spec.value] ?? ''),
-        label: String(item[spec.label] ?? ''),
+        // A stage shows its pipeline ("Vendas › Proposta") when there are several pipelines.
+        label:
+          spec.group && item[spec.group]
+            ? `${String(item[spec.group])} › ${String(item[spec.label] ?? '')}`
+            : String(item[spec.label] ?? ''),
       }))
       .filter((option) => option.value && option.value !== excludeUUID);
   }
@@ -184,7 +188,7 @@ export class AutomationService {
 
 const PICKERS: Record<
   string,
-  { endpoint: string; value: string; label: string; publishedOnly?: boolean }
+  { endpoint: string; value: string; label: string; publishedOnly?: boolean; group?: string }
 > = {
   connection: { endpoint: 'conversations/connections', value: 'ChcUUID', label: 'ChcName' },
   team: { endpoint: 'support/teams', value: 'SupportTeamUUID', label: 'Name' },
@@ -195,7 +199,40 @@ const PICKERS: Record<
     label: 'AflName',
     publishedOnly: true,
   },
+  supportChannel: {
+    endpoint: 'support/ticket-channels',
+    value: 'SupportTicketChannelUUID',
+    label: 'Name',
+  },
+  supportType: { endpoint: 'support/ticket-types', value: 'SupportTicketTypeUUID', label: 'Name' },
+  supportPriority: {
+    endpoint: 'support/ticket-priorities',
+    value: 'SupportTicketPriorityUUID',
+    label: 'Name',
+  },
+  crmSource: { endpoint: 'crm/sources', value: 'CsoUUID', label: 'CsoName' },
+  crmStage: {
+    endpoint: 'crm/stages',
+    value: 'CstUUID',
+    label: 'CstName',
+    group: 'CrmPipelineCpiUUIDName',
+  },
+  crmMember: { endpoint: 'crm/members', value: 'UsrUUID', label: 'UsrName' },
 };
+
+/** Picker widgets used by the config of the nodes the tenant can use (locked modules excluded). */
+export function usedWidgets(defs: Array<{ locked: boolean; configSchema: unknown }>): string[] {
+  const found = new Set<string>();
+  const walk = (schema: unknown): void => {
+    if (!schema || typeof schema !== 'object') return;
+    const record = schema as Dict;
+    const widget = record['x-widget'];
+    if (typeof widget === 'string' && widget in PICKERS) found.add(widget);
+    for (const value of Object.values(record)) if (value && typeof value === 'object') walk(value);
+  };
+  for (const def of defs) if (!def.locked) walk(def.configSchema);
+  return [...found];
+}
 
 /** Widget of a config property: explicit `x-widget`, otherwise inferred from its name. */
 export function widgetOf(name: string, hint: string | undefined): string {
