@@ -14092,7 +14092,7 @@
   "automation.nodeHelp.crm.assign_owner": "Sets the salesperson in charge of the lead or opportunity.",
   "automation.nodeHelp.crm.create_opportunity": "Converts the lead of the flow into an opportunity at the chosen stage.",
   "automation.nodeHelp.crm.move_opportunity": "Moves the opportunity of the flow to another stage.",
-  "automation.nodeHelp.crm.create_handoff": "Creates the handoff of the opportunity to the next team.",
+  "automation.nodeHelp.crm.create_handoff": "Creates the handoff of the opportunity to the next team. The opportunity must be won: move it to a won stage first.",
   "hostingSmtp.resale.link": "Link customer",
   "hostingSmtp.resale.unlink": "Unlink customer",
   "hostingSmtp.resale.unlinked": "Account unlinked from the customer.",
