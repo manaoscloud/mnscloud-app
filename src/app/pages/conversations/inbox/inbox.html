@@ -351,6 +351,17 @@
                       <mat-icon>task_alt</mat-icon>
                     </button>
                   }
+                  @if (canRunAutomation() && conv.CnvState !== 'resolved') {
+                    <button
+                      type="button"
+                      mat-icon-button
+                      (click)="runAutomation(conv)"
+                      [matTooltip]="'automation.manual.action' | transloco"
+                      [attr.aria-label]="'automation.manual.action' | transloco"
+                    >
+                      <mat-icon>smart_toy</mat-icon>
+                    </button>
+                  }
                   <button
                     type="button"
                     mat-icon-button
