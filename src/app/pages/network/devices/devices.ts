@@ -57,6 +57,32 @@ function managedByHosting(row: ConfigurableCrudRecord): boolean {
   return Number(row['ManagedByHosting'] ?? 0) === 1;
 }
 
+/** Address of the management VPN the tenant owns (`GET /network/mgmt-vpn/addresses`). */
+export type MgmtVpnAddress = {
+  NvaUUID: string;
+  NvaAddress: string;
+  HubName?: string | null;
+  NetworkDeviceNwdUUID?: string | null;
+  DeviceName?: string | null;
+};
+
+/** Management VPN path of a tenant device: the host must be one of the tenant's own addresses. */
+export function usesMgmtVpnAddress(platform: boolean, values: ConfigurableCrudRecord): boolean {
+  return !platform && formText(values['networkPath']) === 'mgmt_vpn';
+}
+
+/** Addresses a device can take: the unbound ones plus the one already bound to this device. */
+export function selectableMgmtVpnAddresses(
+  addresses: readonly MgmtVpnAddress[],
+  deviceUUID: string,
+): MgmtVpnAddress[] {
+  return addresses.filter(
+    (address) =>
+      !address.NetworkDeviceNwdUUID ||
+      (deviceUUID !== '' && address.NetworkDeviceNwdUUID === deviceUUID),
+  );
+}
+
 function hostKeyText(row: ConfigurableCrudRecord, translate: Translate): string {
   const fingerprint = formText(row['NwdHostKeyFingerprint']);
   if (!fingerprint) return translate('network.hostKeyNotPinned');
@@ -65,7 +91,11 @@ function hostKeyText(row: ConfigurableCrudRecord, translate: Translate): string 
 }
 
 /** Record, network path and the read-only pinned host key (credentials are their own tab). */
-function deviceFields(platform: boolean, translate: Translate): ConfigurableCrudField[] {
+function deviceFields(
+  platform: boolean,
+  translate: Translate,
+  hasMgmtAddresses: () => boolean,
+): ConfigurableCrudField[] {
   const sites = `${networkBase(platform)}/sites?status=1`;
   return [
     statusField('Nwd'),
@@ -147,6 +177,24 @@ function deviceFields(platform: boolean, translate: Translate): ConfigurableCrud
       tab: 'network',
       span: 1,
       help: 'network.managementHostHelp',
+      // The management VPN path takes one of the tenant's own addresses (field below).
+      hiddenWhen: ({ values }) => usesMgmtVpnAddress(platform, values),
+    },
+    {
+      key: 'mgmtVpnAddress',
+      source: 'NwdManagementHost',
+      label: 'network.managementHost',
+      type: 'search-select',
+      tab: 'network',
+      span: 1,
+      help: 'network.mgmtVpnAddressHelp',
+      helpWhen: () =>
+        hasMgmtAddresses() ? 'network.mgmtVpnAddressHelp' : 'network.mgmtVpnNoAddresses',
+      hiddenWhen: ({ values }) => !usesMgmtVpnAddress(platform, values),
+      requiredWhen: ({ values }) => usesMgmtVpnAddress(platform, values),
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Management VPN addresses are assigned by MNSCloud; they cannot be created here.',
     },
     {
       key: 'networkPath',
@@ -223,7 +271,10 @@ function deviceFields(platform: boolean, translate: Translate): ConfigurableCrud
 }
 
 /** PUT replaces the text fields: the whole form is sent; credentials never are. */
-function devicePayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
+export function devicePayload(
+  values: ConfigurableCrudRecord,
+  platform = false,
+): ConfigurableCrudRecord {
   return {
     ...formTexts(values, [
       'siteUUID',
@@ -232,7 +283,6 @@ function devicePayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
       'vendorType',
       'model',
       'osVersion',
-      'managementHost',
       'apiUrl',
       'networkPath',
       'lifecycle',
@@ -242,6 +292,12 @@ function devicePayload(values: ConfigurableCrudRecord): ConfigurableCrudRecord {
     // Only the connector path carries a connector: any other path clears it (API trigger rule).
     connectorUuid:
       formText(values['networkPath']) === 'connector' ? formText(values['connectorUuid']) : null,
+    // On the management VPN path (tenant) the host is the chosen address; otherwise the free input.
+    managementHost: formText(
+      !platform && formText(values['networkPath']) === 'mgmt_vpn'
+        ? values['mgmtVpnAddress']
+        : values['managementHost'],
+    ),
     verifyTls: formFlag(values['verifyTls'], 1),
     ...recordState(values),
   };
@@ -336,6 +392,7 @@ function deviceConfig(
   translate: Translate,
   typeOf: (code: unknown) => NetworkDeviceType | undefined,
   connections: ConnectionActions,
+  hasMgmtAddresses: () => boolean,
 ): ConfigurableCrudConfig {
   const base = networkBase(platform);
   const canWrite = can('tenant.network.devices.write');
@@ -390,6 +447,7 @@ function deviceConfig(
       lifecycle: 'active',
       supportEndDate: '',
       managementHost: '',
+      mgmtVpnAddress: '',
       networkPath: 'public',
       connectorUuid: '',
       apiUrl: '',
@@ -400,7 +458,7 @@ function deviceConfig(
       revision: null,
       notes: '',
     },
-    fields: deviceFields(platform, translate),
+    fields: deviceFields(platform, translate, hasMgmtAddresses),
     columns: [
       {
         id: 'name',
@@ -460,7 +518,7 @@ function deviceConfig(
       },
       { id: 'status', label: 'Status', field: 'NwdStatus', kind: 'status' },
     ],
-    payload: (values) => devicePayload(values),
+    payload: (values) => devicePayload(values, platform),
     relatedCollections: [
       accessCollection(base),
       credentialCollection(base, can('tenant.network.devices.credentials')),
@@ -542,6 +600,32 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
     },
     defaultValue: [] as NetworkDeviceType[],
   });
+  private readonly platform: boolean;
+  /** Own management VPN addresses of the tenant, loaded while the management VPN path is chosen. */
+  private readonly mgmtAddresses = resource({
+    params: () =>
+      !this.platform && formText(this.formValues()['networkPath']) === 'mgmt_vpn'
+        ? { editing: String(this.editingRecord()?.['NwdUUID'] ?? '') }
+        : undefined,
+    loader: async () => {
+      const response = await this.api.get<{ data?: { items?: MgmtVpnAddress[] } }>(
+        'network/mgmt-vpn/addresses',
+      );
+      return response?.data?.items ?? [];
+    },
+    defaultValue: [] as MgmtVpnAddress[],
+  });
+  /** Unbound addresses plus the one already bound to the device being edited. */
+  readonly mgmtAddressOptions = computed<ConfigurableCrudOption[]>(() => {
+    const addresses = this.mgmtAddresses.hasValue() ? this.mgmtAddresses.value() : [];
+    const device = String(this.editingRecord()?.['NwdUUID'] ?? '');
+    return selectableMgmtVpnAddresses(addresses, device).map((address) => ({
+      value: address.NvaAddress,
+      label: address.NvaAddress,
+      description: address.HubName ?? '',
+      searchText: `${address.NvaAddress} ${address.HubName ?? ''}`,
+    }));
+  });
   private readonly typeOptions = computed<ConfigurableCrudOption[]>(() =>
     this.types().map((type) => ({
       value: type.code,
@@ -568,8 +652,18 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
       showConnection: async (row) => page?.viewer((deps) => showConnection(deps, row)),
       showRecording: async (row) => page?.viewer((deps) => showRecording(deps, row)),
     };
-    super(deviceConfig(platform, can, (key) => transloco.translate(key), typeOf, connections));
+    super(
+      deviceConfig(
+        platform,
+        can,
+        (key) => transloco.translate(key),
+        typeOf,
+        connections,
+        () => (page?.mgmtAddressOptions().length ?? 0) > 0,
+      ),
+    );
     this.base = networkBase(platform);
+    this.platform = platform;
     this.can = can;
     page = this;
   }
@@ -651,11 +745,13 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   override fieldLoading(field: ConfigurableCrudField): boolean {
+    if (field.key === 'mgmtVpnAddress') return this.mgmtAddresses.isLoading();
     return field.key === 'vendorType' ? this.typeCatalog.isLoading() : super.fieldLoading(field);
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
     if (key === 'vendorType') return this.typeOptions();
+    if (key === 'mgmtVpnAddress') return this.mgmtAddressOptions();
     // Access methods of the device being edited (its type and major OS version).
     if (key === 'method') {
       const values = this.formValues();
