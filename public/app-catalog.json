@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "3c8912ec5a2a",
+  "version": "72b210c0e5ae",
   "language": "pt-BR",
   "entries": [
     {
@@ -4184,6 +4184,22 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/hr/reports",
+      "menuPath": "Recursos humanos › Ponto por posto",
+      "scope": "tenant",
+      "title": "Ponto por posto",
+      "description": "Totais do mês dos espelhos de ponto por colaborador e posto: horas previstas e trabalhadas, extras a 50% e 100%, atrasos, saídas antecipadas, faltas e saldo. Ordene por extras, faltas ou atrasos para ver os rankings.",
+      "fields": []
+    },
+    {
+      "route": "/hr/reports/uniform",
+      "menuPath": "Recursos humanos › Horário britânico",
+      "scope": "tenant",
+      "title": "Horário britânico",
+      "description": "Indica meses com horários de ponto uniformes (Súmula 338, III do TST) para análise do RH: pelo menos 10 dias com entrada e saída variando até 3 minutos, ou 80% ou mais das batidas em minuto múltiplo de 5. As batidas nunca são alteradas.",
+      "fields": []
     },
     {
       "route": "/hr/time-adjustments",

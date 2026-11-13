@@ -1037,6 +1037,22 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.vacation-balances.read'],
       },
       {
+        id: 'hr/reports',
+        label: 'nav.hr.reports',
+        icon: 'leaderboard',
+        category: 'reports',
+        route: '/hr/reports',
+        permissions: ['tenant.hr.timesheets.read'],
+      },
+      {
+        id: 'hr/reports-uniform',
+        label: 'nav.hr.reports-uniform',
+        icon: 'av_timer',
+        category: 'reports',
+        route: '/hr/reports/uniform',
+        permissions: ['tenant.hr.timesheets.read'],
+      },
+      {
         id: 'hr/time-policies',
         label: 'nav.hr.time-policies',
         icon: 'rule',

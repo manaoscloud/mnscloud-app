@@ -1263,6 +1263,18 @@ export const routes: Routes = [
                 title: 'Human resources • Timesheet issues | mnscloud',
               },
               {
+                path: 'hr/reports',
+                loadComponent: () =>
+                  import('./pages/hr/reports/time-report').then((m) => m.HrTimeReportPage),
+                title: 'Human resources • Time by location | mnscloud',
+              },
+              {
+                path: 'hr/reports/uniform',
+                loadComponent: () =>
+                  import('./pages/hr/reports/uniform-report').then((m) => m.HrUniformReportPage),
+                title: 'Human resources • British schedule | mnscloud',
+              },
+              {
                 path: 'hr/time-requests',
                 loadComponent: () =>
                   import('./pages/hr/time-requests/time-requests').then(

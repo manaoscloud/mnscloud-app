@@ -8,6 +8,8 @@ const HR_ERROR_TEXTS: Record<string, string> = {
     'The employment has punches outside the new dates or company. Adjust the dates so they stay covered.',
   HR_LOCATION_SCOPE_INVALID:
     'Some of the chosen locations do not belong to the companies of this account.',
+  HR_REPORT_PERIOD_INVALID: 'The report period is invalid. Choose a month.',
+  HR_REPORT_ORDER_INVALID: 'The report order is invalid.',
 };
 
 /** Code of an API error (`{ error, code }` body), or '' when there is none. */
