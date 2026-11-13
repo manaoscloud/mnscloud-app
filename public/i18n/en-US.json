@@ -14340,5 +14340,7 @@
   "Agent not responding": "Agent not responding",
   "Failure": "Failure",
   "suspect": "suspect",
-  "replaced by {{name}}": "replaced by {{name}}"
+  "replaced by {{name}}": "replaced by {{name}}",
+  "Repair automatic": "Automatic",
+  "Repair paused": "Paused"
 }

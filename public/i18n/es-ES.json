@@ -14340,5 +14340,7 @@
   "Agent not responding": "Agent sin contacto",
   "Failure": "Fallo",
   "suspect": "sospechoso",
-  "replaced by {{name}}": "sustituido por {{name}}"
+  "replaced by {{name}}": "sustituido por {{name}}",
+  "Repair automatic": "Automático",
+  "Repair paused": "Pausado"
 }
