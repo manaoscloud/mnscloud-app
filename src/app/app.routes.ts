@@ -3574,6 +3574,25 @@ export const routes: Routes = [
                 data: { breadcrumb: 'network.platformDevices' },
               },
               // Access gateways (mnscloud-access-gateway runtime) that open the device consoles.
+              // Management VPN (master): hubs and the /32 addresses assigned to tenants.
+              {
+                path: 'network/mgmt-vpn',
+                loadComponent: () =>
+                  import('./pages/network/mgmt-vpn/mgmt-vpn-hubs').then(
+                    (m) => m.NetworkMgmtVpnHubsPage,
+                  ),
+                title: 'Network platform',
+                data: { breadcrumb: 'network.mgmtVpn.title' },
+              },
+              {
+                path: 'network/mgmt-vpn-addresses',
+                loadComponent: () =>
+                  import('./pages/network/mgmt-vpn/mgmt-vpn-addresses').then(
+                    (m) => m.NetworkMgmtVpnAddressesPage,
+                  ),
+                title: 'Network platform',
+                data: { breadcrumb: 'network.mgmtVpnAddresses.title' },
+              },
               {
                 path: 'network/access-gateways',
                 loadComponent: () =>

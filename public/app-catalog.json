@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "7ed584361b29",
+  "version": "88f35c336ad5",
   "language": "pt-BR",
   "entries": [
     {
@@ -10344,6 +10344,80 @@
         {
           "label": "Agent",
           "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/mgmt-vpn",
+      "menuPath": "Rede › VPN de gestão",
+      "scope": "platform",
+      "title": "VPN de gestão",
+      "description": "Concentradores WireGuard da rede de gestão. Os equipamentos dos clientes são alcançados por eles, cada cliente só pelos próprios endereços.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endpoint",
+          "help": "Host e porta UDP do concentrador (host:porta)."
+        },
+        {
+          "label": "Chave pública do concentrador",
+          "help": "Chave pública WireGuard (44 caracteres). Pode ficar vazia até o concentrador existir."
+        },
+        {
+          "label": "Faixa de gestão",
+          "help": "Rede IPv4 de onde saem os endereços /32 atribuídos aos clientes."
+        },
+        {
+          "label": "Faixa dos gateways",
+          "help": "Rede IPv4 das origens do gateway de acesso, uma por cliente."
+        },
+        {
+          "label": "Gateway de acesso",
+          "help": "Gateway que entra no concentrador e abre os consoles."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/network/mgmt-vpn-addresses",
+      "menuPath": "Rede › Endereços de gestão",
+      "scope": "platform",
+      "title": "Endereços de gestão",
+      "description": "Endereços /32 da VPN de gestão atribuídos a cada cliente (ou à plataforma) e, se quiser, a um equipamento. A origem do gateway de cada cliente é criada pelo sistema e aparece só para leitura.",
+      "fields": [
+        {
+          "label": "Concentrador",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Vazio mantém o endereço com a plataforma."
+        },
+        {
+          "label": "Endereço",
+          "help": "IPv4 /32 dentro da faixa de gestão do concentrador."
+        },
+        {
+          "label": "Equipamento",
+          "help": "Opcional. O cliente também escolhe o endereço no cadastro do equipamento."
         },
         {
           "label": "Revisão",

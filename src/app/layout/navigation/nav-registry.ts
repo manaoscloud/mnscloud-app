@@ -2923,6 +2923,22 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/network/access-gateways',
         permissions: ['platform.access.gateways.manage'],
       },
+      {
+        id: 'network/mgmt-vpn',
+        label: 'nav.network.mgmt-vpn',
+        icon: 'vpn_key',
+        category: 'platform',
+        masterRoute: '/system/network/mgmt-vpn',
+        permissions: ['platform.master.access'],
+      },
+      {
+        id: 'network/mgmt-vpn-addresses',
+        label: 'nav.network.mgmt-vpn-addresses',
+        icon: 'lan',
+        category: 'platform',
+        masterRoute: '/system/network/mgmt-vpn-addresses',
+        permissions: ['platform.master.access'],
+      },
     ],
   },
   {
