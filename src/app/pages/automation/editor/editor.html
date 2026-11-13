@@ -36,6 +36,11 @@
           <button mat-stroked-button type="button" (click)="versions()">
             <mat-icon>history</mat-icon>{{ 'automation.editor.versions' | transloco }}
           </button>
+          @if (canWrite()) {
+            <button mat-stroked-button type="button" (click)="aiReview()">
+              <mat-icon>auto_awesome</mat-icon>{{ 'automation.ai.reviewButton' | transloco }}
+            </button>
+          }
           <button mat-stroked-button type="button" [disabled]="validating()" (click)="validate()">
             <mat-icon>rule</mat-icon>{{ 'automation.editor.validate' | transloco }}
             @if (issueCount()) {

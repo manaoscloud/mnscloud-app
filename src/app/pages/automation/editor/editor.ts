@@ -70,6 +70,7 @@ import {
 } from '../automation-graph';
 import { AutomationService, PickerOption, usedWidgets } from '../automation.service';
 import { askPublish, openVersions } from './editor-dialogs';
+import { openAiReview } from '../ai-dialogs';
 import {
   EditorLayout,
   PhonePane,
@@ -763,6 +764,12 @@ export class AutomationEditorPage {
       this.snack.success('automation.versions.restored');
       await this.reload();
     }
+  }
+
+  /** "Revisar com IA": saves the draft first so the review sees what is on the screen. */
+  async aiReview(): Promise<void> {
+    await this.save();
+    await openAiReview(this.dialog, this.uuid);
   }
 
   // ---- test panel ----------------------------------------------------------------------------

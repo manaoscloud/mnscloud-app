@@ -90,6 +90,38 @@ export class AutomationService {
     });
   }
 
+  /** "Criar com IA": a draft graph from a description (nothing is saved by the API). */
+  async aiDraft(
+    description: string,
+  ): Promise<{ graph: FlowGraph | null; errors: Dict[]; warnings: Dict[] }> {
+    const body = unwrap(
+      await this.api.post('automation/flows/ai-draft', { description }, { silent: true }),
+    );
+    return {
+      graph: (body['graph'] as FlowGraph | null) ?? null,
+      errors: Array.isArray(body['errors']) ? (body['errors'] as Dict[]) : [],
+      warnings: Array.isArray(body['warnings']) ? (body['warnings'] as Dict[]) : [],
+    };
+  }
+
+  /** "Revisar com IA": summary and issues of the saved draft. */
+  async aiReview(
+    uuid: string,
+  ): Promise<{
+    summary: string;
+    issues: Array<{ nodeId: string | null; severity: string; message: string }>;
+  }> {
+    const body = unwrap(
+      await this.api.post(`automation/flows/${uuid}/ai-review`, {}, { silent: true }),
+    );
+    return {
+      summary: String(body['summary'] ?? ''),
+      issues: Array.isArray(body['issues'])
+        ? (body['issues'] as Array<{ nodeId: string | null; severity: string; message: string }>)
+        : [],
+    };
+  }
+
   async simulate(
     uuid: string,
     body: { graph: FlowGraph; state?: Dict; input?: string; contact?: string },
