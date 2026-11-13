@@ -26,6 +26,10 @@ export type TimesheetHeader = {
     Name?: string;
     Document?: string;
     HireDate?: string | null;
+    TerminationDate?: string | null;
+    RegistrationNumber?: string | null;
+    LocationName?: string | null;
+    Pis?: string | null;
     PositionName?: string;
     DepartmentName?: string;
   } | null;
@@ -243,7 +247,14 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
     printKeyValueHtml([
       meta(t('Name'), name),
       meta('CPF', formatDocument(employee.Document)),
+      meta(t('Registration number'), employee.RegistrationNumber),
       meta(t('Admission date'), employee.HireDate ? formatDay(employee.HireDate) : ''),
+      meta(
+        t('Termination date'),
+        employee.TerminationDate ? formatDay(employee.TerminationDate) : '',
+      ),
+      meta('PIS', employee.Pis),
+      meta(t('Location'), employee.LocationName),
       meta(t('Position'), position),
       meta(t('Department'), department),
     ]) +

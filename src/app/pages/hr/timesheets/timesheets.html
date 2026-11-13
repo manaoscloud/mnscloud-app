@@ -22,6 +22,21 @@
       (pageChange)="pageEmployees($event)"
       (valueChange)="setEmployee($event)"
     />
+    @if (showEmployments()) {
+      <mns-search-select-field
+        class="hr-timesheet-employee"
+        data-field-key="employmentUUID"
+        data-quick-create-exempt="Selector of an existing employment for a read-only timesheet; employments are managed in HR > Employments."
+        [label]="'Employment' | transloco"
+        [options]="employmentOptions()"
+        [value]="employmentUUID()"
+        [help]="
+          'The employee has more than one employment in force: choose the one of this timesheet.'
+            | transloco
+        "
+        (valueChange)="setEmployment($event)"
+      />
+    }
     <div class="hr-timesheet-month">
       <button
         mat-icon-button
@@ -107,10 +122,27 @@
           <dd>
             {{ data.employee.Name }} · CPF {{ art84.employeeDocument || '—' }} ·
             {{ 'Admission date' | transloco }} {{ art84.hireDate || '—' }}
+            @if (art84.terminationDate) {
+              · {{ 'Termination date' | transloco }} {{ art84.terminationDate }}
+            }
             @if (art84.position) {
               · {{ art84.position }}
             }
           </dd>
+          @if (art84.registrationNumber || art84.locationName || art84.pis) {
+            <dt>{{ 'Employment' | transloco }}</dt>
+            <dd>
+              @if (art84.registrationNumber) {
+                {{ 'Registration number' | transloco }} {{ art84.registrationNumber }}
+              }
+              @if (art84.locationName) {
+                · {{ 'Location' | transloco }} {{ art84.locationName }}
+              }
+              @if (art84.pis) {
+                · PIS {{ art84.pis }}
+              }
+            </dd>
+          }
           @if (art84.schedules.length) {
             <dt>{{ 'Contractual schedules' | transloco }}</dt>
             <dd>

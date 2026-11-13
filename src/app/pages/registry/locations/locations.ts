@@ -79,6 +79,12 @@ function timeOrNull(value: unknown): string | null {
   return v ? v.slice(0, 5) : null;
 }
 
+/** Fence radius in metres (1-65535); empty means no fence. */
+function radius(value: unknown): number | null {
+  const v = text(value);
+  return v === '' ? null : Number(v);
+}
+
 function coordinate(value: unknown): number | null {
   const v = text(value);
   return v === '' ? null : Number(v);
@@ -107,6 +113,7 @@ export function locationPayload(
     Country: text(values['country']).toUpperCase() || 'BR',
     Latitude: pair ? latitude : null,
     Longitude: pair ? longitude : null,
+    GeofenceRadiusMeters: radius(values['geofenceRadiusMeters']),
     Phone: text(values['phone']),
     Whatsapp: text(values['whatsapp']),
     Email: text(values['email']),
@@ -153,6 +160,7 @@ const config = defineCrud({
     country: 'BR',
     latitude: null,
     longitude: null,
+    geofenceRadiusMeters: null,
     open24h: false,
     weekdayOpens: '',
     weekdayCloses: '',
@@ -258,6 +266,15 @@ const config = defineCrud({
       type: 'number',
       tab: 'address',
       span: 1,
+    },
+    {
+      key: 'geofenceRadiusMeters',
+      source: 'GeofenceRadiusMeters',
+      label: 'Fence radius (m)',
+      type: 'number',
+      tab: 'address',
+      span: 1,
+      help: 'registry.locations.geofenceHelp',
     },
     {
       key: 'open24h',

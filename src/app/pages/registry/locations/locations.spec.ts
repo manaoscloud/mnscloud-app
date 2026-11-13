@@ -42,4 +42,14 @@ describe('locationPayload', () => {
     expect(both['Latitude']).toBe(-3.1);
     expect(both['Longitude']).toBe(-60);
   });
+
+  it('sends the fence radius as a number or null', () => {
+    expect(
+      locationPayload({ ...values, geofenceRadiusMeters: '150' }, false)['GeofenceRadiusMeters'],
+    ).toBe(150);
+    expect(
+      locationPayload({ ...values, geofenceRadiusMeters: '' }, false)['GeofenceRadiusMeters'],
+    ).toBeNull();
+    expect(locationPayload(values, false)['GeofenceRadiusMeters']).toBeNull();
+  });
 });

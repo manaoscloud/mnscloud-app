@@ -123,6 +123,7 @@ function portalAccessConfig(row: ConfigurableCrudRecord) {
       roleUser: 'hrAccount.portalRoleUser',
     },
     grants: GRANTS,
+    locationScope: true,
     initialValues: {
       HpgDashboard: 1,
       HpgEmployees: 1,
@@ -154,6 +155,7 @@ const PAGES: readonly [string, string, string, string][] = [
     'assignment_ind',
     'tenant.hr.work-schedule-assignments.read',
   ],
+  ['employments', 'nav.hr.employments', 'work_history', 'tenant.hr.employments.read'],
   ['holidays', 'nav.hr.holidays', 'celebration', 'tenant.hr.holidays.read'],
   ['time-policies', 'nav.hr.time-policies', 'rule', 'tenant.hr.time-policies.read'],
   ['time-punches', 'nav.hr.time-punches', 'schedule', 'tenant.hr.time-punches.read'],
@@ -240,6 +242,7 @@ export class HrAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
           operatorsTitle: 'hrAccount.operators',
           operatorsDescription: 'hrAccount.operatorsDescription',
           canManage,
+          locationScope: true,
         }),
         {
           key: 'portalAccess',

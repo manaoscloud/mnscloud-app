@@ -1,6 +1,7 @@
 import { ConfigurableCrudOption } from './configurable-crud-page-base';
 import { defineCrud } from './define-crud';
 import { revisionDeletePayloads } from './revision-delete';
+import { LOCATION_SCOPE_COLUMN, LOCATION_SCOPE_FIELD } from './location-scope';
 
 /** Translation keys of one module's Customer Portal access dialog. */
 export interface PortalGrantLabels {
@@ -26,6 +27,8 @@ export interface PortalGrantCrudOptions {
   /** Grant columns (0/1) and their labels, in display order. */
   grants: readonly (readonly [string, string])[];
   initialValues: Record<string, unknown>;
+  /** Adds the optional location scope of the grant (HR accounts). */
+  locationScope?: boolean;
 }
 
 const YES_NO: readonly ConfigurableCrudOption[] = [
@@ -54,7 +57,12 @@ export function portalGrantCrud(options: PortalGrantCrudOptions) {
     emptyLabel: labels.emptyLabel,
     bulkDelete: false,
     ...revisionDeletePayloads(options.uuidField, options.revisionField),
-    initialValues: { RegCustomerUserRcsUUID: '', ...options.initialValues, status: 1 },
+    initialValues: {
+      RegCustomerUserRcsUUID: '',
+      ...options.initialValues,
+      ...(options.locationScope ? { locationUUIDs: [] } : {}),
+      status: 1,
+    },
     fields: [
       { key: 'status', source: options.statusField, label: 'Status', type: 'status', span: 1 },
       {
@@ -84,6 +92,7 @@ export function portalGrantCrud(options: PortalGrantCrudOptions) {
         span: 1 as const,
         options: YES_NO,
       })),
+      ...(options.locationScope ? [LOCATION_SCOPE_FIELD] : []),
       {
         key: 'revision',
         source: options.revisionField,
@@ -100,6 +109,7 @@ export function portalGrantCrud(options: PortalGrantCrudOptions) {
         label,
         kind: 'boolean' as const,
       })),
+      ...(options.locationScope ? [LOCATION_SCOPE_COLUMN] : []),
       { id: 'status', field: options.statusField, label: 'Status', kind: 'status' },
     ],
   });

@@ -10,7 +10,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openDataViewerDialog } from '../../../shared/data-viewer-dialog/data-viewer-dialog';
 import { openPrivateFile } from '../../../shared/file-preview-dialog/private-file';
-import { PUNCH_FLAGS, PUNCH_TYPES } from '../hr-time';
+import { PUNCH_TYPES, punchFlagTexts } from '../hr-time';
 import { openPunchMapDialog, punchLocations } from './punch-map-dialog';
 import { openAfdExportDialog } from './afd-export-dialog';
 
@@ -56,10 +56,6 @@ const AEJ_ACTION: ConfigurableCrudFilterAction = {
   icon: 'event_note',
   tooltip: 'Electronic journey file (AEJ) of one establishment',
 };
-
-function flags(row: ConfigurableCrudRecord): string[] {
-  return Array.isArray(row['Flags']) ? (row['Flags'] as string[]) : [];
-}
 
 // Read-only view of the immutable Pulse ledger: marks are never edited or deleted here; flags
 // point the manager to marks worth checking (treatment arrives with the timesheet phase).
@@ -136,10 +132,7 @@ const config = defineCrud({
     {
       id: 'flags',
       label: 'Flags',
-      value: (row, t) =>
-        flags(row)
-          .map((flag) => t(PUNCH_FLAGS[flag] ?? flag))
-          .join(', '),
+      value: (row, t) => punchFlagTexts(row, t).join(', '),
     },
     {
       id: 'location',
@@ -154,6 +147,12 @@ const config = defineCrud({
       rowAction: 'photo',
     },
     { id: 'nsr', label: 'NSR', field: 'NSR', kind: 'number' },
+    {
+      id: 'registration',
+      label: 'Registration number',
+      field: 'RegistrationNumber',
+      translateValue: false,
+    },
     {
       id: 'company',
       label: 'Company',
@@ -260,6 +259,16 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
         { label: 'Device time', value: row['ClientOccurredAt'] ?? '', kind: 'datetime' },
         { label: 'NSR', value: row['NSR'] ?? '', translate: false },
         {
+          label: 'Registration number',
+          value: row['RegistrationNumber'] ?? '—',
+          translate: false,
+        },
+        {
+          label: 'Company',
+          value: row['CompanyName'] ?? '—',
+          translate: false,
+        },
+        {
           label: 'Photo',
           value: hasPhoto(row) ? this.t('Taken') : this.t('None'),
           translate: false,
@@ -274,10 +283,7 @@ export class HrTimePunchesPage extends ConfigurableCrudPageBase<ConfigurableCrud
         },
         {
           label: 'Flags',
-          value:
-            flags(row)
-              .map((flag) => this.t(PUNCH_FLAGS[flag] ?? flag))
-              .join(', ') || this.t('None'),
+          value: punchFlagTexts(row, (key) => this.t(key)).join(', ') || this.t('None'),
           translate: false,
           wide: true,
         },

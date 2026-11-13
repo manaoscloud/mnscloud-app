@@ -94,8 +94,13 @@ Official business/UI glossary used by the app translation layer.
 | Leads | Leads | Leads |
 | Opportunities | Oportunidades | Oportunidades |
 | Pipeline | Pipeline | Pipeline |
+| Employee | Colaborador | Colaborador |
+| Employment | Vínculo | Vínculo |
+| Registration number | Matrícula | Matrícula |
+| Hour bank | Banco de horas | Banco de horas |
 
 ## Notes
 - Keep `RADIUS`, `PPPoE`, `FTTH`, `VoIP`, `SBC`, `PABX`, `VPS`, `GeoMap` untranslated.
 - In product copy, prefer `Ambiente/Entorno` instead of `Tenant/Inquilino`.
+- `Colaboradores` is the standard pt-BR term for people of HR and Registry (menu `Funcionários` became `Colaboradores`, 2026-11-12).
 - This glossary is the preferred source for manual overrides in `src/app/services/i18n.service.ts`.

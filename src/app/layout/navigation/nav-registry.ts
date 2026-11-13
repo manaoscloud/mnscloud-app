@@ -1000,6 +1000,14 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.applications.read'],
       },
       {
+        id: 'hr/employments',
+        label: 'nav.hr.employments',
+        icon: 'work_history',
+        category: 'registry',
+        route: '/hr/employments',
+        permissions: ['tenant.hr.employments.read'],
+      },
+      {
         id: 'hr/work-schedules',
         label: 'nav.hr.work-schedules',
         icon: 'calendar_view_week',
