@@ -1,6 +1,6 @@
 import { defineCrud } from './define-crud';
 import { revisionDeletePayloads } from './revision-delete';
-import { LOCATION_SCOPE_COLUMN, LOCATION_SCOPE_FIELD } from './location-scope';
+import { LOCATION_SCOPE_COLUMN } from './location-scope';
 import type {
   ConfigurableCrudColumn,
   ConfigurableCrudField,
@@ -129,8 +129,8 @@ export interface ResaleAccountActionOptions {
   canManage: () => boolean;
   /** False while customer publication is not available for the module (portal off). */
   publication?: boolean;
-  /** Operators can be limited to locations (HR accounts). */
-  locationScope?: boolean;
+  /** Operators can be limited to locations (HR accounts): the scope field of the account. */
+  locationScope?: (row: Record<string, unknown>) => ConfigurableCrudField;
 }
 
 /**
@@ -187,7 +187,7 @@ export function resaleAccountRowActions(
     operatorsDescription,
     canManage,
     publication = true,
-    locationScope = false,
+    locationScope,
   } = options;
 
   return [
@@ -252,7 +252,7 @@ export function resaleAccountRowActions(
                 'Tenant operators must be invited through tenant access management.',
             },
             { key: 'status', label: 'Status', type: 'status', span: 1 },
-            ...(locationScope ? [LOCATION_SCOPE_FIELD] : []),
+            ...(locationScope ? [locationScope(row)] : []),
           ],
           columns: [],
         }),
@@ -283,7 +283,7 @@ export function resaleAccountRowActions(
                     type: 'status' as const,
                     span: 1 as const,
                   },
-                  LOCATION_SCOPE_FIELD,
+                  locationScope(row),
                 ],
               }
             : { readOnly: true, fields: [] }),

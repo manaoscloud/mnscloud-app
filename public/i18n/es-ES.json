@@ -14032,5 +14032,10 @@
   "Whole account": "Toda la cuenta",
   "location": "ubicación",
   "locations": "ubicaciones",
-  "The employee has more than one employment in force: choose the one of this timesheet.": "El colaborador tiene más de un vínculo vigente: elija el de esta hoja de horas."
+  "The employee has more than one employment in force: choose the one of this timesheet.": "El colaborador tiene más de un vínculo vigente: elija el de esta hoja de horas.",
+  "Totals per employment are not yet available: this employee has another employment in the month; the totals appear in the timesheet with no employment selected.": "Los totales por vínculo aún no están disponibles: este colaborador tiene otro vínculo en el mes; los totales aparecen en la hoja sin vínculo seleccionado.",
+  "AFD/AEJ export is not available for operators limited to locations.": "La exportación AFD/AEJ no está disponible para operadores limitados a ubicaciones.",
+  "The location is in use by employments or access scopes and cannot be changed this way.": "La ubicación está en uso por vínculos o alcances de acceso y no puede cambiarse de esta forma.",
+  "The employment has punches outside the new dates or company. Adjust the dates so they stay covered.": "El vínculo tiene marcaciones fuera de las nuevas fechas o de la nueva empresa. Ajuste las fechas para que sigan cubiertas.",
+  "Some of the chosen locations do not belong to the companies of this account.": "Algunas de las ubicaciones elegidas no pertenecen a las empresas de esta cuenta."
 }

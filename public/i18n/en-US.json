@@ -14032,5 +14032,10 @@
   "Whole account": "Whole account",
   "location": "location",
   "locations": "locations",
-  "The employee has more than one employment in force: choose the one of this timesheet.": "The employee has more than one employment in force: choose the one of this timesheet."
+  "The employee has more than one employment in force: choose the one of this timesheet.": "The employee has more than one employment in force: choose the one of this timesheet.",
+  "Totals per employment are not yet available: this employee has another employment in the month; the totals appear in the timesheet with no employment selected.": "Totals per employment are not yet available: this employee has another employment in the month; the totals appear in the timesheet with no employment selected.",
+  "AFD/AEJ export is not available for operators limited to locations.": "AFD/AEJ export is not available for operators limited to locations.",
+  "The location is in use by employments or access scopes and cannot be changed this way.": "The location is in use by employments or access scopes and cannot be changed this way.",
+  "The employment has punches outside the new dates or company. Adjust the dates so they stay covered.": "The employment has punches outside the new dates or company. Adjust the dates so they stay covered.",
+  "Some of the chosen locations do not belong to the companies of this account.": "Some of the chosen locations do not belong to the companies of this account."
 }

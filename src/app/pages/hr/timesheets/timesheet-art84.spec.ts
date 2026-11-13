@@ -88,4 +88,23 @@ describe('timesheet art. 84', () => {
     expect(html).toContain('12345678901');
     expect(html).toContain('Posto &lt;Centro&gt;');
   });
+
+  it('omits the day and month totals when the API omits them for an employment', () => {
+    const data = {
+      employee: { Name: 'Ana' },
+      month: '2026-11',
+      timezone: 'UTC',
+      days: [day],
+      totals: {},
+    };
+    const full = timesheetPrintHtml(data, t, 'pt-BR');
+    const omitted = timesheetPrintHtml({ ...data, totalsScope: 'omitted' }, t, 'pt-BR');
+    expect(full).toContain('Balance');
+    expect(full).toContain('Totals');
+    expect(omitted).not.toContain('Balance');
+    expect(omitted).not.toContain('Worked');
+    expect(omitted).not.toContain('<h2>Totals</h2>');
+    expect(omitted).toContain('Totals per employment are not yet available');
+    expect(omitted).toContain('Inconsistencies');
+  });
 });

@@ -1,5 +1,6 @@
 import { employmentDay, employmentPayload } from './employments';
-import { employmentLabel } from '../timesheets/timesheets';
+import { employmentLabel, overlapsMonth } from '../timesheets/timesheets';
+import { hrErrorText } from '../../../shared/crud/configurable-crud/hr-error-codes';
 
 describe('employmentPayload', () => {
   const values = {
@@ -59,5 +60,29 @@ describe('employmentPayload', () => {
     expect(
       employmentLabel({ RegistrationNumber: '12', CompanyName: 'ACME', LocationName: null }),
     ).toBe('12 · ACME');
+  });
+
+  it('does not send the base salary without the salary permission', () => {
+    expect('BaseSalary' in employmentPayload(values, false, false)).toBeFalse();
+    expect(employmentPayload(values, false, true)['BaseSalary']).toBe(2100.5);
+  });
+
+  it('lists the employments that overlap the month, ended ones included', () => {
+    expect(
+      overlapsMonth({ HireDate: '2026-01-05', TerminationDate: '2026-10-31' }, '2026-10'),
+    ).toBeTrue();
+    expect(
+      overlapsMonth({ HireDate: '2026-01-05', TerminationDate: '2026-10-31' }, '2026-11'),
+    ).toBeFalse();
+    expect(overlapsMonth({ HireDate: '2026-12-01', TerminationDate: null }, '2026-11')).toBeFalse();
+    expect(overlapsMonth({ HireDate: '2026-01-05', TerminationDate: null }, '2026-11')).toBeTrue();
+  });
+
+  it('maps the HR rule codes to texts', () => {
+    expect(hrErrorText({ error: { code: 'HR_LOCATION_SCOPE_EXPORT_FORBIDDEN' } })).toContain(
+      'AFD/AEJ',
+    );
+    expect(hrErrorText('HR_EMPLOYMENT_PUNCHES_OUTSIDE')).toContain('punches');
+    expect(hrErrorText({ error: { code: 'OTHER' } })).toBe('');
   });
 });

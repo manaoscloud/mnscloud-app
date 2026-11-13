@@ -19,6 +19,10 @@ import {
 type Row = ConfigurableCrudRecord;
 export type Translate = (key: string) => string;
 
+/** Shown instead of the totals when the API omits them for an employment. */
+export const TOTALS_OMITTED_NOTICE =
+  'Totals per employment are not yet available: this employee has another employment in the month; the totals appear in the timesheet with no employment selected.';
+
 /** Portaria MTP 671/2021 art. 84 header; every part may be absent on an older API. */
 export type TimesheetHeader = {
   employer?: { Name?: string; Document?: string; DocumentKind?: string } | null;
@@ -60,6 +64,7 @@ export type TimesheetPrintData = {
   days: Row[];
   totals: Row;
   header?: TimesheetHeader | null;
+  totalsScope?: string;
 };
 
 function rowsOf(value: unknown): Row[] {
@@ -235,6 +240,21 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
     [t('Balance'), formatMinutes(totals['BalanceMinutes'], true)],
   ];
 
+  // The API omits the day and month figures of an employment when the employee holds another one.
+  const omitted = data.totalsScope === 'omitted';
+  const dayColumns = [
+    { header: t('Date'), index: 0, numeric: false, total: false },
+    { header: t('Day'), index: 1, numeric: false, total: false },
+    { header: t('Expected'), index: 2, numeric: false, total: false },
+    { header: t('Punches'), index: 3, numeric: false, total: false },
+    { header: t('Worked'), index: 4, numeric: true, total: true },
+    { header: t('Overtime'), index: 5, numeric: true, total: true },
+    { header: `${t('Absence')} / ${t('Late')}`, index: 6, numeric: true, total: true },
+    { header: t('Night hours'), index: 7, numeric: true, total: true },
+    { header: t('Balance'), index: 8, numeric: true, total: true },
+    { header: t('Inconsistencies'), index: 9, numeric: false, total: false },
+  ].filter((column) => !(omitted && column.total));
+
   const body =
     `<h1>${escapeHtml(t('Timesheet'))}</h1>` +
     `<p class="muted">${escapeHtml(t('Period'))}: ${escapeHtml(period)}</p>` +
@@ -261,27 +281,18 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
     (schedules ? `<h2>${escapeHtml(t('Contractual schedules'))}</h2>${schedules}` : '') +
     `<h2>${escapeHtml(t('Days'))}</h2>` +
     printTableHtml({
-      headers: [
-        t('Date'),
-        t('Day'),
-        t('Expected'),
-        t('Punches'),
-        t('Worked'),
-        t('Overtime'),
-        `${t('Absence')} / ${t('Late')}`,
-        t('Night hours'),
-        t('Balance'),
-        t('Inconsistencies'),
-      ],
-      rows,
-      numericColumns: [4, 5, 6, 7, 8],
+      headers: dayColumns.map((column) => column.header),
+      rows: rows.map((row) => dayColumns.map((column) => row[column.index])),
+      numericColumns: dayColumns.flatMap((column, position) => (column.numeric ? [position] : [])),
     }) +
-    `<h2>${escapeHtml(t('Totals'))}</h2>` +
-    printTableHtml({
-      headers: totalLine.map((item) => item[0]),
-      rows: [totalLine.map((item) => item[1])],
-      numericColumns: [0, 1, 2, 3, 4, 5, 6],
-    }) +
+    (omitted
+      ? `<p class="muted">${escapeHtml(t(TOTALS_OMITTED_NOTICE))}</p>`
+      : `<h2>${escapeHtml(t('Totals'))}</h2>` +
+        printTableHtml({
+          headers: totalLine.map((item) => item[0]),
+          rows: [totalLine.map((item) => item[1])],
+          numericColumns: [0, 1, 2, 3, 4, 5, 6],
+        })) +
     `<h2>${escapeHtml(t('Treatments'))}</h2>` +
     `<p class="muted">(I) ${escapeHtml(t('Included mark'))} · (D) ${escapeHtml(t('Disregarded punch'))}</p>` +
     (legend.length

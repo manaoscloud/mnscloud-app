@@ -37,6 +37,7 @@ import {
   scheduleDayLine,
   treatmentsText,
   timesheetPrintHtml,
+  TOTALS_OMITTED_NOTICE,
 } from './timesheet-art84';
 import { printHtml } from '../../../shared/print/print-html';
 
@@ -50,9 +51,19 @@ type Timesheet = {
   days: Row[];
   unassignedPunches: Row[];
   totals: Row;
+  /** `omitted`: the API sends no day or month totals for this employment. */
+  totalsScope?: string;
+  totalsNotice?: string;
 };
 
 const EMPLOYEE_PAGE = 50;
+
+/** True when the employment was in force on some day of the month (`YYYY-MM`). */
+export function overlapsMonth(item: Row, month: string): boolean {
+  const hire = String(item['HireDate'] ?? '').slice(0, 10);
+  const end = String(item['TerminationDate'] ?? '').slice(0, 10);
+  return (!hire || hire <= `${month}-31`) && (!end || end >= `${month}-01`);
+}
 
 /** `1234 · Company · Location` of an employment, for the selector. */
 export function employmentLabel(item: Row): string {
@@ -150,19 +161,23 @@ export class HrTimesheetsPage {
 
   // Employments of the chosen employee (several: the timesheet is per employment).
   private readonly employmentList = resource({
-    params: () => (this.employeeUUID() ? { employeeUUID: this.employeeUUID() } : undefined),
+    params: () =>
+      this.employeeUUID() ? { employeeUUID: this.employeeUUID(), month: this.month() } : undefined,
     defaultValue: [] as Row[],
     loader: async ({ params }) => {
+      // Every employment that overlaps the month, ended ones included (the API filters by
+      // `from`/`to` when it knows them; the overlap is checked again here).
       const query = new URLSearchParams({
         employeeUUID: params.employeeUUID,
-        active: '1',
-        limit: '50',
+        from: `${params.month}-01`,
+        to: `${params.month}-31`,
+        limit: '100',
       });
       try {
         const response = await this.api.get<{ data?: { items?: Row[] } }>(
           `hr/employments?${query}`,
         );
-        return response?.data?.items ?? [];
+        return (response?.data?.items ?? []).filter((item) => overlapsMonth(item, params.month));
       } catch {
         // Without the employments permission the timesheet stays the one of the whole employee.
         return [];
@@ -198,6 +213,9 @@ export class HrTimesheetsPage {
   });
   readonly timesheet = computed(() => (this.sheet.hasValue() ? this.sheet.value() : null));
   readonly days = computed(() => this.timesheet()?.days ?? []);
+  /** The API sends no totals for this view; the day and month figures are hidden. */
+  readonly totalsNotice = TOTALS_OMITTED_NOTICE;
+  readonly totalsOmitted = computed(() => this.timesheet()?.totalsScope === 'omitted');
   readonly unassigned = computed(() => this.timesheet()?.unassignedPunches ?? []);
 
   readonly employeeOptions = computed<Option[]>(() => {
@@ -342,21 +360,33 @@ export class HrTimesheetsPage {
             ? 'chip-running'
             : 'chip-skipped',
       },
-      { id: 'worked', label: 'Worked', value: (row) => formatMinutes(row['WorkedMinutes']) },
+      {
+        id: 'worked',
+        hiddenWhen: () => this.totalsOmitted(),
+        label: 'Worked',
+        value: (row) => formatMinutes(row['WorkedMinutes']),
+      },
       {
         id: 'balance',
+        hiddenWhen: () => this.totalsOmitted(),
         label: 'Balance',
         value: (row) => formatMinutes(row['BalanceMinutes'], true),
       },
       {
         id: 'overtime',
+        hiddenWhen: () => this.totalsOmitted(),
         label: 'Overtime',
         value: (row) =>
           formatMinutes(
             Number(row['OvertimeMinutes'] ?? 0) + Number(row['OvertimeRestMinutes'] ?? 0),
           ),
       },
-      { id: 'absence', label: 'Absence', value: (row) => formatMinutes(row['AbsenceMinutes']) },
+      {
+        id: 'absence',
+        hiddenWhen: () => this.totalsOmitted(),
+        label: 'Absence',
+        value: (row) => formatMinutes(row['AbsenceMinutes']),
+      },
       {
         id: 'flags',
         label: 'Inconsistencies',
@@ -368,18 +398,21 @@ export class HrTimesheetsPage {
       },
       {
         id: 'late',
+        hiddenWhen: () => this.totalsOmitted(),
         label: 'Late',
         value: (row) => formatMinutes(row['LateMinutes']),
         optional: true,
       },
       {
         id: 'break',
+        hiddenWhen: () => this.totalsOmitted(),
         label: 'Break',
         value: (row) => formatMinutes(row['BreakMinutes']),
         optional: true,
       },
       {
         id: 'night',
+        hiddenWhen: () => this.totalsOmitted(),
         label: 'Night hours',
         value: (row) => formatMinutes(row['NightReducedMinutes'] ?? row['NightMinutes']),
         optional: true,

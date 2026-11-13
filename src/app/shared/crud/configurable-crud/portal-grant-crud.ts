@@ -1,7 +1,8 @@
 import { ConfigurableCrudOption } from './configurable-crud-page-base';
 import { defineCrud } from './define-crud';
 import { revisionDeletePayloads } from './revision-delete';
-import { LOCATION_SCOPE_COLUMN, LOCATION_SCOPE_FIELD } from './location-scope';
+import { LOCATION_SCOPE_COLUMN } from './location-scope';
+import type { ConfigurableCrudField } from './configurable-crud-page-base';
 
 /** Translation keys of one module's Customer Portal access dialog. */
 export interface PortalGrantLabels {
@@ -27,8 +28,8 @@ export interface PortalGrantCrudOptions {
   /** Grant columns (0/1) and their labels, in display order. */
   grants: readonly (readonly [string, string])[];
   initialValues: Record<string, unknown>;
-  /** Adds the optional location scope of the grant (HR accounts). */
-  locationScope?: boolean;
+  /** Adds the optional location scope of the grant (HR accounts): the field of the account. */
+  locationScope?: ConfigurableCrudField;
 }
 
 const YES_NO: readonly ConfigurableCrudOption[] = [
@@ -92,7 +93,7 @@ export function portalGrantCrud(options: PortalGrantCrudOptions) {
         span: 1 as const,
         options: YES_NO,
       })),
-      ...(options.locationScope ? [LOCATION_SCOPE_FIELD] : []),
+      ...(options.locationScope ? [options.locationScope] : []),
       {
         key: 'revision',
         source: options.revisionField,
