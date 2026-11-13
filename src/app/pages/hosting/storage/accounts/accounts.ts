@@ -1,5 +1,6 @@
 import { storageBillingActions } from '../storage-billing-actions';
 import { storagePriceFields } from '../storage-price-fields';
+import { storagePortalActions } from './portal-actions';
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -44,6 +45,16 @@ const config = defineCrud({
   columns: [
     { id: 'name', field: 'HsaName', uuidField: 'HsaUUID', label: 'Name', kind: 'identity' },
     { id: 'status', field: 'HsaIsActive', label: 'Status', kind: 'status' },
+    {
+      id: 'portal',
+      label: 'hostingStorage.portalColumn',
+      value: (item, translate) =>
+        translate(
+          Number(item['HsaPortalEnabled'] ?? 0) === 1
+            ? 'hostingStorage.portalYes'
+            : 'hostingStorage.portalNo',
+        ),
+    },
   ],
 });
 
@@ -61,7 +72,10 @@ export class HostingStorageAccountsPage extends ConfigurableCrudPageBase<Configu
         const master = inject(ActivatedRoute).snapshot.data['scope'] === 'master';
         return {
           ...config,
-          rowActions: storageBillingActions('accounts', master),
+          rowActions: [
+            ...storageBillingActions('accounts', master),
+            ...storagePortalActions(master),
+          ],
           endpoint: master ? 'system/hosting/storage/accounts' : config.endpoint,
           fields: config.fields.filter(
             (field) => !master || (field.key !== 'customerUuid' && !field.key.startsWith('price')),
