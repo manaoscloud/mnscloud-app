@@ -3873,6 +3873,15 @@ export const routes: Routes = [
                     data: { scope: 'master', context: 'system' },
                   },
                   {
+                    path: 'platform-pools',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/platform-pools/platform-pools').then(
+                        (m) => m.HostingVpsPlatformPoolsPage,
+                      ),
+                    title: 'System VPS Service Pools | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
                     path: 'firewalls',
                     loadComponent: () =>
                       import('./pages/hosting/vps/firewalls/firewalls').then(
