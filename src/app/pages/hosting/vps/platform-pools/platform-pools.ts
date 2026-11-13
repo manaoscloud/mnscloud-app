@@ -172,9 +172,11 @@ const POOL_FIELDS: ConfigurableCrudField[] = [
     label: 'SSH Key',
     placeholder: 'ssh-ed25519 AAAA... comment',
     required: true,
-    span: 1,
+    type: 'textarea',
+    rows: 4,
+    span: 4,
     fromRecord: (_value, record) => String(templateOf(record)['sshKey'] ?? ''),
-    help: 'Public key only. New servers are created with this key.',
+    help: 'Public keys only, one per line. New servers are created with these keys.',
   },
 ];
 
@@ -182,7 +184,7 @@ const POOL_FIELDS: ConfigurableCrudField[] = [
 const config = defineCrud({
   endpoint: ENDPOINT,
   uuidField: 'HpoUUID',
-  pageTitle: 'Service pools',
+  pageTitle: 'Platform server pools',
   pageDescription:
     'Desired number of platform servers per group. The platform creates the missing servers automatically.',
   createTitle: 'New service pool',
@@ -192,7 +194,8 @@ const config = defineCrud({
   searchPlaceholder: 'Group',
   emptyLabel: 'No service pools found.',
   deleteTitle: 'Delete service pool',
-  deleteMessage: 'Delete this service pool? No server is removed.',
+  deleteMessage:
+    'Delete this pool? Only the pool record is removed: no server is removed or stopped, and the platform will not recreate the pool automatically.',
   deleteSelectedTitle: 'Delete selected service pools',
   deleteSelectedMessage: 'Delete {count} selected service pool(s)?',
   savedMessage: 'Service pool saved successfully.',
@@ -226,6 +229,9 @@ const config = defineCrud({
       detail: (row, translate) => {
         const state = stateOf(row);
         const parts: string[] = [];
+        if (state?.status === 'blocked' || state?.status === 'failed') {
+          parts.push(translate('Save the pool to try again'));
+        }
         if (state?.lastCreatedName) {
           parts.push(`${translate('Last created')}: ${state.lastCreatedName}`);
         }
@@ -240,6 +246,7 @@ const config = defineCrud({
         return parts.join(' · ');
       },
     },
+    { id: 'plan', label: 'Plan', field: 'PlanName' },
     {
       id: 'mode',
       label: 'Mode',
@@ -255,6 +262,7 @@ const config = defineCrud({
       value: (row, translate) =>
         translate(String(row['HpoSource'] ?? '') === 'master' ? 'Master' : 'Default'),
     },
+    { id: 'updated', label: 'Updated', kind: 'datetime', field: 'HpoDateUpdated' },
   ],
 });
 
@@ -299,18 +307,24 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
   }
 
   protected override async fetchItems(filters: ConfigurableCrudFilters) {
+    if (!this.plans().length) await this.fetchPlans();
     const response = await this.api.get(ENDPOINT);
     const items = (response as { data?: { items?: ConfigurableCrudRecord[] } })?.data?.items ?? [];
     const search = String(filters.search ?? '')
       .trim()
       .toLowerCase();
+    const planNames = new Map(this.plans().map((plan) => [plan.HvpUUID, plan.HvpName]));
+    const rows: ConfigurableCrudRecord[] = items.map((item) => ({
+      ...item,
+      PlanName: planNames.get(String(item['HostingVpsPlanHvpUUID'] ?? '')) ?? '-',
+    }));
     return search
-      ? items.filter((item) =>
+      ? rows.filter((item) =>
           String(item['HpoGroup'] ?? '')
             .toLowerCase()
             .includes(search),
         )
-      : items;
+      : rows;
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {

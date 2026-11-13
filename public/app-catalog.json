@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0fe01fef1ad2",
+  "version": "7ed584361b29",
   "language": "pt-BR",
   "entries": [
     {
@@ -12052,7 +12052,7 @@
       "route": "/system/vps/platform-pools",
       "menuPath": "Hospedagem › VPS › Grupos",
       "scope": "platform",
-      "title": "Pools de serviço",
+      "title": "Grupos de servidores da plataforma",
       "description": "Quantidade desejada de servidores da plataforma por grupo. A plataforma cria os servidores que faltam automaticamente.",
       "fields": []
     },

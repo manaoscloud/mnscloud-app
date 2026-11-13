@@ -14152,5 +14152,9 @@
   "Servers of this group and the Agent and runtime of each one.": "Servers of this group and the Agent and runtime of each one.",
   "dns-prod": "dns-prod",
   "ubuntu-24.04": "ubuntu-24.04",
-  "ssh-ed25519 AAAA... comment": "ssh-ed25519 AAAA... comment"
+  "ssh-ed25519 AAAA... comment": "ssh-ed25519 AAAA... comment",
+  "Platform server pools": "Platform server pools",
+  "Delete this pool? Only the pool record is removed: no server is removed or stopped, and the platform will not recreate the pool automatically.": "Delete this pool? Only the pool record is removed: no server is removed or stopped, and the platform will not recreate the pool automatically.",
+  "Public keys only, one per line. New servers are created with these keys.": "Public keys only, one per line. New servers are created with these keys.",
+  "Save the pool to try again": "Save the pool to try again"
 }
