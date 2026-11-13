@@ -1,5 +1,5 @@
 import { employmentDay, employmentPayload } from './employments';
-import { employmentLabel, overlapsMonth } from '../timesheets/timesheets';
+import { employmentLabel, lastDayOfMonth, overlapsMonth } from '../timesheets/timesheets';
 import { hrErrorText } from '../../../shared/crud/configurable-crud/hr-error-codes';
 
 describe('employmentPayload', () => {
@@ -84,5 +84,12 @@ describe('employmentPayload', () => {
     );
     expect(hrErrorText('HR_EMPLOYMENT_PUNCHES_OUTSIDE')).toContain('punches');
     expect(hrErrorText({ error: { code: 'OTHER' } })).toBe('');
+  });
+
+  it('uses the real last day of the month', () => {
+    expect(lastDayOfMonth('2026-02')).toBe('2026-02-28');
+    expect(lastDayOfMonth('2028-02')).toBe('2028-02-29');
+    expect(lastDayOfMonth('2026-11')).toBe('2026-11-30');
+    expect(overlapsMonth({ HireDate: '2026-12-01' }, '2026-11')).toBeFalse();
   });
 });

@@ -61,6 +61,7 @@ describe('timesheet art. 84', () => {
   });
 
   it('prints the registration number, termination date, location and PIS of the employment', () => {
+    document.documentElement.lang = 'pt-BR';
     const html = timesheetPrintHtml(
       {
         employee: { Name: 'Ana' },

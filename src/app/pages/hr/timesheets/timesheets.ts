@@ -58,11 +58,18 @@ type Timesheet = {
 
 const EMPLOYEE_PAGE = 50;
 
+/** Last calendar day of a `YYYY-MM` month as `YYYY-MM-DD`. */
+export function lastDayOfMonth(month: string): string {
+  const [year, value] = month.split('-').map(Number);
+  const day = new Date(Date.UTC(year, value, 0)).getUTCDate();
+  return `${month}-${String(day).padStart(2, '0')}`;
+}
+
 /** True when the employment was in force on some day of the month (`YYYY-MM`). */
 export function overlapsMonth(item: Row, month: string): boolean {
   const hire = String(item['HireDate'] ?? '').slice(0, 10);
   const end = String(item['TerminationDate'] ?? '').slice(0, 10);
-  return (!hire || hire <= `${month}-31`) && (!end || end >= `${month}-01`);
+  return (!hire || hire <= lastDayOfMonth(month)) && (!end || end >= `${month}-01`);
 }
 
 /** `1234 · Company · Location` of an employment, for the selector. */
@@ -170,7 +177,7 @@ export class HrTimesheetsPage {
       const query = new URLSearchParams({
         employeeUUID: params.employeeUUID,
         from: `${params.month}-01`,
-        to: `${params.month}-31`,
+        to: lastDayOfMonth(params.month),
         limit: '100',
       });
       try {
