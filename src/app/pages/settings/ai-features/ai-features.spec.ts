@@ -12,6 +12,12 @@ describe('AI feature catalog', () => {
       'support.triage',
       'help.tutorial.script',
       'help.tutorial.narration',
+      'automation.intent.classify',
+      'automation.extract',
+      'automation.agent.answer',
+      'automation.handoff.summary',
+      'automation.flow.draft',
+      'automation.flow.review',
     ]);
     expect(aiFeatureLabel('help.tutorial.narration')).toBe('Tutorial video narration');
   });
