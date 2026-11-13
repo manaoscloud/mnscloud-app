@@ -14330,5 +14330,15 @@
   "Automation knowledge answer": "Automation knowledge answer",
   "Automation handoff summary": "Automation handoff summary",
   "Automation flow draft": "Automation flow draft",
-  "Automation flow review": "Automation flow review"
+  "Automation flow review": "Automation flow review",
+  "Replacing server": "Replacing server",
+  "Automatic repair": "Automatic repair",
+  "When a server of the group stops responding for 30 minutes, the platform creates another one in its place. The failed server is never deleted: retire it afterwards.": "When a server of the group stops responding for 30 minutes, the platform creates another one in its place. The failed server is never deleted: retire it afterwards.",
+  "VM missing in the cluster": "VM missing in the cluster",
+  "Node down": "Node down",
+  "VM stopped in Proxmox": "VM stopped in Proxmox",
+  "Agent not responding": "Agent not responding",
+  "Failure": "Failure",
+  "suspect": "suspect",
+  "replaced by {{name}}": "replaced by {{name}}"
 }
