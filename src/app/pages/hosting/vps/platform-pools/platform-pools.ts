@@ -27,10 +27,19 @@ type PoolMember = {
   runtimeStatus: string | null;
   adopted: boolean;
   live: boolean;
+  failure?: PoolMemberFailure | null;
+};
+
+type PoolMemberFailure = {
+  reason?: string | null;
+  since?: string | null;
+  replacedBy?: string | null;
+  suspect?: boolean;
 };
 
 type PoolState = {
   status?: string | null;
+  message?: string | null;
   createAttempts?: number | null;
   lastCreatedName?: string | null;
 };
@@ -38,6 +47,8 @@ type PoolState = {
 /** Translated labels of `HpoState.status`; the English `HpoState.message` is never shown. */
 const STATE_LABELS: Record<string, string> = {
   converged: 'Converged',
+  degraded: 'Degraded',
+  replacing: 'Replacing server',
   creating: 'Creating server',
   paused: 'Paused',
   excess: 'Extra servers',
@@ -47,6 +58,8 @@ const STATE_LABELS: Record<string, string> = {
 
 const STATE_TONES: Record<string, DataViewerTone> = {
   converged: 'success',
+  degraded: 'warning',
+  replacing: 'info',
   creating: 'info',
   paused: 'warning',
   excess: 'warning',
@@ -62,6 +75,18 @@ const NO_STATE_LABEL = 'Waiting for reconcile';
 const MODE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'automatic', label: 'Automatic' },
   { value: 'paused', label: 'Paused' },
+];
+
+const FAILURE_LABELS: Record<string, string> = {
+  vm_missing: 'VM missing in the cluster',
+  node_down: 'Node down',
+  vm_not_running: 'VM stopped in Proxmox',
+  agent_silent: 'Agent not responding',
+};
+
+const REPAIR_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'automatic', label: 'Repair automatic' },
+  { value: 'paused', label: 'Repair paused' },
 ];
 
 const MEMBERS_ACTION: ConfigurableCrudRowAction = {
@@ -98,6 +123,23 @@ function templateOf(row: ConfigurableCrudRecord): Record<string, unknown> {
 function membersOf(row: ConfigurableCrudRecord): PoolMember[] {
   const members = row['members'];
   return Array.isArray(members) ? (members as PoolMember[]) : [];
+}
+
+function failureText(
+  failure: PoolMemberFailure | null | undefined,
+  translate: (text: string) => string,
+  formatDateTime: (value: string) => string,
+): string {
+  if (!failure) return '-';
+  const reason = String(failure.reason ?? '');
+  const parts = [translate(FAILURE_LABELS[reason] ?? reason)];
+  if (failure.since)
+    parts.push(`${translate('Since')} ${formatDateTime(failure.since) || failure.since}`);
+  if (failure.suspect) parts.push(translate('suspect'));
+  if (failure.replacedBy) {
+    parts.push(translate('replaced by {{name}}').replace('{{name}}', failure.replacedBy));
+  }
+  return parts.join(' · ');
 }
 
 function stateLabel(row: ConfigurableCrudRecord): string {
@@ -137,6 +179,17 @@ const POOL_FIELDS: ConfigurableCrudField[] = [
     translateOptions: true,
     required: true,
     span: 1,
+  },
+  {
+    key: 'repair',
+    source: 'HpoRepair',
+    payloadKey: 'repair',
+    label: 'Automatic repair',
+    type: 'select',
+    options: REPAIR_OPTIONS,
+    translateOptions: true,
+    span: 1,
+    help: 'When a server of the group stops responding for 30 minutes, the platform creates another one in its place. The failed server is never deleted: retire it afterwards.',
   },
   {
     key: 'planUUID',
@@ -208,6 +261,7 @@ const config = defineCrud({
     group: '',
     desiredCount: 1,
     mode: 'automatic',
+    repair: 'automatic',
     planUUID: '',
     providerImageId: '',
     username: '',
@@ -245,6 +299,17 @@ const config = defineCrud({
         }
         return parts.join(' · ');
       },
+    },
+    {
+      id: 'repair',
+      label: 'Repair',
+      field: 'HpoRepair',
+      options: REPAIR_OPTIONS,
+      translateValue: true,
+      value: (row, translate) =>
+        translate(
+          String(row['HpoRepair'] ?? '') === 'paused' ? 'Repair paused' : 'Repair automatic',
+        ),
     },
     { id: 'plan', label: 'Plan', field: 'PlanName' },
     {
@@ -338,6 +403,7 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
     const body: ConfigurableCrudRecord = {
       desiredCount: Number(payload['desiredCount']),
       mode: payload['mode'] || 'automatic',
+      repair: payload['repair'] || 'automatic',
       planUUID: payload['planUUID'],
       template,
     };
@@ -373,6 +439,7 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
               { key: 'name', label: 'Name' },
               { key: 'status', label: 'Status' },
               { key: 'node', label: 'Node' },
+              { key: 'failure', label: 'Failure' },
               { key: 'agent', label: 'Agent', translate: true },
               { key: 'runtime', label: 'Runtime', translate: true },
             ],
@@ -380,6 +447,11 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
               name: member.name,
               status: member.status ?? '-',
               node: member.node ?? '-',
+              failure: failureText(
+                member.failure,
+                (text) => this.t(text),
+                (value) => this.dateTime.formatDateTime(value),
+              ),
               agent: AGENT_LABELS[String(member.agentStatus ?? '')] ?? member.agentStatus ?? '-',
               runtime:
                 RUNTIME_LABELS[String(member.runtimeStatus ?? '')] ?? member.runtimeStatus ?? '-',

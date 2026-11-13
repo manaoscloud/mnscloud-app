@@ -14331,5 +14331,17 @@
   "Automation knowledge answer": "Automação: responder com base no conteúdo",
   "Automation handoff summary": "Automação: resumo para o atendente",
   "Automation flow draft": "Automação: criar fluxo com IA",
-  "Automation flow review": "Automação: revisar fluxo com IA"
+  "Automation flow review": "Automação: revisar fluxo com IA",
+  "Replacing server": "Substituindo servidor",
+  "Automatic repair": "Reparo automático",
+  "When a server of the group stops responding for 30 minutes, the platform creates another one in its place. The failed server is never deleted: retire it afterwards.": "Quando um servidor do grupo para de responder por 30 minutos, a plataforma cria outro no lugar. O servidor com falha nunca é apagado: retire-o depois.",
+  "VM missing in the cluster": "VM ausente no cluster",
+  "Node down": "Nó fora do ar",
+  "VM stopped in Proxmox": "VM parada no Proxmox",
+  "Agent not responding": "Agent sem contato",
+  "Failure": "Falha",
+  "suspect": "suspeito",
+  "replaced by {{name}}": "substituído por {{name}}",
+  "Repair automatic": "Automático",
+  "Repair paused": "Pausado"
 }
