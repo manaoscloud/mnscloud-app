@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "88f35c336ad5",
+  "version": "3c8912ec5a2a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3941,6 +3941,75 @@
       ]
     },
     {
+      "route": "/hr/employments",
+      "menuPath": "Recursos humanos › Vínculos",
+      "scope": "tenant",
+      "title": "Vínculos",
+      "description": "Vínculos dos colaboradores por empresa: matrícula, datas, PIS, contrato, instrumento da escala 12x36 e o local onde cada um trabalha. Uma nova contratação após um desligamento é um novo vínculo.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": "Pessoa do Cadastro. Um colaborador pode ter vários vínculos, um por empresa e período."
+        },
+        {
+          "label": "Empresa",
+          "help": "Empresa que emprega a pessoa neste vínculo. As batidas seguem a numeração (NSR) desta empresa."
+        },
+        {
+          "label": "Localização",
+          "help": "Onde o colaborador trabalha (lotação). Apenas locais da empresa escolhida. Com raio da cerca no local, batidas feitas mais longe são sinalizadas."
+        },
+        {
+          "label": "Matrícula",
+          "help": "Matrícula do colaborador na empresa. Deve ser única entre os vínculos da empresa."
+        },
+        {
+          "label": "Admissão",
+          "help": ""
+        },
+        {
+          "label": "Data de desligamento",
+          "help": "Vazio enquanto o vínculo está vigente. Não pode ser anterior à admissão, e vínculos da mesma pessoa na mesma empresa não podem se sobrepor."
+        },
+        {
+          "label": "PIS",
+          "help": "11 dígitos com o dígito verificador; usado no arquivo eletrônico de jornada (AEJ)."
+        },
+        {
+          "label": "Matrícula eSocial",
+          "help": "Matrícula do trabalhador no eSocial, quando diferente da matrícula da empresa."
+        },
+        {
+          "label": "CBO",
+          "help": "Código Brasileiro de Ocupações, 6 dígitos."
+        },
+        {
+          "label": "Tipo de contrato",
+          "help": ""
+        },
+        {
+          "label": "Salário base",
+          "help": ""
+        },
+        {
+          "label": "Instrumento da escala 12x36",
+          "help": "Instrumento legal que autoriza a escala 12x36 neste vínculo."
+        },
+        {
+          "label": "Observações do instrumento 12x36",
+          "help": "Número ou referência do acordo ou convenção."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/holidays",
       "menuPath": "Recursos humanos › Feriados",
       "scope": "tenant",
@@ -4335,6 +4404,10 @@
         {
           "label": "Colaborador",
           "help": "Colaboradores do Cadastro; o espelho precisa de uma escala atribuída."
+        },
+        {
+          "label": "Vínculo",
+          "help": "O colaborador tem mais de um vínculo vigente: escolha o vínculo deste espelho."
         }
       ]
     },
@@ -6167,7 +6240,7 @@
     },
     {
       "route": "/registry/employees",
-      "menuPath": "Cadastros › Funcionários",
+      "menuPath": "Cadastros › Colaboradores",
       "scope": "tenant",
       "title": "Funcionários",
       "description": "Gerencie os cadastros de funcionários, vínculos com empresas, departamentos e cargos.",
@@ -6333,6 +6406,10 @@
         {
           "label": "Longitude",
           "help": ""
+        },
+        {
+          "label": "Raio da cerca (m)",
+          "help": "Distância em metros ao redor das coordenadas do local (1 a 65535) em que se esperam as batidas de ponto dos colaboradores lotados aqui. Uma batida mais distante é aceita, mas sinalizada como \"Fora da cerca\". Vazio: sem cerca."
         },
         {
           "label": "Aberto 24 horas",

@@ -1379,6 +1379,14 @@ export const routes: Routes = [
                 title: 'Human resources • Time clocks | mnscloud',
               },
               {
+                path: 'hr/employments',
+                loadComponent: () =>
+                  import('./pages/hr/employments/employments').then((m) => m.HrEmploymentsPage),
+                title: 'Human resources • Employments | mnscloud',
+                canActivate: [permissionGuard],
+                data: { permission: 'tenant.hr.employments.read' },
+              },
+              {
                 path: 'hr/time-punches',
                 loadComponent: () =>
                   import('./pages/hr/time-punches/time-punches').then((m) => m.HrTimePunchesPage),

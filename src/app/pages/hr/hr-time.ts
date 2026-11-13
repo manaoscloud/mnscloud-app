@@ -41,7 +41,37 @@ export const PUNCH_FLAGS: Record<string, string> = {
   future_time: 'Device clock ahead (server time used)',
   clock_skew: 'Device clock off by more than 2 min',
   sequence: 'Same mark as the previous one',
+  outside_geofence: 'Outside the fence',
 };
+
+/** `Outside the fence (350 m)`: the flag with the distance to the location, when the API sent it. */
+export function geofenceText(punch: Record<string, unknown>, t: (key: string) => string): string {
+  const distance = Number(punch['GeofenceDistanceMeters']);
+  const outside = punch['OutsideGeofence'] === true || punch['OutsideGeofence'] === 1;
+  if (!outside) return '';
+  return Number.isFinite(distance) && punch['GeofenceDistanceMeters'] !== null
+    ? `${t(PUNCH_FLAGS['outside_geofence'])} (${Math.round(distance)} m)`
+    : t(PUNCH_FLAGS['outside_geofence']);
+}
+
+/**
+ * Translated flags of one punch: the flag list of the API (the fence flag carries the distance)
+ * plus the fence marker when only `OutsideGeofence` came.
+ */
+export function punchFlagTexts(
+  punch: Record<string, unknown>,
+  t: (key: string) => string,
+): string[] {
+  const flags = Array.isArray(punch['Flags']) ? (punch['Flags'] as string[]) : [];
+  const texts = flags
+    .filter((flag) => flag !== 'outside_geofence')
+    .map((flag) => t(PUNCH_FLAGS[flag] ?? flag));
+  const fence = geofenceText(
+    flags.includes('outside_geofence') ? { ...punch, OutsideGeofence: true } : punch,
+    t,
+  );
+  return fence ? [...texts, fence] : texts;
+}
 
 /** Weekly schedule positions: 1 = Monday .. 7 = Sunday (ISO). */
 export const WEEKDAYS = [

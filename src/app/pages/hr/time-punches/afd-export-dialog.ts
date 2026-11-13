@@ -1,3 +1,4 @@
+import { hrErrorText } from '../../../shared/crud/configurable-crud/hr-error-codes';
 import { Component, computed, inject, resource, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -231,7 +232,10 @@ export class AfdExportDialogComponent {
       let message = this.texts.failed;
       if (body instanceof Blob) {
         try {
-          message = JSON.parse(await body.text())?.error || message;
+          const parsed = JSON.parse(await body.text());
+          message = hrErrorText(parsed?.code)
+            ? this.transloco.translate(hrErrorText(parsed.code))
+            : parsed?.error || message;
         } catch {
           // Keep the generic message.
         }

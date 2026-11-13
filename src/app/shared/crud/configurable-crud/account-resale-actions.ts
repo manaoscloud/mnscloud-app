@@ -1,5 +1,6 @@
 import { defineCrud } from './define-crud';
 import { revisionDeletePayloads } from './revision-delete';
+import { LOCATION_SCOPE_COLUMN } from './location-scope';
 import type {
   ConfigurableCrudColumn,
   ConfigurableCrudField,
@@ -128,6 +129,8 @@ export interface ResaleAccountActionOptions {
   canManage: () => boolean;
   /** False while customer publication is not available for the module (portal off). */
   publication?: boolean;
+  /** Operators can be limited to locations (HR accounts): the scope field of the account. */
+  locationScope?: (row: Record<string, unknown>) => ConfigurableCrudField;
 }
 
 /**
@@ -184,6 +187,7 @@ export function resaleAccountRowActions(
     operatorsDescription,
     canManage,
     publication = true,
+    locationScope,
   } = options;
 
   return [
@@ -225,7 +229,11 @@ export function resaleAccountRowActions(
           uuidField,
           pageTitle: assignTitle,
           pageDescription: operatorsDescription,
-          initialValues: { UserUsrUUID: '', status: 1 },
+          initialValues: {
+            UserUsrUUID: '',
+            status: 1,
+            ...(locationScope ? { locationUUIDs: [] } : {}),
+          },
           fields: [
             {
               key: 'UserUsrUUID',
@@ -244,6 +252,7 @@ export function resaleAccountRowActions(
                 'Tenant operators must be invited through tenant access management.',
             },
             { key: 'status', label: 'Status', type: 'status', span: 1 },
+            ...(locationScope ? [locationScope(row)] : []),
           ],
           columns: [],
         }),
@@ -259,10 +268,28 @@ export function resaleAccountRowActions(
           uuidField: memberUuidField,
           pageTitle: operatorsTitle,
           pageDescription: operatorsDescription,
-          readOnly: true,
-          fields: [],
+          // With a location scope the list edits the status and the locations of each operator.
+          ...(locationScope
+            ? {
+                canCreate: false,
+                canDelete: false,
+                bulkDelete: false,
+                editTitle: operatorsTitle,
+                fields: [
+                  {
+                    key: 'status',
+                    source: memberStatusField,
+                    label: 'Status',
+                    type: 'status' as const,
+                    span: 1 as const,
+                  },
+                  locationScope(row),
+                ],
+              }
+            : { readOnly: true, fields: [] }),
           columns: [
             { id: 'user', field: 'MemberName', label: 'User', kind: 'identity' },
+            ...(locationScope ? [LOCATION_SCOPE_COLUMN] : []),
             { id: 'status', field: memberStatusField, label: 'Status', kind: 'status' },
           ],
         }),

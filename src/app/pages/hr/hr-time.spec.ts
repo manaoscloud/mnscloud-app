@@ -2,8 +2,10 @@ import {
   flagLabels,
   formatDay,
   formatMinutes,
+  geofenceText,
   hhmm,
   monthOptions,
+  punchFlagTexts,
   shiftMonth,
   timesheetQuery,
 } from './hr-time';
@@ -100,5 +102,27 @@ describe('Punch map points', () => {
     expect(points[0]).toEqual(
       jasmine.objectContaining({ id: 'a', latitude: -3.1, longitude: -60, accuracy: 12 }),
     );
+  });
+
+  it('shows the fence flag with the distance and never twice', () => {
+    const t = (key: string) => key;
+    expect(geofenceText({ OutsideGeofence: false }, t)).toBe('');
+    expect(geofenceText({ OutsideGeofence: true, GeofenceDistanceMeters: 349.6 }, t)).toBe(
+      'Outside the fence (350 m)',
+    );
+    expect(geofenceText({ OutsideGeofence: true, GeofenceDistanceMeters: null }, t)).toBe(
+      'Outside the fence',
+    );
+    expect(
+      punchFlagTexts(
+        {
+          Flags: ['offline', 'outside_geofence'],
+          OutsideGeofence: true,
+          GeofenceDistanceMeters: 80,
+        },
+        t,
+      ),
+    ).toEqual(['Sent later (offline)', 'Outside the fence (80 m)']);
+    expect(punchFlagTexts({ Flags: ['outside_geofence'] }, t)).toEqual(['Outside the fence']);
   });
 });

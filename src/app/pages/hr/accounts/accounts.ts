@@ -1,4 +1,6 @@
 import { Component, inject } from '@angular/core';
+import { ApiService } from '../../../services/api.service';
+import { accountLocationScopeField } from '../../../shared/crud/configurable-crud/location-scope';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
@@ -104,7 +106,7 @@ const GRANTS: readonly [string, string][] = [
 ];
 
 /** Customer Portal users of the account's customer and the HR operations each one may read. */
-function portalAccessConfig(row: ConfigurableCrudRecord) {
+function portalAccessConfig(api: ApiService, row: ConfigurableCrudRecord) {
   return portalGrantCrud({
     base: `hr/accounts/${row['HraUUID']}`,
     uuidField: 'HpgUUID',
@@ -123,6 +125,11 @@ function portalAccessConfig(row: ConfigurableCrudRecord) {
       roleUser: 'hrAccount.portalRoleUser',
     },
     grants: GRANTS,
+    locationScope: accountLocationScopeField(
+      api,
+      String(row['HraUUID']),
+      row['RegWorkspaceRwkUUID'] ? String(row['RegWorkspaceRwkUUID']) : null,
+    ),
     initialValues: {
       HpgDashboard: 1,
       HpgEmployees: 1,
@@ -154,6 +161,7 @@ const PAGES: readonly [string, string, string, string][] = [
     'assignment_ind',
     'tenant.hr.work-schedule-assignments.read',
   ],
+  ['employments', 'nav.hr.employments', 'work_history', 'tenant.hr.employments.read'],
   ['holidays', 'nav.hr.holidays', 'celebration', 'tenant.hr.holidays.read'],
   ['time-policies', 'nav.hr.time-policies', 'rule', 'tenant.hr.time-policies.read'],
   ['time-punches', 'nav.hr.time-punches', 'schedule', 'tenant.hr.time-punches.read'],
@@ -198,6 +206,7 @@ export class HrAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
   constructor() {
     const router = inject(Router);
     const auth = inject(AuthService);
+    const api = inject(ApiService);
     const allowed = (permission: string) =>
       hasEffectivePermission(auth.user()?.permissions ?? [], permission);
     const canManage = () => allowed('tenant.hr.accounts.all');
@@ -240,13 +249,19 @@ export class HrAccountsPage extends ConfigurableCrudPageBase<ConfigurableCrudRec
           operatorsTitle: 'hrAccount.operators',
           operatorsDescription: 'hrAccount.operatorsDescription',
           canManage,
+          locationScope: (row) =>
+            accountLocationScopeField(
+              api,
+              String(row['HraUUID']),
+              row['RegWorkspaceRwkUUID'] ? String(row['RegWorkspaceRwkUUID']) : null,
+            ),
         }),
         {
           key: 'portalAccess',
           label: 'hrAccount.portalAccess',
           icon: 'badge',
           visible: (row) => canManage() && row['HraKind'] === 'customer',
-          collection: (row) => portalAccessConfig(row),
+          collection: (row) => portalAccessConfig(api, row),
         },
       ],
     });

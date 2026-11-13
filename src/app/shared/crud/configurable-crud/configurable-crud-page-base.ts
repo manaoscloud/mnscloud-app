@@ -9,6 +9,7 @@ import { crudReportMask } from './crud-report-mask';
 import { PhoneDialer } from '../../phone-dock/phone-dialer';
 import { generateCrudPassword } from './password-generation';
 import { PhoneInputComponent } from '../../phone-input/phone-input.component';
+import { hrErrorText } from './hr-error-codes';
 import { remoteLookupParameters } from './remote-lookup-parameters';
 import { isRecordUUID, shortRecordUUID } from './record-uuid-label';
 import { MNS_MENU } from '../../menu/mns-menu';
@@ -263,6 +264,10 @@ export type ConfigurableCrudField = {
     searchParam?: string;
     /** Option values never offered (for example the record the action starts from). */
     exclude?: readonly string[];
+    /** Awaited before every page is requested (for example to load what `accept` needs). */
+    prepare?: () => Promise<void>;
+    /** Items that are not accepted are never offered. */
+    accept?: (item: ConfigurableCrudRecord) => boolean;
   };
   key: string;
   /** Explicit capture classification for non-secret controls with credential-like names. */
@@ -912,6 +917,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
             const cached = this.remoteLookupCache.get(field.key);
             if (cached?.url === url) return [field.key, cached.result];
             try {
+              await field.remoteLookup?.prepare?.();
               const response = await this.api.get<{ data: { items: ConfigurableCrudRecord[] } }>(
                 url,
               );
@@ -2837,8 +2843,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   ): ConfigurableCrudRecord[] {
     const exclude = new Set(field.remoteLookup?.exclude ?? []);
     const uuidField = field.remoteLookup!.uuidField;
-    return exclude.size
-      ? response.data.items.filter((item) => !exclude.has(String(item[uuidField] ?? '')))
+    const accept = field.remoteLookup?.accept;
+    return exclude.size || accept
+      ? response.data.items.filter(
+          (item) => !exclude.has(String(item[uuidField] ?? '')) && (accept?.(item) ?? true),
+        )
       : response.data.items;
   }
 
@@ -4275,6 +4284,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected errorMessage(error: unknown): string {
+    const hrMessage = hrErrorText(error);
+    if (hrMessage) return hrMessage;
     const workspaceMessage = registryWorkspaceErrorMessage(error);
     if (workspaceMessage) return workspaceMessage;
     const commerceMessage = commerceAccountErrorMessage(error);
