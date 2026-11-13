@@ -218,6 +218,7 @@ const PICKERS: Record<
     group: 'CrmPipelineCpiUUIDName',
   },
   crmMember: { endpoint: 'crm/members', value: 'UsrUUID', label: 'UsrName' },
+  billingDueDay: { endpoint: 'customer-billing/due-days', value: 'BddUUID', label: 'BddName' },
 };
 
 /** Picker widgets used by the config of the nodes the tenant can use (locked modules excluded). */
