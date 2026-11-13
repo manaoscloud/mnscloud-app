@@ -8,7 +8,40 @@
   </div>
 
   <mat-dialog-content class="change-plan-content">
-    @if (currentPlan(); as current) {
+    @if (isProxmoxUpgrade()) {
+      <div class="change-plan-summary">
+        <div class="plan-summary-card">
+          <span class="summary-label">{{ 'Current plan' | transloco }}</span>
+          <strong>{{ currentPlan()?.HvpName ?? '-' }}</strong>
+          @if (isAdopted) {
+            @if (vmSize(); as vm) {
+              <small>{{ vm.cpu }} CPU / {{ vm.memoryMb }} MB / {{ vm.diskGb }} GB</small>
+            }
+          } @else {
+            <small>{{ planSpecLabel(currentPlan()) }}</small>
+          }
+        </div>
+        @if (selectedTargetPlan(); as targetPlan) {
+          <div class="plan-summary-card">
+            <span class="summary-label">{{ 'Target plan' | transloco }}</span>
+            <strong>{{ targetPlan.HvpName }}</strong>
+            <small>{{ planSpecLabel(targetPlan) }}</small>
+          </div>
+        }
+      </div>
+      <p class="change-plan-hint">
+        {{
+          'Proxmox applies the new CPU and memory with a reboot when the server cannot take them live; the disk only grows.'
+            | transloco
+        }}
+        @if (isAdopted) {
+          {{
+            'Adopted server: only plans with at least the CPU, memory and disk the VM has now are accepted.'
+              | transloco
+          }}
+        }
+      </p>
+    } @else if (currentPlan(); as current) {
       <div class="change-plan-summary">
         <div class="plan-summary-card">
           <span class="summary-label">{{ 'Current plan' | transloco }}</span>

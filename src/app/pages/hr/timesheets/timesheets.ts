@@ -30,10 +30,20 @@ import {
   optionLabel,
   shiftMonth,
 } from '../hr-time';
+import {
+  TimesheetHeader,
+  formatDocument,
+  punchTimesMarked,
+  scheduleDayLine,
+  treatmentsText,
+  timesheetPrintHtml,
+} from './timesheet-art84';
+import { printHtml } from '../../../shared/print/print-html';
 
 type Row = ConfigurableCrudRecord;
 type Option = { value: string; label: string };
 type Timesheet = {
+  header?: TimesheetHeader | null;
   employee: { EmployeeUUID: string; Name: string } & Row;
   month: string;
   timezone: string;
@@ -43,11 +53,6 @@ type Timesheet = {
 };
 
 const EMPLOYEE_PAGE = 50;
-
-function punchTimes(row: Row): string {
-  const punches = Array.isArray(row['punches']) ? (row['punches'] as Row[]) : [];
-  return punches.map((punch) => String(punch['LocalTime'] ?? '')).join(' · ');
-}
 
 function expected(row: Row): string {
   const start = String(row['ExpectedStartLocal'] ?? '');
@@ -166,6 +171,40 @@ export class HrTimesheetsPage {
     return options;
   });
 
+  /** Art. 84 header; empty parts when the API predates it. */
+  readonly header = computed(() => {
+    const data = this.timesheet();
+    const header = data?.header;
+    if (!data || !header) return null;
+    const t = (key: string) => this.transloco.translate(key);
+    const employer = header.employer ?? {};
+    const employee = header.employee ?? {};
+    return {
+      employerName: String(employer.Name ?? ''),
+      employerDocument: formatDocument(employer.Document),
+      employerDocumentLabel: employer.DocumentKind === 'cpf' ? 'CPF' : 'CNPJ',
+      employeeDocument: formatDocument(employee.Document),
+      hireDate: employee.HireDate ? formatDay(employee.HireDate) : '',
+      position: String(employee.PositionName ?? ''),
+      schedules: (header.schedules ?? []).map((schedule) => ({
+        name: String(schedule.Name ?? ''),
+        lines: (schedule.Days ?? []).map((day) => scheduleDayLine(day, schedule.Kind, t)),
+      })),
+    };
+  });
+
+  async printTimesheet(): Promise<void> {
+    const data = this.timesheet();
+    if (!data) return;
+    try {
+      await printHtml(
+        timesheetPrintHtml(data, (key) => this.transloco.translate(key), this.i18n.language()),
+      );
+    } catch {
+      this.snack.error(this.transloco.translate('Failed to open the print dialog.'));
+    }
+  }
+
   readonly employeeMeta = computed(() => {
     const employee = this.timesheet()?.employee;
     if (!employee) return '';
@@ -241,7 +280,18 @@ export class HrTimesheetsPage {
         chipClass: (value) => DAY_CHIPS[String(value)] ?? 'chip-skipped',
       },
       { id: 'expected', label: 'Expected', value: (row) => expected(row) },
-      { id: 'punches', label: 'Punches', value: (row) => punchTimes(row) || '—' },
+      { id: 'punches', label: 'Punches', value: (row) => punchTimesMarked(row) || '—' },
+      {
+        id: 'treatments',
+        label: 'Treatments',
+        field: 'adjustments',
+        kind: 'status',
+        value: (row, t) => treatmentsText(row, t) || '—',
+        chipClass: (_value, row) =>
+          Array.isArray(row['adjustments']) && row['adjustments'].length
+            ? 'chip-running'
+            : 'chip-skipped',
+      },
       { id: 'worked', label: 'Worked', value: (row) => formatMinutes(row['WorkedMinutes']) },
       {
         id: 'balance',

@@ -179,6 +179,8 @@ export type HostingVpsInstanceConfig = {
   } | null;
   agentName?: string | null;
   agentUUID?: string | null;
+  /** Proxmox node recorded for the VM (PL0, adoption); a migration does not rewrite it. */
+  proxmoxNode?: string | null;
   /** FA4: automatic Agent install of a platform server. */
   agentEnrollment?: {
     status?: 'installing' | 'enrolled' | 'failed' | string | null;

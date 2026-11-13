@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "580234cc3338",
+  "version": "5f56fcda258d",
   "language": "pt-BR",
   "entries": [
     {
@@ -5298,6 +5298,31 @@
       "fields": []
     },
     {
+      "route": "/network/connectors",
+      "menuPath": "Rede › Conectores",
+      "scope": "tenant",
+      "title": "Conectores",
+      "description": "Pequenos programas que você instala dentro da sua própria rede. Eles abrem uma conexão de saída com a MNSCloud para que consoles e testes de acesso alcancem equipamentos com endereço privado, sem abrir nada na internet.",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Redes permitidas",
+          "help": "Opcional. Redes (CIDR) que o conector pode alcançar, separadas por vírgula ou quebra de linha. Vazio permite qualquer endereço privado da rede do host, nunca loopback, link-local ou o próprio host."
+        },
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/network/devices",
       "menuPath": "Rede › Equipamentos",
       "scope": "tenant",
@@ -5342,11 +5367,15 @@
         },
         {
           "label": "Host de gestão",
-          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento."
+          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento. Com o caminho Conector deve ser um endereço IP."
         },
         {
           "label": "Caminho de gestão",
           "help": "Por onde a plataforma chega ao equipamento: pela internet, pela VPN de gestão ou por um conector instalado na rede."
+        },
+        {
+          "label": "Conector",
+          "help": "Conector instalado na sua rede que alcança este equipamento. Com este caminho o host de gerenciamento deve ser um endereço IP."
         },
         {
           "label": "URL da API",
@@ -10270,11 +10299,15 @@
         },
         {
           "label": "Host de gestão",
-          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento."
+          "help": "Nome ou IP pelo qual a plataforma alcança o equipamento. Com o caminho Conector deve ser um endereço IP."
         },
         {
           "label": "Caminho de gestão",
           "help": "Por onde a plataforma chega ao equipamento: pela internet, pela VPN de gestão ou por um conector instalado na rede."
+        },
+        {
+          "label": "Conector",
+          "help": "Conector instalado na sua rede que alcança este equipamento. Com este caminho o host de gerenciamento deve ser um endereço IP."
         },
         {
           "label": "URL da API",

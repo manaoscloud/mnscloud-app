@@ -54,7 +54,7 @@ type AdoptionResult = {
           <h2>{{ 'Adopt existing VMs' | transloco }}</h2>
           <p>
             {{
-              'Platform VMs created outside the platform (names mns-...). Adoption only links them: the platform never changes, powers off or deletes an adopted VM, and removing the server only unlinks it.'
+              'Platform VMs created outside the platform (names mns-...). Adopting links them without changing the VM; afterwards they are managed like the servers the platform created (power, plan, migration, snapshots). The platform never deletes an adopted VM: removing the server only unlinks it.'
                 | transloco
             }}
           </p>
