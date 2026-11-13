@@ -273,10 +273,12 @@ export class AutomationEditorPage {
   }
 
   private async loadPickers(): Promise<void> {
-    const [connection, team, user] = await Promise.all(
-      ['connection', 'team', 'user'].map((widget) => this.service.options(widget).catch(() => [])),
+    const [connection, team, user, flow] = await Promise.all(
+      ['connection', 'team', 'user', 'flow'].map((widget) =>
+        this.service.options(widget, this.uuid).catch(() => []),
+      ),
     );
-    this.pickers.set({ connection, team, user });
+    this.pickers.set({ connection, team, user, flow });
   }
 
   async reload(): Promise<void> {
