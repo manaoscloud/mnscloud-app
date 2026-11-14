@@ -9,6 +9,7 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatMinutes, hhmm } from '../hr-time';
 import { HR_COMPANY_LOOKUP, HR_YES_NO } from '../hr-crud-shared';
+import { OVERTIME_MODES, durationText, parseDuration } from '../closing/closing-shared';
 
 /** IANA time zones of Brazil (the API accepts any valid IANA zone). */
 const TIMEZONES: readonly ConfigurableCrudOption[] = [
@@ -42,6 +43,10 @@ const number = (value: unknown, fallback: number) => {
     : parsed;
 };
 
+/** Monthly hours limit in minutes; none when empty, the typed text when invalid (the API refuses it). */
+const monthlyLimit = (value: unknown) =>
+  String(value ?? '').trim() ? (parseDuration(value) ?? value) : null;
+
 // Timesheet rules per company (or the tenant default when no company is chosen): time zone,
 // CLT tolerances, overtime limit, night period and the rates reported in the monthly totals.
 const config = defineCrud({
@@ -72,8 +77,12 @@ const config = defineCrud({
     nightRate: 20,
     punchPhotoMode: 'required',
     markReminders: false,
+    overtimeMode: 'payment',
+    bankPeriodMonths: 6,
+    monthlyLimit: '',
     notes: '',
   },
+  tabLabels: { limits: 'Overtime' },
   columns: [
     {
       id: 'company',
@@ -114,6 +123,12 @@ const config = defineCrud({
       field: 'OvertimeRate',
       value: (row) => `${row['OvertimeRate']}% / ${row['RestDayRate']}% / ${row['NightRate']}%`,
       optional: true,
+    },
+    {
+      id: 'overtimeMode',
+      label: 'Overtime treatment',
+      field: 'OvertimeMode',
+      options: OVERTIME_MODES,
     },
     {
       id: 'photo',
@@ -248,6 +263,33 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'overtimeMode',
+      source: 'OvertimeMode',
+      label: 'Treatment',
+      type: 'select',
+      options: OVERTIME_MODES,
+      tab: 'limits',
+      help: 'Monthly payment pays the overtime in the payroll. Hour bank (CLT art. 59 §5, individual written agreement) credits the overtime and compensates it with time off within the period below; what is not compensated is paid at the closing of the month it expires.',
+    },
+    {
+      key: 'bankPeriodMonths',
+      source: 'BankPeriodMonths',
+      label: 'Compensation period (months)',
+      type: 'number',
+      tab: 'limits',
+      hiddenWhen: ({ values }) => values['overtimeMode'] !== 'bank',
+      help: 'From 1 to 6 months (CLT art. 59 §5). Credits not compensated within the period expire and are paid.',
+    },
+    {
+      key: 'monthlyLimit',
+      source: 'MonthlyLimitMinutes',
+      label: 'Monthly hours limit',
+      tab: 'limits',
+      fromRecord: (value) => durationText(value),
+      placeholder: '180:00',
+      help: 'Optional. Hours and minutes (180:00) or hours (180). The closing flags months above it, for example the limit set by a 12x36 collective agreement.',
+    },
+    {
       key: 'notes',
       source: 'Notes',
       label: 'Notes',
@@ -274,6 +316,9 @@ const config = defineCrud({
       ? values['punchPhotoMode']
       : 'off',
     markReminders: values['markReminders'] === true,
+    overtimeMode: values['overtimeMode'] === 'bank' ? 'bank' : 'payment',
+    bankPeriodMonths: number(values['bankPeriodMonths'], 6),
+    monthlyLimitMinutes: monthlyLimit(values['monthlyLimit']),
     notes: values['notes'] ?? null,
   }),
 });

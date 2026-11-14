@@ -2063,8 +2063,23 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       for (const reload of this.embeddedReloads.values()) reload();
       return;
     }
-    const ref = this.dialog.open(ConfigurableCrudCollectionDialog, {
-      data: { ...factory(row), requestApi: this.api, collectionDialog: true, formOnly: true },
+    await this.openFormOnlyDialog(factory(row));
+  }
+
+  /**
+   * One-shot form dialog (create call only) over the list. A page may pass its own dialog
+   * component, a subclass of `ConfigurableCrudCollectionDialog` that reads the API answer in
+   * `afterSave` (for example to show a per-record result).
+   */
+  protected async openFormOnlyDialog(
+    config: ConfigurableCrudConfig,
+    component?: ComponentType<unknown>,
+  ): Promise<void> {
+    const dialogComponent =
+      component ??
+      (await import('./configurable-crud-collection-dialog')).ConfigurableCrudCollectionDialog;
+    const ref = this.dialog.open(dialogComponent, {
+      data: { ...config, requestApi: this.api, collectionDialog: true, formOnly: true },
       width: '0',
       maxWidth: '0',
       height: '0',

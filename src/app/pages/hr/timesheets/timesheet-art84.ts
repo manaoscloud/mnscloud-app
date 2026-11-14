@@ -57,7 +57,16 @@ export type TimesheetHeader = {
   Timezone?: string;
 };
 
+/** The closed month (`closing` of the timesheet); null or absent while the month is open. */
+export type TimesheetClosing = {
+  Status?: string;
+  ClosedAt?: string | null;
+  Acknowledged?: boolean;
+  AcknowledgedAt?: string | null;
+};
+
 export type TimesheetPrintData = {
+  closing?: TimesheetClosing | null;
   employee: Row;
   month: string;
   timezone: string;
@@ -149,6 +158,37 @@ function scheduleTitle(
   return [schedule.Name, kind, period].filter(Boolean).join(' · ');
 }
 
+/**
+ * `Closed on 14/11/2026 10:30 · Acknowledged on ...` (or `Awaiting acknowledgement`) of a closed
+ * month; empty while the month is open or after the closing was reopened.
+ */
+export function closingStateText(
+  closing: TimesheetClosing | null | undefined,
+  t: Translate,
+  locale: string,
+  timezone?: string,
+): string {
+  if (!closing || closing.Status !== 'closed') return '';
+  const at = (iso: string | null | undefined) => {
+    const time = Date.parse(iso ?? '');
+    if (Number.isNaN(time)) return '';
+    const format = { dateStyle: 'short', timeStyle: 'short' } as const;
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        ...format,
+        ...(timezone ? { timeZone: timezone } : {}),
+      }).format(new Date(time));
+    } catch {
+      return new Intl.DateTimeFormat(locale, format).format(new Date(time));
+    }
+  };
+  const closed = `${t('Closed on')} ${at(closing.ClosedAt)}`.trim();
+  const acknowledged = closing.Acknowledged
+    ? `${t('Acknowledged on')} ${at(closing.AcknowledgedAt)}`.trim()
+    : t('Awaiting acknowledgement');
+  return `${closed} · ${acknowledged}`;
+}
+
 function dateTimeInZone(
   iso: string | undefined,
   timezone: string | undefined,
@@ -180,6 +220,7 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
   const timezone = header.Timezone || data.timezone;
   const period = `${formatDay(header.period?.From)} – ${formatDay(header.period?.To)}`;
   const meta = (label: string, value: unknown): [string, unknown] => [label, value || '—'];
+  const closingLine = closingStateText(data.closing, t, locale, timezone);
 
   const schedules = (header.schedules ?? [])
     .map(
@@ -258,6 +299,7 @@ export function timesheetPrintHtml(data: TimesheetPrintData, t: Translate, local
   const body =
     `<h1>${escapeHtml(t('Timesheet'))}</h1>` +
     `<p class="muted">${escapeHtml(t('Period'))}: ${escapeHtml(period)}</p>` +
+    (closingLine ? `<p class="muted">${escapeHtml(closingLine)}</p>` : '') +
     `<h2>${escapeHtml(t('Employer'))}</h2>` +
     printKeyValueHtml([
       meta(t('Legal name'), employer.Name),

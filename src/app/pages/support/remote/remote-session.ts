@@ -37,6 +37,18 @@ export const REMOTE_EVENT_KINDS = [
   'state',
   'summary',
   'closed',
+  'ai_request',
+  'ai_reply',
+  'ai_exec',
+  'ai_error',
+  'proposal_created',
+  'proposal_approved',
+  'proposal_rejected',
+  'proposal_expired',
+  'change_applied',
+  'change_failed',
+  'change_rolled_back',
+  'change_blocked',
 ] as const;
 
 export type RemoteEvent = {

@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
@@ -10,7 +12,9 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { SupportRemoteSettingsDialogComponent } from './remote-assistant-dialogs';
 import { REMOTE_BASE, REMOTE_LEVELS, REMOTE_STATES, stateChipClass, text } from './remote-session';
 
 export const REMOTE_STATE_OPTIONS: readonly ConfigurableCrudOption[] = REMOTE_STATES.map(
@@ -50,6 +54,10 @@ export function remoteSessionsConfig(
     bulkDelete: false,
     statusFilter: false,
     fields: [],
+    // Comment prefix of the AI copilot (tenant.support.remote.sessions.supervise).
+    filterActions: canSupervise()
+      ? [{ key: 'settings', label: 'support.remote.settings.action', icon: 'settings' }]
+      : [],
     listFilters: [
       {
         key: 'state',
@@ -188,6 +196,22 @@ export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCru
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SupportRemoteSessionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly matDialog = inject(MatDialog);
+
+  override async handleFilterAction(action: { key: string }) {
+    if (action.key !== 'settings') return;
+    const binding = openCrudComponentDialog(
+      this.matDialog,
+      SupportRemoteSettingsDialogComponent,
+      'crud-form-dialog',
+    );
+    try {
+      await firstValueFrom(binding.ref.afterClosed());
+    } finally {
+      binding.stop();
+    }
+  }
+
   constructor() {
     const router = inject(Router);
     const auth = inject(AuthService);

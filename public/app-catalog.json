@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f002c7d8f405",
+  "version": "e30eaf89af19",
   "language": "pt-BR",
   "entries": [
     {
@@ -4043,6 +4043,31 @@
       ]
     },
     {
+      "route": "/hr/hour-bank",
+      "menuPath": "Recursos humanos › Banco de horas",
+      "scope": "tenant",
+      "title": "Registrar pagamento",
+      "description": "Paga minutos do banco de horas em um mês aberto. O saldo diminui pelos minutos pagos e o pagamento aparece no fechamento desse mês.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Mês",
+          "help": "O mês em que os minutos são pagos. Um mês fechado precisa ser reaberto antes."
+        },
+        {
+          "label": "Horas a pagar",
+          "help": "Horas e minutos (02:30) ou horas com decimais (2,5). Não pode superar o saldo."
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/notices",
       "menuPath": "Recursos humanos › Avisos",
       "scope": "tenant",
@@ -4364,6 +4389,18 @@
           "help": "Os colaboradores podem ativar no Pulse lembretes de entrada e de saída por notificação."
         },
         {
+          "label": "Tratamento",
+          "help": "Pagamento mensal paga as horas extras na folha. Banco de horas (CLT art. 59 §5, acordo individual escrito) credita as horas extras e as compensa com folga dentro do prazo abaixo; o que não for compensado é pago no fechamento do mês em que vence."
+        },
+        {
+          "label": "Prazo de compensação (meses)",
+          "help": "De 1 a 6 meses (CLT art. 59 §5). Créditos não compensados dentro do prazo vencem e são pagos."
+        },
+        {
+          "label": "Limite mensal de horas",
+          "help": "Opcional. Horas e minutos (180:00) ou horas (180). O fechamento sinaliza os meses acima dele, por exemplo o limite definido por uma convenção coletiva da 12x36."
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -4406,6 +4443,19 @@
         },
         {
           "label": "Revisão",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/hr/timesheet-closings",
+      "menuPath": "Recursos humanos › Fechamento",
+      "scope": "tenant",
+      "title": "Fechar mês",
+      "description": "Congela o espelho de ponto do mês de todos os funcionários do escopo. Funcionários com recálculo pendente, solicitações pendentes ou dias em aberto são ignorados e listados com o motivo.",
+      "fields": [
+        {
+          "label": "Mês",
           "help": ""
         }
       ]

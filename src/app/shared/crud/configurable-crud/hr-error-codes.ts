@@ -10,6 +10,14 @@ const HR_ERROR_TEXTS: Record<string, string> = {
     'Some of the chosen locations do not belong to the companies of this account.',
   HR_REPORT_PERIOD_INVALID: 'The report period is invalid. Choose a month.',
   HR_REPORT_ORDER_INVALID: 'The report order is invalid.',
+  HR_TIMESHEET_CLOSED: 'Month closed: reopen the closing to change it.',
+  HR_CLOSING_MONTH_NOT_ENDED: 'A month can only be closed after it has ended.',
+  HR_CLOSING_NOT_LAST:
+    'Only the latest closed month of the employee can be reopened. Reopen the later months first.',
+  HR_CLOSING_TOO_OLD: 'This month is too old to be closed or changed.',
+  HR_CLOSING_NOT_CLOSED: 'This closing is not closed (already reopened).',
+  HR_CLOSING_NOT_FOUND: 'Closing not found.',
+  HR_HOUR_BANK_INSUFFICIENT: 'The hour bank balance is smaller than the hours to pay.',
 };
 
 /** Code of an API error (`{ error, code }` body), or '' when there is none. */

@@ -993,6 +993,22 @@ export const NAV_ITEMS: NavItem[] = [
         permissions: ['tenant.hr.time-adjustments.read'],
       },
       {
+        id: 'hr/timesheet-closings',
+        label: 'nav.hr.timesheet-closings',
+        icon: 'event_available',
+        category: 'operation',
+        route: '/hr/timesheet-closings',
+        permissions: ['tenant.hr.timesheet-closings.read'],
+      },
+      {
+        id: 'hr/hour-bank',
+        label: 'nav.hr.hour-bank',
+        icon: 'savings',
+        category: 'operation',
+        route: '/hr/hour-bank',
+        permissions: ['tenant.hr.hour-bank.read'],
+      },
+      {
         id: 'hr/employee-documents',
         label: 'nav.hr.employee-documents',
         icon: 'folder_shared',

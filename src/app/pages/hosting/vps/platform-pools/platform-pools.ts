@@ -28,6 +28,8 @@ type PoolMember = {
   adopted: boolean;
   live: boolean;
   failure?: PoolMemberFailure | null;
+  version?: number | null;
+  outdated?: { version?: number | null; replacedBy?: string | null } | null;
 };
 
 type PoolMemberFailure = {
@@ -49,6 +51,7 @@ const STATE_LABELS: Record<string, string> = {
   converged: 'Converged',
   degraded: 'Degraded',
   replacing: 'Replacing server',
+  upgrading: 'Upgrading servers',
   creating: 'Creating server',
   paused: 'Paused',
   excess: 'Extra servers',
@@ -60,6 +63,7 @@ const STATE_TONES: Record<string, DataViewerTone> = {
   converged: 'success',
   degraded: 'warning',
   replacing: 'info',
+  upgrading: 'info',
   creating: 'info',
   paused: 'warning',
   excess: 'warning',
@@ -88,6 +92,28 @@ const REPAIR_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'automatic', label: 'Repair automatic' },
   { value: 'paused', label: 'Repair paused' },
 ];
+
+const UPGRADE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'automatic', label: 'Template update automatic' },
+  { value: 'paused', label: 'Template update paused' },
+];
+
+function versionText(member: PoolMember, translate: (text: string) => string): string {
+  const version = String(member.version ?? 1);
+  const outdated = member.outdated;
+  if (!outdated) return version;
+  const parts = [
+    version,
+    translate('outdated (version {{version}})').replace(
+      '{{version}}',
+      String(outdated.version ?? member.version ?? 1),
+    ),
+  ];
+  if (outdated.replacedBy) {
+    parts.push(translate('replaced by {{name}}').replace('{{name}}', outdated.replacedBy));
+  }
+  return parts.join(' · ');
+}
 
 const MEMBERS_ACTION: ConfigurableCrudRowAction = {
   key: 'members',
@@ -192,6 +218,17 @@ const POOL_FIELDS: ConfigurableCrudField[] = [
     help: 'When a server of the group stops responding for 30 minutes, the platform creates another one in its place. The failed server is never deleted: retire it afterwards.',
   },
   {
+    key: 'upgrade',
+    source: 'HpoUpgrade',
+    payloadKey: 'upgrade',
+    label: 'Template update',
+    type: 'select',
+    options: UPGRADE_OPTIONS,
+    translateOptions: true,
+    span: 1,
+    help: 'When the template or plan of the group changes, the platform creates one new server at a time in place of an old one. The old server is never deleted: retire it so the update can continue.',
+  },
+  {
     key: 'planUUID',
     source: 'HostingVpsPlanHvpUUID',
     payloadKey: 'planUUID',
@@ -262,6 +299,7 @@ const config = defineCrud({
     desiredCount: 1,
     mode: 'automatic',
     repair: 'automatic',
+    upgrade: 'automatic',
     planUUID: '',
     providerImageId: '',
     username: '',
@@ -309,6 +347,20 @@ const config = defineCrud({
       value: (row, translate) =>
         translate(
           String(row['HpoRepair'] ?? '') === 'paused' ? 'Repair paused' : 'Repair automatic',
+        ),
+    },
+    { id: 'templateVersion', label: 'Version', field: 'HpoTemplateVersion' },
+    {
+      id: 'upgrade',
+      label: 'Template update',
+      field: 'HpoUpgrade',
+      options: UPGRADE_OPTIONS,
+      translateValue: true,
+      value: (row, translate) =>
+        translate(
+          String(row['HpoUpgrade'] ?? '') === 'paused'
+            ? 'Template update paused'
+            : 'Template update automatic',
         ),
     },
     { id: 'plan', label: 'Plan', field: 'PlanName' },
@@ -404,6 +456,7 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
       desiredCount: Number(payload['desiredCount']),
       mode: payload['mode'] || 'automatic',
       repair: payload['repair'] || 'automatic',
+      upgrade: payload['upgrade'] || 'automatic',
       planUUID: payload['planUUID'],
       template,
     };
@@ -439,6 +492,7 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
               { key: 'name', label: 'Name' },
               { key: 'status', label: 'Status' },
               { key: 'node', label: 'Node' },
+              { key: 'version', label: 'Version' },
               { key: 'failure', label: 'Failure' },
               { key: 'agent', label: 'Agent', translate: true },
               { key: 'runtime', label: 'Runtime', translate: true },
@@ -447,6 +501,7 @@ export class HostingVpsPlatformPoolsPage extends ConfigurableCrudPageBase<Config
               name: member.name,
               status: member.status ?? '-',
               node: member.node ?? '-',
+              version: versionText(member, (text) => this.t(text)),
               failure: failureText(
                 member.failure,
                 (text) => this.t(text),
