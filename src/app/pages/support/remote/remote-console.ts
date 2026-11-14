@@ -52,6 +52,8 @@ import {
   unwrap,
 } from './remote-session';
 import { SupportRemoteTerminalComponent } from './remote-terminal';
+import { SupportRemoteAssistantComponent } from './remote-assistant-panel';
+import { RemoteAssistService } from './remote-assistant';
 
 const UI_KEY = 'mns.support.remote.ui';
 const EVENT_PAGE = 500;
@@ -64,6 +66,10 @@ const DETAIL_EVENTS = new Set([
   'transferred',
   'state',
   'closed',
+  // The assistant run (AssistRunUUID) and the mode live on the session record.
+  'ai_request',
+  'ai_reply',
+  'ai_error',
 ]);
 
 type UiState = {
@@ -72,6 +78,8 @@ type UiState = {
   devices: Record<string, string>;
   /** Sessions opened from the list that are not mine (supervision), kept as tabs. */
   extra: string[];
+  /** Assistant panel open (per browser, all sessions). */
+  assistant?: boolean;
 };
 
 type TimelineItem = {
@@ -98,6 +106,18 @@ const EVENT_ICONS: Record<string, string> = {
   state: 'flag',
   summary: 'summarize',
   closed: 'task_alt',
+  ai_request: 'smart_toy',
+  ai_reply: 'smart_toy',
+  ai_exec: 'manage_search',
+  ai_error: 'error',
+  proposal_created: 'lightbulb',
+  proposal_approved: 'thumb_up',
+  proposal_rejected: 'thumb_down',
+  proposal_expired: 'timer_off',
+  change_applied: 'check_circle',
+  change_failed: 'error',
+  change_rolled_back: 'undo',
+  change_blocked: 'block',
 };
 
 /**
@@ -119,6 +139,7 @@ const EVENT_ICONS: Record<string, string> = {
     ...MNS_MENU,
     MnsDateTimePipe,
     ReportProblemButtonComponent,
+    SupportRemoteAssistantComponent,
     SupportRemoteTerminalComponent,
     TranslocoPipe,
   ],
@@ -200,8 +221,34 @@ const EVENT_ICONS: Record<string, string> = {
         flex: 1 1 auto;
         min-height: 0;
       }
+      .workspace.with-assistant {
+        grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(300px, 400px);
+      }
       @media (max-width: 900px) {
-        .workspace {
+        .workspace,
+        .workspace.with-assistant {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      /* Narrow screens: the assistant is a bottom sheet over the page instead of a third column. */
+      @media (max-width: 1280px) {
+        .workspace.with-assistant {
+          grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+        }
+        .workspace.with-assistant > .assistant {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 20;
+          height: min(70vh, 640px);
+          border-radius: 16px 16px 0 0;
+          background: var(--mat-sys-surface, #fff);
+          box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+        }
+      }
+      @media (max-width: 900px) {
+        .workspace.with-assistant {
           grid-template-columns: minmax(0, 1fr);
         }
       }
@@ -360,7 +407,7 @@ const EVENT_ICONS: Record<string, string> = {
       <div class="empty">{{ 'support.remote.console.empty' | transloco }}</div>
     }
     @if (session(); as current) {
-      <div class="workspace">
+      <div class="workspace" [class.with-assistant]="assistantOpen()">
         <section class="panel" [attr.aria-label]="'support.remote.timeline' | transloco">
           <div class="panel-head">
             <div>
@@ -374,6 +421,16 @@ const EVENT_ICONS: Record<string, string> = {
                 }
               </div>
             </div>
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-pressed]="assistantOpen()"
+              (click)="toggleAssistant()"
+              [matTooltip]="'support.remote.ai.toggle' | transloco"
+              [attr.aria-label]="'support.remote.ai.toggle' | transloco"
+            >
+              <mat-icon>smart_toy</mat-icon>
+            </button>
             <button
               mat-icon-button
               type="button"
@@ -507,6 +564,24 @@ const EVENT_ICONS: Record<string, string> = {
             <div class="empty">{{ 'support.remote.device.pick' | transloco }}</div>
           }
         </section>
+        @if (assistantOpen()) {
+          <section
+            class="panel assistant"
+            [attr.aria-label]="'support.remote.ai.title' | transloco"
+          >
+            <mns-support-remote-assistant
+              [sessionUUID]="text(current['SrsUUID'])"
+              [session]="current"
+              [events]="events()"
+              [technician]="isTechnician()"
+              [canAssist]="canAssist()"
+              [canConsole]="can('tenant.network.devices.console')"
+              [closed]="closed()"
+              (sessionChanged)="reloadDetail()"
+              (closeRequested)="toggleAssistant()"
+            />
+          </section>
+        }
       </div>
     }
   `,
@@ -533,6 +608,7 @@ export class SupportRemoteConsolePage {
   readonly feedMode = signal<'live' | 'polling'>('live');
   readonly activeDevice = signal('');
   readonly note = signal('');
+  readonly assistantOpen = signal(false);
 
   readonly session = computed(() => this.detail()?.session ?? null);
   readonly devices = computed(() => this.detail()?.devices ?? []);
@@ -559,6 +635,7 @@ export class SupportRemoteConsolePage {
   readonly customerText = computed(() => pick(this.session(), 'CustomerName', 'RegCustomerName'));
   readonly timeline = computed<TimelineItem[]>(() => this.events().map((e) => this.toItem(e)));
 
+  private readonly assist = inject(RemoteAssistService);
   private feed: RemoteEventFeed | null = null;
   private detailTimer: ReturnType<typeof setTimeout> | undefined;
   private loadSequence = 0;
@@ -581,15 +658,18 @@ export class SupportRemoteConsolePage {
       const uuid = this.selected();
       untracked(() => void this.openSession(uuid));
     });
+    this.assistantOpen.set(this.ui().assistant === true);
     void this.init();
   }
 
   // ------------------------------------------------------------------ permissions (UX only)
 
-  private can(permission: string): boolean {
+  can(permission: string): boolean {
     return hasEffectivePermission(this.auth.user()?.permissions ?? [], permission);
   }
   canWrite = () => this.can('tenant.support.remote.sessions.write');
+  /** Chat with the AI copilot: the session technician who also holds the assist permission. */
+  canAssist = () => this.isTechnician() && this.can('tenant.support.remote.assist');
   private canSupervise = () => this.can('tenant.support.remote.sessions.supervise');
   private isMember(): boolean {
     const me = this.auth.user()?.uuid;
@@ -616,6 +696,7 @@ export class SupportRemoteConsolePage {
         selected: text(raw.selected),
         devices: raw.devices && typeof raw.devices === 'object' ? raw.devices : {},
         extra: Array.isArray(raw.extra) ? raw.extra.map(text) : [],
+        assistant: raw.assistant === true,
       };
     } catch {
       return { selected: '', devices: {}, extra: [] };
@@ -745,7 +826,7 @@ export class SupportRemoteConsolePage {
     }
   }
 
-  private async reloadDetail(uuid = this.selected()) {
+  async reloadDetail(uuid = this.selected()) {
     if (!uuid) return;
     try {
       const response = await this.api.get<unknown>(`${REMOTE_BASE}/sessions/${uuid}`, {
@@ -846,6 +927,12 @@ export class SupportRemoteConsolePage {
     }
   }
 
+  toggleAssistant() {
+    const open = !this.assistantOpen();
+    this.assistantOpen.set(open);
+    this.saveUi({ assistant: open });
+  }
+
   refreshAfterOpen() {
     this.scheduleDetail(this.selected());
   }
@@ -878,6 +965,7 @@ export class SupportRemoteConsolePage {
         (device ? deviceName(device) : text(event.NetworkDeviceNwdUUID).slice(0, 8)),
       from: this.memberName(data['from']),
       to: this.memberName(data['to']),
+      title: text(data['title'] ?? event.SreText),
     };
     const known = (REMOTE_EVENT_KINDS as readonly string[]).includes(event.SreKind);
     const kind = known ? event.SreKind : 'unknown';
@@ -1018,6 +1106,8 @@ export class SupportRemoteConsolePage {
       description: 'support.remote.action.closeHelp',
       confirm: 'support.remote.action.closeConfirm',
       text: { label: 'support.remote.field.summary', required: true, max: 4000 },
+      // Draft from the AI copilot; the technician reviews it before closing.
+      aiSummary: this.canAssist() ? () => this.assist.summary(this.selected()) : undefined,
     });
     if (!result) return;
     await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/close`, {

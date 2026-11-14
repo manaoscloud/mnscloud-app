@@ -4,12 +4,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslocoPipe } from '@jsverse/transloco';
 
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 import { ReportProblemButtonComponent } from '../../../shared/support-report-dialog/report-problem-button';
+import { assistRequestErrorKey } from './remote-assistant';
 import { REMOTE_LEVELS } from './remote-session';
 import { REMOTE_LOOKUPS, RemoteLookupComponent, RemoteLookupSpec } from './remote-lookup';
 
@@ -163,6 +166,8 @@ export type PromptData = {
   confirm: string;
   lookup?: { label: string; spec: RemoteLookupSpec; exclude?: readonly string[] };
   text?: { label: string; required: boolean; max: number };
+  /** Draft of the text field by the AI copilot (close dialog); fills the field, never submits. */
+  aiSummary?: () => Promise<string>;
 };
 export type PromptResult = { uuid: string; text: string };
 
@@ -175,6 +180,7 @@ export type PromptResult = { uuid: string; text: string };
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     RemoteLookupComponent,
     ReportProblemButtonComponent,
@@ -220,6 +226,24 @@ export type PromptResult = { uuid: string; text: string };
                   <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                 }
               </mat-form-field>
+              @if (data.aiSummary) {
+                <div>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="generating()"
+                    (click)="generate()"
+                  >
+                    <mat-icon>auto_awesome</mat-icon>
+                    {{
+                      (generating()
+                        ? 'support.remote.ai.summaryGenerating'
+                        : 'support.remote.ai.summaryButton'
+                      ) | transloco
+                    }}
+                  </button>
+                </div>
+              }
             }
           </div>
         </div>
@@ -246,6 +270,23 @@ export class SupportRemotePromptDialogComponent {
   readonly uuid = signal('');
   readonly body = signal('');
   readonly touched = signal(false);
+  readonly generating = signal(false);
+  private readonly snack = inject(SnackbarService);
+
+  async generate() {
+    const draft = this.data.aiSummary;
+    if (!draft || this.generating()) return;
+    this.generating.set(true);
+    try {
+      const summary = await draft();
+      if (summary) this.body.set(summary.slice(0, this.data.text?.max ?? 4000));
+      else this.snack.error('support.remote.ai.summaryEmpty', 6000);
+    } catch (error) {
+      this.snack.error(assistRequestErrorKey(error) || 'support.remote.ai.summaryFailed', 6000);
+    } finally {
+      this.generating.set(false);
+    }
+  }
 
   submit() {
     this.touched.set(true);
