@@ -14519,5 +14519,11 @@
   "support.remote.event.state": "{{actor}} mudou a situação para {{state}}",
   "support.remote.event.summary": "Resumo do atendimento",
   "support.remote.event.closed": "{{actor}} encerrou a sessão",
-  "support.remote.event.unknown": "Evento da sessão"
+  "support.remote.event.unknown": "Evento da sessão",
+  "Upgrading servers": "Atualizando",
+  "Template update": "Atualização do modelo",
+  "Template update automatic": "Automática",
+  "Template update paused": "Pausada",
+  "When the template or plan of the group changes, the platform creates one new server at a time in place of an old one. The old server is never deleted: retire it so the update can continue.": "Quando o modelo ou o plano do grupo muda, a plataforma cria um servidor novo por vez no lugar de um antigo. O servidor antigo nunca é apagado: retire-o para a troca seguir.",
+  "outdated (version {{version}})": "desatualizado (versão {{version}})"
 }
