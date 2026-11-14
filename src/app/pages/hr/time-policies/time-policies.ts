@@ -347,12 +347,17 @@ const config = defineCrud({
     overtimeMode: ['bank', 'compensation'].includes(String(values['overtimeMode']))
       ? values['overtimeMode']
       : 'payment',
-    bankPeriodMonths: number(values['bankPeriodMonths'], 6),
-    bankAgreement: values['bankAgreement'] === 'collective' ? 'collective' : 'individual',
-    bankAgreementRef:
-      String(values['bankAgreementRef'] ?? '')
-        .trim()
-        .slice(0, 120) || null,
+    // Bank fields only in bank mode: hidden values must never fail the save; the API keeps the stored ones.
+    ...(values['overtimeMode'] === 'bank'
+      ? {
+          bankPeriodMonths: number(values['bankPeriodMonths'], 6),
+          bankAgreement: values['bankAgreement'] === 'collective' ? 'collective' : 'individual',
+          bankAgreementRef:
+            String(values['bankAgreementRef'] ?? '')
+              .trim()
+              .slice(0, 120) || null,
+        }
+      : {}),
     monthlyLimitMinutes: monthlyLimit(values['monthlyLimit']),
     notes: values['notes'] ?? null,
   }),
