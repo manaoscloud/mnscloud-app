@@ -31,7 +31,9 @@ import {
   shiftMonth,
 } from '../hr-time';
 import {
+  TimesheetClosing,
   TimesheetHeader,
+  closingStateText,
   formatDocument,
   punchTimesMarked,
   scheduleDayLine,
@@ -45,6 +47,8 @@ type Row = ConfigurableCrudRecord;
 type Option = { value: string; label: string };
 type Timesheet = {
   header?: TimesheetHeader | null;
+  /** The closed month (frozen); null while the month is open. */
+  closing?: TimesheetClosing | null;
   employee: { EmployeeUUID: string; Name: string } & Row;
   month: string;
   timezone: string;
@@ -240,6 +244,19 @@ export class HrTimesheetsPage {
       });
     }
     return options;
+  });
+
+  /** `Closed on ... · Acknowledged on ...`; empty while the month is open. */
+  readonly closingLine = computed(() => {
+    const data = this.timesheet();
+    return data
+      ? closingStateText(
+          data.closing,
+          (key) => this.transloco.translate(key),
+          this.i18n.language(),
+          data.timezone,
+        )
+      : '';
   });
 
   /** Art. 84 header; empty parts when the API predates it. */

@@ -28,6 +28,21 @@
   }
 }
 
+.hr-timesheet-closing {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  color: var(--mat-sys-color-on-surface-variant);
+
+  mat-icon {
+    flex: none;
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
 .hr-timesheet-section {
   margin-top: 1.25rem;
 

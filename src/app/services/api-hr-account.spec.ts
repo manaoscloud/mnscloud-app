@@ -78,6 +78,11 @@ describe('HR account API client', () => {
       'hr/employee-documents/x/file',
       'hr/notices/x/reads',
       'hr/vacation-balances',
+      'hr/timesheet-closings?month=2026-10',
+      'hr/timesheet-closings/x/reopen',
+      'hr/hour-bank',
+      'hr/hour-bank/entries?employeeUUID=x',
+      'hr/hour-bank/payments',
     ]) {
       expect(ApiService.isHrAccountEndpoint(endpoint)).withContext(endpoint).toBeTrue();
     }

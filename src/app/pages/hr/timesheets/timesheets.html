@@ -110,6 +110,12 @@
       </p>
     </header>
 
+    @if (closingLine(); as line) {
+      <p class="hr-timesheet-closing" role="status">
+        <mat-icon aria-hidden="true">lock</mat-icon>{{ line }}
+      </p>
+    }
+
     @if (header(); as art84) {
       <section class="hr-timesheet-art84" [attr.aria-label]="'Timesheet header' | transloco">
         <dl>
