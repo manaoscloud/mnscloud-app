@@ -1,5 +1,7 @@
 import {
   aiErrorKey,
+  assistRequestErrorKey,
+  parseServerDate,
   assistEntries,
   assistThinking,
   canApprove,
@@ -24,18 +26,37 @@ const ev = (
 const NOW = Date.parse('2026-11-14T12:01:00Z');
 
 describe('remote assistant helpers', () => {
-  it('is thinking while a request has no reply for the same run', () => {
-    const request = ev(1, 'ai_request', { runUUID: 'r1' }, 'oi');
-    expect(assistThinking(null, [request], NOW)).toBe(true);
-    expect(assistThinking(null, [request, ev(2, 'ai_reply', { runUUID: 'r1' })], NOW)).toBe(false);
-    expect(assistThinking(null, [request, ev(2, 'ai_error', { runUUID: 'r1' })], NOW)).toBe(false);
-    expect(assistThinking(null, [request], NOW + 10 * 60 * 1000)).toBe(false);
+  it('is thinking from server state, not from dates', () => {
+    const request = ev(5, 'ai_request', { runUUID: 'r1' }, 'oi', '2026-11-14 12:00:00');
+    // The record was not reloaded yet (older last seq): the request is still running.
+    expect(assistThinking({ SrsLastEventSeq: 4 }, [request])).toBe(true);
+    // The record already knows the request and carries no active run: stale, not thinking.
+    expect(assistThinking({ SrsLastEventSeq: 5 }, [request])).toBe(false);
+    expect(
+      assistThinking({ SrsLastEventSeq: 4 }, [request, ev(6, 'ai_reply', { runUUID: 'r1' })]),
+    ).toBe(false);
+    const active = { AssistRunUUID: 'r2', SrsLastEventSeq: 9 };
+    expect(assistThinking(active, [])).toBe(true);
+    expect(assistThinking(active, [ev(10, 'ai_error', { runUUID: 'r2' })])).toBe(false);
   });
 
-  it('is thinking while the session carries an active run', () => {
-    const session = { AssistRunUUID: 'r2', AssistStartedAt: '2026-11-14T12:00:30Z' };
-    expect(assistThinking(session, [], NOW)).toBe(true);
-    expect(assistThinking(session, [ev(1, 'ai_reply', { runUUID: 'r2' })], NOW)).toBe(false);
+  it('reads zone-less server dates as UTC', () => {
+    expect(parseServerDate('2026-11-14 12:00:00')).toBe(Date.parse('2026-11-14T12:00:00Z'));
+    expect(parseServerDate('2026-11-14T12:00:00Z')).toBe(Date.parse('2026-11-14T12:00:00Z'));
+    expect(parseServerDate('2026-11-14T12:00:00-03:00')).toBe(Date.parse('2026-11-14T15:00:00Z'));
+    expect(Number.isNaN(parseServerDate(''))).toBe(true);
+  });
+
+  it('maps request failures to messages', () => {
+    const http = (status: number, code?: string) => ({ status, error: code ? { code } : {} });
+    expect(assistRequestErrorKey(http(409, 'SUPPORT_REMOTE_ASSIST_BUSY'))).toBe(
+      'support.remote.ai.busy',
+    );
+    expect(assistRequestErrorKey(http(409))).toBe('support.remote.error.conflict');
+    expect(assistRequestErrorKey(http(402))).toContain('AI_NO_CREDIT');
+    expect(assistRequestErrorKey(http(429))).toContain('rateLimited');
+    expect(assistRequestErrorKey(http(403))).toBe('support.remote.error.forbidden');
+    expect(assistRequestErrorKey(http(500))).toBe('');
   });
 
   it('builds chat entries and keeps hidden outputs marked', () => {
@@ -51,6 +72,13 @@ describe('remote assistant helpers', () => {
     expect(entries.map((e) => e.type)).toEqual(['request', 'exec', 'error']);
     const exec = entries[1];
     expect(exec.type === 'exec' && exec.commands[0].hidden).toBe(true);
+  });
+
+  it('keeps an empty output visible, not hidden', () => {
+    const [entry] = assistEntries([
+      ev(1, 'ai_exec', { commands: [{ command: 'a', output: '' }, { command: 'b' }] }),
+    ]);
+    expect(entry.type === 'exec' && entry.commands.map((c) => c.hidden)).toEqual([false, true]);
   });
 
   it('maps ai error codes and change results', () => {

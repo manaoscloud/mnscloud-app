@@ -578,6 +578,7 @@ const EVENT_ICONS: Record<string, string> = {
               [canConsole]="can('tenant.network.devices.console')"
               [closed]="closed()"
               (sessionChanged)="reloadDetail()"
+              (closeRequested)="toggleAssistant()"
             />
           </section>
         }

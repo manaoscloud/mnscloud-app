@@ -14704,5 +14704,14 @@
   "support.remote.event.change_applied": "Change applied: {{title}}",
   "support.remote.event.change_failed": "Change failed: {{title}}",
   "support.remote.event.change_rolled_back": "Change rolled back: {{title}}",
-  "support.remote.event.change_blocked": "Change blocked: {{title}}"
+  "support.remote.event.change_blocked": "Change blocked: {{title}}",
+  "support.remote.ai.close": "Close assistant",
+  "support.remote.ai.mode.runbook": "Runbook",
+  "support.remote.ai.modeRunbookHelp": "Runbook mode: execution follows a script and cannot be changed here.",
+  "support.remote.ai.error.AI_NOT_CONFIGURED": "AI is not configured in this environment.",
+  "support.remote.ai.error.AI_REFUSAL": "The assistant declined to answer this request.",
+  "support.remote.ai.exec.exit": "exit {{code}}",
+  "support.remote.ai.exec.status.timeout": "Timed out",
+  "support.remote.proposal.error.productionRestricted": "AI changes are restricted in this production environment.",
+  "support.remote.error.forbidden": "You do not have permission for this action."
 }

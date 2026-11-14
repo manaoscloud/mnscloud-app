@@ -14705,5 +14705,14 @@
   "support.remote.event.change_applied": "Mudança aplicada: {{title}}",
   "support.remote.event.change_failed": "Mudança falhou: {{title}}",
   "support.remote.event.change_rolled_back": "Mudança revertida: {{title}}",
-  "support.remote.event.change_blocked": "Mudança bloqueada: {{title}}"
+  "support.remote.event.change_blocked": "Mudança bloqueada: {{title}}",
+  "support.remote.ai.close": "Fechar assistente",
+  "support.remote.ai.mode.runbook": "Runbook",
+  "support.remote.ai.modeRunbookHelp": "Modo runbook: a execução segue um roteiro e não pode ser alterada aqui.",
+  "support.remote.ai.error.AI_NOT_CONFIGURED": "A IA não está configurada neste ambiente.",
+  "support.remote.ai.error.AI_REFUSAL": "O assistente recusou responder a este pedido.",
+  "support.remote.ai.exec.exit": "saída {{code}}",
+  "support.remote.ai.exec.status.timeout": "Tempo esgotado",
+  "support.remote.proposal.error.productionRestricted": "Mudanças por IA estão restritas neste ambiente de produção.",
+  "support.remote.error.forbidden": "Você não tem permissão para esta ação."
 }

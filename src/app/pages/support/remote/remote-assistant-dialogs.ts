@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, viewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -187,15 +187,14 @@ export class SupportRemoteProposalDecisionDialogComponent {
                 matInput
                 name="prefix"
                 maxlength="24"
+                pattern="[A-Za-z0-9 ._-]{0,24}"
                 [disabled]="loading()"
                 [placeholder]="current()?.effectivePrefix ?? ''"
                 [ngModel]="prefix()"
                 (ngModelChange)="prefix.set($event)"
               />
               <mat-hint>{{ 'support.remote.settings.prefixHelp' | transloco }}</mat-hint>
-              @if (!valid()) {
-                <mat-error>{{ 'support.remote.settings.prefixInvalid' | transloco }}</mat-error>
-              }
+              <mat-error>{{ 'support.remote.settings.prefixInvalid' | transloco }}</mat-error>
             </mat-form-field>
             @if (current(); as settings) {
               <p class="meta">
@@ -218,12 +217,7 @@ export class SupportRemoteProposalDecisionDialogComponent {
           </button>
         </div>
         <div class="primary-actions">
-          <button
-            mat-flat-button
-            type="button"
-            [disabled]="loading() || saving() || !valid()"
-            (click)="save()"
-          >
+          <button mat-flat-button type="button" [disabled]="loading() || saving()" (click)="save()">
             {{ 'Save' | transloco }}
           </button>
         </div>
@@ -241,11 +235,7 @@ export class SupportRemoteSettingsDialogComponent {
   readonly saving = signal(false);
   readonly current = signal<SettingsRecord | null>(null);
   readonly prefix = signal('');
-  /** Empty means the default (null); otherwise the API pattern. */
-  readonly valid = computed(() => {
-    const value = this.prefix().trim();
-    return !value || /^[A-Za-z0-9 ._-]{1,24}$/.test(value);
-  });
+  private readonly prefixField = viewChild(NgModel);
 
   constructor() {
     void this.load();
@@ -265,7 +255,12 @@ export class SupportRemoteSettingsDialogComponent {
 
   async save() {
     const settings = this.current();
-    if (!settings || !this.valid() || this.saving()) return;
+    if (!settings || this.saving()) return;
+    // Required-field feedback: Save stays enabled; an invalid prefix is marked and explained.
+    const field = this.prefixField();
+    field?.control.markAsTouched();
+    field?.control.updateValueAndValidity();
+    if (field?.invalid) return;
     this.saving.set(true);
     try {
       const value = this.prefix().trim();

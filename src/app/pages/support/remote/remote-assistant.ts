@@ -82,6 +82,12 @@ export function aiErrorKey(code: string): string {
       return 'support.remote.ai.error.AI_BILLING_UNAVAILABLE';
     case 'MAX_STEPS_EXCEEDED':
       return 'support.remote.ai.error.MAX_STEPS_EXCEEDED';
+    case 'AI_RATE_LIMIT':
+      return 'support.remote.ai.error.rateLimited';
+    case 'AI_NOT_CONFIGURED':
+      return 'support.remote.ai.error.AI_NOT_CONFIGURED';
+    case 'AI_REFUSAL':
+      return 'support.remote.ai.error.AI_REFUSAL';
     case 'AI_INTERRUPTED':
       return 'support.remote.ai.error.AI_INTERRUPTED';
     case 'AI_TIMEOUT':
@@ -110,17 +116,22 @@ export function assistRequestErrorKey(error: unknown): string {
       return 'support.remote.error.revision';
     case 'SUPPORT_REMOTE_EXEC_LIVE':
       return 'support.remote.proposal.error.execLive';
+    case 'ACCESS_GATEWAY_PRODUCTION_RESTRICTED':
+      return 'support.remote.proposal.error.productionRestricted';
     case 'ACCESS_GATEWAY_UNAVAILABLE':
       return 'support.remote.proposal.error.gateway';
     case 'AI_NO_CREDIT':
     case 'AI_NOT_ENTITLED':
     case 'AI_BILLING_UNAVAILABLE':
+    case 'AI_RATE_LIMIT':
+    case 'AI_NOT_CONFIGURED':
     case 'SUPPORT_REMOTE_AI_UNAVAILABLE':
       return aiErrorKey(code);
     default:
       break;
   }
   const status = errorStatus(error);
+  if (status === 403) return 'support.remote.error.forbidden';
   if (status === 409) return 'support.remote.error.conflict';
   if (status === 402) return aiErrorKey('AI_NO_CREDIT');
   if (status === 429) return 'support.remote.ai.error.rateLimited';
@@ -295,17 +306,26 @@ export function assistEntries(events: readonly RemoteEvent[]): AssistEntry[] {
   return entries;
 }
 
-/** An assistant run that began less than this long ago is still considered running (API: 5 min). */
-export const ASSIST_RUN_WINDOW_MS = 6 * 60 * 1000;
+/**
+ * Server timestamps are UTC; MariaDB DATETIME strings arrive without a zone (`2026-11-14 12:00:00`),
+ * which `Date.parse` would read as local time. Returns epoch ms, or NaN when unparsable.
+ */
+export function parseServerDate(value: unknown): number {
+  const raw = text(value).trim();
+  if (!raw) return NaN;
+  const iso = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const zoned = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(iso) ? iso : `${iso}Z`;
+  return Date.parse(zoned);
+}
 
 /**
- * True while a run is active: the session carries an AssistRunUUID, or an ai_request has no
- * later ai_reply/ai_error for the same runUUID. A run older than the API window is stale.
+ * True while a run is active, from server state only: the session carries an AssistRunUUID whose
+ * run has no ai_reply/ai_error yet, or an ai_request without a terminal event is newer than the
+ * session record (SrsLastEventSeq), meaning the record was not reloaded yet.
  */
 export function assistThinking(
   session: RemoteRecord | null | undefined,
   events: readonly RemoteEvent[],
-  now: number,
 ): boolean {
   const done = new Set<string>();
   const open = new Map<string, number>();
@@ -313,24 +333,21 @@ export function assistThinking(
     const run = text(eventData(event)['runUUID']);
     if (!run) continue;
     if (event.SreKind === 'ai_reply' || event.SreKind === 'ai_error') done.add(run);
-    else if (event.SreKind === 'ai_request') {
-      open.set(run, Date.parse(text(event.SreDateCreated)) || now);
-    }
-  }
-  const fresh = (started: number) => now - started < ASSIST_RUN_WINDOW_MS;
-  for (const [run, started] of open) {
-    if (!done.has(run) && fresh(started)) return true;
+    else if (event.SreKind === 'ai_request') open.set(run, Number(event.SreSeq));
   }
   const active = text(session?.['AssistRunUUID']);
-  if (active && !done.has(active)) {
-    const started = Date.parse(text(session?.['AssistStartedAt'])) || now;
-    return fresh(started);
+  if (active && !done.has(active)) return true;
+  const last = Number(session?.['SrsLastEventSeq']);
+  if (!Number.isFinite(last)) return false;
+  for (const [run, seq] of open) {
+    if (!done.has(run) && seq > last) return true;
   }
   return false;
 }
 
-export function sessionMode(session: RemoteRecord | null | undefined): AssistMode {
-  return text(session?.['SrsMode']) === 'copilot' ? 'copilot' : 'manual';
+export function sessionMode(session: RemoteRecord | null | undefined): AssistMode | 'runbook' {
+  const mode = text(session?.['SrsMode']);
+  return mode === 'copilot' || mode === 'runbook' ? mode : 'manual';
 }
 
 /** Calls of the assistant routes. Kept in one place so a route change is a one-line edit. */

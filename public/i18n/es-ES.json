@@ -14704,5 +14704,14 @@
   "support.remote.event.change_applied": "Cambio aplicado: {{title}}",
   "support.remote.event.change_failed": "Cambio falló: {{title}}",
   "support.remote.event.change_rolled_back": "Cambio revertido: {{title}}",
-  "support.remote.event.change_blocked": "Cambio bloqueado: {{title}}"
+  "support.remote.event.change_blocked": "Cambio bloqueado: {{title}}",
+  "support.remote.ai.close": "Cerrar asistente",
+  "support.remote.ai.mode.runbook": "Runbook",
+  "support.remote.ai.modeRunbookHelp": "Modo runbook: la ejecución sigue un guion y no se puede cambiar aquí.",
+  "support.remote.ai.error.AI_NOT_CONFIGURED": "La IA no está configurada en este entorno.",
+  "support.remote.ai.error.AI_REFUSAL": "El asistente rechazó responder a esta solicitud.",
+  "support.remote.ai.exec.exit": "salida {{code}}",
+  "support.remote.ai.exec.status.timeout": "Tiempo agotado",
+  "support.remote.proposal.error.productionRestricted": "Los cambios por IA están restringidos en este entorno de producción.",
+  "support.remote.error.forbidden": "Usted no tiene permiso para esta acción."
 }
