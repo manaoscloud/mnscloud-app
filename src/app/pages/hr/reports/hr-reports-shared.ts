@@ -184,11 +184,11 @@ export function resetReportMonth(
 export abstract class HrMonthListPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   protected readonly months = reportMonthOptions();
 
-  protected constructor(
-    config: ConfigurableCrudConfig,
-    private readonly defaultMonth: () => string = currentMonth,
-  ) {
+  private readonly defaultMonth: () => string;
+
+  protected constructor(config: ConfigurableCrudConfig, defaultMonth: () => string = currentMonth) {
     super(config);
+    this.defaultMonth = defaultMonth;
     resetReportMonth(this, defaultMonth());
   }
 
