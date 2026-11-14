@@ -10,6 +10,8 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Dict, SchemaNode } from '../automation-adapter';
 import { newItem } from '../automation-graph';
 import { PickerOption, widgetOf } from '../automation.service';
+import { EventCatalogItem } from '../event-triggers';
+import { AutomationTriggerList } from './trigger-list';
 
 export type FieldKind =
   | 'enum'
@@ -22,10 +24,13 @@ export type FieldKind =
   | 'picker-multi'
   | 'string-array'
   | 'object-array'
-  | 'object';
+  | 'object'
+  | 'trigger-list';
 
 /** Which control renders a schema property (pure, covered by the spec). */
-export function fieldKind(name: string, schema: SchemaNode): FieldKind {
+export function fieldKind(name: string, schema: SchemaNode, surface = ''): FieldKind {
+  // The trigger list of an event-surface flow has its own editor (events and schedules).
+  if (name === 'triggers' && surface === 'event' && schema.type === 'array') return 'trigger-list';
   const widget = widgetOf(name, schema['x-widget']);
   if (widget && schema.type === 'array') return 'picker-multi';
   if (widget) return 'picker';
@@ -75,6 +80,7 @@ export function humanize(name: string): string {
     MatTooltipModule,
     TranslocoPipe,
     AutomationSchemaField,
+    AutomationTriggerList,
   ],
   styles: `
     :host {
@@ -118,6 +124,14 @@ export function humanize(name: string): string {
   `,
   template: `
     @switch (kind()) {
+      @case ('trigger-list') {
+        <app-automation-trigger-list
+          [value]="value()"
+          [events]="events()"
+          [disabled]="disabled()"
+          (valueChange)="valueChange.emit($event)"
+        />
+      }
       @case ('boolean') {
         <mat-slide-toggle
           class="sf-toggle"
@@ -334,9 +348,12 @@ export class AutomationSchemaField {
   readonly required = input(false);
   readonly pickers = input<Record<string, PickerOption[]>>({});
   readonly disabled = input(false);
+  /** Surface of the flow and its event catalog (event-surface trigger editor only). */
+  readonly surface = input('');
+  readonly events = input<EventCatalogItem[]>([]);
   readonly valueChange = output<unknown>();
 
-  readonly kind = computed(() => fieldKind(this.name(), this.schema()));
+  readonly kind = computed(() => fieldKind(this.name(), this.schema(), this.surface()));
   readonly text = computed(() => (this.value() == null ? '' : String(this.value())));
   readonly list = computed(() =>
     (Array.isArray(this.value()) ? (this.value() as unknown[]) : []).map(String),
