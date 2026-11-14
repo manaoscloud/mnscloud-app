@@ -1672,6 +1672,35 @@ export const routes: Routes = [
                 title: 'Sale • Quotation | mnscloud',
               },
 
+              // Support remote sessions: technician console with persistent session tabs.
+              {
+                path: 'support/remote/console',
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-console').then(
+                    (m) => m.SupportRemoteConsolePage,
+                  ),
+                canActivate: [permissionGuard],
+                title: 'Support • Remote console | mnscloud',
+                data: {
+                  scope: 'tenant',
+                  permission: 'tenant.support.remote.sessions.read',
+                  breadcrumb: 'support.remote.console.title',
+                },
+              },
+              {
+                path: 'support/remote/sessions',
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-sessions').then(
+                    (m) => m.SupportRemoteSessionsPage,
+                  ),
+                canActivate: [permissionGuard],
+                title: 'Support • Remote sessions | mnscloud',
+                data: {
+                  scope: 'tenant',
+                  permission: 'tenant.support.remote.sessions.read',
+                  breadcrumb: 'support.remote.sessions.title',
+                },
+              },
               // Support Channels
               {
                 path: 'support/tickets',

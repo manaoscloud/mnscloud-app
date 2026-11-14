@@ -451,6 +451,31 @@ export const NAV_ITEMS: NavItem[] = [
         ],
       },
       {
+        id: 'support/remote',
+        label: 'nav.support.remote',
+        icon: 'screen_share',
+        category: 'operation',
+        scope: 'tenant',
+        entitlementCode: 'module.support.*',
+        requiresEnvironment: true,
+        children: [
+          {
+            id: 'support/remote/console',
+            label: 'nav.support.remote.console',
+            icon: 'terminal',
+            route: '/support/remote/console',
+            permissions: ['tenant.support.remote.sessions.read'],
+          },
+          {
+            id: 'support/remote/sessions',
+            label: 'nav.support.remote.sessions',
+            icon: 'history',
+            route: '/support/remote/sessions',
+            permissions: ['tenant.support.remote.sessions.read'],
+          },
+        ],
+      },
+      {
         id: 'support/customers/tickets',
         label: 'nav.support.customers.tickets',
         icon: 'confirmation_number',

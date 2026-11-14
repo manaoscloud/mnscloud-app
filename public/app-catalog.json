@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "72b210c0e5ae",
+  "version": "f002c7d8f405",
   "language": "pt-BR",
   "entries": [
     {
@@ -7874,6 +7874,22 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/support/remote/console",
+      "menuPath": "Suporte › Remoto › Terminal",
+      "scope": "tenant",
+      "title": "Terminal",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/support/remote/sessions",
+      "menuPath": "Suporte › Remoto › Sessões",
+      "scope": "tenant",
+      "title": "Sessões de suporte remoto",
+      "description": "Sessões de suporte remoto que você pode ver, com situação, nível, técnico, cliente e equipamentos. Abra uma sessão para continuar no console.",
+      "fields": []
     },
     {
       "route": "/support/requests",
