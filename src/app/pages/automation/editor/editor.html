@@ -479,11 +479,21 @@
                           selectedDef()?.configSchema?.required?.includes(field.name) ?? false
                         "
                         [pickers]="pickers()"
+                        [surface]="flow()?.surface ?? ''"
+                        [events]="events()"
                         [disabled]="readOnly()"
                         (valueChange)="onConfig(field.name, $event)"
                       />
                     } @empty {
                       <p class="auto-help">{{ 'automation.inspector.noConfig' | transloco }}</p>
+                    }
+                    @if (flow()?.surface === 'event' && node.type !== triggerType) {
+                      <h4>{{ 'automation.trigger.eventVariables' | transloco }}</h4>
+                      <ul class="auto-help">
+                        @for (variable of eventVariableHelp(); track variable) {
+                          <li>{{ variable }}</li>
+                        }
+                      </ul>
                     }
                     @if (portsFor(node).length) {
                       <h4>{{ 'automation.inspector.connections' | transloco }}</h4>

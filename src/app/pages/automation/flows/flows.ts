@@ -21,10 +21,14 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
 export const AUTOMATION_SURFACE_OPTIONS: readonly ConfigurableCrudOption[] = [
-  { value: 'conversation', label: 'Conversations' },
-  { value: 'voice', label: 'Voice' },
-  { value: 'event', label: 'Events' },
+  { value: 'conversation', label: 'automation.surface.conversation' },
+  { value: 'voice', label: 'automation.surface.voice' },
+  { value: 'event', label: 'automation.surface.event' },
 ];
+
+/** Surfaces offered when creating a flow; voice flows arrive with FL8. */
+export const AUTOMATION_SURFACE_FORM_OPTIONS: readonly ConfigurableCrudOption[] =
+  AUTOMATION_SURFACE_OPTIONS.filter((option) => option.value !== 'voice');
 
 export const AUTOMATION_FLOW_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'draft', label: 'Draft' },
@@ -128,7 +132,7 @@ export const AUTOMATION_FLOWS_CONFIG = defineCrud({
       source: 'AflSurface',
       label: 'automation.flows.surface',
       type: 'select',
-      options: AUTOMATION_SURFACE_OPTIONS,
+      options: AUTOMATION_SURFACE_FORM_OPTIONS,
       required: true,
       span: 1,
       help: 'automation.flows.surfaceHelp',

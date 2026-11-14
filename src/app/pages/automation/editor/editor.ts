@@ -41,6 +41,7 @@ import {
   FlowDetail,
   FlowGraph,
   GraphEdge,
+  Dict,
   GraphNode,
   NodeTypeDef,
   PortDef,
@@ -49,6 +50,7 @@ import {
   ValidationResult,
   issuesFromError,
 } from '../automation-adapter';
+import { EventCatalogItem, eventVariables } from '../event-triggers';
 import {
   NODE_WIDTH,
   OPTIONAL_PORTS,
@@ -157,6 +159,8 @@ export class AutomationEditorPage {
   readonly validating = signal(false);
   readonly saveState = signal<SaveState>('saved');
   readonly pickers = signal<Record<string, PickerOption[]>>({});
+  readonly events = signal<EventCatalogItem[]>([]);
+  readonly triggerType = TRIGGER_TYPE;
 
   readonly defsMap = computed(() => new Map(this.defs().map((def) => [def.type, def])));
   readonly groups = computed(() => paletteGroups(this.defs(), this.filter()));
@@ -183,6 +187,22 @@ export class AutomationEditorPage {
   readonly selectedFields = computed(() => {
     const properties = this.selectedDef()?.configSchema.properties ?? {};
     return Object.entries(properties).map(([name, schema]) => ({ name, schema }));
+  });
+  /** Variables of an event run: the event itself, its payload keys and the record of each chosen event. */
+  readonly eventVariableHelp = computed(() => {
+    const chosen = new Set<string>();
+    for (const node of this.graph().nodes) {
+      if (node.type !== TRIGGER_TYPE) continue;
+      const list = node.config['triggers'];
+      for (const item of Array.isArray(list) ? list : []) {
+        if (item && typeof item === 'object' && (item as Dict)['type'] === 'event') {
+          chosen.add(String((item as Dict)['event'] ?? ''));
+        }
+      }
+    }
+    const found = this.events().filter((event) => chosen.has(event.name));
+    const variables = [...new Set(found.flatMap((event) => eventVariables(event)))];
+    return variables.length ? variables : eventVariables(undefined);
   });
   readonly entries = computed(() => listEntries(this.graph(), this.defsMap()));
   readonly issuesByNode = computed(() => {
@@ -255,6 +275,12 @@ export class AutomationEditorPage {
       this.defs.set(defs);
       this.applyFlow(flow);
       void this.loadPickers();
+      if (flow.surface === 'event') {
+        void this.service.events().then(
+          (events) => this.events.set(events),
+          () => undefined,
+        );
+      }
       this.scheduleValidate(0);
     } catch {
       this.loadFailed.set(true);

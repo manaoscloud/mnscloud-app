@@ -23,6 +23,7 @@ import {
   toVersions,
   unwrap,
 } from './automation-adapter';
+import { EventCatalogItem, toEventCatalog } from './event-triggers';
 
 export interface ManualFlow {
   uuid: string;
@@ -42,6 +43,11 @@ export class AutomationService {
 
   async nodeTypes(): Promise<NodeTypeDef[]> {
     return toNodeTypes(await this.api.get('automation/node-types'));
+  }
+
+  /** Domain events the event-surface triggers can listen to (locked = module not contracted). */
+  async events(): Promise<EventCatalogItem[]> {
+    return toEventCatalog(await this.api.get('automation/events', { silent: true }));
   }
 
   async flow(uuid: string): Promise<FlowDetail> {
@@ -105,9 +111,7 @@ export class AutomationService {
   }
 
   /** "Revisar com IA": summary and issues of the saved draft. */
-  async aiReview(
-    uuid: string,
-  ): Promise<{
+  async aiReview(uuid: string): Promise<{
     summary: string;
     issues: Array<{ nodeId: string | null; severity: string; message: string }>;
   }> {
