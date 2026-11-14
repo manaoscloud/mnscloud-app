@@ -251,6 +251,9 @@ const PICKERS: Record<
   },
   crmMember: { endpoint: 'crm/members', value: 'UsrUUID', label: 'UsrName' },
   billingDueDay: { endpoint: 'customer-billing/due-days', value: 'BddUUID', label: 'BddName' },
+  saleProduct: { endpoint: 'sale/products', value: 'SprUUID', label: 'SprName' },
+  salePriceList: { endpoint: 'sale/price-lists', value: 'SplUUID', label: 'SplName' },
+  stockLocation: { endpoint: 'stock/locations', value: 'StlUUID', label: 'StlName' },
 };
 
 /** Picker widgets used by the config of the nodes the tenant can use (locked modules excluded). */
