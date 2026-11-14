@@ -9,7 +9,12 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatMinutes, hhmm } from '../hr-time';
 import { HR_COMPANY_LOOKUP, HR_YES_NO } from '../hr-crud-shared';
-import { OVERTIME_MODES, durationText, parseDuration } from '../closing/closing-shared';
+import {
+  BANK_AGREEMENTS,
+  OVERTIME_MODES,
+  durationText,
+  parseDuration,
+} from '../closing/closing-shared';
 
 /** IANA time zones of Brazil (the API accepts any valid IANA zone). */
 const TIMEZONES: readonly ConfigurableCrudOption[] = [
@@ -79,6 +84,8 @@ const config = defineCrud({
     markReminders: false,
     overtimeMode: 'payment',
     bankPeriodMonths: 6,
+    bankAgreement: 'individual',
+    bankAgreementRef: '',
     monthlyLimit: '',
     notes: '',
   },
@@ -269,7 +276,28 @@ const config = defineCrud({
       type: 'select',
       options: OVERTIME_MODES,
       tab: 'limits',
-      help: 'Monthly payment pays the overtime in the payroll. Hour bank (CLT art. 59 §5, individual written agreement) credits the overtime and compensates it with time off within the period below; what is not compensated is paid at the closing of the month it expires.',
+      help: 'Pay in the month pays the overtime in the payroll. Compensate in the month offsets the overtime of the month against the lateness and absences of the same month; the rest is paid or discounted. Hour bank (CLT art. 59 §5) credits the overtime and compensates it with time off within the period below; what is not compensated is paid at the closing of the month it expires.',
+    },
+    {
+      key: 'bankAgreement',
+      source: 'BankAgreement',
+      label: 'Hour bank agreement',
+      type: 'select',
+      options: BANK_AGREEMENTS,
+      tab: 'limits',
+      hiddenWhen: ({ values }) => values['overtimeMode'] !== 'bank',
+      help: 'An individual written agreement allows a bank of up to 6 months; a collective agreement or convention allows up to 12 months (CLT art. 59 §2 and §5).',
+    },
+    {
+      key: 'bankAgreementRef',
+      source: 'BankAgreementRef',
+      label: 'Agreement or convention reference',
+      tab: 'limits',
+      hiddenWhen: ({ values }) =>
+        values['overtimeMode'] !== 'bank' || values['bankAgreement'] !== 'collective',
+      requiredWhen: ({ values }) =>
+        values['overtimeMode'] === 'bank' && values['bankAgreement'] === 'collective',
+      help: 'Identification of the collective agreement or convention (up to 120 characters), for example the registration number.',
     },
     {
       key: 'bankPeriodMonths',
@@ -278,7 +306,7 @@ const config = defineCrud({
       type: 'number',
       tab: 'limits',
       hiddenWhen: ({ values }) => values['overtimeMode'] !== 'bank',
-      help: 'From 1 to 6 months (CLT art. 59 §5). Credits not compensated within the period expire and are paid.',
+      help: 'From 1 to 6 months with an individual agreement, up to 12 with a collective one. Credits not compensated within the period expire and are paid.',
     },
     {
       key: 'monthlyLimit',
@@ -316,8 +344,15 @@ const config = defineCrud({
       ? values['punchPhotoMode']
       : 'off',
     markReminders: values['markReminders'] === true,
-    overtimeMode: values['overtimeMode'] === 'bank' ? 'bank' : 'payment',
+    overtimeMode: ['bank', 'compensation'].includes(String(values['overtimeMode']))
+      ? values['overtimeMode']
+      : 'payment',
     bankPeriodMonths: number(values['bankPeriodMonths'], 6),
+    bankAgreement: values['bankAgreement'] === 'collective' ? 'collective' : 'individual',
+    bankAgreementRef:
+      String(values['bankAgreementRef'] ?? '')
+        .trim()
+        .slice(0, 120) || null,
     monthlyLimitMinutes: monthlyLimit(values['monthlyLimit']),
     notes: values['notes'] ?? null,
   }),
@@ -333,5 +368,25 @@ const config = defineCrud({
 export class HrTimePoliciesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    if (this.saving()) return;
+    const values = this.formValues();
+    if (values['overtimeMode'] === 'bank') {
+      const max = values['bankAgreement'] === 'collective' ? 12 : 6;
+      const months = Number(values['bankPeriodMonths']);
+      if (!Number.isInteger(months) || months < 1 || months > max) {
+        this.clearFieldErrors(null);
+        this.rejectField(
+          'bankPeriodMonths',
+          max === 12
+            ? 'The compensation period must be from 1 to 12 months.'
+            : 'The compensation period must be from 1 to 6 months with an individual agreement.',
+        );
+        return;
+      }
+    }
+    await super.saveItem(saveAndNew);
   }
 }

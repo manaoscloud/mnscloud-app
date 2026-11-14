@@ -18,8 +18,15 @@ export const CLOSING_ACKS: readonly ConfigurableCrudOption[] = [
 
 /** Overtime treatment of a time policy (`HrTimePolicy.HplOvertimeMode`). */
 export const OVERTIME_MODES: readonly ConfigurableCrudOption[] = [
-  { value: 'payment', label: 'Monthly payment' },
+  { value: 'payment', label: 'Pay in the month' },
+  { value: 'compensation', label: 'Compensate in the month' },
   { value: 'bank', label: 'Hour bank' },
+];
+
+/** Legal basis of an hour bank (`HrTimePolicy.HplBankAgreement`); the period limit follows it. */
+export const BANK_AGREEMENTS: readonly ConfigurableCrudOption[] = [
+  { value: 'individual', label: 'Individual agreement (up to 6 months)' },
+  { value: 'collective', label: 'Collective agreement or convention (up to 12 months)' },
 ];
 
 /** Direction of one hour bank ledger entry. */
