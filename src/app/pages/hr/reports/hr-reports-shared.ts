@@ -7,7 +7,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { AppI18nService } from '../../../services/app-i18n.service';
-import { currentMonth, monthOptions } from '../hr-time';
+import { currentMonth, formatMinutes, monthOptions } from '../hr-time';
 
 export const MONTH_FILTER_KEY = 'month';
 
@@ -107,8 +107,8 @@ export const REPORT_LIST_SETTINGS = {
   fields: [],
 } as const;
 
-/** Leading columns of both reports: employee, location, company and registration number. */
-export const REPORT_IDENTITY_COLUMNS: readonly ConfigurableCrudColumn[] = [
+/** Who the row is about: employee, location, company and registration number. */
+export const REPORT_PERSON_COLUMNS: readonly ConfigurableCrudColumn[] = [
   {
     id: 'employee',
     label: 'Employee',
@@ -126,8 +126,28 @@ export const REPORT_IDENTITY_COLUMNS: readonly ConfigurableCrudColumn[] = [
     translateValue: false,
     optional: true,
   },
+];
+
+/** Leading columns of both reports: the person plus the days counted. */
+export const REPORT_IDENTITY_COLUMNS: readonly ConfigurableCrudColumn[] = [
+  ...REPORT_PERSON_COLUMNS,
   { id: 'days', label: 'Days', field: 'Days', kind: 'number' },
 ];
+
+/** Minutes column (`H:MM`, signed for balances) reading `field` of the API row. */
+export const minutesColumn = (
+  id: string,
+  label: string,
+  field: string,
+  signed = false,
+  optional = false,
+): ConfigurableCrudColumn => ({
+  id,
+  label,
+  field,
+  value: (row) => formatMinutes(row[field], signed),
+  ...(optional ? { optional } : {}),
+});
 
 /** Localized month options of the month filter (call in a field initializer: uses `inject`). */
 export function reportMonthOptions(): Signal<readonly ConfigurableCrudOption[]> {
@@ -145,8 +165,10 @@ export function reportFilterOptions(
 }
 
 /** The month filter always has a value: the current month (on open and when the filters are cleared). */
-export function resetReportMonth(page: ConfigurableCrudPageBase<ConfigurableCrudRecord>): void {
-  const month = currentMonth();
+export function resetReportMonth(
+  page: ConfigurableCrudPageBase<ConfigurableCrudRecord>,
+  month = currentMonth(),
+): void {
   page.listFilterValues.update((values) => ({ ...values, [MONTH_FILTER_KEY]: month }));
   page.appliedFilters.update((filters) => ({
     ...filters,
