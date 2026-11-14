@@ -815,6 +815,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         editing ||
         !this.platformScope() ||
         !values['planUUID'] ||
+        // The platform network profile is a Proxmox integration; other providers ignore it.
+        !/^proxmox$/i.test(String(values['planProvider'] ?? '').trim()) ||
         String(values['customerUUID'] ?? '').trim().length > 0;
     }
 
@@ -1044,7 +1046,11 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         ? {}
         : {
             portalEnabled: !this.platformScope() && Number(payload['portalEnabled']) === 1,
-            ...buildNetworkProfile(payload, this.platformScope()),
+            ...(/^proxmox$/i.test(
+              String(payload['planProvider'] ?? this.formValues()['planProvider'] ?? '').trim(),
+            )
+              ? buildNetworkProfile(payload, this.platformScope())
+              : {}),
             networkUUID: normalizeString(payload['networkUUID']),
             firewallUUIDs: Array.isArray(payload['firewallUUIDs']) ? payload['firewallUUIDs'] : [],
           }),
