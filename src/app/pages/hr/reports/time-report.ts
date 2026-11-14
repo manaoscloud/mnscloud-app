@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudListFilter,
@@ -6,10 +6,16 @@ import {
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
-import { AppI18nService } from '../../../services/app-i18n.service';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { currentMonth, formatMinutes, monthOptions } from '../hr-time';
-import { MONTH_FILTER_KEY, REPORT_FILTERS } from './hr-reports-shared';
+import { formatMinutes } from '../hr-time';
+import {
+  REPORT_FILTERS,
+  REPORT_IDENTITY_COLUMNS,
+  REPORT_LIST_SETTINGS,
+  reportFilterOptions,
+  reportMonthOptions,
+  resetReportMonth,
+} from './hr-reports-shared';
 
 export const TIME_REPORT_ORDERS: readonly ConfigurableCrudOption[] = [
   { value: 'overtime', label: 'Most overtime' },
@@ -26,22 +32,12 @@ const minutes = (field: string, signed = false) => ({
 // Month totals of the timesheets per employee, grouped by location, with the rankings (overtime,
 // absences, lateness). Read-only: the employee timesheet holds the day detail.
 const config = defineCrud({
-  listExport: true,
+  ...REPORT_LIST_SETTINGS,
   endpoint: 'hr/reports/time',
-  uuidField: 'RowKey',
   pageTitle: 'Time by location',
   pageDescription:
     'Month totals of the timesheets per employee and location: expected and worked hours, overtime at 50% and 100%, lateness, early leaves, absences and balance. Order by overtime, absences or lateness to see the rankings.',
-  searchPlaceholder: 'Employee or registration number',
   emptyLabel: 'No time records found in the month.',
-  canCreate: false,
-  canEdit: false,
-  canDelete: false,
-  bulkDelete: false,
-  statusFilter: false,
-  serverSidePagination: true,
-  initialPageSize: 25,
-  initialValues: {},
   listFilters: [
     ...REPORT_FILTERS,
     {
@@ -56,30 +52,7 @@ const config = defineCrud({
     },
   ],
   columns: [
-    {
-      id: 'employee',
-      label: 'Employee',
-      field: 'EmployeeName',
-      uuidField: 'EmployeeUUID',
-      kind: 'identity',
-      translateValue: false,
-    },
-    { id: 'location', label: 'Location', field: 'LocationName', translateValue: false },
-    {
-      id: 'company',
-      label: 'Company',
-      field: 'CompanyName',
-      translateValue: false,
-      optional: true,
-    },
-    {
-      id: 'registration',
-      label: 'Registration',
-      field: 'RegistrationNumber',
-      translateValue: false,
-      optional: true,
-    },
-    { id: 'days', label: 'Days', field: 'Days', kind: 'number' },
+    ...REPORT_IDENTITY_COLUMNS,
     { id: 'expected', label: 'Expected', ...minutes('ExpectedMinutes') },
     { id: 'worked', label: 'Worked', ...minutes('WorkedMinutes') },
     { id: 'overtime', label: 'Overtime 50%', ...minutes('OvertimeMinutes') },
@@ -104,7 +77,6 @@ const config = defineCrud({
     },
     { id: 'balance', label: 'Balance', ...minutes('BalanceMinutes', true) },
   ],
-  fields: [],
 });
 
 @Component({
@@ -115,33 +87,21 @@ const config = defineCrud({
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class HrTimeReportPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  private readonly i18n = inject(AppI18nService);
-  private readonly months = computed(() => monthOptions(this.i18n.language()));
+  private readonly months = reportMonthOptions();
 
   constructor() {
     super(config);
-    this.resetMonth();
+    resetReportMonth(this);
   }
 
-  /** The month filter always has a value and offers localized month names. */
   override listFilterOptions(
     filter: ConfigurableCrudListFilter,
   ): readonly ConfigurableCrudOption[] {
-    return filter.key === MONTH_FILTER_KEY ? this.months() : super.listFilterOptions(filter);
+    return reportFilterOptions(filter, this.months, () => super.listFilterOptions(filter));
   }
 
-  /** Clearing the filters keeps the current month. */
   override clearSearchFilters(): void {
     super.clearSearchFilters();
-    this.resetMonth();
-  }
-
-  private resetMonth(): void {
-    const month = currentMonth();
-    this.listFilterValues.update((values) => ({ ...values, [MONTH_FILTER_KEY]: month }));
-    this.appliedFilters.update((filters) => ({
-      ...filters,
-      extra: { ...filters.extra, [MONTH_FILTER_KEY]: month },
-    }));
+    resetReportMonth(this);
   }
 }
