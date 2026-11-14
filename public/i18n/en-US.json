@@ -14527,5 +14527,7 @@
   "Closing not found.": "Closing not found.",
   "The hour bank balance is smaller than the hours to pay.": "The hour bank balance is smaller than the hours to pay.",
   "nav.hr.timesheet-closings": "Closing",
-  "nav.hr.hour-bank": "Hour bank"
+  "nav.hr.hour-bank": "Hour bank",
+  "02:30": "02:30",
+  "180:00": "180:00"
 }
