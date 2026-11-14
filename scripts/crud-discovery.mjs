@@ -9,11 +9,10 @@ export const CRUD_EXEMPT_MARKER = /\/\/\s*crud-template-exempt:[ \t]*(\S[^\n]{9,
 export function classifyCrud(ts, html = '') {
   if (!ts.includes('@Component')) return null;
   // RuntimeServerCrudPage (shared/runtime-server) is the generic base plus the Agent installation
-  // actions of the runtime modules; it renders the same shared template. HrMonthListPage
-  // (pages/hr/reports) is the generic base plus the month filter of the HR month lists. A related collection with
+  // actions of the runtime modules; it renders the same shared template. A related collection with
   // its own table component (`collection.component`) extends ConfigurableCrudEmbeddedCollection.
   if (
-    /extends\s+(?:ConfigurableCrudPageBase|RuntimeServerCrudPage|ConfigurableCrudEmbeddedCollection|HrMonthListPage)\b/.test(
+    /extends\s+(?:ConfigurableCrudPageBase|RuntimeServerCrudPage|ConfigurableCrudEmbeddedCollection)\b/.test(
       ts,
     )
   )

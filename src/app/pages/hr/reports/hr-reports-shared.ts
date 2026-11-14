@@ -1,7 +1,6 @@
 import { Signal, computed, inject } from '@angular/core';
 import {
   ConfigurableCrudColumn,
-  ConfigurableCrudConfig,
   ConfigurableCrudListFilter,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
@@ -175,31 +174,4 @@ export function resetReportMonth(
     ...filters,
     extra: { ...filters.extra, [MONTH_FILTER_KEY]: month },
   }));
-}
-
-/**
- * Read-only HR list with a month filter that always has a value (the current month, or the one
- * `defaultMonth` gives): on open and when the filters are cleared.
- */
-export abstract class HrMonthListPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
-  protected readonly months = reportMonthOptions();
-
-  private readonly defaultMonth: () => string;
-
-  protected constructor(config: ConfigurableCrudConfig, defaultMonth: () => string = currentMonth) {
-    super(config);
-    this.defaultMonth = defaultMonth;
-    resetReportMonth(this, defaultMonth());
-  }
-
-  override listFilterOptions(
-    filter: ConfigurableCrudListFilter,
-  ): readonly ConfigurableCrudOption[] {
-    return reportFilterOptions(filter, this.months, () => super.listFilterOptions(filter));
-  }
-
-  override clearSearchFilters(): void {
-    super.clearSearchFilters();
-    resetReportMonth(this, this.defaultMonth());
-  }
 }

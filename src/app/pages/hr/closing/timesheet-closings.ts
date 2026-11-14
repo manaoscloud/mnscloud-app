@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudFilterAction,
+  ConfigurableCrudListFilter,
   ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudSaveContext,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -13,12 +15,14 @@ import { formatMinutes } from '../hr-time';
 import {
   COMPANY_FILTER_LOOKUP,
   EMPLOYEE_FILTER_LOOKUP,
-  HrMonthListPage,
   LOCATION_FILTER_LOOKUP,
   REPORT_FILTERS,
   REPORT_LIST_SETTINGS,
   REPORT_PERSON_COLUMNS,
   minutesColumn,
+  reportFilterOptions,
+  reportMonthOptions,
+  resetReportMonth,
 } from '../reports/hr-reports-shared';
 import {
   CLOSING_ACKS,
@@ -277,9 +281,23 @@ export class HrCloseMonthDialog extends ConfigurableCrudCollectionDialog {
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimesheetClosingsPage extends HrMonthListPage {
+export class HrTimesheetClosingsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly months = reportMonthOptions();
+
   constructor() {
-    super(config, previousMonth);
+    super(config);
+    resetReportMonth(this, previousMonth());
+  }
+
+  override listFilterOptions(
+    filter: ConfigurableCrudListFilter,
+  ): readonly ConfigurableCrudOption[] {
+    return reportFilterOptions(filter, this.months, () => super.listFilterOptions(filter));
+  }
+
+  override clearSearchFilters(): void {
+    super.clearSearchFilters();
+    resetReportMonth(this, previousMonth());
   }
 
   override async handleFilterAction(action: ConfigurableCrudFilterAction): Promise<void> {

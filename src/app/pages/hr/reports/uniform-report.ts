@@ -1,13 +1,21 @@
 import { Component } from '@angular/core';
-import { CONFIGURABLE_CRUD_IMPORTS } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudListFilter,
+  ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
+} from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
-  HrMonthListPage,
   REPORT_FILTERS,
   REPORT_IDENTITY_COLUMNS,
   REPORT_LIST_SETTINGS,
   formatDeviation,
   formatShare,
+  reportFilterOptions,
+  reportMonthOptions,
+  resetReportMonth,
 } from './hr-reports-shared';
 
 // Months whose punch times are suspiciously uniform (Súmula 338, III of the TST). An indicator for
@@ -70,8 +78,22 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrUniformReportPage extends HrMonthListPage {
+export class HrUniformReportPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly months = reportMonthOptions();
+
   constructor() {
     super(config);
+    resetReportMonth(this);
+  }
+
+  override listFilterOptions(
+    filter: ConfigurableCrudListFilter,
+  ): readonly ConfigurableCrudOption[] {
+    return reportFilterOptions(filter, this.months, () => super.listFilterOptions(filter));
+  }
+
+  override clearSearchFilters(): void {
+    super.clearSearchFilters();
+    resetReportMonth(this);
   }
 }

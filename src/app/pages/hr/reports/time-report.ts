@@ -1,15 +1,20 @@
 import { Component } from '@angular/core';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudListFilter,
   ConfigurableCrudOption,
+  ConfigurableCrudPageBase,
+  ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { formatMinutes } from '../hr-time';
 import {
-  HrMonthListPage,
   REPORT_FILTERS,
   REPORT_IDENTITY_COLUMNS,
   REPORT_LIST_SETTINGS,
-  minutesColumn,
+  reportFilterOptions,
+  reportMonthOptions,
+  resetReportMonth,
 } from './hr-reports-shared';
 
 export const TIME_REPORT_ORDERS: readonly ConfigurableCrudOption[] = [
@@ -18,6 +23,11 @@ export const TIME_REPORT_ORDERS: readonly ConfigurableCrudOption[] = [
   { value: 'late', label: 'Most lateness' },
   { value: 'name', label: 'Name' },
 ];
+
+const minutes = (field: string, signed = false) => ({
+  field,
+  value: (row: Record<string, unknown>) => formatMinutes(row[field], signed),
+});
 
 // Month totals of the timesheets per employee, grouped by location, with the rankings (overtime,
 // absences, lateness). Read-only: the employee timesheet holds the day detail.
@@ -43,14 +53,14 @@ const config = defineCrud({
   ],
   columns: [
     ...REPORT_IDENTITY_COLUMNS,
-    minutesColumn('expected', 'Expected', 'ExpectedMinutes'),
-    minutesColumn('worked', 'Worked', 'WorkedMinutes'),
-    minutesColumn('overtime', 'Overtime 50%', 'OvertimeMinutes'),
-    minutesColumn('overtimeRest', 'Overtime 100%', 'OvertimeRestMinutes'),
-    minutesColumn('late', 'Lates', 'LateMinutes'),
+    { id: 'expected', label: 'Expected', ...minutes('ExpectedMinutes') },
+    { id: 'worked', label: 'Worked', ...minutes('WorkedMinutes') },
+    { id: 'overtime', label: 'Overtime 50%', ...minutes('OvertimeMinutes') },
+    { id: 'overtimeRest', label: 'Overtime 100%', ...minutes('OvertimeRestMinutes') },
+    { id: 'late', label: 'Lates', ...minutes('LateMinutes') },
     { id: 'lateDays', label: 'Late days', field: 'LateDays', kind: 'number', optional: true },
-    minutesColumn('earlyLeave', 'Early leaves', 'EarlyLeaveMinutes'),
-    minutesColumn('absence', 'Absences', 'AbsenceMinutes'),
+    { id: 'earlyLeave', label: 'Early leaves', ...minutes('EarlyLeaveMinutes') },
+    { id: 'absence', label: 'Absences', ...minutes('AbsenceMinutes') },
     {
       id: 'absenceDays',
       label: 'Absence days',
@@ -65,7 +75,7 @@ const config = defineCrud({
       kind: 'number',
       optional: true,
     },
-    minutesColumn('balance', 'Balance', 'BalanceMinutes', true),
+    { id: 'balance', label: 'Balance', ...minutes('BalanceMinutes', true) },
   ],
 });
 
@@ -76,8 +86,22 @@ const config = defineCrud({
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
-export class HrTimeReportPage extends HrMonthListPage {
+export class HrTimeReportPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly months = reportMonthOptions();
+
   constructor() {
     super(config);
+    resetReportMonth(this);
+  }
+
+  override listFilterOptions(
+    filter: ConfigurableCrudListFilter,
+  ): readonly ConfigurableCrudOption[] {
+    return reportFilterOptions(filter, this.months, () => super.listFilterOptions(filter));
+  }
+
+  override clearSearchFilters(): void {
+    super.clearSearchFilters();
+    resetReportMonth(this);
   }
 }
