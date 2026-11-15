@@ -21,7 +21,10 @@ const KINDS: readonly ConfigurableCrudOption[] = [
 /** Longest cycle a schedule may have (24 h stations rotate over 14 or 28 days). */
 export const MAX_CYCLE = 28;
 
-const CYCLE_LENGTHS: readonly ConfigurableCrudOption[] = Array.from({ length: MAX_CYCLE - 1 }, (_, index) => index + 2).map((days) => ({
+const CYCLE_LENGTHS: readonly ConfigurableCrudOption[] = Array.from(
+  { length: MAX_CYCLE - 1 },
+  (_, index) => index + 2,
+).map((days) => ({
   value: days,
   label: String(days),
 }));
