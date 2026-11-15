@@ -14800,5 +14800,13 @@
   "Missing marks, punch contests, absences and shift swaps sent by employees in Pulse. Approve to record the treatment or the absence in the timesheet, or reject with a note the employee will see.": "Marcaciones olvidadas, impugnaciones de marcación, ausencias y cambios de turno enviados por los colaboradores en Pulse. Apruebe para registrar el tratamiento, la ausencia o el cambio en la hoja de asistencia, o rechace con una nota que el colaborador verá.",
   "The colleague has not accepted the swap yet. Approve only after the acceptance.": "El colega aún no aceptó el cambio. Apruebe solo después de la aceptación.",
   "This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.": "Este cambio no está permitido: revise los turnos planificados, ausencias, excepciones y fechas de ambos colaboradores.",
-  "The schedule or the employee is outside the locations you are allowed to manage.": "El horario o el colaborador está fuera de las ubicaciones que usted puede gestionar."
+  "The schedule or the employee is outside the locations you are allowed to manage.": "El horario o el colaborador está fuera de las ubicaciones que usted puede gestionar.",
+  "The employee already has a schedule exception on this date.": "El colaborador ya tiene una excepción de turno en esta fecha.",
+  "A work day needs valid start and end times, and the break must fit the shift.": "Un día de trabajo necesita entrada y salida válidas, y el descanso debe caber en el turno.",
+  "A reason is required for a schedule exception.": "El motivo es obligatorio para una excepción de turno.",
+  "Choose an active location of a company of this HR account.": "Elija una ubicación activa de una empresa de esta cuenta de RR. HH.",
+  "The colleague can no longer take this swap.": "El colega ya no puede asumir este cambio.",
+  "Choose a colleague of the same HR account and location.": "Elija un colega de la misma cuenta de RR. HH. y de la misma ubicación.",
+  "The reason can have at most 500 characters.": "El motivo puede tener como máximo 500 caracteres.",
+  "Up to 500 characters.": "Hasta 500 caracteres."
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4f00d76abbbf",
+  "version": "27eb3f660313",
   "language": "pt-BR",
   "entries": [
     {
@@ -4567,7 +4567,7 @@
         },
         {
           "label": "Motivo",
-          "help": ""
+          "help": "Até 500 caracteres."
         }
       ]
     },

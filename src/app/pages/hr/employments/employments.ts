@@ -10,14 +10,12 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatDay } from '../hr-time';
-import { HR_COMPANY_LOOKUP, HR_LOCATION_LOOKUP, HR_REVISION_FIELD } from '../hr-crud-shared';
-
-const EMPLOYEE_LOOKUP = {
-  endpoint: 'hr/employees',
-  uuidField: 'RemUUID',
-  labelField: 'RemName',
-  selectedLabelField: 'EmployeeName',
-};
+import {
+  HR_COMPANY_LOOKUP,
+  HR_EMPLOYEE_LOOKUP,
+  HR_LOCATION_LOOKUP,
+  HR_REVISION_FIELD,
+} from '../hr-crud-shared';
 
 export const CONTRACT_TYPES: readonly ConfigurableCrudOption[] = [
   { value: 'indeterminate', label: 'Indefinite term' },
@@ -128,7 +126,7 @@ function employmentsConfig(canSalary: boolean) {
         type: 'search-select',
         span: 1,
         emptyLabel: 'All',
-        remoteLookup: EMPLOYEE_LOOKUP,
+        remoteLookup: HR_EMPLOYEE_LOOKUP,
       },
       {
         key: 'companyUUID',
@@ -214,7 +212,7 @@ function employmentsConfig(canSalary: boolean) {
         span: 1,
         help: 'Person of the Registry. One employee can have several employments, one per company and period.',
         remoteLookup: {
-          ...EMPLOYEE_LOOKUP,
+          ...HR_EMPLOYEE_LOOKUP,
           // The employee company is suggested; a company chosen by the operator is kept.
           fill: { companyUUID: 'RegCompanyRcoUUID' },
         },

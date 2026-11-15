@@ -14,6 +14,14 @@ export const HR_COMPANY_LOOKUP = {
   selectedLabelField: 'CompanyName',
 };
 
+/** Employees of the HR account in context (lookups of the HR pages). */
+export const HR_EMPLOYEE_LOOKUP = {
+  endpoint: 'hr/employees',
+  uuidField: 'RemUUID',
+  labelField: 'RemName',
+  selectedLabelField: 'EmployeeName',
+};
+
 /** Locations of the registry (the API limits them to the companies of the HR account). */
 export const HR_LOCATION_LOOKUP = {
   endpoint: 'registry/locations',

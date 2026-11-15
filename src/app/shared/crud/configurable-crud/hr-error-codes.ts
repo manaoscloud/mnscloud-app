@@ -23,6 +23,12 @@ const HR_ERROR_TEXTS: Record<string, string> = {
     'This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.',
   HR_SCHEDULE_SCOPE_FORBIDDEN:
     'The schedule or the employee is outside the locations you are allowed to manage.',
+  HR_OVERRIDE_DUPLICATE: 'The employee already has a schedule exception on this date.',
+  HR_OVERRIDE_TIMES_INVALID:
+    'A work day needs valid start and end times, and the break must fit the shift.',
+  HR_OVERRIDE_REASON_REQUIRED: 'A reason is required for a schedule exception.',
+  HR_SCHEDULE_LOCATION_INVALID: 'Choose an active location of a company of this HR account.',
+  HR_SWAP_PEER_INVALID: 'The colleague can no longer take this swap.',
   HR_HOUR_BANK_INSUFFICIENT: 'The hour bank balance is smaller than the hours to pay.',
 };
 

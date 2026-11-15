@@ -14801,5 +14801,13 @@
   "Missing marks, punch contests, absences and shift swaps sent by employees in Pulse. Approve to record the treatment or the absence in the timesheet, or reject with a note the employee will see.": "Marcações esquecidas, contestações de batida, ausências e trocas de turno enviadas pelos colaboradores no Pulse. Aprove para registrar o tratamento, a ausência ou a troca na folha de ponto, ou rejeite com uma nota que o colaborador verá.",
   "The colleague has not accepted the swap yet. Approve only after the acceptance.": "O colega ainda não aceitou a troca. Aprove somente depois da aceitação.",
   "This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.": "Esta troca não é permitida: confira os turnos planejados, ausências, exceções e datas dos dois colaboradores.",
-  "The schedule or the employee is outside the locations you are allowed to manage.": "A jornada ou o colaborador está fora dos locais que você pode gerenciar."
+  "The schedule or the employee is outside the locations you are allowed to manage.": "A jornada ou o colaborador está fora dos locais que você pode gerenciar.",
+  "The employee already has a schedule exception on this date.": "O colaborador já tem uma exceção de escala nesta data.",
+  "A work day needs valid start and end times, and the break must fit the shift.": "Um dia de trabalho precisa de entrada e saída válidas, e o intervalo deve caber no turno.",
+  "A reason is required for a schedule exception.": "O motivo é obrigatório para uma exceção de escala.",
+  "Choose an active location of a company of this HR account.": "Escolha um local ativo de uma empresa desta conta de RH.",
+  "The colleague can no longer take this swap.": "O colega não pode mais assumir esta troca.",
+  "Choose a colleague of the same HR account and location.": "Escolha um colega da mesma conta de RH e do mesmo local.",
+  "The reason can have at most 500 characters.": "O motivo pode ter no máximo 500 caracteres.",
+  "Up to 500 characters.": "Até 500 caracteres."
 }

@@ -9,13 +9,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatDay, hhmm } from '../hr-time';
-
-const EMPLOYEE_LOOKUP = {
-  endpoint: 'hr/employees',
-  uuidField: 'RemUUID',
-  labelField: 'RemName',
-  selectedLabelField: 'EmployeeName',
-};
+import { HR_EMPLOYEE_LOOKUP } from '../hr-crud-shared';
 
 const KINDS: readonly ConfigurableCrudOption[] = [
   { value: 'work', label: 'Work shift' },
@@ -26,6 +20,9 @@ const SOURCES: readonly ConfigurableCrudOption[] = [
   { value: 'manual', label: 'Recorded by HR' },
   { value: 'swap', label: 'Shift swap' },
 ];
+
+/** Longest reason the API accepts. */
+const REASON_MAX = 500;
 
 const isOff = ({ values }: { values: ConfigurableCrudRecord }) => values['kind'] !== 'work';
 
@@ -95,7 +92,7 @@ const config = defineCrud({
       type: 'search-select',
       span: 1,
       emptyLabel: 'All',
-      remoteLookup: EMPLOYEE_LOOKUP,
+      remoteLookup: HR_EMPLOYEE_LOOKUP,
     },
     {
       key: 'source',
@@ -128,7 +125,7 @@ const config = defineCrud({
       key: 'employeeUUID',
       label: 'Employee',
       type: 'search-select',
-      remoteLookup: EMPLOYEE_LOOKUP,
+      remoteLookup: HR_EMPLOYEE_LOOKUP,
       quickCreate: quickCreateFor('RegEmployeeRemUUID'),
       required: true,
       span: 1,
@@ -155,6 +152,7 @@ const config = defineCrud({
       label: 'Reason',
       type: 'textarea',
       required: true,
+      help: 'Up to 500 characters.',
       span: 4,
       rows: 4,
       breakBefore: true,
@@ -189,5 +187,13 @@ const config = defineCrud({
 export class HrWorkScheduleOverridesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
+  }
+
+  /** The API refuses a reason above 500 characters; say so on the field before sending. */
+  protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
+    if (String(payload['reason'] ?? '').length > REASON_MAX) {
+      return this.rejectField('reason', 'The reason can have at most 500 characters.');
+    }
+    return super.validatePayload(payload);
   }
 }

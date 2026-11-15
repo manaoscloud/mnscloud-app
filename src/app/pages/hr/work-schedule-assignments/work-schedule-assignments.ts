@@ -7,13 +7,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatDay } from '../hr-time';
-
-const EMPLOYEE_LOOKUP = {
-  endpoint: 'hr/employees',
-  uuidField: 'RemUUID',
-  labelField: 'RemName',
-  selectedLabelField: 'EmployeeName',
-};
+import { HR_EMPLOYEE_LOOKUP } from '../hr-crud-shared';
 
 const SCHEDULE_LOOKUP = {
   endpoint: 'hr/work-schedules?status=1',
@@ -55,7 +49,7 @@ const config = defineCrud({
       type: 'search-select',
       span: 1,
       emptyLabel: 'All',
-      remoteLookup: EMPLOYEE_LOOKUP,
+      remoteLookup: HR_EMPLOYEE_LOOKUP,
     },
     {
       key: 'workScheduleUUID',
@@ -112,7 +106,7 @@ const config = defineCrud({
       label: 'Employee',
       type: 'search-select',
       required: true,
-      remoteLookup: EMPLOYEE_LOOKUP,
+      remoteLookup: HR_EMPLOYEE_LOOKUP,
       quickCreate: quickCreateFor('RegEmployeeRemUUID'),
     },
     {

@@ -14800,5 +14800,13 @@
   "Missing marks, punch contests, absences and shift swaps sent by employees in Pulse. Approve to record the treatment or the absence in the timesheet, or reject with a note the employee will see.": "Missing marks, punch contests, absences and shift swaps sent by employees in Pulse. Approve to record the treatment, the absence or the swap in the timesheet, or reject with a note the employee will see.",
   "The colleague has not accepted the swap yet. Approve only after the acceptance.": "The colleague has not accepted the swap yet. Approve only after the acceptance.",
   "This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.": "This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.",
-  "The schedule or the employee is outside the locations you are allowed to manage.": "The schedule or the employee is outside the locations you are allowed to manage."
+  "The schedule or the employee is outside the locations you are allowed to manage.": "The schedule or the employee is outside the locations you are allowed to manage.",
+  "The employee already has a schedule exception on this date.": "The employee already has a schedule exception on this date.",
+  "A work day needs valid start and end times, and the break must fit the shift.": "A work day needs valid start and end times, and the break must fit the shift.",
+  "A reason is required for a schedule exception.": "A reason is required for a schedule exception.",
+  "Choose an active location of a company of this HR account.": "Choose an active location of a company of this HR account.",
+  "The colleague can no longer take this swap.": "The colleague can no longer take this swap.",
+  "Choose a colleague of the same HR account and location.": "Choose a colleague of the same HR account and location.",
+  "The reason can have at most 500 characters.": "The reason can have at most 500 characters.",
+  "Up to 500 characters.": "Up to 500 characters."
 }
