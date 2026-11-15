@@ -25,6 +25,7 @@ import {
   resetReportMonth,
 } from '../reports/hr-reports-shared';
 import {
+  BANK_AGREEMENTS,
   CLOSING_ACKS,
   CLOSING_STATUSES,
   closeResultRows,
@@ -178,6 +179,7 @@ const config = defineCrud({
     minutesColumn('worked', 'Worked', 'WorkedMinutes'),
     minutesColumn('overtime', 'Overtime 50%', 'OvertimeMinutes'),
     minutesColumn('overtimeRest', 'Overtime 100%', 'OvertimeRestMinutes'),
+    minutesColumn('compensated', 'Compensated time', 'CompensatedMinutes', false, true),
     { id: 'absenceDays', label: 'Absence days', field: 'AbsenceDays', kind: 'number' },
     { id: 'dsrLost', label: 'DSR lost', field: 'DsrLostDays', kind: 'number' },
     {
@@ -186,6 +188,21 @@ const config = defineCrud({
       field: 'BankBalanceMinutes',
       value: (row) =>
         row['BankBalanceMinutes'] === null ? '—' : formatMinutes(row['BankBalanceMinutes'], true),
+    },
+    {
+      id: 'bankAgreement',
+      label: 'Hour bank agreement',
+      field: 'BankAgreement',
+      options: BANK_AGREEMENTS,
+      value: (row, t) =>
+        row['BankAgreement'] === 'individual' || row['BankAgreement'] === 'collective'
+          ? t(
+              row['BankAgreement'] === 'collective'
+                ? 'Collective agreement'
+                : 'Individual agreement',
+            )
+          : '—',
+      optional: true,
     },
     {
       id: 'status',

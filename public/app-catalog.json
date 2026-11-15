@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e30eaf89af19",
+  "version": "61ebdf3109b3",
   "language": "pt-BR",
   "entries": [
     {
@@ -4390,11 +4390,19 @@
         },
         {
           "label": "Tratamento",
-          "help": "Pagamento mensal paga as horas extras na folha. Banco de horas (CLT art. 59 §5, acordo individual escrito) credita as horas extras e as compensa com folga dentro do prazo abaixo; o que não for compensado é pago no fechamento do mês em que vence."
+          "help": "Pagar no mês paga as horas extras na folha. Compensar no mês abate as horas extras do mês contra os atrasos e faltas do mesmo mês; o restante é pago ou descontado. Banco de horas (CLT art. 59 §5) credita as horas extras e as compensa com folga dentro do prazo abaixo; o que não for compensado é pago no fechamento do mês em que vence."
+        },
+        {
+          "label": "Acordo do banco de horas",
+          "help": "O acordo individual escrito permite banco de até 6 meses; o acordo ou convenção coletiva permite até 12 meses (CLT art. 59 §2 e §5)."
+        },
+        {
+          "label": "Referência do acordo ou convenção",
+          "help": "Identificação do acordo ou convenção coletiva (até 120 caracteres), por exemplo o número de registro."
         },
         {
           "label": "Prazo de compensação (meses)",
-          "help": "De 1 a 6 meses (CLT art. 59 §5). Créditos não compensados dentro do prazo vencem e são pagos."
+          "help": "De 1 a 6 meses com acordo individual, até 12 com acordo coletivo. Créditos não compensados dentro do prazo vencem e são pagos."
         },
         {
           "label": "Limite mensal de horas",
