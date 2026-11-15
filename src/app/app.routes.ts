@@ -1715,6 +1715,20 @@ export const routes: Routes = [
                   breadcrumb: 'support.remote.sessions.title',
                 },
               },
+              {
+                path: 'support/remote/runbooks',
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-runbooks').then(
+                    (m) => m.SupportRemoteRunbooksPage,
+                  ),
+                canActivate: [permissionGuard],
+                title: 'Support • Remote runbooks | mnscloud',
+                data: {
+                  scope: 'tenant',
+                  permission: 'tenant.support.remote.runbooks.read',
+                  breadcrumb: 'support.remote.runbooks.title',
+                },
+              },
               // Support Channels
               {
                 path: 'support/tickets',

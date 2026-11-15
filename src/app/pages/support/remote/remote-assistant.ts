@@ -243,6 +243,17 @@ export type AssistEntry =
       error: string;
       commands: ExecCommand[];
       omitted: number;
+    }
+  /** The copilot suggests a runbook; only the technician starts it (`support.runbook.suggest`). */
+  | {
+      type: 'suggest';
+      seq: number;
+      date: string;
+      device: string;
+      deviceUUID: string;
+      runbookUUID: string;
+      name: string;
+      params: Record<string, string>;
     };
 
 function execCommands(raw: unknown): ExecCommand[] {
@@ -260,6 +271,22 @@ function execCommands(raw: unknown): ExecCommand[] {
       hidden: !('output' in row) || row['output'] == null,
     };
   });
+}
+
+/** Runbook of an `ai_exec` event of the tool `support.runbook.suggest`, or null for other tools. */
+function runbookSuggestion(
+  data: Record<string, unknown>,
+): { runbookUUID: string; name: string; params: Record<string, string> } | null {
+  if (text(data['tool']) !== 'support.runbook.suggest') return null;
+  const runbook = (data['runbook'] ?? null) as Record<string, unknown> | null;
+  const runbookUUID = text(runbook?.['runbookUUID']);
+  if (!runbookUUID) return null;
+  const raw = runbook?.['params'];
+  const params: Record<string, string> = {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    for (const [key, value] of Object.entries(raw)) params[key] = text(value);
+  }
+  return { runbookUUID, name: text(runbook?.['name']), params };
 }
 
 /** The chat as the technician reads it, in timeline order. Text is data, never markup. */
@@ -288,7 +315,18 @@ export function assistEntries(events: readonly RemoteEvent[]): AssistEntry[] {
           text: text(event.SreText),
         });
         break;
-      case 'ai_exec':
+      case 'ai_exec': {
+        const suggested = runbookSuggestion(data);
+        if (suggested) {
+          entries.push({
+            ...base,
+            type: 'suggest',
+            device: text(data['device']) || text(event.DeviceName),
+            deviceUUID: text(event.NetworkDeviceNwdUUID),
+            ...suggested,
+          });
+          break;
+        }
         entries.push({
           ...base,
           type: 'exec',
@@ -299,6 +337,7 @@ export function assistEntries(events: readonly RemoteEvent[]): AssistEntry[] {
           omitted: Number(data['omitted']) || 0,
         });
         break;
+      }
       default:
         break;
     }

@@ -49,6 +49,12 @@ export const REMOTE_EVENT_KINDS = [
   'change_failed',
   'change_rolled_back',
   'change_blocked',
+  'runbook_started',
+  'runbook_step',
+  'runbook_finished',
+  'credential_rotation_started',
+  'credential_rotated',
+  'credential_rotation_failed',
 ] as const;
 
 export type RemoteEvent = {

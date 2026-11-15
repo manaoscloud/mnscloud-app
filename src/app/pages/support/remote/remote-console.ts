@@ -52,7 +52,14 @@ import {
   unwrap,
 } from './remote-session';
 import { SupportRemoteTerminalComponent } from './remote-terminal';
-import { SupportRemoteAssistantComponent } from './remote-assistant-panel';
+import { RunbookRequest, SupportRemoteAssistantComponent } from './remote-assistant-panel';
+import {
+  RotateData,
+  RunRunbookData,
+  SupportRemoteRotateDialogComponent,
+  SupportRemoteRunDialogComponent,
+} from './remote-runbook-dialogs';
+import { sessionLevelAllowsRotation, stepStatusKey } from './remote-runbook';
 import { RemoteAssistService } from './remote-assistant';
 
 const UI_KEY = 'mns.support.remote.ui';
@@ -118,6 +125,12 @@ const EVENT_ICONS: Record<string, string> = {
   change_failed: 'error',
   change_rolled_back: 'undo',
   change_blocked: 'block',
+  runbook_started: 'playlist_play',
+  runbook_step: 'checklist',
+  runbook_finished: 'playlist_add_check',
+  credential_rotation_started: 'key',
+  credential_rotated: 'vpn_key',
+  credential_rotation_failed: 'key_off',
 };
 
 /**
@@ -360,6 +373,11 @@ const EVENT_ICONS: Record<string, string> = {
         padding: 24px 8px;
         text-align: center;
       }
+      .device-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
       .closed-banner {
         padding: 8px 12px;
         border-radius: 8px;
@@ -549,6 +567,22 @@ const EVENT_ICONS: Record<string, string> = {
               <span class="meta">{{ 'support.remote.device.none' | transloco }}</span>
             }
           </div>
+          @if (isTechnician() && !closed() && activeDevice()) {
+            <div class="device-actions">
+              @if (can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')) {
+                <button mat-stroked-button type="button" (click)="runRunbook()">
+                  <mat-icon>checklist</mat-icon>
+                  {{ 'support.remote.runbooks.action.run' | transloco }}
+                </button>
+              }
+              @if (can('tenant.network.devices.credentials.rotate') && can('tenant.network.devices.console')) {
+                <button mat-stroked-button type="button" (click)="rotatePassword()">
+                  <mat-icon>key</mat-icon>
+                  {{ 'support.remote.runbooks.action.rotate' | transloco }}
+                </button>
+              }
+            </div>
+          }
           @if (closed()) {
             <div class="closed-banner">{{ 'support.remote.closedBanner' | transloco }}</div>
           } @else if (terminalKey(); as key) {
@@ -576,6 +610,8 @@ const EVENT_ICONS: Record<string, string> = {
               [technician]="isTechnician()"
               [canAssist]="canAssist()"
               [canConsole]="can('tenant.network.devices.console')"
+              [canRun]="can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')"
+              (runbookRequested)="runRunbook($event)"
               [closed]="closed()"
               (sessionChanged)="reloadDetail()"
               (closeRequested)="toggleAssistant()"
@@ -633,7 +669,17 @@ export class SupportRemoteConsolePage {
       this.memberName(this.session()?.['SrsTechnicianUUID']),
   );
   readonly customerText = computed(() => pick(this.session(), 'CustomerName', 'RegCustomerName'));
-  readonly timeline = computed<TimelineItem[]>(() => this.events().map((e) => this.toItem(e)));
+  readonly timeline = computed<TimelineItem[]>(() => {
+    const events = this.events();
+    // Runbook name per run, from its runbook_started event (steps and the end repeat only the run id).
+    const names = new Map<string, string>();
+    for (const event of events) {
+      if (event.SreKind !== 'runbook_started') continue;
+      const data = eventData(event);
+      names.set(text(data['runUUID']), text(data['name']));
+    }
+    return events.map((e) => this.toItem(e, names));
+  });
 
   private readonly assist = inject(RemoteAssistService);
   private feed: RemoteEventFeed | null = null;
@@ -953,7 +999,7 @@ export class SupportRemoteConsolePage {
     return personName(member) || id.slice(0, 8);
   }
 
-  private toItem(event: RemoteEvent): TimelineItem {
+  private toItem(event: RemoteEvent, runNames: ReadonlyMap<string, string>): TimelineItem {
     const data = eventData(event);
     const device = this.devices().find(
       (d) => text(d['NetworkDeviceNwdUUID']) === text(event.NetworkDeviceNwdUUID),
@@ -966,9 +1012,28 @@ export class SupportRemoteConsolePage {
       from: this.memberName(data['from']),
       to: this.memberName(data['to']),
       title: text(data['title'] ?? event.SreText),
+      name:
+        text(data['name'] ?? (data['runbook'] as Record<string, unknown> | undefined)?.['name']) ||
+        (runNames.get(text(data['runUUID'])) ?? ''),
+      number: Number.isFinite(Number(data['step'])) ? String(Number(data['step']) + 1) : '',
+      username: text(data['username']),
+      status: '',
     };
+    if (event.SreKind === 'runbook_step') {
+      params['status'] = this.transloco.translate(stepStatusKey(data['status']));
+    } else if (event.SreKind === 'runbook_finished') {
+      const finished = text(data['status']);
+      params['status'] = finished
+        ? this.transloco.translate(`support.remote.runbooks.run.status.${finished}`)
+        : '';
+    }
     const known = (REMOTE_EVENT_KINDS as readonly string[]).includes(event.SreKind);
-    const kind = known ? event.SreKind : 'unknown';
+    const kind =
+      event.SreKind === 'runbook_step' && Number(data['step']) < 0
+        ? 'runbook_preconditions'
+        : known
+          ? event.SreKind
+          : 'unknown';
     if (event.SreKind === 'state') {
       const next = text(data['to'] ?? data['state']);
       params['state'] = next ? this.transloco.translate(`support.remote.state.${next}`) : '';
@@ -1118,6 +1183,46 @@ export class SupportRemoteConsolePage {
     this.activeDevice.set('');
     await this.reloadDetail();
     await this.refreshTabsQuietly();
+  }
+
+  /** "Rodar runbook" on the open device terminal (or the copilot suggestion's device). */
+  async runRunbook(request?: RunbookRequest) {
+    // A suggestion without its device is refused: never fall back to the terminal that happens to be open.
+    if (request && !request.deviceUUID) return;
+    const deviceUUID = request ? request.deviceUUID : this.activeDevice();
+    const device = this.devices().find((d) => text(d['NetworkDeviceNwdUUID']) === deviceUUID);
+    if (!device || this.closed()) return;
+    const result = await this.ask<boolean>(SupportRemoteRunDialogComponent, {
+      sessionUUID: this.selected(),
+      deviceUUID,
+      deviceName: deviceName(device),
+      vendorType: pick(device, 'NwdVendorType', 'NetworkDeviceVendorType'),
+      osVersion: pick(device, 'NwdOsVersion', 'NetworkDeviceOsVersion'),
+      canAutonomous: this.can('tenant.support.remote.runbooks.autonomous'),
+      runbookUUID: request?.runbookUUID,
+      params: request?.params,
+    } satisfies RunRunbookData);
+    if (result) {
+      if (!this.assistantOpen()) this.toggleAssistant();
+      this.scheduleDetail(this.selected());
+    }
+  }
+
+  /** "Gerar nova senha": rotation of the device password credential (needs session level N3). */
+  async rotatePassword() {
+    const deviceUUID = this.activeDevice();
+    const device = this.devices().find((d) => text(d['NetworkDeviceNwdUUID']) === deviceUUID);
+    if (!device || this.closed()) return;
+    const result = await this.ask<boolean>(SupportRemoteRotateDialogComponent, {
+      sessionUUID: this.selected(),
+      deviceUUID,
+      deviceName: deviceName(device),
+      levelOk: sessionLevelAllowsRotation(this.session()),
+    } satisfies RotateData);
+    if (result) {
+      if (!this.assistantOpen()) this.toggleAssistant();
+      this.scheduleDetail(this.selected());
+    }
   }
 
   private prompt(data: PromptData): Promise<PromptResult | undefined> {
