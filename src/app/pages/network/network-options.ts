@@ -243,6 +243,13 @@ export function accessMethodsFor(
   return ACCESS_METHOD_OPTIONS.filter((option) => methods.includes(String(option.value)));
 }
 
+/** Shell dialect of the device type (version specific when the catalog says so), '' when unknown. */
+export function shellDialectFor(type: NetworkDeviceType | undefined, osVersion: unknown): string {
+  if (!type) return '';
+  const major = majorVersion(osVersion);
+  return (major && type.versionAccess?.[major]?.shellDialect) || type.access.shellDialect || '';
+}
+
 /** Choosing a method fills its default port while the port is empty or still a default port. */
 export function accessFieldChange(
   key: string,

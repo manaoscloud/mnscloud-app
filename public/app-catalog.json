@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "61ebdf3109b3",
+  "version": "09866cf94903",
   "language": "pt-BR",
   "entries": [
     {
@@ -7939,6 +7939,14 @@
       "scope": "tenant",
       "title": "Terminal",
       "description": "",
+      "fields": []
+    },
+    {
+      "route": "/support/remote/runbooks",
+      "menuPath": "Suporte › Remoto › Runbooks",
+      "scope": "tenant",
+      "title": "Runbooks de suporte remoto",
+      "description": "Procedimentos do seu tenant que o técnico roda em um equipamento da sessão. Começam supervisionados (cada mudança vira uma proposta que você aprova) e só viram autônomos depois de 3 execuções supervisionadas com sucesso.",
       "fields": []
     },
     {

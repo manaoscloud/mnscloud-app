@@ -19,9 +19,10 @@ import { MatButtonToggleGroup, MatButtonToggleModule } from '@angular/material/b
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 import { SnackbarService } from '../../../services/snackbar.service';
+import { SlowConfirmDialogComponent } from '../../../shared/slow-confirm-dialog/slow-confirm-dialog';
 import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import {
@@ -48,7 +49,33 @@ import {
   ProposalDecisionResult,
   SupportRemoteProposalDecisionDialogComponent,
 } from './remote-assistant-dialogs';
+import {
+  CredentialRotation,
+  RemoteRunbookService,
+  RunCard,
+  RunbookRun,
+  isRotationActive,
+  isRunActive,
+  RotationActive,
+  canResolveRotation,
+  rotationChipClass,
+  rotationErrorKey,
+  rotationStateKey,
+  runCard,
+  runChipClass,
+  runbookMark,
+  runbookRequestErrorKey,
+  stepChipClass,
+  stepStatusKey,
+} from './remote-runbook';
 import { RemoteEvent, RemoteRecord, text } from './remote-session';
+
+/** What the "Rodar" shortcut of a copilot suggestion asks the console to open. */
+export type RunbookRequest = {
+  runbookUUID: string;
+  params: Record<string, string>;
+  deviceUUID: string;
+};
 
 /**
  * Assistant side panel of one support session (ST-F): the AI copilot chat, the change proposals the
@@ -262,6 +289,25 @@ import { RemoteEvent, RemoteRecord, text } from './remote-session';
         background: transparent;
         border: 1px solid var(--mat-sys-outline, #888);
       }
+      ol.steps {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      ol.steps li {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        overflow-wrap: anywhere;
+      }
+      ol.steps li.current {
+        font-weight: 600;
+      }
       .empty {
         color: var(--mat-sys-on-surface-variant);
         padding: 16px 8px;
@@ -319,7 +365,11 @@ import { RemoteEvent, RemoteRecord, text } from './remote-session';
       }}
     </div>
     @if (proposals().length) {
-      <details class="proposals" [open]="hasOpenProposals()">
+      <details
+        class="proposals"
+        [open]="hasOpenProposals() || proposalsForced()"
+        (toggle)="proposalsForced.set($any($event.target).open)"
+      >
         <summary>
           {{ 'support.remote.proposal.title' | transloco }} ({{ proposals().length }})
         </summary>
@@ -435,6 +485,134 @@ import { RemoteEvent, RemoteRecord, text } from './remote-session';
         </div>
       </details>
     }
+    @if (runCards().length) {
+      <details class="proposals" [open]="hasActiveRun()">
+        <summary>{{ 'support.remote.runbooks.card.title' | transloco }} ({{ runCards().length }})</summary>
+        <div class="proposals-body">
+          @for (card of runCards(); track card.run.SrxUUID) {
+            <article class="card" [attr.aria-label]="card.run.RunbookName">
+              <div class="card-head">
+                <strong data-report-mask>{{ card.run.RunbookName }}</strong>
+                <span class="chips">
+                  <span class="status-pill status-chip chip-skipped">{{
+                    'support.remote.runbooks.mode.' + card.run.SrxMode | transloco
+                  }}</span>
+                  <span
+                    class="status-pill status-chip"
+                    [class]="'status-pill status-chip ' + runChip(card.run.SrxStatus)"
+                    >{{ 'support.remote.runbooks.run.status.' + card.run.SrxStatus | transloco }}</span
+                  >
+                </span>
+              </div>
+              <div class="meta">
+                {{ card.run.DeviceName }}
+                @if (card.currentNumber) {
+                  ·
+                  {{
+                    'support.remote.runbooks.card.current'
+                      | transloco: { current: card.currentNumber, total: card.total }
+                  }}
+                } @else if (card.run.SrxStep === -1 && card.active) {
+                  · {{ 'support.remote.runbooks.card.preconditions' | transloco }}
+                }
+              </div>
+              @if (card.preconditions; as pre) {
+                <div class="result">
+                  {{ 'support.remote.runbooks.card.preconditions' | transloco }}:
+                  {{ stepKey(pre.status) | transloco }}
+                </div>
+              }
+              <ol class="steps">
+                @for (step of card.steps; track step.index) {
+                  <li [class.current]="step.current">
+                    <span
+                      class="status-pill status-chip"
+                      [class]="'status-pill status-chip ' + stepChip(step.status)"
+                      >{{ stepKey(step.status) | transloco }}</span
+                    >
+                    <span data-report-mask>{{
+                      step.title ||
+                        ('support.remote.runbooks.card.stepN' | transloco: { number: step.index + 1 })
+                    }}</span>
+                    @if (step.proposalUUID) {
+                      <button mat-button type="button" (click)="proposalsForced.set(!proposalsForced())">
+                        {{ 'support.remote.runbooks.card.viewProposal' | transloco }}
+                      </button>
+                    }
+                  </li>
+                }
+              </ol>
+              @if (card.errorKey) {
+                <div class="result" role="status">{{ card.errorKey | transloco }}</div>
+              }
+              @if (technician() && !closed() && card.active) {
+                <div class="actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busyRun() === card.run.SrxUUID"
+                    (click)="cancelRun(card.run)"
+                  >
+                    {{ 'support.remote.runbooks.card.cancel' | transloco }}
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      </details>
+    }
+    @if (rotations().length) {
+      <details class="proposals" [open]="hasActiveRotation()">
+        <summary>
+          {{ 'support.remote.runbooks.rotation.title' | transloco }} ({{ rotations().length }})
+        </summary>
+        <div class="proposals-body">
+          @for (rotation of rotations(); track rotation.ScrUUID) {
+            <article class="card">
+              <div class="card-head">
+                <strong data-report-mask>{{ rotation.DeviceName }}</strong>
+                <span
+                  class="status-pill status-chip"
+                  [class]="'status-pill status-chip ' + rotationChip(rotation.ScrState)"
+                  >{{ 'support.remote.runbooks.rotation.state.' + rotation.ScrState | transloco }}</span
+                >
+              </div>
+              @if (rotation.CredentialUsername) {
+                <div class="meta" data-report-mask>{{ rotation.CredentialUsername }}</div>
+              }
+              <div class="result" role="status">{{ rotationHelp(rotation) | transloco }}</div>
+              @if (technician() && !closed() && canConsole() && canResolve(rotation)) {
+                <div class="result" role="alert">
+                  {{ 'support.remote.runbooks.rotation.resolve.explain' | transloco }}
+                </div>
+                <div class="actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busyRotation() === rotation.ScrUUID"
+                    (click)="resolveRotation(rotation, 'current')"
+                  >
+                    {{ 'support.remote.runbooks.rotation.resolve.current' | transloco }}
+                  </button>
+                  <button
+                    mat-flat-button
+                    type="button"
+                    [disabled]="busyRotation() === rotation.ScrUUID"
+                    (click)="resolveRotation(rotation, 'new')"
+                  >
+                    {{ 'support.remote.runbooks.rotation.resolve.new' | transloco }}
+                  </button>
+                </div>
+              }
+              @if (rotation.ScrErrorCode) {
+                <div class="meta">{{ rotationError(rotation.ScrErrorCode) | transloco }}</div>
+              }
+            </article>
+          }
+        </div>
+      </details>
+    }
     <div class="scroll" #scroll (scroll)="onScroll()">
       <div class="chat" aria-live="polite">
         @if (!entries().length && !thinking()) {
@@ -463,6 +641,28 @@ import { RemoteEvent, RemoteRecord, text } from './remote-session';
                 {{ errorKey(entry.code) | transloco }}
                 {{ 'support.remote.ai.manualStillAvailable' | transloco }}
               </span>
+            </div>
+          } @else if (entry.type === 'suggest') {
+            <div class="card">
+              <div class="card-head">
+                <strong><mat-icon>checklist</mat-icon> {{ 'support.remote.runbooks.suggest.title' | transloco }}</strong>
+              </div>
+              <div data-report-mask>{{ entry.name }} · {{ entry.device }}</div>
+              @for (param of paramList(entry.params); track param[0]) {
+                <div class="cmd" data-report-mask>{{ param[0] }} = {{ param[1] }}</div>
+              }
+              <div class="meta">{{ 'support.remote.runbooks.suggest.help' | transloco }}</div>
+              @if (technician() && !closed() && canRun() && entry.deviceUUID) {
+                <div class="actions">
+                  <button
+                    mat-flat-button
+                    type="button"
+                    (click)="runbookRequested.emit({ runbookUUID: entry.runbookUUID, params: entry.params, deviceUUID: entry.deviceUUID })"
+                  >
+                    {{ 'support.remote.runbooks.suggest.run' | transloco }}
+                  </button>
+                </div>
+              }
             </div>
           } @else if (entry.type === 'exec') {
             <details class="card">
@@ -560,20 +760,30 @@ export class SupportRemoteAssistantComponent {
   readonly closed = input(false);
   /** Holds tenant.network.devices.console, required by the API to approve a change. */
   readonly canConsole = input(false);
+  /** Holds runbooks.run and the device console permission: the copilot suggestion can be started. */
+  readonly canRun = input(false);
   /** The session record changed (mode): the console reads it again. */
   readonly sessionChanged = output<void>();
   /** The user closed the panel (bottom sheet on narrow screens). */
   readonly closeRequested = output<void>();
+  /** "Rodar" on a copilot runbook suggestion: the console opens the run dialog. */
+  readonly runbookRequested = output<RunbookRequest>();
 
   private readonly service = inject(RemoteAssistService);
+  private readonly runbooks = inject(RemoteRunbookService);
   private readonly snack = inject(SnackbarService);
   private readonly dialog = inject(MatDialog);
+  private readonly transloco = inject(TranslocoService);
 
   readonly message = signal('');
   readonly sending = signal(false);
   readonly modeBusy = signal(false);
   readonly busyProposal = signal('');
   readonly proposals = signal<RemoteProposal[]>([]);
+  readonly runs = signal<RunbookRun[]>([]);
+  readonly rotations = signal<CredentialRotation[]>([]);
+  readonly busyRun = signal('');
+  readonly proposalsForced = signal(false);
   private readonly now = signal(Date.now());
   private readonly modeGroup = viewChild<MatButtonToggleGroup>('modeGroup');
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroll');
@@ -587,7 +797,15 @@ export class SupportRemoteAssistantComponent {
     this.proposals().some((p) => ['proposed', 'approved', 'applying'].includes(p.SrpStatus)),
   );
   readonly results = computed(() => changeResults(this.events()));
-  /** Highest proposal_* / change_* sequence: a change reloads the proposal list. */
+  readonly runCards = computed<RunCard[]>(() =>
+    this.runs().map((run) => runCard(run, this.events())),
+  );
+  readonly hasActiveRun = computed(() => this.runs().some((run) => isRunActive(run)));
+  readonly hasActiveRotation = computed(() => this.rotations().some((r) => isRotationActive(r)));
+  /** Changes when a runbook, rotation, proposal or change event arrives: reloads runs and rotations. */
+  private readonly runbookEventKey = computed(
+    () => `${runbookMark(this.events())}:${this.proposalMark()}`,
+  );  /** Highest proposal_* / change_* sequence: a change reloads the proposal list. */
   private readonly proposalMark = computed(() =>
     this.events().reduce(
       (max, event) => (isProposalEvent(event.SreKind) ? Math.max(max, Number(event.SreSeq)) : max),
@@ -599,9 +817,18 @@ export class SupportRemoteAssistantComponent {
   readonly statusChip = proposalChipClass;
   readonly safeKey = safeChangeKey;
   readonly errorKey = aiErrorKey;
+  readonly runChip = runChipClass;
+  readonly stepChip = stepChipClass;
+  readonly stepKey = stepStatusKey;
+  readonly rotationChip = rotationChipClass;
+  readonly rotationHelp = rotationStateKey;
+  readonly canResolve = canResolveRotation;
+  readonly busyRotation = signal('');
+  readonly rotationError = rotationErrorKey;
 
   private destroyed = false;
   private loadTicket = 0;
+  private runbookTicket = 0;
 
   constructor() {
     const timer = setInterval(() => this.now.set(Date.now()), 30000);
@@ -614,6 +841,9 @@ export class SupportRemoteAssistantComponent {
       // A different session: nothing of the previous one (proposals, draft) stays on screen.
       untracked(() => {
         this.proposals.set([]);
+        this.runs.set([]);
+        this.rotations.set([]);
+        this.proposalsForced.set(false);
         this.message.set('');
         this.nearBottom = true;
       });
@@ -623,6 +853,11 @@ export class SupportRemoteAssistantComponent {
       const uuid = this.sessionUUID();
       this.proposalMark();
       untracked(() => void this.loadProposals(uuid));
+    });
+    effect(() => {
+      const uuid = this.sessionUUID();
+      this.runbookEventKey();
+      untracked(() => void this.loadRunbookState(uuid));
     });
     // Follow the newest entry or the "thinking" indicator while the user is near the bottom.
     effect(() => {
@@ -698,6 +933,76 @@ export class SupportRemoteAssistantComponent {
       );
     } catch {
       // keep the last list; the next proposal event reads it again
+    }
+  }
+
+  paramList(params: Record<string, string>): [string, string][] {
+    return Object.entries(params);
+  }
+
+  private async loadRunbookState(uuid: string) {
+    if (!uuid) return;
+    const ticket = ++this.runbookTicket;
+    try {
+      const [runs, rotations] = await Promise.all([
+        this.runbooks.runs(uuid).catch(() => null),
+        this.runbooks.rotations(uuid).catch(() => null),
+      ]);
+      if (this.destroyed || ticket !== this.runbookTicket || uuid !== this.sessionUUID()) return;
+      // Active first, then the most recent (the API already lists newest first).
+      if (runs) {
+        this.runs.set([...runs].sort((a, b) => Number(isRunActive(b)) - Number(isRunActive(a))));
+      }
+      if (rotations) {
+        this.rotations.set(
+          [...rotations].sort((a, b) => Number(isRotationActive(b)) - Number(isRotationActive(a))),
+        );
+      }
+    } catch {
+      // keep the last cards; the next runbook event reads them again
+    }
+  }
+
+  /** Asks first (the answer decides which password the platform trusts), then sends it. */
+  async resolveRotation(rotation: CredentialRotation, active: RotationActive) {
+    if (this.busyRotation()) return;
+    const ref = this.dialog.open(SlowConfirmDialogComponent, {
+      width: '440px',
+      panelClass: 'slow-confirm-dialog',
+      disableClose: true,
+      data: {
+        title: this.transloco.translate(`support.remote.runbooks.rotation.resolve.${active}`),
+        message: this.transloco.translate(`support.remote.runbooks.rotation.resolve.${active}Confirm`),
+        confirmLabel: this.transloco.translate('Confirm'),
+      },
+    });
+    if (!(await firstValueFrom(ref.afterClosed())) || this.destroyed) return;
+    this.busyRotation.set(rotation.ScrUUID);
+    try {
+      await this.runbooks.resolveRotation(this.sessionUUID(), rotation, active);
+      this.snack.success('support.remote.runbooks.rotation.resolve.done');
+    } catch (error) {
+      this.snack.error(
+        runbookRequestErrorKey(error) || 'support.remote.runbooks.rotation.resolve.failed',
+        8000,
+      );
+    } finally {
+      this.busyRotation.set('');
+      await this.loadRunbookState(this.sessionUUID());
+    }
+  }
+
+  async cancelRun(run: RunbookRun) {
+    if (this.busyRun()) return;
+    this.busyRun.set(run.SrxUUID);
+    try {
+      await this.runbooks.cancelRun(this.sessionUUID(), run);
+      this.snack.success('support.remote.runbooks.card.cancelled');
+    } catch (error) {
+      this.snack.error(runbookRequestErrorKey(error) || 'support.remote.runbooks.card.cancelFailed', 7000);
+    } finally {
+      this.busyRun.set('');
+      await this.loadRunbookState(this.sessionUUID());
     }
   }
 

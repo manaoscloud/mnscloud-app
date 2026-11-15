@@ -473,6 +473,13 @@ export const NAV_ITEMS: NavItem[] = [
             route: '/support/remote/sessions',
             permissions: ['tenant.support.remote.sessions.read'],
           },
+          {
+            id: 'support/remote/runbooks',
+            label: 'nav.support.remote.runbooks',
+            icon: 'checklist',
+            route: '/support/remote/runbooks',
+            permissions: ['tenant.support.remote.runbooks.read'],
+          },
         ],
       },
       {
