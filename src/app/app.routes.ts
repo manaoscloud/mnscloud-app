@@ -1375,6 +1375,14 @@ export const routes: Routes = [
                 title: 'Human resources • Schedule assignments | mnscloud',
               },
               {
+                path: 'hr/work-schedule-overrides',
+                loadComponent: () =>
+                  import('./pages/hr/work-schedule-overrides/work-schedule-overrides').then(
+                    (m) => m.HrWorkScheduleOverridesPage,
+                  ),
+                title: 'Human resources • Schedule exceptions | mnscloud',
+              },
+              {
                 path: 'hr/holidays',
                 loadComponent: () =>
                   import('./pages/hr/holidays/holidays').then((m) => m.HrHolidaysPage),

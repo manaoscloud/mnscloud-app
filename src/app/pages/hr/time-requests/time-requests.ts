@@ -9,6 +9,7 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import {
   ABSENCE_TYPES,
+  PEER_STATUSES,
   PUNCH_TYPES,
   REQUEST_STATUSES,
   REQUEST_TYPES,
@@ -22,6 +23,12 @@ const DECISIONS = [
   { value: 'approve', label: 'Approve' },
   { value: 'reject', label: 'Reject' },
 ] as const;
+
+const isSwap = ({ values }: { values: ConfigurableCrudRecord }) => values['type'] === 'shift_swap';
+
+/** A shift swap can only be approved after the colleague accepted it. */
+const canApprove = ({ values }: { values: ConfigurableCrudRecord }) =>
+  !isSwap({ values }) || values['peerStatus'] === 'accepted';
 
 const CERTIFICATE: ConfigurableCrudRowAction = {
   key: 'certificate',
@@ -94,6 +101,13 @@ function requestDetail(row: ConfigurableCrudRecord, translate: (key: string) => 
   if (type === 'punch_contest') {
     return `${translate(optionLabel(PUNCH_TYPES, row['ContestedPunchType']))} ${formatInstant(row['ContestedOccurredAt'])}`;
   }
+  if (type === 'shift_swap') {
+    const swapDate = row['SwapDate'] && row['SwapDate'] !== row['Date'] ? row['SwapDate'] : null;
+    const dates = swapDate
+      ? `${formatDay(row['Date'])} ⇄ ${formatDay(swapDate)}`
+      : formatDay(row['Date']);
+    return `${translate('With')} ${String(row['PeerEmployeeName'] ?? '—')}: ${dates} · ${translate(optionLabel(PEER_STATUSES, row['PeerStatus']))}`;
+  }
   const end =
     row['EndDate'] && row['EndDate'] !== row['Date'] ? ` – ${formatDay(row['EndDate'])}` : '';
   return `${translate(optionLabel(ABSENCE_TYPES, row['AbsenceType']))}: ${formatDay(row['Date'])}${end}`;
@@ -108,7 +122,7 @@ const config = defineCrud({
   uuidField: 'RequestUUID',
   pageTitle: 'Requests',
   pageDescription:
-    'Missing marks, punch contests and absences sent by employees in Pulse. Approve to record the treatment or the absence in the timesheet, or reject with a note the employee will see.',
+    'Missing marks, punch contests, absences and shift swaps sent by employees in Pulse. Approve to record the treatment or the absence in the timesheet, or reject with a note the employee will see.',
   editTitle: 'Decide request',
   searchPlaceholder: 'Employee or reason',
   emptyLabel: 'No requests found.',
@@ -208,10 +222,52 @@ const config = defineCrud({
       disabledWhen: readOnly,
     },
     {
+      key: 'peer',
+      source: 'PeerEmployeeName',
+      label: 'Colleague',
+      span: 1,
+      hiddenWhen: (context) => !isSwap(context),
+      disabledWhen: readOnly,
+    },
+    {
+      key: 'peerStatus',
+      source: 'PeerStatus',
+      label: 'Colleague answer',
+      type: 'select',
+      options: PEER_STATUSES,
+      span: 1,
+      hiddenWhen: (context) => !isSwap(context),
+      disabledWhen: readOnly,
+    },
+    {
+      key: 'date',
+      source: 'Date',
+      label: 'Date',
+      fromRecord: (value) => formatDay(value),
+      span: 1,
+      hiddenWhen: (context) => !isSwap(context),
+      disabledWhen: readOnly,
+    },
+    {
+      key: 'swapDate',
+      source: 'SwapDate',
+      label: 'Colleague date',
+      fromRecord: (value, row) => formatDay(value ?? row['Date']),
+      span: 1,
+      hiddenWhen: (context) => !isSwap(context),
+      disabledWhen: readOnly,
+    },
+    {
       key: 'decision',
+      source: 'PeerStatus',
+      // A swap the colleague has not accepted can only be rejected: start on that option.
+      fromRecord: (_value, row) =>
+        row['Type'] === 'shift_swap' && row['PeerStatus'] !== 'accepted' ? 'reject' : 'approve',
       label: 'Decision',
       type: 'select',
       options: DECISIONS,
+      optionsWhen: (context) => (canApprove(context) ? DECISIONS : DECISIONS.slice(1)),
+      help: 'A shift swap can only be approved after the colleague accepted it.',
       required: true,
       span: 1,
       breakBefore: true,

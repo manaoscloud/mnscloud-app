@@ -17,6 +17,11 @@ const HR_ERROR_TEXTS: Record<string, string> = {
   HR_CLOSING_TOO_OLD: 'This month is too old to be closed or changed.',
   HR_CLOSING_NOT_CLOSED: 'This closing is not closed (already reopened).',
   HR_CLOSING_NOT_FOUND: 'Closing not found.',
+  HR_SWAP_PEER_PENDING: 'The colleague has not accepted the swap yet. Approve only after the acceptance.',
+  HR_SWAP_NOT_ALLOWED:
+    'This swap is not allowed: check the planned shifts, absences, exceptions and dates of both employees.',
+  HR_SCHEDULE_SCOPE_FORBIDDEN:
+    'The schedule or the employee is outside the locations you are allowed to manage.',
   HR_HOUR_BANK_INSUFFICIENT: 'The hour bank balance is smaller than the hours to pay.',
 };
 

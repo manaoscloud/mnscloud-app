@@ -14,6 +14,14 @@ export const HR_COMPANY_LOOKUP = {
   selectedLabelField: 'CompanyName',
 };
 
+/** Locations of the registry (the API limits them to the companies of the HR account). */
+export const HR_LOCATION_LOOKUP = {
+  endpoint: 'registry/locations',
+  uuidField: 'LocationUUID',
+  labelField: 'Name',
+  selectedLabelField: 'LocationName',
+};
+
 export const HR_YES_NO: readonly ConfigurableCrudOption[] = [
   { value: true, label: 'Yes' },
   { value: false, label: 'No' },

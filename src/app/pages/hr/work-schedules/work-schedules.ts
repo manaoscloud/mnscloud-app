@@ -7,7 +7,9 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { WEEKDAYS, formatMinutes, hhmm } from '../hr-time';
+import { HR_LOCATION_LOOKUP } from '../hr-crud-shared';
 
 const ENDPOINT = 'hr/work-schedules';
 
@@ -16,7 +18,10 @@ const KINDS: readonly ConfigurableCrudOption[] = [
   { value: 'cycle', label: 'Cycle' },
 ];
 
-const CYCLE_LENGTHS: readonly ConfigurableCrudOption[] = [2, 3, 4, 5, 6, 7].map((days) => ({
+/** Longest cycle a schedule may have (24 h stations rotate over 14 or 28 days). */
+export const MAX_CYCLE = 28;
+
+const CYCLE_LENGTHS: readonly ConfigurableCrudOption[] = Array.from({ length: MAX_CYCLE - 1 }, (_, index) => index + 2).map((days) => ({
   value: days,
   label: String(days),
 }));
@@ -26,7 +31,7 @@ const YES_NO: readonly ConfigurableCrudOption[] = [
   { value: false, label: 'No' },
 ];
 
-const POSITIONS = [1, 2, 3, 4, 5, 6, 7] as const;
+const POSITIONS: readonly number[] = Array.from({ length: MAX_CYCLE }, (_, index) => index + 1);
 
 /** The four marks of a schedule day: form key suffix, API body key and API item key. */
 const DAY_PARTS = [
@@ -93,7 +98,7 @@ const dayKey = (position: number, suffix: string) => `d${position}${suffix}`;
 function cycleLengthOf(values: ConfigurableCrudRecord): number {
   if (values['kind'] !== 'cycle') return 7;
   const length = Number(values['cycleLength']);
-  return Number.isInteger(length) && length >= 2 && length <= 7 ? length : 2;
+  return Number.isInteger(length) && length >= 2 && length <= MAX_CYCLE ? length : 2;
 }
 
 function recordDay(row: ConfigurableCrudRecord, position: number): ConfigurableCrudRecord | null {
@@ -155,6 +160,7 @@ export function workSchedulePayload(values: ConfigurableCrudRecord): Configurabl
     name: values['name'],
     kind: values['kind'] === 'cycle' ? 'cycle' : 'weekly',
     ...(values['kind'] === 'cycle' ? { cycleLength: length } : {}),
+    locationUUID: values['locationUUID'] || null,
     preAssignedBreak: values['preAssignedBreak'] === true,
     status: Number(values['status'] ?? 1) === 0 ? 0 : 1,
     notes: values['notes'] ?? null,
@@ -182,9 +188,21 @@ const config = defineCrud({
     name: '',
     kind: 'weekly',
     cycleLength: '',
+    locationUUID: '',
     preAssignedBreak: false,
     notes: '',
   },
+  listFilters: [
+    {
+      key: 'locationUUID',
+      paramKey: 'locationUUID',
+      label: 'Location',
+      type: 'search-select',
+      span: 1,
+      emptyLabel: 'All',
+      remoteLookup: HR_LOCATION_LOOKUP,
+    },
+  ],
   columns: [
     {
       id: 'name',
@@ -209,6 +227,12 @@ const config = defineCrud({
       field: 'WeeklyMinutes',
       value: (row) => formatMinutes(row['WeeklyMinutes']),
     },
+    {
+      id: 'location',
+      label: 'Location',
+      field: 'LocationName',
+      value: (row, t) => (row['LocationName'] ? String(row['LocationName']) : t('Whole account')),
+    },
     { id: 'assigned', label: 'Assigned employees', field: 'AssignedCount', kind: 'number' },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
     { id: 'revision', label: 'Revision', field: 'Revision', kind: 'number', optional: true },
@@ -230,7 +254,7 @@ const config = defineCrud({
       type: 'select',
       options: KINDS,
       required: true,
-      help: 'Weekly: the same times every week (Monday to Sunday). Cycle: a sequence of 2 to 7 days that repeats, such as 12x36 (work one day, rest the next).',
+      help: 'Weekly: the same times every week (Monday to Sunday). Cycle: a sequence of 2 to 28 days that repeats, such as 12x36 (work one day, rest the next).',
       span: 1,
     },
     {
@@ -243,6 +267,16 @@ const config = defineCrud({
       requiredWhen: ({ values }) => values['kind'] === 'cycle',
       hiddenWhen: ({ values }) => values['kind'] !== 'cycle',
       fromRecord: (value, row) => (row['Kind'] === 'cycle' ? Number(value) : ''),
+      span: 1,
+    },
+    {
+      key: 'locationUUID',
+      source: 'LocationUUID',
+      label: 'Location',
+      type: 'search-select',
+      remoteLookup: HR_LOCATION_LOOKUP,
+      quickCreate: quickCreateFor('RegLocationRlcUUID'),
+      help: 'Leave empty for a schedule of the whole account. Operators limited to locations only manage the schedules of their locations.',
       span: 1,
     },
     {
@@ -284,7 +318,7 @@ export class HrWorkSchedulesPage extends ConfigurableCrudPageBase<ConfigurableCr
 
   /** Day fields read `Monday · Start` (weekly) or `Day 2 · Break end` (cycle). */
   override translatedFieldLabel(field: ConfigurableCrudField): string {
-    const match = /^d([1-7])(Start|BreakStart|BreakEnd|End)$/.exec(field.key);
+    const match = /^d(\d{1,2})(Start|BreakStart|BreakEnd|End)$/.exec(field.key);
     if (!match) return super.translatedFieldLabel(field);
     const position = Number(match[1]);
     const day =

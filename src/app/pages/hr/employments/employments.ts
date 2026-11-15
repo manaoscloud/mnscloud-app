@@ -10,20 +10,13 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 import { formatDay } from '../hr-time';
-import { HR_COMPANY_LOOKUP, HR_REVISION_FIELD } from '../hr-crud-shared';
+import { HR_COMPANY_LOOKUP, HR_LOCATION_LOOKUP, HR_REVISION_FIELD } from '../hr-crud-shared';
 
 const EMPLOYEE_LOOKUP = {
   endpoint: 'hr/employees',
   uuidField: 'RemUUID',
   labelField: 'RemName',
   selectedLabelField: 'EmployeeName',
-};
-
-const LOCATION_LOOKUP = {
-  endpoint: 'registry/locations',
-  uuidField: 'LocationUUID',
-  labelField: 'Name',
-  selectedLabelField: 'LocationName',
 };
 
 export const CONTRACT_TYPES: readonly ConfigurableCrudOption[] = [
@@ -153,7 +146,7 @@ function employmentsConfig(canSalary: boolean) {
         type: 'search-select',
         span: 1,
         emptyLabel: 'All',
-        remoteLookup: LOCATION_LOOKUP,
+        remoteLookup: HR_LOCATION_LOOKUP,
       },
       {
         key: 'active',
@@ -247,7 +240,7 @@ function employmentsConfig(canSalary: boolean) {
         span: 1,
         help: 'Where the employee works (lotação). Only locations of the chosen company. With a fence radius on the location, punches made farther away are flagged.',
         remoteLookup: {
-          ...LOCATION_LOOKUP,
+          ...HR_LOCATION_LOOKUP,
           parameters: { companyUUID: 'companyUUID' },
         },
         quickCreate: quickCreateFor('RegLocationRlcUUID'),

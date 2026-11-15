@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "61ebdf3109b3",
+  "version": "4f00d76abbbf",
   "language": "pt-BR",
   "entries": [
     {
@@ -4427,7 +4427,7 @@
       "menuPath": "Recursos humanos › Solicitações",
       "scope": "tenant",
       "title": "Solicitações",
-      "description": "Marcações esquecidas, contestações de batida e ausências enviadas pelos colaboradores no Pulse. Aprove para registrar o tratamento ou a ausência no espelho, ou recuse com uma resposta que o colaborador verá.",
+      "description": "Marcações esquecidas, contestações de batida, ausências e trocas de turno enviadas pelos colaboradores no Pulse. Aprove para registrar o tratamento, a ausência ou a troca na folha de ponto, ou rejeite com uma nota que o colaborador verá.",
       "fields": [
         {
           "label": "Colaborador",
@@ -4442,8 +4442,24 @@
           "help": ""
         },
         {
-          "label": "Decisão",
+          "label": "Colega",
           "help": ""
+        },
+        {
+          "label": "Resposta do colega",
+          "help": ""
+        },
+        {
+          "label": "Data",
+          "help": ""
+        },
+        {
+          "label": "Data do colega",
+          "help": ""
+        },
+        {
+          "label": "Decisão",
+          "help": "Uma troca de turno só pode ser aprovada depois que o colega aceitar."
         },
         {
           "label": "Resposta",
@@ -4531,6 +4547,31 @@
       ]
     },
     {
+      "route": "/hr/work-schedule-overrides",
+      "menuPath": "Recursos humanos › Exceções",
+      "scope": "tenant",
+      "title": "Exceções de escala",
+      "description": "Uma folga ou um turno diferente para um colaborador em uma data, no lugar da escala planejada daquele dia. As trocas de turno aprovadas em Solicitações criam suas exceções aqui. Meses fechados não podem ser alterados.",
+      "fields": [
+        {
+          "label": "Colaborador",
+          "help": ""
+        },
+        {
+          "label": "Data",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": "Substitui o dia planejado do colaborador nessa data. Feriados mantêm a regra própria."
+        },
+        {
+          "label": "Motivo",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/hr/work-schedules",
       "menuPath": "Recursos humanos › Jornadas",
       "scope": "tenant",
@@ -4551,11 +4592,15 @@
         },
         {
           "label": "Tipo",
-          "help": "Semanal: os mesmos horários toda semana (segunda a domingo). Ciclo: uma sequência de 2 a 7 dias que se repete, como 12x36 (trabalha um dia, descansa no seguinte)."
+          "help": "Semanal: os mesmos horários toda semana (segunda a domingo). Ciclo: uma sequência de 2 a 28 dias que se repete, como 12x36 (trabalha um dia, descansa no seguinte)."
         },
         {
           "label": "Duração do ciclo (dias)",
           "help": ""
+        },
+        {
+          "label": "Localização",
+          "help": "Deixe vazio para uma jornada da conta inteira. Operadores limitados a locais gerenciam só as jornadas dos seus locais."
         },
         {
           "label": "Intervalo pré-assinalado",

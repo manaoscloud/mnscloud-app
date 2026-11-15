@@ -1063,6 +1063,14 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/hr/work-schedule-assignments',
       },
       {
+        id: 'hr/work-schedule-overrides',
+        label: 'nav.hr.work-schedule-overrides',
+        icon: 'event_repeat',
+        category: 'registry',
+        route: '/hr/work-schedule-overrides',
+        permissions: ['tenant.hr.work-schedule-overrides.read'],
+      },
+      {
         id: 'hr/holidays',
         label: 'nav.hr.holidays',
         icon: 'celebration',

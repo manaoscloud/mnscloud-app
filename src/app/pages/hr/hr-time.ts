@@ -171,6 +171,14 @@ export const REQUEST_TYPES: readonly ConfigurableCrudOption[] = [
   { value: 'missing_punch', label: 'Missing mark' },
   { value: 'punch_contest', label: 'Punch contest' },
   { value: 'absence', label: 'Absence' },
+  { value: 'shift_swap', label: 'Shift swap' },
+];
+
+/** Answer of the colleague to a shift swap request. */
+export const PEER_STATUSES: readonly ConfigurableCrudOption[] = [
+  { value: 'pending', label: 'Waiting for the colleague' },
+  { value: 'accepted', label: 'Accepted by the colleague' },
+  { value: 'refused', label: 'Refused by the colleague' },
 ];
 
 export const REQUEST_STATUSES: readonly ConfigurableCrudOption[] = [

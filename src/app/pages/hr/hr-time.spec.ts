@@ -83,6 +83,35 @@ describe('Work schedule form mapping', () => {
   });
 });
 
+describe('Long cycles and location', () => {
+  it('sends 28 day rows for a 28 day cycle and the location of the schedule', () => {
+    const values: Record<string, unknown> = {
+      name: 'Posto 24h',
+      kind: 'cycle',
+      cycleLength: 28,
+      locationUUID: 'loc-1',
+      d28Start: '07:00',
+      d28End: '19:00',
+      d29Start: '09:00',
+    };
+    const body = workSchedulePayload(values);
+    const days = body['days'] as Record<string, unknown>[];
+    expect(days.length).toBe(28);
+    expect(days[27]).toEqual(
+      jasmine.objectContaining({ position: 28, start: '07:00', end: '19:00' }),
+    );
+    expect(body['locationUUID']).toBe('loc-1');
+    expect(body['cycleLength']).toBe(28);
+  });
+
+  it('keeps weekly at 7 rows and sends a null location for the whole account', () => {
+    const body = workSchedulePayload({ name: 'A', kind: 'weekly', cycleLength: 28 });
+    expect((body['days'] as unknown[]).length).toBe(7);
+    expect(body['locationUUID']).toBeNull();
+    expect(body['cycleLength']).toBeUndefined();
+  });
+});
+
 describe('Punch map points', () => {
   it('keeps only punches with a captured location', () => {
     const points = punchLocations(

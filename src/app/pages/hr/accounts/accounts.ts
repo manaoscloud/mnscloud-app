@@ -161,6 +161,12 @@ const PAGES: readonly [string, string, string, string][] = [
     'assignment_ind',
     'tenant.hr.work-schedule-assignments.read',
   ],
+  [
+    'work-schedule-overrides',
+    'nav.hr.work-schedule-overrides',
+    'event_repeat',
+    'tenant.hr.work-schedule-overrides.read',
+  ],
   ['employments', 'nav.hr.employments', 'work_history', 'tenant.hr.employments.read'],
   ['holidays', 'nav.hr.holidays', 'celebration', 'tenant.hr.holidays.read'],
   ['time-policies', 'nav.hr.time-policies', 'rule', 'tenant.hr.time-policies.read'],
