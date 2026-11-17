@@ -122,10 +122,19 @@ export function termproxyResize(cols: number, rows: number): string {
         gap: 12px;
         flex-wrap: wrap;
       }
-      .header-actions {
+      /* Own class: the global .header-actions gives every button the fixed CRUD width. */
+      .console-actions {
         display: flex;
-        gap: 8px;
+        align-items: center;
+        gap: 4px;
         flex-wrap: wrap;
+      }
+      /* Icon-only buttons are as large as their icon. */
+      .console-actions .mat-mdc-icon-button {
+        --mat-icon-button-state-layer-size: 24px;
+        width: 24px;
+        height: 24px;
+        padding: 0;
       }
       .title {
         font-weight: 600;
@@ -172,7 +181,7 @@ export function termproxyResize(cols: number, rows: number): string {
           <div class="status">{{ message | transloco }}</div>
         }
       </div>
-      <div class="header-actions">
+      <div class="console-actions">
         @if (passwordAvailable()) {
           @if (credential(); as shown) {
             <span class="password">
