@@ -62,6 +62,8 @@ describe('Global mns-menu primitives', () => {
     const { fixture, panel, items } = await openMenu();
     expect(panel.querySelector('.mns-menu-title')?.textContent).toContain('Actions');
     expect(panel.querySelector('.mns-menu-hint')?.textContent).toContain('Ramal 2001');
+    // A long hint can be clamped, so its full text stays available as the tooltip.
+    expect(panel.querySelector('.mns-menu-hint')?.getAttribute('title')).toBe('Ramal 2001');
 
     const [column, density, remove] = items;
     expect(column.getAttribute('role')).toBe('menuitemcheckbox');

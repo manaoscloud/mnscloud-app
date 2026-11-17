@@ -91,7 +91,11 @@ export class MnsMenuLabel {
   protected readonly item = inject(MnsMenuItem, { optional: true });
 }
 
-/** Panel or section heading with an optional context hint (record name, count, scope). */
+/**
+ * Panel or section heading with an optional context hint (record name, count, scope). A short
+ * hint sits beside the title; a long one moves below it (at most two lines, full text as tooltip)
+ * so the title is never squeezed.
+ */
 @Component({
   selector: 'mns-menu-title',
   host: {
@@ -102,7 +106,7 @@ export class MnsMenuLabel {
   template: `
     <span class="mns-menu-title-text"><ng-content /></span>
     @if (hint()) {
-      <span class="mns-menu-hint">{{ hint() }}</span>
+      <span class="mns-menu-hint" [attr.title]="hint()">{{ hint() }}</span>
     }
   `,
 })
