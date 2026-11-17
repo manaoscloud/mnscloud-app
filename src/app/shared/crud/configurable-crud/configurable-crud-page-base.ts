@@ -2022,6 +2022,16 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   /**
+   * Second line of a row action in the `more_vert` menu: the disabled reason, else the tooltip
+   * unless it only repeats the label (the menu already shows the label as the item text).
+   */
+  rowActionDescription(action: ConfigurableCrudRowAction, row: T): string | null {
+    const reason = this.rowActionDisabledReason(action, row);
+    if (reason) return reason;
+    return action.tooltip && action.tooltip !== action.label ? action.tooltip : null;
+  }
+
+  /**
    * Record name shown in the row actions menu heading: the first visible column that is not a
    * status chip (pages such as Agents lead with the status column).
    */
