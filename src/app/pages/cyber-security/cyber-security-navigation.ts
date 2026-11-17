@@ -1,3 +1,5 @@
+import type { Routes } from '@angular/router';
+
 /** Navigation-only groups. Existing tenant/master URLs and API contracts stay canonical. */
 const sections: Record<string, { label: string; group?: string }> = {
   '': { label: 'Overview' },
@@ -36,4 +38,30 @@ export function cyberSecurityRouteData(section: string, scope: 'tenant' | 'maste
       { label: item.label, url: section ? `${base}/${section}` : base },
     ],
   };
+}
+
+/** Sections served by the generic Cyber Security page; platform: also in the System area. */
+const SECTION_PAGES: { section: string; title: string; platform?: boolean }[] = [
+  { section: 'servers', title: 'Servers', platform: true },
+  { section: 'alerts', title: 'Alerts', platform: true },
+  { section: 'decisions', title: 'Protection Decisions', platform: true },
+  { section: 'lists', title: 'Allowlist / Blocklist', platform: true },
+  { section: 'security-events', title: 'Security Events', platform: true },
+  { section: 'vulnerabilities', title: 'Vulnerabilities', platform: true },
+  { section: 'inventory', title: 'Software inventory', platform: true },
+  { section: 'patches', title: 'Security updates' },
+  { section: 'exposure', title: 'External exposure' },
+  { section: 'hardening', title: 'Hardening and antivirus' },
+  { section: 'network', title: 'Network devices' },
+];
+
+export function cyberSecuritySectionRoutes(scope: 'tenant' | 'master'): Routes {
+  return SECTION_PAGES.filter((page) => scope === 'tenant' || page.platform).map(
+    ({ section, title }) => ({
+      path: `cyber-security/${section}`,
+      loadComponent: () => import('./cyber-security').then((m) => m.CyberSecurityPage),
+      title: `Cyber Security • ${title} | mnscloud`,
+      data: cyberSecurityRouteData(section, scope),
+    }),
+  );
 }

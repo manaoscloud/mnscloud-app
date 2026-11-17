@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "09866cf94903",
+  "version": "57d7509b43b5",
   "language": "pt-BR",
   "entries": [
     {
@@ -8688,6 +8688,14 @@
       "fields": []
     },
     {
+      "route": "/system/cyber-security/inventory",
+      "menuPath": "Cibersegurança › Inventário",
+      "scope": "platform",
+      "title": "Inventário",
+      "description": "",
+      "fields": []
+    },
+    {
       "route": "/system/cyber-security/lists",
       "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "platform",
@@ -9041,6 +9049,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/cyber-security/vulnerabilities",
+      "menuPath": "Cibersegurança › Vulnerabilidades",
+      "scope": "platform",
+      "title": "Vulnerabilidades",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/system/did",

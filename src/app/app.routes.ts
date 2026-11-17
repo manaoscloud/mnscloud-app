@@ -1,4 +1,7 @@
-import { cyberSecurityRouteData } from './pages/cyber-security/cyber-security-navigation';
+import {
+  cyberSecurityRouteData,
+  cyberSecuritySectionRoutes,
+} from './pages/cyber-security/cyber-security-navigation';
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
@@ -759,25 +762,7 @@ export const routes: Routes = [
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
               },
-              ...[
-                { section: 'servers', title: 'Servers' },
-                { section: 'alerts', title: 'Alerts' },
-                { section: 'decisions', title: 'Protection Decisions' },
-                { section: 'lists', title: 'Allowlist / Blocklist' },
-                { section: 'security-events', title: 'Security Events' },
-                { section: 'vulnerabilities', title: 'Vulnerabilities' },
-                { section: 'inventory', title: 'Software inventory' },
-                { section: 'patches', title: 'Security updates' },
-                { section: 'exposure', title: 'External exposure' },
-                { section: 'hardening', title: 'Hardening and antivirus' },
-                { section: 'network', title: 'Network devices' },
-              ].map(({ section, title }) => ({
-                path: `cyber-security/${section}`,
-                loadComponent: () =>
-                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
-                title: `Cyber Security • ${title} | mnscloud`,
-                data: cyberSecurityRouteData(section, 'tenant'),
-              })),
+              ...cyberSecuritySectionRoutes('tenant'),
 
               {
                 path: 'authentication/dashboard',
@@ -3105,19 +3090,7 @@ export const routes: Routes = [
                 redirectTo: 'cyber-security',
                 pathMatch: 'full',
               },
-              ...[
-                { section: 'servers', title: 'Servers' },
-                { section: 'alerts', title: 'Alerts' },
-                { section: 'decisions', title: 'Protection Decisions' },
-                { section: 'lists', title: 'Allowlist / Blocklist' },
-                { section: 'security-events', title: 'Security Events' },
-              ].map(({ section, title }) => ({
-                path: `cyber-security/${section}`,
-                loadComponent: () =>
-                  import('./pages/cyber-security/cyber-security').then((m) => m.CyberSecurityPage),
-                title: `Cyber Security • ${title} | mnscloud`,
-                data: cyberSecurityRouteData(section, 'master'),
-              })),
+              ...cyberSecuritySectionRoutes('master'),
               {
                 path: 'billing',
                 loadComponent: () =>
