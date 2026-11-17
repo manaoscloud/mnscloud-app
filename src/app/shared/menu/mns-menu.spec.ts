@@ -9,7 +9,7 @@ import { MNS_MENU } from './mns-menu';
   template: `
     <button type="button" [matMenuTriggerFor]="menu">Open</button>
     <mat-menu #menu="matMenu" class="mns-menu">
-      <mns-menu-title hint="Ramal 2001">Actions</mns-menu-title>
+      <mns-menu-title [hint]="hint()">Actions</mns-menu-title>
       <mns-menu-search [(value)]="search" label="Search columns" />
       <button
         mat-menu-item
@@ -38,6 +38,7 @@ class MenuHost {
   readonly visible = signal(true);
   readonly deleted = signal(false);
   readonly search = signal('');
+  readonly hint = signal('Ramal 2001');
 }
 
 async function openMenu() {
@@ -57,6 +58,27 @@ describe('Global mns-menu primitives', () => {
   afterEach(() =>
     document.querySelectorAll('.cdk-overlay-container').forEach((node) => node.remove()),
   );
+
+  it('keeps the title on one line and moves a long hint below it', async () => {
+    const { fixture, panel } = await openMenu();
+    const title = panel.querySelector('.mns-menu-title-text') as HTMLElement;
+    const shortHint = panel.querySelector('.mns-menu-hint') as HTMLElement;
+    // A short hint shares the title line.
+    expect(shortHint.getBoundingClientRect().top).toBeLessThan(
+      title.getBoundingClientRect().bottom,
+    );
+
+    fixture.componentInstance.hint.set(
+      "Ip 193.32.162.218 performed 'crowdsecurity/ssh-bf' (14 events over 2s) on a long host name",
+    );
+    fixture.detectChanges();
+    const longHint = panel.querySelector('.mns-menu-hint') as HTMLElement;
+    const titleBox = title.getBoundingClientRect();
+    const lineHeight = parseFloat(getComputedStyle(title).lineHeight);
+    expect(titleBox.height).toBeLessThan(lineHeight * 1.5);
+    expect(titleBox.width).toBeGreaterThan(30);
+    expect(longHint.getBoundingClientRect().top).toBeGreaterThanOrEqual(titleBox.bottom - 1);
+  });
 
   it('renders the shared shell, title hint, description and selection semantics', async () => {
     const { fixture, panel, items } = await openMenu();
