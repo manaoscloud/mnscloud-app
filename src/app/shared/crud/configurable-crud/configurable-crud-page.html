@@ -607,10 +607,9 @@
         (click)="runRowAction(action, row)"
       >
         <mat-icon>{{ action.icon }}</mat-icon>
-        <mns-menu-label
-          [description]="rowActionDisabledReason(action, row) || action.tooltip | transloco"
-          >{{ action.label | transloco }}</mns-menu-label
-        >
+        <mns-menu-label [description]="rowActionDescription(action, row) | transloco">{{
+          action.label | transloco
+        }}</mns-menu-label>
       </button>
     }
     @if (canDeleteRow(row)) {

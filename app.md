@@ -291,8 +291,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
     the reason a disabled action is unavailable) and the trailing check of a selected item. Rich
     second lines are projected as `<span mnsMenuDescription class="mns-menu-description">`.
   - `<mns-menu-title [hint]>`: uppercase panel/section heading with a context hint (signed-in
-    e-mail, record name, `visible / total`). A title after items opens a divided section; clicking
-    it never closes the panel.
+    e-mail, record name, `visible / total`). The title never wraps or shrinks: a short hint stays
+    beside it, a long one moves to the next line (at most two lines, full text as tooltip). A title
+    after items opens a divided section; clicking it never closes the panel.
   - `<mns-menu-search [(value)] [label]>`: in-panel search. Typing stays in the field; Escape and
     arrow keys reach the menu. The owner resets the value when the menu closes. Lists use
     `.mns-menu-list` and `.mns-menu-empty`.
@@ -1061,7 +1062,7 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     buttons appear on row hover/keyboard focus and stay visible on touch screens. The actions
     column keeps `Edit` inline; row actions and `Delete` live in the `more_vert` menu (compact
     `mns-menu` titled `Actions` with the record name as hint; an action `tooltip` is shown as the
-    second line, and `disabledReason(row)` keeps an action listed but disabled with its reason).
+    second line unless it only repeats the label, and `disabledReason(row)` keeps an action listed but disabled with its reason).
   - Every desktop table ends with the sticky actions column, also when there are no row actions
     (then it is a narrow column without the `Actions` label and with empty cells). Never render the
     `tune` button in a separate bar above the table header; on phones it sits in the card toolbar.
