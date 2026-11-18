@@ -33,6 +33,13 @@ export function aiFailureKey(error: unknown): string | null {
   return null;
 }
 
+/** `error` of a plain API failure or `detail` of a problem+json body, never the raw HTTP line. */
+export function apiErrorText(error: unknown): string | null {
+  const body = (error as { error?: { error?: unknown; detail?: unknown } } | null)?.error;
+  const text = body && typeof body === 'object' ? (body.error ?? body.detail) : null;
+  return typeof text === 'string' && text.trim() ? text : null;
+}
+
 const list = (items: unknown, numbered = false) =>
   (Array.isArray(items) ? items : [])
     .map((item, index) => `${numbered ? `${index + 1}.` : '-'} ${String(item)}`)

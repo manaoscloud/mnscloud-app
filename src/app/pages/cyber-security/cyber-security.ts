@@ -17,6 +17,7 @@ import { AuthService } from '../../services/auth.service';
 import { hasEffectivePermission } from '../../core/guards/permission.guard';
 import {
   aiFailureKey,
+  apiErrorText,
   aiLanguage,
   digestView,
   explanationView,
@@ -61,6 +62,9 @@ import {
   devicePayload,
   devicesEndpoint,
 } from './cyber-network';
+
+/** The page words AI failures itself (aiError), so the global raw HTTP toast stays off. */
+const AI_CALL = { silent: true } as const;
 
 type CyberSection =
   | 'servers'
@@ -1171,8 +1175,9 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     return aiLanguage(this.transloco.getActiveLang());
   }
 
+  /** AI refusals get their own text; other failures the API text, never the raw HTTP line. */
   private aiError(error: unknown, fallback: string): void {
-    this.snack.error(this.t(aiFailureKey(error) ?? (this.errorMessage(error) || fallback)));
+    this.snack.error(this.t(aiFailureKey(error) ?? apiErrorText(error) ?? fallback));
   }
 
   /** cyber_security.vuln_explain: plain-language explanation beside the rule-based fix. */
@@ -1181,6 +1186,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       const response = await this.api.post<{ data?: Record<string, unknown> }>(
         `cyber-security/vulnerabilities/findings/${encodeURIComponent(String(finding['findingUUID']))}/ai-explain`,
         { code: finding['code'], agentUUID: finding['agentUUID'], language: this.language() },
+        AI_CALL,
       );
       openDataViewerDialog(
         this.dialog,
@@ -1196,6 +1202,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       const response = await this.api.post<{ data?: Record<string, unknown> }>(
         'cyber-security/vulnerabilities/ai-digest',
         { language: this.language() },
+        AI_CALL,
       );
       const data = response?.data ?? {};
       if (!data['digest']) {
@@ -1214,6 +1221,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       const response = await this.api.post<{ data?: Record<string, unknown> }>(
         'cyber-security/alerts/ai-triage',
         { cyberAccountUUID: account ? String(account) : null, language: this.language() },
+        AI_CALL,
       );
       const data = response?.data ?? {};
       if (!((data['groups'] as unknown[] | undefined) ?? []).length) {
@@ -1232,17 +1240,22 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const path = `system/cyber-security/vulnerabilities/${encodeURIComponent(code)}/exposure`;
     try {
       let data: Record<string, unknown> | undefined;
+      let aiUnavailable: string | null = null;
       try {
         data = (
-          await this.api.post<{ data?: Record<string, unknown> }>(`${path}/ai-watch`, {
-            language: this.language(),
-          })
+          await this.api.post<{ data?: Record<string, unknown> }>(
+            `${path}/ai-watch`,
+            { language: this.language() },
+            AI_CALL,
+          )
         )?.data;
       } catch (error) {
-        if (!aiFailureKey(error)) throw error;
-        data = (await this.api.get<{ data?: Record<string, unknown> }>(path))?.data;
+        aiUnavailable = aiFailureKey(error);
+        if (!aiUnavailable) throw error;
+        data = (await this.api.get<{ data?: Record<string, unknown> }>(path, AI_CALL))?.data;
       }
       openDataViewerDialog(this.dialog, exposureView(code, data ?? {}, this.t.bind(this)));
+      if (aiUnavailable) this.snack.warning(this.t(aiUnavailable));
     } catch (error) {
       this.aiError(error, 'cyberSecurity.ai.failed');
     }
