@@ -13,6 +13,7 @@ import {
   CONTRACT_STATUSES,
   ITEM_KINDS,
   CYBER_SECURITY_METRICS,
+  SUPPORT_REMOTE_METRIC,
   CONTRACT_USAGE_METRICS,
   ITEM_NATURES,
   MODULE_LOOKUP,
@@ -260,7 +261,9 @@ const config = defineCrud({
             values['module'] === 'cyber_security' ||
             values['module'] === 'commerce' ||
             values['module'] === 'conversations' ||
-            values['module'] === 'contracts',
+            values['module'] === 'contracts' ||
+            // Managed support bills the contract's own customer: the API fills the resource.
+            values['module'] === 'support_remote',
           source: 'BciSourceResourceUUID',
           label: 'Resource UUID',
           help: 'Resource in the source module (connection, VPS, account...). Required for usage items.',
@@ -345,7 +348,11 @@ const config = defineCrud({
           type: 'search-select',
           source: 'BciSourceResourceUUID',
           help: 'contracts.contractItemHelp',
-          remoteLookup: { endpoint: 'contracts/accounts?status=1', uuidField: 'CtaUUID', labelField: 'CtaName' },
+          remoteLookup: {
+            endpoint: 'contracts/accounts?status=1',
+            uuidField: 'CtaUUID',
+            labelField: 'CtaName',
+          },
           hiddenWhen: ({ values }) => values['module'] !== 'contracts',
           requiredWhen: ({ values }) => values['module'] === 'contracts',
           quickCreate: false,
@@ -408,13 +415,15 @@ const config = defineCrud({
             values['module'] === 'hr' ||
             values['module'] === 'commerce' ||
             values['module'] === 'cyber_security' ||
-            values['module'] === 'contracts',
+            values['module'] === 'contracts' ||
+            values['module'] === 'support_remote',
           requiredWhen: ({ values }) =>
             values['kind'] === 'usage' &&
             values['module'] !== 'hr' &&
             values['module'] !== 'commerce' &&
             values['module'] !== 'cyber_security' &&
-            values['module'] !== 'contracts',
+            values['module'] !== 'contracts' &&
+            values['module'] !== 'support_remote',
         },
         {
           key: 'contractsMetric',
@@ -483,7 +492,9 @@ const config = defineCrud({
                     ? values['conversationsAccountUUID']
                     : values['module'] === 'contracts'
                       ? values['contractsAccountUUID']
-                      : values['resourceUUID']) || null,
+                      : values['module'] === 'support_remote'
+                        ? null
+                        : values['resourceUUID']) || null,
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -501,7 +512,9 @@ const config = defineCrud({
                   ? values['cyberMetric']
                   : values['module'] === 'contracts'
                     ? values['contractsMetric']
-                    : values['metric'] || null,
+                    : values['module'] === 'support_remote'
+                      ? SUPPORT_REMOTE_METRIC
+                      : values['metric'] || null,
         includedQuantity: Number(values['includedQuantity'] ?? 0),
         overagePrice: Number(values['overagePrice'] ?? 0),
         startDate: values['startDate'],
