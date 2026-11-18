@@ -552,7 +552,7 @@ export class SettingsThemesPage extends ConfigurableCrudPageBase<ConfigurableCru
     this.refreshList();
     if (failed.length) {
       this.snack.error(
-        this.t('Theme saved, but some images were not uploaded: {list}', {
+        this.t('Theme saved, but some images were not uploaded: {{list}}', {
           list: failed.join('; '),
         }),
       );

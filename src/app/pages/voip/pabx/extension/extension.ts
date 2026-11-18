@@ -439,12 +439,14 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       this.dateTime.formatDateTime(value as string | null | undefined, 'short', 'short') || '-';
     const lines: string[] = [];
     if (state === 'online') {
-      lines.push(this.t('Online since {date}', { date: when(row.PresenceSince) }));
+      lines.push(this.t('Online since {{date}}', { date: when(row.PresenceSince) }));
       const devices = Number(row.PresenceContactCount ?? 0);
-      if (devices > 1) lines.push(this.t('{count} devices registered', { count: devices }));
+      if (devices > 1) lines.push(this.t('{{count}} devices registered', { count: devices }));
     } else if (state === 'offline') {
-      lines.push(this.t('Offline since {date}', { date: when(row.PresenceSince) }));
-      lines.push(this.t('Last registration: {date}', { date: when(row.PresenceLastRegisteredAt) }));
+      lines.push(this.t('Offline since {{date}}', { date: when(row.PresenceSince) }));
+      lines.push(
+        this.t('Last registration: {{date}}', { date: when(row.PresenceLastRegisteredAt) }),
+      );
     } else if (state === 'never') {
       lines.push(this.t('This extension has never registered.'));
     } else if (state === 'unknown') {
@@ -625,7 +627,7 @@ export class VoipPabxExtensionPage extends ConfigurableCrudPageBase<ExtensionRec
       const skipped = readArray(response, 'skippedExisting');
       if (skipped.length) {
         this.snack.warning(
-          this.t('{count} extensions were skipped because they already exist.', {
+          this.t('{{count}} extensions were skipped because they already exist.', {
             count: skipped.length,
           }),
         );
@@ -898,6 +900,7 @@ function extensionStatusSections(result: RuntimeDiagnosticResult) {
           { key: 'domain', label: 'Domain' },
           { key: 'registration', label: 'Registration', translate: true },
           { key: 'endpoint', label: 'Endpoint', monospace: true },
+          { key: 'device', label: 'Device' },
           { key: 'contact', label: 'Contact', monospace: true },
         ],
         rows: extensions.map((item) => ({
@@ -907,6 +910,7 @@ function extensionStatusSections(result: RuntimeDiagnosticResult) {
             item['registrationStatus'] ?? item['status'] ?? 'unknown',
           ),
           endpoint: item['endpoint'] ?? '-',
+          device: item['userAgent'] ?? '-',
           contact: item['contact'] ?? '-',
         })),
         emptyLabel: 'No extension statuses were returned.',

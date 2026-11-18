@@ -400,7 +400,7 @@ export class BillingSystemPriceAdjustmentsPage extends ConfigurableCrudPageBase<
       if (this.formValues()['indexCode'] !== code) return;
       this.patchFormValues({ percent: Number(Number(percent).toFixed(4)) });
       this.snack.success(
-        this.t('{index} accumulated in 12 months: {percent}%', {
+        this.t('{{index}} accumulated in 12 months: {{percent}}%', {
           index: code,
           percent: Number(percent).toFixed(2),
         }),
