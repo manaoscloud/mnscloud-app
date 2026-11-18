@@ -116,6 +116,7 @@ function config(): ConfigurableCrudConfig {
         field: 'CustomerName',
         uuidField: 'RegCustomerRcuUUID',
       },
+      { id: 'domain', label: 'Domain', field: 'DomainName', kind: 'text', copyable: true },
       {
         id: 'server',
         label: 'Server',

@@ -430,7 +430,7 @@ export class VoipPabxServerPage extends ConfigurableCrudPageBase<ServerRecord> {
       const correlationID = response?.data?.correlationID;
       this.snack.success(
         correlationID
-          ? this.t('Control validation queued. Correlation: {correlationID}', { correlationID })
+          ? this.t('Control validation queued. Correlation: {{correlationID}}', { correlationID })
           : this.t('Control validation queued. Check Activity Logs for the result.'),
       );
     } catch (error) {
