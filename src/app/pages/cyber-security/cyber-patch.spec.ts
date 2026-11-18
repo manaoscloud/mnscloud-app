@@ -1,5 +1,6 @@
 import {
   findingPatchAction,
+  findingPatchBlocked,
   patchPolicyForm,
   patchRunsCollection,
   patchServerActions,
@@ -90,6 +91,17 @@ describe('Cyber Security patch management views', () => {
       agentUUID: 'a',
       findingUUIDs: ['f'],
     });
+    expect(findingPatchBlocked({ patchEnabled: false, patchSupported: true })).toBe(
+      'cyberSecurity.patch.enableFirst',
+    );
+    expect(findingPatchBlocked({ patchEnabled: false, patchSupported: false })).toBe(
+      'cyberSecurity.patch.agentOutdated',
+    );
+    expect(findingPatchBlocked({ patchEnabled: true, patchSupported: true })).toBeNull();
+    expect(findingPatchBlocked({})).toBeNull();
+    expect(findingPatchAction.disabledReason?.({ patchEnabled: false })).toBe(
+      'cyberSecurity.patch.enableFirst',
+    );
     expect(runStateTone('failed')).toBe('chip-failed');
   });
 
