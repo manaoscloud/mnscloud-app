@@ -116,8 +116,8 @@ export function assistRequestErrorKey(error: unknown): string {
       return 'support.remote.error.revision';
     case 'SUPPORT_REMOTE_EXEC_LIVE':
       return 'support.remote.proposal.error.execLive';
-    case 'ACCESS_GATEWAY_PRODUCTION_RESTRICTED':
-      return 'support.remote.proposal.error.productionRestricted';
+    case 'ACCESS_GATEWAY_REMOTE_SUPPORT_DISABLED':
+      return 'support.remote.proposal.error.remoteSupportDisabled';
     case 'ACCESS_GATEWAY_UNAVAILABLE':
       return 'support.remote.proposal.error.gateway';
     case 'AI_NO_CREDIT':

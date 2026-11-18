@@ -88,7 +88,7 @@ const FINAL_STATES = ['closed', 'failed', 'blocked'];
 /** Translation keys of the API codes of the console routes; other errors keep the API text. */
 const ERROR_KEYS: Record<string, string> = {
   ACCESS_GATEWAY_UNAVAILABLE: 'network.console.error.unavailable',
-  ACCESS_GATEWAY_PRODUCTION_RESTRICTED: 'network.console.error.productionRestricted',
+  ACCESS_GATEWAY_REMOTE_SUPPORT_DISABLED: 'network.console.error.remoteSupportDisabled',
   ACCESS_GATEWAY_DESTINATION_REFUSED: 'network.console.error.destinationRefused',
   ACCESS_GATEWAY_METHOD_UNSUPPORTED: 'network.console.error.methodUnsupported',
   ACCESS_GATEWAY_PATH_UNSUPPORTED: 'network.console.error.pathUnsupported',

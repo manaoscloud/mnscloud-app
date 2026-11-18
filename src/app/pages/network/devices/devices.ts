@@ -84,6 +84,37 @@ export function selectableMgmtVpnAddresses(
   );
 }
 
+/** Tenant devices are reached only while remote support is on (managed device unit, ST-J1). */
+function remoteSupportOff(platform: boolean, row: ConfigurableCrudRecord): string | null {
+  return !platform && Number(row['NwdRemoteSupportEnabled'] ?? 0) !== 1
+    ? 'network.remoteSupport.requiredReason'
+    : null;
+}
+
+function remoteSupportRequest(base: string, enabled: boolean) {
+  return {
+    method: 'put' as const,
+    endpoint: (row: ConfigurableCrudRecord) =>
+      `${base}/devices/${String(row['NwdUUID'])}/remote-support`,
+    body: (row: ConfigurableCrudRecord) => ({
+      enabled,
+      revision: Number(row['NwdRevision']),
+    }),
+    successMessage: enabled ? 'network.remoteSupport.enabled' : 'network.remoteSupport.disabled',
+    confirm: enabled
+      ? {
+          title: 'network.remoteSupport.enable',
+          message: 'network.remoteSupport.enableMessage',
+          confirmLabel: 'network.remoteSupport.enable',
+        }
+      : {
+          title: 'network.remoteSupport.disable',
+          message: 'network.remoteSupport.disableMessage',
+          confirmLabel: 'network.remoteSupport.disable',
+        },
+  };
+}
+
 function hostKeyText(row: ConfigurableCrudRecord, translate: Translate): string {
   const fingerprint = formText(row['NwdHostKeyFingerprint']);
   if (!fingerprint) return translate('network.hostKeyNotPinned');
@@ -517,6 +548,18 @@ function deviceConfig(
         optional: true,
         value: (row, t) => hostKeyText(row, t),
       },
+      {
+        id: 'remoteSupport',
+        label: 'network.remoteSupport.column',
+        field: 'NwdRemoteSupportEnabled',
+        optional: true,
+        value: (row, t) =>
+          t(
+            Number(row['NwdRemoteSupportEnabled'] ?? 0) === 1
+              ? 'network.remoteSupport.on'
+              : 'network.remoteSupport.off',
+          ),
+      },
       { id: 'status', label: 'Status', field: 'NwdStatus', kind: 'status' },
     ],
     payload: (values) => devicePayload(values, platform),
@@ -531,6 +574,7 @@ function deviceConfig(
         icon: 'terminal',
         tooltip: 'network.console.openTooltip',
         visible: () => canConsole,
+        disabledReason: (row) => remoteSupportOff(platform, row),
       },
       {
         key: 'access-test',
@@ -538,6 +582,25 @@ function deviceConfig(
         icon: 'network_check',
         tooltip: 'network.accessTest.tooltip',
         visible: () => canConsole,
+        disabledReason: (row) => remoteSupportOff(platform, row),
+      },
+      {
+        key: 'remote-support-on',
+        label: 'network.remoteSupport.enable',
+        icon: 'support_agent',
+        tooltip: 'network.remoteSupport.enableTooltip',
+        visible: (row) =>
+          !platform && canWrite && Number(row['NwdRemoteSupportEnabled'] ?? 0) !== 1,
+        request: remoteSupportRequest(base, true),
+      },
+      {
+        key: 'remote-support-off',
+        label: 'network.remoteSupport.disable',
+        icon: 'block',
+        tooltip: 'network.remoteSupport.disableTooltip',
+        visible: (row) =>
+          !platform && canWrite && Number(row['NwdRemoteSupportEnabled'] ?? 0) === 1,
+        request: remoteSupportRequest(base, false),
       },
       {
         key: 'connections',
