@@ -1,5 +1,6 @@
 import {
   aiFailureKey,
+  apiErrorText,
   aiLanguage,
   digestView,
   explanationView,
@@ -21,6 +22,17 @@ describe('Cyber Security AI views', () => {
     expect(aiFailureKey(null)).toBeNull();
     expect(aiLanguage('es-ES')).toBe('es-ES');
     expect(aiLanguage('fr')).toBe('pt-BR');
+  });
+
+  it('reads the API text of a failure and never the raw HTTP line', () => {
+    expect(apiErrorText({ error: { error: 'Invalid vulnerability code.' } })).toBe(
+      'Invalid vulnerability code.',
+    );
+    expect(apiErrorText({ error: { title: 'Forbidden', detail: 'No access.' } })).toBe(
+      'No access.',
+    );
+    expect(apiErrorText({ message: 'Http failure response for /x: 503 OK', error: {} })).toBeNull();
+    expect(apiErrorText(null)).toBeNull();
   });
 
   it('shows the rule-based command beside the AI explanation', () => {
