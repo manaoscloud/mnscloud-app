@@ -483,6 +483,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'status',
       span: 1,
     },
+    // wide-field: Record tab layout decided by the user (2026-11-18): Status alone on line 1,
+    // Customer (2) + Portal (1) + Name (1) on line 2, Plan (2) + Image (1) + Placement group (1).
     {
       key: 'customerUUID',
       source: 'RegCustomerRcuUUID',
@@ -490,7 +492,9 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       type: 'search-select',
       required: true,
-      span: 1,
+      span: 2,
+      wideField: true,
+      breakBefore: true,
     },
     {
       key: 'portalEnabled',
@@ -515,6 +519,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
+    // wide-field: Record tab layout decided by the user (2026-11-18), see Customer.
     {
       key: 'planUUID',
       source: 'HostingVpsPlanHvpUUID',
@@ -522,6 +527,9 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Plan',
       type: 'search-select',
       required: true,
+      span: 2,
+      wideField: true,
+      breakBefore: true,
     },
     {
       key: 'image',
@@ -816,6 +824,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       customerField.helpWhen = () =>
         this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
+
+    // Without Customer (and Portal) on line 2, Name starts that line instead of following Status.
+    const nameField = this.config.fields.find((field) => field.key === 'name');
+    if (nameField) nameField.breakBeforeWhen = () => !this.hasCustomerScope();
 
     // FA2: on a platform server an empty group is automatic (from the name mns-<role>-<env><n>).
     const groupField = this.config.fields.find((field) => field.key === 'placementGroup');

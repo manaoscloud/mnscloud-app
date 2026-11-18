@@ -1,6 +1,7 @@
 import { Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -162,6 +163,7 @@ export class SupportRemoteProposalDecisionDialogComponent {
   imports: [
     FormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -207,6 +209,14 @@ export class SupportRemoteProposalDecisionDialogComponent {
                 }
               </p>
             }
+            <mat-checkbox
+              name="customerApproval"
+              [disabled]="loading()"
+              [ngModel]="customerApproval()"
+              (ngModelChange)="customerApproval.set($event)"
+              >{{ 'support.remote.settings.customerApproval' | transloco }}</mat-checkbox
+            >
+            <p class="meta">{{ 'support.remote.settings.customerApprovalHelp' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -235,6 +245,7 @@ export class SupportRemoteSettingsDialogComponent {
   readonly saving = signal(false);
   readonly current = signal<SettingsRecord | null>(null);
   readonly prefix = signal('');
+  readonly customerApproval = signal(false);
   private readonly prefixField = viewChild(NgModel);
 
   constructor() {
@@ -246,6 +257,7 @@ export class SupportRemoteSettingsDialogComponent {
       const settings = await this.service.settings();
       this.current.set(settings);
       this.prefix.set(settings.commentPrefix ?? '');
+      this.customerApproval.set(settings.customerApprovalRequired);
     } catch {
       this.snack.error('support.remote.settings.loadFailed');
     } finally {
@@ -264,7 +276,10 @@ export class SupportRemoteSettingsDialogComponent {
     this.saving.set(true);
     try {
       const value = this.prefix().trim();
-      const saved = await this.service.saveSettings(value || null, settings.revision);
+      let saved = await this.service.saveSettings(value || null, settings.revision);
+      if (this.customerApproval() !== settings.customerApprovalRequired) {
+        saved = await this.service.saveCustomerApproval(this.customerApproval(), saved.revision);
+      }
       this.snack.success('support.remote.settings.saved');
       this.ref.close(saved);
     } catch (error) {

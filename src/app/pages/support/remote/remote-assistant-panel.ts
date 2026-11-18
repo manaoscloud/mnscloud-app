@@ -487,7 +487,9 @@ export type RunbookRequest = {
     }
     @if (runCards().length) {
       <details class="proposals" [open]="hasActiveRun()">
-        <summary>{{ 'support.remote.runbooks.card.title' | transloco }} ({{ runCards().length }})</summary>
+        <summary>
+          {{ 'support.remote.runbooks.card.title' | transloco }} ({{ runCards().length }})
+        </summary>
         <div class="proposals-body">
           @for (card of runCards(); track card.run.SrxUUID) {
             <article class="card" [attr.aria-label]="card.run.RunbookName">
@@ -500,7 +502,9 @@ export type RunbookRequest = {
                   <span
                     class="status-pill status-chip"
                     [class]="'status-pill status-chip ' + runChip(card.run.SrxStatus)"
-                    >{{ 'support.remote.runbooks.run.status.' + card.run.SrxStatus | transloco }}</span
+                    >{{
+                      'support.remote.runbooks.run.status.' + card.run.SrxStatus | transloco
+                    }}</span
                   >
                 </span>
               </div>
@@ -532,10 +536,15 @@ export type RunbookRequest = {
                     >
                     <span data-report-mask>{{
                       step.title ||
-                        ('support.remote.runbooks.card.stepN' | transloco: { number: step.index + 1 })
+                        ('support.remote.runbooks.card.stepN'
+                          | transloco: { number: step.index + 1 })
                     }}</span>
                     @if (step.proposalUUID) {
-                      <button mat-button type="button" (click)="proposalsForced.set(!proposalsForced())">
+                      <button
+                        mat-button
+                        type="button"
+                        (click)="proposalsForced.set(!proposalsForced())"
+                      >
                         {{ 'support.remote.runbooks.card.viewProposal' | transloco }}
                       </button>
                     }
@@ -575,7 +584,9 @@ export type RunbookRequest = {
                 <span
                   class="status-pill status-chip"
                   [class]="'status-pill status-chip ' + rotationChip(rotation.ScrState)"
-                  >{{ 'support.remote.runbooks.rotation.state.' + rotation.ScrState | transloco }}</span
+                  >{{
+                    'support.remote.runbooks.rotation.state.' + rotation.ScrState | transloco
+                  }}</span
                 >
               </div>
               @if (rotation.CredentialUsername) {
@@ -645,7 +656,10 @@ export type RunbookRequest = {
           } @else if (entry.type === 'suggest') {
             <div class="card">
               <div class="card-head">
-                <strong><mat-icon>checklist</mat-icon> {{ 'support.remote.runbooks.suggest.title' | transloco }}</strong>
+                <strong
+                  ><mat-icon>checklist</mat-icon>
+                  {{ 'support.remote.runbooks.suggest.title' | transloco }}</strong
+                >
               </div>
               <div data-report-mask>{{ entry.name }} · {{ entry.device }}</div>
               @for (param of paramList(entry.params); track param[0]) {
@@ -657,7 +671,13 @@ export type RunbookRequest = {
                   <button
                     mat-flat-button
                     type="button"
-                    (click)="runbookRequested.emit({ runbookUUID: entry.runbookUUID, params: entry.params, deviceUUID: entry.deviceUUID })"
+                    (click)="
+                      runbookRequested.emit({
+                        runbookUUID: entry.runbookUUID,
+                        params: entry.params,
+                        deviceUUID: entry.deviceUUID,
+                      })
+                    "
                   >
                     {{ 'support.remote.runbooks.suggest.run' | transloco }}
                   </button>
@@ -805,7 +825,7 @@ export class SupportRemoteAssistantComponent {
   /** Changes when a runbook, rotation, proposal or change event arrives: reloads runs and rotations. */
   private readonly runbookEventKey = computed(
     () => `${runbookMark(this.events())}:${this.proposalMark()}`,
-  );  /** Highest proposal_* / change_* sequence: a change reloads the proposal list. */
+  ); /** Highest proposal_* / change_* sequence: a change reloads the proposal list. */
   private readonly proposalMark = computed(() =>
     this.events().reduce(
       (max, event) => (isProposalEvent(event.SreKind) ? Math.max(max, Number(event.SreSeq)) : max),
@@ -972,7 +992,9 @@ export class SupportRemoteAssistantComponent {
       disableClose: true,
       data: {
         title: this.transloco.translate(`support.remote.runbooks.rotation.resolve.${active}`),
-        message: this.transloco.translate(`support.remote.runbooks.rotation.resolve.${active}Confirm`),
+        message: this.transloco.translate(
+          `support.remote.runbooks.rotation.resolve.${active}Confirm`,
+        ),
         confirmLabel: this.transloco.translate('Confirm'),
       },
     });
@@ -999,7 +1021,10 @@ export class SupportRemoteAssistantComponent {
       await this.runbooks.cancelRun(this.sessionUUID(), run);
       this.snack.success('support.remote.runbooks.card.cancelled');
     } catch (error) {
-      this.snack.error(runbookRequestErrorKey(error) || 'support.remote.runbooks.card.cancelFailed', 7000);
+      this.snack.error(
+        runbookRequestErrorKey(error) || 'support.remote.runbooks.card.cancelFailed',
+        7000,
+      );
     } finally {
       this.busyRun.set('');
       await this.loadRunbookState(this.sessionUUID());
@@ -1050,9 +1075,14 @@ export class SupportRemoteAssistantComponent {
     this.busyProposal.set(proposal.SrpUUID);
     try {
       if (decision === 'approve') {
-        await this.service.approve(this.sessionUUID(), proposal, result.note);
+        const state = await this.service.approve(this.sessionUUID(), proposal, result.note);
         this.lastDecision = { uuid: proposal.SrpUUID, at: Date.now() };
-        this.snack.success('support.remote.proposal.approved');
+        this.snack.success(
+          state === 'awaiting'
+            ? 'support.remote.proposal.awaitingCustomer'
+            : 'support.remote.proposal.approved',
+          state === 'awaiting' ? 7000 : undefined,
+        );
       } else {
         await this.service.reject(this.sessionUUID(), proposal, result.note);
         this.snack.success('support.remote.proposal.rejected');
