@@ -48,3 +48,17 @@ export const voipCapacityReadGuard: CanActivateFn = async () => {
     ? true
     : router.parseUrl('/dashboard');
 };
+
+/** Delegated Cyber Security platform pages: the API hint (or a master); the API reauthorizes. */
+export const cyberPlatformGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const api = inject(ApiService);
+  const router = inject(Router);
+  const loaded = await auth.loadMeFromApi(api);
+  const user = auth.user();
+  return loaded &&
+    (user?.resourceAccess?.cyberPlatform === true ||
+      (user?.permissions ?? []).includes('platform.master.access'))
+    ? true
+    : router.parseUrl('/dashboard');
+};
