@@ -523,6 +523,9 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
 - `/user/release-notes` (`ReleaseNotesPage`, user menu › Novidades) is a feed on `PageShellComponent`,
   one card per feature (type, modules, date, text, "action required", component versions), not a
   table. Filters: My modules / All modules (tenant entitlements, API side), type and module chips.
+  Module chips are one per family (`moduleFamily`: `module.hosting.vps.firewall` → `module.hosting`)
+  and match every sub-module (the API `module` filter and RSS do the same); card tags show the
+  family plus the sub-module menu name when one exists ("Hospedagem › VPS"), each tag once.
   The platform master gets the tabs "In this environment" and "Being deployed" (`status=pending`) and
   sees each component marked deployed or not.
 - Public changelog `/release-notes` (same `ReleaseNotesPage`, `data.publicFeed`, `publicReleaseNotesGuard`
