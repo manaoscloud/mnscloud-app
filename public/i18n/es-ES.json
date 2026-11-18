@@ -6354,6 +6354,7 @@
   "nav.cyber-security.platform.inventory": "Inventario",
   "nav.cyber-security.platform.patches": "Actualizaciones",
   "nav.cyber-security.platform.hardening": "Endurecimiento",
+  "nav.cyber-security.platform.network": "Red",
   "nav.cyber-security.platform.exposure": "Exposición",
   "nav.cyber-security.platform.alerts": "Alertas",
   "nav.cyber-security.platform.decisions": "Decisiones",
@@ -15049,5 +15050,8 @@
   "support.remote.runbooks.rotation.resolve.currentConfirm": "La contraseña antigua sigue vigente: la contraseña provisional se descarta y la bóveda no cambia.",
   "support.remote.runbooks.rotation.resolve.newConfirm": "El equipo ya usa la contraseña nueva: se guardará en la bóveda en lugar de la antigua.",
   "support.remote.runbooks.rotation.resolve.done": "Respuesta registrada.",
-  "support.remote.runbooks.rotation.resolve.failed": "No se pudo registrar la respuesta."
+  "support.remote.runbooks.rotation.resolve.failed": "No se pudo registrar la respuesta.",
+  "cyberSecurity.network.registryDevice": "Equipo de Red",
+  "cyberSecurity.network.registryDeviceHelp": "Equipo de la plataforma en el registro de Red que este monitoreo sigue.",
+  "cyberSecurity.network.registryNameHelp": "Opcional: en blanco, usa el nombre del equipo en el registro de Red."
 }

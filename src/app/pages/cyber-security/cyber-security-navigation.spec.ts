@@ -15,7 +15,7 @@ describe('Cyber Security navigation scopes', () => {
     expect(master).toContain('cyber-security/hardening');
     expect(master).toContain('cyber-security/exposure');
     expect(master).toContain('cyber-security/patches');
-    expect(master).not.toContain('cyber-security/network');
+    expect(master).toContain('cyber-security/network');
     expect(cyberSecurityRouteData('servers', 'master').scope).toBe('master');
     expect(cyberSecurityRouteData('servers', 'tenant').scope).toBe('tenant');
   });
@@ -31,7 +31,7 @@ describe('Cyber Security navigation scopes', () => {
     expect(paths).toContain('cyber-security/platform/exposure');
     expect(paths.some((p) => String(p).includes('secret'))).toBeFalse();
     expect(paths).toContain('cyber-security/platform/patches');
-    expect(paths.some((p) => String(p).endsWith('/network'))).toBeFalse();
+    expect(paths).toContain('cyber-security/platform/network');
     for (const route of routes) {
       expect(route.canActivate).toEqual([guard]);
       expect(route.data?.['scope']).toBe('master');

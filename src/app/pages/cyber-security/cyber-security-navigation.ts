@@ -68,7 +68,7 @@ const SECTION_PAGES: { section: string; title: string; platform?: boolean }[] = 
   { section: 'patches', title: 'Security updates', platform: true },
   { section: 'exposure', title: 'External exposure', platform: true },
   { section: 'hardening', title: 'Hardening and antivirus', platform: true },
-  { section: 'network', title: 'Network devices' },
+  { section: 'network', title: 'Network devices', platform: true },
 ];
 
 export function cyberSecuritySectionRoutes(scope: CyberRouteScope): Routes {
