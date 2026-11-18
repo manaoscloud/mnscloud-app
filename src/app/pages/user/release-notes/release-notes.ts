@@ -25,6 +25,11 @@ import {
 type Scope = 'mine' | 'all';
 type Status = 'live' | 'pending';
 
+/** Module family of a note code: `module.hosting.vps.firewall` → `module.hosting`. */
+export function moduleFamily(code: string) {
+  return code === 'platform' ? code : code.split('.').slice(0, 2).join('.');
+}
+
 /**
  * What changed in the platform (App › Novidades), one entry per feature, shown only when every
  * component of the feature is deployed in this environment (DEV shows DEV, PROD shows PROD).
@@ -79,16 +84,19 @@ export class ReleaseNotesPage {
 
   readonly loading = computed(() => this.entries.isLoading());
   readonly failed = computed(() => this.entries.status() === 'error');
-  /** Modules present in the loaded entries, for the module filter. */
+  /** Modules present in the loaded entries, one per family (`module.hosting`), for the filter. */
   readonly modules = computed(() =>
-    [...new Set(this.entries.value().flatMap((entry) => entry.modules))].sort((a, b) =>
-      this.moduleLabel(a).localeCompare(this.moduleLabel(b)),
+    [...new Set(this.entries.value().flatMap((entry) => entry.modules.map(moduleFamily)))].sort(
+      (a, b) => this.moduleLabel(a).localeCompare(this.moduleLabel(b)),
     ),
   );
   readonly items = computed(() =>
     this.entries
       .value()
-      .filter((entry) => !this.module() || entry.modules.includes(this.module()))
+      .filter(
+        (entry) =>
+          !this.module() || entry.modules.some((code) => moduleFamily(code) === this.module()),
+      )
       .filter((entry) => !this.type() || entry.type === this.type()),
   );
 
@@ -150,12 +158,33 @@ export class ReleaseNotesPage {
     return productLabel(product);
   }
 
-  /** `module.dns` → the DNS menu name; `platform` → Platform. */
+  /** `module.dns` → the DNS menu name; `platform` → Platform. Family name only (filter chips). */
   moduleLabel(code: string) {
     if (code === 'platform') return this.i18n.t('releaseNotes.platform');
-    const key = `nav.${code.replace(/^module\./, '').split('.')[0]}`;
+    const family = moduleFamily(code).replace(/^module\./, '');
+    return this.navLabel(family) ?? family;
+  }
+
+  /**
+   * Module tags of one card: family plus the sub-module menu name when it has one
+   * (`module.hosting.vps.firewall` → "Hospedagem › VPS"), each tag once.
+   */
+  entryModules(entry: ReleaseNote) {
+    return [...new Set(entry.modules.map((code) => this.moduleDetailLabel(code)))];
+  }
+
+  private moduleDetailLabel(code: string) {
+    const family = this.moduleLabel(code);
+    const [, sub] = code.replace(/^module\./, '').split('.');
+    if (code === 'platform' || !sub) return family;
+    const subLabel = this.navLabel(`${moduleFamily(code).replace(/^module\./, '')}.${sub}`);
+    return subLabel ? `${family} › ${subLabel}` : family;
+  }
+
+  private navLabel(path: string) {
+    const key = `nav.${path}`;
     const label = this.i18n.t(key);
-    return label && label !== key ? label : code.replace(/^module\./, '');
+    return label && label !== key ? label : null;
   }
 
   date(entry: ReleaseNote) {

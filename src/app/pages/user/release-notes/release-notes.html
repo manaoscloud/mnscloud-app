@@ -97,8 +97,8 @@
             <mat-icon aria-hidden="true">{{ icon(entry) }}</mat-icon>
             {{ 'releaseNotes.type.' + entry.type | transloco }}
           </span>
-          @for (code of entry.modules; track code) {
-            <span class="release-note-module">{{ moduleLabel(code) }}</span>
+          @for (label of entryModules(entry); track label) {
+            <span class="release-note-module">{{ label }}</span>
           }
           <span class="release-note-date">{{ date(entry) }}</span>
         </div>
