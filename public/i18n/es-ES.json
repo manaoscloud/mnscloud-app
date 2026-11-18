@@ -4311,6 +4311,7 @@
   "Failed to load provider catalog.": "Error al cargar el catálogo del proveedor.",
   "Failed to load provider credentials.": "Error al cargar las credenciales del proveedor.",
   "Failed to retry VPS provisioning.": "Error al reintentar el aprovisionamiento VPS.",
+  "VPS provisioning is still running.": "El aprovisionamiento de la VPS aún está en curso.",
   "Failed to test provider.": "Error al probar el proveedor.",
   "No compatible plans are available for this instance.": "No hay planes compatibles disponibles para esta instancia.",
   "Sangfor requires an API token, Access Key/Secret Key, or username/password.": "Sangfor requiere un token de API, Access Key/Secret Key o usuario/contraseña.",
