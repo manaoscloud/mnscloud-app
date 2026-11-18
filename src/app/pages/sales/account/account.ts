@@ -1,14 +1,18 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { openCrudTemplateDialog } from '../../../shared/dialog/crud-dialog.util';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { revisionDeletePayloads } from '../../../shared/crud/configurable-crud/revision-delete';
+import { ConfigurableCrudCollectionDialog } from '../../../shared/crud/configurable-crud/configurable-crud-collection-dialog';
 import { resaleAccountRowActions } from '../../../shared/crud/configurable-crud/account-resale-actions';
 
 // Commercial accounts shared by Sales and POS: the internal account of the reseller (automatic)
@@ -75,9 +79,63 @@ const config = defineCrud({
     { id: 'name', field: 'CmaName', label: 'Name', kind: 'identity' },
     { id: 'customer', field: 'CustomerName', label: 'Customer' },
     { id: 'workspace', field: 'WorkspaceName', label: 'commerceAccount.workspace' },
+    {
+      id: 'portal',
+      field: 'CmaPortalEnabled',
+      label: 'commerceAccount.portalEnabled',
+      kind: 'boolean',
+    },
     { id: 'status', field: 'CmaStatus', label: 'Status', kind: 'status' },
   ],
 });
+
+/** Operators of a customer shop and the Portal login each one opens the web POS with. */
+function operatorsConfig(row: ConfigurableCrudRecord, canManage: boolean) {
+  return defineCrud({
+    endpoint: `sale/accounts/${row['CmaUUID']}/members`,
+    uuidField: 'CmmUUID',
+    pageTitle: 'commerceAccount.operators',
+    pageDescription: 'commerceAccount.portalUserHelp',
+    editTitle: 'commerceAccount.linkPortalUser',
+    canCreate: false,
+    canDelete: false,
+    canEdit: canManage,
+    bulkDelete: false,
+    initialValues: { portalUserUUID: null },
+    fields: [
+      {
+        key: 'portalUserUUID',
+        source: 'RegCustomerUserRcsUUID',
+        label: 'commerceAccount.portalUser',
+        type: 'search-select',
+        help: 'commerceAccount.portalUserHelp',
+        span: 1,
+        remoteLookup: {
+          endpoint: `sale/accounts/${row['CmaUUID']}/portal-users`,
+          uuidField: 'RcsUUID',
+          labelField: 'RcsUsername',
+          descriptionField: 'CustomerName',
+          selectedLabelField: 'PortalUsername',
+        },
+        quickCreate: false,
+        quickCreateExemptReason:
+          'Portal logins are managed in Registry > Customers by the shop customer.',
+      },
+    ],
+    columns: [
+      { id: 'user', field: 'MemberName', label: 'User', kind: 'identity' },
+      {
+        id: 'portalUser',
+        field: 'PortalUsername',
+        label: 'commerceAccount.portalUser',
+        value: (member, translate) =>
+          String(member['PortalUsername'] ?? '').trim() ||
+          translate('commerceAccount.noPortalUser'),
+      },
+      { id: 'status', field: 'CmmStatus', label: 'Status', kind: 'status' },
+    ],
+  });
+}
 
 // Canonical pages opened in the account's scope: Sales catalog and the shop's shared resources.
 const SCOPED_PAGES = [
@@ -123,6 +181,39 @@ const SCOPED_PAGES = [
   ['point-of-sale/audit', 'nav.pos.audit', 'policy', 'tenant.pos.audit-events.read'],
 ] as const;
 
+/**
+ * Operators of a customer shop. Editing a member links (or unlinks) the Customer Portal login that
+ * opens the web POS as that operator: `PUT sale/accounts/:uuid/members/:userUUID/portal-user`.
+ */
+@Component({
+  selector: 'app-sale-account-operators-dialog',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class SaleAccountOperatorsDialog extends ConfigurableCrudCollectionDialog {
+  override async saveItem(): Promise<void> {
+    const current = this.editingRecord();
+    if (!current || this.saving()) return;
+    this.saving.set(true);
+    try {
+      const portalUserUUID = String(this.formValues()['portalUserUUID'] ?? '').trim() || null;
+      await this.api.put(`${this.config.endpoint}/${current['UserUsrUUID']}/portal-user`, {
+        portalUserUUID,
+      });
+      this.snack.success(this.t('commerceAccount.portalUserSaved'));
+      this.itemsResource.reload();
+      this.closeDialog();
+    } catch (error) {
+      // The message (for example "already linked") is shown while the dialog stays open.
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+}
+
 @Component({
   selector: 'app-sale-accounts',
   standalone: true,
@@ -131,12 +222,33 @@ const SCOPED_PAGES = [
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SaleAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly canManageAccounts: () => boolean;
+
   constructor() {
     const router = inject(Router);
     const auth = inject(AuthService);
     const allowed = (permission: string) =>
       hasEffectivePermission(auth.user()?.permissions ?? [], permission);
     const canManage = () => allowed('tenant.commerce.accounts.all');
+    const canPublish = (row: ConfigurableCrudRecord, enabled: boolean) =>
+      canManage() &&
+      row['CmaKind'] === 'customer' &&
+      (Number(row['CmaPortalEnabled']) === 1) === !enabled;
+    const publication = (enabled: boolean) => ({
+      key: enabled ? 'portalPublish' : 'portalUnpublish',
+      label: enabled ? 'commerceAccount.publish' : 'commerceAccount.unpublish',
+      icon: enabled ? 'public' : 'public_off',
+      visible: (row: ConfigurableCrudRecord) => canPublish(row, enabled),
+      request: {
+        method: 'put' as const,
+        endpoint: (row: ConfigurableCrudRecord) => `sale/accounts/${row['CmaUUID']}/portal`,
+        body: (row: ConfigurableCrudRecord) => ({
+          enabled,
+          revision: String(row['CmaRevision'] ?? ''),
+        }),
+        successMessage: enabled ? 'commerceAccount.published' : 'commerceAccount.unpublished',
+      },
+    });
     super({
       ...config,
       canCreate: canManage() && allowed('tenant.commerce.accounts.write'),
@@ -158,6 +270,8 @@ export class SaleAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
             });
           },
         })),
+        publication(true),
+        publication(false),
         ...resaleAccountRowActions({
           module: 'sale',
           uuidField: 'CmaUUID',
@@ -180,5 +294,28 @@ export class SaleAccountPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
         }),
       ],
     });
+    this.canManageAccounts = canManage;
+  }
+
+  /** Customer shops edit the Portal login of each operator; internal accounts only list them. */
+  override async runRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== 'operators' || row['CmaKind'] !== 'customer') {
+      return super.runRowAction(action, row);
+    }
+    const binding = openCrudTemplateDialog(
+      this.dialog,
+      SaleAccountOperatorsDialog,
+      ['crud-form-dialog', 'crud-collection-dialog'],
+      {
+        data: {
+          ...operatorsConfig(row, this.canManageAccounts()),
+          requestApi: this.api,
+          collectionDialog: true,
+          formOnly: false,
+        },
+      },
+    );
+    await firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
+    this.refreshList();
   }
 }
