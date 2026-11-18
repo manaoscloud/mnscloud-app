@@ -12035,6 +12035,7 @@
   "Copy this image to the node? The disk crosses the network and may take several minutes.": "¿Copiar esta imagen al nodo? El disco cruza la red y puede tardar varios minutos.",
   "Automatic (best node)": "Automático (mejor nodo)",
   "No server node has capacity for this plan right now. Choose a smaller plan or try again later.": "Ningún nodo de servidor tiene capacidad para este plan ahora. Elija un plan menor o inténtelo de nuevo más tarde.",
+  "The selected image is not available on the server nodes with room right now. Choose another image or try again later.": "La imagen elegida no está disponible en los servidores con espacio ahora. Elija otra imagen o inténtelo más tarde.",
   "No node has capacity for this server.": "Ningún nodo tiene capacidad para este servidor.",
   "Placement is busy; try again.": "La ubicación está ocupada; inténtelo de nuevo.",
   "website.activationStepLabel": "Activación",
