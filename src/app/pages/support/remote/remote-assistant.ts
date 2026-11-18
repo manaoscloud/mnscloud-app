@@ -14,6 +14,7 @@ export type SafeChange = 'routeros_safe_mode' | 'vrp5_schedule_reboot' | 'system
 
 export type ProposalStatus =
   | 'proposed'
+  | 'awaiting'
   | 'approved'
   | 'rejected'
   | 'expired'
@@ -47,9 +48,21 @@ export type RemoteProposal = {
 export type SettingsRecord = {
   commentPrefix: string | null;
   effectivePrefix: string;
+  /** Changes on customer devices wait for the customer approval in the portal (ST-J2b). */
+  customerApprovalRequired: boolean;
   revision: number;
   updatedAt?: string | null;
 };
+
+function settingsOf(body: Partial<SettingsRecord>, revision = 0): SettingsRecord {
+  return {
+    commentPrefix: typeof body.commentPrefix === 'string' ? body.commentPrefix : null,
+    effectivePrefix: text(body.effectivePrefix),
+    customerApprovalRequired: body.customerApprovalRequired === true,
+    revision: Number(body.revision) || revision,
+    updatedAt: body.updatedAt ?? null,
+  };
+}
 
 /** Events that make the proposal list stale. */
 export function isProposalEvent(kind: string): boolean {
@@ -111,6 +124,12 @@ export function assistRequestErrorKey(error: unknown): string {
     case 'SUPPORT_REMOTE_PROPOSAL_EXPIRED':
     case 'SUPPORT_REMOTE_PROPOSAL_NOT_PENDING':
       return 'support.remote.proposal.error.notPending';
+    case 'SUPPORT_REMOTE_PROPOSAL_AWAITING_CUSTOMER':
+      return 'support.remote.proposal.awaitingCustomer';
+    case 'SUPPORT_REMOTE_CUSTOMER_APPROVAL_REQUIRED':
+      return 'support.remote.proposal.error.customerApprovalRequired';
+    case 'SUPPORT_REMOTE_DEVICE_OTHER_CUSTOMER':
+      return 'support.remote.error.deviceOtherCustomer';
     case 'SUPPORT_REMOTE_REVISION_CONFLICT':
     case 'REVISION_CONFLICT':
       return 'support.remote.error.revision';
@@ -167,6 +186,7 @@ export function proposalChipClass(status: unknown): string {
     case 'approved':
       return 'chip-success';
     case 'proposed':
+    case 'awaiting':
     case 'applying':
     case 'rolled_back':
       return 'chip-warning';
@@ -419,12 +439,14 @@ export class RemoteAssistService {
     return unwrap<{ items?: RemoteProposal[] }>(response)?.items ?? [];
   }
 
-  async approve(sessionUUID: string, proposal: RemoteProposal, note: string): Promise<void> {
-    await this.api.post(
+  /** Returns the state of the apply; `awaiting` when the change waits for the customer approval. */
+  async approve(sessionUUID: string, proposal: RemoteProposal, note: string): Promise<string> {
+    const response = await this.api.post<unknown>(
       `${REMOTE_BASE}/sessions/${sessionUUID}/proposals/${proposal.SrpUUID}/approve`,
       { revision: Number(proposal.SrpRevision), ...(note ? { note } : {}) },
       { silent: true },
     );
+    return text(unwrap<{ state?: string }>(response)?.state);
   }
 
   async reject(sessionUUID: string, proposal: RemoteProposal, note: string): Promise<void> {
@@ -446,13 +468,16 @@ export class RemoteAssistService {
 
   async settings(): Promise<SettingsRecord> {
     const response = await this.api.get<unknown>(`${REMOTE_BASE}/settings`, { silent: true });
-    const body = unwrap<Partial<SettingsRecord>>(response) ?? {};
-    return {
-      commentPrefix: typeof body.commentPrefix === 'string' ? body.commentPrefix : null,
-      effectivePrefix: text(body.effectivePrefix),
-      revision: Number(body.revision) || 0,
-      updatedAt: body.updatedAt ?? null,
-    };
+    return settingsOf(unwrap<Partial<SettingsRecord>>(response) ?? {});
+  }
+
+  async saveCustomerApproval(required: boolean, revision: number): Promise<SettingsRecord> {
+    const response = await this.api.put<unknown>(
+      `${REMOTE_BASE}/settings/customer-approval`,
+      { required, revision },
+      { silent: true },
+    );
+    return settingsOf(unwrap<Partial<SettingsRecord>>(response) ?? {}, revision + 1);
   }
 
   async saveSettings(commentPrefix: string | null, revision: number): Promise<SettingsRecord> {
@@ -461,12 +486,6 @@ export class RemoteAssistService {
       { commentPrefix, revision },
       { silent: true },
     );
-    const body = unwrap<Partial<SettingsRecord>>(response) ?? {};
-    return {
-      commentPrefix: typeof body.commentPrefix === 'string' ? body.commentPrefix : null,
-      effectivePrefix: text(body.effectivePrefix),
-      revision: Number(body.revision) || revision + 1,
-      updatedAt: body.updatedAt ?? null,
-    };
+    return settingsOf(unwrap<Partial<SettingsRecord>>(response) ?? {}, revision + 1);
   }
 }
