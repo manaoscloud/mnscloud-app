@@ -84,6 +84,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
       @if (field(); as formField) {
         <mat-select
           #select
+          panelClass="mns-search-select-panel"
           [formField]="formField"
           [multiple]="multiple()"
           [compareWith]="compareOptionValues"
@@ -194,6 +195,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
               [value]="option.value"
               [disabled]="option.disabled"
               [class]="option.optionClass ?? ''"
+              [attr.title]="optionTitle(option)"
             >
               <span class="select-option-main">
                 @if (translateOptions()) {
@@ -223,6 +225,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
       } @else {
         <mat-select
           #select
+          panelClass="mns-search-select-panel"
           [value]="value()"
           [multiple]="multiple()"
           [disabled]="disabled()"
@@ -334,6 +337,7 @@ const SELECT_NAVIGATION_KEYS = new Set([
               [value]="option.value"
               [disabled]="option.disabled"
               [class]="option.optionClass ?? ''"
+              [attr.title]="optionTitle(option)"
             >
               <span class="select-option-main">
                 @if (translateOptions()) {
@@ -686,6 +690,18 @@ export class MnsSearchSelectFieldComponent {
 
   optionTrack(option: MnsSearchSelectFieldOption): string {
     return `${String(option.value)}::${option.label}::${option.optionClass ?? ''}`;
+  }
+
+  /**
+   * Native tooltip with the full record text: option cards clamp long labels and descriptions
+   * (styles.scss, "Search-select option cards"). Translated options are short enum labels whose
+   * text is a translation key, so they get no tooltip.
+   */
+  optionTitle(option: MnsSearchSelectFieldOption): string | null {
+    if (this.translateOptions()) {
+      return null;
+    }
+    return option.description ? `${option.label}\n${option.description}` : option.label;
   }
 
   selectValue(value: MnsSearchSelectValue): void {

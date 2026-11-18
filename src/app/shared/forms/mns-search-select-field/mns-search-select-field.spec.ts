@@ -210,6 +210,37 @@ describe('Remote relationship dropdown accessibility', () => {
     expect(selections).toHaveBeenCalledOnceWith('');
     fixture.destroy();
   });
+
+  it('tags its panel for the global option cards and puts the full record text in the title', async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        MnsSearchSelectFieldComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(MnsSearchSelectFieldComponent);
+    fixture.componentRef.setInput('label', 'Customer');
+    fixture.componentRef.setInput('options', [
+      { value: 'c1', label: 'Long customer name', description: '12345678000190' },
+      { value: 'c2', label: 'Short customer' },
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.nativeElement.querySelector('mat-select').click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const panel = document.querySelector('.mat-mdc-select-panel')!;
+    expect(panel.classList).toContain('mns-search-select-panel');
+    const titles = Array.from(panel.querySelectorAll('mat-option:not(.select-search-option)')).map(
+      (option) => option.getAttribute('title'),
+    );
+    expect(titles).toEqual(['Long customer name\n12345678000190', 'Short customer']);
+    fixture.destroy();
+  });
   describe('search focus and keyboard', () => {
     async function create(options: { remote?: boolean } = {}) {
       await TestBed.configureTestingModule({

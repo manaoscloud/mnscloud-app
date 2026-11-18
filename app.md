@@ -1199,6 +1199,12 @@ result panel, is rendered by it. Pick the surface by where the rows live:
     must be owned by the adapter/component, not by browser auto-translation
   - spacing, option padding, and search field sizing come from the global `src/styles.scss`
     contract; do not add page-local layout overrides for these classes
+  - option cards (global, every select): the adapter tags its panel `mns-search-select-panel`
+    and each option is a bordered card (8 px radius, 6 px gap, outline-variant border; hover and
+    keyboard focus tint the border, the selected option has a primary border and tonal fill, clear
+    and create options use a dashed border). Label and description clamp to two lines each and
+    the full text goes to the option `title`; `select-plan-option` keeps its full text. Group and
+    subgroup headers, search, and state rows are not cards
 - Static enum/control selects still must be fully internationalized by the component, not by the DOM
   translation fallback.
   - Define a canonical option list in the component for commercial/status/mode enums.

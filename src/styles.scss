@@ -1513,7 +1513,7 @@ mat-chip.status-pill.is-inactive,
   margin-top: 0.65rem;
   margin-bottom: 0.15rem;
   background: color-mix(in srgb, var(--mat-sys-color-surface-container-high) 88%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 80%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 80%, transparent);
 }
 
 .mat-mdc-option.select-group-option .select-option-main {
@@ -1542,7 +1542,7 @@ mat-chip.status-pill.is-inactive,
   margin: 2px 8px 8px 1.15rem;
   padding-top: 6px;
   padding-bottom: 6px;
-  border: 1px solid color-mix(in srgb, var(--mat-sys-outline-variant) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-color-outline-variant) 70%, transparent);
   border-radius: 8px;
   box-sizing: border-box;
 }
@@ -1568,6 +1568,79 @@ mat-chip.status-pill.is-inactive,
 
 .select-state-option {
   color: var(--mat-sys-color-on-surface-variant);
+}
+
+// Search-select option cards: every option of a `mns-search-select-field` panel (FK records,
+// enums, status) is a bordered card, so users see where one record ends and the next begins.
+// Labels and descriptions clamp to two lines each; the adapter puts the full text in the option
+// `title`. Plan options keep their full text and their indent under the group header.
+$mns-select-card: '.cdk-overlay-pane .mns-search-select-panel .mat-mdc-option:not(.select-search-option, .select-group-option, .select-subgroup-option, .select-state-option)';
+
+#{$mns-select-card} {
+  min-height: 44px;
+  margin: 0 0 6px;
+  padding: 8px 12px !important;
+  border: 1px solid var(--mat-sys-color-outline-variant);
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+#{$mns-select-card}:not(.mdc-list-item--disabled):hover,
+#{$mns-select-card}.mat-mdc-option-active {
+  border-color: color-mix(
+    in srgb,
+    var(--mat-sys-color-primary) 55%,
+    var(--mat-sys-color-outline-variant)
+  );
+}
+
+#{$mns-select-card}.mdc-list-item--selected {
+  border-color: var(--mat-sys-color-primary);
+  background: color-mix(in srgb, var(--mat-sys-color-primary) 12%, transparent);
+}
+
+#{$mns-select-card}.select-clear-option,
+#{$mns-select-card}.select-create-option {
+  border-style: dashed;
+}
+
+.cdk-overlay-pane .mns-search-select-panel .select-option-main,
+.cdk-overlay-pane .mns-search-select-panel .select-option-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cdk-overlay-pane .mns-search-select-panel .select-option-main {
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.cdk-overlay-pane .mns-search-select-panel .select-option-description {
+  margin-top: 3px;
+}
+
+.cdk-overlay-pane .mns-search-select-panel .mat-mdc-option.select-plan-option {
+  margin: 2px 0 8px 1.15rem;
+}
+
+.cdk-overlay-pane .mns-search-select-panel .select-plan-option .select-option-main,
+.cdk-overlay-pane .mns-search-select-panel .select-plan-option .select-option-description {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #{$mns-select-card} {
+    transition: none;
+  }
 }
 
 .select-search-option .mat-pseudo-checkbox {
