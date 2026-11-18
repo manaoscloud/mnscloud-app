@@ -278,6 +278,29 @@ function withCyberAccount(section: CyberSection, config: ConfigurableCrudConfig)
   };
 }
 
+/**
+ * Platform pages (System area and delegated platform scope): the platform servers are Advanced
+ * without a patch policy and their antivirus is never installed, updated or scanned from here
+ * (decision D-2 of the 2026-11-17 platform scope assessment).
+ */
+const PLATFORM_HIDDEN_ACTIONS = new Set([
+  'advancedEnable',
+  'antivirusUpdate',
+  'antivirusQuickScan',
+  'antivirusFullScan',
+  'antivirusInstall',
+]);
+
+function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
+  if (section !== 'hardening') return config;
+  return {
+    ...config,
+    rowActions: (config.rowActions ?? []).filter(
+      (action) => !PLATFORM_HIDDEN_ACTIONS.has(action.key),
+    ),
+  };
+}
+
 // ----- Vulnerabilities and software inventory (vulnerability management V3) -----
 
 const findingStatuses: ConfigurableCrudOption[] = [
@@ -1124,7 +1147,11 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const data = inject(ActivatedRoute).snapshot.data;
     const section = (data['section'] as CyberSection | undefined) ?? 'servers';
     const config = CONFIGS[section] ?? CONFIGS.servers;
-    super(data['scope'] === 'master' ? config : withCyberAccount(section, config));
+    super(
+      data['scope'] === 'master'
+        ? platformConfig(section, config)
+        : withCyberAccount(section, config),
+    );
     const auth = inject(AuthService);
     remediationDialog = (finding) => this.showRemediation(finding);
     aiExplainDialog = (finding) => this.explainFinding(finding);

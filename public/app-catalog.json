@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ce2a67a8179f",
+  "version": "4e9572399434",
   "language": "pt-BR",
   "entries": [
     {
@@ -2090,6 +2090,14 @@
       "menuPath": "Cibersegurança › Plataforma › Decisões",
       "scope": "tenant",
       "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/hardening",
+      "menuPath": "Cibersegurança › Plataforma › Endurecimento",
+      "scope": "tenant",
+      "title": "Endurecimento",
       "description": "",
       "fields": []
     },
@@ -8780,6 +8788,14 @@
       "menuPath": "Cibersegurança › Decisões",
       "scope": "platform",
       "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/cyber-security/hardening",
+      "menuPath": "Cibersegurança › Endurecimento",
+      "scope": "platform",
+      "title": "Endurecimento",
       "description": "",
       "fields": []
     },
