@@ -23,7 +23,7 @@ export interface NavItem {
 
   permissions?: string[];
   /** Server-confirmed navigation hint, never a global permission. */
-  resourceAccess?: 'voipCapacityRead';
+  resourceAccess?: 'voipCapacityRead' | 'cyberPlatform';
 
   // ✅ Controle de visibilidade por TENANT (exige EnvironmentUUID selecionado)
   requiresEnvironment?: boolean;
@@ -3134,6 +3134,103 @@ export const NAV_ITEMS: NavItem[] = [
         masterRoute: '/system/cyber-security',
         permissions: ['tenant.access.manage'],
         requiresEnvironment: true,
+      },
+      {
+        // Delegated platform scope (platform.cyber-security.read/.manage, not a master): the
+        // platform servers without the System area. The API sets the hint and reauthorizes.
+        id: 'cyber-security/platform',
+        label: 'nav.cyber-security.platform',
+        icon: 'domain',
+        scope: 'public',
+        entitlementCode: '',
+        resourceAccess: 'cyberPlatform',
+        requiresEnvironment: false,
+        children: [
+          {
+            id: 'cyber-security/platform/dashboard',
+            label: 'nav.cyber-security.platform.dashboard',
+            icon: 'dashboard',
+            route: '/cyber-security/platform',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/servers',
+            label: 'nav.cyber-security.platform.servers',
+            icon: 'dns',
+            route: '/cyber-security/platform/servers',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/vulnerabilities',
+            label: 'nav.cyber-security.platform.vulnerabilities',
+            icon: 'bug_report',
+            route: '/cyber-security/platform/vulnerabilities',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/inventory',
+            label: 'nav.cyber-security.platform.inventory',
+            icon: 'inventory_2',
+            route: '/cyber-security/platform/inventory',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/alerts',
+            label: 'nav.cyber-security.platform.alerts',
+            icon: 'notification_important',
+            route: '/cyber-security/platform/alerts',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/decisions',
+            label: 'nav.cyber-security.platform.decisions',
+            icon: 'gavel',
+            route: '/cyber-security/platform/decisions',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/security-events',
+            label: 'nav.cyber-security.platform.security-events',
+            icon: 'manage_search',
+            route: '/cyber-security/platform/security-events',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/lists',
+            label: 'nav.cyber-security.platform.lists',
+            icon: 'rule',
+            route: '/cyber-security/platform/lists',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/profiles',
+            label: 'nav.cyber-security.platform.profiles',
+            icon: 'shield',
+            route: '/cyber-security/platform/profiles',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/services',
+            label: 'nav.cyber-security.platform.services',
+            icon: 'settings_applications',
+            route: '/cyber-security/platform/services',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/trusted-nodes',
+            label: 'nav.cyber-security.platform.trusted-nodes',
+            icon: 'hub',
+            route: '/cyber-security/platform/trusted-nodes',
+            requiresEnvironment: false,
+          },
+          {
+            id: 'cyber-security/platform/network-policies',
+            label: 'nav.cyber-security.platform.network-policies',
+            icon: 'policy',
+            route: '/cyber-security/platform/network-policies',
+            requiresEnvironment: false,
+          },
+        ],
       },
       {
         id: 'cyber-security/vulnerabilities',

@@ -34,6 +34,20 @@ export class RouteScopeService {
     return routeScopeOf(snapshot);
   }
 
+  /**
+   * `data.apiScope` of the active route (deepest wins): `platform` on the delegated Cyber Security
+   * pages, whose API calls then ask for the platform scope explicitly (`scope=platform`).
+   */
+  apiScope(): string | null {
+    let scope: unknown = null;
+    let snapshot: ActivatedRouteSnapshot | null = this.router.routerState?.snapshot?.root ?? null;
+    while (snapshot) {
+      if (snapshot.data?.['apiScope'] !== undefined) scope = snapshot.data['apiScope'];
+      snapshot = snapshot.firstChild;
+    }
+    return typeof scope === 'string' ? scope : null;
+  }
+
   isPlatform(): boolean {
     return this.current() === 'master';
   }

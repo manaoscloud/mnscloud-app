@@ -1,4 +1,4 @@
-import type { Routes } from '@angular/router';
+import type { CanActivateFn, Route, Routes } from '@angular/router';
 
 /** Navigation-only groups. Existing tenant/master URLs and API contracts stay canonical. */
 const sections: Record<string, { label: string; group?: string }> = {
@@ -25,15 +25,31 @@ const sections: Record<string, { label: string; group?: string }> = {
   'secret-servers': { label: 'Secret Servers', group: 'Secrets' },
 };
 
-export function cyberSecurityRouteData(section: string, scope: 'tenant' | 'master') {
+/**
+ * `tenant`: the selected tenant; `master`: the System area; `delegated`: the platform servers for a
+ * user with platform.cyber-security.read/.manage who is not a master (`/cyber-security/platform`).
+ * A delegated page is a platform page (scope `master`, no account column) whose API calls carry
+ * `scope=platform` (ApiService, data.apiScope).
+ */
+export type CyberRouteScope = 'tenant' | 'master' | 'delegated';
+
+const BASES: Record<CyberRouteScope, string> = {
+  tenant: '/cyber-security',
+  master: '/system/cyber-security',
+  delegated: '/cyber-security/platform',
+};
+
+export function cyberSecurityRouteData(section: string, scope: CyberRouteScope) {
   const item = sections[section];
-  const base = `${scope === 'master' ? '/system' : ''}/cyber-security`;
+  const base = BASES[scope];
   return {
-    scope,
+    scope: scope === 'tenant' ? 'tenant' : 'master',
+    ...(scope === 'delegated' ? { apiScope: 'platform', cyberBase: base } : {}),
     section,
     breadcrumbTrail: [
       ...(scope === 'master' ? [{ label: 'System', url: '/system' }] : []),
-      { label: 'Cyber Security', url: base },
+      { label: 'Cyber Security', url: scope === 'delegated' ? '/cyber-security' : base },
+      ...(scope === 'delegated' ? [{ label: 'Platform', url: base }] : []),
       ...(item.group ? [{ label: item.group }] : []),
       { label: item.label, url: section ? `${base}/${section}` : base },
     ],
@@ -55,13 +71,43 @@ const SECTION_PAGES: { section: string; title: string; platform?: boolean }[] = 
   { section: 'network', title: 'Network devices' },
 ];
 
-export function cyberSecuritySectionRoutes(scope: 'tenant' | 'master'): Routes {
+export function cyberSecuritySectionRoutes(scope: CyberRouteScope): Routes {
   return SECTION_PAGES.filter((page) => scope === 'tenant' || page.platform).map(
     ({ section, title }) => ({
-      path: `cyber-security/${section}`,
+      path: `${BASES[scope].slice(scope === 'master' ? '/system/'.length : 1)}/${section}`,
       loadComponent: () => import('./cyber-security').then((m) => m.CyberSecurityPage),
       title: `Cyber Security • ${title} | mnscloud`,
       data: cyberSecurityRouteData(section, scope),
     }),
   );
+}
+
+/**
+ * Pages of the delegated platform scope (no secrets). The guard lets in only users the API marks
+ * with resourceAccess.cyberPlatform (or masters); every request is authorized again by the API.
+ */
+export function cyberSecurityDelegatedRoutes(guard: CanActivateFn): Routes {
+  const page = (section: string, title: string, loadComponent: Route['loadComponent']): Route => ({
+    path: section ? `cyber-security/platform/${section}` : 'cyber-security/platform',
+    canActivate: [guard],
+    loadComponent,
+    title: `Cyber Security • Platform${title ? ' • ' + title : ''} | mnscloud`,
+    data: cyberSecurityRouteData(section, 'delegated'),
+  });
+  return [
+    page('', '', () => import('./dashboard/dashboard').then((m) => m.CyberSecurityDashboardPage)),
+    page('services', 'Protected Services', () =>
+      import('./services/services').then((m) => m.CyberSecurityServicesPage),
+    ),
+    page('profiles', 'Security Profiles', () =>
+      import('./profiles/profiles').then((m) => m.CyberSecurityProfilesPage),
+    ),
+    page('trusted-nodes', 'Trusted Nodes', () =>
+      import('./trusted-nodes/trusted-nodes').then((m) => m.CyberSecurityTrustedNodesPage),
+    ),
+    page('network-policies', 'API Access Policies', () =>
+      import('./network-policies/network-policies').then((m) => m.CyberSecurityNetworkPoliciesPage),
+    ),
+    ...cyberSecuritySectionRoutes('delegated').map((route) => ({ ...route, canActivate: [guard] })),
+  ];
 }

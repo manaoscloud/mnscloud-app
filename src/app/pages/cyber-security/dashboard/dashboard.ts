@@ -56,17 +56,18 @@ export class CyberSecurityDashboardPage {
   });
   readonly dashboard = this.snapshot.value;
   readonly actions = [
-    // Vulnerabilities live only in the tenant area (findings of the selected tenant's servers).
-    ...(this.platform
-      ? []
-      : [{ section: 'vulnerabilities', icon: 'bug_report', label: 'Review vulnerabilities' }]),
+    { section: 'vulnerabilities', icon: 'bug_report', label: 'Review vulnerabilities' },
     { section: 'servers', icon: 'dns', label: 'Review server protection' },
     { section: 'profiles', icon: 'shield', label: 'Maintain security profiles' },
     { section: 'alerts', icon: 'notification_important', label: 'Investigate open alerts' },
     { section: 'trusted-nodes', icon: 'hub', label: 'Review trusted nodes' },
   ];
+  /** The route's own base: tenant, System area or the delegated platform pages. */
+  private readonly base =
+    (this.route.snapshot.data['cyberBase'] as string | undefined) ??
+    (this.platform ? '/system/cyber-security' : '/cyber-security');
   routeFor(section: string) {
-    return (this.platform ? '/system/cyber-security' : '/cyber-security') + '/' + section;
+    return this.base + '/' + section;
   }
   readonly dashboardKpis = computed(() => {
     const item = this.dashboard();

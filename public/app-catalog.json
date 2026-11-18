@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "57d7509b43b5",
+  "version": "ce2a67a8179f",
   "language": "pt-BR",
   "entries": [
     {
@@ -2066,6 +2066,102 @@
       "menuPath": "Cibersegurança › Atualizações",
       "scope": "tenant",
       "title": "Atualizações",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform",
+      "menuPath": "Cibersegurança › Plataforma › Painel",
+      "scope": "tenant",
+      "title": "Painel",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/alerts",
+      "menuPath": "Cibersegurança › Plataforma › Alertas",
+      "scope": "tenant",
+      "title": "Alertas",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/decisions",
+      "menuPath": "Cibersegurança › Plataforma › Decisões",
+      "scope": "tenant",
+      "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/inventory",
+      "menuPath": "Cibersegurança › Plataforma › Inventário",
+      "scope": "tenant",
+      "title": "Inventário",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/lists",
+      "menuPath": "Cibersegurança › Plataforma › Listas de acesso",
+      "scope": "tenant",
+      "title": "Listas de acesso",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/network-policies",
+      "menuPath": "Cibersegurança › Plataforma › Políticas de API",
+      "scope": "tenant",
+      "title": "Políticas de API",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/profiles",
+      "menuPath": "Cibersegurança › Plataforma › Perfis",
+      "scope": "tenant",
+      "title": "Perfis",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/security-events",
+      "menuPath": "Cibersegurança › Plataforma › Eventos",
+      "scope": "tenant",
+      "title": "Eventos",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/servers",
+      "menuPath": "Cibersegurança › Plataforma › Servidores",
+      "scope": "tenant",
+      "title": "Servidores",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/services",
+      "menuPath": "Cibersegurança › Plataforma › Serviços",
+      "scope": "tenant",
+      "title": "Serviços",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/trusted-nodes",
+      "menuPath": "Cibersegurança › Plataforma › Nós confiáveis",
+      "scope": "tenant",
+      "title": "Nós confiáveis",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/vulnerabilities",
+      "menuPath": "Cibersegurança › Plataforma › Vulnerabilidades",
+      "scope": "tenant",
+      "title": "Vulnerabilidades",
       "description": "",
       "fields": []
     },
