@@ -2,7 +2,8 @@
 // Form Field Layout Baseline (app.md): app-wide, no allowlist.
 //
 // Generic CRUD field declarations (`fields: [...]` of defineCrud/ConfigurableCrud configs):
-// - single-line controls (inputs, selects, FK selects, dates, status) are `span: 1`;
+// - single-line controls (inputs, selects, FK selects, dates, status) are `span: 1`, unless the
+//   field sets `wideField: true` and says `// wide-field: <why>` on the line above (user decision);
 // - text areas are `span: 4` with the default four rows (no other `rows`);
 // - a text area labelled `Notes` lives in the Notes tab (`tab: 'notes'`), unless the line above
 //   it says `// notes-tab-exempt: <why>` (for example the only input of an action dialog);
@@ -95,8 +96,14 @@ export function findFieldViolations(file, source) {
         const label = literal(props.get('label'));
         const tab = props.has('tab') ? literal(props.get('tab')) : undefined;
         const comments = leadingComments(source, node);
+        const wideField =
+          props.has('wideField') && props.get('wideField').kind === ts.SyntaxKind.TrueKeyword;
         if (SINGLE_LINE_FIELD_TYPES.has(type) && props.has('span') && span !== 1) {
-          report(node, `${type} field must be span 1 (single-line controls take one column)`);
+          if (!wideField) {
+            report(node, `${type} field must be span 1 (single-line controls take one column)`);
+          } else if (!/wide-field:\s*\S/.test(comments)) {
+            report(node, 'wideField needs a `// wide-field: <why>` comment on the line above');
+          }
         }
         if (type === 'textarea') {
           if (props.has('span') && span !== 4) report(node, 'textarea must be span 4 (full row)');

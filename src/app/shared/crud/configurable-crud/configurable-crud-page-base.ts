@@ -321,9 +321,15 @@ export type ConfigurableCrudField = {
   /**
    * Grid columns of composite controls only (file, checkbox group, permission tree, secret
    * content). Single-line controls are always `span-1` and text areas `span-4`
-   * (`crud-field-layout.ts`); `npm run check:crud:fields` rejects other values for them.
+   * (`crud-field-layout.ts`); `npm run check:crud:fields` rejects other values for them, unless
+   * the field sets `wideField: true`.
    */
   span?: 1 | 2 | 3 | 4;
+  /**
+   * User-decided exception to the layout baseline: this single-line control keeps its declared
+   * `span`. The field says `// wide-field: <why>` on the line above (`check:crud:fields`).
+   */
+  wideField?: boolean;
   lineFillAfter?: 1 | 2 | 3;
   breakBefore?: boolean;
   breakBeforeWhen?: (context: ConfigurableCrudFieldContext) => boolean;
@@ -2549,7 +2555,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
         editing: Boolean(this.editingRecord()),
         values: this.formValues(),
       });
-    const span = crudFieldSpan(this.resolvedFieldType(field), field.span);
+    const span = crudFieldSpan(this.resolvedFieldType(field), field.span, field.wideField);
     return [`span-${span}`, breakBefore ? 'break-before' : ''].filter(Boolean).join(' ');
   }
 

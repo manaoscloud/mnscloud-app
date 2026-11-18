@@ -31,6 +31,19 @@ test('wide inputs, FK selects and short or narrow text areas are reported', () =
   ]);
 });
 
+test('a wide single-line field needs wideField and a wide-field comment', () => {
+  const ok = config(`
+    // wide-field: user decision for this form.
+    { key: 'customerUUID', label: 'Customer', type: 'search-select', span: 2, wideField: true },`);
+  assert.deepEqual(findFieldViolations('ok.ts', ok), []);
+  const bad = config(`
+    { key: 'customerUUID', label: 'Customer', type: 'search-select', span: 2, wideField: true },`);
+  assert.deepEqual(
+    findFieldViolations('bad.ts', bad).map((p) => p.replace(/^bad\.ts:\d+: /, '')),
+    ['wideField needs a `// wide-field: <why>` comment on the line above'],
+  );
+});
+
 test('annotations use Notes in the Notes tab; descriptions must justify themselves', () => {
   const bad = config(`
     { key: 'notes', label: 'Notes', type: 'textarea', span: 4 },
