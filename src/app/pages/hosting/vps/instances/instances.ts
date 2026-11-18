@@ -1250,10 +1250,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     const status = String(row['HviStatus'] ?? '')
       .trim()
       .toLowerCase();
+    // queued/provisioning without a provider id may be stalled by a blocked operation: the API
+    // retries only then and answers 409 while the provisioning is still running.
     return (
       Number(row['HviIsActive']) === 1 &&
       !row['HviExternalId'] &&
-      ['', 'failed', 'queue_failed'].includes(status)
+      ['', 'failed', 'queue_failed', 'queued', 'provisioning'].includes(status)
     );
   }
 
@@ -1394,7 +1396,12 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       }
       this.refreshList();
     } catch (error) {
-      this.snack.error(this.errorMessage(error) || this.t('Failed to retry VPS provisioning.'));
+      const code = (error as { error?: { code?: unknown } } | null)?.error?.code;
+      if (code === 'VPS_PROVISION_IN_PROGRESS') {
+        this.snack.error(this.t('VPS provisioning is still running.'));
+      } else {
+        this.snack.error(this.errorMessage(error) || this.t('Failed to retry VPS provisioning.'));
+      }
     } finally {
       this.retryingInstanceUUIDs.update((current) => {
         const next = new Set(current);
