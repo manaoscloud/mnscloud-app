@@ -31,6 +31,15 @@ export function moduleFamily(code: string) {
 }
 
 /**
+ * Card tags, each once; a bare family tag is dropped when a sub-module tag of the same family is
+ * present (["Hospedagem › VPS", "Hospedagem"] → ["Hospedagem › VPS"]).
+ */
+export function moduleTags(labels: string[]) {
+  const unique = [...new Set(labels)];
+  return unique.filter((label) => !unique.some((other) => other.startsWith(`${label} › `)));
+}
+
+/**
  * What changed in the platform (App › Novidades), one entry per feature, shown only when every
  * component of the feature is deployed in this environment (DEV shows DEV, PROD shows PROD).
  * Tenants see platform notes and the modules they contract ("All modules" shows the rest). The
@@ -170,7 +179,7 @@ export class ReleaseNotesPage {
    * (`module.hosting.vps.firewall` → "Hospedagem › VPS"), each tag once.
    */
   entryModules(entry: ReleaseNote) {
-    return [...new Set(entry.modules.map((code) => this.moduleDetailLabel(code)))];
+    return moduleTags(entry.modules.map((code) => this.moduleDetailLabel(code)));
   }
 
   private moduleDetailLabel(code: string) {

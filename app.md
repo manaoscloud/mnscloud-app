@@ -525,7 +525,7 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   table. Filters: My modules / All modules (tenant entitlements, API side), type and module chips.
   Module chips are one per family (`moduleFamily`: `module.hosting.vps.firewall` → `module.hosting`)
   and match every sub-module (the API `module` filter and RSS do the same); card tags show the
-  family plus the sub-module menu name when one exists ("Hospedagem › VPS"), each tag once.
+  family plus the sub-module menu name when one exists ("Hospedagem › VPS"), each tag once, without the bare family next to one of its sub-modules (`moduleTags`).
   The platform master gets the tabs "In this environment" and "Being deployed" (`status=pending`) and
   sees each component marked deployed or not.
 - Public changelog `/release-notes` (same `ReleaseNotesPage`, `data.publicFeed`, `publicReleaseNotesGuard`
