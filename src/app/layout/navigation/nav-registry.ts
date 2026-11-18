@@ -3182,6 +3182,13 @@ export const NAV_ITEMS: NavItem[] = [
             requiresEnvironment: false,
           },
           {
+            id: 'cyber-security/platform/exposure',
+            label: 'nav.cyber-security.platform.exposure',
+            icon: 'travel_explore',
+            route: '/cyber-security/platform/exposure',
+            requiresEnvironment: false,
+          },
+          {
             id: 'cyber-security/platform/alerts',
             label: 'nav.cyber-security.platform.alerts',
             icon: 'notification_important',
@@ -3314,6 +3321,7 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'travel_explore',
         category: 'protection',
         route: '/cyber-security/exposure',
+        masterRoute: '/system/cyber-security/exposure',
         permissions: ['tenant.cyber-security.servers.read'],
         requiresEnvironment: true,
       },

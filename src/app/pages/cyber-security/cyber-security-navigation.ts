@@ -66,7 +66,7 @@ const SECTION_PAGES: { section: string; title: string; platform?: boolean }[] = 
   { section: 'vulnerabilities', title: 'Vulnerabilities', platform: true },
   { section: 'inventory', title: 'Software inventory', platform: true },
   { section: 'patches', title: 'Security updates' },
-  { section: 'exposure', title: 'External exposure' },
+  { section: 'exposure', title: 'External exposure', platform: true },
   { section: 'hardening', title: 'Hardening and antivirus', platform: true },
   { section: 'network', title: 'Network devices' },
 ];
