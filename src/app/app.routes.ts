@@ -1,4 +1,5 @@
 import {
+  cyberSecurityDelegatedRoutes,
   cyberSecurityRouteData,
   cyberSecuritySectionRoutes,
 } from './pages/cyber-security/cyber-security-navigation';
@@ -7,7 +8,11 @@ import { authGuard } from './core/guards/auth.guard';
 import { userResolver } from './core/resolvers/user.resolver';
 import { MainLayout } from './layout/main-layout/main-layout';
 import { redirectIfLoggedGuard } from './core/guards/redirectIfLogged.guard';
-import { permissionGuard, voipCapacityReadGuard } from './core/guards/permission.guard';
+import {
+  cyberPlatformGuard,
+  permissionGuard,
+  voipCapacityReadGuard,
+} from './core/guards/permission.guard';
 import { environmentGuard } from './core/guards/environment.guard';
 import { publicBoardGuard } from './core/guards/public-board.guard';
 import { publicReleaseNotesGuard } from './core/guards/public-release-notes.guard';
@@ -763,6 +768,8 @@ export const routes: Routes = [
                 pathMatch: 'full',
               },
               ...cyberSecuritySectionRoutes('tenant'),
+              // Delegated platform scope (platform.cyber-security.read/.manage, not a master).
+              ...cyberSecurityDelegatedRoutes(cyberPlatformGuard),
 
               {
                 path: 'authentication/dashboard',

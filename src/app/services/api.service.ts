@@ -173,7 +173,20 @@ export class ApiService {
   }
 
   private url(endpoint: string): string {
-    return resolveApiUrl(endpoint);
+    return resolveApiUrl(this.withApiScope(endpoint));
+  }
+
+  /** Delegated Cyber Security platform pages ask the platform scope on the Cyber Security API. */
+  private withApiScope(endpoint: string): string {
+    if (!/^\/?(system\/)?cyber-security(\/|\?|$)/.test(endpoint)) return endpoint;
+    let scope: string | null = null;
+    try {
+      scope = this.injector.get(RouteScopeService).apiScope();
+    } catch {
+      return endpoint;
+    }
+    if (scope !== 'platform' || /[?&]scope=/.test(endpoint)) return endpoint;
+    return `${endpoint}${endpoint.includes('?') ? '&' : '?'}scope=platform`;
   }
 
   /**

@@ -55,7 +55,7 @@ export interface AuthUser {
   avatarVersion?: number | null;
   EnvironmentUUID?: string | null;
   permissions?: string[];
-  resourceAccess?: { voipCapacityRead: boolean };
+  resourceAccess?: { voipCapacityRead: boolean; cyberPlatform?: boolean };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -234,7 +234,10 @@ export class AuthService {
           readStoredEnvironmentUUID() ??
           normalizeEnvironmentUUID(current.EnvironmentUUID) ??
           null,
-        resourceAccess: { voipCapacityRead: raw?.resourceAccess?.voipCapacityRead === true },
+        resourceAccess: {
+          voipCapacityRead: raw?.resourceAccess?.voipCapacityRead === true,
+          cyberPlatform: raw?.resourceAccess?.cyberPlatform === true,
+        },
         permissions: Array.isArray(raw?.permissions)
           ? raw.permissions
           : (current.permissions ?? []),

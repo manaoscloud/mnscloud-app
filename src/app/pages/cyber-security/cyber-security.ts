@@ -1136,7 +1136,8 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     networkFindingDialog = (finding) =>
       openDataViewerDialog(this.dialog, deviceFindingView(finding, this.t.bind(this)));
     platformMaster = () =>
-      hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access');
+      hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access') ||
+      auth.user()?.resourceAccess?.cyberPlatform === true;
   }
 
   private language(): string {
