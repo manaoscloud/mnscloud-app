@@ -6355,6 +6355,7 @@
   "nav.cyber-security.platform.inventory": "Inventário",
   "nav.cyber-security.platform.patches": "Atualizações",
   "nav.cyber-security.platform.hardening": "Endurecimento",
+  "nav.cyber-security.platform.network": "Rede",
   "nav.cyber-security.platform.exposure": "Exposição",
   "nav.cyber-security.platform.alerts": "Alertas",
   "nav.cyber-security.platform.decisions": "Decisões",
@@ -15050,5 +15051,8 @@
   "support.remote.runbooks.rotation.resolve.currentConfirm": "A senha antiga continua valendo: a senha provisória é descartada e o cofre não muda.",
   "support.remote.runbooks.rotation.resolve.newConfirm": "O equipamento já usa a senha nova: ela será gravada no cofre no lugar da antiga.",
   "support.remote.runbooks.rotation.resolve.done": "Resposta registrada.",
-  "support.remote.runbooks.rotation.resolve.failed": "Não foi possível registrar a resposta."
+  "support.remote.runbooks.rotation.resolve.failed": "Não foi possível registrar a resposta.",
+  "cyberSecurity.network.registryDevice": "Equipamento de Rede",
+  "cyberSecurity.network.registryDeviceHelp": "Equipamento da plataforma no cadastro de Rede que este monitoramento acompanha.",
+  "cyberSecurity.network.registryNameHelp": "Opcional: em branco, usa o nome do equipamento no cadastro de Rede."
 }
