@@ -39,6 +39,9 @@ export const CYBER_SECURITY_METRICS = [
   { value: 'cyber_security.vaults', label: 'cyberSecurity.metricVaults' },
 ];
 
+/** Single usage metric of managed support: devices with remote support on in the customer's sites. */
+export const SUPPORT_REMOTE_METRIC = 'support_remote.managed_devices';
+
 /** Usage metrics reported by Contracts per customer account and closed month. */
 export const CONTRACT_USAGE_METRICS = [
   { value: 'contracts.envelopes_completed', label: 'contracts.metricEnvelopes' },

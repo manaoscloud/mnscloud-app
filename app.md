@@ -262,6 +262,9 @@ Faturamento › contract items of module `cyber_security` pick the customer acco
 search-select (`cyber-security/accounts?status=1`, no quick-create: accounts are created in
 Cybersecurity › Customer accounts). A usage item replaces the free metric field with a select of the
 two Cyber Security metrics (`cyber_security.protected_servers`, `cyber_security.vaults`).
+Contract items of module `support_remote` (managed support, ST-J2a) hide the resource: the API fills the
+contract's own customer; a usage item always uses `support_remote.managed_devices` (devices with remote
+support on in the customer's sites, counted per closed month).
 
 Cybersecurity › Customer accounts has two row actions on customer accounts. **Acessos do Portal**
 (`.../portal-grants`, needs `tenant.cyber-security.accounts.all`) picks a portal user of the account

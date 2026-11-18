@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "4e9572399434",
+  "version": "cb6d5d5796ed",
   "language": "pt-BR",
   "entries": [
     {
@@ -2090,6 +2090,14 @@
       "menuPath": "Cibersegurança › Plataforma › Decisões",
       "scope": "tenant",
       "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/exposure",
+      "menuPath": "Cibersegurança › Plataforma › Exposição",
+      "scope": "tenant",
+      "title": "Exposição",
       "description": "",
       "fields": []
     },
@@ -8788,6 +8796,14 @@
       "menuPath": "Cibersegurança › Decisões",
       "scope": "platform",
       "title": "Decisões",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/cyber-security/exposure",
+      "menuPath": "Cibersegurança › Exposição",
+      "scope": "platform",
+      "title": "Exposição",
       "description": "",
       "fields": []
     },
