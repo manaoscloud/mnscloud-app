@@ -340,6 +340,16 @@ export function patchServerActions(
   ];
 }
 
+/**
+ * Why Fix cannot run on the server of a finding: an Agent without the patch capability, or managed
+ * patching not turned on. Rows of an older API without the flags keep Fix enabled.
+ */
+export function findingPatchBlocked(finding: ConfigurableCrudRecord): string | null {
+  if (finding['patchSupported'] === false) return 'cyberSecurity.patch.agentOutdated';
+  if (finding['patchEnabled'] === false) return 'cyberSecurity.patch.enableFirst';
+  return null;
+}
+
 /** "Fix" on a finding: requests a patch run of that finding (it still needs an approval). */
 export const findingPatchAction: ConfigurableCrudRowAction = {
   key: 'patchFix',
@@ -349,6 +359,7 @@ export const findingPatchAction: ConfigurableCrudRowAction = {
     finding['status'] === 'open' &&
     finding['fixState'] === 'fixed' &&
     Boolean(finding['agentUUID']),
+  disabledReason: (finding) => findingPatchBlocked(finding),
   request: {
     method: 'post',
     endpoint: () => runsEndpoint,
