@@ -193,7 +193,7 @@ const SCOPED_PAGES = [
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SaleAccountOperatorsDialog extends ConfigurableCrudCollectionDialog {
-  override async saveItem(): Promise<void> {
+  override async saveItem(_saveAndNew = false): Promise<void> {
     const current = this.editingRecord();
     if (!current || this.saving()) return;
     this.saving.set(true);
