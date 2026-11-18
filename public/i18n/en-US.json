@@ -12391,6 +12391,7 @@
   "cyberSecurity.patch.reboot.never": "Never",
   "cyberSecurity.patch.reboot.always": "Always",
   "cyberSecurity.patch.agentOutdated": "Update the Agent of this server to use managed patching.",
+  "cyberSecurity.patch.enableFirst": "Turn on managed patching for this server first in Cybersecurity › Updates.",
   "Turn on managed patching for this server first": "Turn on managed patching for this server first in Cybersecurity › Updates",
   "Update the Agent of this server to use managed patching": "Update the Agent of this server to use managed patching",
   "Choose at least one day for the maintenance window": "Choose at least one day for the maintenance window",
