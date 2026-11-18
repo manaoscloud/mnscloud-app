@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "cb6d5d5796ed",
+  "version": "6af24ef71ccb",
   "language": "pt-BR",
   "entries": [
     {
@@ -2130,6 +2130,14 @@
       "menuPath": "Cibersegurança › Plataforma › Políticas de API",
       "scope": "tenant",
       "title": "Políticas de API",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/patches",
+      "menuPath": "Cibersegurança › Plataforma › Atualizações",
+      "scope": "tenant",
+      "title": "Atualizações",
       "description": "",
       "fields": []
     },
@@ -8895,6 +8903,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/cyber-security/patches",
+      "menuPath": "Cibersegurança › Atualizações",
+      "scope": "platform",
+      "title": "Atualizações",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/system/cyber-security/profiles",

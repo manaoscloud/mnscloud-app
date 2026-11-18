@@ -295,7 +295,31 @@ const PLATFORM_HIDDEN_ACTIONS = new Set([
   'antivirusInstall',
 ]);
 
+/** Decision D-3: patching never reboots a platform server, so the policy form offers only "never". */
+function neverReboot(form: ConfigurableCrudConfig): ConfigurableCrudConfig {
+  return {
+    ...form,
+    initialValues: { ...form.initialValues, rebootPolicy: 'never' },
+    fields: form.fields.map((field) =>
+      field.key === 'rebootPolicy'
+        ? { ...field, options: (field.options ?? []).filter((option) => option.value === 'never') }
+        : field,
+    ),
+  };
+}
+
 function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
+  if (section === 'patches') {
+    return {
+      ...config,
+      rowActions: (config.rowActions ?? []).map((action) => {
+        const form = action.form;
+        return form
+          ? { ...action, form: (row: ConfigurableCrudRecord) => neverReboot(form(row)) }
+          : action;
+      }),
+    };
+  }
   if (section !== 'hardening') return config;
   return {
     ...config,

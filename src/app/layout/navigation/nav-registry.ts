@@ -3175,6 +3175,13 @@ export const NAV_ITEMS: NavItem[] = [
             requiresEnvironment: false,
           },
           {
+            id: 'cyber-security/platform/patches',
+            label: 'nav.cyber-security.platform.patches',
+            icon: 'system_update_alt',
+            route: '/cyber-security/platform/patches',
+            requiresEnvironment: false,
+          },
+          {
             id: 'cyber-security/platform/hardening',
             label: 'nav.cyber-security.platform.hardening',
             icon: 'verified_user',
@@ -3312,6 +3319,7 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'system_update_alt',
         category: 'protection',
         route: '/cyber-security/patches',
+        masterRoute: '/system/cyber-security/patches',
         permissions: ['tenant.cyber-security.servers.read'],
         requiresEnvironment: true,
       },
