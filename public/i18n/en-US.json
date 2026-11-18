@@ -6349,6 +6349,7 @@
   "nav.cyber-security.platform.inventory": "Inventory",
   "nav.cyber-security.platform.patches": "Updates",
   "nav.cyber-security.platform.hardening": "Hardening",
+  "nav.cyber-security.platform.network": "Network",
   "nav.cyber-security.platform.exposure": "Exposure",
   "nav.cyber-security.platform.alerts": "Alerts",
   "nav.cyber-security.platform.decisions": "Decisions",
@@ -15043,5 +15044,8 @@
   "support.remote.runbooks.rotation.resolve.currentConfirm": "The old password stays valid: the temporary password is discarded and the vault is unchanged.",
   "support.remote.runbooks.rotation.resolve.newConfirm": "The device already uses the new password: it will be saved in the vault in place of the old one.",
   "support.remote.runbooks.rotation.resolve.done": "Answer recorded.",
-  "support.remote.runbooks.rotation.resolve.failed": "Could not record the answer."
+  "support.remote.runbooks.rotation.resolve.failed": "Could not record the answer.",
+  "cyberSecurity.network.registryDevice": "Network device",
+  "cyberSecurity.network.registryDeviceHelp": "Platform device of the Network registry that this monitoring follows.",
+  "cyberSecurity.network.registryNameHelp": "Optional: when empty, the name of the device in the Network registry is used."
 }

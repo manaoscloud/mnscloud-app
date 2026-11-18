@@ -61,6 +61,7 @@ import {
   deviceFindingView,
   devicePayload,
   devicesEndpoint,
+  platformDeviceFields,
 } from './cyber-network';
 
 /** The page words AI failures itself (aiError), so the global raw HTTP toast stays off. */
@@ -308,7 +309,32 @@ function neverReboot(form: ConfigurableCrudConfig): ConfigurableCrudConfig {
   };
 }
 
+function platformNetwork(config: ConfigurableCrudConfig): ConfigurableCrudConfig {
+  return {
+    ...config,
+    fields: platformDeviceFields(config.fields),
+    columns: [
+      ...config.columns.slice(0, 1),
+      { id: 'registry', label: 'cyberSecurity.network.registryDevice', field: 'networkDeviceName' },
+      ...config.columns.slice(1),
+    ],
+    rowActions: (config.rowActions ?? []).map((action) => {
+      const form = action.form;
+      return form
+        ? {
+            ...action,
+            form: (row: ConfigurableCrudRecord) => {
+              const built = form(row);
+              return { ...built, fields: platformDeviceFields(built.fields) };
+            },
+          }
+        : action;
+    }),
+  };
+}
+
 function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
+  if (section === 'network') return platformNetwork(config);
   if (section === 'patches') {
     return {
       ...config,

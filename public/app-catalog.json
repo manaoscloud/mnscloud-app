@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6af24ef71ccb",
+  "version": "a54568702e02",
   "language": "pt-BR",
   "entries": [
     {
@@ -2122,6 +2122,14 @@
       "menuPath": "Cibersegurança › Plataforma › Listas de acesso",
       "scope": "tenant",
       "title": "Listas de acesso",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/cyber-security/platform/network",
+      "menuPath": "Cibersegurança › Plataforma › Rede",
+      "scope": "tenant",
+      "title": "Rede",
       "description": "",
       "fields": []
     },
@@ -8836,6 +8844,14 @@
       "menuPath": "Cibersegurança › Listas de acesso",
       "scope": "platform",
       "title": "Listas de acesso",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/cyber-security/network",
+      "menuPath": "Cibersegurança › Rede",
+      "scope": "platform",
+      "title": "Rede",
       "description": "",
       "fields": []
     },
