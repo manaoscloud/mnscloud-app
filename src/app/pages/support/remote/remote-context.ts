@@ -1,5 +1,3 @@
-import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../../../services/auth.service';
 import { InjectionToken, inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { injectPlatformScope } from '../../../core/scope/route-scope';
@@ -59,15 +57,6 @@ export function remotePreselection(
     customer: context.platform ? '' : (query.get('customer') ?? ''),
   };
 }
-
-/** Platform desk users do not acquire infrastructure access through delegated ticket grants. */
-export const masterGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  return hasEffectivePermission(auth.user()?.permissions ?? [], 'platform.master.access')
-    ? true
-    : router.parseUrl('/dashboard');
-};
 
 /** Authenticated SSE mirrors the API client; a platform stream never carries a selected tenant. */
 export function remoteStreamHeaders(

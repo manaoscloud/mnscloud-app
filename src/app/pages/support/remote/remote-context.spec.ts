@@ -1,3 +1,4 @@
+import { permissionGuard } from '../../../core/guards/permission.guard';
 import { Injector, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -17,7 +18,6 @@ import {
   remoteStreamHeaders,
   remoteUiKey,
   canRemote,
-  masterGuard,
 } from './remote-context';
 
 function scoped(platform: boolean) {
@@ -117,7 +117,10 @@ describe('remote desk explicit scope', () => {
       });
       expect(
         runInInjectionContext(injector, () =>
-          masterGuard({} as ActivatedRouteSnapshot, {} as never),
+          permissionGuard(
+            { data: { permission: 'platform.master.access' } } as ActivatedRouteSnapshot,
+            {} as never,
+          ),
         ),
       ).toBe(allowed ? true : ('denied' as never));
     }
@@ -160,6 +163,8 @@ for (const platform of [false, true]) {
       expect(api.post.calls.mostRecent().args[0]).toBe(
         `${context.base}/sessions/session-a/devices/device-a/credential-rotation`,
       );
+      await books.deviceTypes();
+      expect(api.get.calls.mostRecent().args[0]).toBe(`${context.network}/device-types`);
       await books.deviceCredentials('device-a');
       expect(api.get.calls.mostRecent().args[0]).toBe(
         `${context.network}/devices/device-a/credentials`,

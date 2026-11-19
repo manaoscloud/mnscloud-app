@@ -1,4 +1,3 @@
-import { masterGuard } from './pages/support/remote/remote-context';
 import {
   cyberSecurityDelegatedRoutes,
   cyberSecurityRouteData,
@@ -2937,7 +2936,7 @@ export const routes: Routes = [
             children: [
               {
                 path: 'support/remote/console',
-                canActivate: [masterGuard, permissionGuard],
+                canActivate: [permissionGuard],
                 loadComponent: () =>
                   import('./pages/support/remote/remote-console').then(
                     (m) => m.SupportRemoteConsolePage,
@@ -2951,7 +2950,7 @@ export const routes: Routes = [
               },
               {
                 path: 'support/remote/sessions',
-                canActivate: [masterGuard, permissionGuard],
+                canActivate: [permissionGuard],
                 loadComponent: () =>
                   import('./pages/support/remote/remote-sessions').then(
                     (m) => m.SupportRemoteSessionsPage,
@@ -2965,7 +2964,7 @@ export const routes: Routes = [
               },
               {
                 path: 'support/remote/runbooks',
-                canActivate: [masterGuard, permissionGuard],
+                canActivate: [permissionGuard],
                 loadComponent: () =>
                   import('./pages/support/remote/remote-runbooks').then(
                     (m) => m.SupportRemoteRunbooksPage,

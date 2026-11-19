@@ -823,7 +823,7 @@ export class RemoteRunbookService {
   /** Device type catalog (codes and shell dialect per type). */
   async deviceTypes(): Promise<NetworkDeviceType[]> {
     const response = await this.api.get<{ data?: NetworkDeviceTypeCatalog }>(
-      'network/device-types',
+      `${this.context.network}/device-types`,
       { silent: true },
     );
     return response?.data?.items ?? [];
