@@ -313,7 +313,7 @@
               <h3>{{ group.label }} ({{ group.rows.length }})</h3>
               @for (row of group.rows; track recordUUID(row)) {
                 <article class="crud-card">
-                  <h4>{{ row[board.titleField] }}</h4>
+                  <h4>{{ boardTitle(row) }}</h4>
                   <button
                     type="button"
                     class="record-uuid crud-uuid-copy"

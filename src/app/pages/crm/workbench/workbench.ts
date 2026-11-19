@@ -8,6 +8,7 @@ import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudFilterAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmWorkspaceFilter } from '../crm-workspace-fields';
@@ -142,7 +143,7 @@ export class CrmWorkbenchPage extends ConfigurableCrudPageBase<ConfigurableCrudR
       ),
     );
   }
-  override filterActions() {
+  override filterActions(): readonly ConfigurableCrudFilterAction[] {
     return hasEffectivePermission(
       this.auth.user()?.permissions ?? [],
       'tenant.automation.flows.read',
@@ -150,7 +151,7 @@ export class CrmWorkbenchPage extends ConfigurableCrudPageBase<ConfigurableCrudR
       ? [{ key: 'automation', label: 'crm.prospect.automations', icon: 'account_tree' }]
       : [];
   }
-  override handleFilterAction() {
+  override handleFilterAction(_action: ConfigurableCrudFilterAction): void {
     void this.router.navigate(['/automation/flows']);
   }
 }

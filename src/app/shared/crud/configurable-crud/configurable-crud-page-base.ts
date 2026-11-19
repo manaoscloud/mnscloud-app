@@ -863,6 +863,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     return [...groups.values()];
   });
+  boardTitle(row: T): string {
+    const field = this.config.board?.titleField;
+    return field ? String(row[field] ?? '') : '';
+  }
   readonly pageSize = signal(5);
   readonly serverTotal = signal(0);
   readonly listExporting = signal(false);

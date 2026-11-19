@@ -238,7 +238,7 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
       this.saving.set(false);
     }
   }
-  override isFilterActionDisabled() {
+  override isFilterActionDisabled(_action: ConfigurableCrudFilterAction): boolean {
     return this.submitting();
   }
   override async handleFilterAction(_action: ConfigurableCrudFilterAction) {
