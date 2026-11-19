@@ -762,7 +762,9 @@ export type ConfigurableCrudConfig = {
     optional?: boolean;
   };
   /** Fixed list query parameters sent with every list request (for example `scope=all`). */
-  listQuery?: Readonly<Record<string, string>> | (() => Readonly<Record<string, string>>);
+  listQuery?:
+    | Readonly<Record<string, string>>
+    | (() => Readonly<Record<string, string>> | Promise<Readonly<Record<string, string>>>);
   /** Captured request scope inherited by embedded collections and canonical quick-create. */
   requestApi?: ApiService;
   /** Opt-in list toolbar actions "Export CSV" and "Print" of the filtered list. */
@@ -1329,7 +1331,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       params: () =>
         this.quickCreateMode || this.config.rows ? undefined : this.listResourceParams(),
       defaultValue: [] as T[],
-      loader: ({ params }) => this.fetchItems(params),
+      loader: ({ params, abortSignal }) => this.fetchItems(params, abortSignal),
     });
 
     if (this.quickCreateMode) {
@@ -3833,10 +3835,26 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (next.size !== selected.size) this.enabledCopyActions.set(next);
   }
 
+  private listRequestGeneration = 0;
+
   protected async fetchItems(
     filters: ConfigurableCrudFilters | ConfigurableCrudListParams,
+    abortSignal?: AbortSignal,
   ): Promise<T[]> {
     if (this.config.formOnly) return [];
+    const generation = ++this.listRequestGeneration;
+    const context = this.parameters.contextKey();
+    const assertCurrent = () => {
+      if (
+        abortSignal?.aborted ||
+        this.destroyRef.destroyed ||
+        generation !== this.listRequestGeneration ||
+        context !== this.parameters.contextKey()
+      ) {
+        throw new DOMException('List request no longer current', 'AbortError');
+      }
+    };
+    assertCurrent();
     const params = new URLSearchParams();
     const limit = this.serverSidePagination()
       ? (filters as ConfigurableCrudListParams).limit
@@ -3859,12 +3877,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     }
     for (const [key, value] of Object.entries(
       typeof this.config.listQuery === 'function'
-        ? this.config.listQuery()
+        ? await this.config.listQuery()
         : (this.config.listQuery ?? {}),
     ))
       params.set(key, value);
 
+    assertCurrent();
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
+    assertCurrent();
     const data = (response as { data?: unknown })?.data;
     if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown }).items)) {
       if (this.serverSidePagination()) {

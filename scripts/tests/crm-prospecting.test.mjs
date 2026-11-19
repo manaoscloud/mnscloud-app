@@ -62,19 +62,6 @@ test('CSV bounds, malformed quoting, duplicate headers and inconsistent rows fai
     assert.throws(() => parseLeadCsv(csv));
   assert.equal(importRequestSize({ a: 'é' }), new TextEncoder().encode('{"a":"é"}').length);
 });
-test('queue day boundaries are fresh, local calendar instants including DST', () => {
-  const before = process.env.TZ;
-  process.env.TZ = 'America/New_York';
-  try {
-    const day = forms.localDayBounds(new Date('2026-03-08T16:00:00Z'));
-    assert.equal(day.from, '2026-03-08T05:00:00.000Z');
-    assert.equal(day.to, '2026-03-09T04:00:00.000Z');
-    assert.notEqual(forms.localDayBounds(new Date('2026-03-09T16:00:00Z')).from, day.from);
-  } finally {
-    if (before === undefined) delete process.env.TZ;
-    else process.env.TZ = before;
-  }
-});
 test('assisted conversion scopes lookups, distinguishes company/person and preserves revision', () => {
   const config = forms.assistedConversion({
     CleUUID: 'lead',
@@ -173,7 +160,7 @@ test('queue stays actionable and paginated; remote timeline retains server total
   assert.match(queue, /uuidField: 'key'/);
   assert.match(queue, /serverSidePagination: true/);
   assert.doesNotMatch(queue, /readOnly: true/);
-  assert.match(queue, /listQuery: \(\) =>/);
+  assert.match(queue, /listQuery: async \(\) =>/);
   const base = fs.readFileSync(
     'src/app/shared/crud/configurable-crud/configurable-crud-page-base.ts',
     'utf8',

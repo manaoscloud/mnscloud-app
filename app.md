@@ -2652,3 +2652,29 @@ projection-only filters must never be re-applied against missing row fields. Agg
 without a search contract may set `searchEnabled: false` (CRM metrics); ordinary CRUDs keep Search.
 Proposal guidance follows the canonical item/transition/document/revise flow; the version document
 shows separate one-time/monthly/yearly totals without copying financial calculations into the App.
+
+### Scoped parameter resolution and operational day filters
+
+SystemParameterService caches resolved values only within the effective route scope, actor,
+session generation and selected tenant. A context change invalidates cached promises, and a late
+response from the previous context is rejected before fallback or consumption. Date/time display
+refreshes its timezone when the identity context changes.
+
+Configurable CRUD `listQuery` may return a promise. The shared loader awaits it before making the
+list request; use this for parameter-backed query defaults, never a provisional browser timezone.
+CRM workbench resolves DEFAULT_TIMEZONE first and uses `shared/date-time/zoned-day-bounds.ts`
+for the current calendar day in that IANA zone. Each boundary is computed independently, including
+23/25-hour DST days. Date/time form input semantics remain unchanged.
+
+Import mappings reset when CSV headers change and reject missing/out-of-range column indices.
+Preview errors, import outcomes and duplicate reasons use translated safe message mappings;
+API codes and arbitrary payloads are not shown as instructions. The global board retains copyable
+UUIDs and the same loading overlay/aria-busy semantics as its paginated list.
+
+The parameter service exposes a deduplicated reactive context for display refresh, driven by
+NavigationEnd and auth/tenant signals, plus an always-fresh contextKey() for request safety checks.
+Unrelated profile metadata updates do not reset timezone display. Async listQuery is cancellation
+aware: the base forwards the resource AbortSignal, and checks destruction, request generation and
+context before issuing the GET and before applying its response/total. Captured requestApi clients
+remain the transport authority. Board contents are inert while loading; the Refresh header keeps
+its standard loading behavior.

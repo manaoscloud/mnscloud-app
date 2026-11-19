@@ -145,10 +145,3 @@ export function completeFollowUp(row: ConfigurableCrudRecord, followUp: boolean)
       ),
   });
 }
-
-/** Recomputed on every request, including Refresh across midnight and DST boundaries. */
-export function localDayBounds(now = new Date()): { from: string; to: string } {
-  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  return { from: from.toISOString(), to: to.toISOString() };
-}

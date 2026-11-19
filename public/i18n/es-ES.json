@@ -15170,5 +15170,15 @@
   "crud.board.view": "Tablero",
   "crud.board.scope": "Página actual: {{count}} de {{total}} registros. Use la paginación para continuar; cambie etapas mediante Editar.",
   "crm.prospect.proposalGuide": "1. Cree el borrador desde la oportunidad. 2. Añada los artículos, separando cobros únicos, mensuales y anuales, y revise condiciones y vigencia. 3. Registre como enviada (sin enviar correo) y revise los totales en el documento de la versión. 4. Registre la respuesta y evidencia; use Revisar para una nueva versión.",
-  "crm.prospect.defaultPeriod": "90 días (predeterminado)"
+  "crm.prospect.defaultPeriod": "90 días (predeterminado)",
+  "crm.prospect.importError.invalid": "Revise los campos y el formato de la fila antes de importar.",
+  "crm.prospect.importError.required": "Complete los campos obligatorios de la fila.",
+  "crm.prospect.importError.duplicate": "Existe un prospecto similar. Revise el duplicado antes de confirmar.",
+  "crm.prospect.importError.conflict": "Este intento entra en conflicto con una importación anterior. Conserve los datos originales al reintentar.",
+  "crm.prospect.importError.access": "El acceso o la suscripción no permite importar esta fila.",
+  "crm.prospect.importError.reference": "Revise el espacio de trabajo y los registros relacionados.",
+  "crm.prospect.duplicateReason.batch": "Otra fila de este archivo",
+  "crm.prospect.duplicateReason.email": "Mismo correo electrónico",
+  "crm.prospect.duplicateReason.phone": "Mismo teléfono",
+  "crm.prospect.duplicateReason.document": "Mismo documento"
 }

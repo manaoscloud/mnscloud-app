@@ -15170,5 +15170,15 @@
   "crud.board.view": "Board",
   "crud.board.scope": "Current page: {{count}} of {{total}} records. Use pagination to continue; change stages through Edit.",
   "crm.prospect.proposalGuide": "1. Create a draft from the opportunity. 2. Add items, separating one-time, monthly and annual charges, and review terms and validity. 3. Record as sent (no email is sent) and review totals in the version document. 4. Record the response and evidence; use Revise for a new version.",
-  "crm.prospect.defaultPeriod": "90 days (default)"
+  "crm.prospect.defaultPeriod": "90 days (default)",
+  "crm.prospect.importError.invalid": "Review the row fields and format before importing.",
+  "crm.prospect.importError.required": "Fill in the required row fields.",
+  "crm.prospect.importError.duplicate": "A similar lead exists. Review the duplicate before confirming.",
+  "crm.prospect.importError.conflict": "This attempt conflicts with an earlier import. Preserve the original data when retrying.",
+  "crm.prospect.importError.access": "Access or subscription does not allow importing this row.",
+  "crm.prospect.importError.reference": "Review the workspace and related records.",
+  "crm.prospect.duplicateReason.batch": "Another row in this file",
+  "crm.prospect.duplicateReason.email": "Same email",
+  "crm.prospect.duplicateReason.phone": "Same phone number",
+  "crm.prospect.duplicateReason.document": "Same document"
 }

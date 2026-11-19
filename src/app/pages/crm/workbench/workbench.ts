@@ -1,3 +1,5 @@
+import { SystemParameterService } from '../../../services/system-parameter.service';
+import { zonedDayBounds } from '../../../shared/date-time/zoned-day-bounds';
 import { AuthService } from '../../../services/auth.service';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { Component, inject } from '@angular/core';
@@ -10,9 +12,13 @@ import {
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmWorkspaceFilter } from '../crm-workspace-fields';
 import { CRM_OPTIONS } from '../crm-options';
-import { completeFollowUp, localDayBounds } from '../prospecting-forms';
+import { completeFollowUp } from '../prospecting-forms';
 
-export function workbenchConfig(router: Router, canWrite = false) {
+export function workbenchConfig(
+  router: Router,
+  parameters: SystemParameterService,
+  canWrite = false,
+) {
   return defineCrud({
     endpoint: 'crm/workbench',
     uuidField: 'key',
@@ -27,7 +33,7 @@ export function workbenchConfig(router: Router, canWrite = false) {
     serverSideFiltering: true,
     initialPageSize: 25,
     pageSizeOptions: [25, 50, 100, 200],
-    listQuery: () => ({ ...localDayBounds() }),
+    listQuery: async () => zonedDayBounds(await parameters.resolveDefaultTimezone()),
     listFilters: [
       { ...crmWorkspaceFilter, key: 'workspaceUUID', paramKey: 'workspaceUUID' },
       {
@@ -131,6 +137,7 @@ export class CrmWorkbenchPage extends ConfigurableCrudPageBase<ConfigurableCrudR
     super(
       workbenchConfig(
         inject(Router),
+        inject(SystemParameterService),
         hasEffectivePermission(inject(AuthService).user()?.permissions ?? [], 'tenant.crm.write'),
       ),
     );

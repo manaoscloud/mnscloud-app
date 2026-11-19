@@ -1,3 +1,4 @@
+import { importFeedbackKey, duplicateReasonKey } from './import-feedback';
 import { injectCrmMemoryScope } from '../crm-context';
 import { Component, effect, signal } from '@angular/core';
 import {
@@ -109,7 +110,13 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
               label: `crm.prospect.${value}`,
             })),
           },
-          { id: 'code', field: 'code', label: 'crm.prospect.error' },
+          {
+            id: 'code',
+            field: 'code',
+            label: 'crm.prospect.error',
+            value: (row, translate) =>
+              row['code'] ? translate(importFeedbackKey(row['code'])) : '',
+          },
           { id: 'uuid', field: 'uuid', label: 'UUID' },
         ],
         filterActions: [{ key: 'import', label: 'crm.prospect.importSelected', icon: 'upload' }],
@@ -184,6 +191,7 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
       if (scope !== this.memoryScope() || this.destroyRef.destroyed) return;
       if (JSON.stringify(csv[0]) !== JSON.stringify(this.headers())) {
         this.csv = csv;
+        for (const key of LEAD_IMPORT_FIELDS) this.setFieldValue(key, '');
         this.headers.set(csv[0]);
         this.snack.info(this.transloco.translate('crm.prospect.mapColumns'));
         return;
@@ -296,11 +304,22 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
       title: 'crm.prospect.preview',
       description: 'crm.prospect.duplicateHelp',
       sections: [
-        { title: 'crm.prospect.error', message: JSON.stringify(row['errors']) },
+        {
+          title: 'crm.prospect.error',
+          message: [
+            ...(Array.isArray(row['errors']) ? row['errors'] : []),
+            ...(row['code'] ? [row['code']] : []),
+          ]
+            .map((value) => this.transloco.translate(importFeedbackKey(value)))
+            .join('\n'),
+        },
         {
           title: 'crm.prospect.duplicates',
           message: (row['duplicates'] as ImportRow['duplicates'])
-            .map((r) => `${r.name} · ${r.reason}${r.uuid ? ` · ${r.uuid}` : ''}`)
+            .map(
+              (r) =>
+                `${r.name} · ${this.transloco.translate(duplicateReasonKey(r.reason))}${r.uuid ? ` · ${r.uuid}` : ''}`,
+            )
             .join('\n'),
         },
       ],

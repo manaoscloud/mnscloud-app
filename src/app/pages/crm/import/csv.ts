@@ -55,6 +55,19 @@ export const LEAD_IMPORT_FIELDS = [
   'CleNeed',
 ] as const;
 export function mapLeadCsv(csv: string[][], mapping: Record<string, unknown>) {
+  for (const key of LEAD_IMPORT_FIELDS) {
+    const index = mapping[key];
+    if (index === '' || index == null) {
+      if (key === 'CleName') throw new Error('mapping');
+      continue;
+    }
+    if (
+      !/^\d+$/.test(String(index)) ||
+      !Number.isSafeInteger(Number(index)) ||
+      Number(index) >= csv[0].length
+    )
+      throw new Error('mapping');
+  }
   return csv.slice(1).map((cells, i) => ({
     rowKey: String(i + 1),
     data: Object.fromEntries(

@@ -301,27 +301,40 @@
       </p>
     </div>
     @if (boardMode()) {
-      <div class="crud-board">
-        @for (group of boardGroups(); track group.key) {
-          <section class="crud-board-column">
-            <h3>{{ group.label }} ({{ group.rows.length }})</h3>
-            @for (row of group.rows; track recordUUID(row)) {
-              <article class="crud-card">
-                <h4>{{ row[board.titleField] }}</h4>
-                <span class="record-uuid" [matTooltip]="recordUUID(row)">{{
-                  recordUUID(row).slice(0, 8)
-                }}</span>
-                <p>{{ columnText(row, board.detailColumn) }}</p>
-                <ng-container
-                  [ngTemplateOutlet]="crudRowActions"
-                  [ngTemplateOutletContext]="{ $implicit: row }"
-                />
-              </article>
-            }
-          </section>
-        } @empty {
-          <p>{{ config.emptyLabel | transloco }}</p>
+      <div class="table-wrapper" [class.is-loading]="loading()" [attr.aria-busy]="loading()">
+        @if (loading()) {
+          <div class="table-loading">
+            <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+          </div>
         }
+        <div class="crud-board" [attr.inert]="loading() ? '' : null">
+          @for (group of boardGroups(); track group.key) {
+            <section class="crud-board-column">
+              <h3>{{ group.label }} ({{ group.rows.length }})</h3>
+              @for (row of group.rows; track recordUUID(row)) {
+                <article class="crud-card">
+                  <h4>{{ row[board.titleField] }}</h4>
+                  <button
+                    type="button"
+                    class="record-uuid crud-uuid-copy"
+                    [matTooltip]="recordUUID(row) + ' · ' + ('Click to copy' | transloco)"
+                    [attr.aria-label]="('Copy' | transloco) + ' UUID ' + recordUUID(row)"
+                    (click)="copyText(recordUUID(row))"
+                  >
+                    {{ recordUUID(row).slice(0, 8) }}
+                  </button>
+                  <p>{{ columnText(row, board.detailColumn) }}</p>
+                  <ng-container
+                    [ngTemplateOutlet]="crudRowActions"
+                    [ngTemplateOutletContext]="{ $implicit: row }"
+                  />
+                </article>
+              }
+            </section>
+          } @empty {
+            <p>{{ config.emptyLabel | transloco }}</p>
+          }
+        </div>
       </div>
     }
   }
@@ -1455,8 +1468,7 @@
                   [disabled]="action.disabled?.()"
                   (click)="action.run(this)"
                 >
-                  <mat-icon>{{ action.icon }}</mat-icon
-                  >{{ action.label | transloco }}
+                  <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
                 </button>
               }
               <p>{{ 'registry.contactSaveHelp' | transloco }}</p>
@@ -3216,8 +3228,7 @@
                     [disabled]="!editingRecord() || action.disabled?.()"
                     (click)="action.run(this)"
                   >
-                    <mat-icon>{{ action.icon }}</mat-icon
-                    >{{ action.label | transloco }}
+                    <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
                   </button>
                 </div>
               }
@@ -3530,8 +3541,7 @@
                 type="button"
                 (click)="runRowAction(action, editingRecord()!)"
               >
-                <mat-icon>{{ action.icon }}</mat-icon
-                >{{ action.label | transloco }}
+                <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
               </button>
             </div>
           </mat-tab>

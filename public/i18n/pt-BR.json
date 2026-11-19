@@ -15171,5 +15171,15 @@
   "crud.board.view": "Quadro",
   "crud.board.scope": "Página atual: {{count}} de {{total}} registros. Use a paginação para continuar; altere a etapa por Editar.",
   "crm.prospect.proposalGuide": "1. Crie o rascunho a partir da oportunidade. 2. Cadastre os itens, separando cobrança única, mensal e anual, e revise condições e validade. 3. Registre como enviada (sem envio de e-mail) e confira os totais no documento da versão. 4. Registre a resposta e a evidência; use Revisar para uma nova versão.",
-  "crm.prospect.defaultPeriod": "90 dias (padrão)"
+  "crm.prospect.defaultPeriod": "90 dias (padrão)",
+  "crm.prospect.importError.invalid": "Revise os campos e o formato da linha antes de importar.",
+  "crm.prospect.importError.required": "Preencha os campos obrigatórios da linha.",
+  "crm.prospect.importError.duplicate": "Há um prospecto semelhante. Revise a duplicidade antes de confirmar.",
+  "crm.prospect.importError.conflict": "Esta tentativa conflita com uma importação anterior. Preserve os dados originais ao repetir.",
+  "crm.prospect.importError.access": "O acesso ou a assinatura não permite importar esta linha.",
+  "crm.prospect.importError.reference": "Revise o espaço de trabalho e os registros relacionados.",
+  "crm.prospect.duplicateReason.batch": "Outra linha deste arquivo",
+  "crm.prospect.duplicateReason.email": "Mesmo e-mail",
+  "crm.prospect.duplicateReason.phone": "Mesmo telefone",
+  "crm.prospect.duplicateReason.document": "Mesmo documento"
 }
