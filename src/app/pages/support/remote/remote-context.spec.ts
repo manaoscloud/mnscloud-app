@@ -118,7 +118,7 @@ describe('remote desk explicit scope', () => {
       expect(
         runInInjectionContext(injector, () =>
           permissionGuard(
-            { data: { permission: 'platform.master.access' } } as ActivatedRouteSnapshot,
+            { data: { permission: 'platform.master.access' } } as unknown as ActivatedRouteSnapshot,
             {} as never,
           ),
         ),
