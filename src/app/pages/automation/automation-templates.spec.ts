@@ -9,6 +9,8 @@ const STATIC_PORTS: Record<string, string[]> = {
   'conversations.distribute': ['no_agent'],
   'conversations.handoff': [],
   'core.end': [],
+  'crm.assign_owner': ['next', 'missing', 'error'],
+  'crm.log_activity': ['next', 'missing', 'error'],
 };
 
 describe('flow templates', () => {

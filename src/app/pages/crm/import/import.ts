@@ -1,4 +1,4 @@
-import { importFeedbackKey, duplicateReasonKey } from './import-feedback';
+import { importFeedbackText, duplicateReasonKey } from './import-feedback';
 import { injectCrmMemoryScope } from '../crm-context';
 import { Component, effect, signal } from '@angular/core';
 import {
@@ -115,7 +115,7 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
             field: 'code',
             label: 'crm.prospect.error',
             value: (row, translate) =>
-              row['code'] ? translate(importFeedbackKey(row['code'])) : '',
+              row['code'] ? importFeedbackText(row['code'], translate) : '',
           },
           { id: 'uuid', field: 'uuid', label: 'UUID' },
         ],
@@ -310,7 +310,7 @@ export class CrmImportPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
             ...(Array.isArray(row['errors']) ? row['errors'] : []),
             ...(row['code'] ? [row['code']] : []),
           ]
-            .map((value) => this.transloco.translate(importFeedbackKey(value)))
+            .map((value) => importFeedbackText(value, (key) => this.transloco.translate(key)))
             .join('\n'),
         },
         {

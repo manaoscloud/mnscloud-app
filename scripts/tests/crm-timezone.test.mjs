@@ -8,6 +8,7 @@ import { zonedDayBounds } from '../../src/app/shared/date-time/zoned-day-bounds.
 import { mapLeadCsv } from '../../src/app/pages/crm/import/csv.ts';
 import {
   importFeedbackKey,
+  importFeedbackText,
   duplicateReasonKey,
 } from '../../src/app/pages/crm/import/import-feedback.ts';
 
@@ -140,7 +141,24 @@ test('CSV rejects stale/out-of-bounds mappings and translates API feedback using
   ])
     assert.throws(() => mapLeadCsv(csv, mapping), /mapping/);
   assert.equal(importFeedbackKey('CleEmail'), 'Email');
+  for (const code of ['CRM_PERMISSION_REQUIRED', 'CRM_ASSIGNMENT_FORBIDDEN'])
+    assert.equal(importFeedbackKey(code), 'crm.prospect.importError.access');
+  assert.equal(
+    importFeedbackKey('CRM_WORKSPACE_UNAVAILABLE'),
+    'crm.prospect.importError.reference',
+  );
   assert.equal(importFeedbackKey('CRM_IMPORT_CONFLICT'), 'crm.prospect.importError.conflict');
+  assert.equal(
+    importFeedbackKey('CRM_IMPORT_REPLAY_CONFLICT'),
+    'crm.prospect.importError.conflict',
+  );
+  assert.equal(importFeedbackKey('CRM_IMPORT_DUPLICATE'), 'crm.prospect.importError.duplicate');
+  assert.equal(importFeedbackKey('CRM_REQUIRED:CleName'), 'crm.prospect.importError.required');
+  assert.equal(
+    importFeedbackKey('CRM_REQUIRED:arbitrary sensitive detail'),
+    'crm.prospect.importError.required',
+  );
+  assert.equal(importFeedbackKey('untrusted:CRM_REQUIRED'), 'crm.prospect.importError.invalid');
   assert.equal(importFeedbackKey('arbitrary server text'), 'crm.prospect.importError.invalid');
   assert.equal(duplicateReasonKey('batch'), 'crm.prospect.duplicateReason.batch');
   assert.equal(duplicateReasonKey('<script>'), 'crm.prospect.importError.duplicate');
@@ -310,4 +328,40 @@ test('board content is inert while loading, without disabling the Refresh header
   );
   assert.match(template, /class="crud-board"\s+\[attr\.inert\]="loading\(\) \? '' : null"/);
   assert.doesNotMatch(template, /<app-refresh-button[^>]*inert/);
+});
+
+test('import feedback shows only canonical translated field context', () => {
+  const translate = (key) => `translated(${key})`;
+  const required = translate('crm.prospect.importError.required');
+  for (const [field, key] of Object.entries({
+    CleName: 'crm.field.Name',
+    CleState: 'crm.field.State',
+    CleCloseReason: 'crm.field.CloseReason',
+    CleNextContactAt: 'crm.field.NextContactAt',
+    CrmSourceCsoUUID: 'crm.title.sources',
+    CrmProductCprUUID: 'crm.title.products',
+    RegIndustryRinUUID: 'crm.title.industries',
+    AssignedUserUsrUUID: 'crm.field.AssignedUserUsrUUID',
+    CrmWorkspaceCwsUUID: 'crm.field.Workspace',
+  }))
+    assert.equal(
+      importFeedbackText(`CRM_REQUIRED:${field}`, translate),
+      `${required} · ${translate(key)}`,
+    );
+  for (const suffix of [
+    'unknown',
+    '<img src=x onerror=alert(1)>',
+    'CleName:<script>',
+    'toString',
+    '__proto__',
+  ]) {
+    assert.equal(importFeedbackText(`CRM_REQUIRED:${suffix}`, translate), required);
+  }
+  for (const value of ['<script>', 'toString', '__proto__', null]) {
+    assert.equal(
+      importFeedbackText(value, translate),
+      translate('crm.prospect.importError.invalid'),
+    );
+  }
+  assert.equal(importFeedbackText('CleEmail', translate), translate('Email'));
 });
