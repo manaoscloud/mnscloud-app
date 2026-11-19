@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "d2af235afb3f",
+  "version": "62a77defbde2",
   "language": "pt-BR",
   "entries": [
     {
@@ -11957,6 +11957,30 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/support/remote/console",
+      "menuPath": "Suporte › Remoto › Terminal",
+      "scope": "platform",
+      "title": "Terminal",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/system/support/remote/runbooks",
+      "menuPath": "Suporte › Remoto › Runbooks",
+      "scope": "platform",
+      "title": "Runbooks de suporte remoto",
+      "description": "Procedimentos que o técnico executa em equipamentos da plataforma durante uma sessão de suporte. Revise as propostas antes de aprovar mudanças.",
+      "fields": []
+    },
+    {
+      "route": "/system/support/remote/sessions",
+      "menuPath": "Suporte › Remoto › Sessões",
+      "scope": "platform",
+      "title": "Sessões de suporte remoto",
+      "description": "Sessões de suporte dos equipamentos da plataforma, com situação, nível e técnico. Abra uma sessão para continuar no console.",
+      "fields": []
     },
     {
       "route": "/system/user/permissions",

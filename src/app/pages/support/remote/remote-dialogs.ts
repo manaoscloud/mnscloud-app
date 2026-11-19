@@ -1,3 +1,5 @@
+import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { REMOTE_CONTEXT, REMOTE_DIALOG_CONTEXT, RemoteLaunch, canRemote } from './remote-context';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -5,16 +7,14 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { ReportProblemButtonComponent } from '../../../shared/support-report-dialog/report-problem-button';
 import { assistRequestErrorKey } from './remote-assistant';
-import { REMOTE_LEVELS } from './remote-session';
-import { REMOTE_LOOKUPS, RemoteLookupComponent, RemoteLookupSpec } from './remote-lookup';
+import { REMOTE_LEVELS, text } from './remote-session';
+import { remoteLookups, RemoteLookupComponent, RemoteLookupSpec } from './remote-lookup';
 
 /** Only the field grid is local: the dialog surface is the shared `crud-form-dialog` + `.crud-dialog`. */
 const DIALOG_STYLES = `
@@ -38,6 +38,7 @@ export type NewSessionResult = {
 /** `+ Nova`: title, level, optional customer and ticket, and the devices of the session. */
 @Component({
   selector: 'mns-support-remote-new-dialog',
+  providers: [REMOTE_DIALOG_CONTEXT],
   standalone: true,
   imports: [
     FormsModule,
@@ -45,7 +46,7 @@ export type NewSessionResult = {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
+    MnsSearchSelectFieldComponent,
     RemoteLookupComponent,
     ReportProblemButtonComponent,
     TranslocoPipe,
@@ -56,7 +57,14 @@ export type NewSessionResult = {
       <header class="dialog-header">
         <div>
           <h2>{{ 'support.remote.new.title' | transloco }}</h2>
-          <p>{{ 'support.remote.new.description' | transloco }}</p>
+          <p>
+            {{
+              (context.platform
+                ? 'support.remote.platform.newDescription'
+                : 'support.remote.new.description'
+              ) | transloco
+            }}
+          </p>
         </div>
         <mns-report-problem-button />
       </header>
@@ -77,22 +85,21 @@ export type NewSessionResult = {
                 <mat-error>{{ 'support.remote.field.titleRequired' | transloco }}</mat-error>
               }
             </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'support.remote.field.level' | transloco }}</mat-label>
-              <mat-select [value]="level()" (valueChange)="level.set($event)">
-                @for (item of levels(); track item) {
-                  <mat-option [value]="item">{{
-                    'support.remote.level.' + item | transloco
-                  }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mns-remote-lookup
-              [label]="'support.remote.field.customer' | transloco"
-              [spec]="lookups.customer"
-              [value]="customer()"
-              (valueChange)="customer.set($any($event) ?? '')"
+            <mns-search-select-field
+              [label]="'support.remote.field.level' | transloco"
+              [options]="levelOptions()"
+              [translateOptions]="true"
+              [value]="level()"
+              (valueChange)="level.set(text($event))"
             />
+            @if (!context.platform) {
+              <mns-remote-lookup
+                [label]="'support.remote.field.customer' | transloco"
+                [spec]="lookups.customer"
+                [value]="customer()"
+                (valueChange)="customer.set($any($event) ?? '')"
+              />
+            }
             <mns-remote-lookup
               [label]="'support.remote.field.ticket' | transloco"
               [spec]="lookups.ticket"
@@ -125,21 +132,28 @@ export type NewSessionResult = {
   `,
 })
 export class SupportRemoteNewDialogComponent {
+  readonly context = inject(REMOTE_CONTEXT);
+  readonly data = inject<{ launch?: RemoteLaunch }>(MAT_DIALOG_DATA);
+
   readonly ref =
     inject<MatDialogRef<SupportRemoteNewDialogComponent, NewSessionResult>>(MatDialogRef);
   private readonly auth = inject(AuthService);
-  readonly lookups = REMOTE_LOOKUPS;
-  readonly title = signal('');
+  readonly lookups = remoteLookups(this.context);
+  readonly title = signal(this.data.launch?.title ?? '');
   readonly level = signal('n1');
-  readonly customer = signal<string>('');
-  readonly ticket = signal<string>('');
-  readonly devices = signal<string[]>([]);
+  readonly customer = signal(this.context.platform ? '' : (this.data.launch?.customer ?? ''));
+  readonly ticket = signal(this.data.launch?.ticket ?? '');
+  readonly devices = signal<string[]>(this.data.launch?.device ? [this.data.launch.device] : []);
+  readonly text = text;
+  readonly levelOptions = computed(() =>
+    this.levels().map((value) => ({ value, label: `support.remote.level.${value}` })),
+  );
   readonly touched = signal(false);
   /** UX only: the API refuses a level the user lacks. */
   readonly levels = computed(() => {
     const permissions = this.auth.user()?.permissions ?? [];
     const allowed = REMOTE_LEVELS.filter((item) =>
-      hasEffectivePermission(permissions, `tenant.support.remote.level.${item}`),
+      canRemote(this.context.platform, permissions, `tenant.support.remote.level.${item}`),
     );
     return allowed.length ? allowed : ['n1'];
   });
@@ -151,7 +165,7 @@ export class SupportRemoteNewDialogComponent {
     this.ref.close({
       title,
       level: this.level(),
-      customerUUID: this.customer() || null,
+      customerUUID: this.context.platform ? null : this.customer() || null,
       ticketUUID: this.ticket() || null,
       deviceUUIDs: this.devices(),
     });

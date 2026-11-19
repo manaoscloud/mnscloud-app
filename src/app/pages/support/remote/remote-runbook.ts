@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT } from './remote-context';
 /**
  * Support remote runbooks and credential rotation (ST-H): REST contract of the `/support/remote/runbooks*`,
  * `runbook-runs` and `credential-rotation*` routes of mnscloud-api, and the pure helpers behind the
@@ -69,13 +70,7 @@ export type RunStatus =
   | 'needs_attention'
   | 'cancelled';
 export type RotationState =
-  | 'staging'
-  | 'rotating'
-  | 'promoting'
-  | 'done'
-  | 'failed'
-  | 'rolled_back'
-  | 'needs_attention';
+  'staging' | 'rotating' | 'promoting' | 'done' | 'failed' | 'rolled_back' | 'needs_attention';
 
 const ACTIVE_RUN: readonly string[] = ['running', 'waiting_approval'];
 const ACTIVE_ROTATION: readonly string[] = ['staging', 'rotating', 'promoting'];
@@ -114,7 +109,9 @@ export function paramValueValid(type: string, value: string): boolean {
 export function paramFieldError(param: RunbookParam, raw: unknown): string {
   const value = text(raw).trim();
   if (!value) return param.required ? 'support.remote.runbooks.run.paramRequired' : '';
-  return paramValueValid(param.type, value) ? '' : `support.remote.runbooks.run.invalid.${param.type}`;
+  return paramValueValid(param.type, value)
+    ? ''
+    : `support.remote.runbooks.run.invalid.${param.type}`;
 }
 
 /** Errors of the whole parameter form, keyed by parameter name (only the ones with a problem). */
@@ -192,7 +189,8 @@ export function definitionProblems(def: RunbookDefinition): string[] {
   }
   for (const step of def.steps) {
     if (!step.title.trim() || !step.commands.length) add('support.remote.runbooks.problem.step');
-    if (step.kind === 'change' && !step.verify.length) add('support.remote.runbooks.problem.verify');
+    if (step.kind === 'change' && !step.verify.length)
+      add('support.remote.runbooks.problem.verify');
     if (
       rollbackAllowed(def.dialect, step.kind) &&
       (!step.rollback.length || step.rollback.length > RUNBOOK_LIMITS.commands)
@@ -435,9 +433,24 @@ export function stepChipClass(status: unknown): string {
 
 export function stepStatusKey(status: unknown): string {
   const value = text(status);
-  return ['ok', 'applied', 'succeeded', 'failed', 'blocked', 'timeout', 'running',
-    'waiting_approval', 'proposed', 'applying', 'rejected', 'expired', 'rolled_back',
-    'cancelled', 'skipped', 'pending'].includes(value)
+  return [
+    'ok',
+    'applied',
+    'succeeded',
+    'failed',
+    'blocked',
+    'timeout',
+    'running',
+    'waiting_approval',
+    'proposed',
+    'applying',
+    'rejected',
+    'expired',
+    'rolled_back',
+    'cancelled',
+    'skipped',
+    'pending',
+  ].includes(value)
     ? `support.remote.runbooks.step.status.${value}`
     : 'support.remote.runbooks.step.status.unknown';
 }
@@ -515,7 +528,11 @@ export function runErrorKey(code: unknown): string {
 export function runCard(run: RunbookRun, events: readonly RemoteEvent[]): RunCard {
   const results = stepResults(run);
   const titles = runStepTitles(events, run.SrxUUID);
-  const total = Math.max(Number(run.StepCount) || 0, titles.size, ...results.map((r) => r.step + 1));
+  const total = Math.max(
+    Number(run.StepCount) || 0,
+    titles.size,
+    ...results.map((r) => r.step + 1),
+  );
   const active = isRunActive(run);
   const current = Number(run.SrxStep);
   const steps: RunCardStep[] = [];
@@ -587,7 +604,15 @@ export function rotationChipClass(state: unknown): string {
 /** Translation key explaining the state of a rotation to the technician. */
 export function rotationStateKey(rotation: Pick<CredentialRotation, 'ScrState' | 'ScrErrorCode'>) {
   const state = text(rotation.ScrState);
-  const known = ['staging', 'rotating', 'promoting', 'done', 'failed', 'rolled_back', 'needs_attention'];
+  const known = [
+    'staging',
+    'rotating',
+    'promoting',
+    'done',
+    'failed',
+    'rolled_back',
+    'needs_attention',
+  ];
   return known.includes(state)
     ? `support.remote.runbooks.rotation.help.${state}`
     : 'support.remote.runbooks.rotation.help.unknown';
@@ -695,31 +720,41 @@ export function runbookRequestErrorKey(error: unknown): string {
 // ---------------------------------------------------------------- service
 
 /** Calls of the runbook, run and rotation routes, kept in one place like RemoteAssistService. */
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class RemoteRunbookService {
   private readonly api = inject(ApiService);
+  private readonly context = inject(REMOTE_CONTEXT);
 
   async list(query: { status?: string; dialect?: string } = {}): Promise<RemoteRecord[]> {
     const params = new URLSearchParams({ limit: '200', offset: '0' });
     if (query.status) params.set('status', query.status);
     if (query.dialect) params.set('dialect', query.dialect);
-    const response = await this.api.get<unknown>(`${RUNBOOK_BASE}?${params.toString()}`, {
-      silent: true,
-    });
+    const response = await this.api.get<unknown>(
+      `${this.context.base}/runbooks?${params.toString()}`,
+      {
+        silent: true,
+      },
+    );
     return unwrap<{ items?: RemoteRecord[] }>(response)?.items ?? [];
   }
 
   async get(uuid: string): Promise<RemoteRecord> {
-    const response = await this.api.get<unknown>(`${RUNBOOK_BASE}/${uuid}`, { silent: true });
+    const response = await this.api.get<unknown>(`${this.context.base}/runbooks/${uuid}`, {
+      silent: true,
+    });
     return unwrap<{ runbook?: RemoteRecord }>(response)?.runbook ?? {};
   }
 
   async create(def: RunbookDefinition): Promise<void> {
-    await this.api.post(RUNBOOK_BASE, definitionBody(def), { silent: true });
+    await this.api.post(`${this.context.base}/runbooks`, definitionBody(def), { silent: true });
   }
 
   async update(uuid: string, revision: number, def: RunbookDefinition): Promise<void> {
-    await this.api.put(`${RUNBOOK_BASE}/${uuid}`, { ...definitionBody(def), revision }, { silent: true });
+    await this.api.put(
+      `${this.context.base}/runbooks/${uuid}`,
+      { ...definitionBody(def), revision },
+      { silent: true },
+    );
   }
 
   async startRun(
@@ -731,14 +766,14 @@ export class RemoteRunbookService {
       mode: RunMode;
     },
   ): Promise<void> {
-    await this.api.post(`${REMOTE_BASE}/sessions/${sessionUUID}/runbook-runs`, body, {
+    await this.api.post(`${this.context.base}/sessions/${sessionUUID}/runbook-runs`, body, {
       silent: true,
     });
   }
 
   async runs(sessionUUID: string): Promise<RunbookRun[]> {
     const response = await this.api.get<unknown>(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/runbook-runs`,
+      `${this.context.base}/sessions/${sessionUUID}/runbook-runs`,
       { silent: true },
     );
     return unwrap<{ items?: RunbookRun[] }>(response)?.items ?? [];
@@ -746,7 +781,7 @@ export class RemoteRunbookService {
 
   async cancelRun(sessionUUID: string, run: RunbookRun): Promise<void> {
     await this.api.post(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/runbook-runs/${run.SrxUUID}/cancel`,
+      `${this.context.base}/sessions/${sessionUUID}/runbook-runs/${run.SrxUUID}/cancel`,
       { revision: Number(run.SrxRevision) },
       { silent: true },
     );
@@ -758,7 +793,7 @@ export class RemoteRunbookService {
     credentialUUID: string | null,
   ): Promise<void> {
     await this.api.post(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/devices/${deviceUUID}/credential-rotation`,
+      `${this.context.base}/sessions/${sessionUUID}/devices/${deviceUUID}/credential-rotation`,
       credentialUUID ? { credentialUUID } : {},
       { silent: true },
     );
@@ -771,7 +806,7 @@ export class RemoteRunbookService {
     active: RotationActive,
   ): Promise<void> {
     await this.api.post(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/credential-rotations/${rotation.ScrUUID}/resolve`,
+      `${this.context.base}/sessions/${sessionUUID}/credential-rotations/${rotation.ScrUUID}/resolve`,
       { active, revision: Number(rotation.ScrRevision) },
       { silent: true },
     );
@@ -779,7 +814,7 @@ export class RemoteRunbookService {
 
   async rotations(sessionUUID: string): Promise<CredentialRotation[]> {
     const response = await this.api.get<unknown>(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/credential-rotations`,
+      `${this.context.base}/sessions/${sessionUUID}/credential-rotations`,
       { silent: true },
     );
     return unwrap<{ items?: CredentialRotation[] }>(response)?.items ?? [];
@@ -796,9 +831,12 @@ export class RemoteRunbookService {
 
   /** Credentials metadata of a device (password kind only is kept by the caller). */
   async deviceCredentials(deviceUUID: string): Promise<RemoteRecord[]> {
-    const response = await this.api.get<unknown>(`network/devices/${deviceUUID}/credentials`, {
-      silent: true,
-    });
+    const response = await this.api.get<unknown>(
+      `${this.context.network}/devices/${deviceUUID}/credentials`,
+      {
+        silent: true,
+      },
+    );
     return unwrap<{ items?: RemoteRecord[] }>(response)?.items ?? [];
   }
 }

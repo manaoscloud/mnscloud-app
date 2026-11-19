@@ -1,3 +1,5 @@
+import { Router } from '@angular/router';
+import { remoteLaunchLink } from '../../support/remote/remote-context';
 import { Component, computed, inject, resource } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -49,7 +51,10 @@ import {
   showConnection,
   showRecording,
 } from './device-connections';
-import { deviceSupportSessionsConfig } from '../../support/remote/remote-sessions';
+import {
+  deviceSupportSessionsConfig,
+  remoteConsoleLink,
+} from '../../support/remote/remote-sessions';
 
 type Translate = (key: string) => string;
 
@@ -418,13 +423,14 @@ function accessDialogConfig(
 }
 
 /** Network devices (Rede › Equipamentos): what they are, where they live and how to reach them. */
-function deviceConfig(
+export function deviceConfig(
   platform: boolean,
   can: (permission: string) => boolean,
   translate: Translate,
   typeOf: (code: unknown) => NetworkDeviceType | undefined,
   connections: ConnectionActions,
   hasMgmtAddresses: () => boolean,
+  openSupportSession: (row: ConfigurableCrudRecord) => void,
 ): ConfigurableCrudConfig {
   const base = networkBase(platform);
   const canWrite = can('tenant.network.devices.write');
@@ -569,6 +575,13 @@ function deviceConfig(
     ],
     rowActions: [
       {
+        key: 'remote-session',
+        label: 'support.remote.launch',
+        icon: 'support_agent',
+        visible: () => canConsole && can('tenant.support.remote.sessions.write'),
+        disabledReason: (row) => remoteSupportOff(platform, row),
+      },
+      {
         key: 'console',
         label: 'network.console.open',
         icon: 'terminal',
@@ -612,9 +625,9 @@ function deviceConfig(
         key: 'support-sessions',
         label: 'support.remote.deviceSessions.title',
         icon: 'support_agent',
-        // Tenant devices only: the sessions belong to the tenant that opened them.
-        visible: () => !platform && can('tenant.support.remote.sessions.read'),
-        collection: (row) => deviceSupportSessionsConfig(String(row['NwdUUID'])),
+        visible: () => can('tenant.support.remote.sessions.read'),
+        collection: (row) =>
+          deviceSupportSessionsConfig(String(row['NwdUUID']), platform, openSupportSession),
       },
       {
         key: 'managed-access',
@@ -660,6 +673,7 @@ function deviceConfig(
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly router = inject(Router);
   private readonly base: string;
   /** Device type catalog of the API (codes, versions and access methods per type). */
   private readonly typeCatalog = resource({
@@ -711,6 +725,7 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
 
   constructor() {
     const platform = injectPlatformScope();
+    const router = inject(Router);
     const transloco = inject(TranslocoService);
     const can = injectNetworkPermission(platform);
     const auth = inject(AuthService);
@@ -732,6 +747,10 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
         typeOf,
         connections,
         () => (page?.mgmtAddressOptions().length ?? 0) > 0,
+        (row) => {
+          const link = remoteConsoleLink(row['SrsUUID'], platform);
+          void router.navigate([link.path], { queryParams: link.query });
+        },
       ),
     );
     this.base = networkBase(platform);
@@ -766,6 +785,17 @@ export class NetworkDevicesPage extends ConfigurableCrudPageBase<ConfigurableCru
     action: ConfigurableCrudRowAction,
     row: ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'remote-session') {
+      if (
+        !this.can('tenant.support.remote.sessions.write') ||
+        !this.can('tenant.network.devices.console') ||
+        remoteSupportOff(this.platform, row)
+      )
+        return;
+      const link = remoteLaunchLink(this.platform, 'device', row);
+      await this.router.navigate([link.path], { queryParams: link.query });
+      return;
+    }
     if (action.key === 'console') return this.openConsole(row);
     if (action.key === 'access-test') return this.testAccess(row);
     return super.handleRowAction(action, row);

@@ -1,8 +1,9 @@
+import { REMOTE_CONTEXT, REMOTE_PAGE_CONTEXT, remoteContext, canRemote } from './remote-context';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 
-import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -17,7 +18,6 @@ import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { SupportRemoteRunbookDialogComponent } from './remote-runbook-dialogs';
 import {
-  RUNBOOK_BASE,
   RUNBOOK_DIALECTS,
   RUNBOOK_HISTORY_REQUIRED,
   RUNBOOK_STATUSES,
@@ -34,18 +34,23 @@ export const RUNBOOK_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = RUNBOOK
   (value) => ({ value, label: `support.remote.runbooks.status.${value}` }),
 );
 
-function rowEndpoint(row: ConfigurableCrudRecord, suffix = ''): string {
-  return `${RUNBOOK_BASE}/${text(row['SrbUUID'])}${suffix}`;
-}
-
 /** Suporte › Remoto › Runbooks: tenant procedures the technician runs on a session device. */
-export function remoteRunbooksConfig(canWrite: () => boolean, canAutonomy: () => boolean): ConfigurableCrudConfig {
+export function remoteRunbooksConfig(
+  canWrite: () => boolean,
+  canAutonomy: () => boolean,
+  platform = false,
+): ConfigurableCrudConfig {
+  const base = `${remoteContext(platform).base}/runbooks`;
+  const rowEndpoint = (row: ConfigurableCrudRecord, suffix = '') =>
+    `${base}/${text(row['SrbUUID'])}${suffix}`;
   const autonomyRow = (row: ConfigurableCrudRecord) => canAutonomy() && !autonomyState(row).enabled;
   return defineCrud({
-    endpoint: RUNBOOK_BASE,
+    endpoint: base,
     uuidField: 'SrbUUID',
     pageTitle: 'support.remote.runbooks.title',
-    pageDescription: 'support.remote.runbooks.description',
+    pageDescription: platform
+      ? 'support.remote.platform.runbooksDescription'
+      : 'support.remote.runbooks.description',
     emptyLabel: 'support.remote.runbooks.empty',
     searchPlaceholder: 'support.remote.runbooks.search',
     serverSidePagination: true,
@@ -192,6 +197,7 @@ export function remoteRunbooksConfig(canWrite: () => boolean, canAutonomy: () =>
 
 @Component({
   selector: 'app-support-remote-runbooks',
+  providers: [REMOTE_PAGE_CONTEXT],
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
@@ -199,17 +205,20 @@ export function remoteRunbooksConfig(canWrite: () => boolean, canAutonomy: () =>
 })
 export class SupportRemoteRunbooksPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly matDialog = inject(MatDialog);
+  readonly context = inject(REMOTE_CONTEXT);
 
   constructor() {
+    const platform = injectPlatformScope();
     const auth = inject(AuthService);
     const can = (permission: string) =>
-      hasEffectivePermission(auth.user()?.permissions ?? [], permission);
+      canRemote(platform, auth.user()?.permissions ?? [], permission);
     super(
       remoteRunbooksConfig(
         () => can('tenant.support.remote.runbooks.write'),
         () =>
           can('tenant.support.remote.runbooks.autonomous') &&
           can('tenant.support.remote.sessions.supervise'),
+        platform,
       ),
     );
   }
@@ -229,7 +238,7 @@ export class SupportRemoteRunbooksPage extends ConfigurableCrudPageBase<Configur
       this.matDialog,
       SupportRemoteRunbookDialogComponent,
       'crud-form-dialog',
-      { data: { record } },
+      { data: { record, context: this.context } },
     );
     try {
       const saved = await firstValueFrom(binding.ref.afterClosed());

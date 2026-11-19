@@ -479,7 +479,7 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.support.remote',
         icon: 'screen_share',
         category: 'operation',
-        scope: 'tenant',
+        scope: 'both',
         entitlementCode: 'module.support.*',
         requiresEnvironment: true,
         children: [
@@ -488,6 +488,7 @@ export const NAV_ITEMS: NavItem[] = [
             label: 'nav.support.remote.console',
             icon: 'terminal',
             route: '/support/remote/console',
+            masterRoute: '/system/support/remote/console',
             permissions: ['tenant.support.remote.sessions.read'],
           },
           {
@@ -495,6 +496,7 @@ export const NAV_ITEMS: NavItem[] = [
             label: 'nav.support.remote.sessions',
             icon: 'history',
             route: '/support/remote/sessions',
+            masterRoute: '/system/support/remote/sessions',
             permissions: ['tenant.support.remote.sessions.read'],
           },
           {
@@ -502,6 +504,7 @@ export const NAV_ITEMS: NavItem[] = [
             label: 'nav.support.remote.runbooks',
             icon: 'checklist',
             route: '/support/remote/runbooks',
+            masterRoute: '/system/support/remote/runbooks',
             permissions: ['tenant.support.remote.runbooks.read'],
           },
         ],

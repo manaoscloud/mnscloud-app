@@ -1,5 +1,14 @@
+import {
+  REMOTE_CONTEXT,
+  REMOTE_PAGE_CONTEXT,
+  remoteUiKey,
+  remoteStreamHeaders,
+  remotePreselection,
+  RemoteLaunch,
+  canRemote,
+} from './remote-context';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ComponentType } from '@angular/cdk/portal';
 import { Observable, firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +24,6 @@ import {
   normalizeEnvironmentUUID,
   readStoredEnvironmentUUID,
 } from '../../../core/environment/environment-context';
-import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -24,7 +32,7 @@ import { MnsDateTimePipe } from '../../../shared/date-time/date-time.pipe';
 import { resolveApiUrl } from '../../../shared/runtime/app-runtime-config';
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { ReportProblemButtonComponent } from '../../../shared/support-report-dialog/report-problem-button';
-import { REMOTE_LOOKUPS } from './remote-lookup';
+import { remoteLookups } from './remote-lookup';
 import {
   NewSessionResult,
   PromptData,
@@ -33,7 +41,6 @@ import {
   SupportRemotePromptDialogComponent,
 } from './remote-dialogs';
 import {
-  REMOTE_BASE,
   REMOTE_EVENT_KINDS,
   REMOTE_MAX_TABS,
   RemoteEvent,
@@ -62,7 +69,6 @@ import {
 import { sessionLevelAllowsRotation, stepStatusKey } from './remote-runbook';
 import { RemoteAssistService } from './remote-assistant';
 
-const UI_KEY = 'mns.support.remote.ui';
 const EVENT_PAGE = 500;
 /** Events that change the session itself: the header, members and devices are read again. */
 const DETAIL_EVENTS = new Set([
@@ -141,6 +147,7 @@ const EVENT_ICONS: Record<string, string> = {
  */
 @Component({
   selector: 'app-support-remote-console',
+  providers: [REMOTE_PAGE_CONTEXT, RemoteAssistService],
   standalone: true,
   imports: [
     FormsModule,
@@ -569,13 +576,18 @@ const EVENT_ICONS: Record<string, string> = {
           </div>
           @if (isTechnician() && !closed() && activeDevice()) {
             <div class="device-actions">
-              @if (can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')) {
+              @if (
+                can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')
+              ) {
                 <button mat-stroked-button type="button" (click)="runRunbook()">
                   <mat-icon>checklist</mat-icon>
                   {{ 'support.remote.runbooks.action.run' | transloco }}
                 </button>
               }
-              @if (can('tenant.network.devices.credentials.rotate') && can('tenant.network.devices.console')) {
+              @if (
+                can('tenant.network.devices.credentials.rotate') &&
+                can('tenant.network.devices.console')
+              ) {
                 <button mat-stroked-button type="button" (click)="rotatePassword()">
                   <mat-icon>key</mat-icon>
                   {{ 'support.remote.runbooks.action.rotate' | transloco }}
@@ -610,7 +622,9 @@ const EVENT_ICONS: Record<string, string> = {
               [technician]="isTechnician()"
               [canAssist]="canAssist()"
               [canConsole]="can('tenant.network.devices.console')"
-              [canRun]="can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')"
+              [canRun]="
+                can('tenant.support.remote.runbooks.run') && can('tenant.network.devices.console')
+              "
               (runbookRequested)="runRunbook($event)"
               [closed]="closed()"
               (sessionChanged)="reloadDetail()"
@@ -623,11 +637,14 @@ const EVENT_ICONS: Record<string, string> = {
   `,
 })
 export class SupportRemoteConsolePage {
+  readonly context = inject(REMOTE_CONTEXT);
+  readonly lookups = remoteLookups(this.context);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(SnackbarService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly transloco = inject(TranslocoService);
 
@@ -668,7 +685,9 @@ export class SupportRemoteConsolePage {
       pick(this.session(), 'TechnicianName', 'SrsTechnicianName') ||
       this.memberName(this.session()?.['SrsTechnicianUUID']),
   );
-  readonly customerText = computed(() => pick(this.session(), 'CustomerName', 'RegCustomerName'));
+  readonly customerText = computed(() =>
+    this.context.platform ? '' : pick(this.session(), 'CustomerName', 'RegCustomerName'),
+  );
   readonly timeline = computed<TimelineItem[]>(() => {
     const events = this.events();
     // Runbook name per run, from its runbook_started event (steps and the end repeat only the run id).
@@ -711,7 +730,7 @@ export class SupportRemoteConsolePage {
   // ------------------------------------------------------------------ permissions (UX only)
 
   can(permission: string): boolean {
-    return hasEffectivePermission(this.auth.user()?.permissions ?? [], permission);
+    return canRemote(this.context.platform, this.auth.user()?.permissions ?? [], permission);
   }
   canWrite = () => this.can('tenant.support.remote.sessions.write');
   /** Chat with the AI copilot: the session technician who also holds the assist permission. */
@@ -763,23 +782,28 @@ export class SupportRemoteConsolePage {
   private uiKey(): string {
     const user = this.auth.user()?.uuid;
     if (!user) return '';
+    if (this.context.platform) return remoteUiKey(this.context, user, null);
     // Same resolution as ApiService.currentEnvironmentUUID: stored selection first.
     const env =
       readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
-    return `${UI_KEY}.${user}.${env ?? ''}`;
+    return remoteUiKey(this.context, user, env);
   }
 
   private async init() {
     const requested = text(this.route.snapshot.queryParamMap.get('session'));
     await this.loadTabs(requested);
     this.loading.set(false);
+    const launch = remotePreselection(this.context, this.route.snapshot.queryParamMap);
+    if (!this.destroyed && !requested && (launch.ticket || launch.device) && this.canWrite()) {
+      await this.createSession(launch);
+    }
   }
 
   async loadTabs(preferred = '') {
     let items: RemoteRecord[] = [];
     try {
       const response = await this.api.get<unknown>(
-        `${REMOTE_BASE}/sessions?scope=mine&state=open&limit=${REMOTE_MAX_TABS}&offset=0`,
+        `${this.context.base}/sessions?scope=mine&state=open&limit=${REMOTE_MAX_TABS}&offset=0`,
         { silent: true },
       );
       items = unwrap<{ items?: RemoteRecord[] }>(response)?.items ?? [];
@@ -797,12 +821,12 @@ export class SupportRemoteConsolePage {
     for (const uuid of wanted) {
       if (items.length >= REMOTE_MAX_TABS) break;
       try {
-        const response = await this.api.get<unknown>(`${REMOTE_BASE}/sessions/${uuid}`, {
+        const response = await this.api.get<unknown>(`${this.context.base}/sessions/${uuid}`, {
           silent: true,
         });
         if (this.destroyed) return;
         const found = unwrap<RemoteSessionDetail>(response)?.session;
-        if (found && !isClosed(found)) {
+        if (found && (!isClosed(found) || uuid === preferred)) {
           items.push(found);
           extra.push(uuid);
         }
@@ -846,7 +870,7 @@ export class SupportRemoteConsolePage {
     try {
       for (;;) {
         const response = await this.api.get<unknown>(
-          `${REMOTE_BASE}/sessions/${uuid}/events?after=${lastSeq(all)}&limit=${EVENT_PAGE}`,
+          `${this.context.base}/sessions/${uuid}/events?after=${lastSeq(all)}&limit=${EVENT_PAGE}`,
           { silent: true },
         );
         const page = unwrap<{ items?: RemoteEvent[] }>(response)?.items ?? [];
@@ -875,7 +899,7 @@ export class SupportRemoteConsolePage {
   async reloadDetail(uuid = this.selected()) {
     if (!uuid) return;
     try {
-      const response = await this.api.get<unknown>(`${REMOTE_BASE}/sessions/${uuid}`, {
+      const response = await this.api.get<unknown>(`${this.context.base}/sessions/${uuid}`, {
         silent: true,
       });
       const detail = unwrap<RemoteSessionDetail>(response);
@@ -896,13 +920,13 @@ export class SupportRemoteConsolePage {
 
   private startFeed(uuid: string, after: number) {
     if (this.destroyed) return;
-    const url = `${REMOTE_BASE}/sessions/${uuid}/events/stream`;
+    const url = `${this.context.base}/sessions/${uuid}/events/stream`;
     this.feed = new RemoteEventFeed({
       after,
       openStream: (seq, signal) => this.openStream(url, seq, signal),
       poll: async (seq) => {
         const response = await this.api.get<unknown>(
-          `${REMOTE_BASE}/sessions/${uuid}/events?after=${seq}&limit=${EVENT_PAGE}`,
+          `${this.context.base}/sessions/${uuid}/events?after=${seq}&limit=${EVENT_PAGE}`,
           { silent: true },
         );
         return unwrap<{ items?: RemoteEvent[] }>(response)?.items ?? [];
@@ -922,15 +946,16 @@ export class SupportRemoteConsolePage {
 
   /** SSE by fetch: the session cookie and headers of the HTTP layer, never a token in the URL. */
   private openStream(endpoint: string, after: number, signal: AbortSignal): Promise<Response> {
-    const headers: Record<string, string> = {
-      Accept: 'text/event-stream',
-      'X-Mns-Client': `${APP_BUILD_INFO.product}/${APP_BUILD_INFO.version}`,
-    };
-    const environment =
-      readStoredEnvironmentUUID() ?? normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID);
-    if (environment) headers['X-Environment-UUID'] = environment;
-    const bootstrap = this.auth.sessionBootstrapToken();
-    if (bootstrap) headers['Authorization'] = `Bearer ${bootstrap}`;
+    const environment = this.context.platform
+      ? null
+      : (readStoredEnvironmentUUID() ??
+        normalizeEnvironmentUUID(this.auth.user()?.EnvironmentUUID));
+    const headers = remoteStreamHeaders(
+      this.context,
+      `${APP_BUILD_INFO.product}/${APP_BUILD_INFO.version}`,
+      this.auth.sessionBootstrapToken(),
+      environment,
+    );
     return fetch(resolveApiUrl(`${endpoint}?after=${after}`), {
       headers,
       credentials: 'include',
@@ -1052,13 +1077,14 @@ export class SupportRemoteConsolePage {
 
   // ------------------------------------------------------------------ actions
 
-  async createSession() {
-    const result = await this.ask<NewSessionResult>(SupportRemoteNewDialogComponent, undefined);
-    if (!result) return;
-    const response = await this.api.post<unknown>(`${REMOTE_BASE}/sessions`, {
+  async createSession(launch: RemoteLaunch = {}) {
+    if (!this.canWrite() || this.tabs().length >= this.maxTabs) return;
+    const result = await this.ask<NewSessionResult>(SupportRemoteNewDialogComponent, { launch });
+    if (!result || this.destroyed) return;
+    const response = await this.api.post<unknown>(`${this.context.base}/sessions`, {
       title: result.title,
       level: result.level,
-      customerUUID: result.customerUUID,
+      ...(!this.context.platform ? { customerUUID: result.customerUUID } : {}),
       ticketUUID: result.ticketUUID,
       deviceUUIDs: result.deviceUUIDs,
     });
@@ -1066,13 +1092,20 @@ export class SupportRemoteConsolePage {
     const uuid = text(created?.session?.['SrsUUID'] ?? created?.['SrsUUID']);
     this.snack.success('support.remote.created');
     await this.loadTabs(uuid);
-    if (uuid) this.select(uuid);
+    if (uuid) {
+      this.select(uuid);
+      await this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { session: uuid },
+        replaceUrl: true,
+      });
+    }
   }
 
   async sendNote() {
     const body = this.note().trim();
     if (!body || this.closed()) return;
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/notes`, { text: body });
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/notes`, { text: body });
     this.note.set('');
   }
 
@@ -1088,12 +1121,12 @@ export class SupportRemoteConsolePage {
       confirm: 'support.remote.action.add',
       lookup: {
         label: 'support.remote.field.device',
-        spec: REMOTE_LOOKUPS.device,
+        spec: this.lookups.device,
         exclude: this.devices().map((d) => text(d['NetworkDeviceNwdUUID'])),
       },
     });
     if (!result) return;
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/devices`, {
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/devices`, {
       deviceUUID: result.uuid,
     });
     await this.reloadDetail();
@@ -1102,7 +1135,7 @@ export class SupportRemoteConsolePage {
   async removeDevice(device: RemoteRecord, event: Event) {
     event.stopPropagation();
     const uuid = text(device['NetworkDeviceNwdUUID']);
-    await this.api.delete(`${REMOTE_BASE}/sessions/${this.selected()}/devices/${uuid}`);
+    await this.api.delete(`${this.context.base}/sessions/${this.selected()}/devices/${uuid}`);
     if (this.activeDevice() === uuid) this.activeDevice.set('');
     await this.reloadDetail();
   }
@@ -1114,19 +1147,19 @@ export class SupportRemoteConsolePage {
       confirm: 'support.remote.action.add',
       lookup: {
         label: 'support.remote.field.user',
-        spec: REMOTE_LOOKUPS.user,
+        spec: this.lookups.user,
         exclude: this.members().map((m) => text(m['SrmUserUUID'])),
       },
     });
     if (!result) return;
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/members`, {
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/members`, {
       userUUID: result.uuid,
     });
     await this.reloadDetail();
   }
 
   async watch() {
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/watch`, {});
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/watch`, {});
     await this.reloadDetail();
   }
 
@@ -1137,14 +1170,14 @@ export class SupportRemoteConsolePage {
       confirm: 'support.remote.action.transferConfirm',
       lookup: {
         label: 'support.remote.field.technician',
-        spec: REMOTE_LOOKUPS.user,
+        spec: this.lookups.user,
         exclude: [text(this.session()?.['SrsTechnicianUUID'])],
       },
       text: { label: 'support.remote.field.transferNote', required: false, max: 4000 },
     });
     const session = this.session();
     if (!result || !session) return;
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/transfer`, {
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/transfer`, {
       revision: Number(session['SrsRevision']),
       technicianUUID: result.uuid,
       ...(result.text ? { note: result.text } : {}),
@@ -1156,7 +1189,7 @@ export class SupportRemoteConsolePage {
   async toggleWaiting() {
     const session = this.session();
     if (!session) return;
-    await this.api.put(`${REMOTE_BASE}/sessions/${this.selected()}`, {
+    await this.api.put(`${this.context.base}/sessions/${this.selected()}`, {
       revision: Number(session['SrsRevision']),
       state: session['SrsState'] === 'waiting_customer' ? 'open' : 'waiting_customer',
     });
@@ -1175,7 +1208,7 @@ export class SupportRemoteConsolePage {
       aiSummary: this.canAssist() ? () => this.assist.summary(this.selected()) : undefined,
     });
     if (!result) return;
-    await this.api.post(`${REMOTE_BASE}/sessions/${this.selected()}/close`, {
+    await this.api.post(`${this.context.base}/sessions/${this.selected()}/close`, {
       revision: Number(session['SrsRevision']),
       summary: result.text,
     });
@@ -1230,7 +1263,9 @@ export class SupportRemoteConsolePage {
   }
 
   private async ask<R>(component: ComponentType<unknown>, data: unknown): Promise<R | undefined> {
-    const binding = openCrudComponentDialog(this.dialog, component, 'crud-form-dialog', { data });
+    const binding = openCrudComponentDialog(this.dialog, component, 'crud-form-dialog', {
+      data: { ...(data as object), context: this.context },
+    });
     try {
       return await firstValueFrom(binding.ref.afterClosed() as Observable<R | undefined>);
     } finally {

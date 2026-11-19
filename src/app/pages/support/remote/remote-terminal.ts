@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT } from './remote-context';
 import { Component, DestroyRef, inject, input, output, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,7 +10,7 @@ import { ApiService } from '../../../services/api.service';
 import { TerminalComponent, TerminalNotice } from '../../../shared/terminal/terminal';
 import { TerminalSize } from '../../../shared/terminal/terminal-protocol';
 import { DeviceConsoleChannel } from '../../network/devices/device-console-channel';
-import { REMOTE_BASE, RemoteTerminalOpened, unwrap } from './remote-session';
+import { RemoteTerminalOpened, unwrap } from './remote-session';
 
 /** Pauses (ms) before each automatic reattach after the network dropped the socket. */
 export const REATTACH_DELAYS_MS: readonly number[] = [1500, 4000, 10000];
@@ -126,6 +127,7 @@ export const REATTACH_DELAYS_MS: readonly number[] = [1500, 4000, 10000];
   `,
 })
 export class SupportRemoteTerminalComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly sessionUUID = input.required<string>();
   readonly deviceUUID = input.required<string>();
   readonly deviceName = input('');
@@ -146,7 +148,7 @@ export class SupportRemoteTerminalComponent {
     open: async () => {
       const size = this.terminal()?.size() ?? { cols: 120, rows: 32 };
       const response = await this.api.post<unknown>(
-        `${REMOTE_BASE}/sessions/${this.sessionUUID()}/devices/${this.deviceUUID()}/terminal`,
+        `${this.context.base}/sessions/${this.sessionUUID()}/devices/${this.deviceUUID()}/terminal`,
         { cols: size.cols, rows: size.rows },
       );
       const opened = unwrap<RemoteTerminalOpened>(response);

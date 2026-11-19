@@ -1,3 +1,4 @@
+import { masterGuard } from './pages/support/remote/remote-context';
 import {
   cyberSecurityDelegatedRoutes,
   cyberSecurityRouteData,
@@ -2934,6 +2935,48 @@ export const routes: Routes = [
             // Every /system page is a platform (master) page: children inherit the scope.
             data: { permission: 'platform.master.access', scope: 'master' },
             children: [
+              {
+                path: 'support/remote/console',
+                canActivate: [masterGuard, permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-console').then(
+                    (m) => m.SupportRemoteConsolePage,
+                  ),
+                title: 'Support • Remote console | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.console.title',
+                },
+              },
+              {
+                path: 'support/remote/sessions',
+                canActivate: [masterGuard, permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-sessions').then(
+                    (m) => m.SupportRemoteSessionsPage,
+                  ),
+                title: 'Support • Remote sessions | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.sessions.title',
+                },
+              },
+              {
+                path: 'support/remote/runbooks',
+                canActivate: [masterGuard, permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-runbooks').then(
+                    (m) => m.SupportRemoteRunbooksPage,
+                  ),
+                title: 'Support • Remote runbooks | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.runbooks.title',
+                },
+              },
               {
                 path: 'monitoring',
                 loadComponent: () =>
