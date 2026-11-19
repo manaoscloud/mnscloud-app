@@ -1,3 +1,4 @@
+import { instanceStatusColumn } from '../../shared/instance-status';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -123,13 +124,7 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     { id: 'region', label: 'Region', kind: 'text', field: 'PlanRegion' },
     { id: 'size', label: 'Size', kind: 'text', field: 'PlanSize' },
     { id: 'image', label: 'Image', kind: 'text', field: 'InstanceImage' },
-    {
-      id: 'runtimeStatus',
-      label: 'Situation',
-      kind: 'text',
-      field: 'HciStatus',
-      className: 'runtime-status-col',
-    },
+    instanceStatusColumn('HciStatus'),
     {
       id: 'status',
       label: 'Status',

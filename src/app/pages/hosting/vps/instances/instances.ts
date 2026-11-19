@@ -42,36 +42,13 @@ import {
   vpsNetworkErrorMessage,
 } from '../platform-network';
 import { planHardwareSummary, planNetworkSpecs } from '../../shared/plan-specs';
+import { instanceStatusColumn } from '../../shared/instance-status';
 
 type CustomerOption = {
   CustomerUUID: string;
   Name: string;
   Document?: string | null;
   Status?: number | null;
-};
-
-/** Collection policy power states (non-payment) shown instead of the provider status. */
-const BILLING_POWER_LABELS: Record<string, string> = {
-  STOP_PENDING: 'Powering off: unpaid',
-  STOPPED: 'Powered off: unpaid',
-  START_PENDING: 'Powering on: payment received',
-  DESTROY_PENDING: 'Releasing: unpaid',
-};
-
-/** Customer power actions in progress (the VPS worker records the final status). */
-/** Stage of a provisioning in progress, recorded by each short provisioning pass of the API. */
-const PROVISION_STAGE_LABELS: Record<string, string> = {
-  preparing: 'Provisioning: preparing',
-  cloning: 'Provisioning: copying the image',
-  configuring: 'Provisioning: configuring',
-  starting: 'Provisioning: starting',
-  finishing: 'Provisioning: finishing',
-};
-
-const POWER_STATUS_LABELS: Record<string, string> = {
-  starting: 'Starting',
-  stopping: 'Shutting down',
-  rebooting: 'Rebooting',
 };
 
 const POWER_START_ACTION: ConfigurableCrudRowAction = {
@@ -435,31 +412,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       field: 'PublicIpv4',
       copyable: true,
     },
-    {
-      id: 'runtimeStatus',
-      label: 'Situation',
-      kind: 'text',
-      field: 'HviStatus',
-      className: 'runtime-status-col',
-      // The collection policy state wins over the provider status while billing controls power.
-      value: (row, translate) => {
-        const billing = BILLING_POWER_LABELS[String(row['HviBillingPowerState'] ?? '')];
-        const power = POWER_STATUS_LABELS[String(row['HviStatus'] ?? '')];
-        const status = String(row['HviStatus'] ?? '').toLowerCase();
-        const stage = ['queued', 'provisioning'].includes(status)
-          ? PROVISION_STAGE_LABELS[
-              String(parseConfig<HostingVpsInstanceConfig>(row['HviConfig'])?.provisionStage ?? '')
-            ]
-          : undefined;
-        return billing
-          ? translate(billing)
-          : stage
-            ? translate(stage)
-            : power
-              ? translate(power)
-              : String(row['HviStatus'] ?? '');
-      },
-    },
+    instanceStatusColumn('HviStatus', 'HviBillingPowerState'),
     {
       id: 'portal',
       label: 'hostingVps.portalColumn',

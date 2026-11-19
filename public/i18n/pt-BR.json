@@ -15064,5 +15064,21 @@
   "support.remote.runbooks.rotation.resolve.failed": "Não foi possível registrar a resposta.",
   "cyberSecurity.network.registryDevice": "Equipamento de Rede",
   "cyberSecurity.network.registryDeviceHelp": "Equipamento da plataforma no cadastro de Rede que este monitoramento acompanha.",
-  "cyberSecurity.network.registryNameHelp": "Opcional: em branco, usa o nome do equipamento no cadastro de Rede."
+  "cyberSecurity.network.registryNameHelp": "Opcional: em branco, usa o nome do equipamento no cadastro de Rede.",
+  "hostingInstanceStatus.running": "Em execução",
+  "hostingInstanceStatus.stopped": "Parada",
+  "hostingInstanceStatus.provisioning": "Provisionando",
+  "hostingInstanceStatus.queued": "Na fila",
+  "hostingInstanceStatus.starting": "Iniciando",
+  "hostingInstanceStatus.rebooting": "Reiniciando",
+  "hostingInstanceStatus.stopping": "Desligando",
+  "hostingInstanceStatus.failed": "Falha",
+  "hostingInstanceStatus.suspended": "Suspensa",
+  "hostingInstanceStatus.deleting": "Removendo",
+  "hostingInstanceStatus.deleted": "Removida",
+  "hostingInstanceStatus.unknown": "Desconhecida",
+  "hostingInstanceStatus.billingStopping": "Desligando por cobrança",
+  "hostingInstanceStatus.billingStopped": "Parada por cobrança",
+  "hostingInstanceStatus.billingStarting": "Iniciando após pagamento",
+  "hostingInstanceStatus.billingDeleting": "Removendo por cobrança"
 }

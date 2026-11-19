@@ -15063,5 +15063,21 @@
   "support.remote.runbooks.rotation.resolve.failed": "Could not record the answer.",
   "cyberSecurity.network.registryDevice": "Network device",
   "cyberSecurity.network.registryDeviceHelp": "Platform device of the Network registry that this monitoring follows.",
-  "cyberSecurity.network.registryNameHelp": "Optional: when empty, the name of the device in the Network registry is used."
+  "cyberSecurity.network.registryNameHelp": "Optional: when empty, the name of the device in the Network registry is used.",
+  "hostingInstanceStatus.running": "Running",
+  "hostingInstanceStatus.stopped": "Stopped",
+  "hostingInstanceStatus.provisioning": "Provisioning",
+  "hostingInstanceStatus.queued": "Queued",
+  "hostingInstanceStatus.starting": "Starting",
+  "hostingInstanceStatus.rebooting": "Rebooting",
+  "hostingInstanceStatus.stopping": "Shutting down",
+  "hostingInstanceStatus.failed": "Failed",
+  "hostingInstanceStatus.suspended": "Suspended",
+  "hostingInstanceStatus.deleting": "Deleting",
+  "hostingInstanceStatus.deleted": "Deleted",
+  "hostingInstanceStatus.unknown": "Unknown",
+  "hostingInstanceStatus.billingStopping": "Shutting down: unpaid",
+  "hostingInstanceStatus.billingStopped": "Stopped: unpaid",
+  "hostingInstanceStatus.billingStarting": "Starting: payment received",
+  "hostingInstanceStatus.billingDeleting": "Deleting: unpaid"
 }

@@ -1009,6 +1009,49 @@ mat-chip.status-pill.is-inactive,
   --activity-chip-border: #94a3b8;
 }
 
+.status-pill.status-chip.chip-starting {
+  --activity-chip-bg: rgba(20, 184, 166, 0.16);
+  --activity-chip-border: #14b8a6;
+}
+
+.status-pill.status-chip.chip-stopping {
+  --activity-chip-bg: rgba(249, 115, 22, 0.16);
+  --activity-chip-border: #f97316;
+}
+
+.status-pill.status-chip.chip-billing {
+  --activity-chip-bg: rgba(219, 39, 119, 0.14);
+  --activity-chip-border: #db2777;
+}
+
+.status-pill.status-chip.chip-suspended {
+  --activity-chip-bg: rgba(99, 102, 241, 0.16);
+  --activity-chip-border: #6366f1;
+}
+
+.status-pill.status-chip.chip-deleting {
+  --activity-chip-bg: rgba(190, 18, 60, 0.14);
+  --activity-chip-border: #be123c;
+}
+
+// Opt-in soft presentation; existing status columns retain their standard styling.
+.status-pill.status-chip.chip-soft {
+  border-color: transparent;
+  border-radius: 999px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: color-mix(in srgb, var(--activity-chip-border) 35%, var(--mat-sys-color-on-surface));
+}
+
+.status-pill.status-chip .status-chip-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+
 .crud-dialog {
   --dialog-section-gap: 0.5rem;
   row-gap: var(--dialog-section-gap);
