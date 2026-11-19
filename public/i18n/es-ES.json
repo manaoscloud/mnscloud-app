@@ -15063,5 +15063,21 @@
   "support.remote.runbooks.rotation.resolve.failed": "No se pudo registrar la respuesta.",
   "cyberSecurity.network.registryDevice": "Equipo de Red",
   "cyberSecurity.network.registryDeviceHelp": "Equipo de la plataforma en el registro de Red que este monitoreo sigue.",
-  "cyberSecurity.network.registryNameHelp": "Opcional: en blanco, usa el nombre del equipo en el registro de Red."
+  "cyberSecurity.network.registryNameHelp": "Opcional: en blanco, usa el nombre del equipo en el registro de Red.",
+  "hostingInstanceStatus.running": "En ejecución",
+  "hostingInstanceStatus.stopped": "Detenida",
+  "hostingInstanceStatus.provisioning": "Aprovisionando",
+  "hostingInstanceStatus.queued": "En cola",
+  "hostingInstanceStatus.starting": "Iniciando",
+  "hostingInstanceStatus.rebooting": "Reiniciando",
+  "hostingInstanceStatus.stopping": "Apagando",
+  "hostingInstanceStatus.failed": "Error",
+  "hostingInstanceStatus.suspended": "Suspendida",
+  "hostingInstanceStatus.deleting": "Eliminando",
+  "hostingInstanceStatus.deleted": "Eliminada",
+  "hostingInstanceStatus.unknown": "Desconocida",
+  "hostingInstanceStatus.billingStopping": "Apagando por impago",
+  "hostingInstanceStatus.billingStopped": "Detenida por impago",
+  "hostingInstanceStatus.billingStarting": "Iniciando tras el pago",
+  "hostingInstanceStatus.billingDeleting": "Eliminando por impago"
 }

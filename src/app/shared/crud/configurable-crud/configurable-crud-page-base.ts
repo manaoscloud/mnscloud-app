@@ -471,7 +471,7 @@ export type ConfigurableCrudColumn = {
     translate: (key: string) => string,
     filters: Readonly<Record<string, string | number | boolean | null>>,
   ) => string;
-  /** Material icon shown before a text cell value (for example the resource type). */
+  /** Material icon shown before a text cell value or inside a status chip (for example the resource type). */
   icon?: (row: ConfigurableCrudRecord) => string;
   /** Secondary line under identity/related values, shown instead of the UUID when not empty. */
   detail?: (row: ConfigurableCrudRecord, translate: (key: string) => string) => string;

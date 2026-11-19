@@ -804,6 +804,9 @@
       !hasCustomStatusChipClass(column) && !isActiveStatus(row[column.field ?? column.id])
     "
   >
+    @if (column.icon?.(row); as statusIcon) {
+      <mat-icon class="status-chip-icon" aria-hidden="true">{{ statusIcon }}</mat-icon>
+    }
     {{ statusLabelForColumn(row, column) | transloco }}
   </span>
 </ng-template>
