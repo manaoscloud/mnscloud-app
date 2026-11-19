@@ -51,6 +51,22 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/crm/dashboard',
       },
       {
+        id: 'crm/workbench',
+        label: 'nav.crm.workbench',
+        icon: 'today',
+        category: 'pipeline',
+        route: '/crm/workbench',
+        permissions: ['tenant.crm.read'],
+      },
+      {
+        id: 'crm/import',
+        label: 'nav.crm.import',
+        icon: 'upload_file',
+        category: 'pipeline',
+        route: '/crm/import',
+        permissions: ['tenant.crm.write'],
+      },
+      {
         id: 'crm/leads',
         label: 'nav.crm.leads',
         icon: 'person_add',
@@ -105,6 +121,14 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'inventory_2',
         category: 'registry',
         route: '/crm/products',
+      },
+      {
+        id: 'crm/metrics',
+        label: 'nav.crm.metrics',
+        icon: 'analytics',
+        category: 'reports',
+        route: '/crm/metrics',
+        permissions: ['tenant.crm.read'],
       },
       {
         id: 'crm/pipelines',

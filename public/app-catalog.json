@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a54568702e02",
+  "version": "d2af235afb3f",
   "language": "pt-BR",
   "entries": [
     {
@@ -1430,6 +1430,23 @@
       ]
     },
     {
+      "route": "/crm/import",
+      "menuPath": "CRM › Importação",
+      "scope": "tenant",
+      "title": "Importar prospectos",
+      "description": "Importe até 100 linhas de CSV (512 KiB). Escolha um espaço, mapeie as colunas, revise a prévia e selecione cada linha. Duplicidades exigem confirmação individual; não há união automática. Resultados e lote ficam nesta sessão para repetir apenas falhas.",
+      "fields": [
+        {
+          "label": "Espaço de trabalho",
+          "help": ""
+        },
+        {
+          "label": "Arquivo CSV",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/crm/leads",
       "menuPath": "CRM › Leads",
       "scope": "tenant",
@@ -1490,11 +1507,11 @@
         },
         {
           "label": "Necessidade",
-          "help": ""
+          "help": "Para qualificar: registre a necessidade, confirme os dados de contato e planeje o próximo contato."
         },
         {
           "label": "Motivo do encerramento",
-          "help": ""
+          "help": "Registre o motivo da desqualificação para manter o histórico compreensível."
         },
         {
           "label": "Revisão",
@@ -1522,6 +1539,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/crm/metrics",
+      "menuPath": "CRM › Métricas",
+      "scope": "tenant",
+      "title": "Métricas comerciais",
+      "description": "Use a paginação para consultar todas as dimensões. Leads, oportunidades, atrasados e encaminhamentos são contagens atuais. Conversão: leads criados nos últimos dias até agora e atualmente convertidos / total desse grupo (sem taxa se vazio). Primeiro contato: média de horas até a primeira conclusão observada de ligação, reunião ou e-mail; total apenas dos leads com observação, sem observação = indisponível. Origens e perdas usam o mesmo grupo de criação; etapas mostram o estoque atual e a idade desde a última mudança real (ou criação). Valores não somam moedas.",
+      "fields": []
     },
     {
       "route": "/crm/opportunities",
@@ -1683,7 +1708,7 @@
       "menuPath": "CRM › Propostas",
       "scope": "tenant",
       "title": "Propostas",
-      "description": "Propostas comerciais versionadas enviadas às oportunidades, com aceite ou recusa.",
+      "description": "1. Crie o rascunho a partir da oportunidade. 2. Cadastre os itens, separando cobrança única, mensal e anual, e revise condições e validade. 3. Registre como enviada (sem envio de e-mail) e confira os totais no documento da versão. 4. Registre a resposta e a evidência; use Revisar para uma nova versão.",
       "fields": [
         {
           "label": "Status",
@@ -1784,6 +1809,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/crm/workbench",
+      "menuPath": "CRM › Fila diária",
+      "scope": "tenant",
+      "title": "Fila diária",
+      "description": "Organize contatos e atividades por responsável, vencimento e próximo passo. A lista mostra uma página dos registros autorizados.",
+      "fields": []
     },
     {
       "route": "/crm/workspaces",

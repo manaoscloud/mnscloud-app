@@ -55,7 +55,7 @@ import {
 } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgClass, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 
 import { firstValueFrom, map, Observable } from 'rxjs';
@@ -489,6 +489,8 @@ export type ConfigurableCrudColumn = {
 export type ConfigurableCrudColumnWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type ConfigurableCrudListFilter = {
+  /** Label for the empty/default query value (defaults to All). */
+  emptyValueLabel?: string;
   remoteLookup?: ConfigurableCrudField['remoteLookup'];
   key: string;
   label: string;
@@ -534,6 +536,7 @@ export type ConfigurableCrudRowAction = {
    * user why (shown under the label). Return `null` when the action is available.
    */
   disabledReason?: (row: ConfigurableCrudRecord) => string | null;
+  navigate?: (row: ConfigurableCrudRecord) => string[];
   collection?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   form?: (row: ConfigurableCrudRecord) => ConfigurableCrudConfig;
   /** Declarative one-click API call (for example "set as cover"); reloads the list on success. */
@@ -635,6 +638,13 @@ export type ConfigurableCrudFilterActionMenu = {
 export type ConfigurableCrudStatusMode = 'number' | 'string';
 
 export type ConfigurableCrudConfig = {
+  /** Optional grouping of the current server page; all mutations keep the canonical row actions. */
+  board?: {
+    groupField: string;
+    groupLabelField: string;
+    titleField: string;
+    detailColumn: ConfigurableCrudColumn;
+  };
   authenticationAfterFiscal?: boolean;
   formTabActions?: readonly {
     tab: 'fiscal' | 'limits' | 'contacts';
@@ -647,6 +657,8 @@ export type ConfigurableCrudConfig = {
   saveAndContinue?: boolean;
   collectionDialog?: boolean;
   formOnly?: boolean;
+  /** Load the canonical record before opening an existing-record form. */
+  editRecordUUID?: string;
   /** Set by `ConfigurableCrudEmbeddedCollection`: the table renders inside a parent form tab. */
   embedded?: boolean;
   /** Label of the header create button (defaults to `New`). */
@@ -750,13 +762,17 @@ export type ConfigurableCrudConfig = {
     optional?: boolean;
   };
   /** Fixed list query parameters sent with every list request (for example `scope=all`). */
-  listQuery?: Readonly<Record<string, string>>;
+  listQuery?: Readonly<Record<string, string>> | (() => Readonly<Record<string, string>>);
   /** Captured request scope inherited by embedded collections and canonical quick-create. */
   requestApi?: ApiService;
   /** Opt-in list toolbar actions "Export CSV" and "Print" of the filtered list. */
   listExport?: boolean;
   /** Uses the API list envelope total/limit/offset instead of slicing a local in-memory page. */
   serverSidePagination?: boolean;
+  /** The server owns matching; never re-filter its page using projection fields. */
+  serverSideFiltering?: boolean;
+  /** Aggregate endpoints without search can omit the search control and parameter. */
+  searchEnabled?: boolean;
   /** Send canonical column fields to APIs supporting global ordering. */
   serverSideSorting?: boolean;
   pageSizeOptions?: readonly number[];
@@ -832,6 +848,19 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly sortActive = signal('');
   readonly sortDirection = signal<SortDirection>('');
   readonly pageIndex = signal(0);
+  readonly boardMode = signal(false);
+  readonly boardGroups = computed(() => {
+    const board = this.config.board;
+    if (!board) return [];
+    const groups = new Map<string, { key: string; label: string; rows: T[] }>();
+    for (const row of this.visibleRows()) {
+      const key = String(row[board.groupField] ?? '');
+      if (!groups.has(key))
+        groups.set(key, { key, label: String(row[board.groupLabelField] ?? ''), rows: [] });
+      groups.get(key)!.rows.push(row);
+    }
+    return [...groups.values()];
+  });
   readonly pageSize = signal(5);
   readonly serverTotal = signal(0);
   readonly listExporting = signal(false);
@@ -2046,9 +2075,15 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     return column ? this.columnText(row, column) : '';
   }
 
+  private readonly actionRouter = inject(Router);
+
   async runRowAction(action: ConfigurableCrudRowAction, row: T): Promise<void> {
     if (action.visible?.(row) === false) return;
     if (this.rowActionDisabledReason(action, row)) return;
+    if (action.navigate) {
+      await this.actionRouter.navigate(action.navigate(row));
+      return;
+    }
     if (action.run) {
       await action.run(row);
       return;
@@ -3063,7 +3098,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     if (filter.type === 'search-select') {
       return filter.options ?? this.lookupOptions(filter.key);
     }
-    return [{ value: '', label: 'All' }, ...(filter.options ?? this.lookupOptions(filter.key))];
+    return [
+      { value: '', label: filter.emptyValueLabel ?? 'All' },
+      ...(filter.options ?? this.lookupOptions(filter.key)),
+    ];
   }
 
   translatedListFilterOptions(
@@ -3071,10 +3109,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   ): readonly ConfigurableCrudOption[] {
     return this.listFilterOptions(filter).map((option) => ({
       ...option,
-      label:
-        filter.translateOptions || (option.value === '' && option.label === 'All')
-          ? this.t(option.label)
-          : option.label,
+      label: filter.translateOptions || option.value === '' ? this.t(option.label) : option.label,
     }));
   }
 
@@ -3814,7 +3849,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       params.set('sortBy', ordering.sortBy);
       params.set('sortDirection', ordering.sortDirection);
     }
-    if (filters.search) params.set('search', filters.search);
+    if (this.config.searchEnabled !== false && filters.search) params.set('search', filters.search);
     if (this.statusFilterEnabled() && filters.status !== '')
       params.set('status', String(filters.status));
     for (const filter of this.listFilters()) {
@@ -3822,7 +3857,12 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       if (filter.match || value === null || value === undefined || value === '') continue;
       params.set(filter.paramKey ?? filter.key, String(value));
     }
-    for (const [key, value] of Object.entries(this.config.listQuery ?? {})) params.set(key, value);
+    for (const [key, value] of Object.entries(
+      typeof this.config.listQuery === 'function'
+        ? this.config.listQuery()
+        : (this.config.listQuery ?? {}),
+    ))
+      params.set(key, value);
 
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
     const data = (response as { data?: unknown })?.data;
@@ -3862,6 +3902,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   private filterRows(rows: T[]): T[] {
+    if (this.config.serverSideFiltering) return rows;
     const filters = this.appliedFilters();
     const searchTerm = filters.search?.trim().toLowerCase();
     const statusFilter = filters.status;
@@ -4067,6 +4108,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   private formatNumberColumn(column: ConfigurableCrudColumn, value: unknown): string {
+    if (value === null || value === undefined || value === '') return '-';
     const amount = Number(value);
     if (!Number.isFinite(amount)) return '-';
     try {

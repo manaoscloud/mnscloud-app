@@ -12,6 +12,8 @@ import { aiModelOptions, aiProviderKindLabel } from '../ai-providers/ai-provider
 
 /** AI features of the platform (catalog of the API, `GET system/ai/features`). */
 export const AI_FEATURE_OPTIONS = [
+  { value: 'crm.prospect_summary', label: 'crm.prospect.summary' },
+  { value: 'crm.next_action', label: 'crm.prospect.nextAction' },
   { value: 'registry.documents.assist', label: 'Document classification and extraction' },
   { value: 'support.triage', label: 'Support ticket triage' },
   { value: 'help.tutorial.script', label: 'Tutorial video script' },

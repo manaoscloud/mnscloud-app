@@ -20,8 +20,25 @@ export class ConfigurableCrudCollectionDialog extends ConfigurableCrudPageBase<C
   private readonly hostDialog = inject(MatDialogRef<ConfigurableCrudCollectionDialog>);
   constructor() {
     super(inject<ConfigurableCrudConfig>(MAT_DIALOG_DATA));
-    afterNextRender(() => {
-      if (this.config.formOnly) this.startCreate();
+    afterNextRender(async () => {
+      if (this.config.formOnly && this.config.editRecordUUID) {
+        try {
+          const response = await this.api.get<{ data: ConfigurableCrudRecord }>(
+            `${this.config.endpoint}/${encodeURIComponent(this.config.editRecordUUID)}`,
+          );
+          if (this.destroyRef.destroyed) return;
+          if (
+            String(response.data[this.config.uuidField]) !== this.config.editRecordUUID ||
+            !this.canEditRow(response.data)
+          ) {
+            this.hostDialog.close();
+            return;
+          }
+          this.startEdit(response.data);
+        } catch {
+          this.hostDialog.close();
+        }
+      } else if (this.config.formOnly) this.startCreate();
     });
   }
   override closeCollectionDialog(): void {

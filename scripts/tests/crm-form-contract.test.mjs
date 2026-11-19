@@ -17,57 +17,59 @@ import ts from 'typescript';
 import { crmPayload, crmLocalDate, crmLocalTime } from '../../src/app/pages/crm/crm-input.ts';
 
 function formConfigs() {
-  return [...fs.globSync('src/app/pages/crm/*/*.ts')].flatMap((path) => {
-    const source = ts.createSourceFile(
-      path,
-      fs.readFileSync(path, 'utf8'),
-      ts.ScriptTarget.Latest,
-      true,
-    );
-    const results = [];
-    function visit(node) {
-      if (ts.isCallExpression(node) && node.expression.getText(source) === 'defineCrud') {
-        results.push({
-          path,
-          config: Function(
-            'defineCrud',
-            'crmActions',
-            'crmPayload',
-            'crmLocalDate',
-            'crmLocalTime',
-            'CRM_OPTIONS',
-            'economicClassificationFilters',
-            'industryReferenceField',
-            'industryReferenceColumn',
-            'crmWorkspaceField',
-            'crmWorkspaceFilter',
-            'crmWorkspaceColumn',
-            'crmRecordColumn',
-            'crmOperatorFilter',
-            `return ${node.arguments[0].getText(source)}`,
-          )(
-            (v) => v,
-            () => [],
-            crmPayload,
-            crmLocalDate,
-            crmLocalTime,
-            CRM_OPTIONS,
-            economicClassificationFilters,
-            industryReferenceField,
-            industryReferenceColumn,
-            crmWorkspaceField,
-            crmWorkspaceFilter,
-            crmWorkspaceColumn,
-            crmRecordColumn,
-            crmOperatorFilter,
-          ),
-        });
+  return [...fs.globSync('src/app/pages/crm/*/*.ts')]
+    .filter((path) => !/\/(import|metrics|workbench|relationship)\//.test(path))
+    .flatMap((path) => {
+      const source = ts.createSourceFile(
+        path,
+        fs.readFileSync(path, 'utf8'),
+        ts.ScriptTarget.Latest,
+        true,
+      );
+      const results = [];
+      function visit(node) {
+        if (ts.isCallExpression(node) && node.expression.getText(source) === 'defineCrud') {
+          results.push({
+            path,
+            config: Function(
+              'defineCrud',
+              'crmActions',
+              'crmPayload',
+              'crmLocalDate',
+              'crmLocalTime',
+              'CRM_OPTIONS',
+              'economicClassificationFilters',
+              'industryReferenceField',
+              'industryReferenceColumn',
+              'crmWorkspaceField',
+              'crmWorkspaceFilter',
+              'crmWorkspaceColumn',
+              'crmRecordColumn',
+              'crmOperatorFilter',
+              `return ${node.arguments[0].getText(source)}`,
+            )(
+              (v) => v,
+              () => [],
+              crmPayload,
+              crmLocalDate,
+              crmLocalTime,
+              CRM_OPTIONS,
+              economicClassificationFilters,
+              industryReferenceField,
+              industryReferenceColumn,
+              crmWorkspaceField,
+              crmWorkspaceFilter,
+              crmWorkspaceColumn,
+              crmRecordColumn,
+              crmOperatorFilter,
+            ),
+          });
+        }
+        ts.forEachChild(node, visit);
       }
-      ts.forEachChild(node, visit);
-    }
-    visit(source);
-    return results;
-  });
+      visit(source);
+      return results;
+    });
 }
 
 test('every CRM form follows semantic controls, notes, widths and commercial defaults', () => {

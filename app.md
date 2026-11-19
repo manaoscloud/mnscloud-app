@@ -2611,3 +2611,44 @@ product and stage lookups bind the selected workspace. API/DB validate visibilit
 - Conversations inbox action "Executar automação" (`tenant.automation.runs.start`, open conversations)
   opens `run-automation-dialog.ts`: `GET /automation/manual-flows?conversationUUID=` then
   `POST /automation/runs/manual`; failures map to `automation.manual.error.*`.
+
+## Prospecting operations
+
+`crm/workbench` is an operational configurable CRUD list, never a dashboard. It disables base
+create/edit/delete without `readOnly`, so authorized row actions remain available. Its unique
+row key is `type:uuid`. Every request recomputes browser-local midnight boundaries as UTC ISO
+instants, including Refresh after midnight; workspace/owner/view/search are server filters.
+Completion without follow-up explicitly leaves the parent's next date unchanged. A follow-up
+submits both displayed revisions and never retries a conflict with a newer revision.
+
+Relationship detail uses `DetailPageComponent` and a remote global table for the paginated timeline.
+The shared global table's explicit `remote` input reads its configured endpoint and retains the
+canonical server total; local row consumers retain their previous behavior. `openRecordForm` and
+`editRecordUUID` load the canonical record before opening the shared edit form, checking its identity
+and editability. Navigation row actions use `navigate(row)`; they never render a private CRUD.
+
+The optional generic `board` configuration groups only the current server page. The list alternative
+and paginator remain accessible; the page count/total are explicit. Stage changes always use the
+existing Edit form, including accepted-proposal and loss-reason validation in the API.
+
+CRM import parses at most 100 quoted CSV rows and 512 KiB locally, then maps only canonical lead
+fields. Server preview and per-row selection/duplicate consent precede writes. A batch UUID and
+unchanged row payloads remain in page memory for retries; successful rows are never resubmitted.
+No file or lead data is persisted in browser storage, and formulas remain inert text.
+
+Metrics are paginated dimension rows, not a truncated dashboard report. Overview inventory counts
+are current. Conversion divides currently converted leads from the created-in-window cohort by all
+leads in that cohort (zero denominator unavailable). First-contact latency includes only cohort leads
+with an observed completed call/meeting/email; missing observations are unavailable, not zero hours.
+Sources use the lead creation cohort; losses use the opportunity creation cohort; current stages use
+actual latest stage-transition time, falling back to creation. No currency aggregation occurs.
+
+CRM AI suggestions are optional read-only shared data-viewer content, with manual review and source
+keys; no automatic application, save or sending. Unavailability leaves manual actions usable.
+Automation templates create event-surface drafts only and leave owner selection to the editor.
+
+Read projections may opt into `serverSideFiltering` to preserve the authorized server page exactly;
+projection-only filters must never be re-applied against missing row fields. Aggregate endpoints
+without a search contract may set `searchEnabled: false` (CRM metrics); ordinary CRUDs keep Search.
+Proposal guidance follows the canonical item/transition/document/revise flow; the version document
+shows separate one-time/monthly/yearly totals without copying financial calculations into the App.

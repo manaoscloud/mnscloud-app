@@ -105,15 +105,17 @@
 <ng-template #crudTableBody>
   @if (!config.readOnly) {
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-1">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input
-          matInput
-          [value]="search()"
-          (input)="onSearchInput($any($event.target).value)"
-          (keyup.enter)="applySearchFilters()"
-        />
-      </mat-form-field>
+      @if (config.searchEnabled !== false) {
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ 'Search' | transloco }}</mat-label>
+          <input
+            matInput
+            [value]="search()"
+            (input)="onSearchInput($any($event.target).value)"
+            (keyup.enter)="applySearchFilters()"
+          />
+        </mat-form-field>
+      }
 
       @if (statusFilterEnabled()) {
         <mns-search-select-field
@@ -274,6 +276,55 @@
   @if (listFailed()) {
     <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
   }
+  @if (config.board; as board) {
+    <div class="crud-board-controls">
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-pressed]="!boardMode()"
+        (click)="boardMode.set(false)"
+      >
+        {{ 'crud.board.list' | transloco }}
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-pressed]="boardMode()"
+        (click)="boardMode.set(true)"
+      >
+        {{ 'crud.board.view' | transloco }}
+      </button>
+      <p>
+        {{
+          'crud.board.scope' | transloco: { count: visibleRows().length, total: paginatorLength() }
+        }}
+      </p>
+    </div>
+    @if (boardMode()) {
+      <div class="crud-board">
+        @for (group of boardGroups(); track group.key) {
+          <section class="crud-board-column">
+            <h3>{{ group.label }} ({{ group.rows.length }})</h3>
+            @for (row of group.rows; track recordUUID(row)) {
+              <article class="crud-card">
+                <h4>{{ row[board.titleField] }}</h4>
+                <span class="record-uuid" [matTooltip]="recordUUID(row)">{{
+                  recordUUID(row).slice(0, 8)
+                }}</span>
+                <p>{{ columnText(row, board.detailColumn) }}</p>
+                <ng-container
+                  [ngTemplateOutlet]="crudRowActions"
+                  [ngTemplateOutletContext]="{ $implicit: row }"
+                />
+              </article>
+            }
+          </section>
+        } @empty {
+          <p>{{ config.emptyLabel | transloco }}</p>
+        }
+      </div>
+    }
+  }
   <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
     @if (loading()) {
       <div class="table-loading">
@@ -281,7 +332,7 @@
       </div>
     }
 
-    <div class="table-scroll">
+    <div class="table-scroll" [hidden]="config.board && boardMode()">
       @if (mobileLayout()) {
         <div class="crud-card-toolbar">
           @if (bulkDeleteEnabled()) {
@@ -1404,7 +1455,8 @@
                   [disabled]="action.disabled?.()"
                   (click)="action.run(this)"
                 >
-                  <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
+                  <mat-icon>{{ action.icon }}</mat-icon
+                  >{{ action.label | transloco }}
                 </button>
               }
               <p>{{ 'registry.contactSaveHelp' | transloco }}</p>
@@ -3164,7 +3216,8 @@
                     [disabled]="!editingRecord() || action.disabled?.()"
                     (click)="action.run(this)"
                   >
-                    <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
+                    <mat-icon>{{ action.icon }}</mat-icon
+                    >{{ action.label | transloco }}
                   </button>
                 </div>
               }
@@ -3477,7 +3530,8 @@
                 type="button"
                 (click)="runRowAction(action, editingRecord()!)"
               >
-                <mat-icon>{{ action.icon }}</mat-icon>{{ action.label | transloco }}
+                <mat-icon>{{ action.icon }}</mat-icon
+                >{{ action.label | transloco }}
               </button>
             </div>
           </mat-tab>

@@ -8,7 +8,7 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmActions } from '../crm-actions';
-const config = defineCrud({
+export const config = defineCrud({
   endpoint: 'crm/activities',
   uuidField: 'CatUUID',
   pageTitle: 'crm.title.activities',
