@@ -59,6 +59,15 @@ const BILLING_POWER_LABELS: Record<string, string> = {
 };
 
 /** Customer power actions in progress (the VPS worker records the final status). */
+/** Stage of a provisioning in progress, recorded by each short provisioning pass of the API. */
+const PROVISION_STAGE_LABELS: Record<string, string> = {
+  preparing: 'Provisioning: preparing',
+  cloning: 'Provisioning: copying the image',
+  configuring: 'Provisioning: configuring',
+  starting: 'Provisioning: starting',
+  finishing: 'Provisioning: finishing',
+};
+
 const POWER_STATUS_LABELS: Record<string, string> = {
   starting: 'Starting',
   stopping: 'Shutting down',
@@ -436,11 +445,19 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       value: (row, translate) => {
         const billing = BILLING_POWER_LABELS[String(row['HviBillingPowerState'] ?? '')];
         const power = POWER_STATUS_LABELS[String(row['HviStatus'] ?? '')];
+        const status = String(row['HviStatus'] ?? '').toLowerCase();
+        const stage = ['queued', 'provisioning'].includes(status)
+          ? PROVISION_STAGE_LABELS[
+              String(parseConfig<HostingVpsInstanceConfig>(row['HviConfig'])?.provisionStage ?? '')
+            ]
+          : undefined;
         return billing
           ? translate(billing)
-          : power
-            ? translate(power)
-            : String(row['HviStatus'] ?? '');
+          : stage
+            ? translate(stage)
+            : power
+              ? translate(power)
+              : String(row['HviStatus'] ?? '');
       },
     },
     {
@@ -466,6 +483,8 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       type: 'status',
       span: 1,
     },
+    // wide-field: Record tab layout decided by the user (2026-11-18): Status alone on line 1,
+    // Customer (2) + Portal (1) + Name (1) on line 2, Plan (2) + Image (1) + Placement group (1).
     {
       key: 'customerUUID',
       source: 'RegCustomerRcuUUID',
@@ -473,7 +492,9 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       type: 'search-select',
       required: true,
-      span: 1,
+      span: 2,
+      wideField: true,
+      breakBefore: true,
     },
     {
       key: 'portalEnabled',
@@ -498,6 +519,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       required: true,
       span: 1,
     },
+    // wide-field: Record tab layout decided by the user (2026-11-18), see Customer.
     {
       key: 'planUUID',
       source: 'HostingVpsPlanHvpUUID',
@@ -505,6 +527,9 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Plan',
       type: 'search-select',
       required: true,
+      span: 2,
+      wideField: true,
+      breakBefore: true,
     },
     {
       key: 'image',
@@ -799,6 +824,10 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       customerField.helpWhen = () =>
         this.platformScope() ? 'hostingVps.platformCustomerHelp' : '';
     }
+
+    // Without Customer (and Portal) on line 2, Name starts that line instead of following Status.
+    const nameField = this.config.fields.find((field) => field.key === 'name');
+    if (nameField) nameField.breakBeforeWhen = () => !this.hasCustomerScope();
 
     // FA2: on a platform server an empty group is automatic (from the name mns-<role>-<env><n>).
     const groupField = this.config.fields.find((field) => field.key === 'placementGroup');

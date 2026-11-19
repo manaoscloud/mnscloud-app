@@ -9,7 +9,8 @@ import type { ConfigurableCrudFieldType } from './configurable-crud-page-base';
  * - text areas always take the full row (`span-4`) with four visible rows.
  *
  * Only composite controls (file upload, checkbox group, permission tree, secret content) keep the
- * span they declare. `npm run check:crud:fields` rejects declarations that contradict this.
+ * span they declare, and a single-line control marked `wideField: true` (a user-decided exception,
+ * justified by a `// wide-field: <why>` comment) keeps its declared `span`. `npm run check:crud:fields` rejects declarations that contradict this.
  */
 export const SINGLE_LINE_FIELD_TYPES: ReadonlySet<ConfigurableCrudFieldType> = new Set([
   'text',
@@ -34,8 +35,9 @@ export const TEXTAREA_ROWS = 4;
 export function crudFieldSpan(
   type: ConfigurableCrudFieldType | undefined,
   declared: number | undefined,
+  wideField = false,
 ): number {
   if (type === 'textarea') return TEXTAREA_SPAN;
-  if (!type || SINGLE_LINE_FIELD_TYPES.has(type)) return 1;
+  if (!type || SINGLE_LINE_FIELD_TYPES.has(type)) return wideField ? (declared ?? 1) : 1;
   return declared ?? 1;
 }

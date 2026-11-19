@@ -209,6 +209,9 @@ export type HostingVpsInstanceConfig = {
   sshKey?: string;
   notes?: string;
   provisionError?: string | null;
+  /** Provisioning stage while queued/provisioning (preparing, cloning, configuring, starting...). */
+  provisionStage?: string | null;
+  provisionStageAt?: string | null;
   provisionRetryCount?: number | null;
   lastProvisionRetryAt?: string | null;
   publicIpv4?: string | null;

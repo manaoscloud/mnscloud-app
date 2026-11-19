@@ -119,6 +119,7 @@ export function devicePayload(values: ConfigurableCrudRecord, row?: Configurable
     agentUUID: values['agentUUID'] || null,
     cyberAccountUUID: values['cyberAccountUUID'] || null,
     snmpVersion: values['snmpVersion'] || 'v2c',
+    ...(values['networkDeviceUUID'] ? { networkDeviceUUID: values['networkDeviceUUID'] } : {}),
     ...(credential ? { credential } : {}),
     ...(row ? { revision: row['revision'] ?? null } : {}),
   };
@@ -135,6 +136,51 @@ const AGENT_LOOKUP = { endpoint: 'monitoring/agents', uuidField: 'uuid', labelFi
 const isV3 = ({ values }: { values: ConfigurableCrudRecord }) => values['snmpVersion'] === 'v3';
 const usesPrivacy = (ctx: { values: ConfigurableCrudRecord }) =>
   isV3(ctx) && ctx.values['privProtocol'] !== 'none';
+
+/**
+ * Platform pages (decision D-4 of the 2026-11-17 platform scope assessment): a platform network device
+ * is one device of the platform Network registry, its name comes from there, and the collector is an
+ * Agent of the platform servers (read through the Cyber Security inventory, platform scope).
+ */
+export function platformDeviceFields(
+  fields: readonly ConfigurableCrudField[],
+): ConfigurableCrudField[] {
+  const registry: ConfigurableCrudField = {
+    key: 'networkDeviceUUID',
+    label: 'cyberSecurity.network.registryDevice',
+    type: 'search-select',
+    remoteLookup: {
+      endpoint: 'cyber-security/network-devices/registry-options',
+      uuidField: 'networkDeviceUUID',
+      labelField: 'name',
+    },
+    quickCreate: false,
+    quickCreateExemptReason: 'Platform network devices are registered in the Network module.',
+    required: true,
+    span: 1,
+    help: 'cyberSecurity.network.registryDeviceHelp',
+  };
+  return [
+    registry,
+    ...fields
+      .filter((field) => field.key !== 'cyberAccountUUID')
+      .map((field) => {
+        if (field.key === 'name')
+          return { ...field, required: false, help: 'cyberSecurity.network.registryNameHelp' };
+        if (field.key === 'agentUUID') {
+          return {
+            ...field,
+            remoteLookup: {
+              endpoint: 'cyber-security/inventory?limit=500',
+              uuidField: 'agentUUID',
+              labelField: 'agentName',
+            },
+          };
+        }
+        return field;
+      }),
+  ];
+}
 
 /** Fields of the device form; on an edit the secrets are empty and kept unless typed again. */
 export function deviceFields(editing: boolean): ConfigurableCrudField[] {
@@ -263,6 +309,7 @@ export function deviceForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig 
       cyberAccountUUID: row['cyberAccountUUID'] ?? '',
       snmpVersion: row['snmpVersion'] ?? 'v2c',
       storedSnmpVersion: row['snmpVersion'] ?? 'v2c',
+      networkDeviceUUID: row['networkDeviceUUID'] ?? '',
     },
     payload: (values) => devicePayload(values, row),
     columns: [],
