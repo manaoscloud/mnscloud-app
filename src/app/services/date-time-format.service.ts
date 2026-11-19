@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 
 import { AppI18nService } from './app-i18n.service';
 import { SystemParameterService } from './system-parameter.service';
@@ -14,11 +14,22 @@ export class DateTimeFormatService {
   readonly locale = computed(() => this.i18n.language());
 
   constructor() {
-    void this.refresh();
+    effect(() => {
+      const context = this.parameters.context();
+      this.timezone.set('UTC');
+      untracked(
+        () =>
+          void this.refresh().catch(() => {
+            if (context === this.parameters.contextKey()) this.timezone.set('UTC');
+          }),
+      );
+    });
   }
 
   async refresh(): Promise<void> {
-    this.timezone.set(await this.parameters.resolveDefaultTimezone('UTC'));
+    const context = this.parameters.contextKey();
+    const timezone = await this.parameters.resolveDefaultTimezone('UTC');
+    if (context === this.parameters.contextKey()) this.timezone.set(timezone);
   }
 
   formatDateTime(

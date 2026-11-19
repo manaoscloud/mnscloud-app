@@ -757,3 +757,24 @@
     }
   }
 }
+
+.crud-board-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.crud-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+}
+.crud-board-column {
+  min-width: 0;
+  padding: 0.75rem;
+  background: var(--mat-sys-surface-container);
+  border-radius: 1rem;
+}
+.crud-board-column .crud-card {
+  margin-bottom: 0.75rem;
+}

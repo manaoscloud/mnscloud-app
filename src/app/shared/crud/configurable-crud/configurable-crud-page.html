@@ -105,15 +105,17 @@
 <ng-template #crudTableBody>
   @if (!config.readOnly) {
     <div class="filter-grid">
-      <mat-form-field appearance="outline" class="span-1">
-        <mat-label>{{ 'Search' | transloco }}</mat-label>
-        <input
-          matInput
-          [value]="search()"
-          (input)="onSearchInput($any($event.target).value)"
-          (keyup.enter)="applySearchFilters()"
-        />
-      </mat-form-field>
+      @if (config.searchEnabled !== false) {
+        <mat-form-field appearance="outline" class="span-1">
+          <mat-label>{{ 'Search' | transloco }}</mat-label>
+          <input
+            matInput
+            [value]="search()"
+            (input)="onSearchInput($any($event.target).value)"
+            (keyup.enter)="applySearchFilters()"
+          />
+        </mat-form-field>
+      }
 
       @if (statusFilterEnabled()) {
         <mns-search-select-field
@@ -274,6 +276,68 @@
   @if (listFailed()) {
     <p role="alert">{{ 'Unable to load records. Use Refresh to try again.' | transloco }}</p>
   }
+  @if (config.board; as board) {
+    <div class="crud-board-controls">
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-pressed]="!boardMode()"
+        (click)="boardMode.set(false)"
+      >
+        {{ 'crud.board.list' | transloco }}
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-pressed]="boardMode()"
+        (click)="boardMode.set(true)"
+      >
+        {{ 'crud.board.view' | transloco }}
+      </button>
+      <p>
+        {{
+          'crud.board.scope' | transloco: { count: visibleRows().length, total: paginatorLength() }
+        }}
+      </p>
+    </div>
+    @if (boardMode()) {
+      <div class="table-wrapper" [class.is-loading]="loading()" [attr.aria-busy]="loading()">
+        @if (loading()) {
+          <div class="table-loading">
+            <mat-progress-spinner mode="indeterminate" diameter="36" strokeWidth="4" />
+          </div>
+        }
+        <div class="crud-board" [attr.inert]="loading() ? '' : null">
+          @for (group of boardGroups(); track group.key) {
+            <section class="crud-board-column">
+              <h3>{{ group.label }} ({{ group.rows.length }})</h3>
+              @for (row of group.rows; track recordUUID(row)) {
+                <article class="crud-card">
+                  <h4>{{ boardTitle(row) }}</h4>
+                  <button
+                    type="button"
+                    class="record-uuid crud-uuid-copy"
+                    [matTooltip]="recordUUID(row) + ' · ' + ('Click to copy' | transloco)"
+                    [attr.aria-label]="('Copy' | transloco) + ' UUID ' + recordUUID(row)"
+                    (click)="copyText(recordUUID(row))"
+                  >
+                    {{ recordUUID(row).slice(0, 8) }}
+                  </button>
+                  <p>{{ columnText(row, board.detailColumn) }}</p>
+                  <ng-container
+                    [ngTemplateOutlet]="crudRowActions"
+                    [ngTemplateOutletContext]="{ $implicit: row }"
+                  />
+                </article>
+              }
+            </section>
+          } @empty {
+            <p>{{ config.emptyLabel | transloco }}</p>
+          }
+        </div>
+      </div>
+    }
+  }
   <div class="table-wrapper mat-elevation-z8" [class.is-loading]="loading()">
     @if (loading()) {
       <div class="table-loading">
@@ -281,7 +345,7 @@
       </div>
     }
 
-    <div class="table-scroll">
+    <div class="table-scroll" [hidden]="config.board && boardMode()">
       @if (mobileLayout()) {
         <div class="crud-card-toolbar">
           @if (bulkDeleteEnabled()) {

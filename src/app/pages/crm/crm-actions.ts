@@ -1,3 +1,4 @@
+import { assistedConversion } from './prospecting-forms';
 import { CRM_OPTIONS } from './crm-options';
 import { crmPayload } from './crm-input';
 import { config as proposalItemsConfig } from './proposal-items/proposal-items';
@@ -61,59 +62,20 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
         }),
     },
   ];
+  if (['leads', 'opportunities'].includes(route))
+    actions.push({
+      key: 'relationship',
+      label: 'crm.prospect.relationship',
+      icon: 'person',
+      navigate: (r) => ['/crm/relationships', route, String(r[identity[route]])],
+    });
   if (route === 'leads')
     actions.push({
       key: 'convert',
       label: 'crm.convert',
-      icon: 'conversion_path',
+      icon: 'swap_horiz',
       visible: (r) => r['CleState'] === 'qualified',
-      form: (r) =>
-        defineCrud({
-          endpoint: `crm/leads/${r['CleUUID']}/convert`,
-          uuidField: 'CopUUID',
-          pageTitle: 'crm.convert',
-          pageDescription: 'crm.description.convert',
-          createTitle: 'crm.convert',
-          formOnly: true,
-          columns: [],
-          defaultCurrencyFields: ['currency'],
-          payload: (values) => crmPayload(values, true, 'revision', [], []),
-          initialValues: {
-            revision: r['CleRevision'],
-            accountUUID: '',
-            stageUUID: '',
-            currency: '',
-          },
-          fields: [
-            { key: 'revision', label: 'crm.field.Revision', hidden: true },
-            {
-              key: 'accountUUID',
-              label: 'crm.title.accounts',
-              type: 'search-select',
-              span: 1,
-              quickCreate: quickCreateFor('CrmAccountCacUUID'),
-              remoteLookup: {
-                endpoint: 'crm/accounts',
-                uuidField: 'CacUUID',
-                labelField: 'CacName',
-              },
-            },
-            {
-              key: 'stageUUID',
-              label: 'crm.title.stages',
-              type: 'search-select',
-              span: 1,
-              required: true,
-              quickCreate: quickCreateFor('CrmStageCstUUID'),
-              remoteLookup: {
-                endpoint: 'crm/stages?CstKind=open',
-                uuidField: 'CstUUID',
-                labelField: 'CstName',
-              },
-            },
-            { key: 'currency', label: 'crm.field.Currency', span: 1 },
-          ],
-        }),
+      form: assistedConversion,
     });
   if (route === 'proposals') {
     actions.push({
@@ -143,6 +105,7 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
     actions.push({
       key: 'transition',
       label: 'crm.transition',
+      tooltip: 'crm.prospect.sentHelp',
       icon: 'send',
       visible: (r) => ['draft', 'sent'].includes(String(r['CppState'])),
       form: (r) =>
@@ -151,6 +114,7 @@ export function crmActions(route: string): ConfigurableCrudRowAction[] {
           uuidField: 'CppUUID',
           pageTitle: 'crm.transition',
           pageDescription: 'crm.description.transition',
+          dialogDescription: 'crm.prospect.sentHelp',
           createTitle: 'crm.transition',
           formOnly: true,
           columns: [],

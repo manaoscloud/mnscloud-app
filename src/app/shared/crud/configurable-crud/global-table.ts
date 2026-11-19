@@ -29,6 +29,8 @@ export class GlobalTableComponent {
   readonly config = input.required<ConfigurableCrudConfig>();
   readonly rows = input<readonly ConfigurableCrudRecord[] | null | undefined>([]);
   readonly loading = input(false);
+  /** Read a canonical paginated endpoint instead of supplied local rows. */
+  readonly remote = input(false);
 
   protected readonly table = ConfigurableCrudEmbeddedCollection;
   private readonly injector = inject(Injector);
@@ -38,8 +40,8 @@ export class GlobalTableComponent {
       config: {
         ...this.config(),
         readOnly: true,
-        rows: () => this.rows() ?? [],
-        rowsLoading: () => this.loading(),
+        rows: this.remote() ? undefined : () => this.rows() ?? [],
+        rowsLoading: this.remote() ? undefined : () => this.loading(),
       },
       options: () => [],
       label: () => '',
@@ -67,6 +69,8 @@ export type GlobalTableDefinition = Pick<
   Partial<
     Pick<
       ConfigurableCrudConfig,
+      | 'endpoint'
+      | 'serverSidePagination'
       | 'rowActions'
       | 'initialPageSize'
       | 'pageSizeOptions'

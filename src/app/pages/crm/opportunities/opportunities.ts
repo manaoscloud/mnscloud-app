@@ -9,8 +9,19 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmActions } from '../crm-actions';
-const config = defineCrud({
+export const config = defineCrud({
   endpoint: 'crm/opportunities',
+  board: {
+    groupField: 'CrmStageCstUUID',
+    groupLabelField: 'CrmStageCstUUIDName',
+    titleField: 'CopName',
+    detailColumn: {
+      id: 'next',
+      field: 'CopNextContactAt',
+      label: 'crm.field.NextContactAt',
+      kind: 'datetime',
+    },
+  },
   uuidField: 'CopUUID',
   pageTitle: 'crm.title.opportunities',
   pageDescription: 'crm.description.opportunities',
@@ -55,6 +66,7 @@ const config = defineCrud({
       remoteLookup: {
         selectedLabelField: 'CrmStageCstUUIDName',
         endpoint: 'crm/stages',
+        parameters: { CrmWorkspaceCwsUUID: 'CrmWorkspaceCwsUUID' },
         uuidField: 'CstUUID',
         labelField: 'CstName',
       },
@@ -121,6 +133,7 @@ const config = defineCrud({
       remoteLookup: {
         selectedLabelField: 'CrmContactCcoUUIDName',
         endpoint: 'crm/contacts',
+        parameters: { CrmAccountCacUUID: 'CrmAccountCacUUID' },
         uuidField: 'CcoUUID',
         labelField: 'CcoName',
       },
@@ -135,6 +148,7 @@ const config = defineCrud({
       remoteLookup: {
         selectedLabelField: 'CrmProductCprUUIDName',
         endpoint: 'crm/products',
+        parameters: { CrmWorkspaceCwsUUID: 'CrmWorkspaceCwsUUID' },
         uuidField: 'CprUUID',
         labelField: 'CprName',
       },

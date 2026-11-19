@@ -193,7 +193,7 @@ export class AutomationFlowsPage extends ConfigurableCrudPageBase<ConfigurableCr
       const uuid = await this.service.create({
         name: t(template.nameKey),
         description: t(template.descriptionKey),
-        surface: 'conversation',
+        surface: template.surface ?? 'conversation',
         priority: 100,
       });
       const flow = await this.service.flow(uuid);

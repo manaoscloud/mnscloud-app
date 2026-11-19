@@ -15,7 +15,7 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmActions } from '../crm-actions';
-const config = defineCrud({
+export const config = defineCrud({
   endpoint: 'crm/leads',
   uuidField: 'CleUUID',
   pageTitle: 'crm.title.leads',
@@ -127,6 +127,7 @@ const config = defineCrud({
       remoteLookup: {
         selectedLabelField: 'CrmProductCprUUIDName',
         endpoint: 'crm/products',
+        parameters: { CrmWorkspaceCwsUUID: 'CrmWorkspaceCwsUUID' },
         uuidField: 'CprUUID',
         labelField: 'CprName',
       },
@@ -153,6 +154,8 @@ const config = defineCrud({
     },
     {
       key: 'CleNeed',
+      requiredWhen: ({ values }) => values['CleState'] === 'qualified',
+      help: 'crm.prospect.qualification',
       source: 'CleNeed',
       label: 'crm.field.Need',
       span: 4,
@@ -163,6 +166,8 @@ const config = defineCrud({
     },
     {
       key: 'CleCloseReason',
+      requiredWhen: ({ values }) => values['CleState'] === 'disqualified',
+      help: 'crm.prospect.disqualification',
       source: 'CleCloseReason',
       label: 'crm.field.CloseReason',
       span: 4,

@@ -8,11 +8,12 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { crmActions } from '../crm-actions';
-const config = defineCrud({
+export const config = defineCrud({
   endpoint: 'crm/proposals',
   uuidField: 'CppUUID',
   pageTitle: 'crm.title.proposals',
-  pageDescription: 'crm.description.proposals',
+  pageDescription: 'crm.prospect.proposalGuide',
+  dialogDescription: 'crm.prospect.proposalGuide',
   defaultCurrencyFields: ['CppCurrency'],
   initialValues: {
     CppName: '',

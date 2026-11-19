@@ -1,4 +1,4 @@
-import { Provider, Type } from '@angular/core';
+import { Provider, Type, signal } from '@angular/core';
 import { TestModuleMetadata } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
@@ -39,6 +39,8 @@ export function configurableCrudTestingModule(options: {
       {
         provide: SystemParameterService,
         useValue: {
+          context: signal('test-context'),
+          contextKey: () => 'test-context',
           resolveDefaultCurrency: () => Promise.resolve('BRL'),
           resolveDefaultTimezone: () => Promise.resolve('UTC'),
           resolveDefaultLanguage: () => Promise.resolve('en-US'),

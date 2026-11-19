@@ -947,6 +947,40 @@ export const routes: Routes = [
                 data: { scope: 'tenant', breadcrumb: 'authentication.domains' },
               },
               {
+                path: 'crm/workbench',
+                loadComponent: () =>
+                  import('./pages/crm/workbench/workbench').then((m) => m.CrmWorkbenchPage),
+                title: 'CRM',
+                canActivate: [permissionGuard],
+                data: { scope: 'tenant', permission: 'tenant.crm.read' },
+              },
+              {
+                path: 'crm/metrics',
+                loadComponent: () =>
+                  import('./pages/crm/metrics/metrics').then((m) => m.CrmMetricsPage),
+                title: 'CRM',
+                canActivate: [permissionGuard],
+                data: { scope: 'tenant', permission: 'tenant.crm.read' },
+              },
+              {
+                path: 'crm/import',
+                loadComponent: () =>
+                  import('./pages/crm/import/import').then((m) => m.CrmImportPage),
+                title: 'CRM',
+                canActivate: [permissionGuard],
+                data: { scope: 'tenant', permission: 'tenant.crm.write' },
+              },
+              {
+                path: 'crm/relationships/:resource/:uuid',
+                loadComponent: () =>
+                  import('./pages/crm/relationship/relationship').then(
+                    (m) => m.CrmRelationshipPage,
+                  ),
+                title: 'CRM',
+                canActivate: [permissionGuard],
+                data: { scope: 'tenant', permission: 'tenant.crm.read' },
+              },
+              {
                 path: 'crm/dashboard',
                 loadComponent: () =>
                   import('./pages/crm/dashboard/dashboard').then((m) => m.CrmDashboardPage),

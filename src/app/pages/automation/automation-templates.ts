@@ -2,6 +2,7 @@ import { Dict, FlowGraph, GraphEdge, GraphNode, TRIGGER_TYPE } from './automatio
 
 export interface FlowTemplate {
   key: string;
+  surface?: 'conversation' | 'event';
   /** Translation keys of the menu entry and of the name/description of the created flow. */
   labelKey: string;
   nameKey: string;
@@ -115,6 +116,22 @@ export function buildAfterHours(t: (key: string) => string): FlowGraph {
 
 export const FLOW_TEMPLATES: readonly FlowTemplate[] = [
   {
+    key: 'crm-owner-followup',
+    surface: 'event',
+    labelKey: 'crm.prospect.ownerTemplate',
+    nameKey: 'crm.prospect.ownerTemplate',
+    descriptionKey: 'crm.prospect.ownerTemplateHelp',
+    build: (t) => buildCrmFollowUp(t),
+  },
+  {
+    key: 'crm-reminder',
+    surface: 'event',
+    labelKey: 'crm.prospect.reminderTemplate',
+    nameKey: 'crm.prospect.reminderTemplate',
+    descriptionKey: 'crm.prospect.reminderTemplateHelp',
+    build: (t) => buildCrmFollowUp(t, false),
+  },
+  {
     key: 'main-menu',
     labelKey: 'automation.templates.mainMenu.label',
     nameKey: 'automation.templates.mainMenu.name',
@@ -129,3 +146,38 @@ export const FLOW_TEMPLATES: readonly FlowTemplate[] = [
     build: buildAfterHours,
   },
 ];
+
+/** Draft only: the operator chooses the owner and explicitly validates/publishes in the editor. */
+export function buildCrmFollowUp(t: (key: string) => string, assign = true): FlowGraph {
+  return {
+    schemaVersion: 1,
+    start: 'trigger',
+    nodes: [
+      node('trigger', TRIGGER_TYPE, 40, 200, {
+        triggers: [{ type: 'event', event: 'crm.lead.created' }],
+      }),
+      ...(assign ? [node('owner', 'crm.assign_owner', 340, 200, { target: 'lead' })] : []),
+      node('followup', 'crm.log_activity', 640, 200, {
+        target: 'lead',
+        name: t('crm.prospect.followUpName'),
+        kind: 'call',
+        state: 'planned',
+        dueInMinutes: assign ? 60 : 1440,
+      }),
+      node('end', 'core.end', 940, 200),
+    ],
+    edges: [
+      edge('trigger', 'next', assign ? 'owner' : 'followup'),
+      ...(assign
+        ? [
+            edge('owner', 'next', 'followup'),
+            edge('owner', 'missing', 'end'),
+            edge('owner', 'error', 'end'),
+          ]
+        : []),
+      edge('followup', 'next', 'end'),
+      edge('followup', 'missing', 'end'),
+      edge('followup', 'error', 'end'),
+    ],
+  };
+}
