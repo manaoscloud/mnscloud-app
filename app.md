@@ -2616,8 +2616,9 @@ product and stage lookups bind the selected workspace. API/DB validate visibilit
 
 `crm/workbench` is an operational configurable CRUD list, never a dashboard. It disables base
 create/edit/delete without `readOnly`, so authorized row actions remain available. Its unique
-row key is `type:uuid`. Every request recomputes browser-local midnight boundaries as UTC ISO
-instants, including Refresh after midnight; workspace/owner/view/search are server filters.
+row key is `type:uuid`. Every request resolves `DEFAULT_TIMEZONE` and recomputes that zone’s
+calendar-day boundaries as UTC ISO instants, including Refresh after midnight;
+workspace/owner/view/search are server filters.
 Completion without follow-up explicitly leaves the parent's next date unchanged. A follow-up
 submits both displayed revisions and never retries a conflict with a newer revision.
 

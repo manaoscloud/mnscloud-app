@@ -8,8 +8,20 @@ import { crmPayload } from './crm-input';
 import { CRM_OPTIONS } from './crm-options';
 
 export const nextContactFields: ConfigurableCrudField[] = [
-  { key: 'nextContactAt', label: 'crm.field.NextContactAt', type: 'date', required: true },
-  { key: 'nextContactAtTime', label: 'Time', type: 'time', required: true },
+  {
+    key: 'nextContactAt',
+    label: 'crm.field.NextContactAt',
+    help: 'crm.prospect.inputTimezoneHelp',
+    type: 'date',
+    required: true,
+  },
+  {
+    key: 'nextContactAtTime',
+    label: 'Time',
+    help: 'crm.prospect.inputTimezoneHelp',
+    type: 'time',
+    required: true,
+  },
 ];
 export function assistedConversion(row: ConfigurableCrudRecord) {
   const workspace = String(row['CrmWorkspaceCwsUUID']);

@@ -15181,5 +15181,6 @@
   "crm.prospect.duplicateReason.batch": "Outra linha deste arquivo",
   "crm.prospect.duplicateReason.email": "Mesmo e-mail",
   "crm.prospect.duplicateReason.phone": "Mesmo telefone",
-  "crm.prospect.duplicateReason.document": "Mesmo documento"
+  "crm.prospect.duplicateReason.document": "Mesmo documento",
+  "crm.prospect.inputTimezoneHelp": "Informe a data e a hora no fuso do seu dispositivo. A lista exibe o horário no fuso configurado."
 }

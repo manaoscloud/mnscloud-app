@@ -15180,5 +15180,6 @@
   "crm.prospect.duplicateReason.batch": "Otra fila de este archivo",
   "crm.prospect.duplicateReason.email": "Mismo correo electrónico",
   "crm.prospect.duplicateReason.phone": "Mismo teléfono",
-  "crm.prospect.duplicateReason.document": "Mismo documento"
+  "crm.prospect.duplicateReason.document": "Mismo documento",
+  "crm.prospect.inputTimezoneHelp": "Introduzca la fecha y la hora en la zona horaria de su dispositivo. La lista muestra la hora en la zona horaria configurada."
 }
