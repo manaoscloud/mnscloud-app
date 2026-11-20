@@ -15345,5 +15345,13 @@
   "Choose to renew the same term or to continue monthly.": "Choose to renew the same term or to continue monthly.",
   "Prepaid term not found.": "Prepaid term not found.",
   "Each ladder step needs distinct months (3, 6, 12, 24 or 36) and a discount from 0 to 90 percent.": "Each ladder step needs distinct months (3, 6, 12, 24 or 36) and a discount from 0 to 90 percent.",
-  "The maximum total discount must be between 0 and 90 percent.": "The maximum total discount must be between 0 and 90 percent."
+  "The maximum total discount must be between 0 and 90 percent.": "The maximum total discount must be between 0 and 90 percent.",
+  "commercial.module.authentication": "Authentication",
+  "commercial.module.contracts": "Contracts",
+  "commercial.module.conversations": "Conversations",
+  "commercial.module.crm": "CRM",
+  "commercial.module.ged": "Document management",
+  "commercial.module.logs": "Logs",
+  "commercial.module.network": "Network",
+  "commercial.module.website": "Website"
 }
