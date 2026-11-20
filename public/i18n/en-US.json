@@ -15493,5 +15493,8 @@
   "Migrate router": "Migrate router",
   "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.": "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.",
   "Apply again": "Apply again",
-  "Router revision applied.": "Router revision applied."
+  "Router revision applied.": "Router revision applied.",
+  "website.offerCycle.biennial": "Biennial (24 months)",
+  "website.offerCycle.triennial": "Triennial (36 months)",
+  "website.offerBelowCost": "Warning: this price is below the platform cost for the same period ({{cost}})."
 }
