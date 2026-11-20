@@ -15346,5 +15346,13 @@
   "Choose to renew the same term or to continue monthly.": "Escolha renovar o mesmo prazo ou continuar no mensal.",
   "Prepaid term not found.": "Prazo pré-pago não encontrado.",
   "Each ladder step needs distinct months (3, 6, 12, 24 or 36) and a discount from 0 to 90 percent.": "Cada degrau da escada precisa de meses diferentes (3, 6, 12, 24 ou 36) e desconto de 0 a 90 por cento.",
-  "The maximum total discount must be between 0 and 90 percent.": "O desconto total máximo deve estar entre 0 e 90 por cento."
+  "The maximum total discount must be between 0 and 90 percent.": "O desconto total máximo deve estar entre 0 e 90 por cento.",
+  "commercial.module.authentication": "Autenticação",
+  "commercial.module.contracts": "Contratos",
+  "commercial.module.conversations": "Conversas",
+  "commercial.module.crm": "CRM",
+  "commercial.module.ged": "GED",
+  "commercial.module.logs": "Logs",
+  "commercial.module.network": "Rede",
+  "commercial.module.website": "Site"
 }
