@@ -99,7 +99,10 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
       value: (row, t) => {
         const terms = billingTermOffers(row);
         if (!terms.length) return '-';
-        const best = terms.reduce((a, b) => (b.discountPercent > a.discountPercent ? b : a));
+        const best = terms.reduce(
+          (a, b) => (b.discountPercent > a.discountPercent ? b : a),
+          terms[0],
+        );
         return `${t('Up to')} ${Number(best.discountPercent)}% (${best.months} ${t('months')})`;
       },
     },
