@@ -7,7 +7,11 @@ import {
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
+import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
+import { BillingPriceTermsDialogComponent } from './terms-dialog';
 import { BillingPrice, BillingService } from '../../shared/billing.service';
 import {
   BILLING_MODE_OPTIONS,
@@ -102,6 +106,15 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
   deleteFailedMessage: 'Failed to delete billing price.',
   bulkDelete: false,
   serverSidePagination: true,
+  rowActions: [
+    {
+      key: 'terms',
+      label: 'Prepaid terms',
+      icon: 'event_repeat',
+      // Terms are prepaid months of a monthly price (3 to 36 months at a discount).
+      visible: (row) => ['MONTHLY', 'MODULE_MONTHLY'].includes(String(row['BpcBillingMode'])),
+    },
+  ],
   tabLabels: {
     financial: 'Pricing',
   },
@@ -338,6 +351,28 @@ export class BillingSystemPricesPage extends ConfigurableCrudPageBase<
   constructor() {
     super(PRICE_CONFIG);
     void this.lookups.load();
+  }
+
+  override async handleRowAction(
+    action: ConfigurableCrudRowAction,
+    row: BillingPrice & ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.key !== 'terms') return super.handleRowAction(action, row);
+    const binding = openCrudComponentDialog(
+      this.dialog,
+      BillingPriceTermsDialogComponent,
+      'crud-form-dialog',
+      {
+        data: {
+          priceUUID: this.recordUUID(row),
+          priceName: String(row['BpcName'] ?? ''),
+          currency: String(row['BpcCurrency'] ?? 'BRL'),
+          unitPrice: Number(row['BpcUnitPrice'] ?? 0),
+        },
+        onEscape: () => binding.ref.close(true),
+      },
+    );
+    bindDialogClosed(binding.ref, () => binding.stop(), this.destroyRef);
   }
 
   override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {

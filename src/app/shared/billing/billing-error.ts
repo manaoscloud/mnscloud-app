@@ -51,6 +51,25 @@ const messages: Record<string, string> = {
     'This item is the primary product of the package. Choose another primary product first.',
   BILLING_PACKAGE_CODE_INVALID:
     'Use a package code like package.voip.start (lowercase segments separated by dots).',
+  BILLING_TERM_INVALID: 'Choose monthly or a prepaid term of 3, 6, 12, 24 or 36 months.',
+  BILLING_TERM_MODE_INVALID: 'Prepaid terms are offered only for monthly prices.',
+  BILLING_TERM_NOT_OFFERED: 'This prepaid term is not offered for this price.',
+  BILLING_TERM_SCHEDULED_UNSUPPORTED:
+    'A prepaid term cannot be used on a plan change scheduled for the end of the period.',
+  BILLING_TERM_COTERM_REQUIRED:
+    'A plan change inside a prepaid term keeps the current term until it ends.',
+  BILLING_TERM_COST_REQUIRED: 'Prepaid terms over 12 months require the plan cost.',
+  BILLING_TERM_FOREIGN_COST:
+    'Prepaid terms over 12 months are not offered for a cost in another currency.',
+  BILLING_TERM_BELOW_FLOOR: 'This discount takes the price below the plan minimum.',
+  BILLING_TERM_DISCOUNT_INVALID: 'The discount must be between 0 and 90 percent.',
+  BILLING_PROMOTION_NOT_ELIGIBLE: 'This promotion does not apply to your account or to this term.',
+  BILLING_TERM_NONE: 'This subscription has no prepaid term.',
+  BILLING_TERM_RENEWAL_INVALID: 'Choose to renew the same term or to continue monthly.',
+  BILLING_TERM_NOT_FOUND: 'Prepaid term not found.',
+  BILLING_TERM_LADDER_INVALID:
+    'Each ladder step needs distinct months (3, 6, 12, 24 or 36) and a discount from 0 to 90 percent.',
+  BILLING_TERM_MAX_DISCOUNT_INVALID: 'The maximum total discount must be between 0 and 90 percent.',
   BILLING_FAILED: 'Unable to complete the billing operation.',
 };
 
