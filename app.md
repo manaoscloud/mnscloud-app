@@ -2710,3 +2710,15 @@ shell's master-mode rules. There is no duplicate management entry, menu move, da
 or changed quoted menu path. AI remains in the existing session assistant. Release validation
 includes PT/EN/ES expanded, compact and mobile menus for masters and tenant users, with and
 without entitlement; authenticated DEV visual checks belong to the orchestrator's delivery.
+
+### Remote support vendor labels and runbook drafts
+
+Runbook dialect labels share one helper across the editor, picker, list and filters. Known
+dialects use PT/EN/ES translations; an unrecognized server dialect stays visible as inert text
+and stays unchanged in the draft. Saving that draft requires an explicit supported selection;
+never silently substitute RouterOS or discard unknown rollback commands. Dialect and step-kind
+controls use the shared searchable select. Read-only dialects cannot add change steps; existing
+steps remain visible for correction. These controls are UX only; API/gateway enforce capability.
+Protection labels describe the API mechanism (including scheduled reload and confirmed commit),
+not proof that a pending rollback has completed. WinRM in connection history is a method label,
+not an authorization to open an interactive console.

@@ -15188,5 +15188,18 @@
   "support.remote.platform.runbooksDescription": "Procedures technicians run on platform devices during a support session. Review proposals before approving changes.",
   "support.remote.settings.platformPrefixHelp": "Changes to platform devices use the fixed MNSCloud prefix to identify support work.",
   "support.remote.platform.sessionsDescription": "Support sessions for platform devices, with state, level and technician. Open a session to continue in the console.",
-  "support.remote.platform.newDescription": "Link a platform ticket and select devices for support. These fields are optional."
+  "support.remote.platform.newDescription": "Link a platform ticket and select devices for support. These fields are optional.",
+  "support.remote.runbooks.dialect.ios": "Cisco IOS / IOS XE",
+  "support.remote.runbooks.dialect.junos": "Juniper Junos",
+  "support.remote.runbooks.dialect.fortios": "Fortinet FortiOS",
+  "support.remote.runbooks.dialect.bsd": "pfSense / OPNsense",
+  "support.remote.runbooks.dialect.windows": "Windows (WinRM)",
+  "support.remote.runbooks.dialect.vsol": "VSOL OLT",
+  "support.remote.runbooks.dialect.dmos": "Datacom DmOS",
+  "support.remote.runbooks.problem.dialect": "Select a supported dialect before saving.",
+  "support.remote.runbooks.problem.changeUnsupported": "This dialect supports read steps only.",
+  "support.remote.runbooks.dialect.unsupported": "Unsupported: {{dialect}}",
+  "support.remote.proposal.safe.reload_in": "If verification fails, the device reloads the saved configuration.",
+  "support.remote.proposal.safe.commit_confirmed": "The previous configuration is restored unless the change is confirmed after verification.",
+  "network.connection.method.winrm": "WinRM (HTTPS)"
 }

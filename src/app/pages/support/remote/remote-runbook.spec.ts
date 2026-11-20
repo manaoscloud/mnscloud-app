@@ -1,6 +1,11 @@
 import { assistEntries } from './remote-assistant';
 import {
   RunbookDefinition,
+  RUNBOOK_DIALECTS,
+  runbookChangeAllowed,
+  runbookDialectKnown,
+  runbookDialectKey,
+  runbookDialectLabel,
   RunbookRun,
   autonomyBlockReason,
   definitionBody,
@@ -117,6 +122,60 @@ describe('runbook editor model', () => {
     expect(body.steps[0].verify).toEqual([]);
   });
 
+  it('preserves every supported dialect and blocks changes on read-only dialects', () => {
+    for (const dialect of RUNBOOK_DIALECTS) {
+      const loaded = definitionOf({ SrbDialect: dialect, SrbSteps: [] });
+      expect(loaded.dialect).toBe(dialect);
+      expect(definitionBody(loaded)['dialect']).toBe(dialect);
+      const problems = definitionProblems({ ...valid, dialect });
+      expect(problems).not.toContain('support.remote.runbooks.problem.dialect');
+      expect(problems.includes('support.remote.runbooks.problem.changeUnsupported')).toBe(
+        !runbookChangeAllowed(dialect),
+      );
+    }
+  });
+
+  it('retains an unknown server dialect and rollback without silently converting the draft', () => {
+    const loaded = definitionOf({
+      SrbName: 'Future device',
+      SrbDialect: 'future_cli',
+      SrbStatus: 'draft',
+      SrbSteps: [
+        {
+          title: 'Keep',
+          kind: 'change',
+          commands: ['future change'],
+          verify: ['future read'],
+          rollback: ['future undo'],
+        },
+      ],
+    });
+    expect(loaded.dialect).toBe('future_cli');
+    expect(loaded.steps[0].rollback).toEqual(['future undo']);
+    expect(definitionProblems(loaded)).toContain('support.remote.runbooks.problem.dialect');
+    expect(runbookChangeAllowed(loaded.dialect)).toBeFalse();
+    const body = definitionBody({ ...loaded, name: 'Renamed draft' });
+    expect(body['dialect']).toBe('future_cli');
+    expect((body['steps'] as { rollback: string[] }[])[0].rollback).toEqual(['future undo']);
+    expect(definitionOf(null).dialect).toBe('routeros');
+  });
+
+  it('uses one dialect label source and never translates an unknown server value as a key', () => {
+    const translate = jasmine
+      .createSpy('translate')
+      .and.callFake((key: string) => `translated:${key}`);
+    for (const dialect of RUNBOOK_DIALECTS) {
+      expect(runbookDialectKnown(dialect)).toBeTrue();
+      expect(runbookDialectLabel(dialect, translate)).toBe(
+        `translated:${runbookDialectKey(dialect)}`,
+      );
+    }
+    translate.calls.reset();
+    expect(runbookDialectLabel('future_cli', translate)).toBe('future_cli');
+    expect(runbookDialectKey('future_cli')).toBeNull();
+    expect(translate).not.toHaveBeenCalled();
+  });
+
   it('reads JSON columns as arrays or strings and splits lines', () => {
     const def = definitionOf({
       SrbName: 'A',
@@ -187,7 +246,9 @@ describe('run card', () => {
     expect(card.currentNumber).toBe(0);
     expect(card.steps[1].status).toBe('failed');
     expect(card.steps[1].proposalUUID).toBe('p1');
-    expect(card.errorKey).toBe('support.remote.runbooks.runError.SUPPORT_REMOTE_RUNBOOK_STEP_FAILED');
+    expect(card.errorKey).toBe(
+      'support.remote.runbooks.runError.SUPPORT_REMOTE_RUNBOOK_STEP_FAILED',
+    );
     expect(runErrorKey('NEW_CODE')).toBe('support.remote.runbooks.runError.unknown');
     expect(runErrorKey('')).toBe('');
   });
@@ -222,7 +283,9 @@ describe('rotation and timeline helpers', () => {
   });
 
   it('reloads on runbook and rotation events only', () => {
-    expect(runbookMark([ev(3, 'note'), ev(4, 'runbook_step'), ev(7, 'credential_rotated')])).toBe(7);
+    expect(runbookMark([ev(3, 'note'), ev(4, 'runbook_step'), ev(7, 'credential_rotated')])).toBe(
+      7,
+    );
     expect(runbookMark([ev(3, 'note')])).toBe(0);
   });
 

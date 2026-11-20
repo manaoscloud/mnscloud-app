@@ -1,5 +1,6 @@
 import {
   aiErrorKey,
+  safeChangeKey,
   assistRequestErrorKey,
   parseServerDate,
   assistEntries,
@@ -101,5 +102,21 @@ describe('remote assistant helpers', () => {
     expect(canApprove(base)).toBe(true);
     expect(canApprove({ ...base, SrpStatus: 'approved' })).toBe(true);
     expect(canApprove({ ...base, SrpStatus: 'applying' })).toBe(false);
+  });
+});
+
+describe('second-wave protection labels', () => {
+  it('names supported protection mechanisms and keeps unknown protection explicit', () => {
+    for (const value of [
+      'reload_in',
+      'commit_confirmed',
+      'routeros_safe_mode',
+      'vrp5_schedule_reboot',
+      'systemd_deadman',
+    ]) {
+      expect(safeChangeKey(value)).toBe(`support.remote.proposal.safe.${value}`);
+    }
+    expect(safeChangeKey('future_mechanism')).toBe('support.remote.proposal.safe.unknown');
+    expect(safeChangeKey(null)).toBe('support.remote.proposal.safe.unknown');
   });
 });

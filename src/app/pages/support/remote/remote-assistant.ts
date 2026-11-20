@@ -164,6 +164,8 @@ export function safeChangeKey(value: unknown): string {
     case 'routeros_safe_mode':
     case 'vrp5_schedule_reboot':
     case 'systemd_deadman':
+    case 'reload_in':
+    case 'commit_confirmed':
       return `support.remote.proposal.safe.${text(value)}`;
     default:
       return 'support.remote.proposal.safe.unknown';

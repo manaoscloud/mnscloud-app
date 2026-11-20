@@ -24,11 +24,13 @@ import {
   autonomyBlockReason,
   autonomyState,
   runbookStatusChip,
+  runbookDialectKey,
+  runbookDialectLabel,
 } from './remote-runbook';
 import { text } from './remote-session';
 
 export const RUNBOOK_DIALECT_OPTIONS: readonly ConfigurableCrudOption[] = RUNBOOK_DIALECTS.map(
-  (value) => ({ value, label: `support.remote.runbooks.dialect.${value}` }),
+  (value) => ({ value, label: runbookDialectKey(value)! }),
 );
 export const RUNBOOK_STATUS_OPTIONS: readonly ConfigurableCrudOption[] = RUNBOOK_STATUSES.map(
   (value) => ({ value, label: `support.remote.runbooks.status.${value}` }),
@@ -98,7 +100,7 @@ export function remoteRunbooksConfig(
         id: 'dialect',
         label: 'support.remote.runbooks.field.dialect',
         field: 'SrbDialect',
-        options: RUNBOOK_DIALECT_OPTIONS,
+        value: (row, translate) => runbookDialectLabel(text(row['SrbDialect']), translate),
       },
       { id: 'version', label: 'Version', field: 'SrbVersion', kind: 'number' },
       {

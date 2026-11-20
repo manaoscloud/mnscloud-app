@@ -15188,5 +15188,18 @@
   "support.remote.platform.runbooksDescription": "Procedimientos que el técnico ejecuta en equipos de la plataforma durante una sesión de soporte. Revise las propuestas antes de aprobar cambios.",
   "support.remote.settings.platformPrefixHelp": "Los cambios en los equipos de la plataforma usan el prefijo fijo MNSCloud para identificar el trabajo de soporte.",
   "support.remote.platform.sessionsDescription": "Sesiones de soporte de los equipos de la plataforma, con estado, nivel y técnico. Abra una sesión para continuar en la consola.",
-  "support.remote.platform.newDescription": "Vincule un ticket de la plataforma y seleccione los equipos que recibirán soporte. Estos campos son opcionales."
+  "support.remote.platform.newDescription": "Vincule un ticket de la plataforma y seleccione los equipos que recibirán soporte. Estos campos son opcionales.",
+  "support.remote.runbooks.dialect.ios": "Cisco IOS / IOS XE",
+  "support.remote.runbooks.dialect.junos": "Juniper Junos",
+  "support.remote.runbooks.dialect.fortios": "Fortinet FortiOS",
+  "support.remote.runbooks.dialect.bsd": "pfSense / OPNsense",
+  "support.remote.runbooks.dialect.windows": "Windows (WinRM)",
+  "support.remote.runbooks.dialect.vsol": "VSOL OLT",
+  "support.remote.runbooks.dialect.dmos": "Datacom DmOS",
+  "support.remote.runbooks.problem.dialect": "Seleccione un dialecto compatible antes de guardar.",
+  "support.remote.runbooks.problem.changeUnsupported": "Este dialecto solo permite pasos de lectura.",
+  "support.remote.runbooks.dialect.unsupported": "No compatible: {{dialect}}",
+  "support.remote.proposal.safe.reload_in": "Si falla la verificación, el equipo reinicia con la configuración guardada.",
+  "support.remote.proposal.safe.commit_confirmed": "Se restaura la configuración anterior si el cambio no se confirma después de la verificación.",
+  "network.connection.method.winrm": "WinRM (HTTPS)"
 }
