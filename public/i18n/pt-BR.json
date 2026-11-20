@@ -15368,5 +15368,19 @@
   "Start the VPS to read its security updates": "Ligue a VPS para ler as atualizações de segurança",
   "The VPS guest agent did not answer": "O agente da VPS não respondeu",
   "Not reported by this VPS": "Não informado por esta VPS",
-  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
+  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim.",
+  "Engine 1 (legacy)": "Motor 1 (legado)",
+  "Engine 2 (router with revisions)": "Motor 2 (roteador com revisões)",
+  "Engine of the gateway template. New customer gateways use it; existing ones change with Customer routers > Migrate to engine 2.": "Motor do template do gateway. Gateways novos dos clientes usam este motor; os existentes mudam em Roteadores dos clientes > Migrar para motor 2.",
+  "Customer gateway engine": "Motor do gateway dos clientes",
+  "Customer routers": "Roteadores dos clientes",
+  "Router of each customer network: engine 2 applies its whole configuration as numbered revisions, checks it and rolls back by itself. Migrate engine 1 gateways in a window agreed with the customer.": "Roteador de cada rede de cliente: o motor 2 aplica toda a configuração em revisões numeradas, verifica e volta sozinho em caso de falha. Migre gateways do motor 1 numa janela combinada com o cliente.",
+  "Router": "Roteador",
+  "Applied at": "Aplicada em",
+  "Migrate to engine 2": "Migrar para motor 2",
+  "Migration started. Refresh to follow it.": "Migração iniciada. Atualize para acompanhar.",
+  "Migrate router": "Migrar roteador",
+  "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.": "Recriar o gateway deste cliente no motor 2? Os servidores do cliente ficam sem internet por cerca de um minuto; em qualquer falha o gateway atual volta.",
+  "Apply again": "Aplicar novamente",
+  "Router revision applied.": "Revisão do roteador aplicada."
 }
