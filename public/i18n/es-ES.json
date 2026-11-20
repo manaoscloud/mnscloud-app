@@ -15367,5 +15367,19 @@
   "Start the VPS to read its security updates": "Encienda el VPS para leer sus actualizaciones de seguridad",
   "The VPS guest agent did not answer": "El agente del VPS no respondió",
   "Not reported by this VPS": "No informado por este VPS",
-  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pague el plazo completo ahora con el saldo prepago y con descuento; el precio queda fijo hasta el final."
+  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pague el plazo completo ahora con el saldo prepago y con descuento; el precio queda fijo hasta el final.",
+  "Engine 1 (legacy)": "Motor 1 (heredado)",
+  "Engine 2 (router with revisions)": "Motor 2 (router con revisiones)",
+  "Engine of the gateway template. New customer gateways use it; existing ones change with Customer routers > Migrate to engine 2.": "Motor de la plantilla del gateway. Los gateways nuevos de los clientes lo usan; los existentes cambian en Routers de los clientes > Migrar al motor 2.",
+  "Customer gateway engine": "Motor del gateway de los clientes",
+  "Customer routers": "Routers de los clientes",
+  "Router of each customer network: engine 2 applies its whole configuration as numbered revisions, checks it and rolls back by itself. Migrate engine 1 gateways in a window agreed with the customer.": "Router de cada red de cliente: el motor 2 aplica toda su configuración en revisiones numeradas, la verifica y vuelve atrás por sí solo. Migre los gateways del motor 1 en una ventana acordada con el cliente.",
+  "Router": "Router",
+  "Applied at": "Aplicada el",
+  "Migrate to engine 2": "Migrar al motor 2",
+  "Migration started. Refresh to follow it.": "Migración iniciada. Actualice para seguirla.",
+  "Migrate router": "Migrar router",
+  "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.": "¿Recrear el gateway de este cliente en el motor 2? Los servidores del cliente pierden internet durante cerca de un minuto; ante cualquier falla vuelve el gateway actual.",
+  "Apply again": "Aplicar de nuevo",
+  "Router revision applied.": "Revisión del router aplicada."
 }

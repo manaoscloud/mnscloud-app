@@ -34,6 +34,8 @@ export type VpsProviderConfig = {
         transitCidr: string;
         transitPool?: string;
         placement?: 'spread' | 'fixed';
+        /** Router engine of new gateways: 2 = revisioned router (template 9021). Absent = 1. */
+        engine?: 1 | 2;
       };
       mtu?: number;
       defaultCidr?: string;

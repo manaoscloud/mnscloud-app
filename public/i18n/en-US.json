@@ -15367,5 +15367,19 @@
   "Start the VPS to read its security updates": "Start the VPS to read its security updates",
   "The VPS guest agent did not answer": "The VPS guest agent did not answer",
   "Not reported by this VPS": "Not reported by this VPS",
-  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends."
+  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.",
+  "Engine 1 (legacy)": "Engine 1 (legacy)",
+  "Engine 2 (router with revisions)": "Engine 2 (router with revisions)",
+  "Engine of the gateway template. New customer gateways use it; existing ones change with Customer routers > Migrate to engine 2.": "Engine of the gateway template. New customer gateways use it; existing ones change with Customer routers > Migrate to engine 2.",
+  "Customer gateway engine": "Customer gateway engine",
+  "Customer routers": "Customer routers",
+  "Router of each customer network: engine 2 applies its whole configuration as numbered revisions, checks it and rolls back by itself. Migrate engine 1 gateways in a window agreed with the customer.": "Router of each customer network: engine 2 applies its whole configuration as numbered revisions, checks it and rolls back by itself. Migrate engine 1 gateways in a window agreed with the customer.",
+  "Router": "Router",
+  "Applied at": "Applied at",
+  "Migrate to engine 2": "Migrate to engine 2",
+  "Migration started. Refresh to follow it.": "Migration started. Refresh to follow it.",
+  "Migrate router": "Migrate router",
+  "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.": "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.",
+  "Apply again": "Apply again",
+  "Router revision applied.": "Router revision applied."
 }
