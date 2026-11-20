@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT, REMOTE_DIALOG_CONTEXT } from './remote-context';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -118,6 +119,7 @@ export type RunbookEditorData = { record: RemoteRecord | null };
 @Component({
   selector: 'mns-support-remote-runbook-dialog',
   standalone: true,
+  providers: [REMOTE_DIALOG_CONTEXT, RemoteRunbookService],
   imports: [
     FieldHelpComponent,
     FieldInvalidDirective,
@@ -198,7 +200,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
               <mns-field-help
                 matIconSuffix
                 [label]="'support.remote.runbooks.field.description' | transloco"
-                [text]="'support.remote.runbooks.placeholderHelp' | transloco: { example: placeholderExample }"
+                [text]="
+                  'support.remote.runbooks.placeholderHelp'
+                    | transloco: { example: placeholderExample }
+                "
               />
             </mat-form-field>
 
@@ -216,11 +221,13 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                       (ngModelChange)="patchParam($index, { name: $event })"
                     />
                     <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.param.name' | transloco"
-                [text]="'support.remote.runbooks.paramsHelp' | transloco"
-              />
-                    <mat-error>{{ 'support.remote.runbooks.problem.params' | transloco }}</mat-error>
+                      matIconSuffix
+                      [label]="'support.remote.runbooks.param.name' | transloco"
+                      [text]="'support.remote.runbooks.paramsHelp' | transloco"
+                    />
+                    <mat-error>{{
+                      'support.remote.runbooks.problem.params' | transloco
+                    }}</mat-error>
                   </mat-form-field>
                   <mat-form-field appearance="outline">
                     <mat-label>{{ 'support.remote.runbooks.param.label' | transloco }}</mat-label>
@@ -287,10 +294,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                     (ngModelChange)="patchPre($index, { command: $event })"
                   />
                   <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.pre.command' | transloco"
-                [text]="'support.remote.runbooks.preconditionsHelp' | transloco"
-              />
+                    matIconSuffix
+                    [label]="'support.remote.runbooks.pre.command' | transloco"
+                    [text]="'support.remote.runbooks.preconditionsHelp' | transloco"
+                  />
                   <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                 </mat-form-field>
                 <mat-form-field appearance="outline">
@@ -359,10 +366,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                       (ngModelChange)="patchStep($index, { title: $event })"
                     />
                     <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.step.title' | transloco"
-                [text]="'support.remote.runbooks.stepsHelp' | transloco"
-              />
+                      matIconSuffix
+                      [label]="'support.remote.runbooks.step.title' | transloco"
+                      [text]="'support.remote.runbooks.stepsHelp' | transloco"
+                    />
                     <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                   </mat-form-field>
                   <mat-form-field appearance="outline">
@@ -389,10 +396,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                     (ngModelChange)="patchStep($index, { commands: $event })"
                   ></textarea>
                   <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.step.commands' | transloco"
-                [text]="'support.remote.runbooks.step.commandsHelp' | transloco"
-              />
+                    matIconSuffix
+                    [label]="'support.remote.runbooks.step.commands' | transloco"
+                    [text]="'support.remote.runbooks.step.commandsHelp' | transloco"
+                  />
                   <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                 </mat-form-field>
                 @if (step.kind === 'change') {
@@ -406,10 +413,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                       (ngModelChange)="patchStep($index, { verify: $event })"
                     ></textarea>
                     <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.step.verify' | transloco"
-                [text]="'support.remote.runbooks.step.verifyHelp' | transloco"
-              />
+                      matIconSuffix
+                      [label]="'support.remote.runbooks.step.verify' | transloco"
+                      [text]="'support.remote.runbooks.step.verifyHelp' | transloco"
+                    />
                     <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                   </mat-form-field>
                 }
@@ -424,10 +431,10 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                       (ngModelChange)="patchStep($index, { rollback: $event })"
                     ></textarea>
                     <mns-field-help
-                matIconSuffix
-                [label]="'support.remote.runbooks.step.rollback' | transloco"
-                [text]="'support.remote.runbooks.step.rollbackHelp' | transloco"
-              />
+                      matIconSuffix
+                      [label]="'support.remote.runbooks.step.rollback' | transloco"
+                      [text]="'support.remote.runbooks.step.rollbackHelp' | transloco"
+                    />
                     <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                   </mat-form-field>
                 }
@@ -476,6 +483,7 @@ export type RunbookEditorData = { record: RemoteRecord | null };
   `,
 })
 export class SupportRemoteRunbookDialogComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly data = inject<RunbookEditorData>(MAT_DIALOG_DATA);
   readonly ref = inject<MatDialogRef<SupportRemoteRunbookDialogComponent, boolean>>(MatDialogRef);
   private readonly service = inject(RemoteRunbookService);
@@ -577,7 +585,10 @@ export class SupportRemoteRunbookDialogComponent {
   addParam() {
     this.params.update((rows) => [...rows, { name: '', label: '', type: 'word', required: true }]);
   }
-  patchParam(index: number, patch: Partial<RunbookDefinition['params'][number]> & { type?: RunbookParamType }) {
+  patchParam(
+    index: number,
+    patch: Partial<RunbookDefinition['params'][number]> & { type?: RunbookParamType },
+  ) {
     this.params.update((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
   removeParam(index: number) {
@@ -649,6 +660,7 @@ export type RunRunbookData = {
 @Component({
   selector: 'mns-support-remote-run-dialog',
   standalone: true,
+  providers: [REMOTE_DIALOG_CONTEXT, RemoteRunbookService],
   imports: [
     FieldHelpComponent,
     FieldInvalidDirective,
@@ -668,7 +680,9 @@ export type RunRunbookData = {
       <header class="dialog-header">
         <div>
           <h2>{{ 'support.remote.runbooks.run.title' | transloco }}</h2>
-          <p>{{ 'support.remote.runbooks.run.description' | transloco: { device: data.deviceName } }}</p>
+          <p>
+            {{ 'support.remote.runbooks.run.description' | transloco: { device: data.deviceName } }}
+          </p>
         </div>
         <mns-report-problem-button />
       </header>
@@ -715,7 +729,9 @@ export type RunRunbookData = {
                     [label]="param.label || param.name"
                     [text]="'support.remote.runbooks.paramType.' + param.type | transloco"
                   />
-                  <mat-error>{{ (errors()[param.name] || 'support.remote.field.required') | transloco }}</mat-error>
+                  <mat-error>{{
+                    errors()[param.name] || 'support.remote.field.required' | transloco
+                  }}</mat-error>
                 </mat-form-field>
               }
               <mat-form-field appearance="outline">
@@ -755,6 +771,7 @@ export type RunRunbookData = {
   `,
 })
 export class SupportRemoteRunDialogComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly data = inject<RunRunbookData>(MAT_DIALOG_DATA);
   readonly ref = inject<MatDialogRef<SupportRemoteRunDialogComponent, boolean>>(MatDialogRef);
   private readonly service = inject(RemoteRunbookService);
@@ -871,6 +888,7 @@ export type RotateData = {
 @Component({
   selector: 'mns-support-remote-rotate-dialog',
   standalone: true,
+  providers: [REMOTE_DIALOG_CONTEXT, RemoteRunbookService],
   imports: [
     FieldInvalidDirective,
     FormsModule,
@@ -957,6 +975,7 @@ export type RotateData = {
   `,
 })
 export class SupportRemoteRotateDialogComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly data = inject<RotateData>(MAT_DIALOG_DATA);
   readonly ref = inject<MatDialogRef<SupportRemoteRotateDialogComponent, boolean>>(MatDialogRef);
   private readonly service = inject(RemoteRunbookService);

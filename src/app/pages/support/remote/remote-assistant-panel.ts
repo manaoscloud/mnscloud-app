@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT } from './remote-context';
 import {
   Component,
   DestroyRef,
@@ -85,6 +86,7 @@ export type RunbookRequest = {
  */
 @Component({
   selector: 'mns-support-remote-assistant',
+  providers: [RemoteAssistService, RemoteRunbookService],
   standalone: true,
   imports: [
     FormsModule,
@@ -770,6 +772,7 @@ export type RunbookRequest = {
   `,
 })
 export class SupportRemoteAssistantComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly sessionUUID = input.required<string>();
   readonly session = input<RemoteRecord | null>(null);
   readonly events = input<readonly RemoteEvent[]>([]);
@@ -1096,7 +1099,9 @@ export class SupportRemoteAssistantComponent {
   }
 
   private async ask<R>(component: ComponentType<unknown>, data: unknown): Promise<R | undefined> {
-    const binding = openCrudComponentDialog(this.dialog, component, 'crud-form-dialog', { data });
+    const binding = openCrudComponentDialog(this.dialog, component, 'crud-form-dialog', {
+      data: { ...(data as object), context: this.context },
+    });
     try {
       return await firstValueFrom(binding.ref.afterClosed() as Observable<R | undefined>);
     } finally {

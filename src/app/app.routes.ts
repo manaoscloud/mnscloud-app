@@ -2935,6 +2935,48 @@ export const routes: Routes = [
             data: { permission: 'platform.master.access', scope: 'master' },
             children: [
               {
+                path: 'support/remote/console',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-console').then(
+                    (m) => m.SupportRemoteConsolePage,
+                  ),
+                title: 'Support • Remote console | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.console.title',
+                },
+              },
+              {
+                path: 'support/remote/sessions',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-sessions').then(
+                    (m) => m.SupportRemoteSessionsPage,
+                  ),
+                title: 'Support • Remote sessions | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.sessions.title',
+                },
+              },
+              {
+                path: 'support/remote/runbooks',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/support/remote/remote-runbooks').then(
+                    (m) => m.SupportRemoteRunbooksPage,
+                  ),
+                title: 'Support • Remote runbooks | mnscloud',
+                data: {
+                  scope: 'master',
+                  permission: 'platform.master.access',
+                  breadcrumb: 'support.remote.runbooks.title',
+                },
+              },
+              {
                 path: 'monitoring',
                 loadComponent: () =>
                   import('./pages/monitoring/dashboard/dashboard').then(

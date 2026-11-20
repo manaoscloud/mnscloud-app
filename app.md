@@ -2679,3 +2679,31 @@ aware: the base forwards the resource AbortSignal, and checks destruction, reque
 context before issuing the GET and before applying its response/total. Captured requestApi clients
 remain the transport authority. Board contents are inert while loading; the Refresh header keeps
 its standard loading behavior.
+
+## Remote support desk scope
+
+The same remote console, sessions and runbooks components serve tenant routes under
+`/support/remote` and master-only routes under `/system/support/remote`. Route data declares
+scope; the page supplies an immutable remote context to children and passes it explicitly in
+operation-dialog data. Assistant/runbook services are scoped instances, never mutable global
+services. The API remains the authority for membership, levels, devices and ticket references.
+Platform lookups use `system/network/devices`, `system/support/tickets` and
+`system/support/remote/operators`; tenant operators use `support/remote/operators`.
+Platform forms omit customer references and the tenant customer-approval policy. Platform
+support comments always use the fixed `MNSCloud` prefix. SSE uses the existing authenticated
+cookie/bootstrap-token contract and omits the environment header in platform scope. Saved
+console tabs are separated by user and scope, and by environment for tenant sessions.
+
+Ticket and Network device actions prefill the canonical session dialog using query parameters;
+these inputs never choose scope or authorize inventory access. Platform ticket requesters do not
+select a tenant. Delegated platform ticket agents cannot launch the infrastructure desk without
+`platform.master.access`. The existing direct device console remains available separately.
+Device session history links back to the console in the owning device's declared scope.
+
+Navigation keeps `Suporte › Remoto › Terminal / Sessões / Runbooks` and its existing ids,
+translations, order and tenant routes. The existing entries gain master routes, inheriting
+`scope: both` and the unchanged `module.support.*` entitlement; platform visibility follows the
+shell's master-mode rules. There is no duplicate management entry, menu move, dashboard reorder
+or changed quoted menu path. AI remains in the existing session assistant. Release validation
+includes PT/EN/ES expanded, compact and mobile menus for masters and tenant users, with and
+without entitlement; authenticated DEV visual checks belong to the orchestrator's delivery.

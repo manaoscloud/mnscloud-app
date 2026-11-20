@@ -15181,5 +15181,12 @@
   "crm.prospect.duplicateReason.email": "Mismo correo electrónico",
   "crm.prospect.duplicateReason.phone": "Mismo teléfono",
   "crm.prospect.duplicateReason.document": "Mismo documento",
-  "crm.prospect.inputTimezoneHelp": "Introduzca la fecha y la hora en la zona horaria de su dispositivo. La lista muestra la hora en la zona horaria configurada."
+  "crm.prospect.inputTimezoneHelp": "Introduzca la fecha y la hora en la zona horaria de su dispositivo. La lista muestra la hora en la zona horaria configurada.",
+  "support.remote.platform.settingsDescription": "Identificación de los cambios realizados durante el soporte de los equipos de la plataforma.",
+  "support.remote.launch": "Abrir sesión de soporte",
+  "support.remote.platform.all": "Todas de la plataforma",
+  "support.remote.platform.runbooksDescription": "Procedimientos que el técnico ejecuta en equipos de la plataforma durante una sesión de soporte. Revise las propuestas antes de aprobar cambios.",
+  "support.remote.settings.platformPrefixHelp": "Los cambios en los equipos de la plataforma usan el prefijo fijo MNSCloud para identificar el trabajo de soporte.",
+  "support.remote.platform.sessionsDescription": "Sesiones de soporte de los equipos de la plataforma, con estado, nivel y técnico. Abra una sesión para continuar en la consola.",
+  "support.remote.platform.newDescription": "Vincule un ticket de la plataforma y seleccione los equipos que recibirán soporte. Estos campos son opcionales."
 }

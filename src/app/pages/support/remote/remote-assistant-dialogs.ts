@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT, REMOTE_DIALOG_CONTEXT } from './remote-context';
 import { Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -160,6 +161,7 @@ export class SupportRemoteProposalDecisionDialogComponent {
 @Component({
   selector: 'mns-support-remote-settings-dialog',
   standalone: true,
+  providers: [REMOTE_DIALOG_CONTEXT, RemoteAssistService],
   imports: [
     FormsModule,
     MatButtonModule,
@@ -176,66 +178,85 @@ export class SupportRemoteProposalDecisionDialogComponent {
       <header class="dialog-header">
         <div>
           <h2>{{ 'support.remote.settings.title' | transloco }}</h2>
-          <p>{{ 'support.remote.settings.description' | transloco }}</p>
+          <p>
+            {{
+              (context.platform
+                ? 'support.remote.platform.settingsDescription'
+                : 'support.remote.settings.description'
+              ) | transloco
+            }}
+          </p>
         </div>
         <mns-report-problem-button />
       </header>
       <div class="dialog-content">
         <div class="dialog-scroll">
           <div class="fields">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'support.remote.settings.prefix' | transloco }}</mat-label>
-              <input
-                matInput
-                name="prefix"
-                maxlength="24"
-                pattern="[A-Za-z0-9 ._-]{0,24}"
+            @if (context.platform) {
+              <p>{{ 'support.remote.settings.platformPrefixHelp' | transloco }}</p>
+            } @else {
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'support.remote.settings.prefix' | transloco }}</mat-label>
+                <input
+                  matInput
+                  name="prefix"
+                  maxlength="24"
+                  pattern="[A-Za-z0-9 ._-]{0,24}"
+                  [disabled]="loading()"
+                  [placeholder]="current()?.effectivePrefix ?? ''"
+                  [ngModel]="prefix()"
+                  (ngModelChange)="prefix.set($event)"
+                />
+                <mat-hint>{{ 'support.remote.settings.prefixHelp' | transloco }}</mat-hint>
+                <mat-error>{{ 'support.remote.settings.prefixInvalid' | transloco }}</mat-error>
+              </mat-form-field>
+              @if (current(); as settings) {
+                <p class="meta">
+                  {{
+                    'support.remote.settings.effective'
+                      | transloco: { prefix: settings.effectivePrefix }
+                  }}
+                  @if (settings.commentPrefix === null) {
+                    · {{ 'support.remote.settings.default' | transloco }}
+                  }
+                </p>
+              }
+              <mat-checkbox
+                name="customerApproval"
                 [disabled]="loading()"
-                [placeholder]="current()?.effectivePrefix ?? ''"
-                [ngModel]="prefix()"
-                (ngModelChange)="prefix.set($event)"
-              />
-              <mat-hint>{{ 'support.remote.settings.prefixHelp' | transloco }}</mat-hint>
-              <mat-error>{{ 'support.remote.settings.prefixInvalid' | transloco }}</mat-error>
-            </mat-form-field>
-            @if (current(); as settings) {
-              <p class="meta">
-                {{
-                  'support.remote.settings.effective'
-                    | transloco: { prefix: settings.effectivePrefix }
-                }}
-                @if (settings.commentPrefix === null) {
-                  · {{ 'support.remote.settings.default' | transloco }}
-                }
-              </p>
+                [ngModel]="customerApproval()"
+                (ngModelChange)="customerApproval.set($event)"
+                >{{ 'support.remote.settings.customerApproval' | transloco }}</mat-checkbox
+              >
+              <p class="meta">{{ 'support.remote.settings.customerApprovalHelp' | transloco }}</p>
             }
-            <mat-checkbox
-              name="customerApproval"
-              [disabled]="loading()"
-              [ngModel]="customerApproval()"
-              (ngModelChange)="customerApproval.set($event)"
-              >{{ 'support.remote.settings.customerApproval' | transloco }}</mat-checkbox
-            >
-            <p class="meta">{{ 'support.remote.settings.customerApprovalHelp' | transloco }}</p>
           </div>
         </div>
       </div>
       <mat-dialog-actions class="form-actions">
         <div class="secondary-actions">
           <button mat-stroked-button type="button" (click)="ref.close()">
-            {{ 'Cancel' | transloco }}
+            {{ (context.platform ? 'Close' : 'Cancel') | transloco }}
           </button>
         </div>
         <div class="primary-actions">
-          <button mat-flat-button type="button" [disabled]="loading() || saving()" (click)="save()">
-            {{ 'Save' | transloco }}
-          </button>
+          @if (!context.platform) {
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="loading() || saving()"
+              (click)="save()"
+            >
+              {{ 'Save' | transloco }}
+            </button>
+          }
         </div>
       </mat-dialog-actions>
     </div>
   `,
 })
 export class SupportRemoteSettingsDialogComponent {
+  readonly context = inject(REMOTE_CONTEXT);
   readonly ref =
     inject<MatDialogRef<SupportRemoteSettingsDialogComponent, SettingsRecord>>(MatDialogRef);
   private readonly service = inject(RemoteAssistService);
@@ -267,7 +288,7 @@ export class SupportRemoteSettingsDialogComponent {
 
   async save() {
     const settings = this.current();
-    if (!settings || this.saving()) return;
+    if (this.context.platform || !settings || this.saving()) return;
     // Required-field feedback: Save stays enabled; an invalid prefix is marked and explained.
     const field = this.prefixField();
     field?.control.markAsTouched();

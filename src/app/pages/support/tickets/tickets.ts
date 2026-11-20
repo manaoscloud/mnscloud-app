@@ -1,6 +1,7 @@
+import { canRemote, remoteLaunchLink } from '../remote/remote-context';
 import { workOrderQuickForm } from '../../workorders/orders';
 import { Component, afterNextRender, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -111,14 +112,16 @@ export function supportTicketsConfig(
   desk: SupportDesk,
   api: () => ApiService,
   dialog: () => MatDialog,
+  canLaunch: () => boolean = () => false,
 ): ConfigurableCrudConfig {
-  return config(desk, api, dialog);
+  return config(desk, api, dialog, canLaunch);
 }
 
 function config(
   desk: SupportDesk,
   api: () => ApiService,
   dialog: () => MatDialog,
+  canLaunch: () => boolean = () => false,
 ): ConfigurableCrudConfig {
   const base = supportBase(desk);
   const platform = desk === 'platform';
@@ -189,6 +192,12 @@ function config(
       },
     ],
     rowActions: [
+      {
+        key: 'remote-session',
+        label: 'support.remote.launch',
+        icon: 'support_agent',
+        visible: canLaunch,
+      },
       {
         key: 'conversation',
         label: 'Conversation',
@@ -494,6 +503,7 @@ function config(
 })
 export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly desk: SupportDesk;
+  private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
   constructor() {
@@ -501,11 +511,18 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
     const desk = supportDesk(route);
     const api = inject(ApiService);
     const dialog = inject(MatDialog);
+    const auth = inject(AuthService);
     super(
       config(
         desk,
         () => api,
         () => dialog,
+        () =>
+          canRemote(
+            desk === 'platform',
+            auth.user()?.permissions ?? [],
+            'tenant.support.remote.sessions.write',
+          ),
       ),
     );
     this.desk = desk;
@@ -526,6 +543,19 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   override async handleRowAction(action: { key: string }, row: ConfigurableCrudRecord) {
+    if (action.key === 'remote-session') {
+      if (
+        !canRemote(
+          this.desk === 'platform',
+          this.auth.user()?.permissions ?? [],
+          'tenant.support.remote.sessions.write',
+        )
+      )
+        return;
+      const link = remoteLaunchLink(this.desk === 'platform', 'ticket', row);
+      await this.router.navigate([link.path], { queryParams: link.query });
+      return;
+    }
     if (action.key === 'ai-analysis') return await this.openTriage(row);
     if (action.key === 'refinement') {
       await this.openRefinement(action as ConfigurableCrudRowAction, row);

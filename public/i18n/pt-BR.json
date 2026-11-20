@@ -15182,5 +15182,12 @@
   "crm.prospect.duplicateReason.email": "Mesmo e-mail",
   "crm.prospect.duplicateReason.phone": "Mesmo telefone",
   "crm.prospect.duplicateReason.document": "Mesmo documento",
-  "crm.prospect.inputTimezoneHelp": "Informe a data e a hora no fuso do seu dispositivo. A lista exibe o horário no fuso configurado."
+  "crm.prospect.inputTimezoneHelp": "Informe a data e a hora no fuso do seu dispositivo. A lista exibe o horário no fuso configurado.",
+  "support.remote.platform.settingsDescription": "Identificação das alterações feitas durante o suporte aos equipamentos da plataforma.",
+  "support.remote.launch": "Abrir sessão de suporte",
+  "support.remote.platform.all": "Todas da plataforma",
+  "support.remote.platform.runbooksDescription": "Procedimentos que o técnico executa em equipamentos da plataforma durante uma sessão de suporte. Revise as propostas antes de aprovar mudanças.",
+  "support.remote.settings.platformPrefixHelp": "As alterações nos equipamentos da plataforma usam o prefixo fixo MNSCloud para identificar o trabalho de suporte.",
+  "support.remote.platform.sessionsDescription": "Sessões de suporte dos equipamentos da plataforma, com situação, nível e técnico. Abra uma sessão para continuar no console.",
+  "support.remote.platform.newDescription": "Vincule um chamado da plataforma e selecione os equipamentos que receberão suporte. Esses campos são opcionais."
 }

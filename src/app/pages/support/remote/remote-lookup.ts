@@ -14,6 +14,7 @@ import {
   MnsSearchSelectFieldComponent,
   MnsSearchSelectFieldOption,
 } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
+import { RemoteContext, remoteContext } from './remote-context';
 import { RemoteRecord, text, unwrap } from './remote-session';
 
 export type RemoteLookupSpec = {
@@ -26,9 +27,18 @@ export type RemoteLookupSpec = {
 export const REMOTE_LOOKUPS = {
   customer: { endpoint: 'registry/customers', uuidField: 'CustomerUUID', labelField: 'Name' },
   ticket: { endpoint: 'support/tickets', uuidField: 'SupportTicketUUID', labelField: 'Subject' },
-  user: { endpoint: 'user/access/members', uuidField: 'UserUUID', labelField: 'Name' },
+  user: { endpoint: 'support/remote/operators', uuidField: 'UserUUID', labelField: 'Name' },
   device: { endpoint: 'network/devices', uuidField: 'NwdUUID', labelField: 'NwdName' },
 } as const satisfies Record<string, RemoteLookupSpec>;
+
+export function remoteLookups(context: RemoteContext = remoteContext(false)) {
+  return {
+    ...REMOTE_LOOKUPS,
+    ticket: { ...REMOTE_LOOKUPS.ticket, endpoint: context.tickets },
+    device: { ...REMOTE_LOOKUPS.device, endpoint: `${context.network}/devices` },
+    user: { ...REMOTE_LOOKUPS.user, endpoint: `${context.base}/operators` },
+  };
+}
 
 const PAGE_SIZE = 50;
 

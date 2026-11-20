@@ -1,3 +1,4 @@
+import { REMOTE_CONTEXT } from './remote-context';
 /**
  * Support remote AI copilot (ST-F): REST contract of the assistant routes of `/support/remote/*`
  * (mnscloud-api), and the pure helpers that turn the session timeline into the chat, the "thinking"
@@ -6,7 +7,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from '../../../services/api.service';
-import { REMOTE_BASE, RemoteEvent, RemoteRecord, eventData, text, unwrap } from './remote-session';
+import { RemoteEvent, RemoteRecord, eventData, text, unwrap } from './remote-session';
 
 export type AssistMode = 'manual' | 'copilot';
 
@@ -410,13 +411,14 @@ export function sessionMode(session: RemoteRecord | null | undefined): AssistMod
 }
 
 /** Calls of the assistant routes. Kept in one place so a route change is a one-line edit. */
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class RemoteAssistService {
   private readonly api = inject(ApiService);
+  private readonly context = inject(REMOTE_CONTEXT);
 
   async send(sessionUUID: string, message: string): Promise<void> {
     await this.api.post(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/assist`,
+      `${this.context.base}/sessions/${sessionUUID}/assist`,
       { message },
       { silent: true },
     );
@@ -424,7 +426,7 @@ export class RemoteAssistService {
 
   async summary(sessionUUID: string): Promise<string> {
     const response = await this.api.post<unknown>(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/assist/summary`,
+      `${this.context.base}/sessions/${sessionUUID}/assist/summary`,
       {},
       { silent: true },
     );
@@ -433,7 +435,7 @@ export class RemoteAssistService {
 
   async proposals(sessionUUID: string): Promise<RemoteProposal[]> {
     const response = await this.api.get<unknown>(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/proposals`,
+      `${this.context.base}/sessions/${sessionUUID}/proposals`,
       { silent: true },
     );
     return unwrap<{ items?: RemoteProposal[] }>(response)?.items ?? [];
@@ -442,7 +444,7 @@ export class RemoteAssistService {
   /** Returns the state of the apply; `awaiting` when the change waits for the customer approval. */
   async approve(sessionUUID: string, proposal: RemoteProposal, note: string): Promise<string> {
     const response = await this.api.post<unknown>(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/proposals/${proposal.SrpUUID}/approve`,
+      `${this.context.base}/sessions/${sessionUUID}/proposals/${proposal.SrpUUID}/approve`,
       { revision: Number(proposal.SrpRevision), ...(note ? { note } : {}) },
       { silent: true },
     );
@@ -451,7 +453,7 @@ export class RemoteAssistService {
 
   async reject(sessionUUID: string, proposal: RemoteProposal, note: string): Promise<void> {
     await this.api.post(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/proposals/${proposal.SrpUUID}/reject`,
+      `${this.context.base}/sessions/${sessionUUID}/proposals/${proposal.SrpUUID}/reject`,
       { revision: Number(proposal.SrpRevision), ...(note ? { note } : {}) },
       { silent: true },
     );
@@ -460,20 +462,20 @@ export class RemoteAssistService {
   /** Session mode. If the API moves it to a dedicated route, only this call changes. */
   async setMode(sessionUUID: string, revision: number, mode: AssistMode): Promise<void> {
     await this.api.put(
-      `${REMOTE_BASE}/sessions/${sessionUUID}/mode`,
+      `${this.context.base}/sessions/${sessionUUID}/mode`,
       { mode, revision },
       { silent: true },
     );
   }
 
   async settings(): Promise<SettingsRecord> {
-    const response = await this.api.get<unknown>(`${REMOTE_BASE}/settings`, { silent: true });
+    const response = await this.api.get<unknown>(`${this.context.base}/settings`, { silent: true });
     return settingsOf(unwrap<Partial<SettingsRecord>>(response) ?? {});
   }
 
   async saveCustomerApproval(required: boolean, revision: number): Promise<SettingsRecord> {
     const response = await this.api.put<unknown>(
-      `${REMOTE_BASE}/settings/customer-approval`,
+      `${this.context.base}/settings/customer-approval`,
       { required, revision },
       { silent: true },
     );
@@ -482,7 +484,7 @@ export class RemoteAssistService {
 
   async saveSettings(commentPrefix: string | null, revision: number): Promise<SettingsRecord> {
     const response = await this.api.put<unknown>(
-      `${REMOTE_BASE}/settings`,
+      `${this.context.base}/settings`,
       { commentPrefix, revision },
       { silent: true },
     );

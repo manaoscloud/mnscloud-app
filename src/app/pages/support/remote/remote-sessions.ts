@@ -1,9 +1,10 @@
+import { REMOTE_CONTEXT, REMOTE_PAGE_CONTEXT, remoteContext, canRemote } from './remote-context';
+import { injectPlatformScope } from '../../../core/scope/route-scope';
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { AuthService } from '../../../services/auth.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
@@ -15,7 +16,7 @@ import {
 import { openCrudComponentDialog } from '../../../shared/dialog/crud-dialog.util';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { SupportRemoteSettingsDialogComponent } from './remote-assistant-dialogs';
-import { REMOTE_BASE, REMOTE_LEVELS, REMOTE_STATES, stateChipClass, text } from './remote-session';
+import { REMOTE_LEVELS, REMOTE_STATES, stateChipClass, text } from './remote-session';
 
 export const REMOTE_STATE_OPTIONS: readonly ConfigurableCrudOption[] = REMOTE_STATES.map(
   (value) => ({ value, label: `support.remote.state.${value}` }),
@@ -31,19 +32,25 @@ const STATE_FILTER_OPTIONS: readonly ConfigurableCrudOption[] = [
   ...REMOTE_STATE_OPTIONS.filter((option) => option.value !== 'closed'),
 ];
 
-export function remoteConsoleLink(uuid: unknown): { path: string; query: { session: string } } {
-  return { path: '/support/remote/console', query: { session: text(uuid) } };
+export function remoteConsoleLink(
+  uuid: unknown,
+  platform = false,
+): { path: string; query: { session: string } } {
+  return { path: remoteContext(platform).console, query: { session: text(uuid) } };
 }
 
 export function remoteSessionsConfig(
   open: (row: ConfigurableCrudRecord) => void,
   canSupervise: () => boolean,
+  platform = false,
 ): ConfigurableCrudConfig {
   return defineCrud({
-    endpoint: `${REMOTE_BASE}/sessions`,
+    endpoint: `${remoteContext(platform).base}/sessions`,
     uuidField: 'SrsUUID',
     pageTitle: 'support.remote.sessions.title',
-    pageDescription: 'support.remote.sessions.description',
+    pageDescription: platform
+      ? 'support.remote.platform.sessionsDescription'
+      : 'support.remote.sessions.description',
     emptyLabel: 'support.remote.sessions.empty',
     searchPlaceholder: 'support.remote.sessions.search',
     serverSidePagination: true,
@@ -75,7 +82,12 @@ export function remoteSessionsConfig(
         paramKey: 'scope',
         type: 'select',
         span: 1,
-        options: [{ value: 'all', label: 'support.remote.scope.all' }],
+        options: [
+          {
+            value: 'all',
+            label: platform ? 'support.remote.platform.all' : 'support.remote.scope.all',
+          },
+        ],
         translateOptions: true,
         emptyLabel: 'support.remote.scope.mine',
         hiddenWhen: () => !canSupervise(),
@@ -86,7 +98,11 @@ export function remoteSessionsConfig(
         paramKey: 'deviceUUID',
         type: 'search-select',
         span: 1,
-        remoteLookup: { endpoint: 'network/devices', uuidField: 'NwdUUID', labelField: 'NwdName' },
+        remoteLookup: {
+          endpoint: `${remoteContext(platform).network}/devices`,
+          uuidField: 'NwdUUID',
+          labelField: 'NwdName',
+        },
         emptyLabel: 'All',
       },
     ],
@@ -113,12 +129,16 @@ export function remoteSessionsConfig(
         options: REMOTE_LEVEL_OPTIONS,
       },
       { id: 'technician', label: 'support.remote.field.technician', field: 'TechnicianName' },
-      {
-        id: 'customer',
-        label: 'support.remote.field.customer',
-        field: 'CustomerName',
-        optional: true,
-      },
+      ...(!platform
+        ? [
+            {
+              id: 'customer',
+              label: 'support.remote.field.customer',
+              field: 'CustomerName',
+              optional: true,
+            },
+          ]
+        : []),
       {
         id: 'ticket',
         label: 'support.remote.field.ticket',
@@ -153,9 +173,13 @@ export function remoteSessionsConfig(
 }
 
 /** Support sessions that used a Network device (Rede › Equipamentos › Sessões de suporte). */
-export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCrudConfig {
+export function deviceSupportSessionsConfig(
+  deviceUUID: string,
+  platform = false,
+  open?: (row: ConfigurableCrudRecord) => void,
+): ConfigurableCrudConfig {
   return defineCrud({
-    endpoint: `network/devices/${deviceUUID}/support-sessions`,
+    endpoint: `${remoteContext(platform).network}/devices/${deviceUUID}/support-sessions`,
     uuidField: 'SrsUUID',
     pageTitle: 'support.remote.deviceSessions.title',
     pageDescription: 'support.remote.deviceSessions.description',
@@ -165,6 +189,9 @@ export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCru
     readOnly: true,
     statusFilter: false,
     fields: [],
+    rowActions: open
+      ? [{ key: 'open', label: 'support.remote.sessions.open', icon: 'terminal', run: open }]
+      : [],
     columns: [
       { id: 'title', label: 'support.remote.field.title', field: 'SrsTitle' },
       {
@@ -176,12 +203,16 @@ export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCru
         chipClass: (value) => stateChipClass(value),
       },
       { id: 'technician', label: 'support.remote.field.technician', field: 'TechnicianName' },
-      {
-        id: 'customer',
-        label: 'support.remote.field.customer',
-        field: 'CustomerName',
-        optional: true,
-      },
+      ...(!platform
+        ? [
+            {
+              id: 'customer',
+              label: 'support.remote.field.customer',
+              field: 'CustomerName',
+              optional: true,
+            },
+          ]
+        : []),
       { id: 'created', label: 'Date', field: 'SrsDateCreated', kind: 'datetime' },
     ],
   });
@@ -190,6 +221,7 @@ export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCru
 /** Suporte › Remoto › Sessões: every session I can see; a row opens the console on that session. */
 @Component({
   selector: 'app-support-remote-sessions',
+  providers: [REMOTE_PAGE_CONTEXT],
   standalone: true,
   imports: CONFIGURABLE_CRUD_IMPORTS,
   templateUrl: '../../../shared/crud/configurable-crud/configurable-crud-page.html',
@@ -197,6 +229,7 @@ export function deviceSupportSessionsConfig(deviceUUID: string): ConfigurableCru
 })
 export class SupportRemoteSessionsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly matDialog = inject(MatDialog);
+  readonly context = inject(REMOTE_CONTEXT);
 
   override async handleFilterAction(action: { key: string }) {
     if (action.key !== 'settings') return;
@@ -204,6 +237,7 @@ export class SupportRemoteSessionsPage extends ConfigurableCrudPageBase<Configur
       this.matDialog,
       SupportRemoteSettingsDialogComponent,
       'crud-form-dialog',
+      { data: { context: this.context } },
     );
     try {
       await firstValueFrom(binding.ref.afterClosed());
@@ -213,19 +247,22 @@ export class SupportRemoteSessionsPage extends ConfigurableCrudPageBase<Configur
   }
 
   constructor() {
+    const platform = injectPlatformScope();
     const router = inject(Router);
     const auth = inject(AuthService);
     super(
       remoteSessionsConfig(
         (row) => {
-          const link = remoteConsoleLink(row['SrsUUID']);
+          const link = remoteConsoleLink(row['SrsUUID'], platform);
           void router.navigate([link.path], { queryParams: link.query });
         },
         () =>
-          hasEffectivePermission(
+          canRemote(
+            platform,
             auth.user()?.permissions ?? [],
             'tenant.support.remote.sessions.supervise',
           ),
+        platform,
       ),
     );
   }
