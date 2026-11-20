@@ -13,10 +13,13 @@ describe('Background activity panel', () => {
           langs: {
             en: {
               'operations.kind.vps': 'VPS',
+              'operations.kind.vpsImage': 'VPS image',
               'operations.kind.unknown': 'Operation',
               'operations.action.changePlan': 'Change plan',
+              'operations.action.accessReconcile': 'Apply image access',
               'operations.state.running': 'Running',
               'operations.state.queued': 'Queued',
+              'operations.state.superseded': 'Superseded',
             },
           },
           translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
@@ -66,5 +69,28 @@ describe('Background activity panel', () => {
     ]);
     expect(title(element)).toBe('Operation · Firmware upgrade');
     expect(element.querySelector('.activity-resource')).toBeNull();
+  });
+
+  it('names VPS image access reconciliation operations', async () => {
+    const element = await render([
+      {
+        operationUUID: '22222222-3333-4444-8555-666666666666',
+        state: 'queued',
+        scope: 'platform',
+        kind: 'vpsImage',
+        action: 'access.reconcile',
+        resourceLabel: 'Ubuntu 24.04 LTS',
+      },
+    ]);
+    expect(title(element)).toBe('VPS image · Apply image access');
+    expect(element.querySelector('.activity-resource')?.textContent).toContain('Ubuntu 24.04 LTS');
+  });
+  it('labels superseded work and offers dismissal without a retry', async () => {
+    const element = await render([
+      { operationUUID: '22222222333344448555666666666666', state: 'superseded', canRecheck: true },
+    ]);
+    expect(element.querySelector('.activity-state')?.textContent?.trim()).toBe('Superseded');
+    expect(element.querySelector('.activity-dismiss')).not.toBeNull();
+    expect(element.querySelector('.activity-recheck')).toBeNull();
   });
 });

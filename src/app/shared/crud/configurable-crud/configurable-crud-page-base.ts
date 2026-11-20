@@ -1,3 +1,4 @@
+import { crudUpdateUrl } from './crud-update-url';
 import { buildCsv, csvFilename, downloadCsv } from '../../export/csv';
 import { printHtml, printListHtml } from '../../print/print-html';
 import { LIST_EXPORT_CAP, fetchAllListPages } from './crud-list-export';
@@ -680,8 +681,8 @@ export type ConfigurableCrudConfig = {
   endpoint: string;
   /** Optional lifecycle endpoint when a resource reads from a projection but creates elsewhere. */
   createEndpoint?: string;
-  /** Optional lifecycle endpoint when updates are handled by a dedicated resource route. */
-  updateEndpoint?: string;
+  /** String: base URL with UUID appended. Callback: complete URL, without automatic UUID suffix. */
+  updateEndpoint?: string | ((row: ConfigurableCrudRecord) => string);
   /** Optional lifecycle endpoint for delete. The resolver supports mixed lifecycle rows. */
   deleteEndpoint?: string | ((row: ConfigurableCrudRecord) => string);
   /** Resource-specific concurrency precondition, e.g. the revision confirmed by the user. */
@@ -1612,9 +1613,10 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     this.copyEnabledAddressValues();
     // Validate the flat form payload before augmentPayload reshapes nested
     // config/credentials objects; otherwise required fields look missing.
+    const saveContextIsCurrent = this.captureSaveContext();
     const formPayload = this.buildPayload();
     if (!this.validatePayload(formPayload)) return;
-    if (!(await this.confirmBeforeSave(formPayload))) return;
+    if (!(await this.confirmBeforeSave(formPayload)) || !saveContextIsCurrent()) return;
 
     this.saving.set(true);
     this.quickCreateSaving = this.quickCreateMode;
@@ -1624,7 +1626,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       let response: unknown;
       if (current) {
         response = await this.api.put(
-          `${this.updateEndpoint()}/${this.recordUUID(current)}`,
+          this.updateUrlFor(current),
           payload,
           this.saveRequestOptions(),
         );
@@ -1633,6 +1635,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       } else {
         response = await this.api.post(this.createEndpoint(), payload, this.saveRequestOptions());
       }
+      if (!saveContextIsCurrent()) return;
       const asynchronous = this.trackOperation(response);
       if (!asynchronous) this.snack.success(this.t(this.config.savedMessage));
       if (current && !asynchronous) this.reflectSavedRecord(current, payload);
@@ -1689,6 +1692,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
           this.quickCreateSession?.complete(this.quickCreateResult);
       }
     } catch (error) {
+      if (!saveContextIsCurrent()) return;
       this.snack.error(this.t(this.errorMessage(error)));
       this.markServerRejectedFields(error);
     } finally {
@@ -2103,8 +2107,9 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       await this.handleRowAction(action, row);
       return;
     }
-    const { ConfigurableCrudCollectionDialog } =
-      await import('./configurable-crud-collection-dialog');
+    const { ConfigurableCrudCollectionDialog } = await import(
+      './configurable-crud-collection-dialog'
+    );
     const formOnly = Boolean(action.form);
     if (!formOnly) {
       const binding = openCrudTemplateDialog(
@@ -3724,6 +3729,11 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    * Last chance to show an impact preview/confirmation for the validated flat form payload;
    * returning false keeps the dialog open without saving.
    */
+  /** Pages with context-sensitive writes can fence preview and response handling. */
+  protected captureSaveContext(): () => boolean {
+    return () => !this.destroyRef.destroyed;
+  }
+
   protected confirmBeforeSave(_payload: ConfigurableCrudRecord): Promise<boolean> {
     return Promise.resolve(true);
   }
@@ -3753,7 +3763,24 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   }
 
   protected updateEndpoint(): string {
-    return this.config.updateEndpoint ?? this.config.endpoint;
+    return typeof this.config.updateEndpoint === 'string'
+      ? this.config.updateEndpoint
+      : this.config.endpoint;
+  }
+
+  protected updateEndpointFor(row: T): string {
+    const endpoint = this.config.updateEndpoint;
+    return typeof endpoint === 'function' ? endpoint(row) : this.updateEndpoint();
+  }
+
+  /** Full URL of the update request of one row. */
+  protected updateUrlFor(row: T): string {
+    return crudUpdateUrl(
+      this.config.updateEndpoint,
+      row,
+      () => this.updateEndpointFor(row),
+      () => this.recordUUID(row),
+    );
   }
 
   protected bulkDeleteEndpoint(): string {
@@ -4448,7 +4475,8 @@ function optionText(value: unknown): string | null {
 function quickCreateResponseRecord(response: unknown): ConfigurableCrudRecord | null {
   const value = response as { data?: unknown; item?: unknown; record?: unknown } | null | undefined;
   const data = value?.data as
-    { item?: unknown; record?: unknown; data?: unknown; items?: unknown } | undefined;
+    | { item?: unknown; record?: unknown; data?: unknown; items?: unknown }
+    | undefined;
   const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
   const candidates = [data?.item, data?.record, data?.data, items[0], value?.data, value?.item];
   for (const candidate of candidates) {

@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -406,6 +406,13 @@ const PROVIDER_IMAGES_ACTION = providerCollectionAction(
   'layers',
   providerImages,
 );
+const PROVIDER_IMAGE_CATALOG_ACTION: ConfigurableCrudRowAction = {
+  key: 'imageAccess',
+  label: 'VPS images',
+  icon: 'album',
+  tooltip: 'Manage logical images, audience authorization and availability for this provider.',
+  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+};
 const PROVIDER_GATEWAYS_ACTION = providerCollectionAction(
   'gateways',
   'Customer gateways',
@@ -1154,6 +1161,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 })
 export class HostingVpsProviderPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
@@ -1168,7 +1176,13 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       canEdit: masterScope,
       canDelete: masterScope,
       rowActions: masterScope
-        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION, PROVIDER_GATEWAYS_ACTION, ADOPT_VMS_ACTION]
+        ? [
+            TEST_PROVIDER_ACTION,
+            PROVIDER_IMAGE_CATALOG_ACTION,
+            PROVIDER_IMAGES_ACTION,
+            PROVIDER_GATEWAYS_ACTION,
+            ADOPT_VMS_ACTION,
+          ]
         : [TEST_PROVIDER_ACTION],
     });
   }
@@ -1460,6 +1474,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     const uuid = String(row['HvrUUID'] ?? '');
+    if (action.key === 'imageAccess') {
+      if (uuid) {
+        await this.router.navigate(['/system/vps/images'], {
+          queryParams: { providerUUID: uuid },
+        });
+      }
+      return;
+    }
     if (action.key === 'adopt') {
       if (uuid) await this.openAdoptVms(uuid);
       return;
