@@ -1376,7 +1376,11 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
   }
 
   /** Preview which servers a campaign reaches, ask the user, then open the campaign settings. */
-  async beginCampaign(target: CampaignTarget, platform: boolean): Promise<void> {
+  async beginCampaign(picked: CampaignTarget, platform: boolean): Promise<void> {
+    const account = this.listFilterValues()['cyberAccountUUID'];
+    const target: CampaignTarget = account
+      ? { ...picked, cyberAccountUUID: String(account) }
+      : picked;
     let summary: { eligible: number; message: string };
     try {
       const response = await this.api.post<{ data?: ConfigurableCrudRecord }>(

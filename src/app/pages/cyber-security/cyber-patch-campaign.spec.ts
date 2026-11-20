@@ -90,6 +90,16 @@ describe('Cyber Security patch campaigns', () => {
     expect('confirm' in window).toBe(false);
   });
 
+  it('carries the selected account in the preview and create bodies', () => {
+    const target = { scope: 'all' as const, cyberAccountUUID: 'acc-1' };
+    expect(campaignPreviewBody(target)['cyberAccountUUID']).toBe('acc-1');
+    expect(campaignPayload(target, { mode: 'window', reason: 'xxxxx' })['cyberAccountUUID']).toBe(
+      'acc-1',
+    );
+    expect('cyberAccountUUID' in campaignPreviewBody({ scope: 'all' })).toBe(false);
+    expect('cyberAccountUUID' in campaignPayload({ scope: 'all' }, { mode: 'window' })).toBe(false);
+  });
+
   it('posts the form to the campaigns and hides platform-only choices', () => {
     const form = campaignForm({ scope: 'cves', cves: ['CVE-1'] });
     expect(form.endpoint).toBe('cyber-security/patch/campaigns');
