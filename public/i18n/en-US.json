@@ -15353,5 +15353,18 @@
   "commercial.module.ged": "Document management",
   "commercial.module.logs": "Logs",
   "commercial.module.network": "Network",
-  "commercial.module.website": "Website"
+  "commercial.module.website": "Website",
+  "Security updates applied": "Security updates applied",
+  "Security updates partially applied": "Security updates partially applied",
+  "Security updates deferred to the daily run": "Security updates deferred to the daily run",
+  "Security updates disabled for this image": "Security updates disabled for this image",
+  "Security updates not supported by this system": "Security updates not supported by this system",
+  "Security updates failed": "Security updates failed",
+  "Reboot pending to load the new kernel": "Reboot pending to load the new kernel",
+  "Pending security updates": "Pending security updates",
+  "Automatic security updates on": "Automatic security updates on",
+  "Automatic security updates off": "Automatic security updates off",
+  "Start the VPS to read its security updates": "Start the VPS to read its security updates",
+  "The VPS guest agent did not answer": "The VPS guest agent did not answer",
+  "Not reported by this VPS": "Not reported by this VPS"
 }
