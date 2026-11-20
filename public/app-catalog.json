@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2174d98cdbce",
+  "version": "17492b01cc57",
   "language": "pt-BR",
   "entries": [
     {
@@ -1830,12 +1830,12 @@
           "help": ""
         },
         {
-          "label": "Nome",
-          "help": ""
-        },
-        {
           "label": "Cliente",
           "help": "Cliente do tenant a quem este workspace é revendido. O vínculo é imutável após a criação."
+        },
+        {
+          "label": "Nome",
+          "help": ""
         },
         {
           "label": "Anotações",
