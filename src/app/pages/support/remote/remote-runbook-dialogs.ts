@@ -8,8 +8,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
+import {
+  MnsSearchSelectFieldComponent,
+  MnsSearchSelectFieldOption,
+} from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { FieldHelpComponent } from '../../../shared/forms/field-help';
 import { FieldInvalidDirective } from '../../../shared/forms/field-invalid.directive';
@@ -26,7 +30,6 @@ import {
   RemoteRunbookService,
   RunMode,
   RunbookDefinition,
-  RunbookDialect,
   RunbookParamType,
   RunbookStatus,
   RunbookStepKind,
@@ -38,6 +41,9 @@ import {
   paramFormErrors,
   passwordCredentials,
   rollbackAllowed,
+  runbookChangeAllowed,
+  runbookDialectKnown,
+  runbookDialectLabel,
   runParamValues,
   runbookParams,
   runbookRequestErrorKey,
@@ -122,6 +128,7 @@ export type RunbookEditorData = { record: RemoteRecord | null };
   providers: [REMOTE_DIALOG_CONTEXT, RemoteRunbookService],
   imports: [
     FieldHelpComponent,
+    MnsSearchSelectFieldComponent,
     FieldInvalidDirective,
     FormsModule,
     MatButtonModule,
@@ -167,16 +174,15 @@ export type RunbookEditorData = { record: RemoteRecord | null };
               <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
             </mat-form-field>
             <div class="two">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'support.remote.runbooks.field.dialect' | transloco }}</mat-label>
-                <mat-select [value]="dialect()" (valueChange)="dialect.set($event)">
-                  @for (item of dialects; track item) {
-                    <mat-option [value]="item">{{
-                      'support.remote.runbooks.dialect.' + item | transloco
-                    }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <mns-search-select-field
+                class="span-1"
+                [label]="'support.remote.runbooks.field.dialect' | transloco"
+                [value]="dialect()"
+                [options]="dialectOptions()"
+                [invalid]="rules.invalid('definition') && !dialectKnown(dialect())"
+                [errorMessage]="'support.remote.runbooks.problem.dialect' | transloco"
+                (valueChange)="setDialect($event)"
+              />
               <mat-form-field appearance="outline">
                 <mat-label>{{ 'support.remote.runbooks.field.status' | transloco }}</mat-label>
                 <mat-select [value]="status()" (valueChange)="status.set($event)">
@@ -372,19 +378,13 @@ export type RunbookEditorData = { record: RemoteRecord | null };
                     />
                     <mat-error>{{ 'support.remote.field.required' | transloco }}</mat-error>
                   </mat-form-field>
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'support.remote.runbooks.step.kind' | transloco }}</mat-label>
-                    <mat-select
-                      [value]="step.kind"
-                      (valueChange)="patchStep($index, { kind: $event })"
-                    >
-                      @for (item of stepKinds; track item) {
-                        <mat-option [value]="item">{{
-                          'support.remote.runbooks.stepKind.' + item | transloco
-                        }}</mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
+                  <mns-search-select-field
+                    class="span-1"
+                    [label]="'support.remote.runbooks.step.kind' | transloco"
+                    [value]="step.kind"
+                    [options]="stepKindOptions()"
+                    (valueChange)="setStepKind($index, $event)"
+                  />
                 </div>
                 <mat-form-field appearance="outline">
                   <mat-label>{{ 'support.remote.runbooks.step.commands' | transloco }}</mat-label>
@@ -492,14 +492,16 @@ export class SupportRemoteRunbookDialogComponent {
   readonly limits = RUNBOOK_LIMITS;
   /** Literal braces cannot be written in a translation (interpolation): passed as a parameter. */
   readonly placeholderExample = '{{' + 'name' + '}}';
-  readonly dialects = RUNBOOK_DIALECTS;
+  private readonly translate = inject(TranslocoService);
+  readonly changeAllowed = runbookChangeAllowed;
+  readonly dialectKnown = runbookDialectKnown;
   readonly statuses = RUNBOOK_STATUSES;
   readonly paramTypes = RUNBOOK_PARAM_TYPES;
   readonly stepKinds = RUNBOOK_STEP_KINDS;
 
   readonly name = signal('');
   readonly description = signal('');
-  readonly dialect = signal<RunbookDialect>('routeros');
+  readonly dialect = signal<string>('routeros');
   readonly status = signal<RunbookStatus>('draft');
   readonly params = signal<RunbookDefinition['params']>([]);
   readonly preconditions = signal<RunbookDefinition['preconditions']>([]);
@@ -515,6 +517,33 @@ export class SupportRemoteRunbookDialogComponent {
     definition: () => this.problems().length === 0,
   });
   private readonly revealInvalid = injectRevealInvalidFields();
+
+  dialectOptions(): MnsSearchSelectFieldOption[] {
+    const current = this.dialect();
+    const values: readonly string[] = runbookDialectKnown(current)
+      ? RUNBOOK_DIALECTS
+      : [...RUNBOOK_DIALECTS, current];
+    return values.map((value) => ({
+      value,
+      label: runbookDialectLabel(value, (key) => this.translate.translate(key)),
+      disabled: !runbookDialectKnown(value),
+    }));
+  }
+  stepKindOptions(): MnsSearchSelectFieldOption[] {
+    return RUNBOOK_STEP_KINDS.map((value) => ({
+      value,
+      label: this.translate.translate(`support.remote.runbooks.stepKind.${value}`),
+      disabled: value === 'change' && !runbookChangeAllowed(this.dialect()),
+    }));
+  }
+  setDialect(value: unknown) {
+    if (typeof value === 'string' && runbookDialectKnown(value)) this.dialect.set(value);
+  }
+  setStepKind(index: number, value: unknown) {
+    if (value === 'read' || (value === 'change' && runbookChangeAllowed(this.dialect()))) {
+      this.patchStep(index, { kind: value });
+    }
+  }
 
   constructor() {
     // The list row carries no steps and may be stale: edit only the full record read now.
@@ -700,7 +729,7 @@ export type RunRunbookData = {
                 @for (item of runbooks(); track item['SrbUUID']) {
                   <mat-option [value]="item['SrbUUID']">
                     {{ item['SrbName'] }} ·
-                    {{ 'support.remote.runbooks.dialect.' + item['SrbDialect'] | transloco }}
+                    {{ dialectLabel(item['SrbDialect']) }}
                   </mat-option>
                 }
               </mat-select>
@@ -771,6 +800,10 @@ export type RunRunbookData = {
   `,
 })
 export class SupportRemoteRunDialogComponent {
+  private readonly translate = inject(TranslocoService);
+  dialectLabel(value: unknown): string {
+    return runbookDialectLabel(text(value), (key) => this.translate.translate(key));
+  }
   readonly context = inject(REMOTE_CONTEXT);
   readonly data = inject<RunRunbookData>(MAT_DIALOG_DATA);
   readonly ref = inject<MatDialogRef<SupportRemoteRunDialogComponent, boolean>>(MatDialogRef);

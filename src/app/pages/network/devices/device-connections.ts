@@ -43,6 +43,7 @@ export const CONNECTION_PURPOSE_OPTIONS = enumOptions('network.connection.purpos
 export const CONNECTION_METHOD_OPTIONS = enumOptions('network.connection.method', [
   'ssh',
   'routeros_api',
+  'winrm',
 ]);
 const HOST_KEY_RESULT_OPTIONS = enumOptions('network.connection.hostKeyResult', [
   'matched',

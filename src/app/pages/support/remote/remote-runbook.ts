@@ -13,7 +13,19 @@ import { assistRequestErrorKey, errorCode, errorStatus } from './remote-assistan
 import { REMOTE_BASE, RemoteEvent, RemoteRecord, eventData, text, unwrap } from './remote-session';
 
 export const RUNBOOK_BASE = `${REMOTE_BASE}/runbooks`;
-export const RUNBOOK_DIALECTS = ['routeros', 'vrp', 'linux', 'proxmox'] as const;
+export const RUNBOOK_DIALECTS = [
+  'routeros',
+  'vrp',
+  'linux',
+  'proxmox',
+  'ios',
+  'junos',
+  'fortios',
+  'bsd',
+  'windows',
+  'vsol',
+  'dmos',
+] as const;
 export const RUNBOOK_STATUSES = ['draft', 'active', 'disabled'] as const;
 export const RUNBOOK_PARAM_TYPES = ['word', 'int', 'ipv4', 'cidr'] as const;
 export const RUNBOOK_STEP_KINDS = ['read', 'change'] as const;
@@ -53,7 +65,7 @@ export type RunbookStep = {
 export type RunbookDefinition = {
   name: string;
   description: string | null;
-  dialect: RunbookDialect;
+  dialect: string;
   status: RunbookStatus;
   params: RunbookParam[];
   preconditions: RunbookPrecondition[];
@@ -162,6 +174,25 @@ export function emptyStep(): RunbookStep {
   return { title: '', kind: 'read', commands: [], verify: [], rollback: [] };
 }
 
+/** UX only: API and gateway still validate the actual device and rollback mechanism. */
+export function runbookChangeAllowed(dialect: string): boolean {
+  return ['routeros', 'vrp', 'linux', 'proxmox', 'ios', 'junos'].includes(dialect);
+}
+
+export function runbookDialectKnown(dialect: string): boolean {
+  return (RUNBOOK_DIALECTS as readonly string[]).includes(dialect);
+}
+
+/** Known labels use Transloco; future server values remain identifiable as inert text. */
+export function runbookDialectKey(dialect: string): string | null {
+  return runbookDialectKnown(dialect) ? `support.remote.runbooks.dialect.${dialect}` : null;
+}
+
+export function runbookDialectLabel(dialect: string, translate: (key: string) => string): string {
+  const key = runbookDialectKey(dialect);
+  return key ? translate(key) : dialect;
+}
+
 /** Rollback commands exist only for linux/proxmox change steps (the API keeps the same rule). */
 export function rollbackAllowed(dialect: string, kind: string): boolean {
   return kind === 'change' && (dialect === 'linux' || dialect === 'proxmox');
@@ -173,6 +204,7 @@ export function definitionProblems(def: RunbookDefinition): string[] {
   const add = (key: string) => {
     if (!problems.includes(key)) problems.push(key);
   };
+  if (!runbookDialectKnown(def.dialect)) add('support.remote.runbooks.problem.dialect');
   if (!def.name.trim()) add('support.remote.runbooks.problem.name');
   if (!def.steps.length) add('support.remote.runbooks.problem.steps');
   const names = new Set<string>();
@@ -188,6 +220,8 @@ export function definitionProblems(def: RunbookDefinition): string[] {
     }
   }
   for (const step of def.steps) {
+    if (step.kind === 'change' && !runbookChangeAllowed(def.dialect))
+      add('support.remote.runbooks.problem.changeUnsupported');
     if (!step.title.trim() || !step.commands.length) add('support.remote.runbooks.problem.step');
     if (step.kind === 'change' && !step.verify.length)
       add('support.remote.runbooks.problem.verify');
@@ -238,7 +272,8 @@ export function definitionBody(def: RunbookDefinition): Record<string, unknown> 
       kind: s.kind,
       commands: s.commands,
       verify: s.kind === 'change' ? s.verify : [],
-      rollback: rollbackAllowed(def.dialect, s.kind) ? s.rollback : [],
+      rollback:
+        !runbookDialectKnown(def.dialect) || rollbackAllowed(def.dialect, s.kind) ? s.rollback : [],
     })),
   };
 }
@@ -277,9 +312,8 @@ export function definitionOf(record: RemoteRecord | null): RunbookDefinition {
   return {
     name: text(record['SrbName']),
     description: text(record['SrbDescription']) || null,
-    dialect: (RUNBOOK_DIALECTS as readonly string[]).includes(dialect)
-      ? (dialect as RunbookDialect)
-      : 'routeros',
+    // Preserve an unrecognized server dialect; validation blocks saving instead of converting it.
+    dialect,
     status: (RUNBOOK_STATUSES as readonly string[]).includes(status)
       ? (status as RunbookStatus)
       : 'draft',
