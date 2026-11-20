@@ -34,12 +34,14 @@ export const CRM_WORKSPACES_CONFIG = defineCrud({
       required: true,
       type: 'status',
     },
+    // wide-field: Customer span-2 on the Registro tab, user decision 2026-11-20
     {
       key: 'RegCustomerRcuUUID',
       source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
       span: 2,
+      wideField: true,
       help: 'crm.workspaceCustomerHelp',
       disabledWhen: ({ editing }) => editing,
       remoteLookup: {
