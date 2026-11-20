@@ -57,6 +57,30 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
         },
       },
     })),
+    ...(['SAME_TERM', 'MONTHLY'] as const).map((policy): ConfigurableCrudRowAction => ({
+      key: policy === 'SAME_TERM' ? 'termRenewSame' : 'termRenewMonthly',
+      label: policy === 'SAME_TERM' ? 'Renew for the same term' : 'Continue monthly after the term',
+      icon: policy === 'SAME_TERM' ? 'event_repeat' : 'calendar_view_month',
+      visible: (row) =>
+        Boolean(row['BsuTermStartAt']) &&
+        ['ACTIVE', 'SUSPENDED', 'PENDING_CANCEL'].includes(String(row['BsuStatus'])) &&
+        String(row['BsuTermRenewalPolicy'] ?? 'SAME_TERM') !== policy,
+      request: {
+        method: 'post',
+        endpoint: (row) => `billing/subscriptions/${row['BsuUUID']}/term-renewal`,
+        body: () => ({ policy }),
+        successMessage: 'Renewal preference updated.',
+        confirm: {
+          title:
+            policy === 'SAME_TERM' ? 'Renew for the same term' : 'Continue monthly after the term',
+          message:
+            policy === 'SAME_TERM'
+              ? 'At the end of the term, prepay the same term again at its discount, charged from the prepaid wallet.'
+              : 'At the end of the term, continue monthly at the full monthly price, charged from the prepaid wallet.',
+          confirmLabel: 'Confirm',
+        },
+      },
+    })),
     {
       key: 'cycles',
       label: 'Paid cycles',
@@ -94,6 +118,16 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
     },
     { id: 'product', label: 'Offer', kind: 'identity', field: 'OfferName', uuidField: 'BsuUUID' },
     { id: 'plan', label: 'Plan', field: 'BpcName' },
+    {
+      id: 'term',
+      label: 'Prepaid term',
+      value: (row, t) => {
+        const months = Number(row['BsuTermMonths'] ?? 1);
+        if (!row['BsuTermStartAt'] || months <= 1) return t('Monthly');
+        const discount = Number(row['BsuTermDiscountPercentSnapshot'] ?? 0);
+        return `${months} ${t('months')}${discount > 0 ? ` (-${discount}%)` : ''}`;
+      },
+    },
     {
       id: 'price',
       label: 'Price',
@@ -144,14 +178,46 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     super(SUBSCRIPTIONS_CONFIG);
   }
 
+  private money(value: number, currency: string): string {
+    const code = /^[A-Z]{3}$/.test(currency) ? currency : 'BRL';
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).format(
+        Number(value) || 0,
+      );
+    } catch {
+      return `${code} ${(Number(value) || 0).toFixed(2)}`;
+    }
+  }
+
   override async handleRowAction(
     action: ConfigurableCrudRowAction,
     row: BillingSubscription & ConfigurableCrudRecord,
   ): Promise<void> {
     if (action.key !== 'cancel') return super.handleRowAction(action, row);
+    // Prepaid terms: the server says what canceling now returns to the wallet.
+    let message = 'Cancel this subscription?';
+    try {
+      const preview = await this.billing.cancelPreview(this.recordUUID(row));
+      if (preview?.mode === 'WITHDRAWAL') {
+        message = this.t(
+          'You are within 7 days of the purchase: the whole term and the setup ({{amount}}) return to your prepaid balance and the service ends now.',
+          { amount: this.money(preview.creditAmount, preview.currency) },
+        );
+      } else if (preview?.mode === 'EARLY') {
+        message = this.t(
+          'The months used are recalculated at the discount of the term you completed; {{amount}} returns to your prepaid balance and the service continues until {{date}}.',
+          {
+            amount: this.money(preview.creditAmount, preview.currency),
+            date: String(preview.effectiveAt ?? '').slice(0, 10),
+          },
+        );
+      }
+    } catch {
+      // The API interceptor presents the rejection; the plain confirmation still applies.
+    }
     const confirmed = await this.confirmAction(
       'Cancel subscription',
-      'Cancel this subscription?',
+      message,
       'Cancel subscription',
     );
     if (!confirmed) return;

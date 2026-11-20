@@ -262,6 +262,94 @@ export interface BillingSubscription {
   BsuDiscountTypeSnapshot?: string | null;
   BsuDiscountValueSnapshot?: number | null;
   BsuDiscountCyclesSnapshot?: number | null;
+  /** Prepaid term in months (1 = monthly) and its frozen discount; BsuTermStartAt null = monthly contract. */
+  BsuTermMonths?: number | null;
+  BsuTermDiscountPercentSnapshot?: number | null;
+  BsuTermRenewalPolicy?: 'SAME_TERM' | 'MONTHLY' | null;
+  BsuTermStartAt?: string | null;
+  NextCycleAmount?: number | null;
+}
+
+/** Prepaid term offered for a monthly price (3 to 36 months), as listed by the catalog. */
+export interface BillingTermOffer {
+  months: number;
+  discountPercent: number;
+  setupWaive: number | boolean;
+  monthlyAmount: number;
+  totalAmount: number;
+  savingsAmount: number;
+}
+
+/** Server quote of a new subscription: term, promotion, setup and the amount charged now. */
+export interface BillingCheckoutQuote {
+  priceUUID: string;
+  currency: string;
+  billingMode: string;
+  termMonths: number;
+  termDiscountPercent: number;
+  monthlyFullAmount: number;
+  monthlyAmount: number;
+  setupAmount: number;
+  chargeAmount: number;
+  totalAmount: number;
+  savingsAmount: number;
+  promotionApplied: boolean;
+  promotionCode: string | null;
+  /** TERM_DISCOUNT_IS_BETTER: the code is valid but the term discount is larger, so it is not used. */
+  promotionNote: string | null;
+  periodEnd: string | null;
+  renewalAmount: number | null;
+  availableBalance: number;
+}
+
+/** What canceling a subscription does now (prepaid terms return unused time to the wallet). */
+export interface BillingCancelPreview {
+  subscriptionUUID: string;
+  mode: 'WITHDRAWAL' | 'EARLY' | 'PERIOD_END';
+  creditAmount: number;
+  currency: string;
+  effectiveAt: string | null;
+}
+
+/** Master: prepaid term of a price. */
+export interface BillingPriceTerm {
+  BtmUUID: string;
+  BtmMonths: number;
+  BtmDiscountPercent: number;
+  BtmSetupWaive: number | boolean;
+  BtmStatus: number | boolean;
+  BpcCurrency: string;
+  BpcUnitPrice: number;
+  MonthlyAmount: number;
+  TotalAmount: number;
+  /** Reason the floor refuses this term now (VPS plan minimum, cost or currency), or null. */
+  FloorError?: string | null;
+}
+
+export interface BillingPriceTermLadderResult {
+  Months: number;
+  DiscountPercent: number;
+  SetupWaive: number;
+  Applied: number;
+  Reason: string | null;
+}
+
+/** Prepaid terms of a catalog/offer row (API `terms`, or the raw `TermsJson` string). */
+export function billingTermOffers(row: Record<string, unknown>): BillingTermOffer[] {
+  let value: unknown = row['terms'] ?? row['TermsJson'];
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(value)
+    ? (value as BillingTermOffer[])
+        .map((term) => ({ ...term, months: Number(term.months) }))
+        .filter((term) => term.months > 1)
+        .sort((a, b) => a.months - b.months)
+    : [];
 }
 
 export interface BillingEntitlementGrant {
@@ -282,6 +370,8 @@ export type BillingCatalogItem = BillingProduct &
     PromotionName?: string | null;
     PromotionDiscountType?: string | null;
     PromotionDiscountValue?: number | null;
+    TermsJson?: string | null;
+    terms?: BillingTermOffer[];
   };
 
 export interface BillingSwitchContract {
@@ -324,6 +414,11 @@ export interface BillingSwitchPreview {
   /** SCHEDULED = downgrade in the package family: starts at effectiveAt, nothing is charged now. */
   mode?: 'IMMEDIATE' | 'SCHEDULED';
   effectiveAt?: string | null;
+  /** Prepaid term of the new contract; coterm = it keeps the term (and end) of the replaced term. */
+  termMonths?: number;
+  termDiscountPercent?: number;
+  coterm?: boolean;
+  periodEnd?: string | null;
   contracts: BillingSwitchContract[];
   scheduledChanges?: BillingSwitchScheduledChange[];
 }
@@ -744,8 +839,14 @@ export class BillingService {
     return this.allPages<BillingSubscription>('billing/subscriptions', params);
   }
 
-  async switchPreview(priceUUID: string, offerType: string, offerUUID: string) {
+  async switchPreview(
+    priceUUID: string,
+    offerType: string,
+    offerUUID: string,
+    termMonths: number | null = null,
+  ) {
     const params = new URLSearchParams({ offerType, offerUUID });
+    if (termMonths && termMonths > 1) params.set('termMonths', String(termMonths));
     const response = await this.api.get<{ data?: { item?: BillingSwitchPreview } }>(
       `billing/catalog/${priceUUID}/switch-preview?${params}`,
     );
@@ -760,6 +861,60 @@ export class BillingService {
     const item = response.data?.item ?? null;
     this.invalidateEntitlements();
     return item;
+  }
+
+  async checkoutQuote(
+    priceUUID: string,
+    offerType: string,
+    offerUUID: string,
+    termMonths: number,
+    promotionCode: string | null,
+  ) {
+    const params = new URLSearchParams({ offerType, offerUUID });
+    if (termMonths > 1) params.set('termMonths', String(termMonths));
+    if (promotionCode) params.set('promotionCode', promotionCode);
+    const response = await this.api.get<{ data?: { item?: BillingCheckoutQuote } }>(
+      `billing/catalog/${priceUUID}/quote?${params}`,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async cancelPreview(uuid: string) {
+    const response = await this.api.get<{ data?: { item?: BillingCancelPreview } }>(
+      `billing/subscriptions/${uuid}/cancel-preview`,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async listPriceTerms(priceUUID: string) {
+    const response = await this.api.get<ApiListResponse<BillingPriceTerm>>(
+      `system/billing/prices/${priceUUID}/terms`,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async savePriceTerm(
+    priceUUID: string,
+    months: number,
+    payload: { discountPercent: number; setupWaive: boolean; status: boolean },
+  ) {
+    const response = await this.api.put<ApiListResponse<BillingPriceTerm>>(
+      `system/billing/prices/${priceUUID}/terms/${months}`,
+      payload,
+    );
+    return response.data?.items ?? [];
+  }
+
+  async deletePriceTerm(termUUID: string) {
+    await this.api.delete(`system/billing/price-terms/${termUUID}`);
+  }
+
+  async applyPriceTermLadder(priceUUID: string) {
+    const response = await this.api.post<ApiListResponse<BillingPriceTermLadderResult>>(
+      `system/billing/prices/${priceUUID}/terms/apply-ladder`,
+      {},
+    );
+    return response.data?.items ?? [];
   }
 
   async cancelSubscription(uuid: string) {

@@ -4052,6 +4052,15 @@ export const routes: Routes = [
                     data: { scope: 'master', context: 'system' },
                   },
                   {
+                    path: 'images',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/images/images').then(
+                        (m) => m.HostingVpsImagesPage,
+                      ),
+                    title: 'System VPS Images | mnscloud',
+                    data: { scope: 'master', context: 'system' },
+                  },
+                  {
                     path: 'plans',
                     loadComponent: () =>
                       import('./pages/hosting/vps/plans/plans').then((m) => m.HostingVpsPlansPage),

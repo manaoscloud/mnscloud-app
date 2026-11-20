@@ -90,6 +90,18 @@
             [value]="draft().priorityUUID"
             (valueChange)="setPriority($event)"
           />
+          @if (moduleOptions().length) {
+            <mns-search-select-field
+              fieldClass="span-2"
+              [label]="'Module' | transloco"
+              [placeholder]="'Search' | transloco"
+              [emptyLabel]="'No records found.' | transloco"
+              [options]="moduleOptions()"
+              [loading]="modules.isLoading()"
+              [value]="draft().moduleCode"
+              (valueChange)="setModule($event)"
+            />
+          }
           @if (suggestionSelected()) {
             <p class="support-report-warning span-4" role="note">
               <mat-icon>lightbulb</mat-icon>

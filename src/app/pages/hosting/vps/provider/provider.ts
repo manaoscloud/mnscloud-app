@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -70,6 +70,12 @@ const GATEWAY_PLACEMENT_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 const GATEWAY_PLACEMENT_HELP =
   'Spread: each new gateway goes to the node with the fewest gateways, so a node failure affects fewer customers. Existing gateways only move with Customer gateways.';
+const GATEWAY_ENGINE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'Engine 1 (legacy)' },
+  { value: 2, label: 'Engine 2 (router with revisions)' },
+];
+const GATEWAY_ENGINE_HELP =
+  'Engine of the gateway template. New customer gateways use it; existing ones change with Customer routers > Migrate to engine 2.';
 const PLACEMENT_NODES_HELP = 'Comma separated node names. Empty: every node of the cluster.';
 const PLACEMENT_DRAIN_HELP =
   'Nodes that stop receiving new servers (maintenance). Existing servers stay.';
@@ -187,6 +193,7 @@ function tenantZoneFormValues(zones: TenantZonesConfig | null | undefined): Conf
     sdnTenantGatewayTemplate: zones?.gateway?.templateVmid ?? '',
     sdnTenantGatewayNode: zones?.gateway?.node ?? '',
     sdnTenantGatewayPlacement: zones?.gateway?.placement === 'fixed' ? 'fixed' : 'spread',
+    sdnTenantGatewayEngine: zones?.gateway?.engine === 2 ? 2 : 1,
     sdnTenantTransitBridge: zones?.gateway?.transitBridge ?? DEFAULT_TRANSIT_BRIDGE,
     sdnTenantTransitVlan: zones?.gateway?.transitVlan ?? '',
     sdnTenantTransitCidr: zones?.gateway?.transitCidr ?? '',
@@ -400,17 +407,120 @@ function providerGateways(providerUUID: string): ConfigurableCrudConfig {
   });
 }
 
+const ROUTER_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'idle', label: 'Idle' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'applying', label: 'Applying' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'failed', label: 'Failed' },
+];
+
+/**
+ * Routers of the customer networks of a Proxmox provider (API G0): engine of each zone gateway,
+ * revision state, migration of an engine 1 gateway (about a minute without internet for that
+ * customer; restored on failure) and a forced reapply of an engine 2 router.
+ */
+function providerRouters(providerUUID: string): ConfigurableCrudConfig {
+  const zones = `system/hosting/vps/providers/${providerUUID}/tenant-zones`;
+  const gateways = `system/hosting/vps/providers/${providerUUID}/gateways`;
+  return defineCrud({
+    endpoint: zones,
+    uuidField: 'HtzUUID',
+    pageTitle: 'Customer routers',
+    pageDescription:
+      'Router of each customer network: engine 2 applies its whole configuration as numbered revisions, checks it and rolls back by itself. Migrate engine 1 gateways in a window agreed with the customer.',
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusMode: 'string',
+    columns: [
+      { id: 'zone', label: 'Customer zone', field: 'HtzZone' },
+      { id: 'engine', label: 'Engine', field: 'HtzGatewayEngine', kind: 'number' },
+      {
+        id: 'state',
+        label: 'Router',
+        field: 'HtzGatewayState',
+        kind: 'status',
+        options: ROUTER_STATE_OPTIONS,
+        chipClass: (value) =>
+          value === 'applied'
+            ? 'chip-success'
+            : value === 'failed'
+              ? 'chip-warning'
+              : value === 'idle'
+                ? 'chip-skipped'
+                : 'chip-running',
+      },
+      { id: 'revision', label: 'Revision', field: 'HtzGatewayRevision', kind: 'number' },
+      {
+        id: 'applied',
+        label: 'Applied revision',
+        field: 'HtzGatewayAppliedRevision',
+        kind: 'number',
+      },
+      { id: 'networks', label: 'Networks', field: 'NetworkCount', kind: 'number', optional: true },
+      { id: 'error', label: 'Last error', field: 'HtzGatewayLastError', optional: true },
+      { id: 'appliedAt', label: 'Applied at', field: 'HtzGatewayDateApplied', optional: true },
+    ],
+    fields: [],
+    rowActions: [
+      {
+        key: 'migrateRouter',
+        label: 'Migrate to engine 2',
+        icon: 'upgrade',
+        visible: (row) => Number(row['HtzGatewayEngine']) !== 2 && row['HtzStatus'] === 'available',
+        request: {
+          method: 'post',
+          endpoint: (row) => `${gateways}/${String(row['HtzUUID'] ?? '')}/migrate`,
+          successMessage: 'Migration started. Refresh to follow it.',
+          confirm: {
+            title: 'Migrate router',
+            message:
+              "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.",
+            confirmLabel: 'Migrate',
+          },
+        },
+      },
+      {
+        key: 'reapplyRouter',
+        label: 'Apply again',
+        icon: 'sync',
+        visible: (row) => Number(row['HtzGatewayEngine']) === 2,
+        request: {
+          method: 'post',
+          endpoint: (row) => `${gateways}/${String(row['HtzUUID'] ?? '')}/reapply`,
+          successMessage: 'Router revision applied.',
+        },
+      },
+    ],
+  });
+}
+
 const PROVIDER_IMAGES_ACTION = providerCollectionAction(
   'images',
   'Images per node',
   'layers',
   providerImages,
 );
+const PROVIDER_IMAGE_CATALOG_ACTION: ConfigurableCrudRowAction = {
+  key: 'imageAccess',
+  label: 'VPS images',
+  icon: 'album',
+  tooltip: 'Manage logical images, audience authorization and availability for this provider.',
+  visible: (row) => String(row['HvrProvider'] ?? '') === 'proxmox',
+};
 const PROVIDER_GATEWAYS_ACTION = providerCollectionAction(
   'gateways',
   'Customer gateways',
   'router',
   providerGateways,
+);
+const PROVIDER_ROUTERS_ACTION = providerCollectionAction(
+  'routers',
+  'Customer routers',
+  'hub',
+  providerRouters,
 );
 
 // FA3: link platform VMs created directly on Proxmox to platform servers (the VM is never touched).
@@ -521,6 +631,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
     sdnTenantGatewayTemplate: '',
     sdnTenantGatewayNode: '',
     sdnTenantGatewayPlacement: 'spread',
+    sdnTenantGatewayEngine: 1,
     sdnTenantTransitBridge: DEFAULT_TRANSIT_BRIDGE,
     sdnTenantTransitVlan: '',
     sdnTenantTransitCidr: '',
@@ -805,6 +916,12 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
       type: 'select',
       options: [...GATEWAY_PLACEMENT_OPTIONS],
       help: GATEWAY_PLACEMENT_HELP,
+    },
+    {
+      ...tenantZoneField('sdnTenantGatewayEngine', 'Customer gateway engine'),
+      type: 'select',
+      options: [...GATEWAY_ENGINE_OPTIONS],
+      help: GATEWAY_ENGINE_HELP,
     },
     tenantZoneField('sdnTenantTransitBridge', 'Transit bridge'),
     tenantZoneField('sdnTenantTransitVlan', 'Transit VLAN', { number: true, required: true }),
@@ -1154,6 +1271,7 @@ const HOSTING_VPS_PROVIDER_CONFIG: ConfigurableCrudConfig = {
 })
 export class HostingVpsProviderPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly scope = signal<string>(this.route.snapshot.data?.['scope'] ?? 'tenant');
   private readonly platformScope = computed(() => this.scope() === 'master');
   private readonly endpoint = computed(() =>
@@ -1168,7 +1286,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
       canEdit: masterScope,
       canDelete: masterScope,
       rowActions: masterScope
-        ? [TEST_PROVIDER_ACTION, PROVIDER_IMAGES_ACTION, PROVIDER_GATEWAYS_ACTION, ADOPT_VMS_ACTION]
+        ? [
+            TEST_PROVIDER_ACTION,
+            PROVIDER_IMAGE_CATALOG_ACTION,
+            PROVIDER_IMAGES_ACTION,
+            PROVIDER_GATEWAYS_ACTION,
+            PROVIDER_ROUTERS_ACTION,
+            ADOPT_VMS_ACTION,
+          ]
         : [TEST_PROVIDER_ACTION],
     });
   }
@@ -1460,6 +1585,14 @@ export class HostingVpsProviderPage extends ConfigurableCrudPageBase<Configurabl
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
     const uuid = String(row['HvrUUID'] ?? '');
+    if (action.key === 'imageAccess') {
+      if (uuid) {
+        await this.router.navigate(['/system/vps/images'], {
+          queryParams: { providerUUID: uuid },
+        });
+      }
+      return;
+    }
     if (action.key === 'adopt') {
       if (uuid) await this.openAdoptVms(uuid);
       return;
@@ -1658,6 +1791,7 @@ function buildTenantZonesPayload(
       templateVmid: Number(values['sdnTenantGatewayTemplate']),
       node: normalizeString(values['sdnTenantGatewayNode']) ?? '',
       placement: values['sdnTenantGatewayPlacement'] === 'fixed' ? 'fixed' : 'spread',
+      ...(Number(values['sdnTenantGatewayEngine']) === 2 ? { engine: 2 as const } : {}),
       transitBridge: normalizeString(values['sdnTenantTransitBridge']) ?? DEFAULT_TRANSIT_BRIDGE,
       transitVlan: Number(values['sdnTenantTransitVlan']),
       transitCidr: normalizeString(values['sdnTenantTransitCidr']) ?? '',

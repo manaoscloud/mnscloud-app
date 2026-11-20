@@ -41,6 +41,11 @@ import {
 import { FieldRules } from '../forms/field-validation';
 import { injectRevealInvalidFields } from '../forms/reveal-invalid-fields';
 import { FieldInvalidDirective } from '../forms/field-invalid.directive';
+import {
+  loadSupportModules,
+  supportModuleForRoute,
+  supportModuleOptions,
+} from '../../pages/support/shared/support-modules';
 
 export interface SupportReportDialogData {
   url?: string;
@@ -133,6 +138,13 @@ export class SupportReportDialogComponent {
       'suggestion',
   );
   readonly priorityOptions = computed(() => this.catalogs.value()?.priorities ?? []);
+  /** Modules the environment contracted; the team of the module receives the ticket. */
+  readonly modules = resource({ loader: () => loadSupportModules(this.api, 'help/modules') });
+  readonly moduleOptions = computed(() =>
+    supportModuleOptions(this.modules.value() ?? [], (key) => this.transloco.translate(key)),
+  );
+  /** The user chose a module (or cleared it) in this dialog: the page module no longer applies. */
+  private readonly moduleTouched = signal(false);
   /** Tickets belong to an environment: without one selected, the catalogs cannot load. */
   readonly unavailable = computed(() => this.catalogs.status() === 'error');
 
@@ -201,6 +213,18 @@ export class SupportReportDialogComponent {
         this.draft.update((value) => ({ ...value, typeUUID, priorityUUID }));
       }
     });
+    // Preselect the module of the page the report came from, when the environment contracted it.
+    effect(() => {
+      const options = this.moduleOptions();
+      if (!options.length || this.moduleTouched()) return;
+      const current = this.draft().moduleCode;
+      if (current && options.some((option) => option.value === current)) return;
+      const fromPage = supportModuleForRoute(this.environment.route);
+      const moduleCode = options.some((option) => option.value === fromPage)
+        ? String(fromPage)
+        : '';
+      if (moduleCode !== current) this.draft.update((value) => ({ ...value, moduleCode }));
+    });
   }
 
   successTitle(protocol: string): string {
@@ -245,6 +269,11 @@ export class SupportReportDialogComponent {
   setPriority(value: unknown) {
     this.reports.prefillCodes.update((codes) => ({ ...codes, priorityCode: undefined }));
     this.draft.update((draft) => ({ ...draft, priorityUUID: String(value ?? '') }));
+  }
+
+  setModule(value: unknown) {
+    this.moduleTouched.set(true);
+    this.draft.update((draft) => ({ ...draft, moduleCode: String(value ?? '') }));
   }
 
   setIncludeDiagnostics(value: boolean) {
@@ -422,6 +451,7 @@ export class SupportReportDialogComponent {
           description: draft.description.trim(),
           typeUUID: draft.typeUUID || null,
           priorityUUID: draft.priorityUUID || null,
+          moduleCode: draft.moduleCode || null,
           url: this.environment.url,
           route: this.environment.route,
           appVersion: this.environment.appVersion,

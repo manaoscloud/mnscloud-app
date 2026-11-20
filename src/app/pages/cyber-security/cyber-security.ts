@@ -34,6 +34,18 @@ import {
   runView,
   windowLabel,
 } from './cyber-patch';
+import {
+  CampaignTarget,
+  campaignForm,
+  campaignPreviewBody,
+  campaignPreviewEndpoint,
+  campaignView,
+  campaignsCollection,
+  fixEverywhereAction,
+  emergencyMenu,
+  targetFromEmergencyKey,
+  previewSummary,
+} from './cyber-patch-campaign';
 import { priorities, priorityTone } from './cyber-priority';
 import {
   exposureFindingsCollection,
@@ -527,6 +539,10 @@ function vulnerabilityFindingsOfAgent(row: ConfigurableCrudRecord): Configurable
 let remediationDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
 let aiExplainDialog: ((finding: ConfigurableCrudRecord) => Promise<void>) | null = null;
 let platformMaster: () => boolean = () => false;
+let campaignDialog: ((campaign: ConfigurableCrudRecord) => Promise<void>) | null = null;
+const showCampaign = (campaign: ConfigurableCrudRecord) => void campaignDialog?.(campaign);
+let campaignStarter: ((target: CampaignTarget) => Promise<void>) | null = null;
+const startCampaign = (target: CampaignTarget) => void campaignStarter?.(target);
 let patchRunDialog: ((run: ConfigurableCrudRecord) => Promise<void>) | null = null;
 const showPatchRun = (run: ConfigurableCrudRecord) => void patchRunDialog?.(run);
 let exposureFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
@@ -617,6 +633,7 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         collection: vulnerabilityFindings,
       },
       { key: 'vulnerability', label: 'Details', icon: 'visibility', tooltip: 'Details' },
+      fixEverywhereAction(startCampaign),
       {
         key: 'platformExposure',
         label: 'cyberSecurity.ai.platformExposure',
@@ -632,6 +649,7 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         tooltip: 'cyberSecurity.ai.digestHelp',
       },
     ],
+    filterActionMenu: emergencyMenu,
   }),
   inventory: defineCrud({
     ...agentServerList(
@@ -801,6 +819,20 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
     ],
     fields: [],
     initialValues: {},
+    filterActions: [
+      {
+        key: 'patchRuns',
+        label: 'cyberSecurity.patch.runs',
+        icon: 'history',
+        tooltip: 'cyberSecurity.patch.runsDescription',
+      },
+      {
+        key: 'patchCampaigns',
+        label: 'cyberSecurity.patch.campaign.title',
+        icon: 'campaign',
+        tooltip: 'cyberSecurity.patch.campaign.description',
+      },
+    ],
     rowActions: patchServerActions(showPatchRun),
   }),
 
@@ -1197,6 +1229,8 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
   styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly platformScope: boolean;
+
   constructor() {
     const data = inject(ActivatedRoute).snapshot.data;
     const section = (data['section'] as CyberSection | undefined) ?? 'servers';
@@ -1207,9 +1241,12 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
         : withCyberAccount(section, config),
     );
     const auth = inject(AuthService);
+    this.platformScope = data['scope'] === 'master';
     remediationDialog = (finding) => this.showRemediation(finding);
     aiExplainDialog = (finding) => this.explainFinding(finding);
     patchRunDialog = (run) => this.showPatchRun(run);
+    campaignDialog = (campaign) => this.showCampaign(campaign);
+    campaignStarter = (target) => this.beginCampaign(target, data['scope'] === 'master');
     exposureFindingDialog = (finding) =>
       openDataViewerDialog(this.dialog, exposureFindingView(finding, this.t.bind(this)));
     hardeningCheckDialog = (check) =>
@@ -1323,7 +1360,75 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     }
   }
 
+  /** Campaign detail: settings, left-out servers, runs by wave and the timeline. */
+  async showCampaign(campaign: ConfigurableCrudRecord): Promise<void> {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(
+        `cyber-security/patch/campaigns/${encodeURIComponent(String(campaign['campaignUUID']))}`,
+      );
+      openDataViewerDialog(
+        this.dialog,
+        campaignView(response?.data ?? campaign, this.t.bind(this)),
+      );
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error) || 'cyberSecurity.patch.loadFailed'));
+    }
+  }
+
+  /** Preview which servers a campaign reaches, ask the user, then open the campaign settings. */
+  async beginCampaign(picked: CampaignTarget, platform: boolean): Promise<void> {
+    const account = this.listFilterValues()['cyberAccountUUID'];
+    const target: CampaignTarget = account
+      ? { ...picked, cyberAccountUUID: String(account) }
+      : picked;
+    let summary: { eligible: number; message: string };
+    try {
+      const response = await this.api.post<{ data?: ConfigurableCrudRecord }>(
+        campaignPreviewEndpoint,
+        campaignPreviewBody(target),
+      );
+      summary = previewSummary(response?.data ?? {}, (key, params) => this.t(key, params));
+    } catch (error) {
+      this.snack.error(
+        this.t(this.errorMessage(error) || 'cyberSecurity.patch.campaign.previewFailed'),
+      );
+      return;
+    }
+    if (summary.eligible === 0) {
+      this.snack.error(this.t('cyberSecurity.patch.campaign.previewNone'));
+      return;
+    }
+    const ok = await this.confirmAction(
+      'cyberSecurity.patch.campaign.new',
+      summary.message,
+      'cyberSecurity.patch.campaign.continue',
+    );
+    if (!ok) return;
+    await this.runRowAction(
+      {
+        key: 'campaignCreate',
+        label: 'cyberSecurity.patch.campaign.new',
+        icon: 'healing',
+        form: () => campaignForm(target, platform),
+      },
+      {},
+    );
+  }
+
   override async handleFilterAction(action: { key: string }): Promise<void> {
+    const emergency = targetFromEmergencyKey(action.key);
+    if (emergency) return this.beginCampaign(emergency, this.platformScope);
+    if (action.key === 'patchCampaigns') {
+      return this.runRowAction(
+        {
+          key: 'patchCampaigns',
+          label: 'cyberSecurity.patch.campaign.title',
+          icon: 'campaign',
+          collection: () => campaignsCollection(showCampaign),
+        },
+        {},
+      );
+    }
     if (action.key === 'networkFindings') {
       return this.runRowAction(
         {

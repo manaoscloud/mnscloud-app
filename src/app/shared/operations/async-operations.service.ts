@@ -248,14 +248,14 @@ export class AsyncOperationsService {
       if (state === 'succeeded') {
         stop(false);
         this.scheduleSuccessClear(id);
-      } else if (needsAttention(state)) {
+      } else if (needsAttention(state) || state === 'superseded') {
         stop(false);
       } else {
         stop(true);
       }
       for (const callback of callbacks) callback();
     };
-    if (['succeeded', 'failed', 'blocked', 'cancelled'].includes(operation.state)) {
+    if (['succeeded', 'failed', 'blocked', 'cancelled', 'superseded'].includes(operation.state)) {
       settled(operation.state);
       return;
     }
@@ -290,9 +290,9 @@ export class AsyncOperationsService {
         }
         const result = response.data;
         this.remember(result, environment);
-        if (['succeeded', 'blocked', 'failed', 'cancelled'].includes(result.state)) {
+        if (['succeeded', 'blocked', 'failed', 'cancelled', 'superseded'].includes(result.state)) {
           if (result.state === 'succeeded') this.snack.success('Operation completed.');
-          else
+          else if (result.state !== 'superseded')
             this.snack.warning(
               'Operation requires attention. Check its status before trying again.',
             );

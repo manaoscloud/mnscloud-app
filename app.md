@@ -2722,3 +2722,37 @@ steps remain visible for correction. These controls are UX only; API/gateway enf
 Protection labels describe the API mechanism (including scheduled reload and confirmed commit),
 not proof that a pending rollback has completed. WinRM in connection history is a method label,
 not an authorization to open an interactive console.
+
+## VPS logical images and access management
+
+- Canonical platform route `/system/vps/images` (`nav.hosting.vps.images`, category `platform`,
+  master only) manages logical VPS images (`system/hosting/vps/images`). The Proxmox provider row
+  action **Imagens VPS** opens `/system/vps/images?providerUUID=<HvrUUID>` with a Back link to
+  `/system/vps/provider`.
+- `HostingVpsImagesPage` extends `ConfigurableCrudPageBase` and uses the generic function form of
+  `ConfigurableCrudConfig.updateEndpoint` (`(row) => 'system/hosting/vps/images/' + row.HimUUID + '/access'`)
+  returns the **full update URL**, so `PUT /system/hosting/vps/images/{uuid}/access` is called without
+  duplicating the record UUID. String endpoints and subclass `updateEndpoint()` /
+  `updateEndpointFor(row)` overrides keep their existing base-URL-plus-UUID behavior.
+- Editing an image (**Gerenciar acesso**) loads the current policy and active grants,
+  keeps a dialog-scoped `Idempotency-Key` UUID across retries of unchanged values (rotating it when
+  any form field changes), and sends bounded delta arrays (`addEnvironmentUUIDs` via remote lookup
+  on `system/hosting/vps/images/environments`, `removeEnvironmentUUIDs` from active grants) rather
+  than replacing grants from a single visible page.
+- Before saving, `confirmBeforeSave` calls `POST /system/hosting/vps/images/{uuid}/access/preview`
+  and shows the audience, grant delta, remaining authorized environments and unavailable replicas; expanding to `public` (**Todos os
+  clientes**) requires explicit confirmation. Accepted `202` operations (`kind: 'vpsImage'`,
+  `action: 'access.reconcile'`) are tracked in the shell Activity Center without page-local polling.
+- Read-only **Visão geral** (`/versions`), **Acesso** (`/grants`), **Disponibilidade** (`/replicas`)
+  and **Histórico** (`/history`, with retry for failed/blocked operations on the current revision)
+  render as canonical `relatedCollections` tabs.
+
+- Access dialog loads and save completions are fenced by opening generation, authentication session,
+  tenant context, route scope and component destruction (`captureSaveContext`). Failed fresh detail
+  requests never open stale list-row data. Capability fields default to denied when absent.
+- A confirmed preview is bound to its exact payload and idempotency key. Unchanged retries after
+  a lost accepted PUT response replay that key without another stale-revision preview. Any edit
+  invalidates confirmation and rotates the key; changed values during preview cannot be submitted.
+- Version selection uses the shared remote lookup with search and 50-row pages, retaining the
+  canonical current build label outside the loaded page. UUID paths accept compact/hyphenated
+  UUIDs only, with encoded path segments; malformed provider query parameters cannot trigger requests.

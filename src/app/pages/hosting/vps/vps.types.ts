@@ -34,6 +34,8 @@ export type VpsProviderConfig = {
         transitCidr: string;
         transitPool?: string;
         placement?: 'spread' | 'fixed';
+        /** Router engine of new gateways: 2 = revisioned router (template 9021). Absent = 1. */
+        engine?: 1 | 2;
       };
       mtu?: number;
       defaultCidr?: string;
@@ -139,6 +141,8 @@ export type HostingVpsPlanConfig = {
 };
 
 export type HostingVpsPlan = {
+  /** Prepaid terms of the plan price (JSON array of {months, discountPercent, ...}). */
+  TermsJson?: string | null;
   HvpUUID: string;
   HvpName: string;
   HostingVpsProviderHvrUUID: string;
@@ -169,6 +173,8 @@ export type HostingVpsPlan = {
 };
 
 export type HostingVpsInstanceConfig = {
+  /** Prepaid term chosen at creation (3 to 36 months); absent = monthly. */
+  billingTermMonths?: number;
   /** FA3: set when the VM was created outside the platform and only linked. */
   adopted?: {
     at?: string | null;
@@ -418,6 +424,100 @@ export type HostingVpsFirewallCapabilities = {
   icmpv6: boolean;
   maxRules: number;
   scope: 'profile' | 'instance' | 'none';
+};
+
+export type HostingVpsImageVisibility = 'platform' | 'public' | 'selected';
+
+export type HostingVpsImagePublication = 'draft' | 'published' | 'retired';
+
+export type HostingVpsImage = {
+  HimUUID: string;
+  HostingVpsProviderHvrUUID: string;
+  providerName?: string | null;
+  HimImageKey: string;
+  HimName: string;
+  HimVisibility: HostingVpsImageVisibility;
+  HimRevision: string;
+  HimPublication: HostingVpsImagePublication;
+  HimInternalOnly?: boolean | number | null;
+  HimDateUpdated?: string | null;
+  currentVersionUUID?: string | null;
+  buildRevision?: string | null;
+  cpu?: number | null;
+  memoryMb?: number | null;
+  diskGb?: number | null;
+  readyReplicas?: number | null;
+  totalReplicas?: number | null;
+  syncState?: string | null;
+  canManageAccess?: boolean | number | null;
+  canPublish?: boolean | number | null;
+  activeGrantCount?: number | null;
+  grantCount?: number | null;
+};
+
+export type HostingVpsImageGrant = {
+  EnvironmentUUID: string;
+  EnvironmentName: string;
+  status?: string | number | null;
+};
+
+export type HostingVpsImageVersion = {
+  versionUUID: string;
+  buildRevision: string;
+  publication: HostingVpsImagePublication;
+  cpu?: number | null;
+  memoryMb?: number | null;
+  diskGb?: number | null;
+};
+
+export type HostingVpsImageReplica = {
+  key: string;
+  node: string;
+  vmid?: number | string | null;
+  buildRevision?: string | null;
+  state: string;
+  observedVisibility?: string | null;
+  policyRevision?: string | null;
+  desiredRevision?: string | null;
+  observedAt?: string | null;
+  errorCode?: string | null;
+  sourceVmid?: number | string | null;
+};
+
+export type HostingVpsImageHistoryEntry = {
+  operationUUID: string;
+  state: string;
+  previousVisibility?: HostingVpsImageVisibility | null;
+  visibility: HostingVpsImageVisibility;
+  revision: string;
+  reason?: string | null;
+  actorName?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  errorCode?: string | null;
+};
+
+export type HostingVpsImageAccessPreview = {
+  revision: string;
+  previousVisibility: HostingVpsImageVisibility;
+  visibility: HostingVpsImageVisibility;
+  addedCount: number;
+  removedCount: number;
+  targetCount: number;
+  unavailableCount: number;
+  willPublishPublicly: boolean;
+  publication: HostingVpsImagePublication;
+  versionUUID?: string | null;
+};
+
+export type HostingVpsImageAccessPayload = {
+  revision: string;
+  visibility: HostingVpsImageVisibility;
+  addEnvironmentUUIDs: string[];
+  removeEnvironmentUUIDs: string[];
+  reason: string;
+  publication?: HostingVpsImagePublication;
+  versionUUID?: string;
 };
 
 /**
