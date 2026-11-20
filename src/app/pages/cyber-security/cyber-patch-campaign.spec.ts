@@ -1,0 +1,167 @@
+import {
+  campaignActionsFor,
+  campaignDescription,
+  campaignForm,
+  campaignPayload,
+  campaignPreviewBody,
+  campaignProgress,
+  campaignRowActions,
+  campaignStatusTone,
+  campaignView,
+  fixEverywhereAction,
+  platformCampaignForm,
+  previewSummary,
+  skipReasonKey,
+  targetFromEmergencyKey,
+} from './cyber-patch-campaign';
+
+const t = (key: string, params?: Record<string, string | number>) =>
+  params ? `t:${key}:${JSON.stringify(params)}` : `t:${key}`;
+
+describe('Cyber Security patch campaigns', () => {
+  it('maps the status to its actions', () => {
+    expect(campaignActionsFor('requested')).toEqual(['approve', 'reject', 'abort']);
+    expect(campaignActionsFor('running')).toEqual(['pause', 'abort']);
+    expect(campaignActionsFor('paused')).toEqual(['resume', 'abort']);
+    expect(campaignActionsFor('halted')).toEqual(['pause', 'resume', 'abort']);
+    expect(campaignActionsFor('completed')).toEqual([]);
+    const actions = campaignRowActions(() => undefined);
+    const visible = (status: string) =>
+      actions.filter((a) => a.form && a.visible?.({ status })).map((a) => a.key);
+    expect(visible('paused')).toEqual(['campaign_resume', 'campaign_abort']);
+  });
+
+  it('describes the scope and the progress', () => {
+    expect(campaignDescription({ scope: 'cves', cves: ['CVE-1', 'CVE-2'] }, t)).toBe(
+      'CVE-1, CVE-2',
+    );
+    expect(campaignDescription({ scope: 'cves', cves: ['a', 'b', 'c', 'd', 'e'] }, t)).toBe(
+      'a, b, c +2',
+    );
+    expect(campaignDescription({ scope: 'priority', priority: 'kev' }, t)).toBe(
+      't:cyberSecurity.patch.campaign.priority.kev',
+    );
+    expect(campaignDescription({ scope: 'all' }, t)).toBe(
+      't:cyberSecurity.patch.campaign.scope.all',
+    );
+    expect(
+      campaignProgress({ successCount: 3, partialCount: 1, nothingCount: 2, targetCount: 10 }),
+    ).toBe('6 / 10');
+    expect(campaignStatusTone('halted')).toBe('chip-warning');
+  });
+
+  it('translates reason codes and falls back for unknown ones', () => {
+    expect(skipReasonKey('open_run')).toBe('cyberSecurity.patch.campaign.reason.open_run');
+    expect(skipReasonKey('x')).toBe('cyberSecurity.patch.campaign.reason.unknown');
+  });
+
+  it('builds the preview and create bodies', () => {
+    expect(campaignPreviewBody({ scope: 'cves', cves: ['CVE-1'] })).toEqual({
+      scope: 'cves',
+      cves: ['CVE-1'],
+    });
+    const values = {
+      mode: 'immediate',
+      reason: ' Exploited now ',
+      confirm: 'CORRIGIR',
+      canarySize: 1,
+      maxParallel: '',
+      maxFailures: '5',
+      rebootPolicy: 'server_policy',
+      approveNow: 'yes',
+    };
+    expect(campaignPayload({ scope: 'priority', priority: 'P0' }, values)).toEqual({
+      scope: 'priority',
+      priority: 'P0',
+      mode: 'immediate',
+      rebootPolicy: 'server_policy',
+      canarySize: 1,
+      maxParallel: undefined,
+      maxFailures: 5,
+      reason: 'Exploited now',
+      confirm: 'CORRIGIR',
+      approveNow: true,
+    });
+    const platform = campaignPayload({ scope: 'all' }, values, true);
+    expect(platform['rebootPolicy']).toBe('never');
+    expect(platform['approveNow']).toBe(false);
+    const window = campaignPayload({ scope: 'all' }, { ...values, mode: 'window' });
+    expect(window['mode']).toBe('window');
+    expect('confirm' in window).toBe(false);
+  });
+
+  it('posts the form to the campaigns and hides platform-only choices', () => {
+    const form = campaignForm({ scope: 'cves', cves: ['CVE-1'] });
+    expect(form.endpoint).toBe('cyber-security/patch/campaigns');
+    expect(form.fields.map((f) => f.key)).toContain('approveNow');
+    expect(
+      form.fields
+        .find((f) => f.key === 'confirm')!
+        .hiddenWhen?.({
+          editing: false,
+          values: { mode: 'window' },
+        }),
+    ).toBe(true);
+    const keys = platformCampaignForm(form).fields.map((f) => f.key);
+    expect(keys).not.toContain('rebootPolicy');
+    expect(keys).not.toContain('approveNow');
+    expect(
+      campaignForm({ scope: 'all' }, true).payload?.({ mode: 'window', reason: 'xxxxx' }, false),
+    ).toEqual(jasmine.objectContaining({ mode: 'window', approveNow: false }));
+  });
+
+  it('maps emergency menu keys to targets', () => {
+    expect(targetFromEmergencyKey('campaignEmergency_kev')).toEqual({
+      scope: 'priority',
+      priority: 'kev',
+    });
+    expect(targetFromEmergencyKey('campaignEmergency_all')).toEqual({ scope: 'all' });
+    expect(targetFromEmergencyKey('other')).toBeNull();
+  });
+
+  it('summarises the preview with the left-out servers', () => {
+    const summary = previewSummary(
+      {
+        eligible: 1,
+        items: [
+          { agentName: 'a', eligible: true, reason: null },
+          { agentName: 'b', eligible: false, reason: 'macos' },
+        ],
+      },
+      t,
+    );
+    expect(summary.eligible).toBe(1);
+    expect(summary.message).toContain('"skipped":1');
+    expect(summary.message).toContain('b: t:cyberSecurity.patch.campaign.reason.macos');
+  });
+
+  it('offers the CVE fix only with servers that have a fix', () => {
+    const starts: unknown[] = [];
+    const action = fixEverywhereAction((target) => starts.push(target));
+    expect(action.visible?.({ serverCount: 2, fixState: 'fixed' })).toBe(true);
+    expect(action.visible?.({ serverCount: 0, fixState: 'fixed' })).toBe(false);
+    expect(action.visible?.({ serverCount: 2, fixState: 'no_fix' })).toBe(false);
+    void action.run?.({ code: 'CVE-9' });
+    expect(starts).toEqual([{ scope: 'cves', cves: ['CVE-9'] }]);
+  });
+
+  it('shows runs sorted by wave', () => {
+    const view = campaignView(
+      {
+        status: 'running',
+        scope: 'all',
+        mode: 'window',
+        runs: [
+          { agentName: 'late', wave: 2, state: 'running' },
+          { agentName: 'early', wave: 0, state: 'success' },
+        ],
+        skipped: [{ agentName: 's', reason: 'macos' }],
+        events: [{ type: 'created', createdAt: '2026-11-20' }],
+      },
+      t,
+    );
+    const runs = view.sections!.find((s) => s.title === 't:cyberSecurity.patch.campaign.runs')!;
+    expect(runs.table!.rows.map((r) => r['agent'])).toEqual(['early', 'late']);
+    expect(view.sections!.length).toBe(4);
+  });
+});
