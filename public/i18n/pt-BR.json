@@ -15494,5 +15494,9 @@
   "Migrate router": "Migrar roteador",
   "Recreate this customer's gateway on engine 2? The customer's servers lose internet access for about a minute; on any failure the current gateway comes back.": "Recriar o gateway deste cliente no motor 2? Os servidores do cliente ficam sem internet por cerca de um minuto; em qualquer falha o gateway atual volta.",
   "Apply again": "Aplicar novamente",
-  "Router revision applied.": "Revisão do roteador aplicada."
+  "Router revision applied.": "Revisão do roteador aplicada.",
+  "website.offerCycle.biennial": "Bienal (24 meses)",
+  "website.offerCycle.triennial": "Trienal (36 meses)",
+  "website.offerBelowCost": "Atenção: este preço fica abaixo do custo da plataforma para o mesmo período ({{cost}}).",
+  "Deferred prepaid terms": "Prazos pré-pagos a servir"
 }

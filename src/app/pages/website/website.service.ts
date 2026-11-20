@@ -48,6 +48,14 @@ type Envelope<T> = { status?: string; message?: string; data?: T };
 
 export const WEBSITE_SITES_ENDPOINT = 'website/sites';
 export const WEBSITE_OFFERS_ENDPOINT = 'website/offers';
+
+/** Plan a tenant can sell: platform cost per month and of each prepaid term (VPS plans). */
+export interface WebsiteOfferPlanCost {
+  planUUID: string;
+  currency: string;
+  cost: number;
+  costTerms?: { months: number; totalAmount: number }[];
+}
 export const WEBSITE_ORDERS_ENDPOINT = 'website/orders';
 export const WEBSITE_PARAMETERS_ENDPOINT = 'system/website/parameters';
 
@@ -106,6 +114,14 @@ export class WebsiteService {
     await this.api.post(`${WEBSITE_ORDERS_ENDPOINT}/${encodeURIComponent(uuid)}/decision`, {
       decision,
     });
+  }
+
+  /** Website › Offers: plans the tenant can sell, with the platform cost (and cost per prepaid term). */
+  async offerPlans(kind: string): Promise<WebsiteOfferPlanCost[]> {
+    const response = await this.api.get<{ data?: { items?: WebsiteOfferPlanCost[] } }>(
+      `${WEBSITE_OFFERS_ENDPOINT}/plans?kind=${encodeURIComponent(kind)}&limit=200`,
+    );
+    return response.data?.items ?? [];
   }
 
   /** Website › Offers: publish, back to draft or archive (the API renders the sites again). */
