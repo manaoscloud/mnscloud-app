@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "53f12e7e8b5f",
+  "version": "afebd65fd06e",
   "language": "pt-BR",
   "entries": [
     {
@@ -7941,6 +7941,10 @@
           "help": ""
         },
         {
+          "label": "Módulos atendidos",
+          "help": "Novos chamados destes módulos sem equipe vão para esta equipe (maior prioridade de fila primeiro)."
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -8061,6 +8065,10 @@
           "help": ""
         },
         {
+          "label": "Módulo",
+          "help": "Módulo comercial do chamado. A equipe que atende o módulo recebe os novos chamados."
+        },
+        {
           "label": "Status",
           "help": ""
         },
@@ -8126,6 +8134,10 @@
       "description": "Chamados que você abriu para a equipe de suporte da MNSCloud, inclusive problemas reportados pelo App.",
       "fields": [
         {
+          "label": "Módulo",
+          "help": "Deixe vazio se o chamado for geral ou se não tiver certeza."
+        },
+        {
           "label": "Tipo",
           "help": "Deixe vazio para usar o padrão."
         },
@@ -8173,6 +8185,10 @@
         {
           "label": "Máximo de tickets simultâneos",
           "help": ""
+        },
+        {
+          "label": "Módulos atendidos",
+          "help": "Novos chamados destes módulos sem equipe vão para esta equipe (maior prioridade de fila primeiro)."
         },
         {
           "label": "Anotações",
@@ -8293,6 +8309,10 @@
         {
           "label": "Cliente",
           "help": ""
+        },
+        {
+          "label": "Módulo",
+          "help": "Módulo do chamado. A equipe que atende o módulo recebe os novos chamados."
         },
         {
           "label": "Status",
