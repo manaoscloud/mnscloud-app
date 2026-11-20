@@ -110,6 +110,106 @@ const OBSERVE_PROVIDER_ACTION: ConfigurableCrudFilterAction = {
   tooltip: 'Import read-only image observations from the selected provider.',
 };
 
+/** Image builds (phase T3): new draft versions from the vendor's official cloud image. */
+export const IMAGE_BUILDS_ENDPOINT = 'system/hosting/vps/image-builds';
+/** Images with a build recipe in the API (the API refuses any other key). */
+export const IMAGE_BUILD_KEYS: readonly string[] = [
+  'debian-13',
+  'debian-12',
+  'ubuntu-24.04',
+  'ubuntu-26.04',
+];
+
+export function canBuildImageRow(row: ConfigurableCrudRecord): boolean {
+  return canManageImageRow(row) && IMAGE_BUILD_KEYS.includes(String(row['HimImageKey'] ?? ''));
+}
+
+const IMAGE_BUILD_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'queued', label: 'Queued' },
+  { value: 'running', label: 'Running' },
+  { value: 'succeeded', label: 'Succeeded' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const GENERATE_VERSION_ACTION: ConfigurableCrudRowAction = {
+  key: 'generateVersion',
+  label: 'Generate new version',
+  icon: 'build',
+  tooltip:
+    'Build a new draft version from the official cloud image of the vendor, with security updates applied. It is never published automatically.',
+  visible: (row) => canBuildImageRow(row),
+};
+
+function imageBuildsConfig(providerUUID: string, imageKey: string): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: `${IMAGE_BUILDS_ENDPOINT}/providers/${imageUuidSegment(providerUUID)}/images/${encodeURIComponent(imageKey)}`,
+    uuidField: 'buildUUID',
+    pageTitle: 'Builds',
+    pageDescription:
+      'New versions built from the official cloud image of the vendor. A finished build appears as a draft version; publish it in Manage access.',
+    readOnly: true,
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    bulkDelete: false,
+    statusFilter: false,
+    serverSidePagination: true,
+    emptyLabel: 'No builds requested for this image.',
+    columns: [
+      { id: 'dateCreated', label: 'Requested at', kind: 'datetime', field: 'dateCreated' },
+      {
+        id: 'state',
+        label: 'Status',
+        kind: 'status',
+        field: 'state',
+        options: IMAGE_BUILD_STATE_OPTIONS,
+        chipClass: (value) => operationChipClass(value),
+      },
+      { id: 'stage', label: 'Stage', field: 'stage' },
+      { id: 'progress', label: 'Progress (%)', kind: 'number', field: 'progress' },
+      {
+        id: 'revision',
+        label: 'Build revision',
+        field: 'result',
+        value: (row) =>
+          String((row['result'] as Record<string, unknown> | null)?.['revision'] ?? '-'),
+      },
+      {
+        id: 'draftVmid',
+        label: 'Draft VMID',
+        field: 'result',
+        value: (row) =>
+          String((row['result'] as Record<string, unknown> | null)?.['draftVmid'] ?? '-'),
+      },
+      {
+        id: 'acceptance',
+        label: 'Acceptance',
+        field: 'result',
+        value: (row, translate) => {
+          const acceptance = (row['result'] as Record<string, any> | null)?.['acceptance'];
+          if (!acceptance) return '-';
+          return acceptance.passed ? translate('Passed') : translate('Failed');
+        },
+      },
+      {
+        id: 'errorCode',
+        label: 'Last error',
+        field: 'errorCode',
+        value: (row, translate) => {
+          const code = String(row['errorCode'] ?? '').trim();
+          if (!code) return '-';
+          const key = VPS_IMAGE_ERROR_TEXTS[code.toUpperCase()];
+          return key ? translate(key) : code;
+        },
+      },
+      { id: 'dateFinished', label: 'Finished at', kind: 'datetime', field: 'dateFinished' },
+    ],
+    rowActions: [],
+    fields: [],
+  });
+}
+
 const MANAGE_ACCESS_ACTION: ConfigurableCrudRowAction = {
   key: 'manageAccess',
   label: 'Manage access',
@@ -730,6 +830,24 @@ export class HostingVpsImagesPage extends ConfigurableCrudPageBase<ConfigurableC
           ),
       },
       {
+        key: 'builds',
+        label: 'Builds',
+        emptyLabel: 'No builds requested for this image.',
+        uuidField: 'buildUUID',
+        endpoint: () =>
+          `${IMAGE_BUILDS_ENDPOINT}/providers/${imageUuidSegment(String(page.editingRecord()?.['HostingVpsProviderHvrUUID'] ?? ''))}/images/${encodeURIComponent(String(page.editingRecord()?.['HimImageKey'] ?? ''))}`,
+        deleteEndpoint: (_uuid, row) =>
+          `${IMAGE_BUILDS_ENDPOINT}/${imageUuidSegment(row['buildUUID'])}`,
+        initialValues: {},
+        fields: [],
+        columns: [],
+        config: () =>
+          imageBuildsConfig(
+            String(page.editingRecord()?.['HostingVpsProviderHvrUUID'] ?? ''),
+            String(page.editingRecord()?.['HimImageKey'] ?? ''),
+          ),
+      },
+      {
         key: 'history',
         label: 'History',
         emptyLabel: 'No access operations recorded for this image.',
@@ -757,7 +875,7 @@ export class HostingVpsImagesPage extends ConfigurableCrudPageBase<ConfigurableC
         remoteLookup: field.remoteLookup ? { ...field.remoteLookup } : undefined,
       })),
       canEditRow: (row) => canManageImageRow(row),
-      rowActions: [MANAGE_ACCESS_ACTION],
+      rowActions: [MANAGE_ACCESS_ACTION, GENERATE_VERSION_ACTION],
       relatedCollections: collections(
         // Passed through closure evaluated only when editingRecord() is set.
         null as unknown as HostingVpsImagesPage,
@@ -837,6 +955,40 @@ export class HostingVpsImagesPage extends ConfigurableCrudPageBase<ConfigurableC
   ): Promise<void> {
     if (action.key === 'manageAccess') {
       this.startEdit(row);
+    } else if (action.key === 'generateVersion') {
+      await this.requestImageBuild(row);
+    }
+  }
+
+  /** Queues a draft build of the image (never published automatically). */
+  private async requestImageBuild(row: ConfigurableCrudRecord): Promise<void> {
+    if (!canBuildImageRow(row)) return;
+    const providerUUID = String(row['HostingVpsProviderHvrUUID'] ?? '');
+    const imageKey = String(row['HimImageKey'] ?? '');
+    if (!isImageUuid(providerUUID)) return;
+    const isCurrent = this.capturePageContext();
+    const confirmed = await this.confirmAction(
+      'Generate new version',
+      this.t(
+        'Build a new draft version of {{image}} from the official cloud image of the vendor? It takes about 15 minutes, installs the security updates, passes an acceptance boot and stays as a draft until you publish it in Manage access.',
+        { image: String(row['HimName'] ?? imageKey) },
+      ),
+      'Generate',
+    );
+    if (!confirmed || !isCurrent()) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(IMAGE_BUILDS_ENDPOINT, {
+        providerUUID,
+        imageKey,
+        reason: 'New version requested in the App from the official cloud image of the vendor',
+      });
+      if (!isCurrent()) return;
+      this.snack.success(this.t('Image build queued. Follow it in the Builds tab of the image.'));
+    } catch (error) {
+      if (isCurrent()) this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.mutating.set(false);
     }
   }
 
