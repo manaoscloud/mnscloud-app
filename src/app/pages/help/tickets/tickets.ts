@@ -2,7 +2,21 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { SupportRequestDraft } from '../../../services/support-request-draft';
 import { readStoredEnvironmentUUID } from '../../../core/environment/environment-context';
-import { Component, afterNextRender, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  afterNextRender,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import {
+  loadSupportModules,
+  supportModuleFilterOptions,
+  supportModuleLabel,
+  supportModuleOptions,
+} from '../../support/shared/support-modules';
 import { ActivatedRoute } from '@angular/router';
 import { hasEffectivePermission } from '../../../core/guards/permission.guard';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,6 +27,7 @@ import { NotificationInboxService } from '../../../services/notification-inbox.s
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
@@ -31,6 +46,7 @@ function config(
   api: () => ApiService,
   dialog: () => MatDialog,
   readAll: () => boolean,
+  hasModules: () => boolean,
 ): ConfigurableCrudConfig {
   const open = (row: ConfigurableCrudRecord) =>
     !['closed', 'canceled'].includes(String(row['Status'] ?? ''));
@@ -68,6 +84,14 @@ function config(
         ],
         translateOptions: true,
         hiddenWhen: () => !readAll(),
+      },
+      {
+        key: 'moduleFilter',
+        paramKey: 'moduleCode',
+        label: 'Module',
+        type: 'search-select',
+        span: 1,
+        hiddenWhen: () => !hasModules(),
       },
     ],
     rowActions: [
@@ -120,9 +144,18 @@ function config(
         },
       },
     ],
-    initialValues: { typeUUID: '', priorityUUID: '', subject: '', description: '' },
+    initialValues: { moduleCode: '', typeUUID: '', priorityUUID: '', subject: '', description: '' },
     payload: (values) => ({ ...values, origin: 'help_center' }),
     fields: [
+      {
+        // Only modules the environment contracted (help/modules); the team of the module answers.
+        key: 'moduleCode',
+        payloadKey: 'moduleCode',
+        label: 'Module',
+        type: 'search-select',
+        hiddenWhen: () => !hasModules(),
+        help: 'Leave empty if the ticket is general or you are not sure.',
+      },
       {
         key: 'typeUUID',
         payloadKey: 'typeUUID',
@@ -173,6 +206,12 @@ function config(
         detail: (row) => String(row['TypeName'] ?? ''),
       },
       {
+        id: 'module',
+        field: 'ModuleCode',
+        label: 'Module',
+        value: (row, translate) => supportModuleLabel(row['ModuleCode'], translate),
+      },
+      {
         id: 'unread',
         field: 'UnreadCount',
         label: 'New replies',
@@ -217,6 +256,14 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
 
   private readonly reports = inject(SupportReportService);
   private readonly inbox = inject(NotificationInboxService);
+  private readonly moduleCodes: WritableSignal<string[]>;
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    const translate = (value: string) => this.t(value);
+    if (key === 'moduleCode') return supportModuleOptions(this.moduleCodes(), translate);
+    if (key === 'moduleFilter') return supportModuleFilterOptions(this.moduleCodes(), translate);
+    return super.lookupOptions(key);
+  }
 
   /** Opening the conversation marks it as read on the API: refresh the bell and the menu path. */
   override async runRowAction(
@@ -235,13 +282,17 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
     const dialog = inject(MatDialog);
     const auth = inject(AuthService);
     const route = inject(ActivatedRoute);
+    const modules = signal<string[]>([]);
     super(
       config(
         () => api,
         () => dialog,
         () => hasEffectivePermission(auth.user()?.permissions ?? [], READ_ALL),
+        () => modules().length > 0,
       ),
     );
+    this.moduleCodes = modules;
+    void loadSupportModules(api, 'help/modules').then((codes) => modules.set(codes));
     // Email links, the topbar notifications and "My tickets" after a report open the ticket
     // conversation: ?ticket=<uuid>. The route is reused, so follow later changes too.
     const rendered = signal(false);
@@ -286,6 +337,7 @@ export class HelpTicketsPage extends ConfigurableCrudPageBase<ConfigurableCrudRe
       },
       details: [
         { label: 'Protocol', value: row['SupportTicketID'], monospace: true },
+        { label: 'Module', value: supportModuleLabel(row['ModuleCode'], (key) => this.t(key)) },
         { label: 'Type', value: row['TypeName'] },
         { label: 'Priority', value: row['PriorityName'] },
         { label: 'Origin', value: row['ChannelName'] },

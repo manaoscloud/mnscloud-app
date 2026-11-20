@@ -15276,5 +15276,20 @@
   "Review the image publication and selected build.": "Review the image publication and selected build.",
   "The image provider is unavailable.": "The image provider is unavailable.",
   "This operation has reached its retry limit.": "This operation has reached its retry limit.",
-  "Changed by": "Changed by"
+  "Changed by": "Changed by",
+  "Leave empty if the ticket is general or you are not sure.": "Leave empty if the ticket is general or you are not sure.",
+  "Commercial module the ticket is about. A team that serves it receives new tickets.": "Commercial module the ticket is about. A team that serves it receives new tickets.",
+  "Module the ticket is about. A team that serves it receives new tickets.": "Module the ticket is about. A team that serves it receives new tickets.",
+  "Modules served": "Modules served",
+  "New tickets of these modules without a team go to this team (highest queue priority first).": "New tickets of these modules without a team go to this team (highest queue priority first).",
+  "Support module is not contracted by this environment": "This environment has not contracted the selected module.",
+  "Invalid support module": "Invalid module.",
+  "Invalid support team modules": "Invalid team module list.",
+  "commercial.module.clinic": "Clinic",
+  "commercial.module.laboratory": "Laboratory",
+  "commercial.module.fiscal": "Tax",
+  "commercial.module.stock": "Stock",
+  "commercial.module.pos": "POS",
+  "commercial.module.customer-billing": "Customer billing",
+  "commercial.module.accounting": "Accounting"
 }

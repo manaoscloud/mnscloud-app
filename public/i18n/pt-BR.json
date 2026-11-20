@@ -15277,5 +15277,20 @@
   "Review the image publication and selected build.": "Revise a publicação da imagem e a versão selecionada.",
   "The image provider is unavailable.": "O provedor da imagem está indisponível.",
   "This operation has reached its retry limit.": "Esta operação atingiu o limite de tentativas.",
-  "Changed by": "Alterado por"
+  "Changed by": "Alterado por",
+  "Leave empty if the ticket is general or you are not sure.": "Deixe vazio se o chamado for geral ou se não tiver certeza.",
+  "Commercial module the ticket is about. A team that serves it receives new tickets.": "Módulo comercial do chamado. A equipe que atende o módulo recebe os novos chamados.",
+  "Module the ticket is about. A team that serves it receives new tickets.": "Módulo do chamado. A equipe que atende o módulo recebe os novos chamados.",
+  "Modules served": "Módulos atendidos",
+  "New tickets of these modules without a team go to this team (highest queue priority first).": "Novos chamados destes módulos sem equipe vão para esta equipe (maior prioridade de fila primeiro).",
+  "Support module is not contracted by this environment": "Este ambiente não contratou o módulo informado.",
+  "Invalid support module": "Módulo inválido.",
+  "Invalid support team modules": "Lista de módulos da equipe inválida.",
+  "commercial.module.clinic": "Clínica",
+  "commercial.module.laboratory": "Laboratório",
+  "commercial.module.fiscal": "Fiscal",
+  "commercial.module.stock": "Estoque",
+  "commercial.module.pos": "PDV",
+  "commercial.module.customer-billing": "Cobrança de clientes",
+  "commercial.module.accounting": "Contabilidade"
 }
