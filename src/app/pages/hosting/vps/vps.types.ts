@@ -1,9 +1,5 @@
 export type VpsProvider =
-  | 'digitalocean'
-  | 'lightsail'
-  | 'proxmox'
-  | 'vmware_vcenter'
-  | 'sangfor_scp';
+  'digitalocean' | 'lightsail' | 'proxmox' | 'vmware_vcenter' | 'sangfor_scp';
 
 export type VpsPlatformNetwork = {
   bridge: string;
@@ -343,12 +339,7 @@ export type HostingVpsSnapshot = {
 };
 
 export type HostingVpsNetworkStatus =
-  | 'queued'
-  | 'creating'
-  | 'available'
-  | 'deleting'
-  | 'failed'
-  | 'deleted';
+  'queued' | 'creating' | 'available' | 'deleting' | 'failed' | 'deleted';
 
 export type HostingVpsNetwork = {
   HvnUUID: string;

@@ -2107,9 +2107,8 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
       await this.handleRowAction(action, row);
       return;
     }
-    const { ConfigurableCrudCollectionDialog } = await import(
-      './configurable-crud-collection-dialog'
-    );
+    const { ConfigurableCrudCollectionDialog } =
+      await import('./configurable-crud-collection-dialog');
     const formOnly = Boolean(action.form);
     if (!formOnly) {
       const binding = openCrudTemplateDialog(
@@ -4475,8 +4474,7 @@ function optionText(value: unknown): string | null {
 function quickCreateResponseRecord(response: unknown): ConfigurableCrudRecord | null {
   const value = response as { data?: unknown; item?: unknown; record?: unknown } | null | undefined;
   const data = value?.data as
-    | { item?: unknown; record?: unknown; data?: unknown; items?: unknown }
-    | undefined;
+    { item?: unknown; record?: unknown; data?: unknown; items?: unknown } | undefined;
   const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
   const candidates = [data?.item, data?.record, data?.data, items[0], value?.data, value?.item];
   for (const candidate of candidates) {
