@@ -1,6 +1,16 @@
 :host {
   display: block;
 }
+/* The global html/body never scroll (the signed-in layout owns its scroll area), so the public
+   access pages scroll inside this host; otherwise long forms such as sign-up are cut off on phones. */
+:host(:not(.auth-shell-preview)) {
+  height: 100vh;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .access-shell {
   --access-surface: #ffffff;
   --access-ink: #17243b;

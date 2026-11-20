@@ -26,6 +26,7 @@ import {
   imports: [MatButtonModule, MatIconModule, MatMenuModule, TranslocoPipe, ...MNS_MENU],
   templateUrl: './auth-shell.html',
   styleUrl: './auth-shell.scss',
+  host: { '[class.auth-shell-preview]': 'preview()' },
 })
 export class AuthShell {
   readonly publicTheme = inject(PublicThemeContextService);
