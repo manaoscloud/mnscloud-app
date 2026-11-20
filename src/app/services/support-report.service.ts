@@ -68,7 +68,7 @@ export type SupportReportPayload = {
   description: string;
   typeUUID: string | null;
   priorityUUID: string | null;
-  moduleCode: string | null;
+  moduleCode?: string | null;
   url: string;
   route: string;
   appVersion: string;
