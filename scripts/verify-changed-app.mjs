@@ -64,6 +64,7 @@ run('node', [
   'scripts/tests/capacity-scope.test.mjs',
   'scripts/tests/capacity-expiry.test.mjs',
   'scripts/tests/nav-resource-access.test.mjs',
+  'scripts/tests/vps-image-access.test.mjs',
   'scripts/validate-dialog-report-button.test.mjs',
   'scripts/validate-global-table.test.mjs',
   'scripts/validate-install-command-dialog.test.mjs',

@@ -165,6 +165,19 @@ export interface BillingSwitchDialogData {
             <dt>{{ 'Monthly charge from then' | transloco }}</dt>
             <dd>{{ money(data.preview.chargeAmount) }}</dd>
           } @else {
+            @if ((data.preview.termMonths ?? 1) > 1) {
+              <dt>{{ 'Prepaid term' | transloco }}</dt>
+              <dd>{{ '{{months}} months' | transloco: { months: data.preview.termMonths } }}</dd>
+              @if (data.preview.periodEnd) {
+                <dt>
+                  {{
+                    (data.preview.coterm ? 'Keeps the current term until' : 'Paid until')
+                      | transloco
+                  }}
+                </dt>
+                <dd>{{ date(data.preview.periodEnd) }}</dd>
+              }
+            }
             <dt>{{ 'New offer charge' | transloco }}</dt>
             <dd>{{ money(data.preview.chargeAmount) }}</dd>
             @if (data.preview.creditAmount > 0 || replaced().length) {

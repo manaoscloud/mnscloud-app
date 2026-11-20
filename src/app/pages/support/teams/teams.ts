@@ -1,7 +1,13 @@
 import { ActivatedRoute } from '@angular/router';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 import { SupportDesk, supportBase, supportDesk, YES_NO_OPTIONS } from '../shared/support-desk';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import {
+  loadSupportModules,
+  supportModuleLabel,
+  supportModuleOptions,
+} from '../shared/support-modules';
+import { ApiService } from '../../../services/api.service';
 import {
   ConfigurableCrudConfig,
   ConfigurableCrudOption,
@@ -51,12 +57,22 @@ function config(desk: SupportDesk): ConfigurableCrudConfig {
       code: '',
       queuePriority: 0,
       maxConcurrentTickets: 0,
+      moduleCodes: [],
       notes: '',
     },
     columns: [
       { id: 'name', label: 'Name', kind: 'identity', field: 'Name', uuidField: 'SupportTeamUUID' },
       { id: 'code', label: 'Code', field: 'Code' },
       { id: 'members', label: 'Members', field: 'MembersCount' },
+      {
+        id: 'modules',
+        label: 'Modules served',
+        field: 'ModuleCodes',
+        value: (row, translate) =>
+          (Array.isArray(row['ModuleCodes']) ? row['ModuleCodes'] : [])
+            .map((code) => supportModuleLabel(code, translate))
+            .join(', '),
+      },
       { id: 'default', label: 'Default', kind: 'boolean', field: 'IsDefault' },
       { id: 'status', label: 'Status', kind: 'status', field: 'Status' },
     ],
@@ -88,6 +104,15 @@ function config(desk: SupportDesk): ConfigurableCrudConfig {
         span: 1,
       },
       {
+        key: 'moduleCodes',
+        source: 'ModuleCodes',
+        payloadKey: 'moduleCodes',
+        type: 'multi-select',
+        label: 'Modules served',
+        span: 1,
+        help: 'New tickets of these modules without a team go to this team (highest queue priority first).',
+      },
+      {
         key: 'notes',
         payloadKey: 'description',
         source: 'Description',
@@ -108,8 +133,19 @@ function config(desk: SupportDesk): ConfigurableCrudConfig {
   styleUrls: ['../../../shared/crud/configurable-crud/configurable-crud-page.scss'],
 })
 export class SupportTeamsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
+  private readonly moduleCodes = signal<string[]>([]);
+
   constructor() {
-    super(config(supportDesk(inject(ActivatedRoute))));
+    const desk = supportDesk(inject(ActivatedRoute));
+    super(config(desk));
+    void loadSupportModules(inject(ApiService), `${supportBase(desk)}/modules`).then((codes) =>
+      this.moduleCodes.set(codes),
+    );
+  }
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'moduleCodes') return supportModuleOptions(this.moduleCodes(), (k) => this.t(k));
+    return super.lookupOptions(key);
   }
   protected override augmentPayload(payload: ConfigurableCrudRecord) {
     return {
@@ -118,6 +154,7 @@ export class SupportTeamsPage extends ConfigurableCrudPageBase<ConfigurableCrudR
       isDefault: Number(payload['isDefault']),
       queuePriority: Number(payload['queuePriority']),
       maxConcurrentTickets: Number(payload['maxConcurrentTickets']),
+      moduleCodes: Array.isArray(payload['moduleCodes']) ? payload['moduleCodes'] : [],
     };
   }
 }

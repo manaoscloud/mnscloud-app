@@ -12,11 +12,13 @@ import {
   BillingCatalogItem,
   BillingService,
   BillingSwitchPreview,
+  billingTermOffers,
 } from '../../shared/billing.service';
 import { BILLING_STRING_STATUS_OPTIONS } from '../../shared/billing-crud';
 import { openCrudComponentDialog } from '../../../../shared/dialog/crud-dialog.util';
 import { bindDialogClosed } from '../../../../shared/dialog/dialog-events.util';
 import { BillingSwitchDialogComponent } from './switch-dialog';
+import { BillingCheckoutDialogComponent, BillingCheckoutDialogResult } from './checkout-dialog';
 
 const CATALOG_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'billing/catalog',
@@ -91,6 +93,19 @@ const CATALOG_CONFIG: ConfigurableCrudConfig = {
       currencyField: 'BpcCurrency',
     },
     { id: 'mode', label: 'Billing mode', field: 'BpcBillingMode', translateValue: true },
+    {
+      id: 'terms',
+      label: 'Prepaid terms',
+      value: (row, t) => {
+        const terms = billingTermOffers(row);
+        if (!terms.length) return '-';
+        const best = terms.reduce(
+          (a, b) => (b.discountPercent > a.discountPercent ? b : a),
+          terms[0],
+        );
+        return `${t('Up to')} ${Number(best.discountPercent)}% (${best.months} ${t('months')})`;
+      },
+    },
     { id: 'promotion', label: 'Promotion', field: 'PromotionName' },
     {
       id: 'subscriptionStatus',
@@ -140,19 +155,20 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
       this.mutating.set(false);
     }
     const isSwitch = Boolean(preview && preview.contracts.length);
-    const confirmed = isSwitch
-      ? await this.confirmSwitch(String(row['OfferName'] ?? ''), preview!)
-      : await this.confirmAction(
-          'Subscribe',
-          'Subscribe to this offer? Monthly contracts renew automatically from your prepaid balance; access is suspended if funds are insufficient.',
-          'Subscribe',
-        );
-    if (!confirmed) return;
+    const offerName = String(row['OfferName'] ?? '');
+    let checkout: BillingCheckoutDialogResult | null = null;
+    if (isSwitch) {
+      if (!(await this.confirmSwitch(offerName, preview!))) return;
+    } else {
+      // New subscription: the tenant chooses monthly or a discounted prepaid term, and may use a coupon.
+      checkout = await this.chooseCheckout(offerName, priceUUID, row);
+      if (!checkout) return;
+    }
 
     this.mutating.set(true);
     try {
       // A switch confirmation is a different request than a plain checkout, so it gets its own key.
-      const requestKey = `${localStorage.getItem('mc_current_env')}:${priceUUID}:${isSwitch ? preview!.quotedAt : ''}`;
+      const requestKey = `${localStorage.getItem('mc_current_env')}:${priceUUID}:${isSwitch ? preview!.quotedAt : ''}:${checkout?.termMonths ?? ''}:${checkout?.promotionCode ?? ''}`;
       const idempotencyKey = this.checkoutKeys.get(requestKey) ?? crypto.randomUUID();
       this.checkoutKeys.set(requestKey, idempotencyKey);
       await this.billing.createSubscription({
@@ -160,6 +176,8 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
         offerType: row.OfferType,
         offerUUID: row.OfferUUID,
         idempotencyKey,
+        ...(checkout && checkout.termMonths > 1 ? { termMonths: checkout.termMonths } : {}),
+        ...(checkout?.promotionCode ? { promotionCode: checkout.promotionCode } : {}),
         ...(isSwitch
           ? { switch: { quotedAt: preview!.quotedAt, expectedCredit: preview!.creditAmount } }
           : {}),
@@ -179,6 +197,40 @@ export class BillingTenantCatalogPage extends ConfigurableCrudPageBase<
     } finally {
       this.mutating.set(false);
     }
+  }
+
+  private chooseCheckout(
+    offerName: string,
+    priceUUID: string,
+    row: BillingCatalogItem & ConfigurableCrudRecord,
+  ): Promise<BillingCheckoutDialogResult | null> {
+    return new Promise((resolve) => {
+      const binding = openCrudComponentDialog(
+        this.dialog,
+        BillingCheckoutDialogComponent,
+        'crud-form-dialog',
+        {
+          data: {
+            offerName,
+            priceUUID,
+            offerType: String(row.OfferType),
+            offerUUID: row.OfferUUID,
+            terms: ['MONTHLY', 'MODULE_MONTHLY'].includes(String(row['BpcBillingMode']))
+              ? billingTermOffers(row)
+              : [],
+          },
+          onEscape: () => binding.ref.close(null),
+        },
+      );
+      bindDialogClosed(
+        binding.ref,
+        (result) => {
+          binding.stop();
+          resolve((result as BillingCheckoutDialogResult | null) ?? null);
+        },
+        this.destroyRef,
+      );
+    });
   }
 
   private confirmSwitch(offerName: string, preview: BillingSwitchPreview): Promise<boolean> {

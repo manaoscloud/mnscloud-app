@@ -2465,6 +2465,15 @@ export const NAV_ITEMS: NavItem[] = [
             permissions: ['platform.master.access'],
           },
           {
+            id: 'hosting/vps/images',
+            label: 'nav.hosting.vps.images',
+            icon: 'album',
+            category: 'platform',
+            masterRoute: '/system/vps/images',
+            scope: 'master',
+            permissions: ['platform.master.access'],
+          },
+          {
             id: 'hosting/vps/plans',
             label: 'nav.hosting.vps.plans',
             icon: 'view_list',

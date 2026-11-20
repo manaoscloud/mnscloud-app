@@ -16,6 +16,7 @@ const KIND_LABELS: Record<string, string> = {
   pabxControl: 'operations.kind.pabxControl',
   clinicBradescoSiad: 'operations.kind.clinicBradescoSiad',
   activityLog: 'operations.kind.activityLog',
+  vpsImage: 'operations.kind.vpsImage',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -48,6 +49,7 @@ const ACTION_LABELS: Record<string, string> = {
   'pabx.realm.reconcile': 'operations.action.pabxRealm',
   'softswitch.realm.reconcile': 'operations.action.softswitchRealm',
   'realtime.domain.reconcile': 'operations.action.realtimeDomain',
+  'access.reconcile': 'operations.action.accessReconcile',
   submit: 'operations.action.submit',
 };
 
@@ -99,7 +101,8 @@ const ACTION_LABELS: Record<string, string> = {
                 operation.state === 'succeeded' ||
                 operation.state === 'blocked' ||
                 operation.state === 'failed' ||
-                operation.state === 'cancelled'
+                operation.state === 'cancelled' ||
+                operation.state === 'superseded'
               ) {
                 <div class="activity-item-actions">
                   @if (
@@ -124,7 +127,8 @@ const ACTION_LABELS: Record<string, string> = {
                     operation.state === 'succeeded' ||
                     operation.state === 'blocked' ||
                     operation.state === 'failed' ||
-                    operation.state === 'cancelled'
+                    operation.state === 'cancelled' ||
+                    operation.state === 'superseded'
                   ) {
                     <button
                       mat-icon-button
@@ -308,6 +312,8 @@ export class AsyncOperationActivityComponent {
         return 'operations.state.failed';
       case 'cancelled':
         return 'operations.state.cancelled';
+      case 'superseded':
+        return 'operations.state.superseded';
       default:
         return state;
     }

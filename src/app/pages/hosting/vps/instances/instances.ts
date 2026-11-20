@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../services/auth.service';
 
+import { billingTermOffers } from '../../../billing/shared/billing.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -104,6 +105,35 @@ const RUNTIME_INSTALL_LABELS: Record<string, string> = {
 
 /** FA5: roles whose runtime the platform installs (the API decides again). */
 const PLATFORM_RUNTIME_NAME = /^mns-dns-(dev|prod)\d+$/i;
+
+type VpsSecurityUpdates = {
+  available: boolean;
+  reason?: string;
+  state?: {
+    status: string;
+    rebootRequired: boolean;
+    pendingSecurityAfter: number | null;
+    automaticUpdates: string;
+    finishedAt: string | null;
+  };
+};
+
+const SECURITY_UPDATES_STATUS: Record<string, string> = {
+  applied: 'Security updates applied',
+  partial: 'Security updates partially applied',
+  deferred: 'Security updates deferred to the daily run',
+  skipped: 'Security updates disabled for this image',
+  unsupported: 'Security updates not supported by this system',
+  failed: 'Security updates failed',
+};
+
+const SECURITY_UPDATES_UNAVAILABLE: Record<string, string> = {
+  vm_not_running: 'Start the VPS to read its security updates',
+  agent_unavailable: 'The VPS guest agent did not answer',
+  not_reported: 'Not reported by this VPS',
+  invalid_report: 'Not reported by this VPS',
+  provider_unsupported: 'Not reported by this VPS',
+};
 
 const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
   installing: 'Installing',
@@ -377,6 +407,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     isActive: 1,
     planUUID: '',
+    billingTermMonths: '1',
     customerUUID: '',
     image: '',
     name: '',
@@ -494,6 +525,19 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     PLACEMENT_GROUP_FIELD,
+    {
+      // Prepaid term of the plan price; the database validates it (offered terms, plan floor).
+      key: 'billingTermMonths',
+      source: 'HviConfig',
+      payloadKey: 'billingTermMonths',
+      label: 'Prepaid term',
+      type: 'select',
+      options: [{ value: '1', label: 'Monthly' }],
+      span: 1,
+      help: 'Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.',
+      fromRecord: () => '1',
+      hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
+    },
     {
       // Internal (platform) servers only: hidden for tenant/customer servers (see the constructor).
       key: 'networkProfile',
@@ -907,6 +951,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (field.key === 'authMethod') {
       return this.isSelectedPlanKeyOnly() ? KEY_ONLY_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
     }
+    if (field.key === 'billingTermMonths') {
+      const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+      return [
+        { value: '1', label: this.t('Monthly') },
+        ...billingTermOffers({ TermsJson: plan?.TermsJson ?? null }).map((term) => ({
+          value: String(term.months),
+          label: `${term.months} ${this.t('months')} (-${Number(term.discountPercent)}%)`,
+        })),
+      ];
+    }
     return super.fieldOptions(field);
   }
 
@@ -935,6 +989,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key === 'planUUID') {
+      // Terms belong to the plan price: a new plan starts monthly until the tenant picks a term.
+      this.patchFormValues({ billingTermMonths: '1' });
       void this.applySelectedPlan(String(value ?? ''), true);
       return;
     }
@@ -995,6 +1051,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (providerImageId) config.providerImageId = providerImageId;
     if (notes) config.notes = notes;
     if (placementGroup) config.placementGroup = placementGroup;
+    const termMonths = Number(payload['billingTermMonths'] ?? 1);
+    if (!editing && termMonths > 1) config.billingTermMonths = termMonths;
 
     if (editing?.['HviExternalId']) {
       const current = parseConfig<HostingVpsInstanceConfig>(editing['HviConfig']) ?? {};
@@ -1692,6 +1750,43 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
+  /**
+   * Security update state reported by the VPS (runtime v4 images), read through the guest agent.
+   * Never blocks the details dialog: any failure just omits the line.
+   */
+  private async securityUpdatesSummary(uuid: string): Promise<string | null> {
+    try {
+      const response = await this.api.get<{ data?: VpsSecurityUpdates }>(
+        `${this.instanceEndpoint()}/${uuid}/security-updates`,
+      );
+      const data = response?.data;
+      if (!data) return null;
+      if (!data.available || !data.state) {
+        return this.t(
+          SECURITY_UPDATES_UNAVAILABLE[data.reason ?? ''] ?? 'Not reported by this VPS',
+        );
+      }
+      const state = data.state;
+      return [
+        this.t(SECURITY_UPDATES_STATUS[state.status] ?? state.status),
+        state.rebootRequired ? this.t('Reboot pending to load the new kernel') : null,
+        typeof state.pendingSecurityAfter === 'number' && state.pendingSecurityAfter > 0
+          ? `${this.t('Pending security updates')}: ${state.pendingSecurityAfter}`
+          : null,
+        state.automaticUpdates === 'enabled'
+          ? this.t('Automatic security updates on')
+          : this.t('Automatic security updates off'),
+        state.finishedAt
+          ? `${this.t('Updated')} ${new Date(state.finishedAt).toLocaleString()}`
+          : null,
+      ]
+        .filter((part): part is string => !!part)
+        .join(' · ');
+    } catch {
+      return null;
+    }
+  }
+
   private async openInstanceDetails(row: ConfigurableCrudRecord) {
     const uuid = this.recordUUID(row);
     if (!row['HviExternalId']) {
@@ -1732,6 +1827,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       runtime?.['status'] ?? config.runtime?.providerStatus ?? item.HviStatus ?? '-',
     );
     const isProxmox = String(plan?.HvpProvider ?? '').toLowerCase() === 'proxmox';
+    const securityUpdates = isProxmox ? await this.securityUpdatesSummary(uuid) : null;
 
     openDataViewerDialog(this.dialog, {
       title: this.t('VPS instance details'),
@@ -1747,6 +1843,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         { label: 'Provider', value: providerName },
         { label: 'Plan', value: plan?.HvpName ?? item.HostingVpsPlanHvpUUID },
         { label: 'External ID', value: item.HviExternalId, monospace: true },
+        ...(securityUpdates ? [{ label: 'Security updates', value: securityUpdates }] : []),
         ...(item.HviAdoptedAt
           ? [
               {
