@@ -2431,6 +2431,9 @@ server-side validation. Existing fields retain their configured/default length.
 - `shared/auth-shell` owns the responsive split/compact layout, brand panel, accessible links,
   language menu and form styles for sign-in, sign-up, password recovery/reset and email verification.
   Do not copy this shell or its SCSS into pages. Language changes preserve typed credentials.
+  The global `html`/`body` never scroll, so the shell host is the page's scroll container
+  (`100dvh`, vertical scroll; not in the Themes preview): long forms such as sign-up must stay
+  reachable on small phones. Never add another fixed-height wrapper around it.
 - `PublicThemeContextService` supplies the host brand and API-resolved `LoginAppearance`. Missing
   configuration uses translated product defaults; a broken image never blocks access. The brand
   color drives the primary button, with a computed contrasting foreground; links have independent
