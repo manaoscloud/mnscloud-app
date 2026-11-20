@@ -13,6 +13,7 @@ type BillingDashboardSnapshot = {
   packages: number;
   promotions: number;
   subscriptions: number;
+  deferred: string;
 };
 
 const EMPTY_DASHBOARD: BillingDashboardSnapshot = {
@@ -21,6 +22,7 @@ const EMPTY_DASHBOARD: BillingDashboardSnapshot = {
   packages: 0,
   promotions: 0,
   subscriptions: 0,
+  deferred: '',
 };
 
 @Component({
@@ -55,19 +57,25 @@ export class BillingSystemDashboardPage {
   readonly dashboard = dashboardResource({
     defaultValue: EMPTY_DASHBOARD,
     loader: async () => {
-      const [products, prices, packages, promotions, subscriptions] = await Promise.all([
-        this.billing.listProducts('', null),
-        this.billing.listPrices('', '', null),
-        this.billing.countPackages(),
-        this.billing.listPromotions('', null),
-        this.billing.listSystemSubscriptions('', ''),
-      ]);
+      const [products, prices, packages, promotions, subscriptions, termRevenue] =
+        await Promise.all([
+          this.billing.listProducts('', null),
+          this.billing.listPrices('', '', null),
+          this.billing.countPackages(),
+          this.billing.listPromotions('', null),
+          this.billing.listSystemSubscriptions('', ''),
+          this.billing.termRevenue().catch(() => []),
+        ]);
       return {
         products: products.length,
         prices: prices.length,
         packages,
         promotions: promotions.length,
         subscriptions: subscriptions.length,
+        // Prepaid terms: amount still to be served (liability), per currency.
+        deferred: termRevenue
+          .map((row) => `${row.Currency} ${Number(row.DeferredAmount ?? 0).toFixed(2)}`)
+          .join(' · '),
       };
     },
   });
@@ -81,6 +89,7 @@ export class BillingSystemDashboardPage {
       { label: 'Packages', value: value.packages, icon: 'redeem' },
       { label: 'Promotions', value: value.promotions, icon: 'local_offer' },
       { label: 'Subscriptions', value: value.subscriptions, icon: 'subscriptions' },
+      { label: 'Deferred prepaid terms', value: value.deferred || '-', icon: 'savings' },
     ];
   });
 }

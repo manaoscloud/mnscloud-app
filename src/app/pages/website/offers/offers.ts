@@ -10,7 +10,7 @@ import {
   ConfigurableCrudRowAction,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
-import { WEBSITE_OFFERS_ENDPOINT, WebsiteService } from '../website.service';
+import { WEBSITE_OFFERS_ENDPOINT, WebsiteOfferPlanCost, WebsiteService } from '../website.service';
 
 export const WEBSITE_OFFER_STATUS_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'draft', label: 'website.offerStatus.draft' },
@@ -26,7 +26,18 @@ export const WEBSITE_OFFER_CYCLE_OPTIONS: ConfigurableCrudOption[] = [
   { value: 'quarterly', label: 'website.offerCycle.quarterly' },
   { value: 'semiannual', label: 'website.offerCycle.semiannual' },
   { value: 'yearly', label: 'website.offerCycle.yearly' },
+  { value: 'biennial', label: 'website.offerCycle.biennial' },
+  { value: 'triennial', label: 'website.offerCycle.triennial' },
 ];
+
+const CYCLE_MONTHS: Record<string, number> = {
+  monthly: 1,
+  quarterly: 3,
+  semiannual: 6,
+  yearly: 12,
+  biennial: 24,
+  triennial: 36,
+};
 
 /** Copy per locale as flat form fields (`name_pt-BR`, `summary_pt-BR`, `features_pt-BR`). */
 const OFFER_LOCALES = [
@@ -400,6 +411,44 @@ export class WebsiteOffersPage extends ConfigurableCrudPageBase<ConfigurableCrud
       this.snack.error(this.t(this.errorMessage(error)));
     }
     this.refreshList();
+  }
+
+  /** Plans per kind with the platform cost, loaded once for the margin alert. */
+  private readonly planCosts = new Map<string, Promise<WebsiteOfferPlanCost[]>>();
+
+  protected override onFieldValueChanged(key: string, _value: unknown): void {
+    if (['planUUID', 'price', 'cycle'].includes(key)) void this.warnBelowCost();
+  }
+
+  /**
+   * Alert (never block, decision D8) when the customer price of a cycle is below what the platform
+   * charges for the same period: the prepaid term price when the plan offers that term, otherwise the
+   * monthly cost times the cycle months.
+   */
+  private async warnBelowCost(): Promise<void> {
+    const values = this.formValues();
+    const kind = String(values['kind'] ?? '');
+    const planUUID = String(values['planUUID'] ?? '');
+    const price = Number(values['price']);
+    const months = CYCLE_MONTHS[String(values['cycle'] ?? 'monthly')] ?? 1;
+    if (!kind || !planUUID || !Number.isFinite(price) || price <= 0) return;
+    if (!this.planCosts.has(kind)) this.planCosts.set(kind, this.website.offerPlans(kind));
+    let plans: WebsiteOfferPlanCost[];
+    try {
+      plans = await this.planCosts.get(kind)!;
+    } catch {
+      this.planCosts.delete(kind);
+      return;
+    }
+    const plan = plans.find((item) => item.planUUID.toLowerCase() === planUUID.toLowerCase());
+    if (!plan) return;
+    const term = (plan.costTerms ?? []).find((item) => Number(item.months) === months);
+    const cost = term ? Number(term.totalAmount) : Number(plan.cost) * months;
+    if (price < cost) {
+      this.snack.warning('website.offerBelowCost', 6000, {
+        cost: `${plan.currency} ${cost.toFixed(2)}`,
+      });
+    }
   }
 
   protected override validatePayload(payload: ConfigurableCrudRecord): boolean {
