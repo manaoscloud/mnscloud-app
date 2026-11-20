@@ -57,6 +57,17 @@ export const IMAGE_OPERATION_STATE_OPTIONS: readonly ConfigurableCrudOption[] = 
 
 export const VPS_IMAGE_ERROR_TEXTS: Readonly<Record<string, string>> = {
   VPS_IMAGE_PAYLOAD_INVALID: 'Review the image access fields and try again.',
+  VPS_IMAGE_BUILD_ACTIVE: 'A build of this image is already queued or running.',
+  VPS_IMAGE_BUILD_ACCEPTANCE_FAILED: 'The new version failed the acceptance boot and was removed.',
+  VPS_IMAGE_BUILD_SNIPPET_MISSING: 'The build node lacks a required MNSCloud cloud-init file.',
+  VPS_IMAGE_BUILD_STORAGE_IMPORT_DISABLED:
+    'The build node storage does not accept disk image imports.',
+  VPS_IMAGE_BUILD_CHECKSUM_UNAVAILABLE: 'The checksum of the vendor image could not be verified.',
+  VPS_IMAGE_BUILD_VENDOR_UNAVAILABLE: 'The vendor image site is unavailable. Try again later.',
+  VPS_IMAGE_BUILD_BOOTSTRAP_TIMEOUT: 'The build machine did not finish its preparation in time.',
+  VPS_IMAGE_BUILD_ATTEMPTS_EXHAUSTED: 'This build was interrupted too many times and stopped.',
+  VPS_IMAGE_BUILD_PROXMOX_FAILED:
+    'The hypervisor refused a build step. Check the error and try again.',
   VPS_IMAGE_GRANT_INVALID: 'Select valid active customer environments.',
   VPS_IMAGE_PUBLICATION_INVALID: 'Review the image publication and selected build.',
   VPS_IMAGE_VERSION_MISMATCH: 'Review the image publication and selected build.',
