@@ -142,6 +142,16 @@ export function campaignProgress(row: ConfigurableCrudRecord): string {
   return `${done} / ${num(row['targetCount'])}`;
 }
 
+/** "42 min" (or "1 h 5 min"); empty while the API has no duration yet. */
+export function campaignDuration(value: unknown, t: (key: string) => string): string {
+  const minutes = Number(value);
+  if (value === null || value === undefined || value === '' || !Number.isFinite(minutes)) return '';
+  const hours = Math.floor(minutes / 60);
+  const rest = Math.round(minutes % 60);
+  const min = t(key('minutesShort'));
+  return hours > 0 ? `${hours} h ${rest} ${min}` : `${rest} ${min}`;
+}
+
 export const campaignWave = (row: ConfigurableCrudRecord) =>
   `${num(row['currentWave'])} / ${num(row['waveCount'])}`;
 
@@ -204,8 +214,13 @@ export function campaignPayload(
   platform = false,
 ): Record<string, unknown> {
   const immediate = values['mode'] !== 'window';
+  const chosen = String(values['cyberAccountUUID'] ?? '');
   return {
-    ...campaignTargetBody(target),
+    ...campaignTargetBody(
+      !platform && 'cyberAccountUUID' in values
+        ? { ...target, cyberAccountUUID: chosen || undefined }
+        : target,
+    ),
     mode: immediate ? 'immediate' : 'window',
     rebootPolicy:
       !platform && values['rebootPolicy'] === 'server_policy' ? 'server_policy' : 'never',
@@ -237,8 +252,26 @@ const numberField = (name: string, extra: Partial<ConfigurableCrudField> = {}) =
     ...extra,
   }) as ConfigurableCrudField;
 
-function campaignFields(target: CampaignTarget): ConfigurableCrudField[] {
+export type AccountLookup = NonNullable<ConfigurableCrudField['remoteLookup']>;
+
+function campaignFields(accountLookup?: AccountLookup): ConfigurableCrudField[] {
+  const account: ConfigurableCrudField[] = accountLookup
+    ? [
+        {
+          key: 'cyberAccountUUID',
+          label: 'cyberSecurity.account',
+          type: 'search-select',
+          remoteLookup: accountLookup,
+          quickCreate: false,
+          quickCreateExemptReason:
+            'Cyber Security accounts are created by account administrators in Customer accounts.',
+          span: 1,
+          help: key('field.accountHelp'),
+        },
+      ]
+    : [];
   return [
+    ...account,
     {
       key: 'mode',
       label: key('field.mode'),
@@ -304,7 +337,11 @@ export function platformCampaignForm(form: ConfigurableCrudConfig): Configurable
 }
 
 /** The campaign form: settings of the run; it posts the campaign when saved. */
-export function campaignForm(target: CampaignTarget, platform = false): ConfigurableCrudConfig {
+export function campaignForm(
+  target: CampaignTarget,
+  platform = false,
+  accountLookup?: AccountLookup,
+): ConfigurableCrudConfig {
   const form = defineCrud({
     endpoint: campaignsEndpoint,
     uuidField: 'campaignUUID',
@@ -324,10 +361,11 @@ export function campaignForm(target: CampaignTarget, platform = false): Configur
       approveNow: 'no',
       reason: '',
       confirm: '',
+      ...(accountLookup && !platform ? { cyberAccountUUID: target.cyberAccountUUID ?? '' } : {}),
     },
     payload: (values) => campaignPayload(target, values, platform),
     columns: [],
-    fields: campaignFields(target),
+    fields: campaignFields(accountLookup && !platform ? accountLookup : undefined),
   });
   return platform ? platformCampaignForm(form) : form;
 }
@@ -477,6 +515,11 @@ export function campaignView(campaign: ConfigurableCrudRecord, t: Translate): Da
         { label: key('col.scope'), value: campaignDescription(campaign, t), translate: false },
         { label: key('field.mode'), value: t(key(`mode.${campaign['mode']}`)), translate: false },
         { label: key('col.progress'), value: campaignProgress(campaign), translate: false },
+        {
+          label: key('col.duration'),
+          value: campaignDuration(campaign['durationMinutes'], t),
+          translate: false,
+        },
         { label: key('col.failed'), value: num(campaign['failedCount']), translate: false },
         { label: key('col.wave'), value: campaignWave(campaign), translate: false },
         { label: key('field.canarySize'), value: campaign['canarySize'] ?? '', translate: false },

@@ -345,6 +345,9 @@ function platformNetwork(config: ConfigurableCrudConfig): ConfigurableCrudConfig
   };
 }
 
+const REFRESH_SOURCES_KEY = 'refreshSources';
+const SOURCES_REFRESH_ENDPOINT = 'cyber-security/vulnerabilities/sources/refresh';
+
 function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
   if (section === 'network') return platformNetwork(config);
   if (section === 'patches') {
@@ -356,6 +359,20 @@ function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
           ? { ...action, form: (row: ConfigurableCrudRecord) => neverReboot(form(row)) }
           : action;
       }),
+    };
+  }
+  if (section === 'vulnerabilities') {
+    return {
+      ...config,
+      filterActions: [
+        ...(config.filterActions ?? []),
+        {
+          key: REFRESH_SOURCES_KEY,
+          label: 'cyberSecurity.vuln.refreshSources',
+          icon: 'sync',
+          tooltip: 'cyberSecurity.vuln.refreshSourcesHelp',
+        },
+      ],
     };
   }
   if (section !== 'hardening') return config;
@@ -1409,15 +1426,56 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
         key: 'campaignCreate',
         label: 'cyberSecurity.patch.campaign.new',
         icon: 'healing',
-        form: () => campaignForm(target, platform),
+        form: () => campaignForm(target, platform, CYBER_ACCOUNT_LOOKUP),
       },
       {},
     );
   }
 
+  /** Platform scope: ask the worker to refresh the vulnerability sources now (once per hour). */
+  private async refreshSources(): Promise<void> {
+    let last = '';
+    try {
+      const response = await this.api.get<{ data?: Record<string, unknown> }>(
+        SOURCES_REFRESH_ENDPOINT,
+      );
+      last = this.lastRefreshText(response?.data);
+    } catch {
+      // The last request is informative only; the request itself reports its own error.
+    }
+    const message = [this.t('cyberSecurity.vuln.refreshSourcesConfirm'), last]
+      .filter(Boolean)
+      .join(' ');
+    if (!(await this.confirmAction('cyberSecurity.vuln.refreshSources', message))) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(SOURCES_REFRESH_ENDPOINT, {});
+      this.snack.success(this.t('cyberSecurity.vuln.refreshSourcesDone'));
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  private lastRefreshText(data?: Record<string, unknown>): string {
+    const at = data?.['requestedAt'];
+    const date = at ? new Date(String(at)) : null;
+    if (!date || Number.isNaN(date.getTime())) return '';
+    const when = new Intl.DateTimeFormat(this.language(), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(date);
+    return this.t('cyberSecurity.vuln.refreshSourcesLast', {
+      when,
+      user: String(data?.['requestedBy'] ?? ''),
+    });
+  }
+
   override async handleFilterAction(action: { key: string }): Promise<void> {
     const emergency = targetFromEmergencyKey(action.key);
     if (emergency) return this.beginCampaign(emergency, this.platformScope);
+    if (action.key === REFRESH_SOURCES_KEY) return this.refreshSources();
     if (action.key === 'patchCampaigns') {
       return this.runRowAction(
         {

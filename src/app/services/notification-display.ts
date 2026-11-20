@@ -10,6 +10,26 @@ const SECURITY_DETAIL: Record<string, string> = {
   'security.hardening': 'checks',
 };
 
+/** Title key of the patch campaign notice by `kind`. */
+const PATCH_TITLE_KEYS: Record<string, string> = {
+  campaign_started: 'notifications.securityPatchStarted',
+  campaign_halted: 'notifications.securityPatchHalted',
+  campaign_completed: 'notifications.securityPatchCompleted',
+  run_failed: 'notifications.securityPatchRunFailed',
+};
+
+/** Description of the patch notice: the error of a failed run, else the CVEs and the counters. */
+function patchDetail(params: InboxNotification['params']): string {
+  if (params['kind'] === 'run_failed') {
+    return String(params['error'] ?? '');
+  }
+  const counters =
+    params['targetCount'] === undefined
+      ? ''
+      : `${params['successCount'] ?? 0}/${params['targetCount']}`;
+  return [params['cves'], counters].filter(Boolean).join(' · ');
+}
+
 /** Icon by notification type (never by read state; the row style carries the state). */
 export function notificationIcon(item: InboxNotification): string {
   switch (item.type) {
@@ -48,6 +68,10 @@ export function notificationIcon(item: InboxNotification): string {
       return 'pest_control';
     case 'security.hardening':
       return 'rule';
+    case 'security.patch':
+      return item.params['kind'] === 'run_failed' || item.params['kind'] === 'campaign_halted'
+        ? 'report'
+        : 'system_update_alt';
     case 'website.order.activation':
       return 'storefront';
     case 'website.order.cancelled':
@@ -147,6 +171,12 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
         server: param('server'),
         count: param('count') || '1',
       });
+    case 'security.patch':
+      return t(PATCH_TITLE_KEYS[param('kind')] ?? PATCH_TITLE_KEYS['campaign_started'], {
+        server: param('server'),
+        scope: param('scope'),
+        count: param('failedCount') || '0',
+      });
     case 'website.order.activation':
       return t(
         param('step') === 'manual'
@@ -208,35 +238,38 @@ function releaseNoteTitle(item: InboxNotification, language: string): string {
 /** Subject/offer/title plus the local date of the last event. */
 export function notificationDescription(item: InboxNotification, language: string): string {
   const subject =
-    item.type === 'billing.subscription'
-      ? item.params['offer']
-      : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
-        ? item.params['title']
-        : item.type === 'website.order.activation' ||
-            item.type === 'website.order.cancelled' ||
-            item.type === 'website.order.plan_changed'
-          ? item.params['offer']
-          : item.type.startsWith('logs.account.') || item.type === 'cyber_security.unblock_request'
-            ? item.params['account']
-            : item.type === 'voip.pabx.extension.offline'
-              ? item.params['extensions']
-              : item.type === 'dns.monitor.target'
-                ? item.params['failing'] || item.params['target']
-                : item.type === 'security.alert'
-                  ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
-                  : item.type === 'security.vulnerability'
-                    ? item.params['servers']
-                    : SECURITY_DETAIL[item.type]
-                      ? item.params[SECURITY_DETAIL[item.type]]
-                      : item.type === 'security.protection' && item.params['kind'] === 'lost'
-                        ? item.params['services']
-                        : item.type.startsWith('security.')
-                          ? item.params['hostname']
-                          : item.type === 'hr.time_request'
-                            ? `#${String(item.params['id'] ?? '')}`
-                            : item.type.startsWith('release_note.')
-                              ? releaseNoteTitle(item, language)
-                              : item.params['subject'];
+    item.type === 'security.patch'
+      ? patchDetail(item.params)
+      : item.type === 'billing.subscription'
+        ? item.params['offer']
+        : item.type === 'feature_request.status' || item.type === 'workorders.order.overdue'
+          ? item.params['title']
+          : item.type === 'website.order.activation' ||
+              item.type === 'website.order.cancelled' ||
+              item.type === 'website.order.plan_changed'
+            ? item.params['offer']
+            : item.type.startsWith('logs.account.') ||
+                item.type === 'cyber_security.unblock_request'
+              ? item.params['account']
+              : item.type === 'voip.pabx.extension.offline'
+                ? item.params['extensions']
+                : item.type === 'dns.monitor.target'
+                  ? item.params['failing'] || item.params['target']
+                  : item.type === 'security.alert'
+                    ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
+                    : item.type === 'security.vulnerability'
+                      ? item.params['servers']
+                      : SECURITY_DETAIL[item.type]
+                        ? item.params[SECURITY_DETAIL[item.type]]
+                        : item.type === 'security.protection' && item.params['kind'] === 'lost'
+                          ? item.params['services']
+                          : item.type.startsWith('security.')
+                            ? item.params['hostname']
+                            : item.type === 'hr.time_request'
+                              ? `#${String(item.params['id'] ?? '')}`
+                              : item.type.startsWith('release_note.')
+                                ? releaseNoteTitle(item, language)
+                                : item.params['subject'];
   const date = item.lastEventAt ? new Date(item.lastEventAt) : null;
   const when =
     date && !Number.isNaN(date.getTime())

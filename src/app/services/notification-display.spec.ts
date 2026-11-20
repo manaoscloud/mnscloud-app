@@ -111,6 +111,33 @@ describe('cyber security notifications', () => {
     expect(notificationTitle(hardening, titled)).toBe('notifications.securityHardening:web-1:1');
     expect(notificationDescription(hardening, 'pt-BR')).toBe('mac.sip');
   });
+
+  it('shows the patch campaign notices by kind', () => {
+    const named = (key: string, params?: Record<string, string>) => `${key}:${params?.['server']}`;
+    const started = item('security.patch', {
+      kind: 'campaign_started',
+      cves: 'CVE-2026-1',
+      targetCount: '4',
+      successCount: '0',
+    });
+    expect(notificationIcon(started)).toBe('system_update_alt');
+    expect(notificationTitle(started, named)).toBe('notifications.securityPatchStarted:');
+    expect(notificationDescription(started, 'pt-BR')).toBe('CVE-2026-1 · 0/4');
+    const failed = item('security.patch', {
+      kind: 'run_failed',
+      server: 'web-1',
+      error: 'timeout',
+    });
+    expect(notificationIcon(failed)).toBe('report');
+    expect(notificationTitle(failed, named)).toBe('notifications.securityPatchRunFailed:web-1');
+    expect(notificationDescription(failed, 'pt-BR')).toBe('timeout');
+    expect(notificationTitle(item('security.patch', { kind: 'campaign_halted' }), named)).toBe(
+      'notifications.securityPatchHalted:',
+    );
+    expect(notificationTitle(item('security.patch', { kind: 'campaign_completed' }), named)).toBe(
+      'notifications.securityPatchCompleted:',
+    );
+  });
 });
 
 describe('time clock kiosk notifications (K4b)', () => {

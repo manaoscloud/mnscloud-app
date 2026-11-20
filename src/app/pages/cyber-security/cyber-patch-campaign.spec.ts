@@ -1,6 +1,7 @@
 import {
   campaignActionsFor,
   campaignDescription,
+  campaignDuration,
   campaignForm,
   campaignPayload,
   campaignPreviewBody,
@@ -88,6 +89,24 @@ describe('Cyber Security patch campaigns', () => {
     const window = campaignPayload({ scope: 'all' }, { ...values, mode: 'window' });
     expect(window['mode']).toBe('window');
     expect('confirm' in window).toBe(false);
+  });
+
+  it('uses the account chosen in the form and formats the duration', () => {
+    const target = { scope: 'all' as const, cyberAccountUUID: 'acc-1' };
+    const body = (values: Record<string, unknown>) =>
+      campaignPayload(target, { mode: 'window', reason: 'xxxxx', ...values });
+    expect(body({ cyberAccountUUID: 'acc-2' })['cyberAccountUUID']).toBe('acc-2');
+    expect('cyberAccountUUID' in body({ cyberAccountUUID: '' })).toBe(false);
+    const lookup = { endpoint: 'cyber-security/accounts', uuidField: 'a', labelField: 'b' };
+    const form = campaignForm(target, false, lookup);
+    expect(form.fields.find((f) => f.key === 'cyberAccountUUID')?.span).toBe(1);
+    expect(form.initialValues?.['cyberAccountUUID']).toBe('acc-1');
+    expect(
+      campaignForm(target, true, lookup).fields.some((f) => f.key === 'cyberAccountUUID'),
+    ).toBe(false);
+    expect(campaignDuration(42, () => 'min')).toBe('42 min');
+    expect(campaignDuration(65, () => 'min')).toBe('1 h 5 min');
+    expect(campaignDuration(null, () => 'min')).toBe('');
   });
 
   it('carries the selected account in the preview and create bodies', () => {

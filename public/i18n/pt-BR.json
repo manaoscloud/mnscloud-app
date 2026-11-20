@@ -15519,5 +15519,17 @@
   "The vendor image site is unavailable. Try again later.": "O site de imagens do fornecedor está indisponível. Tente mais tarde.",
   "The build machine did not finish its preparation in time.": "A máquina de build não terminou a preparação a tempo.",
   "This build was interrupted too many times and stopped.": "Este build foi interrompido vezes demais e parou.",
-  "The hypervisor refused a build step. Check the error and try again.": "O hipervisor recusou uma etapa do build. Veja o erro e tente de novo."
+  "The hypervisor refused a build step. Check the error and try again.": "O hipervisor recusou uma etapa do build. Veja o erro e tente de novo.",
+  "notifications.securityPatchStarted": "Campanha de correção iniciada",
+  "notifications.securityPatchHalted": "Campanha de correção parada por falhas",
+  "notifications.securityPatchCompleted": "Campanha de correção concluída",
+  "notifications.securityPatchRunFailed": "Patch falhou em {{server}}",
+  "cyberSecurity.patch.campaign.field.accountHelp": "Conta de cliente da campanha. Vazio: todos os servidores que você vê.",
+  "cyberSecurity.patch.campaign.col.duration": "Duração",
+  "cyberSecurity.patch.campaign.minutesShort": "min",
+  "cyberSecurity.vuln.refreshSources": "Atualizar fontes agora",
+  "cyberSecurity.vuln.refreshSourcesHelp": "Pede ao worker que consulte as fontes de vulnerabilidades (CISA KEV, OSV) agora.",
+  "cyberSecurity.vuln.refreshSourcesConfirm": "As fontes (CISA KEV, OSV) serão consultadas na próxima rodada do worker, em até 10 minutos. Permitido uma vez por hora.",
+  "cyberSecurity.vuln.refreshSourcesLast": "Último pedido: {{when}} por {{user}}.",
+  "cyberSecurity.vuln.refreshSourcesDone": "Atualização das fontes solicitada. Ela roda na próxima rodada do worker."
 }
