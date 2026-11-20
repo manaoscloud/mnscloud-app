@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -260,7 +260,7 @@ export interface BillingCheckoutDialogResult {
     }
   `,
 })
-export class BillingCheckoutDialogComponent implements OnInit {
+export class BillingCheckoutDialogComponent {
   readonly data = inject<BillingCheckoutDialogData>(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<BillingCheckoutDialogComponent>);
   private readonly billing = inject(BillingService);
@@ -285,7 +285,7 @@ export class BillingCheckoutDialogComponent implements OnInit {
     return q ? q.totalAmount > q.availableBalance : false;
   });
 
-  ngOnInit(): void {
+  constructor() {
     void this.refresh(1, null);
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -125,19 +125,20 @@ const TERM_MONTHS = [3, 6, 12, 24, 36] as const;
                 min="0"
                 max="90"
                 step="0.5"
+                data-field-key="discountPercent"
                 [ngModel]="discount()"
                 (ngModelChange)="discount.set(+$event)"
               />
+              @if (!valid()) {
+                <mat-error>{{
+                  'The discount must be between 0 and 90 percent.' | transloco
+                }}</mat-error>
+              }
             </mat-form-field>
             <mat-checkbox [ngModel]="setupWaive()" (ngModelChange)="setupWaive.set($event)">
               {{ 'Waive setup' | transloco }}
             </mat-checkbox>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="save()"
-              [disabled]="busy() || !valid()"
-            >
+            <button mat-stroked-button type="button" (click)="save()">
               <mat-icon>save</mat-icon>
               {{ 'Save term' | transloco }}
             </button>
@@ -233,7 +234,7 @@ const TERM_MONTHS = [3, 6, 12, 24, 36] as const;
     }
   `,
 })
-export class BillingPriceTermsDialogComponent implements OnInit {
+export class BillingPriceTermsDialogComponent {
   readonly data = inject<BillingPriceTermsDialogData>(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<BillingPriceTermsDialogComponent>);
   private readonly billing = inject(BillingService);
@@ -251,7 +252,7 @@ export class BillingPriceTermsDialogComponent implements OnInit {
     () => Number.isFinite(this.discount()) && this.discount() >= 0 && this.discount() <= 90,
   );
 
-  ngOnInit(): void {
+  constructor() {
     void this.reload();
   }
 
@@ -266,6 +267,10 @@ export class BillingPriceTermsDialogComponent implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.valid()) {
+      this.snack.error('The discount must be between 0 and 90 percent.');
+      return;
+    }
     await this.run(async () => {
       this.terms.set(
         await this.billing.savePriceTerm(this.data.priceUUID, this.months(), {
