@@ -15497,5 +15497,6 @@
   "Router revision applied.": "Revisão do roteador aplicada.",
   "website.offerCycle.biennial": "Bienal (24 meses)",
   "website.offerCycle.triennial": "Trienal (36 meses)",
-  "website.offerBelowCost": "Atenção: este preço fica abaixo do custo da plataforma para o mesmo período ({{cost}})."
+  "website.offerBelowCost": "Atenção: este preço fica abaixo do custo da plataforma para o mesmo período ({{cost}}).",
+  "Deferred prepaid terms": "Prazos pré-pagos a servir"
 }

@@ -311,6 +311,15 @@ export interface BillingCancelPreview {
   effectiveAt: string | null;
 }
 
+/** Master: prepaid term revenue of one currency. */
+export interface BillingTermRevenue {
+  Currency: string;
+  ContractCount: number;
+  ReceivedAmount: number;
+  RecognizedAmount: number;
+  DeferredAmount: number;
+}
+
 /** Master: prepaid term of a price. */
 export interface BillingPriceTerm {
   BtmUUID: string;
@@ -913,6 +922,14 @@ export class BillingService {
     const response = await this.api.post<ApiListResponse<BillingPriceTermLadderResult>>(
       `system/billing/prices/${priceUUID}/terms/apply-ladder`,
       {},
+    );
+    return response.data?.items ?? [];
+  }
+
+  /** Master: received, recognized and deferred amounts of live prepaid terms, per currency. */
+  async termRevenue() {
+    const response = await this.api.get<ApiListResponse<BillingTermRevenue>>(
+      'system/billing/term-revenue',
     );
     return response.data?.items ?? [];
   }
