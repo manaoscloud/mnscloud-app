@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../services/auth.service';
 
+import { billingTermOffers } from '../../../billing/shared/billing.service';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -406,6 +407,7 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
   initialValues: {
     isActive: 1,
     planUUID: '',
+    billingTermMonths: '1',
     customerUUID: '',
     image: '',
     name: '',
@@ -523,6 +525,19 @@ const HOSTING_VPS_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       fromRecord: (_value, row) => instanceImageFromRecord(row),
     },
     PLACEMENT_GROUP_FIELD,
+    {
+      // Prepaid term of the plan price; the database validates it (offered terms, plan floor).
+      key: 'billingTermMonths',
+      source: 'HviConfig',
+      payloadKey: 'billingTermMonths',
+      label: 'Prepaid term',
+      type: 'select',
+      options: [{ value: '1', label: 'Monthly' }],
+      span: 1,
+      help: 'Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.',
+      fromRecord: () => '1',
+      hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
+    },
     {
       // Internal (platform) servers only: hidden for tenant/customer servers (see the constructor).
       key: 'networkProfile',
@@ -936,6 +951,16 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (field.key === 'authMethod') {
       return this.isSelectedPlanKeyOnly() ? KEY_ONLY_AUTH_METHOD_OPTIONS : AUTH_METHOD_OPTIONS;
     }
+    if (field.key === 'billingTermMonths') {
+      const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+      return [
+        { value: '1', label: this.t('Monthly') },
+        ...billingTermOffers({ TermsJson: plan?.TermsJson ?? null }).map((term) => ({
+          value: String(term.months),
+          label: `${term.months} ${this.t('months')} (-${Number(term.discountPercent)}%)`,
+        })),
+      ];
+    }
     return super.fieldOptions(field);
   }
 
@@ -964,6 +989,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
 
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key === 'planUUID') {
+      // Terms belong to the plan price: a new plan starts monthly until the tenant picks a term.
+      this.patchFormValues({ billingTermMonths: '1' });
       void this.applySelectedPlan(String(value ?? ''), true);
       return;
     }
@@ -1024,6 +1051,8 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     if (providerImageId) config.providerImageId = providerImageId;
     if (notes) config.notes = notes;
     if (placementGroup) config.placementGroup = placementGroup;
+    const termMonths = Number(payload['billingTermMonths'] ?? 1);
+    if (!editing && termMonths > 1) config.billingTermMonths = termMonths;
 
     if (editing?.['HviExternalId']) {
       const current = parseConfig<HostingVpsInstanceConfig>(editing['HviConfig']) ?? {};

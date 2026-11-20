@@ -15367,5 +15367,6 @@
   "Automatic security updates off": "Atualização automática de segurança desligada",
   "Start the VPS to read its security updates": "Ligue a VPS para ler as atualizações de segurança",
   "The VPS guest agent did not answer": "O agente da VPS não respondeu",
-  "Not reported by this VPS": "Não informado por esta VPS"
+  "Not reported by this VPS": "Não informado por esta VPS",
+  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
 }

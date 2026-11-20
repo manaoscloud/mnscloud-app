@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "afebd65fd06e",
+  "version": "2174d98cdbce",
   "language": "pt-BR",
   "entries": [
     {
@@ -3623,6 +3623,10 @@
         {
           "label": "Grupo de posicionamento",
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
+          "label": "Prazo pré-pago",
+          "help": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
         },
         {
           "label": "Rede",
@@ -12411,6 +12415,10 @@
         {
           "label": "Grupo de posicionamento",
           "help": "Opcional. Servidores do mesmo cliente com o mesmo grupo rodam em nós de servidor diferentes (um por nó), assim a falha de um nó para só um deles. Vale para planos com nó automático."
+        },
+        {
+          "label": "Prazo pré-pago",
+          "help": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
         },
         {
           "label": "Rede",
