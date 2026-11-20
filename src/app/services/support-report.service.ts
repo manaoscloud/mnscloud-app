@@ -22,6 +22,8 @@ export type SupportReportDraft = {
   /** Platform ticket type and priority (catalogs of the platform support desk). */
   typeUUID: string;
   priorityUUID: string;
+  /** Commercial module of the ticket ('' = general); only modules the environment contracted. */
+  moduleCode: string;
   includeDiagnostics: boolean;
 };
 
@@ -66,6 +68,7 @@ export type SupportReportPayload = {
   description: string;
   typeUUID: string | null;
   priorityUUID: string | null;
+  moduleCode: string | null;
   url: string;
   route: string;
   appVersion: string;
@@ -119,6 +122,7 @@ const EMPTY_DRAFT: SupportReportDraft = {
   description: '',
   typeUUID: '',
   priorityUUID: '',
+  moduleCode: '',
   includeDiagnostics: true,
 };
 
@@ -432,6 +436,7 @@ export class SupportReportService {
         description: payload.description,
         typeUUID: payload.typeUUID,
         priorityUUID: payload.priorityUUID,
+        moduleCode: payload.moduleCode,
         screenshot: payload.screenshot,
         route: payload.route,
         includeDiagnostics: this.draft().includeDiagnostics,

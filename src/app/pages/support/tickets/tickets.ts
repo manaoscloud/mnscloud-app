@@ -1,11 +1,18 @@
 import { canRemote, remoteLaunchLink } from '../remote/remote-context';
 import { workOrderQuickForm } from '../../workorders/orders';
-import { Component, afterNextRender, inject } from '@angular/core';
+import { Component, afterNextRender, inject, signal } from '@angular/core';
+import {
+  loadSupportModules,
+  supportModuleFilterOptions,
+  supportModuleLabel,
+  supportModuleOptions,
+} from '../shared/support-modules';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudField,
+  ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
   ConfigurableCrudRowAction,
@@ -190,6 +197,13 @@ function config(
         options: SUPPORT_QUEUE_OPTIONS,
         translateOptions: true,
       },
+      {
+        key: 'moduleFilter',
+        paramKey: 'moduleCode',
+        label: 'Module',
+        type: 'search-select',
+        span: 1,
+      },
     ],
     rowActions: [
       {
@@ -276,6 +290,7 @@ function config(
       channelUUID: '',
       typeUUID: '',
       priorityUUID: '',
+      moduleCode: '',
       status: 'open',
       subject: '',
       description: '',
@@ -302,6 +317,12 @@ function config(
         field: 'Subject',
         label: 'Subject',
         detail: (row) => String(row['TypeName'] ?? ''),
+      },
+      {
+        id: 'module',
+        field: 'ModuleCode',
+        label: 'Module',
+        value: (row, translate) => supportModuleLabel(row['ModuleCode'], translate),
       },
       {
         id: 'requester',
@@ -424,6 +445,18 @@ function config(
         false,
       ),
       {
+        // Tenant desk: modules the tenant contracted; platform desk: the whole catalog.
+        key: 'moduleCode',
+        source: 'ModuleCode',
+        payloadKey: 'moduleCode',
+        label: 'Module',
+        type: 'search-select',
+        span: 1,
+        help: platform
+          ? 'Commercial module the ticket is about. A team that serves it receives new tickets.'
+          : 'Module the ticket is about. A team that serves it receives new tickets.',
+      },
+      {
         key: 'status',
         source: 'Status',
         payloadKey: 'status',
@@ -505,6 +538,14 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
   private readonly desk: SupportDesk;
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly moduleCodes = signal<string[]>([]);
+
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    const translate = (value: string) => this.t(value);
+    if (key === 'moduleCode') return supportModuleOptions(this.moduleCodes(), translate);
+    if (key === 'moduleFilter') return supportModuleFilterOptions(this.moduleCodes(), translate);
+    return super.lookupOptions(key);
+  }
 
   constructor() {
     const route = inject(ActivatedRoute);
@@ -526,6 +567,9 @@ export class SupportTicketsPage extends ConfigurableCrudPageBase<ConfigurableCru
       ),
     );
     this.desk = desk;
+    void loadSupportModules(api, `${supportBase(desk)}/modules`).then((codes) =>
+      this.moduleCodes.set(codes),
+    );
     // Email links open one ticket directly: ?ticket=<uuid>.
     const requested = route.snapshot.queryParamMap.get('ticket');
     if (requested) afterNextRender(() => void this.openTicket(requested));
