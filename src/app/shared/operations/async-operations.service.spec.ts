@@ -74,6 +74,7 @@ describe('Queued operations in cookie sessions', () => {
       data: {
         items: [
           { operationUUID, state: 'succeeded' },
+          { operationUUID: '44444444444444444444444444444444', state: 'superseded' },
           { operationUUID: '33333333333333333333333333333333', state: 'failed', canRecheck: true },
         ],
       },
@@ -120,6 +121,30 @@ describe('Queued operations in cookie sessions', () => {
     service.watch({ operationUUID, state: 'succeeded' }, owner(), callback);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(get).not.toHaveBeenCalled();
+    expect(service.badgeCount()).toBe(0);
+  });
+  it('settles superseded receipts without polling or changing their state', () => {
+    const callback = jasmine.createSpy('settled');
+    service.watch({ operationUUID, state: 'superseded' }, owner(), callback);
+    jasmine.clock().tick(30_000);
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(get).not.toHaveBeenCalled();
+    expect(service.visible()[0].state).toBe('superseded');
+    expect(service.badgeCount()).toBe(0);
+    service.dismiss(operationUUID);
+    expect(service.visible()).toEqual([]);
+  });
+  it('stops polling after a policy operation is superseded', async () => {
+    const callback = jasmine.createSpy('settled');
+    get.and.resolveTo({ data: { operationUUID, state: 'superseded', scope: 'platform' } });
+    service.watch({ operationUUID, state: 'running', scope: 'platform' }, owner(), callback);
+    jasmine.clock().tick(3000);
+    await settle();
+    jasmine.clock().tick(30_000);
+    await settle();
+    expect(get.calls.count()).toBe(1);
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(service.visible()[0].state).toBe('superseded');
     expect(service.badgeCount()).toBe(0);
   });
   it('never resumes audit-log writes recorded for a request', async () => {

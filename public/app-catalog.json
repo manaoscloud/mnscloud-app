@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "62a77defbde2",
+  "version": "53f12e7e8b5f",
   "language": "pt-BR",
   "entries": [
     {
@@ -12319,6 +12319,43 @@
       "title": "Perfis de firewall VPS",
       "description": "Conjuntos reutilizáveis de regras de entrada/saída aplicados pelo provedor da VPS a uma ou mais instâncias.",
       "fields": []
+    },
+    {
+      "route": "/system/vps/images",
+      "menuPath": "Hospedagem › VPS › Imagens",
+      "scope": "platform",
+      "title": "Imagens VPS",
+      "description": "Gerencie imagens lógicas VPS da plataforma, autorização de público, versões publicadas e disponibilidade nos nós.",
+      "fields": [
+        {
+          "label": "Revisão da política",
+          "help": ""
+        },
+        {
+          "label": "Quem pode usar?",
+          "help": "Somente plataforma restringe a imagem à operação interna. Todos os clientes autoriza qualquer ambiente consumidor elegível. Ambientes selecionados autoriza apenas os ambientes concedidos."
+        },
+        {
+          "label": "Estado de publicação",
+          "help": "Apenas imagens publicadas podem ser usadas em novas criações e reinstalações de VPS. Aposentar uma imagem não desliga VMs existentes."
+        },
+        {
+          "label": "Versão de build publicada",
+          "help": "Revisão de build associada à política da imagem lógica."
+        },
+        {
+          "label": "Adicionar ambientes autorizados",
+          "help": "Busque e selecione ambientes consumidores para conceder acesso. As adições são aplicadas em delta sem substituir concessões de outras páginas."
+        },
+        {
+          "label": "Revogar ambientes autorizados",
+          "help": "Selecione concessões ativas para revogar nesta alteração. Revogar o acesso bloqueia novas criações e reinstalações sem interromper instâncias existentes."
+        },
+        {
+          "label": "Justificativa",
+          "help": "Obrigatória para auditoria. Não inclua credenciais, tokens ou dados privados de clientes."
+        }
+      ]
     },
     {
       "route": "/system/vps/instances",
