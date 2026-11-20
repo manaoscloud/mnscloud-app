@@ -139,6 +139,8 @@ export type HostingVpsPlanConfig = {
 };
 
 export type HostingVpsPlan = {
+  /** Prepaid terms of the plan price (JSON array of {months, discountPercent, ...}). */
+  TermsJson?: string | null;
   HvpUUID: string;
   HvpName: string;
   HostingVpsProviderHvrUUID: string;
@@ -169,6 +171,8 @@ export type HostingVpsPlan = {
 };
 
 export type HostingVpsInstanceConfig = {
+  /** Prepaid term chosen at creation (3 to 36 months); absent = monthly. */
+  billingTermMonths?: number;
   /** FA3: set when the VM was created outside the platform and only linked. */
   adopted?: {
     at?: string | null;

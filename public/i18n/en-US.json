@@ -15366,5 +15366,6 @@
   "Automatic security updates off": "Automatic security updates off",
   "Start the VPS to read its security updates": "Start the VPS to read its security updates",
   "The VPS guest agent did not answer": "The VPS guest agent did not answer",
-  "Not reported by this VPS": "Not reported by this VPS"
+  "Not reported by this VPS": "Not reported by this VPS",
+  "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.": "Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends."
 }
