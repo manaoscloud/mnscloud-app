@@ -105,6 +105,35 @@ const RUNTIME_INSTALL_LABELS: Record<string, string> = {
 /** FA5: roles whose runtime the platform installs (the API decides again). */
 const PLATFORM_RUNTIME_NAME = /^mns-dns-(dev|prod)\d+$/i;
 
+type VpsSecurityUpdates = {
+  available: boolean;
+  reason?: string;
+  state?: {
+    status: string;
+    rebootRequired: boolean;
+    pendingSecurityAfter: number | null;
+    automaticUpdates: string;
+    finishedAt: string | null;
+  };
+};
+
+const SECURITY_UPDATES_STATUS: Record<string, string> = {
+  applied: 'Security updates applied',
+  partial: 'Security updates partially applied',
+  deferred: 'Security updates deferred to the daily run',
+  skipped: 'Security updates disabled for this image',
+  unsupported: 'Security updates not supported by this system',
+  failed: 'Security updates failed',
+};
+
+const SECURITY_UPDATES_UNAVAILABLE: Record<string, string> = {
+  vm_not_running: 'Start the VPS to read its security updates',
+  agent_unavailable: 'The VPS guest agent did not answer',
+  not_reported: 'Not reported by this VPS',
+  invalid_report: 'Not reported by this VPS',
+  provider_unsupported: 'Not reported by this VPS',
+};
+
 const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
   installing: 'Installing',
   enrolled: 'Installed',
@@ -1692,6 +1721,43 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     };
   }
 
+  /**
+   * Security update state reported by the VPS (runtime v4 images), read through the guest agent.
+   * Never blocks the details dialog: any failure just omits the line.
+   */
+  private async securityUpdatesSummary(uuid: string): Promise<string | null> {
+    try {
+      const response = await this.api.get<{ data?: VpsSecurityUpdates }>(
+        `${this.instanceEndpoint()}/${uuid}/security-updates`,
+      );
+      const data = response?.data;
+      if (!data) return null;
+      if (!data.available || !data.state) {
+        return this.t(
+          SECURITY_UPDATES_UNAVAILABLE[data.reason ?? ''] ?? 'Not reported by this VPS',
+        );
+      }
+      const state = data.state;
+      return [
+        this.t(SECURITY_UPDATES_STATUS[state.status] ?? state.status),
+        state.rebootRequired ? this.t('Reboot pending to load the new kernel') : null,
+        typeof state.pendingSecurityAfter === 'number' && state.pendingSecurityAfter > 0
+          ? `${this.t('Pending security updates')}: ${state.pendingSecurityAfter}`
+          : null,
+        state.automaticUpdates === 'enabled'
+          ? this.t('Automatic security updates on')
+          : this.t('Automatic security updates off'),
+        state.finishedAt
+          ? `${this.t('Updated')} ${new Date(state.finishedAt).toLocaleString()}`
+          : null,
+      ]
+        .filter((part): part is string => !!part)
+        .join(' · ');
+    } catch {
+      return null;
+    }
+  }
+
   private async openInstanceDetails(row: ConfigurableCrudRecord) {
     const uuid = this.recordUUID(row);
     if (!row['HviExternalId']) {
@@ -1732,6 +1798,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       runtime?.['status'] ?? config.runtime?.providerStatus ?? item.HviStatus ?? '-',
     );
     const isProxmox = String(plan?.HvpProvider ?? '').toLowerCase() === 'proxmox';
+    const securityUpdates = isProxmox ? await this.securityUpdatesSummary(uuid) : null;
 
     openDataViewerDialog(this.dialog, {
       title: this.t('VPS instance details'),
@@ -1747,6 +1814,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
         { label: 'Provider', value: providerName },
         { label: 'Plan', value: plan?.HvpName ?? item.HostingVpsPlanHvpUUID },
         { label: 'External ID', value: item.HviExternalId, monospace: true },
+        ...(securityUpdates ? [{ label: 'Security updates', value: securityUpdates }] : []),
         ...(item.HviAdoptedAt
           ? [
               {

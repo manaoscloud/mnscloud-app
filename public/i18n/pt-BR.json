@@ -15354,5 +15354,18 @@
   "commercial.module.ged": "GED",
   "commercial.module.logs": "Logs",
   "commercial.module.network": "Rede",
-  "commercial.module.website": "Site"
+  "commercial.module.website": "Site",
+  "Security updates applied": "Atualizações de segurança aplicadas",
+  "Security updates partially applied": "Atualizações de segurança aplicadas parcialmente",
+  "Security updates deferred to the daily run": "Atualizações de segurança adiadas para a execução diária",
+  "Security updates disabled for this image": "Atualizações de segurança desligadas nesta imagem",
+  "Security updates not supported by this system": "Atualizações de segurança não suportadas por este sistema",
+  "Security updates failed": "Falha nas atualizações de segurança",
+  "Reboot pending to load the new kernel": "Reinicialização pendente para carregar o novo kernel",
+  "Pending security updates": "Atualizações de segurança pendentes",
+  "Automatic security updates on": "Atualização automática de segurança ligada",
+  "Automatic security updates off": "Atualização automática de segurança desligada",
+  "Start the VPS to read its security updates": "Ligue a VPS para ler as atualizações de segurança",
+  "The VPS guest agent did not answer": "O agente da VPS não respondeu",
+  "Not reported by this VPS": "Não informado por esta VPS"
 }
