@@ -34,7 +34,6 @@ const receiveMethodOptions: readonly ConfigurableCrudOption[] = [
 const companyTypeOptions: readonly ConfigurableCrudOption[] = [
   { value: 'LIMITED', label: 'Limited Company (LTDA)' },
   { value: 'MEI', label: 'Individual Microentrepreneur (MEI)' },
-  { value: 'INDIVIDUAL', label: 'Sole Proprietorship (EI)' },
   { value: 'ASSOCIATION', label: 'Association / Non-profit' },
 ];
 const payoutModeOptions: readonly ConfigurableCrudOption[] = [
@@ -45,9 +44,6 @@ const payoutModeOptions: readonly ConfigurableCrudOption[] = [
 const pixKeyTypeOptions: readonly ConfigurableCrudOption[] = [
   { value: 'CNPJ', label: 'CNPJ' },
   { value: 'CPF', label: 'CPF' },
-  { value: 'EMAIL', label: 'E-mail' },
-  { value: 'PHONE', label: 'Phone' },
-  { value: 'EVP', label: 'Random key (EVP)' },
 ];
 /** Fallback until the catalog loads; the API remains the source of truth. Only MNSCloud Pay is offered. */
 export const defaultGatewayOptions: readonly ConfigurableCrudOption[] = [
@@ -222,6 +218,7 @@ const fields: ConfigurableCrudField[] = [
     tab: 'financial',
     span: 1,
     options: companyTypeOptions,
+    help: 'Required for a CNPJ tax identity.',
     hiddenWhen: (context) => !isMnscloudPay(context),
   },
   {
@@ -230,6 +227,16 @@ const fields: ConfigurableCrudField[] = [
     type: 'number',
     tab: 'financial',
     span: 1,
+    requiredWhen: (context) => isMnscloudPay(context),
+    hiddenWhen: (context) => !isMnscloudPay(context),
+  },
+  {
+    key: 'birthDate',
+    label: 'Birth date',
+    type: 'date',
+    tab: 'financial',
+    span: 1,
+    help: 'Required when the tax identity is a CPF.',
     hiddenWhen: (context) => !isMnscloudPay(context),
   },
   {
@@ -271,7 +278,7 @@ const fields: ConfigurableCrudField[] = [
     label: 'Payout Pix key',
     tab: 'financial',
     span: 1,
-    help: 'Same ownership: must match the CPF or CNPJ of the tenant tax identity.',
+    help: 'Same ownership: the CPF or CNPJ of the tenant tax identity.',
     hiddenWhen: (context) => !isMnscloudPay(context),
   },
 ];
@@ -313,8 +320,9 @@ export const paymentGatewayConfig = defineCrud({
     clientSecret: '',
     certPem: '',
     keyPem: '',
-    companyType: 'LIMITED',
-    incomeValue: 10000,
+    companyType: null,
+    incomeValue: null,
+    birthDate: null,
     mobilePhone: '',
     payoutMode: 'DAILY_BATCH',
     payoutMinAmount: 50,
