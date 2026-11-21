@@ -15576,5 +15576,7 @@
   "Address shared by the platform": "Address shared by the platform",
   "Public IP of the router": "Public IP of the router",
   "Internet exit of the network saved.": "Internet exit of the network saved.",
-  "Remove": "Remove"
+  "Remove": "Remove",
+  "10.0.0.10": "10.0.0.10",
+  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32"
 }

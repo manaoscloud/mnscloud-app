@@ -15577,5 +15577,7 @@
   "Address shared by the platform": "Endereço compartilhado da plataforma",
   "Public IP of the router": "IP público do roteador",
   "Internet exit of the network saved.": "Saída para a internet da rede salva.",
-  "Remove": "Remover"
+  "Remove": "Remover",
+  "10.0.0.10": "10.0.0.10",
+  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32"
 }
