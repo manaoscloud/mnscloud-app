@@ -2448,6 +2448,14 @@ export const NAV_ITEMS: NavItem[] = [
             entitlementCode: 'module.hosting.vps.ip',
           },
           {
+            id: 'hosting/vps/port-forwards',
+            label: 'nav.hosting.vps.port-forwards',
+            icon: 'alt_route',
+            route: '/hosting/vps/port-forwards',
+            scope: 'tenant',
+            entitlementCode: 'module.hosting.vps.ip',
+          },
+          {
             id: 'hosting/vps/firewalls',
             label: 'nav.hosting.vps.firewalls',
             icon: 'security',

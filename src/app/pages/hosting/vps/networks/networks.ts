@@ -1,4 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import type { ConfigurableCrudRowAction } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
+import { openTemplatePickerDialog } from '../../../../shared/template-picker-dialog/template-picker-dialog';
 import { ActivatedRoute } from '@angular/router';
 
 import {
@@ -128,10 +130,29 @@ const config = defineCrud({
       chipClass: (value) => statusChipClass(value),
     },
     { id: 'instances', label: 'Instances', kind: 'number', field: 'InstanceCount' },
+    {
+      id: 'egress',
+      label: 'Internet exit',
+      field: 'EgressAddress',
+      // Networks of the private network router leave through the shared exit or a public IP of it.
+      value: (row, translate) =>
+        row['EgressAddress']
+          ? String(row['EgressAddress'])
+          : row['HostingVpsTenantZoneHtzUUID']
+            ? translate('Shared')
+            : '',
+    },
     { id: 'isDefault', label: 'Default', kind: 'boolean', field: 'HvnIsDefault' },
     { id: 'status', label: 'Status', kind: 'status', field: 'HvnIsActive' },
   ],
 });
+
+const EGRESS_ACTION: ConfigurableCrudRowAction = {
+  key: 'egress',
+  label: 'Internet exit',
+  icon: 'alt_route',
+  tooltip: 'Choose the public IP this network uses to reach the internet',
+};
 
 @Component({
   selector: 'app-networks',
@@ -376,6 +397,64 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
   override refreshList() {
     void this.fetchCatalog();
     super.refreshList();
+  }
+
+  override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
+    const actions = [...super.rowActions(row)];
+    if (
+      (this.route.snapshot.data?.['scope'] ?? 'tenant') !== 'master' &&
+      row['HostingVpsTenantZoneHtzUUID'] &&
+      row['HvnStatus'] === 'available'
+    ) {
+      actions.push(EGRESS_ACTION);
+    }
+    return actions;
+  }
+
+  override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key !== EGRESS_ACTION.key) return super.handleRowAction(action, row);
+    const zone = String(row['HostingVpsTenantZoneHtzUUID'] ?? '');
+    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+      'hosting/vps/public-ips?status=allocated&limit=500',
+    );
+    const routerIps = (response?.data?.items ?? []).filter(
+      (ip) =>
+        String(ip['HostingVpsTenantZoneHtzUUID'] ?? '') === zone &&
+        ip['HpiNetworkState'] !== 'removing',
+    );
+    const shared = '__shared__';
+    const choice = await openTemplatePickerDialog(this.dialog, {
+      title: 'Internet exit',
+      description: routerIps.length
+        ? 'Choose how this network leaves to the internet.'
+        : 'No public IP is used by the router yet: use one on the router in Public IPs to give this network its own exit.',
+      useLabel: 'Apply',
+      items: [
+        {
+          id: shared,
+          name: this.t('Shared exit'),
+          description: this.t('Address shared by the platform'),
+        },
+        ...routerIps.map((ip) => ({
+          id: String(ip['HpiUUID']),
+          name: String(ip['HpiAddress']),
+          description: this.t('Public IP of the router'),
+        })),
+      ],
+    });
+    if (!choice) return;
+    this.mutating.set(true);
+    try {
+      await this.api.put(`hosting/vps/networks/${String(row['HvnUUID'])}/egress`, {
+        publicIpUUID: choice === shared ? null : choice,
+      });
+      this.snack.success(this.t('Internet exit of the network saved.'));
+    } catch {
+      // The API error toast already explains the refusal.
+    } finally {
+      this.mutating.set(false);
+      this.refreshList();
+    }
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
