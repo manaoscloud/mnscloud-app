@@ -2263,6 +2263,15 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'vpn-connections',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/vpn-connections/vpn-connections').then(
+                        (m) => m.HostingVpsVpnConnectionsPage,
+                      ),
+                    title: 'Hosting • VPS VPN | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
                     path: 'firewalls',
                     loadComponent: () =>
                       import('./pages/hosting/vps/firewalls/firewalls').then(

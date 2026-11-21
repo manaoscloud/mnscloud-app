@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "9fc5c191c2d1",
+  "version": "913848471dd3",
   "language": "pt-BR",
   "entries": [
     {
@@ -3759,6 +3759,67 @@
       "title": "Snapshots de VPS",
       "description": "Snapshots duráveis das instâncias VPS, para restauração e cópia.",
       "fields": []
+    },
+    {
+      "route": "/hosting/vps/vpn-connections",
+      "menuPath": "Hospedagem › VPS › VPN",
+      "scope": "tenant",
+      "title": "VPN",
+      "description": "VPN IPsec site a site entre suas redes privadas e a rede da sua empresa. Antes, use um IP público no roteador (IPs públicos > Usar no roteador).",
+      "fields": [
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "IP público da nuvem",
+          "help": "IP público usado pelo roteador: o endereço ao qual o seu equipamento se conecta."
+        },
+        {
+          "label": "Endereço do seu equipamento",
+          "help": "IP público fixo ou nome do seu equipamento. Vazio quando o IP é dinâmico: aí só o seu equipamento inicia o túnel."
+        },
+        {
+          "label": "Conexão",
+          "help": ""
+        },
+        {
+          "label": "Criptografia",
+          "help": "A mesma proposta nas duas pontas. Compatível para MikroTik v6 e firewalls antigos."
+        },
+        {
+          "label": "Redes da nuvem no túnel",
+          "help": ""
+        },
+        {
+          "label": "ID do seu equipamento",
+          "help": "Opcional. Necessário para equipamento com IP dinâmico, para identificá-lo."
+        },
+        {
+          "label": "ID da nuvem",
+          "help": "Opcional. Padrão: o IP público da nuvem."
+        },
+        {
+          "label": "MTU do túnel",
+          "help": ""
+        },
+        {
+          "label": "Verificação do par (segundos)",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Redes da sua empresa",
+          "help": "Uma rede por linha (CIDR), até 20. Não podem sobrepor as redes privadas da nuvem."
+        }
+      ]
     },
     {
       "route": "/hosting/webhost",
