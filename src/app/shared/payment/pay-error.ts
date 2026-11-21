@@ -53,6 +53,11 @@ const messages: Record<string, string> = {
   PAY_PAYOUT_MINIMUM: 'The payout minimum cannot be less than R$ 50.00.',
   PAY_GATEWAY_UNAVAILABLE: 'This payment gateway is not available yet.',
   PAY_DUPLICATE_UNSUPPORTED: 'Connections of this bank cannot be duplicated (certificate files).',
+  PAY_SPLIT_DISABLED_AT_BANK:
+    'The bank has not enabled the payment split for MNSCloud Pay yet. Contact support.',
+  PAY_FIELD_NOT_ACCEPTED: 'A payment charge field is not accepted for this gateway.',
+  PAY_INVALID_BILLING_TYPE: 'The payment method must be boleto, Pix or credit card.',
+  PAY_PAYOUT_BALANCE: 'The payout exceeds the available balance.',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 

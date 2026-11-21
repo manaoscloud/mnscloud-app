@@ -15753,5 +15753,9 @@
   "198.51.100.30": "198.51.100.30",
   "203.0.113.20": "203.0.113.20",
   "192.168.10.0/24": "192.168.10.0/24",
-  "Inactive (tunnel off)": "Inactiva (túnel apagado)"
+  "Inactive (tunnel off)": "Inactiva (túnel apagado)",
+  "The bank has not enabled the payment split for MNSCloud Pay yet. Contact support.": "El banco aún no habilitó el split de pago de MNSCloud Pay. Contacte al soporte.",
+  "A payment charge field is not accepted for this gateway.": "Un campo del cobro no es aceptado por este gateway.",
+  "The payment method must be boleto, Pix or credit card.": "La forma de pago debe ser boleto, Pix o tarjeta de crédito.",
+  "The payout exceeds the available balance.": "La transferencia supera el saldo disponible."
 }
