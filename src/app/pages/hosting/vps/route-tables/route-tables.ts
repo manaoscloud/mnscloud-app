@@ -142,7 +142,7 @@ const config = defineCrud({
   bulkDelete: false,
   statusFilter: false,
   pageSizeOptions: [10, 25, 100],
-  initialValues: { name: '', networkPolicy: 'allow', description: '' },
+  initialValues: { zoneUUID: '', name: '', networkPolicy: 'allow', description: '' },
   fields: [
     {
       key: 'name',
@@ -205,10 +205,25 @@ const config = defineCrud({
 })
 export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly routerIps = signal<ConfigurableCrudRecord[]>([]);
+  private readonly routers = signal<ConfigurableCrudRecord[]>([]);
 
   constructor() {
     super({
       ...config,
+      fields: [
+        {
+          key: 'zoneUUID',
+          source: 'HostingVpsTenantZoneHtzUUID',
+          payloadKey: 'zoneUUID',
+          label: 'Router',
+          type: 'select',
+          span: 1,
+          // Only a tenant with routers on several providers chooses it, and only on create.
+          hiddenWhen: ({ editing }) => editing || this.routers().length <= 1,
+          requiredWhen: ({ editing }) => !editing && this.routers().length > 1,
+        },
+        ...(config.fields ?? []),
+      ],
       canDeleteRow: (row) => Number(row['HrtIsMain']) !== 1,
       rowActions: [
         {
@@ -230,8 +245,24 @@ export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<Configur
       .map((ip) => ({ value: String(ip['HpiUUID']), label: String(ip['HpiAddress']) }));
   }
 
+  protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
+    if (key === 'zoneUUID') {
+      return this.routers().map((router) => ({
+        value: String(router['zoneUUID']),
+        label: String(router['providerName'] ?? router['zoneUUID']),
+      }));
+    }
+    return [];
+  }
+
+  override refreshList() {
+    void this.fetchRouterIps();
+    super.refreshList();
+  }
+
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     return {
+      ...(this.editingRecord() ? {} : { zoneUUID: payload['zoneUUID'] || null }),
       name: String(payload['name'] ?? '').trim(),
       networkPolicy: payload['networkPolicy'] || 'allow',
       description: String(payload['description'] ?? '').trim() || null,
@@ -239,9 +270,13 @@ export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<Configur
   }
 
   private async fetchRouterIps() {
-    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
-      'hosting/vps/public-ips?status=allocated&limit=500',
-    );
+    const [response, routers] = await Promise.all([
+      this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+        'hosting/vps/public-ips?status=allocated&limit=500',
+      ),
+      this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>('hosting/vps/networks/routers'),
+    ]);
+    this.routers.set(routers?.data?.items ?? []);
     this.routerIps.set(
       (response?.data?.items ?? []).filter(
         (ip) => !!ip['HostingVpsTenantZoneHtzUUID'] && ip['HpiNetworkState'] !== 'removing',
