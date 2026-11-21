@@ -134,6 +134,17 @@ export class WebsiteEditorPage {
   /** Validation shown after a save/publish attempt; `publish` adds the required titles. */
   readonly attempt = signal<'save' | 'publish' | null>(null);
   readonly serverInvalid = signal<ReadonlySet<string>>(new Set());
+  /** Web chat connections of the tenant; false when Conversations is not available to the user. */
+  readonly webchatAvailable = signal(false);
+  readonly webchatConnections = signal<{ value: string; label: string }[]>([]);
+  /** The tenant's web chats, plus the stored one when it is no longer listed (removed). */
+  readonly webchatOptions = computed(() => {
+    const options = this.webchatConnections();
+    const current = this.content().integrations.webchat.channelUUID;
+    return current && !options.some((option) => option.value === current)
+      ? [...options, { value: current, label: this.transloco.translate('website.webchatMissing') }]
+      : options;
+  });
 
   readonly locales = computed<WebsiteLocale[]>(() => {
     const site = this.site();
@@ -168,6 +179,7 @@ export class WebsiteEditorPage {
   constructor() {
     inject(DestroyRef).onDestroy(() => (this.destroyed = true));
     void this.load();
+    void this.loadWebchatConnections();
     effect((onCleanup) => {
       const name = this.site()?.name;
       if (name) onCleanup(this.breadcrumbLabels.register(`/website/sites/${this.uuid}`, name));
@@ -242,6 +254,39 @@ export class WebsiteEditorPage {
     this.content.update((content) => setContentValue(content, path, value));
     if (this.serverInvalid().has(path)) {
       this.serverInvalid.update((set) => new Set([...set].filter((key) => key !== path)));
+    }
+  }
+
+  setWebchat(value: unknown): void {
+    this.set('integrations.webchat.channelUUID', typeof value === 'string' ? value : '');
+  }
+
+  /** Creates a web chat connection (Conversations › Connections) in place and selects it. */
+  async createWebchat(): Promise<void> {
+    const [{ openQuickCreate }, { quickCreateFor }] = await Promise.all([
+      import('../../../shared/crud/configurable-crud/configurable-crud-quick-create-host'),
+      import('../../../shared/crud/configurable-crud/quick-create'),
+    ]);
+    const { loadComponent, routeData } = quickCreateFor('ChannelConnectionChcUUID');
+    const result = await openQuickCreate(this.dialog, {
+      loadComponent,
+      routeData,
+      initialValues: { kind: 'webchat' },
+    });
+    if (!result?.option || this.destroyed) return;
+    await this.loadWebchatConnections();
+    this.setWebchat(String(result.option.value).toLowerCase());
+  }
+
+  private async loadWebchatConnections(): Promise<void> {
+    try {
+      const connections = await this.website.webchatConnections();
+      if (this.destroyed) return;
+      this.webchatConnections.set(connections);
+      this.webchatAvailable.set(true);
+    } catch {
+      // No Conversations module or permission: the site chat field stays hidden.
+      this.webchatAvailable.set(false);
     }
   }
 

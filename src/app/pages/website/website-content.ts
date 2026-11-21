@@ -91,12 +91,18 @@ export type WebsiteLocaleContent = {
   pages?: Partial<Record<WebsitePageKey, WebsitePageBlock>>;
   promotions?: WebsitePromotion[];
 };
+/** Typed integrations rendered by the platform (never free HTML or script). */
+export type WebsiteIntegrations = {
+  /** Conversations web chat connection; empty = no chat on the site. */
+  webchat: { channelUUID: string };
+};
 export type WebsiteContent = {
   version: 1;
   theme: { primaryColor: string; accentColor: string; logoUrl: string };
   contact: { email: string; phone: string; whatsapp: string; address: string };
   social: { network: WebsiteSocialNetwork; url: string }[];
   locales: Partial<Record<WebsiteLocale, WebsiteLocaleContent>>;
+  integrations: WebsiteIntegrations;
 };
 
 export const DEFAULT_PRIMARY_COLOR = '#1d5b31';
@@ -246,6 +252,7 @@ export function normalizeWebsiteContent(
   const theme = record(source['theme']);
   const contact = record(source['contact']);
   const social = Array.isArray(source['social']) ? source['social'] : [];
+  const webchat = record(record(source['integrations'])['webchat']);
   const storedLocales = record(source['locales']);
   const result: WebsiteContent['locales'] = {};
   for (const locale of WEBSITE_LOCALES) {
@@ -276,6 +283,7 @@ export function normalizeWebsiteContent(
         url: text(entry['url']),
       })),
     locales: result,
+    integrations: { webchat: { channelUUID: text(webchat['channelUUID']) } },
   };
 }
 
@@ -459,10 +467,15 @@ function addOptionalBlocks(payload: WebsiteLocaleContent, block: WebsiteLocaleCo
 }
 
 /** Content sent to the API: trimmed text, only the enabled locales. */
+/** Content as sent to the API: integrations only when one is on (older documents stay unchanged). */
+export type WebsiteContentPayload = Omit<WebsiteContent, 'integrations'> & {
+  integrations?: WebsiteIntegrations;
+};
+
 export function websiteContentPayload(
   content: WebsiteContent,
   locales: readonly WebsiteLocale[],
-): WebsiteContent {
+): WebsiteContentPayload {
   const trim = (value: string) => value.trim();
   const localesPayload: WebsiteContent['locales'] = {};
   for (const locale of locales) {
@@ -512,6 +525,13 @@ export function websiteContentPayload(
     },
     social: content.social.map((entry) => ({ network: entry.network, url: trim(entry.url) })),
     locales: localesPayload,
+    ...(trim(content.integrations.webchat.channelUUID)
+      ? {
+          integrations: {
+            webchat: { channelUUID: trim(content.integrations.webchat.channelUUID) },
+          },
+        }
+      : {}),
   };
 }
 
