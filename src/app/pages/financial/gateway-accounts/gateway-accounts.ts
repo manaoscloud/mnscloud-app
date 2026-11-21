@@ -87,21 +87,40 @@ export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<Config
   override async saveItem(saveAndNew = false): Promise<void> {
     const isMnsPay = String(this.formValues()['provider'] ?? '') === MNSCLOUD_PAY;
     if (isMnsPay) {
+      const values = this.formValues();
       const subData = {
-        companyType: this.formValues()['companyType'],
-        incomeValue: this.formValues()['incomeValue'],
-        mobilePhone: this.formValues()['mobilePhone'],
-        payoutMode: this.formValues()['payoutMode'],
-        payoutMinAmount: this.formValues()['payoutMinAmount'],
-        payoutPixKeyType: this.formValues()['payoutPixKeyType'],
-        payoutPixKey: this.formValues()['payoutPixKey'],
+        companyType: values['companyType'] || null,
+        incomeValue: values['incomeValue'] === '' ? null : values['incomeValue'],
+        birthDate: values['birthDate'] || null,
+        mobilePhone: values['mobilePhone'],
+        payoutMode: values['payoutMode'],
+        payoutMinAmount: values['payoutMinAmount'],
+        payoutPixKeyType: values['payoutPixKeyType'],
+        payoutPixKey: values['payoutPixKey'],
       };
-      await this.api
-        .put('financial/gateway-accounts/mnscloud-pay/subaccount/payout-config', subData)
-        .catch(() =>
-          this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', subData)
-        )
-        .catch(() => {});
+      try {
+        const sub = await this.api.get<{ data?: { configured?: boolean } }>(
+          'financial/gateway-accounts/mnscloud-pay/subaccount',
+        );
+        if (sub?.data?.configured) {
+          await this.api.put(
+            'financial/gateway-accounts/mnscloud-pay/subaccount/payout-config',
+            subData,
+          );
+        } else {
+          // Setup creates the MNSCloud Pay gateway account itself, with the subaccount.
+          await this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', subData);
+          if (!this.editingRecord()) {
+            this.snack.success(this.t('MNSCloud Pay configured.'));
+            this.closeDialog();
+            this.itemsResource.reload();
+            return;
+          }
+        }
+      } catch (error) {
+        this.snack.error(this.t(this.errorMessage(error)));
+        return;
+      }
     }
     await super.saveItem(saveAndNew);
   }
@@ -127,12 +146,8 @@ export class FinancialPaymentGatewayPage extends ConfigurableCrudPageBase<Config
     if (action.key !== 'validate') return;
     try {
       if (String(row['FgaProvider'] ?? '') === MNSCLOUD_PAY) {
-        const sub = await this.api.get<{ data?: { item?: any; configured?: boolean } }>(
-          'financial/gateway-accounts/mnscloud-pay/subaccount',
-        );
-        if (!sub?.data?.configured) {
-          await this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', {});
-        }
+        // Setup is idempotent: for an existing subaccount it re-registers the webhook (new token).
+        await this.api.post('financial/gateway-accounts/mnscloud-pay/subaccount/setup', {});
       }
       await this.api.post(`${this.config.endpoint}/${this.recordUUID(row)}/validate`, {});
       this.snack.success(this.t('Connection validated.'));
