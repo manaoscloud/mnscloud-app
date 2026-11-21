@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f62c8eb1a89a",
+  "version": "9fc5c191c2d1",
   "language": "pt-BR",
   "entries": [
     {
@@ -12908,6 +12908,10 @@
         {
           "label": "Domínio do site institucional",
           "help": "Domínio do site da plataforma (por exemplo www.empresa.com). Crie o domínio em Temas e emita o certificado; a borda passa a servir o site institucional nele, em vez do App. Deixe vazio para não usar."
+        },
+        {
+          "label": "Chat do site institucional",
+          "help": "Conexão de chat do site (Conversas › Conexões do tenant da plataforma) exibida em todas as páginas do site institucional. As mensagens chegam na caixa de entrada de Conversas desse tenant."
         },
         {
           "label": "Certificado curinga da borda",
