@@ -29,6 +29,7 @@ export type NotificationType =
   | 'security.network_device'
   | 'security.threat'
   | 'security.hardening'
+  | 'security.patch'
   | 'hr.time_request'
   | 'hr.time_clock_kiosk.offline'
   | 'hr.time_clock_kiosk.pin_locked'
