@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from '../../services/api.service';
-import type { WebsiteContent, WebsiteLocale } from './website-content';
+import { websiteUuid, type WebsiteContentPayload, type WebsiteLocale } from './website-content';
 
 /** Site as listed and returned by `GET /website/sites[/:uuid]` (mnscloud-api `WebsiteSite`). */
 export type WebsiteSite = {
@@ -94,7 +94,7 @@ export class WebsiteService {
   async saveContent(
     uuid: string,
     revision: number,
-    content: WebsiteContent,
+    content: WebsiteContentPayload,
   ): Promise<WebsiteSiteDetail | null> {
     const response = await this.api.put<Envelope<WebsiteSite>>(`${this.path(uuid)}/content`, {
       revision,
@@ -107,6 +107,22 @@ export class WebsiteService {
     return this.detail(
       await this.api.post<Envelope<WebsiteSite>>(`${this.path(uuid)}/publish`, { revision }),
     );
+  }
+
+  /**
+   * Web chat connections of the tenant (Conversations › Connections, kind `webchat`) for the site
+   * chat field. A tenant without Conversations access gets an error: the field is then hidden.
+   */
+  async webchatConnections(): Promise<{ value: string; label: string }[]> {
+    const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
+      'conversations/connections?limit=500',
+    );
+    return (response.data?.items ?? [])
+      .filter((row) => row['ChcKind'] === 'webchat' && typeof row['ChcUUID'] === 'string')
+      .map((row) => ({
+        value: websiteUuid(row['ChcUUID']),
+        label: String(row['ChcName'] ?? row['ChcUUID']),
+      }));
   }
 
   /** Website › Orders: approve (the first charge is issued) or cancel an order still waiting. */

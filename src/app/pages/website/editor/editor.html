@@ -273,6 +273,32 @@
             } @empty {
               <p class="settings-page-note">{{ 'website.noSocial' | transloco }}</p>
             }
+
+            @if (webchatAvailable() || content().integrations.webchat.channelUUID) {
+              <h2 class="website-editor-heading">{{ 'website.webchatHeading' | transloco }}</h2>
+              <div class="form-grid">
+                <mns-search-select-field
+                  fieldClass="span-1"
+                  data-field-key="integrations.webchat.channelUUID"
+                  [label]="'website.webchatChannel' | transloco"
+                  [options]="webchatOptions()"
+                  [translateOptions]="false"
+                  [clearable]="true"
+                  [clearLabel]="'website.webchatNone' | transloco"
+                  [value]="content().integrations.webchat.channelUUID"
+                  [invalid]="invalid('integrations.webchat.channelUUID')"
+                  [errorMessage]="errorText('integrations.webchat.channelUUID') | transloco"
+                  [help]="'website.webchatHelp' | transloco"
+                  [canCreate]="webchatAvailable()"
+                  [createLabel]="'website.webchatCreate' | transloco"
+                  (createRecord)="createWebchat()"
+                  (valueChange)="setWebchat($event)"
+                />
+              </div>
+              @if (webchatAvailable() && !webchatConnections().length) {
+                <p class="settings-page-note">{{ 'website.webchatEmpty' | transloco }}</p>
+              }
+            }
           </div>
         </mat-tab>
 
