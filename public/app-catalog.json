@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "17492b01cc57",
+  "version": "e0cca7193132",
   "language": "pt-BR",
   "entries": [
     {
@@ -3669,6 +3669,51 @@
       "title": "Redes privadas VPS",
       "description": "Redes privadas compartilhadas por uma ou mais instâncias VPS do mesmo provedor e região.",
       "fields": []
+    },
+    {
+      "route": "/hosting/vps/port-forwards",
+      "menuPath": "Hospedagem › VPS › Portas",
+      "scope": "tenant",
+      "title": "Redirecionamento de portas",
+      "description": "Redirecione portas de um IP público do roteador para servidores das suas redes privadas. Restrinja as origens permitidas sempre que puder.",
+      "fields": [
+        {
+          "label": "IP público",
+          "help": "IP público usado pelo roteador. Use um no roteador em IPs públicos primeiro."
+        },
+        {
+          "label": "Protocolo",
+          "help": ""
+        },
+        {
+          "label": "Porta pública",
+          "help": "Primeira porta pública (1 a 65535)."
+        },
+        {
+          "label": "Última porta pública",
+          "help": "Só para uma faixa (até 1000 portas). Vazio = uma porta."
+        },
+        {
+          "label": "IP privado do servidor",
+          "help": "Endereço do servidor em uma das suas redes privadas."
+        },
+        {
+          "label": "Porta privada",
+          "help": "Só para uma porta pública única. Vazio = a mesma porta."
+        },
+        {
+          "label": "Origens permitidas",
+          "help": "Endereços ou redes IPv4 que podem conectar, separados por vírgula (até 20). 0.0.0.0/0 = qualquer um."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        },
+        {
+          "label": "Ativo",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/hosting/vps/public-ips",
