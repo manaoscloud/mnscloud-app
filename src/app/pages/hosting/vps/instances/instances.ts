@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../services/auth.service';
 
 import { billingTermOffers } from '../../../billing/shared/billing.service';
+import { openTermChangeDialog } from '../../../billing/shared/term-change-dialog';
 import {
   CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
@@ -139,6 +140,13 @@ const AGENT_ENROLLMENT_LABELS: Record<string, string> = {
   installing: 'Installing',
   enrolled: 'Installed',
   failed: 'Install failed',
+};
+
+const PREPAID_TERM_ACTION: ConfigurableCrudRowAction = {
+  key: 'prepaid-term',
+  label: 'Prepaid term',
+  icon: 'event_upcoming',
+  tooltip: 'Prepay a longer term',
 };
 
 const UPGRADE_ACTION: ConfigurableCrudRowAction = {
@@ -1182,6 +1190,7 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
       });
     }
     if (this.canUpgrade(row)) actions.push(UPGRADE_ACTION);
+    if (this.canChangeTerm(row)) actions.push(PREPAID_TERM_ACTION);
     actions.push(...portalRowActions(row, this.platformScope()));
     return actions;
   }
@@ -1229,6 +1238,49 @@ export class HostingVpsInstancesPage extends ConfigurableCrudPageBase<Configurab
     }
     if (action.key === 'upgrade') {
       await this.openUpgradeDialog(row);
+      return;
+    }
+    if (action.key === 'prepaid-term') {
+      await this.changeTerm(row);
+    }
+  }
+
+  /** The tenant prepays a longer term of the plan price; the platform scope bills nothing. */
+  private canChangeTerm(row: ConfigurableCrudRecord): boolean {
+    if (this.platformScope() || Number(row['HviIsActive']) !== 1) return false;
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    return billingTermOffers({ TermsJson: plan?.TermsJson ?? null }).length > 0;
+  }
+
+  /**
+   * Moves the server contract to a longer prepaid term of its plan. The server credits the unused
+   * paid time of the current contract and charges the new term from the prepaid balance.
+   */
+  private async changeTerm(row: ConfigurableCrudRecord): Promise<void> {
+    const plan = this.planById(String(row['HostingVpsPlanHvpUUID'] ?? ''));
+    const months = await openTermChangeDialog(this.dialog, this.destroyRef, {
+      title: 'Prepaid term',
+      subjectName: String(row['HviName'] ?? ''),
+      currency: String(plan?.HvpCurrency ?? 'BRL'),
+      currentMonths: 1,
+      options: billingTermOffers({ TermsJson: plan?.TermsJson ?? null }).map((term) => ({
+        months: term.months,
+        discountPercent: Number(term.discountPercent) || 0,
+        totalAmount: Number(term.totalAmount) || null,
+      })),
+    });
+    if (!months) return;
+    this.mutating.set(true);
+    try {
+      await this.api.post(`${this.instanceEndpoint()}/${this.recordUUID(row)}/term`, {
+        termMonths: months,
+      });
+      this.snack.success('Prepaid term changed.');
+      this.refreshList();
+    } catch {
+      // The API interceptor presents the rejection (term not offered, shorter term, balance).
+    } finally {
+      this.mutating.set(false);
     }
   }
 

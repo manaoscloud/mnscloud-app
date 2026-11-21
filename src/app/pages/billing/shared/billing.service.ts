@@ -302,6 +302,16 @@ export interface BillingCheckoutQuote {
   availableBalance: number;
 }
 
+/** Moving a prepaid contract to a longer term: the new term quote and the credit of the current one. */
+export interface BillingTermChangePreview {
+  subscriptionUUID: string;
+  currentTermMonths: number;
+  termMonths: number;
+  creditAmount: number;
+  netAmount: number;
+  quote: BillingCheckoutQuote;
+}
+
 /** What canceling a subscription does now (prepaid terms return unused time to the wallet). */
 export interface BillingCancelPreview {
   subscriptionUUID: string;
@@ -885,6 +895,23 @@ export class BillingService {
     const response = await this.api.get<{ data?: { item?: BillingCheckoutQuote } }>(
       `billing/catalog/${priceUUID}/quote?${params}`,
     );
+    return response.data?.item ?? null;
+  }
+
+  /** Quote of moving a prepaid contract to a longer term (credit of the unused paid time). */
+  async termChangePreview(uuid: string, termMonths: number) {
+    const response = await this.api.get<{ data?: { item?: BillingTermChangePreview } }>(
+      `billing/subscriptions/${uuid}/term-change-preview?termMonths=${termMonths}`,
+    );
+    return response.data?.item ?? null;
+  }
+
+  async changeSubscriptionTerm(uuid: string, termMonths: number, idempotencyKey: string) {
+    const response = await this.api.post<ApiListResponse<BillingSubscription>>(
+      `billing/subscriptions/${uuid}/term-change`,
+      { termMonths, idempotencyKey },
+    );
+    this.invalidateEntitlements();
     return response.data?.item ?? null;
   }
 

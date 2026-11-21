@@ -15578,5 +15578,10 @@
   "Internet exit of the network saved.": "Salida a internet de la red guardada.",
   "Remove": "Quitar",
   "10.0.0.10": "10.0.0.10",
-  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32"
+  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32",
+  "Prepay a longer term": "Pagar un plazo mayor por adelantado",
+  "No longer prepaid term is offered for this plan.": "No se ofrece un plazo mayor para este plan.",
+  "Term discount": "Descuento del plazo",
+  "The current contract ends now and its unused paid time returns to your prepaid balance; the new term is charged from it and its price is locked until it ends.": "El contrato actual termina ahora y el tiempo pagado no usado vuelve a su saldo prepago; el nuevo plazo se cobra de ese saldo y el precio queda fijo hasta el final.",
+  "Prepaid term changed.": "Plazo prepago cambiado."
 }

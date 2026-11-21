@@ -10,6 +10,11 @@ import {
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { BillingService, BillingSubscription } from '../../shared/billing.service';
 import { BILLING_STRING_STATUS_OPTIONS } from '../../shared/billing-crud';
+import {
+  PREPAID_TERM_MONTHS,
+  TermChangeDialogData,
+  openTermChangeDialog,
+} from '../../shared/term-change-dialog';
 
 const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
   endpoint: 'billing/subscriptions',
@@ -81,6 +86,16 @@ const SUBSCRIPTIONS_CONFIG: ConfigurableCrudConfig = {
         },
       },
     })),
+    {
+      key: 'termChange',
+      label: 'Prepay a longer term',
+      icon: 'event_upcoming',
+      visible: (row) =>
+        row['BsuStatus'] === 'ACTIVE' &&
+        row['BsuBillingScopeSnapshot'] === 'MODULE' &&
+        ['MONTHLY', 'MODULE_MONTHLY'].includes(String(row['BsuBillingModeSnapshot'])) &&
+        Number(row['BsuTermMonths'] ?? 1) < 36,
+    },
     {
       key: 'cycles',
       label: 'Paid cycles',
@@ -193,6 +208,7 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     action: ConfigurableCrudRowAction,
     row: BillingSubscription & ConfigurableCrudRecord,
   ): Promise<void> {
+    if (action.key === 'termChange') return this.changeTerm(row);
     if (action.key !== 'cancel') return super.handleRowAction(action, row);
     // Prepaid terms: the server says what canceling now returns to the wallet.
     let message = 'Cancel this subscription?';
@@ -225,6 +241,43 @@ export class BillingTenantSubscriptionsPage extends ConfigurableCrudPageBase<
     try {
       await this.billing.cancelSubscription(this.recordUUID(row));
       this.snack.success('Subscription canceled successfully.');
+      this.refreshList();
+    } catch {
+      // Preserve the explicit rejection returned by the API interceptor.
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  /** Moves the contract to a longer prepaid term; the server quotes and credits the unused paid time. */
+  private async changeTerm(row: BillingSubscription & ConfigurableCrudRecord): Promise<void> {
+    const uuid = this.recordUUID(row);
+    const data: TermChangeDialogData = {
+      title: 'Prepay a longer term',
+      subjectName: String(row['OfferName'] ?? row['BpcName'] ?? ''),
+      currency: String(row['BsuCurrency'] ?? 'BRL'),
+      currentMonths: row['BsuTermStartAt'] ? Number(row['BsuTermMonths'] ?? 1) : 1,
+      options: PREPAID_TERM_MONTHS.map((months) => ({ months, discountPercent: 0 })),
+      preview: async (months) => {
+        const item = await this.billing.termChangePreview(uuid, months);
+        if (!item) return null;
+        return {
+          discountPercent: item.quote.termDiscountPercent,
+          chargeAmount: item.quote.chargeAmount,
+          setupAmount: item.quote.setupAmount,
+          creditAmount: item.creditAmount,
+          netAmount: item.netAmount,
+          periodEnd: item.quote.periodEnd,
+          availableBalance: item.quote.availableBalance,
+        };
+      },
+    };
+    const months = await openTermChangeDialog(this.dialog, this.destroyRef, data);
+    if (!months) return;
+    this.mutating.set(true);
+    try {
+      await this.billing.changeSubscriptionTerm(uuid, months, crypto.randomUUID());
+      this.snack.success('Prepaid term changed.');
       this.refreshList();
     } catch {
       // Preserve the explicit rejection returned by the API interceptor.

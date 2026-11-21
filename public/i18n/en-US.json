@@ -15578,5 +15578,10 @@
   "Internet exit of the network saved.": "Internet exit of the network saved.",
   "Remove": "Remove",
   "10.0.0.10": "10.0.0.10",
-  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32"
+  "203.0.113.0/24, 198.51.100.7/32": "203.0.113.0/24, 198.51.100.7/32",
+  "Prepay a longer term": "Prepay a longer term",
+  "No longer prepaid term is offered for this plan.": "No longer prepaid term is offered for this plan.",
+  "Term discount": "Term discount",
+  "The current contract ends now and its unused paid time returns to your prepaid balance; the new term is charged from it and its price is locked until it ends.": "The current contract ends now and its unused paid time returns to your prepaid balance; the new term is charged from it and its price is locked until it ends.",
+  "Prepaid term changed.": "Prepaid term changed."
 }
