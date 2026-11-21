@@ -1,0 +1,266 @@
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+  type AfterViewInit,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+
+import { AppI18nService } from '../../services/app-i18n.service';
+import { openCrudComponentDialog } from '../dialog/crud-dialog.util';
+import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
+import {
+  AssistantService,
+  assistantErrorCode,
+  safeAssistantRoute,
+  type AssistantConversation,
+  type AssistantLink,
+  type AssistantMessage,
+} from './assistant.service';
+
+/** A visible menu entry the user can open (already filtered by permission, scope and contract). */
+export type AssistantScreen = { label: string; path: string; route: string; icon?: string };
+
+export type AssistantDialogData = { screens: AssistantScreen[]; route: string };
+
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/** Screens whose menu path holds every typed word (instant, no AI, no request). */
+export function matchScreens(
+  screens: AssistantScreen[],
+  query: string,
+  limit = 8,
+): AssistantScreen[] {
+  const terms = normalize(query)
+    .split(/\s+/)
+    .filter((term) => term.length >= 2);
+  if (!terms.length) return [];
+  return screens
+    .map((screen) => ({ screen, text: normalize(`${screen.path} ${screen.route}`) }))
+    .filter((item) => terms.every((term) => item.text.includes(term)))
+    .sort((a, b) => a.screen.path.length - b.screen.path.length)
+    .slice(0, limit)
+    .map((item) => item.screen);
+}
+
+const ERROR_KEYS: Record<string, string> = {
+  AI_ASSISTANT_RATE_LIMIT: 'assistant.errorRateLimit',
+  AI_ASSISTANT_CONVERSATION_FULL: 'assistant.errorFull',
+  AI_ASSISTANT_NOT_FOUND: 'assistant.errorNotFound',
+};
+
+/**
+ * Ask panel: screen search first (instant), then a conversation with the App assistant, which
+ * answers from product knowledge only and links to App screens. The assistant never changes
+ * anything; the user opens the screen and does the steps.
+ */
+@Component({
+  selector: 'mns-assistant-dialog',
+  standalone: true,
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    ReportProblemButtonComponent,
+    TranslocoPipe,
+  ],
+  templateUrl: './assistant-dialog.html',
+  styleUrl: './assistant-dialog.scss',
+})
+export class AssistantDialogComponent implements AfterViewInit {
+  private readonly data = inject<AssistantDialogData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<AssistantDialogComponent>);
+  private readonly router = inject(Router);
+  private readonly i18n = inject(AppI18nService);
+  readonly assistant = inject(AssistantService);
+
+  private readonly input = viewChild<ElementRef<HTMLTextAreaElement>>('questionInput');
+  private readonly thread = viewChild<ElementRef<HTMLElement>>('thread');
+
+  readonly query = signal('');
+  readonly messages = signal<AssistantMessage[]>([]);
+  readonly conversationUUID = signal<string | null>(null);
+  readonly busy = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly showHistory = signal(false);
+  readonly history = signal<AssistantConversation[]>([]);
+
+  readonly screens = computed(() =>
+    this.messages().length ? [] : matchScreens(this.data.screens, this.query()),
+  );
+  readonly canAsk = computed(
+    () => !this.busy() && this.assistant.available() !== false && this.query().trim().length >= 3,
+  );
+
+  constructor() {
+    void this.assistant.refreshStatus();
+  }
+
+  ngAfterViewInit(): void {
+    queueMicrotask(() => this.input()?.nativeElement.focus());
+  }
+
+  openScreen(route: string | null): void {
+    const target = safeAssistantRoute(route);
+    if (!target) return;
+    this.ref.close();
+    void this.router.navigateByUrl(target);
+  }
+
+  openLink(link: AssistantLink): void {
+    this.openScreen(link.route);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    const first = this.screens()[0];
+    if (event.ctrlKey || event.metaKey || !this.canAsk()) {
+      if (first) this.openScreen(first.route);
+      return;
+    }
+    void this.ask();
+  }
+
+  async ask(text?: string): Promise<void> {
+    const question = (text ?? this.query()).trim();
+    if (question.length < 3 || this.busy()) return;
+    this.busy.set(true);
+    this.error.set(null);
+    this.query.set('');
+    const language = this.i18n.language();
+    const pending: AssistantMessage = {
+      messageUUID: `pending-${Date.now()}`,
+      role: 'user',
+      text: question,
+      links: [],
+      outcome: null,
+    };
+    this.messages.update((list) => [...list, pending]);
+    this.scrollDown();
+    try {
+      const uuid = this.conversationUUID();
+      let result: { question: AssistantMessage; answer: AssistantMessage };
+      if (uuid) {
+        result = await this.assistant.ask(uuid, question, this.data.route, language);
+      } else {
+        const started = await this.assistant.start(question, this.data.route, language);
+        this.conversationUUID.set(started.conversation?.conversationUUID || null);
+        result = started;
+      }
+      this.messages.update((list) => [
+        ...list.filter((item) => item !== pending),
+        { ...result.question, links: [], outcome: null },
+        result.answer,
+      ]);
+    } catch (error) {
+      const code = assistantErrorCode(error);
+      this.messages.update((list) => list.filter((item) => item !== pending));
+      this.query.set(question);
+      this.error.set(ERROR_KEYS[code] ?? 'assistant.errorGeneric');
+    } finally {
+      this.busy.set(false);
+      this.scrollDown();
+      queueMicrotask(() => this.input()?.nativeElement.focus());
+    }
+  }
+
+  newConversation(): void {
+    this.conversationUUID.set(null);
+    this.messages.set([]);
+    this.error.set(null);
+    this.showHistory.set(false);
+    queueMicrotask(() => this.input()?.nativeElement.focus());
+  }
+
+  async toggleHistory(): Promise<void> {
+    const open = !this.showHistory();
+    this.showHistory.set(open);
+    if (!open) return;
+    try {
+      this.history.set(await this.assistant.conversations());
+    } catch {
+      this.history.set([]);
+    }
+  }
+
+  async openConversation(item: AssistantConversation): Promise<void> {
+    try {
+      const data = await this.assistant.conversation(item.conversationUUID);
+      this.conversationUUID.set(item.conversationUUID);
+      this.messages.set(data.messages ?? []);
+      this.showHistory.set(false);
+      this.error.set(null);
+      this.scrollDown();
+    } catch {
+      this.error.set('assistant.errorNotFound');
+    }
+  }
+
+  async removeConversation(item: AssistantConversation, event: Event): Promise<void> {
+    event.stopPropagation();
+    try {
+      await this.assistant.remove(item.conversationUUID);
+      this.history.update((list) =>
+        list.filter((entry) => entry.conversationUUID !== item.conversationUUID),
+      );
+      if (this.conversationUUID() === item.conversationUUID) this.newConversation();
+    } catch {
+      this.error.set('assistant.errorGeneric');
+    }
+  }
+
+  /** Unavailable answers keep their text; the outcome only adds a hint. */
+  unavailable(message: AssistantMessage): boolean {
+    return message.role === 'assistant' && !!message.outcome?.toLowerCase().startsWith('ai_');
+  }
+
+  paragraphs(text: string): string[] {
+    return text
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
+  close(): void {
+    this.ref.close();
+  }
+
+  private scrollDown(): void {
+    queueMicrotask(() => {
+      const element = this.thread()?.nativeElement;
+      if (element) element.scrollTop = element.scrollHeight;
+    });
+  }
+}
+
+export function openAssistantDialog(dialog: MatDialog, data: AssistantDialogData): void {
+  if (dialog.openDialogs.some((ref) => ref.componentInstance instanceof AssistantDialogComponent)) {
+    return;
+  }
+  const binding = openCrudComponentDialog(dialog, AssistantDialogComponent, 'crud-form-dialog', {
+    data,
+  });
+  void firstValueFrom(binding.ref.afterClosed()).finally(() => binding.stop());
+}
