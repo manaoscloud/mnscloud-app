@@ -1,9 +1,13 @@
 import {
   findingPatchAction,
   findingPatchBlocked,
+  maintenanceGroupForm,
+  maintenanceGroupPayload,
   patchPolicyForm,
   patchRunsCollection,
   patchServerActions,
+  patchSettingsForm,
+  patchSettingsPayload,
   policyPayload,
   runStateTone,
   runView,
@@ -127,5 +131,36 @@ describe('Cyber Security patch management views', () => {
       't:cyberSecurity.patch.output',
     ]);
     expect(view.sections?.[1].table?.rows).toEqual([{ name: 'openssl', from: '1', to: '2' }]);
+  });
+
+  it('builds the maintenance group body and offers the action to managed servers only', () => {
+    expect(maintenanceGroupPayload({ maintenanceGroup: '  db-a ' })).toEqual({
+      maintenanceGroup: 'db-a',
+    });
+    expect(maintenanceGroupPayload({ maintenanceGroup: ' ' })).toEqual({ maintenanceGroup: null });
+    const action = patchServerActions().find((item) => item.key === 'patchGroup')!;
+    expect(action.visible?.({ enabled: true })).toBe(true);
+    expect(action.visible?.({ enabled: false })).toBe(false);
+    const form = maintenanceGroupForm({ agentUUID: 'a/b', maintenanceGroup: 'x' });
+    const url = form.updateEndpoint as (row: Record<string, unknown>) => string;
+    expect(url({ agentUUID: 'a/b' })).toBe('cyber-security/patch/servers/a%2Fb/group');
+    expect(form.initialValues['maintenanceGroup']).toBe('x');
+  });
+
+  it('builds the patch settings body with the revision', () => {
+    expect(patchSettingsPayload({ requireSecondApprover: 'yes' }, 3)).toEqual({
+      requireSecondApprover: true,
+      revision: 3,
+    });
+    expect(patchSettingsPayload({ requireSecondApprover: 'no' }, undefined)).toEqual({
+      requireSecondApprover: false,
+      revision: null,
+    });
+    const form = patchSettingsForm({ requireSecondApprover: true, revision: 2 });
+    expect(form.initialValues['requireSecondApprover']).toBe('yes');
+    expect(form.payload?.({ requireSecondApprover: 'no' }, true)).toEqual({
+      requireSecondApprover: false,
+      revision: 2,
+    });
   });
 });

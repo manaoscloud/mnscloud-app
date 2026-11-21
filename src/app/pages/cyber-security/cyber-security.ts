@@ -28,6 +28,9 @@ import {
   findingPatchAction,
   patchRunsCollection,
   patchServerActions,
+  patchSettingsEndpoint,
+  patchSettingsFilterAction,
+  patchSettingsForm,
   rebootOptions,
   runStateOptions,
   runStateTone,
@@ -353,12 +356,17 @@ function platformConfig(section: CyberSection, config: ConfigurableCrudConfig) {
   if (section === 'patches') {
     return {
       ...config,
-      rowActions: (config.rowActions ?? []).map((action) => {
-        const form = action.form;
-        return form
-          ? { ...action, form: (row: ConfigurableCrudRecord) => neverReboot(form(row)) }
-          : action;
-      }),
+      filterActions: (config.filterActions ?? []).filter(
+        (action) => action.key !== patchSettingsFilterAction.key,
+      ),
+      rowActions: (config.rowActions ?? [])
+        .filter((action) => action.key !== 'patchGroup')
+        .map((action) => {
+          const form = action.form;
+          return form
+            ? { ...action, form: (row: ConfigurableCrudRecord) => neverReboot(form(row)) }
+            : action;
+        }),
     };
   }
   if (section === 'vulnerabilities') {
@@ -561,6 +569,8 @@ const showCampaign = (campaign: ConfigurableCrudRecord) => void campaignDialog?.
 let campaignStarter: ((target: CampaignTarget) => Promise<void>) | null = null;
 const startCampaign = (target: CampaignTarget) => void campaignStarter?.(target);
 let patchRunDialog: ((run: ConfigurableCrudRecord) => Promise<void>) | null = null;
+let patchEditor: ((config: ConfigurableCrudConfig) => Promise<void>) | null = null;
+const editPatchForm = (config: ConfigurableCrudConfig) => void patchEditor?.(config);
 const showPatchRun = (run: ConfigurableCrudRecord) => void patchRunDialog?.(run);
 let exposureFindingDialog: ((finding: ConfigurableCrudRecord) => void) | null = null;
 const showExposureFinding = (finding: ConfigurableCrudRecord) => exposureFindingDialog?.(finding);
@@ -807,6 +817,12 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         value: (row, t) => windowLabel(row, t),
       },
       {
+        id: 'group',
+        label: 'cyberSecurity.patch.group',
+        field: 'maintenanceGroup',
+        translateValue: false,
+      },
+      {
         id: 'reboot',
         label: 'cyberSecurity.patch.rebootPolicy',
         field: 'rebootPolicy',
@@ -849,8 +865,9 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         icon: 'campaign',
         tooltip: 'cyberSecurity.patch.campaign.description',
       },
+      patchSettingsFilterAction,
     ],
-    rowActions: patchServerActions(showPatchRun),
+    rowActions: patchServerActions(showPatchRun, editPatchForm),
   }),
 
   exposure: defineCrud({
@@ -1238,6 +1255,26 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
   }),
 };
 
+import { ConfigurableCrudCollectionDialog } from '../../shared/crud/configurable-crud/configurable-crud-collection-dialog';
+
+/**
+ * One-field edit dialog of the patch pages (maintenance group, patch settings): the API takes a
+ * PUT on a known record, so the dialog opens in edit mode over `initialValues` (which carry the
+ * key the `updateEndpoint` needs) instead of the create mode of a one-shot form.
+ */
+@Component({
+  selector: 'app-cyber-patch-edit-dialog',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class CyberPatchEditDialog extends ConfigurableCrudCollectionDialog {
+  override startCreate(): void {
+    this.startEdit({ ...this.config.initialValues });
+  }
+}
+
 @Component({
   selector: 'app-cyber-security',
   standalone: true,
@@ -1247,6 +1284,8 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
 })
 export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly platformScope: boolean;
+  /** The tenant requires a second person to approve patch campaigns (read when a form opens). */
+  private secondApprover = false;
 
   constructor() {
     const data = inject(ActivatedRoute).snapshot.data;
@@ -1262,6 +1301,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     remediationDialog = (finding) => this.showRemediation(finding);
     aiExplainDialog = (finding) => this.explainFinding(finding);
     patchRunDialog = (run) => this.showPatchRun(run);
+    patchEditor = (form) => this.openFormOnlyDialog(form, CyberPatchEditDialog);
     campaignDialog = (campaign) => this.showCampaign(campaign);
     campaignStarter = (target) => this.beginCampaign(target, data['scope'] === 'master');
     exposureFindingDialog = (finding) =>
@@ -1415,6 +1455,7 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       this.snack.error(this.t('cyberSecurity.patch.campaign.previewNone'));
       return;
     }
+    if (!platform) await this.loadPatchSettings();
     const ok = await this.confirmAction(
       'cyberSecurity.patch.campaign.new',
       summary.message,
@@ -1426,10 +1467,35 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
         key: 'campaignCreate',
         label: 'cyberSecurity.patch.campaign.new',
         icon: 'healing',
-        form: () => campaignForm(target, platform, CYBER_ACCOUNT_LOOKUP),
+        form: () => campaignForm(target, platform, CYBER_ACCOUNT_LOOKUP, this.secondApprover),
       },
       {},
     );
+  }
+
+  /** GET patch settings; a failure leaves the API to refuse (the form then shows "approve now"). */
+  private async loadPatchSettings(): Promise<ConfigurableCrudRecord | null> {
+    try {
+      const response = await this.api.get<{ data?: ConfigurableCrudRecord }>(patchSettingsEndpoint);
+      const settings = response?.data ?? null;
+      this.secondApprover = settings?.['requireSecondApprover'] === true;
+      return settings;
+    } catch {
+      return null;
+    }
+  }
+
+  private async editPatchSettings(): Promise<void> {
+    const settings = await this.loadPatchSettings();
+    if (!settings) {
+      this.snack.error(this.t('cyberSecurity.patch.loadFailed'));
+      return;
+    }
+    if (settings['locked'] === true) {
+      this.snack.error(this.t('cyberSecurity.patch.settingsLocked'));
+      return;
+    }
+    await this.openFormOnlyDialog(patchSettingsForm(settings), CyberPatchEditDialog);
   }
 
   /** Platform scope: ask the worker to refresh the vulnerability sources now (once per hour). */
@@ -1476,13 +1542,19 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     const emergency = targetFromEmergencyKey(action.key);
     if (emergency) return this.beginCampaign(emergency, this.platformScope);
     if (action.key === REFRESH_SOURCES_KEY) return this.refreshSources();
+    if (action.key === patchSettingsFilterAction.key) return this.editPatchSettings();
     if (action.key === 'patchCampaigns') {
+      if (!this.platformScope) await this.loadPatchSettings();
       return this.runRowAction(
         {
           key: 'patchCampaigns',
           label: 'cyberSecurity.patch.campaign.title',
           icon: 'campaign',
-          collection: () => campaignsCollection(showCampaign),
+          collection: () =>
+            campaignsCollection(showCampaign, {
+              platform: this.platformScope,
+              secondApprover: () => this.secondApprover,
+            }),
         },
         {},
       );

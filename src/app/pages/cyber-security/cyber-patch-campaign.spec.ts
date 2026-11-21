@@ -9,9 +9,13 @@ import {
   campaignRowActions,
   campaignStatusTone,
   campaignView,
+  campaignsCollection,
+  canRebootCampaign,
   fixEverywhereAction,
   platformCampaignForm,
   previewSummary,
+  rebootForm,
+  rebootPayload,
   skipReasonKey,
   targetFromEmergencyKey,
 } from './cyber-patch-campaign';
@@ -192,5 +196,49 @@ describe('Cyber Security patch campaigns', () => {
     const runs = view.sections!.find((s) => s.title === 't:cyberSecurity.patch.campaign.runs')!;
     expect(runs.table!.rows.map((r) => r['agent'])).toEqual(['early', 'late']);
     expect(view.sections!.length).toBe(4);
+  });
+
+  it('offers the reboot only on a finished patch campaign and never on the platform', () => {
+    expect(canRebootCampaign({ status: 'completed', rebootOnly: false })).toBe(true);
+    expect(canRebootCampaign({ status: 'halted' })).toBe(true);
+    expect(canRebootCampaign({ status: 'aborted' })).toBe(true);
+    expect(canRebootCampaign({ status: 'running' })).toBe(false);
+    expect(canRebootCampaign({ status: 'completed', rebootOnly: true })).toBe(false);
+    const reboot = (platform: boolean) =>
+      campaignRowActions(() => undefined, { platform }).find((a) => a.key === 'campaign_reboot')!;
+    expect(reboot(false).visible?.({ status: 'completed' })).toBe(true);
+    expect(reboot(true).visible?.({ status: 'completed' })).toBe(false);
+    expect(campaignsCollection(() => undefined).rowActions?.map((a) => a.key)).toContain(
+      'campaign_reboot',
+    );
+  });
+
+  it('builds the reboot body and hides approve now when a second person approves', () => {
+    expect(
+      rebootPayload({ mode: 'immediate', reason: ' patch ok ', confirm: 'CORRIGIR ' }),
+    ).toEqual({
+      mode: 'immediate',
+      maxParallel: 1,
+      reason: 'patch ok',
+      confirm: 'CORRIGIR',
+      approveNow: false,
+    });
+    expect(
+      rebootPayload({ mode: 'window', maxParallel: '5', reason: 'r', approveNow: 'yes' }),
+    ).toEqual({ mode: 'window', maxParallel: 5, reason: 'r', approveNow: true });
+    expect(rebootPayload({ mode: 'window', reason: 'r', approveNow: 'yes' }, true)).toEqual({
+      mode: 'window',
+      maxParallel: 1,
+      reason: 'r',
+      approveNow: false,
+    });
+    const row = { campaignUUID: 'c1' };
+    expect(rebootForm(row).endpoint).toBe('cyber-security/patch/campaigns/c1/reboot');
+    expect(rebootForm(row).fields.some((f) => f.key === 'approveNow')).toBe(true);
+    expect(rebootForm(row, true).fields.some((f) => f.key === 'approveNow')).toBe(false);
+    const target = { scope: 'all' as const };
+    const keys = (form: ReturnType<typeof campaignForm>) => form.fields.map((f) => f.key);
+    expect(keys(campaignForm(target))).toContain('approveNow');
+    expect(keys(campaignForm(target, false, undefined, true))).not.toContain('approveNow');
   });
 });
