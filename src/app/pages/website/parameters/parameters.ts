@@ -23,7 +23,7 @@ import { FieldRules } from '../../../shared/forms/field-validation';
 import { injectRevealInvalidFields } from '../../../shared/forms/reveal-invalid-fields';
 import { MnsSearchSelectFieldComponent } from '../../../shared/forms/mns-search-select-field/mns-search-select-field';
 import { dnsPolicySelector } from '../../voip/service-domain/dns-policy-selector';
-import { WEBSITE_LOCALE_OPTIONS, isWebsiteLocale } from '../website-content';
+import { WEBSITE_LOCALE_OPTIONS, isWebsiteLocale, websiteUuid } from '../website-content';
 import { WEBSITE_PARAMETERS_ENDPOINT } from '../website.service';
 
 type DnsMode = 'identity_only' | 'managed_dns';
@@ -58,6 +58,8 @@ export type WebsiteParameterForm = {
   edgeIPv6: string;
   defaultLocale: string;
   institutionalDomain: string;
+  /** Conversations web chat connection shown on every page of the institutional website. */
+  institutionalWebchatUUID: string;
 };
 
 type FieldKey =
@@ -67,7 +69,8 @@ type FieldKey =
   | 'edgeIPv4'
   | 'edgeIPv6'
   | 'defaultLocale'
-  | 'institutionalDomain';
+  | 'institutionalDomain'
+  | 'institutionalWebchatUUID';
 
 const FQDN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
@@ -84,6 +87,7 @@ const EMPTY_FORM: WebsiteParameterForm = {
   edgeIPv6: '',
   defaultLocale: 'pt-BR',
   institutionalDomain: '',
+  institutionalWebchatUUID: '',
 };
 
 export function websiteParameterForm(item: Record<string, unknown>): WebsiteParameterForm {
@@ -99,6 +103,7 @@ export function websiteParameterForm(item: Record<string, unknown>): WebsitePara
     edgeIPv6: String(item['edgeIPv6'] ?? ''),
     defaultLocale: isWebsiteLocale(item['defaultLocale']) ? item['defaultLocale'] : 'pt-BR',
     institutionalDomain: String(item['institutionalDomain'] ?? ''),
+    institutionalWebchatUUID: websiteUuid(item['institutionalWebchatUUID']),
   };
 }
 
@@ -124,6 +129,7 @@ export function websiteParameterPayload(form: WebsiteParameterForm): Record<stri
         .trim()
         .toLowerCase()
         .replace(/^\.+|\.+$/g, '') || null,
+    institutionalWebchatUUID: form.institutionalWebchatUUID.trim() || null,
   };
 }
 
@@ -179,6 +185,31 @@ export class WebsiteParametersPage {
   readonly serverInvalid = signal<ReadonlySet<string>>(new Set());
   readonly hasChanges = computed(() => JSON.stringify(this.form()) !== this.baseline());
   readonly managedDns = computed(() => this.form().autoDomainDnsMode === 'managed_dns');
+  /** Label of the stored chat (the parameters read it), shown even when the list fails. */
+  private readonly webchatName = signal<string | null>(null);
+  /** Web chat connections of the active environment (Conversations › Connections). */
+  private readonly webchatConnections = resource({
+    loader: async () => {
+      const response = await this.api.get<{ data?: { items?: Record<string, unknown>[] } }>(
+        'conversations/connections?limit=500',
+      );
+      return (response?.data?.items ?? [])
+        .filter((row) => row['ChcKind'] === 'webchat')
+        .map((row) => ({
+          value: websiteUuid(row['ChcUUID']),
+          label: String(row['ChcName'] ?? row['ChcUUID']),
+        }));
+    },
+  });
+  readonly webchatLoading = computed(() => this.webchatConnections.isLoading());
+  readonly webchatLoadError = computed(() => !!this.webchatConnections.error());
+  readonly webchatOptions = computed(() => {
+    const options = this.webchatConnections.hasValue() ? this.webchatConnections.value() : [];
+    const current = this.form().institutionalWebchatUUID;
+    return current && !options.some((option) => option.value === current)
+      ? [...options, { value: current, label: this.webchatName() ?? current }]
+      : options;
+  });
 
   readonly dns = dnsPolicySelector(
     () => WEBSITE_PARAMETERS_ENDPOINT,
@@ -240,6 +271,7 @@ export class WebsiteParametersPage {
         .replace(/^\.+|\.+$/g, '');
       return !value || FQDN.test(value);
     },
+    institutionalWebchatUUID: () => true,
   });
 
   constructor() {
@@ -272,6 +304,10 @@ export class WebsiteParametersPage {
 
   textValue(event: Event): string {
     return (event.target as HTMLInputElement).value;
+  }
+
+  selectWebchat(value: unknown) {
+    this.update({ institutionalWebchatUUID: websiteUuid(value) });
   }
 
   selectDnsPolicy(value: unknown) {
@@ -347,6 +383,11 @@ export class WebsiteParametersPage {
   private apply(item: Record<string, unknown>) {
     const form = websiteParameterForm(item);
     this.edgeCertificates.set(websiteEdgeCertificates(item));
+    this.webchatName.set(
+      typeof item['institutionalWebchatName'] === 'string'
+        ? item['institutionalWebchatName']
+        : null,
+    );
     this.form.set(form);
     this.baseline.set(JSON.stringify(form));
     this.serverInvalid.set(new Set());
