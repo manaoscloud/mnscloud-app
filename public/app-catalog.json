@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "458bff604f73",
+  "version": "913848471dd3",
   "language": "pt-BR",
   "entries": [
     {
@@ -3805,6 +3805,10 @@
         },
         {
           "label": "Verificação do par (segundos)",
+          "help": ""
+        },
+        {
+          "label": "Status",
           "help": ""
         },
         {
