@@ -2464,6 +2464,14 @@ export const NAV_ITEMS: NavItem[] = [
             entitlementCode: 'module.hosting.vps.network',
           },
           {
+            id: 'hosting/vps/vpn-connections',
+            label: 'nav.hosting.vps.vpn-connections',
+            icon: 'vpn_lock',
+            route: '/hosting/vps/vpn-connections',
+            scope: 'tenant',
+            entitlementCode: 'module.hosting.vps.network',
+          },
+          {
             id: 'hosting/vps/firewalls',
             label: 'nav.hosting.vps.firewalls',
             icon: 'security',

@@ -9,10 +9,62 @@ import {
   websiteContentPayload,
   WEBSITE_PAGE_KEYS,
   websiteSiteUrl,
+  websiteUuid,
 } from './website-content';
 import { websiteSitePayload, websiteSiteRow } from './sites/sites';
 
 describe('Website content v1', () => {
+  it('validates and sends third-party integrations by identifier only', () => {
+    const content = normalizeWebsiteContent(
+      {
+        integrations: {
+          googleAnalytics: { measurementId: 'g-abc123xyz' },
+          externalChat: { provider: 'crisp', id: '7598BF86-9EBB-46BC-8D61-BE8929BBF93D' },
+        },
+      },
+      ['pt-BR'],
+    );
+    expect(validateWebsiteContent(content, ['pt-BR'], false)).toEqual([]);
+    expect(websiteContentPayload(content, ['pt-BR']).integrations).toEqual({
+      googleAnalytics: { measurementId: 'G-ABC123XYZ' },
+      externalChat: { provider: 'crisp', id: '7598bf86-9ebb-46bc-8d61-be8929bbf93d' },
+    });
+    const wrong = setContentValue(content, 'integrations.metaPixel.pixelId', 'abc');
+    expect(validateWebsiteContent(wrong, ['pt-BR'], false).map((e) => e.path)).toEqual([
+      'integrations.metaPixel.pixelId',
+    ]);
+    const twoChats = setContentValue(
+      content,
+      'integrations.webchat.channelUUID',
+      '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+    );
+    expect(validateWebsiteContent(twoChats, ['pt-BR'], false).map((e) => e.path)).toEqual([
+      'integrations.externalChat.provider',
+    ]);
+    const empty = normalizeWebsiteContent(null, ['pt-BR']);
+    expect('integrations' in websiteContentPayload(empty, ['pt-BR'])).toBeFalse();
+  });
+
+  it('binds the site chat and sends it only when a connection is chosen', () => {
+    const channel = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+    const empty = normalizeWebsiteContent(null, ['pt-BR']);
+    expect(empty.integrations.webchat).toEqual({ channelUUID: '' });
+    expect('integrations' in websiteContentPayload(empty, ['pt-BR'])).toBeFalse();
+    const stored = normalizeWebsiteContent(
+      { integrations: { webchat: { channelUUID: channel } } },
+      ['pt-BR'],
+    );
+    expect(stored.integrations.webchat.channelUUID).toBe(channel);
+    const edited = setContentValue(empty, 'integrations.webchat.channelUUID', ` ${channel} `);
+    expect(websiteContentPayload(edited, ['pt-BR']).integrations).toEqual({
+      webchat: { channelUUID: channel },
+    });
+    // Connection lists return compact upper-case identifiers.
+    expect(websiteUuid(channel.replace(/-/g, '').toUpperCase())).toBe(channel);
+    expect(websiteUuid(` ${channel.toUpperCase()} `)).toBe(channel);
+    expect(websiteUuid('not-a-uuid')).toBe('not-a-uuid');
+  });
+
   it('orders the enabled locales with the default first and drops unknown codes', () => {
     expect(orderedLocales(['es-ES', 'xx', 'pt-BR'], 'en-US')).toEqual(['en-US', 'pt-BR', 'es-ES']);
     expect(orderedLocales([], 'pt-BR')).toEqual(['pt-BR']);

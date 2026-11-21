@@ -97,6 +97,7 @@ describe('WebsiteParametersPage', () => {
       edgeIPv6: '2001:db8::10',
       defaultLocale: 'pt-BR',
       institutionalDomain: null,
+      institutionalWebchatUUID: null,
     });
   });
 
@@ -111,6 +112,22 @@ describe('WebsiteParametersPage', () => {
     expect(
       websiteParameterPayload({ ...form, institutionalDomain: ' ' })['institutionalDomain'],
     ).toBeNull();
+  });
+
+  it('keeps the institutional web chat normalized, empty as null', () => {
+    const channel = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+    const form = websiteParameterForm({
+      institutionalWebchatUUID: channel.replace(/-/g, '').toUpperCase(),
+    });
+    expect(form.institutionalWebchatUUID).toBe(channel);
+    expect(websiteParameterPayload(form)['institutionalWebchatUUID']).toBe(channel);
+    expect(
+      websiteParameterPayload({ ...form, institutionalWebchatUUID: '' })[
+        'institutionalWebchatUUID'
+      ],
+    ).toBeNull();
+    page.selectWebchat(channel.toUpperCase());
+    expect(page.form().institutionalWebchatUUID).toBe(channel);
   });
 
   it('normalizes the stored item and the managed payload', () => {
