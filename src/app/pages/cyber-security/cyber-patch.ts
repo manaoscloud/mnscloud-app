@@ -160,6 +160,100 @@ export function patchPolicyForm(row: ConfigurableCrudRecord): ConfigurableCrudCo
   });
 }
 
+export const patchSettingsEndpoint = 'cyber-security/patch/settings';
+
+const serverEndpoint = (row: ConfigurableCrudRecord, suffix = '') =>
+  `cyber-security/patch/servers/${encodeURIComponent(String(row['agentUUID']))}${suffix}`;
+
+/** Body of the group form: empty text clears the group (null). */
+export function maintenanceGroupPayload(values: ConfigurableCrudRecord) {
+  const group = String(values['maintenanceGroup'] ?? '').trim();
+  return { maintenanceGroup: group === '' ? null : group };
+}
+
+/** Edit form of the maintenance group of one server (PUT servers/:agentUUID/group). */
+export function maintenanceGroupForm(row: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: 'cyber-security/patch/servers',
+    uuidField: 'agentUUID',
+    updateEndpoint: (server) => serverEndpoint(server, '/group'),
+    pageTitle: 'cyberSecurity.patch.group',
+    pageDescription: 'cyberSecurity.patch.groupHelp',
+    createTitle: 'cyberSecurity.patch.group',
+    editTitle: 'cyberSecurity.patch.group',
+    savedMessage: 'cyberSecurity.patch.groupSaved',
+    statusFilter: false,
+    initialValues: {
+      agentUUID: row['agentUUID'],
+      maintenanceGroup: row['maintenanceGroup'] ?? '',
+    },
+    payload: (values) => maintenanceGroupPayload(values),
+    columns: [],
+    fields: [
+      {
+        key: 'maintenanceGroup',
+        label: 'cyberSecurity.patch.group',
+        type: 'text',
+        span: 1,
+        help: 'cyberSecurity.patch.groupHelp',
+      },
+    ],
+  });
+}
+
+const yesNoOptions: ConfigurableCrudOption[] = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+];
+
+/** Body of the settings form: the second-approver choice and the revision it was read at. */
+export function patchSettingsPayload(values: ConfigurableCrudRecord, revision: unknown) {
+  return {
+    requireSecondApprover: values['requireSecondApprover'] === 'yes',
+    revision: revision ?? null,
+  };
+}
+
+/** Patch settings of the tenant (PUT settings); `settings` is the answer of GET settings. */
+export function patchSettingsForm(settings: ConfigurableCrudRecord): ConfigurableCrudConfig {
+  return defineCrud({
+    endpoint: patchSettingsEndpoint,
+    uuidField: 'settings',
+    updateEndpoint: () => patchSettingsEndpoint,
+    pageTitle: 'cyberSecurity.patch.settings',
+    pageDescription: 'cyberSecurity.patch.settingsDescription',
+    createTitle: 'cyberSecurity.patch.settings',
+    editTitle: 'cyberSecurity.patch.settings',
+    savedMessage: 'cyberSecurity.patch.settingsSaved',
+    statusFilter: false,
+    initialValues: {
+      settings: 'patch',
+      requireSecondApprover: settings['requireSecondApprover'] ? 'yes' : 'no',
+    },
+    payload: (values) => patchSettingsPayload(values, settings['revision']),
+    columns: [],
+    fields: [
+      {
+        key: 'requireSecondApprover',
+        label: 'cyberSecurity.patch.secondApprover',
+        type: 'select',
+        options: yesNoOptions,
+        required: true,
+        span: 1,
+        help: 'cyberSecurity.patch.secondApproverHelp',
+      },
+    ],
+  });
+}
+
+/** Header action of the patch page; tenant scope only (the platform always needs a second person). */
+export const patchSettingsFilterAction = {
+  key: 'patchSettings',
+  label: 'cyberSecurity.patch.settings',
+  icon: 'tune',
+  tooltip: 'cyberSecurity.patch.settingsDescription',
+};
+
 const decision = (
   key: string,
   icon: string,
@@ -275,6 +369,7 @@ export function patchRunsCollection(
 /** Server row actions of the patch page. */
 export function patchServerActions(
   showRun: (run: ConfigurableCrudRecord) => void = () => undefined,
+  editForm: (config: ConfigurableCrudConfig) => void = () => undefined,
 ): ConfigurableCrudRowAction[] {
   return [
     {
@@ -299,6 +394,13 @@ export function patchServerActions(
       icon: 'schedule',
       visible: (row) => Boolean(row['enabled']),
       form: (row) => patchPolicyForm(row),
+    },
+    {
+      key: 'patchGroup',
+      label: 'cyberSecurity.patch.group',
+      icon: 'group_work',
+      visible: (row) => Boolean(row['enabled']),
+      run: (row) => editForm(maintenanceGroupForm(row)),
     },
     {
       key: 'patchRequest',
@@ -326,8 +428,7 @@ export function patchServerActions(
       visible: (row) => Boolean(row['enabled']),
       request: {
         method: 'post',
-        endpoint: (row) =>
-          `cyber-security/patch/servers/${encodeURIComponent(String(row['agentUUID']))}`,
+        endpoint: (row) => serverEndpoint(row),
         body: (row) => ({ enabled: false, revision: row['revision'] }),
         successMessage: 'cyberSecurity.patch.disabled',
         confirm: {

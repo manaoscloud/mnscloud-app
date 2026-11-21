@@ -208,6 +208,99 @@ export const emergencyMenu: ConfigurableCrudFilterActionMenu = {
 };
 
 /** Body of `campaigns`: the target plus the form values (platform scope never reboots/approves now). */
+/** Campaign statuses after which the servers can be rebooted (a reboot campaign of its own). */
+export const REBOOT_STATUSES: readonly string[] = ['completed', 'halted', 'aborted'];
+
+/** "Restart servers" shows on a finished patch campaign (never on a reboot campaign). */
+export function canRebootCampaign(row: ConfigurableCrudRecord): boolean {
+  return REBOOT_STATUSES.includes(String(row['status'])) && row['rebootOnly'] !== true;
+}
+
+/** Body of `campaigns/:uuid/reboot`: window mode needs no confirmation word. */
+export function rebootPayload(
+  values: ConfigurableCrudRecord,
+  secondApprover = false,
+): Record<string, unknown> {
+  const immediate = values['mode'] !== 'window';
+  return {
+    mode: immediate ? 'immediate' : 'window',
+    maxParallel: optionalNumber(values['maxParallel']) ?? 1,
+    reason: String(values['reason'] ?? '').trim(),
+    ...(immediate ? { confirm: String(values['confirm'] ?? '').trim() } : {}),
+    approveNow: !secondApprover && values['approveNow'] === 'yes',
+  };
+}
+
+/** Form that reboots the servers of a finished campaign (POST campaigns/:uuid/reboot). */
+export function rebootForm(
+  row: ConfigurableCrudRecord,
+  secondApprover = false,
+): ConfigurableCrudConfig {
+  const approve: ConfigurableCrudField[] = secondApprover
+    ? []
+    : [
+        {
+          key: 'approveNow',
+          label: key('field.approveNow'),
+          type: 'select',
+          options: yesNo,
+          span: 1,
+          help: key('field.approveNowHelp'),
+        },
+      ];
+  return defineCrud({
+    endpoint: campaignEndpoint(row, 'reboot'),
+    uuidField: 'campaignUUID',
+    pageTitle: key('action.reboot'),
+    pageDescription: key('action.rebootConfirm'),
+    createTitle: key('action.reboot'),
+    dialogDescription: key('action.rebootConfirm'),
+    savedMessage: key('action.rebootDone'),
+    statusFilter: false,
+    initialValues: { mode: 'window', maxParallel: 1, reason: '', confirm: '', approveNow: 'no' },
+    payload: (values) => rebootPayload(values, secondApprover),
+    columns: [],
+    fields: [
+      {
+        key: 'mode',
+        label: key('field.mode'),
+        type: 'select',
+        options: campaignModeOptions,
+        required: true,
+        span: 1,
+        help: key('field.rebootModeHelp'),
+      },
+      {
+        key: 'maxParallel',
+        label: key('field.maxParallel'),
+        type: 'number',
+        span: 1,
+        positive: true,
+        help: key('field.maxParallelHelp'),
+      },
+      {
+        key: 'confirm',
+        label: key('field.confirm'),
+        type: 'text',
+        span: 1,
+        hiddenWhen: ({ values }) => !isImmediate(values),
+        requiredWhen: ({ values }) => isImmediate(values),
+        placeholder: CONFIRM_WORD,
+        help: key('field.confirmHelp'),
+      },
+      ...approve,
+      {
+        key: 'reason',
+        label: key('field.reason'),
+        type: 'textarea',
+        required: true,
+        span: 4,
+        help: key('field.reasonHelp'),
+      },
+    ],
+  });
+}
+
 export function campaignPayload(
   target: CampaignTarget,
   values: ConfigurableCrudRecord,
@@ -336,11 +429,17 @@ export function platformCampaignForm(form: ConfigurableCrudConfig): Configurable
   };
 }
 
+/** A second person approves the campaigns of the tenant: there is no "approve now". */
+export function withoutApproveNow(form: ConfigurableCrudConfig): ConfigurableCrudConfig {
+  return { ...form, fields: form.fields.filter((field) => field.key !== 'approveNow') };
+}
+
 /** The campaign form: settings of the run; it posts the campaign when saved. */
 export function campaignForm(
   target: CampaignTarget,
   platform = false,
   accountLookup?: AccountLookup,
+  secondApprover = false,
 ): ConfigurableCrudConfig {
   const form = defineCrud({
     endpoint: campaignsEndpoint,
@@ -367,7 +466,8 @@ export function campaignForm(
     columns: [],
     fields: campaignFields(accountLookup && !platform ? accountLookup : undefined),
   });
-  return platform ? platformCampaignForm(form) : form;
+  if (platform) return platformCampaignForm(form);
+  return secondApprover ? withoutApproveNow(form) : form;
 }
 
 /** Summary shown before the settings: how many servers are fixed and which are left out. */
@@ -421,8 +521,16 @@ function decisionForm(action: CampaignAction, row: ConfigurableCrudRecord): Conf
   });
 }
 
+export type CampaignListOptions = {
+  /** Platform scope never reboots a server. */
+  platform?: boolean;
+  /** Whether the tenant requires a second person (read when the form opens). */
+  secondApprover?: () => boolean;
+};
+
 export function campaignRowActions(
   showCampaign: (row: ConfigurableCrudRecord) => void,
+  options: CampaignListOptions = {},
 ): ConfigurableCrudRowAction[] {
   return [
     {
@@ -439,12 +547,20 @@ export function campaignRowActions(
       visible: (row: ConfigurableCrudRecord) => campaignActionsFor(row['status']).includes(action),
       form: (row: ConfigurableCrudRecord) => decisionForm(action, row),
     })),
+    {
+      key: 'campaign_reboot',
+      label: key('action.reboot'),
+      icon: 'restart_alt',
+      visible: (row) => !options.platform && canRebootCampaign(row),
+      form: (row) => rebootForm(row, options.secondApprover?.() ?? false),
+    },
   ];
 }
 
 /** Campaigns, newest first (Updates › Campaigns). */
 export function campaignsCollection(
   showCampaign: (row: ConfigurableCrudRecord) => void,
+  options: CampaignListOptions = {},
 ): ConfigurableCrudConfig {
   return defineCrud({
     endpoint: campaignsEndpoint,
@@ -484,6 +600,11 @@ export function campaignsCollection(
         options: campaignStatusOptions,
         chipClass: campaignStatusTone,
       },
+      {
+        id: 'kind',
+        label: key('col.kind'),
+        value: (row, t) => (row['rebootOnly'] === true ? t(key('kind.reboot')) : ''),
+      },
       { id: 'progress', label: key('col.progress'), value: (row) => campaignProgress(row) },
       { id: 'failed', label: key('col.failed'), field: 'failedCount', kind: 'number' },
       { id: 'wave', label: key('col.wave'), value: (row) => campaignWave(row) },
@@ -494,7 +615,7 @@ export function campaignsCollection(
         translateValue: false,
       },
     ],
-    rowActions: campaignRowActions(showCampaign),
+    rowActions: campaignRowActions(showCampaign, options),
   });
 }
 
@@ -513,6 +634,9 @@ export function campaignView(campaign: ConfigurableCrudRecord, t: Translate): Da
       title: t('cyberSecurity.patch.summary'),
       details: [
         { label: key('col.scope'), value: campaignDescription(campaign, t), translate: false },
+        ...(campaign['rebootOnly'] === true
+          ? [{ label: key('col.kind'), value: t(key('kind.reboot')), translate: false }]
+          : []),
         { label: key('field.mode'), value: t(key(`mode.${campaign['mode']}`)), translate: false },
         { label: key('col.progress'), value: campaignProgress(campaign), translate: false },
         {
