@@ -38,6 +38,21 @@ const messages: Record<string, string> = {
   PAY_SANDBOX_INVALID_REQUEST: 'Provide the bank charge reference and BOLETO or PIX.',
   PAY_INVALID_CARD_FEE:
     'Card fees apply only to card connections: percent from 0 to 50 and fixed fee from 0 to 100.',
+  PAY_SPLIT_NOT_CONFIGURED: 'MNSCloud Pay is not ready on the platform yet. Contact support.',
+  PAY_WEBHOOK_NOT_REGISTERED: 'Register the PAY_SPLIT settlement webhook in System > Pay first.',
+  PAY_IDENTITY_INCOMPLETE:
+    'Complete the address and billing e-mail of the tax identity (Billing > Tax identity) first.',
+  PAY_COMPANY_TYPE_REQUIRED: 'Choose the company type (MEI, limited company or association).',
+  PAY_INCOME_REQUIRED: 'Enter the monthly income of the company.',
+  PAY_BIRTH_DATE_REQUIRED: 'Enter the birth date.',
+  PAY_PAYOUT_DESTINATION_INVALID:
+    'Payouts go only to the CPF/CNPJ Pix key or a bank account of the tenant itself.',
+  PAY_PAYOUT_BANK_INCOMPLETE:
+    'Enter the bank code, agency and account number of the payout account.',
+  PAY_KYC_PENDING: 'The MNSCloud Pay account verification is not approved yet.',
+  PAY_PAYOUT_MINIMUM: 'The payout minimum cannot be less than R$ 50.00.',
+  PAY_GATEWAY_UNAVAILABLE: 'This payment gateway is not available yet.',
+  PAY_DUPLICATE_UNSUPPORTED: 'Connections of this bank cannot be duplicated (certificate files).',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 

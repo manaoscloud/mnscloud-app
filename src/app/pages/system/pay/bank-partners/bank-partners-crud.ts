@@ -2,6 +2,7 @@ import {
   ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudRowAction,
 } from '../../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../../shared/crud/configurable-crud/define-crud';
 
@@ -9,6 +10,24 @@ import { defineCrud } from '../../../../shared/crud/configurable-crud/define-cru
  * MNSCloud Pay bank partners: connections to the banks behind the platform product.
  * The bank list comes from the API catalog; each bank shows only the fields its API needs.
  */
+
+/** Same bank account for another purpose: the API reuses the sealed key (Asaas only). */
+function duplicateAction(purpose: string, label: string, icon: string): ConfigurableCrudRowAction {
+  return {
+    key: `duplicate-${purpose.toLowerCase().replace(/_/g, '-')}`,
+    label,
+    icon,
+    visible: (row) =>
+      String(row['PbcProvider'] ?? '') === 'asaas' && String(row['PbcPurpose'] ?? '') !== purpose,
+    request: {
+      method: 'post',
+      endpoint: (row) => `system/pay/bank-connections/${String(row['PbcUUID'] ?? '')}/duplicate`,
+      body: () => ({ purpose }),
+      successMessage: 'Connection duplicated for the new purpose.',
+    },
+  };
+}
+
 export const INTER = 'inter_business';
 
 const statusOptions: readonly ConfigurableCrudOption[] = [
@@ -386,6 +405,9 @@ export const bankPartnersConfig = defineCrud({
   rowActions: [
     { key: 'validate', label: 'Validate connection', icon: 'verified' },
     { key: 'webhook', label: 'Register settlement webhook', icon: 'webhook' },
+    duplicateAction('PAY_SPLIT', 'Duplicate for MNSCloud Pay split', 'call_split'),
+    duplicateAction('TENANT_BILLING', 'Duplicate for tenant billing (Pix/Boleto)', 'content_copy'),
+    duplicateAction('TENANT_BILLING_CARD', 'Duplicate for tenant billing (card)', 'credit_card'),
   ],
   payload: (values, editing) => {
     const bank = bankOf(values);
