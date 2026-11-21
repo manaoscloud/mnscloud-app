@@ -15767,7 +15767,6 @@
   "L (4 vCPU, 1 GB, up to 30 VPN connections)": "L (4 vCPU, 1 GB, up to 30 VPN connections)",
   "Router size saved. The router restarts once to take it.": "Router size saved. The router restarts once to take it.",
   "Change the router size": "Change the router size",
-  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly. Change the size?": "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly. Change the size?",
   "Change size": "Change size",
   "Routers": "Routers",
   "One router per provider routes your private networks (NAT, routes and VPN). Choose its size by the VPN connections it carries.": "One router per provider routes your private networks (NAT, routes and VPN). Choose its size by the VPN connections it carries.",
@@ -15776,5 +15775,6 @@
   "VPN connections": "VPN connections",
   "Size S": "Size S",
   "Size M": "Size M",
-  "Size L": "Size L"
+  "Size L": "Size L",
+  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly; a new size starts a new monthly charge and the previous one is not refunded. Change the size?": "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly; a new size starts a new monthly charge and the previous one is not refunded. Change the size?"
 }

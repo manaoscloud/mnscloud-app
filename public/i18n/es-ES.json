@@ -15767,7 +15767,6 @@
   "L (4 vCPU, 1 GB, up to 30 VPN connections)": "L (4 vCPU, 1 GB, hasta 30 conexiones VPN)",
   "Router size saved. The router restarts once to take it.": "Tamaño del router guardado. El router se reinicia una vez para aplicarlo.",
   "Change the router size": "Cambiar el tamaño del router",
-  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly. Change the size?": "El router se reinicia una vez (cerca de un minuto sin tráfico en sus redes privadas). Los tamaños M y L se cobran por mes. ¿Cambiar el tamaño?",
   "Change size": "Cambiar tamaño",
   "Routers": "Routers",
   "One router per provider routes your private networks (NAT, routes and VPN). Choose its size by the VPN connections it carries.": "Un router por proveedor encamina sus redes privadas (NAT, rutas y VPN). Elija el tamaño por las conexiones VPN que lleva.",
@@ -15776,5 +15775,6 @@
   "VPN connections": "Conexiones VPN",
   "Size S": "Tamaño S",
   "Size M": "Tamaño M",
-  "Size L": "Tamaño L"
+  "Size L": "Tamaño L",
+  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly; a new size starts a new monthly charge and the previous one is not refunded. Change the size?": "El router se reinicia una vez (cerca de un minuto sin tráfico en sus redes privadas). Los tamaños M y L se cobran por mes; un nuevo tamaño inicia un nuevo cobro mensual y el anterior no se reembolsa. ¿Cambiar el tamaño?"
 }

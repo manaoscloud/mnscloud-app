@@ -28,7 +28,9 @@ function sizeAction(size: 'S' | 'M' | 'L', label: string): ConfigurableCrudRowAc
     key: `size-${size}`,
     label,
     icon: 'memory',
-    visible: (row: ConfigurableCrudRecord) => String(row['size'] ?? 'S') !== size,
+    // Sizes need router engine 2 (the provider moves routers to it).
+    visible: (row: ConfigurableCrudRecord) =>
+      Number(row['engine']) === 2 && String(row['size'] ?? 'S') !== size,
     request: {
       method: 'put',
       endpoint: (row: ConfigurableCrudRecord) =>
@@ -38,7 +40,7 @@ function sizeAction(size: 'S' | 'M' | 'L', label: string): ConfigurableCrudRowAc
       confirm: {
         title: 'Change the router size',
         message:
-          'The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly. Change the size?',
+          'The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly; a new size starts a new monthly charge and the previous one is not refunded. Change the size?',
         confirmLabel: 'Change size',
       },
     },
