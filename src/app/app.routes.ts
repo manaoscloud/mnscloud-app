@@ -2245,6 +2245,15 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'port-forwards',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/port-forwards/port-forwards').then(
+                        (m) => m.HostingVpsPortForwardsPage,
+                      ),
+                    title: 'Hosting • VPS Port forwards | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
                     path: 'firewalls',
                     loadComponent: () =>
                       import('./pages/hosting/vps/firewalls/firewalls').then(

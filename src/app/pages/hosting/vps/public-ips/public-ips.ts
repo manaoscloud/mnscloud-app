@@ -49,6 +49,18 @@ const ACTIONS = {
     tooltip: 'Dissociate from the VPS',
   },
   retry: { key: 'retry', label: 'Retry', icon: 'replay', tooltip: 'Retry the network change' },
+  useOnRouter: {
+    key: 'useOnRouter',
+    label: 'Use on the router',
+    icon: 'hub',
+    tooltip: 'Use this IP on the router of your private networks (internet exit and port forwards)',
+  },
+  removeFromRouter: {
+    key: 'removeFromRouter',
+    label: 'Remove from the router',
+    icon: 'hub',
+    tooltip: 'Stop using this IP on the router',
+  },
   release: {
     key: 'release',
     label: 'Release',
@@ -125,7 +137,7 @@ const config = defineCrud({
       options: IP_STATUS_OPTIONS,
       className: 'status-col',
     },
-    { id: 'vps', label: 'VPS', field: 'HviName' },
+    { id: 'vps', label: 'Used by', field: 'UsedBy' },
     { id: 'privateAddress', label: 'Private IP', field: 'HpiPrivateAddress', copyable: true },
     {
       id: 'networkState',
@@ -285,7 +297,11 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
       params.set(filter.paramKey ?? filter.key, String(value));
     }
     const response = await this.api.get(`${this.listEndpoint()}?${params.toString()}`);
-    return (response as { data?: { items?: ConfigurableCrudRecord[] } })?.data?.items ?? [];
+    const items = (response as { data?: { items?: ConfigurableCrudRecord[] } })?.data?.items ?? [];
+    return items.map((item) => ({
+      ...item,
+      UsedBy: item['HostingVpsTenantZoneHtzUUID'] ? this.t('Router') : (item['HviName'] ?? null),
+    }));
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
@@ -311,7 +327,8 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
 
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const mine = Number(row['IsMine']) === 1;
-    const associated = !!row['HostingVpsInstanceHviUUID'];
+    const onRouter = !!row['HostingVpsTenantZoneHtzUUID'];
+    const associated = !!row['HostingVpsInstanceHviUUID'] || onRouter;
     const state = String(row['HpiNetworkState'] ?? '');
     const actions: ConfigurableCrudRowAction[] = [];
     if (!this.platformScope() && row['HpiStatus'] === 'available') actions.push(ACTIONS.contract);
@@ -320,9 +337,18 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
       actions.push(ACTIONS.assign);
     if ((mine || this.platformScope()) && row['HpiStatus'] === 'allocated' && !associated)
       actions.push(ACTIONS.release);
-    if ((mine || this.platformScope()) && associated && state !== 'removing')
+    if (!this.platformScope() && mine && row['HpiStatus'] === 'allocated' && !associated)
+      actions.push(ACTIONS.useOnRouter);
+    if (!this.platformScope() && mine && onRouter && state !== 'removing')
+      actions.push(ACTIONS.removeFromRouter);
+    if ((mine || this.platformScope()) && associated && !onRouter && state !== 'removing')
       actions.push(ACTIONS.unassign);
-    if ((mine || this.platformScope()) && associated && state === 'failed')
+    // A router IP whose removal failed stays "removing" with the error: Retry finishes the removal.
+    if (
+      (mine || this.platformScope()) &&
+      associated &&
+      (state === 'failed' || (onRouter && state === 'removing' && !!row['HpiLastError']))
+    )
       actions.push(ACTIONS.retry);
     return actions;
   }
@@ -361,6 +387,34 @@ export class HostingVpsPublicIpsPage extends ConfigurableCrudPageBase<Configurab
         'Dissociate',
       );
       if (ok) await this.post(`${uuid}/unassign`, {}, 'Public IP dissociated from the VPS.');
+      return;
+    }
+    if (action.key === 'useOnRouter') {
+      const ok = await this.confirmAction(
+        'Use public IP on the router',
+        `Use ${address} on the router of your private networks? Then choose it as the internet exit of a network or forward its ports to your servers. If the router needs an upgrade, your servers lose internet access for about two minutes and you try again.`,
+        'Use on the router',
+      );
+      if (ok) await this.post(`${uuid}/router`, {}, 'Public IP is used by the router.');
+      return;
+    }
+    if (action.key === 'removeFromRouter') {
+      const ok = await this.confirmAction(
+        'Remove public IP from the router',
+        `Stop using ${address} on the router? Remove its port forwards and network exits first; the IP stays contracted.`,
+        'Remove',
+      );
+      if (!ok) return;
+      this.mutating.set(true);
+      try {
+        await this.api.delete(`${this.ipEndpoint()}/${uuid}/router`);
+        this.snack.success(this.t('Public IP removed from the router.'));
+      } catch {
+        // The API error toast already explains the refusal.
+      } finally {
+        this.mutating.set(false);
+        this.refreshList();
+      }
       return;
     }
     if (action.key === 'retry') {
