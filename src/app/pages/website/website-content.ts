@@ -91,10 +91,38 @@ export type WebsiteLocaleContent = {
   pages?: Partial<Record<WebsitePageKey, WebsitePageBlock>>;
   promotions?: WebsitePromotion[];
 };
-/** Typed integrations rendered by the platform (never free HTML or script). */
+export const WEBSITE_EXTERNAL_CHAT_PROVIDERS = ['tawk', 'jivochat', 'crisp'] as const;
+export type WebsiteExternalChatProvider = (typeof WEBSITE_EXTERNAL_CHAT_PROVIDERS)[number];
+export const WEBSITE_EXTERNAL_CHAT_OPTIONS: {
+  value: WebsiteExternalChatProvider;
+  label: string;
+}[] = [
+  { value: 'tawk', label: 'Tawk.to' },
+  { value: 'jivochat', label: 'JivoChat' },
+  { value: 'crisp', label: 'Crisp' },
+];
+/** Identifier formats the API enforces (vendor formats). */
+export const WEBSITE_INTEGRATION_FORMATS = {
+  googleAnalytics: /^G-[A-Z0-9]{4,16}$/,
+  googleTagManager: /^GTM-[A-Z0-9]{4,12}$/,
+  metaPixel: /^[0-9]{6,20}$/,
+  tawk: /^[a-f0-9]{24}\/[a-z0-9]{1,16}$/,
+  jivochat: /^[A-Za-z0-9]{6,20}$/,
+  crisp: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+} as const;
+
+/**
+ * Typed integrations rendered by the platform (never free HTML or script). Every identifier is
+ * empty when the integration is off; third-party ones load only after the visitor's consent.
+ */
 export type WebsiteIntegrations = {
   /** Conversations web chat connection; empty = no chat on the site. */
   webchat: { channelUUID: string };
+  googleAnalytics: { measurementId: string };
+  googleTagManager: { containerId: string };
+  metaPixel: { pixelId: string };
+  /** Third-party chat widget; never together with the Conversations web chat. */
+  externalChat: { provider: WebsiteExternalChatProvider | ''; id: string };
 };
 export type WebsiteContent = {
   version: 1;
@@ -263,7 +291,10 @@ export function normalizeWebsiteContent(
   const theme = record(source['theme']);
   const contact = record(source['contact']);
   const social = Array.isArray(source['social']) ? source['social'] : [];
-  const webchat = record(record(source['integrations'])['webchat']);
+  const integrations = record(source['integrations']);
+  const webchat = record(integrations['webchat']);
+  const externalChat = record(integrations['externalChat']);
+  const provider = text(externalChat['provider']);
   const storedLocales = record(source['locales']);
   const result: WebsiteContent['locales'] = {};
   for (const locale of WEBSITE_LOCALES) {
@@ -294,7 +325,22 @@ export function normalizeWebsiteContent(
         url: text(entry['url']),
       })),
     locales: result,
-    integrations: { webchat: { channelUUID: websiteUuid(webchat['channelUUID']) } },
+    integrations: {
+      webchat: { channelUUID: websiteUuid(webchat['channelUUID']) },
+      googleAnalytics: {
+        measurementId: text(record(integrations['googleAnalytics'])['measurementId']),
+      },
+      googleTagManager: {
+        containerId: text(record(integrations['googleTagManager'])['containerId']),
+      },
+      metaPixel: { pixelId: text(record(integrations['metaPixel'])['pixelId']) },
+      externalChat: {
+        provider: (WEBSITE_EXTERNAL_CHAT_PROVIDERS as readonly string[]).includes(provider)
+          ? (provider as WebsiteExternalChatProvider)
+          : '',
+        id: text(externalChat['id']),
+      },
+    },
   };
 }
 
@@ -374,6 +420,8 @@ const LINK_MESSAGE = 'website.validation.link';
 const URL_MESSAGE = 'website.validation.httpsUrl';
 const COLOR_MESSAGE = 'website.validation.color';
 const EMAIL_MESSAGE = 'website.validation.email';
+const INTEGRATION_MESSAGE = 'website.validation.integrationId';
+const ONE_CHAT_MESSAGE = 'website.validation.oneChat';
 const DATE_MESSAGE = 'website.validation.date';
 const DATE_ORDER_MESSAGE = 'website.validation.dateOrder';
 const PROMOTIONS_MAX_MESSAGE = 'website.validation.promotionsMax';
@@ -411,6 +459,30 @@ export function validateWebsiteContent(
     if (!entry.url.trim()) add(`social.${index}.url`, REQUIRED_MESSAGE);
     else if (!isHttpsUrl(entry.url)) add(`social.${index}.url`, URL_MESSAGE);
   });
+  const integrations = content.integrations;
+  const ga = integrations.googleAnalytics.measurementId.trim().toUpperCase();
+  if (ga && !WEBSITE_INTEGRATION_FORMATS.googleAnalytics.test(ga)) {
+    add('integrations.googleAnalytics.measurementId', INTEGRATION_MESSAGE);
+  }
+  const gtm = integrations.googleTagManager.containerId.trim().toUpperCase();
+  if (gtm && !WEBSITE_INTEGRATION_FORMATS.googleTagManager.test(gtm)) {
+    add('integrations.googleTagManager.containerId', INTEGRATION_MESSAGE);
+  }
+  const pixel = integrations.metaPixel.pixelId.trim();
+  if (pixel && !WEBSITE_INTEGRATION_FORMATS.metaPixel.test(pixel)) {
+    add('integrations.metaPixel.pixelId', INTEGRATION_MESSAGE);
+  }
+  const chat = integrations.externalChat;
+  if (chat.provider && !chat.id.trim()) add('integrations.externalChat.id', REQUIRED_MESSAGE);
+  else if (
+    chat.provider &&
+    !WEBSITE_INTEGRATION_FORMATS[chat.provider].test(externalChatId(chat.provider, chat.id))
+  ) {
+    add('integrations.externalChat.id', INTEGRATION_MESSAGE);
+  }
+  if (chat.provider && integrations.webchat.channelUUID.trim()) {
+    add('integrations.externalChat.provider', ONE_CHAT_MESSAGE);
+  }
   for (const locale of locales) {
     const block = content.locales[locale] ?? emptyLocaleContent();
     const at = (path: string) => `${locale}.${path}`;
@@ -480,7 +552,7 @@ function addOptionalBlocks(payload: WebsiteLocaleContent, block: WebsiteLocaleCo
 /** Content sent to the API: trimmed text, only the enabled locales. */
 /** Content as sent to the API: integrations only when one is on (older documents stay unchanged). */
 export type WebsiteContentPayload = Omit<WebsiteContent, 'integrations'> & {
-  integrations?: WebsiteIntegrations;
+  integrations?: Partial<WebsiteIntegrations>;
 };
 
 export function websiteContentPayload(
@@ -536,14 +608,33 @@ export function websiteContentPayload(
     },
     social: content.social.map((entry) => ({ network: entry.network, url: trim(entry.url) })),
     locales: localesPayload,
-    ...(trim(content.integrations.webchat.channelUUID)
-      ? {
-          integrations: {
-            webchat: { channelUUID: trim(content.integrations.webchat.channelUUID) },
-          },
-        }
-      : {}),
+    ...integrationsPayload(content.integrations),
   };
+}
+
+/** Only the integrations that are on (older documents and API versions stay unchanged). */
+function integrationsPayload(integrations: WebsiteIntegrations): {
+  integrations?: Partial<WebsiteIntegrations>;
+} {
+  const out: Partial<WebsiteIntegrations> = {};
+  const channel = integrations.webchat.channelUUID.trim();
+  if (channel) out.webchat = { channelUUID: channel };
+  const ga = integrations.googleAnalytics.measurementId.trim().toUpperCase();
+  if (ga) out.googleAnalytics = { measurementId: ga };
+  const gtm = integrations.googleTagManager.containerId.trim().toUpperCase();
+  if (gtm) out.googleTagManager = { containerId: gtm };
+  const pixel = integrations.metaPixel.pixelId.trim();
+  if (pixel) out.metaPixel = { pixelId: pixel };
+  const chat = integrations.externalChat;
+  if (chat.provider && chat.id.trim()) {
+    out.externalChat = { provider: chat.provider, id: externalChatId(chat.provider, chat.id) };
+  }
+  return Object.keys(out).length ? { integrations: out } : {};
+}
+
+function externalChatId(provider: WebsiteExternalChatProvider, id: string): string {
+  const value = id.trim();
+  return provider === 'jivochat' ? value : value.toLowerCase();
 }
 
 /** Public address of the site: the custom domain when bound, else the automatic one. */

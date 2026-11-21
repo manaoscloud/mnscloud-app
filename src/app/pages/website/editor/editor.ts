@@ -35,6 +35,7 @@ import {
   WEBSITE_PAGE_KEYS,
   WEBSITE_SECTION_TYPES_WITH_ITEMS,
   WEBSITE_SECTION_TYPE_OPTIONS,
+  WEBSITE_EXTERNAL_CHAT_OPTIONS,
   WEBSITE_SOCIAL_OPTIONS,
   WebsiteContent,
   WebsiteContentError,
@@ -120,6 +121,7 @@ export class WebsiteEditorPage {
 
   readonly sectionTypeOptions = WEBSITE_SECTION_TYPE_OPTIONS;
   readonly socialOptions = WEBSITE_SOCIAL_OPTIONS;
+  readonly externalChatOptions = WEBSITE_EXTERNAL_CHAT_OPTIONS;
   readonly pageKeys = WEBSITE_PAGE_KEYS;
   readonly maxPromotions = WEBSITE_MAX_PROMOTIONS;
   readonly statusOptions = WEBSITE_SITE_STATUS_OPTIONS;
