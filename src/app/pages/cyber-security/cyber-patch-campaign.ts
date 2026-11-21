@@ -569,6 +569,8 @@ export function simulationSummary(
   }
   const noCapability = items.filter((item) => status(item) === 'no_capability').length;
   if (noCapability) lines.push(t(key('simulationNoCapability'), { count: noCapability }));
+  const patching = items.filter((item) => status(item) === 'patch_running').length;
+  if (patching) lines.push(t(key('simulationPatchRunning'), { count: patching }));
   const waiting =
     pending > 0
       ? pending

@@ -15227,6 +15227,7 @@
   "cyberSecurity.patch.campaign.simulationReboot": "{{count}} servidores pueden necesitar reiniciar.",
   "cyberSecurity.patch.campaign.simulationFailed": "{{count}} servidores no terminaron la simulación.",
   "cyberSecurity.patch.campaign.simulationNoCapability": "{{count}} servidores con Agent sin soporte de simulación (actualice el Agent).",
+  "cyberSecurity.patch.campaign.simulationPatchRunning": "{{count}} servidores con una corrección en curso (no simulados).",
   "cyberSecurity.patch.campaign.simulationPending": "{{count}} servidores aún no respondieron.",
   "cyberSecurity.patch.campaign.simulationUnavailable": "Simulación no disponible.",
   "cyberSecurity.patch.campaign.previewFailed": "No se pudo calcular los servidores de la campaña.",

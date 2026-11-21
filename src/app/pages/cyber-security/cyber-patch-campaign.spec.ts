@@ -186,16 +186,18 @@ describe('Cyber Security patch campaigns', () => {
         { agentName: 'win1', status: 'completed', updateCount: 2, upgradeCount: 0 },
         { agentName: 'db1', status: 'failed', error: 'boom' },
         { agentName: 'old1', status: 'no_capability' },
+        { agentName: 'busy1', status: 'patch_running' },
         { agentName: 'slow1', status: 'running' },
       ],
       t,
       1,
     );
-    expect(text).toContain('"done":2,"total":5,"upgrade":5,"install":1,"remove":5');
+    expect(text).toContain('"done":2,"total":6,"upgrade":5,"install":1,"remove":5');
     expect(text).toContain('web1: t:cyberSecurity.patch.campaign.simulationRemove a, b, c (+2)');
     expect(text).toContain('simulationReboot');
     expect(text).toContain('db1: boom');
     expect(text).toContain('simulationNoCapability');
+    expect(text).toContain('simulationPatchRunning');
     expect(text).toContain('simulationPending');
     expect(simulationSummary([{ status: 'nothing' }], t)).not.toContain('simulationRemoveWarning');
   });
