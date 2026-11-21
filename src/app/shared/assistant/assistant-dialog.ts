@@ -1,11 +1,11 @@
 import {
   Component,
+  afterNextRender,
   ElementRef,
   computed,
   inject,
   signal,
   viewChild,
-  type AfterViewInit,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -88,7 +88,7 @@ const ERROR_KEYS: Record<string, string> = {
   templateUrl: './assistant-dialog.html',
   styleUrl: './assistant-dialog.scss',
 })
-export class AssistantDialogComponent implements AfterViewInit {
+export class AssistantDialogComponent {
   private readonly data = inject<AssistantDialogData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<AssistantDialogComponent>);
   private readonly router = inject(Router);
@@ -115,10 +115,7 @@ export class AssistantDialogComponent implements AfterViewInit {
 
   constructor() {
     void this.assistant.refreshStatus();
-  }
-
-  ngAfterViewInit(): void {
-    queueMicrotask(() => this.input()?.nativeElement.focus());
+    afterNextRender(() => this.input()?.nativeElement.focus());
   }
 
   openScreen(route: string | null): void {
