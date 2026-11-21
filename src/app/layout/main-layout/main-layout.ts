@@ -28,6 +28,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { BreadcrumbComponent } from '../../shared/breadcrumb/breadcrumb';
 import { PhoneDock } from '../../shared/phone-dock/phone-dock';
 import { PhoneDockButton } from '../../shared/phone-dock/phone-dock-button';
+import { openAssistantDialog, type AssistantScreen } from '../../shared/assistant/assistant-dialog';
 import { PhoneDockService } from '../../shared/phone-dock/phone-dock.service';
 import { isSignedStorageUrl } from '../../shared/storage/signed-url';
 import { NavigationLoadingService } from '../../shared/route-loader/navigation-loading.service';
@@ -165,6 +166,7 @@ interface UserAccessResponse {
   ],
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.scss'],
+  host: { '(document:keydown)': 'onGlobalKeydown($event)' },
 })
 export class MainLayout {
   // =======================================================
@@ -426,6 +428,53 @@ export class MainLayout {
     };
 
     return normalize(this.router.url) === normalize(route);
+  }
+
+  // =======================================================
+  // App assistant (Ask panel, Ctrl+K / Cmd+K)
+  // =======================================================
+
+  /** The assistant answers inside the active tenant; without one only the menu search exists. */
+  readonly assistantAvailable = computed(() => !!this.activeEnvironmentId());
+
+  onGlobalKeydown(event: KeyboardEvent): void {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+    if (event.key.toLowerCase() !== 'k') return;
+    if (!this.assistantAvailable()) return;
+    event.preventDefault();
+    this.openAssistant();
+  }
+
+  openAssistant(): void {
+    if (!this.assistantAvailable()) return;
+    openAssistantDialog(this.dialogs, {
+      screens: this.assistantScreens(),
+      route: this.router.url.split('#')[0],
+    });
+  }
+
+  /** Visible menu leaves the user can open (permission, scope and contract already applied). */
+  private assistantScreens(): AssistantScreen[] {
+    const screens: AssistantScreen[] = [];
+    const walk = (items: ShellNavItem[], icon?: string) => {
+      for (const item of items) {
+        const itemIcon = item.icon ?? icon;
+        if (item.children?.length) {
+          walk(item.children, itemIcon);
+          continue;
+        }
+        const route = this.routeForItem(item);
+        if (!route || route.includes(':')) continue;
+        screens.push({
+          label: item.label,
+          path: item.searchText || item.path,
+          route,
+          icon: itemIcon,
+        });
+      }
+    };
+    walk(this.localizedNavItems());
+    return screens;
   }
 
   private routeForItem(item: NavItem): string | undefined {

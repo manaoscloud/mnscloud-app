@@ -336,6 +336,20 @@
           <mns-phone-dock-button />
         }
 
+        @if (assistantAvailable()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="assistant-button"
+            (click)="openAssistant()"
+            [matTooltip]="'assistant.trigger' | transloco"
+            [attr.aria-label]="'assistant.trigger' | transloco"
+            aria-keyshortcuts="Control+K Meta+K"
+          >
+            <mat-icon>auto_awesome</mat-icon>
+          </button>
+        }
+
         <button
           mat-icon-button
           type="button"
