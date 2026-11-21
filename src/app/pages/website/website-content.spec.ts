@@ -13,6 +13,22 @@ import {
 import { websiteSitePayload, websiteSiteRow } from './sites/sites';
 
 describe('Website content v1', () => {
+  it('binds the site chat and sends it only when a connection is chosen', () => {
+    const channel = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+    const empty = normalizeWebsiteContent(null, ['pt-BR']);
+    expect(empty.integrations).toEqual({ webchat: { channelUUID: '' } });
+    expect('integrations' in websiteContentPayload(empty, ['pt-BR'])).toBeFalse();
+    const stored = normalizeWebsiteContent(
+      { integrations: { webchat: { channelUUID: channel } } },
+      ['pt-BR'],
+    );
+    expect(stored.integrations.webchat.channelUUID).toBe(channel);
+    const edited = setContentValue(empty, 'integrations.webchat.channelUUID', ` ${channel} `);
+    expect(websiteContentPayload(edited, ['pt-BR']).integrations).toEqual({
+      webchat: { channelUUID: channel },
+    });
+  });
+
   it('orders the enabled locales with the default first and drops unknown codes', () => {
     expect(orderedLocales(['es-ES', 'xx', 'pt-BR'], 'en-US')).toEqual(['en-US', 'pt-BR', 'es-ES']);
     expect(orderedLocales([], 'pt-BR')).toEqual(['pt-BR']);
