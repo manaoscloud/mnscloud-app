@@ -26,7 +26,14 @@ const config = defineCrud({
   pageTitle: 'Vendor Models',
   pageDescription: 'Map vendor equipment models to your ISP inventory.',
   bulkDelete: true,
-  initialValues: { status: 1, vendorUUID: '', name: '', type: 'OLT', notes: '' },
+  initialValues: {
+    status: 1,
+    vendorUUID: '',
+    name: '',
+    type: 'OLT',
+    catalogModelUUID: '',
+    notes: '',
+  },
   columns: [
     {
       id: 'name',
@@ -63,6 +70,23 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'catalogModelUUID',
+      source: 'CatalogModelUUID',
+      label: 'isp.catalogModel',
+      help: 'isp.catalogModelHelp',
+      type: 'search-select',
+      remoteLookup: {
+        parameters: { type: 'type' },
+        endpoint: 'isp/catalog-models',
+        uuidField: 'IcmUUID',
+        labelField: 'IcmName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'The ISP catalog is platform data managed by the master in the platform area.',
+      span: 1,
+    },
+    {
       key: 'notes',
       source: 'VendorModelNotes',
       label: 'Notes',
@@ -87,6 +111,10 @@ export class IspVendorModelPage extends ConfigurableCrudPageBase<ConfigurableCru
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) };
+    return {
+      ...payload,
+      status: Number(payload['status']),
+      catalogModelUUID: payload['catalogModelUUID'] || null,
+    };
   }
 }
