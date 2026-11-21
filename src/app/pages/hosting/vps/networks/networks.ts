@@ -131,6 +131,17 @@ const config = defineCrud({
     },
     { id: 'instances', label: 'Instances', kind: 'number', field: 'InstanceCount' },
     {
+      id: 'routeTable',
+      label: 'Route table',
+      field: 'RouteTableName',
+      value: (row, translate) =>
+        row['RouteTableName']
+          ? String(row['RouteTableName'])
+          : row['HostingVpsTenantZoneHtzUUID']
+            ? translate('Main table')
+            : '',
+    },
+    {
       id: 'egress',
       label: 'Internet exit',
       field: 'EgressAddress',
@@ -146,6 +157,13 @@ const config = defineCrud({
     { id: 'status', label: 'Status', kind: 'status', field: 'HvnIsActive' },
   ],
 });
+
+const ROUTE_TABLE_ACTION: ConfigurableCrudRowAction = {
+  key: 'routeTable',
+  label: 'Route table',
+  icon: 'route',
+  tooltip: 'Choose the route table this network uses',
+};
 
 const EGRESS_ACTION: ConfigurableCrudRowAction = {
   key: 'egress',
@@ -399,6 +417,45 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
     super.refreshList();
   }
 
+  private async chooseRouteTable(row: ConfigurableCrudRecord) {
+    const zone = String(row['HostingVpsTenantZoneHtzUUID'] ?? '');
+    const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
+      'hosting/vps/router/route-tables?limit=500',
+    );
+    const tables = (response?.data?.items ?? []).filter(
+      (table) => String(table['HostingVpsTenantZoneHtzUUID'] ?? '') === zone,
+    );
+    const choice = await openTemplatePickerDialog(this.dialog, {
+      title: 'Route table',
+      description: 'Choose the route table of this network.',
+      useLabel: 'Apply',
+      items: tables.map((table) => ({
+        id: String(table['HrtUUID']),
+        name: String(table['HrtName']),
+        description:
+          Number(table['HrtIsMain']) === 1
+            ? this.t('Main table')
+            : table['HrtNetworkPolicy'] === 'isolate'
+              ? this.t('Isolated from the other tables')
+              : this.t('Networks talk to each other'),
+      })),
+    });
+    if (!choice) return;
+    const main = tables.find((table) => Number(table['HrtIsMain']) === 1);
+    this.mutating.set(true);
+    try {
+      await this.api.put(`hosting/vps/networks/${String(row['HvnUUID'])}/route-table`, {
+        routeTableUUID: main && String(main['HrtUUID']) === choice ? null : choice,
+      });
+      this.snack.success(this.t('Route table of the network saved.'));
+    } catch {
+      // The API error toast already explains the refusal.
+    } finally {
+      this.mutating.set(false);
+      this.refreshList();
+    }
+  }
+
   override rowActions(row: ConfigurableCrudRecord): readonly ConfigurableCrudRowAction[] {
     const actions = [...super.rowActions(row)];
     if (
@@ -406,12 +463,13 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
       row['HostingVpsTenantZoneHtzUUID'] &&
       row['HvnStatus'] === 'available'
     ) {
-      actions.push(EGRESS_ACTION);
+      actions.push(EGRESS_ACTION, ROUTE_TABLE_ACTION);
     }
     return actions;
   }
 
   override async handleRowAction(action: ConfigurableCrudRowAction, row: ConfigurableCrudRecord) {
+    if (action.key === ROUTE_TABLE_ACTION.key) return this.chooseRouteTable(row);
     if (action.key !== EGRESS_ACTION.key) return super.handleRowAction(action, row);
     const zone = String(row['HostingVpsTenantZoneHtzUUID'] ?? '');
     const response = await this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
