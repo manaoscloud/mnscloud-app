@@ -1,6 +1,11 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 
@@ -47,7 +52,13 @@ export interface TermChangeDialogData {
 @Component({
   selector: 'app-term-change-dialog',
   standalone: true,
-  imports: [MatButtonModule, MatDialogModule, MatIconModule, ReportProblemButtonComponent, TranslocoPipe],
+  imports: [
+    MatButtonModule,
+    MatDialogModule,
+    MatIconModule,
+    ReportProblemButtonComponent,
+    TranslocoPipe,
+  ],
   template: `
     <div class="crud-dialog">
       <div class="dialog-header">
