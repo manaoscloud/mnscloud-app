@@ -18,6 +18,7 @@ import {
   VpsContainerChangePlanDialogData,
   VpsContainerChangePlanDialogResult,
 } from './change-plan-dialog';
+import { billingTermOffers } from '../../../billing/shared/billing.service';
 import type {
   HostingVpsContainerInstance,
   HostingVpsContainerInstanceConfig,
@@ -97,6 +98,7 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
     name: '',
     sshKey: '',
     notes: '',
+    billingTermMonths: '1',
   },
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HciName', uuidField: 'HciUUID' },
@@ -167,6 +169,19 @@ const HOSTING_VPS_CONTAINER_INSTANCE_CONFIG: ConfigurableCrudConfig = {
       label: 'Plan',
       type: 'search-select',
       required: true,
+    },
+    {
+      // Prepaid term of the plan price; the database validates it (offered terms).
+      key: 'billingTermMonths',
+      source: 'HciConfig',
+      payloadKey: 'billingTermMonths',
+      label: 'Prepaid term',
+      type: 'select',
+      options: [{ value: '1', label: 'Monthly' }],
+      span: 1,
+      help: 'Pay the whole term now from the prepaid balance at a discount; the price is locked until it ends.',
+      fromRecord: () => '1',
+      hiddenWhen: ({ editing, values }) => editing || !values['planUUID'],
     },
     {
       key: 'image',
@@ -398,8 +413,29 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
     return field.key === 'image' ? this.catalogLoading() : super.fieldLoading(field);
   }
 
+  override isFieldVisible(field: ConfigurableCrudField): boolean {
+    // The platform scope is not billed: only tenant containers carry a prepaid term.
+    if (field.key === 'billingTermMonths' && this.platformScope()) return false;
+    return super.isFieldVisible(field);
+  }
+
+  override fieldOptions(field: ConfigurableCrudField): readonly ConfigurableCrudOption[] {
+    if (field.key === 'billingTermMonths') {
+      const plan = this.planById(String(this.formValues()['planUUID'] ?? ''));
+      return [
+        { value: '1', label: this.t('Monthly') },
+        ...billingTermOffers({ TermsJson: plan?.TermsJson ?? null }).map((term) => ({
+          value: String(term.months),
+          label: `${term.months} ${this.t('months')} (-${Number(term.discountPercent)}%)`,
+        })),
+      ];
+    }
+    return super.fieldOptions(field);
+  }
+
   protected override onFieldValueChanged(key: string, value: unknown): void {
     if (key === 'planUUID') {
+      this.patchFormValues({ billingTermMonths: '1' });
       void this.applySelectedPlan(String(value ?? ''), true);
     }
   }
@@ -413,6 +449,8 @@ export class HostingVpsContainerInstancesPage extends ConfigurableCrudPageBase<C
     if (sshKey) config.sshKey = sshKey;
     if (providerImageId) config.providerImageId = providerImageId;
     if (notes) config.notes = notes;
+    const termMonths = Number(payload['billingTermMonths'] ?? 1);
+    if (!editing && !this.platformScope() && termMonths > 1) config.billingTermMonths = termMonths;
 
     if (editing?.['HciExternalId']) {
       const current = parseConfig<HostingVpsContainerInstanceConfig>(editing['HciConfig']) ?? {};

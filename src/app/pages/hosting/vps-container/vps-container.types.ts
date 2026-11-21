@@ -56,6 +56,8 @@ export type HostingVpsContainerPlan = {
   HcnSetupFee?: number | null;
   HcnConfig?: HostingVpsContainerPlanConfig | null;
   HcnIsActive: number;
+  /** Prepaid terms of the plan price (tenant plans list). */
+  TermsJson?: string | null;
 };
 
 export type HostingVpsContainerInstanceConfig = {
@@ -68,6 +70,8 @@ export type HostingVpsContainerInstanceConfig = {
   ipv4?: string | null;
   ipv6?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Create only: prepaid term in months of the plan price (1 = monthly). */
+  billingTermMonths?: number;
 };
 
 export type VpsContainerCatalogOption = {

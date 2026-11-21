@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e0cca7193132",
+  "version": "180447a1941a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3566,6 +3566,10 @@
         {
           "label": "Plano",
           "help": ""
+        },
+        {
+          "label": "Prazo pré-pago",
+          "help": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
         },
         {
           "label": "Imagem",
@@ -12208,6 +12212,10 @@
         {
           "label": "Plano",
           "help": ""
+        },
+        {
+          "label": "Prazo pré-pago",
+          "help": "Pague o prazo inteiro agora pelo saldo pré-pago com desconto; o preço fica travado até o fim."
         },
         {
           "label": "Imagem",
