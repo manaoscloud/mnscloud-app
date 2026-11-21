@@ -2254,6 +2254,15 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'route-tables',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/route-tables/route-tables').then(
+                        (m) => m.HostingVpsRouteTablesPage,
+                      ),
+                    title: 'Hosting • VPS Route tables | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
                     path: 'firewalls',
                     loadComponent: () =>
                       import('./pages/hosting/vps/firewalls/firewalls').then(

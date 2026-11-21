@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "180447a1941a",
+  "version": "f62c8eb1a89a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3726,6 +3726,31 @@
       "title": "IPs públicos das VPS",
       "description": "Endereços IPv4 públicos para as VPS da rede isolada: contrate um, associe a uma VPS e acesse pela internet.",
       "fields": []
+    },
+    {
+      "route": "/hosting/vps/route-tables",
+      "menuPath": "Hospedagem › VPS › Rotas",
+      "scope": "tenant",
+      "title": "Rotas",
+      "description": "Por onde sai cada destino: o destino mais específico vence. As redes privadas do roteador sempre ficam locais.",
+      "fields": [
+        {
+          "label": "Destino",
+          "help": "Rede IPv4 em CIDR. 0.0.0.0/0 = todo destino sem rota mais específica."
+        },
+        {
+          "label": "Sair por",
+          "help": ""
+        },
+        {
+          "label": "IP público",
+          "help": "IP público usado pelo roteador. Use um no roteador em IPs públicos primeiro."
+        },
+        {
+          "label": "Descrição",
+          "help": ""
+        }
+      ]
     },
     {
       "route": "/hosting/vps/snapshots",
