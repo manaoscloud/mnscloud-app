@@ -173,6 +173,24 @@
       <mat-error>{{ 'Enter a valid domain name.' | transloco }}</mat-error>
     </mat-form-field>
 
+    <mns-search-select-field
+      data-quick-create-exempt="The institutional chat is a connection of the platform tenant, created in Conversations."
+      fieldClass="span-1"
+      data-field-key="institutionalWebchatUUID"
+      [label]="'website.institutionalWebchat' | transloco"
+      [options]="webchatOptions()"
+      [translateOptions]="false"
+      [loading]="webchatLoading()"
+      [loadError]="webchatLoadError()"
+      [clearable]="true"
+      [clearLabel]="'website.webchatNone' | transloco"
+      [value]="form().institutionalWebchatUUID"
+      [invalid]="invalid('institutionalWebchatUUID')"
+      [errorMessage]="'website.institutionalWebchatInvalid' | transloco"
+      [help]="'website.institutionalWebchatHelp' | transloco"
+      (valueChange)="selectWebchat($event)"
+    />
+
     @if (managedDns()) {
       <section class="span-4 website-edge-certificates" aria-labelledby="website-edge-title">
         <div class="website-edge-header">
