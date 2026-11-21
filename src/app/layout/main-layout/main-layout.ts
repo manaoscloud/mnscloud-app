@@ -439,6 +439,10 @@ export class MainLayout {
 
   onGlobalKeydown(event: KeyboardEvent): void {
     if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+    if (event.defaultPrevented) return;
+    // Terminals (VPS and device consoles) keep Ctrl+K for the shell (kill to end of line).
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('.xterm, mns-terminal, [data-keep-shortcuts]')) return;
     if (event.key.toLowerCase() !== 'k') return;
     if (!this.assistantAvailable()) return;
     event.preventDefault();
@@ -449,7 +453,8 @@ export class MainLayout {
     if (!this.assistantAvailable()) return;
     openAssistantDialog(this.dialogs, {
       screens: this.assistantScreens(),
-      route: this.router.url.split('#')[0],
+      // Path only: filters in the query string may hold personal data.
+      route: this.router.url.split(/[?#]/)[0],
     });
   }
 
