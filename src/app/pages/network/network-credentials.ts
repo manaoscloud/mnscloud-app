@@ -48,6 +48,7 @@ export const SNMP_PRIV_OPTIONS: readonly ConfigurableCrudOption[] = [
 ];
 
 const SSH_MODE_OPTIONS = keyOptions('network.sshKeyMode', ['generate', 'import']);
+const SSH_KEY_ALGORITHM_OPTIONS = keyOptions('network.sshKeyAlgorithm', ['ed25519', 'ecdsa-p256']);
 const VALUE_MODE_OPTIONS = keyOptions('network.credentialValueMode', ['keep', 'replace']);
 
 /** Kinds that need a username, and kinds that have none (the API enforces both). */
@@ -57,7 +58,7 @@ const USERNAME_FORBIDDEN: readonly string[] = ['enable_password', 'snmp_v2c'];
 /** Value fields of each kind (request keys; never read back, never prefilled). */
 const VALUE_FIELDS: Readonly<Record<NetworkCredentialKind, readonly string[]>> = {
   password: ['password'],
-  ssh_key: ['mode', 'privateKey'],
+  ssh_key: ['mode', 'algorithm', 'privateKey'],
   api_token: ['token'],
   enable_password: ['password'],
   snmp_v2c: ['community'],
@@ -234,6 +235,16 @@ export function credentialFields(): ConfigurableCrudField[] {
       help: 'network.sshKeyModeHelp',
     },
     {
+      key: 'algorithm',
+      label: 'network.sshKeyAlgorithmLabel',
+      type: 'select',
+      options: SSH_KEY_ALGORITHM_OPTIONS,
+      tab: 'authentication',
+      span: 1,
+      hiddenWhen: (context) => valueOf('ssh_key')(context) || context.values['mode'] === 'import',
+      help: 'network.sshKeyAlgorithmHelp',
+    },
+    {
       key: 'privateKey',
       label: 'network.sshPrivateKey',
       type: 'textarea',
@@ -344,6 +355,7 @@ export function credentialFields(): ConfigurableCrudField[] {
 export function blankCredentialValues(): ConfigurableCrudRecord {
   return {
     mode: 'generate',
+    algorithm: 'ed25519',
     privateKey: '',
     password: '',
     token: '',
@@ -391,7 +403,10 @@ function valueBody(kind: string, values: ConfigurableCrudRecord): ConfigurableCr
     case 'ssh_key':
       return values['mode'] === 'import'
         ? { mode: 'import', privateKey: secret('privateKey') }
-        : { mode: 'generate' };
+        : {
+            mode: 'generate',
+            algorithm: values['algorithm'] === 'ecdsa-p256' ? 'ecdsa-p256' : 'ed25519',
+          };
     default:
       return {};
   }

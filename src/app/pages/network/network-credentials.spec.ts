@@ -3,6 +3,7 @@ import {
   credentialBusy,
   credentialDisplayState,
   credentialErrorKey,
+  credentialFields,
   credentialInitialValues,
   credentialPayload,
   credentialStateChip,
@@ -38,6 +39,27 @@ describe('Network credentials', () => {
     );
     expect(imported['mode']).toBe('import');
     expect(imported['privateKey']).toBe('KEY');
+  });
+
+  it('sends the chosen SSH key algorithm only when generating', () => {
+    const base = { kind: 'ssh_key', username: 'ops' };
+    expect(credentialPayload(form(base), false)['algorithm']).toBe('ed25519');
+    expect(credentialPayload(form({ ...base, algorithm: 'ecdsa-p256' }), false)['algorithm']).toBe(
+      'ecdsa-p256',
+    );
+    const imported = credentialPayload(
+      form({ ...base, mode: 'import', privateKey: 'KEY', algorithm: 'ecdsa-p256' }),
+      false,
+    );
+    expect('algorithm' in imported).toBeFalse();
+  });
+
+  it('hides the algorithm field for imported keys', () => {
+    const field = credentialFields().find((item) => item.key === 'algorithm');
+    const hidden = (values: Record<string, unknown>) =>
+      field?.hiddenWhen?.({ values, editing: false } as never);
+    expect(hidden({ kind: 'ssh_key', mode: 'generate' })).toBeFalse();
+    expect(hidden({ kind: 'ssh_key', mode: 'import' })).toBeTrue();
   });
 
   it('never sends a username for kinds without one', () => {
