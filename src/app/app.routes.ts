@@ -3689,6 +3689,24 @@ export const routes: Routes = [
                 data: { scope: 'master', breadcrumb: 'authentication.clusters' },
               },
               {
+                path: 'isp/catalog-vendors',
+                loadComponent: () =>
+                  import('./pages/isp/catalog-vendors/catalog-vendors').then(
+                    (m) => m.IspCatalogVendorsPage,
+                  ),
+                title: 'ISP • Catalog vendors | mnscloud',
+                data: { scope: 'master', breadcrumb: 'isp.catalogVendors' },
+              },
+              {
+                path: 'isp/catalog-models',
+                loadComponent: () =>
+                  import('./pages/isp/catalog-models/catalog-models').then(
+                    (m) => m.IspCatalogModelsPage,
+                  ),
+                title: 'ISP • Catalog models | mnscloud',
+                data: { scope: 'master', breadcrumb: 'isp.catalogModels' },
+              },
+              {
                 path: 'authentication/servers',
                 loadComponent: () =>
                   import('./pages/authentication/servers/servers').then(
