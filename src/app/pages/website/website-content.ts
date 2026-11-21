@@ -105,6 +105,17 @@ export type WebsiteContent = {
   integrations: WebsiteIntegrations;
 };
 
+/**
+ * Platform identifiers come dashed or compact (32 hex) and in either case; the API stores the
+ * dashed lower-case form. Anything else is returned trimmed so validation can still show it.
+ */
+export function websiteUuid(value: unknown): string {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  const hex = raw.replace(/-/g, '').toLowerCase();
+  if (!/^[0-9a-f]{32}$/.test(hex) || (raw.includes('-') && raw.length !== 36)) return raw;
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export const DEFAULT_PRIMARY_COLOR = '#1d5b31';
 export const DEFAULT_ACCENT_COLOR = '#f5832e';
 
@@ -283,7 +294,7 @@ export function normalizeWebsiteContent(
         url: text(entry['url']),
       })),
     locales: result,
-    integrations: { webchat: { channelUUID: text(webchat['channelUUID']) } },
+    integrations: { webchat: { channelUUID: websiteUuid(webchat['channelUUID']) } },
   };
 }
 

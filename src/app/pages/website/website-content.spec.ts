@@ -9,6 +9,7 @@ import {
   websiteContentPayload,
   WEBSITE_PAGE_KEYS,
   websiteSiteUrl,
+  websiteUuid,
 } from './website-content';
 import { websiteSitePayload, websiteSiteRow } from './sites/sites';
 
@@ -27,6 +28,10 @@ describe('Website content v1', () => {
     expect(websiteContentPayload(edited, ['pt-BR']).integrations).toEqual({
       webchat: { channelUUID: channel },
     });
+    // Connection lists return compact upper-case identifiers.
+    expect(websiteUuid(channel.replace(/-/g, '').toUpperCase())).toBe(channel);
+    expect(websiteUuid(` ${channel.toUpperCase()} `)).toBe(channel);
+    expect(websiteUuid('not-a-uuid')).toBe('not-a-uuid');
   });
 
   it('orders the enabled locales with the default first and drops unknown codes', () => {

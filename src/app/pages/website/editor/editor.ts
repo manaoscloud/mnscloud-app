@@ -59,6 +59,7 @@ import {
   validateWebsiteContent,
   websiteContentPayload,
   websiteSiteUrl,
+  websiteUuid,
 } from '../website-content';
 import {
   WebsiteService,
@@ -258,7 +259,7 @@ export class WebsiteEditorPage {
   }
 
   setWebchat(value: unknown): void {
-    this.set('integrations.webchat.channelUUID', typeof value === 'string' ? value : '');
+    this.set('integrations.webchat.channelUUID', websiteUuid(value));
   }
 
   /** Creates a web chat connection (Conversations › Connections) in place and selects it. */
@@ -275,7 +276,7 @@ export class WebsiteEditorPage {
     });
     if (!result?.option || this.destroyed) return;
     await this.loadWebchatConnections();
-    this.setWebchat(String(result.option.value).toLowerCase());
+    this.setWebchat(String(result.option.value));
   }
 
   private async loadWebchatConnections(): Promise<void> {

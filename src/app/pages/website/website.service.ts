@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { ApiService } from '../../services/api.service';
-import type { WebsiteContentPayload, WebsiteLocale } from './website-content';
+import { websiteUuid, type WebsiteContentPayload, type WebsiteLocale } from './website-content';
 
 /** Site as listed and returned by `GET /website/sites[/:uuid]` (mnscloud-api `WebsiteSite`). */
 export type WebsiteSite = {
@@ -120,7 +120,7 @@ export class WebsiteService {
     return (response.data?.items ?? [])
       .filter((row) => row['ChcKind'] === 'webchat' && typeof row['ChcUUID'] === 'string')
       .map((row) => ({
-        value: String(row['ChcUUID']).toLowerCase(),
+        value: websiteUuid(row['ChcUUID']),
         label: String(row['ChcName'] ?? row['ChcUUID']),
       }));
   }
