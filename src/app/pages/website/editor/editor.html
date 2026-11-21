@@ -299,6 +299,103 @@
                 <p class="settings-page-note">{{ 'website.webchatEmpty' | transloco }}</p>
               }
             }
+
+            <h2 class="website-editor-heading">{{ 'website.integrationsHeading' | transloco }}</h2>
+            <p class="settings-page-note">{{ 'website.integrationsNote' | transloco }}</p>
+            <div class="form-grid">
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'website.googleAnalytics' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="integrations.googleAnalytics.measurementId"
+                  autocomplete="off"
+                  placeholder="G-XXXXXXXXXX"
+                  [value]="content().integrations.googleAnalytics.measurementId"
+                  [mnsInvalid]="invalid('integrations.googleAnalytics.measurementId')"
+                  (input)="setText('integrations.googleAnalytics.measurementId', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.googleAnalytics' | transloco"
+                  [text]="'website.googleAnalyticsHelp' | transloco"
+                />
+                <mat-error>{{
+                  errorText('integrations.googleAnalytics.measurementId') | transloco
+                }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'website.googleTagManager' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="integrations.googleTagManager.containerId"
+                  autocomplete="off"
+                  placeholder="GTM-XXXXXXX"
+                  [value]="content().integrations.googleTagManager.containerId"
+                  [mnsInvalid]="invalid('integrations.googleTagManager.containerId')"
+                  (input)="setText('integrations.googleTagManager.containerId', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.googleTagManager' | transloco"
+                  [text]="'website.googleTagManagerHelp' | transloco"
+                />
+                <mat-error>{{
+                  errorText('integrations.googleTagManager.containerId') | transloco
+                }}</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="span-1">
+                <mat-label>{{ 'website.metaPixel' | transloco }}</mat-label>
+                <input
+                  matInput
+                  data-field-key="integrations.metaPixel.pixelId"
+                  autocomplete="off"
+                  placeholder="123456789012345"
+                  [value]="content().integrations.metaPixel.pixelId"
+                  [mnsInvalid]="invalid('integrations.metaPixel.pixelId')"
+                  (input)="setText('integrations.metaPixel.pixelId', $event)"
+                />
+                <mns-field-help
+                  matIconSuffix
+                  [label]="'website.metaPixel' | transloco"
+                  [text]="'website.metaPixelHelp' | transloco"
+                />
+                <mat-error>{{ errorText('integrations.metaPixel.pixelId') | transloco }}</mat-error>
+              </mat-form-field>
+              <mns-search-select-field
+                data-quick-create-exempt="Third-party chat providers are a fixed list of vendors, not platform records."
+                fieldClass="span-1"
+                data-field-key="integrations.externalChat.provider"
+                [label]="'website.externalChatProvider' | transloco"
+                [options]="externalChatOptions"
+                [translateOptions]="false"
+                [clearable]="true"
+                [clearLabel]="'website.externalChatNone' | transloco"
+                [value]="content().integrations.externalChat.provider"
+                [invalid]="invalid('integrations.externalChat.provider')"
+                [errorMessage]="errorText('integrations.externalChat.provider') | transloco"
+                [help]="'website.externalChatProviderHelp' | transloco"
+                (valueChange)="set('integrations.externalChat.provider', $event || '')"
+              />
+              @if (content().integrations.externalChat.provider) {
+                <mat-form-field appearance="outline" class="span-1">
+                  <mat-label>{{ 'website.externalChatId' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    data-field-key="integrations.externalChat.id"
+                    autocomplete="off"
+                    [value]="content().integrations.externalChat.id"
+                    [mnsInvalid]="invalid('integrations.externalChat.id')"
+                    (input)="setText('integrations.externalChat.id', $event)"
+                  />
+                  <mns-field-help
+                    matIconSuffix
+                    [label]="'website.externalChatId' | transloco"
+                    [text]="'website.externalChatIdHelp' | transloco"
+                  />
+                  <mat-error>{{ errorText('integrations.externalChat.id') | transloco }}</mat-error>
+                </mat-form-field>
+              }
+            </div>
           </div>
         </mat-tab>
 
