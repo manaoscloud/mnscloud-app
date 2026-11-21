@@ -87,6 +87,7 @@ const config = defineCrud({
         endpoint: 'authentication/network-devices?status=1',
         uuidField: 'AanUUID',
         labelField: 'AanName',
+        selectedLabelField: 'AuthenticationNasName',
       },
       quickCreate: quickCreateFor('AuthenticationNasAanUUID'),
       span: 1,

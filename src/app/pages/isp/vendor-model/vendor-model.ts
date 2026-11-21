@@ -80,6 +80,7 @@ const config = defineCrud({
         endpoint: 'isp/catalog-models',
         uuidField: 'IcmUUID',
         labelField: 'IcmName',
+        selectedLabelField: 'CatalogModelName',
       },
       quickCreate: false,
       quickCreateExemptReason:

@@ -66,6 +66,7 @@ const config = defineCrud({
         endpoint: 'isp/catalog-vendors',
         uuidField: 'IcvUUID',
         labelField: 'IcvName',
+        selectedLabelField: 'CatalogVendorName',
       },
       quickCreate: false,
       quickCreateExemptReason:

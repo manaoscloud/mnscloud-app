@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "1d9fab059324",
+  "version": "68e50a49a73b",
   "language": "pt-BR",
   "entries": [
     {
@@ -10471,7 +10471,7 @@
     },
     {
       "route": "/system/isp/catalog-models",
-      "menuPath": "ISP › Equipamentos",
+      "menuPath": "ISP › Modelos padrão",
       "scope": "platform",
       "title": "Catálogo de modelos",
       "description": "Modelos de equipamentos de cada fabricante do catálogo da plataforma. Os provedores os vinculam aos seus próprios modelos.",
@@ -10516,7 +10516,7 @@
     },
     {
       "route": "/system/isp/catalog-vendors",
-      "menuPath": "ISP › Marcas",
+      "menuPath": "ISP › Catálogo",
       "scope": "platform",
       "title": "Catálogo de fabricantes",
       "description": "Fabricantes de equipamentos de rede mantidos pela plataforma. Os provedores os vinculam aos seus próprios fabricantes.",
