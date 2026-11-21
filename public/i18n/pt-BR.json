@@ -15761,5 +15761,21 @@
   "The bank has not enabled the payment split for MNSCloud Pay yet. Contact support.": "O banco ainda não liberou o split de pagamento do MNSCloud Pay. Fale com o suporte.",
   "A payment charge field is not accepted for this gateway.": "Um campo da cobrança não é aceito por este gateway.",
   "The payment method must be boleto, Pix or credit card.": "A forma de pagamento deve ser boleto, Pix ou cartão de crédito.",
-  "The payout exceeds the available balance.": "O repasse é maior que o saldo disponível."
+  "The payout exceeds the available balance.": "O repasse é maior que o saldo disponível.",
+  "nav.hosting.vps.routers": "Roteadores",
+  "S (1 vCPU, 256 MB, up to 3 VPN connections)": "S (1 vCPU, 256 MB, até 3 conexões VPN)",
+  "M (2 vCPU, 512 MB, up to 10 VPN connections)": "M (2 vCPU, 512 MB, até 10 conexões VPN)",
+  "L (4 vCPU, 1 GB, up to 30 VPN connections)": "L (4 vCPU, 1 GB, até 30 conexões VPN)",
+  "Router size saved. The router restarts once to take it.": "Tamanho do roteador salvo. O roteador reinicia uma vez para aplicar.",
+  "Change the router size": "Alterar o tamanho do roteador",
+  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly. Change the size?": "O roteador reinicia uma vez (cerca de um minuto sem tráfego nas suas redes privadas). Os tamanhos M e L são cobrados por mês. Alterar o tamanho?",
+  "Change size": "Alterar tamanho",
+  "Routers": "Roteadores",
+  "One router per provider routes your private networks (NAT, routes and VPN). Choose its size by the VPN connections it carries.": "Um roteador por provedor encaminha suas redes privadas (NAT, rotas e VPN). Escolha o tamanho pelas conexões VPN que ele carrega.",
+  "No routers yet: create a private network first.": "Nenhum roteador ainda: crie uma rede privada primeiro.",
+  "Routers go away with their private networks.": "Os roteadores saem junto com suas redes privadas.",
+  "VPN connections": "Conexões VPN",
+  "Size S": "Tamanho S",
+  "Size M": "Tamanho M",
+  "Size L": "Tamanho L"
 }

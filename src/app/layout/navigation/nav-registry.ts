@@ -2456,6 +2456,14 @@ export const NAV_ITEMS: NavItem[] = [
             entitlementCode: 'module.hosting.vps.ip',
           },
           {
+            id: 'hosting/vps/routers',
+            label: 'nav.hosting.vps.routers',
+            icon: 'router',
+            route: '/hosting/vps/routers',
+            scope: 'tenant',
+            entitlementCode: 'module.hosting.vps.network',
+          },
+          {
             id: 'hosting/vps/route-tables',
             label: 'nav.hosting.vps.route-tables',
             icon: 'route',

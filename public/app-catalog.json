@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "913848471dd3",
+  "version": "52e18edd7f17",
   "language": "pt-BR",
   "entries": [
     {
@@ -3751,6 +3751,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/hosting/vps/routers",
+      "menuPath": "Hospedagem › VPS › Roteadores",
+      "scope": "tenant",
+      "title": "Roteadores",
+      "description": "Um roteador por provedor encaminha suas redes privadas (NAT, rotas e VPN). Escolha o tamanho pelas conexões VPN que ele carrega.",
+      "fields": []
     },
     {
       "route": "/hosting/vps/snapshots",
