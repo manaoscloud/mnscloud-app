@@ -62,6 +62,8 @@ export type SlowConfirmDialogData = {
       </div>
     }
   `,
+  // A multi-line message (e.g. a preview summary with one server per line) keeps its line breaks.
+  styles: ['.message { white-space: pre-line; }'],
 })
 export class SlowConfirmDialogComponent {
   readonly data = inject<SlowConfirmDialogData>(MAT_DIALOG_DATA);
