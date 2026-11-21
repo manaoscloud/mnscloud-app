@@ -21,6 +21,11 @@ const START_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'responder', label: 'Only answer (the customer device starts it)' },
 ];
 
+const ACTIVE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: '1', label: 'Active' },
+  { value: '0', label: 'Inactive (tunnel off)' },
+];
+
 const TUNNEL_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'established', label: 'Connected' },
   { value: 'connecting', label: 'Connecting' },
@@ -88,6 +93,7 @@ const config = defineCrud({
     remotePrefixes: '',
     mtu: 1400,
     dpdSeconds: 30,
+    isActive: '1',
     description: '',
   },
   fields: [
@@ -181,6 +187,16 @@ const config = defineCrud({
       payloadKey: 'dpdSeconds',
       label: 'Peer check (seconds)',
       type: 'number',
+      span: 1,
+    },
+    {
+      key: 'isActive',
+      source: 'HvcIsActive',
+      payloadKey: 'isActive',
+      label: 'Status',
+      type: 'select',
+      options: ACTIVE_OPTIONS,
+      required: true,
       span: 1,
     },
     {
@@ -345,6 +361,7 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
     const values = super.formValuesFromRecord(row);
     return {
       ...values,
+      isActive: String(Number(row['HvcIsActive'] ?? 1) === 0 ? 0 : 1),
       localNetworks: lines(row['LocalNetworks']),
       remotePrefixes: lines(row['RemotePrefixes']).join('\n'),
     };
@@ -371,6 +388,7 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
       remotePrefixes: lines(payload['remotePrefixes']),
       mtu: Number(payload['mtu']) || 1400,
       dpdSeconds: Number(payload['dpdSeconds']) || 30,
+      isActive: String(payload['isActive'] ?? '1') !== '0',
       description: String(payload['description'] ?? '').trim() || null,
     };
   }
