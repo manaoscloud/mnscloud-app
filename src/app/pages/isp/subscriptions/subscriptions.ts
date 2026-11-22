@@ -165,7 +165,7 @@ const ipAssignments = ispChildCollection({
       requiredWhen: ({ values }) => String(values['family']) === '6',
       span: 1,
     },
-    { key: 'notes', label: 'Notes', type: 'textarea', span: 4, rows: 4 },
+    { key: 'notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4, rows: 4 },
   ],
   columns: [
     { id: 'family', label: 'Family', field: 'IiaFamily', options: FAMILIES },

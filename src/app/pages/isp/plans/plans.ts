@@ -79,6 +79,7 @@ const addons = ispChildCollection({
       source: 'IpdNotes',
       label: 'Notes',
       type: 'textarea',
+      tab: 'notes',
       span: 4,
       rows: 4,
     },
