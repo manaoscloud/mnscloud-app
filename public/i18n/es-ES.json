@@ -15760,5 +15760,21 @@
   "The bank has not enabled the payment split for MNSCloud Pay yet. Contact support.": "El banco aún no habilitó el split de pago de MNSCloud Pay. Contacte al soporte.",
   "A payment charge field is not accepted for this gateway.": "Un campo del cobro no es aceptado por este gateway.",
   "The payment method must be boleto, Pix or credit card.": "La forma de pago debe ser boleto, Pix o tarjeta de crédito.",
-  "The payout exceeds the available balance.": "La transferencia supera el saldo disponible."
+  "The payout exceeds the available balance.": "La transferencia supera el saldo disponible.",
+  "nav.hosting.vps.routers": "Enrutadores",
+  "S (1 vCPU, 256 MB, up to 3 VPN connections)": "S (1 vCPU, 256 MB, hasta 3 conexiones VPN)",
+  "M (2 vCPU, 512 MB, up to 10 VPN connections)": "M (2 vCPU, 512 MB, hasta 10 conexiones VPN)",
+  "L (4 vCPU, 1 GB, up to 30 VPN connections)": "L (4 vCPU, 1 GB, hasta 30 conexiones VPN)",
+  "Router size saved. The router restarts once to take it.": "Tamaño del router guardado. El router se reinicia una vez para aplicarlo.",
+  "Change the router size": "Cambiar el tamaño del router",
+  "Change size": "Cambiar tamaño",
+  "Routers": "Routers",
+  "One router per provider routes your private networks (NAT, routes and VPN). Choose its size by the VPN connections it carries.": "Un router por proveedor encamina sus redes privadas (NAT, rutas y VPN). Elija el tamaño por las conexiones VPN que lleva.",
+  "No routers yet: create a private network first.": "Todavía no hay routers: cree primero una red privada.",
+  "Routers go away with their private networks.": "Los routers se eliminan con sus redes privadas.",
+  "VPN connections": "Conexiones VPN",
+  "Size S": "Tamaño S",
+  "Size M": "Tamaño M",
+  "Size L": "Tamaño L",
+  "The router restarts once (about a minute without traffic in your private networks). Sizes M and L are billed monthly; a new size starts a new monthly charge and the previous one is not refunded. Change the size?": "El router se reinicia una vez (cerca de un minuto sin tráfico en sus redes privadas). Los tamaños M y L se cobran por mes; un nuevo tamaño inicia un nuevo cobro mensual y el anterior no se reembolsa. ¿Cambiar el tamaño?"
 }
