@@ -15821,5 +15821,7 @@
   "Refunded": "Estornada",
   "Amount received": "Valor recebido",
   "Cancel at the bank": "Cancelar no banco",
-  "Charge canceled at the bank.": "Cobrança cancelada no banco."
+  "Charge canceled at the bank.": "Cobrança cancelada no banco.",
+  "This receivable already has an open charge. Cancel it before issuing another one.": "Este título já tem uma cobrança em aberto. Cancele-a antes de emitir outra.",
+  "This charge was not issued at a bank.": "Esta cobrança não foi emitida em um banco."
 }
