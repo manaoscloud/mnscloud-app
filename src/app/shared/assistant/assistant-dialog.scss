@@ -37,7 +37,7 @@
     font-size: 0.8125rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--mat-sys-color-on-surface-variant);
   }
 }
 
@@ -62,13 +62,13 @@
   margin: auto;
   max-width: 36rem;
   text-align: center;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
 
   mat-icon {
     width: 40px;
     height: 40px;
     font-size: 40px;
-    color: var(--mat-sys-primary);
+    color: var(--mat-sys-color-primary);
   }
 }
 
@@ -77,8 +77,8 @@
   max-width: min(46rem, 92%);
   padding: 0.625rem 0.875rem;
   border-radius: 12px;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-color-surface-container-high);
+  color: var(--mat-sys-color-on-surface);
 
   p {
     margin: 0 0 0.375rem;
@@ -88,8 +88,8 @@
 
   &.is-user {
     align-self: flex-end;
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
+    background: var(--mat-sys-color-primary-container);
+    color: var(--mat-sys-color-on-primary-container);
   }
 }
 
@@ -106,14 +106,14 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.8125rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
 }
 
 .assistant-busy {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
 }
 
 .assistant-composer {
@@ -130,14 +130,14 @@
     min-height: 3rem;
     resize: vertical;
     padding: 0.5rem 0.75rem;
-    border: 1px solid var(--mat-sys-outline-variant);
+    border: 1px solid var(--mat-sys-color-outline-variant);
     border-radius: 8px;
-    background: var(--mat-sys-surface);
-    color: var(--mat-sys-on-surface);
+    background: var(--mat-sys-color-surface);
+    color: var(--mat-sys-color-on-surface);
     font: inherit;
 
     &:focus-visible {
-      outline: 2px solid var(--mat-sys-primary);
+      outline: 2px solid var(--mat-sys-color-primary);
       outline-offset: 1px;
     }
   }
@@ -146,13 +146,13 @@
 .assistant-hint {
   margin: 0.25rem 0;
   font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--mat-sys-color-on-surface-variant);
 }
 
 .assistant-error {
   margin: 0.25rem 0;
   font-size: 0.8125rem;
-  color: var(--mat-sys-error);
+  color: var(--mat-sys-color-error);
 }
 
 @media (max-width: 600px) {
