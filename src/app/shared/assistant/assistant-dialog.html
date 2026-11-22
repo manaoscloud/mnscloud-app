@@ -149,7 +149,7 @@
                     · {{ proposal.resultMessage }}
                   }
                 </p>
-                @if (proposal.status === 'proposed') {
+                @if (canConfirm(proposal)) {
                   <div class="assistant-action-buttons">
                     <button
                       mat-flat-button
@@ -158,16 +158,23 @@
                       (click)="confirmProposal(proposal)"
                     >
                       <mat-icon>check</mat-icon>
-                      {{ 'assistant.actionConfirm' | transloco }}
+                      {{
+                        (proposal.status === 'unknown'
+                          ? 'assistant.actionResend'
+                          : 'assistant.actionConfirm'
+                        ) | transloco
+                      }}
                     </button>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      [disabled]="acting() !== null"
-                      (click)="rejectProposal(proposal)"
-                    >
-                      {{ 'assistant.actionCancel' | transloco }}
-                    </button>
+                    @if (proposal.status === 'proposed') {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="acting() !== null"
+                        (click)="rejectProposal(proposal)"
+                      >
+                        {{ 'assistant.actionCancel' | transloco }}
+                      </button>
+                    }
                   </div>
                 }
               </article>

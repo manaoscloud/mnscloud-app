@@ -15928,5 +15928,7 @@
   "assistant.actionStatus.expired": "Expiró. Pídala de nuevo al asistente.",
   "assistant.errorActionDone": "Esta acción ya fue confirmada o cancelada.",
   "assistant.errorActionExpired": "Esta acción expiró. Pídala de nuevo al asistente.",
-  "assistant.tool.hosting.vps.instances.power": "Energía de la VPS"
+  "assistant.tool.hosting.vps.instances.power": "Energía de la VPS",
+  "assistant.actionStatus.unknown": "No se sabe si se hizo. Revise la pantalla; enviarla de nuevo nunca la ejecuta dos veces.",
+  "assistant.actionResend": "Enviar de nuevo"
 }

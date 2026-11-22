@@ -15928,5 +15928,7 @@
   "assistant.actionStatus.expired": "Expired. Ask the assistant again.",
   "assistant.errorActionDone": "This action was already confirmed or cancelled.",
   "assistant.errorActionExpired": "This action expired. Ask the assistant again.",
-  "assistant.tool.hosting.vps.instances.power": "VPS power"
+  "assistant.tool.hosting.vps.instances.power": "VPS power",
+  "assistant.actionStatus.unknown": "It is not known whether it ran. Check the screen; sending again never runs it twice.",
+  "assistant.actionResend": "Send again"
 }

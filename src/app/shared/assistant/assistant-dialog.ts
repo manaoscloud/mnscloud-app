@@ -250,13 +250,18 @@ export class AssistantDialogComponent {
     return message.role === 'assistant' && !!message.outcome?.toLowerCase().startsWith('ai_');
   }
 
+  /** Pending cards, and uncertain ones (resent with the same idempotency key, never run twice). */
+  canConfirm(proposal: AssistantProposal): boolean {
+    return proposal.status === 'proposed' || proposal.status === 'unknown';
+  }
+
   actionKey(proposal: AssistantProposal): string {
     return assistantActionKey(proposal);
   }
 
   /** The user's explicit confirmation: the only way an action of the assistant runs. */
   async confirmProposal(proposal: AssistantProposal): Promise<void> {
-    if (this.acting() || proposal.status !== 'proposed') return;
+    if (this.acting() || !this.canConfirm(proposal)) return;
     this.acting.set(proposal.proposalUUID);
     this.error.set(null);
     try {
