@@ -15903,7 +15903,7 @@
   "isp.assignmentBlockHelp": "Bloque fijo de la dirección. Déjelo vacío para localizar el bloque que la contiene.",
   "isp.blockProfile": "Perfil de bloqueo",
   "isp.blockProfileHelp": "Perfil asignado a los suscriptores bloqueados, por ejemplo un pool de aviso o redirección. Sin él, el acceso bloqueado se desactiva.",
-  "isp.cancelDescription": "Cancelar termina los ítems recurrentes en la fecha, factura la penalización por fidelización proporcional a los meses restantes, desactiva el acceso y no se puede deshacer.",
+  "isp.cancelDescription": "Cancelar termina los ítems recurrentes en la fecha, factura la penalización por fidelización proporcional a los meses completos restantes, desactiva el acceso y no se puede deshacer. La suscripción solo se puede eliminar después de facturar la penalización y la tarifa de instalación.",
   "isp.fidelityHelp": "Meses de fidelización contados desde la activación. 0 significa sin fidelización.",
   "isp.fidelityPenaltyHelp": "Penalización íntegra. Al cancelar, es proporcional a los meses de fidelización restantes.",
   "isp.fixedIpv4Block": "Bloque IPv4 fijo",
@@ -15932,5 +15932,8 @@
   "isp.trustUnlockMaxHelp": "Máximo de desbloqueos de confianza por suscripción en 30 días. 0 desactiva el desbloqueo de confianza.",
   "nav.isp.plans": "Planes",
   "nav.isp.subscriptions": "Suscripciones",
-  "nav.isp.settings": "Parámetros"
+  "nav.isp.settings": "Parámetros",
+  "Resync billing": "Resincronizar cobro",
+  "Billing resynchronized.": "Cobro resincronizado.",
+  "isp.billingResyncConfirm": "¿Recrear los ítems del contrato de esta suscripción a partir del plan y los adicionales actuales? Los cambios se aplican desde el próximo ciclo de facturación; los cobros ya emitidos no cambian."
 }

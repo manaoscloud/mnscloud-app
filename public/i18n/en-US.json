@@ -15903,7 +15903,7 @@
   "isp.assignmentBlockHelp": "Fixed block of the address. Leave empty to find the block that contains it.",
   "isp.blockProfile": "Block profile",
   "isp.blockProfileHelp": "Profile given to blocked subscribers, for example a notice or redirect pool. Without it, a blocked access is disabled.",
-  "isp.cancelDescription": "Cancelling ends the recurring items on the date, bills the fidelity penalty prorated by the remaining months, disables the access and cannot be undone.",
+  "isp.cancelDescription": "Cancelling ends the recurring items on the date, bills the fidelity penalty prorated by the whole months still remaining, disables the access and cannot be undone. The subscription can be deleted only after the penalty and the installation fee are billed.",
   "isp.fidelityHelp": "Months of commitment counted from the activation. 0 means no fidelity.",
   "isp.fidelityPenaltyHelp": "Full penalty. On cancellation it is prorated by the fidelity months still to run.",
   "isp.fixedIpv4Block": "Fixed IPv4 block",
@@ -15932,5 +15932,8 @@
   "isp.trustUnlockMaxHelp": "Most trust unlocks per subscription in 30 days. 0 turns the trust unlock off.",
   "nav.isp.plans": "Plans",
   "nav.isp.subscriptions": "Subscriptions",
-  "nav.isp.settings": "Parameters"
+  "nav.isp.settings": "Parameters",
+  "Resync billing": "Resync billing",
+  "Billing resynchronized.": "Billing resynchronized.",
+  "isp.billingResyncConfirm": "Recreate the contract items of this subscription from its current plan and add-ons? Changes apply from the next billing cycle; charges already issued stay as they are."
 }

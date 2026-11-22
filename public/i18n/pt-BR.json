@@ -15904,7 +15904,7 @@
   "isp.assignmentBlockHelp": "Bloco fixo do endereço. Deixe vazio para localizar o bloco que o contém.",
   "isp.blockProfile": "Perfil de bloqueio",
   "isp.blockProfileHelp": "Perfil dado aos assinantes bloqueados, por exemplo um pool de aviso ou redirecionamento. Sem ele, o acesso bloqueado é desativado.",
-  "isp.cancelDescription": "Cancelar encerra os itens recorrentes na data, cobra a multa de fidelidade proporcional aos meses restantes, desativa o acesso e não pode ser desfeito.",
+  "isp.cancelDescription": "Cancelar encerra os itens recorrentes na data, cobra a multa de fidelidade proporcional aos meses inteiros restantes, desativa o acesso e não pode ser desfeito. A assinatura só pode ser excluída depois que a multa e a taxa de instalação forem cobradas.",
   "isp.fidelityHelp": "Meses de fidelidade contados da ativação. 0 significa sem fidelidade.",
   "isp.fidelityPenaltyHelp": "Multa integral. No cancelamento, é proporcional aos meses de fidelidade que faltam.",
   "isp.fixedIpv4Block": "Bloco IPv4 fixo",
@@ -15933,5 +15933,8 @@
   "isp.trustUnlockMaxHelp": "Máximo de desbloqueios de confiança por assinatura em 30 dias. 0 desativa o desbloqueio de confiança.",
   "nav.isp.plans": "Planos",
   "nav.isp.subscriptions": "Assinaturas",
-  "nav.isp.settings": "Parâmetros"
+  "nav.isp.settings": "Parâmetros",
+  "Resync billing": "Ressincronizar cobrança",
+  "Billing resynchronized.": "Cobrança ressincronizada.",
+  "isp.billingResyncConfirm": "Recriar os itens do contrato desta assinatura a partir do plano e dos adicionais atuais? As mudanças valem a partir do próximo ciclo de cobrança; cobranças já emitidas não mudam."
 }

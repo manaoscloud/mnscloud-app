@@ -365,7 +365,8 @@ function subscriptionsConfig(canTrustUnlock: () => boolean) {
           initialValues: ({ values }) => ({ RegCustomerRcuUUID: values['customerUUID'] }),
         }),
         disabledWhen: ({ editing, values }) =>
-          editing && !['', 'none'].includes(String(values['appliedState'] ?? '')),
+          !values['customerUUID'] ||
+          (editing && !['', 'none'].includes(String(values['appliedState'] ?? ''))),
         span: 1,
       },
       {

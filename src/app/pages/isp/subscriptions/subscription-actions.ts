@@ -6,7 +6,12 @@ import {
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** Local calendar date (the API compares it with the platform local day, never UTC). */
+const today = () => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
 const uuidOf = (row: ConfigurableCrudRecord) => String(row['IsbUUID']);
 const revisionOf = (row: ConfigurableCrudRecord) => Number(row['IsbRevision']);
 const statusOf = (row: ConfigurableCrudRecord) => String(row['IsbStatus'] ?? '');
@@ -176,6 +181,23 @@ export function subscriptionRowActions(canTrustUnlock: () => boolean): Configura
           fields: [{ key: 'reason', label: 'Reason', type: 'textarea', span: 4, rows: 4 }],
           payload: (values) => ({ reason: values['reason'] || null }),
         }),
+    },
+    {
+      key: 'billing-resync',
+      label: 'Resync billing',
+      icon: 'sync',
+      visible: (row) => statusOf(row) === 'active' && Boolean(row['BillContractBctUUID']),
+      request: {
+        method: 'post',
+        endpoint: (row) => `isp/subscriptions/${uuidOf(row)}/billing-resync`,
+        body: (row) => ({ revision: revisionOf(row) }),
+        successMessage: 'Billing resynchronized.',
+        confirm: {
+          title: 'Resync billing',
+          message: 'isp.billingResyncConfirm',
+          confirmLabel: 'Resync billing',
+        },
+      },
     },
     {
       key: 'cancel',

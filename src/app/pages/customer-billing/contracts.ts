@@ -19,8 +19,8 @@ import {
   MODULE_LOOKUP,
 } from './billing-options';
 
-/** Customer of the contract being edited: the ISP item lookup offers only its subscriptions. */
-const editingContract = { customerUUID: '' };
+/** Customer of the contract form: the ISP item lookup offers only its subscriptions. */
+const contractForm = { customerUUID: (): string => '' };
 
 const today = () => new Date().toISOString().slice(0, 10);
 const optionLabel = (options: readonly { value: string; label: string }[], value: unknown) =>
@@ -390,15 +390,14 @@ const config = defineCrud({
           help: 'isp.contractItemHelp',
           hiddenWhen: ({ values }) => values['module'] !== 'isp',
           requiredWhen: ({ values }) => values['module'] === 'isp',
+          // Read on every lookup request: the customer comes from the contract form.
           remoteLookup: {
-            endpoint: 'isp/subscriptions',
+            get endpoint() {
+              return `isp/subscriptions?customerUUID=${encodeURIComponent(contractForm.customerUUID())}`;
+            },
             uuidField: 'IsbUUID',
             labelField: 'IsbID',
             descriptionField: 'CustomerName',
-            // Only the subscriptions of the contract customer (the API refuses any other).
-            accept: (item) =>
-              item['RegCustomerRcuUUID'] === editingContract.customerUUID &&
-              item['IsbStatus'] !== 'cancelled',
           },
           quickCreate: false,
           quickCreateExemptReason:
@@ -630,10 +629,6 @@ const config = defineCrud({
 export class CustomerBillingContractsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
-  }
-
-  override startEdit(row: ConfigurableCrudRecord): void {
-    editingContract.customerUUID = String(row['RegCustomerRcuUUID'] ?? '');
-    super.startEdit(row);
+    contractForm.customerUUID = () => String(this.formValues()['customerUUID'] ?? '');
   }
 }
