@@ -452,7 +452,7 @@ export class MainLayout {
   openAssistant(): void {
     if (!this.assistantAvailable()) return;
     openAssistantDialog(this.dialogs, {
-      screens: this.assistantScreens(),
+      screens: () => this.assistantScreens(),
       // Path only: filters in the query string may hold personal data.
       route: this.router.url.split(/[?#]/)[0],
     });
