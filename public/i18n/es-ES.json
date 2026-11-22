@@ -14048,6 +14048,7 @@
   "automation.port.open": "Abierto",
   "automation.port.closed": "Cerrado",
   "automation.port.success": "Éxito",
+  "automation.port.blocked": "Bloqueado (demasiados intentos)",
   "automation.port.error": "Error",
   "automation.field.triggers": "Disparadores",
   "automation.field.type": "Tipo",

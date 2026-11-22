@@ -14049,6 +14049,7 @@
   "automation.port.open": "Aberto",
   "automation.port.closed": "Fechado",
   "automation.port.success": "Sucesso",
+  "automation.port.blocked": "Bloqueado (muitas tentativas)",
   "automation.port.error": "Erro",
   "automation.field.triggers": "Gatilhos",
   "automation.field.type": "Tipo",
