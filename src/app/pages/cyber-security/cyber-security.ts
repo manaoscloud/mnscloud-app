@@ -51,6 +51,7 @@ import {
   campaignView,
   campaignsCollection,
   fixEverywhereAction,
+  fixSelectedAction,
   emergencyMenu,
   targetFromEmergencyKey,
   previewSummary,
@@ -804,6 +805,8 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         tooltip: 'cyberSecurity.patch.runsDescription',
       },
     ),
+    // E2c: a campaign for the servers chosen in this list (scope selection).
+    bulkActions: [fixSelectedAction(startCampaign)],
     columns: [
       ...agentServerColumns,
       {

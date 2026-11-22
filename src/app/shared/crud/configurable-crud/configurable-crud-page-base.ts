@@ -524,6 +524,25 @@ export type ConfigurableCrudListSummaryItem = {
   tooltip?: string;
 };
 
+/**
+ * Toolbar action on the selected records (besides "Delete selected"): the table shows the selection
+ * checkboxes whenever a visible bulk action exists, and the button appears with a selection.
+ * `run` gets the selected UUIDs (also those on other server pages) and the selected rows loaded on
+ * this page; the selection is cleared when it resolves to `true`.
+ */
+export type ConfigurableCrudBulkAction = {
+  key: string;
+  /** Translation key. */
+  label: string;
+  icon: string;
+  tooltip?: string;
+  color?: 'primary' | 'warn';
+  /** At most this many records per run (the button explains it when the selection is larger). */
+  max?: number;
+  visible?: () => boolean;
+  run: (ids: string[], rows: ConfigurableCrudRecord[]) => boolean | void | Promise<boolean | void>;
+};
+
 export type ConfigurableCrudRowAction = {
   key: string;
   label: string;
@@ -746,6 +765,8 @@ export type ConfigurableCrudConfig = {
   canEditRow?: (row: ConfigurableCrudRecord) => boolean;
   canDeleteRow?: (row: ConfigurableCrudRecord) => boolean;
   bulkDelete?: boolean;
+  /** Actions on the selected records besides delete (see ConfigurableCrudBulkAction). */
+  bulkActions?: ConfigurableCrudBulkAction[];
   statusFilter?: boolean;
   tabLabels?: Partial<Record<NonNullable<ConfigurableCrudField['tab']>, string>>;
   /** Places Authentication directly after Record without changing the default tab sequence. */
@@ -1033,7 +1054,7 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
    * button in its header, so tables without row actions keep the same header as editable ones.
    */
   readonly displayedColumns = computed(() => [
-    ...(this.bulkDeleteEnabled() ? ['select'] : []),
+    ...(this.selectionEnabled() ? ['select'] : []),
     ...this.tableColumns().map((column) => column.id),
     'actions',
   ]);
@@ -1273,6 +1294,14 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
   readonly canEdit = computed(() => !this.config.readOnly && this.config.canEdit !== false);
   readonly canDelete = computed(() => !this.config.readOnly && this.config.canDelete !== false);
   readonly bulkDeleteEnabled = computed(() => this.canDelete() && this.config.bulkDelete !== false);
+  /** Bulk actions besides delete that the current user may run. */
+  readonly bulkActions = computed(() =>
+    (this.config.bulkActions ?? []).filter((action) => action.visible?.() ?? true),
+  );
+  /** Row selection is shown for bulk delete or any other bulk action. */
+  readonly selectionEnabled = computed(
+    () => this.bulkDeleteEnabled() || this.bulkActions().length > 0,
+  );
   readonly statusFilterEnabled = computed(
     () => !this.config.readOnly && this.config.statusFilter !== false,
   );
@@ -2273,6 +2302,21 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
 
   cancelFileUpload(): void {
     this.fileUploadExecution?.cancel();
+  }
+
+  async runBulkAction(action: ConfigurableCrudBulkAction): Promise<void> {
+    const ids = [...this.selectedUUIDs()];
+    if (!ids.length) return;
+    if (action.max && ids.length > action.max) {
+      this.snack.warning(
+        this.t('Select at most {count} records').replace('{count}', String(action.max)),
+      );
+      return;
+    }
+    const selected = new Set(ids);
+    const rows = this.rows().filter((row) => selected.has(String(row[this.config.uuidField])));
+    const done = await action.run(ids, rows);
+    if (done === true) this.selectedUUIDs.set(new Set());
   }
 
   async deleteSelectedItems(): Promise<void> {
