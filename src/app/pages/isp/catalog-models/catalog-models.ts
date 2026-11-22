@@ -5,6 +5,13 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import {
+  ispCatalogCodeField,
+  ispCatalogHeadFields,
+  ispCatalogListOptions,
+  ispCatalogNotesField,
+  ispCatalogPayload,
+} from '../catalog-crud';
 
 const modelTypes = ['OLT', 'ONU', 'NAS', 'CPE', 'OPTICAL_CABLE', 'UTP_CABLE', 'SPLITTER'].map(
   (value) => ({ value, label: value }),
@@ -13,12 +20,7 @@ const modelTypes = ['OLT', 'ONU', 'NAS', 'CPE', 'OPTICAL_CABLE', 'UTP_CABLE', 'S
 const config = defineCrud({
   endpoint: 'system/isp/catalog-models',
   uuidField: 'IcmUUID',
-  serverSidePagination: true,
-  serverSideSorting: true,
-  initialPageSize: 50,
-  // Each deletion carries its own revision; there is no bulk deletion contract.
-  bulkDelete: false,
-  deletePayload: (row) => ({ revision: Number(row['IcmRevision']) }),
+  ...ispCatalogListOptions('Icm'),
   pageTitle: 'isp.catalogModels',
   pageDescription: 'isp.catalogModelsDescription',
   initialValues: {
@@ -31,20 +33,11 @@ const config = defineCrud({
     tr069: 0,
     notes: '',
   },
-  payload: (values, editing) => {
-    const payload: ConfigurableCrudRecord = {
-      ...values,
-      status: Number(values['status']),
-      tr069: Number(values['tr069'] ?? 0),
-      oltDriver: values['oltDriver'] || null,
-    };
-    // Vendor and code are fixed at creation.
-    if (editing) {
-      delete payload['vendorUUID'];
-      delete payload['code'];
-    } else delete payload['revision'];
-    return payload;
-  },
+  // Vendor and code are fixed at creation.
+  payload: (values, editing) => ({
+    ...ispCatalogPayload(values, editing, ['vendorUUID', 'code'], ['oltDriver']),
+    tr069: Number(values['tr069'] ?? 0),
+  }),
   columns: [
     { id: 'name', label: 'Model', field: 'IcmName', uuidField: 'IcmUUID', kind: 'identity' },
     { id: 'code', label: 'Code', field: 'IcmCode', translateValue: false },
@@ -53,8 +46,7 @@ const config = defineCrud({
     { id: 'status', label: 'Status', field: 'IcmStatus', kind: 'status' },
   ],
   fields: [
-    { key: 'revision', source: 'IcmRevision', label: 'Revision', type: 'number', hidden: true },
-    { key: 'status', source: 'IcmStatus', label: 'Status', type: 'status', span: 1 },
+    ...ispCatalogHeadFields('Icm'),
     {
       key: 'vendorUUID',
       source: 'IspCatalogVendorIcvUUID',
@@ -72,15 +64,7 @@ const config = defineCrud({
       span: 1,
       disabledWhen: ({ editing }) => editing,
     },
-    {
-      key: 'code',
-      source: 'IcmCode',
-      label: 'Code',
-      required: true,
-      span: 1,
-      help: 'isp.catalogCodeHelp',
-      disabledWhen: ({ editing }) => editing,
-    },
+    ispCatalogCodeField('Icm'),
     { key: 'name', source: 'IcmName', label: 'Model', required: true, span: 1 },
     {
       key: 'type',
@@ -104,15 +88,7 @@ const config = defineCrud({
       ],
       span: 1,
     },
-    {
-      key: 'notes',
-      source: 'IcmNotes',
-      label: 'Notes',
-      type: 'textarea',
-      tab: 'notes',
-      span: 4,
-      rows: 4,
-    },
+    ispCatalogNotesField('Icm'),
   ],
 });
 
