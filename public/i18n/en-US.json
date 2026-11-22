@@ -15921,6 +15921,8 @@
   "assistant.action.hosting.vps.instances.power.start": "Start the VPS",
   "assistant.action.hosting.vps.instances.power.stop": "Stop the VPS",
   "assistant.action.hosting.vps.instances.power.reboot": "Reboot the VPS",
+  "assistant.action.billing.subscriptions.checkout.PRODUCT": "Subscribe to product",
+  "assistant.action.billing.subscriptions.checkout.PACKAGE": "Subscribe to plan",
   "assistant.actionStatus.proposed": "Nothing was done yet. Check and confirm to run it.",
   "assistant.actionStatus.executing": "Running...",
   "assistant.actionStatus.executed": "Done.",

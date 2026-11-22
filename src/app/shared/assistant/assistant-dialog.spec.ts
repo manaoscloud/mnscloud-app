@@ -58,6 +58,12 @@ describe('App assistant', () => {
       assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'reboot' } }),
     ).toBe('assistant.action.hosting.vps.instances.power.reboot');
     expect(
+      assistantActionKey({
+        tool: 'billing.subscriptions.checkout',
+        params: { offerType: 'PACKAGE' },
+      }),
+    ).toBe('assistant.action.billing.subscriptions.checkout.PACKAGE');
+    expect(
       assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'destroy' } }),
     ).toBe('assistant.action.generic');
     expect(assistantActionKey({ tool: 'x.y.z', params: {} })).toBe('assistant.action.generic');
