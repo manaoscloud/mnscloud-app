@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ad5fb7c3c7bd",
+  "version": "d8b58b3b63e1",
   "language": "pt-BR",
   "entries": [
     {
@@ -1152,6 +1152,71 @@
         {
           "label": "Permitir subdomínios",
           "help": "Abre o chat também em subdomínios de cada site permitido: com https://exemplo.com permitido, loja.exemplo.com também funciona. Subdomínios não são verificados como instalados."
+        }
+      ]
+    },
+    {
+      "route": "/conversations/erp-calls",
+      "menuPath": "Conversas › Chamadas ERP",
+      "scope": "tenant",
+      "title": "Chamadas ERP",
+      "description": "Auditoria de cada chamada que os fluxos e o agente de IA fizeram ao seu ERP: ferramenta, resultado, horário e referência no ERP. Dados do cliente nunca são guardados aqui.",
+      "fields": []
+    },
+    {
+      "route": "/conversations/erp-connections",
+      "menuPath": "Conversas › Integrações ERP",
+      "scope": "tenant",
+      "title": "Integrações ERP",
+      "description": "Conecte o ERP do seu provedor para que os fluxos e o agente de IA consultem planos, faturas e contratos e executem as ações que você permitir.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Política",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "ERP",
+          "help": "Sistema ERP do seu provedor. Não pode mudar depois: crie outra integração."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endereço do ERP",
+          "help": "Endereço HTTPS do seu ERP, sem o caminho da API."
+        },
+        {
+          "label": "Conta",
+          "help": "Conta de revenda vinculada a este canal, ou deixe vazio para a conta interna."
+        },
+        {
+          "label": "Impressão digital do certificado (SHA-256)",
+          "help": "Opcional. Quando preenchida, só o ERP que apresentar este certificado é aceito."
+        },
+        {
+          "label": "Como o ERP é acessado",
+          "help": "Use Conector para um ERP em rede privada, acessado por um conector da sua equipe."
+        },
+        {
+          "label": "Tempo limite (ms)",
+          "help": "Uma resposta mais lenta conta como falha (1000 a 30000 ms)."
+        },
+        {
+          "label": "Chamadas simultâneas",
+          "help": "Máximo de chamadas ao ERP ao mesmo tempo (1 a 32)."
+        },
+        {
+          "label": "Chamadas por minuto",
+          "help": "Limite de chamadas por minuto ao ERP (1 a 6000)."
         }
       ]
     },
