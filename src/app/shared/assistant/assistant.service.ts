@@ -54,6 +54,7 @@ export function assistantActionKey(proposal: Pick<AssistantProposal, 'tool' | 'p
 
 const KNOWN_ACTIONS: Record<string, { param: string; values: string[] }> = {
   'hosting.vps.instances.power': { param: 'action', values: ['start', 'stop', 'reboot'] },
+  'billing.subscriptions.checkout': { param: 'offerType', values: ['PRODUCT', 'PACKAGE'] },
 };
 
 export type AssistantConversation = {
