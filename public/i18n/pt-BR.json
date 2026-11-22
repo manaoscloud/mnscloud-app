@@ -15804,7 +15804,7 @@
   "assistant.deleteConversation": "Excluir conversa",
   "assistant.screens": "Telas",
   "assistant.emptyHint": "Digite o nome de uma tela para abri-la, ou faça uma pergunta como \"como cadastro um ramal?\".",
-  "assistant.privacyHint": "O assistente responde com base na ajuda do App, não acessa seus dados e não altera nada. Não digite senhas.",
+  "assistant.privacyHint": "O assistente responde com base na ajuda do App e, quando precisa, consulta seus dados com as suas permissões. Ele não altera nada. Não digite senhas.",
   "assistant.unavailable": "O assistente não respondeu agora. Use a busca de telas.",
   "assistant.thinking": "Procurando a resposta...",
   "assistant.searchOnly": "O assistente de IA não está ativo; a busca de telas continua disponível.",
@@ -15823,5 +15823,11 @@
   "Cancel at the bank": "Cancelar no banco",
   "Charge canceled at the bank.": "Cobrança cancelada no banco.",
   "This receivable already has an open charge. Cancel it before issuing another one.": "Este título já tem uma cobrança em aberto. Cancele-a antes de emitir outra.",
-  "This charge was not issued at a bank.": "Esta cobrança não foi emitida em um banco."
+  "This charge was not issued at a bank.": "Esta cobrança não foi emitida em um banco.",
+  "assistant.sources": "Consultei",
+  "assistant.tool.voip.pabx.extensions.list": "Ramais",
+  "assistant.tool.hosting.vps.instances.list": "Instâncias VPS",
+  "assistant.tool.billing.subscriptions.list": "Adesões",
+  "assistant.tool.billing.wallet.balance": "Saldo da carteira",
+  "assistant.tool.generic": "Dados do ambiente"
 }
