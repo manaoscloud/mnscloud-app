@@ -1479,6 +1479,30 @@ export const routes: Routes = [
                 title: 'Financial • Payment Methods | mnscloud',
               },
               {
+                path: 'financial/mnscloud-pay/summary',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-summary').then(
+                    (m) => m.FinancialPaySummaryPage,
+                  ),
+                title: 'Financial • MNSCloud Pay | mnscloud',
+              },
+              {
+                path: 'financial/mnscloud-pay/statement',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-statement').then(
+                    (m) => m.FinancialPayStatementPage,
+                  ),
+                title: 'Financial • MNSCloud Pay Statement | mnscloud',
+              },
+              {
+                path: 'financial/mnscloud-pay/payouts',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-payouts').then(
+                    (m) => m.FinancialPayPayoutsPage,
+                  ),
+                title: 'Financial • MNSCloud Pay Payouts | mnscloud',
+              },
+              {
                 path: 'financial/payment-charges',
                 loadComponent: () =>
                   import('./pages/financial/payment-charges/payment-charges').then(
@@ -3977,6 +4001,15 @@ export const routes: Routes = [
                 ],
               },
               { path: 'pay', pathMatch: 'full', redirectTo: 'pay/bank-partners' },
+              {
+                path: 'pay/subaccounts',
+                loadComponent: () =>
+                  import('./pages/system/pay/subaccounts/subaccounts').then(
+                    (m) => m.SystemPaySubaccountsPage,
+                  ),
+                title: 'System • Pay • Subaccounts | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
               {
                 path: 'pay/bank-partners',
                 loadComponent: () =>
