@@ -19,9 +19,32 @@ import {
   MODULE_LOOKUP,
 } from './billing-options';
 
+/** Customer of the contract being edited: the ISP item lookup offers only its subscriptions. */
+const editingContract = { customerUUID: '' };
+
 const today = () => new Date().toISOString().slice(0, 10);
 const optionLabel = (options: readonly { value: string; label: string }[], value: unknown) =>
   options.find((option) => option.value === value)?.label ?? String(value ?? '');
+
+const RESOURCE_FIELD_BY_MODULE: Readonly<Record<string, string | null>> = {
+  ged: 'gedAccountUUID',
+  hr: 'hrAccountUUID',
+  cyber_security: 'cyberAccountUUID',
+  commerce: 'commerceAccountUUID',
+  conversations: 'conversationsAccountUUID',
+  contracts: 'contractsAccountUUID',
+  isp: 'ispSubscriptionUUID',
+  // Managed support bills the contract's own customer: the API fills the resource.
+  support_remote: null,
+};
+
+/** Resource of the item: the module specific picker, or the free resource UUID. */
+const resourceOf = (values: ConfigurableCrudRecord) => {
+  const module = String(values['module'] ?? '');
+  const key =
+    module in RESOURCE_FIELD_BY_MODULE ? RESOURCE_FIELD_BY_MODULE[module] : 'resourceUUID';
+  return (key ? values[key] : null) || null;
+};
 
 const statusAction = (key: string, label: string, icon: string, to: string, from: string[]) => ({
   key,
@@ -262,6 +285,7 @@ const config = defineCrud({
             values['module'] === 'commerce' ||
             values['module'] === 'conversations' ||
             values['module'] === 'contracts' ||
+            values['module'] === 'isp' ||
             // Managed support bills the contract's own customer: the API fills the resource.
             values['module'] === 'support_remote',
           source: 'BciSourceResourceUUID',
@@ -357,6 +381,28 @@ const config = defineCrud({
           requiredWhen: ({ values }) => values['module'] === 'contracts',
           quickCreate: false,
           quickCreateExemptReason: 'Customer accounts manage contract accounts.',
+        },
+        {
+          key: 'ispSubscriptionUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'isp.subscription',
+          type: 'search-select',
+          help: 'isp.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'isp',
+          requiredWhen: ({ values }) => values['module'] === 'isp',
+          remoteLookup: {
+            endpoint: 'isp/subscriptions',
+            uuidField: 'IsbUUID',
+            labelField: 'IsbID',
+            descriptionField: 'CustomerName',
+            // Only the subscriptions of the contract customer (the API refuses any other).
+            accept: (item) =>
+              item['RegCustomerRcuUUID'] === editingContract.customerUUID &&
+              item['IsbStatus'] !== 'cancelled',
+          },
+          quickCreate: false,
+          quickCreateExemptReason:
+            'Subscriptions of the customer are created in ISP › Subscriptions.',
         },
         {
           key: 'productUUID',
@@ -479,22 +525,7 @@ const config = defineCrud({
       ],
       payload: (values) => ({
         module: values['module'] || 'manual',
-        resourceUUID:
-          (values['module'] === 'ged'
-            ? values['gedAccountUUID']
-            : values['module'] === 'hr'
-              ? values['hrAccountUUID']
-              : values['module'] === 'cyber_security'
-                ? values['cyberAccountUUID']
-                : values['module'] === 'commerce'
-                  ? values['commerceAccountUUID']
-                  : values['module'] === 'conversations'
-                    ? values['conversationsAccountUUID']
-                    : values['module'] === 'contracts'
-                      ? values['contractsAccountUUID']
-                      : values['module'] === 'support_remote'
-                        ? null
-                        : values['resourceUUID']) || null,
+        resourceUUID: resourceOf(values),
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -599,5 +630,10 @@ const config = defineCrud({
 export class CustomerBillingContractsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
+  }
+
+  override startEdit(row: ConfigurableCrudRecord): void {
+    editingContract.customerUUID = String(row['RegCustomerRcuUUID'] ?? '');
+    super.startEdit(row);
   }
 }
