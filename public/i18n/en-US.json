@@ -15797,5 +15797,11 @@
   "assistant.errorRateLimit": "You asked too many questions in the last hour. Try again later.",
   "assistant.errorFull": "This conversation is full. Start a new conversation.",
   "assistant.errorNotFound": "Conversation not found.",
-  "assistant.errorGeneric": "The question could not be sent. Try again."
+  "assistant.errorGeneric": "The question could not be sent. Try again.",
+  "Only an open charge can be canceled at the bank.": "Only an open charge can be canceled at the bank.",
+  "This payment gateway does not support cancellation.": "This payment gateway does not support cancellation.",
+  "Refunded": "Refunded",
+  "Amount received": "Amount received",
+  "Cancel at the bank": "Cancel at the bank",
+  "Charge canceled at the bank.": "Charge canceled at the bank."
 }

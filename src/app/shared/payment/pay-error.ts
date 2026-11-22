@@ -58,6 +58,8 @@ const messages: Record<string, string> = {
   PAY_FIELD_NOT_ACCEPTED: 'A payment charge field is not accepted for this gateway.',
   PAY_INVALID_BILLING_TYPE: 'The payment method must be boleto, Pix or credit card.',
   PAY_PAYOUT_BALANCE: 'The payout exceeds the available balance.',
+  PAY_CHARGE_NOT_OPEN: 'Only an open charge can be canceled at the bank.',
+  PAY_CANCEL_UNSUPPORTED: 'This payment gateway does not support cancellation.',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 
