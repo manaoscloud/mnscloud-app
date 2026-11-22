@@ -15889,5 +15889,20 @@
   "assistant.tool.hosting.vps.instances.list": "Instancias VPS",
   "assistant.tool.billing.subscriptions.list": "Suscripciones",
   "assistant.tool.billing.wallet.balance": "Saldo de la billetera",
-  "assistant.tool.generic": "Datos del entorno"
+  "assistant.tool.generic": "Datos del entorno",
+  "List plans": "Planes",
+  "Check viability": "Viabilidad",
+  "List outages": "Fallas y mantenimientos",
+  "Find customer": "Identificar cliente",
+  "List contracts": "Contratos del cliente",
+  "List open invoices": "Facturas abiertas",
+  "Invoice payment": "Pago de la factura",
+  "Connection status": "Estado de la conexión",
+  "List tickets": "Tickets del cliente",
+  "Send invoice": "Enviar factura",
+  "Trust unblock": "Desbloqueo de confianza",
+  "Schedule visit": "Agendar visita técnica",
+  "Create lead": "Crear prerregistro",
+  "Erp Connections": "Integraciones ERP",
+  "Erp Calls": "Llamadas ERP"
 }
