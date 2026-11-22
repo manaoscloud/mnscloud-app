@@ -5,6 +5,7 @@ import {
   ConfigurableCrudRecord,
 } from '../../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../../shared/crud/configurable-crud/define-crud';
+import { quickCreateFor } from '../../../shared/crud/configurable-crud/quick-create';
 
 const config = defineCrud({
   endpoint: 'isp/nas',
@@ -28,6 +29,7 @@ const config = defineCrud({
     ip: '',
     vendorUUID: '',
     vendorModelUUID: '',
+    authenticationNasUUID: '',
     notes: '',
   },
   columns: [
@@ -76,6 +78,21 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'authenticationNasUUID',
+      source: 'AuthenticationNasAanUUID',
+      label: 'isp.authenticationNas',
+      help: 'isp.authenticationNasHelp',
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'authentication/network-devices?status=1',
+        uuidField: 'AanUUID',
+        labelField: 'AanName',
+        selectedLabelField: 'AuthenticationNasName',
+      },
+      quickCreate: quickCreateFor('AuthenticationNasAanUUID'),
+      span: 1,
+    },
+    {
       key: 'notes',
       source: 'InsNotes',
       label: 'Notes',
@@ -100,6 +117,10 @@ export class IspNasPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord>
   }
 
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
-    return { ...payload, status: Number(payload['status']) };
+    return {
+      ...payload,
+      status: Number(payload['status']),
+      authenticationNasUUID: payload['authenticationNasUUID'] || null,
+    };
   }
 }

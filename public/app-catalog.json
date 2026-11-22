@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "52e18edd7f17",
+  "version": "ad5fb7c3c7bd",
   "language": "pt-BR",
   "entries": [
     {
@@ -5332,6 +5332,10 @@
           "help": ""
         },
         {
+          "label": "NAS de autenticação",
+          "help": "Vínculo opcional com o NAS do módulo Autenticação que atende este equipamento."
+        },
+        {
           "label": "Anotações",
           "help": ""
         }
@@ -5547,6 +5551,10 @@
           "help": ""
         },
         {
+          "label": "Fabricante do catálogo",
+          "help": "Vínculo opcional com o catálogo da plataforma."
+        },
+        {
           "label": "Website",
           "help": ""
         },
@@ -5590,6 +5598,10 @@
         {
           "label": "Tipo",
           "help": ""
+        },
+        {
+          "label": "Modelo do catálogo",
+          "help": "Vínculo opcional com o catálogo da plataforma. Deve ter o mesmo tipo do modelo."
         },
         {
           "label": "Anotações",
@@ -10518,6 +10530,92 @@
         },
         {
           "label": "Ordem de classificação",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/isp/catalog-models",
+      "menuPath": "ISP › Modelos padrão",
+      "scope": "platform",
+      "title": "Catálogo de modelos",
+      "description": "Modelos de equipamentos de cada fabricante do catálogo da plataforma. Os provedores os vinculam aos seus próprios modelos.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": "Identificador em minúsculas (letras, números e hífen). Não pode ser alterado depois de criado."
+        },
+        {
+          "label": "Modelo",
+          "help": ""
+        },
+        {
+          "label": "Tipo",
+          "help": ""
+        },
+        {
+          "label": "Driver da OLT",
+          "help": ""
+        },
+        {
+          "label": "TR-069",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/system/isp/catalog-vendors",
+      "menuPath": "ISP › Catálogo",
+      "scope": "platform",
+      "title": "Catálogo de fabricantes",
+      "description": "Fabricantes de equipamentos de rede mantidos pela plataforma. Os provedores os vinculam aos seus próprios fabricantes.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": "Identificador em minúsculas (letras, números e hífen). Não pode ser alterado depois de criado."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Website",
+          "help": ""
+        },
+        {
+          "label": "Dicionário RADIUS",
+          "help": ""
+        },
+        {
+          "label": "Ordem",
           "help": ""
         },
         {

@@ -37,7 +37,11 @@ import {
 /** A visible menu entry the user can open (already filtered by permission, scope and contract). */
 export type AssistantScreen = { label: string; path: string; route: string; icon?: string };
 
-export type AssistantDialogData = { screens: AssistantScreen[]; route: string };
+/**
+ * `screens` is read while the user types (not copied at open), so the search works even when the
+ * panel opens before the menu finished loading.
+ */
+export type AssistantDialogData = { screens: () => AssistantScreen[]; route: string };
 
 function normalize(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -107,7 +111,7 @@ export class AssistantDialogComponent {
   readonly history = signal<AssistantConversation[]>([]);
 
   readonly screens = computed(() =>
-    this.messages().length ? [] : matchScreens(this.data.screens, this.query()),
+    this.messages().length ? [] : matchScreens(this.data.screens(), this.query()),
   );
   readonly canAsk = computed(
     () => !this.busy() && this.assistant.available() !== false && this.query().trim().length >= 3,

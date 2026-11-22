@@ -26,6 +26,7 @@ const config = defineCrud({
     status: 1,
     name: '',
     supplierUUID: '',
+    catalogVendorUUID: '',
     website: '',
     supportEmail: '',
     supportPhone: '',
@@ -53,6 +54,23 @@ const config = defineCrud({
         labelField: 'Name',
       },
       quickCreate: quickCreateFor('RegSupplierRsuUUID'),
+      span: 1,
+    },
+    {
+      key: 'catalogVendorUUID',
+      source: 'CatalogVendorUUID',
+      label: 'isp.catalogVendor',
+      help: 'isp.catalogVendorHelp',
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'isp/catalog-vendors',
+        uuidField: 'IcvUUID',
+        labelField: 'IcvName',
+        selectedLabelField: 'CatalogVendorName',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'The ISP catalog is platform data managed by the master in the platform area.',
       span: 1,
     },
     { key: 'website', source: 'VendorWebsite', label: 'Website', span: 1 },
@@ -98,6 +116,7 @@ export class IspVendorPage extends ConfigurableCrudPageBase<ConfigurableCrudReco
     return {
       ...payload,
       supplierUUID: payload['supplierUUID'] || null,
+      catalogVendorUUID: payload['catalogVendorUUID'] || null,
       status: Number(payload['status']),
     };
   }
