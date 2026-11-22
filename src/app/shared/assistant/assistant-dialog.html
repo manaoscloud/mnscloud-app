@@ -132,6 +132,55 @@
             }
           </article>
         }
+        @if (proposals().length) {
+          <section class="assistant-actions" [attr.aria-label]="'assistant.actions' | transloco">
+            @for (proposal of proposals(); track proposal.proposalUUID) {
+              <article class="assistant-action" [attr.data-status]="proposal.status">
+                <header>
+                  <mat-icon>bolt</mat-icon>
+                  <strong>{{ actionKey(proposal) | transloco }}</strong>
+                </header>
+                @if (proposal.targetLabel) {
+                  <p class="assistant-action-target">{{ proposal.targetLabel }}</p>
+                }
+                <p class="assistant-hint">
+                  {{ 'assistant.actionStatus.' + proposal.status | transloco }}
+                  @if (proposal.resultMessage && proposal.status === 'failed') {
+                    · {{ proposal.resultMessage }}
+                  }
+                </p>
+                @if (canConfirm(proposal)) {
+                  <div class="assistant-action-buttons">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="acting() !== null"
+                      (click)="confirmProposal(proposal)"
+                    >
+                      <mat-icon>check</mat-icon>
+                      {{
+                        (proposal.status === 'unknown'
+                          ? 'assistant.actionResend'
+                          : 'assistant.actionConfirm'
+                        ) | transloco
+                      }}
+                    </button>
+                    @if (proposal.status === 'proposed') {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="acting() !== null"
+                        (click)="rejectProposal(proposal)"
+                      >
+                        {{ 'assistant.actionCancel' | transloco }}
+                      </button>
+                    }
+                  </div>
+                }
+              </article>
+            }
+          </section>
+        }
         @if (busy()) {
           <div class="assistant-busy">
             <mat-spinner diameter="20" />

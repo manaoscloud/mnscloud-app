@@ -1,5 +1,6 @@
 import { matchScreens, type AssistantScreen } from './assistant-dialog';
 import {
+  assistantActionKey,
   assistantErrorCode,
   assistantLocale,
   assistantToolKey,
@@ -50,5 +51,15 @@ describe('App assistant', () => {
       'assistant.tool.voip.pabx.extensions.list',
     );
     expect(assistantToolKey('x.y.z')).toBe('assistant.tool.generic');
+  });
+
+  it('labels action cards only from known tools and values', () => {
+    expect(
+      assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'reboot' } }),
+    ).toBe('assistant.action.hosting.vps.instances.power.reboot');
+    expect(
+      assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'destroy' } }),
+    ).toBe('assistant.action.generic');
+    expect(assistantActionKey({ tool: 'x.y.z', params: {} })).toBe('assistant.action.generic');
   });
 });

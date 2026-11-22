@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "ddb29a3e1382",
+  "version": "eb84135eb58f",
   "language": "pt-BR",
   "entries": [
     {
@@ -3887,6 +3887,10 @@
         {
           "label": "Descrição",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente que vê esta conexão no Portal do Cliente depois de publicada. Vazio: uso próprio."
         },
         {
           "label": "Redes da sua empresa",

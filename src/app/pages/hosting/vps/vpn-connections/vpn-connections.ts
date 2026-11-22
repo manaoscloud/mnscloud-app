@@ -207,6 +207,21 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'customerUuid',
+      source: 'RegCustomerRcuUUID',
+      label: 'Customer',
+      type: 'search-select',
+      span: 1,
+      help: 'Customer that sees this connection in the Customer Portal once published. Empty: your own use.',
+      hiddenWhen: ({ editing }) => !editing,
+      remoteLookup: {
+        endpoint: 'registry/customers?status=1',
+        uuidField: 'CustomerUUID',
+        labelField: 'Name',
+        selectedLabelField: 'CustomerName',
+      },
+    },
+    {
       key: 'remotePrefixes',
       source: 'RemotePrefixes',
       payloadKey: 'remotePrefixes',
@@ -240,6 +255,13 @@ const config = defineCrud({
       field: 'RouterState',
       options: ROUTER_STATE_OPTIONS,
       className: 'status-col',
+    },
+    { id: 'customer', label: 'Customer', field: 'CustomerName' },
+    {
+      id: 'portal',
+      label: 'Customer Portal',
+      value: (row, translate) =>
+        translate(Number(row['HvcPortalEnabled'] ?? 0) === 1 ? 'Published' : 'Not published'),
     },
     { id: 'provider', label: 'Provider', field: 'ProviderName' },
     { id: 'description', label: 'Description', field: 'HvcDescription' },
@@ -309,6 +331,38 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
             },
           },
         } satisfies ConfigurableCrudRowAction,
+        {
+          key: 'portal-publish',
+          label: 'Publish in the Customer Portal',
+          icon: 'public',
+          visible: (row) =>
+            !!row['RegCustomerRcuUUID'] && Number(row['HvcPortalEnabled'] ?? 0) !== 1,
+          request: {
+            method: 'put',
+            endpoint: (row) => `hosting/vps/router/vpn-connections/${row['HvcUUID']}/portal`,
+            // Only the publication: the customer stays as the server has it.
+            body: () => ({ portalEnabled: true }),
+            successMessage: 'Published in the Customer Portal.',
+            confirm: {
+              title: 'Publish in the Customer Portal',
+              message:
+                'The customer sees this connection, downloads the configuration of its device and, with the key rule, reveals the pre-shared key. Publish?',
+              confirmLabel: 'Publish',
+            },
+          },
+        } satisfies ConfigurableCrudRowAction,
+        {
+          key: 'portal-hide',
+          label: 'Hide from the Customer Portal',
+          icon: 'public_off',
+          visible: (row) => Number(row['HvcPortalEnabled'] ?? 0) === 1,
+          request: {
+            method: 'put',
+            endpoint: (row) => `hosting/vps/router/vpn-connections/${row['HvcUUID']}/portal`,
+            body: () => ({ portalEnabled: false }),
+            successMessage: 'Hidden from the Customer Portal.',
+          },
+        } satisfies ConfigurableCrudRowAction,
         ...VENDORS.map(
           (vendor) =>
             ({
@@ -365,6 +419,25 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
       localNetworks: lines(row['LocalNetworks']),
       remotePrefixes: lines(row['RemotePrefixes']).join('\n'),
     };
+  }
+
+  /** The customer has its own route (P1): sent after the connection saved, never before. */
+  override async saveItem(saveAndNew = false): Promise<void> {
+    const current = this.editingRecord();
+    const chosen = current ? String(this.formValues()['customerUuid'] ?? '') || null : null;
+    const previous = current ? String(current['RegCustomerRcuUUID'] ?? '') || null : null;
+    await super.saveItem(saveAndNew);
+    // Still editing = the save failed (the dialog shows why): the customer is left as it was.
+    if (!current || this.editingRecord() === current || chosen === previous) return;
+    try {
+      await this.api.put(`hosting/vps/router/vpn-connections/${current['HvcUUID']}/portal`, {
+        customerUUID: chosen,
+        portalEnabled: false,
+      });
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 
   override refreshList() {
