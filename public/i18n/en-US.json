@@ -14048,6 +14048,7 @@
   "automation.port.open": "Open",
   "automation.port.closed": "Closed",
   "automation.port.success": "Success",
+  "automation.port.blocked": "Blocked (too many attempts)",
   "automation.port.error": "Error",
   "automation.field.triggers": "Triggers",
   "automation.field.type": "Type",
