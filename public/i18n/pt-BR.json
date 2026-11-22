@@ -15905,5 +15905,13 @@
   "Schedule visit": "Agendar visita técnica",
   "Create lead": "Criar pré-cadastro",
   "Erp Connections": "Integrações ERP",
-  "Erp Calls": "Chamadas ERP"
+  "Erp Calls": "Chamadas ERP",
+  "Customer that sees this connection in the Customer Portal once published. Empty: your own use.": "Cliente que vê esta conexão no Portal do Cliente depois de publicada. Vazio: uso próprio.",
+  "Not published": "Não publicada",
+  "Publish in the Customer Portal": "Publicar no Portal do Cliente",
+  "Published in the Customer Portal.": "Publicada no Portal do Cliente.",
+  "The customer sees this connection, downloads the configuration of its device and, with the key rule, reveals the pre-shared key. Publish?": "O cliente vê esta conexão, baixa a configuração do equipamento dele e, com a regra da chave, revela a chave pré-compartilhada. Publicar?",
+  "Publish": "Publicar",
+  "Hide from the Customer Portal": "Ocultar do Portal do Cliente",
+  "Hidden from the Customer Portal.": "Oculta do Portal do Cliente."
 }

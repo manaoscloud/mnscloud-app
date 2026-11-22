@@ -15904,5 +15904,13 @@
   "Schedule visit": "Agendar visita técnica",
   "Create lead": "Crear prerregistro",
   "Erp Connections": "Integraciones ERP",
-  "Erp Calls": "Llamadas ERP"
+  "Erp Calls": "Llamadas ERP",
+  "Customer that sees this connection in the Customer Portal once published. Empty: your own use.": "Cliente que ve esta conexión en el Portal del Cliente una vez publicada. Vacío: uso propio.",
+  "Not published": "No publicada",
+  "Publish in the Customer Portal": "Publicar en el Portal del Cliente",
+  "Published in the Customer Portal.": "Publicada en el Portal del Cliente.",
+  "The customer sees this connection, downloads the configuration of its device and, with the key rule, reveals the pre-shared key. Publish?": "El cliente ve esta conexión, descarga la configuración de su equipo y, con la regla de la clave, revela la clave precompartida. ¿Publicar?",
+  "Publish": "Publicar",
+  "Hide from the Customer Portal": "Ocultar del Portal del Cliente",
+  "Hidden from the Customer Portal.": "Oculta del Portal del Cliente."
 }
