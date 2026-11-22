@@ -107,6 +107,20 @@
                 }
               </div>
             }
+            @if (message.toolsUsed?.length) {
+              <div class="assistant-sources" [attr.aria-label]="'assistant.sources' | transloco">
+                <mat-icon>fact_check</mat-icon>
+                <span>{{ 'assistant.sources' | transloco }}:</span>
+                @for (use of message.toolsUsed; track $index) {
+                  <span class="assistant-source-chip" [class.is-failed]="!use.ok">
+                    {{ toolKey(use.tool) | transloco }}
+                    @if (use.ok) {
+                      ({{ use.returned }})
+                    }
+                  </span>
+                }
+              </div>
+            }
             @if (message.followUps?.length) {
               <div class="assistant-followups">
                 @for (followUp of message.followUps; track $index) {

@@ -15811,7 +15811,7 @@
   "assistant.deleteConversation": "Delete conversation",
   "assistant.screens": "Screens",
   "assistant.emptyHint": "Type a screen name to open it, or ask a question such as \"how do I add an extension?\".",
-  "assistant.privacyHint": "The assistant answers from the App help, does not access your data and changes nothing. Do not type passwords.",
+  "assistant.privacyHint": "The assistant answers from the App help and, when needed, reads your data with your own permissions. It changes nothing. Do not type passwords.",
   "assistant.unavailable": "The assistant did not answer now. Use the screen search.",
   "assistant.thinking": "Looking for the answer...",
   "assistant.searchOnly": "The AI assistant is not active; the screen search is still available.",
@@ -15883,5 +15883,11 @@
   "nav.conversations.erp-connections": "ERP integrations",
   "nav.conversations.erp-calls": "ERP calls",
   "This receivable already has an open charge. Cancel it before issuing another one.": "This receivable already has an open charge. Cancel it before issuing another one.",
-  "This charge was not issued at a bank.": "This charge was not issued at a bank."
+  "This charge was not issued at a bank.": "This charge was not issued at a bank.",
+  "assistant.sources": "Checked",
+  "assistant.tool.voip.pabx.extensions.list": "Extensions",
+  "assistant.tool.hosting.vps.instances.list": "VPS instances",
+  "assistant.tool.billing.subscriptions.list": "Subscriptions",
+  "assistant.tool.billing.wallet.balance": "Wallet balance",
+  "assistant.tool.generic": "Tenant data"
 }

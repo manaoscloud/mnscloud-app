@@ -15811,7 +15811,7 @@
   "assistant.deleteConversation": "Eliminar conversación",
   "assistant.screens": "Pantallas",
   "assistant.emptyHint": "Escriba el nombre de una pantalla para abrirla, o haga una pregunta como \"¿cómo registro un ramal?\".",
-  "assistant.privacyHint": "El asistente responde con base en la ayuda de la App, no accede a sus datos y no cambia nada. No escriba contraseñas.",
+  "assistant.privacyHint": "El asistente responde con base en la ayuda de la App y, cuando lo necesita, consulta sus datos con sus permisos. No cambia nada. No escriba contraseñas.",
   "assistant.unavailable": "El asistente no respondió ahora. Use la búsqueda de pantallas.",
   "assistant.thinking": "Buscando la respuesta...",
   "assistant.searchOnly": "El asistente de IA no está activo; la búsqueda de pantallas sigue disponible.",
@@ -15883,5 +15883,11 @@
   "nav.conversations.erp-connections": "Integraciones ERP",
   "nav.conversations.erp-calls": "Llamadas ERP",
   "This receivable already has an open charge. Cancel it before issuing another one.": "Este título ya tiene un cobro abierto. Cancélelo antes de emitir otro.",
-  "This charge was not issued at a bank.": "Este cobro no fue emitido en un banco."
+  "This charge was not issued at a bank.": "Este cobro no fue emitido en un banco.",
+  "assistant.sources": "Consulté",
+  "assistant.tool.voip.pabx.extensions.list": "Ramales",
+  "assistant.tool.hosting.vps.instances.list": "Instancias VPS",
+  "assistant.tool.billing.subscriptions.list": "Suscripciones",
+  "assistant.tool.billing.wallet.balance": "Saldo de la billetera",
+  "assistant.tool.generic": "Datos del entorno"
 }

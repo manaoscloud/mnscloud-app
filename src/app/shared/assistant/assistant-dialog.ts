@@ -28,6 +28,7 @@ import { ReportProblemButtonComponent } from '../support-report-dialog/report-pr
 import {
   AssistantService,
   assistantErrorCode,
+  assistantToolKey,
   safeAssistantRoute,
   type AssistantConversation,
   type AssistantLink,
@@ -235,6 +236,10 @@ export class AssistantDialogComponent {
   /** Unavailable answers keep their text; the outcome only adds a hint. */
   unavailable(message: AssistantMessage): boolean {
     return message.role === 'assistant' && !!message.outcome?.toLowerCase().startsWith('ai_');
+  }
+
+  toolKey(tool: string): string {
+    return assistantToolKey(tool);
   }
 
   paragraphs(text: string): string[] {

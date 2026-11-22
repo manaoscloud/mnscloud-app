@@ -23,6 +23,8 @@ export type AssistantMessage = {
   links: AssistantLink[];
   outcome: string | null;
   followUps?: string[];
+  /** Read tools used for the answer (A1): which of the user's records were consulted. */
+  toolsUsed?: { tool: string; ok: boolean; returned: number }[];
   createdAt?: string | null;
 };
 
@@ -48,6 +50,18 @@ export function safeAssistantRoute(route: string | null | undefined): string | n
   const value = route.trim();
   return value.startsWith('/') && !value.startsWith('//') && !/[\s\\]/.test(value) ? value : null;
 }
+
+/** Translation key of a read tool (`assistant.tool.voip.pabx.extensions.list`); unknown names use a generic label. */
+export function assistantToolKey(tool: string): string {
+  return KNOWN_TOOLS.has(tool) ? `assistant.tool.${tool}` : 'assistant.tool.generic';
+}
+
+const KNOWN_TOOLS = new Set([
+  'billing.subscriptions.list',
+  'billing.wallet.balance',
+  'hosting.vps.instances.list',
+  'voip.pabx.extensions.list',
+]);
 
 /** Error code of a failed ask (problem+json `code`, HTTP status otherwise). */
 export function assistantErrorCode(error: unknown): string {
