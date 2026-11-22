@@ -365,6 +365,20 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/conversations/connections',
       },
       {
+        id: 'conversations/erp-connections',
+        label: 'nav.conversations.erp-connections',
+        icon: 'lan',
+        route: '/conversations/erp-connections',
+        permissions: ['tenant.conversations.erp.read'],
+      },
+      {
+        id: 'conversations/erp-calls',
+        label: 'nav.conversations.erp-calls',
+        icon: 'fact_check',
+        route: '/conversations/erp-calls',
+        permissions: ['tenant.conversations.erp.read'],
+      },
+      {
         id: 'conversations/quick-replies',
         label: 'nav.conversations.quick-replies',
         icon: 'bolt',

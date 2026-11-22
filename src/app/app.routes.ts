@@ -2831,6 +2831,26 @@ export const routes: Routes = [
                 title: 'Conversations • Channel connections | mnscloud',
               },
               {
+                path: 'conversations/erp-connections',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/conversations/erp-connections/erp-connections').then(
+                    (m) => m.ConversationsErpConnectionsPage,
+                  ),
+                title: 'Conversations • ERP integrations | mnscloud',
+                data: { permission: 'tenant.conversations.erp.read' },
+              },
+              {
+                path: 'conversations/erp-calls',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/conversations/erp-calls/erp-calls').then(
+                    (m) => m.ConversationsErpCallsPage,
+                  ),
+                title: 'Conversations • ERP calls | mnscloud',
+                data: { permission: 'tenant.conversations.erp.read' },
+              },
+              {
                 path: 'conversations/accounts',
                 loadComponent: () =>
                   import('./pages/conversations/accounts/accounts').then(
