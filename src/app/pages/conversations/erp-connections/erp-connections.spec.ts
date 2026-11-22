@@ -5,6 +5,7 @@ import {
   erpFieldsPayload,
   erpPolicyPayload,
   erpSlotField,
+  erpToolVisible,
   erpToolSlotValues,
   setErpCatalog,
   type ErpKind,
@@ -42,17 +43,22 @@ const field = (key: string, secret: boolean): ErpKindField => ({
   secret,
 });
 
-const kindOf = (kind: string, fields: ErpKindField[]): ErpKind => ({
+const kindOf = (
+  kind: string,
+  fields: ErpKindField[],
+  capabilities: ErpToolInfo[] = [],
+): ErpKind => ({
   kind,
   label: kind.toUpperCase(),
   homologated: kind === 'ixc',
   fields,
-  capabilities: [],
+  capabilities,
 });
 
 const KINDS: ErpKind[] = [
-  kindOf('ixc', [field('user', false), field('token', true)]),
-  kindOf('sgp', []),
+  kindOf('ixc', [field('user', false), field('token', true)], TOOLS),
+  kindOf('sgp', [], [TOOLS[0], TOOLS[2]]),
+  kindOf('tiny', [], [TOOLS[0]]),
 ];
 
 describe('ERP integrations form', () => {
@@ -116,6 +122,7 @@ describe('ERP integrations form', () => {
 
   it('builds the policy and never lowers the identity level below the catalog', () => {
     const policy = erpPolicyPayload({
+      kind: 'ixc',
       storedPolicy: JSON.stringify({ tools: { list_contracts: { minIdentity: 0 } } }),
       erpTool0: 1,
       erpTool1: 1,
@@ -134,8 +141,44 @@ describe('ERP integrations form', () => {
 
   it('keeps the stored identity level when it is stricter', () => {
     const policy = erpPolicyPayload({
+      kind: 'ixc',
       storedPolicy: JSON.stringify({ tools: { list_plans: { minIdentity: 1 } } }),
     }) as { tools: Record<string, Record<string, unknown>> };
     expect(policy.tools['list_plans']['minIdentity']).toBe(1);
+  });
+
+  it('shows only the tools of the kind, and no writes when it is not homologated', () => {
+    expect(erpToolVisible({ kind: 'ixc' }, 2)).toBeTrue();
+    expect(erpToolVisible({ kind: 'tiny' }, 1)).toBeFalse();
+    expect(erpToolVisible({ kind: 'sgp' }, 0)).toBeTrue();
+    expect(erpToolVisible({ kind: 'sgp' }, 2)).toBeFalse();
+    expect(erpToolVisible({}, 0)).toBeFalse();
+  });
+
+  it('keeps the stored policy of hidden tools', () => {
+    const stored = { enabled: true, minIdentity: 2, requireConfirmation: true, requireHuman: true };
+    const policy = erpPolicyPayload({
+      kind: 'sgp',
+      storedPolicy: JSON.stringify({ tools: { request_trust_unblock: stored, other: {} } }),
+      erpTool0: 0,
+    }) as { tools: Record<string, Record<string, unknown>> };
+    expect(policy.tools['request_trust_unblock']).toEqual(stored);
+    expect(policy.tools['list_plans']['enabled']).toBe(false);
+    expect('other' in policy.tools).toBeFalse();
+    expect('list_contracts' in policy.tools).toBeFalse();
+  });
+
+  it('sends null when the account was cleared on edit', () => {
+    const base = { kind: 'ixc', name: 'X', revision: 1, storedAccount: 'acc-1' };
+    expect(erpConnectionPayload({ ...base, ConversationAccountCvaUUID: '' }, true)).toEqual(
+      jasmine.objectContaining({ ConversationAccountCvaUUID: null }),
+    );
+    expect(erpConnectionPayload({ ...base, ConversationAccountCvaUUID: 'acc-2' }, true)).toEqual(
+      jasmine.objectContaining({ ConversationAccountCvaUUID: 'acc-2' }),
+    );
+    expect(
+      'ConversationAccountCvaUUID' in
+        erpConnectionPayload({ ...base, storedAccount: '', ConversationAccountCvaUUID: '' }, true),
+    ).toBeFalse();
   });
 });

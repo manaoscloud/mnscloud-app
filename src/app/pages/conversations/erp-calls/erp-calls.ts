@@ -22,7 +22,7 @@ const config = defineCrud({
   pageTitle: 'ERP calls',
   pageDescription:
     'Audit of every call the flows and the AI agent made to your ERP: tool, result, time and ERP reference. Customer data is never stored here.',
-  searchPlaceholder: 'Tool, customer or reference',
+  searchEnabled: false,
   emptyLabel: 'No ERP calls recorded.',
   ...READ_ONLY_LOG_CRUD,
   listFilters: [

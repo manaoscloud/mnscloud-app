@@ -119,6 +119,18 @@ export function erpFieldSlot(index: number): ConfigurableCrudField {
 }
 
 const toolAt = (index: number) => toolCatalog()[index];
+
+/**
+ * A tool slot is shown only for tools the selected kind implements; write tools also need the
+ * kind to be homologated. Hidden tools keep their stored policy untouched.
+ */
+export function erpToolVisible(values: ConfigurableCrudRecord, index: number): boolean {
+  const tool = toolAt(index);
+  const kind = erpKind(values['kind']);
+  if (!tool || !kind) return false;
+  if (!kind.capabilities.some((item) => item.tool === tool.tool)) return false;
+  return kind.homologated || tool.class !== 'write';
+}
 const isWrite = (tool: ErpToolInfo | undefined) => tool?.class === 'write';
 
 function toolSlots(index: number): ConfigurableCrudField[] {
@@ -131,7 +143,7 @@ function toolSlots(index: number): ConfigurableCrudField[] {
       tab: 'limits',
       options: YES_NO,
       translateOptions: true,
-      hiddenWhen: () => !toolAt(index),
+      hiddenWhen: ({ values }) => !erpToolVisible(values, index),
       help: 'The AI agent and the flows can only use the tools that are enabled here.',
       span: 1,
     },
@@ -142,7 +154,7 @@ function toolSlots(index: number): ConfigurableCrudField[] {
       tab: 'limits',
       options: YES_NO,
       translateOptions: true,
-      hiddenWhen: () => !isWrite(toolAt(index)),
+      hiddenWhen: ({ values }) => !erpToolVisible(values, index) || !isWrite(toolAt(index)),
       help: 'A person of the team must approve each use of this tool before it runs.',
       span: 1,
     },
@@ -192,10 +204,14 @@ export function erpToolSlotValues(policy: unknown): ConfigurableCrudRecord {
  */
 export function erpPolicyPayload(values: ConfigurableCrudRecord): Record<string, unknown> {
   const stored = storedTools(values['storedPolicy']);
-  const tools: Record<string, StoredToolPolicy> = {};
+  const known = new Set(toolCatalog().map((item) => item.tool));
+  // Tools the form does not show keep the stored policy as it is.
+  const tools: Record<string, StoredToolPolicy> = Object.fromEntries(
+    Object.entries(stored).filter(([name]) => known.has(name)),
+  );
   for (let index = 0; index < ERP_TOOL_SLOTS; index++) {
     const tool = toolAt(index);
-    if (!tool) continue;
+    if (!tool || !erpToolVisible(values, index)) continue;
     const entry = stored[tool.tool] ?? {};
     const minIdentity = Math.max(tool.minIdentity, Number(entry.minIdentity ?? tool.minIdentity));
     tools[tool.tool] = {
@@ -249,6 +265,10 @@ export function erpConnectionPayload(
     ...(rate === undefined ? {} : { CecRatePerMinute: rate }),
     CecStatus: Number(values['status']),
     ...(editing && account ? { ConversationAccountCvaUUID: account } : {}),
+    // Cleared by the user: the API takes null to detach the stored account.
+    ...(editing && !account && String(values['storedAccount'] ?? '')
+      ? { ConversationAccountCvaUUID: null }
+      : {}),
   };
 }
 
@@ -287,6 +307,7 @@ const config = defineCrud({
     maxConcurrency: 4,
     ratePerMinute: 120,
     storedPolicy: '{}',
+    storedAccount: '',
     revision: '',
   },
   rowActions: [
@@ -351,6 +372,12 @@ const config = defineCrud({
   ],
   fields: [
     { key: 'revision', source: 'CecRevision', label: 'Revision', hidden: true },
+    {
+      key: 'storedAccount',
+      source: 'ConversationAccountCvaUUID',
+      label: 'Account',
+      hidden: true,
+    },
     {
       key: 'storedPolicy',
       source: 'CecPolicy',
@@ -546,6 +573,8 @@ export class ConversationsErpConnectionsPage extends ConfigurableCrudPageBase<Co
         const detail = [result?.code, result?.error].filter(Boolean).join(': ');
         this.snack.error(`${this.t('Connection failed')}: ${detail}`, 15000);
       }
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
     } finally {
       this.refreshList();
     }
