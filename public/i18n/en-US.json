@@ -15904,5 +15904,13 @@
   "Schedule visit": "Schedule visit",
   "Create lead": "Create lead",
   "Erp Connections": "ERP integrations",
-  "Erp Calls": "ERP calls"
+  "Erp Calls": "ERP calls",
+  "Customer that sees this connection in the Customer Portal once published. Empty: your own use.": "Customer that sees this connection in the Customer Portal once published. Empty: your own use.",
+  "Not published": "Not published",
+  "Publish in the Customer Portal": "Publish in the Customer Portal",
+  "Published in the Customer Portal.": "Published in the Customer Portal.",
+  "The customer sees this connection, downloads the configuration of its device and, with the key rule, reveals the pre-shared key. Publish?": "The customer sees this connection, downloads the configuration of its device and, with the key rule, reveals the pre-shared key. Publish?",
+  "Publish": "Publish",
+  "Hide from the Customer Portal": "Hide from the Customer Portal",
+  "Hidden from the Customer Portal.": "Hidden from the Customer Portal."
 }
