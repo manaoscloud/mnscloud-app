@@ -2254,12 +2254,30 @@ export const routes: Routes = [
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {
+                    path: 'routers',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/routers/routers').then(
+                        (m) => m.HostingVpsRoutersPage,
+                      ),
+                    title: 'Hosting • VPS Routers | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
                     path: 'route-tables',
                     loadComponent: () =>
                       import('./pages/hosting/vps/route-tables/route-tables').then(
                         (m) => m.HostingVpsRouteTablesPage,
                       ),
                     title: 'Hosting • VPS Route tables | mnscloud',
+                    data: { scope: 'tenant', context: 'hosting' },
+                  },
+                  {
+                    path: 'vpn-connections',
+                    loadComponent: () =>
+                      import('./pages/hosting/vps/vpn-connections/vpn-connections').then(
+                        (m) => m.HostingVpsVpnConnectionsPage,
+                      ),
+                    title: 'Hosting • VPS VPN | mnscloud',
                     data: { scope: 'tenant', context: 'hosting' },
                   },
                   {

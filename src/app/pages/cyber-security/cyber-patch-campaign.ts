@@ -4,6 +4,7 @@ import {
   ConfigurableCrudFilterActionMenu,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudBulkAction,
   ConfigurableCrudRowAction,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
@@ -23,6 +24,12 @@ const key = (suffix: string) => `${PREFIX}.${suffix}`;
 
 export const campaignsEndpoint = 'cyber-security/patch/campaigns';
 export const campaignPreviewEndpoint = `${campaignsEndpoint}/preview`;
+export const campaignSimulateEndpoint = `${campaignsEndpoint}/simulate`;
+export const campaignSimulationEndpoint = (simulationUUID: string) =>
+  `${campaignsEndpoint}/simulations/${encodeURIComponent(simulationUUID)}`;
+/** The simulation is polled every 3 s, for at most 45 s, and never blocks the campaign. */
+export const SIMULATION_POLL_INTERVAL_MS = 3000;
+export const SIMULATION_POLL_LIMIT_MS = 45000;
 const campaignEndpoint = (row: ConfigurableCrudRecord, action = '') =>
   `${campaignsEndpoint}/${encodeURIComponent(String(row['campaignUUID']))}${action ? `/${action}` : ''}`;
 
@@ -492,6 +499,87 @@ export function previewSummary(
   return { eligible, message: parts.join(' ') };
 }
 
+export interface SimulationResult {
+  simulationUUID?: string;
+  items?: ConfigurableCrudRecord[];
+  pending?: number;
+}
+
+/** Whether to poll again: servers still pending and the time limit not reached. */
+export function shouldPollSimulation(
+  pending: number,
+  elapsedMs: number,
+  limitMs = SIMULATION_POLL_LIMIT_MS,
+  intervalMs = SIMULATION_POLL_INTERVAL_MS,
+): boolean {
+  return pending > 0 && elapsedMs + intervalMs <= limitMs;
+}
+
+type SimulationT = (key: string, params?: Record<string, string | number>) => string;
+
+const names = (list: unknown, field: string): string[] =>
+  (Array.isArray(list) ? (list as ConfigurableCrudRecord[]) : []).map((entry) =>
+    String(entry[field] ?? ''),
+  );
+
+/** Simulation text for the confirm dialog: counts, removals, reboots and servers that did not answer. */
+export function simulationSummary(
+  items: ConfigurableCrudRecord[],
+  t: SimulationT,
+  pending = 0,
+  maxListed = 8,
+): string {
+  const label = (item: ConfigurableCrudRecord) =>
+    String(item['agentName'] ?? item['hostname'] ?? '');
+  const status = (item: ConfigurableCrudRecord) => String(item['status'] ?? '');
+  const done = items.filter((item) => ['completed', 'nothing'].includes(status(item)));
+  const sum = (field: string) => done.reduce((total, item) => total + num(item[field]), 0);
+  const lines = [
+    t(key('simulationCounts'), {
+      done: done.length,
+      total: items.length,
+      upgrade: sum('upgradeCount') + sum('updateCount'),
+      install: sum('installCount'),
+      remove: sum('removeCount'),
+    }),
+  ];
+  const removing = done.filter((item) => num(item['removeCount']) > 0);
+  if (removing.length) {
+    lines.push(t(key('simulationRemoveWarning'), { count: removing.length }));
+    for (const item of removing.slice(0, maxListed)) {
+      const list = names(item['remove'], 'name');
+      const shown = list.slice(0, 3).join(', ');
+      const more = num(item['removeCount']) - Math.min(list.length, 3);
+      lines.push(
+        `${label(item)}: ${t(key('simulationRemove'))} ${shown}${more > 0 ? ` (+${more})` : ''}`,
+      );
+    }
+    if (removing.length > maxListed) {
+      lines.push(t(key('previewMore'), { count: removing.length - maxListed }));
+    }
+  }
+  const reboot = done.filter((item) => item['rebootLikely']).length;
+  if (reboot) lines.push(t(key('simulationReboot'), { count: reboot }));
+  const failed = items.filter((item) => ['failed', 'no_answer'].includes(status(item)));
+  if (failed.length) {
+    lines.push(t(key('simulationFailed'), { count: failed.length }));
+    for (const item of failed.slice(0, 3)) {
+      const error = String(item['error'] ?? '').trim();
+      if (error) lines.push(`${label(item)}: ${error}`);
+    }
+  }
+  const noCapability = items.filter((item) => status(item) === 'no_capability').length;
+  if (noCapability) lines.push(t(key('simulationNoCapability'), { count: noCapability }));
+  const patching = items.filter((item) => status(item) === 'patch_running').length;
+  if (patching) lines.push(t(key('simulationPatchRunning'), { count: patching }));
+  const waiting =
+    pending > 0
+      ? pending
+      : items.filter((item) => ['pending', 'running'].includes(status(item))).length;
+  if (waiting) lines.push(t(key('simulationPending'), { count: waiting }));
+  return lines.join('\n');
+}
+
 /** One decision (approve, reject, pause, resume, abort) with an optional note, behind a dialog. */
 function decisionForm(action: CampaignAction, row: ConfigurableCrudRecord): ConfigurableCrudConfig {
   return defineCrud({
@@ -775,6 +863,23 @@ function eventsSection(events: ConfigurableCrudRecord[], t: Translate): DataView
 }
 
 /** "Fix on every server" on a CVE row. */
+/** Servers list: a campaign for the selected servers (scope selection, at most 500, as the API). */
+export function fixSelectedAction(
+  start: (target: CampaignTarget) => void,
+): ConfigurableCrudBulkAction {
+  return {
+    key: 'campaignFixSelected',
+    label: key('fixSelected'),
+    icon: 'healing',
+    tooltip: key('fixSelectedHelp'),
+    max: 500,
+    run: (ids) => {
+      start({ scope: 'selection', agentUUIDs: ids });
+      return true;
+    },
+  };
+}
+
 export function fixEverywhereAction(
   start: (target: CampaignTarget) => void,
 ): ConfigurableCrudRowAction {

@@ -1,0 +1,162 @@
+<div class="crud-dialog assistant-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>{{ 'assistant.title' | transloco }}</h2>
+      <p>{{ 'assistant.subtitle' | transloco }}</p>
+    </div>
+    <div class="assistant-header-actions">
+      <button
+        mat-icon-button
+        type="button"
+        [matTooltip]="'assistant.history' | transloco"
+        [attr.aria-label]="'assistant.history' | transloco"
+        [attr.aria-pressed]="showHistory()"
+        (click)="toggleHistory()"
+      >
+        <mat-icon>history</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        [matTooltip]="'assistant.newConversation' | transloco"
+        [attr.aria-label]="'assistant.newConversation' | transloco"
+        (click)="newConversation()"
+      >
+        <mat-icon>add_comment</mat-icon>
+      </button>
+      <mns-report-problem-button [helpVideo]="false" />
+    </div>
+  </header>
+
+  <div class="dialog-content">
+    <div class="dialog-scroll assistant-scroll" #thread aria-live="polite">
+      @if (showHistory()) {
+        <section class="assistant-history" [attr.aria-label]="'assistant.history' | transloco">
+          @for (item of history(); track item.conversationUUID) {
+            <div class="assistant-history-row">
+              <button
+                mat-button
+                type="button"
+                class="assistant-history-open"
+                (click)="openConversation(item)"
+              >
+                <mat-icon>chat_bubble_outline</mat-icon>
+                <span>{{ item.title }}</span>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="'assistant.deleteConversation' | transloco"
+                [attr.aria-label]="'assistant.deleteConversation' | transloco"
+                (click)="removeConversation(item, $event)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p class="assistant-hint">{{ 'assistant.historyEmpty' | transloco }}</p>
+          }
+        </section>
+      } @else {
+        @if (!messages().length) {
+          @if (screens().length) {
+            <section class="assistant-screens" [attr.aria-label]="'assistant.screens' | transloco">
+              <h3>{{ 'assistant.screens' | transloco }}</h3>
+              @for (screen of screens(); track screen.route) {
+                <button
+                  mat-button
+                  type="button"
+                  class="assistant-screen"
+                  (click)="openScreen(screen.route)"
+                >
+                  <mat-icon>{{ screen.icon || 'arrow_forward' }}</mat-icon>
+                  <span>{{ screen.path }}</span>
+                </button>
+              }
+            </section>
+          } @else {
+            <div class="assistant-empty">
+              <mat-icon>auto_awesome</mat-icon>
+              <p>{{ 'assistant.emptyHint' | transloco }}</p>
+              <p class="assistant-hint">{{ 'assistant.privacyHint' | transloco }}</p>
+            </div>
+          }
+        }
+
+        @for (message of messages(); track message.messageUUID) {
+          <article class="assistant-message" [class.is-user]="message.role === 'user'">
+            @for (line of paragraphs(message.text); track $index) {
+              <p>{{ line }}</p>
+            }
+            @if (unavailable(message)) {
+              <p class="assistant-hint">{{ 'assistant.unavailable' | transloco }}</p>
+            }
+            @if (message.links.length) {
+              <div class="assistant-links">
+                @for (link of message.links; track $index) {
+                  @if (link.route) {
+                    <button mat-stroked-button type="button" (click)="openLink(link)">
+                      <mat-icon>open_in_browser</mat-icon>
+                      {{ link.menuPath || link.title }}
+                    </button>
+                  } @else {
+                    <span class="assistant-source">
+                      <mat-icon>article</mat-icon>{{ link.title }}
+                    </span>
+                  }
+                }
+              </div>
+            }
+            @if (message.followUps?.length) {
+              <div class="assistant-followups">
+                @for (followUp of message.followUps; track $index) {
+                  <button mat-button type="button" [disabled]="busy()" (click)="ask(followUp)">
+                    {{ followUp }}
+                  </button>
+                }
+              </div>
+            }
+          </article>
+        }
+        @if (busy()) {
+          <div class="assistant-busy">
+            <mat-spinner diameter="20" />
+            <span>{{ 'assistant.thinking' | transloco }}</span>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="assistant-composer">
+    @if (error(); as key) {
+      <p class="assistant-error" role="alert">{{ key | transloco }}</p>
+    }
+    @if (assistant.available() === false) {
+      <p class="assistant-hint">{{ 'assistant.searchOnly' | transloco }}</p>
+    }
+    <div class="assistant-input">
+      <textarea
+        #questionInput
+        rows="2"
+        maxlength="2000"
+        [attr.aria-label]="'assistant.inputLabel' | transloco"
+        [placeholder]="'assistant.placeholder' | transloco"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+        (keydown)="onKeydown($event)"
+      ></textarea>
+      <button mat-flat-button type="button" [disabled]="!canAsk()" (click)="ask()">
+        <mat-icon>send</mat-icon>
+        {{ 'assistant.ask' | transloco }}
+      </button>
+    </div>
+    <p class="assistant-hint">{{ 'assistant.keyboardHint' | transloco }}</p>
+  </div>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      <button mat-stroked-button type="button" (click)="close()">{{ 'Close' | transloco }}</button>
+    </div>
+  </mat-dialog-actions>
+</div>

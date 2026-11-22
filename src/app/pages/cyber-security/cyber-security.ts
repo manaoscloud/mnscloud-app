@@ -42,9 +42,16 @@ import {
   campaignForm,
   campaignPreviewBody,
   campaignPreviewEndpoint,
+  campaignSimulateEndpoint,
+  campaignSimulationEndpoint,
+  shouldPollSimulation,
+  SIMULATION_POLL_INTERVAL_MS,
+  simulationSummary,
+  type SimulationResult,
   campaignView,
   campaignsCollection,
   fixEverywhereAction,
+  fixSelectedAction,
   emergencyMenu,
   targetFromEmergencyKey,
   previewSummary,
@@ -798,6 +805,8 @@ const CONFIGS: Record<CyberSection, ConfigurableCrudConfig> = {
         tooltip: 'cyberSecurity.patch.runsDescription',
       },
     ),
+    // E2c: a campaign for the servers chosen in this list (scope selection).
+    bulkActions: [fixSelectedAction(startCampaign)],
     columns: [
       ...agentServerColumns,
       {
@@ -1432,6 +1441,34 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
     }
   }
 
+  /** Dry-run of the patch on the eligible servers; never blocks the campaign (failure = one line). */
+  private async simulateCampaign(target: CampaignTarget): Promise<string> {
+    const t = (key: string, params?: Record<string, string | number>) => this.t(key, params);
+    try {
+      this.snack.info(this.t('cyberSecurity.patch.campaign.simulating'), 4000);
+      const started = await this.api.post<{ data?: SimulationResult }>(
+        campaignSimulateEndpoint,
+        campaignPreviewBody(target),
+        { silent: true },
+      );
+      let result = started?.data ?? {};
+      let elapsed = 0;
+      while (result.simulationUUID && shouldPollSimulation(Number(result.pending ?? 0), elapsed)) {
+        await new Promise((resolve) => setTimeout(resolve, SIMULATION_POLL_INTERVAL_MS));
+        elapsed += SIMULATION_POLL_INTERVAL_MS;
+        if (this.destroyRef.destroyed) return '';
+        const next = await this.api.get<{ data?: SimulationResult }>(
+          campaignSimulationEndpoint(result.simulationUUID),
+          { silent: true },
+        );
+        result = { simulationUUID: result.simulationUUID, ...(next?.data ?? result) };
+      }
+      return simulationSummary(result.items ?? [], t, Number(result.pending ?? 0));
+    } catch {
+      return this.t('cyberSecurity.patch.campaign.simulationUnavailable');
+    }
+  }
+
   /** Preview which servers a campaign reaches, ask the user, then open the campaign settings. */
   async beginCampaign(picked: CampaignTarget, platform: boolean): Promise<void> {
     const account = this.listFilterValues()['cyberAccountUUID'];
@@ -1455,10 +1492,12 @@ export class CyberSecurityPage extends ConfigurableCrudPageBase<ConfigurableCrud
       this.snack.error(this.t('cyberSecurity.patch.campaign.previewNone'));
       return;
     }
+    const simulation = await this.simulateCampaign(target);
+    if (this.destroyRef.destroyed) return;
     if (!platform) await this.loadPatchSettings();
     const ok = await this.confirmAction(
       'cyberSecurity.patch.campaign.new',
-      summary.message,
+      `${summary.message}\n${simulation}`,
       'cyberSecurity.patch.campaign.continue',
     );
     if (!ok) return;

@@ -315,10 +315,10 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   menus use the global `mns-menu` design (section Menus); `src/styles/_topbar-menu.scss` keeps only
   the toolbar trigger state layers and the tenant row layout. The profile heading shows the
   signed-in e-mail.
-- Order: Activity, Notifications, Language, Scope, Report problem, Theme, Avatar. Activity is the
+- Order: Ask (assistant, only with a tenant selected), Activity, Notifications, Language, Scope, Report problem, Theme, Avatar. Activity is the
   work the user started (queued operations); Notifications are things that happened to the user.
   Never merge the two.
-- Icon-only triggers: Activity, Notifications, Language, Report problem, Theme and Avatar. Each has
+- Icon-only triggers: Ask, Activity, Notifications, Language, Report problem, Theme and Avatar. Each has
   a translated tooltip and accessible name that carry the current value (`Idioma: Automático`).
 - The scope trigger is the only text trigger and always names the active scope on desktop: the
   tenant display name (truncated, full name and identity line in the tooltip) or `Sistema` with a
@@ -382,6 +382,21 @@ save, and any new one) uses one global design, based on the topbar Activity Cent
   operation polling and logout/session-cleanup flows in their services.
 - Validate desktop/mobile, light/dark, PT/EN/ES, long lists/names, default-versus-active selection,
   keyboard/touch, operation actions and session expiry before delivering topbar changes.
+
+### App assistant (Ask panel, Ctrl+K)
+
+- Contract: workspace `docs/handoffs/2026-11-21-app-ai-assistant-assessment.md` (phase A0). The
+  topbar `auto_awesome` trigger and Ctrl+K / Cmd+K open `AssistantDialogComponent`
+  (`src/app/shared/assistant/`) when a tenant is selected; without one only the menu search exists.
+- The panel first searches screens locally: the visible menu leaves of `localizedNavItems`
+  (permission, scope and contract already applied) matched by every typed word of the localized
+  path, no request. Enter asks the assistant, Ctrl+Enter opens the first screen.
+- Answers come from `/assistant/*` (product knowledge only; the API scopes conversations to the
+  user and tenant). Text renders as plain paragraphs (never `innerHTML`); link buttons open only
+  internal routes (`safeAssistantRoute`) that the API built from the cited screens. Follow-up
+  chips ask again; History lists the last 90 days and deletes a conversation.
+- `GET /assistant/status` false (no AI provider bound) keeps the screen search and shows a hint;
+  429/409/404 map to translated messages. The assistant never changes data in A0.
 
 ## Unified Support, My tickets and "Report problem"
 
@@ -660,6 +675,14 @@ as `sortBy` and `asc`/`desc` as `sortDirection`; it preserves the API order inst
 only the current page. APIs must validate the field and use a deterministic tie-breaker.
 Revision-aware bulk APIs can use `bulkDeletePayload(rows)` to include the selected records'
 displayed preconditions alongside `ids`; never fetch newer revisions to silently retry a conflict.
+
+Other actions on the selected records use `bulkActions` (`ConfigurableCrudBulkAction`: `key`,
+`label`, `icon`, optional `tooltip`, `color`, `max`, `visible()`, `run(ids, rows)`), never a page
+of its own: the selection checkboxes appear whenever a visible bulk action exists (also on read-only
+lists), each action is a toolbar button next to the selection count, `max` refuses a larger
+selection with a message, and the selection is cleared when `run` resolves to `true`. `ids` holds
+every selected UUID, including those on other server pages; `rows` only the loaded ones. Example:
+Cyber Security › Updates "Fix selected" opens a patch campaign for the chosen servers.
 
 "Template" in this document always means one of the shared page bases below. Copying the global
 CSS hook classes (`.app-page`, `.filter-grid`, `.crud-dialog`, ...) or calling

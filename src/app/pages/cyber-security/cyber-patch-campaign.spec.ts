@@ -12,8 +12,11 @@ import {
   campaignsCollection,
   canRebootCampaign,
   fixEverywhereAction,
+  fixSelectedAction,
   platformCampaignForm,
   previewSummary,
+  shouldPollSimulation,
+  simulationSummary,
   rebootForm,
   rebootPayload,
   skipReasonKey,
@@ -166,6 +169,53 @@ describe('Cyber Security patch campaigns', () => {
     expect(summary.eligible).toBe(1);
     expect(summary.message).toContain('"skipped":1');
     expect(summary.message).toContain('b: t:cyberSecurity.patch.campaign.reason.macos');
+  });
+
+  it('summarises the simulation: counts, removals, reboot, failures, capability, pending', () => {
+    const text = simulationSummary(
+      [
+        {
+          agentName: 'web1',
+          status: 'completed',
+          upgradeCount: 3,
+          installCount: 1,
+          removeCount: 5,
+          updateCount: 0,
+          rebootLikely: true,
+          remove: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ name })),
+        },
+        { agentName: 'win1', status: 'completed', updateCount: 2, upgradeCount: 0 },
+        { agentName: 'db1', status: 'failed', error: 'boom' },
+        { agentName: 'old1', status: 'no_capability' },
+        { agentName: 'busy1', status: 'patch_running' },
+        { agentName: 'slow1', status: 'running' },
+      ],
+      t,
+      1,
+    );
+    expect(text).toContain('"done":2,"total":6,"upgrade":5,"install":1,"remove":5');
+    expect(text).toContain('web1: t:cyberSecurity.patch.campaign.simulationRemove a, b, c (+2)');
+    expect(text).toContain('simulationReboot');
+    expect(text).toContain('db1: boom');
+    expect(text).toContain('simulationNoCapability');
+    expect(text).toContain('simulationPatchRunning');
+    expect(text).toContain('simulationPending');
+    expect(simulationSummary([{ status: 'nothing' }], t)).not.toContain('simulationRemoveWarning');
+  });
+
+  it('polls only while servers are pending and the limit is not reached', () => {
+    expect(shouldPollSimulation(2, 0)).toBe(true);
+    expect(shouldPollSimulation(0, 0)).toBe(false);
+    expect(shouldPollSimulation(2, 45000)).toBe(false);
+    expect(shouldPollSimulation(2, 42000)).toBe(true);
+  });
+
+  it('starts a selection campaign for the selected servers', async () => {
+    const starts: unknown[] = [];
+    const action = fixSelectedAction((target) => starts.push(target));
+    expect(action.max).toBe(500);
+    expect(await action.run(['a1', 'a2'], [])).toBeTrue();
+    expect(starts).toEqual([{ scope: 'selection', agentUUIDs: ['a1', 'a2'] }]);
   });
 
   it('offers the CVE fix only with servers that have a fix', () => {
