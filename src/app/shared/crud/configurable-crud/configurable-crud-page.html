@@ -182,7 +182,7 @@
           filterActionMenu() ||
           filterActions().length ||
           listSummary().length ||
-          (bulkDeleteEnabled() && selectedCount())
+          (selectionEnabled() && selectedCount())
         ) {
           <div class="filter-actions-start">
             @if (filterActionMenu(); as actionMenu) {
@@ -248,14 +248,34 @@
                 }
               </div>
             }
-            @if (bulkDeleteEnabled() && selectedCount()) {
+            @if (selectionEnabled() && selectedCount()) {
               <span class="selection-count"
                 >{{ selectedCount() }} {{ 'selected' | transloco }}</span
               >
-              <button mat-stroked-button color="warn" type="button" (click)="deleteSelectedItems()">
-                <mat-icon>delete</mat-icon>
-                {{ 'Delete selected' | transloco }}
-              </button>
+              @for (action of bulkActions(); track action.key) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  [color]="action.color"
+                  [matTooltip]="action.tooltip ?? '' | transloco"
+                  [matTooltipDisabled]="!action.tooltip"
+                  (click)="runBulkAction(action)"
+                >
+                  <mat-icon>{{ action.icon }}</mat-icon>
+                  {{ action.label | transloco }}
+                </button>
+              }
+              @if (bulkDeleteEnabled()) {
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  type="button"
+                  (click)="deleteSelectedItems()"
+                >
+                  <mat-icon>delete</mat-icon>
+                  {{ 'Delete selected' | transloco }}
+                </button>
+              }
             }
           </div>
         }
@@ -348,7 +368,7 @@
     <div class="table-scroll" [hidden]="config.board && boardMode()">
       @if (mobileLayout()) {
         <div class="crud-card-toolbar">
-          @if (bulkDeleteEnabled()) {
+          @if (selectionEnabled()) {
             <mat-checkbox
               [checked]="allVisibleSelected()"
               [indeterminate]="someVisibleSelected() && !allVisibleSelected()"
@@ -372,7 +392,7 @@
           @for (row of visibleRows(); track recordUUID(row)) {
             <article class="crud-card" role="listitem">
               <div class="crud-card-head">
-                @if (bulkDeleteEnabled()) {
+                @if (selectionEnabled()) {
                   <mat-checkbox
                     [checked]="isSelected(row)"
                     [aria-label]="'Select' | transloco"
@@ -429,7 +449,7 @@
           class="app-table"
           [class.crud-density-compact]="compactDensity()"
         >
-          @if (bulkDeleteEnabled()) {
+          @if (selectionEnabled()) {
             <ng-container matColumnDef="select">
               <th mat-header-cell *matHeaderCellDef class="select-col">
                 <mat-checkbox

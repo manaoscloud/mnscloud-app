@@ -4,6 +4,7 @@ import {
   ConfigurableCrudFilterActionMenu,
   ConfigurableCrudOption,
   ConfigurableCrudRecord,
+  ConfigurableCrudBulkAction,
   ConfigurableCrudRowAction,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
@@ -862,6 +863,23 @@ function eventsSection(events: ConfigurableCrudRecord[], t: Translate): DataView
 }
 
 /** "Fix on every server" on a CVE row. */
+/** Servers list: a campaign for the selected servers (scope selection, at most 500, as the API). */
+export function fixSelectedAction(
+  start: (target: CampaignTarget) => void,
+): ConfigurableCrudBulkAction {
+  return {
+    key: 'campaignFixSelected',
+    label: key('fixSelected'),
+    icon: 'healing',
+    tooltip: key('fixSelectedHelp'),
+    max: 500,
+    run: (ids) => {
+      start({ scope: 'selection', agentUUIDs: ids });
+      return true;
+    },
+  };
+}
+
 export function fixEverywhereAction(
   start: (target: CampaignTarget) => void,
 ): ConfigurableCrudRowAction {

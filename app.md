@@ -661,6 +661,14 @@ only the current page. APIs must validate the field and use a deterministic tie-
 Revision-aware bulk APIs can use `bulkDeletePayload(rows)` to include the selected records'
 displayed preconditions alongside `ids`; never fetch newer revisions to silently retry a conflict.
 
+Other actions on the selected records use `bulkActions` (`ConfigurableCrudBulkAction`: `key`,
+`label`, `icon`, optional `tooltip`, `color`, `max`, `visible()`, `run(ids, rows)`), never a page
+of its own: the selection checkboxes appear whenever a visible bulk action exists (also on read-only
+lists), each action is a toolbar button next to the selection count, `max` refuses a larger
+selection with a message, and the selection is cleared when `run` resolves to `true`. `ids` holds
+every selected UUID, including those on other server pages; `rows` only the loaded ones. Example:
+Cyber Security › Updates "Fix selected" opens a patch campaign for the chosen servers.
+
 "Template" in this document always means one of the shared page bases below. Copying the global
 CSS hook classes (`.app-page`, `.filter-grid`, `.crud-dialog`, ...) or calling
 `openCrudTemplateDialog` from a page-local component does **not** make a page template-compliant;

@@ -12,6 +12,7 @@ import {
   campaignsCollection,
   canRebootCampaign,
   fixEverywhereAction,
+  fixSelectedAction,
   platformCampaignForm,
   previewSummary,
   shouldPollSimulation,
@@ -207,6 +208,14 @@ describe('Cyber Security patch campaigns', () => {
     expect(shouldPollSimulation(0, 0)).toBe(false);
     expect(shouldPollSimulation(2, 45000)).toBe(false);
     expect(shouldPollSimulation(2, 42000)).toBe(true);
+  });
+
+  it('starts a selection campaign for the selected servers', async () => {
+    const starts: unknown[] = [];
+    const action = fixSelectedAction((target) => starts.push(target));
+    expect(action.max).toBe(500);
+    expect(await action.run(['a1', 'a2'], [])).toBeTrue();
+    expect(starts).toEqual([{ scope: 'selection', agentUUIDs: ['a1', 'a2'] }]);
   });
 
   it('offers the CVE fix only with servers that have a fix', () => {
