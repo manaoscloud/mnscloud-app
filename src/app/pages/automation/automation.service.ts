@@ -227,6 +227,7 @@ const PICKERS: Record<
   { endpoint: string; value: string; label: string; publishedOnly?: boolean; group?: string }
 > = {
   connection: { endpoint: 'conversations/connections', value: 'ChcUUID', label: 'ChcName' },
+  erpConnection: { endpoint: 'conversations/erp/connections', value: 'CecUUID', label: 'CecName' },
   team: { endpoint: 'support/teams', value: 'SupportTeamUUID', label: 'Name' },
   user: { endpoint: 'conversations/members', value: 'UsrUUID', label: 'UsrName' },
   flow: {
