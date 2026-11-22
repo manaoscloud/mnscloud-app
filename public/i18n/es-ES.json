@@ -15814,5 +15814,11 @@
   "assistant.errorRateLimit": "Hizo demasiadas preguntas en la última hora. Intente de nuevo más tarde.",
   "assistant.errorFull": "Esta conversación está llena. Inicie una nueva conversación.",
   "assistant.errorNotFound": "Conversación no encontrada.",
-  "assistant.errorGeneric": "No se pudo enviar la pregunta. Intente de nuevo."
+  "assistant.errorGeneric": "No se pudo enviar la pregunta. Intente de nuevo.",
+  "Only an open charge can be canceled at the bank.": "Solo un cobro abierto puede cancelarse en el banco.",
+  "This payment gateway does not support cancellation.": "Este gateway de pago no permite cancelación.",
+  "Refunded": "Reembolsado",
+  "Amount received": "Monto recibido",
+  "Cancel at the bank": "Cancelar en el banco",
+  "Charge canceled at the bank.": "Cobro cancelado en el banco."
 }

@@ -13,13 +13,16 @@ const statuses = [
   { value: 'paid', label: 'Paid' },
   { value: 'overdue', label: 'Overdue' },
   { value: 'canceled', label: 'Canceled' },
+  { value: 'refunded', label: 'Refunded' },
 ];
 // Charges issued at the tenant gateway (boleto or Pix) for receivables, POS Pix and manual billing.
 // Financial records use individual deletion only; bank-backed records remain protected by DB/API.
 const config = defineCrud({
   serverSidePagination: true,
   canEditRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
-  canDeleteRow: (row) => !row['GatewayChargeId'] && !row['GatewayAccountUUID'],
+  // A charge the bank refused (rejected, never issued) may be deleted; issued ones are canceled.
+  canDeleteRow: (row) =>
+    !row['GatewayChargeId'] && (!row['GatewayAccountUUID'] || row['GatewayStatus'] === 'rejected'),
   endpoint: 'financial/payment-charges',
   uuidField: 'FinPayChargeUUID',
   pageTitle: 'Boletos and Pix',
@@ -44,6 +47,7 @@ const config = defineCrud({
     { id: 'date', label: 'Due date', field: 'DueDate', kind: 'date' },
     { id: 'amount', label: 'Amount', field: 'Amount', kind: 'currency' },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
+    { id: 'paidAmount', label: 'Amount received', field: 'PaidAmount', kind: 'currency' },
   ],
   fields: [
     {
@@ -104,6 +108,18 @@ const config = defineCrud({
       label: 'Synchronize payment',
       icon: 'sync',
       visible: (r) => Boolean(r['GatewayChargeId']),
+    },
+    {
+      key: 'cancel-at-bank',
+      label: 'Cancel at the bank',
+      icon: 'cancel',
+      visible: (r) =>
+        Boolean(r['GatewayChargeId']) && (r['Status'] === 'open' || r['Status'] === 'overdue'),
+      request: {
+        method: 'post',
+        endpoint: (r) => `financial/payment-charges/${String(r['FinPayChargeUUID'] ?? '')}/cancel`,
+        successMessage: 'Charge canceled at the bank.',
+      },
     },
   ],
   payload: (v, editing) =>
