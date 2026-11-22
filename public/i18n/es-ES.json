@@ -15935,5 +15935,6 @@
   "nav.isp.settings": "Parámetros",
   "Resync billing": "Resincronizar cobro",
   "Billing resynchronized.": "Cobro resincronizado.",
-  "isp.billingResyncConfirm": "¿Recrear los ítems del contrato de esta suscripción a partir del plan y los adicionales actuales? Los cambios se aplican desde el próximo ciclo de facturación; los cobros ya emitidos no cambian."
+  "isp.billingResyncConfirm": "¿Recrear los ítems del contrato de esta suscripción a partir del plan y los adicionales actuales? Los cambios se aplican desde el próximo ciclo de facturación; los cobros ya emitidos no cambian.",
+  "Network sync error": "Error de sincronización de red"
 }

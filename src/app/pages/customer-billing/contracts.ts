@@ -22,7 +22,12 @@ import {
 /** Customer of the contract form: the ISP item lookup offers only its subscriptions. */
 const contractForm = { customerUUID: (): string => '' };
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** Local calendar date (UTC would already be tomorrow in the evening in Brazil). */
+const today = () => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
 const optionLabel = (options: readonly { value: string; label: string }[], value: unknown) =>
   options.find((option) => option.value === value)?.label ?? String(value ?? '');
 
@@ -393,8 +398,13 @@ const config = defineCrud({
           // Read on every lookup request: the customer comes from the contract form.
           remoteLookup: {
             get endpoint() {
-              return `isp/subscriptions?customerUUID=${encodeURIComponent(contractForm.customerUUID())}`;
+              // Without a customer nothing may be offered: the nil UUID matches no subscription.
+              const customer =
+                contractForm.customerUUID() || '00000000-0000-0000-0000-000000000000';
+              return `isp/subscriptions?customerUUID=${encodeURIComponent(customer)}`;
             },
+            // Cancelled connections cannot receive new contract items.
+            accept: (row: Record<string, unknown>) => row['IsbStatus'] !== 'cancelled',
             uuidField: 'IsbUUID',
             labelField: 'IsbID',
             descriptionField: 'CustomerName',

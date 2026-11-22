@@ -186,7 +186,8 @@ export function subscriptionRowActions(canTrustUnlock: () => boolean): Configura
       key: 'billing-resync',
       label: 'Resync billing',
       icon: 'sync',
-      visible: (row) => statusOf(row) === 'active' && Boolean(row['BillContractBctUUID']),
+      visible: (row) =>
+        ['active', 'suspended'].includes(statusOf(row)) && Boolean(row['BillContractBctUUID']),
       request: {
         method: 'post',
         endpoint: (row) => `isp/subscriptions/${uuidOf(row)}/billing-resync`,

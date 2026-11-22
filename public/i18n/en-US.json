@@ -15935,5 +15935,6 @@
   "nav.isp.settings": "Parameters",
   "Resync billing": "Resync billing",
   "Billing resynchronized.": "Billing resynchronized.",
-  "isp.billingResyncConfirm": "Recreate the contract items of this subscription from its current plan and add-ons? Changes apply from the next billing cycle; charges already issued stay as they are."
+  "isp.billingResyncConfirm": "Recreate the contract items of this subscription from its current plan and add-ons? Changes apply from the next billing cycle; charges already issued stay as they are.",
+  "Network sync error": "Network sync error"
 }

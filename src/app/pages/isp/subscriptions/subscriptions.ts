@@ -300,6 +300,13 @@ function subscriptionsConfig(canTrustUnlock: () => boolean) {
         options: OPERATIONAL_STATUSES,
         chipClass: ispStateChipClass,
       },
+      // Last network sync error (the access may not reflect the state): shown so a failed suspension never looks applied.
+      {
+        id: 'networkSync',
+        label: 'Network sync error',
+        field: 'IsbProjectionError',
+        translateValue: false,
+      },
       { id: 'contract', label: 'Contract', field: 'BctID', optional: true },
       { id: 'pending', label: 'Next plan', field: 'IsbPendingPlanName', optional: true },
       { id: 'activation', label: 'Activated on', field: 'IsbActivationDate', kind: 'date' },
