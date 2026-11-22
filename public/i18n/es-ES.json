@@ -15820,5 +15820,7 @@
   "Refunded": "Reembolsado",
   "Amount received": "Monto recibido",
   "Cancel at the bank": "Cancelar en el banco",
-  "Charge canceled at the bank.": "Cobro cancelado en el banco."
+  "Charge canceled at the bank.": "Cobro cancelado en el banco.",
+  "This receivable already has an open charge. Cancel it before issuing another one.": "Este título ya tiene un cobro abierto. Cancélelo antes de emitir otro.",
+  "This charge was not issued at a bank.": "Este cobro no fue emitido en un banco."
 }

@@ -60,6 +60,9 @@ const messages: Record<string, string> = {
   PAY_PAYOUT_BALANCE: 'The payout exceeds the available balance.',
   PAY_CHARGE_NOT_OPEN: 'Only an open charge can be canceled at the bank.',
   PAY_CANCEL_UNSUPPORTED: 'This payment gateway does not support cancellation.',
+  PAY_RECEIVABLE_HAS_OPEN_CHARGE:
+    'This receivable already has an open charge. Cancel it before issuing another one.',
+  PAY_CHARGE_NOT_ISSUED: 'This charge was not issued at a bank.',
   PAY_REQUEST_REJECTED: 'Pay request could not be completed.',
 };
 

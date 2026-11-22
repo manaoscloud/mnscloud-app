@@ -15820,5 +15820,7 @@
   "Refunded": "Refunded",
   "Amount received": "Amount received",
   "Cancel at the bank": "Cancel at the bank",
-  "Charge canceled at the bank.": "Charge canceled at the bank."
+  "Charge canceled at the bank.": "Charge canceled at the bank.",
+  "This receivable already has an open charge. Cancel it before issuing another one.": "This receivable already has an open charge. Cancel it before issuing another one.",
+  "This charge was not issued at a bank.": "This charge was not issued at a bank."
 }
