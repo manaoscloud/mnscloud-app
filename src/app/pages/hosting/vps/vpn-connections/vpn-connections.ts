@@ -340,7 +340,8 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
           request: {
             method: 'put',
             endpoint: (row) => `hosting/vps/router/vpn-connections/${row['HvcUUID']}/portal`,
-            body: (row) => ({ customerUUID: row['RegCustomerRcuUUID'], portalEnabled: true }),
+            // Only the publication: the customer stays as the server has it.
+            body: () => ({ portalEnabled: true }),
             successMessage: 'Published in the Customer Portal.',
             confirm: {
               title: 'Publish in the Customer Portal',
@@ -358,7 +359,7 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
           request: {
             method: 'put',
             endpoint: (row) => `hosting/vps/router/vpn-connections/${row['HvcUUID']}/portal`,
-            body: (row) => ({ customerUUID: row['RegCustomerRcuUUID'], portalEnabled: false }),
+            body: () => ({ portalEnabled: false }),
             successMessage: 'Hidden from the Customer Portal.',
           },
         } satisfies ConfigurableCrudRowAction,
@@ -420,24 +421,23 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
     };
   }
 
-  /** The customer has its own route (P1): sent before the connection update when it changed. */
+  /** The customer has its own route (P1): sent after the connection saved, never before. */
   override async saveItem(saveAndNew = false): Promise<void> {
     const current = this.editingRecord();
-    if (current) {
-      const chosen = String(this.formValues()['customerUuid'] ?? '') || null;
-      const previous = String(current['RegCustomerRcuUUID'] ?? '') || null;
-      if (chosen !== previous) {
-        try {
-          await this.api.put(`hosting/vps/router/vpn-connections/${current['HvcUUID']}/portal`, {
-            customerUUID: chosen,
-            portalEnabled: false,
-          });
-        } catch {
-          return;
-        }
-      }
-    }
+    const chosen = current ? String(this.formValues()['customerUuid'] ?? '') || null : null;
+    const previous = current ? String(current['RegCustomerRcuUUID'] ?? '') || null : null;
     await super.saveItem(saveAndNew);
+    // Still editing = the save failed (the dialog shows why): the customer is left as it was.
+    if (!current || this.editingRecord() === current || chosen === previous) return;
+    try {
+      await this.api.put(`hosting/vps/router/vpn-connections/${current['HvcUUID']}/portal`, {
+        customerUUID: chosen,
+        portalEnabled: false,
+      });
+      this.refreshList();
+    } catch (error) {
+      this.snack.error(this.t(this.errorMessage(error)));
+    }
   }
 
   override refreshList() {
