@@ -130,6 +130,35 @@
                 }
               </div>
             }
+            @if (message.role === 'assistant' && !unavailable(message)) {
+              <div class="assistant-feedback" [attr.aria-label]="'assistant.feedback' | transloco">
+                @if (feedbackSent()[message.messageUUID]) {
+                  <span class="assistant-feedback-thanks">
+                    <mat-icon>check</mat-icon>
+                    {{ 'assistant.feedbackThanks' | transloco }}
+                  </span>
+                } @else {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="assistant-feedback-btn"
+                    [matTooltip]="'assistant.feedbackHelpful' | transloco"
+                    (click)="submitFeedback(message, true)"
+                  >
+                    <mat-icon>thumb_up</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="assistant-feedback-btn"
+                    [matTooltip]="'assistant.feedbackUnhelpful' | transloco"
+                    (click)="submitFeedback(message, false, 'not_helpful')"
+                  >
+                    <mat-icon>thumb_down</mat-icon>
+                  </button>
+                }
+              </div>
+            }
           </article>
         }
         @if (proposals().length) {
