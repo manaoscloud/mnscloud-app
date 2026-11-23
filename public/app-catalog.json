@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "c6393d8811f7",
+  "version": "eda767686b9d",
   "language": "pt-BR",
   "entries": [
     {
@@ -3878,8 +3878,20 @@
           "help": ""
         },
         {
+          "label": "Tipo de túnel",
+          "help": ""
+        },
+        {
           "label": "IP público da nuvem",
           "help": "IP público usado pelo roteador: o endereço ao qual o seu equipamento se conecta."
+        },
+        {
+          "label": "Sua chave pública WireGuard",
+          "help": "Chave pública gerada no seu dispositivo ou roteador (wg pubkey)."
+        },
+        {
+          "label": "Porta de escuta UDP",
+          "help": "Porta no IP público da nuvem (padrão: 51820)."
         },
         {
           "label": "Endereço do seu equipamento",
@@ -3911,6 +3923,14 @@
         },
         {
           "label": "Verificação do par (segundos)",
+          "help": ""
+        },
+        {
+          "label": "Roteamento dinâmico BGP",
+          "help": "Troque rotas dinamicamente sobre o túnel com BIRD."
+        },
+        {
+          "label": "Limite de prefixos aceitos",
           "help": ""
         },
         {

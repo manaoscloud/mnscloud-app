@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 
 import {
   CONFIGURABLE_CRUD_IMPORTS,
+  ConfigurableCrudField,
   ConfigurableCrudOption,
   ConfigurableCrudPageBase,
   ConfigurableCrudRecord,
@@ -13,6 +14,16 @@ const PROFILE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'recommended', label: 'Recommended (AES-256-GCM)' },
   { value: 'compatible', label: 'Compatible (AES-256-CBC, MikroTik v6)' },
   { value: 'performance', label: 'High performance (AES-128-GCM)' },
+];
+
+const TYPE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 'ipsec', label: 'IPsec (IKEv2)' },
+  { value: 'wireguard', label: 'WireGuard' },
+];
+
+const BGP_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: '1', label: 'Enabled' },
+  { value: '0', label: 'Disabled (static routes)' },
 ];
 
 const START_OPTIONS: readonly ConfigurableCrudOption[] = [
@@ -40,14 +51,20 @@ const ROUTER_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'failed', label: 'Failed' },
 ];
 
-const VENDORS: ReadonlyArray<{ key: string; label: string }> = [
+const VENDORS: ReadonlyArray<{
+  key: string;
+  label: string;
+  wireguardOnly?: boolean;
+  ipsecOnly?: boolean;
+}> = [
+  { key: 'wireguard', label: 'Download WireGuard configuration (.conf)', wireguardOnly: true },
   { key: 'mikrotik7', label: 'Download for MikroTik RouterOS v7' },
-  { key: 'mikrotik6', label: 'Download for MikroTik RouterOS v6' },
-  { key: 'fortinet', label: 'Download for Fortinet' },
-  { key: 'pfsense', label: 'Download for pfSense / OPNsense' },
-  { key: 'cisco', label: 'Download for Cisco IOS-XE' },
-  { key: 'huawei', label: 'Download for Huawei' },
-  { key: 'generic', label: 'Download the parameters (any device)' },
+  { key: 'mikrotik6', label: 'Download for MikroTik RouterOS v6', ipsecOnly: true },
+  { key: 'fortinet', label: 'Download for Fortinet', ipsecOnly: true },
+  { key: 'pfsense', label: 'Download for pfSense / OPNsense', ipsecOnly: true },
+  { key: 'cisco', label: 'Download for Cisco IOS-XE', ipsecOnly: true },
+  { key: 'huawei', label: 'Download for Huawei', ipsecOnly: true },
+  { key: 'generic', label: 'Download the parameters (any device)', ipsecOnly: true },
 ];
 
 function lines(value: unknown): string[] {
@@ -83,12 +100,21 @@ const config = defineCrud({
   initialValues: {
     zoneUUID: '',
     name: '',
+    type: 'ipsec',
     publicIpUUID: '',
     remoteAddress: '',
     startAction: 'start',
     remoteId: '',
     localId: '',
     profile: 'recommended',
+    wireguardPublicKey: '',
+    wireguardListenPort: '',
+    bgpEnabled: '0',
+    bgpLocalAsn: '',
+    bgpRemoteAsn: '',
+    bgpLocalPeerIp: '',
+    bgpRemotePeerIp: '',
+    bgpMaxPrefixes: 50,
     localNetworks: [],
     remotePrefixes: '',
     mtu: 1400,
@@ -107,6 +133,16 @@ const config = defineCrud({
       span: 1,
     },
     {
+      key: 'type',
+      source: 'HvcType',
+      payloadKey: 'type',
+      label: 'Tunnel type',
+      type: 'select',
+      options: TYPE_OPTIONS,
+      required: true,
+      span: 1,
+    },
+    {
       key: 'publicIpUUID',
       source: 'HostingVpsPublicIpHpiUUID',
       payloadKey: 'publicIpUUID',
@@ -115,6 +151,28 @@ const config = defineCrud({
       required: true,
       span: 1,
       help: 'Public IP used by the router: the address your device connects to.',
+    },
+    {
+      key: 'wireguardPublicKey',
+      source: 'HvcWireguardPublicKey',
+      payloadKey: 'wireguardPublicKey',
+      label: 'Your WireGuard public key',
+      placeholder: 'Base64 44-character public key',
+      span: 1,
+      help: 'Public key generated on your device or router (wg pubkey).',
+      hiddenWhen: ({ values }) => values['type'] !== 'wireguard',
+      requiredWhen: ({ values }) => values['type'] === 'wireguard',
+    },
+    {
+      key: 'wireguardListenPort',
+      source: 'HvcWireguardListenPort',
+      payloadKey: 'wireguardListenPort',
+      label: 'UDP listen port',
+      placeholder: '51820',
+      type: 'number',
+      span: 1,
+      help: 'Port on the cloud public IP (default: 51820).',
+      hiddenWhen: ({ values }) => values['type'] !== 'wireguard',
     },
     {
       key: 'remoteAddress',
@@ -134,6 +192,7 @@ const config = defineCrud({
       options: START_OPTIONS,
       required: true,
       span: 1,
+      hiddenWhen: ({ values }) => values['type'] === 'wireguard',
     },
     {
       key: 'profile',
@@ -145,6 +204,7 @@ const config = defineCrud({
       required: true,
       span: 1,
       help: 'Same proposal on both ends. Compatible for MikroTik v6 and older firewalls.',
+      hiddenWhen: ({ values }) => values['type'] === 'wireguard',
     },
     {
       key: 'localNetworks',
@@ -163,6 +223,7 @@ const config = defineCrud({
       placeholder: 'office.example.com',
       span: 1,
       help: 'Optional. Required for a device with a dynamic IP, to tell it apart.',
+      hiddenWhen: ({ values }) => values['type'] === 'wireguard',
     },
     {
       key: 'localId',
@@ -172,6 +233,7 @@ const config = defineCrud({
       placeholder: '203.0.113.20',
       span: 1,
       help: 'Optional. Default: the cloud public IP.',
+      hiddenWhen: ({ values }) => values['type'] === 'wireguard',
     },
     {
       key: 'mtu',
@@ -188,6 +250,43 @@ const config = defineCrud({
       label: 'Peer check (seconds)',
       type: 'number',
       span: 1,
+      hiddenWhen: ({ values }) => values['type'] === 'wireguard',
+    },
+    {
+      key: 'bgpEnabled',
+      source: 'HvcBgpEnabled',
+      payloadKey: 'bgpEnabled',
+      label: 'BGP dynamic routing',
+      type: 'select',
+      options: BGP_OPTIONS,
+      span: 1,
+      help: 'Exchange routes dynamically over the tunnel with BIRD.',
+    },
+    ...([
+      ['bgpLocalAsn', 'HvcBgpLocalAsn', 'Cloud ASN', '65001', 'number'],
+      ['bgpRemoteAsn', 'HvcBgpRemoteAsn', 'Your ASN', '65002', 'number'],
+      ['bgpLocalPeerIp', 'HvcBgpLocalPeerIp', 'Cloud peer IP', '169.254.10.1', 'text'],
+      ['bgpRemotePeerIp', 'HvcBgpRemotePeerIp', 'Your peer IP', '169.254.10.2', 'text'],
+    ] as const).map(([key, source, label, placeholder, type]): ConfigurableCrudField => ({
+      key,
+      source,
+      payloadKey: key,
+      label,
+      placeholder,
+      type: type === 'number' ? 'number' : undefined,
+      span: 1,
+      hiddenWhen: ({ values }: { values: ConfigurableCrudRecord }) => values['bgpEnabled'] !== '1',
+      requiredWhen: ({ values }: { values: ConfigurableCrudRecord }) => values['bgpEnabled'] === '1',
+    })),
+    {
+      key: 'bgpMaxPrefixes',
+      source: 'HvcBgpMaxPrefixes',
+      payloadKey: 'bgpMaxPrefixes',
+      label: 'Max accepted prefixes',
+      placeholder: '50',
+      type: 'number',
+      span: 1,
+      hiddenWhen: ({ values }) => values['bgpEnabled'] !== '1',
     },
     {
       key: 'isActive',
@@ -236,8 +335,20 @@ const config = defineCrud({
   ],
   columns: [
     { id: 'name', label: 'Name', kind: 'identity', field: 'HvcName', uuidField: 'HvcUUID' },
+    {
+      id: 'type',
+      label: 'Type',
+      field: 'HvcType',
+      value: (row) => (row['HvcType'] === 'wireguard' ? 'WireGuard' : 'IPsec'),
+    },
     { id: 'publicIp', label: 'Cloud public IP', field: 'HpiAddress', copyable: true },
     { id: 'remote', label: 'Your device address', field: 'HvcRemoteAddress' },
+    {
+      id: 'wgServerKey',
+      label: 'Server public key',
+      field: 'HvcWireguardServerPublicKey',
+      copyable: true,
+    },
     {
       id: 'tunnel',
       label: 'Tunnel',
@@ -369,6 +480,12 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
               key: `config-${vendor.key}`,
               label: vendor.label,
               icon: 'download',
+              visible: (row) => {
+                const isWg = row['HvcType'] === 'wireguard';
+                if (vendor.wireguardOnly && !isWg) return false;
+                if (vendor.ipsecOnly && isWg) return false;
+                return true;
+              },
               run: (row) => this.download(row, vendor.key),
             }) satisfies ConfigurableCrudRowAction,
         ),
@@ -415,6 +532,15 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
     const values = super.formValuesFromRecord(row);
     return {
       ...values,
+      type: String(row['HvcType'] ?? 'ipsec'),
+      wireguardPublicKey: String(row['HvcWireguardPublicKey'] ?? ''),
+      wireguardListenPort: row['HvcWireguardListenPort'] ? String(row['HvcWireguardListenPort']) : '',
+      bgpEnabled: String(Number(row['HvcBgpEnabled'] ?? 0) === 1 ? '1' : '0'),
+      bgpLocalAsn: row['HvcBgpLocalAsn'] ? String(row['HvcBgpLocalAsn']) : '',
+      bgpRemoteAsn: row['HvcBgpRemoteAsn'] ? String(row['HvcBgpRemoteAsn']) : '',
+      bgpLocalPeerIp: String(row['HvcBgpLocalPeerIp'] ?? ''),
+      bgpRemotePeerIp: String(row['HvcBgpRemotePeerIp'] ?? ''),
+      bgpMaxPrefixes: row['HvcBgpMaxPrefixes'] ? Number(row['HvcBgpMaxPrefixes']) : 50,
       isActive: String(Number(row['HvcIsActive'] ?? 1) === 0 ? 0 : 1),
       localNetworks: lines(row['LocalNetworks']),
       remotePrefixes: lines(row['RemotePrefixes']).join('\n'),
@@ -448,19 +574,31 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
   protected override augmentPayload(payload: ConfigurableCrudRecord): ConfigurableCrudRecord {
     const zone = this.selectedZone();
     const networks = payload['localNetworks'];
+    const type = payload['type'] === 'wireguard' ? 'wireguard' : 'ipsec';
+    const isWg = type === 'wireguard';
+    const bgpEnabled = payload['bgpEnabled'] === '1';
     return {
       ...(this.editingRecord() ? {} : { zoneUUID: zone || null }),
       name: String(payload['name'] ?? '').trim(),
+      type,
       publicIpUUID: payload['publicIpUUID'] || null,
       remoteAddress: String(payload['remoteAddress'] ?? '').trim() || null,
-      startAction: payload['startAction'] || 'start',
-      remoteId: String(payload['remoteId'] ?? '').trim() || null,
-      localId: String(payload['localId'] ?? '').trim() || null,
-      profile: payload['profile'] || 'recommended',
+      startAction: isWg ? 'start' : payload['startAction'] || 'start',
+      remoteId: isWg ? null : String(payload['remoteId'] ?? '').trim() || null,
+      localId: isWg ? null : String(payload['localId'] ?? '').trim() || null,
+      profile: isWg ? 'recommended' : payload['profile'] || 'recommended',
+      wireguardPublicKey: isWg ? String(payload['wireguardPublicKey'] ?? '').trim() || null : null,
+      wireguardListenPort: isWg && payload['wireguardListenPort'] ? Number(payload['wireguardListenPort']) : null,
+      bgpEnabled,
+      bgpLocalAsn: bgpEnabled && payload['bgpLocalAsn'] ? Number(payload['bgpLocalAsn']) : null,
+      bgpRemoteAsn: bgpEnabled && payload['bgpRemoteAsn'] ? Number(payload['bgpRemoteAsn']) : null,
+      bgpLocalPeerIp: bgpEnabled ? String(payload['bgpLocalPeerIp'] ?? '').trim() || null : null,
+      bgpRemotePeerIp: bgpEnabled ? String(payload['bgpRemotePeerIp'] ?? '').trim() || null : null,
+      bgpMaxPrefixes: bgpEnabled && payload['bgpMaxPrefixes'] ? Number(payload['bgpMaxPrefixes']) : 50,
       localNetworks: Array.isArray(networks) ? networks : lines(networks),
       remotePrefixes: lines(payload['remotePrefixes']),
-      mtu: Number(payload['mtu']) || 1400,
-      dpdSeconds: Number(payload['dpdSeconds']) || 30,
+      mtu: Number(payload['mtu']) || (isWg ? 1420 : 1400),
+      dpdSeconds: isWg ? 30 : Number(payload['dpdSeconds']) || 30,
       isActive: String(payload['isActive'] ?? '1') !== '0',
       description: String(payload['description'] ?? '').trim() || null,
     };
@@ -471,12 +609,14 @@ export class HostingVpsVpnConnectionsPage extends ConfigurableCrudPageBase<Confi
       const blob = await this.api.getBlob(
         `hosting/vps/router/vpn-connections/${row['HvcUUID']}/peer-config?vendor=${vendor}`,
       );
+      const isWg = row['HvcType'] === 'wireguard';
+      const ext = isWg && vendor === 'wireguard' ? 'conf' : isWg && vendor === 'mikrotik7' ? 'rsc' : 'txt';
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
       anchor.download = `${String(row['HvcName'] ?? 'vpn')
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')}-${vendor}.txt`;
+        .replace(/[^a-z0-9]+/g, '-')}-${vendor}.${ext}`;
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
