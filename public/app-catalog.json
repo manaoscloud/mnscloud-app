@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "69ab9bb20a72",
+  "version": "c6393d8811f7",
   "language": "pt-BR",
   "entries": [
     {
@@ -2758,6 +2758,10 @@
         },
         {
           "label": "Data de vencimento",
+          "help": ""
+        },
+        {
+          "label": "Forma de pagamento",
           "help": ""
         },
         {
