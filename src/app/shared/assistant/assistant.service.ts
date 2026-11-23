@@ -188,4 +188,17 @@ export class AssistantService {
   async remove(uuid: string): Promise<void> {
     await this.api.delete(`assistant/conversations/${encodeURIComponent(uuid)}`);
   }
+
+  async feedback(
+    messageUUID: string,
+    helpful: boolean,
+    reason?: string | null,
+    comment?: string | null,
+  ): Promise<void> {
+    await this.api.post(
+      `assistant/messages/${encodeURIComponent(messageUUID)}/feedback`,
+      { helpful, reason: reason ?? null, comment: comment ?? null },
+      { silent: true },
+    );
+  }
 }

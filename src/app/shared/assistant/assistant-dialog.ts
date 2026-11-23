@@ -117,6 +117,7 @@ export class AssistantDialogComponent {
   /** Action cards of the open conversation (A2). */
   readonly proposals = signal<AssistantProposal[]>([]);
   readonly acting = signal<string | null>(null);
+  readonly feedbackSent = signal<Record<string, boolean>>({});
 
   readonly screens = computed(() =>
     this.messages().length ? [] : matchScreens(this.data.screens(), this.query()),
@@ -309,6 +310,20 @@ export class AssistantDialogComponent {
 
   toolKey(tool: string): string {
     return assistantToolKey(tool);
+  }
+
+  async submitFeedback(
+    message: AssistantMessage,
+    helpful: boolean,
+    reason?: string,
+  ): Promise<void> {
+    if (!message.messageUUID || this.feedbackSent()[message.messageUUID]) return;
+    this.feedbackSent.update((prev) => ({ ...prev, [message.messageUUID]: true }));
+    try {
+      await this.assistant.feedback(message.messageUUID, helpful, reason);
+    } catch {
+      // non-blocking
+    }
   }
 
   paragraphs(text: string): string[] {
