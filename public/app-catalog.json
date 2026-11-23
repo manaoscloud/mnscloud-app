@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "eb84135eb58f",
+  "version": "69ab9bb20a72",
   "language": "pt-BR",
   "entries": [
     {
@@ -2665,6 +2665,35 @@
       "scope": "tenant",
       "title": "Gateways",
       "description": "",
+      "fields": []
+    },
+    {
+      "route": "/financial/mnscloud-pay/payouts",
+      "menuPath": "Financeiro › Pay › Repasses",
+      "scope": "tenant",
+      "title": "Repasses do MNSCloud Pay",
+      "description": "Transferências do saldo do MNSCloud Pay para a sua própria chave Pix CPF/CNPJ ou conta bancária.",
+      "fields": [
+        {
+          "label": "Valor",
+          "help": "Mínimo de R$ 50,00. Vazio transfere todo o saldo disponível."
+        }
+      ]
+    },
+    {
+      "route": "/financial/mnscloud-pay/statement",
+      "menuPath": "Financeiro › Pay › Extrato",
+      "scope": "tenant",
+      "title": "Extrato do MNSCloud Pay",
+      "description": "Cada pagamento recebido, taxa do MNSCloud Pay, estorno e repasse da sua conta, em lançamentos de partidas dobradas que não podem ser alterados.",
+      "fields": []
+    },
+    {
+      "route": "/financial/mnscloud-pay/summary",
+      "menuPath": "Financeiro › Pay › Resumo",
+      "scope": "tenant",
+      "title": "Resumo do MNSCloud Pay",
+      "description": "Verificação da conta, saldo informado pelo banco e razão do MNSCloud Pay da sua conta.",
       "fields": []
     },
     {
@@ -11581,6 +11610,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/pay/subaccounts",
+      "menuPath": "Pay › Subcontas",
+      "scope": "platform",
+      "title": "Subcontas do MNSCloud Pay",
+      "description": "Todas as subcontas dos tenants com verificação, saldo do razão e os últimos 30 dias de pagamentos, taxas e repasses.",
+      "fields": []
     },
     {
       "route": "/system/realtime",

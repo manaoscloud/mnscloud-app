@@ -790,6 +790,32 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/financial/payment-charges',
       },
       {
+        id: 'financial/mnscloud-pay',
+        label: 'nav.financial.mnscloud-pay',
+        icon: 'account_balance_wallet',
+        category: 'operation',
+        children: [
+          {
+            id: 'financial/mnscloud-pay/summary',
+            label: 'nav.financial.mnscloud-pay.summary',
+            icon: 'dashboard',
+            route: '/financial/mnscloud-pay/summary',
+          },
+          {
+            id: 'financial/mnscloud-pay/statement',
+            label: 'nav.financial.mnscloud-pay.statement',
+            icon: 'receipt_long',
+            route: '/financial/mnscloud-pay/statement',
+          },
+          {
+            id: 'financial/mnscloud-pay/payouts',
+            label: 'nav.financial.mnscloud-pay.payouts',
+            icon: 'payments',
+            route: '/financial/mnscloud-pay/payouts',
+          },
+        ],
+      },
+      {
         id: 'financial/gateway-accounts',
         label: 'nav.financial.gateway-accounts',
         icon: 'credit_card',
@@ -3755,6 +3781,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.system.pay.bank-partners',
         icon: 'account_balance',
         masterRoute: '/system/pay/bank-partners',
+      },
+      {
+        id: 'system/pay/subaccounts',
+        label: 'nav.system.pay.subaccounts',
+        icon: 'groups',
+        masterRoute: '/system/pay/subaccounts',
       },
       {
         id: 'system/pay/fees',
