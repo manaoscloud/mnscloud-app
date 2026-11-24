@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "feba3cce6182",
+  "version": "40d27841f3f9",
   "language": "pt-BR",
   "entries": [
     {
@@ -2380,11 +2380,11 @@
           "help": ""
         },
         {
-          "label": "Servidor",
+          "label": "Cliente",
           "help": ""
         },
         {
-          "label": "Cliente",
+          "label": "Servidor",
           "help": ""
         },
         {
@@ -9445,11 +9445,11 @@
           "help": ""
         },
         {
-          "label": "Servidor",
+          "label": "Cliente",
           "help": ""
         },
         {
-          "label": "Cliente",
+          "label": "Servidor",
           "help": ""
         },
         {
