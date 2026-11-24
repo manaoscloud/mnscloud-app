@@ -29,13 +29,15 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
       span: 1,
       disabledWhen: options.statusDisabledWhen,
     },
-    { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
+    // wide-field: Record tab layout decided by the user (2026-11-24): Status (1) + Customer (2)
+    // + Name (1) on one line, in every resale account form.
     {
       key: options.customerKey ?? 'customerUUID',
       source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
-      span: 1,
+      span: 2,
+      wideField: true,
       help: options.helpKey,
       requiredWhen: ({ editing }) => Boolean(options.requireCustomer) && !editing,
       disabledWhen: ({ editing }) => editing,
@@ -46,6 +48,7 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
         selectedLabelField: 'CustomerName',
       },
     },
+    { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
     {
       key: 'notes',
       source: options.notesField,

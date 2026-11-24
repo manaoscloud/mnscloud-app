@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "822a14617179",
+  "version": "feba3cce6182",
   "language": "pt-BR",
   "entries": [
     {
@@ -2588,12 +2588,12 @@
           "help": ""
         },
         {
-          "label": "Nome",
-          "help": ""
-        },
-        {
           "label": "Cliente",
           "help": "Cliente cadastrado para quem esta conta e seus escritórios serão delegados na revenda."
+        },
+        {
+          "label": "Nome",
+          "help": ""
         },
         {
           "label": "Anotações",
@@ -7258,11 +7258,11 @@
           "help": ""
         },
         {
-          "label": "Nome",
+          "label": "Cliente",
           "help": ""
         },
         {
-          "label": "Cliente",
+          "label": "Nome",
           "help": ""
         },
         {
