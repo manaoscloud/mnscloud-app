@@ -29,13 +29,12 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
       span: 1,
       disabledWhen: options.statusDisabledWhen,
     },
-    { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
     {
       key: options.customerKey ?? 'customerUUID',
       source: 'RegCustomerRcuUUID',
       label: 'Customer',
       type: 'search-select',
-      span: 1,
+      span: 2,
       help: options.helpKey,
       requiredWhen: ({ editing }) => Boolean(options.requireCustomer) && !editing,
       disabledWhen: ({ editing }) => editing,
@@ -46,6 +45,7 @@ export function resaleAccountFields(options: ResaleAccountFieldsOptions): Config
         selectedLabelField: 'CustomerName',
       },
     },
+    { key: 'name', source: options.nameField, label: 'Name', required: true, span: 1 },
     {
       key: 'notes',
       source: options.notesField,
