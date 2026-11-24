@@ -25,6 +25,7 @@ const config = defineCrud({
     name: '',
     notes: '',
     status: 1,
+    chapEnabled: 0,
     revision: 1,
     AuthenticationClusterAtcUUID: '',
     RegCustomerRcuUUID: '',
@@ -38,6 +39,18 @@ const config = defineCrud({
   },
   fields: [
     { key: 'status', source: 'AacStatus', label: 'Status', type: 'status', span: 1 },
+    {
+      key: 'chapEnabled',
+      source: 'AacChapEnabled',
+      label: 'Autenticação CHAP',
+      type: 'select',
+      options: [
+        { value: 0, label: 'Desativado (PAP PBKDF2)' },
+        { value: 1, label: 'Ativado (PAP + CHAP)' },
+      ],
+      span: 1,
+      help: 'Habilita suporte a CHAP armazenando senha reversível. Padrão desativado (PAP PBKDF2).',
+    },
     {
       key: 'AuthenticationClusterAtcUUID',
       source: 'AuthenticationClusterAtcUUID',
