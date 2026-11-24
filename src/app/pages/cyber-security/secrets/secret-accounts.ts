@@ -32,6 +32,7 @@ const CYBER_ACCOUNT_COLUMN = {
   lookupKey: 'cyberAccountUUID',
 } as const;
 
+// wide-field: user decision 2026-11-24, the owner account leads line 2 of the record tab.
 const CYBER_ACCOUNT_FIELD: ConfigurableCrudField = {
   key: 'cyberAccountUUID',
   source: 'CyberSecurityAccountCyaUUID',
@@ -39,7 +40,9 @@ const CYBER_ACCOUNT_FIELD: ConfigurableCrudField = {
   label: 'cyberSecurity.account',
   type: 'search-select',
   required: true,
-  span: 1,
+  wideField: true,
+  span: 2,
+  breakBefore: true,
   tab: 'record',
   help: 'cyberSecurity.vaultAccountHelp',
   disabledWhen: ({ editing }) => editing,
@@ -146,16 +149,7 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       span: 1,
       tab: 'record',
     },
-    {
-      key: 'serverUUID',
-      source: 'CyberSecuritySecretServerCsrUUID',
-      payloadKey: 'serverUUID',
-      label: 'Server',
-      type: 'search-select',
-      required: true,
-      span: 1,
-      tab: 'record',
-    },
+    // wide-field: user decision 2026-11-24, the owner leads line 2 of the record tab.
     {
       key: 'customerUUID',
       source: 'RegCustomerRcuUUID',
@@ -163,6 +157,18 @@ const ACCOUNT_CONFIG: ConfigurableCrudConfig = {
       label: 'Customer',
       type: 'search-select',
       required: false,
+      wideField: true,
+      span: 2,
+      breakBefore: true,
+      tab: 'record',
+    },
+    {
+      key: 'serverUUID',
+      source: 'CyberSecuritySecretServerCsrUUID',
+      payloadKey: 'serverUUID',
+      label: 'Server',
+      type: 'search-select',
+      required: true,
       span: 1,
       tab: 'record',
     },
