@@ -9,13 +9,14 @@ import { FISCAL_DOCUMENT_STATES, FISCAL_ENVIRONMENTS, FISCAL_MODELS } from './fi
 
 // The page instance downloads the XML with the authenticated API client.
 let download: ((row: ConfigurableCrudRecord) => Promise<void>) | null = null;
+let viewDanfe: ((row: ConfigurableCrudRecord) => Promise<void>) | null = null;
 
 const config = defineCrud({
   endpoint: 'fiscal/documents',
   uuidField: 'FdoUUID',
   pageTitle: 'Fiscal documents',
   pageDescription:
-    'NFC-e and NF-e of the establishments with their state at the tax authority; an unknown answer is always checked before any resend.',
+    'NFC-e, NF-e, NFCom (62) and NFS-e of the establishments with their state at the tax authority; an unknown answer is always checked before any resend.',
   canCreate: false,
   canEdit: false,
   canDelete: false,
@@ -82,6 +83,13 @@ const config = defineCrud({
       icon: 'download',
       visible: (row) => !['prevalidating', 'generated'].includes(String(row['FdoState'])),
       run: (row) => download?.(row),
+    },
+    {
+      key: 'danfe',
+      label: 'View DANFE',
+      icon: 'print',
+      visible: (row) => row['FdoModel'] === '62',
+      run: (row) => viewDanfe?.(row),
     },
     {
       key: 'history',
@@ -154,6 +162,12 @@ export class FiscalDocumentsPage extends ConfigurableCrudPageBase<ConfigurableCr
       link.download = `${row['FdoAccessKey'] || row['FdoUUID']}.xml`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    viewDanfe = async (row) => {
+      const blob = await this.api.getBlob(`fiscal/documents/${row['FdoUUID']}/danfe`);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     };
   }
 }
