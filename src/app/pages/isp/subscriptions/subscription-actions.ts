@@ -201,6 +201,24 @@ export function subscriptionRowActions(canTrustUnlock: () => boolean): Configura
       },
     },
     {
+      key: 'kick-session',
+      label: 'Desconectar sessão',
+      icon: 'power_settings_new',
+      visible: (row) =>
+        ['active', 'suspended'].includes(statusOf(row)) && Boolean(row['AuthenticationAccessAaxUUID']),
+      request: {
+        method: 'post',
+        endpoint: (row) => `isp/subscriptions/${uuidOf(row)}/kick-session`,
+        body: () => ({}),
+        successMessage: 'Comando de desconexão (PoD/CoA) enviado ao NAS.',
+        confirm: {
+          title: 'Desconectar sessão',
+          message: 'Enviar pacote RFC 5176 Disconnect-Request para forçar a reconexão da sessão no NAS?',
+          confirmLabel: 'Desconectar',
+        },
+      },
+    },
+    {
       key: 'cancel',
       label: 'Cancel subscription',
       icon: 'block',

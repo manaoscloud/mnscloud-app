@@ -25,6 +25,8 @@ const config = defineCrud({
     AuthenticationAccountAacUUID: '',
     address: '',
     secret: '',
+    radiusDictionary: 'mikrotik',
+    coaPort: 3799,
   },
   payload: (values, editing) => authenticationPayload(values, editing),
   fields: [
@@ -67,6 +69,28 @@ const config = defineCrud({
       help: 'authentication.credentialHelp',
       autocomplete: 'new-password',
       generatedPasswordLength: 32,
+    },
+    {
+      key: 'radiusDictionary',
+      source: 'AanRadiusDictionary',
+      label: 'Dicionário RADIUS',
+      tab: 'authentication',
+      span: 1,
+      type: 'select',
+      options: [
+        { value: 'mikrotik', label: 'MikroTik' },
+        { value: 'huawei', label: 'Huawei' },
+        { value: 'juniper', label: 'Juniper' },
+        { value: 'accel-ppp', label: 'Accel-PPP' },
+      ],
+    },
+    {
+      key: 'coaPort',
+      source: 'AanCoaPort',
+      label: 'Porta CoA (RFC 5176)',
+      tab: 'authentication',
+      span: 1,
+      type: 'number',
     },
     {
       key: 'notes',
