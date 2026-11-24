@@ -85,6 +85,8 @@ const config = defineCrud({
       span: 1,
       options: [
         { value: 'BOLETO', label: 'Boleto' },
+        { value: 'PIX', label: 'Pix' },
+        { value: 'CREDIT_CARD', label: 'Credit card' },
       ],
       hiddenWhen: ({ editing }) => editing,
     },
