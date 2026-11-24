@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "eda767686b9d",
+  "version": "cdc0a5b8c173",
   "language": "pt-BR",
   "entries": [
     {
@@ -5505,6 +5505,59 @@
       ]
     },
     {
+      "route": "/isp/plans",
+      "menuPath": "ISP › Planos",
+      "scope": "tenant",
+      "title": "Planos",
+      "description": "Planos de internet que você vende: tecnologia, velocidade, o perfil de rede aplicado ao assinante, preços e fidelidade.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Código",
+          "help": ""
+        },
+        {
+          "label": "Tecnologia",
+          "help": ""
+        },
+        {
+          "label": "Download (kbps)",
+          "help": "Velocidade contratada em quilobits por segundo, usada na faixa de velocidade dos relatórios do regulador."
+        },
+        {
+          "label": "Upload (kbps)",
+          "help": ""
+        },
+        {
+          "label": "Perfil de serviço",
+          "help": "Perfil de autenticação aplicado ao acesso enquanto a assinatura está em serviço normal."
+        },
+        {
+          "label": "Perfil reduzido",
+          "help": "Perfil aplicado na etapa de redução de uma assinatura em atraso. Sem ele, o perfil de serviço permanece."
+        },
+        {
+          "label": "Fidelidade (meses)",
+          "help": "Meses de fidelidade contados da ativação. 0 significa sem fidelidade."
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
       "route": "/isp/pool-ip/fixed-ipv4",
       "menuPath": "ISP › IPv4 fixos",
       "scope": "tenant",
@@ -5641,6 +5694,51 @@
         },
         {
           "label": "Endereço",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/isp/settings",
+      "menuPath": "ISP › Parâmetros",
+      "scope": "tenant",
+      "title": "Parâmetros",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/isp/subscriptions",
+      "menuPath": "ISP › Assinaturas",
+      "scope": "tenant",
+      "title": "Assinaturas",
+      "description": "Assinaturas de internet dos seus clientes: plano, acesso, contrato de cobrança e o estado do serviço aplicado à rede.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Estado aplicado",
+          "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente da assinatura. Não pode ser alterado após a criação."
+        },
+        {
+          "label": "Plano",
+          "help": "Plano da assinatura. Depois de criada, use Trocar plano."
+        },
+        {
+          "label": "Acesso de autenticação",
+          "help": "Acesso do mesmo cliente que o perfil do plano controla. Não pode ter grupo cujo perfil sobreponha o do plano. Só pode ser trocado antes de a assinatura entrar em serviço."
+        },
+        {
+          "label": "Publicada no portal",
           "help": ""
         },
         {

@@ -613,6 +613,11 @@ export const QUICK_CREATE_REGISTRY = {
     label: 'Create POP',
     loadComponent: () => import('../../../pages/isp/pop/pop').then((m) => m.IspPopPage),
   },
+  IspPlanIpnUUID: {
+    label: 'Create plan',
+    loadComponent: () => import('../../../pages/isp/plans/plans').then((m) => m.IspPlansPage),
+    permission: 'tenant.isp.plans.write',
+  },
   IspVendorIveUUID: {
     label: 'Create vendor',
     loadComponent: () => import('../../../pages/isp/vendor/vendor').then((m) => m.IspVendorPage),

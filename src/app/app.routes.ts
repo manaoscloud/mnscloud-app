@@ -1853,6 +1853,25 @@ export const routes: Routes = [
 
               // ISP
               {
+                path: 'isp/plans',
+                loadComponent: () => import('./pages/isp/plans/plans').then((m) => m.IspPlansPage),
+                title: 'ISP • Plans | mnscloud',
+              },
+              {
+                path: 'isp/subscriptions',
+                loadComponent: () =>
+                  import('./pages/isp/subscriptions/subscriptions').then(
+                    (m) => m.IspSubscriptionsPage,
+                  ),
+                title: 'ISP • Subscriptions | mnscloud',
+              },
+              {
+                path: 'isp/settings',
+                loadComponent: () =>
+                  import('./pages/isp/settings/settings').then((m) => m.IspSettingsPage),
+                title: 'ISP • Settings | mnscloud',
+              },
+              {
                 path: 'isp/pop',
                 loadComponent: () => import('./pages/isp/pop/pop').then((m) => m.IspPopPage),
                 title: 'ISP • POP | mnscloud',

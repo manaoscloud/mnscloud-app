@@ -19,9 +19,37 @@ import {
   MODULE_LOOKUP,
 } from './billing-options';
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** Customer of the contract form: the ISP item lookup offers only its subscriptions. */
+const contractForm = { customerUUID: (): string => '' };
+
+/** Local calendar date (UTC would already be tomorrow in the evening in Brazil). */
+const today = () => {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
 const optionLabel = (options: readonly { value: string; label: string }[], value: unknown) =>
   options.find((option) => option.value === value)?.label ?? String(value ?? '');
+
+const RESOURCE_FIELD_BY_MODULE: Readonly<Record<string, string | null>> = {
+  ged: 'gedAccountUUID',
+  hr: 'hrAccountUUID',
+  cyber_security: 'cyberAccountUUID',
+  commerce: 'commerceAccountUUID',
+  conversations: 'conversationsAccountUUID',
+  contracts: 'contractsAccountUUID',
+  isp: 'ispSubscriptionUUID',
+  // Managed support bills the contract's own customer: the API fills the resource.
+  support_remote: null,
+};
+
+/** Resource of the item: the module specific picker, or the free resource UUID. */
+const resourceOf = (values: ConfigurableCrudRecord) => {
+  const module = String(values['module'] ?? '');
+  const key =
+    module in RESOURCE_FIELD_BY_MODULE ? RESOURCE_FIELD_BY_MODULE[module] : 'resourceUUID';
+  return (key ? values[key] : null) || null;
+};
 
 const statusAction = (key: string, label: string, icon: string, to: string, from: string[]) => ({
   key,
@@ -262,6 +290,7 @@ const config = defineCrud({
             values['module'] === 'commerce' ||
             values['module'] === 'conversations' ||
             values['module'] === 'contracts' ||
+            values['module'] === 'isp' ||
             // Managed support bills the contract's own customer: the API fills the resource.
             values['module'] === 'support_remote',
           source: 'BciSourceResourceUUID',
@@ -357,6 +386,32 @@ const config = defineCrud({
           requiredWhen: ({ values }) => values['module'] === 'contracts',
           quickCreate: false,
           quickCreateExemptReason: 'Customer accounts manage contract accounts.',
+        },
+        {
+          key: 'ispSubscriptionUUID',
+          source: 'BciSourceResourceUUID',
+          label: 'isp.subscription',
+          type: 'search-select',
+          help: 'isp.contractItemHelp',
+          hiddenWhen: ({ values }) => values['module'] !== 'isp',
+          requiredWhen: ({ values }) => values['module'] === 'isp',
+          // Read on every lookup request: the customer comes from the contract form.
+          remoteLookup: {
+            get endpoint() {
+              // Without a customer nothing may be offered: the nil UUID matches no subscription.
+              const customer =
+                contractForm.customerUUID() || '00000000-0000-0000-0000-000000000000';
+              return `isp/subscriptions?customerUUID=${encodeURIComponent(customer)}`;
+            },
+            // Cancelled connections cannot receive new contract items.
+            accept: (row: Record<string, unknown>) => row['IsbStatus'] !== 'cancelled',
+            uuidField: 'IsbUUID',
+            labelField: 'IsbID',
+            descriptionField: 'CustomerName',
+          },
+          quickCreate: false,
+          quickCreateExemptReason:
+            'Subscriptions of the customer are created in ISP › Subscriptions.',
         },
         {
           key: 'productUUID',
@@ -479,22 +534,7 @@ const config = defineCrud({
       ],
       payload: (values) => ({
         module: values['module'] || 'manual',
-        resourceUUID:
-          (values['module'] === 'ged'
-            ? values['gedAccountUUID']
-            : values['module'] === 'hr'
-              ? values['hrAccountUUID']
-              : values['module'] === 'cyber_security'
-                ? values['cyberAccountUUID']
-                : values['module'] === 'commerce'
-                  ? values['commerceAccountUUID']
-                  : values['module'] === 'conversations'
-                    ? values['conversationsAccountUUID']
-                    : values['module'] === 'contracts'
-                      ? values['contractsAccountUUID']
-                      : values['module'] === 'support_remote'
-                        ? null
-                        : values['resourceUUID']) || null,
+        resourceUUID: resourceOf(values),
         productUUID: values['productUUID'] || null,
         description: values['description'],
         nature: values['nature'],
@@ -599,5 +639,6 @@ const config = defineCrud({
 export class CustomerBillingContractsPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   constructor() {
     super(config);
+    contractForm.customerUUID = () => String(this.formValues()['customerUUID'] ?? '');
   }
 }

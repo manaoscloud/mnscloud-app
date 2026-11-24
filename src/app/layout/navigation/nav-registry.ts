@@ -2258,6 +2258,14 @@ export const NAV_ITEMS: NavItem[] = [
     requiresEnvironment: true,
     children: [
       {
+        id: 'isp/plans',
+        label: 'nav.isp.plans',
+        icon: 'sell',
+        category: 'registry',
+        route: '/isp/plans',
+        permissions: ['tenant.isp.plans.read'],
+      },
+      {
         id: 'isp/pop',
         label: 'nav.isp.pop',
         icon: 'location_on',
@@ -2319,6 +2327,22 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'memory',
         category: 'equipment',
         route: '/isp/vendor-model',
+      },
+      {
+        id: 'isp/settings',
+        label: 'nav.isp.settings',
+        icon: 'tune',
+        category: 'settings',
+        route: '/isp/settings',
+        permissions: ['tenant.isp.settings.read'],
+      },
+      {
+        id: 'isp/subscriptions',
+        label: 'nav.isp.subscriptions',
+        icon: 'wifi',
+        category: 'resale',
+        route: '/isp/subscriptions',
+        permissions: ['tenant.isp.subscriptions.read'],
       },
       {
         id: 'isp/catalog-vendors',
