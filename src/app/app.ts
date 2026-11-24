@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AppUpdateNotice } from './shared/app-update/app-update-notice';
 import { RouteLoader } from './shared/route-loader/route-loader';
+import { ToastContainer } from './shared/toast/toast-container';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouteLoader, AppUpdateNotice],
+  imports: [RouterOutlet, RouteLoader, AppUpdateNotice, ToastContainer],
   template: `
     <app-route-loader />
 
@@ -15,6 +16,7 @@ import { RouteLoader } from './shared/route-loader/route-loader';
     </main>
 
     <mns-app-update-notice />
+    <mns-toast-container />
   `,
   styles: [
     `

@@ -36,7 +36,7 @@ export function isAppLanguage(value: unknown): value is AppLanguage {
 
 @Injectable({ providedIn: 'root' })
 export class AppI18nService {
-  private readonly transloco = inject(TranslocoService);
+  private readonly transloco = inject(TranslocoService, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
 
   readonly languageOptions = [
@@ -60,19 +60,19 @@ export class AppI18nService {
 
   constructor() {
     const initialLanguage = this.language();
-    this.transloco.setActiveLang(initialLanguage);
+    this.transloco?.setActiveLang(initialLanguage);
     this.syncDocumentLanguage(initialLanguage);
     this.bindNavigatorLanguageChange();
   }
 
   t(key: string, params?: Record<string, unknown>): string {
-    return this.transloco.translate(key, params);
+    return this.transloco?.translate(key, params) ?? key;
   }
 
   setLanguage(language: AppLanguage, reload = false) {
     this.language.set(language);
     this.languageMode.set('manual');
-    this.transloco.setActiveLang(language);
+    this.transloco?.setActiveLang(language);
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
@@ -90,7 +90,7 @@ export class AppI18nService {
     const systemLanguage = preferredLanguage ?? detectAppLanguage();
     this.languageMode.set('auto');
     this.language.set(systemLanguage);
-    this.transloco.setActiveLang(systemLanguage);
+    this.transloco?.setActiveLang(systemLanguage);
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(LANGUAGE_MODE_STORAGE_KEY, 'auto');
@@ -122,7 +122,7 @@ export class AppI18nService {
       if (this.languageMode() !== 'auto') return;
       const systemLanguage = detectAppLanguage();
       this.language.set(systemLanguage);
-      this.transloco.setActiveLang(systemLanguage);
+      this.transloco?.setActiveLang(systemLanguage);
       this.syncDocumentLanguage(systemLanguage);
     };
 

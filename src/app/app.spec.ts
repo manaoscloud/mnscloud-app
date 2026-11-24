@@ -22,5 +22,6 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-route-loader')).not.toBeNull();
     expect(compiled.querySelector('router-outlet')).not.toBeNull();
+    expect(compiled.querySelector('mns-toast-container')).not.toBeNull();
   });
 });
