@@ -23,6 +23,57 @@ const ROUTER_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'failed', label: 'Failed' },
 ];
 
+const HA_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
+  { value: 1, label: 'HA Enabled (Active/Standby)' },
+  { value: 0, label: 'Standalone' },
+];
+
+function enableHaAction(): ConfigurableCrudRowAction {
+  return {
+    key: 'enable-ha',
+    label: 'Enable HA',
+    icon: 'shield',
+    visible: (row: ConfigurableCrudRecord) =>
+      Number(row['engine']) === 2 && Number(row['ha'] ?? 0) === 0,
+    request: {
+      method: 'post',
+      endpoint: (row: ConfigurableCrudRecord) =>
+        `hosting/vps/tenant-zones/${row['zoneUUID']}/ha`,
+      body: () => ({ enabled: true }),
+      successMessage: 'High Availability enabled. Secondary router VM provisioned with VRRP failover.',
+      confirm: {
+        title: 'Enable High Availability (VRRP Pair)',
+        message:
+          'A secondary router VM will be provisioned on a separate physical host. State synchronization (conntrack) and VRRP keepalived ensure sub-5s failover. HA subscription is billed monthly. Enable HA?',
+        confirmLabel: 'Enable HA',
+      },
+    },
+  };
+}
+
+function disableHaAction(): ConfigurableCrudRowAction {
+  return {
+    key: 'disable-ha',
+    label: 'Disable HA',
+    icon: 'shield_off',
+    visible: (row: ConfigurableCrudRecord) =>
+      Number(row['engine']) === 2 && Number(row['ha'] ?? 0) === 1,
+    request: {
+      method: 'post',
+      endpoint: (row: ConfigurableCrudRecord) =>
+        `hosting/vps/tenant-zones/${row['zoneUUID']}/ha`,
+      body: () => ({ enabled: false }),
+      successMessage: 'High Availability disabled. Secondary router VM torn down.',
+      confirm: {
+        title: 'Disable High Availability',
+        message:
+          'Disabling HA tears down the secondary router VM and cancels the HA subscription. The router returns to standalone single mode. Disable HA?',
+        confirmLabel: 'Disable HA',
+      },
+    },
+  };
+}
+
 function sizeAction(size: 'S' | 'M' | 'L', label: string): ConfigurableCrudRowAction {
   return {
     key: `size-${size}`,
@@ -94,6 +145,14 @@ const config = defineCrud({
       options: ROUTER_STATE_OPTIONS,
       className: 'status-col',
     },
+    {
+      id: 'ha',
+      label: 'High Availability',
+      kind: 'status',
+      field: 'ha',
+      options: HA_STATE_OPTIONS,
+      className: 'status-col',
+    },
     { id: 'revision', label: 'Applied revision', kind: 'number', field: 'appliedRevision' },
   ],
 });
@@ -109,7 +168,13 @@ export class HostingVpsRoutersPage extends ConfigurableCrudPageBase<Configurable
   constructor() {
     super({
       ...config,
-      rowActions: [sizeAction('S', 'Size S'), sizeAction('M', 'Size M'), sizeAction('L', 'Size L')],
+      rowActions: [
+        sizeAction('S', 'Size S'),
+        sizeAction('M', 'Size M'),
+        sizeAction('L', 'Size L'),
+        enableHaAction(),
+        disableHaAction(),
+      ],
     });
   }
 }
