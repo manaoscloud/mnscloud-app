@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "f60bbabc1e3d",
+  "version": "cdc0a5b8c173",
   "language": "pt-BR",
   "entries": [
     {
@@ -1152,6 +1152,71 @@
         {
           "label": "Permitir subdomínios",
           "help": "Abre o chat também em subdomínios de cada site permitido: com https://exemplo.com permitido, loja.exemplo.com também funciona. Subdomínios não são verificados como instalados."
+        }
+      ]
+    },
+    {
+      "route": "/conversations/erp-calls",
+      "menuPath": "Conversas › Chamadas ERP",
+      "scope": "tenant",
+      "title": "Chamadas ERP",
+      "description": "Auditoria de cada chamada que os fluxos e o agente de IA fizeram ao seu ERP: ferramenta, resultado, horário e referência no ERP. Dados do cliente nunca são guardados aqui.",
+      "fields": []
+    },
+    {
+      "route": "/conversations/erp-connections",
+      "menuPath": "Conversas › Integrações ERP",
+      "scope": "tenant",
+      "title": "Integrações ERP",
+      "description": "Conecte o ERP do seu provedor para que os fluxos e o agente de IA consultem planos, faturas e contratos e executem as ações que você permitir.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Conta",
+          "help": ""
+        },
+        {
+          "label": "Política",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "ERP",
+          "help": "Sistema ERP do seu provedor. Não pode mudar depois: crie outra integração."
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Endereço do ERP",
+          "help": "Endereço HTTPS do seu ERP, sem o caminho da API."
+        },
+        {
+          "label": "Impressão digital do certificado (SHA-256)",
+          "help": "Opcional. Quando preenchida, só o ERP que apresentar este certificado é aceito."
+        },
+        {
+          "label": "Como o ERP é acessado",
+          "help": "Use Conector para um ERP em rede privada, acessado por um conector da sua equipe."
+        },
+        {
+          "label": "Tempo limite (ms)",
+          "help": "Uma resposta mais lenta conta como falha (1000 a 30000 ms)."
+        },
+        {
+          "label": "Chamadas simultâneas",
+          "help": "Máximo de chamadas ao ERP ao mesmo tempo (1 a 32)."
+        },
+        {
+          "label": "Chamadas por minuto",
+          "help": "Limite de chamadas por minuto ao ERP (1 a 6000)."
         }
       ]
     },
@@ -2603,6 +2668,35 @@
       "fields": []
     },
     {
+      "route": "/financial/mnscloud-pay/payouts",
+      "menuPath": "Financeiro › Pay › Repasses",
+      "scope": "tenant",
+      "title": "Repasses do MNSCloud Pay",
+      "description": "Transferências do saldo do MNSCloud Pay para a sua própria chave Pix CPF/CNPJ ou conta bancária.",
+      "fields": [
+        {
+          "label": "Valor",
+          "help": "Mínimo de R$ 50,00. Vazio transfere todo o saldo disponível."
+        }
+      ]
+    },
+    {
+      "route": "/financial/mnscloud-pay/statement",
+      "menuPath": "Financeiro › Pay › Extrato",
+      "scope": "tenant",
+      "title": "Extrato do MNSCloud Pay",
+      "description": "Cada pagamento recebido, taxa do MNSCloud Pay, estorno e repasse da sua conta, em lançamentos de partidas dobradas que não podem ser alterados.",
+      "fields": []
+    },
+    {
+      "route": "/financial/mnscloud-pay/summary",
+      "menuPath": "Financeiro › Pay › Resumo",
+      "scope": "tenant",
+      "title": "Resumo do MNSCloud Pay",
+      "description": "Verificação da conta, saldo informado pelo banco e razão do MNSCloud Pay da sua conta.",
+      "fields": []
+    },
+    {
       "route": "/financial/payables",
       "menuPath": "Financeiro › Contas a pagar",
       "scope": "tenant",
@@ -2664,6 +2758,10 @@
         },
         {
           "label": "Data de vencimento",
+          "help": ""
+        },
+        {
+          "label": "Forma de pagamento",
           "help": ""
         },
         {
@@ -3780,8 +3878,20 @@
           "help": ""
         },
         {
+          "label": "Tipo de túnel",
+          "help": ""
+        },
+        {
           "label": "IP público da nuvem",
           "help": "IP público usado pelo roteador: o endereço ao qual o seu equipamento se conecta."
+        },
+        {
+          "label": "Sua chave pública WireGuard",
+          "help": "Chave pública gerada no seu dispositivo ou roteador (wg pubkey)."
+        },
+        {
+          "label": "Porta de escuta UDP",
+          "help": "Porta no IP público da nuvem (padrão: 51820)."
         },
         {
           "label": "Endereço do seu equipamento",
@@ -3816,12 +3926,24 @@
           "help": ""
         },
         {
+          "label": "Roteamento dinâmico BGP",
+          "help": "Troque rotas dinamicamente sobre o túnel com BIRD."
+        },
+        {
+          "label": "Limite de prefixos aceitos",
+          "help": ""
+        },
+        {
           "label": "Status",
           "help": ""
         },
         {
           "label": "Descrição",
           "help": ""
+        },
+        {
+          "label": "Cliente",
+          "help": "Cliente que vê esta conexão no Portal do Cliente depois de publicada. Vazio: uso próprio."
         },
         {
           "label": "Redes da sua empresa",
@@ -11610,6 +11732,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/pay/subaccounts",
+      "menuPath": "Pay › Subcontas",
+      "scope": "platform",
+      "title": "Subcontas do MNSCloud Pay",
+      "description": "Todas as subcontas dos tenants com verificação, saldo do razão e os últimos 30 dias de pagamentos, taxas e repasses.",
+      "fields": []
     },
     {
       "route": "/system/realtime",

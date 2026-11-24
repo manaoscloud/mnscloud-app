@@ -365,6 +365,20 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/conversations/connections',
       },
       {
+        id: 'conversations/erp-connections',
+        label: 'nav.conversations.erp-connections',
+        icon: 'lan',
+        route: '/conversations/erp-connections',
+        permissions: ['tenant.conversations.erp.read'],
+      },
+      {
+        id: 'conversations/erp-calls',
+        label: 'nav.conversations.erp-calls',
+        icon: 'fact_check',
+        route: '/conversations/erp-calls',
+        permissions: ['tenant.conversations.erp.read'],
+      },
+      {
         id: 'conversations/quick-replies',
         label: 'nav.conversations.quick-replies',
         icon: 'bolt',
@@ -774,6 +788,32 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'qr_code_2',
         category: 'operation',
         route: '/financial/payment-charges',
+      },
+      {
+        id: 'financial/mnscloud-pay',
+        label: 'nav.financial.mnscloud-pay',
+        icon: 'account_balance_wallet',
+        category: 'operation',
+        children: [
+          {
+            id: 'financial/mnscloud-pay/summary',
+            label: 'nav.financial.mnscloud-pay.summary',
+            icon: 'dashboard',
+            route: '/financial/mnscloud-pay/summary',
+          },
+          {
+            id: 'financial/mnscloud-pay/statement',
+            label: 'nav.financial.mnscloud-pay.statement',
+            icon: 'receipt_long',
+            route: '/financial/mnscloud-pay/statement',
+          },
+          {
+            id: 'financial/mnscloud-pay/payouts',
+            label: 'nav.financial.mnscloud-pay.payouts',
+            icon: 'payments',
+            route: '/financial/mnscloud-pay/payouts',
+          },
+        ],
       },
       {
         id: 'financial/gateway-accounts',
@@ -3765,6 +3805,12 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'nav.system.pay.bank-partners',
         icon: 'account_balance',
         masterRoute: '/system/pay/bank-partners',
+      },
+      {
+        id: 'system/pay/subaccounts',
+        label: 'nav.system.pay.subaccounts',
+        icon: 'groups',
+        masterRoute: '/system/pay/subaccounts',
       },
       {
         id: 'system/pay/fees',

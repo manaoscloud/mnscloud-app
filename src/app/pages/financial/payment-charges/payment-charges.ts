@@ -38,6 +38,7 @@ const config = defineCrud({
     status: 'open',
     dueDate: null,
     notes: '',
+    billingType: 'BOLETO',
     issueAtGateway: true,
     customerUUID: '',
     gatewayAccountUUID: '',
@@ -46,6 +47,7 @@ const config = defineCrud({
     { id: 'title', label: 'Title', field: 'Title', kind: 'identity' },
     { id: 'date', label: 'Due date', field: 'DueDate', kind: 'date' },
     { id: 'amount', label: 'Amount', field: 'Amount', kind: 'currency' },
+    { id: 'billingType', label: 'Method', field: 'BillingType', kind: 'text' },
     { id: 'status', label: 'Status', field: 'Status', kind: 'status' },
     { id: 'paidAmount', label: 'Amount received', field: 'PaidAmount', kind: 'currency' },
   ],
@@ -76,6 +78,19 @@ const config = defineCrud({
     { key: 'amount', source: 'Amount', label: 'Amount', type: 'currency', required: true, span: 1 },
     { key: 'dueDate', source: 'DueDate', label: 'Due date', type: 'date', required: true, span: 1 },
     {
+      key: 'billingType',
+      source: 'BillingType',
+      label: 'Payment method',
+      type: 'select',
+      span: 1,
+      options: [
+        { value: 'BOLETO', label: 'Boleto' },
+        { value: 'PIX', label: 'Pix' },
+        { value: 'CREDIT_CARD', label: 'Credit card' },
+      ],
+      hiddenWhen: ({ editing }) => editing,
+    },
+    {
       key: 'issueAtGateway',
       label: 'Issue at bank',
       type: 'select',
@@ -103,6 +118,17 @@ const config = defineCrud({
     { key: 'notes', source: 'Notes', label: 'Notes', type: 'textarea', tab: 'notes', span: 4 },
   ],
   rowActions: [
+    {
+      key: 'checkout-link',
+      label: 'Open payment link',
+      icon: 'open_in_new',
+      visible: (r) => Boolean(r['InvoiceUrl']),
+      run: (r) => {
+        if (typeof window !== 'undefined' && r['InvoiceUrl']) {
+          window.open(String(r['InvoiceUrl']), '_blank', 'noopener,noreferrer');
+        }
+      },
+    },
     {
       key: 'sync',
       label: 'Synchronize payment',
@@ -134,6 +160,7 @@ const config = defineCrud({
         }
       : {
           ...v,
+          billingType: v['billingType'] || 'BOLETO',
           gatewayAccountUUID: v['issueAtGateway'] ? v['gatewayAccountUUID'] : null,
           gatewayPayload: null,
         },

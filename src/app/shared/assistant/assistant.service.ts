@@ -23,7 +23,38 @@ export type AssistantMessage = {
   links: AssistantLink[];
   outcome: string | null;
   followUps?: string[];
+  /** Read tools used for the answer (A1): which of the user's records were consulted. */
+  toolsUsed?: { tool: string; ok: boolean; returned: number }[];
+  /** Action cards prepared in this answer (A2); nothing runs until the user confirms. */
+  proposals?: AssistantProposal[];
   createdAt?: string | null;
+};
+
+/** Action card (A2): the API froze the request; it runs once, only after the user confirms. */
+export type AssistantProposal = {
+  proposalUUID: string;
+  tool: string;
+  targetLabel: string | null;
+  params: Record<string, unknown>;
+  status: 'proposed' | 'executing' | 'executed' | 'failed' | 'rejected' | 'expired' | string;
+  resultCode?: number | null;
+  resultMessage?: string | null;
+  expiresAt: string | null;
+};
+
+/** Translation key of an action card (`assistant.action.hosting.vps.instances.power.reboot`). */
+export function assistantActionKey(proposal: Pick<AssistantProposal, 'tool' | 'params'>): string {
+  const known = KNOWN_ACTIONS[proposal.tool];
+  if (!known) return 'assistant.action.generic';
+  const value = String(proposal.params?.[known.param] ?? '');
+  return known.values.includes(value)
+    ? `assistant.action.${proposal.tool}.${value}`
+    : 'assistant.action.generic';
+}
+
+const KNOWN_ACTIONS: Record<string, { param: string; values: string[] }> = {
+  'hosting.vps.instances.power': { param: 'action', values: ['start', 'stop', 'reboot'] },
+  'billing.subscriptions.checkout': { param: 'offerType', values: ['PRODUCT', 'PACKAGE'] },
 };
 
 export type AssistantConversation = {
@@ -49,10 +80,24 @@ export function safeAssistantRoute(route: string | null | undefined): string | n
   return value.startsWith('/') && !value.startsWith('//') && !/[\s\\]/.test(value) ? value : null;
 }
 
+/** Translation key of a read tool (`assistant.tool.voip.pabx.extensions.list`); unknown names use a generic label. */
+export function assistantToolKey(tool: string): string {
+  return KNOWN_TOOLS.has(tool) ? `assistant.tool.${tool}` : 'assistant.tool.generic';
+}
+
+const KNOWN_TOOLS = new Set([
+  'billing.subscriptions.list',
+  'hosting.vps.instances.power',
+  'billing.wallet.balance',
+  'hosting.vps.instances.list',
+  'voip.pabx.extensions.list',
+]);
+
 /** Error code of a failed ask (problem+json `code`, HTTP status otherwise). */
 export function assistantErrorCode(error: unknown): string {
   const err = error as { status?: number; error?: { code?: string } } | null;
   if (err?.error?.code) return String(err.error.code);
+  if (err?.status === 410) return 'AI_ASSISTANT_PROPOSAL_EXPIRED';
   if (err?.status === 409) return 'AI_ASSISTANT_CONVERSATION_FULL';
   if (err?.status === 404) return 'AI_ASSISTANT_NOT_FOUND';
   return 'AI_PROVIDER_ERROR';
@@ -87,7 +132,11 @@ export class AssistantService {
 
   async conversation(uuid: string) {
     const response = await this.api.get<
-      Envelope<{ conversation: AssistantConversation; messages: AssistantMessage[] }>
+      Envelope<{
+        conversation: AssistantConversation;
+        messages: AssistantMessage[];
+        proposals?: AssistantProposal[];
+      }>
     >(`assistant/conversations/${encodeURIComponent(uuid)}`, { silent: true });
     return response.data;
   }
@@ -118,7 +167,38 @@ export class AssistantService {
     return response.data;
   }
 
+  async confirm(uuid: string, language: AppLanguage) {
+    const response = await this.api.post<Envelope<{ proposal: AssistantProposal; text: string }>>(
+      `assistant/proposals/${encodeURIComponent(uuid)}/confirm`,
+      { locale: assistantLocale(language) },
+      { silent: true },
+    );
+    return response.data;
+  }
+
+  async reject(uuid: string) {
+    const response = await this.api.post<Envelope<{ proposal: AssistantProposal }>>(
+      `assistant/proposals/${encodeURIComponent(uuid)}/reject`,
+      {},
+      { silent: true },
+    );
+    return response.data;
+  }
+
   async remove(uuid: string): Promise<void> {
     await this.api.delete(`assistant/conversations/${encodeURIComponent(uuid)}`);
+  }
+
+  async feedback(
+    messageUUID: string,
+    helpful: boolean,
+    reason?: string | null,
+    comment?: string | null,
+  ): Promise<void> {
+    await this.api.post(
+      `assistant/messages/${encodeURIComponent(messageUUID)}/feedback`,
+      { helpful, reason: reason ?? null, comment: comment ?? null },
+      { silent: true },
+    );
   }
 }

@@ -1,5 +1,11 @@
 import { matchScreens, type AssistantScreen } from './assistant-dialog';
-import { assistantErrorCode, assistantLocale, safeAssistantRoute } from './assistant.service';
+import {
+  assistantActionKey,
+  assistantErrorCode,
+  assistantLocale,
+  assistantToolKey,
+  safeAssistantRoute,
+} from './assistant.service';
 
 const screens: AssistantScreen[] = [
   { label: 'Ramais', path: 'Telefonia › PABX › Ramais', route: '/voip/pabx/extensions' },
@@ -38,5 +44,28 @@ describe('App assistant', () => {
     expect(assistantErrorCode({ status: 409, error: {} })).toBe('AI_ASSISTANT_CONVERSATION_FULL');
     expect(assistantErrorCode({ status: 404 })).toBe('AI_ASSISTANT_NOT_FOUND');
     expect(assistantErrorCode(new Error('x'))).toBe('AI_PROVIDER_ERROR');
+  });
+
+  it('labels read tools by translation key, unknown ones generically', () => {
+    expect(assistantToolKey('voip.pabx.extensions.list')).toBe(
+      'assistant.tool.voip.pabx.extensions.list',
+    );
+    expect(assistantToolKey('x.y.z')).toBe('assistant.tool.generic');
+  });
+
+  it('labels action cards only from known tools and values', () => {
+    expect(
+      assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'reboot' } }),
+    ).toBe('assistant.action.hosting.vps.instances.power.reboot');
+    expect(
+      assistantActionKey({
+        tool: 'billing.subscriptions.checkout',
+        params: { offerType: 'PACKAGE' },
+      }),
+    ).toBe('assistant.action.billing.subscriptions.checkout.PACKAGE');
+    expect(
+      assistantActionKey({ tool: 'hosting.vps.instances.power', params: { action: 'destroy' } }),
+    ).toBe('assistant.action.generic');
+    expect(assistantActionKey({ tool: 'x.y.z', params: {} })).toBe('assistant.action.generic');
   });
 });

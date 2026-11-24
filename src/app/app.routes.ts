@@ -1479,6 +1479,30 @@ export const routes: Routes = [
                 title: 'Financial • Payment Methods | mnscloud',
               },
               {
+                path: 'financial/mnscloud-pay/summary',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-summary').then(
+                    (m) => m.FinancialPaySummaryPage,
+                  ),
+                title: 'Financial • MNSCloud Pay | mnscloud',
+              },
+              {
+                path: 'financial/mnscloud-pay/statement',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-statement').then(
+                    (m) => m.FinancialPayStatementPage,
+                  ),
+                title: 'Financial • MNSCloud Pay Statement | mnscloud',
+              },
+              {
+                path: 'financial/mnscloud-pay/payouts',
+                loadComponent: () =>
+                  import('./pages/financial/mnscloud-pay/pay-payouts').then(
+                    (m) => m.FinancialPayPayoutsPage,
+                  ),
+                title: 'Financial • MNSCloud Pay Payouts | mnscloud',
+              },
+              {
                 path: 'financial/payment-charges',
                 loadComponent: () =>
                   import('./pages/financial/payment-charges/payment-charges').then(
@@ -2850,6 +2874,26 @@ export const routes: Routes = [
                 title: 'Conversations • Channel connections | mnscloud',
               },
               {
+                path: 'conversations/erp-connections',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/conversations/erp-connections/erp-connections').then(
+                    (m) => m.ConversationsErpConnectionsPage,
+                  ),
+                title: 'Conversations • ERP integrations | mnscloud',
+                data: { permission: 'tenant.conversations.erp.read' },
+              },
+              {
+                path: 'conversations/erp-calls',
+                canActivate: [permissionGuard],
+                loadComponent: () =>
+                  import('./pages/conversations/erp-calls/erp-calls').then(
+                    (m) => m.ConversationsErpCallsPage,
+                  ),
+                title: 'Conversations • ERP calls | mnscloud',
+                data: { permission: 'tenant.conversations.erp.read' },
+              },
+              {
                 path: 'conversations/accounts',
                 loadComponent: () =>
                   import('./pages/conversations/accounts/accounts').then(
@@ -3976,6 +4020,15 @@ export const routes: Routes = [
                 ],
               },
               { path: 'pay', pathMatch: 'full', redirectTo: 'pay/bank-partners' },
+              {
+                path: 'pay/subaccounts',
+                loadComponent: () =>
+                  import('./pages/system/pay/subaccounts/subaccounts').then(
+                    (m) => m.SystemPaySubaccountsPage,
+                  ),
+                title: 'System • Pay • Subaccounts | mnscloud',
+                data: { scope: 'master', context: 'system' },
+              },
               {
                 path: 'pay/bank-partners',
                 loadComponent: () =>

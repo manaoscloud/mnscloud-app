@@ -107,6 +107,20 @@
                 }
               </div>
             }
+            @if (message.toolsUsed?.length) {
+              <div class="assistant-sources" [attr.aria-label]="'assistant.sources' | transloco">
+                <mat-icon>fact_check</mat-icon>
+                <span>{{ 'assistant.sources' | transloco }}:</span>
+                @for (use of message.toolsUsed; track $index) {
+                  <span class="assistant-source-chip" [class.is-failed]="!use.ok">
+                    {{ toolKey(use.tool) | transloco }}
+                    @if (use.ok) {
+                      ({{ use.returned }})
+                    }
+                  </span>
+                }
+              </div>
+            }
             @if (message.followUps?.length) {
               <div class="assistant-followups">
                 @for (followUp of message.followUps; track $index) {
@@ -116,7 +130,85 @@
                 }
               </div>
             }
+            @if (message.role === 'assistant' && !unavailable(message)) {
+              <div class="assistant-feedback" [attr.aria-label]="'assistant.feedback' | transloco">
+                @if (feedbackSent()[message.messageUUID]) {
+                  <span class="assistant-feedback-thanks">
+                    <mat-icon>check</mat-icon>
+                    {{ 'assistant.feedbackThanks' | transloco }}
+                  </span>
+                } @else {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="assistant-feedback-btn"
+                    [matTooltip]="'assistant.feedbackHelpful' | transloco"
+                    (click)="submitFeedback(message, true)"
+                  >
+                    <mat-icon>thumb_up</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="assistant-feedback-btn"
+                    [matTooltip]="'assistant.feedbackUnhelpful' | transloco"
+                    (click)="submitFeedback(message, false, 'not_helpful')"
+                  >
+                    <mat-icon>thumb_down</mat-icon>
+                  </button>
+                }
+              </div>
+            }
           </article>
+        }
+        @if (proposals().length) {
+          <section class="assistant-actions" [attr.aria-label]="'assistant.actions' | transloco">
+            @for (proposal of proposals(); track proposal.proposalUUID) {
+              <article class="assistant-action" [attr.data-status]="proposal.status">
+                <header>
+                  <mat-icon>bolt</mat-icon>
+                  <strong>{{ actionKey(proposal) | transloco }}</strong>
+                </header>
+                @if (proposal.targetLabel) {
+                  <p class="assistant-action-target">{{ proposal.targetLabel }}</p>
+                }
+                <p class="assistant-hint">
+                  {{ 'assistant.actionStatus.' + proposal.status | transloco }}
+                  @if (proposal.resultMessage && proposal.status === 'failed') {
+                    · {{ proposal.resultMessage }}
+                  }
+                </p>
+                @if (canConfirm(proposal)) {
+                  <div class="assistant-action-buttons">
+                    <button
+                      mat-flat-button
+                      type="button"
+                      [disabled]="acting() !== null"
+                      (click)="confirmProposal(proposal)"
+                    >
+                      <mat-icon>check</mat-icon>
+                      {{
+                        (proposal.status === 'unknown'
+                          ? 'assistant.actionResend'
+                          : 'assistant.actionConfirm'
+                        ) | transloco
+                      }}
+                    </button>
+                    @if (proposal.status === 'proposed') {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="acting() !== null"
+                        (click)="rejectProposal(proposal)"
+                      >
+                        {{ 'assistant.actionCancel' | transloco }}
+                      </button>
+                    }
+                  </div>
+                }
+              </article>
+            }
+          </section>
         }
         @if (busy()) {
           <div class="assistant-busy">

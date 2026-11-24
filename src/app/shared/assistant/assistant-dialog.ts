@@ -27,11 +27,14 @@ import { openCrudComponentDialog } from '../dialog/crud-dialog.util';
 import { ReportProblemButtonComponent } from '../support-report-dialog/report-problem-button';
 import {
   AssistantService,
+  assistantActionKey,
   assistantErrorCode,
+  assistantToolKey,
   safeAssistantRoute,
   type AssistantConversation,
   type AssistantLink,
   type AssistantMessage,
+  type AssistantProposal,
 } from './assistant.service';
 
 /** A visible menu entry the user can open (already filtered by permission, scope and contract). */
@@ -66,6 +69,8 @@ export function matchScreens(
 }
 
 const ERROR_KEYS: Record<string, string> = {
+  AI_ASSISTANT_PROPOSAL_NOT_PENDING: 'assistant.errorActionDone',
+  AI_ASSISTANT_PROPOSAL_EXPIRED: 'assistant.errorActionExpired',
   AI_ASSISTANT_RATE_LIMIT: 'assistant.errorRateLimit',
   AI_ASSISTANT_CONVERSATION_FULL: 'assistant.errorFull',
   AI_ASSISTANT_NOT_FOUND: 'assistant.errorNotFound',
@@ -109,6 +114,10 @@ export class AssistantDialogComponent {
   readonly error = signal<string | null>(null);
   readonly showHistory = signal(false);
   readonly history = signal<AssistantConversation[]>([]);
+  /** Action cards of the open conversation (A2). */
+  readonly proposals = signal<AssistantProposal[]>([]);
+  readonly acting = signal<string | null>(null);
+  readonly feedbackSent = signal<Record<string, boolean>>({});
 
   readonly screens = computed(() =>
     this.messages().length ? [] : matchScreens(this.data.screens(), this.query()),
@@ -175,6 +184,9 @@ export class AssistantDialogComponent {
         { ...result.question, links: [], outcome: null },
         result.answer,
       ]);
+      if (result.answer.proposals?.length) {
+        this.proposals.update((list) => [...list, ...result.answer.proposals!]);
+      }
     } catch (error) {
       const code = assistantErrorCode(error);
       this.messages.update((list) => list.filter((item) => item !== pending));
@@ -190,6 +202,7 @@ export class AssistantDialogComponent {
   newConversation(): void {
     this.conversationUUID.set(null);
     this.messages.set([]);
+    this.proposals.set([]);
     this.error.set(null);
     this.showHistory.set(false);
     queueMicrotask(() => this.input()?.nativeElement.focus());
@@ -211,6 +224,7 @@ export class AssistantDialogComponent {
       const data = await this.assistant.conversation(item.conversationUUID);
       this.conversationUUID.set(item.conversationUUID);
       this.messages.set(data.messages ?? []);
+      this.proposals.set(data.proposals ?? []);
       this.showHistory.set(false);
       this.error.set(null);
       this.scrollDown();
@@ -235,6 +249,81 @@ export class AssistantDialogComponent {
   /** Unavailable answers keep their text; the outcome only adds a hint. */
   unavailable(message: AssistantMessage): boolean {
     return message.role === 'assistant' && !!message.outcome?.toLowerCase().startsWith('ai_');
+  }
+
+  /** Pending cards, and uncertain ones (resent with the same idempotency key, never run twice). */
+  canConfirm(proposal: AssistantProposal): boolean {
+    return proposal.status === 'proposed' || proposal.status === 'unknown';
+  }
+
+  actionKey(proposal: AssistantProposal): string {
+    return assistantActionKey(proposal);
+  }
+
+  /** The user's explicit confirmation: the only way an action of the assistant runs. */
+  async confirmProposal(proposal: AssistantProposal): Promise<void> {
+    if (this.acting() || !this.canConfirm(proposal)) return;
+    this.acting.set(proposal.proposalUUID);
+    this.error.set(null);
+    try {
+      const result = await this.assistant.confirm(proposal.proposalUUID, this.i18n.language());
+      this.replaceProposal(result.proposal);
+      this.messages.update((list) => [
+        ...list,
+        {
+          messageUUID: `result-${proposal.proposalUUID}`,
+          role: 'assistant',
+          text: result.text,
+          links: [],
+          outcome: result.proposal.status === 'executed' ? 'action_executed' : 'action_failed',
+        },
+      ]);
+    } catch (error) {
+      const code = assistantErrorCode(error);
+      this.error.set(ERROR_KEYS[code] ?? 'assistant.errorGeneric');
+      if (code === 'AI_ASSISTANT_PROPOSAL_EXPIRED')
+        this.replaceProposal({ ...proposal, status: 'expired' });
+    } finally {
+      this.acting.set(null);
+      this.scrollDown();
+    }
+  }
+
+  async rejectProposal(proposal: AssistantProposal): Promise<void> {
+    if (this.acting() || proposal.status !== 'proposed') return;
+    this.acting.set(proposal.proposalUUID);
+    try {
+      const result = await this.assistant.reject(proposal.proposalUUID);
+      this.replaceProposal(result.proposal);
+    } catch {
+      this.error.set('assistant.errorGeneric');
+    } finally {
+      this.acting.set(null);
+    }
+  }
+
+  private replaceProposal(next: AssistantProposal): void {
+    this.proposals.update((list) =>
+      list.map((item) => (item.proposalUUID === next.proposalUUID ? { ...item, ...next } : item)),
+    );
+  }
+
+  toolKey(tool: string): string {
+    return assistantToolKey(tool);
+  }
+
+  async submitFeedback(
+    message: AssistantMessage,
+    helpful: boolean,
+    reason?: string,
+  ): Promise<void> {
+    if (!message.messageUUID || this.feedbackSent()[message.messageUUID]) return;
+    this.feedbackSent.update((prev) => ({ ...prev, [message.messageUUID]: true }));
+    try {
+      await this.assistant.feedback(message.messageUUID, helpful, reason);
+    } catch {
+      // non-blocking
+    }
   }
 
   paragraphs(text: string): string[] {
