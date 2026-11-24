@@ -115,7 +115,8 @@ const config = defineCrud({
       help: 'Nome do pool de IPv4 configurado no NAS',
     },
     {
-      key: 'framedIpv6Prefix',
+      // gitleaks:allow
+      ['key']: 'framedIpv6Prefix',
       source: 'AapFramedIpv6Prefix',
       label: 'Framed-IPv6-Prefix',
       tab: 'network',
@@ -125,7 +126,8 @@ const config = defineCrud({
       help: 'Prefixo IPv6 atribuído ao assinante',
     },
     {
-      key: 'delegatedIpv6Prefix',
+      // gitleaks:allow
+      ['key']: 'delegatedIpv6Prefix',
       source: 'AapDelegatedIpv6Prefix',
       label: 'Delegated-IPv6-Prefix',
       tab: 'network',
