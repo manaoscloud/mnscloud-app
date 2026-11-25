@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "bf08c2eab17a",
+  "version": "ec7500023c86",
   "language": "pt-BR",
   "entries": [
     {
@@ -5449,6 +5449,75 @@
           "help": "Rótulo opcional guardado no histórico de importações (OZmap, GeoGrid, IXC...)."
         }
       ]
+    },
+    {
+      "route": "/isp/anatel",
+      "menuPath": "ISP › Anatel SCM",
+      "scope": "tenant",
+      "title": "Anatel SCM",
+      "description": "",
+      "fields": []
+    },
+    {
+      "route": "/isp/cgnat",
+      "menuPath": "ISP › CGNAT",
+      "scope": "tenant",
+      "title": "CGNAT",
+      "description": "Perfis CGNAT determinísticos (RFC 7422) para mapeamento de portas IPv4 e scripts de configuração de roteador.",
+      "fields": [
+        {
+          "label": "Revisão",
+          "help": ""
+        },
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Nome",
+          "help": ""
+        },
+        {
+          "label": "Fornecedor",
+          "help": ""
+        },
+        {
+          "label": "Prefixo privado (CIDR)",
+          "help": "Rede privada para provedores RFC 6598 (ex: 100.64.0.0/24)"
+        },
+        {
+          "label": "Início do pool público",
+          "help": ""
+        },
+        {
+          "label": "Fim do pool público",
+          "help": ""
+        },
+        {
+          "label": "Portas por assinante",
+          "help": ""
+        },
+        {
+          "label": "Porta inicial",
+          "help": ""
+        },
+        {
+          "label": "Porta final",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/isp/legal-records",
+      "menuPath": "ISP › Registros legais",
+      "scope": "tenant",
+      "title": "Registros legais",
+      "description": "",
+      "fields": []
     },
     {
       "route": "/isp/nas",

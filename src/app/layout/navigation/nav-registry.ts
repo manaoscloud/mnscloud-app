@@ -2315,6 +2315,14 @@ export const NAV_ITEMS: NavItem[] = [
         route: '/isp/pool-ip/fixed-ipv6',
       },
       {
+        id: 'isp/cgnat',
+        label: 'nav.isp.cgnat',
+        icon: 'alt_route',
+        category: 'addressing',
+        route: '/isp/cgnat',
+        permissions: ['tenant.isp.cgnat-profiles.read'],
+      },
+      {
         id: 'isp/vendor/registry',
         label: 'nav.isp.vendor.registry',
         icon: 'badge',
@@ -2327,6 +2335,22 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'memory',
         category: 'equipment',
         route: '/isp/vendor-model',
+      },
+      {
+        id: 'isp/legal-records',
+        label: 'nav.isp.legal-records',
+        icon: 'policy',
+        category: 'reports',
+        route: '/isp/legal-records',
+        permissions: ['tenant.isp.legal-records.query'],
+      },
+      {
+        id: 'isp/anatel',
+        label: 'nav.isp.anatel',
+        icon: 'assessment',
+        category: 'reports',
+        route: '/isp/anatel',
+        permissions: ['tenant.isp.subscriptions.read'],
       },
       {
         id: 'isp/settings',
