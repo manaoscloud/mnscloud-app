@@ -2,9 +2,9 @@ import { crmRecordColumn, crmOperatorFilter } from '../crm-table-fields';
 import { crmWorkspaceField, crmWorkspaceFilter, crmWorkspaceColumn } from '../crm-workspace-fields';
 import {
   economicClassificationFilters,
-  industryReferenceField,
   industryReferenceColumn,
 } from '../../../shared/registry/economic-classification';
+import { companyLookupButton } from '../../../shared/data-lookup/company-lookup';
 import { CRM_OPTIONS } from '../crm-options';
 import { crmPayload } from '../crm-input';
 import { Component } from '@angular/core';
@@ -44,24 +44,6 @@ const config = defineCrud({
     },
     crmWorkspaceField,
     {
-      key: 'CacType',
-      source: 'CacType',
-      label: 'crm.field.Type',
-      span: 1,
-      required: true,
-      type: 'select',
-      translateOptions: true,
-      options: CRM_OPTIONS.accountTypes,
-    },
-    {
-      key: 'CacDocument',
-      source: 'CacDocument',
-      label: 'crm.field.Document',
-      span: 1,
-      required: false,
-      type: 'text',
-    },
-    {
       key: 'AssignedUserUsrUUID',
       source: 'AssignedUserUsrUUID',
       label: 'crm.field.AssignedUserUsrUUID',
@@ -78,9 +60,48 @@ const config = defineCrud({
         'Assignment selects existing tenant members; membership is managed through the canonical tenant invitation flow.',
     },
     {
+      key: 'CacType',
+      source: 'CacType',
+      label: 'crm.field.Type',
+      span: 1,
+      breakBefore: true,
+      required: true,
+      type: 'select',
+      translateOptions: true,
+      options: CRM_OPTIONS.accountTypes,
+    },
+    {
+      key: 'CacDocument',
+      source: 'CacDocument',
+      label: 'crm.field.Document',
+      span: 1,
+      required: false,
+      type: 'text',
+      suffixButtons: [
+        companyLookupButton({
+          feature: 'crm.account',
+          documentKey: 'CacDocument',
+          typeKey: 'CacType',
+          nameKey: 'CacName',
+          address: {
+            zip: '',
+            street: '',
+            number: '',
+            complement: '',
+            district: '',
+            city: 'CacCity',
+            state: 'CacState',
+          },
+        }),
+      ],
+    },
+    // wide-field: Name span-2 on the Registro tab, user decision 2026-11-25
+    {
       key: 'CacName',
       source: 'CacName',
       label: 'crm.field.Name',
+      span: 2,
+      wideField: true,
       required: true,
       type: 'text',
     },
@@ -89,10 +110,26 @@ const config = defineCrud({
       source: 'CacOccupation',
       label: 'crm.field.Occupation',
       span: 1,
+      breakBefore: true,
       required: false,
       type: 'text',
     },
-    industryReferenceField(),
+    // wide-field: Industry span-2 on the Registro tab, user decision 2026-11-25
+    {
+      key: 'RegIndustryRinUUID',
+      source: 'RegIndustryRinUUID',
+      label: 'registry.economy.industries',
+      span: 2,
+      wideField: true,
+      type: 'search-select',
+      remoteLookup: {
+        endpoint: 'registry/industries',
+        uuidField: 'RinUUID',
+        labelField: 'RinName',
+        descriptionField: 'SectorName',
+        selectedLabelField: 'RegIndustryRinUUIDName',
+      },
+    },
     {
       key: 'CacCity',
       source: 'CacCity',
