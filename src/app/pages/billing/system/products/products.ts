@@ -92,7 +92,9 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       label: 'Status',
       type: 'status',
       span: 1,
+      lineFillAfter: 3,
     },
+    // wide-field: Record tab layout decided by user (2026-11-25): Status on line 1, Code (2) + Sales mode (1) + Name (1) on line 2.
     {
       key: 'code',
       source: 'BprCode',
@@ -100,7 +102,9 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       label: 'Code',
       type: 'search-select',
       required: true,
-      span: 1,
+      span: 2,
+      wideField: true,
+      breakBefore: true,
       hiddenWhen: ({ editing }) => editing,
     },
     {
@@ -130,6 +134,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       options: YES_NO_OPTIONS,
       tab: 'public',
       span: 1,
+      lineFillAfter: 3,
     },
     {
       key: 'publicName',
@@ -138,6 +143,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       label: 'Public name',
       tab: 'public',
       span: 1,
+      breakBefore: true,
     },
     {
       key: 'publicSlug',
@@ -162,6 +168,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       payloadKey: 'publicSummary',
       label: 'Public summary',
       tab: 'public',
+      span: 1,
     },
     {
       key: 'publicDescription',
@@ -171,6 +178,7 @@ const PRODUCT_CONFIG: ConfigurableCrudConfig = {
       type: 'textarea',
       tab: 'public',
       span: 4,
+      breakBefore: true,
     },
     {
       key: 'notes',

@@ -9,6 +9,7 @@ import {
   industryReferenceField,
   industryReferenceColumn,
 } from '../../src/app/shared/registry/economic-classification.ts';
+import { companyLookupButton } from '../../src/app/shared/data-lookup/company-lookup.ts';
 import { CRM_OPTIONS } from '../../src/app/pages/crm/crm-options.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -46,6 +47,7 @@ function formConfigs() {
               'crmWorkspaceColumn',
               'crmRecordColumn',
               'crmOperatorFilter',
+              'companyLookupButton',
               `return ${node.arguments[0].getText(source)}`,
             )(
               (v) => v,
@@ -62,6 +64,7 @@ function formConfigs() {
               crmWorkspaceColumn,
               crmRecordColumn,
               crmOperatorFilter,
+              companyLookupButton,
             ),
           });
         }
@@ -86,7 +89,9 @@ test('every CRM form follows semantic controls, notes, widths and commercial def
       if (field.required && field.requiredWhen)
         assert.ok(field.requiredWhen({ values: {} }), context);
       // Form Field Layout Baseline (app.md): single-line controls take one column.
-      if (field.source?.endsWith('Name')) assert.equal(field.span ?? 1, 1, context);
+      if (field.source?.endsWith('Name') && !field.wideField) {
+        assert.equal(field.span ?? 1, 1, context);
+      }
       if (field.source?.endsWith('Notes')) {
         assert.equal(field.key, 'notes', context);
         assert.equal(field.tab, 'notes', context);
