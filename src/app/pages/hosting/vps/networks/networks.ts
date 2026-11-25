@@ -343,7 +343,36 @@ export class HostingVpsNetworksPage extends ConfigurableCrudPageBase<Configurabl
             { id: 'nic', label: 'NIC', field: 'HinNicIndex', kind: 'number' },
             { id: 'privateIp', label: 'Private IP', field: 'HinPrivateIp' },
             { id: 'attachment', label: 'Situation', field: 'HinStatus' },
+            {
+              id: 'sourceDestCheck',
+              label: 'Source/Dest Check',
+              value: (row, translate) =>
+                Number(row['HinSourceDestCheck'] ?? 1) === 1
+                  ? translate('Active')
+                  : translate('Appliance (Off)'),
+            },
             { id: 'lastError', label: 'Last error', field: 'HinLastError' },
+          ],
+          rowActions: [
+            {
+              key: 'toggleSourceDestCheck',
+              label: 'Source/Dest Check',
+              icon: 'shield',
+              request: {
+                method: 'put',
+                endpoint: (row) =>
+                  `${this.networkEndpoint()}/${row['HostingVpsNetworkHvnUUID']}/instances/${row['HinUUID']}/source-dest-check`,
+                body: (row) => ({
+                  sourceDestCheck: Number(row['HinSourceDestCheck'] ?? 1) === 1 ? 0 : 1,
+                }),
+                successMessage: 'Source/destination check updated.',
+                confirm: {
+                  title: 'Source/destination check',
+                  message:
+                    'Toggle source/destination check on this NIC (Active = anti-spoofing; Appliance = routing enabled)?',
+                },
+              },
+            },
           ],
         },
       ],

@@ -16151,5 +16151,10 @@
   "Framed-IPv6-Prefix": "Framed-IPv6-Prefix",
   "Prefixo IPv6 atribuído ao assinante": "Prefijo IPv6 asignado al suscriptor",
   "Delegated-IPv6-Prefix": "Delegated-IPv6-Prefix",
-  "Prefixo IPv6 delegado para a rede local (PD)": "Prefijo IPv6 delegado para la red local (PD)"
+  "Prefixo IPv6 delegado para a rede local (PD)": "Prefijo IPv6 delegado para la red local (PD)",
+  "Source/Dest Check": "Verificación de origen/destino",
+  "VPS instance (appliance / firewall)": "Instancia VPS (appliance / firewall)",
+  "Target instance": "Instancia de destino",
+  "Tenant VPS appliance instance in this router zone.": "Instancia VPS appliance en esta zona del enrutador.",
+  "Target details": "Detalles del destino"
 }

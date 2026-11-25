@@ -18,6 +18,7 @@ const POLICY_OPTIONS: readonly ConfigurableCrudOption[] = [
 const TARGET_OPTIONS: readonly ConfigurableCrudOption[] = [
   { value: 'internet', label: 'Internet (shared exit)' },
   { value: 'nat', label: 'Internet through a public IP of the router' },
+  { value: 'instance', label: 'VPS instance (appliance / firewall)' },
   { value: 'blackhole', label: 'Block (discard)' },
 ];
 
@@ -33,6 +34,7 @@ const ROUTER_STATE_OPTIONS: readonly ConfigurableCrudOption[] = [
 function routesOf(
   table: ConfigurableCrudRecord,
   routerIps: readonly ConfigurableCrudOption[],
+  instanceOptions: readonly ConfigurableCrudOption[] = [],
 ): ConfigurableCrudConfig {
   return defineCrud({
     endpoint: `hosting/vps/router/route-tables/${String(table['HrtUUID'] ?? '')}/routes`,
@@ -54,7 +56,14 @@ function routesOf(
     deleteFailedMessage: 'Failed to delete route.',
     bulkDelete: false,
     statusFilter: false,
-    initialValues: { destination: '', targetKind: 'internet', publicIpUUID: '', description: '' },
+    initialValues: { destination: '', targetKind: 'internet', publicIpUUID: '', instanceUUID: '', description: '' },
+    payload: (values) => ({
+      destination: String(values['destination'] ?? '').trim(),
+      targetKind: values['targetKind'],
+      publicIpUUID: values['targetKind'] === 'nat' ? values['publicIpUUID'] || null : null,
+      instanceUUID: values['targetKind'] === 'instance' ? values['instanceUUID'] || null : null,
+      description: String(values['description'] ?? '').trim() || null,
+    }),
     fields: [
       {
         key: 'destination',
@@ -89,6 +98,18 @@ function routesOf(
         help: 'Public IP used by the router. Use one on the router in Public IPs first.',
       },
       {
+        key: 'instanceUUID',
+        source: 'HostingVpsInstanceHviUUID',
+        payloadKey: 'instanceUUID',
+        label: 'Target instance',
+        type: 'select',
+        options: instanceOptions,
+        span: 1,
+        hiddenWhen: ({ values }) => values['targetKind'] !== 'instance',
+        requiredWhen: ({ values }) => values['targetKind'] === 'instance',
+        help: 'Tenant VPS appliance instance in this router zone.',
+      },
+      {
         key: 'description',
         source: 'HroDescription',
         payloadKey: 'description',
@@ -112,7 +133,14 @@ function routesOf(
         field: 'HroTargetKind',
         options: TARGET_OPTIONS,
       },
-      { id: 'publicIp', label: 'Public IP', field: 'HpiAddress' },
+      {
+        id: 'targetDetails',
+        label: 'Target details',
+        value: (row) =>
+          row['HroTargetKind'] === 'instance'
+            ? (row['InstanceName'] ? `${row['InstanceName']} (${row['InstancePrivateIp'] ?? ''})` : String(row['HostingVpsInstanceHviUUID'] ?? ''))
+            : (row['HpiAddress'] ? String(row['HpiAddress']) : ''),
+      },
       { id: 'description', label: 'Description', field: 'HroDescription' },
     ],
   });
@@ -206,6 +234,7 @@ const config = defineCrud({
 export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<ConfigurableCrudRecord> {
   private readonly routerIps = signal<ConfigurableCrudRecord[]>([]);
   private readonly routers = signal<ConfigurableCrudRecord[]>([]);
+  private readonly instances = signal<ConfigurableCrudRecord[]>([]);
 
   constructor() {
     super({
@@ -231,7 +260,7 @@ export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<Configur
           label: 'Routes',
           icon: 'alt_route',
           tooltip: 'Routes of this table',
-          collection: (row) => routesOf(row, this.ipOptionsOf(row)),
+          collection: (row) => routesOf(row, this.ipOptionsOf(row), this.instanceOptionsOf(row)),
         } satisfies ConfigurableCrudRowAction,
       ],
     });
@@ -243,6 +272,22 @@ export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<Configur
     return this.routerIps()
       .filter((ip) => String(ip['HostingVpsTenantZoneHtzUUID'] ?? '') === zone)
       .map((ip) => ({ value: String(ip['HpiUUID']), label: String(ip['HpiAddress']) }));
+  }
+
+  private instanceOptionsOf(table: ConfigurableCrudRecord): ConfigurableCrudOption[] {
+    const zone = String(table['HostingVpsTenantZoneHtzUUID'] ?? '');
+    return this.instances()
+      .filter(
+        (inst) =>
+          !zone ||
+          String(inst['HostingVpsTenantZoneHtzUUID'] ?? '') === zone ||
+          String(inst['HtzUUID'] ?? '') === zone ||
+          String(inst['ZoneUUID'] ?? '') === zone,
+      )
+      .map((inst) => ({
+        value: String(inst['HviUUID']),
+        label: `${inst['HviName']} (${inst['HinPrivateIp'] || inst['HviIp'] || 'Appliance'})`,
+      }));
   }
 
   protected override lookupOptions(key: string): readonly ConfigurableCrudOption[] {
@@ -270,13 +315,15 @@ export class HostingVpsRouteTablesPage extends ConfigurableCrudPageBase<Configur
   }
 
   private async fetchRouterIps() {
-    const [response, routers] = await Promise.all([
+    const [response, routers, instances] = await Promise.all([
       this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>(
         'hosting/vps/public-ips?status=allocated&limit=500',
       ),
       this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>('hosting/vps/networks/routers'),
+      this.api.get<{ data?: { items?: ConfigurableCrudRecord[] } }>('hosting/vps/instances?limit=500'),
     ]);
     this.routers.set(routers?.data?.items ?? []);
+    this.instances.set(instances?.data?.items ?? []);
     this.routerIps.set(
       (response?.data?.items ?? []).filter(
         (ip) => !!ip['HostingVpsTenantZoneHtzUUID'] && ip['HpiNetworkState'] !== 'removing',
