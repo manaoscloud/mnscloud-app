@@ -160,6 +160,43 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       span: 1,
     },
     {
+      key: 'priceAudience',
+      source: 'BpcConfigJson',
+      label: 'billing.priceAudience',
+      type: 'select',
+      tab: 'record',
+      span: 1,
+      options: [
+        { value: 'all', label: 'billing.allTenants' },
+        { value: 'selected', label: 'billing.selectedTenants' },
+      ],
+      fromRecord: (value) =>
+        Object.hasOwn(priceConfig(value), 'allowedTenantUUIDs') ? 'selected' : 'all',
+      help: 'billing.priceAudienceHelp',
+    },
+    // wide-field: Record tab layout decided by user (2026-11-25): Status (1) + Price audience (1) + Allowed tenants (2) on line 1.
+    {
+      key: 'allowedTenantUUIDs',
+      source: 'BpcConfigJson',
+      label: 'billing.allowedTenants',
+      type: 'search-select',
+      multiple: true,
+      tab: 'record',
+      span: 2,
+      wideField: true,
+      remoteLookup: {
+        endpoint: 'system/billing/tenants',
+        uuidField: 'EnvironmentUUID',
+        labelField: 'EnvironmentName',
+        descriptionField: 'TenantEmail',
+      },
+      quickCreate: false,
+      quickCreateExemptReason:
+        'Existing tenants only; tenant identities are created through onboarding.',
+      hiddenWhen: ({ values }) => values['priceAudience'] !== 'selected',
+      fromRecord: (value) => priceConfig(value)['allowedTenantUUIDs'] ?? [],
+    },
+    {
       key: 'offerType',
       source: 'OfferType',
       label: 'Offer type',
@@ -170,8 +207,11 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       ],
       required: true,
       disabledWhen: ({ editing }) => editing,
+      tab: 'record',
       span: 1,
+      breakBefore: true,
     },
+    // wide-field: Record tab layout decided by user (2026-11-25): Offer type (1) + Product/Package (2) + Billing mode (1) on line 2.
     {
       key: 'productUUID',
       source: 'BillingProductBprUUID',
@@ -187,8 +227,10 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
         labelField: 'BprName',
       },
       tab: 'record',
-      span: 1,
+      span: 2,
+      wideField: true,
     },
+    // wide-field: Record tab layout decided by user (2026-11-25): Offer type (1) + Product/Package (2) + Billing mode (1) on line 2.
     {
       key: 'packageUUID',
       source: 'BillingPackageBpaUUID',
@@ -204,7 +246,8 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
         labelField: 'BpaName',
       },
       tab: 'record',
-      span: 1,
+      span: 2,
+      wideField: true,
     },
     {
       key: 'billingMode',
@@ -225,6 +268,7 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       required: true,
       tab: 'record',
       span: 1,
+      breakBefore: true,
     },
     {
       key: 'unitCode',
@@ -282,39 +326,6 @@ const PRICE_CONFIG: ConfigurableCrudConfig = {
       help: 'Lowest amount billed each cycle: the charge is the greater of unit price x quantity and this value. Use 0 for no minimum. It is not a loyalty period.',
       tab: 'financial',
       span: 1,
-    },
-    {
-      key: 'priceAudience',
-      source: 'BpcConfigJson',
-      label: 'billing.priceAudience',
-      type: 'select',
-      span: 1,
-      options: [
-        { value: 'all', label: 'billing.allTenants' },
-        { value: 'selected', label: 'billing.selectedTenants' },
-      ],
-      fromRecord: (value) =>
-        Object.hasOwn(priceConfig(value), 'allowedTenantUUIDs') ? 'selected' : 'all',
-      help: 'billing.priceAudienceHelp',
-    },
-    {
-      key: 'allowedTenantUUIDs',
-      source: 'BpcConfigJson',
-      label: 'billing.allowedTenants',
-      type: 'search-select',
-      multiple: true,
-      span: 1,
-      remoteLookup: {
-        endpoint: 'system/billing/tenants',
-        uuidField: 'EnvironmentUUID',
-        labelField: 'EnvironmentName',
-        descriptionField: 'TenantEmail',
-      },
-      quickCreate: false,
-      quickCreateExemptReason:
-        'Existing tenants only; tenant identities are created through onboarding.',
-      hiddenWhen: ({ values }) => values['priceAudience'] !== 'selected',
-      fromRecord: (value) => priceConfig(value)['allowedTenantUUIDs'] ?? [],
     },
     {
       key: 'config',
