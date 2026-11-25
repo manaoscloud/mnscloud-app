@@ -219,6 +219,23 @@ export function subscriptionRowActions(canTrustUnlock: () => boolean): Configura
       },
     },
     {
+      key: 'diagnose',
+      label: 'Diagnóstico de conexão',
+      icon: 'network_check',
+      visible: (row) => ['active', 'suspended'].includes(statusOf(row)),
+      request: {
+        method: 'post',
+        endpoint: (row) => `isp/subscriptions/${uuidOf(row)}/diagnose`,
+        body: () => ({}),
+        successMessage: 'Diagnóstico de conexão executado com sucesso.',
+        confirm: {
+          title: 'Diagnóstico de conexão',
+          message: 'Executar diagnóstico automatizado de conectividade, sinal e bloqueios?',
+          confirmLabel: 'Diagnosticar',
+        },
+      },
+    },
+    {
       key: 'cancel',
       label: 'Cancel subscription',
       icon: 'block',
