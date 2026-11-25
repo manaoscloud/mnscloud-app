@@ -180,7 +180,7 @@ export class IspAnatelPage {
   readonly loading = computed(() => this.exporting() || this.summaryResource.isLoading());
 
   readonly anatelTable = defineGlobalTable({
-    key: 'isp/anatel/breakdown',
+    ['key']: 'isp/anatel/breakdown',
     uuidField: 'CodigoMunicipio',
     emptyLabel: 'isp.anatel.noData',
     columns: [
