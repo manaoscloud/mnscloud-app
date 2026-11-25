@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "40d27841f3f9",
+  "version": "bf08c2eab17a",
   "language": "pt-BR",
   "entries": [
     {
@@ -3871,6 +3871,10 @@
         {
           "label": "IP público",
           "help": "IP público usado pelo roteador. Use um no roteador em IPs públicos primeiro."
+        },
+        {
+          "label": "Instância de destino",
+          "help": "Instância VPS appliance nesta zona do roteador."
         },
         {
           "label": "Descrição",
