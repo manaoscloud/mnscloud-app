@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a1ec018174c2",
+  "version": "e26fb144dfcc",
   "language": "pt-BR",
   "entries": [
     {
@@ -1334,15 +1334,15 @@
           "help": ""
         },
         {
+          "label": "Responsável",
+          "help": ""
+        },
+        {
           "label": "Tipo",
           "help": ""
         },
         {
           "label": "Documento",
-          "help": ""
-        },
-        {
-          "label": "Responsável",
           "help": ""
         },
         {
