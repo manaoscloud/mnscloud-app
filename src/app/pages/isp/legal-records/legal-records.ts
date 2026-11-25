@@ -58,6 +58,7 @@ export interface LegalRecordQueryResult {
 }
 
 export interface LegalRecordAuditItem {
+  [key: string]: unknown;
   IlaUUID: string;
   IlaUserUUID: string;
   IlaQueriedAt: string;

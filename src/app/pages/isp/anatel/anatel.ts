@@ -17,6 +17,7 @@ import {
 } from '../../../shared/crud/configurable-crud/global-table';
 
 export interface AnatelReportItem {
+  [key: string]: unknown;
   CodigoMunicipio: string;
   TipoPessoa: 'F' | 'J';
   Tecnologia: string;
@@ -165,10 +166,10 @@ export class IspAnatelPage {
   readonly selectedMonth = signal(new Date().getMonth() + 1);
 
   readonly summaryResource = resource({
-    request: () => ({ year: this.selectedYear(), month: this.selectedMonth() }),
-    loader: async ({ request }) => {
+    params: () => ({ year: this.selectedYear(), month: this.selectedMonth() }),
+    loader: async ({ params }) => {
       const res = await this.api.get<{ status: string; data: AnatelSummaryData }>(
-        `isp/anatel/summary?year=${request.year}&month=${request.month}`,
+        `isp/anatel/summary?year=${params.year}&month=${params.month}`,
       );
       return res.data;
     },
