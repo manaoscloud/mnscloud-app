@@ -1926,6 +1926,25 @@ export const routes: Routes = [
                   ),
                 title: 'ISP • Fixed IPv6 | mnscloud',
               },
+              {
+                path: 'isp/cgnat',
+                loadComponent: () => import('./pages/isp/cgnat/cgnat').then((m) => m.IspCgnatPage),
+                title: 'ISP • CGNAT | mnscloud',
+              },
+              {
+                path: 'isp/legal-records',
+                loadComponent: () =>
+                  import('./pages/isp/legal-records/legal-records').then(
+                    (m) => m.IspLegalRecordsPage,
+                  ),
+                title: 'ISP • Legal Records | mnscloud',
+              },
+              {
+                path: 'isp/anatel',
+                loadComponent: () =>
+                  import('./pages/isp/anatel/anatel').then((m) => m.IspAnatelPage),
+                title: 'ISP • Anatel SCM | mnscloud',
+              },
               // InfraGIS
               {
                 path: 'infragis/accounts',
