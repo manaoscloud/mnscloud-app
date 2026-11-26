@@ -6,33 +6,38 @@ import {
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 
-export const STOCK_SERIAL_UNIT_STATES = [
-  { value: 'in_stock', label: 'In stock' },
-  { value: 'reserved', label: 'Reserved' },
-  { value: 'installed', label: 'Installed' },
-  { value: 'faulty', label: 'Faulty' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'returned', label: 'Returned' },
-  { value: 'disposed', label: 'Disposed' },
-];
+const STATES_MAP: Record<string, string> = {
+  in_stock: 'In stock',
+  reserved: 'Reserved',
+  installed: 'Installed',
+  faulty: 'Faulty',
+  maintenance: 'Maintenance',
+  returned: 'Returned',
+  disposed: 'Disposed',
+};
+
+export const STOCK_SERIAL_UNIT_STATES = Object.entries(STATES_MAP).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 const config = defineCrud({
-  endpoint: 'stock/serial-units',
-  uuidField: 'SsuUUID',
+  serverSidePagination: true,
   pageTitle: 'Serialized stock & Comodato',
+  endpoint: 'stock/serial-units',
+  bulkDelete: false,
+  createTitle: 'New serialized unit',
+  uuidField: 'SsuUUID',
+  editTitle: 'Edit serialized unit',
   pageDescription:
     'Track individualized serial units (ONUs, routers, CPEs), comodato assignments, and field status.',
-  createTitle: 'New serialized unit',
-  editTitle: 'Edit serialized unit',
-  bulkDelete: false,
-  serverSidePagination: true,
   initialValues: {
+    state: 'in_stock',
+    comodato: 1,
     status: 1,
     serialNumber: '',
     macAddress: '',
     gponSerialNumber: '',
-    state: 'in_stock',
-    comodato: 1,
     saleProductUUID: '',
     stockLocationUUID: '',
     notes: '',
