@@ -32,7 +32,6 @@ const config = defineCrud({
       span: 1,
       required: true,
       type: 'status',
-      tab: 'record',
     },
     crmWorkspaceField,
     {
@@ -43,7 +42,6 @@ const config = defineCrud({
       required: true,
       type: 'text',
       breakBefore: true,
-      tab: 'record',
     },
     {
       key: 'CprAmount',
@@ -53,7 +51,6 @@ const config = defineCrud({
       required: true,
       type: 'currency',
       currencyKey: 'CprCurrency',
-      tab: 'record',
     },
     {
       key: 'CprCurrency',
@@ -62,7 +59,6 @@ const config = defineCrud({
       span: 1,
       required: false,
       type: 'text',
-      tab: 'record',
     },
     {
       key: 'CprPeriod',
@@ -73,7 +69,6 @@ const config = defineCrud({
       type: 'select',
       translateOptions: true,
       options: CRM_OPTIONS.productPeriods,
-      tab: 'record',
     },
     {
       key: 'CprDescription',
@@ -84,7 +79,6 @@ const config = defineCrud({
       type: 'textarea',
       rows: 4,
       breakBefore: true,
-      tab: 'record',
     },
     { key: 'CprRevision', source: 'CprRevision', label: 'crm.field.Revision', hidden: true },
   ],
