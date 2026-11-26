@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "a36804c447d5",
+  "version": "58d8aa0823f5",
   "language": "pt-BR",
   "entries": [
     {
@@ -8159,6 +8159,51 @@
         },
         {
           "label": "Chave de idempotência",
+          "help": ""
+        }
+      ]
+    },
+    {
+      "route": "/stock/serial-units",
+      "menuPath": "Estoque › Unidades serializadas",
+      "scope": "tenant",
+      "title": "Serialized stock & Comodato",
+      "description": "Controle unidades serializadas individualizadas (ONUs, roteadores, CPEs), vínculos de comodato e status em campo.",
+      "fields": [
+        {
+          "label": "Status",
+          "help": ""
+        },
+        {
+          "label": "Serial number",
+          "help": ""
+        },
+        {
+          "label": "MAC address",
+          "help": ""
+        },
+        {
+          "label": "GPON SN",
+          "help": ""
+        },
+        {
+          "label": "Estado",
+          "help": ""
+        },
+        {
+          "label": "Comodato",
+          "help": ""
+        },
+        {
+          "label": "Catalog product",
+          "help": ""
+        },
+        {
+          "label": "Local de estoque",
+          "help": ""
+        },
+        {
+          "label": "Anotações",
           "help": ""
         }
       ]

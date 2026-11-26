@@ -1547,6 +1547,12 @@ export const routes: Routes = [
                   import('./pages/stock/transfers').then((m) => m.StockTransfersPage),
                 title: 'Stock • Transfers | mnscloud',
               },
+              {
+                path: 'stock/serial-units',
+                loadComponent: () =>
+                  import('./pages/stock/serial-units').then((m) => m.StockSerialUnitsPage),
+                title: 'Stock • Serialized Units | mnscloud',
+              },
 
               // Accounting
               {
