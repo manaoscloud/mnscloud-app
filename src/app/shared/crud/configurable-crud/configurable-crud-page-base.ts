@@ -4049,25 +4049,43 @@ export abstract class ConfigurableCrudPageBase<T extends ConfigurableCrudRecord>
     filter: ConfigurableCrudListFilter,
     filterVal: unknown,
   ): boolean {
-    const target = String(filterVal ?? '');
+    const target = String(filterVal ?? '').trim();
     if (!target) return true;
     if (filter.match) return filter.match(row, filterVal as string | number | boolean);
 
-    if (String(row[filter.key] ?? '') === target) return true;
-    if (filter.paramKey && String(row[filter.paramKey] ?? '') === target) return true;
+    const matchesValue = (actual: unknown): boolean => {
+      if (actual === null || actual === undefined) return false;
+      const str = String(actual).trim();
+      if (!str) return false;
+      if (str === target || str.toLowerCase() === target.toLowerCase()) return true;
+      const cleanStr = str.replace(/-/g, '').toLowerCase();
+      const cleanTarget = target.replace(/-/g, '').toLowerCase();
+      return cleanStr === cleanTarget;
+    };
+
+    const filterKeys = [filter.key, filter.paramKey].filter((k): k is string => Boolean(k));
+
+    for (const key of filterKeys) {
+      if (matchesValue(row[key])) return true;
+    }
 
     const mappedField = this.config.fields.find(
-      (f) => f.key === filter.key || f.payloadKey === filter.key,
+      (f) =>
+        filterKeys.includes(f.key) ||
+        (f.payloadKey && filterKeys.includes(f.payloadKey)),
     );
-    if (mappedField?.source && String(row[mappedField.source] ?? '') === target) return true;
+    if (mappedField?.source && matchesValue(row[mappedField.source])) return true;
 
     const matchedCol = this.columns().find(
       (c) =>
-        c.uuidField === filter.key ||
-        c.field === filter.key ||
+        (c.uuidField && filterKeys.includes(c.uuidField)) ||
+        (c.field && filterKeys.includes(c.field)) ||
+        (c.id && filterKeys.includes(c.id)) ||
+        (c.lookupKey && filterKeys.includes(c.lookupKey)) ||
         (mappedField?.source && c.uuidField === mappedField.source),
     );
-    if (matchedCol?.uuidField && String(row[matchedCol.uuidField] ?? '') === target) return true;
+    if (matchedCol?.uuidField && matchesValue(row[matchedCol.uuidField])) return true;
+    if (matchedCol?.field && matchesValue(row[matchedCol.field])) return true;
 
     return false;
   }

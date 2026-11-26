@@ -616,7 +616,7 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
   }
 
   protected override lookupLabel(key: string, value: unknown): string {
-    if (key === 'providerUUID') {
+    if (key === 'providerUUID' || key === 'providerFilter') {
       const option = this.providerFilterOptions().find(
         (item) => String(item.value ?? '') === String(value ?? ''),
       );
@@ -653,13 +653,16 @@ export class HostingVpsContainerPlansPage extends ConfigurableCrudPageBase<Confi
     }));
 
     if (!providerUUID) return parsed;
+    const targetClean = providerUUID.replace(/-/g, '').toLowerCase();
     return parsed.filter((item) => {
-      const itemProviderUUID = String(item['HostingVpsContainerProviderHcpUUID'] ?? '');
+      const itemProviderUUID = String(item['HostingVpsContainerProviderHcpUUID'] ?? '')
+        .replace(/-/g, '')
+        .toLowerCase();
       const itemProvider = String(item['HcnProvider'] ?? '') as VpsContainerProvider;
-      return (
-        itemProviderUUID === providerUUID ||
-        this.resolveProviderUUIDForProvider(itemProvider) === providerUUID
-      );
+      const resolvedUUID = this.resolveProviderUUIDForProvider(itemProvider)
+        .replace(/-/g, '')
+        .toLowerCase();
+      return itemProviderUUID === targetClean || (resolvedUUID ? resolvedUUID === targetClean : false);
     });
   }
 
