@@ -1865,3 +1865,24 @@ $mns-select-card: '.cdk-overlay-pane .mns-search-select-panel .mat-mdc-option:no
   padding: 0.65rem 0 0.75rem;
   overscroll-behavior: contain;
 }
+
+/* =========================================================
+   TOAST & OVERLAY STACKING (ALWAYS ON TOP)
+   Ensure toast container and alerts always stack above
+   dialogs, drawers, backdrops, and other full-screen layers.
+========================================================= */
+
+mns-toast-container {
+  position: fixed !important;
+  z-index: 100000 !important;
+  pointer-events: none !important;
+}
+
+mns-toast-container:popover-open {
+  z-index: 100000 !important;
+}
+
+.cdk-global-overlay-wrapper:has(.mat-mdc-snack-bar-container) {
+  z-index: 100000 !important;
+}
+
