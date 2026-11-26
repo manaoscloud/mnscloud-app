@@ -174,4 +174,36 @@ describe('ToastContainer', () => {
     container.dispatchEvent(new MouseEvent('mouseleave'));
     expect(snackbarMock.resume).toHaveBeenCalled();
   });
+
+  it('brings container to front (attaches to document.body) when toasts are active and restores when cleared', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    parent.appendChild(host);
+
+    toastsSignal.set([
+      {
+        id: 't-front',
+        type: 'info',
+        message: 'Front toast',
+        duration: 3000,
+        count: 1,
+        dismissing: false,
+        createdAt: Date.now(),
+        remainingTime: 3000,
+      },
+    ]);
+    fixture.detectChanges();
+
+    expect(host.parentElement).toBe(document.body);
+    if (typeof host.showPopover === 'function') {
+      expect(host.getAttribute('popover')).toBe('manual');
+    }
+
+    toastsSignal.set([]);
+    fixture.detectChanges();
+
+    expect(host.parentElement).toBe(parent);
+    parent.remove();
+  });
 });

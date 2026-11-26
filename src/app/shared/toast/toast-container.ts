@@ -1,5 +1,13 @@
-import { Component, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  computed,
+  inject,
+  ElementRef,
+  PLATFORM_ID,
+  DestroyRef,
+  effect,
+} from '@angular/core';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { SnackbarService } from '../../services/snackbar.service';
 import { AppI18nService } from '../../services/app-i18n.service';
@@ -75,13 +83,48 @@ import { AppI18nService } from '../../services/app-i18n.service';
   `,
   styles: [
     `
+      :host {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        overflow: visible;
+        z-index: 100000 !important;
+        pointer-events: none;
+      }
+
+      :host[popover],
+      :host:popover-open {
+        display: block;
+        position: fixed;
+        inset: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        overflow: visible;
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        outline: none;
+        pointer-events: none;
+        z-index: 100000 !important;
+      }
+
+      :host::backdrop {
+        display: none !important;
+      }
+
       .mns-toast-container {
         position: fixed;
         bottom: 24px;
         left: 50%;
         transform: translateX(-50%);
         width: min(520px, calc(100vw - 32px));
-        z-index: 10000;
+        z-index: 100000 !important;
         display: flex;
         flex-direction: column-reverse;
         align-items: stretch;
@@ -312,10 +355,130 @@ import { AppI18nService } from '../../services/app-i18n.service';
 export class ToastContainer {
   private readonly snackbar = inject(SnackbarService);
   private readonly i18n = inject(AppI18nService);
+  private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly toasts = this.snackbar.toasts;
   readonly isPaused = this.snackbar.isPaused;
   readonly closeLabel = computed(() => this.i18n.t('snackbar.close'));
+
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private originalParent: HTMLElement | null = null;
+  private observer: MutationObserver | null = null;
+
+  constructor() {
+    effect(() => {
+      const hasToasts = this.toasts().length > 0;
+      if (hasToasts) {
+        this.bringToFront();
+      } else {
+        this.restorePosition();
+      }
+    });
+
+    if (this.isBrowser && typeof MutationObserver !== 'undefined' && this.document?.body) {
+      this.setupOverlayObserver();
+    }
+
+    this.destroyRef.onDestroy(() => {
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      }
+      this.restorePosition(true);
+    });
+  }
+
+  private setupOverlayObserver() {
+    const host = this.elementRef.nativeElement;
+    this.observer = new MutationObserver((mutations) => {
+      if (this.toasts().length === 0) return;
+      let needsReElevation = false;
+
+      for (const mutation of mutations) {
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node === host || host.contains(node)) continue;
+
+          if (node instanceof HTMLElement) {
+            if (
+              node.classList.contains('cdk-overlay-container') ||
+              node.classList.contains('cdk-overlay-pane') ||
+              node.classList.contains('cdk-global-overlay-wrapper') ||
+              node.classList.contains('cdk-overlay-backdrop') ||
+              node.tagName.toLowerCase().includes('dialog')
+            ) {
+              needsReElevation = true;
+              break;
+            }
+          }
+        }
+        if (needsReElevation) break;
+      }
+
+      if (needsReElevation) {
+        this.bringToFront();
+      }
+    });
+
+    this.observer.observe(this.document.body, { childList: true, subtree: true });
+  }
+
+  bringToFront() {
+    if (!this.isBrowser || !this.document?.body) return;
+    const host = this.elementRef.nativeElement;
+    if (!host) return;
+
+    if (host.parentElement && host.parentElement !== this.document.body && !this.originalParent) {
+      this.originalParent = host.parentElement;
+    }
+
+    if (host.parentElement !== this.document.body) {
+      this.document.body.appendChild(host);
+    } else if (this.document.body.lastElementChild !== host) {
+      this.document.body.appendChild(host);
+    }
+
+    if (typeof host.showPopover === 'function') {
+      try {
+        if (!host.hasAttribute('popover')) {
+          host.setAttribute('popover', 'manual');
+        }
+        try {
+          host.showPopover();
+        } catch {
+          try {
+            host.hidePopover();
+          } catch {}
+          host.showPopover();
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    }
+  }
+
+  restorePosition(isDestroying = false) {
+    if (!this.isBrowser || !this.document?.body) return;
+    const host = this.elementRef.nativeElement;
+    if (!host) return;
+
+    if (typeof host.hidePopover === 'function') {
+      try {
+        host.hidePopover();
+      } catch {}
+    }
+
+    if (this.originalParent && host.parentElement === this.document.body) {
+      try {
+        this.originalParent.appendChild(host);
+      } catch {}
+    } else if (isDestroying && host.parentElement === this.document.body) {
+      host.remove();
+    }
+  }
 
   onMouseEnter() {
     this.snackbar.pause();
