@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "e26fb144dfcc",
+  "version": "a36804c447d5",
   "language": "pt-BR",
   "entries": [
     {
@@ -1771,11 +1771,7 @@
           "help": ""
         },
         {
-          "label": "Periodicidade",
-          "help": ""
-        },
-        {
-          "label": "Moeda",
+          "label": "Nome",
           "help": ""
         },
         {
@@ -1783,7 +1779,11 @@
           "help": ""
         },
         {
-          "label": "Nome",
+          "label": "Moeda",
+          "help": ""
+        },
+        {
+          "label": "Periodicidade",
           "help": ""
         },
         {
