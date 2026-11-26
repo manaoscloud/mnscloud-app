@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "58d8aa0823f5",
+  "version": "6129f28bed71",
   "language": "pt-BR",
   "entries": [
     {
@@ -8167,7 +8167,7 @@
       "route": "/stock/serial-units",
       "menuPath": "Estoque › Unidades serializadas",
       "scope": "tenant",
-      "title": "Serialized stock & Comodato",
+      "title": "Estoque serializado e Comodato",
       "description": "Controle unidades serializadas individualizadas (ONUs, roteadores, CPEs), vínculos de comodato e status em campo.",
       "fields": [
         {
@@ -8175,11 +8175,11 @@
           "help": ""
         },
         {
-          "label": "Serial number",
+          "label": "Número de série",
           "help": ""
         },
         {
-          "label": "MAC address",
+          "label": "Endereço MAC",
           "help": ""
         },
         {
@@ -8195,7 +8195,7 @@
           "help": ""
         },
         {
-          "label": "Catalog product",
+          "label": "Produto do catálogo",
           "help": ""
         },
         {
