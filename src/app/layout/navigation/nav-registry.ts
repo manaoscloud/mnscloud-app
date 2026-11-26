@@ -1003,6 +1003,12 @@ export const NAV_ITEMS: NavItem[] = [
         icon: 'local_shipping',
         route: '/stock/transfers',
       },
+      {
+        id: 'stock/serial-units',
+        label: 'nav.stock.serial-units',
+        icon: 'devices',
+        route: '/stock/serial-units',
+      },
     ],
   },
   // Human resources: the Pulse time clock (timesheets, schedules, holidays, policies, accounts)

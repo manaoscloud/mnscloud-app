@@ -15,6 +15,9 @@ export const WORK_ORDER_KINDS = [
   { value: 'MAINTENANCE', label: 'Maintenance' },
   { value: 'INSPECTION', label: 'Inspection' },
   { value: 'REPLACEMENT', label: 'Replacement' },
+  { value: 'ADDRESS_CHANGE', label: 'Address Change' },
+  { value: 'EQUIPMENT_SWAP', label: 'Equipment Swap' },
+  { value: 'REMOVAL', label: 'Removal' },
   { value: 'OTHER', label: 'Other' },
 ];
 export const WORK_ORDER_STATUSES = [
