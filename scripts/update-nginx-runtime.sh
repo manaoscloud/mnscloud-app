@@ -65,7 +65,13 @@ cd "$REPO_ROOT"
 git fetch --no-tags origin "+refs/tags/${REF}:refs/tags/${REF}" ||
   die "release ref not found on origin: ${REF}"
 
+# The Agent checks out the target before calling this script and passes the commit that was
+# running (mnscloud-agent >= 1.0.194); a manual run records HEAD itself.
 PREVIOUS_COMMIT="$(git rev-parse HEAD)"
+if [[ "${MNSCLOUD_APP_PREVIOUS_COMMIT:-}" =~ ^[0-9a-f]{40}$ ]] &&
+  git cat-file -e "${MNSCLOUD_APP_PREVIOUS_COMMIT}^{commit}" 2>/dev/null; then
+  PREVIOUS_COMMIT="$MNSCLOUD_APP_PREVIOUS_COMMIT"
+fi
 TARGET_COMMIT="$(resolve_git_ref "$REF" || true)"
 if [[ -z "$TARGET_COMMIT" ]]; then
   recent_tags="$(git tag --sort=-creatordate | head -10 | tr '\n' ' ' | sed 's/[[:space:]]*$//')"
