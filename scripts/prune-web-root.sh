@@ -9,7 +9,11 @@
 #
 # Usage:
 #   prune-web-root.sh --web-root DIR --state-dir DIR [--record RELEASE --files-from LIST]
-#                     [--keep N] [--grace-hours H] [--dry-run]
+#                     [--live-release RELEASE] [--keep N] [--grace-hours H] [--dry-run]
+#
+# Lists are ordered by a deploy sequence number, never by the clock. --live-release names the release
+# that served before this deploy (it stays kept; when it has no list, nothing is removed this run, so
+# a rollback to a release recorded before retention existed never loses its files).
 #
 # Prints one JSON summary line on stdout.
 set -Eeuo pipefail
@@ -18,6 +22,7 @@ WEB_ROOT=""
 STATE_DIR=""
 RECORD_ID=""
 FILES_FROM=""
+LIVE_ID=""
 KEEP="${APP_KEEP_RELEASES:-5}"
 GRACE_HOURS="${APP_ASSET_GRACE_HOURS:-48}"
 DRY_RUN=0
@@ -34,6 +39,7 @@ while [[ $# -gt 0 ]]; do
     --state-dir) STATE_DIR="${2:-}"; shift 2 ;;
     --record) RECORD_ID="${2:-}"; shift 2 ;;
     --files-from) FILES_FROM="${2:-}"; shift 2 ;;
+    --live-release) LIVE_ID="${2:-}"; shift 2 ;;
     --keep) KEEP="${2:-}"; shift 2 ;;
     --grace-hours) GRACE_HOURS="${2:-}"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
@@ -41,7 +47,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ "$KEEP" =~ ^[1-9][0-9]*$ ]] || die "--keep must be a positive integer"
+[[ "$KEEP" =~ ^[0-9]+$ && "$KEEP" -ge 2 ]] || die "--keep must be an integer >= 2"
 [[ "$GRACE_HOURS" =~ ^[0-9]+$ ]] || die "--grace-hours must be a non-negative integer"
 [[ "$NOW" =~ ^[0-9]+$ ]] || die "invalid clock"
 [[ "$WEB_ROOT" == /* && "$STATE_DIR" == /* ]] || die "--web-root and --state-dir must be absolute"
@@ -53,6 +59,8 @@ if [[ -n "$RECORD_ID" || -n "$FILES_FROM" ]]; then
   [[ -f "$FILES_FROM" ]] || die "release file list not found: ${FILES_FROM:-empty}"
   grep -qx 'index.html' "$FILES_FROM" || die "release file list has no index.html"
 fi
+ID_PATTERN='^[0-9A-Za-z][0-9A-Za-z.+_-]*$'
+[[ -z "$LIVE_ID" || "$LIVE_ID" =~ $ID_PATTERN ]] || die "invalid live release id: ${LIVE_ID}"
 
 install -d -m 0755 "$STATE_DIR"
 STATE_DIR="$(realpath -e "$STATE_DIR")"
@@ -65,19 +73,39 @@ grace_seconds=$((GRACE_HOURS * 3600))
 since="$(tr -dc '0-9' < "${STATE_DIR}/since" 2>/dev/null || true)"
 [[ -n "$since" ]] || since="$NOW"
 
+# List names: <sequence>-<deploy epoch>-<release>.files (12 digits each). Other names are ignored.
+LIST_PATTERN='^[0-9]{12}-[0-9]{12}-[0-9A-Za-z][0-9A-Za-z.+_-]*[.]files$'
+release_of() { local rest="${1#*-}"; rest="${rest#*-}"; printf '%s' "${rest%.files}"; }
+mapfile -t lists < <(find "$STATE_DIR" -maxdepth 1 -type f -name '*.files' -printf '%f\n' |
+  grep -E "$LIST_PATTERN" | LC_ALL=C sort -r || true)
+
 if [[ -n "$RECORD_ID" && "$DRY_RUN" != "1" ]]; then
+  sequence=1
+  [[ "${#lists[@]}" -eq 0 ]] || sequence=$((10#${lists[0]%%-*} + 1))
   # A redeploy of the same release moves it to the front instead of keeping two lists.
-  find "$STATE_DIR" -maxdepth 1 -type f -name "*-${RECORD_ID}.files" -delete
-  LC_ALL=C sort -u "$FILES_FROM" > "${STATE_DIR}/$(printf '%012d' "$NOW")-${RECORD_ID}.files"
+  for name in "${lists[@]}"; do
+    [[ "$(release_of "$name")" != "$RECORD_ID" ]] || rm -f -- "${STATE_DIR}/${name}"
+  done
+  LC_ALL=C sort -u "$FILES_FROM" > "${STATE_DIR}/$(printf '%012d-%012d' "$sequence" "$NOW")-${RECORD_ID}.files"
+  mapfile -t lists < <(find "$STATE_DIR" -maxdepth 1 -type f -name '*.files' -printf '%f\n' |
+    grep -E "$LIST_PATTERN" | LC_ALL=C sort -r || true)
 fi
 
-mapfile -t lists < <(find "$STATE_DIR" -maxdepth 1 -type f -name '[0-9]*-*.files' -printf '%f\n' | LC_ALL=C sort -r)
 kept=()
 dropped=()
+live_recorded=0
 for index in "${!lists[@]}"; do
   name="${lists[$index]}"
-  recorded=$((10#${name%%-*}))
-  if (( index < KEEP || NOW - recorded < grace_seconds )); then kept+=("$name"); else dropped+=("$name"); fi
+  recorded="${name#*-}"
+  recorded=$((10#${recorded%%-*}))
+  release="$(release_of "$name")"
+  [[ "$release" != "$LIVE_ID" ]] || live_recorded=1
+  # A list stamped in the future (clock corrected backwards) counts as inside the grace window.
+  if (( index < KEEP || NOW - recorded < grace_seconds )) || [[ -n "$LIVE_ID" && "$release" == "$LIVE_ID" ]]; then
+    kept+=("$name")
+  else
+    dropped+=("$name")
+  fi
 done
 [[ "${#kept[@]}" -gt 0 ]] || die "no release list recorded; nothing is pruned"
 
@@ -97,6 +125,10 @@ removed=0
 freed=0
 transition=0
 if (( NOW - since < grace_seconds )); then
+  transition=1
+elif [[ -n "$LIVE_ID" && "$live_recorded" == "0" ]]; then
+  # The release that served until now has no list (deployed before retention, or by an older
+  # installer): its files cannot be told apart, so this run removes nothing.
   transition=1
 else
   # Size and path of every present file that no kept release lists (batch: the first prune of a

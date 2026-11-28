@@ -57,7 +57,10 @@ validate_release_ref "$REF"
 [[ "${EUID}" -eq 0 ]] || { printf '[mnscloud-app] ERROR: this command must run as root\n' >&2; exit 1; }
 
 cd "$REPO_ROOT"
-git fetch --tags --prune
+# Fetch only the release being installed: older release tags carry a browser tarball, so fetching
+# every tag grows the host checkout by gigabytes.
+git fetch --no-tags origin "+refs/tags/${REF}:refs/tags/${REF}" ||
+  die "release ref not found on origin: ${REF}"
 TARGET_COMMIT="$(resolve_git_ref "$REF" || true)"
 if [[ -z "$TARGET_COMMIT" ]]; then
   recent_tags="$(git tag --sort=-creatordate | head -10 | tr '\n' ' ' | sed 's/[[:space:]]*$//')"

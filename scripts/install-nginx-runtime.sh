@@ -333,6 +333,11 @@ publish_artifact() {
   local release_files="${APP_ARTIFACT_TMP_DIR}/release.files"
   (cd "$extract_dir" && find . -type f -printf '%P\n') | LC_ALL=C sort -u > "$release_files"
 
+  # Release that served until now (restored by update-nginx-runtime.sh if this update fails).
+  local live_release=""
+  live_release="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([0-9A-Za-z.+_-]*\)".*/\1/p' \
+    "${APP_WEB_ROOT}/build.json" 2>/dev/null | head -n 1 || true)"
+
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
   # Keep old hashed JS/CSS assets available for active browser sessions that loaded the
@@ -344,14 +349,14 @@ publish_artifact() {
   local prune_summary
   if prune_summary="$("$REPO_ROOT/scripts/prune-web-root.sh" --web-root "$APP_WEB_ROOT" \
     --state-dir "$APP_RELEASE_STATE_DIR" --record "$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")" \
-    --files-from "$release_files")"; then
+    --files-from "$release_files" ${live_release:+--live-release "$live_release"})"; then
     log "web root retention: ${prune_summary}"
   else
     log "WARNING: web root retention failed; old release files were kept"
   fi
   # Runtime files expose the deployment timestamp for operator validation; only the files of this
   # release are touched, so older files keep their own deployment time.
-  (cd "$APP_WEB_ROOT" && xargs -r -d '\n' touch -- < "$release_files")
+  (cd "$APP_WEB_ROOT" && xargs -r -d '\n' touch -c -- < "$release_files")
 }
 
 reload_nginx() {
