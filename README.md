@@ -375,6 +375,12 @@ release deployed within `APP_ASSET_GRACE_HOURS` (default 48). The first deploy w
 starts the clock; files older than retention are removed from the first deploy 48 hours later.
 `scripts/prune-web-root.sh --web-root /var/www/mnscloud-app --state-dir /var/lib/mnscloud/app/web-releases --dry-run`
 reports what would be removed.
+`scripts/housekeeping.sh --apply` runs this web-root retention without recording a deploy and compacts
+the local Git checkout, keeping every tag at HEAD plus the newest `MNSCLOUD_APP_KEEP_TAGS` other
+version tags (default 2), removing other tags and origin tracking refs except main/HEAD, expiring
+reflogs and pruning unreachable objects.
+The Agent runs it after each update and daily; `--dry-run` reports the planned cleanup without
+deleting files or refs, with one JSON summary per part on stdout and diagnostics on stderr.
 
 #### Validation
 
