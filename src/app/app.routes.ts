@@ -1086,6 +1086,11 @@ export const routes: Routes = [
                 title: 'GED • Archive | mnscloud',
               },
               {
+                path: 'ged/audit',
+                loadComponent: () => import('./pages/ged/audit').then((m) => m.GedAuditPage),
+                title: 'GED • Audit | mnscloud',
+              },
+              {
                 path: 'ged/dossiers',
                 loadComponent: () => import('./pages/ged/dossiers').then((m) => m.GedDossiersPage),
                 title: 'GED • Dossiers | mnscloud',
