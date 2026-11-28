@@ -178,3 +178,31 @@ describe('platform disk notifications', () => {
     expect(notificationTitle(recovered, (key) => key)).toBe('notifications.diskRecovered');
   });
 });
+
+describe('platform operations approval notifications', () => {
+  it('shows a pending approval request with its title and HTTP target', () => {
+    const approval = item('ops.approval', {
+      title: 'Apply runtime reconcile',
+      method: 'POST',
+      path: '/api/v1/system/runtime/reconcile-jobs',
+    });
+    expect(notificationIcon(approval)).toBe('gavel');
+    expect(notificationTitle(approval, (key, params) => `${key}:${params?.['title']}`)).toBe(
+      'notifications.opsApprovalPending:Apply runtime reconcile',
+    );
+    expect(notificationDescription(approval, 'pt-BR')).toBe(
+      'POST /api/v1/system/runtime/reconcile-jobs',
+    );
+  });
+
+  it('falls back to method + path when title is omitted', () => {
+    const approval = item('ops.approval', {
+      method: 'POST',
+      path: '/api/v1/system/database/principals',
+      reason: 'Rotate database credential',
+    });
+    expect(notificationTitle(approval, (key, params) => `${key}:${params?.['title']}`)).toBe(
+      'notifications.opsApprovalPending:POST /api/v1/system/database/principals',
+    );
+  });
+});

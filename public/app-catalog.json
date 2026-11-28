@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "50cee1c315e8",
+  "version": "37c603a9d455",
   "language": "pt-BR",
   "entries": [
     {
@@ -11500,6 +11500,14 @@
           "help": ""
         }
       ]
+    },
+    {
+      "route": "/system/operations/approvals",
+      "menuPath": "Monitoramento › Aprovações",
+      "scope": "platform",
+      "title": "Solicitações de aprovação",
+      "description": "Operações da plataforma que exigem aprovação de um master antes da execução. Revise o método, o caminho, o corpo JSON, o hash SHA-256 e o motivo antes de aprovar ou rejeitar.",
+      "fields": []
     },
     {
       "route": "/system/pabx",
