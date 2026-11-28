@@ -52,6 +52,8 @@ export function notificationIcon(item: InboxNotification): string {
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
     case 'monitoring.disk':
       return item.severity === 'info' ? 'check_circle' : 'hard_drive';
+    case 'ops.approval':
+      return 'gavel';
     case 'workorders.order.overdue':
       return 'alarm';
     case 'cyber_security.unblock_request':
@@ -145,6 +147,10 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
               : 'notifications.diskWarning',
         { server: param('agentName'), percent: param('usagePercent'), days: param('daysToFull') },
       );
+    case 'ops.approval':
+      return t('notifications.opsApprovalPending', {
+        title: param('title') || [param('method'), param('path')].filter(Boolean).join(' '),
+      });
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });
     case 'cyber_security.unblock_request':
@@ -269,7 +275,13 @@ export function notificationDescription(item: InboxNotification, language: strin
                 ? item.params['extensions']
                 : item.type === 'dns.monitor.target'
                   ? item.params['failing'] || item.params['target']
-                  : item.type === 'security.alert'
+                  : item.type === 'ops.approval'
+                    ? [item.params['method'], item.params['path']].filter(Boolean).join(' ') ||
+                      item.params['reason'] ||
+                      item.params['requesterLabel'] ||
+                      item.params['taskSlug'] ||
+                      item.params['subject']
+                    : item.type === 'security.alert'
                     ? [item.params['scenario'], item.params['sourceIP']].filter(Boolean).join(' · ')
                     : item.type === 'security.vulnerability'
                       ? item.params['servers']

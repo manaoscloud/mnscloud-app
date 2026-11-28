@@ -3208,6 +3208,15 @@ export const routes: Routes = [
                 data: { scope: 'master' },
               },
               {
+                path: 'operations/approvals',
+                loadComponent: () =>
+                  import('./pages/system/operations/approvals/approvals').then(
+                    (m) => m.SystemOperationsApprovalsPage,
+                  ),
+                title: 'System Operations • Approvals | mnscloud',
+                data: { scope: 'master' },
+              },
+              {
                 path: 'governance/users',
                 loadComponent: () =>
                   import('./pages/system/governance/users/users').then(

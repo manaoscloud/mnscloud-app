@@ -3303,6 +3303,15 @@ export const NAV_ITEMS: NavItem[] = [
         scope: 'master',
         requiresEnvironment: false,
       },
+      {
+        id: 'monitoring/approvals',
+        label: 'nav.monitoring.approvals',
+        icon: 'gavel',
+        category: 'platform',
+        masterRoute: '/system/operations/approvals',
+        scope: 'master',
+        requiresEnvironment: false,
+      },
     ],
   },
   {

@@ -1,0 +1,235 @@
+<div class="crud-dialog approval-dialog">
+  <header class="dialog-header">
+    <div>
+      <h2>
+        @if (mode() === 'detail') {
+          {{ titleText() }}
+        } @else {
+          {{ dialogTitle() | transloco }}
+        }
+      </h2>
+      <p>{{ dialogSubtitle() | transloco }}</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill status-chip state-chip" [ngClass]="statusClass()">
+        {{ statusLabel() | transloco }}
+      </span>
+      <mns-report-problem-button />
+    </div>
+  </header>
+
+  <div class="dialog-content">
+    <div class="dialog-scroll approval-dialog-scroll">
+      @if (mode() === 'approve' || mode() === 'reject') {
+        <section
+          class="approval-confirm-banner"
+          [class.is-reject]="mode() === 'reject'"
+          role="region"
+          [attr.aria-label]="dialogTitle() | transloco"
+        >
+          <div class="approval-confirm-summary">
+            <div class="approval-confirm-item">
+              <span class="approval-confirm-label">{{ 'Method and path' | transloco }}</span>
+              <code class="approval-confirm-target">{{ targetText() }}</code>
+            </div>
+            <div class="approval-confirm-item">
+              <span class="approval-confirm-label">{{ 'Reason' | transloco }}</span>
+              <p class="approval-confirm-reason">{{ reasonFirstLine() }}</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="span-4">
+              <mat-label>{{ 'Decision note' | transloco }}</mat-label>
+              <textarea
+                matInput
+                rows="4"
+                data-field-key="decisionNote"
+                [mnsInvalid]="noteInvalid()"
+                [value]="note()"
+                [disabled]="submitting()"
+                [placeholder]="
+                  (mode() === 'reject'
+                    ? 'Explain why this request is being rejected'
+                    : 'Optional note recorded with the approval') | transloco
+                "
+                (input)="onNoteInput($any($event.target).value)"
+              ></textarea>
+              <mat-error>{{
+                'A note is required to reject an approval request.' | transloco
+              }}</mat-error>
+            </mat-form-field>
+          </div>
+        </section>
+      }
+
+      @if (hasExecutionResult()) {
+        <section class="approval-section approval-result-section" role="status" aria-live="polite">
+          <div class="approval-section-header">
+            <h3>{{ 'Execution result' | transloco }}</h3>
+            <span class="status-pill status-chip state-chip" [ngClass]="resultChipClass()">
+              {{ (resultStatusText() !== '-' ? resultStatusText() : statusLabel()) | transloco }}
+            </span>
+          </div>
+          <dl class="approval-detail-grid">
+            <div class="approval-detail-item">
+              <dt>{{ 'Result status' | transloco }}</dt>
+              <dd class="monospace">{{ resultStatusText() }}</dd>
+            </div>
+            <div class="approval-detail-item">
+              <dt>{{ 'Executed at' | transloco }}</dt>
+              <dd>{{ executedAtText() }}</dd>
+            </div>
+            <div class="approval-detail-item is-wide">
+              <dt>{{ 'Result summary' | transloco }}</dt>
+              <dd class="approval-pre-line">{{ resultSummaryText() }}</dd>
+            </div>
+          </dl>
+        </section>
+      }
+
+      <section class="approval-section">
+        <h3>{{ 'Request details' | transloco }}</h3>
+        <dl class="approval-detail-grid">
+          <div class="approval-detail-item is-wide">
+            <dt>{{ 'Title' | transloco }}</dt>
+            <dd>{{ titleText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Task' | transloco }}</dt>
+            <dd class="monospace">{{ taskSlugText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Requester' | transloco }}</dt>
+            <dd>{{ requesterText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'HTTP method' | transloco }}</dt>
+            <dd class="monospace">{{ methodText() }}</dd>
+          </div>
+          <div class="approval-detail-item is-wide">
+            <dt>{{ 'Request path' | transloco }}</dt>
+            <dd class="monospace">{{ pathText() }}</dd>
+          </div>
+          <div class="approval-detail-item is-full">
+            <dt>{{ 'Reason' | transloco }}</dt>
+            <dd class="approval-pre-line">{{ reasonText() }}</dd>
+          </div>
+          <div class="approval-detail-item is-full">
+            <dt>{{ 'Body SHA-256' | transloco }}</dt>
+            <dd class="monospace">{{ bodySha256Text() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Created' | transloco }}</dt>
+            <dd>{{ createdAtText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Expires' | transloco }}</dt>
+            <dd>{{ expiresAtText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Decided at' | transloco }}</dt>
+            <dd>{{ decidedAtText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Decided by' | transloco }}</dt>
+            <dd>{{ decisionUserText() }}</dd>
+          </div>
+          <div class="approval-detail-item">
+            <dt>{{ 'Executed at' | transloco }}</dt>
+            <dd>{{ executedAtText() }}</dd>
+          </div>
+          <div class="approval-detail-item is-wide">
+            <dt>{{ 'Decision note' | transloco }}</dt>
+            <dd class="approval-pre-line">{{ decisionNoteText() }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="approval-section">
+        <div class="approval-code-header">
+          <h3>{{ 'JSON body' | transloco }}</h3>
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            [cdkCopyToClipboard]="formattedBody()"
+            (cdkCopyToClipboardCopied)="notifyCopied($event)"
+          >
+            <mat-icon>content_copy</mat-icon>
+            {{ 'Copy' | transloco }}
+          </button>
+        </div>
+        <pre class="approval-code-block"><code>{{ formattedBody() }}</code></pre>
+      </section>
+    </div>
+  </div>
+
+  <mat-dialog-actions class="form-actions">
+    <div class="secondary-actions">
+      @if (mode() === 'detail') {
+        <button mat-stroked-button type="button" [disabled]="submitting()" (click)="close()">
+          {{ 'Close' | transloco }}
+        </button>
+      } @else {
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="submitting()"
+          (click)="cancelDecision()"
+        >
+          {{ 'Cancel' | transloco }}
+        </button>
+      }
+    </div>
+
+    <div class="primary-actions">
+      @if (pending()) {
+        @if (mode() === 'detail') {
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            [disabled]="submitting()"
+            (click)="startReject()"
+          >
+            <mat-icon>cancel</mat-icon>
+            {{ 'Reject' | transloco }}
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="submitting()"
+            (click)="startApprove()"
+          >
+            <mat-icon>check_circle</mat-icon>
+            {{ 'Approve' | transloco }}
+          </button>
+        } @else if (mode() === 'approve') {
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="submitting()"
+            (click)="submitDecision()"
+          >
+            <mat-icon>check_circle</mat-icon>
+            {{ 'Approve' | transloco }}
+          </button>
+        } @else {
+          <button
+            mat-flat-button
+            color="warn"
+            type="button"
+            [disabled]="submitting()"
+            (click)="submitDecision()"
+          >
+            <mat-icon>cancel</mat-icon>
+            {{ 'Reject' | transloco }}
+          </button>
+        }
+      }
+    </div>
+  </mat-dialog-actions>
+</div>

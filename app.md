@@ -46,6 +46,13 @@ Each tenant sees only its own data, the master included (workspace
 - `/system/*` pages (children of `path: 'system'`, `permissionGuard` with `platform.master.access`)
   manage platform records. They never list, edit or delete tenant records. Support on a tenant's
   records happens on the tenant pages with that tenant selected.
+- `Sistema › Operações › Aprovações` (`/system/operations/approvals`, `monitoring/approvals`,
+  `system/ops/approvals`) lists platform operations awaiting master approval (default filter
+  `pending`, newest first), shows the full request (`method`, `path`, formatted JSON `body`,
+  `bodySha256`, `reason`, `taskSlug`, `requesterLabel`, timestamps, decision note and execution
+  result), and lets a platform master approve (optional note, then displays the final `executed` or
+  `failed` status and result) or reject (required note) on desktop and mobile; bell type
+  `ops.approval` opens it.
 - The only cross-tenant views are the registered platform functions (dashboard aggregates, platform
   billing, user governance, support desk, shared pools such as public IPs and DIDs, infrastructure
   operation such as tenant zones, gateways, VM migration and the Agent fleet). Such a view shows the
