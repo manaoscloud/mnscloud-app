@@ -4,16 +4,27 @@ import { ApiService, FileUploadProgress } from '../../services/api.service';
 import { MatDialog } from '@angular/material/dialog';
 import { defineCrud } from '../../shared/crud/configurable-crud/define-crud';
 import { quickCreateFor } from '../../shared/crud/configurable-crud/quick-create';
-import type {
+import { ConfigurableCrudCollectionDialog } from '../../shared/crud/configurable-crud/configurable-crud-collection-dialog';
+import { ConfigurableCrudEmbeddedCollection } from '../../shared/crud/configurable-crud/configurable-crud-embedded-collection';
+import {
+  CONFIGURABLE_CRUD_IMPORTS,
   ConfigurableCrudConfig,
   ConfigurableCrudField,
   ConfigurableCrudRecord,
   ConfigurableCrudRelatedCollection,
+  ConfigurableCrudRowAction,
 } from '../../shared/crud/configurable-crud/configurable-crud-page-base';
 import { openPrivateFile } from '../../shared/file-preview-dialog/private-file';
+import { openCrudTemplateDialog } from '../../shared/dialog/crud-dialog.util';
+import { UploadCancelledError } from '../../shared/upload/file-upload-progress';
 import { TranslocoService } from '@jsverse/transloco';
-import { inject } from '@angular/core';
-import { catchError, Observable, throwError } from 'rxjs';
+import { afterNextRender, Component, inject } from '@angular/core';
+import { catchError, firstValueFrom, Observable, throwError } from 'rxjs';
+import {
+  DOCUMENT_ACCEPT_ATTRIBUTE,
+  DOCUMENT_CAMERA_ACCEPT_ATTRIBUTE,
+  documentUploadObservable,
+} from './document-upload';
 
 export const DOCUMENT_REVIEW_OPTIONS = [
   { value: 'not-required', label: 'documents.notRequired' },
@@ -42,6 +53,11 @@ export const DOCUMENT_SCAN_REASON_KEYS: Readonly<Record<string, string>> = {
   'pdf-embedded-goto': 'documents.scan.reason.pdf-embedded-goto',
   'png-invalid': 'documents.scan.reason.png-invalid',
   'jpeg-invalid': 'documents.scan.reason.jpeg-invalid',
+  'webp-invalid': 'documents.scan.reason.webp-invalid',
+  'heic-invalid': 'documents.scan.reason.heic-invalid',
+  'tiff-invalid': 'documents.scan.reason.tiff-invalid',
+  'type-mismatch': 'documents.scan.reason.type-mismatch',
+  'checksum-mismatch': 'documents.scan.reason.checksum-mismatch',
   'type-unsupported': 'documents.scan.reason.type-unsupported',
 };
 
@@ -59,6 +75,12 @@ export function documentScanReasonText(
   return key ? t(key) : code;
 }
 
+function hasUploadedTimestamp(row: ConfigurableCrudRecord): boolean {
+  const uploadedAt = row['RdvUploadedAt'];
+  if (typeof uploadedAt === 'string') return uploadedAt.trim().length > 0;
+  return Boolean(uploadedAt);
+}
+
 export function documentVersionVerificationText(
   row: ConfigurableCrudRecord,
   t: (key: string, params?: Record<string, string | number>) => string,
@@ -68,9 +90,12 @@ export function documentVersionVerificationText(
   }
   const engine = typeof row['RdvScanEngine'] === 'string' ? row['RdvScanEngine'].trim() : '';
   if (!engine) {
-    return row['RdvState'] === 'pending'
-      ? t('documents.pending')
-      : t('documents.scan.unverified');
+    if (row['RdvState'] === 'pending') {
+      if (hasUploadedTimestamp(row)) return t('documents.scan.verifying');
+      if ('RdvUploadedAt' in row || 'RdvUploadMode' in row) return t('documents.scan.incomplete');
+      return t('documents.pending');
+    }
+    return t('documents.scan.unverified');
   }
   return t('documents.scan.verified');
 }
@@ -78,7 +103,12 @@ export function documentVersionVerificationText(
 export function documentVersionVerificationChipClass(row: ConfigurableCrudRecord): string {
   if (row['RdvState'] === 'rejected') return 'chip-failed';
   const engine = typeof row['RdvScanEngine'] === 'string' ? row['RdvScanEngine'].trim() : '';
-  if (!engine) return row['RdvState'] === 'pending' ? 'chip-queued' : 'chip-skipped';
+  if (!engine) {
+    if (row['RdvState'] === 'pending') {
+      return hasUploadedTimestamp(row) ? 'chip-running' : 'chip-queued';
+    }
+    return 'chip-skipped';
+  }
   return 'chip-success';
 }
 
@@ -98,10 +128,33 @@ export function documentUploadErrorMessage(
   if (code === 'DOCUMENT_UPLOAD_EXPIRED') {
     return t('documents.scan.uploadExpired');
   }
+  if (code === 'DOCUMENT_MULTIPART_UNSUPPORTED') {
+    return t('documents.scan.multipartUnsupported');
+  }
   return null;
 }
 
-function withDocumentUploadErrors(
+function wrapUploadError(
+  err: unknown,
+  translate: (key: string, params?: Record<string, string | number>) => string,
+): unknown {
+  const msg = documentUploadErrorMessage(err, translate);
+  if (!msg) return err;
+  return {
+    ...(typeof err === 'object' && err ? err : {}),
+    error: {
+      ...(typeof (err as { error?: unknown })?.error === 'object' &&
+      (err as { error?: unknown })?.error
+        ? (err as { error: Record<string, unknown> }).error
+        : {}),
+      error: msg,
+      message: msg,
+    },
+    message: msg,
+  };
+}
+
+export function withDocumentUploadErrors(
   api: ApiService,
   translate: (key: string, params?: Record<string, string | number>) => string,
 ): ApiService {
@@ -109,31 +162,314 @@ function withDocumentUploadErrors(
     get(target, prop, receiver) {
       if (prop === 'postFormWithProgress') {
         return <T>(endpoint: string, body: FormData): Observable<FileUploadProgress<T>> =>
-          target.postFormWithProgress<T>(endpoint, body).pipe(
-            catchError((err: unknown) => {
-              const msg = documentUploadErrorMessage(err, translate);
-              if (msg) {
-                return throwError(() => ({
-                  ...(typeof err === 'object' && err ? err : {}),
-                  error: {
-                    ...(typeof (err as { error?: unknown })?.error === 'object' &&
-                    (err as { error?: unknown })?.error
-                      ? ((err as { error: Record<string, unknown> }).error)
-                      : {}),
-                    error: msg,
-                    message: msg,
-                  },
-                  message: msg,
-                }));
-              }
-              return throwError(() => err);
-            }),
-          );
+          target
+            .postFormWithProgress<T>(endpoint, body)
+            .pipe(catchError((err: unknown) => throwError(() => wrapUploadError(err, translate))));
+      }
+      if (prop === 'post' || prop === 'put' || prop === 'get') {
+        return async <T>(...args: [string, ...unknown[]]): Promise<T> => {
+          try {
+            const fn = Reflect.get(target, prop, receiver) as (...a: unknown[]) => Promise<T>;
+            return await fn.apply(target, args);
+          } catch (err) {
+            throw wrapUploadError(err, translate);
+          }
+        };
       }
       const value = Reflect.get(target, prop, receiver);
       return typeof value === 'function' ? value.bind(target) : value;
     },
   });
+}
+
+function extractUploadedFiles(value: unknown): File[] {
+  if (value instanceof File) return [value];
+  if (Array.isArray(value)) return value.filter((item): item is File => item instanceof File);
+  if (typeof FileList !== 'undefined' && value instanceof FileList) return Array.from(value);
+  return [];
+}
+
+/**
+ * Canonical collection dialog for document versions: reuses the shared CRUD template and enhances
+ * the file control in the upload dialog with multiple file selection (when creating new versions),
+ * drag-and-drop on the upload area, and a separate "Usar câmera" (`capture="environment"`) option
+ * on mobile, uploading each selected file sequentially through single or 8 MiB resumable parts.
+ */
+@Component({
+  selector: 'mns-document-versions-dialog',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+  host: { '[class.collection-dialog-host]': '!config.formOnly' },
+})
+export class RegistryDocumentVersionsDialog extends ConfigurableCrudCollectionDialog {
+  private readonly batchVersionUUIDs = new Map<string, string>();
+  private cleanupUploadEnhancements: (() => void) | null = null;
+
+  private isResumeDialog(): boolean {
+    return Boolean(this.config.formOnly && this.formValues()['resume']);
+  }
+
+  override startCreate(): void {
+    this.batchVersionUUIDs.clear();
+    super.startCreate();
+    afterNextRender(() => this.enhanceUploadDialog());
+  }
+
+  override closeDialog(): void {
+    this.cleanupUploadEnhancements?.();
+    this.cleanupUploadEnhancements = null;
+    super.closeDialog();
+  }
+
+  override onFileInput(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    this.applySelectedFiles(key, files);
+  }
+
+  override fieldFileName(key: string): string {
+    const files = extractUploadedFiles(this.formValues()[key]);
+    if (!files.length) return '';
+    if (files.length === 1) return files[0].name;
+    return `${files.length}: ${files.map((f) => f.name).join(', ')}`;
+  }
+
+  private applySelectedFiles(key: string, files: File[]): void {
+    if (!files.length) {
+      this.setFieldValue(key, null);
+      return;
+    }
+    if (this.isResumeDialog() || files.length === 1) {
+      this.setFieldValue(key, files[0]);
+      return;
+    }
+    this.setFieldValue(key, files);
+  }
+
+  private enhanceUploadDialog(): void {
+    this.cleanupUploadEnhancements?.();
+    this.cleanupUploadEnhancements = null;
+
+    const dialogId = this.dialogBinding?.ref.id;
+    const root = (dialogId ? document.getElementById(dialogId) : null) ?? document;
+    const fileInput = root.querySelector<HTMLInputElement>(
+      'input.crud-file-field-input[data-field-key="file"]',
+    );
+    if (!fileInput) return;
+
+    if (!this.isResumeDialog()) {
+      fileInput.multiple = true;
+    }
+
+    const fileBox = fileInput.closest<HTMLElement>('.crud-file-field') ?? fileInput.parentElement;
+    if (!fileBox) return;
+
+    const onDragOver = (event: DragEvent) => {
+      if (!event.dataTransfer?.types?.includes('Files')) return;
+      event.preventDefault();
+      fileBox.classList.add('is-dragging');
+    };
+    const onDragLeave = () => {
+      fileBox.classList.remove('is-dragging');
+    };
+    const onDrop = (event: DragEvent) => {
+      fileBox.classList.remove('is-dragging');
+      const dropped = Array.from(event.dataTransfer?.files ?? []);
+      if (!dropped.length) return;
+      event.preventDefault();
+      this.applySelectedFiles('file', dropped);
+    };
+
+    fileBox.addEventListener('dragover', onDragOver);
+    fileBox.addEventListener('dragleave', onDragLeave);
+    fileBox.addEventListener('drop', onDrop);
+
+    let cameraInput: HTMLInputElement | null = null;
+    let cameraButton: HTMLButtonElement | null = null;
+    if (this.mobileLayout()) {
+      cameraInput = document.createElement('input');
+      cameraInput.type = 'file';
+      cameraInput.accept = DOCUMENT_CAMERA_ACCEPT_ATTRIBUTE;
+      cameraInput.setAttribute('capture', 'environment');
+      cameraInput.style.display = 'none';
+      cameraInput.addEventListener('change', () => {
+        const captured = Array.from(cameraInput?.files ?? []);
+        if (captured.length) {
+          this.applySelectedFiles('file', captured);
+        }
+        if (cameraInput) cameraInput.value = '';
+      });
+      cameraButton = document.createElement('button');
+      cameraButton.type = 'button';
+      cameraButton.className = 'mdc-button mdc-button--outlined mat-mdc-outlined-button';
+      cameraButton.textContent = this.t('documents.useCamera');
+      cameraButton.addEventListener('click', () => cameraInput?.click());
+      fileBox.appendChild(cameraInput);
+      fileBox.appendChild(cameraButton);
+    }
+
+    this.cleanupUploadEnhancements = () => {
+      fileBox.removeEventListener('dragover', onDragOver);
+      fileBox.removeEventListener('dragleave', onDragLeave);
+      fileBox.removeEventListener('drop', onDrop);
+      cameraInput?.remove();
+      cameraButton?.remove();
+    };
+  }
+
+  triggerCameraCapture(): void {
+    const dialogId = this.dialogBinding?.ref.id;
+    const root = (dialogId ? document.getElementById(dialogId) : null) ?? document;
+    const existing = root.querySelector<HTMLInputElement>('input[capture="environment"]');
+    if (existing) {
+      existing.click();
+      return;
+    }
+    const cameraInput = document.createElement('input');
+    cameraInput.type = 'file';
+    cameraInput.accept = DOCUMENT_CAMERA_ACCEPT_ATTRIBUTE;
+    cameraInput.setAttribute('capture', 'environment');
+    cameraInput.addEventListener(
+      'change',
+      () => {
+        const captured = Array.from(cameraInput.files ?? []);
+        if (captured.length) this.applySelectedFiles('file', captured);
+      },
+      { once: true },
+    );
+    cameraInput.click();
+  }
+
+  override async saveItem(saveAndNew = false): Promise<void> {
+    if (this.saving()) return;
+    if (!this.canCreate()) return;
+    this.clearFieldErrors(null);
+
+    const values = this.formValues();
+    const files = extractUploadedFiles(values['file']);
+    if (!files.length) {
+      this.validatePayload({ ...values, file: null });
+      return;
+    }
+
+    const saveContextIsCurrent = this.captureSaveContext();
+    this.saving.set(true);
+    const resume = this.isResumeDialog();
+    const initialVersionUUID = String(values['versionUUID'] ?? '').trim() || crypto.randomUUID();
+    let currentRevision = values['revision'];
+    let uploadedCount = 0;
+
+    try {
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
+        const fileKey = `${index}:${file.name}:${file.size}:${file.lastModified}`;
+        const versionUUID =
+          index === 0 && (resume || files.length === 1)
+            ? initialVersionUUID
+            : (this.batchVersionUUIDs.get(fileKey) ?? crypto.randomUUID());
+        this.batchVersionUUIDs.set(fileKey, versionUUID);
+
+        const progress = await this.runManagedFileUpload(
+          documentUploadObservable({
+            api: this.api,
+            endpoint: this.createEndpoint(),
+            file,
+            versionUUID,
+            revision: currentRevision,
+            resume,
+          }),
+          file.size,
+        );
+        if (!saveContextIsCurrent()) return;
+        uploadedCount += 1;
+        const responseData = (
+          progress.response as { data?: ConfigurableCrudRecord } | null
+        )?.data;
+        if (responseData && responseData['RdcRevision'] !== undefined) {
+          currentRevision = responseData['RdcRevision'];
+        }
+      }
+
+      if (!saveContextIsCurrent()) return;
+      this.snack.success(this.t(this.config.savedMessage));
+      this.itemsResource.reload();
+      if (saveAndNew) {
+        this.batchVersionUUIDs.clear();
+        this.resetFieldErrors();
+        this.editingRecord.set(null);
+        this.formValues.set({
+          ...values,
+          file: null,
+          versionUUID: crypto.randomUUID(),
+          revision: currentRevision,
+        });
+      } else {
+        this.closeDialog();
+      }
+    } catch (error) {
+      if (!saveContextIsCurrent()) return;
+      if (uploadedCount > 0) this.itemsResource.reload();
+      if (error instanceof UploadCancelledError) return;
+      this.snack.error(this.t(this.errorMessage(error)));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  override async runRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.visible?.(row) === false) return;
+    if (this.rowActionDisabledReason(action, row)) return;
+    if (action.form) {
+      await this.openFormOnlyDialog(action.form(row), RegistryDocumentVersionsDialog);
+      return;
+    }
+    await super.runRowAction(action, row);
+  }
+}
+
+/**
+ * Embedded document collection component that opens `RegistryDocumentVersionsDialog` for version
+ * management while keeping the canonical shared CRUD table and template.
+ */
+@Component({
+  selector: 'mns-registry-documents-collection',
+  standalone: true,
+  imports: CONFIGURABLE_CRUD_IMPORTS,
+  templateUrl: '../../shared/crud/configurable-crud/configurable-crud-page.html',
+  styleUrls: ['../../shared/crud/configurable-crud/configurable-crud-page.scss'],
+})
+export class RegistryDocumentsEmbeddedCollection extends ConfigurableCrudEmbeddedCollection {
+  override async runRowAction(
+    action: ConfigurableCrudRowAction,
+    row: ConfigurableCrudRecord,
+  ): Promise<void> {
+    if (action.visible?.(row) === false) return;
+    if (this.rowActionDisabledReason(action, row)) return;
+    if (action.collection) {
+      const binding = openCrudTemplateDialog(
+        this.dialog,
+        RegistryDocumentVersionsDialog,
+        ['crud-form-dialog', 'crud-collection-dialog'],
+        {
+          data: {
+            ...action.collection(row),
+            requestApi: this.api,
+            collectionDialog: true,
+            formOnly: false,
+          },
+        },
+      );
+      await firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
+      this.refreshList();
+      return;
+    }
+    await super.runRowAction(action, row);
+  }
 }
 
 const suggestionLabels: Record<string, string> = {
@@ -168,6 +504,7 @@ export function documentCollection(
     const base = `${endpoint}/${document['RdcUUID']}/versions`;
     const upload = (versionUUID?: string) => {
       let currentVersionUUID = versionUUID;
+      const isResume = Boolean(versionUUID);
       return defineCrud({
         endpoint: base,
         requestApi: uploadApi,
@@ -188,6 +525,7 @@ export function documentCollection(
             file: null,
             versionUUID: currentVersionUUID,
             revision: document['RdcRevision'],
+            resume: isResume,
           };
         },
         fields: [
@@ -195,7 +533,8 @@ export function documentCollection(
             key: 'file',
             label: 'File',
             type: 'file',
-            accept: 'application/pdf,image/jpeg,image/png',
+            accept: DOCUMENT_ACCEPT_ATTRIBUTE,
+            help: 'documents.dropOrCameraHelp',
             required: true,
             span: 1,
           },
@@ -296,7 +635,8 @@ export function documentCollection(
           key: 'resume',
           label: 'documents.resume',
           icon: 'upload_file',
-          visible: (row: ConfigurableCrudRecord) => row['RdvState'] === 'pending',
+          visible: (row: ConfigurableCrudRecord) =>
+            row['RdvState'] === 'pending' && !hasUploadedTimestamp(row),
           form: (row: ConfigurableCrudRecord) => upload(String(row['RdvUUID'])),
         },
       ],
@@ -362,7 +702,28 @@ export function documentCollection(
       { id: 'status', field: 'RdcStatus', label: 'Status', kind: 'status' },
     ],
     rowActions: [
-      { key: 'versions', label: 'documents.versions', icon: 'history', collection: versions },
+      {
+        key: 'versions',
+        label: 'documents.versions',
+        icon: 'history',
+        collection: versions,
+        run: async (row: ConfigurableCrudRecord) => {
+          const binding = openCrudTemplateDialog(
+            dialog,
+            RegistryDocumentVersionsDialog,
+            ['crud-form-dialog', 'crud-collection-dialog'],
+            {
+              data: {
+                ...versions(row),
+                requestApi: uploadApi,
+                collectionDialog: true,
+                formOnly: false,
+              },
+            },
+          );
+          await firstValueFrom(binding.ref.afterClosed()).finally(binding.stop);
+        },
+      },
       {
         key: 'review',
         label: 'documents.review',
@@ -414,5 +775,6 @@ export function registryDocuments(
     fields: [],
     columns: [],
     config: (parent) => documentCollection(base(parent), api, dialog, canReview, canAssist),
+    component: () => Promise.resolve(RegistryDocumentsEmbeddedCollection),
   };
 }
