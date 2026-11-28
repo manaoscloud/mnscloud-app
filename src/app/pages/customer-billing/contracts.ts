@@ -319,7 +319,7 @@ const config = defineCrud({
           type: 'search-select',
           hiddenWhen: ({ values }) => values['module'] !== 'ged',
           requiredWhen: ({ values }) => values['module'] === 'ged',
-          remoteLookup: { endpoint: 'ged/accounts', uuidField: 'GacUUID', labelField: 'GacName' },
+          remoteLookup: { endpoint: 'ged/accounts?status=1', uuidField: 'GacUUID', labelField: 'GacName' },
           quickCreate: quickCreateFor('GedAccountGacUUID'),
         },
         {
