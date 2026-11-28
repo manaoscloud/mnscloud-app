@@ -188,7 +188,7 @@ export const APPROVALS_CONFIG: ConfigurableCrudConfig = defineCrud({
   inactiveValue: 'rejected',
   activeStatusValues: ['executed', 'approved'],
   statusOptions: APPROVAL_STATUS_OPTIONS,
-  initialStatus: 'pending',
+  initialStatus: '', // All: a decided request stays visible right after the decision
   statusFilter: true,
   initialValues: {},
   fields: [],
