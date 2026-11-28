@@ -16355,5 +16355,7 @@
   "documents.scan.reason.checksum-mismatch": "A integridade do arquivo (SHA-256) não confere com o envio",
   "documents.scan.reason.type-unsupported": "Formato de arquivo não suportado",
   "documents.scan.reason.av": "Ameaça detectada pelo antivírus",
-  "documents.scan.reason.unknown": "Violação das regras de segurança"
+  "documents.scan.reason.unknown": "Violação das regras de segurança",
+  "opsApproval.decisionNote": "Observação da decisão",
+  "Approvals": "Aprovações"
 }
