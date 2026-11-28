@@ -83,13 +83,15 @@ done
 
 union="$(mktemp)"
 present="$(mktemp)"
-trap 'rm -f "$union" "$present"' EXIT
+doomed="$(mktemp)"
+trap 'rm -f "$union" "$present" "$doomed"' EXIT
 {
   for name in "${kept[@]}"; do cat "${STATE_DIR}/${name}"; done
   printf '%s\n' "${PROTECTED[@]}"
 } | LC_ALL=C sort -u > "$union"
-# -P: never follow symlinks; hidden paths (for example .well-known) are not release files.
-(cd "$WEB_ROOT" && find -P . -type f ! -path '*/.*' -printf '%P\n') | LC_ALL=C sort -u > "$present"
+# -P: never follow symlinks (-type f skips them); hidden paths (for example .well-known) are not
+# release files. Lines are "<size>\t<relative path>".
+(cd "$WEB_ROOT" && find -P . -type f ! -path '*/.*' -printf '%s\t%P\n') | LC_ALL=C sort -t $'\t' -k2,2 -u > "$present"
 
 removed=0
 freed=0
@@ -97,16 +99,15 @@ transition=0
 if (( NOW - since < grace_seconds )); then
   transition=1
 else
-  while IFS= read -r relative; do
-    [[ -n "$relative" ]] || continue
-    path="${WEB_ROOT}/${relative}"
-    [[ -f "$path" && ! -L "$path" ]] || continue
-    size="$(stat -c %s -- "$path" 2>/dev/null || echo 0)"
-    if [[ "$DRY_RUN" != "1" ]]; then rm -f -- "$path"; fi
-    removed=$((removed + 1))
-    freed=$((freed + size))
-  done < <(LC_ALL=C comm -23 "$present" "$union")
-  [[ "$DRY_RUN" == "1" ]] || find -P "$WEB_ROOT" -mindepth 1 -type d -empty ! -path '*/.*' -delete
+  # Size and path of every present file that no kept release lists (batch: the first prune of a
+  # host may remove tens of thousands of files).
+  LC_ALL=C join -t $'\t' -1 2 -2 1 -v 1 -o 1.1,1.2 "$present" "$union" > "$doomed"
+  removed="$(wc -l < "$doomed")"
+  freed="$(awk -F '\t' '{ total += $1 } END { printf "%d", total }' "$doomed")"
+  if [[ "$DRY_RUN" != "1" && "$removed" -gt 0 ]]; then
+    (cd "$WEB_ROOT" && cut -f2- "$doomed" | xargs -r -d '\n' rm -f --)
+    find -P "$WEB_ROOT" -mindepth 1 -type d -empty ! -path '*/.*' -delete
+  fi
 fi
 
 if [[ "$DRY_RUN" != "1" ]]; then
