@@ -366,6 +366,16 @@ release, downloads the browser artifact, validates the SHA-256 digest, publishes
 `/var/www/mnscloud-app/build.json`, validates Nginx, and reloads the app runtime. If install or
 validation fails, the script restores the previous commit and previous web root.
 
+Disk retention: the update fetches only the requested release tag (release tags no longer carry the
+browser tarball, which is a GitHub release asset only). The web root keeps the files of previous
+releases for browser sessions opened before the update, bounded by `scripts/prune-web-root.sh`: each
+deploy records its file list in `/var/lib/mnscloud/app/web-releases`, and a file leaves the web root
+once no kept release lists it. Kept releases are the newest `APP_KEEP_RELEASES` (default 5) plus every
+release deployed within `APP_ASSET_GRACE_HOURS` (default 48). The first deploy with retention only
+starts the clock; files older than retention are removed from the first deploy 48 hours later.
+`scripts/prune-web-root.sh --web-root /var/www/mnscloud-app --state-dir /var/lib/mnscloud/app/web-releases --dry-run`
+reports what would be removed.
+
 #### Validation
 
 ```text

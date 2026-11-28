@@ -123,9 +123,11 @@ console.log(stable?.artifact?.sha256 ?? "");
       exit 1
     }
   else
+    # The browser tarball is a GitHub release asset only (uploaded below); committing it to the tag
+    # made every host checkout grow by one tarball per release.
     git switch -c "$release_branch"
     git add -f VERSION package.json package-lock.json src/app/app-build-info.ts releases/manifest.json \
-      "releases/${artifact_name}" "releases/${artifact_name}.sha256"
+      "releases/${artifact_name}.sha256"
     git commit -m "Release mnscloud-app v${version}"
     git tag -a "$release_tag" -m "Release mnscloud-app v${version}"
     git push origin "$release_branch"

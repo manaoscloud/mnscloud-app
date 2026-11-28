@@ -21,6 +21,10 @@ APP_UPDATE_CHANNEL="${APP_UPDATE_CHANNEL:-stable}"
 APP_INSTALL_PACKAGES="${APP_INSTALL_PACKAGES:-1}"
 APP_REFRESH_AGENT_CAPABILITIES="${APP_REFRESH_AGENT_CAPABILITIES:-1}"
 APP_ARTIFACT_TMP_DIR=""
+# Retention of previous releases in the web root (scripts/prune-web-root.sh).
+APP_RELEASE_STATE_DIR="${APP_RELEASE_STATE_DIR:-/var/lib/mnscloud/app/web-releases}"
+export APP_KEEP_RELEASES="${APP_KEEP_RELEASES:-5}"
+export APP_ASSET_GRACE_HOURS="${APP_ASSET_GRACE_HOURS:-48}"
 AGENT_REPO_INSTALLER="/opt/mnscloud/mnscloud-agent/scripts/install-agent.sh"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -326,18 +330,28 @@ publish_artifact() {
   # checksums. Normalize the extracted files before rsync so the stale asset
   # cleanup does not delete the freshly deployed hashed bundles.
   find "$extract_dir" -type f -exec touch {} +
+  local release_files="${APP_ARTIFACT_TMP_DIR}/release.files"
+  (cd "$extract_dir" && find . -type f -printf '%P\n') | LC_ALL=C sort -u > "$release_files"
 
   log "deploying browser files to ${APP_WEB_ROOT}"
   install -d -m 0755 "${APP_WEB_ROOT}"
   # Keep old hashed JS/CSS assets available for active browser sessions that loaded the
   # previous index/main bundle before this update. Removing them immediately breaks lazy chunks.
   rsync -a "${extract_dir}/" "${APP_WEB_ROOT}/"
-  find "${APP_WEB_ROOT}" -maxdepth 1 -type f \
-    \( -name 'main-*.js' -o -name 'polyfills-*.js' -o -name 'chunk-*.js' -o -name 'styles-*.css' \) \
-    -mtime +14 -delete
-  # Browser artifacts are built deterministically and may carry normalized mtimes.
-  # Runtime files should expose the deployment timestamp for operator validation.
-  find "${APP_WEB_ROOT}" -type f -exec touch {} +
+  # Bounded retention: files of the last APP_KEEP_RELEASES releases (and of every release deployed
+  # within APP_ASSET_GRACE_HOURS) stay; everything older leaves the web root. A prune failure never
+  # fails the deploy: the new release is already in place.
+  local prune_summary
+  if prune_summary="$("$REPO_ROOT/scripts/prune-web-root.sh" --web-root "$APP_WEB_ROOT" \
+    --state-dir "$APP_RELEASE_STATE_DIR" --record "$(tr -d '[:space:]' < "${REPO_ROOT}/VERSION")" \
+    --files-from "$release_files")"; then
+    log "web root retention: ${prune_summary}"
+  else
+    log "WARNING: web root retention failed; old release files were kept"
+  fi
+  # Runtime files expose the deployment timestamp for operator validation; only the files of this
+  # release are touched, so older files keep their own deployment time.
+  (cd "$APP_WEB_ROOT" && xargs -r -d '\n' touch -- < "$release_files")
 }
 
 reload_nginx() {

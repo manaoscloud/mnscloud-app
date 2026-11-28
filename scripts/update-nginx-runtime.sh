@@ -60,7 +60,9 @@ validate_release_ref "$REF"
 [[ "${EUID}" -eq 0 ]] || { printf '[mnscloud-app] ERROR: this command must run as root\n' >&2; exit 1; }
 
 cd "$REPO_ROOT"
-git fetch --tags --prune
+# Fetch only the release being installed: every release tag of this repository carries a browser
+# tarball, so fetching all tags grows the host checkout by gigabytes.
+git fetch --no-tags origin "+refs/tags/${REF}:refs/tags/${REF}"
 
 PREVIOUS_COMMIT="$(git rev-parse HEAD)"
 TARGET_COMMIT="$(resolve_git_ref "$REF" || true)"
