@@ -156,3 +156,25 @@ describe('time clock kiosk notifications (K4b)', () => {
     expect(notificationTitle(refused, named)).toBe('notifications.hrKioskRejected:Recepcao:3');
   });
 });
+
+describe('platform disk notifications', () => {
+  function disk(severity: string, params: Record<string, string>): InboxNotification {
+    return { type: 'monitoring.disk', severity, params, lastEventAt: null } as unknown as InboxNotification;
+  }
+
+  it('shows warning, critical, forecast and recovery', () => {
+    const base = { agentName: 'agent-app-1', usagePercent: '85.0' };
+    const warning = disk('warning', base);
+    expect(notificationIcon(warning)).toBe('hard_drive');
+    expect(notificationTitle(warning, (key, params) => `${key}:${params?.['server']}`)).toBe(
+      'notifications.diskWarning:agent-app-1',
+    );
+    expect(notificationTitle(disk('error', base), (key) => key)).toBe('notifications.diskCritical');
+    expect(notificationTitle(disk('warning', { ...base, daysToFull: '9' }), (key) => key)).toBe(
+      'notifications.diskForecast',
+    );
+    const recovered = disk('info', base);
+    expect(notificationIcon(recovered)).toBe('check_circle');
+    expect(notificationTitle(recovered, (key) => key)).toBe('notifications.diskRecovered');
+  });
+});
