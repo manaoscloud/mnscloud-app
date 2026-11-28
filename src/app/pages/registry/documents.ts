@@ -36,6 +36,10 @@ export const DOCUMENT_SCAN_REASON_KEYS: Readonly<Record<string, string>> = {
   'pdf-too-complex': 'documents.scan.reason.pdf-too-complex',
   'pdf-unsupported-filter': 'documents.scan.reason.pdf-unsupported-filter',
   'pdf-unreadable-stream': 'documents.scan.reason.pdf-unreadable-stream',
+  'pdf-encrypted-uninspectable': 'documents.scan.reason.pdf-encrypted-uninspectable',
+  'pdf-submit-form': 'documents.scan.reason.pdf-submit-form',
+  'pdf-import-data': 'documents.scan.reason.pdf-import-data',
+  'pdf-embedded-goto': 'documents.scan.reason.pdf-embedded-goto',
   'png-invalid': 'documents.scan.reason.png-invalid',
   'jpeg-invalid': 'documents.scan.reason.jpeg-invalid',
   'type-unsupported': 'documents.scan.reason.type-unsupported',
@@ -90,6 +94,9 @@ export function documentUploadErrorMessage(
   }
   if (code === 'DOCUMENT_SCAN_UNAVAILABLE') {
     return t('documents.scan.unavailable');
+  }
+  if (code === 'DOCUMENT_UPLOAD_EXPIRED') {
+    return t('documents.scan.uploadExpired');
   }
   return null;
 }
