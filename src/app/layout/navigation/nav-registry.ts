@@ -1247,6 +1247,15 @@ export const NAV_ITEMS: NavItem[] = [
         requiresEnvironment: true,
       },
       {
+        id: 'ged/audit',
+        label: 'nav.ged.audit',
+        icon: 'policy',
+        route: '/ged/audit',
+        entitlementCode: 'module.ged.*',
+        permissions: ['tenant.ged.audit.read'],
+        requiresEnvironment: true,
+      },
+      {
         id: 'ged/accounts',
         label: 'nav.ged.accounts',
         icon: 'account_tree',

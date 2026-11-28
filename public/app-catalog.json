@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "6129f28bed71",
+  "version": "50cee1c315e8",
   "language": "pt-BR",
   "entries": [
     {
@@ -3185,6 +3185,14 @@
       "scope": "tenant",
       "title": "Acervo e revisão",
       "description": "Pesquise títulos, observações, dossiês e locais físicos. Filtre documentos pendentes de revisão e consulte seus arquivos privados.",
+      "fields": []
+    },
+    {
+      "route": "/ged/audit",
+      "menuPath": "Gestão de documentos › Auditoria",
+      "scope": "tenant",
+      "title": "Auditoria de documentos",
+      "description": "Consulte a trilha imutável de criação, revisão, verificação de segurança e acessos aos documentos e verifique a integridade da cadeia de hashes.",
       "fields": []
     },
     {
