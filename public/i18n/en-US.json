@@ -16354,5 +16354,7 @@
   "documents.scan.reason.checksum-mismatch": "File integrity (SHA-256) does not match the upload",
   "documents.scan.reason.type-unsupported": "Unsupported file format",
   "documents.scan.reason.av": "Threat detected by antivirus",
-  "documents.scan.reason.unknown": "Security rule violation"
+  "documents.scan.reason.unknown": "Security rule violation",
+  "opsApproval.decisionNote": "Decision note",
+  "Approvals": "Approvals"
 }
