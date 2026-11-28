@@ -50,6 +50,8 @@ export function notificationIcon(item: InboxNotification): string {
       return 'phone_disabled';
     case 'dns.monitor.target':
       return item.params['state'] === 'down' ? 'cloud_off' : 'cloud_done';
+    case 'monitoring.disk':
+      return item.severity === 'info' ? 'check_circle' : 'hard_drive';
     case 'workorders.order.overdue':
       return 'alarm';
     case 'cyber_security.unblock_request':
@@ -130,6 +132,18 @@ export function notificationTitle(item: InboxNotification, t: Translate): string
           ? 'notifications.dnsTargetDown'
           : 'notifications.dnsTargetRecovered',
         { name: param('name') },
+      );
+    case 'monitoring.disk':
+      // The platform disk alert bell (critical >= 90%, warning >= 80%, fill forecast, recovered).
+      return t(
+        item.severity === 'info'
+          ? 'notifications.diskRecovered'
+          : param('daysToFull')
+            ? 'notifications.diskForecast'
+            : item.severity === 'error'
+              ? 'notifications.diskCritical'
+              : 'notifications.diskWarning',
+        { server: param('agentName'), percent: param('usagePercent'), days: param('daysToFull') },
       );
     case 'workorders.order.overdue':
       return t('notifications.workOrderOverdue', { id: param('id') });

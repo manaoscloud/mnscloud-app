@@ -17,6 +17,7 @@ export type NotificationType =
   | 'logs.account.capped'
   | 'voip.pabx.extension.offline'
   | 'dns.monitor.target'
+  | 'monitoring.disk'
   | 'workorders.order.overdue'
   | 'cyber_security.unblock_request'
   | 'website.order.activation'
